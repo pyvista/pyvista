@@ -60,10 +60,10 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
 
     Parameters
     ----------
-    center : list or np.ndarray
+    center : list or tuple or np.ndarray
         Location of the centroid in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction cylinder points to  in [x, y, z]
 
     radius : float
@@ -121,10 +121,10 @@ def CylinderStructured(radius=0.5, height=1.0,
     height : float
         Height (length) of the cylinder along its Z-axis
 
-    center : list or np.ndarray
+    center : list or tuple or np.ndarray
         Location of the centroid in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction cylinder Z-axis in [x, y, z]
 
     theta_resolution : int
@@ -185,7 +185,7 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     start : np.ndarray
         Start location in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction the arrow points to in [x, y, z]
 
     tip_length : float, optional
@@ -246,7 +246,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     center : np.ndarray or list, optional
         Center in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction the top of the sphere points to in [x, y, z]
 
     theta_resolution: int , optional
@@ -296,10 +296,10 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     Parameters
     ----------
-    center : list or np.ndarray
+    center : list or tuple or np.ndarray
         Location of the centroid in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction cylinder points to  in [x, y, z]
 
     i_size : float
@@ -431,13 +431,13 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
         Center in [x, y, z]. middle of the axis of the cone.
 
     direction : np.ndarray or list
-        direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. orientation vector of the cone.
 
     height : float
-        height along the cone in its specified direction.
+        Height along the cone in its specified direction.
 
     radius : float
-        base radius of the cone
+        Base radius of the cone
 
     capping : bool
         Turn on/off whether to cap the base of the cone with a polygon.
@@ -446,7 +446,7 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
         The angle degrees between the axis of the cone and a generatrix.
 
     resolution : int
-        number of facets used to represent the cone
+        Number of facets used to represent the cone
 
     """
     src = vtk.vtkConeSource()
@@ -484,7 +484,7 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
         The radius of the polygon
 
     normal : np.ndarray or list
-        direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. orientation vector of the cone.
 
     n_sides : int
         Number of sides of the polygon
@@ -519,13 +519,13 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
         The outer radius
 
     normal : np.ndarray or list
-        direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. orientation vector of the cone.
 
     r_res: int
-        number of points in radius direction.
+        Number of points in radius direction.
 
     r_res: int
-        number of points in circumferential direction.
+        Number of points in circumferential direction.
 
     """
     src = vtk.vtkDiskSource()

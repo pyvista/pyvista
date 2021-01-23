@@ -96,6 +96,13 @@ def test_disc():
     normals = geom.compute_normals()['Normals']
     assert np.allclose(np.dot(normals, unit_normal), 1)
 
+    center = (1.2, 3.4, 5.6)
+    geom = pyvista.Disc(center=center)
+
+    assert np.allclose(
+        geom.bounds, pyvista.Disc().bounds + np.array([1.2, 1.2, 3.4, 3.4, 5.6, 5.6])
+    )
+
 
 # def test_supertoroid():
 #     geom = pyvista.SuperToroid()

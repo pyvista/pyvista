@@ -17,7 +17,7 @@ import numpy as np
 
 mesh = examples.download_carotid().threshold(145, scalars="scalars")
 
-# Make a geometric obhect to use as the glyph
+# Make a geometric object to use as the glyph
 geom = pv.Arrow()  # This could be any dataset
 
 # Perform the glyph

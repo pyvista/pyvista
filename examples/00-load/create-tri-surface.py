@@ -10,7 +10,7 @@ import pyvista as pv
 import numpy as np
 
 ###############################################################################
-# Simple Traingulations
+# Simple Triangulations
 # +++++++++++++++++++++
 #
 # First, create some points for the surface.
@@ -68,7 +68,7 @@ surf.plot(cpos="xy", show_edges=True)
 
 ###############################################################################
 # Note that some of the outer edges are unconstrained and the triangulation
-# added unwanted triangles. We cn mitigate that with the ``alpha`` parameter.
+# added unwanted triangles. We can mitigate that with the ``alpha`` parameter.
 surf = cloud.delaunay_2d(alpha=1.0)
 surf.plot(cpos="xy", show_edges=True)
 

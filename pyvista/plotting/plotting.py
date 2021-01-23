@@ -5,6 +5,7 @@ import collections.abc
 from functools import partial
 import logging
 import os
+import textwrap
 import time
 import warnings
 import weakref
@@ -29,7 +30,7 @@ from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
-from .renderer import Renderer
+from .renderer import Renderer, Camera
 from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
                     parse_font_family, rcParams)
 from .tools import normalize, opacity_transfer_function
@@ -657,6 +658,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def camera(self):
         """Return the active camera of the active renderer."""
+        if not self.camera_set:
+            self.camera_position = self.get_default_cam_pos()
+            self.reset_camera()
+            self.camera_set = True
         return self.renderer.camera
 
     @camera.setter
@@ -1238,11 +1243,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             result is showing colors that are not present in the color map.
 
         cmap : str, list, optional
-           Name of the Matplotlib colormap to us when mapping the ``scalars``.
-           See available Matplotlib colormaps.  Only applicable for when
-           displaying ``scalars``. Requires Matplotlib to be installed.
-           ``colormap`` is also an accepted alias for this. If ``colorcet`` or
-           ``cmocean`` are installed, their colormaps can be specified by name.
+            Name of the Matplotlib colormap to us when mapping the ``scalars``.
+            See available Matplotlib colormaps.  Only applicable for when
+            displaying ``scalars``. Requires Matplotlib to be installed.
+            ``colormap`` is also an accepted alias for this. If ``colorcet`` or
+            ``cmocean`` are installed, their colormaps can be specified by name.
 
             You can also specify a list of colors to override an
             existing colormap with a custom one.  For example, to
@@ -1859,11 +1864,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The scalar bar will also have this many colors.
 
         cmap : str, optional
-           Name of the Matplotlib colormap to us when mapping the ``scalars``.
-           See available Matplotlib colormaps.  Only applicable for when
-           displaying ``scalars``. Requires Matplotlib to be installed.
-           ``colormap`` is also an accepted alias for this. If ``colorcet`` or
-           ``cmocean`` are installed, their colormaps can be specified by name.
+            Name of the Matplotlib colormap to us when mapping the ``scalars``.
+            See available Matplotlib colormaps.  Only applicable for when
+            displaying ``scalars``. Requires Matplotlib to be installed.
+            ``colormap`` is also an accepted alias for this. If ``colorcet`` or
+            ``cmocean`` are installed, their colormaps can be specified by name.
 
         flip_scalars : bool, optional
             Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
@@ -2309,14 +2314,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if views is None:
             for renderer in self.renderers:
-                renderer.camera = vtk.vtkCamera()
+                renderer.camera = Camera()
                 renderer.reset_camera()
         elif isinstance(views, int):
-            self.renderers[views].camera = vtk.vtkCamera()
+            self.renderers[views].camera = Camera()
             self.renderers[views].reset_camera()
         elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
-                self.renderers[view_index].camera = vtk.vtkCamera()
+                self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
         else:
             raise TypeError('Expected type is None, int, list or tuple:'
@@ -2359,10 +2364,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         font_family : string, optional
             Font family.  Must be either courier, times, or arial.
@@ -2955,6 +2961,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Write a single frame to the movie file."""
         if not hasattr(self, 'mwriter'):
             raise RuntimeError('This plotter has not opened a movie or GIF file.')
+        self.update()
         self.mwriter.append_data(self.image)
 
     def _run_image_filter(self, ifilter):
@@ -3014,8 +3021,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert z-buffer values to depth from camera
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore')
-            near, far = self.camera.GetClippingRange()
-            if self.camera.GetParallelProjection():
+            near, far = self.camera.clipping_range
+            if self.camera.is_parallel_projection:
                 zval = (zbuff - near) / (far - near)
             else:
                 zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
@@ -3041,10 +3048,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         width : float, optional
             Thickness of lines
@@ -3143,10 +3151,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         point_color : string or 3 item list, optional. Color of points (if visible).
             Either a string, rgb list, or hex color string.  For example:
 
-                text_color='white'
-                text_color='w'
-                text_color=[1, 1, 1]
-                text_color='#FFFFFF'
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         point_size : float, optional
             Size of points (if visible)
@@ -3271,14 +3279,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # add points
         if show_points:
-            style = 'points'
-        else:
-            style = 'surface'
-        self.add_mesh(vtkpoints, style=style, color=point_color,
-                      point_size=point_size, name=f'{name}-points',
-                      pickable=pickable,
-                      render_points_as_spheres=render_points_as_spheres,
-                      reset_camera=reset_camera)
+            self.add_mesh(vtkpoints, color=point_color, point_size=point_size,
+                          name=f'{name}-points', pickable=pickable,
+                          render_points_as_spheres=render_points_as_spheres,
+                          reset_camera=reset_camera)
 
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
@@ -3616,10 +3620,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ----------
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         top : string or 3 item list, optional, defaults to None
             If given, this will enable a gradient background where the
@@ -3721,7 +3726,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         points = path.points
 
         # Make sure the whole scene is visible
-        self.camera.SetThickness(path.length)
+        self.camera.thickness = path.length
 
         def orbit():
             """Define the internal thread for running the orbit."""
@@ -4101,7 +4106,16 @@ class Plotter(BasePlotter):
         self._before_close_callback = kwargs.pop('before_close_callback', None)
         assert_empty_kwargs(**kwargs)
 
-        if auto_close is None:
+        if interactive_update and auto_close is None:
+            auto_close = False
+        elif interactive_update and auto_close:
+            warnings.warn(textwrap.dedent("""\
+                The plotter will close immediately automatically since ``auto_close=True``.
+                Either, do not specify ``auto_close``, or set it to ``False`` if you want to
+                interact with the plotter interactively.\
+                """)
+            )
+        elif auto_close is None:
             auto_close = rcParams['auto_close']
 
         if use_ipyvtk is None:

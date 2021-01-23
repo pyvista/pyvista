@@ -65,7 +65,7 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
-    def _clip_with_function(dataset, function, invert=True, value=0.0):
+    def _clip_with_function(dataset, function, invert=True, value=0.0, return_clipped=False):
         """Clip using an implicit function (internal helper)."""
         if isinstance(dataset, vtk.vtkPolyData):
             alg = vtk.vtkClipPolyData()
@@ -78,10 +78,18 @@ class DataSetFilters:
         alg.SetValue(value)
         alg.SetClipFunction(function) # the implicit function
         alg.SetInsideOut(invert) # invert the clip if needed
+        if return_clipped:
+            alg.GenerateClippedOutputOn()
         alg.Update() # Perform the Cut
-        return _get_output(alg)
 
-    def clip(dataset, normal='x', origin=None, invert=True, value=0.0, inplace=False):
+        if return_clipped:
+            a = _get_output(alg, oport=0)
+            b = _get_output(alg, oport=1)
+            return a, b
+        else:
+            return _get_output(alg)
+
+    def clip(dataset, normal='x', origin=None, invert=True, value=0.0, inplace=False, return_clipped=False):
         """Clip a dataset by a plane by specifying the origin and normal.
 
         If no parameters are given the clip will occur in the center of that dataset.
@@ -107,11 +115,16 @@ class DataSetFilters:
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
+        return_clipped : bool, optional
+            Return both unclipped and clipped parts of the dataset.
+
         Returns
         -------
-        mesh : pyvista.PolyData
+        mesh : pyvista.PolyData or tuple(pyvista.PolyData)
             Clipped mesh when ``inplace=False``.  When
-            ``inplace=True``, ``None``
+            ``inplace=True``, ``None``. When ``return_clipped=True``,
+            a tuple containing the unclipped and clipped datasets,
+            regardless of the setting of ``inplace``.
 
         Examples
         --------
@@ -140,9 +153,16 @@ class DataSetFilters:
         function = generate_plane(normal, origin)
         # run the clip
         result = DataSetFilters._clip_with_function(dataset, function,
-                                                    invert=invert, value=value)
+                                                    invert=invert, value=value,
+                                                    return_clipped=return_clipped)
         if inplace:
-            dataset.overwrite(result)
+            overwrite_with = result[0] if return_clipped else result
+            dataset.overwrite(overwrite_with)
+            if return_clipped:
+                # normally if inplace=True, filters return None. But if
+                # return_clipped=True, the user still wants the clipped data,
+                # so return both the unclipped and clipped data as a tuple
+                return result
         else:
             return result
 
@@ -2170,9 +2190,10 @@ class DataSetFilters:
         subgrid = _get_output(extract_sel)
 
         # extracts only in float32
-        if dataset.points.dtype is not np.dtype('float32'):
-            ind = subgrid.point_arrays['vtkOriginalPointIds']
-            subgrid.points = dataset.points[ind]
+        if subgrid.n_points:
+            if dataset.points.dtype is not np.dtype('float32'):
+                ind = subgrid.point_arrays['vtkOriginalPointIds']
+                subgrid.points = dataset.points[ind]
 
         return subgrid
 
@@ -2700,7 +2721,7 @@ class CompositeFilters:
             controls the relative size of the corners to the length of the
             corresponding bounds
 
-        ested : bool, optional
+        nested : bool, optional
             If True, these creates individual outlines for each nested dataset
 
         """
@@ -2882,6 +2903,67 @@ class PolyDataFilters(DataSetFilters):
             poly_data.overwrite(mesh)
         else:
             return mesh
+
+    def intersection(poly_data, mesh, split_first=True, split_second=True):
+        """Compute the intersection between two meshes.
+
+        Parameters
+        ----------
+        mesh : pyvista.PolyData
+            The mesh to intersect with.
+
+        split_first : bool, optional
+            If `True`, return the first input mesh split by the intersection with the
+            second input mesh.
+
+        split_second : bool, optional
+            If `True`, return the second input mesh split by the intersection with the
+            first input mesh.
+
+        Return
+        ------
+        intersection: pyvista.PolyData
+            The intersection line.
+
+        first_split: pyvista.PolyData
+            The first mesh split along the intersection. Returns the original first mesh
+            if `split_first` is False.
+
+        second_split: pyvista.PolyData
+            The second mesh split along the intersection. Returns the original second mesh
+            if `split_second` is False.
+
+        Examples
+        --------
+        Intersect two spheres, returning the intersection and both spheres
+        which have new points/cells along the intersection line.
+
+        >>> import pyvista as pv
+        >>> s1 = pv.Sphere()
+        >>> s2 = pv.Sphere(center=(0.25, 0, 0))
+        >>> intersection, s1_split, s2_split = s1.intersection(s2)
+
+        The mesh splitting takes additional time and can be turned
+        off for either mesh individually.
+
+        >>> intersection, _, s2_split = s1.intersection(s2, \
+                                                        split_first=False, \
+                                                        split_second=True)
+
+        """
+        intfilter = vtk.vtkIntersectionPolyDataFilter()
+        intfilter.SetInputDataObject(0, poly_data)
+        intfilter.SetInputDataObject(1, mesh)
+        intfilter.SetComputeIntersectionPointArray(True)
+        intfilter.SetSplitFirstOutput(split_first)
+        intfilter.SetSplitSecondOutput(split_second)
+        intfilter.Update()
+
+        intersection = _get_output(intfilter, oport=0)
+        first = _get_output(intfilter, oport=1)
+        second = _get_output(intfilter, oport=2)
+
+        return intersection, first, second
 
     def curvature(poly_data, curv_type='mean'):
         """Return the pointwise curvature of a mesh.
@@ -3899,8 +3981,8 @@ class PolyDataFilters(DataSetFilters):
         """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces,
-         an array of origin points and an equal sized array of
-         direction vectors to trace along.
+        an array of origin points and an equal sized array of
+        direction vectors to trace along.
 
         The embree library used for vectorisation of the ray traces is known to occasionally
         return no intersections where the VTK implementation would return an intersection.
@@ -3914,7 +3996,7 @@ class PolyDataFilters(DataSetFilters):
             Starting point for each trace.
 
         directions : np.ndarray or list
-            direction vector for each trace.
+            Direction vector for each trace.
 
         first_point : bool, optional
             Returns intersection of first point only.

@@ -51,6 +51,14 @@ def test_clip_filter():
         else:
             assert isinstance(clp, pyvista.UnstructuredGrid)
 
+    # clip with get_clipped=True
+    for i, dataset in enumerate(DATASETS):
+        clp1, clp2 = dataset.clip(normal=normals[i], invert=True, return_clipped=True)
+        for clp in (clp1, clp2):
+            if isinstance(dataset, pyvista.PolyData):
+                assert isinstance(clp, pyvista.PolyData)
+            else:
+                assert isinstance(clp, pyvista.UnstructuredGrid)
 
 @skip_windows
 @skip_mac

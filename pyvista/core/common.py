@@ -634,8 +634,8 @@ class Common(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : list or np.ndarray
-            Length 3 list or array.
+        xyz : list or tuple or np.ndarray
+            Length 3 list, tuple or array.
 
         """
         self.points += np.asarray(xyz)
