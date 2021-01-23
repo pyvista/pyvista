@@ -1522,8 +1522,8 @@ class DataSetFilters:
         inplace : bool, optional
             Updates mesh in-place while returning ``None``.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.UnstructuredGrid
             Mesh containing only triangles. ``None`` when ``inplace=True``
 
@@ -2064,8 +2064,8 @@ class DataSetFilters:
             Tolerance used to compute whether a point in the source is in a
             cell of the input.  If not given, tolerance is automatically generated.
 
-        Return
-        ------
+        Returns
+        -------
         sampled_line : pv.PolyData
             Line object with sampled data from dataset.
         """
@@ -2167,8 +2167,8 @@ class DataSetFilters:
         ind : np.ndarray
             Numpy array of cell indices to be extracted.
 
-        Return
-        ------
+        Returns
+        -------
         subgrid : pyvista.UnstructuredGrid
             Subselected grid
 
@@ -2213,8 +2213,8 @@ class DataSetFilters:
             Specifies if the cells shall be returned or not. The default is 
             True.
 
-        Return
-        ------
+        Returns
+        -------
         subgrid : pyvista.UnstructuredGrid
             Subselected grid.
 
@@ -2259,8 +2259,8 @@ class DataSetFilters:
             Adds a cell array "vtkOriginalPointIds" that idenfities which
             original cells these surface cells correspond to
 
-        Return
-        ------
+        Returns
+        -------
         extsurf : pyvista.PolyData
             Surface mesh of the grid
 
@@ -2282,8 +2282,8 @@ class DataSetFilters:
     def surface_indices(dataset):
         """Return the surface indices of a grid.
 
-        Return
-        ------
+        Returns
+        -------
         surf_ind : np.ndarray
             Indices of the surface points.
 
@@ -2326,8 +2326,8 @@ class DataSetFilters:
         inplace : bool, optional
             Return new mesh or overwrite input.
 
-        Return
-        ------
+        Returns
+        -------
         edges : pyvista.vtkPolyData
             Extracted edges. None if inplace=True.
 
@@ -2377,8 +2377,8 @@ class DataSetFilters:
             the arrays of the merging grids will be overwritten
             by the original main mesh.
 
-        Return
-        ------
+        Returns
+        -------
         merged_grid : vtk.UnstructuredGrid
             Merged grid.  Returned when inplace is False.
 
@@ -2772,8 +2772,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             The cut mesh when inplace=False
 
@@ -2812,8 +2812,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         joinedmesh : pyvista.PolyData
             Initial mesh and the new mesh when inplace=False.
 
@@ -2849,8 +2849,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         union : pyvista.PolyData
             The union mesh when inplace=False.
 
@@ -2882,8 +2882,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         union : pyvista.PolyData
             The union mesh when inplace=False.
 
@@ -2920,8 +2920,8 @@ class PolyDataFilters(DataSetFilters):
             If `True`, return the second input mesh split by the intersection with the
             first input mesh.
 
-        Return
-        ------
+        Returns
+        -------
         intersection: pyvista.PolyData
             The intersection line.
 
@@ -2980,8 +2980,8 @@ class PolyDataFilters(DataSetFilters):
             Maximum
             Minimum
 
-        Return
-        ------
+        Returns
+        -------
         curvature : np.ndarray
             Curvature values
 
@@ -3024,8 +3024,8 @@ class PolyDataFilters(DataSetFilters):
         **kwargs : optional
             See :func:`pyvista.plot`
 
-        Return
-        ------
+        Returns
+        -------
         cpos : list
             List of camera position, focal point, and view up
 
@@ -3043,8 +3043,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Mesh containing only triangles.  None when inplace=True
 
@@ -3098,8 +3098,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Smoothed mesh. None when inplace=True.
 
@@ -3174,8 +3174,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Decimated mesh. None when inplace=True.
 
@@ -3225,8 +3225,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Tube-filtered mesh. None when inplace=True.
 
@@ -3303,8 +3303,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : Polydata object
             pyvista polydata object.  None when inplace=True
 
@@ -3412,8 +3412,8 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        Return
-        ------
+        Returns
+        -------
         outmesh : pyvista.PolyData
             Decimated mesh.  None when inplace=True.
 
@@ -3523,8 +3523,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing. Defaults to False.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Updated mesh with cell and point normals if inplace=False
 
@@ -3763,8 +3763,8 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Cleaned mesh.  None when inplace=True
 
@@ -3823,8 +3823,8 @@ class PolyDataFilters(DataSetFilters):
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
 
-        Return
-        ------
+        Returns
+        -------
         output : pyvista.PolyData
             PolyData object consisting of the line segment between the
             two given vertices.
@@ -3876,8 +3876,8 @@ class PolyDataFilters(DataSetFilters):
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
 
-        Return
-        ------
+        Returns
+        -------
         length : float
             Length of the geodesic segment.
 
@@ -3921,8 +3921,8 @@ class PolyDataFilters(DataSetFilters):
         off_screen : bool, optional
             Plots off screen when ``plot=True``.  Used for unit testing.
 
-        Return
-        ------
+        Returns
+        -------
         intersection_points : np.ndarray
             Location of the intersection points.  Empty array if no
             intersections.
@@ -4004,8 +4004,8 @@ class PolyDataFilters(DataSetFilters):
         retry : bool, optional
             Will retry rays that return no intersections using the ray_trace
 
-        Return
-        ------
+        Returns
+        -------
         intersection_points : np.ndarray
             Location of the intersection points.  Empty array if no
             intersections.
@@ -4125,8 +4125,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Mesh without the points flagged for removal.  Not returned
             when inplace=False.

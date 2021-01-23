@@ -100,8 +100,8 @@ class Table(vtk.vtkTable, DataObject):
         name : str
             Name of row scalars to retrieve.
 
-        Return
-        ------
+        Returns
+        -------
         scalars : np.ndarray
             Numpy array of scalars
 

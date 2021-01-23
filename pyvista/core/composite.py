@@ -115,8 +115,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def bounds(self):
         """Find min/max for bounds across blocks.
 
-        Return
-        ------
+        Returns
+        -------
         tuple(float):
             length 6 tuple of floats containing min/max along each axis
 
@@ -166,8 +166,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def volume(self):
         """Return the total volume of all meshes in this dataset.
 
-        Return
-        ------
+        Returns
+        -------
         volume : float
             Total volume of the mesh.
 
@@ -453,8 +453,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         deep : bool, optional
             When True makes a full copy of the object.
 
-        Return
-        ------
+        Returns
+        -------
         newobject : same as input
            Deep or shallow copy of the input.
 

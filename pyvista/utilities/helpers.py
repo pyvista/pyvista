@@ -33,8 +33,8 @@ def get_vtk_type(typ):
 
     Corrects for string type mapping issues.
 
-    Return
-    ------
+    Returns
+    -------
         int : the integer type id specified in vtkType.h
 
     """
@@ -93,8 +93,8 @@ def convert_array(arr, name=None, deep=0, array_type=None):
     deep : bool
         if input is numpy array then deep copy values
 
-    Return
-    ------
+    Returns
+    -------
     vtkDataArray, ndarray, or DataFrame:
         the converted array (if input is a NumPy ndaray then returns
         ``vtkDataArray`` or is input is ``vtkDataArray`` then returns NumPy
@@ -319,8 +319,8 @@ def lines_from_points(points, close=False):
     close : bool, optional
         If True, close the line segments into a loop
 
-    Return
-    ------
+    Returns
+    -------
     lines : pyvista.PolyData
         PolyData with lines and cells.
 

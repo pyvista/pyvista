@@ -306,8 +306,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
 
-        Return
-        ------
+        Returns
+        -------
         idx : int
             Index of the render window.
 
@@ -1360,8 +1360,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, optional
             Force a render when True.  Default ``True``.
 
-        Return
-        ------
+        Returns
+        -------
         actor: vtk.vtkActor
             VTK actor of the mesh.
 
@@ -1957,8 +1957,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, optional
             Force a render when True.  Default ``True``.
 
-        Return
-        ------
+        Returns
+        -------
         actor: vtk.vtkVolume
             VTK volume of the input data.
 
@@ -2858,8 +2858,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the normalized viewport coordinate system (values between 0.0
             and 1.0 and support for HiDPI).
 
-        Return
-        ------
+        Returns
+        -------
         textActor : vtk.vtkTextActor
             Text actor added to plot
 
@@ -2990,8 +2990,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera_clipping_range : bool
             Reset the camera clipping range to include data in view?
 
-        Return
-        ------
+        Returns
+        -------
         image_depth : numpy.ndarray
             Image of depth values from camera orthogonal to image plane
 
@@ -3062,8 +3062,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
-        Return
-        ------
+        Returns
+        -------
         actor : vtk.vtkActor
             Lines actor.
 
@@ -3193,8 +3193,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         always_visible : bool, optional
             Skip adding the visibility filter. Default False.
 
-        Return
-        ------
+        Returns
+        -------
         labelActor : vtk.vtkActor2D
             VTK label actor.  Can be used to change properties of the labels.
 
@@ -3455,8 +3455,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If a string filename is given and this is true, a NumPy array of
             the image will be returned.
 
-        Return
-        ------
+        Returns
+        -------
         img :  numpy.ndarray
             Array containing pixel RGB and alpha.  Sized:
             [Window height x Window width x 3] for transparent_background=False
@@ -3542,8 +3542,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
-        Return
-        ------
+        Returns
+        -------
         legend : vtk.vtkLegendBoxActor
             Actor for the legend.
 
@@ -4076,8 +4076,8 @@ class Plotter(BasePlotter):
             Use the ``ipyvtk-simple`` ``ViewInteractiveWidget`` to
             visualize the plot within a juyterlab notebook.
 
-        Return
-        ------
+        Returns
+        -------
         cpos : list
             List of camera position, focal point, and view up
 
@@ -4268,8 +4268,8 @@ class Plotter(BasePlotter):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        Return
-        ------
+        Returns
+        -------
         textActor : vtk.vtkTextActor
             Text actor added to plot.
 

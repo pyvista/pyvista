@@ -78,8 +78,8 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     capping : bool, optional
         Cap cylinder ends with polygons.  Default True
 
-    Return
-    ------
+    Returns
+    -------
     cylinder : pyvista.PolyData
         Cylinder surface.
 
@@ -207,8 +207,8 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
         Scale factor of the entire object, default is None (i.e. scale of 1).
         'auto' scales to length of direction array.
 
-    Return
-    ------
+    Returns
+    -------
     arrow : pyvista.PolyData
         Arrow surface.
 
@@ -269,8 +269,8 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     end_phi : float, optional
         Ending latitude angle.
 
-    Return
-    ------
+    Returns
+    -------
     sphere : pyvista.PolyData
         Sphere mesh.
 
@@ -314,8 +314,8 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
     j_resolution : int
         Number of points on the plane in the j direction.
 
-    Return
-    ------
+    Returns
+    -------
     plane : pyvista.PolyData
         Plane mesh
 
