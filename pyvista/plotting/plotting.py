@@ -4139,13 +4139,15 @@ class Plotter(BasePlotter):
         self._on_first_render_request(cpos)
 
         # Render
-        # For Windows issues. Resolves #186 and #1018
-        if os.name == 'nt' and not pyvista.VERY_FIRST_RENDER:
+        # For Windows issues. Resolves #186, #1018 and #1078
+        if os.name == 'nt' and pyvista.IS_INTERACTIVE and not pyvista.VERY_FIRST_RENDER:
             if interactive and (not self.off_screen):
                 self.iren.Start()
         pyvista.VERY_FIRST_RENDER = False
         # for some reason iren needs to start before rendering on
-        # Windows (but not after the very first render window
+        # Windows when running in interactive mode (python console,
+        # Ipython console, Jupyter notebook) but only after the very
+        # first render window
 
         self.render()
 
