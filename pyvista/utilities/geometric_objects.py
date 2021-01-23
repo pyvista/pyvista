@@ -499,7 +499,7 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
     return pyvista.wrap(src.GetOutput())
 
 
-def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
+def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
          c_res=6):
     """Create a polygonal disk with a hole in the center.
 
@@ -537,7 +537,7 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
     normal = np.array(normal)
     center = np.array(center)
     surf = pyvista.PolyData(src.GetOutput())
-    surf.rotate_y(-90)
+    surf.rotate_y(90)
     translate(surf, center, normal)
     return surf
 
