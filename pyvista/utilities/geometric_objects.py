@@ -706,7 +706,6 @@ def Pyramid(points):
     Examples
     --------
     >>> import pyvista
-    >>> import numpy as np
     >>> pointa = [1.0, 1.0, 1.0]
     >>> pointb = [-1.0, 1.0, 1.0]
     >>> pointc = [-1.0, -1.0, 1.0]
