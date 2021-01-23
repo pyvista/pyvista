@@ -112,3 +112,8 @@ except KeyError:
 
 # Set a parameter to control default print format for floats
 FLOAT_FORMAT = "{:.3e}"
+
+VERY_FIRST_RENDER = [True]
+
+# Check if python is running in interactive mode (see https://stackoverflow.com/a/64523765)
+IS_INTERACTIVE = hasattr(sys, 'ps1')

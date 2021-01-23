@@ -33,8 +33,8 @@ def get_vtk_type(typ):
 
     Corrects for string type mapping issues.
 
-    Return
-    ------
+    Returns
+    -------
         int : the integer type id specified in vtkType.h
 
     """
@@ -93,8 +93,8 @@ def convert_array(arr, name=None, deep=0, array_type=None):
     deep : bool
         if input is numpy array then deep copy values
 
-    Return
-    ------
+    Returns
+    -------
     vtkDataArray, ndarray, or DataFrame:
         the converted array (if input is a NumPy ndaray then returns
         ``vtkDataArray`` or is input is ``vtkDataArray`` then returns NumPy
@@ -319,8 +319,8 @@ def lines_from_points(points, close=False):
     close : bool, optional
         If True, close the line segments into a loop
 
-    Return
-    ------
+    Returns
+    -------
     lines : pyvista.PolyData
         PolyData with lines and cells.
 
@@ -334,6 +334,55 @@ def lines_from_points(points, close=False):
         cells = np.append(cells, [[2, len(points)-1, 0],], axis=0)
     poly.lines = cells
     return poly
+
+
+def make_tri_mesh(points, faces):
+    """Construct a ``pyvista.PolyData`` mesh using points and faces arrays.
+
+    Construct a mesh from an Nx3 array of points and an Mx3 array of
+    triangle indices, resulting in a mesh with N vertices and M
+    triangles.  This function does not require the standard VTK
+    "padding" column and simplifies mesh creation.
+
+    Parameters
+    ----------
+    points : np.ndarray
+        Array of points with shape (N, 3) storing the vertices of the
+        triangle mesh.
+
+    faces : np.ndarray
+        Array of indices with shape (M, 3) containing the triangle
+        indices.
+
+    Returns
+    -------
+    tri_mesh : pyvista.PolyData
+        PolyData instance containing the triangle mesh.
+
+    Examples
+    --------
+    This example discretizes the unit square into a triangle mesh with
+    nine vertices and eight faces.
+
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> points = np.array([[0, 0, 0], [0.5, 0, 0], [1, 0, 0], [0, 0.5, 0],
+    ...                    [0.5, 0.5, 0], [1, 0.5, 0], [0, 1, 0], [0.5, 1, 0],
+    ...                    [1, 1, 0]])
+    >>> faces = np.array([[0, 1, 4], [4, 7, 6], [2, 5, 4], [4, 5, 8],
+    ...                   [0, 4, 3], [3, 4, 6], [1, 2, 4], [4, 8, 7]])
+    >>> tri_mesh = pyvista.make_tri_mesh(points, faces)
+    >>> tri_mesh.plot(show_edges=True) # doctest:+SKIP
+
+    """
+    if points.shape[1] != 3:
+        raise ValueError("Points array should have shape (N, 3).")
+    if faces.ndim != 2 or faces.shape[1] != 3:
+        raise ValueError("Face array should have shape (M, 3).")
+    cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
+    cells[:, 0] = 3
+    cells[:, 1:] = faces
+    return pyvista.PolyData(points, cells)
 
 
 def vector_poly_data(orig, vec):
@@ -749,7 +798,7 @@ def abstract_class(cls_):
     """Decorate a class, overriding __new__.
 
     Preventing a class from being instantiated similar to abc.ABCMeta
-      but does not require an abstract method.
+    but does not require an abstract method.
     """
 
     def __new__(cls, *args, **kwargs):

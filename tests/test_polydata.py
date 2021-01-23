@@ -296,6 +296,21 @@ def test_boolean_difference():
     assert sub_mesh.n_cells
 
 
+def test_intersection():
+    sphere = SPHERE.copy()
+    sphere_shifted = SPHERE_SHIFTED.copy()
+    intersection, first, second = sphere.intersection(sphere_shifted, split_first=True, split_second=True)
+
+    assert intersection.n_points
+    assert first.n_points > sphere.n_points
+    assert second.n_points > sphere_shifted.n_points
+
+    intersection, first, second = sphere.intersection(sphere_shifted, split_first=False, split_second=False)
+    assert intersection.n_points
+    assert first.n_points == sphere.n_points
+    assert second.n_points == sphere_shifted.n_points
+
+
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
 def test_curvature(curv_type):
     sphere = SPHERE.copy()
@@ -692,9 +707,7 @@ def test_flip_normals(sphere):
     sphere_flipped = sphere.copy()
     sphere_flipped.flip_normals()
 
-
-    # TODO: Check why this fails on Mac OS and Windows on Azure
-    # sphere.compute_normals(inplace=True)
-    # sphere_flipped.compute_normals(inplace=True)
-    # assert np.allclose(sphere_flipped.point_arrays['Normals'],
-    #                    -sphere.point_arrays['Normals'])
+    sphere.compute_normals(inplace=True)
+    sphere_flipped.compute_normals(inplace=True)
+    assert np.allclose(sphere_flipped.point_arrays['Normals'],
+                       -sphere.point_arrays['Normals'])

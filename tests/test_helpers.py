@@ -1,6 +1,8 @@
-import pyvista
+import pytest
 import trimesh
 import numpy as np
+
+import pyvista
 
 
 def test_wrap_trimesh():
@@ -12,3 +14,17 @@ def test_wrap_trimesh():
 
     assert np.allclose(tmesh.vertices, mesh.points)
     assert np.allclose(tmesh.faces, mesh.faces[1:])
+
+
+def test_make_tri_mesh(sphere):
+    with pytest.raises(ValueError):
+        pyvista.make_tri_mesh(sphere.points, sphere.faces)
+
+    with pytest.raises(ValueError):
+        pyvista.make_tri_mesh(sphere.points[:, :1], sphere.faces)
+
+    faces = sphere.faces.reshape(-1, 4)[:, 1:]
+    mesh = pyvista.make_tri_mesh(sphere.points, faces)
+
+    assert np.allclose(sphere.points, mesh.points)
+    assert np.allclose(sphere.faces, mesh.faces)

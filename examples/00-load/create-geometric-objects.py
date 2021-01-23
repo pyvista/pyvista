@@ -9,7 +9,7 @@ The "Hello, world!" of VTK
 import pyvista as pv
 
 ###############################################################################
-# This runs through several of the available geomoetric objects available in
+# This runs through several of the available geometric objects available in
 # VTK which PyVista provides simple convenience methods for generating.
 #
 # Let's run through creating a few geometric objects!

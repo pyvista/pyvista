@@ -13,6 +13,7 @@ from .tools import (create_axes_marker, create_axes_orientation_box,
                     opacity_transfer_function, system_supports_plotting)
 from .widgets import WidgetHelper
 from .lights import Light
+from .camera import Camera
 
 
 class QtDeprecationError(Exception):

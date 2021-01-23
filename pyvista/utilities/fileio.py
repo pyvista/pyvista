@@ -128,7 +128,8 @@ def standard_reader_routine(reader, filename, attrs=None):
         attrs = {}
     if not isinstance(attrs, dict):
         raise TypeError('Attributes must be a dictionary of name and arguments.')
-    reader.SetFileName(filename)
+    if filename is not None:
+        reader.SetFileName(filename)
     # Apply any attributes listed
     for name, args in attrs.items():
         attr = getattr(reader, name)
@@ -154,11 +155,10 @@ def read_legacy(filename):
     reader.ReadAllTCoordsOn()
     reader.ReadAllVectorsOn()
     # Perform the read
-    reader.Update()
-    output = reader.GetOutputDataObject(0)
+    output = standard_reader_routine(reader, None)
     if output is None:
         raise RuntimeError('No output when using VTKs legacy reader')
-    return pyvista.wrap(output)
+    return output
 
 
 def read(filename, attrs=None, file_format=None):
@@ -206,7 +206,8 @@ def read(filename, attrs=None, file_format=None):
                 name = os.path.basename(str(each))
             else:
                 name = None
-            multi[-1, name] = read(each)
+            multi[-1, name] = read(each, attrs=attrs,
+                                   file_format=file_format)
         return multi
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
@@ -305,6 +306,65 @@ def read_exodus(filename,
 
     reader.Update()
     return pyvista.wrap(reader.GetOutput())
+
+
+def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
+    """Read a Plot3D grid file (e.g., grid.in) and optional q file(s).
+    
+    Parameters
+    ----------
+    filename : str
+        The string filename to the data file to read.
+
+    q_filenames : str or tuple(str), optional
+        The string filename of the q-file, or iterable of such filenames.
+
+    auto_detect : bool, optional
+        When this option is turned on, the reader will try to figure out the
+        values of various options such as byte order, byte count etc. Default is
+        True.
+
+    attrs : dict, optional
+        A dictionary of attributes to call on the reader. Keys of dictionary are
+        the attribute/method names and values are the arguments passed to those
+        calls. If you do not have any attributes to call, pass ``None`` as the
+        value.
+
+    Returns
+    -------
+    mesh : pyvista.MultiBlock
+        Data read from the file.
+
+    """
+    filename = _process_filename(filename)
+
+    reader = vtk.vtkMultiBlockPLOT3DReader()
+    reader.SetFileName(filename)
+
+    # q_filenames may be a list or a single filename
+    if q_filenames:
+        if isinstance(q_filenames, (str, pathlib.Path)):
+            q_filenames = [q_filenames]
+    q_filenames = [_process_filename(f) for f in q_filenames]
+
+    if hasattr(reader, 'AddFileName'):
+        # AddFileName was added to vtkMultiBlockPLOT3DReader sometime around
+        # VTK 8.2. This method supports reading multiple q files.
+        for q_filename in q_filenames:
+            reader.AddFileName(q_filename)
+    else:
+        # SetQFileName is used to add a single q file to be read, and is still
+        # supported in VTK9.
+        if len(q_filenames) > 0:
+            if len(q_filenames) > 1:
+                raise RuntimeError('Reading of multiple q files is not supported '
+                                   'with this version of VTK.')
+            reader.SetQFileName(q_filenames[0])
+
+    attrs = {} if not attrs else attrs
+    attrs['SetAutoDetectFormat'] = auto_detect
+
+    return standard_reader_routine(reader, filename=None, attrs=attrs)
 
 
 def from_meshio(mesh):
@@ -454,3 +514,6 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
         file_format=file_format,
         **kwargs
     )
+
+def _process_filename(filename):
+    return os.path.abspath(os.path.expanduser(str(filename)))

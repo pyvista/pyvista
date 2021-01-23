@@ -4,11 +4,18 @@ from collections.abc import Iterable
 
 import numpy as np
 import vtk
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, numpyTovtkDataArray
 
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
 from .pyvista_ndarray import pyvista_ndarray
+
+# necessary for pyinstaller on VTK9
+if vtk.vtkVersion().GetVTKMajorVersion() >= 9:
+    from vtkmodules.numpy_interface.dataset_adapter import (VTKObjectWrapper,
+                                                            numpyTovtkDataArray)
+else:
+    from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper,
+                                                     numpyTovtkDataArray)
 
 
 class DataSetAttributes(VTKObjectWrapper):
@@ -17,17 +24,17 @@ class DataSetAttributes(VTKObjectWrapper):
     Implement a ``dict`` like interface for interacting with vtkDataArrays.
 
     Parameters
-        ----------
-        vtkobject : vtkFieldData
-            The vtk object to wrap as a DataSetAttribute, usually an
-             instance of ``vtk.vtkCellData``, ``vtk.vtkPointData``, or
-             ``vtk.vtkFieldData``.
+    ----------
+    vtkobject : vtkFieldData
+        The vtk object to wrap as a DataSetAttribute, usually an
+        instance of ``vtk.vtkCellData``, ``vtk.vtkPointData``, or
+        ``vtk.vtkFieldData``.
 
-        dataset : vtkDataSet
-            The vtkDataSet containing the vtkobject.
+    dataset : vtkDataSet
+        The vtkDataSet containing the vtkobject.
 
-        association : FieldAssociation
-            The array association type of the vtkobject.
+    association : FieldAssociation
+        The array association type of the vtkobject.
     """
 
     def __init__(self, vtkobject, dataset, association):

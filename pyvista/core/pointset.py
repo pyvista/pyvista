@@ -41,8 +41,8 @@ class PointSet(Common):
         scalars_weight : bool, optional
             Flag for using the mesh scalars as weights. Defaults to False.
 
-        Return
-        ------
+        Returns
+        -------
         center : np.ndarray, float
             Coordinates for the center of mass.
 
@@ -314,7 +314,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         Notes
         -----
         Binary files write much faster than ASCII and have a smaller
-         file size.
+        file size.
 
         """
         filename = os.path.abspath(os.path.expanduser(str(filename)))
@@ -329,8 +329,8 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     def area(self):
         """Return the mesh surface area.
 
-        Return
-        ------
+        Returns
+        -------
         area : float
             Total area of the mesh.
 
@@ -344,8 +344,8 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         This will throw a VTK error/warning if not a closed surface
 
-        Return
-        ------
+        Returns
+        -------
         volume : float
             Total volume of the mesh.
 
@@ -430,8 +430,8 @@ class PointGrid(PointSet):
         **kwargs : optional
             Optional keyword arguments.  See help(pyvista.plot)
 
-        Return
-        ------
+        Returns
+        -------
         cpos : list
             Camera position, focal point, and view up.  Used for storing and
             setting camera view.
@@ -684,8 +684,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         This function returns a np.ndarray for each cell type in an ordered fashion.
         Note that this function only works with element types of fixed sizes
 
-        Return
-        ------
+        Returns
+        -------
         cells_dict : dict
             A dictionary mapping containing all cells of this unstructured grid.
             Structure: vtk_enum_type (int) -> cells (np.ndarray)
@@ -697,7 +697,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     def cell_connectivity(self):
         """Return a the vtk cell connectivity as a numpy array."""
         carr = self.GetCells()
-        if hasattr(carr, 'GetConnectivityArray'):  # available >= VTK9
+        if VTK9:
             return vtk_to_numpy(carr.GetConnectivityArray())
         raise AttributeError('Install vtk>=9.0.0 for `cell_connectivity`\n'
                              'Otherwise, use the legacy `cells` method')
@@ -718,8 +718,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             When True, makes a copy of the points array.  Default
             False.  Cells and cell types are always copied.
 
-        Return
-        ------
+        Returns
+        -------
         grid : pyvista.UnstructuredGrid
             UnstructuredGrid containing only linear cells.
 
@@ -788,7 +788,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     def offset(self):
         """Get cell locations Array."""
         carr = self.GetCells()
-        if hasattr(carr, 'GetOffsetsArray'):  # available >= VTK9
+        if VTK9:
             # This will be the number of cells + 1.
             return vtk_to_numpy(carr.GetOffsetsArray())
         else:  # this is no longer used in >= VTK9

@@ -96,6 +96,13 @@ def test_disc():
     normals = geom.compute_normals()['Normals']
     assert np.allclose(np.dot(normals, unit_normal), 1)
 
+    center = (1.2, 3.4, 5.6)
+    geom = pyvista.Disc(center=center)
+
+    assert np.allclose(
+        geom.bounds, pyvista.Disc().bounds + np.array([1.2, 1.2, 3.4, 3.4, 5.6, 5.6])
+    )
+
 
 # def test_supertoroid():
 #     geom = pyvista.SuperToroid()
@@ -133,3 +140,17 @@ def test_circular_arc():
                                polar=[1, 0, 1], negative=True, angle=180)
     assert mesh.n_points
     assert mesh.n_cells
+
+
+def test_pyramid():
+    pointa = [1.0, 1.0, 1.0]
+    pointb = [-1.0, 1.0, 1.0]
+    pointc = [-1.0, -1.0, 1.0]
+    pointd = [1.0, -1.0, 1.0]
+    pointe = [0.0, 0.0, 0.0]
+    points = np.array([pointa, pointb, pointc, pointd, pointe])
+
+    mesh = pyvista.Pyramid(points)
+    assert mesh.n_points
+    assert mesh.n_cells
+    assert np.allclose(mesh.points, points)

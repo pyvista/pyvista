@@ -97,8 +97,8 @@ def generate_cell_offsets_loop(cells, cell_types):
     cell_types : np.ndarray (int)
         The types of the cell arrays given to the function
 
-    Return
-    ------
+    Returns
+    -------
     offset : np.ndarray (int)
         Array of VTK offsets
 
@@ -141,8 +141,8 @@ def generate_cell_offsets(cells, cell_types):
     cell_types : np.ndarray (int)
         The types of the cell arrays given to the function
 
-    Return
-    ------
+    Returns
+    -------
     offset : np.ndarray (int)
         Array of VTK offsets
 

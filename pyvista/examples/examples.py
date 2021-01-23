@@ -165,8 +165,8 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
         Enables off screen rendering when True.  Used for automated testing.
         Disabled by default.
 
-    Return
-    ------
+    Returns
+    -------
     points : np.ndarray
         Position of points at last frame.
 

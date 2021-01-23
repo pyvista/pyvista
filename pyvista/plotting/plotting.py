@@ -5,6 +5,7 @@ import collections.abc
 from functools import partial
 import logging
 import os
+import textwrap
 import time
 import warnings
 import weakref
@@ -29,7 +30,7 @@ from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
-from .renderer import Renderer
+from .renderer import Renderer, Camera
 from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
                     parse_font_family, rcParams)
 from .tools import normalize, opacity_transfer_function
@@ -324,8 +325,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
 
-        Return
-        ------
+        Returns
+        -------
         idx : int
             Index of the render window.
 
@@ -705,6 +706,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def camera(self):
         """Return the active camera of the active renderer."""
+        if not self.camera_set:
+            self.camera_position = self.get_default_cam_pos()
+            self.reset_camera()
+            self.camera_set = True
         return self.renderer.camera
 
     @camera.setter
@@ -1286,11 +1291,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             result is showing colors that are not present in the color map.
 
         cmap : str, list, optional
-           Name of the Matplotlib colormap to us when mapping the ``scalars``.
-           See available Matplotlib colormaps.  Only applicable for when
-           displaying ``scalars``. Requires Matplotlib to be installed.
-           ``colormap`` is also an accepted alias for this. If ``colorcet`` or
-           ``cmocean`` are installed, their colormaps can be specified by name.
+            Name of the Matplotlib colormap to us when mapping the ``scalars``.
+            See available Matplotlib colormaps.  Only applicable for when
+            displaying ``scalars``. Requires Matplotlib to be installed.
+            ``colormap`` is also an accepted alias for this. If ``colorcet`` or
+            ``cmocean`` are installed, their colormaps can be specified by name.
 
             You can also specify a list of colors to override an
             existing colormap with a custom one.  For example, to
@@ -1403,8 +1408,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, optional
             Force a render when True.  Default ``True``.
 
-        Return
-        ------
+        Returns
+        -------
         actor: vtk.vtkActor
             VTK actor of the mesh.
 
@@ -1907,11 +1912,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The scalar bar will also have this many colors.
 
         cmap : str, optional
-           Name of the Matplotlib colormap to us when mapping the ``scalars``.
-           See available Matplotlib colormaps.  Only applicable for when
-           displaying ``scalars``. Requires Matplotlib to be installed.
-           ``colormap`` is also an accepted alias for this. If ``colorcet`` or
-           ``cmocean`` are installed, their colormaps can be specified by name.
+            Name of the Matplotlib colormap to us when mapping the ``scalars``.
+            See available Matplotlib colormaps.  Only applicable for when
+            displaying ``scalars``. Requires Matplotlib to be installed.
+            ``colormap`` is also an accepted alias for this. If ``colorcet`` or
+            ``cmocean`` are installed, their colormaps can be specified by name.
 
         flip_scalars : bool, optional
             Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
@@ -2000,8 +2005,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, optional
             Force a render when True.  Default ``True``.
 
-        Return
-        ------
+        Returns
+        -------
         actor: vtk.vtkVolume
             VTK volume of the input data.
 
@@ -2357,14 +2362,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if views is None:
             for renderer in self.renderers:
-                renderer.camera = vtk.vtkCamera()
+                renderer.camera = Camera()
                 renderer.reset_camera()
         elif isinstance(views, int):
-            self.renderers[views].camera = vtk.vtkCamera()
+            self.renderers[views].camera = Camera()
             self.renderers[views].reset_camera()
         elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
-                self.renderers[view_index].camera = vtk.vtkCamera()
+                self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
         else:
             raise TypeError('Expected type is None, int, list or tuple:'
@@ -2407,10 +2412,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         font_family : string, optional
             Font family.  Must be either courier, times, or arial.
@@ -2900,8 +2906,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the normalized viewport coordinate system (values between 0.0
             and 1.0 and support for HiDPI).
 
-        Return
-        ------
+        Returns
+        -------
         textActor : vtk.vtkTextActor
             Text actor added to plot
 
@@ -3003,6 +3009,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Write a single frame to the movie file."""
         if not hasattr(self, 'mwriter'):
             raise RuntimeError('This plotter has not opened a movie or GIF file.')
+        self.update()
         self.mwriter.append_data(self.image)
 
     def _run_image_filter(self, ifilter):
@@ -3031,8 +3038,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera_clipping_range : bool
             Reset the camera clipping range to include data in view?
 
-        Return
-        ------
+        Returns
+        -------
         image_depth : numpy.ndarray
             Image of depth values from camera orthogonal to image plane
 
@@ -3062,8 +3069,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert z-buffer values to depth from camera
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore')
-            near, far = self.camera.GetClippingRange()
-            if self.camera.GetParallelProjection():
+            near, far = self.camera.clipping_range
+            if self.camera.is_parallel_projection:
                 zval = (zbuff - near) / (far - near)
             else:
                 zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
@@ -3089,10 +3096,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         width : float, optional
             Thickness of lines
@@ -3102,8 +3110,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
-        Return
-        ------
+        Returns
+        -------
         actor : vtk.vtkActor
             Lines actor.
 
@@ -3191,10 +3199,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         point_color : string or 3 item list, optional. Color of points (if visible).
             Either a string, rgb list, or hex color string.  For example:
 
-                text_color='white'
-                text_color='w'
-                text_color=[1, 1, 1]
-                text_color='#FFFFFF'
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         point_size : float, optional
             Size of points (if visible)
@@ -3233,8 +3241,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         always_visible : bool, optional
             Skip adding the visibility filter. Default False.
 
-        Return
-        ------
+        Returns
+        -------
         labelActor : vtk.vtkActor2D
             VTK label actor.  Can be used to change properties of the labels.
 
@@ -3319,14 +3327,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # add points
         if show_points:
-            style = 'points'
-        else:
-            style = 'surface'
-        self.add_mesh(vtkpoints, style=style, color=point_color,
-                      point_size=point_size, name=f'{name}-points',
-                      pickable=pickable,
-                      render_points_as_spheres=render_points_as_spheres,
-                      reset_camera=reset_camera)
+            self.add_mesh(vtkpoints, color=point_color, point_size=point_size,
+                          name=f'{name}-points', pickable=pickable,
+                          render_points_as_spheres=render_points_as_spheres,
+                          reset_camera=reset_camera)
 
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
@@ -3499,8 +3503,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If a string filename is given and this is true, a NumPy array of
             the image will be returned.
 
-        Return
-        ------
+        Returns
+        -------
         img :  numpy.ndarray
             Array containing pixel RGB and alpha.  Sized:
             [Window height x Window width x 3] for transparent_background=False
@@ -3586,8 +3590,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
-        Return
-        ------
+        Returns
+        -------
         legend : vtk.vtkLegendBoxActor
             Actor for the legend.
 
@@ -3664,10 +3668,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ----------
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         top : string or 3 item list, optional, defaults to None
             If given, this will enable a gradient background where the
@@ -3769,7 +3774,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         points = path.points
 
         # Make sure the whole scene is visible
-        self.camera.SetThickness(path.length)
+        self.camera.thickness = path.length
 
         def orbit():
             """Define the internal thread for running the orbit."""
@@ -4152,8 +4157,8 @@ class Plotter(BasePlotter):
             Use the ``ipyvtk-simple`` ``ViewInteractiveWidget`` to
             visualize the plot within a juyterlab notebook.
 
-        Return
-        ------
+        Returns
+        -------
         cpos : list
             List of camera position, focal point, and view up
 
@@ -4182,7 +4187,16 @@ class Plotter(BasePlotter):
         self._before_close_callback = kwargs.pop('before_close_callback', None)
         assert_empty_kwargs(**kwargs)
 
-        if auto_close is None:
+        if interactive_update and auto_close is None:
+            auto_close = False
+        elif interactive_update and auto_close:
+            warnings.warn(textwrap.dedent("""\
+                The plotter will close immediately automatically since ``auto_close=True``.
+                Either, do not specify ``auto_close``, or set it to ``False`` if you want to
+                interact with the plotter interactively.\
+                """)
+            )
+        elif auto_close is None:
             auto_close = rcParams['auto_close']
 
         if use_ipyvtk is None:
@@ -4206,8 +4220,17 @@ class Plotter(BasePlotter):
         self._on_first_render_request(cpos)
 
         # Render
-        self.render()  # Replaced by below.  May no longer be necessary
-        # self.update(force_redraw=False)  # For Windows issues. Resolves #186
+        # For Windows issues. Resolves #186, #1018 and #1078
+        if os.name == 'nt' and pyvista.IS_INTERACTIVE and not pyvista.VERY_FIRST_RENDER:
+            if interactive and (not self.off_screen):
+                self.iren.Start()
+        pyvista.VERY_FIRST_RENDER = False
+        # for some reason iren needs to start before rendering on
+        # Windows when running in interactive mode (python console,
+        # Ipython console, Jupyter notebook) but only after the very
+        # first render window
+
+        self.render()
 
         # This has to be after the first render for some reason
         if title is None:
@@ -4228,9 +4251,9 @@ class Plotter(BasePlotter):
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
                 self.update_style()
-                self.iren.Initialize()
                 if not interactive_update:
                     self.iren.Start()
+                self.iren.Initialize()
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
                 self.close()
@@ -4328,8 +4351,8 @@ class Plotter(BasePlotter):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        Return
-        ------
+        Returns
+        -------
         textActor : vtk.vtkTextActor
             Text actor added to plot.
 

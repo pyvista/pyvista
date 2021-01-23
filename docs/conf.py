@@ -28,7 +28,7 @@ if not os.path.exists(pyvista.FIGURE_PATH):
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
 
-# SG warnins
+# SG warnings
 import warnings
 warnings.filterwarnings(
     "ignore",
@@ -203,6 +203,10 @@ latex_documents = [
      author, 'manual'),
 ]
 
+# -- Options for gettext output -------------------------------------------
+
+# To specify names to enable gettext extracting and translation applying for i18n additionally. You can specify below names:
+gettext_additional_targets = ['raw'] 
 
 # -- Options for manual page output ---------------------------------------
 
@@ -231,6 +235,11 @@ notfound_context = {
         'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.',
 }
 notfound_no_urls_prefix = True
+
+
+# Copy button customization ---------------------------------------------------
+# exclude traditional Python prompts from the copied code
+copybutton_prompt_text = ">>> "
 
 
 # -- Autosummary options

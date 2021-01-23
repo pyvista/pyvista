@@ -11,6 +11,7 @@ vtkCubeSource
 vtkConeSource
 vtkDiskSource
 vtkRegularPolygonSource
+vtkPyramid
 
 """
 import numpy as np
@@ -60,10 +61,10 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
 
     Parameters
     ----------
-    center : list or np.ndarray
+    center : list or tuple or np.ndarray
         Location of the centroid in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction cylinder points to  in [x, y, z]
 
     radius : float
@@ -78,8 +79,8 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     capping : bool, optional
         Cap cylinder ends with polygons.  Default True
 
-    Return
-    ------
+    Returns
+    -------
     cylinder : pyvista.PolyData
         Cylinder surface.
 
@@ -121,10 +122,10 @@ def CylinderStructured(radius=0.5, height=1.0,
     height : float
         Height (length) of the cylinder along its Z-axis
 
-    center : list or np.ndarray
+    center : list or tuple or np.ndarray
         Location of the centroid in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction cylinder Z-axis in [x, y, z]
 
     theta_resolution : int
@@ -185,7 +186,7 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     start : np.ndarray
         Start location in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction the arrow points to in [x, y, z]
 
     tip_length : float, optional
@@ -207,8 +208,8 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
         Scale factor of the entire object, default is None (i.e. scale of 1).
         'auto' scales to length of direction array.
 
-    Return
-    ------
+    Returns
+    -------
     arrow : pyvista.PolyData
         Arrow surface.
 
@@ -246,7 +247,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     center : np.ndarray or list, optional
         Center in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction the top of the sphere points to in [x, y, z]
 
     theta_resolution: int , optional
@@ -269,8 +270,8 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     end_phi : float, optional
         Ending latitude angle.
 
-    Return
-    ------
+    Returns
+    -------
     sphere : pyvista.PolyData
         Sphere mesh.
 
@@ -296,10 +297,10 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     Parameters
     ----------
-    center : list or np.ndarray
+    center : list or tuple or np.ndarray
         Location of the centroid in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction cylinder points to  in [x, y, z]
 
     i_size : float
@@ -314,8 +315,8 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
     j_resolution : int
         Number of points on the plane in the j direction.
 
-    Return
-    ------
+    Returns
+    -------
     plane : pyvista.PolyData
         Plane mesh
 
@@ -431,13 +432,13 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
         Center in [x, y, z]. middle of the axis of the cone.
 
     direction : np.ndarray or list
-        direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. orientation vector of the cone.
 
     height : float
-        height along the cone in its specified direction.
+        Height along the cone in its specified direction.
 
     radius : float
-        base radius of the cone
+        Base radius of the cone
 
     capping : bool
         Turn on/off whether to cap the base of the cone with a polygon.
@@ -446,7 +447,7 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
         The angle degrees between the axis of the cone and a generatrix.
 
     resolution : int
-        number of facets used to represent the cone
+        Number of facets used to represent the cone
 
     """
     src = vtk.vtkConeSource()
@@ -484,7 +485,7 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
         The radius of the polygon
 
     normal : np.ndarray or list
-        direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. orientation vector of the cone.
 
     n_sides : int
         Number of sides of the polygon
@@ -499,7 +500,7 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
     return pyvista.wrap(src.GetOutput())
 
 
-def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
+def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
          c_res=6):
     """Create a polygonal disk with a hole in the center.
 
@@ -519,13 +520,13 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
         The outer radius
 
     normal : np.ndarray or list
-        direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. orientation vector of the cone.
 
     r_res: int
-        number of points in radius direction.
+        Number of points in radius direction.
 
     r_res: int
-        number of points in circumferential direction.
+        Number of points in circumferential direction.
 
     """
     src = vtk.vtkDiskSource()
@@ -534,26 +535,12 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
     src.SetRadialResolution(r_res)
     src.SetCircumferentialResolution(c_res)
     src.Update()
-
-    default_normal = np.array([0, 0, 1])
     normal = np.array(normal)
     center = np.array(center)
-
-    axis = np.cross(default_normal, normal)
-    angle = np.rad2deg(np.arccos(
-        np.clip(np.dot(normal, default_normal), -1, 1)))
-
-    transform = vtk.vtkTransform()
-    transform.Translate(-center)
-    transform.RotateWXYZ(angle, axis)
-    transform.Translate(center)
-
-    transform_filter = vtk.vtkTransformFilter()
-    transform_filter.SetInputConnection(src.GetOutputPort())
-    transform_filter.SetTransform(transform)
-    transform_filter.Update()
-
-    return pyvista.wrap(transform_filter.GetOutput())
+    surf = pyvista.PolyData(src.GetOutput())
+    surf.rotate_y(90)
+    translate(surf, center, normal)
+    return surf
 
 
 def Text3D(string, depth=0.5):
@@ -689,3 +676,51 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
 
     arc.Update()
     return pyvista.wrap(arc.GetOutput())
+
+
+def Pyramid(points):
+    """Create a pyramid defined by 5 points.
+
+    Parameters
+    ----------
+    points : np.ndarray or list
+        Points of the pyramid.  Points are ordered such that the first
+        four points are the four counterclockwise points on the
+        quadrilateral face, and the last point is the apex.
+
+    Returns
+    -------
+    pyramid : pyvista.UnstructuredGrid
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pointa = [1.0, 1.0, 1.0]
+    >>> pointb = [-1.0, 1.0, 1.0]
+    >>> pointc = [-1.0, -1.0, 1.0]
+    >>> pointd = [1.0, -1.0, 1.0]
+    >>> pointe = [0.0, 0.0, 0.0]
+    >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
+    >>> pyramid.plot() # doctest:+SKIP
+    """
+    if len(points) != 5:
+        raise TypeError('Points must be given as length 5 np.ndarray or list')
+
+    check_valid_vector(points[0], 'points[0]')
+    check_valid_vector(points[1], 'points[1]')
+    check_valid_vector(points[2], 'points[2]')
+    check_valid_vector(points[3], 'points[3]')
+    check_valid_vector(points[4], 'points[4]')
+
+    pyramid = vtk.vtkPyramid()
+    pyramid.GetPointIds().SetId(0, 0)
+    pyramid.GetPointIds().SetId(1, 1)
+    pyramid.GetPointIds().SetId(2, 2)
+    pyramid.GetPointIds().SetId(3, 3)
+    pyramid.GetPointIds().SetId(4, 4)
+
+    ug = vtk.vtkUnstructuredGrid()
+    ug.SetPoints(pyvista.vtk_points(np.array(points), False))
+    ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
+
+    return pyvista.wrap(ug)

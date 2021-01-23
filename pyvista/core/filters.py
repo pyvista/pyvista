@@ -65,7 +65,7 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
-    def _clip_with_function(dataset, function, invert=True, value=0.0):
+    def _clip_with_function(dataset, function, invert=True, value=0.0, return_clipped=False):
         """Clip using an implicit function (internal helper)."""
         if isinstance(dataset, vtk.vtkPolyData):
             alg = vtk.vtkClipPolyData()
@@ -78,10 +78,18 @@ class DataSetFilters:
         alg.SetValue(value)
         alg.SetClipFunction(function) # the implicit function
         alg.SetInsideOut(invert) # invert the clip if needed
+        if return_clipped:
+            alg.GenerateClippedOutputOn()
         alg.Update() # Perform the Cut
-        return _get_output(alg)
 
-    def clip(dataset, normal='x', origin=None, invert=True, value=0.0, inplace=False):
+        if return_clipped:
+            a = _get_output(alg, oport=0)
+            b = _get_output(alg, oport=1)
+            return a, b
+        else:
+            return _get_output(alg)
+
+    def clip(dataset, normal='x', origin=None, invert=True, value=0.0, inplace=False, return_clipped=False):
         """Clip a dataset by a plane by specifying the origin and normal.
 
         If no parameters are given the clip will occur in the center of that dataset.
@@ -107,11 +115,16 @@ class DataSetFilters:
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
+        return_clipped : bool, optional
+            Return both unclipped and clipped parts of the dataset.
+
         Returns
         -------
-        mesh : pyvista.PolyData
+        mesh : pyvista.PolyData or tuple(pyvista.PolyData)
             Clipped mesh when ``inplace=False``.  When
-            ``inplace=True``, ``None``
+            ``inplace=True``, ``None``. When ``return_clipped=True``,
+            a tuple containing the unclipped and clipped datasets,
+            regardless of the setting of ``inplace``.
 
         Examples
         --------
@@ -140,9 +153,16 @@ class DataSetFilters:
         function = generate_plane(normal, origin)
         # run the clip
         result = DataSetFilters._clip_with_function(dataset, function,
-                                                    invert=invert, value=value)
+                                                    invert=invert, value=value,
+                                                    return_clipped=return_clipped)
         if inplace:
-            dataset.overwrite(result)
+            overwrite_with = result[0] if return_clipped else result
+            dataset.overwrite(overwrite_with)
+            if return_clipped:
+                # normally if inplace=True, filters return None. But if
+                # return_clipped=True, the user still wants the clipped data,
+                # so return both the unclipped and clipped data as a tuple
+                return result
         else:
             return result
 
@@ -1502,8 +1522,8 @@ class DataSetFilters:
         inplace : bool, optional
             Updates mesh in-place while returning ``None``.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.UnstructuredGrid
             Mesh containing only triangles. ``None`` when ``inplace=True``
 
@@ -2044,8 +2064,8 @@ class DataSetFilters:
             Tolerance used to compute whether a point in the source is in a
             cell of the input.  If not given, tolerance is automatically generated.
 
-        Return
-        ------
+        Returns
+        -------
         sampled_line : pv.PolyData
             Line object with sampled data from dataset.
         """
@@ -2147,8 +2167,8 @@ class DataSetFilters:
         ind : np.ndarray
             Numpy array of cell indices to be extracted.
 
-        Return
-        ------
+        Returns
+        -------
         subgrid : pyvista.UnstructuredGrid
             Subselected grid
 
@@ -2170,13 +2190,14 @@ class DataSetFilters:
         subgrid = _get_output(extract_sel)
 
         # extracts only in float32
-        if dataset.points.dtype is not np.dtype('float32'):
-            ind = subgrid.point_arrays['vtkOriginalPointIds']
-            subgrid.points = dataset.points[ind]
+        if subgrid.n_points:
+            if dataset.points.dtype is not np.dtype('float32'):
+                ind = subgrid.point_arrays['vtkOriginalPointIds']
+                subgrid.points = dataset.points[ind]
 
         return subgrid
 
-    def extract_points(dataset, ind, adjacent_cells=True):
+    def extract_points(dataset, ind, adjacent_cells=True, include_cells=True):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
 
         Parameters
@@ -2188,9 +2209,12 @@ class DataSetFilters:
             extracted points. If False, extract the cells that contain 
             exclusively points from the extracted points list. The default is 
             True.
+        include_cells : bool, optional
+            Specifies if the cells shall be returned or not. The default is 
+            True.
 
-        Return
-        ------
+        Returns
+        -------
         subgrid : pyvista.UnstructuredGrid
             Subselected grid.
 
@@ -2199,6 +2223,8 @@ class DataSetFilters:
         selectionNode = vtk.vtkSelectionNode()
         selectionNode.SetFieldType(vtk.vtkSelectionNode.POINT)
         selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
+        if not include_cells:
+            adjacent_cells = True        
         if not adjacent_cells:
             # Build array of point indices to be removed.
             ind_rem = np.ones(dataset.n_points, dtype='bool')
@@ -2207,7 +2233,8 @@ class DataSetFilters:
             # Invert selection
             selectionNode.GetProperties().Set(vtk.vtkSelectionNode.INVERSE(), 1)
         selectionNode.SetSelectionList(numpy_to_idarr(ind))
-        selectionNode.GetProperties().Set(vtk.vtkSelectionNode.CONTAINING_CELLS(), 1)
+        if include_cells:
+            selectionNode.GetProperties().Set(vtk.vtkSelectionNode.CONTAINING_CELLS(), 1)
         
         selection = vtk.vtkSelection()
         selection.AddNode(selectionNode)
@@ -2232,8 +2259,8 @@ class DataSetFilters:
             Adds a cell array "vtkOriginalPointIds" that idenfities which
             original cells these surface cells correspond to
 
-        Return
-        ------
+        Returns
+        -------
         extsurf : pyvista.PolyData
             Surface mesh of the grid
 
@@ -2255,8 +2282,8 @@ class DataSetFilters:
     def surface_indices(dataset):
         """Return the surface indices of a grid.
 
-        Return
-        ------
+        Returns
+        -------
         surf_ind : np.ndarray
             Indices of the surface points.
 
@@ -2299,8 +2326,8 @@ class DataSetFilters:
         inplace : bool, optional
             Return new mesh or overwrite input.
 
-        Return
-        ------
+        Returns
+        -------
         edges : pyvista.vtkPolyData
             Extracted edges. None if inplace=True.
 
@@ -2350,8 +2377,8 @@ class DataSetFilters:
             the arrays of the merging grids will be overwritten
             by the original main mesh.
 
-        Return
-        ------
+        Returns
+        -------
         merged_grid : vtk.UnstructuredGrid
             Merged grid.  Returned when inplace is False.
 
@@ -2694,7 +2721,7 @@ class CompositeFilters:
             controls the relative size of the corners to the length of the
             corresponding bounds
 
-        ested : bool, optional
+        nested : bool, optional
             If True, these creates individual outlines for each nested dataset
 
         """
@@ -2745,8 +2772,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             The cut mesh when inplace=False
 
@@ -2785,8 +2812,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         joinedmesh : pyvista.PolyData
             Initial mesh and the new mesh when inplace=False.
 
@@ -2822,8 +2849,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         union : pyvista.PolyData
             The union mesh when inplace=False.
 
@@ -2855,8 +2882,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         union : pyvista.PolyData
             The union mesh when inplace=False.
 
@@ -2877,6 +2904,67 @@ class PolyDataFilters(DataSetFilters):
         else:
             return mesh
 
+    def intersection(poly_data, mesh, split_first=True, split_second=True):
+        """Compute the intersection between two meshes.
+
+        Parameters
+        ----------
+        mesh : pyvista.PolyData
+            The mesh to intersect with.
+
+        split_first : bool, optional
+            If `True`, return the first input mesh split by the intersection with the
+            second input mesh.
+
+        split_second : bool, optional
+            If `True`, return the second input mesh split by the intersection with the
+            first input mesh.
+
+        Returns
+        -------
+        intersection: pyvista.PolyData
+            The intersection line.
+
+        first_split: pyvista.PolyData
+            The first mesh split along the intersection. Returns the original first mesh
+            if `split_first` is False.
+
+        second_split: pyvista.PolyData
+            The second mesh split along the intersection. Returns the original second mesh
+            if `split_second` is False.
+
+        Examples
+        --------
+        Intersect two spheres, returning the intersection and both spheres
+        which have new points/cells along the intersection line.
+
+        >>> import pyvista as pv
+        >>> s1 = pv.Sphere()
+        >>> s2 = pv.Sphere(center=(0.25, 0, 0))
+        >>> intersection, s1_split, s2_split = s1.intersection(s2)
+
+        The mesh splitting takes additional time and can be turned
+        off for either mesh individually.
+
+        >>> intersection, _, s2_split = s1.intersection(s2, \
+                                                        split_first=False, \
+                                                        split_second=True)
+
+        """
+        intfilter = vtk.vtkIntersectionPolyDataFilter()
+        intfilter.SetInputDataObject(0, poly_data)
+        intfilter.SetInputDataObject(1, mesh)
+        intfilter.SetComputeIntersectionPointArray(True)
+        intfilter.SetSplitFirstOutput(split_first)
+        intfilter.SetSplitSecondOutput(split_second)
+        intfilter.Update()
+
+        intersection = _get_output(intfilter, oport=0)
+        first = _get_output(intfilter, oport=1)
+        second = _get_output(intfilter, oport=2)
+
+        return intersection, first, second
+
     def curvature(poly_data, curv_type='mean'):
         """Return the pointwise curvature of a mesh.
 
@@ -2892,8 +2980,8 @@ class PolyDataFilters(DataSetFilters):
             Maximum
             Minimum
 
-        Return
-        ------
+        Returns
+        -------
         curvature : np.ndarray
             Curvature values
 
@@ -2936,8 +3024,8 @@ class PolyDataFilters(DataSetFilters):
         **kwargs : optional
             See :func:`pyvista.plot`
 
-        Return
-        ------
+        Returns
+        -------
         cpos : list
             List of camera position, focal point, and view up
 
@@ -2955,8 +3043,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Mesh containing only triangles.  None when inplace=True
 
@@ -3010,8 +3098,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Smoothed mesh. None when inplace=True.
 
@@ -3086,8 +3174,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Decimated mesh. None when inplace=True.
 
@@ -3137,8 +3225,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Tube-filtered mesh. None when inplace=True.
 
@@ -3215,8 +3303,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : Polydata object
             pyvista polydata object.  None when inplace=True
 
@@ -3324,8 +3412,8 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        Return
-        ------
+        Returns
+        -------
         outmesh : pyvista.PolyData
             Decimated mesh.  None when inplace=True.
 
@@ -3435,8 +3523,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing. Defaults to False.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Updated mesh with cell and point normals if inplace=False
 
@@ -3675,8 +3763,8 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Cleaned mesh.  None when inplace=True
 
@@ -3735,8 +3823,8 @@ class PolyDataFilters(DataSetFilters):
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
 
-        Return
-        ------
+        Returns
+        -------
         output : pyvista.PolyData
             PolyData object consisting of the line segment between the
             two given vertices.
@@ -3788,8 +3876,8 @@ class PolyDataFilters(DataSetFilters):
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
 
-        Return
-        ------
+        Returns
+        -------
         length : float
             Length of the geodesic segment.
 
@@ -3833,8 +3921,8 @@ class PolyDataFilters(DataSetFilters):
         off_screen : bool, optional
             Plots off screen when ``plot=True``.  Used for unit testing.
 
-        Return
-        ------
+        Returns
+        -------
         intersection_points : np.ndarray
             Location of the intersection points.  Empty array if no
             intersections.
@@ -3893,8 +3981,8 @@ class PolyDataFilters(DataSetFilters):
         """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces,
-         an array of origin points and an equal sized array of
-         direction vectors to trace along.
+        an array of origin points and an equal sized array of
+        direction vectors to trace along.
 
         The embree library used for vectorisation of the ray traces is known to occasionally
         return no intersections where the VTK implementation would return an intersection.
@@ -3908,7 +3996,7 @@ class PolyDataFilters(DataSetFilters):
             Starting point for each trace.
 
         directions : np.ndarray or list
-            direction vector for each trace.
+            Direction vector for each trace.
 
         first_point : bool, optional
             Returns intersection of first point only.
@@ -3916,8 +4004,8 @@ class PolyDataFilters(DataSetFilters):
         retry : bool, optional
             Will retry rays that return no intersections using the ray_trace
 
-        Return
-        ------
+        Returns
+        -------
         intersection_points : np.ndarray
             Location of the intersection points.  Empty array if no
             intersections.
@@ -4037,8 +4125,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Mesh without the points flagged for removal.  Not returned
             when inplace=False.
@@ -4129,6 +4217,7 @@ class PolyDataFilters(DataSetFilters):
 
         f = poly_data.faces.reshape((-1, 4))
         f[:, 1:] = f[:, 1:][:, ::-1]
+        poly_data.faces = f
 
     def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     inplace=False, edge_source=None, progress_bar=False):
