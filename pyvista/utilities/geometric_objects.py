@@ -694,8 +694,6 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
 def Pyramid(points):
     """Create a pyramid defined by 5 points.
 
-    The pyramid has 5 points. The user can specify each points.
-
     Parameters
     ----------
     points : np.ndarray or list
