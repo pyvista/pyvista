@@ -691,27 +691,15 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
     return pyvista.wrap(arc.GetOutput())
 
 
-def Pyramid(pointa, pointb, pointc, pointd, pointe):
+def Pyramid(points):
     """Create a pyramid defined by 5 points.
 
     The pyramid has 5 points. The user can specify each points.
 
     Parameters
     ----------
-    pointa : np.ndarray or list
-        Position of the 1st point.
-
-    pointb : np.ndarray or list
-        Position of the 2nd point.
-
-    pointc : np.ndarray or list
-        Position of the 3rd point.
-
-    pointd : np.ndarray or list
-        Position of the 4th point.
-
-    pointe : np.ndarray or list
-        Position of the 5th point.
+    points : np.ndarray or list
+        List of Position of the points.
 
     Return
     ------
@@ -726,21 +714,23 @@ def Pyramid(pointa, pointb, pointc, pointd, pointe):
     >>> pointc = [-1.0, -1.0, 1.0]
     >>> pointd = [1.0, -1.0, 1.0]
     >>> pointe = [0.0, 0.0, 0.0]
-    >>> pyramid = pyvista.Pyramid(pointa, pointb, pointc, pointd, pointe)
+    >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
     >>> pyramid.plot() # doctest:+SKIP
     """
-    check_valid_vector(pointa, 'pointa')
-    check_valid_vector(pointb, 'pointb')
-    check_valid_vector(pointc, 'pointc')
-    check_valid_vector(pointd, 'pointd')
-    check_valid_vector(pointe, 'pointe')
+    assert(len(points) == 5)
 
-    points = vtk.vtkPoints()
-    points.InsertNextPoint(pointa)
-    points.InsertNextPoint(pointb)
-    points.InsertNextPoint(pointc)
-    points.InsertNextPoint(pointd)
-    points.InsertNextPoint(pointe)
+    check_valid_vector(points[0], 'points[0]')
+    check_valid_vector(points[1], 'points[1]')
+    check_valid_vector(points[2], 'points[2]')
+    check_valid_vector(points[3], 'points[3]')
+    check_valid_vector(points[4], 'points[4]')
+
+    pts = vtk.vtkPoints()
+    pts.InsertNextPoint(points[0])
+    pts.InsertNextPoint(points[1])
+    pts.InsertNextPoint(points[2])
+    pts.InsertNextPoint(points[3])
+    pts.InsertNextPoint(points[4])
 
     pyramid = vtk.vtkPyramid()
     pyramid.GetPointIds().SetId(0, 0)
@@ -750,7 +740,7 @@ def Pyramid(pointa, pointb, pointc, pointd, pointe):
     pyramid.GetPointIds().SetId(4, 4)
 
     ug = vtk.vtkUnstructuredGrid()
-    ug.SetPoints(points)
+    ug.SetPoints(pts)
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
     return pyvista.wrap(ug)

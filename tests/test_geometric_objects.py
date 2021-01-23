@@ -150,7 +150,7 @@ def test_pyramid():
     pointe = [0.0, 0.0, 0.0]
     points = np.array([pointa, pointb, pointc, pointd, pointe])
 
-    mesh = pyvista.Pyramid(pointa, pointb, pointc, pointd, pointe)
+    mesh = pyvista.Pyramid(points)
     assert mesh.n_points
     assert mesh.n_cells
     assert np.allclose(mesh.points, points)
