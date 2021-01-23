@@ -3931,7 +3931,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer, see the ``add_light`` method of the Renderer class.
 
         """
-        # TODO: is this design OK?
+        # TODO: example!
         renderers = [self.renderer] if only_active else self.renderers
         for renderer in renderers:
             renderer.add_light(light)
@@ -3946,7 +3946,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             is that lights are stripped from every renderer.
 
         """
-        # TODO: is this design OK?
+        # TODO: example!
         renderers = [self.renderer] if only_active else self.renderers
         for renderer in renderers:
             renderer.remove_all_lights()

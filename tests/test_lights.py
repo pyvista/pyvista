@@ -5,15 +5,9 @@ import vtk
 
 import pyvista
 from pyvista.plotting import system_supports_plotting
-# TODO: do we need OFF_SCREEN stuff? And as per tests/test_renderer.py or tests/plotting/test_plotting.py?
-# TODO: do we actually need the @skip_no_plotting decorator when there's no plotter?
-
-skip_no_plotting = pytest.mark.skipif(not system_supports_plotting(),
-                                      reason="Test requires system to support plotting")
 
 # TODO: invalid cases, once checks are in place
 
-@skip_no_plotting
 def test_init():
     position = (1, 1, 1)
     color = (0.5, 0.5, 0.5)
@@ -30,7 +24,6 @@ def test_init():
     assert repr(light) is not None
 
 
-@skip_no_plotting
 def test_colors():
     light = pyvista.Light()
 
@@ -44,13 +37,7 @@ def test_colors():
     light.ambient_color = color
     assert light.ambient_color == color
 
-    old_color, color = color, (1, 1, 0)
-    light.set_color(color)
-    assert light.diffuse_color == light.specular_color == color
-    assert light.ambient_color == old_color
 
-
-@skip_no_plotting
 def test_positioning():
     light = pyvista.Light()
 
@@ -78,7 +65,6 @@ def test_positioning():
                in zip(light.position, expected_position))  # TODO: fix this style
 
 
-@skip_no_plotting
 def test_intensity():
     light = pyvista.Light()
 
@@ -87,35 +73,28 @@ def test_intensity():
     assert light.intensity == intensity
 
 
-@skip_no_plotting
 def test_switch_state():
     light = pyvista.Light()
 
     light.switch_on()
-    assert light.is_on
+    assert light.on
     light.switch_off()
-    assert not light.is_on
-    light.switch()
-    assert light.is_on
-    light.is_on = False
-    assert not light.is_on
+    assert not light.on
+    light.on = False
+    assert not light.on
 
 
-@skip_no_plotting
 def test_positional():
     light = pyvista.Light()
 
     # default is directional light
     assert not light.positional
-    light.positional_on()
-    assert light.positional
-    light.positional_off()
-    assert not light.positional
     light.positional = True
     assert light.positional
+    light.positional = False
+    assert not light.positional
 
 
-@skip_no_plotting
 def test_shape():
     light = pyvista.Light()
 
@@ -136,7 +115,6 @@ def test_shape():
     assert light.shadow_attenuation == shadow_attenuation
 
 
-@skip_no_plotting
 @pytest.mark.parametrize(
     'int_code,enum_code',
     [
@@ -158,7 +136,6 @@ def test_type_properties(int_code, enum_code):
     assert light.light_type == enum_code
 
 
-@skip_no_plotting
 def test_type_setters():
     light = pyvista.Light()
 
@@ -170,7 +147,6 @@ def test_type_setters():
     assert light.is_scene_light
 
 
-@skip_no_plotting
 def test_type_invalid():
     with pytest.raises(TypeError):
         light = pyvista.Light(light_type=['invalid'])
@@ -183,7 +159,6 @@ def test_type_invalid():
         light.light_type = ['invalid']
 
 
-@skip_no_plotting
 def test_from_vtk():
     vtk_light = vtk.vtkLight()
 
@@ -196,7 +171,7 @@ def test_from_vtk():
         ('diffuse_color', (0, 1, 0), 'SetDiffuseColor'),
         ('specular_color', (0, 0, 1), 'SetSpecularColor'),
         ('intensity', 0.5, 'SetIntensity'),
-        ('is_on', False, 'SetSwitch'),
+        ('on', False, 'SetSwitch'),
         ('positional', True, 'SetPositional'),
         ('exponent', 1.5, 'SetExponent'),
         ('cone_angle', 45, 'SetConeAngle'),

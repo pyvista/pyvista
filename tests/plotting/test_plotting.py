@@ -198,13 +198,13 @@ def test_lighting():
     lights = plotter.renderer.lights
     assert len(lights) == 5
     for light in lights:
-        assert light.is_on
+        assert light.on
 
     plotter.enable_3_lights()
     lights = plotter.renderer.lights
     assert len(lights) == 3
     for light in lights:
-        assert light.is_on
+        assert light.on
 
     assert lights[0].intensity == 1.0
     assert lights[1].intensity == 0.6

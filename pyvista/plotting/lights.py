@@ -43,6 +43,15 @@ class Light(vtkLight):
         position with respect to it.
         A scene light is stationary with respect to the scene, as it does not
         follow the camera. This is the default.
+
+    Examples
+    --------
+    Create a light at (10, 10, 10) and set its diffuse color to red
+
+    >>> import pyvista as pv
+    >>> light = pv.Light(position=(10, 10, 10))
+    >>> light.diffuse_color = 1, 0, 0
+
     """
 
     # TODO: better/more explanation for ``position``?
@@ -64,7 +73,6 @@ class Light(vtkLight):
             self.ambient_color = color
             self.diffuse_color = color
             self.specular_color = color
-            # TODO: make this a single call if that's implemented
 
         if isinstance(light_type, str):
             # be forgiving: ignore spaces and case
@@ -85,11 +93,12 @@ class Light(vtkLight):
 
         self.light_type = light_type
 
-        # TODO: more init kwargs (focal_point, cone angle etc.)
-        # TODO: default Positional state?
         # TODO: should setting attenuation and cone angle automatically switch to positional?
         # TODO: should color and point and direction_angle have more flexible signatures? (only for non-properties)
         # TODO: ndarray type and shape and size checking for color and point
+        # TODO: allow string colors for pyvista.plotting.theme.parse_color
+        # TODO: check if backticks in error messages are OK/necessary
+        # TODO: examples, also for property getters!
 
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
@@ -126,8 +135,6 @@ class Light(vtkLight):
     def specular_color(self, color):
         """Set the specular color of the light."""
         self.SetSpecularColor(color)
-
-    # TODO: implement light.color = ... using setattr? no guarantee that a getter would always make sense, so property won't work!
 
     @property
     def position(self):
@@ -182,19 +189,17 @@ class Light(vtkLight):
         self.SetIntensity(intensity)
 
     @property
-    def is_on(self):
-        # TODO: is this name OK? Just "on" sounds too short.
+    def on(self):
         """Return whether the light is on."""
         return bool(self.GetSwitch())
 
-    @is_on.setter
-    def is_on(self, state):
+    @on.setter
+    def on(self, state):
         """Set whether the light should be on."""
         self.SetSwitch(state)
 
     @property
     def positional(self):
-        # TODO: did I understand this correctly?
         """Return whether the light is positional.
 
         The default is a directional light, i.e. an infinitely distant
@@ -324,20 +329,6 @@ class Light(vtkLight):
 
     #### Everything else ####
 
-    def set_color(self, color):
-        # TODO: do we want to remove this?
-        # TODO: do we want instead to set _all_ lights in pyvista?
-        # TODO: do we want to support a three-arg form?
-        """Set the diffuse and specular color of the light.
-
-        Parameters
-        ----------
-        color : tuple(float)
-            The color that should be set for diffuse and specular.
-
-        """
-        self.SetColor(color)
-
     def switch_on(self):
         """Switch on the light."""
         self.SwitchOn()
@@ -345,37 +336,6 @@ class Light(vtkLight):
     def switch_off(self):
         """Switch off the light."""
         self.SwitchOff()
-
-    def switch(self, is_on=None):
-        """Set whether the light should be on. Toggles by default.
-
-        Parameters
-        ----------
-        is_on : bool
-            The state of the light to be set (True is on, False is off).
-            Default is to toggle the state.
-
-        """
-        if is_on is None:
-            # toggle
-            is_on = not self.is_on
-        self.SetSwitch(is_on)
-
-    def positional_on(self):
-        """Make the light positional.
-
-        Attenuation and cone angles are only used for a positional light.
-
-        """
-        self.PositionalOn()
-
-    def positional_off(self):
-        """Make the light directional.
-
-        Attenuation and cone angles are ignored for a directional light.
-
-        """
-        self.PositionalOff()
 
     # TODO: implement transform_point, transform_vector here?
 
@@ -455,7 +415,7 @@ class Light(vtkLight):
         light.diffuse_color = vtk_light.GetDiffuseColor()
         light.specular_color = vtk_light.GetSpecularColor()
         light.intensity = vtk_light.GetIntensity()
-        light.is_on = vtk_light.GetSwitch()
+        light.on = vtk_light.GetSwitch()
         light.positional = vtk_light.GetPositional()
         light.exponent = vtk_light.GetExponent()
         light.cone_angle = vtk_light.GetConeAngle()
