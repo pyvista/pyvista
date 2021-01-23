@@ -11,6 +11,7 @@ vtkCubeSource
 vtkConeSource
 vtkDiskSource
 vtkRegularPolygonSource
+vtkPyramid
 
 """
 import numpy as np
@@ -688,3 +689,68 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
 
     arc.Update()
     return pyvista.wrap(arc.GetOutput())
+
+
+def Pyramid(pointa, pointb, pointc, pointd, pointe):
+    """Create a pyramid defined by 5 points.
+
+    The pyramid has 5 points. The user can specify each points.
+
+    Parameters
+    ----------
+    pointa : np.ndarray or list
+        Position of the 1st point.
+
+    pointb : np.ndarray or list
+        Position of the 2nd point.
+
+    pointc : np.ndarray or list
+        Position of the 3rd point.
+
+    pointd : np.ndarray or list
+        Position of the 4th point.
+
+    pointe : np.ndarray or list
+        Position of the 5th point.
+
+    Return
+    ------
+    pyramid : pyvista.UnstructuredGrid
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> import numpy as np
+    >>> pointa = [1.0, 1.0, 1.0]
+    >>> pointb = [-1.0, 1.0, 1.0]
+    >>> pointc = [-1.0, -1.0, 1.0]
+    >>> pointd = [1.0, -1.0, 1.0]
+    >>> pointe = [0.0, 0.0, 0.0]
+    >>> pyramid = pyvista.Pyramid(pointa, pointb, pointc, pointd, pointe)
+    >>> pyramid.plot() # doctest:+SKIP
+    """
+    check_valid_vector(pointa, 'pointa')
+    check_valid_vector(pointb, 'pointb')
+    check_valid_vector(pointc, 'pointc')
+    check_valid_vector(pointd, 'pointd')
+    check_valid_vector(pointe, 'pointe')
+
+    points = vtk.vtkPoints()
+    points.InsertNextPoint(pointa)
+    points.InsertNextPoint(pointb)
+    points.InsertNextPoint(pointc)
+    points.InsertNextPoint(pointd)
+    points.InsertNextPoint(pointe)
+
+    pyramid = vtk.vtkPyramid()
+    pyramid.GetPointIds().SetId(0, 0)
+    pyramid.GetPointIds().SetId(1, 1)
+    pyramid.GetPointIds().SetId(2, 2)
+    pyramid.GetPointIds().SetId(3, 3)
+    pyramid.GetPointIds().SetId(4, 4)
+
+    ug = vtk.vtkUnstructuredGrid()
+    ug.SetPoints(points)
+    ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
+
+    return pyvista.wrap(ug)
