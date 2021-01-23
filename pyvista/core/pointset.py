@@ -18,7 +18,7 @@ import pyvista
 from pyvista.utilities import abstract_class
 from pyvista.utilities.cells import CellArray, numpy_to_idarr, generate_cell_offsets, create_mixed_cells, get_mixed_cells
 from .common import Common
-from .filters import PolyDataFilters, UnstructuredGridFilters
+from .filters import PolyDataFilters, UnstructuredGridFilters, StructuredGridFilters
 from ..utilities.fileio import get_ext
 
 log = logging.getLogger(__name__)
@@ -795,7 +795,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             return vtk_to_numpy(self.GetCellLocationsArray())
 
 
-class StructuredGrid(vtkStructuredGrid, PointGrid):
+class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
     """Extend the functionality of a vtk.vtkStructuredGrid object.
 
     Can be initialized in several ways:

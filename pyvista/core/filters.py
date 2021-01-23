@@ -4599,6 +4599,48 @@ class UnstructuredGridFilters(DataSetFilters):
 
 
 @abstract_class
+class StructuredGridFilters(DataSetFilters):
+    def extract_subset(dataset, voi, rate=(1, 1, 1), boundary=False):
+        """Select piece (e.g., volume of interest).
+
+        To use this filter set the VOI ivar which are i-j-k min/max indices
+        that specify a rectangular region in the data. (Note that these are
+        0-offset.) You can also specify a sampling rate to subsample the
+        data.
+
+        Typical applications of this filter are to extract a slice from a
+        volume for image processing, subsampling large volumes to reduce data
+        size, or extracting regions of a volume with interesting data.
+
+        Parameters
+        ----------
+        voi : tuple(int)
+            Length 6 iterable of ints: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            These bounds specify the volume of interest in i-j-k min/max
+            indices.
+
+        rate : tuple(int)
+            Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
+            Default: ``(1, 1, 1)``
+
+        boundary : bool
+            Control whether to enforce that the "boundary" of the grid is
+            output in the subsampling process. (This only has effect
+            when the rate in any direction is not equal to 1). When
+            this is on, the subsampling will always include the boundary of
+            the grid even though the sample rate is not an even multiple of
+            the grid dimensions. (By default this is off.)
+        """
+        alg = vtk.vtkExtractGrid()
+        alg.SetVOI(voi)
+        alg.SetInputDataObject(dataset)
+        alg.SetSampleRate(rate)
+        alg.SetIncludeBoundary(boundary)
+        alg.Update()
+        return _get_output(alg)
+
+
+@abstract_class
 class UniformGridFilters(DataSetFilters):
     """An internal class to manage filtes/algorithms for uniform grid datasets."""
 

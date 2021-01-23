@@ -960,6 +960,11 @@ def test_extract_subset():
     #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
     assert voi.origin == voi.bounds[::2]
 
+def test_extract_subset_structured():
+    structured = examples.load_structured()
+    voi = structured.extract_subset([0,3,1,4,0,1])
+    assert isinstance(voi, pyvista.StructuredGrid)
+    assert voi.dimensions == [4, 4, 1]
 
 def test_poly_data_strip():
     mesh = examples.load_airplane()
