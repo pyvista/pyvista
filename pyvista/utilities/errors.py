@@ -80,8 +80,8 @@ class Observer:
     def get_message(self, etc=False):
         """Get the last set error message.
 
-        Return
-        ------
+        Returns
+        -------
             str: the last set error message
 
         """

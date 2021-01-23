@@ -91,8 +91,8 @@ def grid_from_sph_coords(theta, phi, r):
     r: array-like
         Distance (radius) from the point of origin
 
-    Return
-    ------
+    Returns
+    -------
     pyvista.StructuredGrid
 
     """
@@ -125,8 +125,8 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
     w: array-like
         Z-component of the vector of shape (P, N, M)
 
-    Return
-    ------
+    Returns
+    -------
     u_t, v_t, w_t: array-like
         Arrays of transformed x-, y-, z-components, respectively.
 

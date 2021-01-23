@@ -13,8 +13,8 @@ from .theme import parse_color, rcParams
 def system_supports_plotting():
     """Check if x server is running.
 
-    Return
-    ------
+    Returns
+    -------
     system_supports_plotting : bool
         True when on Linux and running an xserver.  Returns None when
         on a non-linux platform.

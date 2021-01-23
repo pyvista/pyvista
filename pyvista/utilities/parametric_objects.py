@@ -20,8 +20,8 @@ def Spline(points, n_points=None):
     n_points : int, optional
         Number of points to interpolate along the points array.
 
-    Return
-    ------
+    Returns
+    -------
     spline : pyvista.PolyData
         Line mesh of spline.
 
@@ -63,8 +63,8 @@ def ParametricBohemianDome(a=None, **kwargs):
 
     vtkGetMacro(A, double);
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricBohemianDome surface
 
@@ -93,8 +93,8 @@ def ParametricBohemianDome(a=None, **kwargs):
 def ParametricBour(**kwargs):
     """Generate Bour's minimal surface.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricBour surface
 
@@ -135,8 +135,8 @@ def ParametricBoy(zscale=None, **kwargs):
         The scale factor for the z-coordinate.
         Default is 18, giving a nice shape.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricBoy surface
 
@@ -222,8 +222,8 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
         See the definition in Parametric surfaces referred to above.
         Default is 2.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricConicSpiral surface
 
@@ -265,8 +265,8 @@ def ParametricCrossCap(**kwargs):
     self-intersecting single-sided surface.  This is one possible
     image of a projective plane in three-space.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricCrossCap surface
 
@@ -308,8 +308,8 @@ def ParametricDini(a=None, b=None, **kwargs):
         See the definition in Parametric surfaces referred to above.
         Default is 0.2
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricDini surface
 
@@ -359,8 +359,8 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
     zradius : double, optional
         The scaling factor for the z-axis. Default is 1.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricEllipsoid surface
 
@@ -409,8 +409,8 @@ def ParametricEnneper(**kwargs):
     Enneper's surface is a a self-intersecting minimal surface
     possessing constant negative Gaussian curvature
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricEnneper surface
 
@@ -446,8 +446,8 @@ def ParametricFigure8Klein(radius=None, **kwargs):
     radius : double, optional
         The radius of the bottle. Default is 1.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricFigure8Klein surface
 
@@ -476,8 +476,8 @@ def ParametricFigure8Klein(radius=None, **kwargs):
 def ParametricHenneberg(**kwargs):
     """Generate Henneberg's minimal surface.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricHenneberg surface
 
@@ -509,8 +509,8 @@ def ParametricKlein(**kwargs):
     surface.  It is unrealisable in 3 dimensions without intersecting
     surfaces.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricKlein surface
 
@@ -549,8 +549,8 @@ def ParametricKuen(deltav0=None, **kwargs):
         towards a pole in the -z direction.
         Setting it to 0 retains the pole whose z-value is -inf.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricKuen surface
 
@@ -584,8 +584,8 @@ def ParametricMobius(radius=None, **kwargs):
     radius : double, optional
         The radius of the Mobius strip. Default is 1.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricMobius surface
 
@@ -625,8 +625,8 @@ def ParametricPluckerConoid(n=None, **kwargs):
 
     vtkGetMacro(N, int);
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricPluckerConoid surface
 
@@ -660,8 +660,8 @@ def ParametricPseudosphere(**kwargs):
     tractrix about it's asymptote, and is a surface of constant
     negative Gaussian curvature.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricPseudosphere surface
 
@@ -735,8 +735,8 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
         The scaling factor for the amplitude.
         Default is 13.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricRandomHills surface
 
@@ -791,8 +791,8 @@ def ParametricRoman(radius=None, **kwargs):
     radius : double, optional
         The radius. Default is 1.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricRoman surface
 
@@ -844,8 +844,8 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
     n2 : double, optional
         The "squareness" parameter in the x-y plane. Default is 1.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricSuperEllipsoid surface
 
@@ -922,8 +922,8 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     n2 : double, optional
         The shape of the cross section of the ring. Default is 1.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricSuperToroid surface
 
@@ -979,8 +979,8 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
     crosssectionradius : double, optional
         The radius of the cross section of ring of the torus. Default is 0.5.
 
-    Return
-    ------
+    Returns
+    -------
     surf : pyvista.PolyData
         ParametricTorus surface
 

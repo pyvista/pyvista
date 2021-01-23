@@ -348,8 +348,8 @@ class Renderer(vtkRenderer):
             especially when edges are visible, but can cause flat
             meshes to be partially displayed.  Default False.
 
-        Return
-        ------
+        Returns
+        -------
         actor : vtk.vtkActor
             The actor.
 
@@ -413,8 +413,8 @@ class Renderer(vtkRenderer):
                            labels_off=False):
         """Add axes actor at origin.
 
-        Return
-        ------
+        Returns
+        -------
         marker_actor : vtk.vtkAxesActor
             vtkAxesActor actor
 
@@ -644,8 +644,8 @@ class Renderer(vtkRenderer):
             the datasets in the scene from the axes annotations. Defaults to
             have no padding
 
-        Return
-        ------
+        Returns
+        -------
         cube_axes_actor : vtk.vtkCubeAxesActor
             Bounds actor
 
@@ -1162,8 +1162,8 @@ class Renderer(vtkRenderer):
             Render upon actor removal.  Set this to ``False`` to stop
             the render window from rendering when an actor is removed.
 
-        Return
-        ------
+        Returns
+        -------
         success : bool
             True when actor removed.  False when actor has not been
             removed.
