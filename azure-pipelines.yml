@@ -126,8 +126,8 @@ jobs:
 
   strategy:
     matrix:
-      VTKv81:
-        VTK.VERSION: 8.1
+      # VTKv81:
+      #   VTK.VERSION: 8.1
       VTKv82:
         VTK.VERSION: 8.2
 
