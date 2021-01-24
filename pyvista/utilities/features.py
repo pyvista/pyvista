@@ -12,8 +12,10 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Parameters
     ----------
-    density : float
-        The uniform size of the voxels. Defaults to 1/100th of the mesh length.
+    density : float or list
+        The uniform size of the voxels when single float passed.
+        A list of densities along x,y,z directions.
+        Defaults to 1/100th of the mesh length.
 
     check_surface : bool
         Specify whether to check the surface for closure. If on, then the
@@ -21,15 +23,41 @@ def voxelize(mesh, density=None, check_surface=True):
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
 
+    Returns
+    -------
+    vox : pyvista.core.pointset.UnstructuredGrid
+        voxelized unstructured grid for original mesh
+
+    Examples
+    --------
+    This example creates an equal density voxelized mesh.
+
+    >>> import pyvista as pv
+    >>> import pyvista.examples as ex
+    >>> mesh = pv.PolyData(ex.load_uniform().points)
+    >>> vox = pv.voxelize(mesh, density=0.5)
+
+    This example creates a voxelized mesh using unequal density dimensions
+
+    >>> import pyvista as pv
+    >>> import pyvista.examples as ex
+    >>> mesh = pv.PolyData(ex.load_uniform().points)
+    >>> vox = pv.voxelize(mesh, density=[0.5, 0.9, 1.4])
+
     """
     if not pyvista.is_pyvista_dataset(mesh):
         mesh = pyvista.wrap(mesh)
     if density is None:
         density = mesh.length / 100
+    if isinstance(density, (int, float)):
+        density_x, density_y, density_z = [density] * 3
+    if isinstance(density, (list, set, tuple)):
+        density_x, density_y, density_z = density
+        
     x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-    x = np.arange(x_min, x_max, density)
-    y = np.arange(y_min, y_max, density)
-    z = np.arange(z_min, z_max, density)
+    x = np.arange(x_min, x_max, density_x)
+    y = np.arange(y_min, y_max, density_y)
+    z = np.arange(z_min, z_max, density_z)
     x, y, z = np.meshgrid(x, y, z)
 
     # Create unstructured grid from the structured grid
@@ -43,8 +71,8 @@ def voxelize(mesh, density=None, check_surface=True):
     mask = selection.point_arrays['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
-    return ugrid.extract_points(mask)
-
+    vox = ugrid.extract_points(mask)
+    return vox
 
 def create_grid(dataset, dimensions=(101, 101, 101)):
     """Create a uniform grid surrounding the given dataset.

@@ -31,7 +31,20 @@ class pyvista_ndarray(np.ndarray):
             obj.dataset.Set(dataset)
         return obj
 
-    __array_finalize__ = VTKArray.__array_finalize__
+    def __array_finalize__(self, obj):
+        """Finalize array (associate with parent metadata)."""
+        # this is necessary to ensure that views/slices of pyvista_ndarray
+        # objects stay associated with those of their parents.
+        #
+        # the VTKArray class uses attributes called `DataSet` and `Assocation`
+        # to hold this data. I don't know why this class doesn't use the same
+        # convention, but here we just map those over to the appropriate
+        # attributes of this class
+        VTKArray.__array_finalize__(self, obj)
+        if np.shares_memory(self, obj):
+            self.dataset = getattr(obj, 'dataset', None)
+            self.association = getattr(obj, 'association', None)
+            self.VTKObject = getattr(obj, 'VTKObject', None)
 
     def __setitem__(self, key: int, value):
         """Implement [] set operator.
