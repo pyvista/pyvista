@@ -173,7 +173,7 @@ jobs:
 # DESCRIPTION: Core API testing for Windows
 - job: Windows
   pool:
-    vmIMage: 'VS2017-Win2016'
+    vmIMage: 'windows-2019'
   variables:
     AZURE_CI_WINDOWS: 'true'
   strategy:
