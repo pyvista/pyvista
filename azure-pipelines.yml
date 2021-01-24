@@ -24,7 +24,7 @@ jobs:
 # DESCRIPTION: Quickly check the spelling and documentation style
 - job: CodeSpellStyle
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: 'ubuntu-20.04'
   steps:
   - task: UsePythonVersion@0
     inputs:
