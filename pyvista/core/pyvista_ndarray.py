@@ -32,6 +32,7 @@ class pyvista_ndarray(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
+        """Finalize array (associate with parent metadata)."""
         # this is necessary to ensure that views/slices of pyvista_ndarray
         # objects stay associated with those of their parents.
         #
