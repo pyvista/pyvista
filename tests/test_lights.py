@@ -37,6 +37,18 @@ def test_colors():
     light.ambient_color = color
     assert light.ambient_color == color
 
+    # test whether strings raise but don't test the result
+    for valid in 'white', 'r', '#c0ffee':
+        light.diffuse_color = valid
+        light.specular_color = valid
+        light.ambient_color = valid
+    with pytest.raises(ValueError):
+        light.diffuse_color = 'invalid'
+    with pytest.raises(ValueError):
+        light.specular_color = 'invalid'
+    with pytest.raises(ValueError):
+        light.ambient_color = 'invalid'
+
 
 def test_positioning():
     light = pyvista.Light()

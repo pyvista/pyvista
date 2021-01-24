@@ -6,6 +6,7 @@ import vtk
 from vtk import vtkLight
 
 import pyvista
+from .theme import parse_color
 
 class LightType(IntEnum):
     """An enumeration for the light types."""
@@ -27,9 +28,9 @@ class Light(vtkLight):
         The position of the light. The interpretation of the position depends
         on the type of the light.
 
-    color : list or tuple, optional
+    color : string or 3-length sequence, optional
         The color of the light. The ambient, diffuse and specular colors will
-        all be set to this color in creation.
+        all be set to this color on creation.
 
     light_type : string or int, optional
         The type of the light. If a string, one of ``'headlight'``,
@@ -46,7 +47,7 @@ class Light(vtkLight):
 
     Examples
     --------
-    Create a light at (10, 10, 10) and set its diffuse color to red
+    Create a light at (10, 10, 10) and set its diffuse color to red.
 
     >>> import pyvista as pv
     >>> light = pv.Light(position=(10, 10, 10))
@@ -60,7 +61,6 @@ class Light(vtkLight):
     HEADLIGHT = LightType.HEADLIGHT
     CAMERA_LIGHT = LightType.CAMERA_LIGHT
     SCENE_LIGHT = LightType.SCENE_LIGHT
-    # TODO: is this design OK?
 
     def __init__(self, position=None, color=None, light_type='scene light'):
         """Initialize the light."""
@@ -96,7 +96,6 @@ class Light(vtkLight):
         # TODO: should setting attenuation and cone angle automatically switch to positional?
         # TODO: should color and point and direction_angle have more flexible signatures? (only for non-properties)
         # TODO: ndarray type and shape and size checking for color and point
-        # TODO: allow string colors for pyvista.plotting.theme.parse_color
         # TODO: check if backticks in error messages are OK/necessary
         # TODO: examples, also for property getters!
 
@@ -108,33 +107,87 @@ class Light(vtkLight):
 
     @property
     def ambient_color(self):
-        """Return the ambient color of the light."""
+        """Return the ambient color of the light.
+
+        When setting, the color must be a 3-length sequence or a string.
+        For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
+        Examples
+        --------
+        Create a light and set its ambient color to red.
+
+        >>> import pyvista as pv
+        >>> light = pv.Light()
+        >>> light.ambient_color = 'red'
+
+        """
         return self.GetAmbientColor()
 
     @ambient_color.setter
     def ambient_color(self, color):
         """Set the ambient color of the light."""
-        self.SetAmbientColor(color)
+        self.SetAmbientColor(parse_color(color))
 
     @property
     def diffuse_color(self):
-        """Return the diffuse color of the light."""
+        """Return the diffuse color of the light.
+
+        When setting, the color must be a 3-length sequence or a string.
+        For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
+        Examples
+        --------
+        Create a light and set its diffuse color to blue.
+
+        >>> import pyvista as pv
+        >>> light = pv.Light()
+        >>> light.diffuse_color = (0, 0, 1)
+
+        """
         return self.GetDiffuseColor()
 
     @diffuse_color.setter
     def diffuse_color(self, color):
         """Set the diffuse color of the light."""
-        self.SetDiffuseColor(color)
+        self.SetDiffuseColor(parse_color(color))
 
     @property
     def specular_color(self):
-        """Return the specular color of the light."""
+        """Return the specular color of the light.
+
+        When setting, the color must be a 3-length sequence or a string.
+        For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
+        Examples
+        --------
+        Create a light and set its specular color to bright green.
+
+        >>> import pyvista as pv
+        >>> light = pv.Light()
+        >>> light.specular_color = '#00FF00'
+
+        """
         return self.GetSpecularColor()
 
     @specular_color.setter
     def specular_color(self, color):
         """Set the specular color of the light."""
-        self.SetSpecularColor(color)
+        self.SetSpecularColor(parse_color(color))
 
     @property
     def position(self):
