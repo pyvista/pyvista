@@ -23,6 +23,27 @@ def voxelize(mesh, density=None, check_surface=True):
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
 
+    Returns
+    -------
+    vox : pyvista.core.pointset.UnstructuredGrid
+        voxelized unstructured grid for original mesh
+
+    Examples
+    --------
+    This example creates an equal density voxelized mesh.
+
+    >>> import pyvista as pv
+    >>> import pyvista.examples as ex
+    >>> mesh = pv.PolyData(ex.load_uniform().points)
+    >>> vox = pv.voxelize(mesh, density=0.5)
+
+    This example creates a voxelized mesh using unequal density dimensions
+
+    >>> import pyvista as pv
+    >>> import pyvista.examples as ex
+    >>> mesh = pv.PolyData(ex.load_uniform().points)
+    >>> vox = pv.voxelize(mesh, density=[0.5, 0.9, 1.4])
+
     """
     if not pyvista.is_pyvista_dataset(mesh):
         mesh = pyvista.wrap(mesh)
@@ -50,8 +71,8 @@ def voxelize(mesh, density=None, check_surface=True):
     mask = selection.point_arrays['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
-    return ugrid.extract_points(mask)
-
+    vox = ugrid.extract_points(mask)
+    return vox
 
 def create_grid(dataset, dimensions=(101, 101, 101)):
     """Create a uniform grid surrounding the given dataset.
