@@ -40,9 +40,10 @@ class pyvista_ndarray(np.ndarray):
         # convention, but here we just map those over to the appropriate
         # attributes of this class
         VTKArray.__array_finalize__(self, obj)
-        self.dataset = getattr(obj, 'dataset', None)
-        self.association = getattr(obj, 'association', None)
-        self.VTKObject = getattr(obj, 'VTKObject', None)
+        if np.shares_memory(self, obj):
+            self.dataset = getattr(obj, 'dataset', None)
+            self.association = getattr(obj, 'association', None)
+            self.VTKObject = getattr(obj, 'VTKObject', None)
 
     def __setitem__(self, key: int, value):
         """Implement [] set operator.
