@@ -952,35 +952,61 @@ def test_compute_derivatives():
     with pytest.raises(TypeError):
         derv = mesh.compute_derivative()
 
+
 def test_extract_subset():
     volume = examples.load_uniform()
-    voi = volume.extract_subset([0,3,1,4,5,7])
+    voi = volume.extract_subset([0, 3, 1, 4, 5, 7])
     assert isinstance(voi, pyvista.UniformGrid)
     # Test that we fix the confusing issue from extents in
     #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
     assert voi.origin == voi.bounds[::2]
 
+
 def test_extract_subset_structured():
     structured = examples.load_structured()
-    voi = structured.extract_subset([0,3,1,4,0,1])
+    voi = structured.extract_subset([0, 3, 1, 4, 0, 1])
     assert isinstance(voi, pyvista.StructuredGrid)
     assert voi.dimensions == [4, 4, 1]
+
 
 def test_concatenate_structured():
     structured = examples.load_structured()
 
     # split the grid into two
-    voi_1 = structured.extract_subset([0, 40, 0, 40, 0, 1], boundary=True)
-    voi_2 = structured.extract_subset([40, 80, 40, 80, 0, 1], boundary=True)
+    voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1], boundary=True)
+    voi_2 = structured.extract_subset([0, 80, 40, 80, 0, 1], boundary=True)
 
     # then recombine
     joined = voi_1.concatenate(voi_2)
     assert structured.points == pytest.approx(joined.points)
     assert structured.volume == pytest.approx(joined.volume)
 
+
+def test_structured_add():
+    structured = examples.load_structured()
+
+    # split the grid into two
+    voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1], boundary=True)
+    voi_2 = structured.extract_subset([0, 80, 40, 80, 0, 1], boundary=True)
+
+    # then recombine
+    joined = voi_1 + voi_2
+
+    # ensure type remains structured
+    assert isinstance(joined, type(voi_1))
+    assert structured.points == pytest.approx(joined.points)
+    assert structured.volume == pytest.approx(joined.volume)
+
+
+def test_structured_add_non_grid():
+    grid = examples.load_structured()
+    merged = grid + examples.load_hexbeam()
+    assert isinstance(merged, pyvista.UnstructuredGrid)
+
+
 def test_poly_data_strip():
     mesh = examples.load_airplane()
-    slc = mesh.slice(normal='z', origin=(0,0,-10))
+    slc = mesh.slice(normal='z', origin=(0, 0, -10))
     stripped = slc.strip()
     assert stripped.n_cells == 1
 

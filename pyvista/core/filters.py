@@ -4601,7 +4601,7 @@ class UnstructuredGridFilters(DataSetFilters):
 @abstract_class
 class StructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for structured grid datasets."""
-    
+
     def extract_subset(dataset, voi, rate=(1, 1, 1), boundary=False):
         """Select piece (e.g., volume of interest).
 
@@ -4631,7 +4631,24 @@ class StructuredGridFilters(DataSetFilters):
             when the rate in any direction is not equal to 1). When
             this is on, the subsampling will always include the boundary of
             the grid even though the sample rate is not an even multiple of
-            the grid dimensions. (By default this is off.)
+            the grid dimensions.  By default this is ``False``.
+
+        Examples
+        --------
+        Split a grid in half.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> grid = examples.load_structured()
+        >>> voi_1 = grid.extract_subset([0, 80, 0, 40, 0, 1], boundary=True)
+        >>> voi_2 = grid.extract_subset([0, 80, 40, 80, 0, 1], boundary=True)
+
+        For fun, add the two grids back together and show they are
+        identical to the original grid.
+
+        >>> joined = voi_1 + voi_2
+        >>> assert np.allclose(grid.points, joined.points)
         """
         alg = vtk.vtkExtractGrid()
         alg.SetVOI(voi)
@@ -4641,17 +4658,46 @@ class StructuredGridFilters(DataSetFilters):
         alg.Update()
         return _get_output(alg)
 
+    def __add__(dataset, other_dataset):
+        """Join two datasets together.
+
+        When both datasets are structured, concatenate these grids.
+
+        """
+        if isinstance(other_dataset, vtk.vtkStructuredGrid):
+            return dataset.concatenate(dataset, other_dataset)
+        return dataset.merge(other_dataset)
+
     def concatenate(dataset, *structured_grids):
         """Concatenate other structured grids to this grid.
 
-        Takes the components from multiple inputs and merges them into one output.
-        All inputs must have the same number of scalar components. All inputs must
-        have the same scalar type.
+        Takes the components from multiple inputs and merges them into
+        one output.  All inputs must have the same number of scalar
+        components. All inputs must have the same scalar type.
 
         Parameters
         ----------
         *structured_grids : pyvista.StructuredGrid
             Structured grids to append.
+
+        Returns
+        --------
+        pyvista.StructuredGrid
+            Concatenated grids.
+
+        Examples
+        --------
+        Split a grid in half and join them.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> grid = examples.load_structured()
+        >>> voi_1 = grid.extract_subset([0, 80, 0, 40, 0, 1], boundary=True)
+        >>> voi_2 = grid.extract_subset([0, 80, 40, 80, 0, 1], boundary=True)
+        >>> joined = voi_1 + voi_2
+        >>> print(grid.dimensions, 'same as', joined.dimensions)
+        [80, 80, 1] same as [80, 80, 1]
         """
         alg = vtk.vtkStructuredGridAppend()
         alg.AddInputData(dataset)
