@@ -443,16 +443,18 @@ def trans_from_matrix(matrix):  # pragma: no cover
     DEPRECATED: Please use ``array_from_vtkmatrix``.
 
     """
+    # import needs to happen here to prevent a circular import
+    from pyvista.core.errors import DeprecationError
     raise DeprecationError('DEPRECATED: Please use ``array_from_vtkmatrix``.')
 
 
 def array_from_vtkmatrix(matrix):
-    """Convert a vtk matrix to a numpy.ndarray.
+    """Convert a vtk matrix to a ``numpy.ndarray``.
 
     Parameters
     ----------
     matrix : vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4
-        The vtk matrix to be converted to a numpy ndarray.
+        The vtk matrix to be converted to a ``numpy.ndarray``.
         Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
 
     """
@@ -471,14 +473,14 @@ def array_from_vtkmatrix(matrix):
 
 
 def vtkmatrix_from_array(array):
-    """Convert a numpy.ndarray or array-like to a vtk matrix.
+    """Convert a ``numpy.ndarray`` or array-like to a vtk matrix.
 
     Parameters
     ----------
     array : numpy.ndarray or array-like
         The array or array-like to be converted to a vtk matrix.
-        Shape (3, 3) gets converted to vtk.vtkMatrix3x3, shape (4, 4)
-        gets converte dto vtk.vtkMatrix4x4. No other shapes are valid.
+        Shape (3, 3) gets converted to a ``vtk.vtkMatrix3x3``, shape (4, 4)
+        gets converted to a ``vtk.vtkMatrix4x4``. No other shapes are valid.
 
     """
     array = np.asarray(array)
