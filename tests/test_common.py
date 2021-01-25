@@ -191,7 +191,7 @@ def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amo
     grid_c = grid.copy()
     grid_a.transform(trans)
     grid_b.transform(trans.GetMatrix())
-    grid_c.transform(pyvista.trans_from_matrix(trans.GetMatrix()))
+    grid_c.transform(pyvista.array_from_vtkmatrix(trans.GetMatrix()))
     assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
     assert np.allclose(grid_a.points, grid_c.points, equal_nan=True)
 

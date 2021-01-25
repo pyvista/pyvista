@@ -79,6 +79,17 @@ def test_box():
     geom = pyvista.Box()
     assert np.any(geom.points)
 
+    bounds = [-10.0, 10.0, 10.0, 20.0, -5.0, 5.0]
+    level = 3
+    quads = True
+    mesh1 = pyvista.Box(bounds, level, quads)
+    assert mesh1.n_cells == (level + 1) * (level + 1) * 6
+    assert np.allclose(mesh1.bounds, bounds)
+
+    quads = False
+    mesh2 = pyvista.Box(bounds, level, quads)
+    assert mesh2.n_cells == mesh1.n_cells*2
+
 
 def test_polygon():
     geom = pyvista.Polygon()
