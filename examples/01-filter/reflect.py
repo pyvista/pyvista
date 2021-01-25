@@ -17,7 +17,7 @@ from pyvista import examples
 airplane = examples.load_airplane()
 
 ###############################################################################
-# Reflects the mesh across a plane parallel to Z plane and centered in -100
+# Reflect the mesh across a plane parallel to Z plane and centered in -100
 # (the geometry input is copied to the output):
 airplane = airplane.reflect('z', copy=True, center=-100)
 
