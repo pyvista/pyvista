@@ -2640,8 +2640,9 @@ class DataSetFilters:
         Parameters
         ----------
         plane : str
-            Reflection plane options: `'xmin'`, `'ymin'`, `'zmin'`, `'xmax'`, `'ymax'`, `'zmax'`,
-            `'x'`, `'y'`, or `'z'`.
+            Reflection plane options: ``'xmin'``, ``'ymin'``,
+            ``'zmin'``, ``'xmax'``, ``'ymax'``, ``'zmax'``, ``'x'``,
+            ``'y'``, or ``'z'``.
         copy : bool
             If `True`, copy the input geometry to the output.
         center : float
