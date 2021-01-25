@@ -1098,8 +1098,7 @@ class Common(DataSetFilters, DataObject):
             The limits of the cell in the X, Y and Z directions respectivelly.
 
         """
-        bounds = self.GetCell(ind).GetBounds()
-        return list(bounds)
+        return list(self.GetCell(ind).GetBounds())
 
     def cell_type(self, ind):
         """Return the type of a cell.
