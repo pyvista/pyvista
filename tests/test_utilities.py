@@ -246,6 +246,44 @@ def test_transform_vectors_sph_to_cart():
     )
 
 
+def test_vtkmatrix_to_from_array():
+    rng = np.random.default_rng()
+    array3x3 = rng.integers(0, 10, size=(3, 3))
+    matrix = pyvista.vtkmatrix_from_array(array3x3)
+    assert isinstance(matrix, vtk.vtkMatrix3x3)
+    for i in range(3):
+        for j in range(3):
+            assert matrix.GetElement(i, j) == array3x3[i, j]
+
+    array = pyvista.array_from_vtkmatrix(matrix)
+    assert isinstance(array, np.ndarray)
+    assert array.shape == (3, 3)
+    for i in range(3):
+        for j in range(3):
+            assert array[i, j] == matrix.GetElement(i, j)
+
+    array4x4 = rng.integers(0, 10, size=(4, 4))
+    matrix = pyvista.vtkmatrix_from_array(array4x4)
+    assert isinstance(matrix, vtk.vtkMatrix4x4)
+    for i in range(4):
+        for j in range(4):
+            assert matrix.GetElement(i, j) == array4x4[i, j]
+
+    array = pyvista.array_from_vtkmatrix(matrix)
+    assert isinstance(array, np.ndarray)
+    assert array.shape == (4, 4)
+    for i in range(4):
+        for j in range(4):
+            assert array[i, j] == matrix.GetElement(i, j)
+
+    # invalid cases
+    with pytest.raises(ValueError):
+        matrix = pyvista.vtkmatrix_from_array(np.arange(3 * 4).reshape(3, 4))
+    with pytest.raises(TypeError):
+        invalid = vtk.vtkTransform()
+        array = pyvista.array_from_vtkmatrix(invalid)
+
+
 def test_assert_empty_kwargs():
     kwargs = {}
     assert errors.assert_empty_kwargs(**kwargs)

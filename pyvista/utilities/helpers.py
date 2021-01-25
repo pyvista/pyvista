@@ -437,13 +437,62 @@ def vector_poly_data(orig, vec):
     return pyvista.PolyData(pdata)
 
 
-def trans_from_matrix(matrix):
-    """Convert a vtk matrix to a numpy.ndarray."""
-    t = np.zeros((4, 4))
-    for i in range(4):
-        for j in range(4):
-            t[i, j] = matrix.GetElement(i, j)
-    return t
+def trans_from_matrix(matrix):  # pragma: no cover
+    """Convert a vtk matrix to a numpy.ndarray.
+
+    DEPRECATED: Please use ``array_from_vtkmatrix``.
+
+    """
+    raise DeprecationError('DEPRECATED: Please use ``array_from_vtkmatrix``.')
+
+
+def array_from_vtkmatrix(matrix):
+    """Convert a vtk matrix to a numpy.ndarray.
+
+    Parameters
+    ----------
+    matrix : vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4
+        The vtk matrix to be converted to a numpy ndarray.
+        Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
+
+    """
+    if isinstance(matrix, vtk.vtkMatrix3x3):
+        shape = (3, 3)
+    elif isinstance(matrix, vtk.vtkMatrix4x4):
+        shape = (4, 4)
+    else:
+        raise TypeError('Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
+                        f' got {type(matrix).__name__} instead.')
+    array = np.zeros(shape)
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            array[i, j] = matrix.GetElement(i, j)
+    return array
+
+
+def vtkmatrix_from_array(array):
+    """Convert a numpy.ndarray or array-like to a vtk matrix.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or array-like
+        The array or array-like to be converted to a vtk matrix.
+        Shape (3, 3) gets converted to vtk.vtkMatrix3x3, shape (4, 4)
+        gets converte dto vtk.vtkMatrix4x4. No other shapes are valid.
+
+    """
+    array = np.asarray(array)
+    if array.shape == (3, 3):
+        matrix = vtk.vtkMatrix3x3()
+    elif array.shape == (4, 4):
+        matrix = vtk.vtkMatrix4x4()
+    else:
+        raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
+    m, n = array.shape
+    for i in range(m):
+        for j in range(n):
+            matrix.SetElement(i, j, array[i, j])
+    return matrix
 
 
 def is_meshio_mesh(mesh):

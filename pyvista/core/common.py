@@ -650,9 +650,9 @@ class Common(DataSetFilters, DataObject):
 
         """
         if isinstance(trans, vtk.vtkMatrix4x4):
-            t = pyvista.trans_from_matrix(trans)
+            t = pyvista.array_from_vtkmatrix(trans)
         elif isinstance(trans, vtk.vtkTransform):
-            t = pyvista.trans_from_matrix(trans.GetMatrix())
+            t = pyvista.array_from_vtkmatrix(trans.GetMatrix())
         elif isinstance(trans, np.ndarray):
             if trans.ndim != 2:
                 raise ValueError('Transformation array must be 4x4')
