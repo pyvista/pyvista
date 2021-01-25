@@ -22,5 +22,5 @@ airplane = examples.load_airplane()
 airplane = airplane.reflect('z', copy=True, center=-100)
 
 ###############################################################################
-# Plots the reflected mesh:
+# Plot the reflected mesh:
 airplane.plot(show_edges=True)
