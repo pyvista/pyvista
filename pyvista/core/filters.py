@@ -2645,7 +2645,7 @@ class DataSetFilters:
         copy : bool
             If `True`, copy the input geometry to the output.
         center : float
-            If the reflection plane is set to `'x'`, `'y'` or `'z'`, then this parameter is used to
+            If the reflection plane is set to ``'x'``, ``'y'`` or ``'z'``, then this parameter is used to
             set the position of the plane.
 
         Returns
