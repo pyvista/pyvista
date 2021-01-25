@@ -1093,7 +1093,7 @@ class Renderer(vtkRenderer):
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
-        self.camera.position(scale_point(self.camera, point, invert=False))
+        self.camera.position = scale_point(self.camera, point, invert=False)
         if reset:
             self.reset_camera()
         self.camera_set = True
