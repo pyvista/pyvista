@@ -4,7 +4,7 @@
 Reflect Meshes
 ~~~~~~~~~~~~~~
 
-Reflects a mesh across a plane.
+This example reflects a mesh across a plane.
 
 """
 
