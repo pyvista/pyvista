@@ -1,7 +1,6 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
-import logging
 from weakref import proxy
 
 import numpy as np
@@ -137,7 +136,7 @@ class Renderer(vtkRenderer):
         return CameraPosition(
             scale_point(self.camera, self.camera.position, invert=True),
             scale_point(self.camera, self.camera.focal_point, invert=True),
-            self.camera.up())
+            self.camera.up)
 
     @camera_position.setter
     def camera_position(self, camera_location):
@@ -169,7 +168,7 @@ class Renderer(vtkRenderer):
             # everything is set explicitly
             self.camera.position = scale_point(self.camera, camera_location[0], invert=False)
             self.camera.focal_point = scale_point(self.camera, camera_location[1], invert=False)
-            self.camera.up(camera_location[2])
+            self.camera.up = camera_location[2]
 
         # reset clipping range
         self.ResetCameraClippingRange()
@@ -189,7 +188,7 @@ class Renderer(vtkRenderer):
         self.camera_position = CameraPosition(
             scale_point(source, source.position, invert=True),
             scale_point(source, source.focal_point, invert=True),
-            source.up()
+            source.up
         )
         self.Modified()
         self.camera_set = True
@@ -1093,7 +1092,7 @@ class Renderer(vtkRenderer):
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
-        self.camera.position(scale_point(self.camera, point, invert=False))
+        self.camera.position = scale_point(self.camera, point, invert=False)
         if reset:
             self.reset_camera()
         self.camera_set = True
@@ -1104,7 +1103,7 @@ class Renderer(vtkRenderer):
         if isinstance(vector, np.ndarray):
             if vector.ndim != 1:
                 vector = vector.ravel()
-        self.camera.up(vector)
+        self.camera.up = vector
         self.Modified()
 
     def enable_parallel_projection(self):

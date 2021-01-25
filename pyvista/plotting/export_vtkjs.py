@@ -595,7 +595,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
         "camera": {
             "focalPoint": plotter.camera.focal_point,
             "position": plotter.camera.position,
-            "viewUp": plotter.camera.up(),
+            "viewUp": plotter.camera.up,
             "clippingRange": [elt for elt in cameraClippingRange],
         },
         "centerOfRotation": plotter.camera.focal_point,
