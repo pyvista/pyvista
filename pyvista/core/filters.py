@@ -4710,10 +4710,12 @@ class StructuredGridFilters(DataSetFilters):
                                    % (dataset.dimensions, other.dimensions))
 
         # check point/cell variables are the same
-        assert set(dataset.point_arrays.keys()) == \
-               set(other.point_arrays.keys())
-        assert set(dataset.cell_arrays.keys()) == \
-               set(other.cell_arrays.keys())
+        if not set(dataset.point_arrays.keys()) == \
+               set(other.point_arrays.keys()):
+            raise RuntimeError('Grid to concatenate has different point array names.')
+        if not set(dataset.cell_arrays.keys()) == \
+               set(other.cell_arrays.keys()):
+            raise RuntimeError('Grid to concatenate has different cell array names.')
 
         # check that points are coincident (within tolerance) along seam
         if not np.allclose(np.take(dataset.points_matrix, indices=-1, axis=axis),

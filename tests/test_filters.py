@@ -1033,8 +1033,19 @@ def test_concatenate_structured_bad_point_arrays(structured_grids_split_coincide
 
 
 def test_concatenate_structured_disconnected(structured_grids_split_disconnected):
-    # test disconnected pieces
     voi_1, voi_2 = structured_grids_split_disconnected
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
+
+
+def test_concatenate_structured_different_arrays(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    point_data = voi_1.point_arrays.pop('point_data')
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
+
+    voi_1.point_arrays['point_data'] = point_data
+    voi_1.cell_arrays.remove('cell_data')
     with pytest.raises(RuntimeError):
         joined = voi_1.concatenate(voi_2, axis=1)
 
