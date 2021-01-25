@@ -238,15 +238,50 @@ class DataObject:
 
     @property
     def actual_memory_size(self):
-        """Return the actual size of the dataset object in kibibytes (1024 bytes)."""
+        """Return the actual size of the dataset object in kibibytes (1024 bytes).
+
+        Returns
+        -------
+        int
+            The actual size of the dataset object in kibibytes (1024 bytes).
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh.actual_memory_size
+        93
+
+        """
         return self.GetActualMemorySize()
 
     def copy_structure(self, dataset):
-        """Copy the structure (geometry and topology) of the input dataset object."""
+        """Copy the structure (geometry and topology) of the input dataset object.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> source = pv.UniformGrid((10, 10, 5))
+        >>> target = pv.UniformGrid()
+        >>> target.copy_structure(source)
+        >>> target.plot(show_edges=True)
+
+        """
         self.CopyStructure(dataset)
 
     def copy_attributes(self, dataset):
-        """Copy the data attributes of the input dataset object."""
+        """Copy the data attributes of the input dataset object.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> source = pv.UniformGrid((10, 10, 5))
+        >>> source = source.compute_cell_sizes()
+        >>> target = pv.UniformGrid((10, 10, 5))
+        >>> target.copy_attributes(source)
+        >>> target.plot(scalars='Volume', show_edges=True)
+
+        """
         self.CopyAttributes(dataset)
 
 
@@ -1063,6 +1098,13 @@ class Common(DataSetFilters, DataObject):
         int
             Number of points in the cell.
 
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh.cell_n_points(0)
+        3
+
         """
         return self.GetCell(ind).GetPoints().GetNumberOfPoints()
 
@@ -1079,6 +1121,15 @@ class Common(DataSetFilters, DataObject):
         numpy.ndarray
             An array of floats with shape (number of points, 3) containing the coordinates of the
             cell corners.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh.cell_points(0)
+        [[896.99401855  48.76010132  82.26560211]
+         [906.59301758  48.76010132  80.74520111]
+         [907.53900146  55.49020004  83.65809631]]
 
         """
         points = self.GetCell(ind).GetPoints().GetData()
@@ -1097,6 +1148,14 @@ class Common(DataSetFilters, DataObject):
         list(float)
             The limits of the cell in the X, Y and Z directions respectivelly.
 
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh.cell_bounds(0)
+        [896.9940185546875, 907.5390014648438, 48.760101318359375, 55.49020004272461,
+        80.74520111083984, 83.65809631347656]
+
         """
         return list(self.GetCell(ind).GetBounds())
 
@@ -1111,7 +1170,14 @@ class Common(DataSetFilters, DataObject):
         Returns
         -------
         int
-            VTK cell type.
+            VTK cell type. See <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh.cell_type(0)
+        5
 
         """
         return self.GetCellType(ind)

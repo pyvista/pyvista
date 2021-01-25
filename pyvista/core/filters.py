@@ -2640,19 +2640,25 @@ class DataSetFilters:
         Parameters
         ----------
         plane : str
-            Reflection plane options: ``'xmin'``, ``'ymin'``,
-            ``'zmin'``, ``'xmax'``, ``'ymax'``, ``'zmax'``, ``'x'``,
-            ``'y'``, or ``'z'``.
+            Reflection plane options: ``'xmin'``, ``'ymin'``, ``'zmin'``, ``'xmax'``, ``'ymax'``,
+            ``'zmax'``, ``'x'``, ``'y'``, or ``'z'``.
         copy : bool
             If `True`, copy the input geometry to the output.
         center : float
-            If the reflection plane is set to ``'x'``, ``'y'`` or ``'z'``, then this parameter is used to
-            set the position of the plane.
+            If the reflection plane is set to ``'x'``, ``'y'`` or ``'z'``, then this parameter is
+            used to set the position of the plane.
 
         Returns
         -------
         pyvista.UnstructuredGrid
             An unstructured grid.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh = mesh.reflect('z', copy=True, center=-100)
+        >>> mesh.plot(show_edges=True)
 
         """
         planes = {'x': 6, 'xmin': 0, 'xmax': 3,
