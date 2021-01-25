@@ -908,17 +908,22 @@ class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
     @property
     def x(self):
         """Return the X coordinates of all points."""
-        return self.points[:, 0].reshape(self.dimensions, order='F')
+        return self._reshape_point_array(self.points[:, 0])
 
     @property
     def y(self):
         """Return the Y coordinates of all points."""
-        return self.points[:, 1].reshape(self.dimensions, order='F')
+        return self._reshape_point_array(self.points[:, 1])
 
     @property
     def z(self):
         """Return the Z coordinates of all points."""
-        return self.points[:, 2].reshape(self.dimensions, order='F')
+        return self._reshape_point_array(self.points[:, 2])
+
+    @property
+    def points_matrix(self):
+        """Points as a 4-D matrix, with x/y/z along the last dimension."""
+        return self.points.reshape((*self.dimensions, 3), order='F')
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
@@ -991,3 +996,13 @@ class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
         # have no effect
 
         self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+
+    def _reshape_point_array(self, array):
+        """Reshape point data to a 3-D matrix"""
+        return array.reshape(self.dimensions, order='F')
+
+    def _reshape_cell_array(self, array):
+        """Reshape cell data to a 3-D matrix"""
+        cell_dims = np.array(self.dimensions) - 1
+        cell_dims[cell_dims == 0] = 1
+        return array.reshape(cell_dims, order='F')

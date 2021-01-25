@@ -4647,7 +4647,7 @@ class StructuredGridFilters(DataSetFilters):
         For fun, add the two grids back together and show they are
         identical to the original grid.
 
-        >>> joined = voi_1 + voi_2
+        >>> joined = voi_1.concatenate(voi_2, axis=1)
         >>> assert np.allclose(grid.points, joined.points)
         """
         alg = vtk.vtkExtractGrid()
@@ -4658,32 +4658,29 @@ class StructuredGridFilters(DataSetFilters):
         alg.Update()
         return _get_output(alg)
 
-    def __add__(dataset, other_dataset):
-        """Join two datasets together.
+    def concatenate(dataset, other, axis, tolerance=0.0):
+        """Concatenate a structured grids to this grid.
 
-        When both datasets are structured, concatenate these grids.
-
-        """
-        if isinstance(other_dataset, vtk.vtkStructuredGrid):
-            return dataset.concatenate(dataset, other_dataset)
-        return dataset.merge(other_dataset)
-
-    def concatenate(dataset, *structured_grids):
-        """Concatenate other structured grids to this grid.
-
-        Takes the components from multiple inputs and merges them into
-        one output.  All inputs must have the same number of scalar
-        components. All inputs must have the same scalar type.
+        Joins structured grids into a single structured grid.
+        Grids must be of compatible dimension, and must be coincident
+        along the seam. Grids must have the same point and cell data.
+        Field data is ignored.
 
         Parameters
         ----------
-        *structured_grids : pyvista.StructuredGrid
-            Structured grids to append.
+        other : pyvista.StructuredGrid
+            Structured grid to concatenate.
+
+        axis : int
+            Axis along which to concatenate.
+
+        tolerance : float
+            Tolerance for point coincidence along joining seam.
 
         Returns
         --------
         pyvista.StructuredGrid
-            Concatenated grids.
+            Concatenated grid.
 
         Examples
         --------
@@ -4695,16 +4692,77 @@ class StructuredGridFilters(DataSetFilters):
         >>> grid = examples.load_structured()
         >>> voi_1 = grid.extract_subset([0, 80, 0, 40, 0, 1], boundary=True)
         >>> voi_2 = grid.extract_subset([0, 80, 40, 80, 0, 1], boundary=True)
-        >>> joined = voi_1 + voi_2
+        >>> joined = voi_1.concatenate(voi_2, axis=1)
         >>> print(grid.dimensions, 'same as', joined.dimensions)
         [80, 80, 1] same as [80, 80, 1]
         """
-        alg = vtk.vtkStructuredGridAppend()
-        alg.AddInputData(dataset)
-        for grid in structured_grids:
-            alg.AddInputData(grid)
-        alg.Update()
-        return _get_output(alg)
+        if axis > 2:
+            raise RuntimeError('Concatenation axis must be <= 2.')
+
+        # check dimensions are compatible
+        for i, (dim1, dim2) in enumerate(zip(dataset.dimensions,
+                                             other.dimensions)):
+            if i == axis:
+                continue
+            if dim1 != dim2:
+                raise RuntimeError('StructuredGrids with dimensions %s and %s '
+                                   'are not compatible.'
+                                   % (dataset.dimensions, other.dimensions))
+
+        # check point/cell variables are the same
+        assert set(dataset.point_arrays.keys()) == \
+               set(other.point_arrays.keys())
+        assert set(dataset.cell_arrays.keys()) == \
+               set(other.cell_arrays.keys())
+
+        # check that points are coincident (within tolerance) along seam
+        if not np.allclose(np.take(dataset.points_matrix, indices=-1, axis=axis),
+                           np.take(other.points_matrix, indices=0, axis=axis),
+                           atol=tolerance):
+            raise RuntimeError('Grids cannot be joined along axis %d, as points '
+                               'are not coincident within tolerance of %f.'
+                               % (axis, tolerance))
+
+        # slice to cut off the repeated grid face
+        slice_spec = [slice(None, None, None)] * 3
+        slice_spec[axis] = slice(0, -1, None)
+
+        # concatenate points, cutting off duplicate
+        new_points = np.concatenate((dataset.points_matrix[slice_spec],
+                                     other.points_matrix), axis=axis)
+
+        # concatenate point arrays, cutting off duplicate
+        new_point_data = {}
+        for name, point_array in dataset.point_arrays.items():
+            arr_1 = dataset._reshape_point_array(point_array)
+            arr_2 = other._reshape_point_array(other.point_arrays[name])
+            if not np.array_equal(np.take(arr_1, indices=-1, axis=axis),
+                                  np.take(arr_2, indices=0, axis=axis)):
+                raise RuntimeError('Grids cannot be joined along axis %d, as field '
+                                   '`%s` is not identical along the seam.'
+                                   % (axis, name))
+            new_point_data[name] = np.concatenate((arr_1[slice_spec], arr_2),
+                                                  axis=axis).ravel(order='F')
+
+        new_dims = np.array(dataset.dimensions)
+        new_dims[axis] += other.dimensions[axis] - 1
+
+        # concatenate cell arrays
+        new_cell_data = {}
+        for name, cell_array in dataset.cell_arrays.items():
+            arr_1 = dataset._reshape_cell_array(cell_array)
+            arr_2 = other._reshape_cell_array(other.cell_arrays[name])
+            new_cell_data[name] = np.concatenate((arr_1, arr_2),
+                                                 axis=axis).ravel(order='F')
+
+        # assemble output
+        joined = pyvista.StructuredGrid()
+        joined.dimensions = list(new_dims)
+        joined.points = new_points.reshape((-1, 3), order='F')
+        joined.point_arrays.update(new_point_data)
+        joined.cell_arrays.update(new_cell_data)
+
+        return joined
 
 
 @abstract_class

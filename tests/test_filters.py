@@ -969,33 +969,74 @@ def test_extract_subset_structured():
     assert voi.dimensions == [4, 4, 1]
 
 
-def test_concatenate_structured():
+@pytest.fixture
+def structured_grids_split_coincident():
+    """Two structured grids which are coincident along second axis (axis=1), and
+    the grid from which they were extracted."""
     structured = examples.load_structured()
+    point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
+    cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
+    structured.point_arrays['point_data'] = point_data
+    structured.cell_arrays['cell_data'] = cell_data
+    voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1])
+    voi_2 = structured.extract_subset([0, 80, 40, 80, 0, 1])
+    return voi_1, voi_2, structured
 
-    # split the grid into two
-    voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1], boundary=True)
-    voi_2 = structured.extract_subset([0, 80, 40, 80, 0, 1], boundary=True)
 
-    # then recombine
-    joined = voi_1.concatenate(voi_2)
+@pytest.fixture
+def structured_grids_split_disconnected():
+    """Two structured grids which are disconnected."""
+    structured = examples.load_structured()
+    point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
+    cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
+    structured.point_arrays['point_data'] = point_data
+    structured.cell_arrays['cell_data'] = cell_data
+    voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1])
+    voi_2 = structured.extract_subset([0, 80, 45, 80, 0, 1])
+    return voi_1, voi_2
+
+
+def test_concatenate_structured(structured_grids_split_coincident,
+                                structured_grids_split_disconnected):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    joined = voi_1.concatenate(voi_2, axis=1)
     assert structured.points == pytest.approx(joined.points)
     assert structured.volume == pytest.approx(joined.volume)
+    assert structured.point_arrays['point_data'] ==\
+           pytest.approx(joined.point_arrays['point_data'])
+    assert structured.cell_arrays['cell_data'] ==\
+           pytest.approx(joined.cell_arrays['cell_data'])
 
 
-def test_structured_add():
-    structured = examples.load_structured()
+def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
 
-    # split the grid into two
-    voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1], boundary=True)
-    voi_2 = structured.extract_subset([0, 80, 40, 80, 0, 1], boundary=True)
+    # test invalid dimensions
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=0)
 
-    # then recombine
-    joined = voi_1 + voi_2
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=2)
 
-    # ensure type remains structured
-    assert isinstance(joined, type(voi_1))
-    assert structured.points == pytest.approx(joined.points)
-    assert structured.volume == pytest.approx(joined.volume)
+
+def test_concatenate_structured_bad_inputs(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=3)
+
+
+def test_concatenate_structured_bad_point_arrays(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1['point_data'] = voi_1['point_data'] * 2.0
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
+
+
+def test_concatenate_structured_disconnected(structured_grids_split_disconnected):
+    # test disconnected pieces
+    voi_1, voi_2 = structured_grids_split_disconnected
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
 
 
 def test_structured_add_non_grid():
