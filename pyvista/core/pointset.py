@@ -998,11 +998,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
         self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
 
     def _reshape_point_array(self, array):
-        """Reshape point data to a 3-D matrix"""
+        """Reshape point data to a 3-D matrix."""
         return array.reshape(self.dimensions, order='F')
 
     def _reshape_cell_array(self, array):
-        """Reshape cell data to a 3-D matrix"""
+        """Reshape cell data to a 3-D matrix."""
         cell_dims = np.array(self.dimensions) - 1
         cell_dims[cell_dims == 0] = 1
         return array.reshape(cell_dims, order='F')
