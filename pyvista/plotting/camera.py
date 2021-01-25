@@ -259,7 +259,8 @@ class Camera(vtk.vtkCamera):
 
     @clipping_range.setter
     def clipping_range(self, points):
-        """Set the clipping range
+        """Set the clipping range.
+
         Examples
         --------
         >>> import pyvista
