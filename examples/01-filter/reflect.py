@@ -13,7 +13,7 @@ from pyvista import examples
 ###############################################################################
 # This example demonstrates how to reflect a mesh across a plane.
 #
-# Loads an example mesh:
+# Load an example mesh:
 airplane = examples.load_airplane()
 
 ###############################################################################
