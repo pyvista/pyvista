@@ -952,18 +952,113 @@ def test_compute_derivatives():
     with pytest.raises(TypeError):
         derv = mesh.compute_derivative()
 
+
 def test_extract_subset():
     volume = examples.load_uniform()
-    voi = volume.extract_subset([0,3,1,4,5,7])
+    voi = volume.extract_subset([0, 3, 1, 4, 5, 7])
     assert isinstance(voi, pyvista.UniformGrid)
     # Test that we fix the confusing issue from extents in
     #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
     assert voi.origin == voi.bounds[::2]
 
 
+def test_extract_subset_structured():
+    structured = examples.load_structured()
+    voi = structured.extract_subset([0, 3, 1, 4, 0, 1])
+    assert isinstance(voi, pyvista.StructuredGrid)
+    assert voi.dimensions == [4, 4, 1]
+
+
+@pytest.fixture
+def structured_grids_split_coincident():
+    """Two structured grids which are coincident along second axis (axis=1), and
+    the grid from which they were extracted."""
+    structured = examples.load_structured()
+    point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
+    cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
+    structured.point_arrays['point_data'] = point_data
+    structured.cell_arrays['cell_data'] = cell_data
+    voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1])
+    voi_2 = structured.extract_subset([0, 80, 40, 80, 0, 1])
+    return voi_1, voi_2, structured
+
+
+@pytest.fixture
+def structured_grids_split_disconnected():
+    """Two structured grids which are disconnected."""
+    structured = examples.load_structured()
+    point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
+    cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
+    structured.point_arrays['point_data'] = point_data
+    structured.cell_arrays['cell_data'] = cell_data
+    voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1])
+    voi_2 = structured.extract_subset([0, 80, 45, 80, 0, 1])
+    return voi_1, voi_2
+
+
+def test_concatenate_structured(structured_grids_split_coincident,
+                                structured_grids_split_disconnected):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    joined = voi_1.concatenate(voi_2, axis=1)
+    assert structured.points == pytest.approx(joined.points)
+    assert structured.volume == pytest.approx(joined.volume)
+    assert structured.point_arrays['point_data'] ==\
+           pytest.approx(joined.point_arrays['point_data'])
+    assert structured.cell_arrays['cell_data'] ==\
+           pytest.approx(joined.cell_arrays['cell_data'])
+
+
+def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+
+    # test invalid dimensions
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=0)
+
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=2)
+
+
+def test_concatenate_structured_bad_inputs(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=3)
+
+
+def test_concatenate_structured_bad_point_arrays(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1['point_data'] = voi_1['point_data'] * 2.0
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
+
+
+def test_concatenate_structured_disconnected(structured_grids_split_disconnected):
+    voi_1, voi_2 = structured_grids_split_disconnected
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
+
+
+def test_concatenate_structured_different_arrays(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    point_data = voi_1.point_arrays.pop('point_data')
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
+
+    voi_1.point_arrays['point_data'] = point_data
+    voi_1.cell_arrays.remove('cell_data')
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
+
+
+def test_structured_add_non_grid():
+    grid = examples.load_structured()
+    merged = grid + examples.load_hexbeam()
+    assert isinstance(merged, pyvista.UnstructuredGrid)
+
+
 def test_poly_data_strip():
     mesh = examples.load_airplane()
-    slc = mesh.slice(normal='z', origin=(0,0,-10))
+    slc = mesh.slice(normal='z', origin=(0, 0, -10))
     stripped = slc.strip()
     assert stripped.n_cells == 1
 

@@ -3,6 +3,8 @@ import pathlib
 import logging
 import os
 import warnings
+import numbers
+import collections
 
 import numpy as np
 import vtk
@@ -18,7 +20,7 @@ import pyvista
 from pyvista.utilities import abstract_class
 from pyvista.utilities.cells import CellArray, numpy_to_idarr, generate_cell_offsets, create_mixed_cells, get_mixed_cells
 from .common import Common
-from .filters import PolyDataFilters, UnstructuredGridFilters
+from .filters import PolyDataFilters, UnstructuredGridFilters, StructuredGridFilters
 from ..utilities.fileio import get_ext
 
 log = logging.getLogger(__name__)
@@ -795,7 +797,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             return vtk_to_numpy(self.GetCellLocationsArray())
 
 
-class StructuredGrid(vtkStructuredGrid, PointGrid):
+class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
     """Extend the functionality of a vtk.vtkStructuredGrid object.
 
     Can be initialized in several ways:
@@ -906,23 +908,54 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
     @property
     def x(self):
         """Return the X coordinates of all points."""
-        return self.points[:, 0].reshape(self.dimensions, order='F')
+        return self._reshape_point_array(self.points[:, 0])
 
     @property
     def y(self):
         """Return the Y coordinates of all points."""
-        return self.points[:, 1].reshape(self.dimensions, order='F')
+        return self._reshape_point_array(self.points[:, 1])
 
     @property
     def z(self):
         """Return the Z coordinates of all points."""
-        return self.points[:, 2].reshape(self.dimensions, order='F')
+        return self._reshape_point_array(self.points[:, 2])
+
+    @property
+    def points_matrix(self):
+        """Points as a 4-D matrix, with x/y/z along the last dimension."""
+        return self.points.reshape((*self.dimensions, 3), order='F')
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = PointGrid._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
+
+    def __getitem__(self, key):
+        """Slice subsets of the StructuredGrid, or extract an array field."""
+        # legacy behavior which looks for a point or cell array
+        if not isinstance(key, tuple):
+            return super().__getitem__(key)
+
+        # convert slice to VOI specification - only "basic indexing" is supported
+        voi = []
+        rate = []
+        if len(key) != 3:
+            raise RuntimeError('Slices must have exactly 3 dimensions.')
+        for i, k in enumerate(key):
+            if isinstance(k, collections.Iterable):
+                raise RuntimeError('Fancy indexing is not supported.')
+            if isinstance(k, numbers.Integral):
+                start = stop = k
+                step = 1
+            elif isinstance(k, slice):
+                start = k.start if k.start is not None else 0
+                stop = k.stop - 1 if k.stop is not None else self.dimensions[i]
+                step = k.step if k.step is not None else 1
+            voi.extend((start, stop))
+            rate.append(step)
+
+        return self.extract_subset(voi, rate, boundary=False)
 
     def hide_cells(self, ind):
         """Hide cells without deleting them.
@@ -963,3 +996,13 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         # have no effect
 
         self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+
+    def _reshape_point_array(self, array):
+        """Reshape point data to a 3-D matrix."""
+        return array.reshape(self.dimensions, order='F')
+
+    def _reshape_cell_array(self, array):
+        """Reshape cell data to a 3-D matrix."""
+        cell_dims = np.array(self.dimensions) - 1
+        cell_dims[cell_dims == 0] = 1
+        return array.reshape(cell_dims, order='F')
