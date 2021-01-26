@@ -1398,6 +1398,7 @@ class Renderer(vtkRenderer):
         if not hasattr(self, 'edl_pass'):
             return
         self.SetPass(None)
+        self.edl_pass.ReleaseGraphicsResources(self.parent.ren_win)
         del self.edl_pass
         self.Modified()
         return
