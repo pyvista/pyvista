@@ -3708,7 +3708,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_with_hole = pv.Sphere(end_theta=330)
         >>> sphere_with_hole.fill_holes(1000, inplace=True)
         >>> edges = sphere_with_hole.extract_feature_edges(feature_edges=False, manifold_edges=False)
-        >>> assert edges.n_cells is 0
+        >>> assert edges.n_cells == 0
 
         """
         logging.warning('pyvista.PolyData.fill_holes is known to segfault. '
