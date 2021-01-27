@@ -7,6 +7,7 @@ from vtk import vtkLight
 
 import pyvista
 from .theme import parse_color
+from ..utilities.helpers import vtkmatrix_from_array
 
 class LightType(IntEnum):
     """An enumeration for the light types."""
@@ -98,6 +99,7 @@ class Light(vtkLight):
         # TODO: ndarray type and shape and size checking for color and point
         # TODO: check if backticks in error messages are OK/necessary
         # TODO: examples, also for property getters!
+        # TODO: add actor...?
 
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
@@ -195,20 +197,59 @@ class Light(vtkLight):
 
         Note: the position is defined in the coordinate space indicated
         by the light's transformation matrix (if it exists). To get the
-        light's world space position, use the ``world_position`` property.
+        light's world space position, use the (read-only) :py:attr:`world_position`
+        property.
+
+        Examples
+        --------
+        Create a light positioned at (10, 10, 10) after initialization, and note
+        how the position is unaffected by a non-trivial transform matrix.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> light = pv.Light()
+        >>> light.position = (10, 10, 10)
+        >>> # set a "random" transformation matrix
+        >>> light.transform_matrix = np.arange(4 * 4).reshape(4, 4)
+        >>> light.position
+        (10.0, 10.0, 10.0)
 
         """
         return self.GetPosition()
 
     @position.setter
     def position(self, pos):
+        """Set the position of the light."""
         self.SetPosition(pos)
 
     @property
     def world_position(self):
-        # TODO: is this name and configuration OK? Same for world_focal_point
-        # TODO: can a transformation matrix happen accidentally? If not, perhaps we can just not expose these at all!
-        """Return the world space position of the light."""
+        """Return the world space position of the light.
+
+        The world space position is the :py:attr:`position` property transformed by
+        the light's transform matrix if it exists. The value of this read-only
+        property corresponds to the ``vtk.vtkLight.GetTransformedPosition()`` method.
+
+        Examples
+        --------
+        Create a light with a transformation matrix that corresponds to a
+        90-degree rotation around the z axis and a shift by (0, 0, -1), and
+        check that the light's position transforms as expected.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> light = pv.Light(position=(1, 0, 3))
+        >>> trans = np.zeros((4, 4))
+        >>> trans[:-1, :-1] = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+        >>> trans[:-1, -1] = [0, 0, -1]
+        >>> light.transform_matrix = trans
+        >>> light.position
+        (1.0, 0.0, 3.0)
+        >>> light.world_position
+        (0.0, 1.0, 2.0)
+
+        """
+
         return self.GetTransformedPosition()
 
     @property
@@ -217,19 +258,54 @@ class Light(vtkLight):
 
         Note: the focal point is defined in the coordinate space indicated
         by the light's transformation matrix (if it exists). To get the
-        light's world space focal point, use the ``world_focal_point``
+        light's world space focal point, use the (read-only) :py:attr:`world_focal_point`
         property.
+
+        Examples
+        --------
+        Create a light at (10, 10, 10) shining at (0, 0, 1).
+
+        >>> import pyvista as pv
+        >>> light = pv.Light(position=(10, 10, 10))
+        >>> light.focal_point = (0, 0, 1)
 
         """
         return self.GetFocalPoint()
 
     @focal_point.setter
     def focal_point(self, pos):
+        """Set the focal point of the light."""
         self.SetFocalPoint(pos)
 
     @property
     def world_focal_point(self):
-        """Return the world space focal point of the light."""
+        """Return the world space focal point of the light.
+
+        The world space focal point is the :py:attr:`focal_point` property
+        transformed by the light's transform matrix if it exists. The value of
+        this read-only property corresponds to the
+        ``vtk.vtkLight.GetTransformedFocalPoint()`` method.
+
+        Examples
+        --------
+        Create a light with a transformation matrix that corresponds to a
+        90-degree rotation around the z axis and a shift by (0, 0, -1), and
+        check that the light's focal point transforms as expected.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> light = pv.Light()
+        >>> light.focal_point = (1, 0, 3)
+        >>> trans = np.zeros((4, 4))
+        >>> trans[:-1, :-1] = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+        >>> trans[:-1, -1] = [0, 0, -1]
+        >>> light.transform_matrix = trans
+        >>> light.focal_point
+        (1.0, 0.0, 3.0)
+        >>> light.world_focal_point
+        (0.0, 1.0, 2.0)
+
+        """
         return self.GetTransformedFocalPoint()
 
     @property
@@ -309,7 +385,58 @@ class Light(vtkLight):
         """Set the quadratic attenuation constants."""
         self.SetAttenuationValues(values)
 
-    # TODO: implement transformation_matrix here?
+    @property
+    def transform_matrix(self):
+        """Return the transformation matrix of the light (if any).
+
+        The transformation matrix is ``None`` by default, and it is stored
+        as a ``vtk.vtkMatrix4x4`` object when set. If set, the light's
+        parameters (position and focal point) are transformed by the matrix
+        before being rendered. See also the :py:attr:`world_position` and
+        :py:attr:`world_focal_point` read-only properties that can differ from
+        :py:attr:`position` and :py:attr:`focal_point`, respectively.
+
+        The 4-by-4 transformation matrix is a tool to encode a general linear
+        transformation and a translation (an affine transform). The 3-by-3 principal
+        submatrix (the top left corner of the matrix) encodes a three-dimensional
+        linear transformation (e.g. some rotation around the origin). The top three
+        elements in the last column of the matrix encode a three-dimensional
+        translation. The last row of the matrix is redundant.
+
+        Examples
+        --------
+        Create a light with a transformation matrix that corresponds to a
+        90-degree rotation around the z axis and a shift by (0, 0, -1), and
+        check that the light's position transforms as expected.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> light = pv.Light(position=(1, 0, 3))
+        >>> trans = np.zeros((4, 4))
+        >>> trans[:-1, :-1] = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+        >>> trans[:-1, -1] = [0, 0, -1]
+        >>> light.transform_matrix = trans
+        >>> light.position
+        (1.0, 0.0, 3.0)
+        >>> light.world_position
+        (0.0, 1.0, 2.0)
+
+        """
+        return self.GetTransformMatrix()
+
+    @transform_matrix.setter
+    def transform_matrix(self, matrix):
+        """Set the 4x4 transformation matrix of the light.
+        """
+        if isinstance(matrix, vtk.vtkMatrix4x4):
+            trans = matrix
+        else:
+            try:
+                trans = vtkmatrix_from_array(matrix)
+            except ValueError:
+                raise ValueError('Transformation matrix must be '
+                                 'a 4-by-4 matrix or array-like.') from None
+        self.SetTransformMatrix(trans)
 
     @property
     def light_type(self):
@@ -329,11 +456,13 @@ class Light(vtkLight):
         establish this space.
 
         The property returns class constant values from an enum:
+
             - Light.HEADLIGHT == 1
             - Light.CAMERA_LIGHT == 2
             - Light.SCENE_LIGHT == 3
 
         """
+        # TODO: "Camera lights use the transform matrix to establish this space.": is this true in practice?
         return LightType(self.GetLightType())
 
     @light_type.setter
@@ -389,8 +518,6 @@ class Light(vtkLight):
     def switch_off(self):
         """Switch off the light."""
         self.SwitchOff()
-
-    # TODO: implement transform_point, transform_vector here?
 
     def set_direction_angle(self, elev, azim):
         """Set the position and focal point of a directional light.
@@ -474,6 +601,8 @@ class Light(vtkLight):
         light.cone_angle = vtk_light.GetConeAngle()
         light.attenuation_values = vtk_light.GetAttenuationValues()
         light.shadow_attenuation = vtk_light.GetShadowAttenuation()
-        # TODO: copy transformation matrix even if not exposed?
+        trans = vtk_light.GetTransformMatrix()
+        if trans is not None:
+            light.transform_matrix = trans
 
         return light

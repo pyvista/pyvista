@@ -1,5 +1,6 @@
 import math
 
+import numpy as np
 import pytest
 import vtk
 
@@ -75,6 +76,41 @@ def test_positioning():
     assert light.focal_point == (0, 0, 0)
     assert all(math.isclose(coord_have, coord_expect) for coord_have, coord_expect
                in zip(light.position, expected_position))  # TODO: fix this style
+
+    with pytest.raises(AttributeError):
+        light.world_position = position
+    with pytest.raises(AttributeError):
+        light.world_focal_point = focal_point
+
+
+def test_transforms():
+    position = (1, 2, 3)
+    focal_point = (4, 5, 6)
+    light = pyvista.Light(position=position)
+    light.focal_point = focal_point
+
+    trans_array = np.arange(4 * 4).reshape(4, 4)
+    trans_matrix = pyvista.vtkmatrix_from_array(trans_array)
+
+    assert light.transform_matrix is None
+    light.transform_matrix = trans_array
+    assert isinstance(light.transform_matrix, vtk.vtkMatrix4x4)
+    array = pyvista.array_from_vtkmatrix(light.transform_matrix)
+    assert np.array_equal(array, trans_array)
+    light.transform_matrix = trans_matrix
+    matrix = light.transform_matrix
+    assert all(matrix.GetElement(i, j) == trans_matrix.GetElement(i, j)
+               for i in range(4) for j in range(4))
+
+    linear_trans = trans_array[:-1, :-1]
+    shift = trans_array[:-1, -1]
+    assert light.position == position
+    assert np.allclose(light.world_position, linear_trans @ position + shift)
+    assert light.focal_point == focal_point
+    assert np.allclose(light.world_focal_point, linear_trans @ focal_point + shift)
+
+    with pytest.raises(ValueError):
+        light.transform_matrix = 'invalid'
 
 
 def test_intensity():
