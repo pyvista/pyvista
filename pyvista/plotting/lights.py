@@ -249,7 +249,6 @@ class Light(vtkLight):
         (0.0, 1.0, 2.0)
 
         """
-
         return self.GetTransformedPosition()
 
     @property
@@ -426,8 +425,7 @@ class Light(vtkLight):
 
     @transform_matrix.setter
     def transform_matrix(self, matrix):
-        """Set the 4x4 transformation matrix of the light.
-        """
+        """Set the 4x4 transformation matrix of the light."""
         if isinstance(matrix, vtk.vtkMatrix4x4):
             trans = matrix
         else:
