@@ -105,6 +105,33 @@ class Light(vtkLight):
         """Print a repr specifying the id of the light and its light type."""
         return (f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>')
 
+    def __eq__(self, other):
+        """Compare whether the relevant attributes of two lights are equal."""
+        # attributes which are native python types and thus implement __eq__
+        native_attrs = [
+            'light_type', 'position', 'focal_point', 'ambient_color',
+            'diffuse_color', 'specular_color', 'intensity', 'on',
+            'positional', 'exponent', 'cone_angle', 'attenuation_values',
+            'shadow_attenuation',
+        ]
+        for attr in native_attrs:
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+
+        # check transformation matrix element by element (if it exists)
+        this_trans = self.transform_matrix
+        that_trans = other.transform_matrix
+        trans_count = sum(1 for trans in [this_trans, that_trans] if trans is not None)
+        if trans_count == 1:
+            # either but not both are None
+            return False
+        if trans_count == 2:
+            for i in range(4):
+                for j in range(4):
+                    if this_trans.GetElement(i, j) != that_trans.GetElement(i, j):
+                        return False
+        return True
+
     #### Properties ####
 
     @property
@@ -318,7 +345,11 @@ class Light(vtkLight):
 
     @property
     def on(self):
-        """Return whether the light is on."""
+        """Return whether the light is on.
+
+        This corresponds to the Switch state of the ``vtk.vtkLight`` class.
+
+        """
         return bool(self.GetSwitch())
 
     @on.setter
@@ -535,7 +566,30 @@ class Light(vtkLight):
         """
         self.SetDirectionAngle(elev, azim)
 
-    # TODO: deepcopy?
+    def copy(self, deep=True):
+        """Return a shallow or a deep copy of the light.
+
+        The only mutable attribute of ``Light`` objects is the transformation
+        matrix (if it exists). Thus asking for a shallow copy merely implies
+        that the returned light and the original share the transformation
+        matrix instance.
+
+        Parameters
+        ----------
+        deep : bool
+            Whether to return a deep copy rather than a shallow one. Default ``True``.
+
+        """
+        # let vtk do the heavy lifting
+        if deep:
+            other = vtkLight()
+            other.DeepCopy(self)
+        else:
+            other = self.ShallowClone()
+            # workaround until https://gitlab.kitware.com/vtk/vtk/-/issues/18093 is patched
+            other.SetShadowAttenuation(self.shadow_attenuation)
+
+        return Light.from_vtk(other)
 
     def set_headlight(self):
         """Set the light to be a headlight.

@@ -9,6 +9,24 @@ from pyvista.plotting import system_supports_plotting
 
 # TODO: invalid cases, once checks are in place
 
+# pyvista attr -- value -- vtk name triples:
+configuration = [
+    ('light_type', pyvista.Light.CAMERA_LIGHT, 'SetLightType'),  # resets transformation!
+    ('position', (1, 1, 1), 'SetPosition'),
+    ('focal_point', (2, 2, 2), 'SetFocalPoint'),
+    ('ambient_color', (1, 0, 0), 'SetAmbientColor'),
+    ('diffuse_color', (0, 1, 0), 'SetDiffuseColor'),
+    ('specular_color', (0, 0, 1), 'SetSpecularColor'),
+    ('intensity', 0.5, 'SetIntensity'),
+    ('on', False, 'SetSwitch'),
+    ('positional', True, 'SetPositional'),
+    ('exponent', 1.5, 'SetExponent'),
+    ('cone_angle', 45, 'SetConeAngle'),
+    ('attenuation_values', (3, 2, 1), 'SetAttenuationValues'),
+    ('shadow_attenuation', 0.5, 'SetShadowAttenuation'),
+    ('transform_matrix', np.arange(4 * 4).reshape(4, 4), 'SetTransformMatrix'),
+]
+
 def test_init():
     position = (1, 1, 1)
     color = (0.5, 0.5, 0.5)
@@ -23,6 +41,55 @@ def test_init():
 
     # check repr too
     assert repr(light) is not None
+
+
+def test_eq():
+    light = pyvista.Light()
+    other = pyvista.Light()
+    for light_now in light, other:
+        for name, value, _ in configuration:
+            setattr(light_now, name, value)
+
+    assert light == other
+
+    # check that changing anything will break equality
+    for name, value, _ in configuration:
+        original_value = getattr(other, name)
+        restore_transform = False
+        if value is pyvista.Light.CAMERA_LIGHT:
+            changed_value = pyvista.Light.HEADLIGHT
+            restore_transform = True
+        elif isinstance(value, bool):
+            changed_value = not value
+        elif isinstance(value, (int, float)):
+            changed_value = 0
+        elif isinstance(value, tuple):
+            changed_value = (0.5, 0.5, 0.5)
+        else:
+            # transform_matrix; value is an ndarray
+            changed_value = -value
+        setattr(other, name, changed_value)
+        assert light != other
+        setattr(other, name, original_value)
+        if restore_transform:
+            # setting the light type cleared the transform
+            other.transform_matrix = light.transform_matrix
+
+    # sanity check that we managed to restore the original state
+    assert light == other
+
+
+def test_copy():
+    light = pyvista.Light()
+    for name, value, _ in configuration:
+        setattr(light, name, value)
+
+    deep = light.copy()
+    assert deep == light
+    assert deep.transform_matrix is not light.transform_matrix
+    shallow = light.copy(deep=False)
+    assert shallow == light
+    assert shallow.transform_matrix is light.transform_matrix
 
 
 def test_colors():
@@ -210,30 +277,20 @@ def test_type_invalid():
 def test_from_vtk():
     vtk_light = vtk.vtkLight()
 
-    # pyvista attr -- value -- vtk name triples:
-    configuration = [
-        ('light_type', pyvista.Light.CAMERA_LIGHT, 'SetLightType'),  # resets transformation!
-        ('position', (1, 1, 1), 'SetPosition'),
-        ('focal_point', (2, 2, 2), 'SetFocalPoint'),
-        ('ambient_color', (1, 0, 0), 'SetAmbientColor'),
-        ('diffuse_color', (0, 1, 0), 'SetDiffuseColor'),
-        ('specular_color', (0, 0, 1), 'SetSpecularColor'),
-        ('intensity', 0.5, 'SetIntensity'),
-        ('on', False, 'SetSwitch'),
-        ('positional', True, 'SetPositional'),
-        ('exponent', 1.5, 'SetExponent'),
-        ('cone_angle', 45, 'SetConeAngle'),
-        ('attenuation_values', (3, 2, 1), 'SetAttenuationValues'),
-        ('shadow_attenuation', 0.5, 'SetShadowAttenuation'),
-    ]
-
     # set the vtk light
     for _, value, vtkname in configuration:
         vtk_setter = getattr(vtk_light, vtkname)
+        if isinstance(value, np.ndarray):
+            # we can't pass the array to vtkLight directly
+            value = pyvista.vtkmatrix_from_array(value)
         vtk_setter(value)
     light = pyvista.Light.from_vtk(vtk_light)
     for pvname, value, _ in configuration:
-        assert getattr(light, pvname) == value
+        if isinstance(value, np.ndarray):
+            trans_arr = pyvista.array_from_vtkmatrix(getattr(light, pvname))
+            assert np.array_equal(trans_arr, value)
+        else:
+            assert getattr(light, pvname) == value
 
     # invalid case
     with pytest.raises(TypeError):
