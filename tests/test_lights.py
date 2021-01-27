@@ -297,3 +297,16 @@ def test_from_vtk():
         pyvista.Light.from_vtk('invalid')
     with pytest.raises(TypeError):
         pyvista.Light('invalid')
+
+
+def test_vtk_shallow_copy_regression():
+    """Verify that https://gitlab.kitware.com/vtk/vtk/-/issues/18093 is not fixed yet.
+
+    If this test breaks then the bug has been fixed in "this" version of vtk. Please
+    remove the corresponding workaround from pyvista.plotting.lights.Light.copy(),
+    paying attention to possible supported vtk versions.
+    """
+    light = vtk.vtkLight()
+    attenuation = 0.5
+    light.SetShadowAttenuation(attenuation)
+    assert light.ShallowClone().GetShadowAttenuation() != attenuation
