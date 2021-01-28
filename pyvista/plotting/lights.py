@@ -86,20 +86,18 @@ class Light(vtkLight):
             try:
                 light_type = mapping[type_normalized]
             except KeyError:
-                raise ValueError(f'Invalid ``light_type`` "{light_type_orig}"') from None
+                raise ValueError(f'Invalid light_type "{light_type_orig}"') from None
         elif not isinstance(light_type, int):
-            raise TypeError('Parameter ``light_type`` must be int or str,'
-                            f' not {type(light_type)}.')
+            raise TypeError('Parameter light_type must be int or str,'
+                            f' not {type(light_type).__name__}.')
         # LightType is an int subclass
 
         self.light_type = light_type
 
-        # TODO: should setting attenuation and cone angle automatically switch to positional?
         # TODO: should color and point and direction_angle have more flexible signatures? (only for non-properties)
         # TODO: ndarray type and shape and size checking for color and point
-        # TODO: check if backticks in error messages are OK/necessary
         # TODO: examples, also for property getters!
-        # TODO: add actor...?
+        # TODO: add actor?
 
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
@@ -405,7 +403,8 @@ class Light(vtkLight):
         """Return the quadratic attenuation constants.
 
         The values specify the constant, linear and quadratic constants
-        in this order.
+        in this order. These parameters only have an effect for positional
+        lights.
 
         """
         return self.GetAttenuationValues()
@@ -503,7 +502,7 @@ class Light(vtkLight):
         """
         if not isinstance(ltype, int):
             # note that LightType is an int subclass
-            raise TypeError('Light type must be an integer subclass,'
+            raise TypeError('Light type must be an integer subclass instance,'
                             f' got {ltype} instead.')
         self.SetLightType(ltype)
 
@@ -637,7 +636,7 @@ class Light(vtkLight):
 
         """
         if not isinstance(vtk_light, vtkLight):
-            raise TypeError(f'Expected ``vtkLight`` object, got ``{type(vtk_light)}`` instead.')
+            raise TypeError(f'Expected vtkLight object, got {type(vtk_light).__name__} instead.')
 
         light = cls()
         light.light_type = vtk_light.GetLightType()  # resets transformation matrix!
