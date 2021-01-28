@@ -249,8 +249,8 @@ class DataObject:
         --------
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
-        >>> mesh.actual_memory_size
-        94
+        >>> mesh.actual_memory_size  # doctest:+SKIP
+        93
 
         """
         return self.GetActualMemorySize()
