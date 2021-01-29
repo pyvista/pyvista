@@ -955,10 +955,3 @@ def test_cell_bounds(grid):
 def test_cell_type(grid):
     ctype = grid.cell_type(0)
     assert isinstance(ctype, int)
-
-
-def test_reflect(grid):
-    reflected = grid.reflect('z', copy=True, center=6)
-    assert isinstance(reflected, pyvista.UnstructuredGrid)
-    assert reflected.n_cells == 2*grid.n_cells
-    assert reflected.n_points == 2*grid.n_points
