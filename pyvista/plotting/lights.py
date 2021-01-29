@@ -109,7 +109,6 @@ class Light(vtkLight):
             'light_type', 'position', 'focal_point', 'ambient_color',
             'diffuse_color', 'specular_color', 'intensity', 'on',
             'positional', 'exponent', 'cone_angle', 'attenuation_values',
-            'shadow_attenuation',
         ]
         for attr in native_attrs:
             if getattr(self, attr) != getattr(other, attr):
@@ -581,22 +580,6 @@ class Light(vtkLight):
 
         return bool(self.LightTypeIsSceneLight())
 
-    @property
-    def shadow_attenuation(self):
-        """Return the shadow intensity.
-
-        By default a light will be completely blocked when in shadow.
-        By setting this value to less than 1 you can control how much
-        light is attenuated when in shadow.
-
-        """
-        return self.GetShadowAttenuation()
-
-    @shadow_attenuation.setter
-    def shadow_attenuation(self, shadow_intensity):
-        """Set the shadow intensity."""
-        self.SetShadowAttenuation(shadow_intensity)
-
     #### Everything else ####
 
     def switch_on(self):
@@ -645,8 +628,6 @@ class Light(vtkLight):
             other.DeepCopy(self)
         else:
             other = self.ShallowClone()
-            # workaround until https://gitlab.kitware.com/vtk/vtk/-/issues/18093 is patched
-            other.SetShadowAttenuation(self.shadow_attenuation)
 
         return Light.from_vtk(other)
 
@@ -711,7 +692,6 @@ class Light(vtkLight):
         light.exponent = vtk_light.GetExponent()
         light.cone_angle = vtk_light.GetConeAngle()
         light.attenuation_values = vtk_light.GetAttenuationValues()
-        light.shadow_attenuation = vtk_light.GetShadowAttenuation()
         trans = vtk_light.GetTransformMatrix()
         if trans is not None:
             light.transform_matrix = trans

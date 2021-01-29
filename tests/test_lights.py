@@ -22,7 +22,6 @@ configuration = [
     ('exponent', 1.5, 'SetExponent'),
     ('cone_angle', 45, 'SetConeAngle'),
     ('attenuation_values', (3, 2, 1), 'SetAttenuationValues'),
-    ('shadow_attenuation', 0.5, 'SetShadowAttenuation'),
     ('transform_matrix', np.arange(4 * 4).reshape(4, 4), 'SetTransformMatrix'),
 ]
 
@@ -224,10 +223,6 @@ def test_shape():
     light.attenuation_values = attenuation_values
     assert light.attenuation_values == attenuation_values
 
-    shadow_attenuation = 0.5
-    light.shadow_attenuation = shadow_attenuation
-    assert light.shadow_attenuation == shadow_attenuation
-
 
 @pytest.mark.parametrize(
     'int_code,enum_code',
@@ -296,16 +291,3 @@ def test_from_vtk():
         pyvista.Light.from_vtk('invalid')
     with pytest.raises(TypeError):
         pyvista.Light('invalid')
-
-
-def test_vtk_shallow_copy_regression():
-    """Verify that https://gitlab.kitware.com/vtk/vtk/-/issues/18093 is not fixed yet.
-
-    If this test breaks then the bug has been fixed in "this" version of vtk. Please
-    remove the corresponding workaround from pyvista.plotting.lights.Light.copy(),
-    paying attention to possible supported vtk versions.
-    """
-    light = vtk.vtkLight()
-    attenuation = 0.5
-    light.SetShadowAttenuation(attenuation)
-    assert light.ShallowClone().GetShadowAttenuation() != attenuation
