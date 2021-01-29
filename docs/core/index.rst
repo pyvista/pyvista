@@ -40,3 +40,4 @@ PyVista has the following mesh types:
    grids
    composite
    filters
+   helpers

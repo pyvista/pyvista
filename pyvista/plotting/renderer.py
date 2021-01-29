@@ -1,7 +1,6 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
-import logging
 from weakref import proxy
 
 import numpy as np
@@ -12,6 +11,7 @@ import pyvista
 from pyvista.utilities import wrap, check_depth_peeling
 from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
 from .tools import create_axes_orientation_box, create_axes_marker
+from .camera import Camera
 
 
 def scale_point(camera, point, invert=False):
@@ -19,7 +19,7 @@ def scale_point(camera, point, invert=False):
 
     Parameters
     ----------
-    camera : vtk.vtkCamera
+    camera : Camera
         The camera who's matrix to use.
 
     point : tuple(float)
@@ -117,6 +117,8 @@ class Renderer(vtkRenderer):
         self.AutomaticLightCreationOff()
         self._floors = []
         self._floor_kwargs = []
+        self._camera = Camera()
+        self.SetActiveCamera(self._camera)
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -132,9 +134,9 @@ class Renderer(vtkRenderer):
     def camera_position(self):
         """Return camera position of active render window."""
         return CameraPosition(
-            scale_point(self.camera, self.camera.GetPosition(), invert=True),
-            scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
-            self.camera.GetViewUp())
+            scale_point(self.camera, self.camera.position, invert=True),
+            scale_point(self.camera, self.camera.focal_point, invert=True),
+            self.camera.up)
 
     @camera_position.setter
     def camera_position(self, camera_location):
@@ -164,11 +166,9 @@ class Renderer(vtkRenderer):
                     raise pyvista.core.errors.InvalidCameraError
 
             # everything is set explicitly
-            self.camera.SetPosition(scale_point(self.camera, camera_location[0],
-                                                invert=False))
-            self.camera.SetFocalPoint(scale_point(self.camera, camera_location[1],
-                                                  invert=False))
-            self.camera.SetViewUp(camera_location[2])
+            self.camera.position = scale_point(self.camera, camera_location[0], invert=False)
+            self.camera.focal_point = scale_point(self.camera, camera_location[1], invert=False)
+            self.camera.up = camera_location[2]
 
         # reset clipping range
         self.ResetCameraClippingRange()
@@ -178,18 +178,20 @@ class Renderer(vtkRenderer):
     @property
     def camera(self):
         """Return the active camera for the rendering scene."""
-        return self.GetActiveCamera()
+        return self._camera
 
     @camera.setter
-    def camera(self, camera):
+    def camera(self, source):
         """Set the active camera for the rendering scene."""
-        self.SetActiveCamera(camera)
+        self._camera = source
+        self.SetActiveCamera(self._camera)
         self.camera_position = CameraPosition(
-            scale_point(camera, camera.GetPosition(), invert=True),
-            scale_point(camera, camera.GetFocalPoint(), invert=True),
-            camera.GetViewUp()
+            scale_point(source, source.position, invert=True),
+            scale_point(source, source.focal_point, invert=True),
+            source.up
         )
         self.Modified()
+        self.camera_set = True
 
     @property
     def bounds(self):
@@ -345,8 +347,8 @@ class Renderer(vtkRenderer):
             especially when edges are visible, but can cause flat
             meshes to be partially displayed.  Default False.
 
-        Return
-        ------
+        Returns
+        -------
         actor : vtk.vtkActor
             The actor.
 
@@ -410,8 +412,8 @@ class Renderer(vtkRenderer):
                            labels_off=False):
         """Add axes actor at origin.
 
-        Return
-        ------
+        Returns
+        -------
         marker_actor : vtk.vtkAxesActor
             vtkAxesActor actor
 
@@ -641,8 +643,8 @@ class Renderer(vtkRenderer):
             the datasets in the scene from the axes annotations. Defaults to
             have no padding
 
-        Return
-        ------
+        Returns
+        -------
         cube_axes_actor : vtk.vtkCubeAxesActor
             Bounds actor
 
@@ -1082,7 +1084,7 @@ class Renderer(vtkRenderer):
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
-        self.camera.SetFocalPoint(scale_point(self.camera, point, invert=False))
+        self.camera.focus = scale_point(self.camera, point, invert=False)
         self.Modified()
 
     def set_position(self, point, reset=False):
@@ -1090,7 +1092,7 @@ class Renderer(vtkRenderer):
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
-        self.camera.SetPosition(scale_point(self.camera, point, invert=False))
+        self.camera.position = scale_point(self.camera, point, invert=False)
         if reset:
             self.reset_camera()
         self.camera_set = True
@@ -1101,7 +1103,7 @@ class Renderer(vtkRenderer):
         if isinstance(vector, np.ndarray):
             if vector.ndim != 1:
                 vector = vector.ravel()
-        self.camera.SetViewUp(vector)
+        self.camera.up = vector
         self.Modified()
 
     def enable_parallel_projection(self):
@@ -1111,34 +1113,34 @@ class Renderer(vtkRenderer):
         often useful when viewing images or 2D datasets.
 
         """
-        self.camera.SetParallelProjection(True)
+        self.camera.enable_parallel_projection()
         self.Modified()
 
     def disable_parallel_projection(self):
         """Reset the camera to use perspective projection."""
-        self.camera.SetParallelProjection(False)
+        self.camera.disable_parallel_projection()
         self.Modified()
 
     @property
     def parallel_projection(self):
         """Return parallel projection state of active render window."""
-        return bool(self.camera.GetParallelProjection())
+        return self.camera.is_parallel_projection
 
     @parallel_projection.setter
     def parallel_projection(self, state):
         """Set parallel projection state of all active render windows."""
-        self.camera.SetParallelProjection(state)
+        self.camera.enable_parallel_projection(state)
         self.Modified()
 
     @property
     def parallel_scale(self):
         """Return parallel scale of active render window."""
-        return self.camera.GetParallelScale()
+        return self.camera.parallel_scale
 
     @parallel_scale.setter
     def parallel_scale(self, value):
         """Set parallel scale of all active render windows."""
-        self.camera.SetParallelScale(value)
+        self.camera.parallel_scale = value
         self.Modified()
 
     def remove_actor(self, actor, reset_camera=False, render=True):
@@ -1159,8 +1161,8 @@ class Renderer(vtkRenderer):
             Render upon actor removal.  Set this to ``False`` to stop
             the render window from rendering when an actor is removed.
 
-        Return
-        ------
+        Returns
+        -------
         success : bool
             True when actor removed.  False when actor has not been
             removed.
@@ -1396,6 +1398,7 @@ class Renderer(vtkRenderer):
         if not hasattr(self, 'edl_pass'):
             return
         self.SetPass(None)
+        self.edl_pass.ReleaseGraphicsResources(self.parent.ren_win)
         del self.edl_pass
         self.Modified()
         return
@@ -1446,7 +1449,6 @@ class Renderer(vtkRenderer):
     def close(self):
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        self.camera.RemoveAllObservers()
         if hasattr(self, 'axes_widget'):
             self.hide_axes()  # Necessary to avoid segfault
             self.axes_actor = None
@@ -1464,6 +1466,7 @@ class Renderer(vtkRenderer):
         self.remove_floors(render=render)
         self.RemoveAllViewProps()
         self._actors = {}
+        self._camera = None
         # remove reference to parent last
         self.parent = None
         return

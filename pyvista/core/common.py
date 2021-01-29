@@ -202,8 +202,8 @@ class DataObject:
         deep : bool, optional
             When True makes a full copy of the object.
 
-        Return
-        ------
+        Returns
+        -------
         newobject : same as input
            Deep or shallow copy of the input.
 
@@ -369,8 +369,8 @@ class Common(DataSetFilters, DataObject):
         their size will be dependent on the length of the vector.
         Their direction will be the "direction" of the vector
 
-        Return
-        ------
+        Returns
+        -------
         arrows : pyvista.PolyData
             Active scalars represented as arrows.
 
@@ -431,8 +431,8 @@ class Common(DataSetFilters, DataObject):
         name : str
             The name of the texture and texture coordinates to activate
 
-        Return
-        ------
+        Returns
+        -------
         vtk.vtkTexture : The active texture
 
         """
@@ -650,9 +650,9 @@ class Common(DataSetFilters, DataObject):
 
         """
         if isinstance(trans, vtk.vtkMatrix4x4):
-            t = pyvista.trans_from_matrix(trans)
+            t = pyvista.array_from_vtkmatrix(trans)
         elif isinstance(trans, vtk.vtkTransform):
-            t = pyvista.trans_from_matrix(trans.GetMatrix())
+            t = pyvista.array_from_vtkmatrix(trans.GetMatrix())
         elif isinstance(trans, np.ndarray):
             if trans.ndim != 2:
                 raise ValueError('Transformation array must be 4x4')
@@ -771,8 +771,8 @@ class Common(DataSetFilters, DataObject):
     def volume(self):
         """Return the mesh volume.
 
-        Return
-        ------
+        Returns
+        -------
         volume : float
             Total volume of the mesh.
 
@@ -959,8 +959,8 @@ class Common(DataSetFilters, DataObject):
             If greater than ``1``, returns the indices of the ``n`` closest
             points.
 
-        Return
-        ------
+        Returns
+        -------
         int : the index of the point in this mesh that is closes to the given point.
         """
         if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:

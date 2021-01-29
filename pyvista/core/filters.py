@@ -65,7 +65,7 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
-    def _clip_with_function(dataset, function, invert=True, value=0.0):
+    def _clip_with_function(dataset, function, invert=True, value=0.0, return_clipped=False):
         """Clip using an implicit function (internal helper)."""
         if isinstance(dataset, vtk.vtkPolyData):
             alg = vtk.vtkClipPolyData()
@@ -78,10 +78,18 @@ class DataSetFilters:
         alg.SetValue(value)
         alg.SetClipFunction(function) # the implicit function
         alg.SetInsideOut(invert) # invert the clip if needed
+        if return_clipped:
+            alg.GenerateClippedOutputOn()
         alg.Update() # Perform the Cut
-        return _get_output(alg)
 
-    def clip(dataset, normal='x', origin=None, invert=True, value=0.0, inplace=False):
+        if return_clipped:
+            a = _get_output(alg, oport=0)
+            b = _get_output(alg, oport=1)
+            return a, b
+        else:
+            return _get_output(alg)
+
+    def clip(dataset, normal='x', origin=None, invert=True, value=0.0, inplace=False, return_clipped=False):
         """Clip a dataset by a plane by specifying the origin and normal.
 
         If no parameters are given the clip will occur in the center of that dataset.
@@ -107,11 +115,16 @@ class DataSetFilters:
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
+        return_clipped : bool, optional
+            Return both unclipped and clipped parts of the dataset.
+
         Returns
         -------
-        mesh : pyvista.PolyData
+        mesh : pyvista.PolyData or tuple(pyvista.PolyData)
             Clipped mesh when ``inplace=False``.  When
-            ``inplace=True``, ``None``
+            ``inplace=True``, ``None``. When ``return_clipped=True``,
+            a tuple containing the unclipped and clipped datasets,
+            regardless of the setting of ``inplace``.
 
         Examples
         --------
@@ -140,9 +153,16 @@ class DataSetFilters:
         function = generate_plane(normal, origin)
         # run the clip
         result = DataSetFilters._clip_with_function(dataset, function,
-                                                    invert=invert, value=value)
+                                                    invert=invert, value=value,
+                                                    return_clipped=return_clipped)
         if inplace:
-            dataset.overwrite(result)
+            overwrite_with = result[0] if return_clipped else result
+            dataset.overwrite(overwrite_with)
+            if return_clipped:
+                # normally if inplace=True, filters return None. But if
+                # return_clipped=True, the user still wants the clipped data,
+                # so return both the unclipped and clipped data as a tuple
+                return result
         else:
             return result
 
@@ -1502,8 +1522,8 @@ class DataSetFilters:
         inplace : bool, optional
             Updates mesh in-place while returning ``None``.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.UnstructuredGrid
             Mesh containing only triangles. ``None`` when ``inplace=True``
 
@@ -2044,8 +2064,8 @@ class DataSetFilters:
             Tolerance used to compute whether a point in the source is in a
             cell of the input.  If not given, tolerance is automatically generated.
 
-        Return
-        ------
+        Returns
+        -------
         sampled_line : pv.PolyData
             Line object with sampled data from dataset.
         """
@@ -2147,8 +2167,8 @@ class DataSetFilters:
         ind : np.ndarray
             Numpy array of cell indices to be extracted.
 
-        Return
-        ------
+        Returns
+        -------
         subgrid : pyvista.UnstructuredGrid
             Subselected grid
 
@@ -2193,8 +2213,8 @@ class DataSetFilters:
             Specifies if the cells shall be returned or not. The default is 
             True.
 
-        Return
-        ------
+        Returns
+        -------
         subgrid : pyvista.UnstructuredGrid
             Subselected grid.
 
@@ -2239,8 +2259,8 @@ class DataSetFilters:
             Adds a cell array "vtkOriginalPointIds" that idenfities which
             original cells these surface cells correspond to
 
-        Return
-        ------
+        Returns
+        -------
         extsurf : pyvista.PolyData
             Surface mesh of the grid
 
@@ -2262,8 +2282,8 @@ class DataSetFilters:
     def surface_indices(dataset):
         """Return the surface indices of a grid.
 
-        Return
-        ------
+        Returns
+        -------
         surf_ind : np.ndarray
             Indices of the surface points.
 
@@ -2306,8 +2326,8 @@ class DataSetFilters:
         inplace : bool, optional
             Return new mesh or overwrite input.
 
-        Return
-        ------
+        Returns
+        -------
         edges : pyvista.vtkPolyData
             Extracted edges. None if inplace=True.
 
@@ -2357,8 +2377,8 @@ class DataSetFilters:
             the arrays of the merging grids will be overwritten
             by the original main mesh.
 
-        Return
-        ------
+        Returns
+        -------
         merged_grid : vtk.UnstructuredGrid
             Merged grid.  Returned when inplace is False.
 
@@ -2616,7 +2636,7 @@ class DataSetFilters:
 
 @abstract_class
 class CompositeFilters:
-    """An internal class to manage filtes/algorithms for composite datasets."""
+    """An internal class to manage filters/algorithms for composite datasets."""
 
     def extract_geometry(composite):
         """Combine the geomertry of all blocks into a single ``PolyData`` object.
@@ -2713,7 +2733,7 @@ class CompositeFilters:
 
 @abstract_class
 class PolyDataFilters(DataSetFilters):
-    """An internal class to manage filtes/algorithms for polydata datasets."""
+    """An internal class to manage filters/algorithms for polydata datasets."""
 
     def edge_mask(poly_data, angle):
         """Return a mask of the points of a surface mesh that has a surface angle greater than angle.
@@ -2752,8 +2772,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             The cut mesh when inplace=False
 
@@ -2792,8 +2812,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         joinedmesh : pyvista.PolyData
             Initial mesh and the new mesh when inplace=False.
 
@@ -2829,8 +2849,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         union : pyvista.PolyData
             The union mesh when inplace=False.
 
@@ -2862,8 +2882,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         union : pyvista.PolyData
             The union mesh when inplace=False.
 
@@ -2900,8 +2920,8 @@ class PolyDataFilters(DataSetFilters):
             If `True`, return the second input mesh split by the intersection with the
             first input mesh.
 
-        Return
-        ------
+        Returns
+        -------
         intersection: pyvista.PolyData
             The intersection line.
 
@@ -2960,8 +2980,8 @@ class PolyDataFilters(DataSetFilters):
             Maximum
             Minimum
 
-        Return
-        ------
+        Returns
+        -------
         curvature : np.ndarray
             Curvature values
 
@@ -3004,8 +3024,8 @@ class PolyDataFilters(DataSetFilters):
         **kwargs : optional
             See :func:`pyvista.plot`
 
-        Return
-        ------
+        Returns
+        -------
         cpos : list
             List of camera position, focal point, and view up
 
@@ -3023,8 +3043,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Mesh containing only triangles.  None when inplace=True
 
@@ -3078,8 +3098,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Smoothed mesh. None when inplace=True.
 
@@ -3154,8 +3174,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Decimated mesh. None when inplace=True.
 
@@ -3205,8 +3225,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Tube-filtered mesh. None when inplace=True.
 
@@ -3283,8 +3303,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : Polydata object
             pyvista polydata object.  None when inplace=True
 
@@ -3392,8 +3412,8 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        Return
-        ------
+        Returns
+        -------
         outmesh : pyvista.PolyData
             Decimated mesh.  None when inplace=True.
 
@@ -3503,8 +3523,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing. Defaults to False.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Updated mesh with cell and point normals if inplace=False
 
@@ -3688,7 +3708,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_with_hole = pv.Sphere(end_theta=330)
         >>> sphere_with_hole.fill_holes(1000, inplace=True)
         >>> edges = sphere_with_hole.extract_feature_edges(feature_edges=False, manifold_edges=False)
-        >>> assert edges.n_cells is 0
+        >>> assert edges.n_cells == 0
 
         """
         logging.warning('pyvista.PolyData.fill_holes is known to segfault. '
@@ -3743,8 +3763,8 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Cleaned mesh.  None when inplace=True
 
@@ -3803,8 +3823,8 @@ class PolyDataFilters(DataSetFilters):
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
 
-        Return
-        ------
+        Returns
+        -------
         output : pyvista.PolyData
             PolyData object consisting of the line segment between the
             two given vertices.
@@ -3856,8 +3876,8 @@ class PolyDataFilters(DataSetFilters):
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
 
-        Return
-        ------
+        Returns
+        -------
         length : float
             Length of the geodesic segment.
 
@@ -3901,8 +3921,8 @@ class PolyDataFilters(DataSetFilters):
         off_screen : bool, optional
             Plots off screen when ``plot=True``.  Used for unit testing.
 
-        Return
-        ------
+        Returns
+        -------
         intersection_points : np.ndarray
             Location of the intersection points.  Empty array if no
             intersections.
@@ -3984,8 +4004,8 @@ class PolyDataFilters(DataSetFilters):
         retry : bool, optional
             Will retry rays that return no intersections using the ray_trace
 
-        Return
-        ------
+        Returns
+        -------
         intersection_points : np.ndarray
             Location of the intersection points.  Empty array if no
             intersections.
@@ -4105,8 +4125,8 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
-        Return
-        ------
+        Returns
+        -------
         mesh : pyvista.PolyData
             Mesh without the points flagged for removal.  Not returned
             when inplace=False.
@@ -4559,7 +4579,7 @@ class PolyDataFilters(DataSetFilters):
 
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):
-    """An internal class to manage filtes/algorithms for unstructured grid datasets."""
+    """An internal class to manage filters/algorithms for unstructured grid datasets."""
 
     def delaunay_2d(ugrid, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     progress_bar=False):
@@ -4579,8 +4599,177 @@ class UnstructuredGridFilters(DataSetFilters):
 
 
 @abstract_class
+class StructuredGridFilters(DataSetFilters):
+    """An internal class to manage filters/algorithms for structured grid datasets."""
+
+    def extract_subset(dataset, voi, rate=(1, 1, 1), boundary=False):
+        """Select piece (e.g., volume of interest).
+
+        To use this filter set the VOI ivar which are i-j-k min/max indices
+        that specify a rectangular region in the data. (Note that these are
+        0-offset.) You can also specify a sampling rate to subsample the
+        data.
+
+        Typical applications of this filter are to extract a slice from a
+        volume for image processing, subsampling large volumes to reduce data
+        size, or extracting regions of a volume with interesting data.
+
+        Parameters
+        ----------
+        voi : tuple(int)
+            Length 6 iterable of ints: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            These bounds specify the volume of interest in i-j-k min/max
+            indices.
+
+        rate : tuple(int)
+            Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
+            Default: ``(1, 1, 1)``
+
+        boundary : bool
+            Control whether to enforce that the "boundary" of the grid is
+            output in the subsampling process. (This only has effect
+            when the rate in any direction is not equal to 1). When
+            this is on, the subsampling will always include the boundary of
+            the grid even though the sample rate is not an even multiple of
+            the grid dimensions.  By default this is ``False``.
+
+        Examples
+        --------
+        Split a grid in half.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> grid = examples.load_structured()
+        >>> voi_1 = grid.extract_subset([0, 80, 0, 40, 0, 1], boundary=True)
+        >>> voi_2 = grid.extract_subset([0, 80, 40, 80, 0, 1], boundary=True)
+
+        For fun, add the two grids back together and show they are
+        identical to the original grid.
+
+        >>> joined = voi_1.concatenate(voi_2, axis=1)
+        >>> assert np.allclose(grid.points, joined.points)
+        """
+        alg = vtk.vtkExtractGrid()
+        alg.SetVOI(voi)
+        alg.SetInputDataObject(dataset)
+        alg.SetSampleRate(rate)
+        alg.SetIncludeBoundary(boundary)
+        alg.Update()
+        return _get_output(alg)
+
+    def concatenate(dataset, other, axis, tolerance=0.0):
+        """Concatenate a structured grids to this grid.
+
+        Joins structured grids into a single structured grid.
+        Grids must be of compatible dimension, and must be coincident
+        along the seam. Grids must have the same point and cell data.
+        Field data is ignored.
+
+        Parameters
+        ----------
+        other : pyvista.StructuredGrid
+            Structured grid to concatenate.
+
+        axis : int
+            Axis along which to concatenate.
+
+        tolerance : float
+            Tolerance for point coincidence along joining seam.
+
+        Returns
+        --------
+        pyvista.StructuredGrid
+            Concatenated grid.
+
+        Examples
+        --------
+        Split a grid in half and join them.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> grid = examples.load_structured()
+        >>> voi_1 = grid.extract_subset([0, 80, 0, 40, 0, 1], boundary=True)
+        >>> voi_2 = grid.extract_subset([0, 80, 40, 80, 0, 1], boundary=True)
+        >>> joined = voi_1.concatenate(voi_2, axis=1)
+        >>> print(grid.dimensions, 'same as', joined.dimensions)
+        [80, 80, 1] same as [80, 80, 1]
+        """
+        if axis > 2:
+            raise RuntimeError('Concatenation axis must be <= 2.')
+
+        # check dimensions are compatible
+        for i, (dim1, dim2) in enumerate(zip(dataset.dimensions,
+                                             other.dimensions)):
+            if i == axis:
+                continue
+            if dim1 != dim2:
+                raise RuntimeError('StructuredGrids with dimensions %s and %s '
+                                   'are not compatible.'
+                                   % (dataset.dimensions, other.dimensions))
+
+        # check point/cell variables are the same
+        if not set(dataset.point_arrays.keys()) == \
+               set(other.point_arrays.keys()):
+            raise RuntimeError('Grid to concatenate has different point array names.')
+        if not set(dataset.cell_arrays.keys()) == \
+               set(other.cell_arrays.keys()):
+            raise RuntimeError('Grid to concatenate has different cell array names.')
+
+        # check that points are coincident (within tolerance) along seam
+        if not np.allclose(np.take(dataset.points_matrix, indices=-1, axis=axis),
+                           np.take(other.points_matrix, indices=0, axis=axis),
+                           atol=tolerance):
+            raise RuntimeError('Grids cannot be joined along axis %d, as points '
+                               'are not coincident within tolerance of %f.'
+                               % (axis, tolerance))
+
+        # slice to cut off the repeated grid face
+        slice_spec = [slice(None, None, None)] * 3
+        slice_spec[axis] = slice(0, -1, None)
+
+        # concatenate points, cutting off duplicate
+        new_points = np.concatenate((dataset.points_matrix[slice_spec],
+                                     other.points_matrix), axis=axis)
+
+        # concatenate point arrays, cutting off duplicate
+        new_point_data = {}
+        for name, point_array in dataset.point_arrays.items():
+            arr_1 = dataset._reshape_point_array(point_array)
+            arr_2 = other._reshape_point_array(other.point_arrays[name])
+            if not np.array_equal(np.take(arr_1, indices=-1, axis=axis),
+                                  np.take(arr_2, indices=0, axis=axis)):
+                raise RuntimeError('Grids cannot be joined along axis %d, as field '
+                                   '`%s` is not identical along the seam.'
+                                   % (axis, name))
+            new_point_data[name] = np.concatenate((arr_1[slice_spec], arr_2),
+                                                  axis=axis).ravel(order='F')
+
+        new_dims = np.array(dataset.dimensions)
+        new_dims[axis] += other.dimensions[axis] - 1
+
+        # concatenate cell arrays
+        new_cell_data = {}
+        for name, cell_array in dataset.cell_arrays.items():
+            arr_1 = dataset._reshape_cell_array(cell_array)
+            arr_2 = other._reshape_cell_array(other.cell_arrays[name])
+            new_cell_data[name] = np.concatenate((arr_1, arr_2),
+                                                 axis=axis).ravel(order='F')
+
+        # assemble output
+        joined = pyvista.StructuredGrid()
+        joined.dimensions = list(new_dims)
+        joined.points = new_points.reshape((-1, 3), order='F')
+        joined.point_arrays.update(new_point_data)
+        joined.cell_arrays.update(new_cell_data)
+
+        return joined
+
+
+@abstract_class
 class UniformGridFilters(DataSetFilters):
-    """An internal class to manage filtes/algorithms for uniform grid datasets."""
+    """An internal class to manage filters/algorithms for uniform grid datasets."""
 
     def gaussian_smooth(dataset, radius_factor=1.5, std_dev=2.,
                         scalars=None, preference='points', progress_bar=False):

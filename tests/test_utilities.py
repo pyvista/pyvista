@@ -169,6 +169,16 @@ def test_voxelize():
     vox = pyvista.voxelize(mesh, 0.5)
     assert vox.n_cells
 
+def test_voxelize_non_uniform_desnity():
+    mesh = pyvista.PolyData(ex.load_uniform().points)
+    vox = pyvista.voxelize(mesh, [0.5, 0.3, 0.2])
+    assert vox.n_cells
+
+def test_voxelize_throws_when_density_is_not_length_3():
+    with pytest.raises(ValueError) as e:
+        mesh = pyvista.PolyData(ex.load_uniform().points)
+        vox = pyvista.voxelize(mesh, [0.5, 0.3])
+    assert "not enough values to unpack" in str(e.value)
 
 def test_report():
     report = pyvista.Report(gpu=True)
@@ -234,6 +244,44 @@ def test_transform_vectors_sph_to_cart():
         [uu[-1, -1], vv[-1, -1], ww[-1, -1]],
         [67.80403533828323, 360.8359915416445, -70000.0],
     )
+
+
+def test_vtkmatrix_to_from_array():
+    rng = np.random.default_rng()
+    array3x3 = rng.integers(0, 10, size=(3, 3))
+    matrix = pyvista.vtkmatrix_from_array(array3x3)
+    assert isinstance(matrix, vtk.vtkMatrix3x3)
+    for i in range(3):
+        for j in range(3):
+            assert matrix.GetElement(i, j) == array3x3[i, j]
+
+    array = pyvista.array_from_vtkmatrix(matrix)
+    assert isinstance(array, np.ndarray)
+    assert array.shape == (3, 3)
+    for i in range(3):
+        for j in range(3):
+            assert array[i, j] == matrix.GetElement(i, j)
+
+    array4x4 = rng.integers(0, 10, size=(4, 4))
+    matrix = pyvista.vtkmatrix_from_array(array4x4)
+    assert isinstance(matrix, vtk.vtkMatrix4x4)
+    for i in range(4):
+        for j in range(4):
+            assert matrix.GetElement(i, j) == array4x4[i, j]
+
+    array = pyvista.array_from_vtkmatrix(matrix)
+    assert isinstance(array, np.ndarray)
+    assert array.shape == (4, 4)
+    for i in range(4):
+        for j in range(4):
+            assert array[i, j] == matrix.GetElement(i, j)
+
+    # invalid cases
+    with pytest.raises(ValueError):
+        matrix = pyvista.vtkmatrix_from_array(np.arange(3 * 4).reshape(3, 4))
+    with pytest.raises(TypeError):
+        invalid = vtk.vtkTransform()
+        array = pyvista.array_from_vtkmatrix(invalid)
 
 
 def test_assert_empty_kwargs():

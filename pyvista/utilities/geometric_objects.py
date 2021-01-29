@@ -11,6 +11,7 @@ vtkCubeSource
 vtkConeSource
 vtkDiskSource
 vtkRegularPolygonSource
+vtkPyramid
 
 """
 import numpy as np
@@ -78,8 +79,8 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     capping : bool, optional
         Cap cylinder ends with polygons.  Default True
 
-    Return
-    ------
+    Returns
+    -------
     cylinder : pyvista.PolyData
         Cylinder surface.
 
@@ -207,8 +208,8 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
         Scale factor of the entire object, default is None (i.e. scale of 1).
         'auto' scales to length of direction array.
 
-    Return
-    ------
+    Returns
+    -------
     arrow : pyvista.PolyData
         Arrow surface.
 
@@ -269,8 +270,8 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     end_phi : float, optional
         Ending latitude angle.
 
-    Return
-    ------
+    Returns
+    -------
     sphere : pyvista.PolyData
         Sphere mesh.
 
@@ -314,8 +315,8 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
     j_resolution : int
         Number of points on the plane in the j direction.
 
-    Return
-    ------
+    Returns
+    -------
     plane : pyvista.PolyData
         Plane mesh
 
@@ -408,17 +409,34 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=N
     return pyvista.wrap(src.GetOutput())
 
 
-def Box(bounds=(-1.,1.,-1.,1.,-1.,1.)):
+def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
     """Create a box with solid faces for the given bounds.
 
     Parameters
     ----------
     bounds : np.ndarray or list
-        Specify the bounding box of the cube. If given, all other arguments are
-        ignored. ``(xMin,xMax, yMin,yMax, zMin,zMax)``
+        Specify the bounding box of the cube.
+        ``(xMin, xMax, yMin, yMax, zMin, zMax)``
+
+    level : int
+        Level of subdivision of the faces.
+
+    quads : bool, optional
+        Flag to tell the source to generate either a quad or two
+        triangle for a set of four points.  Default ``True``.
 
     """
-    return Cube(bounds=bounds)
+    if np.array(bounds).size != 6:
+        raise TypeError('Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)')
+    src = vtk.vtkTessellatedBoxSource()
+    src.SetLevel(level)
+    if quads:
+       src.QuadsOn()
+    else:
+       src.QuadsOff()
+    src.SetBounds(bounds)
+    src.Update()
+    return pyvista.wrap(src.GetOutput())
 
 
 def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
@@ -499,7 +517,7 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
     return pyvista.wrap(src.GetOutput())
 
 
-def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
+def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
          c_res=6):
     """Create a polygonal disk with a hole in the center.
 
@@ -534,25 +552,12 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
     src.SetRadialResolution(r_res)
     src.SetCircumferentialResolution(c_res)
     src.Update()
-
-    default_normal = np.array([0, 0, 1])
     normal = np.array(normal)
     center = np.array(center)
-
-    axis = np.cross(default_normal, normal)
-    angle = np.rad2deg(np.arccos(
-        np.clip(np.dot(normal, default_normal), -1, 1)))
-
-    transform = vtk.vtkTransform()
-    transform.RotateWXYZ(angle, axis)
-    transform.Translate(center)
-
-    transform_filter = vtk.vtkTransformFilter()
-    transform_filter.SetInputConnection(src.GetOutputPort())
-    transform_filter.SetTransform(transform)
-    transform_filter.Update()
-
-    return pyvista.wrap(transform_filter.GetOutput())
+    surf = pyvista.PolyData(src.GetOutput())
+    surf.rotate_y(90)
+    translate(surf, center, normal)
+    return surf
 
 
 def Text3D(string, depth=0.5):
@@ -688,3 +693,51 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
 
     arc.Update()
     return pyvista.wrap(arc.GetOutput())
+
+
+def Pyramid(points):
+    """Create a pyramid defined by 5 points.
+
+    Parameters
+    ----------
+    points : np.ndarray or list
+        Points of the pyramid.  Points are ordered such that the first
+        four points are the four counterclockwise points on the
+        quadrilateral face, and the last point is the apex.
+
+    Returns
+    -------
+    pyramid : pyvista.UnstructuredGrid
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pointa = [1.0, 1.0, 1.0]
+    >>> pointb = [-1.0, 1.0, 1.0]
+    >>> pointc = [-1.0, -1.0, 1.0]
+    >>> pointd = [1.0, -1.0, 1.0]
+    >>> pointe = [0.0, 0.0, 0.0]
+    >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
+    >>> pyramid.plot() # doctest:+SKIP
+    """
+    if len(points) != 5:
+        raise TypeError('Points must be given as length 5 np.ndarray or list')
+
+    check_valid_vector(points[0], 'points[0]')
+    check_valid_vector(points[1], 'points[1]')
+    check_valid_vector(points[2], 'points[2]')
+    check_valid_vector(points[3], 'points[3]')
+    check_valid_vector(points[4], 'points[4]')
+
+    pyramid = vtk.vtkPyramid()
+    pyramid.GetPointIds().SetId(0, 0)
+    pyramid.GetPointIds().SetId(1, 1)
+    pyramid.GetPointIds().SetId(2, 2)
+    pyramid.GetPointIds().SetId(3, 3)
+    pyramid.GetPointIds().SetId(4, 4)
+
+    ug = vtk.vtkUnstructuredGrid()
+    ug.SetPoints(pyvista.vtk_points(np.array(points), False))
+    ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
+
+    return pyvista.wrap(ug)

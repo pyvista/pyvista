@@ -24,7 +24,7 @@ jobs:
 # DESCRIPTION: Quickly check the spelling and documentation style
 - job: CodeSpellStyle
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: 'ubuntu-20.04'
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -38,7 +38,7 @@ jobs:
 # DESCRIPTION: Core API and doc string testing for Linux
 - job: Linux
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
@@ -119,15 +119,15 @@ jobs:
 # DESCRIPTION: Core API and doc string testing across VTK versions using conda
 - job: LinuxConda
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
 
   strategy:
     matrix:
-      VTKv81:
-        VTK.VERSION: 8.1
+      # VTKv81:
+      #   VTK.VERSION: 8.1
       VTKv82:
         VTK.VERSION: 8.2
 
@@ -173,7 +173,7 @@ jobs:
 # DESCRIPTION: Core API testing for Windows
 - job: Windows
   pool:
-    vmIMage: 'VS2017-Win2016'
+    vmIMage: 'windows-2019'
   variables:
     AZURE_CI_WINDOWS: 'true'
   strategy:
@@ -259,7 +259,7 @@ jobs:
 # Builds the documentation
 - job: BuildDocumentation
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
 
   variables:
     DISPLAY: ':99.0'

@@ -787,6 +787,12 @@ def test_camera():
     plotter.show(before_close_callback=verify_cache_image)
     plotter.camera_position = None
 
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.camera.zoom(5)
+    plotter.camera.up = 0, 0, 10
+    plotter.show()
+
 
 @skip_no_plotting
 def test_multi_renderers():
@@ -1330,15 +1336,15 @@ def test_reset_camera_clipping_range():
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
 
-    default_clipping_range = pl.camera.GetClippingRange() # get default clipping range
+    default_clipping_range = pl.camera.clipping_range # get default clipping range
     assert default_clipping_range != (10, 100) # make sure we assign something different than default
 
-    pl.camera.SetClippingRange(10,100) # set clipping range to some random numbers
-    assert pl.camera.GetClippingRange() == (10, 100) # make sure assignment is successful
+    pl.camera.clipping_range = (10,100) # set clipping range to some random numbers
+    assert pl.camera.clipping_range == (10, 100) # make sure assignment is successful
 
     pl.reset_camera_clipping_range()
-    assert pl.camera.GetClippingRange() == default_clipping_range
-    assert pl.camera.GetClippingRange() != (10, 100)
+    assert pl.camera.clipping_range == default_clipping_range
+    assert pl.camera.clipping_range != (10, 100)
 
 
 def test_index_vs_loc():

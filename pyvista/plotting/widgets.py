@@ -582,7 +582,8 @@ class WidgetHelper:
 
     def add_text_slider_widget(self, callback, data, value=None,
                               pointa=(.4, .9), pointb=(.9, .9),
-                              color=None, event_type='end'):
+                              color=None, event_type='end',
+                              style=None):
         """Add a text slider bar widget.
 
         This is useless without a callback function. You can pass a callable
@@ -616,6 +617,10 @@ class WidgetHelper:
             Either 'start', 'end' or 'always', this defines how often the
             slider interacts with the callback.
 
+        style : str, optional
+            The name of the slider style. The list of available styles are in
+            ``rcParams['slider_style']``. Defaults to None.
+
         Returns
         -------
         slider_widget: vtk.vtkSliderWidget
@@ -645,7 +650,8 @@ class WidgetHelper:
         slider_widget = self.add_slider_widget(callback=_the_callback, rng=[0, n_states - 1],
                                                value=value,
                                                pointa=pointa, pointb=pointb,
-                                               color=color, event_type=event_type)
+                                               color=color, event_type=event_type,
+                                               style=style)
         slider_rep = slider_widget.GetRepresentation()
         slider_rep.ShowSliderLabelOff()
 
