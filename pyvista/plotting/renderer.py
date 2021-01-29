@@ -1071,7 +1071,7 @@ class Renderer(vtkRenderer):
         """Add a Light to the renderer."""
         if not isinstance(light, vtk.vtkLight):
             raise TypeError('Expected Light or vtkLight instance,'
-                            f' got {type(light)} instead.')
+                            f' got {type(light).__name__} instead.')
         self.AddLight(light)
         self.Modified()
 

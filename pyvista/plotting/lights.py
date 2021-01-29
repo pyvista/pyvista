@@ -95,6 +95,7 @@ class Light(vtkLight):
 
         self.light_type = light_type
 
+        # TODO: focal_point in init?
         # TODO: ndarray type and shape and size checking for points
         # TODO: examples, also for property getters!
         # TODO: add actor?
@@ -333,11 +334,30 @@ class Light(vtkLight):
 
     @property
     def intensity(self):
-        """Return the brightness of the light (between 0 and 1)."""
+        """Return the brightness of the light (between 0 and 1).
+
+        Examples
+        --------
+        Light the two sides of a cube with lights of different brightness.
+        
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter(lighting='none')
+        >>> _ = plotter.add_mesh(pv.Cube(), color='blue')
+        >>> light_bright = pv.Light(position=(3, 0, 0), light_type='scene light')
+        >>> light_dim = pv.Light(position=(0, 3, 0), light_type='scene light')
+        >>> light_dim.intensity = 0.5
+        >>> for light in light_bright, light_dim:
+        ...     light.positional = True
+        ...     plotter.add_light(light)
+        ... 
+        >>> plotter.show()  # doctest:+SKIP
+
+        """
         return self.GetIntensity()
 
     @intensity.setter
     def intensity(self, intensity):
+        """Set the brightness of the light (between 0 and 1)."""
         self.SetIntensity(intensity)
 
     @property
@@ -345,6 +365,16 @@ class Light(vtkLight):
         """Return whether the light is on.
 
         This corresponds to the Switch state of the ``vtk.vtkLight`` class.
+
+        Examples
+        --------
+        Create a light, check if it's on by default, and turn it off.
+
+        >>> import pyvista as pv
+        >>> light = pv.Light()
+        >>> light.on
+        True
+        >>> light.on = False
 
         """
         return bool(self.GetSwitch())
@@ -362,6 +392,16 @@ class Light(vtkLight):
         point source. Attenuation and cone angles are only used for a
         positional light.
 
+
+        Examples
+        --------
+        Create a spotlight shining on the origin.
+
+        >>> import pyvista as pv
+        >>> light = pv.Light(position=(1, 1, 1))
+        >>> light.positional = True
+        >>> light.cone_angle = 30
+
         """
         return bool(self.GetPositional())
 
@@ -372,7 +412,39 @@ class Light(vtkLight):
 
     @property
     def exponent(self):
-        """Return the exponent of the cosine used in positional lighting."""
+        """Return the exponent of the cosine used in positional lighting.
+
+        With a positional light (including spotlights) the shape of the light beam
+        within the light cone varies with the angle from the light's axis, and the
+        variation of the intensity depends as the cosine of this angle raised to
+        an exponent, which is 1 by default. Increasing the exponent makes the beam
+        sharper (more focussed around the axis), decreasing it spreads the beam out.
+
+        Note that for spotlights with narrow beams (positional lights with a small
+        :py:attr:`cone_angle`) it is harder to see the angular variation of the
+        intensity, and a lot higher exponent might be necessary to visibly impact
+        the angular distribution of the beam.
+
+        Examples
+        --------
+        Plot three planes lit by three spotlights with exponents of 1, 2 and 5.
+        The one with the lowest exponent has the broadest beam.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter(lighting='none')
+        >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
+        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
+        ...     light = pv.Light((offset, 0, 0.1))
+        ...     light.focal_point = (offset, 0, 0)
+        ...     light.exponent = exponent
+        ...     light.positional = True
+        ...     light.cone_angle = 80
+        ...     plotter.add_light(light)
+        ...
+        >>> plotter.view_xy()
+        >>> plotter.show()  # doctest:+SKIP
+
+        """
         return self.GetExponent()
 
     @exponent.setter
@@ -389,6 +461,29 @@ class Light(vtkLight):
         lighting effects, anything equal to and above 90 is just a positional
         light.
 
+        Regarding the angular distribution of the light, the cone angle merely
+        truncates the beam the shape of which is defined by the :py:attr:`exponent`.
+
+        Examples
+        --------
+        Plot three planes lit by three spotlights with varying cone angles.
+        Use a large exponent to cause a visible angular variation of the
+        intensity of the beams.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter(lighting='none')
+        >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
+        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
+        ...     light = pv.Light((offset, 0, 1))
+        ...     light.focal_point = (offset, 0, 0)
+        ...     light.exponent = 15
+        ...     light.positional = True
+        ...     light.cone_angle = angle
+        ...     plotter.add_light(light)
+        ...
+        >>> plotter.view_xy()
+        >>> plotter.show()  # doctest:+SKIP
+
         """
         return self.GetConeAngle()
 
@@ -401,9 +496,40 @@ class Light(vtkLight):
     def attenuation_values(self):
         """Return the quadratic attenuation constants.
 
-        The values specify the constant, linear and quadratic constants
-        in this order. These parameters only have an effect for positional
-        lights.
+        The values are 3-length sequences which specify the constant, linear
+        and quadratic constants in this order. These parameters only have an
+        effect for positional lights.
+
+        Attenuation refers to the dampening of a beam of light as it gets further
+        away from the point source. The three constants describe three different
+        profiles for dampening with distance. A larger attenuation constant corresponds
+        to more rapid decay with distance.
+
+        Examples
+        --------
+        Plot three cubes lit by two lights with different attenuation profiles.
+        The blue light has slower linear attenuation, the green one quadratic
+        attenuation that makes it decay faster. Note that there are no shadow
+        effects included so each box gets lit by both lights.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter(lighting='none')
+        >>> for offset in 1, 2.5, 4:
+        ...     _ = plotter.add_mesh(pv.Cube(center=(offset, offset, 0)), color='white')
+        ...
+        >>> colors = ['b', 'g']
+        >>> all_attenuations = [(0, 0.1, 0), (0, 0, 0.1)]
+        >>> centers = [(0, 1, 0), (1, 0, 0)]
+        >>> for color, attenuation_constants, center in zip(colors, all_attenuations, centers):
+        ...     light = pv.Light(position=center, color=color)
+        ...     light.focal_point = (1 + center[0], 1 + center[1], 0)
+        ...     light.cone_angle = 90
+        ...     light.positional = True
+        ...     light.attenuation_values = attenuation_constants
+        ...     plotter.add_light(light)
+        ...
+        >>> plotter.view_vector((-1, -1, 1))
+        >>> plotter.show()  # doctest:+SKIP
 
         """
         return self.GetAttenuationValues()
@@ -584,19 +710,51 @@ class Light(vtkLight):
     #### Everything else ####
 
     def switch_on(self):
-        """Switch on the light."""
+        """Switch on the light.
+
+        Examples
+        --------
+        Create a light, switch it off and switch it back on again.
+
+        >>> import pyvista as pv
+        >>> light = pv.Light()
+        >>> light.on = False
+        >>> light.switch_on()
+
+        """
         self.SwitchOn()
 
     def switch_off(self):
-        """Switch off the light."""
+        """Switch off the light.
+
+        Examples
+        --------
+        Create a light and switch it off.
+
+        >>> import pyvista as pv
+        >>> light = pv.Light()
+        >>> light.switch_off()
+
+        """
         self.SwitchOff()
 
     def set_direction_angle(self, elev, azim):
         """Set the position and focal point of a directional light.
 
-        The light is switched into directional (non-positional). The focal
-        point is set to the origin. The position is defined in terms of an elevation
+        The light is switched to directional (non-positional). The focal point
+        is set to the origin. The position is defined in terms of an elevation
         and an azimuthal angle, both in degrees.
+
+        Note that the equivalent ``vtkLight.SetDirectionAngle()`` method
+        uses a surprising coordinate system where the (x', y', z') axes of
+        the method correspond to the (z, x, y) axes of the renderer.
+        This method reimplements the functionality in a way that `elev`
+        is the conventional elevation and `azim` is the conventional azimuth.
+        In particular:
+
+          * `elev = 0`, `azim = 0` is the +x direction
+          * `elev = 0`, `azim = 90` is the +y direction
+          * `elev = 90`, `azim = 0` is the +z direction
 
         Parameters
         ----------
@@ -605,6 +763,14 @@ class Light(vtkLight):
 
         azim : float
             The azimuthal angle of the directional light.
+
+        Examples
+        --------
+        Create a light that shines on the origin from a 30-degree elevation.
+
+        >>> import pyvista as pv
+        >>> light = pv.Light()
+        >>> light.set_direction_angle(30, 0)
 
         """
         self.positional = False
@@ -629,6 +795,20 @@ class Light(vtkLight):
         ----------
         deep : bool
             Whether to return a deep copy rather than a shallow one. Default ``True``.
+
+        Examples
+        --------
+        Create a light and check that it shares a transformation matrix with its
+        shallow copy.
+
+        >>> import pyvista as pv
+        >>> light = pv.Light()
+        >>> light.transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+        >>> shallow_copied = light.copy(deep=False)
+        >>> shallow_copied == light
+        True
+        >>> shallow_copied.transform_matrix is light.transform_matrix
+        True
 
         """
         # let vtk do the heavy lifting
