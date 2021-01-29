@@ -5,7 +5,6 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista.plotting import system_supports_plotting
 
 # TODO: invalid cases, once checks are in place
 
