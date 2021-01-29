@@ -27,7 +27,7 @@ class Light(vtkLight):
     ----------
     position : list or tuple, optional
         The position of the light. The interpretation of the position depends
-        on the type of the light.
+        on the type of the light and whether the light has a transformation matrix.
 
     color : string or 3-length sequence, optional
         The color of the light. The ambient, diffuse and specular colors will
@@ -94,8 +94,7 @@ class Light(vtkLight):
 
         self.light_type = light_type
 
-        # TODO: should color and point and direction_angle have more flexible signatures? (only for non-properties)
-        # TODO: ndarray type and shape and size checking for color and point
+        # TODO: ndarray type and shape and size checking for points
         # TODO: examples, also for property getters!
         # TODO: add actor?
 
@@ -481,7 +480,11 @@ class Light(vtkLight):
         defined in a coordinate space where the camera is located at
         (0, 0, 1), looking towards (0, 0, 0) at a distance of 1, with
         up being (0, 1, 0). Camera lights use the transform matrix to
-        establish this space.
+        establish this space, i.e. they have a fixed :py:attr:`position`
+        with respect to the camera, and moving the camera only
+        affects the :py:attr:`world_position` via changes in the
+        :py:attr:`transform_matrix` (and the same goes for the focal
+        point).
 
         The property returns class constant values from an enum:
 
@@ -489,8 +492,27 @@ class Light(vtkLight):
             - Light.CAMERA_LIGHT == 2
             - Light.SCENE_LIGHT == 3
 
+        Examples
+        --------
+        Check the type of lights for the first two lights of the default
+        Light Kit of plotters.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> lights = plotter.renderer.lights[:2]
+        >>> [light.light_type for light in lights]
+        [<LightType.HEADLIGHT: 1>, <LightType.CAMERA_LIGHT: 2>]
+
+        Change the light type of the default light kit's headlight to a scene light.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> lights = plotter.renderer.lights[:2]
+        >>> lights[0].light_type = pv.Light.SCENE_LIGHT
+        >>> [light.light_type for light in lights]
+        [<LightType.SCENE_LIGHT: 3>, <LightType.CAMERA_LIGHT: 2>]
+
         """
-        # TODO: "Camera lights use the transform matrix to establish this space.": is this true in practice?
         return LightType(self.GetLightType())
 
     @light_type.setter
@@ -508,17 +530,55 @@ class Light(vtkLight):
 
     @property
     def is_headlight(self):
-        """Return whether the light is a headlight."""
+        """Return whether the light is a headlight.
+
+        Examples
+        --------
+        Verify that the first light of the default light kit is a headlight.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> lights = plotter.renderer.lights
+        >>> [light.is_headlight for light in lights]
+        [True, False, False, False, False]
+
+        """
         return bool(self.LightTypeIsHeadlight())
 
     @property
     def is_camera_light(self):
-        """Return whether the light is a camera light."""
+        """Return whether the light is a camera light.
+
+        Examples
+        --------
+        Verify that four out of five lights of the default light kit are camera lights.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> lights = plotter.renderer.lights
+        >>> [light.is_camera_light for light in lights]
+        [False, True, True, True, True]
+
+        """
+
         return bool(self.LightTypeIsCameraLight())
 
     @property
     def is_scene_light(self):
-        """Return whether the light is a scene light."""
+        """Return whether the light is a scene light.
+
+        Examples
+        --------
+        Verify that none of the lights of the default light kit are scene lights.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> lights = plotter.renderer.lights
+        >>> [light.is_scene_light for light in lights]
+        [False, False, False, False, False]
+
+        """
+
         return bool(self.LightTypeIsSceneLight())
 
     @property
@@ -550,8 +610,8 @@ class Light(vtkLight):
     def set_direction_angle(self, elev, azim):
         """Set the position and focal point of a directional light.
 
-        The light is switched into directional (non-positional). The
-        position and focal point can be defined in terms of an elevation
+        The light is switched into directional (non-positional). The focal
+        point is set to the origin. The position is defined in terms of an elevation
         and an azimuthal angle, both in degrees.
 
         Parameters

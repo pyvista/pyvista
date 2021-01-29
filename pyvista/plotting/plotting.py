@@ -102,7 +102,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``'three lights'``: illumination using 3 lights.
             * ``'none'``: no light sources at instantiation.
 
-        The default is a Light Kit.
+        The default is a Light Kit (to be precise, 5 separate lights
+        that act like a Light Kit).
 
     """
 
@@ -4010,6 +4011,17 @@ class Plotter(BasePlotter):
 
     polygon_smoothing : bool
         If True, enable polygon smothing
+
+    lighting : str, optional
+        What lighting to set up for the plotter.
+        Accepted options:
+
+            * ``'light_kit'``: a vtk Light Kit composed of 5 lights.
+            * ``'three lights'``: illumination using 3 lights.
+            * ``'none'``: no light sources at instantiation.
+
+        The default is a Light Kit (to be precise, 5 separate lights
+        that act like a Light Kit).
 
     """
 
