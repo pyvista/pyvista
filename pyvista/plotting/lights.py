@@ -100,8 +100,6 @@ class Light(vtkLight):
         self._actor.SetLight(self)
         self._actor.VisibilityOff()
 
-        # TODO: ndarray type and shape and size checking for points
-
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
         return (f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>')
@@ -131,6 +129,10 @@ class Light(vtkLight):
                     if this_trans.GetElement(i, j) != that_trans.GetElement(i, j):
                         return False
         return True
+
+    def __del__(self):
+        """Clean up when the light is being destroyed."""
+        self._actor = None
 
     #### Properties ####
 
