@@ -425,7 +425,7 @@ class Light(vtkLight):
         within the light cone varies with the angle from the light's axis, and the
         variation of the intensity depends as the cosine of this angle raised to
         an exponent, which is 1 by default. Increasing the exponent makes the beam
-        sharper (more focussed around the axis), decreasing it spreads the beam out.
+        sharper (more focused around the axis), decreasing it spreads the beam out.
 
         Note that for spotlights with narrow beams (positional lights with a small
         :py:attr:`cone_angle`) it is harder to see the angular variation of the
