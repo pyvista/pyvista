@@ -2634,6 +2634,82 @@ class DataSetFilters:
         if isinstance(dataset, vtk.vtkPolyData):
             return output.extract_surface()
 
+    def reflect(dataset, plane, copy=False, center=0, inplace=False):
+        """Reflect a dataset across a plane.
+
+        Parameters
+        ----------
+        plane : str
+            Reflection plane options: ``'xmin'``, ``'ymin'``,
+            ``'zmin'``, ``'xmax'``, ``'ymax'``, ``'zmax'``, ``'x'``,
+            ``'y'``, or ``'z'``.
+
+        copy : bool
+            If ``True``, copy the input geometry to the output.
+
+        center : float
+            If the reflection plane is set to ``'x'``, ``'y'`` or
+            ``'z'``, then this parameter is used to set the position
+            of the plane.
+
+        inplace : bool, optional
+            When ``True``, modifies the dataset and returns nothing.
+            Not valid when ``copy`` is ``True``.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid, pyvista.PolyData, or None
+            PolyData when input is a PolyData, UnstructuredGrid
+            otherwise unless ``inplace`` is ``True`` then ``None``.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh = mesh.reflect('z', copy=True, center=-100)
+        >>> mesh.plot(show_edges=True)  # doctest:+SKIP
+
+        """
+        planes = {'x': 6, 'xmin': 0, 'xmax': 3,
+                  'y': 7, 'ymin': 1, 'ymax': 4,
+                  'z': 8, 'zmin': 2, 'zmax': 5}
+
+        if inplace and copy:
+            raise ValueError('Cannot copy and modify inplace.  Pick only one.')
+
+        if plane not in planes:
+            raise ValueError('Invalid ``plane``.  Pick one of the following:\n'
+                             + ", ".join([f'"{key}"' for key in planes]))
+
+        alg = vtk.vtkReflectionFilter()
+        alg.SetInputDataObject(dataset)
+        alg.SetPlane(planes[plane])
+        alg.SetCopyInput(copy)
+        alg.SetCenter(center)
+        alg.Update()
+        grid = _get_output(alg)
+
+        # simply update inplace
+        if inplace:
+            dataset.points = grid.points
+            return
+
+        # output is always an UnstructuredGrid.  Ensure datatype
+        # matches when a polydata is input.
+        if isinstance(dataset, vtk.vtkPolyData):
+            if copy:
+                # this is faster than adding two meshes together
+                return grid.extract_surface()
+
+            # and this is faster since we can simply "copy" and then
+            # modify inplace
+            mesh = dataset.copy()
+            mesh.points = grid.points
+            return mesh
+
+        return grid
+
+
 @abstract_class
 class CompositeFilters:
     """An internal class to manage filters/algorithms for composite datasets."""
@@ -3708,7 +3784,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_with_hole = pv.Sphere(end_theta=330)
         >>> sphere_with_hole.fill_holes(1000, inplace=True)
         >>> edges = sphere_with_hole.extract_feature_edges(feature_edges=False, manifold_edges=False)
-        >>> assert edges.n_cells is 0
+        >>> assert edges.n_cells == 0
 
         """
         logging.warning('pyvista.PolyData.fill_holes is known to segfault. '

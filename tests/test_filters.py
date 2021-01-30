@@ -26,6 +26,11 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
 
+@pytest.fixture()
+def grid():
+    return pyvista.UnstructuredGrid(examples.hexbeamfile)
+
+
 @pytest.fixture(scope='module')
 def uniform_vec():
     nx, ny, nz = 20, 15, 5
@@ -1068,3 +1073,40 @@ def test_shrink():
     shrunk = mesh.shrink(shrink_factor=0.8)
     assert shrunk.n_cells == mesh.n_cells
     assert shrunk.area < mesh.area
+
+
+def test_reflect_grid(grid):
+    with pytest.raises(ValueError):
+        grid.reflect('not_valid')
+
+    reflected = grid.reflect('z', copy=True, center=6)
+    assert isinstance(reflected, pyvista.UnstructuredGrid)
+    assert reflected.n_cells == 2*grid.n_cells
+    assert reflected.n_points == 2*grid.n_points
+
+
+def test_reflect_mesh(airplane):
+    reflected = airplane.reflect('x')
+    assert isinstance(reflected, pyvista.PolyData)
+    assert reflected.n_cells == airplane.n_cells
+    assert reflected.n_points == airplane.n_points
+
+    assert np.allclose(airplane.points[:, 0], -reflected.points[:, 0])
+    assert np.allclose(airplane.points[:, 1:], reflected.points[:, 1:])
+
+
+def test_reflect_mesh_copy(airplane):
+    reflected = airplane.reflect('x', copy=True)
+    assert isinstance(reflected, pyvista.PolyData)
+    assert reflected.n_cells == 2*airplane.n_cells
+    assert reflected.n_points == 2*airplane.n_points
+
+
+def test_reflect_inplace(airplane):
+    with pytest.raises(ValueError):
+        airplane.reflect('x', copy=True, inplace=True)
+
+    orig = airplane.copy()
+    airplane.reflect('x', inplace=True)
+    assert airplane.n_cells == orig.n_cells
+    assert airplane.n_points == orig.n_points
