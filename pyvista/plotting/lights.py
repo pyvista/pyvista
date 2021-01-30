@@ -1,4 +1,4 @@
-"""Module containing pyvista implementation of vtkLight."""
+"""Module containing pyvista implementation of vtk.vtkLight."""
 
 from enum import IntEnum
 
@@ -748,7 +748,7 @@ class Light(vtkLight):
         is set to the origin. The position is defined in terms of an elevation
         and an azimuthal angle, both in degrees.
 
-        Note that the equivalent ``vtkLight.SetDirectionAngle()`` method
+        Note that the equivalent ``vtk.vtkLight.SetDirectionAngle()`` method
         uses a surprising coordinate system where the (x', y', z') axes of
         the method correspond to the (z, x, y) axes of the renderer.
         This method reimplements the functionality in a way that `elev`
@@ -860,16 +860,17 @@ class Light(vtkLight):
 
     @classmethod
     def from_vtk(cls, vtk_light):
-        """Create a Light object from a vtkLight, resulting in a copy.
+        """Create a light from a ``vtk.vtkLight``, resulting in a copy.
 
         Parameters
         ----------
-        vtk_light : vtkLight
-            The ``vtkLight`` to be copied.
+        vtk_light : vtk.vtkLight
+            The ``vtk.vtkLight`` to be copied.
 
         """
         if not isinstance(vtk_light, vtkLight):
-            raise TypeError(f'Expected vtkLight object, got {type(vtk_light).__name__} instead.')
+            raise TypeError('Expected vtk.vtkLight object, got '
+                            f'{type(vtk_light).__name__} instead.')
 
         light = cls()
         light.light_type = vtk_light.GetLightType()  # resets transformation matrix!

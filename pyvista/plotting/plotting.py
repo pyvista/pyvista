@@ -435,7 +435,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Inspired from Mayavi's version of Raymond Maple 3-lights illumination
         intensities = [1, 0.6, 0.5]
         all_angles = [(45.0, 45.0), (-30.0, -60.0), (-30.0, 60.0)]
-        # TODO: do we want to add two placeholder lights for backwards compat?
         for intensity, angles in zip(intensities, all_angles):
             light = pyvista.Light(light_type='camera light')
             light.intensity = intensity
@@ -455,7 +454,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             every renderer is affected.
 
         """
-        # TODO: rename this to enable_lightkit() and deprecate the old name in a separate PR
         renderers = [self.renderer] if only_active else self.renderers
 
         light_kit = vtk.vtkLightKit()
