@@ -2,6 +2,7 @@
 
 from enum import IntEnum
 
+import numpy as np
 import vtk
 from vtk import vtkLight
 
@@ -606,7 +607,15 @@ class Light(vtkLight):
             The azimuthal angle of the directional light.
 
         """
-        self.SetDirectionAngle(elev, azim)
+        self.positional = False
+        self.focal_point = (0, 0, 0)
+        theta = np.radians(90 - elev)
+        phi = np.radians(azim)
+        self.position = (
+            np.sin(theta) * np.cos(phi),
+            np.sin(theta) * np.sin(phi),
+            np.cos(theta)
+        )
 
     def copy(self, deep=True):
         """Return a shallow or a deep copy of the light.

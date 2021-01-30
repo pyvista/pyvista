@@ -1,5 +1,3 @@
-import math
-
 import numpy as np
 import pytest
 import vtk
@@ -131,16 +129,17 @@ def test_positioning():
     # with no transformation matrix this is also the world focal point
     assert light.world_focal_point == focal_point
 
-    elev, azim = (45, 30)
-    expected_position = (0.5 / math.sqrt(2),
-                         1 / math.sqrt(2),
-                         math.sqrt(3) / (2 * math.sqrt(2)))  # TODO: fix this style
+    elev, azim = (30, 60)
+    expected_position = (
+        np.sqrt(3)/2 * 1/2,
+        np.sqrt(3)/2 * np.sqrt(3)/2,                
+        1/2
+    )
     light.positional = True
     light.set_direction_angle(elev, azim)
     assert not light.positional
     assert light.focal_point == (0, 0, 0)
-    assert all(math.isclose(coord_have, coord_expect) for coord_have, coord_expect
-               in zip(light.position, expected_position))  # TODO: fix this style
+    assert np.allclose(light.position, expected_position)
 
     with pytest.raises(AttributeError):
         light.world_position = position
