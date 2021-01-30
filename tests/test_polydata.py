@@ -329,8 +329,13 @@ def test_invalid_curvature():
 @pytest.mark.parametrize('extension', pyvista.core.pointset.PolyData._WRITERS)
 def test_save(extension, binary, tmpdir):
     sphere = SPHERE.copy()
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp{extension}'))
     sphere.save(filename, binary)
+
+    if not binary:
+        with open(filename) as f:
+            fst = f.read(100).lower()
+            assert 'ascii' in fst or 'xml' in fst or 'solid' in fst
 
     mesh = pyvista.PolyData(filename)
     assert mesh.faces.shape == sphere.faces.shape

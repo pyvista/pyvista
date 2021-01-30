@@ -902,3 +902,56 @@ def test_get_data_range(grid):
     rng = grid.get_data_range('sample_cell_scalars')
     assert len(rng) == 2
     assert np.allclose(rng, (1, 40))
+
+
+def test_actual_memory_size(grid):
+    size = grid.actual_memory_size
+    assert isinstance(size, int)
+    assert size >= 0
+
+
+def test_copy_structure(grid):
+    classname = grid.__class__.__name__
+    copy = eval(f'pyvista.{classname}')()
+    copy.copy_structure(grid)
+    assert copy.n_cells == grid.n_cells
+    assert copy.n_points == grid.n_points
+    assert len(copy.field_arrays) == 0
+    assert len(copy.cell_arrays) == 0
+    assert len(copy.point_arrays) == 0
+
+
+def test_copy_attributes(grid):
+    classname = grid.__class__.__name__
+    copy = eval(f'pyvista.{classname}')()
+    copy.copy_attributes(grid)
+    assert copy.n_cells == 0
+    assert copy.n_points == 0
+    assert copy.field_arrays.keys() == grid.field_arrays.keys()
+    assert copy.cell_arrays.keys() == grid.cell_arrays.keys()
+    assert copy.point_arrays.keys() == grid.point_arrays.keys()
+
+
+def test_cell_n_points(grid):
+    npoints = grid.cell_n_points(0)
+    assert isinstance(npoints, int)
+    assert npoints >= 0
+
+
+def test_cell_points(grid):
+    points = grid.cell_points(0)
+    assert isinstance(points, np.ndarray)
+    assert points.ndim == 2
+    assert points.shape[0] > 0
+    assert points.shape[1] == 3
+
+
+def test_cell_bounds(grid):
+    bounds = grid.cell_bounds(0)
+    assert isinstance(bounds, list)
+    assert len(bounds) == 6
+
+
+def test_cell_type(grid):
+    ctype = grid.cell_type(0)
+    assert isinstance(ctype, int)
