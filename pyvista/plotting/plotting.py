@@ -458,23 +458,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # TODO: rename this to enable_lightkit() and deprecate the old name in a separate PR
         renderers = [self.renderer] if only_active else self.renderers
 
-        self.lighting = vtk.vtkLightKit()
-        # TODO: we should probably do something to self.lighting...
-        # self.lighting.SetHeadLightWarmth(1.0)
-        # self.lighting.SetHeadLightWarmth(1.0)
+        light_kit = vtk.vtkLightKit()
         for renderer in renderers:
             renderer.remove_all_lights()
             # Use the renderer as a vtkLightKit parser.
             # Feed it the LightKit, pop off the vtkLights, put back
             # pyvista Lights. This is the price we must pay for using
             # inheritance rather than composition.
-            self.lighting.AddLightsToRenderer(renderer)
+            light_kit.AddLightsToRenderer(renderer)
             vtk_lights = renderer.lights
             renderer.remove_all_lights()
             for vtk_light in vtk_lights:
                 light = pyvista.Light.from_vtk(vtk_light)
                 renderer.add_light(light)
-            # TODO: at this point self.lighting is meaningless...
             renderer.LightFollowCameraOn()
 
     @wraps(Renderer.enable_anti_aliasing)
@@ -2807,7 +2803,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Turn off the lights
         for renderer in self.renderers:
             renderer.remove_all_lights()
-        self.lighting = None
 
         # Clear the scalar bar
         self.scalar_bar = None

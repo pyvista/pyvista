@@ -691,7 +691,6 @@ class Light(vtkLight):
         [False, True, True, True, True]
 
         """
-
         return bool(self.LightTypeIsCameraLight())
 
     @property
@@ -709,7 +708,6 @@ class Light(vtkLight):
         [False, False, False, False, False]
 
         """
-
         return bool(self.LightTypeIsSceneLight())
 
     #### Everything else ####
