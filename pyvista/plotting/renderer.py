@@ -1069,10 +1069,10 @@ class Renderer(vtkRenderer):
 
     def add_light(self, light):
         """Add a Light to the renderer."""
-        if not isinstance(light, vtk.vtkLight):
-            raise TypeError('Expected Light or vtkLight instance,'
-                            f' got {type(light).__name__} instead.')
+        if not isinstance(light, pyvista.Light):
+            raise TypeError('Expected Light instance, got {type(light).__name__} instead.')
         self.AddLight(light)
+        self.AddActor(light._actor)
         self.Modified()
 
     @property

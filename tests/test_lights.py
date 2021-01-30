@@ -291,3 +291,25 @@ def test_from_vtk():
         pyvista.Light.from_vtk('invalid')
     with pytest.raises(TypeError):
         pyvista.Light('invalid')
+
+
+def test_actors():
+    light = pyvista.Light()
+    actor = light._actor
+
+    # test showing
+    assert not actor.GetVisibility()
+    light.show_actor()
+    assert not actor.GetVisibility()
+    light.positional = True
+    light.show_actor()
+    assert actor.GetVisibility()
+
+    # test hiding
+    light.positional = False
+    assert not actor.GetVisibility()
+    light.positional = True
+    light.show_actor()
+    assert actor.GetVisibility()
+    light.hide_actor()
+    assert not actor.GetVisibility()

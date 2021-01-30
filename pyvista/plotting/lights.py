@@ -96,8 +96,11 @@ class Light(vtkLight):
 
         self.light_type = light_type
 
+        self._actor = vtk.vtkLightActor()
+        self._actor.SetLight(self)
+        self._actor.VisibilityOff()
+
         # TODO: ndarray type and shape and size checking for points
-        # TODO: add actor?
 
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
@@ -390,6 +393,8 @@ class Light(vtkLight):
         point source. Attenuation and cone angles are only used for a
         positional light.
 
+        If the light is changed to directional, its actor is automatically
+        hidden.
 
         Examples
         --------
@@ -406,6 +411,8 @@ class Light(vtkLight):
     @positional.setter
     def positional(self, state):
         """Set whether the light should be positional."""
+        if not state:
+            self.hide_actor()
         self.SetPositional(state)
 
     @property
@@ -882,3 +889,47 @@ class Light(vtkLight):
             light.transform_matrix = trans
 
         return light
+
+
+    def show_actor(self):
+        """Show an actor for a positional light that depicts the geometry of the beam.
+
+        For a directional light the function doesn't do anything. If the light type
+        is changed to directional, it has to be called again for the actor to show.
+        To hide the actor see :func:`hide_actor`.
+
+        Examples
+        --------
+        Create a scene containing a cube lit with a blue spotlight and visualize the
+        light using an actor.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(), color='white')
+        >>> for light in plotter.renderer.lights:
+        ...     light.intensity /= 5
+        ...
+        >>> spotlight = pv.Light(position=(-1, 1, 1), color='blue')
+        >>> spotlight.positional = True
+        >>> spotlight.cone_angle = 20
+        >>> spotlight.intensity = 10
+        >>> spotlight.exponent = 40
+        >>> spotlight.show_actor()
+        >>> plotter.add_light(spotlight)
+        >>> plotter.show()  # doctest:+SKIP
+
+        """
+        if not self.positional:
+            return
+        self._actor.VisibilityOn()
+
+
+    def hide_actor(self):
+        """Hide the actor for a positional light that depicts the geometry of the beam.
+
+        For a directional light the function doesn't do anything.
+
+        """
+        if not self.positional:
+            return
+        self._actor.VisibilityOff()
