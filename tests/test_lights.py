@@ -4,8 +4,6 @@ import vtk
 
 import pyvista
 
-# TODO: invalid cases, once checks are in place
-
 # pyvista attr -- value -- vtk name triples:
 configuration = [
     ('light_type', pyvista.Light.CAMERA_LIGHT, 'SetLightType'),  # resets transformation!
@@ -25,11 +23,14 @@ configuration = [
 
 def test_init():
     position = (1, 1, 1)
+    focal_point = (2, 2, 2)
     color = (0.5, 0.5, 0.5)
     light_type = 'headlight'
-    light = pyvista.Light(position=position, color=color, light_type=light_type)
+    light = pyvista.Light(position=position, focal_point=focal_point,
+                          color=color, light_type=light_type)
     assert isinstance(light, pyvista.Light)
     assert light.position == position
+    assert light.focal_point == focal_point
     assert light.ambient_color == color
     assert light.diffuse_color == color
     assert light.specular_color == color

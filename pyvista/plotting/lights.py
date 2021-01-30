@@ -29,6 +29,7 @@ class Light(vtkLight):
     position : list or tuple, optional
         The position of the light. The interpretation of the position depends
         on the type of the light and whether the light has a transformation matrix.
+        See also the :py:attr:`position` property.
 
     color : string or 3-length sequence, optional
         The color of the light. The ambient, diffuse and specular colors will
@@ -57,19 +58,19 @@ class Light(vtkLight):
 
     """
 
-    # TODO: better/more explanation for ``position``?
-
     # pull in light type enum values as class constants
     HEADLIGHT = LightType.HEADLIGHT
     CAMERA_LIGHT = LightType.CAMERA_LIGHT
     SCENE_LIGHT = LightType.SCENE_LIGHT
 
-    def __init__(self, position=None, color=None, light_type='scene light'):
+    def __init__(self, position=None, focal_point=None, color=None, light_type='scene light'):
         """Initialize the light."""
         super().__init__()
 
         if position:
             self.position = position
+        if focal_point:
+            self.focal_point = focal_point
 
         if color:
             self.ambient_color = color
@@ -95,9 +96,7 @@ class Light(vtkLight):
 
         self.light_type = light_type
 
-        # TODO: focal_point in init?
         # TODO: ndarray type and shape and size checking for points
-        # TODO: examples, also for property getters!
         # TODO: add actor?
 
     def __repr__(self):
@@ -318,8 +317,7 @@ class Light(vtkLight):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> light = pv.Light()
-        >>> light.focal_point = (1, 0, 3)
+        >>> light = pv.Light(focal_point=(1, 0, 3))
         >>> trans = np.zeros((4, 4))
         >>> trans[:-1, :-1] = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
         >>> trans[:-1, -1] = [0, 0, -1]
@@ -434,8 +432,7 @@ class Light(vtkLight):
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
         ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
-        ...     light = pv.Light((offset, 0, 0.1))
-        ...     light.focal_point = (offset, 0, 0)
+        ...     light = pv.Light(position=(offset, 0, 0.1), focal_point=(offset, 0, 0))
         ...     light.exponent = exponent
         ...     light.positional = True
         ...     light.cone_angle = 80
@@ -474,8 +471,7 @@ class Light(vtkLight):
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
         ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
-        ...     light = pv.Light((offset, 0, 1))
-        ...     light.focal_point = (offset, 0, 0)
+        ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
         ...     light.exponent = 15
         ...     light.positional = True
         ...     light.cone_angle = angle
