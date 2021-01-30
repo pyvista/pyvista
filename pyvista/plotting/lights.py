@@ -395,8 +395,8 @@ class Light(vtkLight):
         point source. Attenuation and cone angles are only used for a
         positional light.
 
-        If the light is changed to directional, its actor is automatically
-        hidden.
+        If the light is changed to directional, its actor (if previousy
+        shown) is automatically hidden.
 
         Examples
         --------
@@ -619,14 +619,14 @@ class Light(vtkLight):
 
         The property returns class constant values from an enum:
 
-            - Light.HEADLIGHT == 1
-            - Light.CAMERA_LIGHT == 2
-            - Light.SCENE_LIGHT == 3
+            - ``Light.HEADLIGHT == 1``
+            - ``Light.CAMERA_LIGHT == 2``
+            - ``Light.SCENE_LIGHT == 3``
 
         Examples
         --------
         Check the type of lights for the first two lights of the default
-        Light Kit of plotters.
+        light kit of plotters.
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter()
@@ -769,7 +769,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        Create a light that shines on the origin from a 30-degree elevation.
+        Create a light that shines on the origin from a 30-degree elevation in
+        the xz plane.
 
         >>> import pyvista as pv
         >>> light = pv.Light()
