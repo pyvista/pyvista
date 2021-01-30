@@ -420,7 +420,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             every renderer is affected.
 
         """
-        # TODO: this changes every renderer now by default, which is what it should be doing anyway I think
         def _to_pos(elevation, azimuth):
             theta = azimuth * np.pi / 180.0
             phi = (90.0 - elevation) * np.pi / 180.0
@@ -3931,8 +3930,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
             is that every renderer adds the light. To add the light to an arbitrary
             renderer, see the ``add_light`` method of the Renderer class.
 
+        Examples
+        --------
+        Create a plotter that we initialize with no lights, and add a cube and a
+        single headlight to it.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter(lighting='none')
+        >>> _ = plotter.add_mesh(pv.Cube())
+        >>> light = pv.Light(color='cyan', light_type='headlight')
+        >>> plotter.add_light(light)
+        >>> plotter.show()  # doctest:+SKIP
+
         """
-        # TODO: example!
         renderers = [self.renderer] if only_active else self.renderers
         for renderer in renderers:
             renderer.add_light(light)
@@ -3946,8 +3956,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``True``, only remove lights from the active renderer. The default
             is that lights are stripped from every renderer.
 
+        Examples
+        --------
+        Create a plotter, forget to initialize it without default lighting,
+        correct the mistake after instantiation.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> plotter.remove_all_lights()
+        >>> plotter.renderer.lights
+        []
+
         """
-        # TODO: example!
         renderers = [self.renderer] if only_active else self.renderers
         for renderer in renderers:
             renderer.remove_all_lights()
