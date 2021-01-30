@@ -75,6 +75,10 @@ def test_eq():
     # sanity check that we managed to restore the original state
     assert light == other
 
+    # check None vs transform_matrix case
+    other.transform_matrix = None
+    assert light != other
+
 
 def test_copy():
     light = pyvista.Light()
@@ -312,4 +316,7 @@ def test_actors():
     light.show_actor()
     assert actor.GetVisibility()
     light.hide_actor()
+    assert not actor.GetVisibility()
+    light.show_actor()
+    light.cone_angle = 90
     assert not actor.GetVisibility()

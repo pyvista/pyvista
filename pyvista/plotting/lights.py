@@ -470,6 +470,9 @@ class Light(vtkLight):
         Regarding the angular distribution of the light, the cone angle merely
         truncates the beam the shape of which is defined by the :py:attr:`exponent`.
 
+        If the light's cone angle is increased to 90 degrees or above, its actor
+        (if previousy shown) is automatically hidden.
+
         Examples
         --------
         Plot three planes lit by three spotlights with varying cone angles.
@@ -495,6 +498,8 @@ class Light(vtkLight):
     @cone_angle.setter
     def cone_angle(self, angle):
         """Set the cone angle of a positional light."""
+        if angle >= 90:
+            self.hide_actor()
         self.SetConeAngle(angle)
 
     @property
@@ -586,7 +591,7 @@ class Light(vtkLight):
     @transform_matrix.setter
     def transform_matrix(self, matrix):
         """Set the 4x4 transformation matrix of the light."""
-        if isinstance(matrix, vtk.vtkMatrix4x4):
+        if matrix is None or isinstance(matrix, vtk.vtkMatrix4x4):
             trans = matrix
         else:
             try:
@@ -894,11 +899,12 @@ class Light(vtkLight):
 
 
     def show_actor(self):
-        """Show an actor for a positional light that depicts the geometry of the beam.
+        """Show an actor for a spotlight that depicts the geometry of the beam.
 
-        For a directional light the function doesn't do anything. If the light type
-        is changed to directional, it has to be called again for the actor to show.
-        To hide the actor see :func:`hide_actor`.
+        For a directional light or a positional light with :py:attr:`cone_angle`
+        of at least 90 degrees the method doesn't do anything. If the light is
+        changed so that it becomes a spotlight, this method has to be called again
+        for the actor to show. To hide the actor see :func:`hide_actor`.
 
         Examples
         --------
@@ -921,7 +927,7 @@ class Light(vtkLight):
         >>> plotter.show()  # doctest:+SKIP
 
         """
-        if not self.positional:
+        if not self.positional or self.cone_angle >= 90:
             return
         self._actor.VisibilityOn()
 
