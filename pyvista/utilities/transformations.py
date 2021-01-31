@@ -33,6 +33,21 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     -------
     new_points : np.ndarray
         Transformed points.
+
+    Examples
+    --------
+    Scale a set of points in-place.
+
+    >>> import numpy as np
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> points = examples.load_airplane().points
+    >>> points_orig = points.copy()
+    >>> scale_factor = 2
+    >>> tf = scale_factor * np.eye(4)
+    >>> tf[3, 3,] = 1
+    >>> pyvista.transformations.apply_transformation_to_points(tf, points, inplace=True)
+    >>> assert np.all(np.isclose(points, scale_factor * points_orig))
     """
     transformation_shape = transformation.shape
     if transformation_shape not in ((3, 3), (4, 4)):
