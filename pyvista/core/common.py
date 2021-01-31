@@ -305,7 +305,7 @@ class Common(DataSetFilters, DataObject):
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._textures = {}
 
-    def __getattr__(self, item):
+    def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
