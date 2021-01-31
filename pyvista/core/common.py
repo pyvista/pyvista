@@ -342,7 +342,7 @@ class Common(DataSetFilters, DataObject):
         return self._active_tensors_info
 
     @property
-    def active_vectors(self) -> pyvista_ndarray:
+    def active_vectors(self) -> Optional[pyvista_ndarray]:
         """Return the active vectors array."""
         field, name = self.active_vectors_info
         if name:
@@ -605,7 +605,7 @@ class Common(DataSetFilters, DataObject):
             self.set_active_scalars(new_name, preference=field)
 
     @property
-    def active_scalars(self) -> pyvista_ndarray:
+    def active_scalars(self) -> Optional[pyvista_ndarray]:
         """Return the active scalars as an array."""
         field, name = self.active_scalars_info
         if name is not None:
@@ -683,7 +683,7 @@ class Common(DataSetFilters, DataObject):
         """
         axis_rotation(self.points, angle, inplace=True, axis='z')
 
-    def translate(self, xyz: [list, tuple, np.ndarray]):
+    def translate(self, xyz: Union[list, tuple, np.ndarray]):
         """Translate the mesh.
 
         Parameters
@@ -694,7 +694,7 @@ class Common(DataSetFilters, DataObject):
         """
         self.points += np.asarray(xyz)
 
-    def transform(self, trans: [vtk.vtkMatrix4x4, vtk.vtkTransform, np.ndarray]):
+    def transform(self, trans: Union[vtk.vtkMatrix4x4, vtk.vtkTransform, np.ndarray]):
         """Compute a transformation in place using a 4x4 transform.
 
         Parameters
@@ -834,14 +834,14 @@ class Common(DataSetFilters, DataObject):
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
         return np.sum(sizes.cell_arrays['Volume'])
 
-    def get_array(self, name: str, preference='cell', info=False) -> [Tuple, np.ndarray]:
+    def get_array(self, name: str, preference='cell', info=False) -> Union[Tuple, np.ndarray]:
         """Search both point, cell and field data for an array."""
         return get_array(self, name, preference=preference, info=info)
 
-    def __getitem__(self, index: [Iterable, str]) -> [Tuple, np.ndarray]:
+    def __getitem__(self, index: Union[Iterable, str]) -> Union[Tuple, np.ndarray]:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
-            name, preference = index
+            name, preference = tuple(index)
         elif isinstance(index, str):
             name = index
             preference = 'cell'
@@ -1033,7 +1033,7 @@ class Common(DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)
 
-    def find_closest_cell(self, point: [int, np.ndarray]) -> int:
+    def find_closest_cell(self, point: Union[int, np.ndarray]) -> int:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
