@@ -49,7 +49,7 @@ plotter.show()
 
 ###############################################################################
 # Both hemispheres have their surface lit on the side that faces the light.
-# This is consistent with the point source positioned at infinity, looking from
+# This is consistent with the point source positioned at infinity, directed from
 # the light's nominal position toward the focal point.
 #
 # Now let's change the light to a positional light (but not a spotlight):
@@ -74,7 +74,7 @@ plotter.show()
 
 ###############################################################################
 # Now the inner surface of both hemispheres is lit. A positional light with a
-# cone angle of 90 degrees (or more) acts as a plane of light positioned on the
+# cone angle of 90 degrees (or more) acts as a point source positioned at the
 # light's nominal position. It could still display attenuation, see the
 # :ref:`ref_attenuation_example` example.
 #

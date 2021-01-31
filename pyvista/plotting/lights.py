@@ -393,21 +393,15 @@ class Light(vtkLight):
         """Return whether the light is positional.
 
         The default is a directional light, i.e. an infinitely distant
-        point source. Positional lights with a cone angle that is less
-        than 90 degrees are known as spotlights.
+        point source. A positional light with a cone angle of at least
+        90 degrees acts like a spherical point source. A positional
+        light with a cone angle that is less than 90 degrees is known
+        as a spotlight.
 
         Attenuation and cone angles are only used for positional lights.
         The :py:attr:`exponent` property is only used for spotlights.
-
-        Positional lights with a cone angle of at least 90 degrees are
-        a hybrid: they act like directional lights in the sense that
-        they are bidirectional and they don't show angular dependence of
-        their beams, but they display attenuation. They can be thought
-        of as a plane of light (containing the :py:attr:`position` and
-        perpendicular to the axis of the light) that shines in both
-        directions from the plane. In contrast, directional lights are
-        infinitely distant point sources shining from the :py:attr:`position`
-        toward to :py:attr:`focal_point`.
+        Positional lights with a cone angle of at least 90 degrees don't
+        show angular dependence of their beams, but they display attenuation.
 
         If the light is changed to directional, its actor (if previousy
         shown) is automatically hidden.
@@ -481,13 +475,11 @@ class Light(vtkLight):
         The angle is in degrees and is measured between the axis of the cone
         and an extremal ray of the cone. A value smaller than 90 has spot
         lighting effects, anything equal to and above 90 is just a positional
-        light.
+        light, i.e. a spherical point source.
 
         Regarding the angular distribution of the light, the cone angle merely
-        truncates the beam the shape of which is defined by the :py:attr:`exponent`.
-        If the cone angle is at least 90 degrees then there is no angular dependence,
-        as the light acts as if it emanated from a plane (see also the
-        :py:attr:`positional` property).
+        truncates the beam, the shape of which is defined by the :py:attr:`exponent`.
+        If the cone angle is at least 90 degrees then there is no angular dependence.
 
         If the light's cone angle is increased to 90 degrees or above, its actor
         (if previousy shown) is automatically hidden.
@@ -537,7 +529,7 @@ class Light(vtkLight):
         Examples
         --------
         Plot three cubes lit by two lights with different attenuation profiles.
-        The blue light has slower linear attenuation, the green one quadratic
+        The blue light has slower linear attenuation, the green one has quadratic
         attenuation that makes it decay faster. Note that there are no shadow
         effects included so each box gets lit by both lights.
 

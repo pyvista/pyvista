@@ -51,17 +51,17 @@ Lights can be either directional (meaning an infinitely distant point source) or
 :py:attr:`positional`. Positional lights have additional properties that describe
 the geometry and the spatial distribution of the light. The :py:attr:`cone_angle`
 and :py:attr:`exponent` properties define the shape of the light beam and the
-angular distribution of the light's intensity within that beam. The decay of the
-light with distance can be defined with the :py:attr:`attenuation_values` property.
+angular distribution of the light's intensity within that beam. The fading of the
+light with distance can be customized with the :py:attr:`attenuation_values` property.
 Positional lights can also make use of an actor that represents the shape and color
 of the light using a wireframe, see :func:`show_actor`.
 
 Positional lights with a :py:attr:`cone_angle` of less than 90 degrees are known as
 spotlights. Spotlights are unidirectional and they make full use of beam shaping
 properties, namely :py:attr:`exponent` and attenuation.  Non-spotlight positional
-lights, however, act like a plane of light containing the real-world position of the
-light, shining in both directions of the plane. They display attenuation with distance
-from the plane, but their beam is homogeneous across the plane. In contrast, directional
+lights, however, act like a point source located in the real-world position of the
+light, shining in all directions of space. They display attenuation with distance
+from the source, but their beam is isotropic in space. In contrast, directional
 lights act as infinitely distant point sources, so they are unidirectional and they do
 not attenuate.
 
