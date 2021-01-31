@@ -393,8 +393,21 @@ class Light(vtkLight):
         """Return whether the light is positional.
 
         The default is a directional light, i.e. an infinitely distant
-        point source. Attenuation and cone angles are only used for a
-        positional light.
+        point source. Positional lights with a cone angle that is less
+        than 90 degrees are known as spotlights.
+
+        Attenuation and cone angles are only used for positional lights.
+        The :py:attr:`exponent` property is only used for spotlights.
+
+        Positional lights with a cone angle of at least 90 degrees are
+        a hybrid: they act like directional lights in the sense that
+        they are bidirectional and they don't show angular dependence of
+        their beams, but they display attenuation. They can be thought
+        of as a plane of light (containing the :py:attr:`position` and
+        perpendicular to the axis of the light) that shines in both
+        directions from the plane. In contrast, directional lights are
+        infinitely distant point sources shining from the :py:attr:`position`
+        toward to :py:attr:`focal_point`.
 
         If the light is changed to directional, its actor (if previousy
         shown) is automatically hidden.
@@ -420,18 +433,20 @@ class Light(vtkLight):
 
     @property
     def exponent(self):
-        """Return the exponent of the cosine used in positional lighting.
+        """Return the exponent of the cosine used for spotlights.
 
-        With a positional light (including spotlights) the shape of the light beam
-        within the light cone varies with the angle from the light's axis, and the
-        variation of the intensity depends as the cosine of this angle raised to
-        an exponent, which is 1 by default. Increasing the exponent makes the beam
-        sharper (more focused around the axis), decreasing it spreads the beam out.
+        With a spotlight (a positional light with cone angle less than 90 degrees)
+        the shape of the light beam within the light cone varies with the angle from
+        the light's axis, and the variation of the intensity depends as the cosine
+        of this angle raised to an exponent, which is 1 by default. Increasing the
+        exponent makes the beam sharper (more focused around the axis), decreasing
+        it spreads the beam out.
 
-        Note that for spotlights with narrow beams (positional lights with a small
-        :py:attr:`cone_angle`) it is harder to see the angular variation of the
-        intensity, and a lot higher exponent might be necessary to visibly impact
-        the angular distribution of the beam.
+        Note that since the angular dependence defined by this property and the
+        truncation performed by the :py:attr:`cone_angle` are independent, for
+        spotlights with narrow beams (small :py:attr:`cone_angle`) it is harder
+        to see the angular variation of the intensity, and a lot higher exponent
+        might be necessary to visibly impact the angular distribution of the beam.
 
         Examples
         --------
@@ -470,6 +485,9 @@ class Light(vtkLight):
 
         Regarding the angular distribution of the light, the cone angle merely
         truncates the beam the shape of which is defined by the :py:attr:`exponent`.
+        If the cone angle is at least 90 degrees then there is no angular dependence,
+        as the light acts as if it emanated from a plane (see also the
+        :py:attr:`positional` property).
 
         If the light's cone angle is increased to 90 degrees or above, its actor
         (if previousy shown) is automatically hidden.
