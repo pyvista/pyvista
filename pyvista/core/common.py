@@ -41,6 +41,7 @@ class DataObject:
         self.association_bitarray_names = collections.defaultdict(set)
 
     def __getattr__(self, item) -> Any:
+        """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
     def shallow_copy(self, to_copy):
