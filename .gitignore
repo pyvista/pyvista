@@ -70,3 +70,6 @@ docs/external_examples.rst
 
 # benchmark cache from pytest-benchmark
 .benchmarks
+
+# PyCharm
+.idea/
