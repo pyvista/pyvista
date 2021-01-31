@@ -843,14 +843,11 @@ class Light(vtkLight):
     def set_camera_light(self):
         """Set the light to be a camera light.
 
-        Camera lights are fixed to the camera and always point to the focal
-        point of the camera.
-
         A camera light moves with the camera, but it can have an arbitrary
         relative position to the camera. Camera lights are defined in a
         coordinate space where the camera is located at (0, 0, 1), looking
         towards (0, 0, 0) at a distance of 1, with up being (0, 1, 0).
-        Camera lights use the transform matrix to establish this space.
+        Camera lights use the transformation matrix to establish this space.
         Calling this method will reset the light's transformation matrix.
 
         """

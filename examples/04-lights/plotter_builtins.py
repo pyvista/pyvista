@@ -13,6 +13,9 @@ With meshes that don't have depth information encoded in their color the
 importance of an appropriate lighting setup becomes paramount for accurate
 visualization.
 
+Light kit
+=========
+
 The default ``lighting='light kit'`` option recreates a lighting setup that
 corresponds to a ``vtk.vtkLightKit``. We can check what type of lights this
 lighting comprises:
@@ -42,6 +45,9 @@ plotter.show()
 
 
 ###############################################################################
+# Three-lights illumination
+# =========================
+#
 # Switching to three-lights illumination gives a different character to the
 # figure, in this case showing less contrast when viewing the mountain from
 # the top, but having more contrast with views closer to the side. This becomes
@@ -64,6 +70,9 @@ light_types
 
 
 ###############################################################################
+# Custom lighting
+# ===============
+#
 # We can introduce our own lighting from scratch by disabling any lighting
 # on plotter initialization. Adding a single scene light to a scene will
 # often result in ominous visuals due to objects casting large shadows on
