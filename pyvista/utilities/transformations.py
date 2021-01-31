@@ -16,13 +16,42 @@ def reflection(normal, point=None):
 
 
 def apply_transformation_to_points(transformation, points, inplace=False):
-    """Apply a given transformation matrix (3x3 or 4x4) to a set of points."""
-    if transformation.shape not in ((3, 3), (4, 4)):
-        raise ValueError('`transformation` must be of shape (3, 3) or (4, 4)')
+    """Apply a given transformation matrix (3x3 or 4x4) to a set of points.
 
-    if transformation.shape[1] == 4:
-        # a stack is a copy
-        points_2 = np.hstack((points, np.ones((len(points), 1))))
+    Parameters
+    ----------
+    transformation : np.ndarray
+        Transformation matrix of shape (3, 3) or (4, 4).
+
+    points : np.ndarray
+        Array of points to be transformed of shape (N, 3).
+
+    inplace : bool, optional
+        Updates points in-place while returning nothing.
+
+    Returns
+    -------
+    new_points : np.ndarray
+        Transformed points.
+    """
+    transformation_shape = transformation.shape
+    if transformation_shape not in ((3, 3), (4, 4)):
+        raise ValueError('`transformation` must be of shape (3, 3) or (4, 4).')
+
+    if points.shape[1] != 3:
+        raise ValueError('`points` must be of shape (N, 3).')
+
+    is_homogeneous = transformation_shape[0] == 4
+
+    if is_homogeneous:
+        # Divide by scale factor
+        transformation /= transformation[3, 3]
+
+        # Add the homogeneous coordinate
+        # `points_2` is a copy of the data, not a view
+        points_2 = np.empty((len(points), 4))
+        points_2[:, :-1] = points
+        points_2[:, -1] = 1
     else:
         points_2 = points
 
