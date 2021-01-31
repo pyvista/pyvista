@@ -23,7 +23,7 @@ log.setLevel('CRITICAL')
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
 
-ActiveArrayInfo = collections.namedtuple('ActiveInfo', ['association', 'name'])
+ActiveArrayInfo = collections.namedtuple('ActiveArrayInfo', ['association', 'name'])
 
 
 @abstract_class
