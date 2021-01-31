@@ -15,7 +15,7 @@ from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                raise_not_matching, vtk_id_list_to_array, fileio,
                                abstract_class, axis_rotation)
 from .datasetattributes import DataSetAttributes
-from .filters import DataSetFilters
+from .filters import DataSetFilters, _get_output
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -348,11 +348,14 @@ class Common(DataSetFilters, DataObject):
     def active_vectors(self) -> Optional[pyvista_ndarray]:
         """Return the active vectors array."""
         field, name = self.active_vectors_info
-        if name:
+        try:
             if field is FieldAssociation.POINT:
                 return self.point_arrays[name]
             if field is FieldAssociation.CELL:
                 return self.cell_arrays[name]
+        except KeyError:
+            return None
+        return None
 
     @property
     def active_tensors(self):
@@ -419,7 +422,7 @@ class Common(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(self) -> 'pyvista.PolyData':
+    def arrows(self) -> Optional['pyvista.PolyData']:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points of the mesh and
@@ -432,9 +435,8 @@ class Common(DataSetFilters, DataObject):
             Active scalars represented as arrows.
 
         """
-        if self.active_vectors is not None:
-            name = self.active_vectors_name
-            return self.glyph(scale=name, orient=name)
+        name = self.active_vectors_name
+        return None if name is None else self.glyph(scale=name, orient=name)
 
     @property
     def vectors(self) -> Optional[pyvista_ndarray]:
@@ -611,11 +613,14 @@ class Common(DataSetFilters, DataObject):
     def active_scalars(self) -> Optional[pyvista_ndarray]:
         """Return the active scalars as an array."""
         field, name = self.active_scalars_info
-        if name is not None:
+        try:
             if field == FieldAssociation.POINT:
                 return self.point_arrays[name]
-            elif field == FieldAssociation.CELL:
+            if field == FieldAssociation.CELL:
                 return self.cell_arrays[name]
+        except KeyError:
+            return None
+        return None
 
     def get_data_range(self, arr: Optional[Union[str, np.ndarray]]=None, preference='cell'):
         """Get the non-NaN min and max of a named array.
@@ -1000,7 +1005,7 @@ class Common(DataSetFilters, DataObject):
         alg = vtk.vtkAppendFilter()
         alg.AddInputData(self)
         alg.Update()
-        return pyvista.filters._get_output(alg)
+        return _get_output(alg)
 
     def find_closest_point(self, point, n=1) -> int:
         """Find index of closest point in this mesh to the given point.
