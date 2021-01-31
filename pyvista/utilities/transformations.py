@@ -12,7 +12,7 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
 
 def reflection(normal, point=None):
     """Return a 4x4 matrix for reflection across a normal about a point."""
-    return tf3d.reflections.rfnorm2aff(normal, point=None)
+    return tf3d.reflections.rfnorm2aff(normal, point=point)
 
 
 def apply_transformation_to_points(transformation, points, inplace=False):

@@ -1099,19 +1099,20 @@ def test_reflect_mesh(airplane):
     assert np.allclose(airplane.points[:, 1:], reflected.points[:, 1:])
 
 
-def test_reflect_mesh(airplane):
-    reflected = airplane.reflect((1, 0, 0))
+def test_reflect_mesh_about_point(airplane):
+    x_plane = 500
+    reflected = airplane.reflect((1, 0, 0), point=(x_plane, 0, 0))
     assert isinstance(reflected, type(airplane))
     assert reflected.n_cells == airplane.n_cells
     assert reflected.n_points == airplane.n_points
 
-    assert np.allclose(airplane.points[:, 0], -reflected.points[:, 0])
+    assert np.allclose(x_plane - airplane.points[:, 0], reflected.points[:, 0] - x_plane)
     assert np.allclose(airplane.points[:, 1:], reflected.points[:, 1:])
 
 
 def test_reflect_inplace(airplane):
     orig = airplane.copy()
-    airplane.reflect_2((1, 0, 0), inplace=True)
+    airplane.reflect((1, 0, 0), inplace=True)
     assert airplane.n_cells == orig.n_cells
     assert airplane.n_points == orig.n_points
 
