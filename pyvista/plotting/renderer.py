@@ -117,6 +117,8 @@ class Renderer(vtkRenderer):
         self.AutomaticLightCreationOff()
         self._floors = []
         self._floor_kwargs = []
+        # this keeps track of lights added manually to prevent garbage collection
+        self._lights = []
         self._camera = Camera()
         self.SetActiveCamera(self._camera)
 
@@ -1071,6 +1073,7 @@ class Renderer(vtkRenderer):
         """Add a Light to the renderer."""
         if not isinstance(light, pyvista.Light):
             raise TypeError('Expected Light instance, got {type(light).__name__} instead.')
+        self._lights.append(light)
         self.AddLight(light)
         self.AddActor(light._actor)
         self.Modified()
@@ -1083,6 +1086,7 @@ class Renderer(vtkRenderer):
     def remove_all_lights(self):
         """Remove all lights from the renderer."""
         self.RemoveAllLights()
+        self._lights.clear()
 
     def clear(self):
         """Remove all actors and properties."""
@@ -1093,6 +1097,7 @@ class Renderer(vtkRenderer):
                 except KeyError:
                     pass
 
+        self.remove_all_lights()
         self.RemoveAllViewProps()
         self.Modified()
 

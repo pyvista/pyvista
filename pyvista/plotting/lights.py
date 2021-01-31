@@ -21,6 +21,7 @@ class LightType(IntEnum):
         """Pretty name for a light type."""
         return self.name.replace('_', ' ').title()
 
+
 class Light(vtkLight):
     """Light class.
 
