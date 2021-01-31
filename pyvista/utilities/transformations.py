@@ -18,7 +18,7 @@ def reflection(normal, point=None):
 def apply_transformation_to_points(transformation, points, inplace=False):
     """Apply a given transformation matrix (3x3 or 4x4) to a set of points."""
     if transformation.shape not in ((3, 3), (4, 4)):
-        raise RuntimeError('`transformation` must be of shape (3, 3) or (4, 4)')
+        raise ValueError('`transformation` must be of shape (3, 3) or (4, 4)')
 
     if transformation.shape[1] == 4:
         # a stack is a copy
