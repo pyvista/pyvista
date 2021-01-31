@@ -10,13 +10,18 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
     return tf3d.axangles.axangle2aff(axis, angle, point=point)
 
 
+def reflection(normal, point=None):
+    """Return a 4x4 matrix for reflection across a normal about a point."""
+    return tf3d.reflections.rfnorm2aff(normal, point=None)
+
+
 def apply_transformation_to_points(transformation, points, inplace=False):
     """Apply a given transformation matrix (3x3 or 4x4) to a set of points."""
     if transformation.shape not in ((3, 3), (4, 4)):
         raise RuntimeError('`transformation` must be of shape (3, 3) or (4, 4)')
 
-    # Copy original array to if not inplace
     if transformation.shape[1] == 4:
+        # a stack is a copy
         points_2 = np.hstack((points, np.ones((len(points), 1))))
     else:
         points_2 = points
@@ -26,7 +31,9 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     points_2 = np.matmul(transformation[np.newaxis, :, :],
                          points_2.T)[0, :3, :].T
 
+    # If inplace, set the points
     if inplace:
         points[:] = points_2
     else:
+        # otherwise return the new points
         return points_2
