@@ -3,7 +3,7 @@
 import collections.abc
 import logging
 from pathlib import Path
-from typing import Optional, List, Tuple, Iterable
+from typing import Optional, List, Tuple, Iterable, Union
 
 import numpy as np
 import vtk
@@ -121,7 +121,7 @@ class DataObject:
         writer.SetInputData(self)
         writer.Write()
 
-    def get_data_range(self, arr: Optional[str, np.ndarray]=None, preference='field'):  # pragma: no cover
+    def get_data_range(self, arr: Optional[Union[str, np.ndarray]]=None, preference='field'):  # pragma: no cover
         """Get the non-NaN min and max of a named array.
 
         Parameters
@@ -412,7 +412,7 @@ class Common(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(self) -> pyvista.PolyData:
+    def arrows(self) -> 'pyvista.PolyData':
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points of the mesh and
@@ -610,7 +610,7 @@ class Common(DataSetFilters, DataObject):
             elif field == FieldAssociation.CELL:
                 return self.cell_arrays[name]
 
-    def get_data_range(self, arr: Optional[str, np.ndarray]=None, preference='cell'):
+    def get_data_range(self, arr: Optional[Union[str, np.ndarray]]=None, preference='cell'):
         """Get the non-NaN min and max of a named array.
 
         Parameters
@@ -985,7 +985,7 @@ class Common(DataSetFilters, DataObject):
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
 
-    def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
+    def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
         """Get a new representation of this object as an :class:`pyvista.UnstructuredGrid`."""
         alg = vtk.vtkAppendFilter()
         alg.AddInputData(self)
