@@ -302,6 +302,10 @@ class Common(DataSetFilters, DataObject):
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._textures = {}
 
+    def __getattr__(self, item):
+        """Get attribute from base class if not found."""
+        return super().__getattribute__(item)
+
     @property
     def active_scalars_info(self) -> ActiveArrayInfo:
         """Return the active scalar's field and name: [field, name]."""
