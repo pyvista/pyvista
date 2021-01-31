@@ -4636,7 +4636,7 @@ class PolyDataFilters(DataSetFilters):
         --------
         >>> import pyvista
         >>> line = pyvista.Line(pointa = (0, 0, 0), pointb = (1, 0, 0))
-        >>> mesh = line.extrude_rotate(resolution = 4, rotate = True)
+        >>> mesh = line.extrude_rotate(resolution = 4)
         >>> mesh.show() # doctest:+SKIP
         """
         if not (0 < resolution):
