@@ -29,9 +29,9 @@ Create a scene without lighting and add our light to it manually.
     mesh.rotate_z(180)
     plotter.add_mesh(mesh, specular=1.0, diffuse=0.7, smooth_shading=True)
     plotter.add_light(light)
-    plotter.show(screenshot='shiny_bunny.png')
+    plotter.show(screenshot='ominous_bunny.png')
 
-.. image:: ../images/auto-generated/shiny_bunny.png
+.. image:: ../images/auto-generated/ominous_bunny.png
 
 Light API
 ---------
@@ -44,8 +44,8 @@ lighting of the scene.
 Lights have a :py:attr:`position` and a :py:attr:`focal_point` that define the
 axis of the light. The meaning of these depends on the type of the light. The
 color of the light can be set according to ambient, diffuse and specular components.
-The brightness can be set with the :py:attr:`intensity` property, and the light
-can be switched on and off with the :py:attr:`on` property.
+The brightness can be set with the :py:attr:`intensity` property, and the writable
+:py:attr:`on` property specifies whether the light is switched on.
 
 Lights can be either directional (meaning an infinitely distant point source) or
 :py:attr:`positional`. Positional lights have additional properties that describe
