@@ -15,11 +15,11 @@ plotter = pv.Plotter()
 
 hemi = pv.Sphere().clip()
 hemi.translate((-1, 0, 0))
-plotter.add_mesh(hemi, color='blue', smooth_shading=True)
+plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 hemi = hemi.copy()
 hemi.rotate_z(180)
-plotter.add_mesh(hemi, color='blue', smooth_shading=True)
+plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 plotter.show()
 
@@ -35,11 +35,11 @@ plotter = pv.Plotter(lighting='none')
 
 hemi = pv.Sphere().clip()
 hemi.translate((-1, 0, 0))
-plotter.add_mesh(hemi, color='blue', smooth_shading=True)
+plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 hemi = hemi.copy()
 hemi.rotate_z(180)
-plotter.add_mesh(hemi, color='blue', smooth_shading=True)
+plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 light = pv.Light(position=(0, 0, 0), focal_point=(-1, 0, 0))
 plotter.add_light(light)
@@ -58,11 +58,11 @@ plotter = pv.Plotter(lighting='none')
 
 hemi = pv.Sphere().clip()
 hemi.translate((-1, 0, 0))
-plotter.add_mesh(hemi, color='blue', smooth_shading=True)
+plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 hemi = hemi.copy()
 hemi.rotate_z(180)
-plotter.add_mesh(hemi, color='blue', smooth_shading=True)
+plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 light = pv.Light(position=(0, 0, 0), focal_point=(-1, 0, 0))
 light.positional = True
@@ -85,12 +85,12 @@ plotter.show()
 plotter = pv.Plotter(lighting='none')
 
 hemi = pv.Sphere().clip()
-plotter.add_mesh(hemi, color='blue', smooth_shading=True)
+plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 offset = 1.5
 hemi = hemi.copy()
 hemi.translate((0, offset, 0))
-plotter.add_mesh(hemi, color='blue', smooth_shading=True)
+plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 # non-spot positional light in the center of the first hemisphere
 light = pv.Light(position=(0, 0, 0), focal_point=(-1, 0, 0))
@@ -128,7 +128,7 @@ exponents = [1, 0.3, 5]
 for center, exponent in zip(centers, exponents):
     hemi = hemi_template.copy()
     hemi.translate(center)
-    plotter.add_mesh(hemi, color='blue', smooth_shading=True)
+    plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
     # spotlight in the center of the hemisphere, shining into it
     focal_point = center[0] - 1, center[1], center[2]
