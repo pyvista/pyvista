@@ -16,12 +16,17 @@ def apply_transformation_to_points(transformation, points, inplace=False):
         raise RuntimeError('`transformation` must be of shape (3, 3) or (4, 4)')
 
     # Copy original array to if not inplace
-    if not inplace:
-        points = points.copy()
-
     if transformation.shape[1] == 4:
-        points_homogeneous = np.hstack((points, np.ones((len(points), 1))))
-    points[:, :3] = np.matmul(transformation[np.newaxis, :, :], points_homogeneous.T)[0, :3, :].T
+        points_2 = np.hstack((points, np.ones((len(points), 1))))
+    else:
+        points_2 = points
 
-    if not inplace:
-        return points
+    # Paged matrix multiplication. For arrays with ndim > 2, matmul assumes
+    # that the matrices to be multiplied lie in the last two dimensions.
+    points_2 = np.matmul(transformation[np.newaxis, :, :],
+                         points_2.T)[0, :3, :].T
+
+    if inplace:
+        points[:] = points_2
+    else:
+        return points_2
