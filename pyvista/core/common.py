@@ -3,7 +3,7 @@
 import collections.abc
 import logging
 from pathlib import Path
-from typing import Optional, List, Tuple, Iterable, Union
+from typing import Optional, List, Tuple, Iterable, Union, Any
 
 import numpy as np
 import vtk
@@ -39,6 +39,9 @@ class DataObject:
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
         self.association_bitarray_names = collections.defaultdict(set)
+
+    def __getattr__(self, item) -> Any:
+        return super().__getattribute__(item)
 
     def shallow_copy(self, to_copy):
         """Shallow copy the given mesh to this mesh."""
