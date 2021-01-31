@@ -871,7 +871,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     }
 
     if axis not in axis_to_vec:
-        raise ValueError
+        raise ValueError('Invalid axis. Must be either "x", "y", or "z"')
 
     rot_mat = transformations.axis_angle_rotation(axis_to_vec[axis], angle, deg=deg)
     return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
