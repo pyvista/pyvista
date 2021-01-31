@@ -392,14 +392,14 @@ class Common(DataSetFilters, DataObject):
         self.set_active_scalars(name)
 
     @property
-    def points(self) -> pyvista_ndarray:
+    def points(self) -> Optional[pyvista_ndarray]:
         """Return a pointer to the points as a numpy object."""
-        pts = self.GetPoints()
-        if pts is None:
+        _points = self.GetPoints()
+        try:
+            _points = _points.GetData()
+        except AttributeError:
             return None
-        vtk_data = pts.GetData()
-        # arr = vtk_to_numpy(vtk_data)
-        return pyvista_ndarray(vtk_data, dataset=self)
+        return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
     def points(self, points: np.ndarray):
@@ -434,7 +434,7 @@ class Common(DataSetFilters, DataObject):
             return self.glyph(scale=name, orient=name)
 
     @property
-    def vectors(self) -> pyvista_ndarray:
+    def vectors(self) -> Optional[pyvista_ndarray]:
         """Return active vectors."""
         return self.active_vectors
 
