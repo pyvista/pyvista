@@ -10,7 +10,7 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista import pyvista_ndarray
+from .pyvista_ndarray import pyvista_ndarray
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                raise_not_matching, vtk_id_list_to_array, fileio,
                                abstract_class, axis_rotation)
