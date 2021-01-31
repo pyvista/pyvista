@@ -811,8 +811,11 @@ class Common(DataSetFilters, DataObject):
     @property
     def extent(self) -> Optional[list]:
         """Return the range of the bounding box."""
-        if hasattr(self, 'GetExtent'):
-            return list(self.GetExtent())
+        try:
+            _extent = list(self.GetExtent())
+        except AttributeError:
+            return None
+        return _extent
 
     @extent.setter
     def extent(self, extent):
