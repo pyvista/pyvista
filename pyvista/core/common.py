@@ -2,15 +2,15 @@
 
 import collections.abc
 import logging
-import warnings
 from pathlib import Path
-from typing import Optional, List, Dict, Tuple, Iterable
+from typing import Optional, List, Tuple, Iterable
 
 import numpy as np
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
+from pyvista import pyvista_ndarray
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                raise_not_matching, vtk_id_list_to_array, fileio,
                                abstract_class, axis_rotation)
@@ -48,7 +48,7 @@ class DataObject:
         """Overwrite this mesh with the given mesh as a deep copy."""
         return self.DeepCopy(to_copy)
 
-    def _load_file(self, filename):
+    def _load_file(self, filename: str):
         """Generically load a vtk object from file.
 
         Parameters
@@ -84,10 +84,10 @@ class DataObject:
         reader.Update()
         return reader.GetOutputDataObject(0)
 
-    def _from_file(self, filename):
+    def _from_file(self, filename: str):
         self.shallow_copy(self._load_file(filename))
 
-    def save(self, filename, binary=True):
+    def save(self, filename: str, binary=True):
         """Save this vtk object to file.
 
         Parameters
@@ -219,12 +219,12 @@ class DataObject:
         newobject.copy_meta_from(self)
         return newobject
 
-    def add_field_array(self, scalars, name, deep=True):
+    def add_field_array(self, scalars: np.ndarray, name: str, deep=True):
         """Add a field array."""
         self.field_arrays.append(scalars, name, deep_copy=deep)
 
     @property
-    def field_arrays(self):
+    def field_arrays(self) -> DataSetAttributes:
         """Return vtkFieldData as DataSetAttributes."""
         return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
 
@@ -303,7 +303,7 @@ class Common(DataSetFilters, DataObject):
         self._textures = {}
 
     @property
-    def active_scalars_info(self):
+    def active_scalars_info(self) -> ActiveArrayInfo:
         """Return the active scalar's field and name: [field, name]."""
         field, name = self._active_scalars_info
         exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
@@ -324,7 +324,7 @@ class Common(DataSetFilters, DataObject):
         return self._active_scalars_info
 
     @property
-    def active_vectors_info(self):
+    def active_vectors_info(self) -> ActiveArrayInfo:
         """Return the active scalar's field and name: [field, name]."""
         if self._active_vectors_info.name is None:
             # Sometimes, precomputed normals aren't set as active
@@ -333,12 +333,12 @@ class Common(DataSetFilters, DataObject):
         return self._active_vectors_info
 
     @property
-    def active_tensors_info(self):
+    def active_tensors_info(self) -> ActiveArrayInfo:
         """Return the active tensor's field and name: [field, name]."""
         return self._active_tensors_info
 
     @property
-    def active_vectors(self):
+    def active_vectors(self) -> pyvista_ndarray:
         """Return the active vectors array."""
         field, name = self.active_vectors_info
         if name:
@@ -388,14 +388,14 @@ class Common(DataSetFilters, DataObject):
         self.set_active_scalars(name)
 
     @property
-    def points(self) -> pyvista.pyvista_ndarray:
+    def points(self) -> pyvista_ndarray:
         """Return a pointer to the points as a numpy object."""
         pts = self.GetPoints()
         if pts is None:
             return None
         vtk_data = pts.GetData()
         # arr = vtk_to_numpy(vtk_data)
-        return pyvista.pyvista_ndarray(vtk_data, dataset=self)
+        return pyvista_ndarray(vtk_data, dataset=self)
 
     @points.setter
     def points(self, points: np.ndarray):
@@ -430,7 +430,7 @@ class Common(DataSetFilters, DataObject):
             return self.glyph(scale=name, orient=name)
 
     @property
-    def vectors(self) -> pyvista.pyvista_ndarray:
+    def vectors(self) -> pyvista_ndarray:
         """Return active vectors."""
         return self.active_vectors
 
@@ -448,7 +448,7 @@ class Common(DataSetFilters, DataObject):
         self.active_vectors_name = DEFAULT_VECTOR_KEY
 
     @property
-    def t_coords(self) -> pyvista.pyvista_ndarray:
+    def t_coords(self) -> pyvista_ndarray:
         """Return the active texture coordinates on the points."""
         return self.point_arrays.t_coords
 
@@ -601,7 +601,7 @@ class Common(DataSetFilters, DataObject):
             self.set_active_scalars(new_name, preference=field)
 
     @property
-    def active_scalars(self) -> pyvista.pyvista_ndarray:
+    def active_scalars(self) -> pyvista_ndarray:
         """Return the active scalars as an array."""
         field, name = self.active_scalars_info
         if name is not None:
