@@ -48,7 +48,7 @@ jobs:
     displayName: 'Install pyvista'
   - script: |
       pip install mypy
-      python -m mypy pyvista/core/common.py
+      make mypy
     displayName: 'Run static code check'
 
 
