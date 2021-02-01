@@ -3,13 +3,16 @@ import vtk
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import numpy as np
 
+import pyvista
+
 
 def remove_alpha(img):
     """Remove the alpha channel from ``vtk.vtkImageData``."""
     ec = vtk.vtkImageExtractComponents()
     ec.SetComponents(0, 1, 2)
     ec.SetInputData(img)
-    return ec.GetOutput()
+    ec.Update()
+    return pyvista.wrap(ec.GetOutput())
 
 
 def wrap_image_array(arr):
@@ -29,10 +32,9 @@ def wrap_image_array(arr):
     if arr.dtype != np.uint8:
         raise ValueError('Expecting a np.uint8 array')
 
-    from pyvista import wrap
     img = vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
-    wrap_img = wrap(img)
+    wrap_img = pyvista.wrap(img)
     wrap_img.point_arrays['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
     return wrap_img
 
@@ -48,14 +50,6 @@ def image_from_window(ren_win, as_vtk=False, ignore_alpha=False):
     if as_vtk:
         return wrap_image_array(data)
     return data
-
-
-# def compare_plotters(pl1, pl2):
-#     img_diff = vtk.vtkImageDifference()
-#     img_diff.SetInputData(image_from_window(pl1, ignore_alpha=True))
-#     img_diff.SetImageData(image_from_window(pl2, ignore_alpha=True))
-#     img_diff.Update()
-#     return img_diff.GetError()
 
 
 def compare_images(im1, im2, threshold=1, use_vtk=True):

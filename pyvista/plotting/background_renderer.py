@@ -30,6 +30,7 @@ class BackgroundRenderer(Renderer):
         image_actor.SetInputData(image_data)
         self.add_actor(image_actor, name='background')
         self.camera.enable_parallel_projection()
+        self.reset_camera()  # necessary to get first render
         self.resize()
 
     def resize(self, *args):
@@ -48,12 +49,12 @@ class BackgroundRenderer(Renderer):
         xc = origin[0] + 0.5*(extent[0] + extent[1]) * spacing[0]
         yc = origin[1] + 0.5*(extent[2] + extent[3]) * spacing[1]
         yd = (extent[3] - extent[2] + 1) * spacing[1]
-        d = self.camera.distance
+        dist = self.camera.distance
 
         # make the longest dimensions match the plotting window
         img_dim = np.array(image_data.dimensions[:2])
         self.camera.focus = np.array([xc, yc, 0.0])
-        self.camera.position = np.array([xc, yc, d])
+        self.camera.position = np.array([xc, yc, dist])
 
         ratio = img_dim/np.array(self.parent.window_size)
         scale_value = 1
