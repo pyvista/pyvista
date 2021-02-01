@@ -18,6 +18,7 @@ import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
+from pyvista.core.errors import DeprecationError
 
 
 ffmpeg_failed = False
@@ -189,19 +190,9 @@ def test_interactor_style():
     plotter.close()
 
 
-@skip_no_plotting
 def test_lighting_disable_3_lights():
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(pyvista.Sphere())
-
-    # test default disable_3_lights()
-    plotter.disable_3_lights()
-    lights = plotter.renderer.lights
-    assert len(lights) == 5
-    for light in lights:
-        assert light.on
-
-    plotter.show(before_close_callback=verify_cache_image)
+    with pytest.raises(DeprecationError):
+        pyvista.Plotter().disable_3_lights()
 
 
 @skip_no_plotting

@@ -280,7 +280,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             lighting = 'none'
         lighting_normalized = lighting.replace('_', ' ').lower()
         if lighting_normalized == 'light kit':
-            self.disable_3_lights()
+            self.enable_lightkit()
         elif lighting_normalized == 'three lights':
             self.enable_3_lights()
         elif lighting_normalized != 'none':
@@ -442,8 +442,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in renderers:
                 renderer.add_light(light)
 
-    def disable_3_lights(self, only_active=False):
-        """Disable 3-lights illumination and switch to a light kit.
+    def disable_3_lights(self):
+        """This method as been depreciated, Please use ``enable_lightkit``."""
+        from pyvista.core.errors import DeprecationError
+        raise DeprecationError('DEPRECATED: Please use ``enable_lightkit``')
+
+    def enable_lightkit(self, only_active=False):
+        """Enable the default light-kit lighting.
+
+        See:
+        https://www.researchgate.net/publication/2926068
 
         This will replace all pre-existing lights in the renderer.
 
