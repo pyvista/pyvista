@@ -11,10 +11,10 @@ Brief Example
 
 Create a red spotlight that shines on the origin.
 
-.. # TODO: code or testcode directives?
 .. testcode:: python
 
     import pyvista as pv
+    from pyvista import examples
     light = pv.Light(position=(-1, 1, 1), color='red')
     light.positional = True
 
@@ -22,7 +22,6 @@ Create a scene without lighting and add our light to it manually.
 
 .. testcode:: python
 
-    from pyvista import examples
     plotter = pv.Plotter(lighting='none')
     mesh = examples.download_bunny()
     mesh.rotate_x(90)
@@ -32,6 +31,8 @@ Create a scene without lighting and add our light to it manually.
     plotter.show(screenshot='ominous_bunny.png')
 
 .. image:: ../images/auto-generated/ominous_bunny.png
+
+For detailed examples please see :ref:`ref_light_examples`.
 
 Light API
 ---------

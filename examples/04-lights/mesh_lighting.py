@@ -11,14 +11,15 @@ for the given mesh.
 import pyvista as pv
 from pyvista import examples
 
-mesh = examples.download_cow()
-mesh.rotate_x(90)
-shifted = mesh.copy()
-shifted.translate((0, 6, 0))
+horse = examples.download_horse().decimate(0.9)
+horse.rotate_z(-120)
+horse.points = (horse.points - horse.center) * 100
+shifted = horse.copy()
+shifted.translate((0, 10, 0))
 
 plotter = pv.Plotter()
-plotter.add_mesh(mesh, color='tan')
-plotter.add_mesh(shifted, color='tan', show_edges=True, lighting=False)
+plotter.add_mesh(horse, color='brown')
+plotter.add_mesh(shifted, color='brown', show_edges=True, lighting=False)
 plotter.show()
 
 
@@ -28,7 +29,7 @@ plotter.show()
 # the second mesh would be practically impossible to understand even with the
 # option to interactively explore the surface:
 
-shifted.plot(color='tan', lighting=False)
+shifted.plot(color='brown', lighting=False)
 
 ###############################################################################
 # For further examples about fine-tuning mesh properties that affect
