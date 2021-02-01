@@ -399,13 +399,16 @@ class Common(DataSetFilters, DataObject):
         self.set_active_scalars(name)
 
     @property
-    def points(self) -> Optional[pyvista_ndarray]:
+    def points(self) -> pyvista_ndarray:
         """Return a pointer to the points as a numpy object."""
         _points = self.GetPoints()
         try:
             _points = _points.GetData()
         except AttributeError:
-            return None
+            # create an empty array
+            vtk_points = pyvista.vtk_points(np.empty((0, 3)), False)
+            self.SetPoints(vtk_points)
+            _points = self.GetPoints().GetData()
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
@@ -623,13 +626,15 @@ class Common(DataSetFilters, DataObject):
             return None
         return None
 
-    def get_data_range(self, arr: Optional[Union[str, np.ndarray]]=None, preference='cell'):
+    def get_data_range(self,
+                       arr_var: Optional[Union[str, np.ndarray]] = None,
+                       preference='cell'):
         """Get the non-NaN min and max of a named array.
 
         Parameters
         ----------
-        arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the
+        arr_var : str, np.ndarray, optional
+            The name of the array to get the range. If ``None``, the
             active scalars is used.
 
         preference : str, optional
@@ -638,18 +643,19 @@ class Common(DataSetFilters, DataObject):
             ``'cell'``, or ``'field'``.
 
         """
-        if arr is None:
+        if arr_var is None:
             # use active scalars array
             _, arr = self.active_scalars_info
-        if isinstance(arr, str):
-            name = arr
+        if isinstance(arr_var, str):
+            name = arr_var
             # This can return None when an array is not found - expected
             arr = get_array(self, name, preference=preference)
-            if arr is None:
-                # Raise a value error if fetching the range of an unknown array
-                raise ValueError(f'Array `{name}` not present.')
+        if arr is None:
+            # Raise a value error if fetching the range of an unknown array
+            raise ValueError(f'Array `{name}` not present.')
+
         # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
