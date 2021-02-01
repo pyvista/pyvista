@@ -201,6 +201,19 @@ def test_translate_should_fail_given_none(grid):
         grid.transform(None)
 
 
+def test_translate_should_fail_bad_points(grid):
+    points = np.random.random((10, 2))
+    bad_points = np.random.random((10, 2))
+    trans = np.random.random((4, 4))
+    bad_trans = np.random.random((2, 4))
+    with pytest.raises(ValueError):
+        pyvista.utilities.transformations.apply_transformation_to_points(trans, bad_points)
+
+    with pytest.raises(ValueError):
+        pyvista.utilities.transformations.apply_transformation_to_points(bad_trans, points)
+
+
+
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
 def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
