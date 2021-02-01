@@ -81,8 +81,8 @@ class ActiveArrayInfo:
 class DataObject:
     """Methods common to all wrapped data objects."""
 
-    _READERS: Dict[str, vtk.vtkDataReader] = {}
-    _WRITERS: Dict[str, vtk.vtkDataReader] = {}
+    _READERS: Dict[str, Union[vtk.vtkXMLReader, vtk.vtkDataReader]] = {}
+    _WRITERS: Dict[str, Union[vtk.vtkXMLWriter, vtk.vtkDataWriter]] = {}
 
     def __init__(self, *args, **kwargs):
         """Initialize the data object."""
