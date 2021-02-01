@@ -3,7 +3,7 @@
 import collections.abc
 import logging
 from pathlib import Path
-from typing import Optional, List, Tuple, Iterable, Union, Any
+from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
 
 import numpy as np
 import vtk
@@ -30,8 +30,8 @@ ActiveArrayInfo = collections.namedtuple('ActiveArrayInfo', ['association', 'nam
 class DataObject:
     """Methods common to all wrapped data objects."""
 
-    _READERS = None
-    _WRITERS = None
+    _READERS: Dict[str, vtk.vtkDataReader] = {}
+    _WRITERS: Dict[str, vtk.vtkDataReader] = {}
 
     def __init__(self, *args, **kwargs):
         """Initialize the data object."""

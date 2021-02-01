@@ -4,6 +4,7 @@ from collections.abc import Iterable
 
 import numpy as np
 import vtk
+from typing import Union
 
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
@@ -61,7 +62,7 @@ class DataSetAttributes(VTKObjectWrapper):
         """Implement setting with the [] operator."""
         self.append(narray=value, name=key)
 
-    def __delitem__(self, key: [str, int]):
+    def __delitem__(self, key: Union[str, int]):
         """Implement del with array name or index."""
         self.remove(key)
 

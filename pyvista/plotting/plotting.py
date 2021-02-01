@@ -18,6 +18,7 @@ import scooby
 import vtk
 from vtk.util import numpy_support as VN
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
+from typing import Dict
 
 import pyvista
 from pyvista.utilities import (assert_empty_kwargs, convert_array,
@@ -42,7 +43,6 @@ try:
 except ImportError:
     has_matplotlib = False
 
-_ALL_PLOTTERS = {}
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 
@@ -749,15 +749,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Return the scalar bar slots of the active renderer."""
         return self.renderer._scalar_bar_slots
 
-    @property
-    def _scalar_bar_slot_lookup(self):
-        """Return the scalar bar slot lookup of the active renderer."""
-        return self.renderer._scalar_bar_slot_lookup
-
     @_scalar_bar_slots.setter
     def _scalar_bar_slots(self, value):
         """Set the scalar bar slots of the active renderer."""
         self.renderer._scalar_bar_slots = value
+
+    @property
+    def _scalar_bar_slot_lookup(self):
+        """Return the scalar bar slot lookup of the active renderer."""
+        return self.renderer._scalar_bar_slot_lookup
 
     @_scalar_bar_slot_lookup.setter
     def _scalar_bar_slot_lookup(self, value):
@@ -4434,3 +4434,8 @@ def _style_factory(klass):
                     renderer.SetInteractive(True)
 
     return CustomStyle
+
+
+# Tracks created plotters.  At the end of the file as we need to
+# define ``BasePlotter`` before including it in the type definition.
+_ALL_PLOTTERS: Dict[str, BasePlotter] = {}
