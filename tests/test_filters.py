@@ -1076,18 +1076,22 @@ def test_shrink():
 
 
 def test_reflect_grid(grid):
-    with pytest.raises(ValueError):
-        grid.reflect('not_valid')
+    reflected = grid.reflect((0, 0, 1), point=(0, 0, 6))
+    assert isinstance(reflected, type(grid))
+    assert reflected.n_cells == grid.n_cells
+    assert reflected.n_points == grid.n_points
 
-    reflected = grid.reflect('z', copy=True, center=6)
-    assert isinstance(reflected, pyvista.UnstructuredGrid)
-    assert reflected.n_cells == 2*grid.n_cells
-    assert reflected.n_points == 2*grid.n_points
+
+def test_reflect_struct_grid(struct_grid):
+    reflected = struct_grid.reflect((0, 0, 1), point=(0, 0, 6))
+    assert isinstance(reflected, type(struct_grid))
+    assert reflected.n_cells == struct_grid.n_cells
+    assert reflected.n_points == struct_grid.n_points
 
 
 def test_reflect_mesh(airplane):
-    reflected = airplane.reflect('x')
-    assert isinstance(reflected, pyvista.PolyData)
+    reflected = airplane.reflect((1, 0, 0))
+    assert isinstance(reflected, type(airplane))
     assert reflected.n_cells == airplane.n_cells
     assert reflected.n_points == airplane.n_points
 
@@ -1095,18 +1099,42 @@ def test_reflect_mesh(airplane):
     assert np.allclose(airplane.points[:, 1:], reflected.points[:, 1:])
 
 
-def test_reflect_mesh_copy(airplane):
-    reflected = airplane.reflect('x', copy=True)
-    assert isinstance(reflected, pyvista.PolyData)
-    assert reflected.n_cells == 2*airplane.n_cells
-    assert reflected.n_points == 2*airplane.n_points
+def test_reflect_mesh_about_point(airplane):
+    x_plane = 500
+    reflected = airplane.reflect((1, 0, 0), point=(x_plane, 0, 0))
+    assert isinstance(reflected, type(airplane))
+    assert reflected.n_cells == airplane.n_cells
+    assert reflected.n_points == airplane.n_points
+
+    assert np.allclose(x_plane - airplane.points[:, 0], reflected.points[:, 0] - x_plane)
+    assert np.allclose(airplane.points[:, 1:], reflected.points[:, 1:])
 
 
 def test_reflect_inplace(airplane):
-    with pytest.raises(ValueError):
-        airplane.reflect('x', copy=True, inplace=True)
-
     orig = airplane.copy()
-    airplane.reflect('x', inplace=True)
+    airplane.reflect((1, 0, 0), inplace=True)
     assert airplane.n_cells == orig.n_cells
     assert airplane.n_points == orig.n_points
+    assert np.allclose(airplane.points[:, 0], -orig.points[:, 0])
+    assert np.allclose(airplane.points[:, 1:], orig.points[:, 1:])
+
+
+def test_extrude_rotate():
+    resolution = 4
+    line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
+    
+    with pytest.raises(ValueError):
+        line.extrude_rotate(resolution=0)
+
+    poly = line.extrude_rotate(resolution=resolution)
+    assert poly.n_cells == line.n_points - 1
+    assert poly.n_points == (resolution + 1)*line.n_points
+
+
+def test_extrude_rotate_inplace():
+    resolution = 4
+    poly = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
+    old_line = poly.copy()
+    poly.extrude_rotate(resolution=resolution, inplace=True)
+    assert poly.n_cells == old_line.n_points - 1
+    assert poly.n_points == (resolution + 1)*old_line.n_points
