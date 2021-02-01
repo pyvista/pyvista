@@ -362,11 +362,14 @@ class Common(DataSetFilters, DataObject):
     def active_tensors(self) -> Optional[np.ndarray]:
         """Return the active tensors array."""
         field, name = self.active_tensors_info
-        if name:
+        try:
             if field is FieldAssociation.POINT:
                 return self.point_arrays[name]
             if field is FieldAssociation.CELL:
                 return self.cell_arrays[name]
+        except KeyError:
+            return None
+        return None
 
     @property
     def active_tensors_name(self) -> str:
