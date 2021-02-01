@@ -155,18 +155,21 @@ jobs:
         conda activate pyvista-vtk$(VTK.VERSION)
         pytest -v --ignore=tests/plotting
       displayName: 'Test Core API'
+      continueOnError: true  # 'true' if future steps should run even if this step fails; defaults to 'false'
 
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-vtk$(VTK.VERSION)
         pytest -v tests/plotting --cov-report html
       displayName: 'Test Core Plotting API'
+      continueOnError: true  # 'true' if future steps should run even if this step fails; defaults to 'false'
 
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-vtk$(VTK.VERSION)
         pytest -v --doctest-modules pyvista
       displayName: 'Test Package Docstrings against VTK'
+      continueOnError: true  # 'true' if future steps should run even if this step fails; defaults to 'false'
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
 
