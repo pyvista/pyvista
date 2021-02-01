@@ -99,7 +99,7 @@ def get_ref(dest_dir, md5):
 # -----------------------------------------------------------------------------
 
 
-objIds = []
+objIds = []  # type: ignore
 
 
 def get_object_id(obj):

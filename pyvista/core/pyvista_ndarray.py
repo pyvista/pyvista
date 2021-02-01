@@ -1,6 +1,7 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
 from collections.abc import Iterable
 
+from typing import Union
 import numpy as np
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
 
@@ -15,7 +16,8 @@ except ImportError:
 class pyvista_ndarray(np.ndarray):
     """An ndarray which references the owning dataset and the underlying vtkArray."""
 
-    def __new__(cls, array: [Iterable, vtkAbstractArray], dataset=None, association=FieldAssociation.NONE):
+    def __new__(cls, array: Union[Iterable, vtkAbstractArray], dataset=None,
+                association=FieldAssociation.NONE):
         """Allocate the array."""
         if isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)

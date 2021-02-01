@@ -102,7 +102,7 @@ def verify_cache_image(plotter):
     # cached image name
     image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
 
-    # simply save the last screenshot if it doesn't exist of the cache
+    # simply save the last screenshot if it doesn't exist or the cache
     # is being reset.
     if glb_reset_image_cache or not os.path.isfile(image_filename):
         return plotter.screenshot(image_filename)
@@ -120,6 +120,8 @@ def verify_cache_image(plotter):
         warnings.warn('Exceeded image regression warning of '
                       f'{IMAGE_REGRESSION_WARNING} with an image error of '
                       f'{error}')
+
+
 
 
 @skip_no_plotting
@@ -221,7 +223,11 @@ def test_lighting_add_manual_light():
     # test manual light addition
     light = pyvista.Light()
     plotter.add_light(light)
-    assert plotter.renderer.lights[-1] is light
+    assert plotter.renderer.lights == [light]
+
+    # failing case
+    with pytest.raises(TypeError):
+        plotter.add_light('invalid')
 
     plotter.show(before_close_callback=verify_cache_image)
 
@@ -235,10 +241,6 @@ def test_lighting_remove_manual_light():
     # test light removal
     plotter.remove_all_lights()
     assert not plotter.renderer.lights
-
-    # failing case
-    with pytest.raises(TypeError):
-        plotter.add_light('invalid')
 
     plotter.show(before_close_callback=verify_cache_image)
 
@@ -294,6 +296,7 @@ def test_lighting_init_three_lights():
 def test_lighting_init_none():
     # ``None`` already tested above
     plotter = pyvista.Plotter(lighting='none')
+    plotter.add_mesh(pyvista.Sphere())
     lights = plotter.renderer.lights
     assert not lights
     plotter.show(before_close_callback=verify_cache_image)
@@ -554,9 +557,10 @@ def test_add_point_labels():
     with pytest.raises(ValueError):
         plotter.add_point_labels(points, range(n - 1))
 
-    plotter.add_point_labels(points, range(n), show_points=True, point_color='r', point_size=10)
-    plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r',
-                             point_size=10)
+    plotter.add_point_labels(points, range(n), show_points=True,
+                             point_color='r', point_size=10)
+    plotter.add_point_labels(points - 1, range(n), show_points=False,
+                             point_color='r', point_size=10)
     plotter.show(before_close_callback=verify_cache_image)
 
 
@@ -1147,13 +1151,13 @@ def test_volume_rendering():
 
 
 @skip_no_plotting
-def test_plot_compar_four():
+def test_plot_compare_four():
     # Really just making sure no errors are thrown
     mesh = examples.load_uniform()
     data_a = mesh.contour()
     data_b = mesh.threshold_percent(0.5)
     data_c = mesh.decimate_boundary(0.5)
-    data_d = mesh.glyph()
+    data_d = mesh.glyph(scale=False)
     pyvista.plot_compare_four(data_a, data_b, data_c, data_d,
                               disply_kwargs={'color': 'w'},
                               show_kwargs={'before_close_callback': verify_cache_image})
@@ -1383,7 +1387,6 @@ def test_add_background_image_not_global():
     plotter.add_mesh(sphere)
     plotter.add_background_image(examples.mapfile, as_global=False)
     plotter.show(before_close_callback=verify_cache_image)
-
 
 
 @skip_no_plotting

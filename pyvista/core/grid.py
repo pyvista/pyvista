@@ -225,7 +225,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         self._update_dimensions()
         self.Modified()
 
-    @Grid.dimensions.setter
+    @Grid.dimensions.setter  # type: ignore
     def dimensions(self, dims):
         """Do not let the dimensions of the RectilinearGrid be set."""
         raise AttributeError("The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.")

@@ -722,7 +722,7 @@ class DataSetFilters:
             _, tscalars = dataset.active_scalars_info
         else:
             tscalars = scalars
-        dmin, dmax = dataset.get_data_range(arr=tscalars, preference=preference)
+        dmin, dmax = dataset.get_data_range(arr_var=tscalars, preference=preference)
 
         def _check_percent(percent):
             """Make sure percent is between 0 and 1 or fix if between 0 and 100."""
@@ -869,7 +869,7 @@ class DataSetFilters:
         if scalar_range is None:
             scalar_range = (low_point[2], high_point[2])
         elif isinstance(scalar_range, str):
-            scalar_range = dataset.get_data_range(arr=scalar_range, preference=preference)
+            scalar_range = dataset.get_data_range(arr_var=scalar_range, preference=preference)
         elif isinstance(scalar_range, (np.ndarray, collections.abc.Sequence)):
             if len(scalar_range) != 2:
                 raise ValueError('scalar_range must have a length of two defining the min and max')

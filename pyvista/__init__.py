@@ -6,16 +6,12 @@ from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
+from pyvista.utilities.misc import _get_vtk_id_type
 # Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
 # get the int type from vtk
-VTK_ID_TYPE_SIZE = vtk.vtkIdTypeArray().GetDataTypeSize()
-ID_TYPE = np.int32
-if VTK_ID_TYPE_SIZE == 4:
-    ID_TYPE = np.int32
-elif VTK_ID_TYPE_SIZE == 8:
-    ID_TYPE = np.int64
+ID_TYPE = _get_vtk_id_type()
 
 # for additional error output for VTK segfaults
 try:
@@ -88,7 +84,7 @@ except Exception as e:
     warnings.warn(f'Unable to create `EXAMPLES_PATH` at "{EXAMPLES_PATH}"\nError: {e}\n\n'
                   'Override the default path by setting the environmental variable '
                   '`PYVISTA_USERDATA_PATH` to a writable path.')
-    EXAMPLES_PATH = None
+    EXAMPLES_PATH = ''
 
 # Send VTK messages to the logging module:
 send_errors_to_logging()

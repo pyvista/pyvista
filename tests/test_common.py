@@ -896,7 +896,7 @@ def test_setting_points_from_self(grid):
 
 def test_empty_points():
     pdata = pyvista.PolyData()
-    assert pdata.points is None
+    assert np.allclose(pdata.points, np.empty(3))
 
 
 def test_no_active():
@@ -917,7 +917,7 @@ def test_get_data_range(grid):
         rng = mesh.get_data_range('some data')
 
     # Test with some data
-    rng = grid.get_data_range() # active scalars
+    rng = grid.get_data_range()  # active scalars
     assert len(rng) == 2
     assert np.allclose(rng, (1, 302))
 

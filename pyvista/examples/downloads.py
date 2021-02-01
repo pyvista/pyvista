@@ -15,7 +15,7 @@ from pyvista.core.errors import DeprecationError
 
 def _check_examples_path():
     """Check if the examples path exists."""
-    if pyvista.EXAMPLES_PATH is None:
+    if not pyvista.EXAMPLES_PATH:
         raise FileNotFoundError('EXAMPLES_PATH does not exist.  Try setting the '
                                 'environment variable `PYVISTA_USERDATA_PATH` '
                                 'to a writable path and restarting python')
