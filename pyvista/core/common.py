@@ -40,19 +40,19 @@ class DataObject:
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
         self.association_bitarray_names = collections.defaultdict(set)
 
-    def __getattr__(self, item) -> Any:
+    def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
-    def shallow_copy(self, to_copy):
+    def shallow_copy(self, to_copy: vtk.vtkDataObject) -> vtk.vtkDataObject:
         """Shallow copy the given mesh to this mesh."""
         return self.ShallowCopy(to_copy)
 
-    def deep_copy(self, to_copy):
+    def deep_copy(self, to_copy: vtk.vtkDataObject) -> vtk.vtkDataObject:
         """Overwrite this mesh with the given mesh as a deep copy."""
         return self.DeepCopy(to_copy)
 
-    def _load_file(self, filename: str):
+    def _load_file(self, filename: str) -> vtk.vtkDataObject:
         """Generically load a vtk object from file.
 
         Parameters
@@ -146,7 +146,7 @@ class DataObject:
         """Return the representation methods (internal helper)."""
         raise NotImplementedError('Called only by the inherited class')
 
-    def head(self, display=True, html=None):
+    def head(self, display=True, html: bool = None):
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise returns a console friendly string.
@@ -171,8 +171,8 @@ class DataObject:
             fmt += "</table>\n"
             fmt += "\n"
             if display:
-                from IPython.display import display, HTML
-                display(HTML(fmt))
+                from IPython.display import display as _display, HTML
+                _display(HTML(fmt))
                 return
             return fmt
         # Otherwise return a string that is Python console friendly
@@ -237,12 +237,12 @@ class DataObject:
         self.field_arrays.clear()
 
     @property
-    def memory_address(self):
+    def memory_address(self) -> str:
         """Get address of the underlying C++ object in format 'Addr=%p'."""
         return self.GetInformation().GetAddressAsString("")
 
     @property
-    def actual_memory_size(self):
+    def actual_memory_size(self) -> int:
         """Return the actual size of the dataset object.
 
         Returns
@@ -260,7 +260,7 @@ class DataObject:
         """
         return self.GetActualMemorySize()
 
-    def copy_structure(self, dataset):
+    def copy_structure(self, dataset: vtk.vtkDataSet):
         """Copy the structure (geometry and topology) of the input dataset object.
 
         Examples
@@ -274,7 +274,7 @@ class DataObject:
         """
         self.CopyStructure(dataset)
 
-    def copy_attributes(self, dataset):
+    def copy_attributes(self, dataset: vtk.vtkDataSet):
         """Copy the data attributes of the input dataset object.
 
         Examples
@@ -359,7 +359,7 @@ class Common(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors(self):
+    def active_tensors(self) -> Optional[np.ndarray]:
         """Return the active tensors array."""
         field, name = self.active_tensors_info
         if name:
@@ -471,7 +471,7 @@ class Common(DataSetFilters, DataObject):
         self.point_arrays.t_coords = t_coords
 
     @property
-    def textures(self) -> dict:
+    def textures(self) -> Dict[str, vtk.vtkTexture]:
         """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
 
         When casting back to a VTK dataset or filtering this dataset, these textures
@@ -484,7 +484,7 @@ class Common(DataSetFilters, DataObject):
         """Clear the textures from this mesh."""
         self._textures.clear()
 
-    def _activate_texture(mesh, name: str):
+    def _activate_texture(mesh, name: str) -> vtk.vtkTexture:
         """Grab a texture and update the active texture coordinates.
 
         This makes sure to not destroy old texture coordinates.
@@ -628,7 +628,7 @@ class Common(DataSetFilters, DataObject):
 
     def get_data_range(self,
                        arr_var: Optional[Union[str, np.ndarray]] = None,
-                       preference='cell'):
+                       preference='cell') -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
         """Get the non-NaN min and max of a named array.
 
         Parameters
@@ -745,7 +745,7 @@ class Common(DataSetFilters, DataObject):
         transformations.apply_transformation_to_points(t, self.points, inplace=True)
 
 
-    def copy_meta_from(self, ido):
+    def copy_meta_from(self, ido: 'Common'):
         """Copy pyvista meta data onto this object from another object."""
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
@@ -825,7 +825,7 @@ class Common(DataSetFilters, DataObject):
         return _extent
 
     @extent.setter
-    def extent(self, extent):
+    def extent(self, extent: List[float]):
         """Set the range of the bounding box."""
         if hasattr(self, 'SetExtent'):
             if len(extent) != 6:
@@ -1009,7 +1009,7 @@ class Common(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def find_closest_point(self, point, n=1) -> int:
+    def find_closest_point(self, point: Iterable[float], n=1) -> int:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -1103,7 +1103,7 @@ class Common(DataSetFilters, DataObject):
         closest_cells = np.array([locator.FindCell(node) for node in point])
         return int(closest_cells[0]) if len(closest_cells) == 1 else closest_cells
 
-    def cell_n_points(self, ind):
+    def cell_n_points(self, ind: int) -> int:
         """Return the number of points in a cell.
 
         Parameters
@@ -1126,7 +1126,7 @@ class Common(DataSetFilters, DataObject):
         """
         return self.GetCell(ind).GetPoints().GetNumberOfPoints()
 
-    def cell_points(self, ind):
+    def cell_points(self, ind: int) -> np.ndarray:
         """Return the points in a cell.
 
         Parameters
@@ -1153,7 +1153,7 @@ class Common(DataSetFilters, DataObject):
         points = self.GetCell(ind).GetPoints().GetData()
         return vtk_to_numpy(points)
 
-    def cell_bounds(self, ind):
+    def cell_bounds(self, ind: int) -> List[float]:
         """Return the bounding box of a cell.
 
         Parameters
@@ -1176,7 +1176,7 @@ class Common(DataSetFilters, DataObject):
         """
         return list(self.GetCell(ind).GetBounds())
 
-    def cell_type(self, ind):
+    def cell_type(self, ind: int) -> int:
         """Return the type of a cell.
 
         Parameters
