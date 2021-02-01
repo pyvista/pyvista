@@ -113,7 +113,6 @@ def verify_cache_image(plotter):
     # otherwise, compare with the existing cached image
     error = pyvista.compare_images(image_filename, plotter)
     if error > IMAGE_REGRESSION_ERROR:
-        breakpoint()
         raise RuntimeError('Exceeded image regression error of '
                            f'{IMAGE_REGRESSION_ERROR} with an image error of '
                            f'{error}')
