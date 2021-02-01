@@ -68,12 +68,12 @@ class Light(vtkLight):
         """Initialize the light."""
         super().__init__()
 
-        if position:
+        if position is not None:
             self.position = position
-        if focal_point:
+        if focal_point is not None:
             self.focal_point = focal_point
 
-        if color:
+        if color is not None:
             self.ambient_color = color
             self.diffuse_color = color
             self.specular_color = color
