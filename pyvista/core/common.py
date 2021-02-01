@@ -1132,8 +1132,11 @@ class Common(DataSetFilters, DataObject):
          [907.53900146  55.49020004  83.65809631]]
 
         """
+        # A copy of the points must be returned to avoid overlapping them since the
+        # `vtk.vtkExplicitStructuredGrid.GetCell` is an override method.
         points = self.GetCell(ind).GetPoints().GetData()
-        return vtk_to_numpy(points)
+        points = vtk_to_numpy(points)
+        return points.copy()
 
     def cell_bounds(self, ind):
         """Return the bounding box of a cell.

@@ -295,6 +295,23 @@ The following is a description of the methods available to a
    :undoc-members:
 
 
+Explicit Structured Grid
+------------------------
+
+.. rubric:: Attributes
+.. autoautosummary:: pyvista.ExplicitStructuredGrid
+   :attributes:
+
+.. rubric:: Methods
+.. autoautosummary:: pyvista.ExplicitStructuredGrid
+   :methods:
+
+.. autoclass:: pyvista.ExplicitStructuredGrid
+   :show-inheritance:
+   :members:
+   :undoc-members:
+
+
 pv.Structured Grid Class Methods
 --------------------------------------------
 The following is a description of the methods available to a
