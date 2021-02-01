@@ -34,4 +34,4 @@ coverage-html:
 
 mypy:
 	@echo "Running mypy static type checking"
-	@mypy pyvista
+	@mypy pyvista/core/common.py

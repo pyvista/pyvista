@@ -643,16 +643,20 @@ class Common(DataSetFilters, DataObject):
             ``'cell'``, or ``'field'``.
 
         """
-        if arr_var is None:
-            # use active scalars array
-            _, arr = self.active_scalars_info
+        if arr_var is None:  # use active scalars array
+            _, arr_var = self.active_scalars_info
+            if arr_var is None:
+                return (np.nan, np.nan)
+
         if isinstance(arr_var, str):
             name = arr_var
             # This can return None when an array is not found - expected
             arr = get_array(self, name, preference=preference)
-        if arr is None:
-            # Raise a value error if fetching the range of an unknown array
-            raise ValueError(f'Array `{name}` not present.')
+            if arr is None:
+                # Raise a value error if fetching the range of an unknown array
+                raise ValueError(f'Array `{name}` not present.')
+        else:
+            arr = arr_var
 
         # If array has no tuples return a NaN range
         if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
@@ -1042,7 +1046,7 @@ class Common(DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)
 
-    def find_closest_cell(self, point: Union[int, np.ndarray]) -> int:
+    def find_closest_cell(self, point: Union[int, np.ndarray]) -> Union[int, np.ndarray]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
