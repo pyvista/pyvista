@@ -80,7 +80,8 @@ plotter.show()
 # light's nominal position. It could still display attenuation, see the
 # :ref:`ref_attenuation_example` example.
 #
-# Switching to a spotlight will enable beam shaping using the :py:attr:`exponent`
+# Switching to a spotlight (i.e. a positional light with a cone angle less
+# than 90 degrees) will enable beam shaping using the :py:attr:`exponent`
 # property. Let's put our hemispheres side by side for this, and put a light in
 # the center of each: one spotlight, one merely positional.
 

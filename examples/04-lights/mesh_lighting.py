@@ -2,10 +2,10 @@
 Disabling Mesh Lighting
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-While plotters have a default set of lights and a seemingly endless option for
-customizing lighting conditions in general, meshes have the option to opt out of
-lighting altogether. Pass ``lighting=False`` to ``add_mesh`` to disable lighting
-for the given mesh.
+While plotters have a default set of lights and there are many options for
+customizing lighting conditions in general, meshes have the option to opt out
+of lighting altogether. Pass ``lighting=False`` to ``add_mesh`` to disable
+lighting for the given mesh:
 """
 # sphinx_gallery_thumbnail_number = 1
 import pyvista as pv

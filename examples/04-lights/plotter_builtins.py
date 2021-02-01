@@ -22,6 +22,7 @@ lighting comprises:
 """
 # sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
+from pyvista import examples
 
 # default: light kit
 plotter = pv.Plotter()
@@ -35,8 +36,6 @@ light_types
 
 ###############################################################################
 # Add a white terrain to the scene:
-
-from pyvista import examples
 
 mesh = examples.download_st_helens().warp_by_scalar()
 plotter = pv.Plotter()
@@ -75,8 +74,8 @@ light_types
 #
 # We can introduce our own lighting from scratch by disabling any lighting
 # on plotter initialization. Adding a single scene light to a scene will
-# often result in ominous visuals due to objects casting large shadows on
-# themselves:
+# often result in ominous visuals due to objects having larger regions in
+# shadow:
 
 plotter = pv.Plotter(lighting='none')
 plotter.add_mesh(mesh, color='white')

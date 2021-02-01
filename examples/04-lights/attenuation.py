@@ -73,7 +73,7 @@ plotter.show()
 # Now the relationship of the three kinds of attenuation seems clearer.
 #
 # For a more practical comparison, let's look at planes that are perpendicular
-# to the axes of each light (making use of the fact that shadowing between
+# to the axis of each light (making use of the fact that shadowing between
 # objects is not handled by default):
 
 plotter = pv.Plotter(lighting='none')
