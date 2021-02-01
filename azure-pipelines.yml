@@ -35,7 +35,7 @@ jobs:
     displayName: 'Run doctest'
 
 
-# DESCRIPTION: Static code check the spelling and documentation style
+# DESCRIPTION: Static code check the spelling and documentation style.
 - job: StaticCodeCheck
   pool:
     vmImage: 'ubuntu-20.04'
