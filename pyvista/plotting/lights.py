@@ -32,6 +32,11 @@ class Light(vtkLight):
         on the type of the light and whether the light has a transformation matrix.
         See also the :py:attr:`position` property.
 
+    focal_point : list or tuple, optional
+        The focal point of the light. The interpretation of the focal point depends
+        on the type of the light and whether the light has a transformation matrix.
+        See also the :py:attr:`focal_point` property.
+
     color : string or 3-length sequence, optional
         The color of the light. The ambient, diffuse and specular colors will
         all be set to this color on creation.
