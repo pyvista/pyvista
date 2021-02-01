@@ -1115,6 +1115,26 @@ def test_reflect_inplace(airplane):
     airplane.reflect((1, 0, 0), inplace=True)
     assert airplane.n_cells == orig.n_cells
     assert airplane.n_points == orig.n_points
-
     assert np.allclose(airplane.points[:, 0], -orig.points[:, 0])
     assert np.allclose(airplane.points[:, 1:], orig.points[:, 1:])
+
+
+def test_extrude_rotate():
+    resolution = 4
+    line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
+    
+    with pytest.raises(ValueError):
+        line.extrude_rotate(resolution=0)
+
+    poly = line.extrude_rotate(resolution=resolution)
+    assert poly.n_cells == line.n_points - 1
+    assert poly.n_points == (resolution + 1)*line.n_points
+
+
+def test_extrude_rotate_inplace():
+    resolution = 4
+    poly = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
+    old_line = poly.copy()
+    poly.extrude_rotate(resolution=resolution, inplace=True)
+    assert poly.n_cells == old_line.n_points - 1
+    assert poly.n_points == (resolution + 1)*old_line.n_points
