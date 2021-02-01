@@ -36,6 +36,7 @@ from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                wrap, ProgressMonitor, abstract_class)
 from pyvista.utilities.cells import numpy_to_idarr
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.utilities import transformations
 
 
 def _update_alg(alg, progress_bar=False, message=''):
@@ -2634,80 +2635,36 @@ class DataSetFilters:
         if isinstance(dataset, vtk.vtkPolyData):
             return output.extract_surface()
 
-    def reflect(dataset, plane, copy=False, center=0, inplace=False):
+    def reflect(dataset, normal, point=None, inplace=False):
         """Reflect a dataset across a plane.
 
         Parameters
         ----------
-        plane : str
-            Reflection plane options: ``'xmin'``, ``'ymin'``,
-            ``'zmin'``, ``'xmax'``, ``'ymax'``, ``'zmax'``, ``'x'``,
-            ``'y'``, or ``'z'``.
+        normal : tuple(float)
+            Normal direction for reflection.
 
-        copy : bool
-            If ``True``, copy the input geometry to the output.
-
-        center : float
-            If the reflection plane is set to ``'x'``, ``'y'`` or
-            ``'z'``, then this parameter is used to set the position
-            of the plane.
+        point : tuple(float), optional
+            Point which, along with `normal`, defines the reflection plane. If not
+            specified, this is the origin.
 
         inplace : bool, optional
             When ``True``, modifies the dataset and returns nothing.
-            Not valid when ``copy`` is ``True``.
-
-        Returns
-        -------
-        pyvista.UnstructuredGrid, pyvista.PolyData, or None
-            PolyData when input is a PolyData, UnstructuredGrid
-            otherwise unless ``inplace`` is ``True`` then ``None``.
 
         Examples
         --------
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
-        >>> mesh = mesh.reflect('z', copy=True, center=-100)
+        >>> mesh = mesh.reflect((0, 0, 1), point=(0, 0, -100))
         >>> mesh.plot(show_edges=True)  # doctest:+SKIP
 
         """
-        planes = {'x': 6, 'xmin': 0, 'xmax': 3,
-                  'y': 7, 'ymin': 1, 'ymax': 4,
-                  'z': 8, 'zmin': 2, 'zmax': 5}
-
-        if inplace and copy:
-            raise ValueError('Cannot copy and modify inplace.  Pick only one.')
-
-        if plane not in planes:
-            raise ValueError('Invalid ``plane``.  Pick one of the following:\n'
-                             + ", ".join([f'"{key}"' for key in planes]))
-
-        alg = vtk.vtkReflectionFilter()
-        alg.SetInputDataObject(dataset)
-        alg.SetPlane(planes[plane])
-        alg.SetCopyInput(copy)
-        alg.SetCenter(center)
-        alg.Update()
-        grid = _get_output(alg)
-
-        # simply update inplace
+        t = transformations.reflection(normal, point=point)
         if inplace:
-            dataset.points = grid.points
-            return
-
-        # output is always an UnstructuredGrid.  Ensure datatype
-        # matches when a polydata is input.
-        if isinstance(dataset, vtk.vtkPolyData):
-            if copy:
-                # this is faster than adding two meshes together
-                return grid.extract_surface()
-
-            # and this is faster since we can simply "copy" and then
-            # modify inplace
-            mesh = dataset.copy()
-            mesh.points = grid.points
-            return mesh
-
-        return grid
+            dataset.transform(t)
+        else:
+            mirror = dataset.copy()
+            mirror.transform(t)
+            return mirror
 
 
 @abstract_class

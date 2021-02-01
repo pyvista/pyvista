@@ -8,6 +8,7 @@ This example reflects a mesh across a plane.
 
 """
 
+import pyvista
 from pyvista import examples
 
 ###############################################################################
@@ -17,10 +18,14 @@ from pyvista import examples
 airplane = examples.load_airplane()
 
 ###############################################################################
-# Reflect the mesh across a plane parallel to Z plane and centered in -100
-# (the geometry input is copied to the output):
-airplane = airplane.reflect('z', copy=True, center=-100)
+# Reflect the mesh across a plane parallel to Z plane and coincident with
+# (0, 0, -100)
+airplane_reflected = airplane.reflect((0, 0, 1), point=(0, 0, -100))
 
 ###############################################################################
 # Plot the reflected mesh:
-airplane.plot(show_edges=True)
+p = pyvista.Plotter()
+p.add_mesh(airplane, show_edges=True)
+p.add_mesh(airplane_reflected, show_edges=True)
+p.show()
+

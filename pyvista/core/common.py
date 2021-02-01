@@ -12,7 +12,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 import pyvista
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                raise_not_matching, vtk_id_list_to_array, fileio,
-                               abstract_class, axis_rotation)
+                               abstract_class, axis_rotation, transformations)
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters
 
@@ -718,17 +718,8 @@ class Common(DataSetFilters, DataObject):
             raise ValueError(
                 "Transform element (3,3), the inverse scale term, is zero")
 
-        # Normalize the transformation to account for the scale
-        t /= t[3, 3]
+        transformations.apply_transformation_to_points(t, self.points, inplace=True)
 
-        x = (self.points*t[0, :3]).sum(1) + t[0, -1]
-        y = (self.points*t[1, :3]).sum(1) + t[1, -1]
-        z = (self.points*t[2, :3]).sum(1) + t[2, -1]
-
-        # overwrite points
-        self.points[:, 0] = x
-        self.points[:, 1] = y
-        self.points[:, 2] = z
 
     def copy_meta_from(self, ido):
         """Copy pyvista meta data onto this object from another object."""
