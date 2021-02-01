@@ -36,6 +36,7 @@ from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                wrap, ProgressMonitor, abstract_class)
 from pyvista.utilities.cells import numpy_to_idarr
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.utilities import transformations
 
 
 def _update_alg(alg, progress_bar=False, message=''):
@@ -2634,80 +2635,36 @@ class DataSetFilters:
         if isinstance(dataset, vtk.vtkPolyData):
             return output.extract_surface()
 
-    def reflect(dataset, plane, copy=False, center=0, inplace=False):
+    def reflect(dataset, normal, point=None, inplace=False):
         """Reflect a dataset across a plane.
 
         Parameters
         ----------
-        plane : str
-            Reflection plane options: ``'xmin'``, ``'ymin'``,
-            ``'zmin'``, ``'xmax'``, ``'ymax'``, ``'zmax'``, ``'x'``,
-            ``'y'``, or ``'z'``.
+        normal : tuple(float)
+            Normal direction for reflection.
 
-        copy : bool
-            If ``True``, copy the input geometry to the output.
-
-        center : float
-            If the reflection plane is set to ``'x'``, ``'y'`` or
-            ``'z'``, then this parameter is used to set the position
-            of the plane.
+        point : tuple(float), optional
+            Point which, along with `normal`, defines the reflection plane. If not
+            specified, this is the origin.
 
         inplace : bool, optional
             When ``True``, modifies the dataset and returns nothing.
-            Not valid when ``copy`` is ``True``.
-
-        Returns
-        -------
-        pyvista.UnstructuredGrid, pyvista.PolyData, or None
-            PolyData when input is a PolyData, UnstructuredGrid
-            otherwise unless ``inplace`` is ``True`` then ``None``.
 
         Examples
         --------
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
-        >>> mesh = mesh.reflect('z', copy=True, center=-100)
+        >>> mesh = mesh.reflect((0, 0, 1), point=(0, 0, -100))
         >>> mesh.plot(show_edges=True)  # doctest:+SKIP
 
         """
-        planes = {'x': 6, 'xmin': 0, 'xmax': 3,
-                  'y': 7, 'ymin': 1, 'ymax': 4,
-                  'z': 8, 'zmin': 2, 'zmax': 5}
-
-        if inplace and copy:
-            raise ValueError('Cannot copy and modify inplace.  Pick only one.')
-
-        if plane not in planes:
-            raise ValueError('Invalid ``plane``.  Pick one of the following:\n'
-                             + ", ".join([f'"{key}"' for key in planes]))
-
-        alg = vtk.vtkReflectionFilter()
-        alg.SetInputDataObject(dataset)
-        alg.SetPlane(planes[plane])
-        alg.SetCopyInput(copy)
-        alg.SetCenter(center)
-        alg.Update()
-        grid = _get_output(alg)
-
-        # simply update inplace
+        t = transformations.reflection(normal, point=point)
         if inplace:
-            dataset.points = grid.points
-            return
-
-        # output is always an UnstructuredGrid.  Ensure datatype
-        # matches when a polydata is input.
-        if isinstance(dataset, vtk.vtkPolyData):
-            if copy:
-                # this is faster than adding two meshes together
-                return grid.extract_surface()
-
-            # and this is faster since we can simply "copy" and then
-            # modify inplace
-            mesh = dataset.copy()
-            mesh.points = grid.points
-            return mesh
-
-        return grid
+            dataset.transform(t)
+        else:
+            mirror = dataset.copy()
+            mirror.transform(t)
+            return mirror
 
 
 @abstract_class
@@ -4583,6 +4540,67 @@ class PolyDataFilters(DataSetFilters):
         alg.SetExtrusionTypeToVectorExtrusion()
         alg.SetVector(*vector)
         alg.SetInputData(poly_data)
+        _update_alg(alg, progress_bar, 'Extruding')
+        output = pyvista.wrap(alg.GetOutput())
+        if not inplace:
+            return output
+        poly_data.overwrite(output)
+
+    def extrude_rotate(poly_data, resolution=30, inplace=False, progress_bar=False):
+        """Sweep polygonal data creating "skirt" from free edges and lines, and lines from vertices.
+
+        This is a modeling filter.
+
+        This takes polygonal data as input and generates polygonal
+        data on output. The input dataset is swept around the z-axis
+        to create new polygonal primitives. These primitives form a
+        "skirt" or swept surface. For example, sweeping a line
+        results in a cylindrical shell, and sweeping a circle
+        creates a torus.
+
+        There are a number of control parameters for this filter.
+        You can control whether the sweep of a 2D object (i.e.,
+        polygon or triangle strip) is capped with the generating
+        geometry via the "Capping" instance variable. Also, you can
+        control the angle of rotation, and whether translation along
+        the z-axis is performed along with the rotation.
+        (Translation is useful for creating "springs".) You also can
+        adjust the radius of the generating geometry using the
+        "DeltaRotation" instance variable.
+
+        The skirt is generated by locating certain topological
+        features. Free edges (edges of polygons or triangle strips
+        only used by one polygon or triangle strips) generate
+        surfaces. This is true also of lines or polylines. Vertices
+        generate lines.
+
+        This filter can be used to model axisymmetric objects like
+        cylinders, bottles, and wine glasses; or translational/
+        rotational symmetric objects like springs or corkscrews.
+
+        Parameters
+        ----------
+        resolution : int
+            Number of pieces to divide line into.
+
+        inplace : bool, optional
+            Overwrites the original mesh inplace.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
+        >>> mesh = line.extrude_rotate(resolution = 4)
+        >>> mesh.show() # doctest:+SKIP
+        """
+        if resolution <= 0:
+            raise ValueError('`resolution` should be positive')
+        alg = vtk.vtkRotationalExtrusionFilter()
+        alg.SetInputData(poly_data)
+        alg.SetResolution(resolution)
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
         if not inplace:

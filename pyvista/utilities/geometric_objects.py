@@ -301,7 +301,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
         Location of the centroid in [x, y, z]
 
     direction : list or tuple or np.ndarray
-        Direction cylinder points to  in [x, y, z]
+        Direction of the plane's normal in [x, y, z]
 
     i_size : float
         Size of the plane in the i direction.

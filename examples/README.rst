@@ -1,7 +1,7 @@
 .. _ref_examples:
 
-Quick Examples
-==============
+Examples Gallery
+================
 
 Here is a gallery of all the quick examples demonstrating what PyVista can do!
 
