@@ -18,6 +18,7 @@ import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
+from pyvista.core.errors import DeprecationError
 
 
 ffmpeg_failed = False
@@ -189,27 +190,118 @@ def test_interactor_style():
     plotter.close()
 
 
-@skip_no_plotting
-def test_lighting():
-    plotter = pyvista.Plotter()
+def test_lighting_disable_3_lights():
+    with pytest.raises(DeprecationError):
+        pyvista.Plotter().disable_3_lights()
 
-    # test default disable_3_lights()
-    lights = list(plotter.renderer.GetLights())
-    assert all([light.GetSwitch() for light in lights])
+
+@skip_no_plotting
+def test_lighting_enable_three_lights():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Sphere())
 
     plotter.enable_3_lights()
-    lights = list(plotter.renderer.GetLights())
-    headlight = lights.pop(0)
-    assert not headlight.GetSwitch()
-    for i in range(len(lights)):
-        if i < 3:
-            assert lights[i].GetSwitch()
-        else:
-            assert not lights[i].GetSwitch()
-    assert lights[0].GetIntensity() == 1.0
-    assert lights[1].GetIntensity() == 0.6
-    assert lights[2].GetIntensity() == 0.5
-    plotter.close()
+    lights = plotter.renderer.lights
+    assert len(lights) == 3
+    for light in lights:
+        assert light.on
+
+    assert lights[0].intensity == 1.0
+    assert lights[1].intensity == 0.6
+    assert lights[2].intensity == 0.5
+
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_add_manual_light():
+    plotter = pyvista.Plotter(lighting=None)
+    plotter.add_mesh(pyvista.Sphere())
+
+    # test manual light addition
+    light = pyvista.Light()
+    plotter.add_light(light)
+    assert plotter.renderer.lights[-1] is light
+
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_remove_manual_light():
+    plotter = pyvista.Plotter(lighting=None)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.add_light(pyvista.Light())
+
+    # test light removal
+    plotter.remove_all_lights()
+    assert not plotter.renderer.lights
+
+    # failing case
+    with pytest.raises(TypeError):
+        plotter.add_light('invalid')
+
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_subplots():
+    plotter = pyvista.Plotter(shape='1|1')
+    plotter.add_mesh(pyvista.Sphere())
+    renderers = plotter.renderers
+
+    light = pyvista.Light()
+    plotter.remove_all_lights()
+    for renderer in renderers:
+        assert not renderer.lights
+
+    plotter.subplot(0)
+    plotter.add_light(light, only_active=True)
+    assert renderers[0].lights and not renderers[1].lights
+    plotter.add_light(light, only_active=False)
+    assert renderers[0].lights and renderers[1].lights
+    plotter.subplot(1)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.remove_all_lights(only_active=True)
+    assert renderers[0].lights and not renderers[1].lights
+
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_init_light_kit():
+    plotter = pyvista.Plotter(lighting='light kit')
+    plotter.add_mesh(pyvista.Sphere())
+    lights = plotter.renderer.lights
+    assert len(lights) == 5
+    assert lights[0].light_type == pyvista.Light.HEADLIGHT
+    for light in lights[1:]:
+        assert light.light_type == light.CAMERA_LIGHT
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_init_three_lights():
+    plotter = pyvista.Plotter(lighting='three lights')
+    plotter.add_mesh(pyvista.Sphere())
+    lights = plotter.renderer.lights
+    assert len(lights) == 3
+    for light in lights:
+        assert light.light_type == light.CAMERA_LIGHT
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_init_none():
+    # ``None`` already tested above
+    plotter = pyvista.Plotter(lighting='none')
+    lights = plotter.renderer.lights
+    assert not lights
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_lighting_init_invalid():
+    with pytest.raises(ValueError):
+        pyvista.Plotter(lighting='invalid')
 
 
 @skip_no_plotting

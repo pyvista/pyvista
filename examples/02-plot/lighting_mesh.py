@@ -1,12 +1,15 @@
 """
-Lighting Controls
-~~~~~~~~~~~~~~~~~
+.. _ref_lighting_properties_example:
+
+Lighting Properties
+~~~~~~~~~~~~~~~~~~~
 
 Control aspects of the rendered mesh's lighting such as Ambient, Diffuse,
 and Specular. These options only work if the ``lighting`` argument to
-``add_mesh`` is ``True`` (it's true by default).
+``add_mesh`` is ``True`` (it's ``True`` by default).
 
-You can turn off all lighting by passing ``lighting=False`` to ``add_mesh``.
+You can turn off all lighting for the given mesh by passing ``lighting=False``
+to ``add_mesh``.
 """
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
@@ -56,3 +59,7 @@ mesh.plot(specular=0.5, specular_power=15,
 # Demonstration of all three in use
 mesh.plot(diffuse=0.5, specular=0.5, ambient=0.5,
           cpos=cpos, show_scalar_bar=False)
+
+###############################################################################
+# For detailed control over lighting conditions in general see the
+# :ref:`ref_light_examples` examples.
