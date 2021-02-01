@@ -113,6 +113,7 @@ def verify_cache_image(plotter):
     # otherwise, compare with the existing cached image
     error = pyvista.compare_images(image_filename, plotter)
     if error > IMAGE_REGRESSION_ERROR:
+        breakpoint()
         raise RuntimeError('Exceeded image regression error of '
                            f'{IMAGE_REGRESSION_ERROR} with an image error of '
                            f'{error}')
@@ -120,6 +121,8 @@ def verify_cache_image(plotter):
         warnings.warn('Exceeded image regression warning of '
                       f'{IMAGE_REGRESSION_WARNING} with an image error of '
                       f'{error}')
+
+
 
 
 @skip_no_plotting
@@ -555,9 +558,10 @@ def test_add_point_labels():
     with pytest.raises(ValueError):
         plotter.add_point_labels(points, range(n - 1))
 
-    plotter.add_point_labels(points, range(n), show_points=True, point_color='r', point_size=10)
-    plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r',
-                             point_size=10)
+    plotter.add_point_labels(points, range(n), show_points=True,
+                             point_color='r', point_size=10)
+    plotter.add_point_labels(points - 1, range(n), show_points=False,
+                             point_color='r', point_size=10)
     plotter.show(before_close_callback=verify_cache_image)
 
 
@@ -1148,13 +1152,13 @@ def test_volume_rendering():
 
 
 @skip_no_plotting
-def test_plot_compar_four():
+def test_plot_compare_four():
     # Really just making sure no errors are thrown
     mesh = examples.load_uniform()
     data_a = mesh.contour()
     data_b = mesh.threshold_percent(0.5)
     data_c = mesh.decimate_boundary(0.5)
-    data_d = mesh.glyph()
+    data_d = mesh.glyph(scale=False)
     pyvista.plot_compare_four(data_a, data_b, data_c, data_d,
                               disply_kwargs={'color': 'w'},
                               show_kwargs={'before_close_callback': verify_cache_image})
@@ -1384,7 +1388,6 @@ def test_add_background_image_not_global():
     plotter.add_mesh(sphere)
     plotter.add_background_image(examples.mapfile, as_global=False)
     plotter.show(before_close_callback=verify_cache_image)
-
 
 
 @skip_no_plotting
