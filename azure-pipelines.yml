@@ -45,8 +45,8 @@ jobs:
       versionSpec: '3.8'
   - script: |
       pip install mypy
-      make mypy
-    displayName: 'Run doctest'
+      mypy pyvista/core/common.py
+    displayName: 'Run static code check'
 
 
 # DESCRIPTION: Core API and doc string testing for Linux
