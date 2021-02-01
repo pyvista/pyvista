@@ -716,11 +716,3 @@ def test_flip_normals(sphere):
     sphere_flipped.compute_normals(inplace=True)
     assert np.allclose(sphere_flipped.point_arrays['Normals'],
                        -sphere.point_arrays['Normals'])
-
-
-def test_extrude_rotate():
-    resolution = 4
-    line = pyvista.Line(pointa = (0, 0, 0), pointb = (1, 0, 0))
-    poly = line.extrude_rotate(resolution = resolution)
-    assert poly.n_cells == line.n_points-1
-    assert poly.n_points == (resolution+1)*line.n_points

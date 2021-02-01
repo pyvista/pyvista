@@ -4635,11 +4635,11 @@ class PolyDataFilters(DataSetFilters):
         Examples
         --------
         >>> import pyvista
-        >>> line = pyvista.Line(pointa = (0, 0, 0), pointb = (1, 0, 0))
+        >>> line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
         >>> mesh = line.extrude_rotate(resolution = 4)
         >>> mesh.show() # doctest:+SKIP
         """
-        if not (0 < resolution):
+        if resolution <= 0:
             raise ValueError('`resolution` should be positive')
         alg = vtk.vtkRotationalExtrusionFilter()
         alg.SetInputData(poly_data)
