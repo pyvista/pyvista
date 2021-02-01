@@ -35,6 +35,23 @@ jobs:
     displayName: 'Run doctest'
 
 
+# DESCRIPTION: Static code check the spelling and documentation style.
+- job: StaticCodeCheck
+  pool:
+    vmImage: 'ubuntu-20.04'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.8'
+  - script: |
+      pip install .
+    displayName: 'Install pyvista'
+  - script: |
+      pip install mypy
+      make mypy
+    displayName: 'Run static code check'
+
+
 # DESCRIPTION: Core API and doc string testing for Linux
 - job: Linux
   pool:
