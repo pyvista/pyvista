@@ -36,7 +36,7 @@ jobs:
 
 
 # DESCRIPTION: Static code check the spelling and documentation style
-- job: StaticCodeMyPy
+- job: StaticCodeCheck
   pool:
     vmImage: 'ubuntu-20.04'
   steps:
@@ -44,8 +44,10 @@ jobs:
     inputs:
       versionSpec: '3.8'
   - script: |
+      pip install .
+    displayName: 'Install pyvista'
       pip install mypy
-      mypy pyvista/core/common.py
+      make mypy
     displayName: 'Run static code check'
 
 
