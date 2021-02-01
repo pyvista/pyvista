@@ -346,7 +346,7 @@ class Light(vtkLight):
         
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
-        >>> _ = plotter.add_mesh(pv.Cube(), color='blue')
+        >>> _ = plotter.add_mesh(pv.Cube(), color='cyan')
         >>> light_bright = pv.Light(position=(3, 0, 0), light_type='scene light')
         >>> light_dim = pv.Light(position=(0, 3, 0), light_type='scene light')
         >>> light_dim.intensity = 0.5
@@ -837,8 +837,12 @@ class Light(vtkLight):
             other.DeepCopy(self)
         else:
             other = self.ShallowClone()
+        new_light = Light.from_vtk(other)
 
-        return Light.from_vtk(other)
+        # light actors are private, always copy, but copy visibility state as well
+        new_light._actor.SetVisibility(self._actor.GetVisibility())
+
+        return new_light
 
     def set_headlight(self):
         """Set the light to be a headlight.
@@ -916,7 +920,7 @@ class Light(vtkLight):
 
         Examples
         --------
-        Create a scene containing a cube lit with a blue spotlight and visualize the
+        Create a scene containing a cube lit with a cyan spotlight and visualize the
         light using an actor.
 
         >>> import pyvista as pv
@@ -925,7 +929,7 @@ class Light(vtkLight):
         >>> for light in plotter.renderer.lights:
         ...     light.intensity /= 5
         ...
-        >>> spotlight = pv.Light(position=(-1, 1, 1), color='blue')
+        >>> spotlight = pv.Light(position=(-1, 1, 1), color='cyan')
         >>> spotlight.positional = True
         >>> spotlight.cone_angle = 20
         >>> spotlight.intensity = 10

@@ -60,10 +60,10 @@ of the light using a wireframe, see :func:`show_actor`.
 Positional lights with a :py:attr:`cone_angle` of less than 90 degrees are known as
 spotlights. Spotlights are unidirectional and they make full use of beam shaping
 properties, namely :py:attr:`exponent` and attenuation.  Non-spotlight positional
-lights, however, act like a point source located in the real-world position of the
+lights, however, act like point sources located in the real-world position of the
 light, shining in all directions of space. They display attenuation with distance
 from the source, but their beam is isotropic in space. In contrast, directional
-lights act as infinitely distant point sources, so they are unidirectional and they do
+lights act as infinitely distant point sources, so they are unidirectional but they do
 not attenuate.
 
 API reference
