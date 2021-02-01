@@ -17,7 +17,8 @@ from pyvista.utilities import (
     GPUInfo,
     helpers,
     Observer,
-    cells
+    cells,
+    transformations
 )
 
 # Only set this here just the once.
@@ -391,3 +392,25 @@ def test_cells_dict_utils():
     np.all(cells.generate_cell_offsets(cells_arr, cells_types) ==
            cells.generate_cell_offsets(cells_arr, np.array([255, 255])))
 
+
+def test_apply_transformation_to_points():
+    mesh = ex.load_airplane()
+    points = mesh.points
+    points_orig = points.copy()
+
+    # identity 3 x 3
+    tf = np.eye(3)
+    points_new = transformations.apply_transformation_to_points(tf, points, inplace=False)
+    assert points_new == pytest.approx(points)
+
+    # identity 4 x 4
+    tf = np.eye(4)
+    points_new = transformations.apply_transformation_to_points(tf, points, inplace=False)
+    assert points_new == pytest.approx(points)
+
+    # scale in-place
+    tf = np.eye(4) * 2
+    tf[3, 3] = 1
+    r = transformations.apply_transformation_to_points(tf, points, inplace=True)
+    assert r is None
+    assert mesh.points == pytest.approx(2 * points_orig)

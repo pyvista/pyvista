@@ -17,6 +17,7 @@ import vtk.util.numpy_support as nps
 
 import pyvista
 from .fileio import from_meshio
+from . import transformations
 
 
 class FieldAssociation(enum.Enum):
@@ -861,34 +862,54 @@ def abstract_class(cls_):
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
-    """Rotate points angle (in deg) about an axis."""
+    """Rotate points angle (in deg) about an axis.
+
+    Parameters
+    ----------
+    points : numpy.ndarray
+        Array of points with shape ``(N, 3)``
+
+    angle : float
+        Rotation angle.
+
+    inplace : bool, optional
+        Updates points in-place while returning nothing.
+
+    deg : bool, optional
+        If `True`, the angle is interpreted as degrees instead of
+        radians. Default is `True`.
+
+    axis : str, optional
+        Name of axis to rotate about. Valid options are ``'x'``, ``'y'``,
+        and ``'z'``. Default value is ``'z'``.
+
+    Returns
+    -------
+    points : numpy.ndarray
+        Rotated points.
+
+    Examples
+    --------
+    Rotate a set of points by 90 degrees about the x-axis in-place.
+    >>> import numpy as np
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> points = examples.load_airplane().points
+    >>> points_orig = points.copy()
+    >>> pyvista.axis_rotation(points, 90, axis='x', deg=True, inplace=True)
+    >>> assert np.all(np.isclose(points[:, 0], points_orig[:, 0]))
+    >>> assert np.all(np.isclose(points[:, 1], -points_orig[:, 2]))
+    >>> assert np.all(np.isclose(points[:, 2], points_orig[:, 1]))
+    """
     axis = axis.lower()
+    axis_to_vec = {
+        'x': (1, 0, 0),
+        'y': (0, 1, 0),
+        'z': (0, 0, 1)
+    }
 
-    # Copy original array to if not inplace
-    if not inplace:
-        points = points.copy()
+    if axis not in axis_to_vec:
+        raise ValueError('Invalid axis. Must be either "x", "y", or "z"')
 
-    # Convert angle to radians
-    if deg:
-        angle *= np.pi / 180
-
-    if axis == 'x':
-        y = points[:, 1] * np.cos(angle) - points[:, 2] * np.sin(angle)
-        z = points[:, 1] * np.sin(angle) + points[:, 2] * np.cos(angle)
-        points[:, 1] = y
-        points[:, 2] = z
-    elif axis == 'y':
-        x = points[:, 0] * np.cos(angle) + points[:, 2] * np.sin(angle)
-        z = - points[:, 0] * np.sin(angle) + points[:, 2] * np.cos(angle)
-        points[:, 0] = x
-        points[:, 2] = z
-    elif axis == 'z':
-        x = points[:, 0] * np.cos(angle) - points[:, 1] * np.sin(angle)
-        y = points[:, 0] * np.sin(angle) + points[:, 1] * np.cos(angle)
-        points[:, 0] = x
-        points[:, 1] = y
-    else:
-        raise ValueError('invalid axis. Must be either "x", "y", or "z"')
-
-    if not inplace:
-        return points
+    rot_mat = transformations.axis_angle_rotation(axis_to_vec[axis], angle, deg=deg)
+    return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
