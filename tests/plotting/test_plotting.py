@@ -102,7 +102,7 @@ def verify_cache_image(plotter):
     # cached image name
     image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
 
-    # simply save the last screenshot if it doesn't exist of the cache
+    # simply save the last screenshot if it doesn't exist or the cache
     # is being reset.
     if glb_reset_image_cache or not os.path.isfile(image_filename):
         return plotter.screenshot(image_filename)
@@ -113,7 +113,6 @@ def verify_cache_image(plotter):
     # otherwise, compare with the existing cached image
     error = pyvista.compare_images(image_filename, plotter)
     if error > IMAGE_REGRESSION_ERROR:
-        breakpoint()
         raise RuntimeError('Exceeded image regression error of '
                            f'{IMAGE_REGRESSION_ERROR} with an image error of '
                            f'{error}')
@@ -224,7 +223,11 @@ def test_lighting_add_manual_light():
     # test manual light addition
     light = pyvista.Light()
     plotter.add_light(light)
-    assert plotter.renderer.lights[-1] is light
+    assert plotter.renderer.lights == [light]
+
+    # failing case
+    with pytest.raises(TypeError):
+        plotter.add_light('invalid')
 
     plotter.show(before_close_callback=verify_cache_image)
 
@@ -238,10 +241,6 @@ def test_lighting_remove_manual_light():
     # test light removal
     plotter.remove_all_lights()
     assert not plotter.renderer.lights
-
-    # failing case
-    with pytest.raises(TypeError):
-        plotter.add_light('invalid')
 
     plotter.show(before_close_callback=verify_cache_image)
 
@@ -297,6 +296,7 @@ def test_lighting_init_three_lights():
 def test_lighting_init_none():
     # ``None`` already tested above
     plotter = pyvista.Plotter(lighting='none')
+    plotter.add_mesh(pyvista.Sphere())
     lights = plotter.renderer.lights
     assert not lights
     plotter.show(before_close_callback=verify_cache_image)
