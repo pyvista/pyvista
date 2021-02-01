@@ -179,10 +179,10 @@ def test_copy(grid):
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(rotate_amounts=n_numbers(3), translate_amounts=n_numbers(3))
+@given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
 def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
     trans = vtk.vtkTransform()
-    trans.RotateWXYZ(0, *rotate_amounts)
+    trans.RotateWXYZ(*rotate_amounts)
     trans.Translate(translate_amounts)
     trans.Update()
 
@@ -195,13 +195,26 @@ def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amo
     assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
     assert np.allclose(grid_a.points, grid_c.points, equal_nan=True)
 
+    # test non homogeneous transform
+    trans_rotate_only = vtk.vtkTransform()
+    trans_rotate_only.RotateWXYZ(*rotate_amounts)
+    trans_rotate_only.Update()
+
+    grid_d = grid.copy()
+    grid_d.transform(trans_rotate_only)
+
+    from pyvista.utilities.transformations import apply_transformation_to_points
+    trans_arr = pyvista.array_from_vtkmatrix(trans_rotate_only.GetMatrix())[:3, :3]
+    trans_pts = apply_transformation_to_points(trans_arr, grid.points)
+    assert np.allclose(grid_d.points, trans_pts, equal_nan=True)
+
 
 def test_translate_should_fail_given_none(grid):
     with pytest.raises(TypeError):
         grid.transform(None)
 
 
-def test_translate_should_fail_bad_points(grid):
+def test_translate_should_fail_bad_points_or_transform(grid):
     points = np.random.random((10, 2))
     bad_points = np.random.random((10, 2))
     trans = np.random.random((4, 4))

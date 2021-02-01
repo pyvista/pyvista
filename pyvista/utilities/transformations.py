@@ -56,10 +56,8 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     if points.shape[1] != 3:
         raise ValueError('`points` must be of shape (N, 3).')
 
-    is_homogeneous = transformation_shape[0] == 4
-
-    if is_homogeneous:
-        # Divide by scale factor
+    if transformation_shape[0] == 4:
+        # Divide by scale factor when homogeneous
         transformation /= transformation[3, 3]
 
         # Add the homogeneous coordinate
