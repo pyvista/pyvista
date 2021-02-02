@@ -14,7 +14,7 @@ from vtk import vtkMultiBlockDataSet
 
 import pyvista
 from pyvista.utilities import get_array, is_pyvista_dataset, wrap
-from .common import DataObject
+from .common import DataObject, Common
 from .filters import CompositeFilters
 
 log = logging.getLogger(__name__)
@@ -203,7 +203,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 return i
         raise KeyError(f'Block name ({name}) not found')
 
-    def __getitem__(self, index: Union[int, str]) -> 'MultiBlock':
+    def __getitem__(self, index: Union[int, str]) -> Optional['MultiBlock']:
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
@@ -241,7 +241,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             self.refs.append(data)
         return data
 
-    def append(self, data: pyvista.Common):
+    def append(self, data: Common):
         """Add a data set to the next block index."""
         index = self.n_blocks # note off by one so use as index
         self[index] = data
@@ -279,7 +279,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def _ipython_key_completions_(self) -> List[str]:
         return self.keys()
 
-    def __setitem__(self, index: Union[Tuple[int, str], Union[int, str]], data: pyvista.Common):
+    def __setitem__(self, index: Union[Tuple[int, str], Union[int, str]], data: Common):
         """Set a block with a VTK data object.
 
         To set the name simultaneously, pass a string name as the 2nd index.
