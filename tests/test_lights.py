@@ -4,8 +4,6 @@ import vtk
 
 import pyvista
 
-VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
-
 # pyvista attr -- value -- vtk name triples:
 configuration = [
     ('light_type', pyvista.Light.CAMERA_LIGHT, 'SetLightType'),  # resets transformation!
@@ -82,7 +80,6 @@ def test_eq():
     assert light != other
 
 
-@pytest.mark.skipif(not VTK9, reason='VTK <9 does not copy light type correctly')
 def test_copy():
     light = pyvista.Light()
     for name, value, _ in configuration:
