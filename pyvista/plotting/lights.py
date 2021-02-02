@@ -853,7 +853,8 @@ class Light(vtkLight):
         new_light = Light()
 
         for attr in immutable_attrs:
-            setattr(new_light, attr, getattr(self, attr))
+            value = getattr(self, attr)
+            setattr(new_light, attr, value)
 
         if deep and self.transform_matrix is not None:
             trans = vtk.vtkMatrix4x4()
