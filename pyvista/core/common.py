@@ -328,8 +328,7 @@ class DataObject:
         writer.SetFileTypeToASCII()
         writer.Write()
         to_serialize = writer.GetOutputString()
-        state['vtk_serialized'] = pickle.dumps(to_serialize,
-                                               protocol=pickle.HIGHEST_PROTOCOL)
+        state['vtk_serialized'] = to_serialize
         return state
 
     def __setstate__(self, state):
@@ -338,7 +337,7 @@ class DataObject:
 
         reader = vtk.vtkDataSetReader()
         reader.ReadFromInputStringOn()
-        reader.SetInputString(pickle.loads(vtk_serialized))
+        reader.SetInputString(vtk_serialized)
         reader.Update()
         mesh = pyvista.wrap(reader.GetOutput())
 
