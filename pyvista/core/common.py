@@ -341,6 +341,7 @@ class DataObject:
         self.CopyAttributes(dataset)
 
     def __getstate__(self):
+        """Support pickle. Serialize the VTK object to ASCII string."""
         state = self.__dict__.copy()
         writer = vtk.vtkDataSetWriter()
         writer.SetInputDataObject(self)
@@ -352,6 +353,7 @@ class DataObject:
         return state
 
     def __setstate__(self, state):
+        """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         self.__dict__.update(state)
 
