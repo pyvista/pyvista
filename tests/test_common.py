@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 import pytest
 import vtk
@@ -981,3 +982,9 @@ def test_cell_bounds(grid):
 def test_cell_type(grid):
     ctype = grid.cell_type(0)
     assert isinstance(ctype, int)
+
+
+def test_serialize_deserialize(grid):
+    grid_2 = pickle.loads(pickle.dumps(grid))
+    for attr in grid.__dict__:
+        assert getattr(grid, attr) == getattr(grid_2, attr)

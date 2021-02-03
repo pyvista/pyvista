@@ -4,6 +4,7 @@ import collections.abc
 import logging
 from pathlib import Path
 from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
+import pickle
 
 import numpy as np
 import vtk
@@ -23,7 +24,37 @@ log.setLevel('CRITICAL')
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
 
-ActiveArrayInfo = collections.namedtuple('ActiveArrayInfo', ['association', 'name'])
+
+
+class ActiveArrayInfo:
+    """Active array info class with support for pickling."""
+    def __init__(self, association, name):
+        self.association = association
+        self.name = name
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['association'] = int(self.association.value)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__ = state.copy()
+        self.association = FieldAssociation(state['association'])
+
+    def __iter__(self):
+        """Provide legacy __iter__ behavior (like collections.namedtuple)."""
+        for v in (self.association, self.name):
+            yield v
+
+    def __repr__(self):
+        """Provide legacy __repr__ behavior (like collections.namedtuple)."""
+        named_tuple = collections.namedtuple('ActiveArrayInfo', ['association', 'name'])
+        return named_tuple(self.association, self.name).__repr__()
+
+    def __eq__(self, other):
+        """Check equivalence (useful for serialize/deserialize tests)."""
+        return self.name == other.name and \
+               int(self.association.value) == int(other.association.value)
 
 
 @abstract_class
@@ -288,6 +319,32 @@ class DataObject:
 
         """
         self.CopyAttributes(dataset)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        writer = vtk.vtkDataSetWriter()
+        writer.SetInputDataObject(self)
+        writer.SetWriteToOutputString(True)
+        writer.SetFileTypeToASCII()
+        writer.Write()
+        to_serialize = writer.GetOutputString()
+        state['vtk_serialized'] = pickle.dumps(to_serialize,
+                                               protocol=pickle.HIGHEST_PROTOCOL)
+        return state
+
+    def __setstate__(self, state):
+        vtk_serialized = state.pop('vtk_serialized')
+        self.__dict__.update(state)
+
+        reader = vtk.vtkDataSetReader()
+        reader.ReadFromInputStringOn()
+        reader.SetInputString(pickle.loads(vtk_serialized))
+        reader.Update()
+        mesh = pyvista.wrap(reader.GetOutput())
+
+        # copy data
+        self.copy_structure(mesh)
+        self.copy_attributes(mesh)
 
 
 @abstract_class
