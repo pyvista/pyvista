@@ -41,15 +41,23 @@ class ActiveArrayInfo:
         self.__dict__ = state.copy()
         self.association = FieldAssociation(state['association'])
 
+    @property
+    def _namedtuple(self):
+        """Build a namedtuple on the fly to provide legacy support."""
+        named_tuple = collections.namedtuple('ActiveArrayInfo', ['association', 'name'])
+        return named_tuple(self.association, self.name)
+
     def __iter__(self):
-        """Provide legacy __iter__ behavior (like collections.namedtuple)."""
-        for v in (self.association, self.name):
-            yield v
+        return self._namedtuple.__iter__()
 
     def __repr__(self):
-        """Provide legacy __repr__ behavior (like collections.namedtuple)."""
-        named_tuple = collections.namedtuple('ActiveArrayInfo', ['association', 'name'])
-        return named_tuple(self.association, self.name).__repr__()
+        return self._namedtuple.__repr__()
+
+    def __getitem__(self, item):
+        return self._namedtuple.__getitem__(item)
+
+    def __setitem__(self, key, value):
+        self._namedtuple.__setitem__(key, value)
 
     def __eq__(self, other):
         """Check equivalence (useful for serialize/deserialize tests)."""
