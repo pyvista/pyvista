@@ -836,13 +836,31 @@ class Light(vtkLight):
         True
 
         """
-        # let vtk do the heavy lifting
-        if deep:
-            other = vtkLight()
-            other.DeepCopy(self)
+        immutable_attrs = [
+            'light_type',
+            'position',
+            'focal_point',
+            'ambient_color',
+            'diffuse_color',
+            'specular_color',
+            'intensity',
+            'on',
+            'positional',
+            'exponent',
+            'cone_angle',
+            'attenuation_values',
+        ]
+        new_light = Light()
+
+        for attr in immutable_attrs:
+            value = getattr(self, attr)
+            setattr(new_light, attr, value)
+
+        if deep and self.transform_matrix is not None:
+            new_light.transform_matrix = vtk.vtkMatrix4x4()
+            new_light.transform_matrix.DeepCopy(self.transform_matrix)
         else:
-            other = self.ShallowClone()
-        new_light = Light.from_vtk(other)
+            new_light.transform_matrix = self.transform_matrix
 
         # light actors are private, always copy, but copy visibility state as well
         new_light._actor.SetVisibility(self._actor.GetVisibility())
@@ -909,8 +927,7 @@ class Light(vtkLight):
         light.cone_angle = vtk_light.GetConeAngle()
         light.attenuation_values = vtk_light.GetAttenuationValues()
         trans = vtk_light.GetTransformMatrix()
-        if trans is not None:
-            light.transform_matrix = trans
+        light.transform_matrix = trans
 
         return light
 
