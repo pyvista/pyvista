@@ -986,5 +986,23 @@ def test_cell_type(grid):
 
 def test_serialize_deserialize(grid):
     grid_2 = pickle.loads(pickle.dumps(grid))
+
+    # check python attributes are the same
     for attr in grid.__dict__:
         assert getattr(grid, attr) == getattr(grid_2, attr)
+
+    # check data is the same
+    for attr in ('n_cells', 'n_points', 'n_arrays'):
+        assert getattr(grid, attr) == getattr(grid_2, attr)
+
+    for attr in ('cells', 'points'):
+        assert np.all(getattr(grid, attr) == getattr(grid_2, attr))
+
+    for name in grid.point_arrays:
+        assert np.all(grid.point_arrays[name] == grid_2.point_arrays[name])
+
+    for name in grid.cell_arrays:
+        assert np.all(grid.cell_arrays[name] == grid_2.cell_arrays[name])
+
+    for name in grid.field_arrays:
+        assert np.all(grid.field_arrays[name] == grid_2.field_arrays[name])
