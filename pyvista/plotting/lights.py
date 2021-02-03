@@ -857,11 +857,10 @@ class Light(vtkLight):
             setattr(new_light, attr, value)
 
         if deep and self.transform_matrix is not None:
-            trans = vtk.vtkMatrix4x4()
-            trans.DeepCopy(self.transform_matrix)
+            new_light.transform_matrix = vtk.vtkMatrix4x4()
+            new_light.transform_matrix.DeepCopy(self.transform_matrix)
         else:
-            trans = self.transform_matrix
-        new_light.transform_matrix = trans
+            new_light.transform_matrix = self.transform_matrix
 
         # light actors are private, always copy, but copy visibility state as well
         new_light._actor.SetVisibility(self._actor.GetVisibility())
