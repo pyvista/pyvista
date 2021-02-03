@@ -64,7 +64,7 @@ class ActiveArrayInfo:
         return self._namedtuple.__getitem__(item)
 
     def __setitem__(self, key, value):
-        """Provide namedtuple-like __getitem__."""
+        """Provide namedtuple-like __setitem__."""
         self._namedtuple.__setitem__(key, value)
 
     def __getattr__(self, item):
