@@ -11,7 +11,7 @@ version_info = 0, 28, '0rc1'
 
 """
 # major, minor, patch
-version_info = 0, 28, 0
+version_info = 0, 28, 1
 
 # Nice string for the version
 __version__ = '.'.join(map(str, version_info))
