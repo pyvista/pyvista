@@ -59,6 +59,9 @@ class ActiveArrayInfo:
     def __setitem__(self, key, value):
         self._namedtuple.__setitem__(key, value)
 
+    def __getattr__(self, item):
+        self._namedtuple.__getattr__(item)
+
     def __eq__(self, other):
         """Check equivalence (useful for serialize/deserialize tests)."""
         return self.name == other.name and \
