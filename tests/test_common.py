@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 import pytest
 import vtk
@@ -5,6 +6,8 @@ from hypothesis import assume, given, settings, HealthCheck
 from hypothesis.extra.numpy import arrays, array_shapes
 from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
+
+from .test_filters import DATASETS
 
 import pyvista
 from pyvista import examples, Texture
@@ -981,3 +984,34 @@ def test_cell_bounds(grid):
 def test_cell_type(grid):
     ctype = grid.cell_type(0)
     assert isinstance(ctype, int)
+
+
+@pytest.mark.parametrize('dataset', DATASETS)
+def test_serialize_deserialize(dataset):
+    dataset_2 = pickle.loads(pickle.dumps(dataset))
+
+    # check python attributes are the same
+    for attr in dataset.__dict__:
+        assert getattr(dataset_2, attr) == getattr(dataset, attr)
+
+    # check data is the same
+    for attr in ('n_cells', 'n_points', 'n_arrays'):
+        if hasattr(dataset, attr):
+            assert getattr(dataset_2, attr) == getattr(dataset, attr)
+
+    for attr in ('cells', 'points'):
+        if hasattr(dataset, attr):
+            assert getattr(dataset_2, attr) == \
+                   pytest.approx(getattr(dataset, attr))
+
+    for name in dataset.point_arrays:
+        assert dataset_2.point_arrays[name] == \
+               pytest.approx(dataset.point_arrays[name])
+
+    for name in dataset.cell_arrays:
+        assert dataset_2.cell_arrays[name] == \
+               pytest.approx(dataset.cell_arrays[name])
+
+    for name in dataset.field_arrays:
+        assert dataset_2.field_arrays[name] == \
+               pytest.approx(dataset.field_arrays[name])
