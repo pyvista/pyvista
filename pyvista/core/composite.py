@@ -135,11 +135,10 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         # get bounds for each block and update
         for i in range(self.n_blocks):
-            if self[i] is None:
-                continue
-            bnds = self[i].bounds
-            for a in range(3):
-                bounds = update_bounds(a, bnds, bounds)
+            bnds = self[i]
+            if bnds is not None:
+                for a in range(3):
+                    bounds = update_bounds(a, bnds, bounds)
 
         return bounds
 
@@ -219,11 +218,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         elif isinstance(index, (list, tuple, np.ndarray)):
             multi = MultiBlock()
             for i in index:
-                if isinstance(i, str):
-                    name = i
-                else:
-                    name = self.get_block_name(i)
-                multi[-1, name] = self[i]
+                name = i if isinstance(i, str) else self.get_block_name(i)
+                multi[-1, name] = self[i]  # type: ignore
             return multi
         elif isinstance(index, str):
             index = self.get_index_by_name(index)
@@ -247,7 +243,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         self[index] = data
         self.refs.append(data)
 
-    def get(self, index: Union[int, str]) -> 'MultiBlock':
+    def get(self, index: Union[int, str]) -> Optional['MultiBlock']:
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
@@ -269,17 +265,17 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             return meta.Get(vtk.vtkCompositeDataSet.NAME())
         return None
 
-    def keys(self) -> List[str]:
+    def keys(self) -> List[Optional[str]]:
         """Get all the block names in the dataset."""
         names = []
         for i in range(self.n_blocks):
             names.append(self.get_block_name(i))
         return names
 
-    def _ipython_key_completions_(self) -> List[str]:
+    def _ipython_key_completions_(self) -> List[Optional[str]]:
         return self.keys()
 
-    def __setitem__(self, index: Union[Tuple[int, str], Union[int, str]], data: Common):
+    def __setitem__(self, index: Union[Tuple[int, Optional[str]], int, str], data: Common):
         """Set a block with a VTK data object.
 
         To set the name simultaneously, pass a string name as the 2nd index.
@@ -329,7 +325,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         self._iter_n = 0
         return self
 
-    def next(self) -> 'MultiBlock':
+    def next(self) -> Optional['MultiBlock']:
         """Get the next block from the iterator."""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
@@ -340,7 +336,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     __next__ = next
 
-    def pop(self, index: Union[int, str]) -> 'MultiBlock':
+    def pop(self, index: Union[int, str]) -> Optional['MultiBlock']:
         """Pop off a block at the specified index."""
         data = self[index]
         del self[index]
