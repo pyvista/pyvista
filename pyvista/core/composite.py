@@ -159,8 +159,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         return self.GetNumberOfBlocks()
 
     @n_blocks.setter
-    def n_blocks(self, n) -> int:
-        """Return the total number of blocks set."""
+    def n_blocks(self, n):
+        """Change the total number of blocks set."""
         self.SetNumberOfBlocks(n)
         self.Modified()
 
