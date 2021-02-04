@@ -33,7 +33,7 @@ class DataObject:
     _READERS: Dict[str, Union[vtk.vtkXMLReader, vtk.vtkDataReader]] = {}
     _WRITERS: Dict[str, Union[vtk.vtkXMLWriter, vtk.vtkDataWriter]] = {}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
@@ -297,7 +297,7 @@ class Common(DataSetFilters, DataObject):
     # Simply bind pyvista.plotting.plot to the object
     plot = pyvista.plot
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
         super().__init__()
         self._last_active_scalars_name = None
