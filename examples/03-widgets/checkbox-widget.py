@@ -66,6 +66,6 @@ for i, lst in enumerate(colors):
                                      color_on=color,
                                      color_off='grey',
                                      background_color='grey')
-        Startpos = Startpos + size + (size / 10)
+        Startpos = Startpos + size + (size // 10)
 
 p.show()

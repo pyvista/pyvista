@@ -16,6 +16,7 @@ import pyvista
 from pyvista.utilities import get_array, is_pyvista_dataset, wrap
 from .common import DataObject, Common
 from .filters import CompositeFilters
+from .._typing import Vector
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -144,7 +145,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         return bounds
 
     @property
-    def center(self) -> np.ndarray:
+    def center(self) -> Vector:
         """Return the center of the bounding box."""
         return np.array(self.bounds).reshape(3,2).mean(axis=1)
 
