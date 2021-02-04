@@ -342,7 +342,7 @@ class DataSetAttributes(VTKObjectWrapper):
         for array_name in self.keys():
             self.remove(key=array_name)
 
-    def update(self, array_dict: Dict[str, np.ndarray]):
+    def update(self, array_dict: Union[Dict[str, np.ndarray], 'DataSetAttributes']):
         """Update arrays in this object.
 
         For each key, value given, add the pair, if it already exists,
