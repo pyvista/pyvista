@@ -67,7 +67,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 '.case': vtk.vtkGenericEnSightReader}
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataWriter)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)
