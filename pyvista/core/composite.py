@@ -135,10 +135,11 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         # get bounds for each block and update
         for i in range(self.n_blocks):
-            bnds = self[i]
-            if bnds is not None:
-                for a in range(3):
-                    bounds = update_bounds(a, bnds, bounds)
+            if self[i] is None:
+                continue
+            bnds = self[i].bounds  # type: ignore
+            for a in range(3):
+                bounds = update_bounds(a, bnds, bounds)
 
         return bounds
 
