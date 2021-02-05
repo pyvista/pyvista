@@ -96,7 +96,7 @@ def set_vtkwriter_mode(vtk_writer, use_binary=True):
             vtk_writer.SetFileTypeToBinary()
         else:
             vtk_writer.SetFileTypeToASCII()
-    elif isinstance(vtk_writer, vtk.vtkXMLWriter):
+    elif isinstance(vtk_writer, (vtk.vtkXMLWriter, vtk.vtkXMLPolyDataWriter)):
         if use_binary:
             vtk_writer.SetDataModeToBinary()
         else:
