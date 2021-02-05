@@ -190,7 +190,7 @@ class DataSetFilters:
                                                     invert=invert, value=value,
                                                     return_clipped=return_clipped)
         if inplace:
-            overwrite_with = result[0] if return_clipped else result
+            overwrite_with = result[0] if return_clipped else result  # type: ignore
             dataset.overwrite(overwrite_with)
             if return_clipped:
                 # normally if inplace=True, filters return None. But if
