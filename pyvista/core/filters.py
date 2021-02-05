@@ -25,14 +25,14 @@ Example
 import collections.abc
 import logging
 from functools import wraps
-from typing import Optional, Callable, Tuple, TYPE_CHECKING, Union, Sequence, List, Type, Any, Iterator
+from typing import Any, List, Callable, cast, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista._typing import Vector, VectorArray
+from pyvista._typing import Vector, VectorArray, Number
 from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
                                wrap, ProgressMonitor, abstract_class)
@@ -73,28 +73,32 @@ def _get_output(algorithm: vtk.vtkAlgorithm, iport=0, iconnection=0, oport=0,
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
-    active_scalars_info: 'ActiveArrayInfo'
-    active_vectors_info: 'ActiveArrayInfo'
-    bounds: List[float]
-    cell_arrays: 'DataSetAttributes'
-    center: Vector
-    copy: Callable
-    deep_copy: Callable
-    extract_geometery: Callable
-    get_array: Callable
-    get_data_range: Callable
-    length: float
-    n_arrays: int
-    n_cells: int
-    n_points: int
-    overwrite: Callable
-    points: np.ndarray
-    point_arrays: 'DataSetAttributes'
-    set_active_vectors: Callable
-    set_active_scalars: Callable
-    transform: Callable
+    if TYPE_CHECKING:
+        __setitem__: None
+        active_scalars: np.ndarray
+        active_scalars_info: 'ActiveArrayInfo'
+        active_vectors_info: 'ActiveArrayInfo'
+        bounds: List[float]
+        cell_arrays: 'DataSetAttributes'
+        center: Vector
+        copy: Callable
+        deep_copy: Callable
+        extract_geometery: Callable
+        get_array: Callable
+        get_data_range: Callable
+        GetPointData: vtk.vtkPointData
+        length: float
+        n_arrays: int
+        n_cells: int
+        n_points: int
+        overwrite: Callable
+        points: np.ndarray
+        point_arrays: 'DataSetAttributes'
+        set_active_vectors: Callable
+        set_active_scalars: Callable
+        transform: Callable
 
-    def _clip_with_function(self, function: Callable, invert=True, value=0.0,
+    def _clip_with_function(self, function: vtk.vtkAlgorithm, invert=True, value=0.0,
                             return_clipped=False) -> Optional[Union[Any, Tuple[Any, Any]]]:
         """Clip using an implicit function (internal helper)."""
         if isinstance(self, vtk.vtkPolyData):
@@ -186,7 +190,7 @@ class DataSetFilters:
                                                     invert=invert, value=value,
                                                     return_clipped=return_clipped)
         if inplace:
-            overwrite_with = result[0] if return_clipped else result
+            overwrite_with = result[0] if return_clipped else result  # type: ignore
             dataset.overwrite(overwrite_with)
             if return_clipped:
                 # normally if inplace=True, filters return None. But if
@@ -195,7 +199,7 @@ class DataSetFilters:
                 return result
         return result
 
-    def clip_box(dataset, bounds: Optional[Union['PolyData', Sequence[float]]] = None,
+    def clip_box(dataset, bounds: Optional[Union['PolyData', Union[np.ndarray, Sequence[Number]]]] = None,
                  invert=True, factor=0.35) -> 'DataObject':
         """Clip a dataset by a bounding box defined by the bounds.
 
@@ -231,6 +235,7 @@ class DataSetFilters:
         >>> clipped_cube = cube.clip_box([0, 1, 0, 1, 0, 1])
 
         """
+        _bounds: List[float] = []
         if bounds is None:
             def _get_quarter(dmin, dmax):
                 """Get a section of the given range (internal helper)."""
@@ -239,27 +244,27 @@ class DataSetFilters:
             xmin = _get_quarter(xmin, xmax)
             ymin = _get_quarter(ymin, ymax)
             zmin = _get_quarter(zmin, zmax)
-            bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
+            _bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
         if isinstance(bounds, (float, int)):
-            bounds = [bounds, bounds, bounds]
+            _bounds = [bounds, bounds, bounds]
         elif isinstance(bounds, pyvista.PolyData):
             poly = bounds
             if poly.n_cells != 6:
                 raise ValueError("The bounds mesh must have only 6 faces.")
-            bounds = []
             poly.compute_normals()
             for cid in range(6):
                 cell = poly.extract_cells(cid)
                 normal = cell["Normals"][0]
-                bounds.append(normal)
-                bounds.append(cell.center)
-        if not isinstance(bounds, (np.ndarray, collections.abc.Sequence)):
+                _bounds.append(normal)
+                _bounds.append(*cell.center)
+        if isinstance(bounds, (np.ndarray, Sequence)):
+            if len(bounds) not in [3, 6, 12]:
+                raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
+            if len(bounds) == 3:
+                xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
+                _bounds = [xmin, xmin + _bounds[0], ymin, ymin + _bounds[1], zmin, zmin + _bounds[2]]
+        else:
             raise TypeError('Bounds must be a sequence of floats with length 3, 6 or 12.')
-        if len(bounds) not in [3, 6, 12]:
-            raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
-        if len(bounds) == 3:
-            xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
-            bounds = (xmin,xmin+bounds[0], ymin,ymin+bounds[1], zmin,zmin+bounds[2])
         alg = vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(dataset)
         alg.SetBoxClip(*bounds)
@@ -316,13 +321,13 @@ class DataSetFilters:
         function.FunctionValue(points, dists)
         if inplace:
             dataset.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
-            return
+            return None
         result = dataset.copy()
         result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
         return result
 
     def clip_scalar(dataset, scalars: Optional[str] = None, invert=True,
-                    value=0.0, inplace=False) -> Type['PolyData']:
+                    value=0.0, inplace=False) -> Optional['PolyData']:
         """Clip a dataset by a scalar.
 
         Parameters
@@ -385,9 +390,10 @@ class DataSetFilters:
             dataset.overwrite(result)
         else:
             return result
+        return None
 
     def clip_surface(dataset, surface: 'PolyData', invert=True, value=0.0,
-                     compute_distance=False) -> 'Common':
+                     compute_distance=False) -> 'UnstructuredGrid':
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
         This will return a :class:`pyvista.UnstructuredGrid` of the clipped
@@ -422,11 +428,11 @@ class DataSetFilters:
             points = pyvista.convert_array(dataset.points)
             dists = vtk.vtkDoubleArray()
             function.FunctionValue(points, dists)
-            dataset['implicit_distance'] = pyvista.convert_array(dists)
+            dataset['implicit_distance'] = pyvista.convert_array(dists)  # type: ignore
         # run the clip
         result = DataSetFilters._clip_with_function(dataset, function,
                                                     invert=invert, value=value)
-        return result
+        return cast('UnstructuredGrid', result)
 
     def slice(dataset, normal='x', origin: Optional[Union[str, Vector]] = None,
               generate_triangles=False, contour=False) -> 'Common':
@@ -505,8 +511,8 @@ class DataSetFilters:
             z = dataset.center[2]
         output = pyvista.MultiBlock()
         if isinstance(dataset, pyvista.MultiBlock):
-            for i in range(dataset.n_blocks):
-                output[i] = dataset[i].slice_orthogonal(x=x, y=y, z=z,
+            for i, block in enumerate(dataset):
+                output[i] = block.slice_orthogonal(x=x, y=y, z=z,
                     generate_triangles=generate_triangles,
                     contour=contour)
             return output
@@ -516,8 +522,8 @@ class DataSetFilters:
         return output
 
     def slice_along_axis(dataset, n=5, axis='x', tolerance: Optional[float] = None,
-                         generate_triangles=False, contour=False, bounds: Optional[float] = None,
-                         center: Optional[bool] = None) -> 'MultiBlock':
+                         generate_triangles=False, contour=False, bounds: Optional[Sequence[float]] = None,
+                         center: Optional[Vector] = None) -> 'MultiBlock':
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -815,7 +821,7 @@ class DataSetFilters:
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(dataset) -> 'Common':
+    def extract_geometry(dataset) -> 'PolyData':
         """Extract the outer surface of a volume or structured grid dataset as PolyData.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -916,9 +922,7 @@ class DataSetFilters:
         alg.SetHighPoint(high_point)
         _update_alg(alg, progress_bar, 'Computing Elevation')
         # Decide on updating active scalars array
-        name = 'Elevation' # Note that this is added to the PointData
-        if not set_active:
-            name = None
+        name = 'Elevation' if set_active else None  # Note that this is added to the PointData
         return _get_output(alg, active_scalars=name, active_scalars_field='point')
 
     def contour(dataset, isosurfaces: Optional[Union[int, Sequence]] = 10,
@@ -1066,10 +1070,10 @@ class DataSetFilters:
         dataset.GetPointData().AddArray(t_coords)
         # CRITICAL:
         dataset.GetPointData().AddArray(otc) # Add old ones back at the end
-        return # No return type because it is inplace
+        return None  # No return type because it is inplace
 
     def texture_map_to_sphere(dataset, center: Optional[Vector] = None, prevent_seam=True,
-                              inplace=False, name='Texture Coordinates') -> 'Common':
+                              inplace=False, name='Texture Coordinates') -> Optional['Common']:
         """Texture map this dataset to a user defined sphere.
 
         This is often used to define a sphere to texture map an image to this
@@ -1127,7 +1131,7 @@ class DataSetFilters:
         dataset.GetPointData().AddArray(t_coords)
         # CRITICAL:
         dataset.GetPointData().AddArray(otc) # Add old ones back at the end
-        return # No return type because it is inplace
+        return None  # No return type because it is inplace
 
     def compute_cell_sizes(dataset, length=True, area=True, volume=True,
                            progress_bar=False) -> 'Common':
@@ -1236,10 +1240,10 @@ class DataSetFilters:
         if tolerance is not None:
             small = pyvista.PolyData(dataset.points)
             small.point_arrays.update(dataset.point_arrays)
-            dataset = small.clean(point_merging=True, merge_tol=tolerance,
-                                  lines_to_points=False, polys_to_lines=False,
-                                  strips_to_polys=False, inplace=False,
-                                  absolute=absolute, progress_bar=progress_bar)
+            dataset = cast('PolyData', small.clean(point_merging=True, merge_tol=tolerance,
+                                                   lines_to_points=False, polys_to_lines=False,
+                                                   strips_to_polys=False, inplace=False,
+                                                   absolute=absolute, progress_bar=progress_bar))
         # Make glyphing geometry if necessary
         if geom is None:
             arrow = vtk.vtkArrowSource()
@@ -1325,7 +1329,7 @@ class DataSetFilters:
         alg.Update()
         return _get_output(alg)
 
-    def extract_largest(dataset, inplace=False) -> 'PolyData':
+    def extract_largest(dataset, inplace=False) -> Optional['PolyData']:
         """
         Extract largest connected set in mesh.
 
@@ -2723,8 +2727,9 @@ class DataSetFilters:
 class CompositeFilters:
     """An internal class to manage filters/algorithms for composite datasets."""
 
-    __iter__: 'MultiBlock'
-    bounds: Vector
+    if TYPE_CHECKING:
+        __iter__: 'MultiBlock'
+        bounds: Vector
 
     def extract_geometry(composite):
         """Combine the geomertry of all blocks into a single ``PolyData`` object.
@@ -2796,7 +2801,7 @@ class CompositeFilters:
 
         """
         if nested:
-            return DataSetFilters.outline(composite, generate_faces=generate_faces)
+            return DataSetFilters.outline(composite, generate_faces=generate_faces)  # type: ignore
         box = pyvista.Box(bounds=composite.bounds)
         return box.outline(generate_faces=generate_faces)
 
@@ -2814,7 +2819,7 @@ class CompositeFilters:
 
         """
         if nested:
-            return DataSetFilters.outline_corners(composite, factor=factor)
+            return DataSetFilters.outline_corners(composite, factor=factor)  # type: ignore
         box = pyvista.Box(bounds=composite.bounds)
         return box.outline_corners(factor=factor)
 
@@ -2823,12 +2828,13 @@ class CompositeFilters:
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for polydata datasets."""
 
-    number_of_faces: int
-    is_all_triangles: Callable
-    point_normals: np.ndarray
-    obbTree: vtk.vtkOBBTree
-    n_open_edges: int
-    plot: Callable
+    if TYPE_CHECKING:
+        number_of_faces: int
+        is_all_triangles: Callable
+        point_normals: np.ndarray
+        obbTree: vtk.vtkOBBTree
+        n_open_edges: int
+        plot: Callable
 
     def edge_mask(poly_data, angle: float) -> np.ndarray:
         """Return a mask of the points of a surface mesh that has a surface angle greater than angle.
@@ -2929,8 +2935,8 @@ class PolyDataFilters(DataSetFilters):
             return mesh
         return None
 
-    def __add__(poly_data, mesh: Union['UnstructuredGrid', Optional['PolyData']]) -> \
-                Union['UnstructuredGrid', Optional['PolyData']]:
+    def __add__(poly_data, mesh: Union['UnstructuredGrid', 'PolyData']) \
+                -> Union[Optional['UnstructuredGrid'], Optional['PolyData']]:
         """Merge these two meshes."""
         if not isinstance(mesh, vtk.vtkPolyData):
             return DataSetFilters.__add__(poly_data, mesh)
@@ -4768,7 +4774,7 @@ class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for unstructured grid datasets."""
 
     def delaunay_2d(ugrid, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
-                    progress_bar=False) -> 'PolyData':
+                    progress_bar=False) -> Optional['PolyData']:
         """Apply a delaunay 2D filter along the best fitting plane.
 
         This extracts the grid's points and performs the triangulation on those alone.
@@ -4786,10 +4792,11 @@ class UnstructuredGridFilters(DataSetFilters):
 class StructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for structured grid datasets."""
 
-    dimensions: Vector
-    points_matrix: np.ndarray
-    _reshape_point_array: Callable
-    _reshape_cell_array: Callable
+    if TYPE_CHECKING:
+        dimensions: Vector
+        points_matrix: np.ndarray
+        _reshape_point_array: Callable
+        _reshape_cell_array: Callable
 
     def extract_subset(dataset, voi: Sequence[int], rate=(1, 1, 1), boundary=False) -> 'Common':
         """Select piece (e.g., volume of interest).
