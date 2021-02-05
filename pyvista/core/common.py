@@ -3,7 +3,7 @@
 import collections.abc
 import logging
 from pathlib import Path
-from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
+from typing import Optional, List, Tuple, Iterable, Union, Any, Dict, DefaultDict
 import pickle
 
 import numpy as np
@@ -90,7 +90,7 @@ class DataObject:
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self.association_bitarray_names = collections.defaultdict(set)
+        self.association_bitarray_names: DefaultDict = collections.defaultdict(set)
 
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
@@ -379,11 +379,11 @@ class Common(DataSetFilters, DataObject):
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
         super().__init__()
-        self._last_active_scalars_name = None
+        self._last_active_scalars_name: str = None
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._textures = {}
+        self._textures: Dict[str, vtk.vtkTexture] = {}
 
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
