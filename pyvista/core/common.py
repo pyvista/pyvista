@@ -4,7 +4,7 @@ import collections.abc
 import logging
 from abc import abstractmethod
 from pathlib import Path
-from typing import Optional, List, Tuple, Iterable, Union, Any, Dict, DefaultDict
+from typing import Optional, List, Tuple, Iterable, Union, Any, Dict, DefaultDict, Type
 import pickle
 
 import numpy as np
@@ -105,7 +105,7 @@ class DataObject:
         """Overwrite this mesh with the given mesh as a deep copy."""
         return self.DeepCopy(to_copy)
 
-    def _load_file(self, filename: str) -> vtk.vtkDataObject:
+    def _load_file(self, filename: Union[str, Path]) -> vtk.vtkDataObject:
         """Generically load a vtk object from file.
 
         Parameters
@@ -141,7 +141,7 @@ class DataObject:
         reader.Update()
         return reader.GetOutputDataObject(0)
 
-    def _from_file(self, filename: str):
+    def _from_file(self, filename: Union[str, Path]):
         self.shallow_copy(self._load_file(filename))
 
     def save(self, filename: str, binary=True):
