@@ -293,6 +293,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         3
 
         """
+        i: int = 0
+        name: Optional[str] = None
         if isinstance(index, (np.ndarray, collections.abc.Sequence)) and not isinstance(index, str):
             i, name = index[0], index[1]
         elif isinstance(index, str):
@@ -301,8 +303,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             except KeyError:
                 i = -1
             name = index
-        else:
-            i, name = index, None  # type: ignore
+        elif isinstance(index, int):
+            i, name = index, None
         if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
         if i == -1:
