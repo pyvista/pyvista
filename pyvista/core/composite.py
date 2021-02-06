@@ -9,7 +9,7 @@ import logging
 
 import numpy as np
 import vtk
-from typing import List, Tuple, Union, Optional, Any
+from typing import List, Tuple, Union, Optional, Any, cast
 from vtk import vtkMultiBlockDataSet
 
 import pyvista
@@ -303,8 +303,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             except KeyError:
                 i = -1
             name = index
-        elif isinstance(index, int):
-            i, name = index, None
+        else:
+            i, name = cast(int, index), None
         if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
         if i == -1:
