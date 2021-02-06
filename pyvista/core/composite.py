@@ -302,7 +302,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 i = -1
             name = index
         else:
-            i, name = index, None
+            i, name = index, None  # type: ignore
         if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
         if i == -1:
