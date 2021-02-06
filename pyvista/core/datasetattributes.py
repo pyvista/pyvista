@@ -81,9 +81,6 @@ class DataSetAttributes(VTKObjectWrapper):
         """Return the number of arrays."""
         return self.VTKObject.GetNumberOfArrays()
 
-    def __dir__(self) -> Sequence[str]:
-        return dir(super()) + dir(self.VTKObject) + list(self.__dict__.keys())
-
     @property
     def active_scalars(self) -> Optional[pyvista_ndarray]:
         """Return the active scalar array as pyvista_ndarray."""
