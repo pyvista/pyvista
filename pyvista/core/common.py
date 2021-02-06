@@ -532,7 +532,7 @@ class Common(DataSetFilters, DataObject):
         self.active_vectors_name = DEFAULT_VECTOR_KEY
 
     @property
-    def t_coords(self) -> pyvista_ndarray:
+    def t_coords(self) -> Optional[pyvista_ndarray]:
         """Return the active texture coordinates on the points."""
         return self.point_arrays.t_coords
 
