@@ -150,43 +150,44 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         deep = kwargs.pop('deep', False)
 
-        if args:
-            if len(args) == 1:
-                if isinstance(args[0], vtk.vtkPolyData):
-                    if deep:
-                        self.deep_copy(args[0])
-                    else:
-                        self.shallow_copy(args[0])
-                elif isinstance(args[0], (str, pathlib.Path)):
-                    self._from_file(args[0])
-                elif isinstance(args[0], (np.ndarray, list)):
-                    if isinstance(args[0], list):
-                        points = np.asarray(args[0])
-                        if not np.issubdtype(points.dtype, np.number):
-                            raise TypeError('Points must be a numeric type')
-                    else:
-                        points = args[0]
-                    if points.ndim != 2:
-                        points = points.reshape((-1, 3))
-                    cells = self._make_vertex_cells(points.shape[0])
-                    self._from_arrays(points, cells, deep, verts=True)
+        if not args:
+            return
+        elif len(args) == 1:
+            if isinstance(args[0], vtk.vtkPolyData):
+                if deep:
+                    self.deep_copy(args[0])
                 else:
-                    raise TypeError('Invalid input type')
-
-            elif len(args) == 2:
-                arg0_is_array = isinstance(args[0], np.ndarray)
-                arg1_is_array = isinstance(args[1], np.ndarray)
-                if arg0_is_array and arg1_is_array:
-                    self._from_arrays(args[0], args[1], deep)
+                    self.shallow_copy(args[0])
+            elif isinstance(args[0], (str, pathlib.Path)):
+                self._from_file(args[0])
+            elif isinstance(args[0], (np.ndarray, list)):
+                if isinstance(args[0], list):
+                    points = np.asarray(args[0])
+                    if not np.issubdtype(points.dtype, np.number):
+                        raise TypeError('Points must be a numeric type')
                 else:
-                    raise TypeError('Invalid input type')
+                    points = args[0]
+                if points.ndim != 2:
+                    points = points.reshape((-1, 3))
+                cells = self._make_vertex_cells(points.shape[0])
+                self._from_arrays(points, cells, deep, verts=True)
             else:
                 raise TypeError('Invalid input type')
 
-            # Check if need to make vertex cells
-            if self.n_points > 0 and self.n_cells == 0:
-                # make vertex cells
-                self.verts = self._make_vertex_cells(self.n_points)
+        elif len(args) == 2:
+            arg0_is_array = isinstance(args[0], np.ndarray)
+            arg1_is_array = isinstance(args[1], np.ndarray)
+            if arg0_is_array and arg1_is_array:
+                self._from_arrays(args[0], args[1], deep)
+            else:
+                raise TypeError('Invalid input type')
+        else:
+            raise TypeError('Invalid input type')
+
+        # Check if need to make vertex cells
+        if self.n_points > 0 and self.n_cells == 0:
+            # make vertex cells
+            self.verts = self._make_vertex_cells(self.n_points)
 
     def __repr__(self):
         """Return the standard representation."""
