@@ -393,7 +393,7 @@ class Common(DataSetFilters, DataObject):
                 first_arr = next((arr for arr in attributes if arr not in exclude), None)
                 if first_arr is not None:
                     self._active_scalars_info = ActiveArrayInfo(attributes.association, first_arr)
-                    attributes.active_scalars = first_arr
+                    attributes.active_scalars = first_arr  # type: ignore
                     break
             else:
                 self._active_scalars_info = ActiveArrayInfo(field, None)
@@ -539,7 +539,7 @@ class Common(DataSetFilters, DataObject):
     @t_coords.setter
     def t_coords(self, t_coords: np.ndarray):
         """Set the array to use as the texture coordinates."""
-        self.point_arrays.t_coords = t_coords
+        self.point_arrays.t_coords = t_coords  # type: ignore
 
     @property
     def textures(self) -> Dict[str, vtk.vtkTexture]:

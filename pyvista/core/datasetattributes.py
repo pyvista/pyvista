@@ -72,7 +72,7 @@ class DataSetAttributes(VTKObjectWrapper):
         """Implement 'in' operator."""
         return name in self.keys()
 
-    def __iter__(self) -> Iterator[np.ndarray]:
+    def __iter__(self) -> Iterator[str]:
         """Implement for loop iteration."""
         for array in self.keys():
             yield array
@@ -80,6 +80,9 @@ class DataSetAttributes(VTKObjectWrapper):
     def __len__(self) -> int:
         """Return the number of arrays."""
         return self.VTKObject.GetNumberOfArrays()
+
+    def __dir__(self) -> Iterable[str]:
+        return dir(super()) + dir(self.VTKObject) + list(self.__dict__.keys())
 
     @property
     def active_scalars(self) -> Optional[pyvista_ndarray]:
@@ -260,7 +263,7 @@ class DataSetAttributes(VTKObjectWrapper):
             if active_vectors or self.active_vectors is None:
                 # verify this is actually vector data
                 if len(shape) == 2 and shape[1] == 3:
-                    self.active_vectors = name
+                    self.active_vectors = name  # type: ignore
         except TypeError:
             pass
         self.VTKObject.Modified()
