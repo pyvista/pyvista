@@ -2,6 +2,7 @@
 
 import collections.abc
 import logging
+from abc import abstractmethod
 from pathlib import Path
 from typing import Optional, List, Tuple, Iterable, Union, Any, Dict, DefaultDict
 import pickle
@@ -177,21 +178,9 @@ class DataObject:
         writer.SetInputData(self)
         writer.Write()
 
-    def get_data_range(self, arr: Optional[Union[str, np.ndarray]]=None, preference='field'):  # pragma: no cover
-        """Get the non-NaN min and max of a named array.
-
-        Parameters
-        ----------
-        arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the
-            active scalar is used
-
-        preference : str, optional
-            When scalars is specified, this is the preferred array type
-            to search for in the dataset.  Must be either ``'point'``,
-            ``'cell'``, or ``'field'``.
-
-        """
+    @abstractmethod
+    def get_data_range(self):  # pragma: no cover
+        """Get the non-NaN min and max of a named array."""
         raise NotImplementedError(f'{type(self)} mesh type does not have a `get_data_range` method.')
 
     def _get_attrs(self):  # pragma: no cover
