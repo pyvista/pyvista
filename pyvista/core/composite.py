@@ -9,7 +9,7 @@ import logging
 
 import numpy as np
 import vtk
-from typing import List, Tuple, Union, Optional
+from typing import List, Tuple, Union, Optional, Any
 from vtk import vtkMultiBlockDataSet
 
 import pyvista
@@ -72,7 +72,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)
-        self.refs = []
+        self.refs: Any = []
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkMultiBlockDataSet):
