@@ -4,7 +4,7 @@ from collections.abc import Iterable
 
 import numpy as np
 import vtk
-from typing import Union, Iterator, Optional, List, Tuple, Dict, Sequence
+from typing import Union, Iterator, Optional, List, Tuple, Dict, Sequence, Any
 
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
@@ -90,7 +90,7 @@ class DataSetAttributes(VTKObjectWrapper):
         return None
 
     @active_scalars.setter
-    def active_scalars(self, name: str):
+    def active_scalars(self, name: str) -> None:
         """Set the active scalars by name."""
         self._raise_field_data_no_scalars_vectors()
         self.SetActiveScalars(name)
@@ -177,7 +177,7 @@ class DataSetAttributes(VTKObjectWrapper):
         return narray
 
     def append(self, narray: Union[Sequence[Number], Number, np.ndarray], name: str, deep_copy=False,
-               active_vectors=True, active_scalars=True):
+               active_vectors=True, active_scalars=True) -> None:
         """Add an array to this object.
 
         Parameters
@@ -206,8 +206,6 @@ class DataSetAttributes(VTKObjectWrapper):
             array_len = self.dataset.GetNumberOfPoints()
         elif self.association == FieldAssociation.CELL:
             array_len = self.dataset.GetNumberOfCells()
-        elif self.association == FieldAssociation.ROW:
-            array_len = narray.shape[0]
         else:
             array_len = narray.shape[0] if isinstance(narray, np.ndarray) else 1
 
@@ -258,7 +256,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         try:
             if active_scalars or self.active_scalars is None:
-                self.active_scalars = name
+                self.active_scalars = name  # type: ignore
             if active_vectors or self.active_vectors is None:
                 # verify this is actually vector data
                 if len(shape) == 2 and shape[1] == 3:
@@ -267,7 +265,7 @@ class DataSetAttributes(VTKObjectWrapper):
             pass
         self.VTKObject.Modified()
 
-    def remove(self, key: Union[int, str]):
+    def remove(self, key: Union[int, str]) -> None:
         """Remove an array.
 
         Parameters
@@ -310,7 +308,7 @@ class DataSetAttributes(VTKObjectWrapper):
         try:
             self.remove(key)
         except KeyError:
-            if default in self.pop.__defaults__:
+            if default in self.pop.__defaults__:  # type: ignore
                 raise
             return default
         return pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
@@ -356,7 +354,7 @@ class DataSetAttributes(VTKObjectWrapper):
         for name, array in array_dict.items():
             self[name] = array.copy()
 
-    def _raise_index_out_of_bounds(self, index: int):
+    def _raise_index_out_of_bounds(self, index: Any):
         max_index = self.VTKObject.GetNumberOfArrays()
         if isinstance(index, int):
             if index < 0 or index >= self.VTKObject.GetNumberOfArrays():
