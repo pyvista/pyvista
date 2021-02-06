@@ -139,10 +139,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     """
 
     _READERS = {'.ply': vtk.vtkPLYReader, '.stl': vtk.vtkSTLReader,
-                    '.vtk': vtk.vtkPolyDataReader, '.vtp': vtk.vtkXMLPolyDataReader,
-                    '.obj': vtk.vtkOBJReader}
+                '.vtk': vtk.vtkPolyDataReader, '.vtp': vtk.vtkXMLPolyDataReader,
+                '.obj': vtk.vtkOBJReader}
     _WRITERS = {'.ply': vtk.vtkPLYWriter, '.vtp': vtk.vtkXMLPolyDataWriter,
-                    '.stl': vtk.vtkSTLWriter, '.vtk': vtk.vtkPolyDataWriter}
+                '.stl': vtk.vtkSTLWriter, '.vtk': vtk.vtkPolyDataWriter}
 
     def __init__(self, *args, **kwargs):
         """Initialize the polydata."""
