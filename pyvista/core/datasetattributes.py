@@ -274,7 +274,7 @@ class DataSetAttributes(VTKObjectWrapper):
             The name or index of the array to remove.
         """
         self._raise_index_out_of_bounds(index=key)
-        name = self.get_array(key).GetName()
+        name = self.get_array(key).GetName()  # type: ignore
         try:
             self.dataset.association_bitarray_names[self.association].remove(name)
         except KeyError:
