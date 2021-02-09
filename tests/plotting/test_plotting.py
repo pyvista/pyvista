@@ -534,6 +534,17 @@ def test_add_legend():
 
 
 @skip_no_plotting
+def test_legend_origin():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    origin = [0, 0]
+    legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
+                                size=[0.1, 0.1], origin=origin)
+    assert list(origin) == list(legend.GetPosition())
+
+
+@skip_no_plotting
 def test_add_axes_twice():
     plotter = pyvista.Plotter()
     plotter.add_axes()
@@ -1020,7 +1031,7 @@ def test_subplot_groups_fail():
         # Full overlap (outer)
         pyvista.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
- 
+
 @skip_no_plotting
 def test_link_views(sphere):
     plotter = pyvista.Plotter(shape=(1, 4))
