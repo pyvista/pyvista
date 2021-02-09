@@ -177,7 +177,8 @@ class WidgetHelper:
                          assign_to_axis=None, tubing=False,
                          outline_translation=False,
                          origin_translation=True, implicit=True,
-                         pass_widget=False, test_callback=True):
+                         pass_widget=False, test_callback=True,
+                         normal_rotation=True):
         """Add a plane widget to the scene.
 
         This is useless without a callback function. You can pass a callable
@@ -232,8 +233,13 @@ class WidgetHelper:
             If true, the widget will be passed as the last argument of the
             callback
 
-        test_callback: bool
+        test_callback : bool
             If true, run the callback function after the widget is created.
+
+        normal_rotation : bool
+            Set the opacity of the normal vector arrow to 0 such that it is
+            effectively disabled. This prevents the user from rotating the
+            normal.
 
         """
         if not hasattr(self, "plane_widgets"):
@@ -281,6 +287,9 @@ class WidgetHelper:
             plane_widget.PlaceWidget(bounds)
             plane_widget.SetOrigin(origin)
 
+            if not normal_rotation:
+                plane_widget.GetNormalProperty().SetOpacity(0)
+
         else:
             # Position of the small plane
             source = vtk.vtkPlaneSource()
@@ -303,6 +312,9 @@ class WidgetHelper:
             plane_widget.SetCenter(origin) # Necessary
             plane_widget.GetPlaneProperty().SetColor(parse_color(color))  # self.C_LOT[fn])
             plane_widget.GetHandleProperty().SetColor(parse_color(color))
+
+            if not normal_rotation:
+                plane_widget.GetHandleProperty().SetOpacity(0)
 
         plane_widget.GetPlaneProperty().SetOpacity(0.5)
         plane_widget.SetInteractor(self.iren)
@@ -345,7 +357,8 @@ class WidgetHelper:
     def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
                             widget_color=None, value=0.0, assign_to_axis=None,
                             tubing=False, origin_translation=True,
-                            outline_translation=False, implicit=True, **kwargs):
+                            outline_translation=False, implicit=True,
+                            normal_rotation=True, **kwargs):
         """Clip a mesh using a plane widget.
 
         Add a mesh to the scene with a plane widget that is used to clip
@@ -405,7 +418,8 @@ class WidgetHelper:
                               assign_to_axis=assign_to_axis,
                               origin_translation=origin_translation,
                               outline_translation=outline_translation,
-                              implicit=implicit, origin=mesh.center)
+                              implicit=implicit, origin=mesh.center,
+                              normal_rotation=normal_rotation)
 
         actor = self.add_mesh(plane_clipped_mesh, **kwargs)
 
@@ -414,7 +428,8 @@ class WidgetHelper:
     def add_mesh_slice(self, mesh, normal='x', generate_triangles=False,
                        widget_color=None, assign_to_axis=None,
                        tubing=False, origin_translation=True,
-                       outline_translation=False, implicit=True, **kwargs):
+                       outline_translation=False, implicit=True,
+                       normal_rotation=True, **kwargs):
         """Slice a mesh using a plane widget.
 
         Add a mesh to the scene with a plane widget that is used to slice
@@ -470,7 +485,8 @@ class WidgetHelper:
                               assign_to_axis=assign_to_axis,
                               origin_translation=origin_translation,
                               outline_translation=outline_translation,
-                              implicit=implicit, origin=mesh.center)
+                              implicit=implicit, origin=mesh.center,
+                              normal_rotation=normal_rotation)
 
         actor = self.add_mesh(plane_sliced_mesh, **kwargs)
 
