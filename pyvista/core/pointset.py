@@ -144,7 +144,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     _WRITERS = {'.ply': vtk.vtkPLYWriter, '.vtp': vtk.vtkXMLPolyDataWriter,
                 '.stl': vtk.vtkSTLWriter, '.vtk': vtk.vtkPolyDataWriter}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the polydata."""
         super().__init__()
 
@@ -412,7 +412,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 class PointGrid(PointSet):
     """Class in common with structured and unstructured grids."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the point grid."""
         super().__init__()
 
@@ -493,7 +493,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     _READERS = {'.vtu': vtk.vtkXMLUnstructuredGridReader, '.vtk': vtk.vtkUnstructuredGridReader}
     _WRITERS = {'.vtu': vtk.vtkXMLUnstructuredGridWriter, '.vtk': vtk.vtkUnstructuredGridWriter}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the unstructured grid."""
         super().__init__()
         deep = kwargs.pop('deep', False)
@@ -834,7 +834,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
     _READERS = {'.vtk': vtk.vtkStructuredGridReader, '.vts': vtk.vtkXMLStructuredGridReader}
     _WRITERS = {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the structured grid."""
         super().__init__()
 

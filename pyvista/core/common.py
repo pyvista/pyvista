@@ -2,8 +2,9 @@
 
 import collections.abc
 import logging
+from abc import abstractmethod
 from pathlib import Path
-from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
+from typing import Optional, List, Tuple, Iterable, Union, Any, Dict, DefaultDict, Type
 import pickle
 
 import numpy as np
@@ -17,6 +18,7 @@ from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                abstract_class, axis_rotation, transformations)
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
+from .._typing import Vector
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -81,29 +83,29 @@ class ActiveArrayInfo:
 class DataObject:
     """Methods common to all wrapped data objects."""
 
-    _READERS: Dict[str, vtk.vtkDataReader] = {}
-    _WRITERS: Dict[str, vtk.vtkDataReader] = {}
+    _READERS: Dict[str, Union[Type[vtk.vtkXMLReader], Type[vtk.vtkDataReader]]] = {}
+    _WRITERS: Dict[str, Union[Type[vtk.vtkXMLWriter], Type[vtk.vtkDataWriter]]] = {}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self.association_bitarray_names = collections.defaultdict(set)
+        self.association_bitarray_names: DefaultDict = collections.defaultdict(set)
 
-    def __getattr__(self, item) -> Any:
+    def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
-    def shallow_copy(self, to_copy):
+    def shallow_copy(self, to_copy: vtk.vtkDataObject) -> vtk.vtkDataObject:
         """Shallow copy the given mesh to this mesh."""
         return self.ShallowCopy(to_copy)
 
-    def deep_copy(self, to_copy):
+    def deep_copy(self, to_copy: vtk.vtkDataObject) -> vtk.vtkDataObject:
         """Overwrite this mesh with the given mesh as a deep copy."""
         return self.DeepCopy(to_copy)
 
-    def _load_file(self, filename: str):
+    def _load_file(self, filename: Union[str, Path]) -> vtk.vtkDataObject:
         """Generically load a vtk object from file.
 
         Parameters
@@ -139,7 +141,7 @@ class DataObject:
         reader.Update()
         return reader.GetOutputDataObject(0)
 
-    def _from_file(self, filename: str):
+    def _from_file(self, filename: Union[str, Path]):
         self.shallow_copy(self._load_file(filename))
 
     def save(self, filename: str, binary=True):
@@ -176,28 +178,16 @@ class DataObject:
         writer.SetInputData(self)
         writer.Write()
 
-    def get_data_range(self, arr: Optional[Union[str, np.ndarray]]=None, preference='field'):  # pragma: no cover
-        """Get the non-NaN min and max of a named array.
-
-        Parameters
-        ----------
-        arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the
-            active scalar is used
-
-        preference : str, optional
-            When scalars is specified, this is the preferred array type
-            to search for in the dataset.  Must be either ``'point'``,
-            ``'cell'``, or ``'field'``.
-
-        """
+    @abstractmethod
+    def get_data_range(self):  # pragma: no cover
+        """Get the non-NaN min and max of a named array."""
         raise NotImplementedError(f'{type(self)} mesh type does not have a `get_data_range` method.')
 
     def _get_attrs(self):  # pragma: no cover
         """Return the representation methods (internal helper)."""
         raise NotImplementedError('Called only by the inherited class')
 
-    def head(self, display=True, html=None):
+    def head(self, display=True, html: bool = None):
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise returns a console friendly string.
@@ -222,8 +212,8 @@ class DataObject:
             fmt += "</table>\n"
             fmt += "\n"
             if display:
-                from IPython.display import display, HTML
-                display(HTML(fmt))
+                from IPython.display import display as _display, HTML
+                _display(HTML(fmt))
                 return
             return fmt
         # Otherwise return a string that is Python console friendly
@@ -288,12 +278,12 @@ class DataObject:
         self.field_arrays.clear()
 
     @property
-    def memory_address(self):
+    def memory_address(self) -> str:
         """Get address of the underlying C++ object in format 'Addr=%p'."""
         return self.GetInformation().GetAddressAsString("")
 
     @property
-    def actual_memory_size(self):
+    def actual_memory_size(self) -> int:
         """Return the actual size of the dataset object.
 
         Returns
@@ -311,7 +301,7 @@ class DataObject:
         """
         return self.GetActualMemorySize()
 
-    def copy_structure(self, dataset):
+    def copy_structure(self, dataset: vtk.vtkDataSet):
         """Copy the structure (geometry and topology) of the input dataset object.
 
         Examples
@@ -325,7 +315,7 @@ class DataObject:
         """
         self.CopyStructure(dataset)
 
-    def copy_attributes(self, dataset):
+    def copy_attributes(self, dataset: vtk.vtkDataSet):
         """Copy the data attributes of the input dataset object.
 
         Examples
@@ -375,14 +365,14 @@ class Common(DataSetFilters, DataObject):
     # Simply bind pyvista.plotting.plot to the object
     plot = pyvista.plot
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
         super().__init__()
-        self._last_active_scalars_name = None
+        self._last_active_scalars_name: Optional[str] = None
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._textures = {}
+        self._textures: Dict[str, vtk.vtkTexture] = {}
 
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
@@ -403,7 +393,7 @@ class Common(DataSetFilters, DataObject):
                 first_arr = next((arr for arr in attributes if arr not in exclude), None)
                 if first_arr is not None:
                     self._active_scalars_info = ActiveArrayInfo(attributes.association, first_arr)
-                    attributes.active_scalars = first_arr
+                    attributes.active_scalars = first_arr  # type: ignore
                     break
             else:
                 self._active_scalars_info = ActiveArrayInfo(field, None)
@@ -437,14 +427,17 @@ class Common(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors(self):
+    def active_tensors(self) -> Optional[np.ndarray]:
         """Return the active tensors array."""
         field, name = self.active_tensors_info
-        if name:
+        try:
             if field is FieldAssociation.POINT:
                 return self.point_arrays[name]
             if field is FieldAssociation.CELL:
                 return self.cell_arrays[name]
+        except KeyError:
+            return None
+        return None
 
     @property
     def active_tensors_name(self) -> str:
@@ -539,17 +532,17 @@ class Common(DataSetFilters, DataObject):
         self.active_vectors_name = DEFAULT_VECTOR_KEY
 
     @property
-    def t_coords(self) -> pyvista_ndarray:
+    def t_coords(self) -> Optional[pyvista_ndarray]:
         """Return the active texture coordinates on the points."""
         return self.point_arrays.t_coords
 
     @t_coords.setter
     def t_coords(self, t_coords: np.ndarray):
         """Set the array to use as the texture coordinates."""
-        self.point_arrays.t_coords = t_coords
+        self.point_arrays.t_coords = t_coords  # type: ignore
 
     @property
-    def textures(self) -> dict:
+    def textures(self) -> Dict[str, vtk.vtkTexture]:
         """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
 
         When casting back to a VTK dataset or filtering this dataset, these textures
@@ -562,7 +555,7 @@ class Common(DataSetFilters, DataObject):
         """Clear the textures from this mesh."""
         self._textures.clear()
 
-    def _activate_texture(mesh, name: str):
+    def _activate_texture(mesh, name: str) -> vtk.vtkTexture:
         """Grab a texture and update the active texture coordinates.
 
         This makes sure to not destroy old texture coordinates.
@@ -706,7 +699,7 @@ class Common(DataSetFilters, DataObject):
 
     def get_data_range(self,
                        arr_var: Optional[Union[str, np.ndarray]] = None,
-                       preference='cell'):
+                       preference='cell') -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
         """Get the non-NaN min and max of a named array.
 
         Parameters
@@ -823,7 +816,7 @@ class Common(DataSetFilters, DataObject):
         transformations.apply_transformation_to_points(t, self.points, inplace=True)
 
 
-    def copy_meta_from(self, ido):
+    def copy_meta_from(self, ido: 'Common'):
         """Copy pyvista meta data onto this object from another object."""
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
@@ -889,7 +882,7 @@ class Common(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> List[float]:
+    def center(self) -> Vector:
         """Return the center of the bounding box."""
         return list(self.GetCenter())
 
@@ -903,7 +896,7 @@ class Common(DataSetFilters, DataObject):
         return _extent
 
     @extent.setter
-    def extent(self, extent):
+    def extent(self, extent: List[float]):
         """Set the range of the bounding box."""
         if hasattr(self, 'SetExtent'):
             if len(extent) != 6:
@@ -1087,7 +1080,7 @@ class Common(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def find_closest_point(self, point, n=1) -> int:
+    def find_closest_point(self, point: Iterable[float], n=1) -> int:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -1181,7 +1174,7 @@ class Common(DataSetFilters, DataObject):
         closest_cells = np.array([locator.FindCell(node) for node in point])
         return int(closest_cells[0]) if len(closest_cells) == 1 else closest_cells
 
-    def cell_n_points(self, ind):
+    def cell_n_points(self, ind: int) -> int:
         """Return the number of points in a cell.
 
         Parameters
@@ -1204,7 +1197,7 @@ class Common(DataSetFilters, DataObject):
         """
         return self.GetCell(ind).GetPoints().GetNumberOfPoints()
 
-    def cell_points(self, ind):
+    def cell_points(self, ind: int) -> np.ndarray:
         """Return the points in a cell.
 
         Parameters
@@ -1231,7 +1224,7 @@ class Common(DataSetFilters, DataObject):
         points = self.GetCell(ind).GetPoints().GetData()
         return vtk_to_numpy(points)
 
-    def cell_bounds(self, ind):
+    def cell_bounds(self, ind: int) -> List[float]:
         """Return the bounding box of a cell.
 
         Parameters
@@ -1254,7 +1247,7 @@ class Common(DataSetFilters, DataObject):
         """
         return list(self.GetCell(ind).GetBounds())
 
-    def cell_type(self, ind):
+    def cell_type(self, ind: int) -> int:
         """Return the type of a cell.
 
         Parameters
