@@ -124,8 +124,9 @@ class PickingHelper:
                 self_().render()
             elif not is_valid_selection:
                 self.remove_actor('_cell_picking_selection')
+                self_().picked_cells = None
 
-            if callback is not None and is_valid_selection:
+            if callback is not None:
                 try_callback(callback, self_().picked_cells)
 
             # TODO: Deactivate selection tool
