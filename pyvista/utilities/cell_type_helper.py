@@ -56,9 +56,9 @@ vtkcell_types = [
 enum_cell_type_nr_points_map = {}
 for cell_num_str, cell_str in vtkcell_types:
     if hasattr(vtk, cell_str) and hasattr(vtk, cell_num_str):
-      try:
-          cell_num = getattr(vtk, cell_num_str)
-          n_points = getattr(vtk, cell_str)().GetNumberOfPoints()
-          enum_cell_type_nr_points_map[cell_num] = n_points
-      except:
-          pass
+        try:
+            cell_num = getattr(vtk, cell_num_str)
+            n_points = getattr(vtk, cell_str)().GetNumberOfPoints()
+            enum_cell_type_nr_points_map[cell_num] = n_points
+        except:
+            pass

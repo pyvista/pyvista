@@ -3,7 +3,6 @@
 The data objects does not have any sort of spatial reference.
 
 """
-import imageio
 import numpy as np
 import vtk
 
@@ -313,7 +312,8 @@ class Texture(vtk.vtkTexture, DataObject):
                 raise ValueError("Problem reading the image with VTK.")
             self._from_image_data(image)
         except (KeyError, ValueError):
-            self._from_array(imageio.imread(filename))
+            from imageio import imread
+            self._from_array(imread(filename))
 
     def _from_texture(self, texture):
         image = texture.GetInput()
