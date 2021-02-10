@@ -226,7 +226,7 @@ class WidgetHelper:
             an implicit plane.
 
         implicit : bool
-            When ``True``, a ``vtkImplicitPlaneWidget`` is ued and when
+            When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
             ``False``, a ``vtkPlaneWidget`` is used.
 
         pass_widget : bool
@@ -407,7 +407,7 @@ class WidgetHelper:
             an implicit plane.
 
         implicit : bool
-            When ``True``, a ``vtkImplicitPlaneWidget`` is ued and when
+            When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
             ``False``, a ``vtkPlaneWidget`` is used.
 
         normal_rotation : bool
@@ -509,7 +509,7 @@ class WidgetHelper:
             an implicit plane.
 
         implicit : bool
-            When ``True``, a ``vtkImplicitPlaneWidget`` is ued and when
+            When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
             ``False``, a ``vtkPlaneWidget`` is used.
 
         normal_rotation : bool
