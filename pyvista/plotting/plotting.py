@@ -3159,7 +3159,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                          name=None, shape_color='grey', shape='rounded_rect',
                          fill_shape=True, margin=3, shape_opacity=1.0,
                          pickable=False, render_points_as_spheres=False,
-                         tolerance=0.001, reset_camera=None, always_visible=False):
+                         tolerance=0.001, reset_camera=None, always_visible=False,
+                         render=True):
         """Create a point actor with one label from list labels assigned to each point.
 
         Parameters
@@ -3241,6 +3242,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         always_visible : bool, optional
             Skip adding the visibility filter. Default False.
+
+        render : bool, optional
+            Force a render when ``True`` (default).
 
         Returns
         -------
@@ -3331,7 +3335,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.add_mesh(vtkpoints, color=point_color, point_size=point_size,
                           name=f'{name}-points', pickable=pickable,
                           render_points_as_spheres=render_points_as_spheres,
-                          reset_camera=reset_camera)
+                          reset_camera=reset_camera, render=render)
 
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
