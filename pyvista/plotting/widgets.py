@@ -381,6 +381,40 @@ class WidgetHelper:
         invert : bool
             Flag on whether to flip/invert the clip
 
+        widget_color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        value : float, optional
+            Set the clipping value along the normal direction.
+            The default value is 0.0.
+
+        assign_to_axis : str or int
+            Assign the normal of the plane to be parallel with a given axis:
+            options are (0, 'x'), (1, 'y'), or (2, 'z').
+
+        tubing : bool
+            When using an implicit plane wiget, this controls whether or not
+            tubing is shown around the plane's boundaries.
+
+        outline_translation : bool
+            If ``False``, the plane widget cannot be translated and is strictly
+            placed at the given bounds. Only valid when using an implicit
+            plane.
+
+        origin_translation : bool
+            If ``False``, the plane widget cannot be translated by its origin
+            and is strictly placed at the given origin. Only valid when using
+            an implicit plane.
+
+        implicit : bool
+            When ``True``, a ``vtkImplicitPlaneWidget`` is ued and when
+            ``False``, a ``vtkPlaneWidget`` is used.
+
+        normal_rotation : bool
+            Set the opacity of the normal vector arrow to 0 such that it is
+            effectively disabled. This prevents the user from rotating the
+            normal. This is forced to ``False`` when ``assign_to_axis`` is set.
+
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
@@ -452,6 +486,37 @@ class WidgetHelper:
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
+
+        widget_color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        assign_to_axis : str or int
+            Assign the normal of the plane to be parallel with a given axis:
+            options are (0, 'x'), (1, 'y'), or (2, 'z').
+
+        tubing : bool
+            When using an implicit plane wiget, this controls whether or not
+            tubing is shown around the plane's boundaries.
+
+        outline_translation : bool
+            If ``False``, the plane widget cannot be translated and is strictly
+            placed at the given bounds. Only valid when using an implicit
+            plane.
+
+        origin_translation : bool
+            If ``False``, the plane widget cannot be translated by its origin
+            and is strictly placed at the given origin. Only valid when using
+            an implicit plane.
+
+        implicit : bool
+            When ``True``, a ``vtkImplicitPlaneWidget`` is ued and when
+            ``False``, a ``vtkPlaneWidget`` is used.
+
+        normal_rotation : bool
+            Set the opacity of the normal vector arrow to 0 such that it is
+            effectively disabled. This prevents the user from rotating the
+            normal. This is forced to ``False`` when ``assign_to_axis`` is set.
+
 
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
