@@ -5,13 +5,11 @@ import enum
 import logging
 import signal
 import sys
-import warnings
 from threading import Thread
 import threading
 import traceback
 
 import numpy as np
-import scooby
 import vtk
 import vtk.util.numpy_support as nps
 

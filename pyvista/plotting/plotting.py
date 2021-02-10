@@ -12,7 +12,6 @@ import weakref
 from functools import wraps
 from threading import Thread
 
-import imageio
 import numpy as np
 import scooby
 import vtk
@@ -37,11 +36,13 @@ from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
 from .tools import normalize, opacity_transfer_function
 from .widgets import WidgetHelper
 
-try:
-    import matplotlib
-    has_matplotlib = True
-except ImportError:
-    has_matplotlib = False
+
+def _has_matplotlib():
+    try:
+        import matplotlib
+        return True
+    except ImportError:
+        return False
 
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
@@ -1496,7 +1497,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             if multi_colors:
                 # Compute unique colors for each index of the block
-                if has_matplotlib:
+                if _has_matplotlib():
+                    import matplotlib
                     from itertools import cycle
                     cycler = matplotlib.rcParams['axes.prop_cycle']
                     colors = cycle(cycler)
@@ -1660,8 +1662,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             opacity = 255 - opacity
 
         # Scalars formatting ==================================================
-        if cmap is None: # Set default map if matplotlib is available
-            if has_matplotlib:
+        if cmap is None:  # Set default map if matplotlib is available
+            if _has_matplotlib():
                 cmap = rcParams['cmap']
         # Set the array title for when it is added back to the mesh
         if _custom_opac:
@@ -1756,7 +1758,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalar_bar_args.setdefault('below_label', 'Below')
 
             if cmap is not None:
-                if not has_matplotlib:
+                if not _has_matplotlib():
                     cmap = None
                     logging.warning('Please install matplotlib for color maps.')
 
@@ -2189,12 +2191,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for val, anno in annotations.items():
                 table.SetAnnotation(float(val), str(anno))
 
-        if cmap is None: # Set default map if matplotlib is available
-            if has_matplotlib:
+        if cmap is None:  # Set default map if matplotlib is available
+            if _has_matplotlib():
                 cmap = rcParams['cmap']
 
         if cmap is not None:
-            if not has_matplotlib:
+            if not _has_matplotlib():
                 raise ImportError('Please install matplotlib for volume rendering.')
 
             cmap = get_cmap_safe(cmap)
@@ -2986,9 +2988,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Frames per second.
 
         """
+        from imageio import get_writer
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
-        self.mwriter = imageio.get_writer(filename, fps=framerate)
+        self.mwriter = get_writer(filename, fps=framerate)
 
     def open_gif(self, filename):
         """Open a gif file.
@@ -2999,12 +3002,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Filename of the gif to open.  Filename must end in gif.
 
         """
+        from imageio import get_writer
         if filename[-3:] != 'gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
-        self.mwriter = imageio.get_writer(filename, mode='I')
+        self.mwriter = get_writer(filename, mode='I')
 
     def write_frame(self):
         """Write a single frame to the movie file."""
