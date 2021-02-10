@@ -9,8 +9,9 @@ within a jupyter notebook.  For those who prefer plotting within
 jupyter, this is an great way of visualizing using ``VTK`` and
 ``pyvista``.
 
-Special thanks to @thewtex for the `itkwidgets`_ library.
+Special thanks to `@thewtex`_ for the `itkwidgets`_ library.
 
+.. _@thewtex: https://github.com/thewtex
 .. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
 
 
@@ -62,10 +63,6 @@ For convenience, figures can also be plotted using the ``plot_itk`` function:
     # Plot using the ITKplotter
     pv.plot_itk(mesh, scalars=z)
 
-
-Additional examples can be found at `binder`_.
-
-.. _binder: https://hub.gke.mybinder.org/user/insightsoftware-tium-itkwidgets-p2yw6xvh/lab
 
 .. rubric:: Attributes
 
