@@ -239,7 +239,7 @@ class WidgetHelper:
         normal_rotation : bool
             Set the opacity of the normal vector arrow to 0 such that it is
             effectively disabled. This prevents the user from rotating the
-            normal.
+            normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
         """
         if not hasattr(self, "plane_widgets"):
@@ -255,6 +255,9 @@ class WidgetHelper:
 
         if color is None:
             color = rcParams['font']['color']
+
+        if assign_to_axis:
+            normal_rotation = False
 
         def _the_callback(widget, event_id):
             the_plane = vtk.vtkPlane()
@@ -321,7 +324,7 @@ class WidgetHelper:
         plane_widget.SetCurrentRenderer(self.renderer)
 
         if assign_to_axis:
-            # TODO: how do we now disable/hide the arrow?
+            # Note that normal_rotation was forced to False
             if assign_to_axis in [0, "x", "X"]:
                 plane_widget.NormalToXAxisOn()
                 plane_widget.SetNormal(NORMALS["x"])
