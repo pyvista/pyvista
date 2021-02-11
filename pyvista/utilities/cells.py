@@ -216,8 +216,11 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     --------
     Create the cell arrays containing two triangles.
 
+    This will generate cell arrays two generate a mesh with two
+    disconnected triangles from 6 points.
+
+    >>> import vtk
     >>> from pyvista.utilities.cells import create_mixed_cells
-    >>> #Will generate cell arrays two generate a mesh with two disconnected triangles from 6 points
     >>> cell_arrays = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
     >>> #VTK versions < 9.0: cell_types, cell_arr, cell_offsets = cell_arrays
     >>> #VTK versions >= 9.0: cell_types, cell_arr = cell_arrays

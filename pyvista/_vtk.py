@@ -1,5 +1,5 @@
 """
-Imports from vtk
+Import from vtk.
 
 These are the modules within vtk that must be loaded across pyvista.
 Here, we attempt to import modules using the VTK9 ``vtkmodules``
@@ -361,6 +361,11 @@ if _vtk9:
         """Lazy import of the vtkPlot3DMetaReader."""
         from vtkmodules.vtkIOParallel import vtkPlot3DMetaReader
         return vtkPlot3DMetaReader()
+
+    def vtkSegYReader():
+        """Lazy import of the vtkSegYReader."""
+        from vtkmodules.vtkIOSegY import vtkSegYReader
+        return vtkSegYReader()
 
 else:
 
