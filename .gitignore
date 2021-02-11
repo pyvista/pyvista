@@ -5,6 +5,8 @@
 *.so
 *.o
 
+*#
+
 # Cython generated files #
 #pymeshfix/cython/_meshfix.cpp
 
