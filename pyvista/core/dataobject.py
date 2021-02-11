@@ -27,58 +27,6 @@ log.setLevel('CRITICAL')
 DEFAULT_VECTOR_KEY = '_vectors'
 
 
-
-class ActiveArrayInfo:
-    """Active array info class with support for pickling."""
-
-    def __init__(self, association, name):
-        """Initialize."""
-        self.association = association
-        self.name = name
-
-    def __getstate__(self):
-        """Support pickling."""
-        state = self.__dict__.copy()
-        state['association'] = int(self.association.value)
-        return state
-
-    def __setstate__(self, state):
-        """Support unpickling."""
-        self.__dict__ = state.copy()
-        self.association = FieldAssociation(state['association'])
-
-    @property
-    def _namedtuple(self):
-        """Build a namedtuple on the fly to provide legacy support."""
-        named_tuple = collections.namedtuple('ActiveArrayInfo', ['association', 'name'])
-        return named_tuple(self.association, self.name)
-
-    def __iter__(self):
-        """Provide namedtuple-like __iter__."""
-        return self._namedtuple.__iter__()
-
-    def __repr__(self):
-        """Provide namedtuple-like __repr__."""
-        return self._namedtuple.__repr__()
-
-    def __getitem__(self, item):
-        """Provide namedtuple-like __getitem__."""
-        return self._namedtuple.__getitem__(item)
-
-    def __setitem__(self, key, value):
-        """Provide namedtuple-like __setitem__."""
-        self._namedtuple.__setitem__(key, value)
-
-    def __getattr__(self, item):
-        """Provide namedtuple-like __getattr__."""
-        self._namedtuple.__getattr__(item)
-
-    def __eq__(self, other):
-        """Check equivalence (useful for serialize/deserialize tests)."""
-        return self.name == other.name and \
-               int(self.association.value) == int(other.association.value)
-
-
 @abstract_class
 class DataObject:
     """Methods common to all wrapped data objects."""
