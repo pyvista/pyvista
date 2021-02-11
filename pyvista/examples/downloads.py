@@ -539,7 +539,7 @@ def download_kitchen(split=False):
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
         alg.Update()
-        result = pyvista.filters._get_output(alg)
+        result = pyvista.datasetfilters._get_output(alg)
         kitchen[key] = result
     return kitchen
 
