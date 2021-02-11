@@ -26,7 +26,7 @@ import collections.abc
 
 import vtk
 
-import pyvista
+from pyvista import DataSetFilters, UniformGrid
 from pyvista.utilities import (abstract_class)
 
 
@@ -114,7 +114,7 @@ class UniformGridFilters(DataSetFilters):
         result = _get_output(alg)
         # Adjust for the confusing issue with the extents
         #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-        fixed = pyvista.UniformGrid()
+        fixed = UniformGrid()
         fixed.origin = result.bounds[::2]
         fixed.spacing = result.spacing
         fixed.dimensions = result.dimensions

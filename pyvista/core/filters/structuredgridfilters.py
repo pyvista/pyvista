@@ -26,7 +26,7 @@ Example
 import numpy as np
 import vtk
 
-import pyvista
+from pyvista import DataSetFilters
 from pyvista.utilities import (abstract_class)
 
 
