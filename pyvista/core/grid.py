@@ -3,7 +3,6 @@ import pathlib
 import logging
 
 import numpy as np
-import vtk
 
 import pyvista
 from pyvista import _vtki

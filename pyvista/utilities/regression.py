@@ -1,14 +1,13 @@
 """Image regression module."""
-import vtk
-from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import numpy as np
 
 import pyvista
+from pyvista import _vtki
 
 
 def remove_alpha(img):
     """Remove the alpha channel from ``vtk.vtkImageData``."""
-    ec = vtk.vtkImageExtractComponents()
+    ec = _vtki.vtkImageExtractComponents()
     ec.SetComponents(0, 1, 2)
     ec.SetInputData(img)
     ec.Update()
@@ -32,7 +31,7 @@ def wrap_image_array(arr):
     if arr.dtype != np.uint8:
         raise ValueError('Expecting a np.uint8 array')
 
-    img = vtk.vtkImageData()
+    img = _vtki.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
     wrap_img = pyvista.wrap(img)
     wrap_img.point_arrays['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
@@ -42,9 +41,9 @@ def wrap_image_array(arr):
 def image_from_window(ren_win, as_vtk=False, ignore_alpha=False):
     """Extract the image from the render window as an array."""
     width, height = ren_win.GetSize()
-    arr = vtk.vtkUnsignedCharArray()
+    arr = _vtki.vtkUnsignedCharArray()
     ren_win.GetRGBACharPixelData(0, 0, width - 1, height - 1, 0, arr)
-    data = vtk_to_numpy(arr).reshape(height, width, -1)[::-1]
+    data = _vtki.vtk_to_numpy(arr).reshape(height, width, -1)[::-1]
     if ignore_alpha:
         data = data[:, :, :-1]
     if as_vtk:
@@ -107,7 +106,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     def to_img(img):
         if isinstance(img, UniformGrid):  # pragma: no cover
             return img
-        elif isinstance(img, vtk.vtkImageData):
+        elif isinstance(img, _vtki.vtkImageData):
             return wrap(img)
         elif isinstance(img, str):
             return read(img)
@@ -129,7 +128,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         raise RuntimeError('Input images %s and %s are not of equal size.')
 
     if use_vtk:
-        img_diff = vtk.vtkImageDifference()
+        img_diff = _vtki.vtkImageDifference()
         img_diff.SetThreshold(threshold)
         img_diff.SetInputData(im1)
         img_diff.SetImageData(im2)

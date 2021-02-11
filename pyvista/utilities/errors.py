@@ -7,17 +7,16 @@ import sys
 
 import numpy as np
 import scooby
-import vtk
 
 import pyvista
-
+from pyvista import _vtki
 
 def set_error_output_file(filename):
     """Set a file to write out the VTK errors."""
     filename = os.path.abspath(os.path.expanduser(filename))
-    fileOutputWindow = vtk.vtkFileOutputWindow()
+    fileOutputWindow = _vtki.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)
-    outputWindow = vtk.vtkOutputWindow()
+    outputWindow = _vtki.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow
 
@@ -102,8 +101,8 @@ class Observer:
 
 def send_errors_to_logging():
     """Send all VTK error/warning messages to Python's logging module."""
-    error_output = vtk.vtkStringOutputWindow()
-    error_win = vtk.vtkOutputWindow()
+    error_output = _vtki.vtkStringOutputWindow()
+    error_win = _vtki.vtkOutputWindow()
     error_win.SetInstance(error_output)
     obs = Observer()
     return obs.observe(error_output)

@@ -3820,13 +3820,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def export_obj(self, filename):
         """Export scene to OBJ format."""
+        # lazy import vtkOBJExporter here as it takes a long time to
+        # load and is not always used
+        try:
+            from vtkmodules.vtkIOExport import vtkOBJExporter
+        except:
+            from vtk import vtkOBJExporter
+
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter must still have a render window open.")
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         else:
             filename = os.path.abspath(os.path.expanduser(filename))
-        exporter = _vtki.vtkOBJExporter()
+        exporter = vtkOBJExporter()
         exporter.SetFilePrefix(filename)
         exporter.SetRenderWindow(self.ren_win)
         return exporter.Write()

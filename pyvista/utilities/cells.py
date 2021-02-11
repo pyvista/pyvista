@@ -1,11 +1,9 @@
 """pyvista wrapping of vtkCellArray."""
 import numpy as np
-from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
-from vtk import vtkCellArray
-import vtk
 
+from pyvista import _vtki
 import pyvista
-VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
+VTK9 = _vtki.vtkVersion().GetVTKMajorVersion() >= 9
 
 
 def numpy_to_idarr(ind, deep=False, return_ind=False):
@@ -24,13 +22,13 @@ def numpy_to_idarr(ind, deep=False, return_ind=False):
         ind = np.ascontiguousarray(ind, dtype=pyvista.ID_TYPE)
 
     # must ravel or segfault when saving MultiBlock
-    vtk_idarr = numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
+    vtk_idarr = _vtki.numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
     if return_ind:
         return vtk_idarr, ind
     return vtk_idarr
 
 
-class CellArray(vtkCellArray):
+class CellArray(_vtki.vtkCellArray):
     """pyvista wrapping of vtkCellArray.
 
     Provides convenience functions to simplify creating a CellArray from
@@ -73,7 +71,7 @@ class CellArray(vtkCellArray):
     @property
     def cells(self):
         """Return a numpy array of the cells."""
-        return vtk_to_numpy(self.GetData()).ravel()
+        return _vtki.vtk_to_numpy(self.GetData()).ravel()
 
     @property
     def n_cells(self):
