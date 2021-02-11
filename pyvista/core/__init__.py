@@ -3,6 +3,7 @@
 from .common import Common, DataObject
 from .composite import MultiBlock
 from .datasetattributes import DataSetAttributes
+from .compositefilters import CompositeFilters
 from .datasetfilters import DataSetFilters
 from .polydatafilters import PolyDataFilters
 from .unstructuredgridfilters import UnstructuredGridFilters
