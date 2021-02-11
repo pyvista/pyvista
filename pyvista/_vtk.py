@@ -363,10 +363,17 @@ if _vtk9:
         return vtkPlot3DMetaReader()
 
 else:
-    from vtk.vtkCommonKitPython import (buffer_shared,
-                                        vtkAbstractArray,
-                                        vtkWeakReference
-                                        )
+
+    # maintain VTK 8.2 compatability
+    try:
+        from vtk.vtkCommonKitPython import (buffer_shared,
+                                            vtkAbstractArray,
+                                            vtkWeakReference)
+    except ImportError:
+        from vtk.vtkCommonCore import (buffer_shared,
+                                       vtkAbstractArray,
+                                       vtkWeakReference)
+
     from vtk.util.numpy_support import vtk_to_numpy
     from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper,
                                                      VTKArray,

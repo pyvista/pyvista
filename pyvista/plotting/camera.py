@@ -5,9 +5,15 @@ import numpy as np
 # have to do the imports here rather than in vtki to avoid circular
 # imports
 try:
+    from vtkmodules.vtkCommonCore import vtkVersion
+    _vtk9 = vtkVersion().GetVTKMajorVersion() >= 9
+except ImportError:
+    _vtk9 = False
+
+if _vtk9:
     from vtkmodules.vtkRenderingCore import vtkCamera
     from vtkmodules.vtkCommonMath import vtkMatrix4x4
-except:
+else:
     from vtk import vtkCamera, vtkMatrix4x4
 
 
