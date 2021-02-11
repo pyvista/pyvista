@@ -118,7 +118,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and clip
 
         invert : bool
@@ -356,7 +356,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and clip
 
         normal : str or tuple(float)
@@ -425,7 +425,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and slice
 
         normal : str or tuple(float)
@@ -829,7 +829,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and threshold
 
         scalars : str
@@ -900,7 +900,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and contour
 
         scalars : str
@@ -1088,7 +1088,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and slice along the spline
 
         generate_triangles: bool, optional

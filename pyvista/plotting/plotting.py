@@ -1219,7 +1219,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : pyvista.Common or pyvista.MultiBlock
+        mesh : pyvista.DataSet or pyvista.MultiBlock
             Any PyVista or VTK mesh is supported. Also, any dataset
             that :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
             points.
@@ -3169,12 +3169,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : np.ndarray or pyvista.Common
+        points : np.ndarray or pyvista.DataSet
             n x 3 numpy array of points or pyvista dataset with points
 
         labels : list or str
             List of labels.  Must be the same length as points. If a string name
-            is given with a pyvista.Common input for points, then these are fetched.
+            is given with a pyvista.DataSet input for points, then these are fetched.
 
         italic : bool, optional
             Italicises title and bar labels.  Default False.
@@ -3355,7 +3355,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : np.ndarray or pyvista.Common
+        points : np.ndarray or pyvista.DataSet
             n x 3 numpy array of points or pyvista dataset with points
 
         labels : str
