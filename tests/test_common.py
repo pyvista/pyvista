@@ -700,18 +700,18 @@ def test_set_cell_vectors(grid):
 
 def test_axis_rotation_invalid():
     with pytest.raises(ValueError):
-        pyvista.core.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pyvista.core.dataset.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pyvista.core.common.axis_rotation(p, 1, False, axis='x')
+    p_out = pyvista.core.dataset.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
 
 
 def test_bad_instantiation():
     with pytest.raises(TypeError):
-        pyvista.Common()
+        pyvista.DataSet()
     with pytest.raises(TypeError):
         pyvista.Grid()
     with pytest.raises(TypeError):

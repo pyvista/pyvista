@@ -80,7 +80,7 @@ class ActiveArrayInfo:
 
 
 @abstract_class
-class Common(DataSetFilters, DataObject):
+class DataSet(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects."""
 
     # Simply bind pyvista.plotting.plot to the object
@@ -537,7 +537,7 @@ class Common(DataSetFilters, DataObject):
         transformations.apply_transformation_to_points(t, self.points, inplace=True)
 
 
-    def copy_meta_from(self, ido: 'Common'):
+    def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object."""
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info

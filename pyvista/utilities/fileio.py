@@ -436,7 +436,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
 
     Parameters
     ----------
-    mesh : pyvista.Common
+    mesh : pyvista.DataSet
         Any PyVista mesh/spatial data type.
     file_format : str
         File type for meshio to save.
