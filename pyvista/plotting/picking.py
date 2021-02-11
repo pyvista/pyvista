@@ -157,28 +157,29 @@ class PickingHelper:
             return end_pick_helper(picker, event_id)
 
         def visible_pick_call_back(picker, event_id):
-            x0,y0,x1,y1 = renderer_().get_pick_position()
-            selector = vtk.vtkOpenGLHardwareSelector()
-            selector.SetFieldAssociation(vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
-            selector.SetRenderer(renderer_())
-            selector.SetArea(x0,y0,x1,y1)
-            selection = selector.Select()
             picked = pyvista.MultiBlock()
-            for node in range(selection.GetNumberOfNodes()):
-                selection_node = selection.GetNode(node)
-                if selection_node is None:
-                    # No selection
-                    continue
-                cids = pyvista.convert_array(selection_node.GetSelectionList())
-                actor = selection_node.GetProperties().Get(vtk.vtkSelectionNode.PROP())
-                if actor.GetProperty().GetRepresentation() != 2: # surface
-                    logging.warning("Display representations other than `surface` will result in incorrect results.")
-                smesh = actor.GetMapper().GetInputAsDataSet()
-                smesh = smesh.copy()
-                smesh["original_cell_ids"] = np.arange(smesh.n_cells)
-                tri_smesh = smesh.extract_surface().triangulate()
-                cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
-                picked.append(smesh.extract_cells(cids_to_get))
+            x0, y0, x1, y1 = renderer_().get_pick_position()
+            if x0 >= 0:  # initial pick position is (-1, -1, -1, -1)
+                selector = vtk.vtkOpenGLHardwareSelector()
+                selector.SetFieldAssociation(vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
+                selector.SetRenderer(renderer_())
+                selector.SetArea(x0, y0, x1, y1)
+                selection = selector.Select()
+                for node in range(selection.GetNumberOfNodes()):
+                    selection_node = selection.GetNode(node)
+                    if selection_node is None:
+                        # No selection
+                        continue
+                    cids = pyvista.convert_array(selection_node.GetSelectionList())
+                    actor = selection_node.GetProperties().Get(vtk.vtkSelectionNode.PROP())
+                    if actor.GetProperty().GetRepresentation() != 2: # surface
+                        logging.warning("Display representations other than `surface` will result in incorrect results.")
+                    smesh = actor.GetMapper().GetInputAsDataSet()
+                    smesh = smesh.copy()
+                    smesh["original_cell_ids"] = np.arange(smesh.n_cells)
+                    tri_smesh = smesh.extract_surface().triangulate()
+                    cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
+                    picked.append(smesh.extract_cells(cids_to_get))
             if len(picked) == 1:
                 self_().picked_cells = picked[0]
             else:
