@@ -20,8 +20,8 @@ import pyvista
 from pyvista.utilities import abstract_class
 from pyvista.utilities.cells import CellArray, numpy_to_idarr, generate_cell_offsets, create_mixed_cells, get_mixed_cells
 from .common import Common
-from .polydatafilters import PolyDataFilters
-from .unstructuredgridfilters import UnstructuredGridFilters
+from pyvista.core.filters.polydatafilters import PolyDataFilters
+from pyvista.core.filters.unstructuredgridfilters import UnstructuredGridFilters
 from ..utilities.fileio import get_ext
 
 log = logging.getLogger(__name__)
