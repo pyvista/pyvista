@@ -23,7 +23,8 @@ Example
 
 """
 
-from pyvista import DataSetFilters, PolyData
+from . import DataSetFilters
+import pyvista
 from pyvista.utilities import (abstract_class)
 
 
@@ -42,7 +43,7 @@ class UnstructuredGridFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
         """
-        return PolyData(ugrid.points).delaunay_2d(tol=tol, alpha=alpha,
-                                                  offset=offset,
-                                                  bound=bound,
-                                                  progress_bar=progress_bar)
+        return pyvista.PolyData(ugrid.points).delaunay_2d(tol=tol, alpha=alpha,
+                                                          offset=offset,
+                                                          bound=bound,
+                                                          progress_bar=progress_bar)

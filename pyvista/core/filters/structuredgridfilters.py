@@ -26,9 +26,10 @@ Example
 import numpy as np
 import vtk
 
-from pyvista import DataSetFilters
+import pyvista
+from .datasetfilters import DataSetFilters
 from .algorithm import _get_output
-from pyvista.utilities import (abstract_class)
+from pyvista.utilities import (point_array, abstract_class)
 
 
 @abstract_class

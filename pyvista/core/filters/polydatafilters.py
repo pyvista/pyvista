@@ -29,12 +29,13 @@ import numpy as np
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
-from pyvista import DataSetFilters, PolyData
+import pyvista
+from . import DataSetFilters
 from pyvista.core.errors import NotAllTrianglesError
 from .algorithm import _get_output, _update_alg
 from pyvista.utilities import (NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
-                               abstract_class)
+                               abstract_class, point_array)
 
 
 @abstract_class
@@ -50,8 +51,8 @@ class PolyDataFilters(DataSetFilters):
             Angle to consider an edge.
 
         """
-        if not isinstance(poly_data, PolyData):  # pragma: no cover
-            poly_data = PolyData(poly_data)
+        if not isinstance(poly_data, pyvista.PolyData):  # pragma: no cover
+            poly_data = pyvista.PolyData(poly_data)
         poly_data.point_arrays['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
@@ -84,7 +85,7 @@ class PolyDataFilters(DataSetFilters):
             The cut mesh when inplace=False
 
         """
-        if not isinstance(cut, PolyData):
+        if not isinstance(cut, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
         if not poly_data.is_all_triangles() or not cut.is_all_triangles():
             raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
@@ -124,7 +125,7 @@ class PolyDataFilters(DataSetFilters):
             Initial mesh and the new mesh when inplace=False.
 
         """
-        if not isinstance(mesh, PolyData):
+        if not isinstance(mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
 
         vtkappend = vtk.vtkAppendPolyData()
@@ -161,7 +162,7 @@ class PolyDataFilters(DataSetFilters):
             The union mesh when inplace=False.
 
         """
-        if not isinstance(mesh, PolyData):
+        if not isinstance(mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
 
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
@@ -194,7 +195,7 @@ class PolyDataFilters(DataSetFilters):
             The union mesh when inplace=False.
 
         """
-        if not isinstance(mesh, PolyData):
+        if not isinstance(mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
 
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
@@ -549,8 +550,8 @@ class PolyDataFilters(DataSetFilters):
         Tube Cells: 22
 
         """
-        if not isinstance(poly_data, PolyData):
-            poly_data = PolyData(poly_data)
+        if not isinstance(poly_data, pyvista.PolyData):
+            poly_data = pyvista.PolyData(poly_data)
         if n_sides < 3:
             n_sides = 3
         tube = vtk.vtkTubeFilter()
@@ -1483,7 +1484,7 @@ class PolyDataFilters(DataSetFilters):
         faces[:, 0] = 3
         faces[:, 1:] = np.reshape(uni[1], (nfaces, 3))
 
-        newmesh = PolyData(new_points, faces, deep=True)
+        newmesh = pyvista.PolyData(new_points, faces, deep=True)
         ridx = uni[0]
 
         # Add scalars back to mesh if requested

@@ -25,7 +25,8 @@ Example
 
 import vtk
 
-from pyvista import DataSetFilters
+import pyvista
+from .datasetfilters import DataSetFilters
 from pyvista.utilities import (wrap, abstract_class)
 
 

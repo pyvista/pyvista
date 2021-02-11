@@ -16,7 +16,7 @@ from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                raise_not_matching, vtk_id_list_to_array, fileio,
                                abstract_class, axis_rotation, transformations)
 from .datasetattributes import DataSetAttributes
-from pyvista.core.filters.datasetfilters import DataSetFilters
+from .filters import DataSetFilters, _get_output
 from .._typing import Vector
 
 log = logging.getLogger(__name__)
