@@ -3174,7 +3174,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         labels : list or str
             List of labels.  Must be the same length as points. If a string name
-            is given with a pyvista.Common input for points, then these are fetched.
+            is given with a pyvista.DataSet input for points, then these are fetched.
 
         italic : bool, optional
             Italicises title and bar labels.  Default False.

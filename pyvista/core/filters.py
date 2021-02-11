@@ -1646,7 +1646,7 @@ class DataSetFilters:
             The mesh to probe from - point and cell arrays from
             this object are probed onto the nodes of the ``points`` mesh
 
-        points: pyvista.Common
+        points: pyvista.DataSet
             The points to probe values on to. This should be a PyVista mesh
             or something :func:`pyvista.wrap` can handle.
 
@@ -1703,7 +1703,7 @@ class DataSetFilters:
         dataset: pyvista.DataSet
             The source vtk data object as the mesh to sample values on to
 
-        target: pyvista.Common
+        target: pyvista.DataSet
             The vtk data object to sample from - point and cell arrays from
             this object are sampled onto the nodes of the ``dataset`` mesh
 

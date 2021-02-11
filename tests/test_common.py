@@ -375,7 +375,7 @@ def test_bitarray_field(grid):
 def test_html_repr(grid):
     """
     This just tests to make sure no errors are thrown on the HTML
-    representation method for Common datasets.
+    representation method for DataSet.
     """
     assert grid._repr_html_() is not None
 
@@ -385,7 +385,7 @@ def test_html_repr(grid):
 def test_print_repr(grid, display, html):
     """
     This just tests to make sure no errors are thrown on the text friendly
-    representation method for Common datasets.
+    representation method for DataSet.
     """
     result = grid.head(display=display, html=html)
     if display and html:
