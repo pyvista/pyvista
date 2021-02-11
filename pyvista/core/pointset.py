@@ -1509,19 +1509,19 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        ind : int
-            Cell ID.
+        ind : int or iterable(int)
+            Cell IDs.
         rel : str, optional
-            Defines the neighborhood relation. If ``'topological'``, returns the ``(i-1, j, k)``,
-            ``(i+1, j, k)``, ``(i, j-1, k)``, ``(i, j+1, k)``, ``(i, j, k-1)`` and ``(i, j, k+1)``
-            cells. If ``'connectivity'`` (default), returns only the topological neighbors
-            considering faces connectivity. If ``'geometric'``, returns the cells in the
+            Defines the neighborhood relationship. If ``'topological'``, returns the 
+            ``(i-1, j, k)``, ``(i+1, j, k)``, ``(i, j-1, k)``, ``(i, j+1, k)``, ``(i, j, k-1)`` and
+            ``(i, j, k+1)`` cells. If ``'connectivity'`` (default), returns only the topological
+            neighbors considering faces connectivity. If ``'geometric'``, returns the cells in the
             ``(i-1, j)``, ``(i+1, j)``, ``(i, j-1)`` and ``(i, j+1)`` vertical cell groups whose
             faces intersect.
 
         Returns
         -------
-        indices : list of int
+        indices : list(int)
             Indices of neighboring cells.
 
         Examples
@@ -1618,13 +1618,13 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid):
                                     indices.append(ind)
             return indices
 
-        if rel == 'geometric':
-            indices = geometric(ind)
-        elif rel == 'topological':
-            indices = topological(ind)
-        else:
-            indices = connectivity(ind)
-        return indices
+        if isinstance(ind, int):
+            ind = [ind]
+        rel = eval(rel)
+        indices = set()
+        for i in ind:
+            indices.update(rel(i))
+        return sorted(indices)
 
     def compute_connectivity(self, inplace=True):
         """Compute the faces connectivity flags array.
