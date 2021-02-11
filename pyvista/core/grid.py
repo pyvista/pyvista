@@ -10,7 +10,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import pyvista
 from pyvista.utilities import abstract_class
 from .common import Common
-from pyvista.core.filters.filters import _get_output, UniformGridFilters
+from pyvista.core.filters.unstructuredgridfilters import _get_output, UniformGridFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
