@@ -4,25 +4,25 @@ from collections.abc import Iterable
 from typing import Union
 import numpy as np
 
-from pyvista import _vtki
+from pyvista import _vtk
 from pyvista.utilities.helpers import FieldAssociation, convert_array
 
 
 class pyvista_ndarray(np.ndarray):
     """An ndarray which references the owning dataset and the underlying vtkArray."""
 
-    def __new__(cls, array: Union[Iterable, _vtki.vtkAbstractArray], dataset=None,
+    def __new__(cls, array: Union[Iterable, _vtk.vtkAbstractArray], dataset=None,
                 association=FieldAssociation.NONE):
         """Allocate the array."""
         if isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)
-        elif isinstance(array, _vtki.vtkAbstractArray):
+        elif isinstance(array, _vtk.vtkAbstractArray):
             obj = convert_array(array).view(cls)
             obj.VTKObject = array
 
         obj.association = association
-        obj.dataset = _vtki.vtkWeakReference()
-        if isinstance(dataset, _vtki.VTKObjectWrapper):
+        obj.dataset = _vtk.vtkWeakReference()
+        if isinstance(dataset, _vtk.VTKObjectWrapper):
             obj.dataset.Set(dataset.VTKObject)
         else:
             obj.dataset.Set(dataset)
@@ -37,7 +37,7 @@ class pyvista_ndarray(np.ndarray):
         # to hold this data. I don't know why this class doesn't use the same
         # convention, but here we just map those over to the appropriate
         # attributes of this class
-        _vtki.VTKArray.__array_finalize__(self, obj)
+        _vtk.VTKArray.__array_finalize__(self, obj)
         if np.shares_memory(self, obj):
             self.dataset = getattr(obj, 'dataset', None)
             self.association = getattr(obj, 'association', None)
@@ -54,4 +54,4 @@ class pyvista_ndarray(np.ndarray):
         if self.VTKObject is not None:
             self.VTKObject.Modified()
 
-    __getattr__ = _vtki.VTKArray.__getattr__
+    __getattr__ = _vtk.VTKArray.__getattr__

@@ -116,7 +116,7 @@ def get_object_id(obj):
 def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
     """Dump vtkjs data array."""
     # import here to avoid circular imports
-    from pyvista import _vtki
+    from pyvista import _vtk
     if root is None:
         root = {}
     if not array:
@@ -125,7 +125,7 @@ def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
     if array.GetDataType() == 12:
         # IdType need to be converted to Uint32
         array_size = array.GetNumberOfTuples() * array.GetNumberOfComponents()
-        new_array = _vtki.vtkTypeUInt32Array()
+        new_array = _vtk.vtkTypeUInt32Array()
         new_array.SetNumberOfTuples(array_size)
         for i in range(array_size):
             new_array.SetValue(i, -1 if array.GetValue(i) < 0 else array.GetValue(i))
@@ -427,7 +427,7 @@ def mkdir_p(path):
 def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
     """Export a plotter's rendering window to the VTKjs format."""
     # import here to avoid circular imports
-    from pyvista import _vtki
+    from pyvista import _vtk
     sceneName = os.path.split(filename)[1]
     doCompressArrays = compress_arrays
 
@@ -460,16 +460,16 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     if dataObject.GetNumberOfBlocks() == 1:
                         dataset = dataObject.GetBlock(0)
                     else:
-                        gf = _vtki.vtkCompositeDataGeometryFilter()
+                        gf = _vtk.vtkCompositeDataGeometryFilter()
                         gf.SetInputData(dataObject)
                         gf.Update()
                         dataset = gf.GetOutput()
                 else:
                     dataset = mapper.GetInput()
 
-                if dataset and not isinstance(dataset, (_vtki.vtkPolyData, _vtki.vtkImageData)):
+                if dataset and not isinstance(dataset, (_vtk.vtkPolyData, _vtk.vtkImageData)):
                     # All data must be PolyData surfaces
-                    gf = _vtki.vtkGeometryFilter()
+                    gf = _vtk.vtkGeometryFilter()
                     gf.SetInputData(dataset)
                     gf.Update()
                     dataset = gf.GetOutputDataObject(0)

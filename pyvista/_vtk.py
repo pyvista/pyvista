@@ -1,10 +1,11 @@
 """
-Common vtk imports.
+Imports from vtk
 
-These are the default modules within vtk that must be loaded across
-pyvista.  Here, we attempt to import modules using the VTK9 vtkmodules
-import strategy, which lets us only have to import from select modules
-and not the entire library.
+These are the modules within vtk that must be loaded across pyvista.
+Here, we attempt to import modules using the VTK9 ``vtkmodules``
+package, which lets us only have to import from select modules and not
+the entire library.
+
 """
 
 try:
@@ -14,7 +15,6 @@ except ImportError:
     _vtk9 = False
 
 if _vtk9:
-
     from vtkmodules.vtkInteractionWidgets import (vtkScalarBarWidget,
                                                   vtkSplineWidget,
                                                   vtkSphereWidget,

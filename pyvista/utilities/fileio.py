@@ -6,73 +6,73 @@ import os
 import numpy as np
 
 import pyvista
-from pyvista import _vtki
+from pyvista import _vtk
 
-VTK9 = _vtki.vtkVersion().GetVTKMajorVersion() >= 9
+VTK9 = _vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 READERS = {
     # Standard dataset readers:
-    '.vtk': _vtki.vtkDataSetReader,
-    '.pvtk': _vtki.vtkPDataSetReader,
-    '.vti': _vtki.vtkXMLImageDataReader,
-    '.pvti': _vtki.vtkXMLPImageDataReader,
-    '.vtr': _vtki.vtkXMLRectilinearGridReader,
-    '.pvtr': _vtki.vtkXMLPRectilinearGridReader,
-    '.vtu': _vtki.vtkXMLUnstructuredGridReader,
-    '.pvtu': _vtki.vtkXMLPUnstructuredGridReader,
-    '.ply': _vtki.vtkPLYReader,
-    '.obj': _vtki.vtkOBJReader,
-    '.stl': _vtki.vtkSTLReader,
-    '.vtp': _vtki.vtkXMLPolyDataReader,
-    '.vts': _vtki.vtkXMLStructuredGridReader,
-    '.vtm': _vtki.vtkXMLMultiBlockDataReader,
-    '.vtmb': _vtki.vtkXMLMultiBlockDataReader,
-    '.case': _vtki.vtkGenericEnSightReader,
+    '.vtk': _vtk.vtkDataSetReader,
+    '.pvtk': _vtk.vtkPDataSetReader,
+    '.vti': _vtk.vtkXMLImageDataReader,
+    '.pvti': _vtk.vtkXMLPImageDataReader,
+    '.vtr': _vtk.vtkXMLRectilinearGridReader,
+    '.pvtr': _vtk.vtkXMLPRectilinearGridReader,
+    '.vtu': _vtk.vtkXMLUnstructuredGridReader,
+    '.pvtu': _vtk.vtkXMLPUnstructuredGridReader,
+    '.ply': _vtk.vtkPLYReader,
+    '.obj': _vtk.vtkOBJReader,
+    '.stl': _vtk.vtkSTLReader,
+    '.vtp': _vtk.vtkXMLPolyDataReader,
+    '.vts': _vtk.vtkXMLStructuredGridReader,
+    '.vtm': _vtk.vtkXMLMultiBlockDataReader,
+    '.vtmb': _vtk.vtkXMLMultiBlockDataReader,
+    '.case': _vtk.vtkGenericEnSightReader,
     # Image formats:
-    '.bmp': _vtki.vtkBMPReader,
-    '.dem': _vtki.vtkDEMReader,
-    '.dcm': _vtki.vtkDICOMImageReader,
-    '.img': _vtki.vtkDICOMImageReader,
-    '.jpeg': _vtki.vtkJPEGReader,
-    '.jpg': _vtki.vtkJPEGReader,
-    '.mhd': _vtki.vtkMetaImageReader,
-    '.nrrd': _vtki.vtkNrrdReader,
-    '.nhdr': _vtki.vtkNrrdReader,
-    '.png': _vtki.vtkPNGReader,
-    '.pnm': _vtki.vtkPNMReader, # TODO: not tested
-    '.slc': _vtki.vtkSLCReader,
-    '.tiff': _vtki.vtkTIFFReader,
-    '.tif': _vtki.vtkTIFFReader,
+    '.bmp': _vtk.vtkBMPReader,
+    '.dem': _vtk.vtkDEMReader,
+    '.dcm': _vtk.vtkDICOMImageReader,
+    '.img': _vtk.vtkDICOMImageReader,
+    '.jpeg': _vtk.vtkJPEGReader,
+    '.jpg': _vtk.vtkJPEGReader,
+    '.mhd': _vtk.vtkMetaImageReader,
+    '.nrrd': _vtk.vtkNrrdReader,
+    '.nhdr': _vtk.vtkNrrdReader,
+    '.png': _vtk.vtkPNGReader,
+    '.pnm': _vtk.vtkPNMReader, # TODO: not tested
+    '.slc': _vtk.vtkSLCReader,
+    '.tiff': _vtk.vtkTIFFReader,
+    '.tif': _vtk.vtkTIFFReader,
     # Other formats:
-    '.byu': _vtki.vtkBYUReader, # TODO: not tested with this extension
-    '.g': _vtki.vtkBYUReader,
-    # '.chemml': _vtki.vtkCMLMoleculeReader, # TODO: not tested
-    # '.cml': _vtki.vtkCMLMoleculeReader, # vtkMolecule is not supported by pyvista
-    # TODO: '.csv': _vtki.vtkCSVReader, # vtkTables are currently not supported
-    '.facet': _vtki.vtkFacetReader,
-    '.cas': _vtki.vtkFLUENTReader, # TODO: not tested
-    # '.dat': _vtki.vtkFLUENTReader, # TODO: not working
-    # '.cube': _vtki.vtkGaussianCubeReader, # Contains `atom_types` which are note supported?
-    '.res': _vtki.vtkMFIXReader, # TODO: not tested
-    '.foam': _vtki.vtkOpenFOAMReader,
-    # '.pdb': _vtki.vtkPDBReader, # Contains `atom_types` which are note supported?
-    '.p3d': _vtki.vtkPlot3DMetaReader,
-    '.pts': _vtki.vtkPTSReader,
-    # '.particles': _vtki.vtkParticleReader, # TODO: not tested
-    #TODO: '.pht': _vtki.vtkPhasta??????,
-    #TODO: '.vpc': _vtki.vtkVPIC?????,
-    # '.bin': _vtki.vtkMultiBlockPLOT3DReader,# TODO: non-default routine
-    '.tri': _vtki.vtkMCubesReader,
-    '.inp': _vtki.vtkAVSucdReader,
+    '.byu': _vtk.vtkBYUReader, # TODO: not tested with this extension
+    '.g': _vtk.vtkBYUReader,
+    # '.chemml': _vtk.vtkCMLMoleculeReader, # TODO: not tested
+    # '.cml': _vtk.vtkCMLMoleculeReader, # vtkMolecule is not supported by pyvista
+    # TODO: '.csv': _vtk.vtkCSVReader, # vtkTables are currently not supported
+    '.facet': _vtk.vtkFacetReader,
+    '.cas': _vtk.vtkFLUENTReader, # TODO: not tested
+    # '.dat': _vtk.vtkFLUENTReader, # TODO: not working
+    # '.cube': _vtk.vtkGaussianCubeReader, # Contains `atom_types` which are note supported?
+    '.res': _vtk.vtkMFIXReader, # TODO: not tested
+    '.foam': _vtk.vtkOpenFOAMReader,
+    # '.pdb': _vtk.vtkPDBReader, # Contains `atom_types` which are note supported?
+    '.p3d': _vtk.vtkPlot3DMetaReader,
+    '.pts': _vtk.vtkPTSReader,
+    # '.particles': _vtk.vtkParticleReader, # TODO: not tested
+    #TODO: '.pht': _vtk.vtkPhasta??????,
+    #TODO: '.vpc': _vtk.vtkVPIC?????,
+    # '.bin': _vtk.vtkMultiBlockPLOT3DReader,# TODO: non-default routine
+    '.tri': _vtk.vtkMCubesReader,
+    '.inp': _vtk.vtkAVSucdReader,
 }
 
-VTK_MAJOR = _vtki.vtkVersion().GetVTKMajorVersion()
-VTK_MINOR = _vtki.vtkVersion().GetVTKMinorVersion()
+VTK_MAJOR = _vtk.vtkVersion().GetVTKMajorVersion()
+VTK_MINOR = _vtk.vtkVersion().GetVTKMinorVersion()
 
 if (VTK_MAJOR >= 8 and VTK_MINOR >= 2):
     try:
-        READERS['.sgy'] = _vtki.vtkSegYReader
-        READERS['.segy'] = _vtki.vtkSegYReader
+        READERS['.sgy'] = _vtk.vtkSegYReader
+        READERS['.segy'] = _vtk.vtkSegYReader
     except AttributeError:
         pass
 
@@ -91,12 +91,12 @@ def get_reader(filename):
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
     """Set any vtk writer to write as binary or ascii."""
-    if isinstance(vtk_writer, (_vtki.vtkDataWriter, _vtki.vtkPLYWriter, _vtki.vtkSTLWriter)):
+    if isinstance(vtk_writer, (_vtk.vtkDataWriter, _vtk.vtkPLYWriter, _vtk.vtkSTLWriter)):
         if use_binary:
             vtk_writer.SetFileTypeToBinary()
         else:
             vtk_writer.SetFileTypeToASCII()
-    elif isinstance(vtk_writer, _vtki.vtkXMLWriter):
+    elif isinstance(vtk_writer, _vtk.vtkXMLWriter):
         if use_binary:
             vtk_writer.SetDataModeToBinary()
         else:
@@ -146,7 +146,7 @@ def standard_reader_routine(reader, filename, attrs=None):
 
 def read_legacy(filename):
     """Use VTK's legacy reader to read a file."""
-    reader = _vtki.vtkDataSetReader()
+    reader = _vtk.vtkDataSetReader()
     reader.SetFileName(filename)
     # Ensure all data is fetched with poorly formatted legacy files
     reader.ReadAllScalarsOn()
@@ -345,7 +345,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
     """
     filename = _process_filename(filename)
 
-    reader = _vtki.vtkMultiBlockPLOT3DReader()
+    reader = _vtk.vtkMultiBlockPLOT3DReader()
     reader.SetFileName(filename)
 
     # q_filenames may be a list or a single filename
