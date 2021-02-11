@@ -18,6 +18,7 @@ from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                abstract_class, axis_rotation, transformations)
 from .datasetattributes import DataSetAttributes
 from .polydatafilters import DataSetFilters, _get_output
+from .unstructuredgridfilters import DataSetFilters
 from .._typing import Vector
 
 log = logging.getLogger(__name__)

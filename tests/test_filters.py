@@ -42,7 +42,7 @@ def uniform_vec():
 
 def test_datasetfilters_init():
     with pytest.raises(TypeError):
-        pyvista.core.polydatafilters.DataSetFilters()
+        pyvista.core.filters.DataSetFilters()
 
 
 @skip_windows
