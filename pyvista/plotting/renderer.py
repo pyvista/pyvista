@@ -437,7 +437,7 @@ class Renderer(vtkRenderer):
 
         Parameters
         ----------
-        actor : vtk.vtkActor or pyvista.Common
+        actor : vtk.vtkActor or pyvista.DataSet
             The mesh or actor to use as the marker.
 
         color : string, optional
@@ -447,7 +447,7 @@ class Renderer(vtkRenderer):
             Opacity of the marker.
 
         """
-        if isinstance(actor, pyvista.Common):
+        if isinstance(actor, pyvista.DataSet):
             mapper = vtk.vtkDataSetMapper()
             mesh = actor.copy()
             mesh.clear_arrays()
