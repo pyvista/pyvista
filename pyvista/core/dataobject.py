@@ -8,8 +8,8 @@ from typing import Union, Any, Dict, DefaultDict, Type
 
 import numpy as np
 
-from pyvista import _vtk
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import (FieldAssociation, fileio, abstract_class)
 from .datasetattributes import DataSetAttributes
 
