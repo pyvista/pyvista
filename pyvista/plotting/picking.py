@@ -114,11 +114,26 @@ class PickingHelper:
             is_valid_selection = picked.n_cells > 0
 
             if show and is_valid_selection:
+                # Select the renderer where the mesh is added.
+                active_renderer_index = self_()._active_renderer_index
+                for index in range(len(self.renderers)):
+                    renderer = self.renderers[index]
+                    for actor in renderer._actors.values():
+                        mapper = actor.GetMapper()
+                        if isinstance(mapper, vtk.vtkDataSetMapper) and mapper.GetInput() == mesh:
+                            loc = self_().index_to_loc(index)
+                            self_().subplot(*loc)
+                            break
+
                 # Use try in case selection is empty
                 self_().add_mesh(picked, name='_cell_picking_selection',
                                  style=style, color=color,
                                  line_width=line_width, pickable=False,
                                  reset_camera=False, **kwargs)
+
+                # Reset to the active renderer.
+                loc = self_().index_to_loc(active_renderer_index)
+                self_().subplot(*loc)
 
                 # render here prior to running the callback
                 self_().render()
