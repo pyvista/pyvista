@@ -336,6 +336,12 @@ if _vtk9:
                                           vtkWeakReference)
 
     # lazy import for some of the less used readers
+    # lazy import for some of the less used readers
+    def vtkGL2PSExporter():
+        """Lazy import of the vtkGL2PSExporter."""
+        from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
+        return vtkGL2PSExporter()
+
     def vtkFacetReader():
         """Lazy import of the vtkFacetReader."""
         from vtkmodules.vtkFiltersHybrid import vtkFacetReader
