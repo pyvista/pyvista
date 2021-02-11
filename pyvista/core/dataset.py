@@ -11,6 +11,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 import pyvista
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                raise_not_matching, vtk_id_list_to_array, abstract_class, axis_rotation, transformations)
+from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
@@ -21,7 +22,6 @@ log.setLevel('CRITICAL')
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
-
 
 
 class ActiveArrayInfo:
