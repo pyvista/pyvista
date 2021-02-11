@@ -15,7 +15,7 @@ from vtk import vtkMultiBlockDataSet
 import pyvista
 from pyvista.utilities import is_pyvista_dataset, wrap
 from .common import DataObject, Common
-from pyvista.core.filters.compositefilters import CompositeFilters
+from pyvista.core.filters.helpers_temp import CompositeFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')

@@ -1,4 +1,4 @@
-from .compositefilters import CompositeFilters
+from .helpers_temp import CompositeFilters
 from .datasetfilters import DataSetFilters
 from .polydatafilters import PolyDataFilters
 from .structuredgridfilters import StructuredGridFilters
