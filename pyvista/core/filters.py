@@ -1493,7 +1493,7 @@ class DataSetFilters:
             If enabled, pass the input point data through to the output
 
         """
-        alg = vtk.vtkPointDataToCellData()
+        alg = vtki.vtkPointDataToCellData()
         alg.SetInputDataObject(dataset)
         alg.SetPassPointData(pass_point_data)
         alg.Update()
@@ -1529,7 +1529,7 @@ class DataSetFilters:
             Mesh containing only triangles. ``None`` when ``inplace=True``
 
         """
-        alg = vtk.vtkDataSetTriangleFilter()
+        alg = vtki.vtkDataSetTriangleFilter()
         alg.SetInputData(dataset)
         alg.Update()
 
@@ -1564,7 +1564,7 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
         """
-        alg = vtk.vtkDelaunay3D()
+        alg = vtki.vtkDelaunay3D()
         alg.SetInputData(dataset)
         alg.SetAlpha(alpha)
         alg.SetTolerance(tol)
@@ -1620,7 +1620,7 @@ class DataSetFilters:
             raise TypeError("`surface` must be `pyvista.PolyData`")
         if check_surface and surface.n_open_edges > 0:
             raise RuntimeError("Surface is not closed. Please read the warning in the documentation for this function and either pass `check_surface=False` or repair the surface.")
-        alg = vtk.vtkSelectEnclosedPoints()
+        alg = vtki.vtkSelectEnclosedPoints()
         alg.SetInputData(dataset)
         alg.SetSurfaceData(surface)
         alg.SetTolerance(tolerance)
@@ -1680,7 +1680,7 @@ class DataSetFilters:
         """
         if not pyvista.is_pyvista_dataset(points):
             points = pyvista.wrap(points)
-        alg = vtk.vtkProbeFilter()
+        alg = vtki.vtkProbeFilter()
         alg.SetInputData(points)
         alg.SetSourceData(dataset)
         alg.SetPassCellArrays(pass_cell_arrays)
@@ -1689,7 +1689,7 @@ class DataSetFilters:
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
-        alg.Update() # Perform the resampling
+        alg.Update()  # Perform the resampling
         return _get_output(alg)
 
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
@@ -1725,7 +1725,7 @@ class DataSetFilters:
         """
         if not pyvista.is_pyvista_dataset(target):
             raise TypeError('`target` must be a PyVista mesh type.')
-        alg = vtk.vtkResampleWithDataSet() # Construct the ResampleWithDataSet object
+        alg = vtki.vtkResampleWithDataSet() # Construct the ResampleWithDataSet object
         alg.SetInputData(dataset)  # Set the Input data (actually the source i.e. where to sample from)
         alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to sample to)
         alg.SetPassCellArrays(pass_cell_arrays)
@@ -1804,7 +1804,7 @@ class DataSetFilters:
         if isinstance(target, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
             target = target.cast_to_unstructured_grid()
 
-        gaussian_kernel = vtk.vtkGaussianKernel()
+        gaussian_kernel = vtki.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
         gaussian_kernel.SetRadius(radius)
         gaussian_kernel.SetKernelFootprintToRadius()
@@ -1812,11 +1812,11 @@ class DataSetFilters:
             gaussian_kernel.SetNumberOfPoints(n_points)
             gaussian_kernel.SetKernelFootprintToNClosest()
 
-        locator = vtk.vtkStaticPointLocator()
+        locator = vtki.vtkStaticPointLocator()
         locator.SetDataSet(target)
         locator.BuildLocator()
 
-        interpolator = vtk.vtkPointInterpolator()
+        interpolator = vtki.vtkPointInterpolator()
         interpolator.SetInputData(dataset)
         interpolator.SetSourceData(target)
         interpolator.SetKernel(gaussian_kernel)
@@ -1959,8 +1959,8 @@ class DataSetFilters:
             raise ValueError("interpolator type must be either 'cell' or 'point'")
         if step_unit not in ['l', 'cl']:
             raise ValueError("step unit must be either 'l' or 'cl'")
-        step_unit = {'cl': vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
-                     'l': vtk.vtkStreamTracer.LENGTH_UNIT}[step_unit]
+        step_unit = {'cl': vtki.vtkStreamTracer.CELL_LENGTH_UNIT,
+                     'l': vtki.vtkStreamTracer.LENGTH_UNIT}[step_unit]
         if isinstance(vectors, str):
             dataset.set_active_scalars(vectors)
             dataset.set_active_vectors(vectors)
@@ -1973,17 +1973,17 @@ class DataSetFilters:
         if source_radius is None:
             source_radius = dataset.length / 10.0
         if pointa is not None and pointb is not None:
-            source = vtk.vtkLineSource()
+            source = vtki.vtkLineSource()
             source.SetPoint1(pointa)
             source.SetPoint2(pointb)
             source.SetResolution(n_points)
         else:
-            source = vtk.vtkPointSource()
+            source = vtki.vtkPointSource()
             source.SetCenter(source_center)
             source.SetRadius(source_radius)
             source.SetNumberOfPoints(n_points)
         # Build the algorithm
-        alg = vtk.vtkStreamTracer()
+        alg = vtki.vtkStreamTracer()
         # Inputs
         alg.SetInputDataObject(dataset)
         # NOTE: not sure why we can't pass a PolyData object
@@ -2175,16 +2175,16 @@ class DataSetFilters:
 
         """
         # Create selection objects
-        selectionNode = vtk.vtkSelectionNode()
-        selectionNode.SetFieldType(vtk.vtkSelectionNode.CELL)
-        selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
+        selectionNode = vtki.vtkSelectionNode()
+        selectionNode.SetFieldType(vtki.vtkSelectionNode.CELL)
+        selectionNode.SetContentType(vtki.vtkSelectionNode.INDICES)
         selectionNode.SetSelectionList(numpy_to_idarr(ind))
 
-        selection = vtk.vtkSelection()
+        selection = vtki.vtkSelection()
         selection.AddNode(selectionNode)
 
         # extract
-        extract_sel = vtk.vtkExtractSelection()
+        extract_sel = vtki.vtkExtractSelection()
         extract_sel.SetInputData(0, dataset)
         extract_sel.SetInputData(1, selection)
         extract_sel.Update()
@@ -2221,27 +2221,27 @@ class DataSetFilters:
 
         """
         # Create selection objects
-        selectionNode = vtk.vtkSelectionNode()
-        selectionNode.SetFieldType(vtk.vtkSelectionNode.POINT)
-        selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
+        selectionNode = vtki.vtkSelectionNode()
+        selectionNode.SetFieldType(vtki.vtkSelectionNode.POINT)
+        selectionNode.SetContentType(vtki.vtkSelectionNode.INDICES)
         if not include_cells:
-            adjacent_cells = True        
+            adjacent_cells = True
         if not adjacent_cells:
             # Build array of point indices to be removed.
             ind_rem = np.ones(dataset.n_points, dtype='bool')
             ind_rem[ind] = False
             ind = np.arange(dataset.n_points)[ind_rem]
             # Invert selection
-            selectionNode.GetProperties().Set(vtk.vtkSelectionNode.INVERSE(), 1)
+            selectionNode.GetProperties().Set(vtki.vtkSelectionNode.INVERSE(), 1)
         selectionNode.SetSelectionList(numpy_to_idarr(ind))
         if include_cells:
-            selectionNode.GetProperties().Set(vtk.vtkSelectionNode.CONTAINING_CELLS(), 1)
+            selectionNode.GetProperties().Set(vtki.vtkSelectionNode.CONTAINING_CELLS(), 1)
         
-        selection = vtk.vtkSelection()
+        selection = vtki.vtkSelection()
         selection.AddNode(selectionNode)
 
         # extract
-        extract_sel = vtk.vtkExtractSelection()
+        extract_sel = vtki.vtkExtractSelection()
         extract_sel.SetInputData(0, dataset)
         extract_sel.SetInputData(1, selection)
         extract_sel.Update()
@@ -2266,7 +2266,7 @@ class DataSetFilters:
             Surface mesh of the grid
 
         """
-        surf_filter = vtk.vtkDataSetSurfaceFilter()
+        surf_filter = vtki.vtkDataSetSurfaceFilter()
         surf_filter.SetInputData(dataset)
         if pass_pointid:
             surf_filter.PassThroughCellIdsOn()
@@ -2274,7 +2274,7 @@ class DataSetFilters:
             surf_filter.PassThroughPointIdsOn()
         surf_filter.Update()
 
-        # need to add
+        # TODO: Add
         # surf_filter.SetNonlinearSubdivisionLevel(subdivision)
 
         mesh = _get_output(surf_filter)
@@ -2335,7 +2335,7 @@ class DataSetFilters:
         """
         if not isinstance(dataset, vtki.vtkPolyData):
             dataset = DataSetFilters.extract_surface(dataset)
-        featureEdges = vtk.vtkFeatureEdges()
+        featureEdges = vtki.vtkFeatureEdges()
         featureEdges.SetInputData(dataset)
         featureEdges.SetFeatureAngle(feature_angle)
         featureEdges.SetManifoldEdges(manifold_edges)
@@ -2390,7 +2390,7 @@ class DataSetFilters:
         included in the final merged mesh.
 
         """
-        append_filter = vtk.vtkAppendFilter()
+        append_filter = vtki.vtkAppendFilter()
         append_filter.SetMergePoints(merge_points)
 
         if not main_has_priority:
@@ -2474,7 +2474,7 @@ class DataSetFilters:
             The default value is -1.
 
         """
-        alg = vtk.vtkCellQuality()
+        alg = vtki.vtkCellQuality()
         measure_setters = {
             'area': alg.SetQualityMeasureToArea,
             'aspect_beta': alg.SetQualityMeasureToAspectBeta,
@@ -2563,7 +2563,7 @@ class DataSetFilters:
             Data type preference. Either 'point' or 'cell'.
 
         """
-        alg = vtk.vtkGradientFilter()
+        alg = vtki.vtkGradientFilter()
         # Check if scalars array given
         if scalars is None:
             field, scalars = dataset.active_scalars_info
@@ -2627,7 +2627,7 @@ class DataSetFilters:
         """
         if not (0.0 <= shrink_factor <= 1.0):
             raise ValueError('`shrink_factor` should be between 0.0 and 1.0')
-        alg = vtk.vtkShrinkFilter()
+        alg = vtki.vtkShrinkFilter()
         alg.SetInputData(dataset)
         alg.SetShrinkFactor(shrink_factor)
         _update_alg(alg, progress_bar, 'Shrinking Mesh')
@@ -2679,7 +2679,7 @@ class CompositeFilters:
         and append them to one polydata object.
 
         """
-        gf = vtk.vtkCompositeDataGeometryFilter()
+        gf = vtki.vtkCompositeDataGeometryFilter()
         gf.SetInputData(composite)
         gf.Update()
         return wrap(gf.GetOutputDataObject(0))
@@ -2693,9 +2693,9 @@ class CompositeFilters:
             Merge coincidental points.
 
         """
-        alg = vtk.vtkAppendFilter()
+        alg = vtki.vtkAppendFilter()
         for block in composite:
-            if isinstance(block, vtk.vtkMultiBlockDataSet):
+            if isinstance(block, vtki.vtkMultiBlockDataSet):
                 block = CompositeFilters.combine(block, merge_points=merge_points)
             alg.AddInputData(block)
         alg.SetMergePoints(merge_points)
@@ -2780,7 +2780,7 @@ class PolyDataFilters(DataSetFilters):
         if not isinstance(poly_data, pyvista.PolyData):  # pragma: no cover
             poly_data = pyvista.PolyData(poly_data)
         poly_data.point_arrays['point_ind'] = np.arange(poly_data.n_points)
-        featureEdges = vtk.vtkFeatureEdges()
+        featureEdges = vtki.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
         featureEdges.FeatureEdgesOn()
         featureEdges.BoundaryEdgesOff()
@@ -2816,7 +2816,7 @@ class PolyDataFilters(DataSetFilters):
         if not poly_data.is_all_triangles() or not cut.is_all_triangles():
             raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
 
-        bfilter = vtk.vtkBooleanOperationPolyDataFilter()
+        bfilter = vtki.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToIntersection()
         # bfilter.SetOperationToDifference()
 
@@ -2854,7 +2854,7 @@ class PolyDataFilters(DataSetFilters):
         if not isinstance(mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
 
-        vtkappend = vtk.vtkAppendPolyData()
+        vtkappend = vtki.vtkAppendPolyData()
         vtkappend.AddInputData(poly_data)
         vtkappend.AddInputData(mesh)
         vtkappend.Update()
@@ -2891,7 +2891,7 @@ class PolyDataFilters(DataSetFilters):
         if not isinstance(mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
 
-        bfilter = vtk.vtkBooleanOperationPolyDataFilter()
+        bfilter = vtki.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToUnion()
         bfilter.SetInputData(1, mesh)
         bfilter.SetInputData(0, poly_data)
@@ -2924,7 +2924,7 @@ class PolyDataFilters(DataSetFilters):
         if not isinstance(mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
 
-        bfilter = vtk.vtkBooleanOperationPolyDataFilter()
+        bfilter = vtki.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToDifference()
         bfilter.SetInputData(1, mesh)
         bfilter.SetInputData(0, poly_data)
@@ -2984,7 +2984,7 @@ class PolyDataFilters(DataSetFilters):
                                                         split_second=True)
 
         """
-        intfilter = vtk.vtkIntersectionPolyDataFilter()
+        intfilter = vtki.vtkIntersectionPolyDataFilter()
         intfilter.SetInputDataObject(0, poly_data)
         intfilter.SetInputDataObject(1, mesh)
         intfilter.SetComputeIntersectionPointArray(True)
@@ -3022,7 +3022,7 @@ class PolyDataFilters(DataSetFilters):
         curv_type = curv_type.lower()
 
         # Create curve filter and compute curvature
-        curvefilter = vtk.vtkCurvatures()
+        curvefilter = vtki.vtkCurvatures()
         curvefilter.SetInputData(poly_data)
         if curv_type == 'mean':
             curvefilter.SetCurvatureTypeToMean()
@@ -3082,7 +3082,7 @@ class PolyDataFilters(DataSetFilters):
             Mesh containing only triangles.  None when inplace=True
 
         """
-        trifilter = vtk.vtkTriangleFilter()
+        trifilter = vtki.vtkTriangleFilter()
         trifilter.SetInputData(poly_data)
         trifilter.PassVertsOff()
         trifilter.PassLinesOff()
@@ -3150,7 +3150,7 @@ class PolyDataFilters(DataSetFilters):
         >>> print(f'Sharp Edges on Smooth Cube: {n_smooth_cells}')
         Sharp Edges on Smooth Cube: 12
         """
-        alg = vtk.vtkSmoothPolyDataFilter()
+        alg = vtki.vtkSmoothPolyDataFilter()
         alg.SetInputData(poly_data)
         alg.SetNumberOfIterations(n_iter)
         alg.SetConvergence(convergence)
@@ -3213,7 +3213,7 @@ class PolyDataFilters(DataSetFilters):
             Decimated mesh. None when inplace=True.
 
         """
-        alg = vtk.vtkDecimatePro()
+        alg = vtki.vtkDecimatePro()
         alg.SetInputData(poly_data)
         alg.SetTargetReduction(reduction)
         alg.SetPreserveTopology(preserve_topology)
@@ -3280,7 +3280,7 @@ class PolyDataFilters(DataSetFilters):
             poly_data = pyvista.PolyData(poly_data)
         if n_sides < 3:
             n_sides = 3
-        tube = vtk.vtkTubeFilter()
+        tube = vtki.vtkTubeFilter()
         tube.SetInputDataObject(poly_data)
         # User Defined Parameters
         tube.SetCapping(capping)
@@ -3355,11 +3355,11 @@ class PolyDataFilters(DataSetFilters):
         """
         subfilter = subfilter.lower()
         if subfilter == 'linear':
-            sfilter = vtk.vtkLinearSubdivisionFilter()
+            sfilter = vtki.vtkLinearSubdivisionFilter()
         elif subfilter == 'butterfly':
-            sfilter = vtk.vtkButterflySubdivisionFilter()
+            sfilter = vtki.vtkButterflySubdivisionFilter()
         elif subfilter == 'loop':
-            sfilter = vtk.vtkLoopSubdivisionFilter()
+            sfilter = vtki.vtkLoopSubdivisionFilter()
         else:
             raise ValueError("Subdivision filter must be one of the following: "
                              "'butterfly', 'loop', or 'linear'")
@@ -3470,7 +3470,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # create decimation filter
-        alg = vtk.vtkQuadricDecimation()  # vtkDecimatePro as well
+        alg = vtki.vtkQuadricDecimation()  # vtkDecimatePro as well
 
         alg.SetVolumePreservation(volume_preservation)
         alg.SetAttributeErrorMetric(attribute_error)
@@ -3596,7 +3596,7 @@ class PolyDataFilters(DataSetFilters):
         May be easier to run mesh.point_normals or mesh.cell_normals
 
         """
-        normal = vtk.vtkPolyDataNormals()
+        normal = vtki.vtkPolyDataNormals()
         normal.SetComputeCellNormals(cell_normals)
         normal.SetComputePointNormals(point_normals)
         normal.SetSplitting(split_vertices)
@@ -3689,15 +3689,15 @@ class PolyDataFilters(DataSetFilters):
 
         # create the plane for clipping
         plane = generate_plane(normal, origin)
-        collection = vtk.vtkPlaneCollection()
+        collection = vtki.vtkPlaneCollection()
         collection.AddItem(plane)
 
-        alg = vtk.vtkClipClosedSurface()
+        alg = vtki.vtkClipClosedSurface()
         alg.SetGenerateFaces(True)
         alg.SetInputDataObject(poly_data)
         alg.SetTolerance(tolerance)
         alg.SetClippingPlanes(collection)
-        alg.Update() # Perform the Cut
+        alg.Update()  # Perform the Cut
         result = _get_output(alg)
 
         if inplace:
@@ -3746,7 +3746,7 @@ class PolyDataFilters(DataSetFilters):
         """
         logging.warning('pyvista.PolyData.fill_holes is known to segfault. '
                         'Use at your own risk')
-        alg = vtk.vtkFillHolesFilter()
+        alg = vtki.vtkFillHolesFilter()
         alg.SetHoleSize(hole_size)
         alg.SetInputData(poly_data)
         _update_alg(alg, progress_bar, 'Filling Holes')
@@ -3818,7 +3818,7 @@ class PolyDataFilters(DataSetFilters):
         if tolerance is None:
             tolerance = kwargs.pop('merge_tol', None)
         assert_empty_kwargs(**kwargs)
-        alg = vtk.vtkCleanPolyData()
+        alg = vtki.vtkCleanPolyData()
         alg.SetPointMerging(point_merging)
         alg.SetConvertLinesToPoints(lines_to_points)
         alg.SetConvertPolysToLines(polys_to_lines)
@@ -3880,7 +3880,7 @@ class PolyDataFilters(DataSetFilters):
         if not poly_data.is_all_triangles():
             raise NotAllTrianglesError("Input mesh for geodesic path must be all triangles.")
 
-        dijkstra = vtk.vtkDijkstraGraphGeodesicPath()
+        dijkstra = vtki.vtkDijkstraGraphGeodesicPath()
         dijkstra.SetInputData(poly_data)
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
@@ -3976,8 +3976,8 @@ class PolyDataFilters(DataSetFilters):
         Intersected at 0.499 0.000 0.000
 
         """
-        points = vtk.vtkPoints()
-        cell_ids = vtk.vtkIdList()
+        points = vtki.vtkPoints()
+        cell_ids = vtki.vtkIdList()
         poly_data.obbTree.IntersectWithLine(np.array(origin),
                                             np.array(end_point),
                                             points, cell_ids)
@@ -4307,8 +4307,8 @@ class PolyDataFilters(DataSetFilters):
         True
 
         """
-        alg = vtk.vtkDelaunay2D()
-        alg.SetProjectionPlaneMode(vtk.VTK_BEST_FITTING_PLANE)
+        alg = vtki.vtkDelaunay2D()
+        alg.SetProjectionPlaneMode(vtki.VTK_BEST_FITTING_PLANE)
         alg.SetInputDataObject(poly_data)
         alg.SetTolerance(tol)
         alg.SetAlpha(alpha)
@@ -4359,13 +4359,14 @@ class PolyDataFilters(DataSetFilters):
         >>> arc.plot(scalars="arc_length")  # doctest:+SKIP
 
         """
-        alg = vtk.vtkAppendArcLength()
+        alg = vtki.vtkAppendArcLength()
         alg.SetInputData(poly_data)
         alg.Update()
         return _get_output(alg)
 
 
-    def project_points_to_plane(poly_data, origin=None, normal=(0,0,1), inplace=False):
+    def project_points_to_plane(poly_data, origin=None, normal=(0, 0, 1),
+                                inplace=False):
         """Project points of this mesh to a plane.
 
         Parameters
@@ -4458,7 +4459,7 @@ class PolyDataFilters(DataSetFilters):
             arr, field = get_array(poly_data, scalars, preference=preference, info=True)
         if width is None:
             width = poly_data.length * 0.1
-        alg = vtk.vtkRibbonFilter()
+        alg = vtki.vtkRibbonFilter()
         alg.SetInputDataObject(poly_data)
         alg.SetWidth(width)
         if normal is not None:
@@ -4536,7 +4537,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh = arc.extrude([0, 0, 1])
         >>> mesh.plot()  # doctest:+SKIP
         """
-        alg = vtk.vtkLinearExtrusionFilter()
+        alg = vtki.vtkLinearExtrusionFilter()
         alg.SetExtrusionTypeToVectorExtrusion()
         alg.SetVector(*vector)
         alg.SetInputData(poly_data)
@@ -4598,7 +4599,7 @@ class PolyDataFilters(DataSetFilters):
         """
         if resolution <= 0:
             raise ValueError('`resolution` should be positive')
-        alg = vtk.vtkRotationalExtrusionFilter()
+        alg = vtki.vtkRotationalExtrusionFilter()
         alg.SetInputData(poly_data)
         alg.SetResolution(resolution)
         _update_alg(alg, progress_bar, 'Extruding')
@@ -4661,7 +4662,7 @@ class PolyDataFilters(DataSetFilters):
         >>> stripped.n_cells
         1
         """
-        alg = vtk.vtkStripper()
+        alg = vtki.vtkStripper()
         alg.SetInputDataObject(poly_data)
         alg.SetJoinContiguousSegments(join)
         alg.SetMaximumLength(max_length)
@@ -4744,7 +4745,7 @@ class StructuredGridFilters(DataSetFilters):
         >>> joined = voi_1.concatenate(voi_2, axis=1)
         >>> assert np.allclose(grid.points, joined.points)
         """
-        alg = vtk.vtkExtractGrid()
+        alg = vtki.vtkExtractGrid()
         alg.SetVOI(voi)
         alg.SetInputDataObject(dataset)
         alg.SetSampleRate(rate)
@@ -4887,7 +4888,7 @@ class UniformGridFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
         """
-        alg = vtk.vtkImageGaussianSmooth()
+        alg = vtki.vtkImageGaussianSmooth()
         alg.SetInputDataObject(dataset)
         if scalars is None:
             field, scalars = dataset.active_scalars_info
@@ -4936,7 +4937,7 @@ class UniformGridFilters(DataSetFilters):
             the grid even though the sample rate is not an even multiple of
             the grid dimensions. (By default this is off.)
         """
-        alg = vtk.vtkExtractVOI()
+        alg = vtki.vtkExtractVOI()
         alg.SetVOI(voi)
         alg.SetInputDataObject(dataset)
         alg.SetSampleRate(rate)
