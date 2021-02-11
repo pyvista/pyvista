@@ -9,7 +9,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
 from pyvista.utilities import abstract_class
-from .common import Common
+from .dataobject import Common
 from .filters import _get_output, UniformGridFilters
 
 log = logging.getLogger(__name__)
