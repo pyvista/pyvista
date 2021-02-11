@@ -27,6 +27,7 @@ import numpy as np
 import vtk
 
 from pyvista import DataSetFilters
+from .algorithm import _get_output
 from pyvista.utilities import (abstract_class)
 
 

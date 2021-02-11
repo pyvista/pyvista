@@ -27,6 +27,7 @@ import collections.abc
 import vtk
 
 from pyvista import DataSetFilters, UniformGrid
+from pyvista.core.filters.algorithm import _update_alg, _get_output
 from pyvista.utilities import (abstract_class)
 
 

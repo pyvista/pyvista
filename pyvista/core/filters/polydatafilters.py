@@ -31,6 +31,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 from pyvista import DataSetFilters, PolyData
 from pyvista.core.errors import NotAllTrianglesError
+from .algorithm import _get_output, _update_alg
 from pyvista.utilities import (NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
                                abstract_class)
