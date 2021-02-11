@@ -1,15 +1,14 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
 from collections.abc import Iterable
+from typing import Union, Iterator, Optional, List, Tuple, Dict, Sequence, Any
 
 import numpy as np
 import vtk
-from typing import Union, Iterator, Optional, List, Tuple, Dict, Sequence, Any
 
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
 from .pyvista_ndarray import pyvista_ndarray
-
 from .._typing import Number
 
 # necessary for pyinstaller on VTK9
