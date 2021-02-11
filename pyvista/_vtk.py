@@ -8,6 +8,9 @@ the entire library.
 
 """
 
+# Checking for VTK9 here since 8.2 contains vtkmodules, but there are
+# enough idiosyncroncies to it that supporting it would lead to
+# obscure code.
 try:
     from vtkmodules.vtkCommonCore import vtkVersion
     _vtk9 = vtkVersion().GetVTKMajorVersion() >= 9
@@ -27,7 +30,6 @@ if _vtk9:
                                                   vtkPlaneWidget,
                                                   vtkBoxWidget,
                                                   vtkOrientationMarkerWidget)
-
     from vtkmodules.vtkRenderingFreeType import vtkVectorText
     from vtkmodules.vtkRenderingLabel import (vtkPointSetToLabelHierarchy,
                                               vtkLabelPlacementMapper)
@@ -65,9 +67,7 @@ if _vtk9:
                                        vtkPNMReader,
                                        vtkSLCReader,
                                        vtkTIFFReader,
-                                       vtkTIFFReader,
-    )
-
+                                       vtkTIFFReader)
     from vtkmodules.vtkIOXML import (vtkXMLReader,
                                      vtkXMLWriter,
                                      vtkXMLPRectilinearGridReader,
@@ -135,16 +135,13 @@ if _vtk9:
                                                VTK_QUADRATIC_WEDGE,
                                                VTK_TETRA,
                                                VTK_TRIANGLE,
-                                               VTK_WEDGE
-
-    )
+                                               VTK_WEDGE)
     from vtkmodules.vtkRenderingAnnotation import (vtkScalarBarActor,
                                                    vtkCornerAnnotation,
                                                    vtkAxesActor,
                                                    vtkAnnotatedCubeActor,
                                                    vtkLegendBoxActor,
-                                                   vtkCubeAxesActor,
-                                                   )
+                                                   vtkCubeAxesActor)
     from vtkmodules.vtkRenderingCore import (vtkTexture,
                                              vtkPropAssembly,
                                              vtkRenderer,
@@ -171,8 +168,7 @@ if _vtk9:
                                              vtkLightActor,
                                              vtkLightKit,
                                              vtkCamera,
-                                             vtkImageActor,
-                                             )
+                                             vtkImageActor)
     from vtkmodules.vtkCommonComputationalGeometry import (vtkParametricSpline,
                                                            vtkParametricBour,
                                                            vtkParametricBoy,
@@ -195,8 +191,7 @@ if _vtk9:
                                                            vtkParametricSuperToroid,
                                                            vtkParametricTorus,
                                                            vtkParametricFunction,
-                                                           vtkParametricBohemianDome,
-                                                           )
+                                                           vtkParametricBohemianDome)
     from vtkmodules.vtkCommonCore import (VTK_COURIER,
                                           VTK_TIMES,
                                           VTK_ARIAL,
@@ -267,8 +262,7 @@ if _vtk9:
                                               vtkDataSetTriangleFilter,
                                               vtkGradientFilter,
                                               vtkShrinkFilter,
-                                              vtkBooleanOperationPolyDataFilter,
-                                              )
+                                              vtkBooleanOperationPolyDataFilter)
     from vtkmodules.vtkFiltersModeling import (vtkOutlineFilter,
                                                vtkRibbonFilter,
                                                vtkLinearExtrusionFilter,
@@ -278,8 +272,7 @@ if _vtk9:
                                                vtkLinearSubdivisionFilter,
                                                vtkButterflySubdivisionFilter,
                                                vtkLoopSubdivisionFilter,
-                                               vtkSelectEnclosedPoints,
-                                               )
+                                               vtkSelectEnclosedPoints)
     from vtkmodules.vtkFiltersSources import (vtkOutlineCornerFilter,
                                               vtkParametricFunctionSource,
                                               vtkParametricFunctionSource,
@@ -313,8 +306,7 @@ if _vtk9:
     from vtkmodules.vtkFiltersPoints import (vtkGaussianKernel,
                                              vtkPointInterpolator)
     from vtkmodules.vtkFiltersVerdict import (vtkCellSizeFilter,
-                                              vtkCellQuality,
-                                              )
+                                              vtkCellQuality)
     from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
     from vtkmodules.vtkImagingCore import (vtkExtractVOI,
                                            vtkImageExtractComponents,
@@ -322,7 +314,6 @@ if _vtk9:
                                            vtkRTAnalyticSource)
     from vtkmodules.vtkFiltersFlowPaths import vtkStreamTracer
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
-
     from vtkmodules.numpy_interface.dataset_adapter import (VTKObjectWrapper,
                                                             numpyTovtkDataArray,
                                                             VTKArray)
@@ -330,12 +321,10 @@ if _vtk9:
                                                numpy_to_vtk,
                                                numpy_to_vtkIdTypeArray,
                                                get_vtk_array_type)
-
     from vtkmodules.vtkCommonCore import (buffer_shared,
                                           vtkAbstractArray,
                                           vtkWeakReference)
 
-    # lazy import for some of the less used readers
     # lazy import for some of the less used readers
     def vtkGL2PSExporter():
         """Lazy import of the vtkGL2PSExporter."""
@@ -388,5 +377,6 @@ else:
                                         numpy_to_vtkIdTypeArray,
                                         get_vtk_array_type)
 
-    # vtk8 already has an import all, so we can just mirror it here at no cost
+    # vtk8 already has an import all, so we can just mirror it here at
+    # no cost
     from vtk import *

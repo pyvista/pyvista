@@ -5,8 +5,6 @@
 *.so
 *.o
 
-*#
-
 # Cython generated files #
 #pymeshfix/cython/_meshfix.cpp
 
@@ -57,18 +55,18 @@ docs/errors.txt
 docs/images/auto-generated
 **/myscreenshot.png
 
-# flycheck temp files
-flycheck*
-
 
 docs/external_examples.rst
 
 # hypothesis
 .hypothesis
 
+# emacs (> vim)
+*#
+flycheck*
+
 # vim
 *.swp
-
 
 # benchmark cache from pytest-benchmark
 .benchmarks

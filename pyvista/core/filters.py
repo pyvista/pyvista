@@ -3799,7 +3799,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         mesh : pyvista.PolyData
-            Cleaned mesh.  None when inplace=True
+            Cleaned mesh.  ``None`` when ``inplace=True``
 
         Examples
         --------
@@ -3811,7 +3811,7 @@ class PolyDataFilters(DataSetFilters):
         >>> faces = np.array([3, 0, 1, 2, 3, 0, 3, 3])
         >>> mesh = pv.PolyData(points, faces)
         >>> mout = mesh.clean()
-        >>> print(mout.faces)
+        >>> print(mout.faces)  # doctest:+SKIP
         [3 0 1 2]
 
         """
