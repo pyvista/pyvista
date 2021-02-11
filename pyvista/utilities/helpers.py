@@ -451,7 +451,7 @@ def array_from_vtkmatrix(matrix):
 
     Parameters
     ----------
-    matrix : _vtk.vtkMatrix3x3 or _vtk.vtkMatrix4x4
+    matrix : vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4
         The vtk matrix to be converted to a ``numpy.ndarray``.
         Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
 
@@ -461,7 +461,7 @@ def array_from_vtkmatrix(matrix):
     elif isinstance(matrix, _vtk.vtkMatrix4x4):
         shape = (4, 4)
     else:
-        raise TypeError('Expected _vtk.vtkMatrix3x3 or _vtk.vtkMatrix4x4 input,'
+        raise TypeError('Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
                         f' got {type(matrix).__name__} instead.')
     array = np.zeros(shape)
     for i in range(shape[0]):
@@ -477,8 +477,8 @@ def vtkmatrix_from_array(array):
     ----------
     array : numpy.ndarray or array-like
         The array or array-like to be converted to a vtk matrix.
-        Shape (3, 3) gets converted to a ``_vtk.vtkMatrix3x3``, shape (4, 4)
-        gets converted to a ``_vtk.vtkMatrix4x4``. No other shapes are valid.
+        Shape (3, 3) gets converted to a ``vtk.vtkMatrix3x3``, shape (4, 4)
+        gets converted to a ``vtk.vtkMatrix4x4``. No other shapes are valid.
 
     """
     array = np.asarray(array)
@@ -560,13 +560,13 @@ def wrap(dataset):
 
     >>> import pyvista
     >>> import vtk
-    >>> points = _vtk.vtkPoints()
+    >>> points = vtk.vtkPoints()
     >>> p = [1.0, 2.0, 3.0]
-    >>> vertices = _vtk.vtkCellArray()
+    >>> vertices = vtk.vtkCellArray()
     >>> pid = points.InsertNextPoint(p)
     >>> _ = vertices.InsertNextCell(1)
     >>> _ = vertices.InsertCellPoint(pid)
-    >>> point = _vtk.vtkPolyData()
+    >>> point = vtk.vtkPolyData()
     >>> _ = point.SetPoints(points)
     >>> _ = point.SetVerts(vertices)
     >>> mesh = pyvista.wrap(point)
@@ -634,7 +634,7 @@ def image_to_texture(image):
 
 
 def numpy_to_texture(image):
-    """Convert a NumPy image array to a _vtk.vtkTexture."""
+    """Convert a NumPy image array to a vtk.vtkTexture."""
     return pyvista.Texture(image)
 
 
