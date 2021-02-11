@@ -26,10 +26,10 @@ import collections.abc
 
 import vtk
 
-from .algorithm import _update_alg, _get_output
-from .datasetfilters import DataSetFilters
 import pyvista
 from pyvista.utilities import (abstract_class)
+from .algorithm import _update_alg, _get_output
+from .datasetfilters import DataSetFilters
 
 
 @abstract_class

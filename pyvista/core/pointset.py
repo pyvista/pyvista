@@ -1,10 +1,10 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-import pathlib
-import logging
-import os
-import warnings
-import numbers
 import collections
+import logging
+import numbers
+import os
+import pathlib
+import warnings
 
 import numpy as np
 import vtk
@@ -18,7 +18,8 @@ from vtk.util.numpy_support import (numpy_to_vtk, vtk_to_numpy)
 
 import pyvista
 from pyvista.utilities import abstract_class
-from pyvista.utilities.cells import CellArray, numpy_to_idarr, generate_cell_offsets, create_mixed_cells, get_mixed_cells
+from pyvista.utilities.cells import CellArray, numpy_to_idarr, generate_cell_offsets, create_mixed_cells, \
+    get_mixed_cells
 from .common import Common
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters
 from ..utilities.fileio import get_ext

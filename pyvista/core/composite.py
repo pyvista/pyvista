@@ -3,13 +3,13 @@
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
-import pathlib
 import collections.abc
 import logging
+import pathlib
+from typing import List, Tuple, Union, Optional, Any, cast
 
 import numpy as np
 import vtk
-from typing import List, Tuple, Union, Optional, Any, cast
 from vtk import vtkMultiBlockDataSet
 
 import pyvista

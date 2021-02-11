@@ -23,9 +23,9 @@ Example
 
 """
 
-from . import DataSetFilters
 import pyvista
 from pyvista.utilities import (abstract_class)
+from . import DataSetFilters
 
 
 @abstract_class

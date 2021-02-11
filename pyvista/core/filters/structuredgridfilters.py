@@ -27,9 +27,9 @@ import numpy as np
 import vtk
 
 import pyvista
-from .datasetfilters import DataSetFilters
+from pyvista.utilities import (abstract_class)
 from .algorithm import _get_output
-from pyvista.utilities import (point_array, abstract_class)
+from .datasetfilters import DataSetFilters
 
 
 @abstract_class

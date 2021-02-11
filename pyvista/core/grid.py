@@ -1,6 +1,6 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
-import pathlib
 import logging
+import pathlib
 
 import numpy as np
 import vtk

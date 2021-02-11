@@ -28,11 +28,11 @@ import numpy as np
 import vtk
 
 import pyvista
-from .algorithm import _get_output, _update_alg
 from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, wrap, abstract_class)
 from pyvista.utilities import transformations
 from pyvista.utilities.cells import numpy_to_idarr
+from .algorithm import _get_output, _update_alg
 
 
 @abstract_class
