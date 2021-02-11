@@ -7,7 +7,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import abstract_class
-from .common import Common
+from .dataset import DataSet
 from .filters import _get_output, UniformGridFilters
 
 
@@ -16,7 +16,7 @@ log.setLevel('CRITICAL')
 
 
 @abstract_class
-class Grid(Common):
+class Grid(DataSet):
     """A class full of common methods for non-pointset grids."""
 
     def __init__(self, *args, **kwargs):
@@ -41,7 +41,7 @@ class Grid(Common):
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
-        attrs = Common._get_attrs(self)
+        attrs = DataSet._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
 
@@ -116,11 +116,11 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
 
     def __repr__(self):
         """Return the default representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
     def __str__(self):
         """Return the str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
 
     def _update_dimensions(self):
         """Update the dimensions if coordinates have changed."""
@@ -310,11 +310,11 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
 
     def __repr__(self):
         """Return the default representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
     def __str__(self):
         """Return the default str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
         """Create VTK image data directly from numpy arrays.

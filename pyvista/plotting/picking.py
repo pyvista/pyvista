@@ -46,7 +46,7 @@ class PickingHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common, optional
+        mesh : pyvista.DataSet, optional
             Mesh to select cells from. When ``through`` is ``True``, uses last
             input mesh by default. When ``through`` is ``False``, all meshes
             in the scene are available for picking and this argument is

@@ -250,7 +250,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        surface : pyvista.Common
+        surface : pyvista.DataSet
             The surface used to compute the distance
 
         inplace : bool
@@ -1642,11 +1642,11 @@ class DataSetFilters:
 
         Parameters
         ----------
-        dataset: pyvista.Common
+        dataset: pyvista.DataSet
             The mesh to probe from - point and cell arrays from
             this object are probed onto the nodes of the ``points`` mesh
 
-        points: pyvista.Common
+        points: pyvista.DataSet
             The points to probe values on to. This should be a PyVista mesh
             or something :func:`pyvista.wrap` can handle.
 
@@ -1700,10 +1700,10 @@ class DataSetFilters:
 
         Parameters
         ----------
-        dataset: pyvista.Common
+        dataset: pyvista.DataSet
             The source vtk data object as the mesh to sample values on to
 
-        target: pyvista.Common
+        target: pyvista.DataSet
             The vtk data object to sample from - point and cell arrays from
             this object are sampled onto the nodes of the ``dataset`` mesh
 
@@ -1751,7 +1751,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        target: pyvista.Common
+        target: pyvista.DataSet
             The vtk data object to sample from - point and cell arrays from
             this object are interpolated onto this mesh.
 
@@ -2396,7 +2396,7 @@ class DataSetFilters:
         if not main_has_priority:
             append_filter.AddInputData(dataset)
 
-        if isinstance(grid, pyvista.Common):
+        if isinstance(grid, pyvista.DataSet):
             append_filter.AddInputData(grid)
         elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid

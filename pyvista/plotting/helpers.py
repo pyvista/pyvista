@@ -242,7 +242,7 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
 
     Parameters
     ----------
-    mesh : pyvista.Common or pyvista.MultiBlock
+    mesh : pyvista.DataSet or pyvista.MultiBlock
         Any PyVista or VTK mesh is supported. Also, any dataset that
         :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
         points.

@@ -13,7 +13,7 @@ from typing import List, Tuple, Union, Optional, Any, cast
 import pyvista
 from pyvista.utilities import get_array, is_pyvista_dataset, wrap
 from pyvista import _vtk
-from .common import DataObject, Common
+from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .._typing import Vector
 
@@ -238,7 +238,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             self.refs.append(data)
         return data
 
-    def append(self, data: Common):
+    def append(self, data: DataSet):
         """Add a data set to the next block index."""
         index = self.n_blocks  # note off by one so use as index
         self[index] = data
@@ -276,7 +276,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def _ipython_key_completions_(self) -> List[Optional[str]]:
         return self.keys()
 
-    def __setitem__(self, index: Union[Tuple[int, Optional[str]], int, str], data: Common):
+    def __setitem__(self, index: Union[Tuple[int, Optional[str]], int, str], data: DataSet):
         """Set a block with a VTK data object.
 
         To set the name simultaneously, pass a string name as the 2nd index.

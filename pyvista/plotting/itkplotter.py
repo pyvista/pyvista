@@ -51,7 +51,7 @@ class PlotterITK():
 
         Parameters
         ----------
-        points : np.ndarray or pyvista.Common
+        points : np.ndarray or pyvista.DataSet
             n x 3 numpy array of points or pyvista dataset with points.
 
         color : string or 3 item list, optional. Color of points (if visible).
@@ -104,7 +104,7 @@ class PlotterITK():
 
         Parameters
         ----------
-        mesh : pyvista.Common or pyvista.MultiBlock
+        mesh : pyvista.DataSet or pyvista.MultiBlock
             Any PyVista or VTK mesh is supported. Also, any dataset
             that :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
             points.

@@ -15,7 +15,7 @@ from pyvista.utilities.cells import (CellArray, numpy_to_idarr,
                                      generate_cell_offsets,
                                      create_mixed_cells,
                                      get_mixed_cells)
-from .common import Common
+from .dataset import DataSet
 from .filters import PolyDataFilters, UnstructuredGridFilters, StructuredGridFilters
 from ..utilities.fileio import get_ext
 
@@ -25,7 +25,7 @@ log.setLevel('CRITICAL')
 VTK9 = _vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 
-class PointSet(Common):
+class PointSet(DataSet):
     """PyVista's equivalent of vtk.vtkPointSet.
 
     This holds methods common to PolyData and UnstructuredGrid.
@@ -56,7 +56,7 @@ class PointSet(Common):
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(_vtk.vtkPoints())
-        return Common.shallow_copy(self, to_copy)
+        return DataSet.shallow_copy(self, to_copy)
 
     def remove_cells(self, ind, inplace=True):
         """Remove cells.
@@ -191,11 +191,11 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
     def __repr__(self):
         """Return the standard representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
     def __str__(self):
         """Return the standard str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
 
     @staticmethod
     def _make_vertex_cells(npoints):
@@ -559,11 +559,11 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     def __repr__(self):
         """Return the standard representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
     def __str__(self):
         """Return the standard str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
 
     def _from_cells_dict(self, cells_dict, points, deep=True):
         if points.ndim != 2 or points.shape[-1] != 3:
@@ -857,11 +857,11 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     def __repr__(self):
         """Return the standard representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
     def __str__(self):
         """Return the standard str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
 
     def _from_arrays(self, x, y, z):
         """Create VTK structured grid directly from numpy arrays.
