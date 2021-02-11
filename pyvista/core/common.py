@@ -9,7 +9,7 @@ from typing import Optional, List, Tuple, Iterable, Union, Any, Dict, DefaultDic
 import numpy as np
 
 import pyvista
-from pyvista.core import vtki
+from pyvista import _vtki
 from .pyvista_ndarray import pyvista_ndarray
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                raise_not_matching, vtk_id_list_to_array, fileio,
@@ -80,8 +80,8 @@ class ActiveArrayInfo:
 class DataObject:
     """Methods common to all wrapped data objects."""
 
-    _READERS: Dict[str, Union[Type[vtki.vtkXMLReader], Type[vtki.vtkDataReader]]] = {}
-    _WRITERS: Dict[str, Union[Type[vtki.vtkXMLWriter], Type[vtki.vtkDataWriter]]] = {}
+    _READERS: Dict[str, Union[Type[_vtki.vtkXMLReader], Type[_vtki.vtkDataReader]]] = {}
+    _WRITERS: Dict[str, Union[Type[_vtki.vtkXMLWriter], Type[_vtki.vtkDataWriter]]] = {}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
@@ -94,15 +94,15 @@ class DataObject:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
-    def shallow_copy(self, to_copy: vtki.vtkDataObject) -> vtki.vtkDataObject:
+    def shallow_copy(self, to_copy: _vtki.vtkDataObject) -> _vtki.vtkDataObject:
         """Shallow copy the given mesh to this mesh."""
         return self.ShallowCopy(to_copy)
 
-    def deep_copy(self, to_copy: vtki.vtkDataObject) -> vtki.vtkDataObject:
+    def deep_copy(self, to_copy: _vtki.vtkDataObject) -> _vtki.vtkDataObject:
         """Overwrite this mesh with the given mesh as a deep copy."""
         return self.DeepCopy(to_copy)
 
-    def _load_file(self, filename: Union[str, Path]) -> vtki.vtkDataObject:
+    def _load_file(self, filename: Union[str, Path]) -> _vtki.vtkDataObject:
         """Generically load a vtk object from file.
 
         Parameters
@@ -298,7 +298,7 @@ class DataObject:
         """
         return self.GetActualMemorySize()
 
-    def copy_structure(self, dataset: vtki.vtkDataSet):
+    def copy_structure(self, dataset: _vtki.vtkDataSet):
         """Copy the structure (geometry and topology) of the input dataset object.
 
         Examples
@@ -312,7 +312,7 @@ class DataObject:
         """
         self.CopyStructure(dataset)
 
-    def copy_attributes(self, dataset: vtki.vtkDataSet):
+    def copy_attributes(self, dataset: _vtki.vtkDataSet):
         """Copy the data attributes of the input dataset object.
 
         Examples
@@ -330,7 +330,7 @@ class DataObject:
     def __getstate__(self):
         """Support pickle. Serialize the VTK object to ASCII string."""
         state = self.__dict__.copy()
-        writer = vtki.vtkDataSetWriter()
+        writer = _vtki.vtkDataSetWriter()
         writer.SetInputDataObject(self)
         writer.SetWriteToOutputString(True)
         writer.SetFileTypeToASCII()
@@ -344,7 +344,7 @@ class DataObject:
         vtk_serialized = state.pop('vtk_serialized')
         self.__dict__.update(state)
 
-        reader = vtki.vtkDataSetReader()
+        reader = _vtki.vtkDataSetReader()
         reader.ReadFromInputStringOn()
         reader.SetInputString(vtk_serialized)
         reader.Update()
@@ -369,7 +369,7 @@ class Common(DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._textures: Dict[str, vtki.vtkTexture] = {}
+        self._textures: Dict[str, _vtki.vtkTexture] = {}
 
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
@@ -539,7 +539,7 @@ class Common(DataSetFilters, DataObject):
         self.point_arrays.t_coords = t_coords  # type: ignore
 
     @property
-    def textures(self) -> Dict[str, vtki.vtkTexture]:
+    def textures(self) -> Dict[str, _vtki.vtkTexture]:
         """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
 
         When casting back to a VTK dataset or filtering this dataset, these textures
@@ -552,7 +552,7 @@ class Common(DataSetFilters, DataObject):
         """Clear the textures from this mesh."""
         self._textures.clear()
 
-    def _activate_texture(mesh, name: str) -> vtki.vtkTexture:
+    def _activate_texture(mesh, name: str) -> _vtki.vtkTexture:
         """Grab a texture and update the active texture coordinates.
 
         This makes sure to not destroy old texture coordinates.
@@ -781,7 +781,7 @@ class Common(DataSetFilters, DataObject):
         """
         self.points += np.asarray(xyz)
 
-    def transform(self, trans: Union[vtki.vtkMatrix4x4, vtki.vtkTransform, np.ndarray]):
+    def transform(self, trans: Union[_vtki.vtkMatrix4x4, _vtki.vtkTransform, np.ndarray]):
         """Compute a transformation in place using a 4x4 transform.
 
         Parameters
@@ -790,9 +790,9 @@ class Common(DataSetFilters, DataObject):
             Accepts a vtk transformation object or a 4x4 transformation matrix.
 
         """
-        if isinstance(trans, vtki.vtkMatrix4x4):
+        if isinstance(trans, _vtki.vtkMatrix4x4):
             t = pyvista.array_from_vtkmatrix(trans)
-        elif isinstance(trans, vtki.vtkTransform):
+        elif isinstance(trans, _vtki.vtkTransform):
             t = pyvista.array_from_vtkmatrix(trans.GetMatrix())
         elif isinstance(trans, np.ndarray):
             if trans.ndim != 2:
@@ -1054,7 +1054,7 @@ class Common(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def overwrite(self, mesh: vtki.vtkDataSet):
+    def overwrite(self, mesh: _vtki.vtkDataSet):
         """Overwrite this mesh inplace with the new mesh's geometries and data.
 
         Parameters
@@ -1072,7 +1072,7 @@ class Common(DataSetFilters, DataObject):
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
         """Get a new representation of this object as an :class:`pyvista.UnstructuredGrid`."""
-        alg = vtki.vtkAppendFilter()
+        alg = _vtki.vtkAppendFilter()
         alg.AddInputData(self)
         alg.Update()
         return _get_output(alg)
@@ -1105,11 +1105,11 @@ class Common(DataSetFilters, DataObject):
         if n < 1:
             raise ValueError("`n` must be a positive integer.")
 
-        locator = vtki.vtkPointLocator()
+        locator = _vtki.vtkPointLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
         if n > 1:
-            id_list = vtki.vtkIdList()
+            id_list = _vtki.vtkIdList()
             locator.FindClosestNPoints(n, point, id_list)
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)
@@ -1165,7 +1165,7 @@ class Common(DataSetFilters, DataObject):
         else:
             raise TypeError("Given point must be an iterable or an array.")
 
-        locator = vtki.vtkCellLocator()
+        locator = _vtki.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
         closest_cells = np.array([locator.FindCell(node) for node in point])
@@ -1219,7 +1219,7 @@ class Common(DataSetFilters, DataObject):
 
         """
         points = self.GetCell(ind).GetPoints().GetData()
-        return vtki.vtk_to_numpy(points)
+        return _vtki.vtk_to_numpy(points)
 
     def cell_bounds(self, ind: int) -> List[float]:
         """Return the bounding box of a cell.

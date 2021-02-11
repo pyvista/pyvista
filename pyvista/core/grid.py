@@ -6,7 +6,7 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.core import vtki
+from pyvista import _vtki
 from pyvista.utilities import abstract_class
 from .common import Common
 from .filters import _get_output, UniformGridFilters
@@ -47,7 +47,7 @@ class Grid(Common):
         return attrs
 
 
-class RectilinearGrid(vtki.vtkRectilinearGrid, Grid):
+class RectilinearGrid(_vtki.vtkRectilinearGrid, Grid):
     """Extend the functionality of a vtk.vtkRectilinearGrid object.
 
     Can be initialized in several ways:
@@ -81,17 +81,17 @@ class RectilinearGrid(vtki.vtkRectilinearGrid, Grid):
 
     """
 
-    _READERS = {'.vtk': vtki.vtkRectilinearGridReader,
-                '.vtr': vtki.vtkXMLRectilinearGridReader}
-    _WRITERS = {'.vtk': vtki.vtkRectilinearGridWriter,
-                '.vtr': vtki.vtkXMLRectilinearGridWriter}
+    _READERS = {'.vtk': _vtki.vtkRectilinearGridReader,
+                '.vtr': _vtki.vtkXMLRectilinearGridReader}
+    _WRITERS = {'.vtk': _vtki.vtkRectilinearGridWriter,
+                '.vtr': _vtki.vtkXMLRectilinearGridWriter}
 
     def __init__(self, *args, **kwargs):
         """Initialize the rectilinear grid."""
         super().__init__()
 
         if len(args) == 1:
-            if isinstance(args[0], vtki.vtkRectilinearGrid):
+            if isinstance(args[0], _vtki.vtkRectilinearGrid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0])
@@ -149,13 +149,13 @@ class RectilinearGrid(vtki.vtkRectilinearGrid, Grid):
         # Set the coordinates along each axial direction
         # Must at least be an x array
         x = np.unique(x.ravel())
-        self.SetXCoordinates(vtki.numpy_to_vtk(x))
+        self.SetXCoordinates(_vtki.numpy_to_vtk(x))
         if y is not None:
             y = np.unique(y.ravel())
-            self.SetYCoordinates(vtki.numpy_to_vtk(y))
+            self.SetYCoordinates(_vtki.numpy_to_vtk(y))
         if z is not None:
             z = np.unique(z.ravel())
-            self.SetZCoordinates(vtki.numpy_to_vtk(z))
+            self.SetZCoordinates(_vtki.numpy_to_vtk(z))
         # Ensure dimensions are properly set
         self._update_dimensions()
 
@@ -194,36 +194,36 @@ class RectilinearGrid(vtki.vtkRectilinearGrid, Grid):
     @property
     def x(self):
         """Get the coordinates along the X-direction."""
-        return vtki.vtk_to_numpy(self.GetXCoordinates())
+        return _vtki.vtk_to_numpy(self.GetXCoordinates())
 
     @x.setter
     def x(self, coords):
         """Set the coordinates along the X-direction."""
-        self.SetXCoordinates(vtki.numpy_to_vtk(coords))
+        self.SetXCoordinates(_vtki.numpy_to_vtk(coords))
         self._update_dimensions()
         self.Modified()
 
     @property
     def y(self):
         """Get the coordinates along the Y-direction."""
-        return vtki.vtk_to_numpy(self.GetYCoordinates())
+        return _vtki.vtk_to_numpy(self.GetYCoordinates())
 
     @y.setter
     def y(self, coords):
         """Set the coordinates along the Y-direction."""
-        self.SetYCoordinates(vtki.numpy_to_vtk(coords))
+        self.SetYCoordinates(_vtki.numpy_to_vtk(coords))
         self._update_dimensions()
         self.Modified()
 
     @property
     def z(self):
         """Get the coordinates along the Z-direction."""
-        return vtki.vtk_to_numpy(self.GetZCoordinates())
+        return _vtki.vtk_to_numpy(self.GetZCoordinates())
 
     @z.setter
     def z(self, coords):
         """Set the coordinates along the Z-direction."""
-        self.SetZCoordinates(vtki.numpy_to_vtk(coords))
+        self.SetZCoordinates(_vtki.numpy_to_vtk(coords))
         self._update_dimensions()
         self.Modified()
 
@@ -234,13 +234,13 @@ class RectilinearGrid(vtki.vtkRectilinearGrid, Grid):
 
     def cast_to_structured_grid(self):
         """Cast this rectilinear grid to a :class:`pyvista.StructuredGrid`."""
-        alg = vtki.vtkRectilinearGridToPointSet()
+        alg = _vtki.vtkRectilinearGridToPointSet()
         alg.SetInputData(self)
         alg.Update()
         return _get_output(alg)
 
 
-class UniformGrid(vtki.vtkImageData, Grid, UniformGridFilters):
+class UniformGrid(_vtki.vtkImageData, Grid, UniformGridFilters):
     """Extend the functionality of a vtk.vtkImageData object.
 
     Can be initialized in several ways:
@@ -279,15 +279,15 @@ class UniformGrid(vtki.vtkImageData, Grid, UniformGridFilters):
 
     """
 
-    _READERS = {'.vtk': vtki.vtkDataSetReader, '.vti': vtki.vtkXMLImageDataReader}
-    _WRITERS = {'.vtk': vtki.vtkDataSetWriter, '.vti': vtki.vtkXMLImageDataWriter}
+    _READERS = {'.vtk': _vtki.vtkDataSetReader, '.vti': _vtki.vtkXMLImageDataReader}
+    _WRITERS = {'.vtk': _vtki.vtkDataSetWriter, '.vti': _vtki.vtkXMLImageDataWriter}
 
     def __init__(self, *args, **kwargs):
         """Initialize the uniform grid."""
         super().__init__()
 
         if len(args) == 1:
-            if isinstance(args[0], vtki.vtkImageData):
+            if isinstance(args[0], _vtki.vtkImageData):
                 self.deep_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0])
@@ -426,7 +426,7 @@ class UniformGrid(vtki.vtkImageData, Grid, UniformGridFilters):
 
     def cast_to_structured_grid(self):
         """Cast this uniform grid to a :class:`pyvista.StructuredGrid`."""
-        alg = vtki.vtkImageToStructuredGrid()
+        alg = _vtki.vtkImageToStructuredGrid()
         alg.SetInputData(self)
         alg.Update()
         return _get_output(alg)

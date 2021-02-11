@@ -5,7 +5,7 @@ The data objects does not have any sort of spatial reference.
 """
 import numpy as np
 
-from pyvista.core import vtki
+from pyvista import _vtki
 import pyvista
 from pyvista.utilities import (FieldAssociation, assert_empty_kwargs, get_array,
                                row_array)
@@ -13,7 +13,7 @@ from .common import DataObject
 from .datasetattributes import DataSetAttributes
 
 
-class Table(vtki.vtkTable, DataObject):
+class Table(_vtki.vtkTable, DataObject):
     """Wrapper for the ``vtkTable`` class.
 
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
@@ -32,7 +32,7 @@ class Table(vtki.vtkTable, DataObject):
         """Initialize the table."""
         super().__init__(*args, **kwargs)
         if len(args) == 1:
-            if isinstance(args[0], vtki.vtkTable):
+            if isinstance(args[0], _vtki.vtkTable):
                 deep = kwargs.get('deep', True)
                 if deep:
                     self.deep_copy(args[0])
@@ -279,23 +279,23 @@ class Table(vtki.vtkTable, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
 
-class Texture(vtki.vtkTexture, DataObject):
+class Texture(_vtki.vtkTexture, DataObject):
     """A helper class for vtkTextures."""
 
-    _READERS = {'.bmp': vtki.vtkBMPReader,
-                '.dem': vtki.vtkDEMReader,
-                '.dcm': vtki.vtkDICOMImageReader,
-                '.img': vtki.vtkDICOMImageReader,
-                '.jpeg': vtki.vtkJPEGReader,
-                '.jpg': vtki.vtkJPEGReader,
-                '.mhd': vtki.vtkMetaImageReader,
-                '.nrrd': vtki.vtkNrrdReader,
-                '.nhdr': vtki.vtkNrrdReader,
-                '.png': vtki.vtkPNGReader,
-                '.pnm': vtki.vtkPNMReader,
-                '.slc': vtki.vtkSLCReader,
-                '.tiff': vtki.vtkTIFFReader,
-                '.tif': vtki.vtkTIFFReader}
+    _READERS = {'.bmp': _vtki.vtkBMPReader,
+                '.dem': _vtki.vtkDEMReader,
+                '.dcm': _vtki.vtkDICOMImageReader,
+                '.img': _vtki.vtkDICOMImageReader,
+                '.jpeg': _vtki.vtkJPEGReader,
+                '.jpg': _vtki.vtkJPEGReader,
+                '.mhd': _vtki.vtkMetaImageReader,
+                '.nrrd': _vtki.vtkNrrdReader,
+                '.nhdr': _vtki.vtkNrrdReader,
+                '.png': _vtki.vtkPNGReader,
+                '.pnm': _vtki.vtkPNMReader,
+                '.slc': _vtki.vtkSLCReader,
+                '.tiff': _vtki.vtkTIFFReader,
+                '.tif': _vtki.vtkTIFFReader}
 
     def __init__(self, *args, **kwargs):
         """Initialize the texture."""
@@ -303,11 +303,11 @@ class Texture(vtki.vtkTexture, DataObject):
         assert_empty_kwargs(**kwargs)
 
         if len(args) == 1:
-            if isinstance(args[0], vtki.vtkTexture):
+            if isinstance(args[0], _vtki.vtkTexture):
                 self._from_texture(args[0])
             elif isinstance(args[0], np.ndarray):
                 self._from_array(args[0])
-            elif isinstance(args[0], vtki.vtkImageData):
+            elif isinstance(args[0], _vtki.vtkImageData):
                 self._from_image_data(args[0])
             elif isinstance(args[0], str):
                 self._from_file(filename=args[0])

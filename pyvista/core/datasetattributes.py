@@ -5,7 +5,7 @@ from collections.abc import Iterable
 import numpy as np
 from typing import Union, Iterator, Optional, List, Tuple, Dict, Sequence, Any
 
-from pyvista.core import vtki
+from pyvista import _vtki
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
 from .pyvista_ndarray import pyvista_ndarray
@@ -13,7 +13,7 @@ from .pyvista_ndarray import pyvista_ndarray
 from .._typing import Number
 
 
-class DataSetAttributes(vtki.VTKObjectWrapper):
+class DataSetAttributes(_vtki.VTKObjectWrapper):
     """Python friendly wrapper of ``vtk.DataSetAttributes``.
 
     Implement a ``dict`` like interface for interacting with vtkDataArrays.
@@ -32,7 +32,7 @@ class DataSetAttributes(vtki.VTKObjectWrapper):
         The array association type of the vtkobject.
     """
 
-    def __init__(self, vtkobject: vtki.vtkFieldData, dataset: vtki.vtkDataSet, association: FieldAssociation):
+    def __init__(self, vtkobject: _vtki.vtkFieldData, dataset: _vtki.vtkDataSet, association: FieldAssociation):
         """Initialize DataSetAttributes."""
         super().__init__(vtkobject=vtkobject)
         self.dataset = dataset
@@ -135,11 +135,11 @@ class DataSetAttributes(vtki.VTKObjectWrapper):
         if t_coords.shape[1] != 2:
             raise ValueError('Texture coordinates must only have 2 components,'
                              f' not ({t_coords.shape[1]})')
-        vtkarr = vtki.numpyTovtkDataArray(t_coords, name='Texture Coordinates')
+        vtkarr = _vtki.numpyTovtkDataArray(t_coords, name='Texture Coordinates')
         self.SetTCoords(vtkarr)
         self.Modified()
 
-    def get_array(self, key: Union[str, int]) -> Union[pyvista_ndarray, vtki.vtkDataArray, vtki.vtkAbstractArray]:
+    def get_array(self, key: Union[str, int]) -> Union[pyvista_ndarray, _vtki.vtkDataArray, _vtki.vtkAbstractArray]:
         """Get an array in this object.
 
         Parameters
@@ -161,7 +161,7 @@ class DataSetAttributes(vtki.VTKObjectWrapper):
             vtk_arr = self.GetAbstractArray(key)
             if vtk_arr is None:
                 raise KeyError(f'{key}')
-            if type(vtk_arr) == vtki.vtkAbstractArray:
+            if type(vtk_arr) == _vtki.vtkAbstractArray:
                 return vtk_arr
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:

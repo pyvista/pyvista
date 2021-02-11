@@ -12,7 +12,7 @@ from typing import List, Tuple, Union, Optional, Any, cast
 
 import pyvista
 from pyvista.utilities import get_array, is_pyvista_dataset, wrap
-from pyvista.core import vtki
+from pyvista import _vtki
 from .common import DataObject, Common
 from .filters import CompositeFilters
 from .._typing import Vector
@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class MultiBlock(vtki.vtkMultiBlockDataSet, CompositeFilters, DataObject):
+class MultiBlock(_vtki.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     """A composite class to hold many data sets which can be iterated over.
 
     This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so that we can
@@ -62,10 +62,10 @@ class MultiBlock(vtki.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     # Bind pyvista.plotting.plot to the object
     plot = pyvista.plot
-    _READERS = {'.vtm': vtki.vtkXMLMultiBlockDataReader,
-                '.vtmb': vtki.vtkXMLMultiBlockDataReader,
-                '.case': vtki.vtkGenericEnSightReader}
-    _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], vtki.vtkXMLMultiBlockDataWriter)
+    _READERS = {'.vtm': _vtki.vtkXMLMultiBlockDataReader,
+                '.vtmb': _vtki.vtkXMLMultiBlockDataReader,
+                '.case': _vtki.vtkGenericEnSightReader}
+    _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtki.vtkXMLMultiBlockDataWriter)
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize multi block."""
@@ -74,7 +74,7 @@ class MultiBlock(vtki.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         self.refs: Any = []
 
         if len(args) == 1:
-            if isinstance(args[0], vtki.vtkMultiBlockDataSet):
+            if isinstance(args[0], _vtki.vtkMultiBlockDataSet):
                 if deep:
                     self.deep_copy(args[0])
                 else:
@@ -256,14 +256,14 @@ class MultiBlock(vtki.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """Set a block's string name at the specified index."""
         if name is None:
             return
-        self.GetMetaData(index).Set(vtki.vtkCompositeDataSet.NAME(), name)
+        self.GetMetaData(index).Set(_vtki.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
     def get_block_name(self, index: int) -> Optional[str]:
         """Return the string name of the block at the given index."""
         meta = self.GetMetaData(index)
         if meta is not None:
-            return meta.Get(vtki.vtkCompositeDataSet.NAME())
+            return meta.Get(_vtki.vtkCompositeDataSet.NAME())
         return None
 
     def keys(self) -> List[Optional[str]]:

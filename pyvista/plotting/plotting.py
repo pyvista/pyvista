@@ -14,15 +14,14 @@ from threading import Thread
 
 import numpy as np
 import scooby
-import vtk
-from vtk.util import numpy_support as VN
-from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from typing import Dict
 
 import pyvista
+from pyvista import _vtki
 from pyvista.utilities import (assert_empty_kwargs, convert_array,
                                convert_string_array, get_array,
                                is_pyvista_dataset, abstract_class,
+                               numpy_to_texture,
                                raise_not_matching, try_callback, wrap)
 from pyvista.utilities.regression import image_from_window
 from .background_renderer import BackgroundRenderer
@@ -465,7 +464,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         renderers = [self.renderer] if only_active else self.renderers
 
-        light_kit = vtk.vtkLightKit()
+        light_kit = _vtki.vtkLightKit()
         for renderer in renderers:
             renderer.remove_all_lights()
             # Use the renderer as a vtkLightKit parser.
@@ -894,12 +893,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if hasattr(self, "iren"):
-            self._add_observer(vtk.vtkCommand.MouseMoveEvent,
+            self._add_observer(_vtki.vtkCommand.MouseMoveEvent,
                                self.store_mouse_position)
 
     def untrack_mouse_position(self):
         """Stop tracking the mouse position."""
-        self._remove_observer(vtk.vtkCommand.MouseMoveEvent)
+        self._remove_observer(_vtki.vtkCommand.MouseMoveEvent)
 
     def track_click_position(self, callback=None, side="right",
                              viewport=False):
@@ -928,9 +927,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         side = str(side).lower()
         if side in ["right", "r"]:
-            event = vtk.vtkCommand.RightButtonPressEvent
+            event = _vtki.vtkCommand.RightButtonPressEvent
         elif side in ["left", "l"]:
-            event = vtk.vtkCommand.LeftButtonPressEvent
+            event = _vtki.vtkCommand.LeftButtonPressEvent
         else:
             raise TypeError(f"Side ({side}) not supported. Try `left` or `right`")
 
@@ -1013,7 +1012,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         click_pos = self.iren.GetEventPosition()
 
         # Get corresponding click location in the 3D plot
-        picker = vtk.vtkWorldPointPicker()
+        picker = _vtki.vtkWorldPointPicker()
         picker.Pick(click_pos[0], click_pos[1], 0, self.renderer)
         self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
         if np.any(np.isnan(self.pickpoint)):
@@ -1525,7 +1524,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     # or it could have zeros points (be empty) after filtering
                     continue
                 # Now check that scalars is available for this dataset
-                if isinstance(data, vtk.vtkMultiBlockDataSet) or get_array(data, scalars) is None:
+                if isinstance(data, _vtki.vtkMultiBlockDataSet) or get_array(data, scalars) is None:
                     ts = None
                 else:
                     ts = scalars
@@ -1586,14 +1585,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # set main values
         self.mesh = mesh
-        self.mapper = make_mapper(vtk.vtkDataSetMapper)
+        self.mapper = make_mapper(_vtki.vtkDataSetMapper)
         self.mapper.SetInputData(self.mesh)
         self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
         if interpolate_before_map:
             self.mapper.InterpolateScalarsBeforeMappingOn()
 
-        actor = vtk.vtkActor()
-        prop = vtk.vtkProperty()
+        actor = _vtki.vtkActor()
+        prop = _vtki.vtkProperty()
         actor.SetMapper(self.mapper)
         actor.SetProperty(prop)
 
@@ -1614,7 +1613,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
-            if not isinstance(texture, (vtk.vtkTexture, vtk.vtkOpenGLTexture)):
+            if not isinstance(texture, (_vtki.vtkTexture, _vtki.vtkOpenGLTexture)):
                 raise TypeError(f'Invalid texture type ({type(texture)})')
             if mesh.GetPointData().GetTCoords() is None:
                 raise ValueError('Input mesh does not have texture coordinates to support the texture.')
@@ -1775,7 +1774,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     ctable[:,-1] = opacity
                 if flip_scalars:
                     ctable = np.ascontiguousarray(ctable[::-1])
-                table.SetTable(VN.numpy_to_vtk(ctable))
+                table.SetTable(_vtki.numpy_to_vtk(ctable))
                 if _custom_opac:
                     # need to round the colors here since we're
                     # directly displaying the colors
@@ -2143,10 +2142,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Define mapper, volume, and add the correct properties
         mappers = {
-            'fixed_point': vtk.vtkFixedPointVolumeRayCastMapper,
-            'gpu': vtk.vtkGPUVolumeRayCastMapper,
-            'open_gl': vtk.vtkOpenGLGPUVolumeRayCastMapper,
-            'smart': vtk.vtkSmartVolumeMapper,
+            'fixed_point': _vtki.vtkFixedPointVolumeRayCastMapper,
+            'gpu': _vtki.vtkGPUVolumeRayCastMapper,
+            'open_gl': _vtki.vtkOpenGLGPUVolumeRayCastMapper,
+            'smart': _vtki.vtkSmartVolumeMapper,
         }
         if not isinstance(mapper, str) or mapper not in mappers.keys():
             raise TypeError(f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers.keys())}")
@@ -2183,7 +2182,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mapper.scalar_range = clim
 
         # Set colormap and build lookup table
-        table = vtk.vtkLookupTable()
+        table = _vtki.vtkLookupTable()
         # table.SetNanColor(nan_color) # NaN's are chopped out with current implementation
         # above/below colors not supported with volume rendering
 
@@ -2208,7 +2207,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if flip_scalars:
             cmap = cmap.reversed()
 
-        color_tf = vtk.vtkColorTransferFunction()
+        color_tf = _vtki.vtkColorTransferFunction()
         for ii in range(n_colors):
             color_tf.AddRGBPoint(ii, *cmap(ii)[:-1])
 
@@ -2221,7 +2220,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             opacity = np.array(opacity)
             opacity_values = opacity_transfer_function(opacity, n_colors)
 
-        opacity_tf = vtk.vtkPiecewiseFunction()
+        opacity_tf = _vtki.vtkPiecewiseFunction()
         for ii in range(n_colors):
             opacity_tf.AddPoint(ii, opacity_values[ii] / n_colors)
 
@@ -2230,7 +2229,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         lut = cmap(np.array(range(n_colors))) * 255
         lut[:,3] = opacity_values
         lut = lut.astype(np.uint8)
-        table.SetTable(VN.numpy_to_vtk(lut))
+        table.SetTable(_vtki.numpy_to_vtk(lut))
         table.SetRange(*clim)
         self.mapper.lookup_table = table
 
@@ -2253,10 +2252,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                              '\'composite\', \'minimum\' or ' + '\'maximum\'.')
         self.mapper.Update()
 
-        self.volume = vtk.vtkVolume()
+        self.volume = _vtki.vtkVolume()
         self.volume.SetMapper(self.mapper)
 
-        prop = vtk.vtkVolumeProperty()
+        prop = _vtki.vtkVolumeProperty()
         prop.SetColor(color_tf)
         prop.SetScalarOpacity(opacity_tf)
         prop.SetAmbient(ambient)
@@ -2569,7 +2568,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         color = parse_color(color)
 
         # Create scalar bar
-        self.scalar_bar = vtk.vtkScalarBarActor()
+        self.scalar_bar = _vtki.vtkScalarBarActor()
         if background_color is not None:
             background_color = parse_color(background_color, opacity=1.0)
             background_color = np.array(background_color) * 255
@@ -2578,14 +2577,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if fill:
                 self.scalar_bar.DrawBackgroundOn()
 
-            lut = vtk.vtkLookupTable()
+            lut = _vtki.vtkLookupTable()
             lut.DeepCopy(mapper.lookup_table)
-            ctable = vtk_to_numpy(lut.GetTable())
+            ctable = _vtki.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.
             use_table = ctable.copy()
             use_table[:, -1] = 255.
             ctable = (use_table * alphas) + background_color * (1 - alphas)
-            lut.SetTable(numpy_to_vtk(ctable, array_type=vtk.VTK_UNSIGNED_CHAR))
+            lut.SetTable(_vtki.numpy_to_vtk(ctable, array_type=_vtki.VTK_UNSIGNED_CHAR))
         else:
             lut = mapper.lookup_table
         self.scalar_bar.SetLookupTable(lut)
@@ -2676,7 +2675,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError('Interactive scalar bars disabled for multi-renderer plots')
 
         if interactive:
-            self.scalar_widget = vtk.vtkScalarBarWidget()
+            self.scalar_widget = _vtki.vtkScalarBarWidget()
             self.scalar_widget.SetScalarBarActor(self.scalar_bar)
             self.scalar_widget.SetInteractor(self.iren)
             self.scalar_widget.SetEnabled(1)
@@ -2929,14 +2928,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             position = [x, y]
 
         corner_mappings = {
-            'lower_left': vtk.vtkCornerAnnotation.LowerLeft,
-            'lower_right': vtk.vtkCornerAnnotation.LowerRight,
-            'upper_left': vtk.vtkCornerAnnotation.UpperLeft,
-            'upper_right': vtk.vtkCornerAnnotation.UpperRight,
-            'lower_edge': vtk.vtkCornerAnnotation.LowerEdge,
-            'upper_edge': vtk.vtkCornerAnnotation.UpperEdge,
-            'left_edge': vtk.vtkCornerAnnotation.LeftEdge,
-            'right_edge': vtk.vtkCornerAnnotation.RightEdge,
+            'lower_left': _vtki.vtkCornerAnnotation.LowerLeft,
+            'lower_right': _vtki.vtkCornerAnnotation.LowerRight,
+            'upper_left': _vtki.vtkCornerAnnotation.UpperLeft,
+            'upper_right': _vtki.vtkCornerAnnotation.UpperRight,
+            'lower_edge': _vtki.vtkCornerAnnotation.LowerEdge,
+            'upper_edge': _vtki.vtkCornerAnnotation.UpperEdge,
+            'left_edge': _vtki.vtkCornerAnnotation.LeftEdge,
+            'right_edge': _vtki.vtkCornerAnnotation.RightEdge,
 
         }
         corner_mappings['ll'] = corner_mappings['lower_left']
@@ -2955,12 +2954,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 position = corner_mappings[position]
             elif position is True:
                 position = corner_mappings['upper_left']
-            self.textActor = vtk.vtkCornerAnnotation()
+            self.textActor = _vtki.vtkCornerAnnotation()
             # This is how you set the font size with this actor
             self.textActor.SetLinearFontScaleFactor(font_size // 2)
             self.textActor.SetText(position, text)
         else:
-            self.textActor = vtk.vtkTextActor()
+            self.textActor = _vtki.vtkTextActor()
             self.textActor.SetInput(text)
             self.textActor.SetPosition(position)
             if viewport:
@@ -3065,7 +3064,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.renderer.ResetCameraClippingRange()
 
         # Get the z-buffer image
-        ifilter = vtk.vtkWindowToImageFilter()
+        ifilter = _vtki.vtkWindowToImageFilter()
         ifilter.SetInput(self.ren_win)
         ifilter.ReadFrontBufferOff()
         ifilter.SetInputBufferTypeToZBuffer()
@@ -3127,7 +3126,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         lines = pyvista.lines_from_points(lines)
 
         # Create mapper and add lines
-        mapper = vtk.vtkDataSetMapper()
+        mapper = _vtki.vtkDataSetMapper()
         mapper.SetInputData(lines)
 
         rgb_color = parse_color(color)
@@ -3139,7 +3138,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._labels.append([lines, label, rgb_color])
 
         # Create actor
-        actor = vtk.vtkActor()
+        actor = _vtki.vtkActor()
         actor.SetMapper(mapper)
         actor.GetProperty().SetLineWidth(width)
         actor.GetProperty().EdgeVisibilityOn()
@@ -3283,21 +3282,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if name is None:
             name = f'{type(vtkpoints).__name__}({vtkpoints.memory_address})'
 
-        vtklabels = vtk.vtkStringArray()
+        vtklabels = _vtki.vtkStringArray()
         vtklabels.SetName('labels')
         for item in labels:
             vtklabels.InsertNextValue(str(item))
         vtkpoints.GetPointData().AddArray(vtklabels)
 
         # Create hierarchy
-        hier = vtk.vtkPointSetToLabelHierarchy()
+        hier = _vtki.vtkPointSetToLabelHierarchy()
         hier.SetLabelArrayName('labels')
 
         if always_visible:
             hier.SetInputData(vtkpoints)
         else:
             # Only show visible points
-            vis_points = vtk.vtkSelectVisiblePoints()
+            vis_points = _vtki.vtkSelectVisiblePoints()
             vis_points.SetInputData(vtkpoints)
             vis_points.SetRenderer(self.renderer)
             vis_points.SetTolerance(tolerance)
@@ -3305,7 +3304,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             hier.SetInputConnection(vis_points.GetOutputPort())
 
         # create label mapper
-        labelMapper = vtk.vtkLabelPlacementMapper()
+        labelMapper = _vtki.vtkLabelPlacementMapper()
         labelMapper.SetInputConnection(hier.GetOutputPort())
         if not isinstance(shape, str):
             labelMapper.SetShapeToNone()
@@ -3341,7 +3340,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                           render_points_as_spheres=render_points_as_spheres,
                           reset_camera=reset_camera, render=render)
 
-        labelActor = vtk.vtkActor2D()
+        labelActor = _vtki.vtkActor2D()
         labelActor.SetMapper(labelMapper)
         self.add_actor(labelActor, reset_camera=False,
                        name=f'{name}-labels', pickable=False)
@@ -3425,9 +3424,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         pdata = pyvista.vector_poly_data(cent, direction)
         # Create arrow object
-        arrow = vtk.vtkArrowSource()
+        arrow = _vtki.vtkArrowSource()
         arrow.Update()
-        glyph3D = vtk.vtkGlyph3D()
+        glyph3D = _vtki.vtkGlyph3D()
         glyph3D.SetSourceData(arrow.GetOutput())
         glyph3D.SetInputData(pdata)
         glyph3D.SetVectorModeToUseVector()
@@ -3477,7 +3476,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         valid = ['.svg', '.eps', '.ps', '.pdf', '.tex']
         if extension not in valid:
             raise ValueError(f"Extension ({extension}) is an invalid choice. Valid options include: {', '.join(valid)}")
-        writer = vtk.vtkGL2PSExporter()
+        writer = _vtki.vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
             '.eps': writer.SetFileFormatToEPS,
@@ -3632,7 +3631,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.show() # doctest:+SKIP
 
         """
-        self.legend = vtk.vtkLegendBoxActor()
+        self.legend = _vtki.vtkLegendBoxActor()
 
         if labels is None:
             # use existing labels
@@ -3827,7 +3826,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         else:
             filename = os.path.abspath(os.path.expanduser(filename))
-        exporter = vtk.vtkOBJExporter()
+        exporter = _vtki.vtkOBJExporter()
         exporter.SetFilePrefix(filename)
         exporter.SetRenderWindow(self.ren_win)
         return exporter.Write()
@@ -4101,7 +4100,7 @@ class Plotter(BasePlotter):
             multi_samples = rcParams['multi_samples']
 
         # initialize render window
-        self.ren_win = vtk.vtkRenderWindow()
+        self.ren_win = _vtki.vtkRenderWindow()
         self.ren_win.SetMultiSamples(multi_samples)
         self.ren_win.SetBorders(True)
         if line_smoothing:
@@ -4128,7 +4127,7 @@ class Plotter(BasePlotter):
             self.ren_win.SetOffScreenRendering(1)
 
         # Add ren win and interactor no matter what - necessary for ipyvtk_simple
-        self.iren = vtk.vtkRenderWindowInteractor()
+        self.iren = _vtki.vtkRenderWindowInteractor()
         self.iren.LightFollowCameraOff()
         self.iren.SetDesiredUpdateRate(30.0)
         self.iren.SetRenderWindow(self.ren_win)
@@ -4144,7 +4143,7 @@ class Plotter(BasePlotter):
         self.window_size = window_size
 
         # add timer event if interactive render exists
-        self._add_observer(vtk.vtkCommand.TimerEvent, on_timer)
+        self._add_observer(_vtki.vtkCommand.TimerEvent, on_timer)
 
         if rcParams["depth_peeling"]["enabled"]:
             if self.enable_depth_peeling():
@@ -4411,7 +4410,12 @@ def _style_factory(klass):
     # swallow the release events
     # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
 
-    class CustomStyle(getattr(vtk, 'vtkInteractorStyle' + klass)):
+    try:
+        from vtkmodules import vtkInteractionStyle
+    except ImportError:
+        import vtk as vtkInteractionStyle
+
+    class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
 
         def __init__(self, parent):
             super().__init__()

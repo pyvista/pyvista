@@ -1,10 +1,17 @@
 """Module containing pyvista implementation of vtkCamera."""
 
 import numpy as np
-import vtk
+
+# have to do the imports here rather than in vtki to avoid circular
+# imports
+try:
+    from vtkmodules.vtkRenderingCore import vtkCamera
+    from vtkmodules.vtkCommonMath import vtkMatrix4x4
+except:
+    from vtk import vtkCamera, vtkMatrix4x4
 
 
-class Camera(vtk.vtkCamera):
+class Camera(vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Examples
@@ -113,7 +120,7 @@ class Camera(vtk.vtkCamera):
                                   [0., 0., 0., 1.]])
         >>> pl.camera.model_transform_matrix = trans_mat
         """
-        vtk_matrix = vtk.vtkMatrix4x4()
+        vtk_matrix = vtkMatrix4x4()
         vtk_matrix.DeepCopy(matrix.ravel())
         self.SetModelTransformMatrix(vtk_matrix)
 
