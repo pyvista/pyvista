@@ -3,6 +3,7 @@
 import pathlib
 import collections.abc
 from functools import partial
+from typing import Sequence
 import logging
 import os
 import textwrap
@@ -3648,11 +3649,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for i, (text, color) in enumerate(labels):
                 self.legend.SetEntry(i, legendface, text, parse_color(color))
 
-        if origin:
-            assert len(origin) == 2, 'origin must be of length 2'
+        if origin is not None:
+            if not isinstance(origin, Sequence) or len(origin) != 2:
+                raise ValueError(
+                    '`origin` must be a list of length 2. Passed value is {}'
+                    .format(origin)
+                )
             self.legend.SetPosition(origin[0], origin[1])
 
-        if size:
+        if size is not None:
+            if not isinstance(size, Sequence) or len(size) != 2:
+                raise ValueError(
+                    '`size` must be a list of length 2. Passed value is {}'
+                    .format(size)
+                )
             self.legend.SetPosition2(size[0], size[1])
 
         if bcolor is None:
