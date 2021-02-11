@@ -1307,11 +1307,13 @@ class Renderer(vtkRenderer):
         ----------
         render : bool
             Trigger a render after resetting the camera.
-        bounds : tuple(int)
+        bounds : iterable(int)
             Automatically set up the camera based on a specified bounding box
             ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         """
+        if isinstance(bounds, np.ndarray):
+            bounds = bounds.tolist()
         if bounds:
             self.ResetCamera(*bounds)
         else:
