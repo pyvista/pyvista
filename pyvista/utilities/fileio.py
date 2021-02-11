@@ -284,7 +284,6 @@ def read_exodus(filename,
                 displacement_magnitude=1.0,
                 enabled_sidesets=None):
     """Read an ExodusII file (``'.e'`` or ``'.exo'``)."""
-    
     # lazy import here to avoid loading module on import pyvista
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader
