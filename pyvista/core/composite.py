@@ -15,7 +15,7 @@ from vtk import vtkMultiBlockDataSet
 import pyvista
 from pyvista.utilities import get_array, is_pyvista_dataset, wrap
 from .common import DataObject, Common
-from .filters import CompositeFilters
+from .polydatafilters import CompositeFilters
 from .._typing import Vector
 
 log = logging.getLogger(__name__)
