@@ -2,7 +2,7 @@
 
 import numpy as np
 
-# have to do the imports here rather than in vtki to avoid circular
+# have to do the imports here rather than in _vtk to avoid circular
 # imports
 try:
     from vtkmodules.vtkCommonCore import vtkVersion

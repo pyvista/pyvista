@@ -4,7 +4,7 @@ from enum import IntEnum
 
 import numpy as np
 
-# imports here rather than in vtki to avoid circular imports
+# imports here rather than in _vtk to avoid circular imports
 try:
     from vtkmodules.vtkRenderingCore import vtkLight, vtkLightActor
     from vtkmodules.vtkCommonMath import vtkMatrix4x4
