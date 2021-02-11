@@ -1312,9 +1312,7 @@ class Renderer(vtkRenderer):
             ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         """
-        if isinstance(bounds, np.ndarray):
-            bounds = bounds.tolist()
-        if bounds:
+        if bounds is not None:
             self.ResetCamera(*bounds)
         else:
             self.ResetCamera()
