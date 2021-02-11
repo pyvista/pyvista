@@ -6,9 +6,9 @@ import sys
 import zipfile
 
 import numpy as np
-import vtk
 
 import pyvista
+from pyvista.core import vtki
 from pyvista.core.errors import DeprecationError
 
 # Helpers:
@@ -240,12 +240,12 @@ def download_sparse_points():
 
     """
     saved_file, _ = _download_file('sparsePoints.txt')
-    points_reader = vtk.vtkDelimitedTextReader()
+    points_reader = vtki.vtkDelimitedTextReader()
     points_reader.SetFileName(saved_file)
     points_reader.DetectNumericColumnsOn()
     points_reader.SetFieldDelimiterCharacters('\t')
     points_reader.SetHaveHeaders(True)
-    table_points = vtk.vtkTableToPolyData()
+    table_points = vtki.vtkTableToPolyData()
     table_points.SetInputConnection(points_reader.GetOutputPort())
     table_points.SetXColumn('x')
     table_points.SetYColumn('y')
@@ -535,7 +535,7 @@ def download_kitchen(split=False):
     }
     kitchen = pyvista.MultiBlock()
     for key, extent in extents.items():
-        alg = vtk.vtkStructuredGridGeometryFilter()
+        alg = vtki.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
         alg.Update()

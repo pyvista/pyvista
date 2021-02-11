@@ -360,7 +360,7 @@ class Common(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects."""
 
     # Simply bind pyvista.plotting.plot to the object
-    plot = pyvista.plot
+    # plot = pyvista.plot
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""

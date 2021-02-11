@@ -7,22 +7,70 @@ import strategy, which lets us only have to import from select modules
 and not the entire library.
 """
 
-# perhaps use:
-# vtk.vtkVersion().GetVTKMajorVersion() >= 9:
-
 try:
-    from vtkmodules.numpy_interface.dataset_adapter import (VTKObjectWrapper,
-                                                            numpyTovtkDataArray)
-    from vtkmodules.util.numpy_support import vtk_to_numpy
+    from vtkmodules.vtkCommonCore import vtkVersion
+    _vtk9 = vtkVersion().GetVTKMajorVersion() >= 9
+except ImportError:
+    _vtk9 = False
+
+if _vtk9:
+    from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLHardwareSelector
+    from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
+    from vtkmodules.vtkIOPLY import vtkPLYReader, vtkPLYWriter
+    from vtkmodules.vtkIOGeometry import (vtkSTLReader,
+                                          vtkSTLWriter,
+                                          vtkOBJReader)
+    from vtkmodules.vtkIOImage import (vtkBMPReader,
+                                       vtkDEMReader,
+                                       vtkDICOMImageReader,
+                                       vtkDICOMImageReader,
+                                       vtkJPEGReader,
+                                       vtkJPEGReader,
+                                       vtkMetaImageReader,
+                                       vtkNrrdReader,
+                                       vtkNrrdReader,
+                                       vtkPNGReader,
+                                       vtkPNMReader,
+                                       vtkSLCReader,
+                                       vtkTIFFReader,
+                                       vtkTIFFReader,
+    )
+
     from vtkmodules.vtkIOXML import (vtkXMLReader,
                                      vtkXMLWriter,
+                                     vtkXMLImageDataReader,
+                                     vtkXMLImageDataWriter,
+                                     vtkXMLPolyDataReader,
+                                     vtkXMLPolyDataWriter,
+                                     vtkXMLRectilinearGridReader,
+                                     vtkXMLRectilinearGridWriter,
+                                     vtkXMLUnstructuredGridReader,
+                                     vtkXMLUnstructuredGridWriter,
+                                     vtkXMLStructuredGridReader,
+                                     vtkXMLStructuredGridWriter,
                                      vtkXMLMultiBlockDataReader,
                                      vtkXMLMultiBlockDataWriter)
     from vtkmodules.vtkIOEnSight import vtkGenericEnSightReader
-    from vtkmodules.vtkIOLegacy import (vtkDataWriter, vtkDataReader,
+    from vtkmodules.vtkIOLegacy import (vtkDataWriter,
+                                        vtkDataReader,
+                                        vtkStructuredGridReader,
+                                        vtkStructuredGridWriter,
+                                        vtkPolyDataWriter,
+                                        vtkPolyDataReader,
+                                        vtkUnstructuredGridReader,
+                                        vtkUnstructuredGridWriter,
+                                        vtkRectilinearGridReader,
+                                        vtkRectilinearGridWriter,
                                         vtkDataSetWriter,
+                                        vtkPolyDataReader,
                                         vtkDataSetReader)
     from vtkmodules.vtkCommonDataModel import (vtkDataObject,
+                                               vtkPolyPlane,
+                                               vtkCellArray,
+                                               vtkStructuredGrid,
+                                               vtkUnstructuredGrid,
+                                               vtkDataSetAttributes,
+                                               vtkTable,
                                                vtkPlaneCollection,
                                                vtkDataSet,
                                                vtkPointLocator,
@@ -37,14 +85,42 @@ try:
                                                vtkStaticPointLocator,
                                                vtkSelectionNode,
                                                vtkSelection,
-                                               )
-    from vtkmodules.vtkRenderingCore import vtkTexture
-    from vtkmodules.vtkCommonCore import (vtkIdList, vtkDataArray,
-                                          vtkPoints, vtkIdList,
-                                          vtkAbstractArray, vtkDoubleArray)
+                                               VTK_HEXAHEDRON,
+                                               VTK_PYRAMID,
+                                               VTK_QUAD,
+                                               VTK_QUADRATIC_HEXAHEDRON,
+                                               VTK_QUADRATIC_PYRAMID,
+                                               VTK_QUADRATIC_QUAD,
+                                               VTK_QUADRATIC_TETRA,
+                                               VTK_QUADRATIC_TRIANGLE,
+                                               VTK_QUADRATIC_WEDGE,
+                                               VTK_TETRA,
+                                               VTK_TRIANGLE,
+                                               VTK_WEDGE
+    )
+    from vtkmodules.vtkRenderingCore import (vtkTexture,
+                                             vtkWorldPointPicker,
+                                             vtkPointPicker,
+                                             vtkRenderedAreaPicker,
+                                             vtkLight,
+                                             vtkLightActor,
+                                             vtkCamera,
+                                             vtkImageActor,
+                                             )
+    from vtkmodules.vtkCommonCore import (vtkIdList,
+                                          vtkCommand,
+                                          vtkTypeUInt32Array,
+                                          vtkDataArray,
+                                          vtkPoints,
+                                          vtkIdList,
+                                          vtkAbstractArray,
+                                          vtkDoubleArray)
     from vtkmodules.vtkCommonMath import vtkMatrix4x4
     from vtkmodules.vtkCommonTransforms import vtkTransform
     from vtkmodules.vtkFiltersCore import (vtkAppendFilter,
+                                           vtkPointDataToCellData,
+                                           vtkMassProperties,
+                                           vtkCenterOfMass,
                                            vtkStripper,
                                            vtkDelaunay2D,
                                            VTK_BEST_FITTING_PLANE,
@@ -74,6 +150,9 @@ try:
                                            vtkDelaunay3D,
                                            vtkCutter)
     from vtkmodules.vtkFiltersGeneral import (vtkTableBasedClipDataSet,
+                                              vtkTableToPolyData,
+                                              vtkOBBTree,
+                                              vtkRectilinearGridToPointSet,
                                               vtkClipClosedSurface,
                                               vtkIntersectionPolyDataFilter,
                                               vtkCurvatures,
@@ -102,9 +181,11 @@ try:
                                               vtkPointSource,
                                               vtkArrowSource)
     from vtkmodules.vtkFiltersGeometry import (vtkGeometryFilter,
+                                               vtkStructuredGridGeometryFilter,
                                                vtkCompositeDataGeometryFilter,
                                                vtkDataSetSurfaceFilter)
     from vtkmodules.vtkFiltersExtraction import (vtkExtractEdges,
+                                                 vtkExtractGeometry,
                                                  vtkExtractGrid,
                                                  vtkExtractSelection)
     from vtkmodules.vtkFiltersTexture import (vtkTextureMapToPlane,
@@ -117,11 +198,25 @@ try:
     from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
     from vtkmodules.vtkImagingCore import vtkExtractVOI
     from vtkmodules.vtkFiltersFlowPaths import vtkStreamTracer
-    from vtkmodules.util.numpy_support import vtk_to_numpy
+    from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
 
-except:
+    from vtkmodules.numpy_interface.dataset_adapter import (VTKObjectWrapper,
+                                                            numpyTovtkDataArray,
+                                                            VTKArray)
+    from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
+
+    from vtkmodules.vtkCommonCore import (buffer_shared,
+                                          vtkAbstractArray,
+                                          vtkWeakReference)
+
+else:
+    from vtk.vtkCommonKitPython import (buffer_shared,
+                                        vtkAbstractArray,
+                                        vtkWeakReference
+                                        )
     from vtk.util.numpy_support import vtk_to_numpy
     from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper,
+                                                     VTKArray,
                                                      numpyTovtkDataArray)
     from vtk.util.numpy_support import vtk_to_numpy
 

@@ -3,31 +3,26 @@ from collections.abc import Iterable
 
 from typing import Union
 import numpy as np
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
 
+from pyvista.core import vtki
 from pyvista.utilities.helpers import FieldAssociation, convert_array
-
-try:
-    from vtk.vtkCommonKitPython import buffer_shared, vtkAbstractArray, vtkWeakReference
-except ImportError:
-    from vtk.vtkCommonCore import buffer_shared, vtkAbstractArray, vtkWeakReference
 
 
 class pyvista_ndarray(np.ndarray):
     """An ndarray which references the owning dataset and the underlying vtkArray."""
 
-    def __new__(cls, array: Union[Iterable, vtkAbstractArray], dataset=None,
+    def __new__(cls, array: Union[Iterable, vtki.vtkAbstractArray], dataset=None,
                 association=FieldAssociation.NONE):
         """Allocate the array."""
         if isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)
-        elif isinstance(array, vtkAbstractArray):
+        elif isinstance(array, vtki.vtkAbstractArray):
             obj = convert_array(array).view(cls)
             obj.VTKObject = array
 
         obj.association = association
-        obj.dataset = vtkWeakReference()
-        if isinstance(dataset, VTKObjectWrapper):
+        obj.dataset = vtki.vtkWeakReference()
+        if isinstance(dataset, vtki.VTKObjectWrapper):
             obj.dataset.Set(dataset.VTKObject)
         else:
             obj.dataset.Set(dataset)
@@ -42,7 +37,7 @@ class pyvista_ndarray(np.ndarray):
         # to hold this data. I don't know why this class doesn't use the same
         # convention, but here we just map those over to the appropriate
         # attributes of this class
-        VTKArray.__array_finalize__(self, obj)
+        vtki.VTKArray.__array_finalize__(self, obj)
         if np.shares_memory(self, obj):
             self.dataset = getattr(obj, 'dataset', None)
             self.association = getattr(obj, 'association', None)
@@ -59,4 +54,4 @@ class pyvista_ndarray(np.ndarray):
         if self.VTKObject is not None:
             self.VTKObject.Modified()
 
-    __getattr__ = VTKArray.__getattr__
+    __getattr__ = vtki.VTKArray.__getattr__

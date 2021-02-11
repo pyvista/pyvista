@@ -279,10 +279,10 @@ class DataSetFilters:
         >>> pl.show()  # doctest:+SKIP
 
         """
-        function = vtkImplicitPolyDataDistance()
+        function = vtki.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         points = pyvista.convert_array(dataset.points)
-        dists = vtkDoubleArray()
+        dists = vtki.vtkDoubleArray()
         function.FunctionValue(points, dists)
         if inplace:
             dataset.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
