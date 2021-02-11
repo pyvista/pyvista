@@ -6,3 +6,4 @@ from .polydatafilters import PolyDataFilters
 from .structuredgridfilters import StructuredGridFilters
 from .uniformgridfilters import UniformGridFilters
 from .unstructuredgridfilters import UnstructuredGridFilters
+from .algorithm import _get_output, _update_alg
