@@ -539,7 +539,7 @@ def download_kitchen(split=False):
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
         alg.Update()
-        result = pyvista.core.filters.helpers_temp._get_output(alg)
+        result = pyvista.core.filters.vtkalgorithm._get_output(alg)
         kitchen[key] = result
     return kitchen
 
