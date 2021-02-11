@@ -369,7 +369,7 @@ if _vtk9:
 
 else:
 
-    # maintain VTK 8.2 compatability
+    # maintain VTK 8.2 compatibility
     try:
         from vtk.vtkCommonKitPython import (buffer_shared,
                                             vtkAbstractArray,
