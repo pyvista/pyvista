@@ -457,7 +457,7 @@ class DataSet(DataSetFilters, DataObject):
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
 
-    def rotate_x(self, angle: float):
+    def rotate_x(self, angle: float, transform_all_input_vectors=False):
         """Rotate mesh about the x-axis.
 
         Parameters
@@ -466,9 +466,10 @@ class DataSet(DataSetFilters, DataObject):
             Angle in degrees to rotate about the x-axis.
 
         """
-        axis_rotation(self.points, angle, inplace=True, axis='x')
+        t = transformations.axis_angle_rotation((1, 0, 0), angle, deg=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_y(self, angle: float):
+    def rotate_y(self, angle: float, transform_all_input_vectors=False):
         """Rotate mesh about the y-axis.
 
         Parameters
@@ -477,9 +478,10 @@ class DataSet(DataSetFilters, DataObject):
             Angle in degrees to rotate about the y-axis.
 
         """
-        axis_rotation(self.points, angle, inplace=True, axis='y')
+        t = transformations.axis_angle_rotation((0, 1, 0), angle, deg=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_z(self, angle: float):
+    def rotate_z(self, angle: float, transform_all_input_vectors=False):
         """Rotate mesh about the z-axis.
 
         Parameters
@@ -488,7 +490,8 @@ class DataSet(DataSetFilters, DataObject):
             Angle in degrees to rotate about the z-axis.
 
         """
-        axis_rotation(self.points, angle, inplace=True, axis='z')
+        t = transformations.axis_angle_rotation((0, 0, 1), angle, deg=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
     def translate(self, xyz: Union[list, tuple, np.ndarray]):
         """Translate the mesh.
