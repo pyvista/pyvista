@@ -36,6 +36,7 @@ from pyvista.utilities.cells import numpy_to_idarr
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.utilities import transformations
 
+from typing import Union
 
 def _update_alg(alg, progress_bar=False, message=''):
     """Update an algorithm with or without a progress bar."""
@@ -2637,6 +2638,57 @@ class DataSetFilters:
         output = pyvista.wrap(alg.GetOutput())
         if isinstance(dataset, _vtk.vtkPolyData):
             return output.extract_surface()
+
+    def transform(dataset, trans: Union[vtk.vtkMatrix4x4, vtk.vtkTransform, np.ndarray],
+                  transform_all_input_vectors=True, inplace=True):
+        """Compute a transformation in place using a 4x4 transform.
+
+        Parameters
+        ----------
+        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
+            Accepts a vtk transformation object or a 4x4 transformation matrix.
+
+        """
+        if isinstance(trans, vtk.vtkMatrix4x4):
+            m = trans
+            t = vtk.vtkTransform()
+            t.SetMatrix(m)
+        elif isinstance(trans, vtk.vtkTransform):
+            t = trans
+            m = trans.GetMatrix()
+        elif isinstance(trans, np.ndarray):
+            if trans.ndim != 2:
+                raise ValueError('Transformation array must be 4x4')
+            elif trans.shape[0] != 4 or trans.shape[1] != 4:
+                raise ValueError('Transformation array must be 4x4')
+            m = pyvista.vtkmatrix_from_array(trans)
+            t = vtk.vtkTransform()
+            t.SetMatrix(m)
+        else:
+            raise TypeError('Input transform must be either:\n'
+                            '\tvtk.vtkMatrix4x4\n'
+                            '\tvtk.vtkTransform\n'
+                            '\t4x4 np.ndarray\n')
+
+        if m.GetElement(3, 3) == 0:
+            raise ValueError(
+                "Transform element (3,3), the inverse scale term, is zero")
+
+        f = vtk.vtkTransformFilter()
+        f.SetInputDataObject(dataset)
+        f.SetTransform(t)
+        f.SetTransformAllInputVectors(transform_all_input_vectors)
+        f.Update()
+        res = pyvista.core.filters._get_output(f)
+
+        if inplace:
+            if not isinstance(res, type(dataset)):
+                raise ValueError('Unable to perform in-place transforation. Input was `%s` but output is `%s`.' %
+                                 (dataset.GetClassName(), res.GetClassName()))
+            dataset.overwrite(res)
+        else:
+            return res
+
 
     def reflect(dataset, normal, point=None, inplace=False,
                 transform_all_input_vectors=False):
