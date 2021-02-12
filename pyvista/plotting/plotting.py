@@ -3,6 +3,7 @@
 import pathlib
 import collections.abc
 from functools import partial
+from typing import Sequence
 import logging
 import os
 import textwrap
@@ -3559,7 +3560,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._save_image(self.image, filename, return_img)
 
     def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
-                   size=None, name=None):
+                   size=None, name=None, origin=None):
         """Add a legend to render window.
 
         Entries must be a list containing one string and color entry for each
@@ -3598,6 +3599,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The name for the added actor so that it can be easily updated.
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
+
+        origin : list, optional
+            If used, specifies the x and y position of the lower left corner
+            of the legend.
 
         Returns
         -------
@@ -3652,7 +3657,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for i, (text, color) in enumerate(labels):
                 self.legend.SetEntry(i, legendface, text, parse_color(color))
 
-        if size:
+        if origin is not None:
+            if not isinstance(origin, Sequence) or len(origin) != 2:
+                raise ValueError(
+                    '`origin` must be a list of length 2. Passed value is {}'
+                    .format(origin)
+                )
+            self.legend.SetPosition(origin[0], origin[1])
+
+        if size is not None:
+            if not isinstance(size, Sequence) or len(size) != 2:
+                raise ValueError(
+                    '`size` must be a list of length 2. Passed value is {}'
+                    .format(size)
+                )
             self.legend.SetPosition2(size[0], size[1])
 
         if bcolor is None:

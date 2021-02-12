@@ -534,6 +534,37 @@ def test_add_legend():
 
 
 @skip_no_plotting
+def test_legend_origin():
+    """Ensure the origin parameter of `add_legend` affects origin position."""
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    origin = [0, 0]
+    legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
+                                size=[0.1, 0.1], origin=origin)
+    assert list(origin) == list(legend.GetPosition())
+
+
+@skip_no_plotting
+def test_bad_legend_origin_and_size():
+    """Ensure bad parameters to origin/size raise ValueErrors."""
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    origin = [0, 0]
+    # test incorrect lengths
+    with pytest.raises(ValueError, match='origin'):
+        plotter.add_legend(labels=legend_labels, origin=(1, 2, 3))
+    with pytest.raises(ValueError, match='size'):
+        plotter.add_legend(labels=legend_labels, size=[])
+    # test non-sequences also raise
+    with pytest.raises(ValueError, match='origin'):
+        plotter.add_legend(labels=legend_labels, origin=len)
+    with pytest.raises(ValueError, match='size'):
+        plotter.add_legend(labels=legend_labels, size=type)
+
+
+@skip_no_plotting
 def test_add_axes_twice():
     plotter = pyvista.Plotter()
     plotter.add_axes()
@@ -1020,7 +1051,7 @@ def test_subplot_groups_fail():
         # Full overlap (outer)
         pyvista.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
- 
+
 @skip_no_plotting
 def test_link_views(sphere):
     plotter = pyvista.Plotter(shape=(1, 4))
