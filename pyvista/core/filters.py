@@ -2719,12 +2719,8 @@ class DataSetFilters:
 
         """
         t = transformations.reflection(normal, point=point)
-        if inplace:
-            dataset.transform(t, transform_all_input_vectors=transform_all_input_vectors)
-        else:
-            mirror = dataset.copy()
-            mirror.transform(t, transform_all_input_vectors=transform_all_input_vectors)
-            return mirror
+        return dataset.transform(t, transform_all_input_vectors=transform_all_input_vectors,
+                                 inplace=inplace)
 
 
 @abstract_class

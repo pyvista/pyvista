@@ -1075,65 +1075,67 @@ def test_shrink():
     assert shrunk.area < mesh.area
 
 
-def test_reflect_grid(grid):
-    reflected = grid.reflect((0, 0, 1), point=(0, 0, 6))
-    assert isinstance(reflected, type(grid))
-    assert reflected.n_cells == grid.n_cells
-    assert reflected.n_points == grid.n_points
-
-
-def test_reflect_struct_grid(struct_grid):
-    reflected = struct_grid.reflect((0, 0, 1), point=(0, 0, 6))
-    assert isinstance(reflected, type(struct_grid))
-    assert reflected.n_cells == struct_grid.n_cells
-    assert reflected.n_points == struct_grid.n_points
-
-
-def test_reflect_mesh_points(airplane):
-    airplane.compute_normals(inplace=True)
-    airplane.cell_arrays['C'] = np.arange(airplane.n_cells)[:, np.newaxis] * \
-                                np.array([1, 2, 3]).reshape((1, 3))
-    airplane.point_arrays['P'] = np.arange(airplane.n_points)[:, np.newaxis] * \
-                                np.array([1, 2, 3]).reshape((1, 3))
-    reflected = airplane.reflect((1, 0, 0))
-
-    assert isinstance(reflected, type(airplane))
-    assert reflected.n_cells == airplane.n_cells
-    assert reflected.n_points == airplane.n_points
-    assert np.allclose(airplane.points[:, 0], -reflected.points[:, 0])
-    assert np.allclose(airplane.points[:, 1:], reflected.points[:, 1:])
-
-    # normals are reflected
-    assert np.allclose(airplane.cell_arrays['Normals'][:, 0], -reflected.cell_arrays['Normals'][:, 0])
-    assert np.allclose(airplane.cell_arrays['Normals'][:, 1:], reflected.cell_arrays['Normals'][:, 1:])
-    assert np.allclose(airplane.point_arrays['Normals'][:, 0], -reflected.point_arrays['Normals'][:, 0])
-    assert np.allclose(airplane.point_arrays['Normals'][:, 1:], reflected.point_arrays['Normals'][:, 1:])
-
-    # check other vector fields are reflected
-    assert np.allclose(airplane.cell_arrays['C'][:, 0], -reflected.cell_arrays['C'][:, 0])
-    assert np.allclose(airplane.cell_arrays['C'][:, 1:], reflected.cell_arrays['C'][:, 1:])
-    assert np.allclose(airplane.point_arrays['P'][:, 0], -reflected.point_arrays['P'][:, 0])
-    assert np.allclose(airplane.point_arrays['P'][:, 1:], reflected.point_arrays['P'][:, 1:])
-
-
-def test_reflect_mesh_about_point(airplane):
+@pytest.mark.parametrize('dataset', DATASETS)
+def test_reflect_mesh_about_point(dataset):
     x_plane = 500
-    reflected = airplane.reflect((1, 0, 0), point=(x_plane, 0, 0))
-    assert isinstance(reflected, type(airplane))
-    assert reflected.n_cells == airplane.n_cells
-    assert reflected.n_points == airplane.n_points
-
-    assert np.allclose(x_plane - airplane.points[:, 0], reflected.points[:, 0] - x_plane)
-    assert np.allclose(airplane.points[:, 1:], reflected.points[:, 1:])
+    reflected = dataset.reflect((1, 0, 0), point=(x_plane, 0, 0))
+    assert reflected.n_cells == dataset.n_cells
+    assert reflected.n_points == dataset.n_points
+    assert np.allclose(x_plane - dataset.points[:, 0], reflected.points[:, 0] - x_plane)
+    assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
 
 
-def test_reflect_inplace(airplane):
-    orig = airplane.copy()
-    airplane.reflect((1, 0, 0), inplace=True)
-    assert airplane.n_cells == orig.n_cells
-    assert airplane.n_points == orig.n_points
-    assert np.allclose(airplane.points[:, 0], -orig.points[:, 0])
-    assert np.allclose(airplane.points[:, 1:], orig.points[:, 1:])
+@pytest.mark.parametrize('dataset', DATASETS)
+def test_reflect_mesh_with_vectors(dataset):
+    if hasattr(dataset, 'compute_normals'):
+        dataset.compute_normals(inplace=True)
+    dataset.cell_arrays['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
+                                np.array([1, 2, 3]).reshape((1, 3))
+    dataset.point_arrays['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
+                                np.array([1, 2, 3]).reshape((1, 3))
+    reflected = dataset.reflect((1, 0, 0), transform_all_input_vectors=True, inplace=False)
+
+    # assert isinstance(reflected, type(dataset))
+    assert reflected.n_cells == dataset.n_cells
+    assert reflected.n_points == dataset.n_points
+    assert np.allclose(dataset.points[:, 0], -reflected.points[:, 0])
+    assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
+
+    # assert normals are reflected
+    if hasattr(dataset, 'compute_normals'):
+        assert np.allclose(dataset.cell_arrays['Normals'][:, 0], -reflected.cell_arrays['Normals'][:, 0])
+        assert np.allclose(dataset.cell_arrays['Normals'][:, 1:], reflected.cell_arrays['Normals'][:, 1:])
+        assert np.allclose(dataset.point_arrays['Normals'][:, 0], -reflected.point_arrays['Normals'][:, 0])
+        assert np.allclose(dataset.point_arrays['Normals'][:, 1:], reflected.point_arrays['Normals'][:, 1:])
+
+    # assert other vector fields are reflected
+    assert np.allclose(dataset.cell_arrays['C'][:, 0], -reflected.cell_arrays['C'][:, 0])
+    assert np.allclose(dataset.cell_arrays['C'][:, 1:], reflected.cell_arrays['C'][:, 1:])
+    assert np.allclose(dataset.point_arrays['P'][:, 0], -reflected.point_arrays['P'][:, 0])
+    assert np.allclose(dataset.point_arrays['P'][:, 1:], reflected.point_arrays['P'][:, 1:])
+
+
+@pytest.mark.parametrize('dataset', [
+    examples.load_hexbeam(),  # UnstructuredGrid
+    examples.load_airplane(),  # PolyData
+    examples.load_structured(),  # StructuredGrid
+])
+def test_reflect_inplace(dataset):
+    orig = dataset.copy()
+    dataset.reflect((1, 0, 0), inplace=True)
+    assert dataset.n_cells == orig.n_cells
+    assert dataset.n_points == orig.n_points
+    assert np.allclose(dataset.points[:, 0], -orig.points[:, 0])
+    assert np.allclose(dataset.points[:, 1:], orig.points[:, 1:])
+
+
+@pytest.mark.parametrize('dataset', [
+    examples.load_uniform(),  # UniformGrid
+    examples.load_rectilinear(),  # RectilinearGrid
+])
+def test_reflect_inplace_bad_types(dataset):
+    with pytest.raises(ValueError):
+        dataset.reflect((1, 0, 0), inplace=True)
 
 
 def test_extrude_rotate():
