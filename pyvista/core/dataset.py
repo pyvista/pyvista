@@ -501,7 +501,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.points += np.asarray(xyz)
 
-    def transform(self, trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray]):
+    def transform(self, trans: Union[vtk.vtkMatrix4x4, vtk.vtkTransform, np.ndarray],
+                  transform_all_input_vectors=True):
         """Compute a transformation in place using a 4x4 transform.
 
         Parameters
@@ -510,27 +511,49 @@ class DataSet(DataSetFilters, DataObject):
             Accepts a vtk transformation object or a 4x4 transformation matrix.
 
         """
-        if isinstance(trans, _vtk.vtkMatrix4x4):
-            t = pyvista.array_from_vtkmatrix(trans)
-        elif isinstance(trans, _vtk.vtkTransform):
-            t = pyvista.array_from_vtkmatrix(trans.GetMatrix())
+        if isinstance(trans, vtk.vtkMatrix4x4):
+            m = trans
+            t = vtk.vtkTransform()
+            t.SetMatrix(m)
+        elif isinstance(trans, vtk.vtkTransform):
+            t = trans
+            m = trans.GetMatrix()
         elif isinstance(trans, np.ndarray):
             if trans.ndim != 2:
                 raise ValueError('Transformation array must be 4x4')
             elif trans.shape[0] != 4 or trans.shape[1] != 4:
                 raise ValueError('Transformation array must be 4x4')
-            t = trans
+            m = pyvista.vtkmatrix_from_array(trans)
+            t = vtk.vtkTransform()
+            t.SetMatrix(m)
         else:
             raise TypeError('Input transform must be either:\n'
                             '\tvtk.vtkMatrix4x4\n'
                             '\tvtk.vtkTransform\n'
                             '\t4x4 np.ndarray\n')
 
-        if t[3, 3] == 0:
+        if m.GetElement(3, 3) == 0:
             raise ValueError(
                 "Transform element (3,3), the inverse scale term, is zero")
 
-        transformations.apply_transformation_to_points(t, self.points, inplace=True)
+        f = vtk.vtkTransformFilter()
+        f.SetInputDataObject(self)
+        f.SetTransform(t)
+        f.SetTransformAllInputVectors(transform_all_input_vectors)
+        f.Update()
+
+        res = pyvista.core.filters._get_output(f)
+
+        # make the transformation in-place
+        self.points[:] = res.points
+        for name, array in self.cell_arrays.items():
+            self.cell_arrays[name][:] = res.cell_arrays[name][:]
+
+        for name, array in self.point_arrays.items():
+            self.point_arrays[name][:] = res.point_arrays[name][:]
+
+        for name, array in self.field_arrays.items():
+            self.field_arrays[name][:] = res.field_arrays[name][:]
 
 
     def copy_meta_from(self, ido: 'DataSet'):

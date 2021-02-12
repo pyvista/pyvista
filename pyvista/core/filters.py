@@ -2638,7 +2638,8 @@ class DataSetFilters:
         if isinstance(dataset, _vtk.vtkPolyData):
             return output.extract_surface()
 
-    def reflect(dataset, normal, point=None, inplace=False):
+    def reflect(dataset, normal, point=None, inplace=False,
+                transform_all_input_vectors=False):
         """Reflect a dataset across a plane.
 
         Parameters
@@ -2653,6 +2654,10 @@ class DataSetFilters:
         inplace : bool, optional
             When ``True``, modifies the dataset and returns nothing.
 
+        transform_all_input_vectors: bool, optional
+            When ``True``, all input vectors are reflected. Otherwise, only the
+            points and the normals are reflected.
+
         Examples
         --------
         >>> from pyvista import examples
@@ -2663,10 +2668,10 @@ class DataSetFilters:
         """
         t = transformations.reflection(normal, point=point)
         if inplace:
-            dataset.transform(t)
+            dataset.transform(t, transform_all_input_vectors=transform_all_input_vectors)
         else:
             mirror = dataset.copy()
-            mirror.transform(t)
+            mirror.transform(t, transform_all_input_vectors=transform_all_input_vectors)
             return mirror
 
 
