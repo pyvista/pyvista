@@ -2640,7 +2640,7 @@ class DataSetFilters:
             return output.extract_surface()
 
     def transform(dataset, trans: Union[vtk.vtkMatrix4x4, vtk.vtkTransform, np.ndarray],
-                  transform_all_input_vectors=True, inplace=True):
+                  transform_all_input_vectors=False, inplace=True):
         """Compute a transformation in place using a 4x4 transform.
 
         Parameters
@@ -2648,6 +2648,9 @@ class DataSetFilters:
         trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
             Accepts a vtk transformation object or a 4x4 transformation matrix.
 
+        transform_all_input_vectors: bool, optional
+            When ``True``, all input vectors are reflected. Otherwise, only the
+            points and the normals are reflected.
         """
         if isinstance(trans, vtk.vtkMatrix4x4):
             m = trans
