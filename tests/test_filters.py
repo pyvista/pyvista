@@ -1091,9 +1091,9 @@ def test_transform_mesh_and_vectors(dataset):
 
     # add vector data to cell and point arrays
     dataset.cell_arrays['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
-                                np.array([1, 2, 3]).reshape((1, 3))
+                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
     dataset.point_arrays['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
-                                np.array([1, 2, 3]).reshape((1, 3))
+                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
 
     transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
@@ -1138,9 +1138,9 @@ def test_reflect_mesh_with_vectors(dataset):
 
     # add vector data to cell and point arrays
     dataset.cell_arrays['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
-                                np.array([1, 2, 3]).reshape((1, 3))
+                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
     dataset.point_arrays['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
-                                np.array([1, 2, 3]).reshape((1, 3))
+                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
 
     reflected = dataset.reflect((1, 0, 0), transform_all_input_vectors=True, inplace=False)
 
