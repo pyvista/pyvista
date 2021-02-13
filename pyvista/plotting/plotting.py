@@ -1859,15 +1859,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if line_width:
             prop.SetLineWidth(line_width)
 
+        self.add_actor(actor, reset_camera=reset_camera, name=name, culling=culling,
+                       pickable=pickable, render=render)
+
         # Add scalar bar if available
         if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
             self.add_scalar_bar(stitle, **scalar_bar_args)
-
-        self.add_actor(actor,
-                       reset_camera=reset_camera,
-                       name=name, culling=culling,
-                       pickable=pickable,
-                       render=render)
 
         self.renderer.Modified()
 
