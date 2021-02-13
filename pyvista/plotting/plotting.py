@@ -2536,6 +2536,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mapper.scalar_range = clim[0], clim[1]
                 self._scalar_bar_mappers[title].append(mapper)
                 self._scalar_bar_ranges[title] = clim
+                self.scalar_bar.SetLookupTable(mapper.lookup_table)
                 # Color bar already present and ready to be used so returning
                 return
 
