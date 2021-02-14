@@ -4000,6 +4000,44 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for renderer in renderers:
             renderer.remove_all_lights()
 
+    def where_is(self, name):
+        """Where is the actor?
+
+        This method returns the subplot coordinates that have a given actor.
+
+        Parameters
+        ----------
+        name : str
+            Actor's name.
+
+        Returns
+        -------
+        places : list(tuple(int))
+            A list with the subplot coordinates of the actor.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter(shape=(2, 2))
+        >>> plotter.subplot(0, 0)
+        >>> plotter.add_mesh(pv.Box(), name='box')
+        >>> plotter.subplot(0, 1)
+        >>> plotter.add_mesh(pv.Sphere(), name='sphere')
+        >>> plotter.subplot(1, 0)
+        >>> plotter.add_mesh(pv.Box(), name='box')
+        >>> plotter.subplot(1, 1)
+        >>> plotter.add_mesh(pv.Cone(), name='cone')
+        >>> plotter.where_is('box')
+        [(0, 0), (1, 0)]
+
+        """
+        places = []
+        for index in range(len(self.renderers)):
+            if name in self.renderers[index]._actors:
+                places.append(tuple(self.index_to_loc(index)))
+        return places
+
+
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
 
