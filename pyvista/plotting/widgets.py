@@ -724,17 +724,18 @@ class WidgetHelper:
             The name of the slider style. The list of available styles are in
             ``rcParams['slider_style']``. Defaults to None.
 
-        title_height: float
+        title_height: float, optional
             Relative height of the title as compared to the length of the slider.
 
-        title_opacity: str
-            Opacity of title. Default to 1.0.
+        title_opacity: str, optional
+            Opacity of title. Defaults to 1.0.
 
-        title_color : string or 3 item list, optional, defaults to argument color
-            Either a string, rgb list, or hex color string.
+        title_color : string or 3 item list, optional
+            Either a string, rgb list, or hex color string.  Defaults to the value 
+            given in ``color``.
 
-        fmt : str
-            String formatter used to format numerical data. Defaults to None.
+        fmt : str, optional
+            String formatter used to format numerical data. Defaults to ``None``.
         """
         if not hasattr(self, "slider_widgets"):
             self.slider_widgets = []
