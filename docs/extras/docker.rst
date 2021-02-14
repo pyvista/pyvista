@@ -52,7 +52,7 @@ the docker image at ``pyvista/docker/Dockerfile`` with:
 Additionally, you must install GPU drivers on the docker image of the
 same version running on the host machine.  For example, if you are
 running on Azure Kubernetes Service and the GPU nodes on the
-kubernetes cluster is running ``450.51.06``, you must install the same
+kubernetes cluster are running ``450.51.06``, you must install the same
 version on your image.  Since you will be using the underlying kernel
 module, there's no reason to build it on the container (and trying
 will only result in an error).

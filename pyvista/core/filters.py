@@ -245,7 +245,7 @@ class DataSetFilters:
     def compute_implicit_distance(dataset, surface, inplace=False):
         """Compute the implicit distance from the points to a surface.
 
-        This filter will comput the implicit distance from all of the nodes of
+        This filter will compute the implicit distance from all of the nodes of
         this mesh to a given surface. This distance will be added as a point
         array called ``'implicit_distance'``.
 
