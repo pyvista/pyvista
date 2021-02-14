@@ -1516,3 +1516,19 @@ def test_interactive_update():
     p = pyvista.Plotter()
     with pytest.warns(UserWarning):
         p.show(auto_close=True, interactive_update=True)
+
+
+def test_where_is():
+    plotter = pyvista.Plotter(shape=(2, 2))
+    plotter.subplot(0, 0)
+    plotter.add_mesh(pyvista.Box(), name='box')
+    plotter.subplot(0, 1)
+    plotter.add_mesh(pyvista.Sphere(), name='sphere')
+    plotter.subplot(1, 0)
+    plotter.add_mesh(pyvista.Box(), name='box')
+    plotter.subplot(1, 1)
+    plotter.add_mesh(pyvista.Cone(), name='cone')
+    places = plotter.where_is('box')
+    assert isinstance(places, list)
+    for loc in places:
+        assert isinstance(loc, tuple)
