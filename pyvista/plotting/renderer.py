@@ -824,7 +824,7 @@ class Renderer(vtkRenderer):
 
         A wrapped implementation of ``show_bounds`` to change default
         behaviour to use gridlines and showing the axes labels on the outer
-        edges. This is intended to be silimar to ``matplotlib``'s ``grid``
+        edges. This is intended to be similar to ``matplotlib``'s ``grid``
         function.
 
         """
