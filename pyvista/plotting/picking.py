@@ -23,6 +23,25 @@ class PickingHelper:
         """Get the pick position/area as x0, y0, x1, y1."""
         return self.renderer.get_pick_position()
 
+    def enable_mesh_picking(self, callback=None):
+        """Enable picking at mesh.
+
+        Parameters
+        ----------
+        callback : function, optional
+            When input, calls this function after a selection is made. The `mesh` is input as
+            the first parameter to this function.
+
+        """
+        def end_pick_call_back(picked, event):
+            if callback:
+                mesh = picked.GetActor().GetMapper().GetInput()
+                try_callback(callback, mesh)
+        picker = vtk.vtkPropPicker()
+        picker.AddObserver(vtk.vtkCommand.EndPickEvent, end_pick_call_back)
+        self.enable_trackball_style()
+        self.iren.SetPicker(picker)
+
     def enable_cell_picking(self, mesh=None, callback=None, through=True,
                             show=True, show_message=True, style='wireframe',
                             line_width=5, color='pink', font_size=18,
