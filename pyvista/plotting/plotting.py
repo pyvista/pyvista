@@ -4020,14 +4020,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(shape=(2, 2))
         >>> plotter.subplot(0, 0)
-        >>> plotter.add_mesh(pv.Box(), name='box')
+        >>> plotter.add_mesh(pv.Box(), name='box')  # doctest:+SKIP
         >>> plotter.subplot(0, 1)
-        >>> plotter.add_mesh(pv.Sphere(), name='sphere')
+        >>> plotter.add_mesh(pv.Sphere(), name='sphere')  # doctest:+SKIP
         >>> plotter.subplot(1, 0)
-        >>> plotter.add_mesh(pv.Box(), name='box')
+        >>> plotter.add_mesh(pv.Box(), name='box')  # doctest:+SKIP
         >>> plotter.subplot(1, 1)
-        >>> plotter.add_mesh(pv.Cone(), name='cone')
-        >>> plotter.where_is('box')
+        >>> plotter.add_mesh(pv.Cone(), name='cone')  # doctest:+SKIP
+        >>> plotter.where_is('box')  # doctest:+SKIP
         [(0, 0), (1, 0)]
 
         """
