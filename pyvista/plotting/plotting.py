@@ -4001,7 +4001,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer.remove_all_lights()
 
     def where_is(self, name):
-        """Return the subplot coordinates that have a given actor.
+        """Return the subplot coordinates of a given actor.
 
         Parameters
         ----------
