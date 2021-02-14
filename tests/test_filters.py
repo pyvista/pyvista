@@ -1,6 +1,7 @@
 import os
 import sys
 import platform
+import itertools
 
 import numpy as np
 import pytest
@@ -1085,15 +1086,16 @@ def test_transform_mesh(dataset):
     assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
 
 
-@pytest.mark.parametrize('dataset', DATASETS)
-def test_transform_mesh_and_vectors(dataset):
+@pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
+                         itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
+def test_transform_mesh_and_vectors(dataset, num_cell_arrays, num_point_arrays):
     tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
 
-    # add vector data to cell and point arrays
-    dataset.cell_arrays['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
-                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
-    dataset.point_arrays['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
-                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
+    for i in range(num_cell_arrays):
+        dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+
+    for i in range(num_point_arrays):
+        dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
 
     transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
@@ -1101,13 +1103,15 @@ def test_transform_mesh_and_vectors(dataset):
     assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
     assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
 
-    assert dataset.point_arrays['P'][:, 0] == pytest.approx( transformed.point_arrays['P'][:, 0])
-    assert dataset.point_arrays['P'][:, 2] == pytest.approx(-transformed.point_arrays['P'][:, 1])
-    assert dataset.point_arrays['P'][:, 1] == pytest.approx( transformed.point_arrays['P'][:, 2])
+    for i in range(num_cell_arrays):
+        assert dataset.cell_arrays['C%d' % i][:, 0] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 0])
+        assert dataset.cell_arrays['C%d' % i][:, 2] == pytest.approx(-transformed.cell_arrays['C%d' % i][:, 1])
+        assert dataset.cell_arrays['C%d' % i][:, 1] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 2])
 
-    assert dataset.cell_arrays['C'][:, 0] == pytest.approx( transformed.cell_arrays['C'][:, 0])
-    assert dataset.cell_arrays['C'][:, 2] == pytest.approx(-transformed.cell_arrays['C'][:, 1])
-    assert dataset.cell_arrays['C'][:, 1] == pytest.approx( transformed.cell_arrays['C'][:, 2])
+    for i in range(num_point_arrays):
+        assert dataset.point_arrays['P%d' % i][:, 0] == pytest.approx( transformed.point_arrays['P%d' % i][:, 0])
+        assert dataset.point_arrays['P%d' % i][:, 2] == pytest.approx(-transformed.point_arrays['P%d' % i][:, 1])
+        assert dataset.point_arrays['P%d' % i][:, 1] == pytest.approx( transformed.point_arrays['P%d' % i][:, 2])
 
 
 @pytest.mark.parametrize('dataset', [
