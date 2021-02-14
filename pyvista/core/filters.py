@@ -2641,7 +2641,7 @@ class DataSetFilters:
 
     def transform(dataset, trans: Union[vtk.vtkMatrix4x4, vtk.vtkTransform, np.ndarray],
                   transform_all_input_vectors=False, inplace=True):
-        """Compute a transformation in place using a 4x4 transform.
+        """Transform this mesh with a 4x4 transform.
 
         Parameters
         ----------
@@ -2649,8 +2649,8 @@ class DataSetFilters:
             Accepts a vtk transformation object or a 4x4 transformation matrix.
 
         transform_all_input_vectors: bool, optional
-            When ``True``, all input vectors are reflected. Otherwise, only the
-            points and the normals are reflected.
+            When ``True``, all input vectors are transformed. Otherwise, only the
+            points, normals and active vectors are transformed.
         """
         if isinstance(trans, vtk.vtkMatrix4x4):
             m = trans
@@ -2720,7 +2720,7 @@ class DataSetFilters:
 
         transform_all_input_vectors: bool, optional
             When ``True``, all input vectors are reflected. Otherwise, only the
-            points and the normals are reflected.
+            points, normals and active vectors are transformed.
 
         Examples
         --------

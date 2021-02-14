@@ -1076,14 +1076,34 @@ def test_shrink():
     assert shrunk.area < mesh.area
 
 
-@pytest.mark.parametrize('dataset', DATASETS)
-def test_transform_mesh(dataset):
+
+@pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
+                         itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
+def test_transform_mesh(dataset, num_cell_arrays, num_point_arrays):
     tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
-    transformed = dataset.transform(tf, inplace=False)
+
+    for i in range(num_cell_arrays):
+        dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+
+    for i in range(num_point_arrays):
+        dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
+
+    # deactivate any active vectors!
+    # even if transform_all_input_vectors is False, vtkTransformfilter will
+    # transform active vectors
+    dataset.set_active_vectors(None)
+
+    transformed = dataset.transform(tf, transform_all_input_vectors=False, inplace=False)
 
     assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
     assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
     assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
+
+    for name, array in dataset.point_arrays.items():
+        assert transformed.point_arrays[name] == pytest.approx(array)
+
+    for name, array in dataset.cell_arrays.items():
+        assert transformed.cell_arrays[name] == pytest.approx(array)
 
 
 @pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
