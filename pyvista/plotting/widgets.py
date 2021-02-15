@@ -742,19 +742,19 @@ class WidgetHelper:
         >>> import pyvista as pv
         >>> p = pv.Plotter()
         >>> def create_mesh(value):
-        >>>     res = int(value)
-        >>>     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
-        >>>     p.add_mesh(sphere, name="sphere", show_edges=True)
-        >>>     return
+        ...     res = int(value)
+        ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
+        ...     p.add_mesh(sphere, name="sphere", show_edges=True)
+        ...     return
         >>> slider = p.add_slider_widget(
-        >>>     create_mesh,
-        >>>     [5, 100],
-        >>>     title="Resolution",
-        >>>     title_opacity=0.5,
-        >>>     title_color="red",
-        >>>     fmt="%0.9f",
-        >>>     title_height=0.08,
-        >>> )
+        ...     create_mesh,
+        ...     [5, 100],
+        ...     title="Resolution",
+        ...     title_opacity=0.5,
+        ...     title_color="red",
+        ...     fmt="%0.9f",
+        ...     title_height=0.08,
+        ... )
         >>> p.show()  # doctest:+SKIP
         """
         if not hasattr(self, "slider_widgets"):
