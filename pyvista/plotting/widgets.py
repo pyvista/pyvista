@@ -678,7 +678,8 @@ class WidgetHelper:
     def add_slider_widget(self, callback, rng, value=None, title=None,
                           pointa=(.4, .9), pointb=(.9, .9),
                           color=None, pass_widget=False,
-                          event_type='end', style=None):
+                          event_type='end', style=None,
+                          title_height=0.03, title_opacity=1.0, title_color=None, fmt=None):
         """Add a slider bar widget.
 
         This is useless without a callback function. You can pass a callable
@@ -722,6 +723,39 @@ class WidgetHelper:
         style : str, optional
             The name of the slider style. The list of available styles are in
             ``rcParams['slider_style']``. Defaults to None.
+
+        title_height: float, optional
+            Relative height of the title as compared to the length of the slider.
+
+        title_opacity: str, optional
+            Opacity of title. Defaults to 1.0.
+
+        title_color : string or 3 item list, optional
+            Either a string, rgb list, or hex color string.  Defaults to the value 
+            given in ``color``.
+
+        fmt : str, optional
+            String formatter used to format numerical data. Defaults to ``None``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> p = pv.Plotter()
+        >>> def create_mesh(value):
+        ...     res = int(value)
+        ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
+        ...     p.add_mesh(sphere, name="sphere", show_edges=True)
+        ...     return
+        >>> slider = p.add_slider_widget(
+        ...     create_mesh,
+        ...     [5, 100],
+        ...     title="Resolution",
+        ...     title_opacity=0.5,
+        ...     title_color="red",
+        ...     fmt="%0.9f",
+        ...     title_height=0.08,
+        ... )
+        >>> p.show()  # doctest:+SKIP
         """
         if not hasattr(self, "slider_widgets"):
             self.slider_widgets = []
@@ -733,6 +767,12 @@ class WidgetHelper:
 
         if color is None:
             color = rcParams['font']['color']
+
+        if title_color is None:
+            title_color = color
+
+        if fmt is None:
+            fmt = rcParams['font']['fmt']
 
         def normalize(point, viewport):
             return (point[0]*(viewport[2]-viewport[0]),point[1]*(viewport[3]-viewport[1]))
@@ -789,6 +829,11 @@ class WidgetHelper:
         slider_widget.SetInteractor(self.iren)
         slider_widget.SetCurrentRenderer(self.renderer)
         slider_widget.SetRepresentation(slider_rep)
+        slider_widget.GetRepresentation().SetTitleHeight(title_height)
+        slider_widget.GetRepresentation().GetTitleProperty().SetOpacity(title_opacity)
+        slider_widget.GetRepresentation().GetTitleProperty().SetColor(parse_color(title_color))
+        if fmt is not None:
+            slider_widget.GetRepresentation().SetLabelFormat(fmt)
         slider_widget.On()
         if not isinstance(event_type, str):
             raise TypeError("Expected type for `event_type` is str: "
