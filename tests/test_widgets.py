@@ -55,6 +55,18 @@ def test_widget_plane():
     p.close()
 
     p = pyvista.Plotter()
+    func = lambda normal, origin: normal # Does nothing
+    p.add_mesh(mesh)
+    p.add_plane_widget(callback=func, assign_to_axis='z', implicit=True)
+    p.close()
+
+    p = pyvista.Plotter()
+    func = lambda normal, origin: normal # Does nothing
+    p.add_mesh(mesh)
+    p.add_plane_widget(callback=func, normal_rotation=False, implicit=False)
+    p.close()
+
+    p = pyvista.Plotter()
     p.add_mesh_clip_plane(mesh)
     p.close()
 
