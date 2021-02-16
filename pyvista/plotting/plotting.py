@@ -1409,6 +1409,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pickable : bool
             Set whether this mesh is pickable
 
+        log_scale : bool, optional
+            Use log scale when mapping data to colors.
+
         render : bool, optional
             Force a render when True.  Default ``True``.
 
@@ -1727,10 +1730,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     self.mapper.SetColorModeToMapScalars()
                 return
 
+            if log_scale:
+                scalars[scalars < 1] = 1
+                scalars = np.log10(scalars)
+
             prepare_mapper(scalars)
             table = self.mapper.GetLookupTable()
-            if log_scale:
-                table.SetScaleToLog10()
+            # if log_scale:
+            #     table.SetScaleToLog10()
 
             if _using_labels:
                 table.SetAnnotations(convert_array(values), convert_string_array(cats))
