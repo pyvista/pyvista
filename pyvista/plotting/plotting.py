@@ -1,5 +1,6 @@
 """Pyvista plotting module."""
 
+import sys
 import pathlib
 import collections.abc
 from functools import partial
@@ -1410,8 +1411,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Set whether this mesh is pickable
 
         log_scale : bool, optional
-            Use log scale when mapping data to colors. Values < 1 are changed
-            to 1. Default: ``True``.
+            Use log scale when mapping data to colors. Scalars less than zero
+            are mapped to the smallest representable positive float. Default:
+            ``True``.
 
         render : bool, optional
             Force a render when True.  Default ``True``.
@@ -1731,14 +1733,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     self.mapper.SetColorModeToMapScalars()
                 return
 
-            if log_scale:
-                scalars[scalars < 1] = 1
-                scalars = np.log10(scalars)
-
             prepare_mapper(scalars)
             table = self.mapper.GetLookupTable()
-            # if log_scale:
-            #     table.SetScaleToLog10()
 
             if _using_labels:
                 table.SetAnnotations(convert_array(values), convert_string_array(cats))
@@ -1752,6 +1748,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 clim = [np.nanmin(scalars), np.nanmax(scalars)]
             elif isinstance(clim, float) or isinstance(clim, int):
                 clim = [-clim, clim]
+
+            if log_scale:
+                if clim[0] <= 0:
+                    clim = [sys.float_info.min, clim[1]]
+                table.SetScaleToLog10()
 
             if np.any(clim) and not rgb:
                 self.mapper.scalar_range = clim[0], clim[1]
