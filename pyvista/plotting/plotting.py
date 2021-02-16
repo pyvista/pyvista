@@ -2396,7 +2396,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                        outline=False, nan_annotation=False,
                        below_label=None, above_label=None,
                        background_color=None, n_colors=None, fill=False,
-                       render=True, only_one=True):
+                       render=True):
         """Create scalar bar using the ranges as set by the last input mesh.
 
         Parameters
@@ -2481,9 +2481,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, optional
             Force a render when True.  Default ``True``.
 
-        only_one : bool, optional
-            Use only one scalar bar when scalars already been plotted.
-
         Notes
         -----
         Setting title_font_size, or label_font_size disables automatic font
@@ -2529,7 +2526,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                      'Add a mesh with scalars first.')
             mapper = self.mapper
 
-        if only_one and title:
+        if title:
             # Check that this data hasn't already been plotted
             if title in list(self._scalar_bar_ranges.keys()):
                 clim = list(self._scalar_bar_ranges[title])
