@@ -1297,7 +1297,7 @@ class Renderer(vtkRenderer):
                 self.cube_axes_actor.SetUse2DMode(False)
             self.Modified()
 
-    def reset_camera(self, render=True):
+    def reset_camera(self, render=True, bounds=None):
         """Reset the camera of the active render window.
 
         The camera slides along the vector defined from camera
@@ -1307,9 +1307,15 @@ class Renderer(vtkRenderer):
         ----------
         render : bool
             Trigger a render after resetting the camera.
+        bounds : iterable(int)
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         """
-        self.ResetCamera()
+        if bounds is not None:
+            self.ResetCamera(*bounds)
+        else:
+            self.ResetCamera()
         if render:
             self.parent.render()
         self.Modified()
