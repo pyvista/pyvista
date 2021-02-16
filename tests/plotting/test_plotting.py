@@ -1532,3 +1532,11 @@ def test_where_is():
     assert isinstance(places, list)
     for loc in places:
         assert isinstance(loc, tuple)
+
+
+@skip_no_plotting
+def test_log_scale():
+    mesh = examples.load_uniform()
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(mesh, log_scale=True)
+    plotter.show()
