@@ -359,7 +359,7 @@ class Renderer(vtkRenderer):
 
         """
         # Remove actor by that name if present
-        rv = self.remove_actor(name, reset_camera=False, render=render)
+        rv = self.remove_actor(name, reset_camera=False, render=False)
 
         if isinstance(uinput, vtk.vtkMapper):
             actor = vtk.vtkActor()
