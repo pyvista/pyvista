@@ -9,15 +9,16 @@ within a jupyter notebook.  For those who prefer plotting within
 jupyter, this is an great way of visualizing using ``VTK`` and
 ``pyvista``.
 
-Special thanks to thewtex
+Special thanks to `@thewtex`_ for the `itkwidgets`_ library.
+
+.. _@thewtex: https://github.com/thewtex
 .. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
 
 
 Installation
 ++++++++++++
 To use `PlotterITK` you'll need to install ``itkwidgets>=0.25.2``.
-Follow the installation steps here:
-.. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets#installation
+Follow the installation steps `here <https://github.com/InsightSoftwareConsortium/itkwidgets#installation>`_.
 
 You can install everything with `pip` if you prefer not using conda,
 but be sure your juptyerlab is up-to-date.  If you encounter problems,
@@ -62,10 +63,6 @@ For convenience, figures can also be plotted using the ``plot_itk`` function:
     # Plot using the ITKplotter
     pv.plot_itk(mesh, scalars=z)
 
-
-Additional binder examples can be found at:
-
-.. _itkwidgets_binder: https://hub.gke.mybinder.org/user/insightsoftware-tium-itkwidgets-p2yw6xvh/lab
 
 .. rubric:: Attributes
 
