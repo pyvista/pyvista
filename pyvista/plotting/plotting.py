@@ -1410,7 +1410,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Set whether this mesh is pickable
 
         log_scale : bool, optional
-            Use log scale when mapping data to colors.
+            Use log scale when mapping data to colors. Values < 1 are changed
+            to 1. Default: ``True``.
 
         render : bool, optional
             Force a render when True.  Default ``True``.
