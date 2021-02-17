@@ -3,6 +3,7 @@
 import pathlib
 import collections.abc
 from functools import partial
+from typing import Sequence
 import logging
 import os
 import textwrap
@@ -1857,15 +1858,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if line_width:
             prop.SetLineWidth(line_width)
 
+        self.add_actor(actor, reset_camera=reset_camera, name=name, culling=culling,
+                       pickable=pickable, render=render)
+
         # Add scalar bar if available
         if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
             self.add_scalar_bar(stitle, **scalar_bar_args)
-
-        self.add_actor(actor,
-                       reset_camera=reset_camera,
-                       name=name, culling=culling,
-                       pickable=pickable,
-                       render=render)
 
         self.renderer.Modified()
 
@@ -2388,7 +2386,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                        outline=False, nan_annotation=False,
                        below_label=None, above_label=None,
                        background_color=None, n_colors=None, fill=False,
-                       render=True):
+                       render=True, only_one=True):
         """Create scalar bar using the ranges as set by the last input mesh.
 
         Parameters
@@ -2473,6 +2471,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, optional
             Force a render when True.  Default ``True``.
 
+        only_one : bool, optional
+            Use only one scalar bar when scalars already been plotted.
+
         Notes
         -----
         Setting title_font_size, or label_font_size disables automatic font
@@ -2518,7 +2519,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                      'Add a mesh with scalars first.')
             mapper = self.mapper
 
-        if title:
+        if only_one and title:
             # Check that this data hasn't already been plotted
             if title in list(self._scalar_bar_ranges.keys()):
                 clim = list(self._scalar_bar_ranges[title])
@@ -2534,6 +2535,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mapper.scalar_range = clim[0], clim[1]
                 self._scalar_bar_mappers[title].append(mapper)
                 self._scalar_bar_ranges[title] = clim
+                self.scalar_bar.SetLookupTable(mapper.lookup_table)
                 # Color bar already present and ready to be used so returning
                 return
 
@@ -3558,7 +3560,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._save_image(self.image, filename, return_img)
 
     def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
-                   size=None, name=None):
+                   size=None, name=None, origin=None):
         """Add a legend to render window.
 
         Entries must be a list containing one string and color entry for each
@@ -3597,6 +3599,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The name for the added actor so that it can be easily updated.
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
+
+        origin : list, optional
+            If used, specifies the x and y position of the lower left corner
+            of the legend.
 
         Returns
         -------
@@ -3651,7 +3657,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for i, (text, color) in enumerate(labels):
                 self.legend.SetEntry(i, legendface, text, parse_color(color))
 
-        if size:
+        if origin is not None:
+            if not isinstance(origin, Sequence) or len(origin) != 2:
+                raise ValueError(
+                    '`origin` must be a list of length 2. Passed value is {}'
+                    .format(origin)
+                )
+            self.legend.SetPosition(origin[0], origin[1])
+
+        if size is not None:
+            if not isinstance(size, Sequence) or len(size) != 2:
+                raise ValueError(
+                    '`size` must be a list of length 2. Passed value is {}'
+                    .format(size)
+                )
             self.legend.SetPosition2(size[0], size[1])
 
         if bcolor is None:
