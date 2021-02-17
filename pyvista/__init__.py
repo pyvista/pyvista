@@ -9,6 +9,7 @@ from pyvista.core import *
 from pyvista.utilities.misc import _get_vtk_id_type
 # Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
+from pyvista import _vtk
 
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
@@ -22,7 +23,6 @@ except Exception as e:  # pragma: no cover
 
 
 # determine if using vtk > 5
-from pyvista import _vtk
 if _vtk.vtkVersion().GetVTKMajorVersion() <= 5:
     raise RuntimeError('VTK version must be 5.0 or greater.')
 

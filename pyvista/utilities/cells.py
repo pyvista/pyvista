@@ -3,7 +3,6 @@ import numpy as np
 
 from pyvista import _vtk
 import pyvista
-VTK9 = _vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 
 def numpy_to_idarr(ind, deep=False, return_ind=False):
@@ -258,17 +257,17 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(np.concatenate([np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1).reshape([-1]))
 
-        if not VTK9:
+        if not _vtk.VTK9:
             final_cell_offsets.append(current_cell_offset + (nr_points_per_elem+1) * (np.arange(nr_elems)+1))
             current_cell_offset += final_cell_offsets[-1][-1]
 
     final_cell_types = np.concatenate(final_cell_types)
     final_cell_arr = np.concatenate(final_cell_arr)
 
-    if not VTK9:
+    if not _vtk.VTK9:
         final_cell_offsets = np.concatenate(final_cell_offsets)[:-1]
 
-    if not VTK9:
+    if not _vtk.VTK9:
         return final_cell_types, final_cell_arr, final_cell_offsets
     else:
         return final_cell_types, final_cell_arr

@@ -8,16 +8,16 @@ the entire library.
 
 """
 
-# Checking for VTK9 here since 8.2 contains vtkmodules, but there are
-# enough idiosyncroncies to it that supporting it would lead to
-# obscure code.
+# Checking for VTK9 here even though 8.2 contains vtkmodules.  There
+# are enough idiosyncroncies to VTK 8.2, and supporting it would lead
+# to obscure code.
 try:
     from vtkmodules.vtkCommonCore import vtkVersion
-    _vtk9 = vtkVersion().GetVTKMajorVersion() >= 9
+    VTK9 = vtkVersion().GetVTKMajorVersion() >= 9
 except ImportError:
-    _vtk9 = False
+    VTK9 = False
 
-if _vtk9:
+if VTK9:
     from vtkmodules.vtkInteractionWidgets import (vtkScalarBarWidget,
                                                   vtkSplineWidget,
                                                   vtkSphereWidget,

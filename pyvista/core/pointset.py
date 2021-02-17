@@ -22,8 +22,6 @@ from ..utilities.fileio import get_ext
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-VTK9 = _vtk.vtkVersion().GetVTKMajorVersion() >= 9
-
 
 class PointSet(DataSet):
     """PyVista's equivalent of vtk.vtkPointSet.
@@ -552,7 +550,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         else:
             err_msg = 'Invalid parameters.  Initialization with arrays ' +\
                       'requires the following arrays:\n'
-            if VTK9:
+            if _vtk.VTK9:
                 raise TypeError(err_msg + '`cells`, `cell_type`, `points`')
             else:
                 raise TypeError(err_msg + '(`offset` optional), `cells`, `cell_type`, `points`')
@@ -570,7 +568,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             raise ValueError("Points array must be a [M, 3] array")
 
         nr_points = points.shape[0]
-        if VTK9:
+        if _vtk.VTK9:
             cell_types, cells = create_mixed_cells(cells_dict, nr_points)
             self._from_arrays(None, cells, cell_types, points, deep=deep)
         else:
@@ -643,7 +641,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         self.SetPoints(points)
 
         # vtk9 does not require an offset array
-        if VTK9:
+        if _vtk.VTK9:
             if offset is not None:
                 warnings.warn('VTK 9 no longer accepts an offset array',
                               stacklevel=3)
@@ -665,7 +663,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             raise ValueError(f'Number of cell types ({self.celltypes.size}) '
                              f'must match the number of cells {self.n_cells})')
 
-        if VTK9:
+        if _vtk.VTK9:
             if self.n_cells != self.offset.size - 1:
                 raise ValueError(f'Size of the offset ({self.offset.size}) '
                                  'must be one greater than the number of cells '
@@ -700,7 +698,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     def cell_connectivity(self):
         """Return a the vtk cell connectivity as a numpy array."""
         carr = self.GetCells()
-        if VTK9:
+        if _vtk.VTK9:
             return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
         raise AttributeError('Install vtk>=9.0.0 for `cell_connectivity`\n'
                              'Otherwise, use the legacy `cells` method')
@@ -751,7 +749,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         # fixing bug with display of quad cells
         if np.any(quad_quad_mask):
-            if VTK9:
+            if _vtk.VTK9:
                 quad_offset = lgrid.offset[:-1][quad_quad_mask]
                 base_point = lgrid.cell_connectivity[quad_offset]
                 lgrid.cell_connectivity[quad_offset + 4] = base_point
@@ -767,7 +765,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 lgrid.cells[quad_offset + 8] = base_point
 
         if np.any(quad_tri_mask):
-            if VTK9:
+            if _vtk.VTK9:
                 tri_offset = lgrid.offset[:-1][quad_tri_mask]
                 base_point = lgrid.cell_connectivity[tri_offset]
                 lgrid.cell_connectivity[tri_offset + 3] = base_point
@@ -791,7 +789,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     def offset(self):
         """Get cell locations Array."""
         carr = self.GetCells()
-        if VTK9:
+        if _vtk.VTK9:
             # This will be the number of cells + 1.
             return _vtk.vtk_to_numpy(carr.GetOffsetsArray())
         else:  # this is no longer used in >= VTK9

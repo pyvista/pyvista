@@ -8,8 +8,6 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-VTK9 = _vtk.vtkVersion().GetVTKMajorVersion() >= 9
-
 READERS = {
     # Standard dataset readers:
     '.vtk': _vtk.vtkDataSetReader,
@@ -392,7 +390,7 @@ def from_meshio(mesh):
             np.hstack((np.full((len(c.data), 1), numnodes), c.data)).ravel()
         )
         cell_type += [vtk_type] * len(c.data)
-        if not VTK9:
+        if not _vtk.VTK9:
             offset += [next_offset + i * (numnodes + 1) for i in range(len(c.data))]
             next_offset = offset[-1] + numnodes + 1
 
@@ -404,7 +402,7 @@ def from_meshio(mesh):
     if points.shape[1] == 2:
         points = np.hstack((points, np.zeros((len(points), 1))))
 
-    if VTK9:
+    if _vtk.VTK9:
         grid = pyvista.UnstructuredGrid(
             np.concatenate(cells),
             np.array(cell_type),
@@ -474,7 +472,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     c = 0
     for offset, cell_type in zip(vtk_offset, vtk_cell_type):
         numnodes = vtk_cells[offset+c]
-        if VTK9:  # must offset by cell count
+        if _vtk.VTK9:  # must offset by cell count
             cell = vtk_cells[offset+1+c:offset+1+c+numnodes]
             c += 1
         else:
