@@ -17,7 +17,7 @@ from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
 from vtk.util.numpy_support import (numpy_to_vtk, vtk_to_numpy)
 
 import pyvista
-from pyvista.utilities import abstract_class
+from pyvista.utilities import abstract_class, assert_empty_kwargs
 from pyvista.utilities.cells import CellArray, numpy_to_idarr, generate_cell_offsets, create_mixed_cells, get_mixed_cells
 from .dataset import DataSet
 from .filters import PolyDataFilters, UnstructuredGridFilters, StructuredGridFilters
@@ -144,45 +144,48 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     _WRITERS = {'.ply': vtk.vtkPLYWriter, '.vtp': vtk.vtkXMLPolyDataWriter,
                 '.stl': vtk.vtkSTLWriter, '.vtk': vtk.vtkPolyDataWriter}
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, var_inp, faces=None, lines=None,
+                 deep=False) -> None:
         """Initialize the polydata."""
         super().__init__()
 
-        deep = kwargs.pop('deep', False)
-
-        if not args:
+        if var_inp is None:
             return
-        elif len(args) == 1:
-            if isinstance(args[0], vtk.vtkPolyData):
+        elif var_inp is not None and faces is None:
+            if isinstance(var_inp, vtk.vtkPolyData):
                 if deep:
-                    self.deep_copy(args[0])
+                    self.deep_copy(var_inp)
                 else:
-                    self.shallow_copy(args[0])
-            elif isinstance(args[0], (str, pathlib.Path)):
-                self._from_file(args[0])
-            elif isinstance(args[0], (np.ndarray, list)):
-                if isinstance(args[0], list):
-                    points = np.asarray(args[0])
+                    self.shallow_copy(var_inp)
+            elif isinstance(var_inp, (str, pathlib.Path)):
+                self._from_file(var_inp)  # is filename
+            elif isinstance(var_inp, (np.ndarray, list)):
+                if isinstance(var_inp, list):
+                    points = np.asarray(var_inp)
                     if not np.issubdtype(points.dtype, np.number):
                         raise TypeError('Points must be a numeric type')
                 else:
-                    points = args[0]
+                    points = var_inp
                 if points.ndim != 2:
                     points = points.reshape((-1, 3))
-                cells = self._make_vertex_cells(points.shape[0])
-                self._from_arrays(points, cells, deep, verts=True)
+
+                # only create cell points when lines do not exist
+                if lines is None:
+                    cells = self._make_vertex_cells(points.shape[0])
+                    self._from_arrays(points, cells, deep, verts=True)
             else:
                 raise TypeError('Invalid input type')
 
-        elif len(args) == 2:
-            arg0_is_array = isinstance(args[0], np.ndarray)
-            arg1_is_array = isinstance(args[1], np.ndarray)
+        elif faces is not None:
             if arg0_is_array and arg1_is_array:
                 self._from_arrays(args[0], args[1], deep)
             else:
-                raise TypeError('Invalid input type')
+                raise TypeError(f'Expected points and faces parameters to be numpy arrays.  \nInstead got: {type(var_inp)}, {type(faces)}')
         else:
             raise TypeError('Invalid input type')
+
+        if lines is not None:
+            self.lines = lines
 
         # Check if need to make vertex cells
         if self.n_points > 0 and self.n_cells == 0:
@@ -242,12 +245,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         # All we have are faces, check if all faces are indeed triangles
         return self.faces.size % 4 == 0 and (self.faces.reshape(-1, 4)[:, 0] == 3).all()
 
-    def _from_arrays(self, vertices, faces, deep=True, verts=False):
+    def _from_arrays(self, points, faces, deep=True, verts=False):
         """Set polygons and points from numpy arrays.
 
         Parameters
         ----------
-        vertices : np.ndarray of dtype=np.float32 or np.float64
+        points : np.ndarray of dtype=np.float32 or np.float64
             Vertex array.  3D points.
 
         faces : np.ndarray of dtype=np.int64
@@ -260,18 +263,23 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         --------
         >>> import numpy as np
         >>> import pyvista
-        >>> vertices = np.array([[0, 0, 0],
-        ...                      [1, 0, 0],
-        ...                      [1, 1, 0],
-        ...                      [0, 1, 0],
-        ...                      [0.5, 0.5, 1]])
+        >>> points = np.array([[0, 0, 0],
+        ...                    [1, 0, 0],
+        ...                    [1, 1, 0],
+        ...                    [0, 1, 0],
+        ...                    [0.5, 0.5, 1]])
         >>> faces = np.hstack([[4, 0, 1, 2, 3],
         ...                    [3, 0, 1, 4],
         ...                    [3, 1, 2, 4]])  # one square and two triangles
-        >>> surf = pyvista.PolyData(vertices, faces)
+        >>> surf = pyvista.PolyData(points, faces)
 
         """
-        self.SetPoints(pyvista.vtk_points(vertices, deep=deep))
+        points_is_array = isinstance(points, np.ndarray)
+        faces_is_array = isinstance(faces, np.ndarray)
+        if not (points_is_array or faces_is_array):
+            raise TypeError(f'Expected points and faces parameters to be numpy arrays.  \nInstead got: {type(points)}, {type(faces)}')
+
+        self.SetPoints(pyvista.vtk_points(points, deep=deep))
         if verts:
             self.SetVerts(CellArray(faces))
         else:

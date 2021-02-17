@@ -251,9 +251,18 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
 
 
 def vtk_points(points, deep=True):
-    """Convert numpy points to a vtkPoints object."""
+    """Convert numpy or list of points to a vtkPoints object."""
+    if not isinstance(points, np.ndarray):
+        points = np.array(points)
+
+    # verify is numeric
+    if not np.issubdtype(points.dtype, np.number):
+        raise TypeError('Points must be a numeric type')
+
+    # points must be contigious
     if not points.flags['C_CONTIGUOUS']:
         points = np.ascontiguousarray(points)
+
     vtkpts = vtk.vtkPoints()
     vtkpts.SetData(nps.numpy_to_vtk(points, deep=deep))
     return vtkpts
