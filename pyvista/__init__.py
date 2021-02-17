@@ -13,14 +13,6 @@ from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
 
-# for additional error output for VTK segfaults
-try:
-    import faulthandler
-    faulthandler.enable()
-except Exception as e:  # pragma: no cover
-    warnings.warn(f'Unable to enable faulthandler:\n{e}')
-
-
 # determine if using vtk > 5
 if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
     raise RuntimeError('VTK version must be 5.0 or greater.')
