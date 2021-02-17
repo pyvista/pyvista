@@ -177,7 +177,8 @@ class WidgetHelper:
                          assign_to_axis=None, tubing=False,
                          outline_translation=False,
                          origin_translation=True, implicit=True,
-                         pass_widget=False, test_callback=True):
+                         pass_widget=False, test_callback=True,
+                         normal_rotation=True):
         """Add a plane widget to the scene.
 
         This is useless without a callback function. You can pass a callable
@@ -225,15 +226,20 @@ class WidgetHelper:
             an implicit plane.
 
         implicit : bool
-            When ``True``, a ``vtkImplicitPlaneWidget`` is ued and when
+            When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
             ``False``, a ``vtkPlaneWidget`` is used.
 
         pass_widget : bool
             If true, the widget will be passed as the last argument of the
             callback
 
-        test_callback: bool
+        test_callback : bool
             If true, run the callback function after the widget is created.
+
+        normal_rotation : bool
+            Set the opacity of the normal vector arrow to 0 such that it is
+            effectively disabled. This prevents the user from rotating the
+            normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
         """
         if not hasattr(self, "plane_widgets"):
@@ -249,6 +255,9 @@ class WidgetHelper:
 
         if color is None:
             color = rcParams['font']['color']
+
+        if assign_to_axis:
+            normal_rotation = False
 
         def _the_callback(widget, event_id):
             the_plane = _vtk.vtkPlane()
@@ -281,6 +290,9 @@ class WidgetHelper:
             plane_widget.PlaceWidget(bounds)
             plane_widget.SetOrigin(origin)
 
+            if not normal_rotation:
+                plane_widget.GetNormalProperty().SetOpacity(0)
+
         else:
             # Position of the small plane
             source = _vtk.vtkPlaneSource()
@@ -304,12 +316,15 @@ class WidgetHelper:
             plane_widget.GetPlaneProperty().SetColor(parse_color(color))  # self.C_LOT[fn])
             plane_widget.GetHandleProperty().SetColor(parse_color(color))
 
+            if not normal_rotation:
+                plane_widget.GetHandleProperty().SetOpacity(0)
+
         plane_widget.GetPlaneProperty().SetOpacity(0.5)
         plane_widget.SetInteractor(self.iren)
         plane_widget.SetCurrentRenderer(self.renderer)
 
         if assign_to_axis:
-            # TODO: how do we now disable/hide the arrow?
+            # Note that normal_rotation was forced to False
             if assign_to_axis in [0, "x", "X"]:
                 plane_widget.NormalToXAxisOn()
                 plane_widget.SetNormal(NORMALS["x"])
@@ -345,7 +360,8 @@ class WidgetHelper:
     def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
                             widget_color=None, value=0.0, assign_to_axis=None,
                             tubing=False, origin_translation=True,
-                            outline_translation=False, implicit=True, **kwargs):
+                            outline_translation=False, implicit=True,
+                            normal_rotation=True, **kwargs):
         """Clip a mesh using a plane widget.
 
         Add a mesh to the scene with a plane widget that is used to clip
@@ -364,6 +380,40 @@ class WidgetHelper:
 
         invert : bool
             Flag on whether to flip/invert the clip
+
+        widget_color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        value : float, optional
+            Set the clipping value along the normal direction.
+            The default value is 0.0.
+
+        assign_to_axis : str or int
+            Assign the normal of the plane to be parallel with a given axis:
+            options are (0, 'x'), (1, 'y'), or (2, 'z').
+
+        tubing : bool
+            When using an implicit plane wiget, this controls whether or not
+            tubing is shown around the plane's boundaries.
+
+        outline_translation : bool
+            If ``False``, the plane widget cannot be translated and is strictly
+            placed at the given bounds. Only valid when using an implicit
+            plane.
+
+        origin_translation : bool
+            If ``False``, the plane widget cannot be translated by its origin
+            and is strictly placed at the given origin. Only valid when using
+            an implicit plane.
+
+        implicit : bool
+            When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
+            ``False``, a ``vtkPlaneWidget`` is used.
+
+        normal_rotation : bool
+            Set the opacity of the normal vector arrow to 0 such that it is
+            effectively disabled. This prevents the user from rotating the
+            normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
@@ -405,7 +455,8 @@ class WidgetHelper:
                               assign_to_axis=assign_to_axis,
                               origin_translation=origin_translation,
                               outline_translation=outline_translation,
-                              implicit=implicit, origin=mesh.center)
+                              implicit=implicit, origin=mesh.center,
+                              normal_rotation=normal_rotation)
 
         actor = self.add_mesh(plane_clipped_mesh, **kwargs)
 
@@ -414,7 +465,8 @@ class WidgetHelper:
     def add_mesh_slice(self, mesh, normal='x', generate_triangles=False,
                        widget_color=None, assign_to_axis=None,
                        tubing=False, origin_translation=True,
-                       outline_translation=False, implicit=True, **kwargs):
+                       outline_translation=False, implicit=True,
+                       normal_rotation=True, **kwargs):
         """Slice a mesh using a plane widget.
 
         Add a mesh to the scene with a plane widget that is used to slice
@@ -434,6 +486,37 @@ class WidgetHelper:
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
+
+        widget_color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        assign_to_axis : str or int
+            Assign the normal of the plane to be parallel with a given axis:
+            options are (0, 'x'), (1, 'y'), or (2, 'z').
+
+        tubing : bool
+            When using an implicit plane wiget, this controls whether or not
+            tubing is shown around the plane's boundaries.
+
+        outline_translation : bool
+            If ``False``, the plane widget cannot be translated and is strictly
+            placed at the given bounds. Only valid when using an implicit
+            plane.
+
+        origin_translation : bool
+            If ``False``, the plane widget cannot be translated by its origin
+            and is strictly placed at the given origin. Only valid when using
+            an implicit plane.
+
+        implicit : bool
+            When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
+            ``False``, a ``vtkPlaneWidget`` is used.
+
+        normal_rotation : bool
+            Set the opacity of the normal vector arrow to 0 such that it is
+            effectively disabled. This prevents the user from rotating the
+            normal. This is forced to ``False`` when ``assign_to_axis`` is set.
+
 
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
@@ -470,7 +553,8 @@ class WidgetHelper:
                               assign_to_axis=assign_to_axis,
                               origin_translation=origin_translation,
                               outline_translation=outline_translation,
-                              implicit=implicit, origin=mesh.center)
+                              implicit=implicit, origin=mesh.center,
+                              normal_rotation=normal_rotation)
 
         actor = self.add_mesh(plane_sliced_mesh, **kwargs)
 
@@ -678,7 +762,8 @@ class WidgetHelper:
     def add_slider_widget(self, callback, rng, value=None, title=None,
                           pointa=(.4, .9), pointb=(.9, .9),
                           color=None, pass_widget=False,
-                          event_type='end', style=None):
+                          event_type='end', style=None,
+                          title_height=0.03, title_opacity=1.0, title_color=None, fmt=None):
         """Add a slider bar widget.
 
         This is useless without a callback function. You can pass a callable
@@ -722,6 +807,39 @@ class WidgetHelper:
         style : str, optional
             The name of the slider style. The list of available styles are in
             ``rcParams['slider_style']``. Defaults to None.
+
+        title_height: float, optional
+            Relative height of the title as compared to the length of the slider.
+
+        title_opacity: str, optional
+            Opacity of title. Defaults to 1.0.
+
+        title_color : string or 3 item list, optional
+            Either a string, rgb list, or hex color string.  Defaults to the value 
+            given in ``color``.
+
+        fmt : str, optional
+            String formatter used to format numerical data. Defaults to ``None``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> p = pv.Plotter()
+        >>> def create_mesh(value):
+        ...     res = int(value)
+        ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
+        ...     p.add_mesh(sphere, name="sphere", show_edges=True)
+        ...     return
+        >>> slider = p.add_slider_widget(
+        ...     create_mesh,
+        ...     [5, 100],
+        ...     title="Resolution",
+        ...     title_opacity=0.5,
+        ...     title_color="red",
+        ...     fmt="%0.9f",
+        ...     title_height=0.08,
+        ... )
+        >>> p.show()  # doctest:+SKIP
         """
         if not hasattr(self, "slider_widgets"):
             self.slider_widgets = []
@@ -733,6 +851,12 @@ class WidgetHelper:
 
         if color is None:
             color = rcParams['font']['color']
+
+        if title_color is None:
+            title_color = color
+
+        if fmt is None:
+            fmt = rcParams['font']['fmt']
 
         def normalize(point, viewport):
             return (point[0]*(viewport[2]-viewport[0]),point[1]*(viewport[3]-viewport[1]))
@@ -789,6 +913,11 @@ class WidgetHelper:
         slider_widget.SetInteractor(self.iren)
         slider_widget.SetCurrentRenderer(self.renderer)
         slider_widget.SetRepresentation(slider_rep)
+        slider_widget.GetRepresentation().SetTitleHeight(title_height)
+        slider_widget.GetRepresentation().GetTitleProperty().SetOpacity(title_opacity)
+        slider_widget.GetRepresentation().GetTitleProperty().SetColor(parse_color(title_color))
+        if fmt is not None:
+            slider_widget.GetRepresentation().SetLabelFormat(fmt)
         slider_widget.On()
         if not isinstance(event_type, str):
             raise TypeError("Expected type for `event_type` is str: "

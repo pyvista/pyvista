@@ -1,5 +1,6 @@
 """Pyvista plotting module."""
 
+import sys
 import pathlib
 import collections.abc
 from functools import partial
@@ -1408,6 +1409,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pickable : bool
             Set whether this mesh is pickable
 
+        log_scale : bool, optional
+            Use log scale when mapping data to colors. Scalars less than zero
+            are mapped to the smallest representable positive float. Default:
+            ``True``.
+
         render : bool, optional
             Force a render when True.  Default ``True``.
 
@@ -1728,8 +1734,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             prepare_mapper(scalars)
             table = self.mapper.GetLookupTable()
-            if log_scale:
-                table.SetScaleToLog10()
 
             if _using_labels:
                 table.SetAnnotations(convert_array(values), convert_string_array(cats))
@@ -1743,6 +1747,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 clim = [np.nanmin(scalars), np.nanmax(scalars)]
             elif isinstance(clim, float) or isinstance(clim, int):
                 clim = [-clim, clim]
+
+            if log_scale:
+                if clim[0] <= 0:
+                    clim = [sys.float_info.min, clim[1]]
+                table.SetScaleToLog10()
 
             if np.any(clim) and not rgb:
                 self.mapper.scalar_range = clim[0], clim[1]
@@ -2386,7 +2395,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                        outline=False, nan_annotation=False,
                        below_label=None, above_label=None,
                        background_color=None, n_colors=None, fill=False,
-                       render=True, only_one=True):
+                       render=True):
         """Create scalar bar using the ranges as set by the last input mesh.
 
         Parameters
@@ -2471,9 +2480,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, optional
             Force a render when True.  Default ``True``.
 
-        only_one : bool, optional
-            Use only one scalar bar when scalars already been plotted.
-
         Notes
         -----
         Setting title_font_size, or label_font_size disables automatic font
@@ -2519,7 +2525,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                      'Add a mesh with scalars first.')
             mapper = self.mapper
 
-        if only_one and title:
+        if title:
             # Check that this data hasn't already been plotted
             if title in list(self._scalar_bar_ranges.keys()):
                 clim = list(self._scalar_bar_ranges[title])
@@ -4005,6 +4011,42 @@ class BasePlotter(PickingHelper, WidgetHelper):
         renderers = [self.renderer] if only_active else self.renderers
         for renderer in renderers:
             renderer.remove_all_lights()
+
+    def where_is(self, name):
+        """Return the subplot coordinates of a given actor.
+
+        Parameters
+        ----------
+        name : str
+            Actor's name.
+
+        Returns
+        -------
+        places : list(tuple(int))
+            A list with the subplot coordinates of the actor.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter(shape=(2, 2))
+        >>> plotter.subplot(0, 0)
+        >>> plotter.add_mesh(pv.Box(), name='box')  # doctest:+SKIP
+        >>> plotter.subplot(0, 1)
+        >>> plotter.add_mesh(pv.Sphere(), name='sphere')  # doctest:+SKIP
+        >>> plotter.subplot(1, 0)
+        >>> plotter.add_mesh(pv.Box(), name='box')  # doctest:+SKIP
+        >>> plotter.subplot(1, 1)
+        >>> plotter.add_mesh(pv.Cone(), name='cone')  # doctest:+SKIP
+        >>> plotter.where_is('box')  # doctest:+SKIP
+        [(0, 0), (1, 0)]
+
+        """
+        places = []
+        for index in range(len(self.renderers)):
+            if name in self.renderers[index]._actors:
+                places.append(tuple(self.index_to_loc(index)))
+        return places
+
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.

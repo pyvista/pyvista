@@ -358,7 +358,7 @@ class Renderer(_vtk.vtkRenderer):
 
         """
         # Remove actor by that name if present
-        rv = self.remove_actor(name, reset_camera=False, render=render)
+        rv = self.remove_actor(name, reset_camera=False, render=False)
 
         if isinstance(uinput, _vtk.vtkMapper):
             actor = _vtk.vtkActor()
@@ -823,7 +823,7 @@ class Renderer(_vtk.vtkRenderer):
 
         A wrapped implementation of ``show_bounds`` to change default
         behaviour to use gridlines and showing the axes labels on the outer
-        edges. This is intended to be silimar to ``matplotlib``'s ``grid``
+        edges. This is intended to be similar to ``matplotlib``'s ``grid``
         function.
 
         """
@@ -1296,7 +1296,7 @@ class Renderer(_vtk.vtkRenderer):
                 self.cube_axes_actor.SetUse2DMode(False)
             self.Modified()
 
-    def reset_camera(self, render=True):
+    def reset_camera(self, render=True, bounds=None):
         """Reset the camera of the active render window.
 
         The camera slides along the vector defined from camera
@@ -1306,9 +1306,15 @@ class Renderer(_vtk.vtkRenderer):
         ----------
         render : bool
             Trigger a render after resetting the camera.
+        bounds : iterable(int)
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         """
-        self.ResetCamera()
+        if bounds is not None:
+            self.ResetCamera(*bounds)
+        else:
+            self.ResetCamera()
         if render:
             self.parent.render()
         self.Modified()

@@ -114,11 +114,26 @@ class PickingHelper:
             is_valid_selection = picked.n_cells > 0
 
             if show and is_valid_selection:
+                # Select the renderer where the mesh is added.
+                active_renderer_index = self_()._active_renderer_index
+                for index in range(len(self.renderers)):
+                    renderer = self.renderers[index]
+                    for actor in renderer._actors.values():
+                        mapper = actor.GetMapper()
+                        if isinstance(mapper, vtk.vtkDataSetMapper) and mapper.GetInput() == mesh:
+                            loc = self_().index_to_loc(index)
+                            self_().subplot(*loc)
+                            break
+
                 # Use try in case selection is empty
                 self_().add_mesh(picked, name='_cell_picking_selection',
                                  style=style, color=color,
                                  line_width=line_width, pickable=False,
                                  reset_camera=False, **kwargs)
+
+                # Reset to the active renderer.
+                loc = self_().index_to_loc(active_renderer_index)
+                self_().subplot(*loc)
 
                 # render here prior to running the callback
                 self_().render()
@@ -142,28 +157,30 @@ class PickingHelper:
             return end_pick_helper(picker, event_id)
 
         def visible_pick_call_back(picker, event_id):
-            x0,y0,x1,y1 = renderer_().get_pick_position()
-            selector = _vtk.vtkOpenGLHardwareSelector()
-            selector.SetFieldAssociation(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
-            selector.SetRenderer(renderer_())
-            selector.SetArea(x0,y0,x1,y1)
-            selection = selector.Select()
             picked = pyvista.MultiBlock()
-            for node in range(selection.GetNumberOfNodes()):
-                selection_node = selection.GetNode(node)
-                if selection_node is None:
-                    # No selection
-                    continue
-                cids = pyvista.convert_array(selection_node.GetSelectionList())
-                actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
-                if actor.GetProperty().GetRepresentation() != 2: # surface
-                    logging.warning("Display representations other than `surface` will result in incorrect results.")
-                smesh = actor.GetMapper().GetInputAsDataSet()
-                smesh = smesh.copy()
-                smesh["original_cell_ids"] = np.arange(smesh.n_cells)
-                tri_smesh = smesh.extract_surface().triangulate()
-                cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
-                picked.append(smesh.extract_cells(cids_to_get))
+            x0, y0, x1, y1 = renderer_().get_pick_position()
+            if x0 >= 0:  # initial pick position is (-1, -1, -1, -1)
+                selector = _vtk.vtkOpenGLHardwareSelector()
+                selector.SetFieldAssociation(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
+                selector.SetRenderer(renderer_())
+                selector.SetArea(x0, y0, x1, y1)
+                selection = selector.Select()
+                for node in range(selection.GetNumberOfNodes()):
+                    selection_node = selection.GetNode(node)
+                    if selection_node is None:
+                        # No selection
+                        continue
+                    cids = pyvista.convert_array(selection_node.GetSelectionList())
+                    actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
+                    if actor.GetProperty().GetRepresentation() != 2:  # surface
+                        logging.warning("Display representations other than `surface` will result in incorrect results.")
+                    smesh = actor.GetMapper().GetInputAsDataSet()
+                    smesh = smesh.copy()
+                    smesh["original_cell_ids"] = np.arange(smesh.n_cells)
+                    tri_smesh = smesh.extract_surface().triangulate()
+                    cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
+                    picked.append(smesh.extract_cells(cids_to_get))
+
             if len(picked) == 1:
                 self_().picked_cells = picked[0]
             else:
