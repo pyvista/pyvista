@@ -195,7 +195,7 @@ class PickingHelper:
             # Reference:
             #     https://github.com/pyvista/pyvista/issues/277
             #     https://github.com/pyvista/pyvista/pull/281
-            #     https://discourse._vtk.org/t/visible-cell-selection-hardwareselector-py-example-is-not-working-reliably/1262
+            #     https://discourse.vtk.org/t/visible-cell-selection-hardwareselector-py-example-is-not-working-reliably/1262
             area_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
         self.enable_rubber_band_style()
