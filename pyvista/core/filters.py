@@ -1619,7 +1619,9 @@ class DataSetFilters:
         if not isinstance(surface, pyvista.PolyData):
             raise TypeError("`surface` must be `pyvista.PolyData`")
         if check_surface and surface.n_open_edges > 0:
-            raise RuntimeError("Surface is not closed. Please read the warning in the documentation for this function and either pass `check_surface=False` or repair the surface.")
+            raise RuntimeError("Surface is not closed. Please read the warning in the "
+                               "documentation for this function and either pass "
+                               "`check_surface=False` or repair the surface.")
         alg = _vtk.vtkSelectEnclosedPoints()
         alg.SetInputData(dataset)
         alg.SetSurfaceData(surface)
