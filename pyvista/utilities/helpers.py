@@ -689,8 +689,8 @@ def raise_not_matching(scalars, mesh):
     """Raise exception about inconsistencies."""
     if isinstance(mesh, _vtk.vtkTable):
         raise ValueError(f'Number of scalars ({scalars.size}) must match number of rows ({mesh.n_rows}).')
-    raise ValueError(f'Number of scalars ({scalars.size}) ' +
-                     f'must match either the number of points ({mesh.n_points}) ' +
+    raise ValueError(f'Number of scalars ({scalars.size}) '
+                     f'must match either the number of points ({mesh.n_points}) '
                      f'or the number of cells ({mesh.n_cells}).')
 
 

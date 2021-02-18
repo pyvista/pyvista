@@ -12,7 +12,7 @@ https://github.com/pyvista/pyvista/pull/1163
 """
 
 pytest.mark.skipif(not pyvista._vtk.VTK9,
-                   reason='``vtk`` can be loaded directly on vtk<')
+                   reason='``vtk`` can be loaded directly on vtk<9')
 def test_vtk_not_loaded():
     """This test verifies that the vtk module isn't loaded when using vtk>=9
 
