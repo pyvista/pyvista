@@ -9,7 +9,7 @@ the entire library.
 """
 
 # Checking for VTK9 here even though 8.2 contains vtkmodules.  There
-# are enough idiosyncroncies to VTK 8.2, and supporting it would lead
+# are enough idiosyncrasies to VTK 8.2, and supporting it would lead
 # to obscure code.
 try:
     from vtkmodules.vtkCommonCore import vtkVersion
