@@ -3225,7 +3225,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
-
         shape_color : string or 3 item list, optional. Color of points (if visible).
             Either a string, rgb list, or hex color string.  For example:
 
