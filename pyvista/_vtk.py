@@ -43,7 +43,8 @@ if VTK9:
                                                 vtkOpenGLRenderer,
                                                 vtkOpenGLTexture)
     from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
-    from vtkmodules.vtkIOPLY import vtkPLYReader, vtkPLYWriter
+    from vtkmodules.vtkIOPLY import (vtkPLYReader,
+                                     vtkPLYWriter)
     from vtkmodules.vtkIOGeometry import (vtkSTLReader,
                                           vtkFLUENTReader,
                                           vtkPTSReader,
