@@ -2,22 +2,10 @@
 
 import numpy as np
 
-# have to do the imports here rather than in _vtk to avoid circular
-# imports
-try:
-    from vtkmodules.vtkCommonCore import vtkVersion
-    _vtk9 = vtkVersion().GetVTKMajorVersion() >= 9
-except ImportError:
-    _vtk9 = False
-
-if _vtk9:
-    from vtkmodules.vtkRenderingCore import vtkCamera
-    from vtkmodules.vtkCommonMath import vtkMatrix4x4
-else:
-    from vtk import vtkCamera, vtkMatrix4x4
+from pyvista import _vtk
 
 
-class Camera(vtkCamera):
+class Camera(_vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Examples
@@ -126,7 +114,7 @@ class Camera(vtkCamera):
                                   [0., 0., 0., 1.]])
         >>> pl.camera.model_transform_matrix = trans_mat
         """
-        vtk_matrix = vtkMatrix4x4()
+        vtk_matrix = _vtk.vtkMatrix4x4()
         vtk_matrix.DeepCopy(matrix.ravel())
         self.SetModelTransformMatrix(vtk_matrix)
 

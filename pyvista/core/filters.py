@@ -1954,13 +1954,14 @@ class DataSetFilters:
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
-            raise ValueError(f"integration direction must be one of: 'backward', 'forward', or 'both' - not '{integration_direction}'.")
+            raise ValueError("Integration direction must be one of:\n 'backward', "
+                             f"'forward', or 'both' - not '{integration_direction}'.")
         if integrator_type not in [2, 4, 45]:
-            raise ValueError('integrator type must be one of `2`, `4`, or `45`.')
+            raise ValueError('Integrator type must be one of `2`, `4`, or `45`.')
         if interpolator_type not in ['c', 'cell', 'p', 'point']:
-            raise ValueError("interpolator type must be either 'cell' or 'point'")
+            raise ValueError("Interpolator type must be either 'cell' or 'point'")
         if step_unit not in ['l', 'cl']:
-            raise ValueError("step unit must be either 'l' or 'cl'")
+            raise ValueError("Step unit must be either 'l' or 'cl'")
         step_unit = {'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
                      'l': _vtk.vtkStreamTracer.LENGTH_UNIT}[step_unit]
         if isinstance(vectors, str):
