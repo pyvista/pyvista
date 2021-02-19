@@ -14,7 +14,7 @@ the entire library.
 try:
     from vtkmodules.vtkCommonCore import vtkVersion
     VTK9 = vtkVersion().GetVTKMajorVersion() >= 9
-except ImportError:
+except ImportError:  # pragma: no cover
     VTK9 = False
 
 
@@ -360,7 +360,7 @@ if VTK9:
         from vtkmodules.vtkIOSegY import vtkSegYReader
         return vtkSegYReader()
 
-else:
+else:  # pragma: no cover
 
     # maintain VTK 8.2 compatibility
     try:
