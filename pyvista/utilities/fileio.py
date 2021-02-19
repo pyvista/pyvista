@@ -280,8 +280,23 @@ def read_exodus(filename,
                 animate_mode_shapes=True,
                 apply_displacements=True,
                 displacement_magnitude=1.0,
+                read_point_data=True,
+                read_cell_data=True,
                 enabled_sidesets=None):
-    """Read an ExodusII file (``'.e'`` or ``'.exo'``)."""
+    """Read an ExodusII file (``'.e'`` or ``'.exo'``).
+
+    Parameters
+    ----------
+    filename : str
+        The path to the exodus file to read.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> data = examples.download_exodus()
+    >>> 
+
+    """
     # lazy import here to avoid loading module on import pyvista
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader
@@ -294,6 +309,12 @@ def read_exodus(filename,
     reader.SetAnimateModeShapes(animate_mode_shapes)
     reader.SetApplyDisplacements(apply_displacements)
     reader.SetDisplacementMagnitude(displacement_magnitude)
+
+    if read_point_data: # enables all point data variables
+        reader.SetAllArrayStatus(vtkExodusIIReader.NODAL, 1)
+
+    if read_cell_data:  # enables all cell data variables
+        reader.SetAllArrayStatus(vtkExodusIIReader.ELEM_BLOCK, 1)
 
     if enabled_sidesets is None:
         enabled_sidesets = list(range(reader.GetNumberOfSideSetArrays()))
