@@ -215,7 +215,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     --------
     Create the cell arrays containing two triangles.
 
-    This will generate cell arrays two generate a mesh with two
+    This will generate cell arrays to generate a mesh with two
     disconnected triangles from 6 points.
 
     >>> import vtk
