@@ -1,9 +1,9 @@
 """Module dedicated to widgets."""
 
 import numpy as np
-import vtk
 
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import NORMALS, generate_plane, get_array, try_callback
 from .theme import rcParams, parse_color
 
@@ -70,7 +70,7 @@ class WidgetHelper:
         def _the_callback(box_widget, event_id):
             the_box = pyvista.PolyData()
             box_widget.GetPolyData(the_box)
-            planes = vtk.vtkPlanes()
+            planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
             if hasattr(callback, '__call__'):
                 if use_planes:
@@ -82,7 +82,7 @@ class WidgetHelper:
                 try_callback(callback, *args)
             return
 
-        box_widget = vtk.vtkBoxWidget()
+        box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(parse_color(color))
         box_widget.SetInteractor(self.iren)
         box_widget.SetCurrentRenderer(self.renderer)
@@ -91,7 +91,7 @@ class WidgetHelper:
         box_widget.SetTranslationEnabled(outline_translation)
         box_widget.PlaceWidget(bounds)
         box_widget.On()
-        box_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        box_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(box_widget, None)
 
         self.box_widgets.append(box_widget)
@@ -142,7 +142,7 @@ class WidgetHelper:
 
         port = 1 if invert else 0
 
-        alg = vtk.vtkBoxClipDataSet()
+        alg = _vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(mesh)
         alg.GenerateClippedOutputOn()
 
@@ -260,7 +260,7 @@ class WidgetHelper:
             normal_rotation = False
 
         def _the_callback(widget, event_id):
-            the_plane = vtk.vtkPlane()
+            the_plane = _vtk.vtkPlane()
             widget.GetPlane(the_plane)
             normal = the_plane.GetNormal()
             origin = the_plane.GetOrigin()
@@ -272,7 +272,7 @@ class WidgetHelper:
             return
 
         if implicit:
-            plane_widget = vtk.vtkImplicitPlaneWidget()
+            plane_widget = _vtk.vtkImplicitPlaneWidget()
             plane_widget.GetNormalProperty().SetColor(parse_color(color))
             plane_widget.GetOutlineProperty().SetColor(parse_color(color))
             plane_widget.GetOutlineProperty().SetColor(parse_color(color))
@@ -284,8 +284,8 @@ class WidgetHelper:
             _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(False)
 
             plane_widget.SetDrawPlane(False)
-            plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
-            plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+            plane_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _start_interact)
+            plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _stop_interact)
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
             plane_widget.SetOrigin(origin)
@@ -295,7 +295,7 @@ class WidgetHelper:
 
         else:
             # Position of the small plane
-            source = vtk.vtkPlaneSource()
+            source = _vtk.vtkPlaneSource()
             source.SetNormal(normal)
             source.SetCenter(origin)
             source.SetPoint1(origin[0] + (bounds[1] - bounds[0]) * 0.01,
@@ -305,7 +305,7 @@ class WidgetHelper:
                              origin[1] + (bounds[3] - bounds[2]) * 0.01,
                              origin[2])
             source.Update()
-            plane_widget = vtk.vtkPlaneWidget()
+            plane_widget = _vtk.vtkPlaneWidget()
             plane_widget.SetHandleSize(.01)
             # Position of the widget
             plane_widget.SetInputData(source.GetOutput())
@@ -342,7 +342,7 @@ class WidgetHelper:
         plane_widget.Modified()
         plane_widget.UpdatePlacement()
         plane_widget.On()
-        plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
         if test_callback:
             _the_callback(plane_widget, None) # Trigger immediate update
 
@@ -427,13 +427,13 @@ class WidgetHelper:
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
-        if isinstance(mesh, vtk.vtkPolyData):
-            alg = vtk.vtkClipPolyData()
+        if isinstance(mesh, _vtk.vtkPolyData):
+            alg = _vtk.vtkClipPolyData()
         # elif isinstance(mesh, vtk.vtkImageData):
         #     alg = vtk.vtkClipVolume()
         #     alg.SetMixed3DCellGeneration(True)
         else:
-            alg = vtk.vtkTableBasedClipDataSet()
+            alg = _vtk.vtkTableBasedClipDataSet()
         alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
         alg.SetValue(value)
         alg.SetInsideOut(invert) # invert the clip if needed
@@ -530,7 +530,7 @@ class WidgetHelper:
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
-        alg = vtk.vtkCutter() # Construct the cutter object
+        alg = _vtk.vtkCutter() # Construct the cutter object
         alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
         if not generate_triangles:
             alg.GenerateTrianglesOff()
@@ -641,7 +641,7 @@ class WidgetHelper:
                 try_callback(callback, *args)
             return
 
-        line_widget = vtk.vtkLineWidget()
+        line_widget = _vtk.vtkLineWidget()
         line_widget.GetLineProperty().SetColor(parse_color(color))
         line_widget.SetInteractor(self.iren)
         line_widget.SetCurrentRenderer(self.renderer)
@@ -650,7 +650,7 @@ class WidgetHelper:
         line_widget.SetResolution(resolution)
         line_widget.Modified()
         line_widget.On()
-        line_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        line_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(line_widget, None)
 
         self.line_widgets.append(line_widget)
@@ -748,11 +748,11 @@ class WidgetHelper:
             slider_rep.SetTitleText(data[idx])
 
         if event_type == 'start':
-            slider_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, title_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, title_callback)
         elif event_type == 'end':
-            slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, title_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, title_callback)
         elif event_type == 'always':
-            slider_widget.AddObserver(vtk.vtkCommand.InteractionEvent, title_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.InteractionEvent, title_callback)
         else:
             raise ValueError("Expected value for `event_type` is 'start',"
                              f" 'end' or 'always': {event_type} was given.")
@@ -864,7 +864,7 @@ class WidgetHelper:
         pointa = normalize(pointa, self.renderer.GetViewport())
         pointb = normalize(pointb, self.renderer.GetViewport())
 
-        slider_rep = vtk.vtkSliderRepresentation2D()
+        slider_rep = _vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
         slider_rep.SetMinimumValue(min)
         slider_rep.SetMaximumValue(max)
@@ -909,7 +909,7 @@ class WidgetHelper:
                     try_callback(callback, value)
             return
 
-        slider_widget = vtk.vtkSliderWidget()
+        slider_widget = _vtk.vtkSliderWidget()
         slider_widget.SetInteractor(self.iren)
         slider_widget.SetCurrentRenderer(self.renderer)
         slider_widget.SetRepresentation(slider_rep)
@@ -923,11 +923,11 @@ class WidgetHelper:
             raise TypeError("Expected type for `event_type` is str: "
                             f"{type(event_type)} was given.")
         if event_type == 'start':
-            slider_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _the_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _the_callback)
         elif event_type == 'end':
-            slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
         elif event_type == 'always':
-            slider_widget.AddObserver(vtk.vtkCommand.InteractionEvent, _the_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.InteractionEvent, _the_callback)
         else:
             raise ValueError("Expected value for `event_type` is 'start',"
                              f" 'end' or 'always': {event_type} was given.")
@@ -988,7 +988,7 @@ class WidgetHelper:
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
-        alg = vtk.vtkThreshold()
+        alg = _vtk.vtkThreshold()
         alg.SetInputDataObject(mesh)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
@@ -1060,7 +1060,7 @@ class WidgetHelper:
             title = scalars
         mesh.set_active_scalars(scalars)
 
-        alg = vtk.vtkContourFilter()
+        alg = _vtk.vtkContourFilter()
         alg.SetInputDataObject(mesh)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
@@ -1159,7 +1159,7 @@ class WidgetHelper:
         ribbon = pyvista.PolyData()
 
         def _the_callback(widget, event_id):
-            para_source = vtk.vtkParametricFunctionSource()
+            para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
             polyline = pyvista.wrap(para_source.GetOutput())
@@ -1171,7 +1171,7 @@ class WidgetHelper:
                     try_callback(callback, polyline)
             return
 
-        spline_widget = vtk.vtkSplineWidget()
+        spline_widget = _vtk.vtkSplineWidget()
         spline_widget.GetLineProperty().SetColor(parse_color(color))
         spline_widget.SetNumberOfHandles(n_handles)
         spline_widget.SetInteractor(self.iren)
@@ -1185,7 +1185,7 @@ class WidgetHelper:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
         spline_widget.On()
-        spline_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        spline_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(spline_widget, None)
 
         if show_ribbon:
@@ -1236,7 +1236,7 @@ class WidgetHelper:
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
-        alg = vtk.vtkCutter() # Construct the cutter object
+        alg = _vtk.vtkCutter() # Construct the cutter object
         alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
         if not generate_triangles:
             alg.GenerateTrianglesOff()
@@ -1249,7 +1249,7 @@ class WidgetHelper:
         def callback(spline):
             polyline = spline.GetCell(0)
             # create the plane for clipping
-            polyplane = vtk.vtkPolyPlane()
+            polyplane = _vtk.vtkPolyPlane()
             polyplane.SetPolyLine(polyline)
             alg.SetCutFunction(polyplane) # the cutter to use the poly planes
             alg.Update() # Perform the Cut
@@ -1354,7 +1354,7 @@ class WidgetHelper:
                 loc = center[i]
             else:
                 loc = center
-            sphere_widget = vtk.vtkSphereWidget()
+            sphere_widget = _vtk.vtkSphereWidget()
             sphere_widget.WIDGET_INDEX = indices[i] # Monkey patch the index
             if style in "wireframe":
                 sphere_widget.SetRepresentationToWireframe()
@@ -1370,7 +1370,7 @@ class WidgetHelper:
             sphere_widget.SetPhiResolution(phi_resolution)
             sphere_widget.Modified()
             sphere_widget.On()
-            sphere_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+            sphere_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
             self.sphere_widgets.append(sphere_widget)
 
         if test_callback is True:
@@ -1460,7 +1460,7 @@ class WidgetHelper:
             0., 0.
         ]
 
-        button_rep = vtk.vtkTexturedButtonRepresentation2D()
+        button_rep = _vtk.vtkTexturedButtonRepresentation2D()
         button_rep.SetNumberOfStates(2)
         button_rep.SetState(value)
         button_rep.SetButtonTexture(0, button_off)
@@ -1468,7 +1468,7 @@ class WidgetHelper:
         button_rep.SetPlaceFactor(1)
         button_rep.PlaceWidget(bounds)
 
-        button_widget = vtk.vtkButtonWidget()
+        button_widget = _vtk.vtkButtonWidget()
         button_widget.SetInteractor(self.iren)
         button_widget.SetRepresentation(button_rep)
         button_widget.SetCurrentRenderer(self.renderer)
@@ -1479,7 +1479,7 @@ class WidgetHelper:
             if hasattr(callback, '__call__'):
                 try_callback(callback, bool(state))
 
-        button_widget.AddObserver(vtk.vtkCommand.StateChangedEvent, _the_callback)
+        button_widget.AddObserver(_vtk.vtkCommand.StateChangedEvent, _the_callback)
         self.button_widgets.append(button_widget)
         return button_widget
 

@@ -4,75 +4,73 @@ import pathlib
 import os
 
 import numpy as np
-import vtk
 
 import pyvista
-
-VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
+from pyvista import _vtk
 
 READERS = {
     # Standard dataset readers:
-    '.vtk': vtk.vtkDataSetReader,
-    '.pvtk': vtk.vtkPDataSetReader,
-    '.vti': vtk.vtkXMLImageDataReader,
-    '.pvti': vtk.vtkXMLPImageDataReader,
-    '.vtr': vtk.vtkXMLRectilinearGridReader,
-    '.pvtr': vtk.vtkXMLPRectilinearGridReader,
-    '.vtu': vtk.vtkXMLUnstructuredGridReader,
-    '.pvtu': vtk.vtkXMLPUnstructuredGridReader,
-    '.ply': vtk.vtkPLYReader,
-    '.obj': vtk.vtkOBJReader,
-    '.stl': vtk.vtkSTLReader,
-    '.vtp': vtk.vtkXMLPolyDataReader,
-    '.vts': vtk.vtkXMLStructuredGridReader,
-    '.vtm': vtk.vtkXMLMultiBlockDataReader,
-    '.vtmb': vtk.vtkXMLMultiBlockDataReader,
-    '.case': vtk.vtkGenericEnSightReader,
+    '.vtk': _vtk.vtkDataSetReader,
+    '.pvtk': _vtk.lazy_vtkPDataSetReader,
+    '.vti': _vtk.vtkXMLImageDataReader,
+    '.pvti': _vtk.vtkXMLPImageDataReader,
+    '.vtr': _vtk.vtkXMLRectilinearGridReader,
+    '.pvtr': _vtk.vtkXMLPRectilinearGridReader,
+    '.vtu': _vtk.vtkXMLUnstructuredGridReader,
+    '.pvtu': _vtk.vtkXMLPUnstructuredGridReader,
+    '.ply': _vtk.vtkPLYReader,
+    '.obj': _vtk.vtkOBJReader,
+    '.stl': _vtk.vtkSTLReader,
+    '.vtp': _vtk.vtkXMLPolyDataReader,
+    '.vts': _vtk.vtkXMLStructuredGridReader,
+    '.vtm': _vtk.vtkXMLMultiBlockDataReader,
+    '.vtmb': _vtk.vtkXMLMultiBlockDataReader,
+    '.case': _vtk.vtkGenericEnSightReader,
     # Image formats:
-    '.bmp': vtk.vtkBMPReader,
-    '.dem': vtk.vtkDEMReader,
-    '.dcm': vtk.vtkDICOMImageReader,
-    '.img': vtk.vtkDICOMImageReader,
-    '.jpeg': vtk.vtkJPEGReader,
-    '.jpg': vtk.vtkJPEGReader,
-    '.mhd': vtk.vtkMetaImageReader,
-    '.nrrd': vtk.vtkNrrdReader,
-    '.nhdr': vtk.vtkNrrdReader,
-    '.png': vtk.vtkPNGReader,
-    '.pnm': vtk.vtkPNMReader, # TODO: not tested
-    '.slc': vtk.vtkSLCReader,
-    '.tiff': vtk.vtkTIFFReader,
-    '.tif': vtk.vtkTIFFReader,
+    '.bmp': _vtk.vtkBMPReader,
+    '.dem': _vtk.vtkDEMReader,
+    '.dcm': _vtk.vtkDICOMImageReader,
+    '.img': _vtk.vtkDICOMImageReader,
+    '.jpeg': _vtk.vtkJPEGReader,
+    '.jpg': _vtk.vtkJPEGReader,
+    '.mhd': _vtk.vtkMetaImageReader,
+    '.nrrd': _vtk.vtkNrrdReader,
+    '.nhdr': _vtk.vtkNrrdReader,
+    '.png': _vtk.vtkPNGReader,
+    '.pnm': _vtk.vtkPNMReader, # TODO: not tested
+    '.slc': _vtk.vtkSLCReader,
+    '.tiff': _vtk.vtkTIFFReader,
+    '.tif': _vtk.vtkTIFFReader,
     # Other formats:
-    '.byu': vtk.vtkBYUReader, # TODO: not tested with this extension
-    '.g': vtk.vtkBYUReader,
-    # '.chemml': vtk.vtkCMLMoleculeReader, # TODO: not tested
-    # '.cml': vtk.vtkCMLMoleculeReader, # vtkMolecule is not supported by pyvista
-    # TODO: '.csv': vtk.vtkCSVReader, # vtkTables are currently not supported
-    '.facet': vtk.vtkFacetReader,
-    '.cas': vtk.vtkFLUENTReader, # TODO: not tested
-    # '.dat': vtk.vtkFLUENTReader, # TODO: not working
-    # '.cube': vtk.vtkGaussianCubeReader, # Contains `atom_types` which are note supported?
-    '.res': vtk.vtkMFIXReader, # TODO: not tested
-    '.foam': vtk.vtkOpenFOAMReader,
-    # '.pdb': vtk.vtkPDBReader, # Contains `atom_types` which are note supported?
-    '.p3d': vtk.vtkPlot3DMetaReader,
-    '.pts': vtk.vtkPTSReader,
-    # '.particles': vtk.vtkParticleReader, # TODO: not tested
-    #TODO: '.pht': vtk.vtkPhasta??????,
-    #TODO: '.vpc': vtk.vtkVPIC?????,
-    # '.bin': vtk.vtkMultiBlockPLOT3DReader,# TODO: non-default routine
-    '.tri': vtk.vtkMCubesReader,
-    '.inp': vtk.vtkAVSucdReader,
+    '.byu': _vtk.vtkBYUReader, # TODO: not tested with this extension
+    '.g': _vtk.vtkBYUReader,
+    # '.chemml': _vtk.vtkCMLMoleculeReader, # TODO: not tested
+    # '.cml': _vtk.vtkCMLMoleculeReader, # vtkMolecule is not supported by pyvista
+    # TODO: '.csv': _vtk.vtkCSVReader, # vtkTables are currently not supported
+    '.facet': _vtk.lazy_vtkFacetReader,
+    '.cas': _vtk.vtkFLUENTReader, # TODO: not tested
+    # '.dat': _vtk.vtkFLUENTReader, # TODO: not working
+    # '.cube': _vtk.vtkGaussianCubeReader, # Contains `atom_types` which are note supported?
+    '.res': _vtk.vtkMFIXReader, # TODO: not tested
+    '.foam': _vtk.vtkOpenFOAMReader,
+    # '.pdb': _vtk.vtkPDBReader, # Contains `atom_types` which are note supported?
+    '.p3d': _vtk.lazy_vtkPlot3DMetaReader,
+    '.pts': _vtk.vtkPTSReader,
+    # '.particles': _vtk.vtkParticleReader, # TODO: not tested
+    #TODO: '.pht': _vtk.vtkPhasta??????,
+    #TODO: '.vpc': _vtk.vtkVPIC?????,
+    # '.bin': _vtk.lazy_vtkMultiBlockPLOT3DReader,# TODO: non-default routine
+    '.tri': _vtk.vtkMCubesReader,
+    '.inp': _vtk.vtkAVSucdReader,
 }
 
-VTK_MAJOR = vtk.vtkVersion().GetVTKMajorVersion()
-VTK_MINOR = vtk.vtkVersion().GetVTKMinorVersion()
+VTK_MAJOR = _vtk.vtkVersion().GetVTKMajorVersion()
+VTK_MINOR = _vtk.vtkVersion().GetVTKMinorVersion()
 
 if (VTK_MAJOR >= 8 and VTK_MINOR >= 2):
     try:
-        READERS['.sgy'] = vtk.vtkSegYReader
-        READERS['.segy'] = vtk.vtkSegYReader
+        READERS['.sgy'] = _vtk.lazy_vtkSegYReader
+        READERS['.segy'] = _vtk.lazy_vtkSegYReader
     except AttributeError:
         pass
 
@@ -91,12 +89,12 @@ def get_reader(filename):
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
     """Set any vtk writer to write as binary or ascii."""
-    if isinstance(vtk_writer, (vtk.vtkDataWriter, vtk.vtkPLYWriter, vtk.vtkSTLWriter)):
+    if isinstance(vtk_writer, (_vtk.vtkDataWriter, _vtk.vtkPLYWriter, _vtk.vtkSTLWriter)):
         if use_binary:
             vtk_writer.SetFileTypeToBinary()
         else:
             vtk_writer.SetFileTypeToASCII()
-    elif isinstance(vtk_writer, vtk.vtkXMLWriter):
+    elif isinstance(vtk_writer, _vtk.vtkXMLWriter):
         if use_binary:
             vtk_writer.SetDataModeToBinary()
         else:
@@ -146,7 +144,7 @@ def standard_reader_routine(reader, filename, attrs=None):
 
 def read_legacy(filename):
     """Use VTK's legacy reader to read a file."""
-    reader = vtk.vtkDataSetReader()
+    reader = _vtk.vtkDataSetReader()
     reader.SetFileName(filename)
     # Ensure all data is fetched with poorly formatted legacy files
     reader.ReadAllScalarsOn()
@@ -284,7 +282,13 @@ def read_exodus(filename,
                 displacement_magnitude=1.0,
                 enabled_sidesets=None):
     """Read an ExodusII file (``'.e'`` or ``'.exo'``)."""
-    reader = vtk.vtkExodusIIReader()
+    # lazy import here to avoid loading module on import pyvista
+    try:
+        from vtkmodules.vtkIOExodus import vtkExodusIIReader
+    except ImportError:
+        from vtk import vtkExodusIIReader
+
+    reader = vtkExodusIIReader()
     reader.SetFileName(filename)
     reader.UpdateInformation()
     reader.SetAnimateModeShapes(animate_mode_shapes)
@@ -338,7 +342,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
     """
     filename = _process_filename(filename)
 
-    reader = vtk.vtkMultiBlockPLOT3DReader()
+    reader = _vtk.lazy_vtkMultiBlockPLOT3DReader()
     reader.SetFileName(filename)
 
     # q_filenames may be a list or a single filename
@@ -386,7 +390,7 @@ def from_meshio(mesh):
             np.hstack((np.full((len(c.data), 1), numnodes), c.data)).ravel()
         )
         cell_type += [vtk_type] * len(c.data)
-        if not VTK9:
+        if not _vtk.VTK9:
             offset += [next_offset + i * (numnodes + 1) for i in range(len(c.data))]
             next_offset = offset[-1] + numnodes + 1
 
@@ -398,7 +402,7 @@ def from_meshio(mesh):
     if points.shape[1] == 2:
         points = np.hstack((points, np.zeros((len(points), 1))))
 
-    if VTK9:
+    if _vtk.VTK9:
         grid = pyvista.UnstructuredGrid(
             np.concatenate(cells),
             np.array(cell_type),
@@ -468,7 +472,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     c = 0
     for offset, cell_type in zip(vtk_offset, vtk_cell_type):
         numnodes = vtk_cells[offset+c]
-        if VTK9:  # must offset by cell count
+        if _vtk.VTK9:  # must offset by cell count
             cell = vtk_cells[offset+1+c:offset+1+c+numnodes]
             c += 1
         else:

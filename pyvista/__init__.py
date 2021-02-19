@@ -2,11 +2,14 @@
 import warnings
 import os
 import appdirs
+
 from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
 from pyvista.utilities.misc import _get_vtk_id_type
+from pyvista import _vtk
+
 # Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
@@ -14,7 +17,7 @@ from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 ID_TYPE = _get_vtk_id_type()
 
 # determine if using vtk > 5
-if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
+if _vtk.vtkVersion().GetVTKMajorVersion() <= 5:
     raise RuntimeError('VTK version must be 5.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
@@ -73,7 +76,8 @@ try:
         except FileExistsError:  # Edge case due to IO race conditions
             pass
 except Exception as e:
-    warnings.warn(f'Unable to create `EXAMPLES_PATH` at "{EXAMPLES_PATH}"\nError: {e}\n\n'
+    warnings.warn(f'Unable to create `EXAMPLES_PATH` at "{EXAMPLES_PATH}"\n'
+                  f'Error: {e}\n\n'
                   'Override the default path by setting the environmental variable '
                   '`PYVISTA_USERDATA_PATH` to a writable path.')
     EXAMPLES_PATH = ''
@@ -103,5 +107,6 @@ FLOAT_FORMAT = "{:.3e}"
 
 VERY_FIRST_RENDER = [True]
 
-# Check if python is running in interactive mode (see https://stackoverflow.com/a/64523765)
+# Check if python is running in interactive mode (see
+# https://stackoverflow.com/a/64523765)
 IS_INTERACTIVE = hasattr(sys, 'ps1')

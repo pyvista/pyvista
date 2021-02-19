@@ -122,8 +122,6 @@ def verify_cache_image(plotter):
                       f'{error}')
 
 
-
-
 @skip_no_plotting
 def test_plot(tmpdir):
     tmp_dir = tmpdir.mkdir("tmpdir2")
