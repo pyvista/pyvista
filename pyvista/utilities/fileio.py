@@ -11,7 +11,7 @@ from pyvista import _vtk
 READERS = {
     # Standard dataset readers:
     '.vtk': _vtk.vtkDataSetReader,
-    '.pvtk': _vtk.vtkPDataSetReader,
+    '.pvtk': _vtk.lazy_vtkPDataSetReader,
     '.vti': _vtk.vtkXMLImageDataReader,
     '.pvti': _vtk.vtkXMLPImageDataReader,
     '.vtr': _vtk.vtkXMLRectilinearGridReader,
@@ -47,19 +47,19 @@ READERS = {
     # '.chemml': _vtk.vtkCMLMoleculeReader, # TODO: not tested
     # '.cml': _vtk.vtkCMLMoleculeReader, # vtkMolecule is not supported by pyvista
     # TODO: '.csv': _vtk.vtkCSVReader, # vtkTables are currently not supported
-    '.facet': _vtk.vtkFacetReader,
+    '.facet': _vtk.lazy_vtkFacetReader,
     '.cas': _vtk.vtkFLUENTReader, # TODO: not tested
     # '.dat': _vtk.vtkFLUENTReader, # TODO: not working
     # '.cube': _vtk.vtkGaussianCubeReader, # Contains `atom_types` which are note supported?
     '.res': _vtk.vtkMFIXReader, # TODO: not tested
     '.foam': _vtk.vtkOpenFOAMReader,
     # '.pdb': _vtk.vtkPDBReader, # Contains `atom_types` which are note supported?
-    '.p3d': _vtk.vtkPlot3DMetaReader,
+    '.p3d': _vtk.lazy_vtkPlot3DMetaReader,
     '.pts': _vtk.vtkPTSReader,
     # '.particles': _vtk.vtkParticleReader, # TODO: not tested
     #TODO: '.pht': _vtk.vtkPhasta??????,
     #TODO: '.vpc': _vtk.vtkVPIC?????,
-    # '.bin': _vtk.vtkMultiBlockPLOT3DReader,# TODO: non-default routine
+    # '.bin': _vtk.lazy_vtkMultiBlockPLOT3DReader,# TODO: non-default routine
     '.tri': _vtk.vtkMCubesReader,
     '.inp': _vtk.vtkAVSucdReader,
 }
@@ -69,8 +69,8 @@ VTK_MINOR = _vtk.vtkVersion().GetVTKMinorVersion()
 
 if (VTK_MAJOR >= 8 and VTK_MINOR >= 2):
     try:
-        READERS['.sgy'] = _vtk.vtkSegYReader
-        READERS['.segy'] = _vtk.vtkSegYReader
+        READERS['.sgy'] = _vtk.lazy_vtkSegYReader
+        READERS['.segy'] = _vtk.lazy_vtkSegYReader
     except AttributeError:
         pass
 
@@ -342,7 +342,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
     """
     filename = _process_filename(filename)
 
-    reader = _vtk.vtkMultiBlockPLOT3DReader()
+    reader = _vtk.lazy_vtkMultiBlockPLOT3DReader()
     reader.SetFileName(filename)
 
     # q_filenames may be a list or a single filename

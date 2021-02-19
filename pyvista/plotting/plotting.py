@@ -3483,7 +3483,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         valid = ['.svg', '.eps', '.ps', '.pdf', '.tex']
         if extension not in valid:
             raise ValueError(f"Extension ({extension}) is an invalid choice. Valid options include: {', '.join(valid)}")
-        writer = _vtk.vtkGL2PSExporter()
+        writer = _vtk.lazy_vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
             '.eps': writer.SetFileFormatToEPS,

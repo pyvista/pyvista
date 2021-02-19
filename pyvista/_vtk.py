@@ -17,7 +17,9 @@ try:
 except ImportError:
     VTK9 = False
 
+
 if VTK9:
+
     from vtkmodules.vtkInteractionWidgets import (vtkScalarBarWidget,
                                                   vtkSplineWidget,
                                                   vtkSphereWidget,
@@ -328,32 +330,32 @@ if VTK9:
                                           vtkWeakReference)
 
     # lazy import for some of the less used readers
-    def vtkGL2PSExporter():
+    def lazy_vtkGL2PSExporter():
         """Lazy import of the vtkGL2PSExporter."""
         from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
         return vtkGL2PSExporter()
 
-    def vtkFacetReader():
+    def lazy_vtkFacetReader():
         """Lazy import of the vtkFacetReader."""
         from vtkmodules.vtkFiltersHybrid import vtkFacetReader
         return vtkFacetReader()
 
-    def vtkPDataSetReader():
+    def lazy_vtkPDataSetReader():
         """Lazy import of the vtkPDataSetReader."""
         from vtkmodules.vtkIOParallel import vtkPDataSetReader
         return vtkPDataSetReader()
 
-    def vtkMultiBlockPLOT3DReader():
+    def lazy_vtkMultiBlockPLOT3DReader():
         """Lazy import of the vtkMultiBlockPLOT3DReader."""
         from vtkmodules.vtkIOParallel import vtkMultiBlockPLOT3DReader
         return vtkMultiBlockPLOT3DReader()
 
-    def vtkPlot3DMetaReader():
+    def lazy_vtkPlot3DMetaReader():
         """Lazy import of the vtkPlot3DMetaReader."""
         from vtkmodules.vtkIOParallel import vtkPlot3DMetaReader
         return vtkPlot3DMetaReader()
 
-    def vtkSegYReader():
+    def lazy_vtkSegYReader():
         """Lazy import of the vtkSegYReader."""
         from vtkmodules.vtkIOSegY import vtkSegYReader
         return vtkSegYReader()
@@ -382,3 +384,26 @@ else:
     # vtk8 already has an import all, so we can just mirror it here at
     # no cost
     from vtk import *
+
+    import vtk
+
+    # match the imports for VTK9
+    def lazy_vtkGL2PSExporter():
+        """Lazy import of the vtkGL2PSExporter."""
+        return vtk.vtkGL2PSExporter()
+
+    def lazy_vtkFacetReader():
+        """Lazy import of the vtkFacetReader."""
+        return vtk.vtkFacetReader()
+
+    def lazy_vtkPDataSetReader():
+        """Lazy import of the vtkPDataSetReader."""
+        return vtk.vtkPDataSetReader()
+
+    def lazy_vtkMultiBlockPLOT3DReader():
+        """Lazy import of the vtkMultiBlockPLOT3DReader."""
+        return vtk.vtkMultiBlockPLOT3DReader()
+
+    def lazy_vtkPlot3DMetaReader():
+        """Lazy import of the vtkPlot3DMetaReader."""
+        return vtk.vtkPlot3DMetaReader()
