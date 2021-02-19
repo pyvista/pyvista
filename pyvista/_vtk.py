@@ -213,7 +213,8 @@ if VTK9:
                                           VTK_UNSIGNED_CHAR,
                                           vtkAbstractArray,
                                           vtkDoubleArray)
-    from vtkmodules.vtkCommonMath import vtkMatrix4x4, vtkMatrix3x3
+    from vtkmodules.vtkCommonMath import (vtkMatrix4x4,
+                                          vtkMatrix3x3)
     from vtkmodules.vtkCommonTransforms import vtkTransform
     from vtkmodules.vtkFiltersCore import (vtkAppendFilter,
                                            vtkCutter,
