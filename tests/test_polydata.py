@@ -729,17 +729,3 @@ def test_flip_normals(sphere):
     sphere_flipped.compute_normals(inplace=True)
     assert np.allclose(sphere_flipped.point_arrays['Normals'],
                        -sphere.point_arrays['Normals'])
-
-
-def test_userpath_read_write(sphere):
-    filename = "~/tmp.vtk"
-    sphere.save(filename)
-
-    mesh = pyvista.PolyData(filename)
-    assert mesh.faces.shape == sphere.faces.shape
-    assert mesh.points.shape == sphere.points.shape
-
-    mesh = pyvista.read(filename)
-    assert isinstance(mesh, pyvista.PolyData)
-    assert mesh.faces.shape == sphere.faces.shape
-    assert mesh.points.shape == sphere.points.shape
