@@ -829,3 +829,17 @@ def test_hide_cells(ind, struct_grid):
     sgrid_copy = struct_grid.copy()
     sgrid_copy.hide_cells(ind)
     assert sgrid_copy.HasAnyBlankCells()
+
+
+def test_userpath_read_write(hexbeam):
+    filename = "~/tmp.vtk"
+    hexbeam.save(filename)
+
+    grid = pyvista.UnstructuredGrid(filename)
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+
+    grid = pyvista.read(filename)
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+    assert isinstance(grid, pyvista.UnstructuredGrid)

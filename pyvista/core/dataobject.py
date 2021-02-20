@@ -64,7 +64,9 @@ class DataObject:
             raise NotImplementedError(f'{self.__class__.__name__} readers are not specified,'
                                       ' this should be a dict of (file extension: vtkReader type)')
 
-        file_path = Path(filename).resolve()
+        file_path = Path(filename)
+        file_path = file_path.expanduser()
+        file_path = file_path.resolve()
         if not file_path.exists():
             raise FileNotFoundError(f'File {filename} does not exist')
 
@@ -107,7 +109,9 @@ class DataObject:
             raise NotImplementedError(f'{self.__class__.__name__} writers are not specified,'
                                       ' this should be a dict of (file extension: vtkWriter type)')
 
-        file_path = Path(filename).resolve()
+        file_path = Path(filename)
+        file_path = file_path.expanduser()
+        file_path = file_path.resolve()
         file_ext = file_path.suffix
         if file_ext not in self._WRITERS:
             raise ValueError('Invalid file extension for this data type.'
