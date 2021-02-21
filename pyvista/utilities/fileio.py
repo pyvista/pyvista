@@ -280,8 +280,48 @@ def read_exodus(filename,
                 animate_mode_shapes=True,
                 apply_displacements=True,
                 displacement_magnitude=1.0,
+                read_point_data=True,
+                read_cell_data=True,
                 enabled_sidesets=None):
-    """Read an ExodusII file (``'.e'`` or ``'.exo'``)."""
+    """Read an ExodusII file (``'.e'`` or ``'.exo'``).
+
+    Parameters
+    ----------
+    filename : str
+        The path to the exodus file to read.
+
+    animate_mode_shapes : bool, optional
+        When ``True`` then this reader will report a continuous time
+        range [0,1] and animate the displacements in a periodic
+        sinusoid.
+
+    apply_displacements : bool, optional
+        Geometric locations can include displacements. When ``True``,
+        the nodal positions are 'displaced' by the standard exodus
+        displacement vector. If displacements are turned off, the user
+        can explicitly add them by applying a warp filter.
+
+    displacement_magnitude : bool, optional
+        This is a number between 0 and 1 that is used to scale the
+        ``DisplacementMagnitude`` in a sinusoidal pattern.
+
+    read_point_data : bool, optional
+        Read in data associated with points.  Default ``True``.
+
+    read_cell_data : bool, optional
+        Read in data associated with cells.  Default ``True``.
+
+    enabled_sidesets : str or int, optional
+        The name of the array that store the mapping from side set
+        cells back to the global id of the elements they bound.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> data = read_exodus('mymesh.exo')  # doctest:+SKIP
+
+    """
     # lazy import here to avoid loading module on import pyvista
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader
@@ -294,6 +334,12 @@ def read_exodus(filename,
     reader.SetAnimateModeShapes(animate_mode_shapes)
     reader.SetApplyDisplacements(apply_displacements)
     reader.SetDisplacementMagnitude(displacement_magnitude)
+
+    if read_point_data:  # read in all point data variables
+        reader.SetAllArrayStatus(vtkExodusIIReader.NODAL, 1)
+
+    if read_cell_data:  # read in all cell data variables
+        reader.SetAllArrayStatus(vtkExodusIIReader.ELEM_BLOCK, 1)
 
     if enabled_sidesets is None:
         enabled_sidesets = list(range(reader.GetNumberOfSideSetArrays()))
