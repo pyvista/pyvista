@@ -3,7 +3,7 @@
 Expected paths:
 flask_example
 └── app.py
-    static
+    templates
     └── index.html
 
 """
