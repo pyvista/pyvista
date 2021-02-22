@@ -15,9 +15,9 @@ vtkPyramid
 
 """
 import numpy as np
-import vtk
 
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import assert_empty_kwargs, check_valid_vector
 
 NORMALS = {
@@ -93,7 +93,7 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     """
     capping = kwargs.pop('cap_ends', capping)
     assert_empty_kwargs(**kwargs)
-    cylinderSource = vtk.vtkCylinderSource()
+    cylinderSource = _vtk.vtkCylinderSource()
     cylinderSource.SetRadius(radius)
     cylinderSource.SetHeight(height)
     cylinderSource.SetCapping(capping)
@@ -215,7 +215,7 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
 
     """
     # Create arrow object
-    arrow = vtk.vtkArrowSource()
+    arrow = _vtk.vtkArrowSource()
     arrow.SetTipLength(tip_length)
     arrow.SetTipRadius(tip_radius)
     arrow.SetTipResolution(tip_resolution)
@@ -276,7 +276,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
         Sphere mesh.
 
     """
-    sphere = vtk.vtkSphereSource()
+    sphere = _vtk.vtkSphereSource()
     sphere.SetRadius(radius)
     sphere.SetThetaResolution(theta_resolution)
     sphere.SetPhiResolution(phi_resolution)
@@ -321,7 +321,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
         Plane mesh
 
     """
-    planeSource = vtk.vtkPlaneSource()
+    planeSource = _vtk.vtkPlaneSource()
     planeSource.SetXResolution(i_resolution)
     planeSource.SetYResolution(j_resolution)
     planeSource.Update()
@@ -356,7 +356,7 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
         raise TypeError('Point A must be a length three tuple of floats.')
     if np.array(pointb).size != 3:
         raise TypeError('Point B must be a length three tuple of floats.')
-    src = vtk.vtkLineSource()
+    src = _vtk.vtkLineSource()
     src.SetPoint1(*pointa)
     src.SetPoint2(*pointb)
     src.SetResolution(resolution)
@@ -395,7 +395,7 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=N
         ignored. ``(xMin,xMax, yMin,yMax, zMin,zMax)``
 
     """
-    src = vtk.vtkCubeSource()
+    src = _vtk.vtkCubeSource()
     if bounds is not None:
         if np.array(bounds).size != 6:
             raise TypeError('Bounds must be given as length 6 tuple: (xMin,xMax, yMin,yMax, zMin,zMax)')
@@ -428,7 +428,7 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
     """
     if np.array(bounds).size != 6:
         raise TypeError('Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)')
-    src = vtk.vtkTessellatedBoxSource()
+    src = _vtk.vtkTessellatedBoxSource()
     src.SetLevel(level)
     if quads:
        src.QuadsOn()
@@ -467,7 +467,7 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
         Number of facets used to represent the cone
 
     """
-    src = vtk.vtkConeSource()
+    src = _vtk.vtkConeSource()
     src.SetCapping(capping)
     src.SetDirection(direction)
     src.SetCenter(center)
@@ -508,7 +508,7 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
         Number of sides of the polygon
 
     """
-    src = vtk.vtkRegularPolygonSource()
+    src = _vtk.vtkRegularPolygonSource()
     src.SetCenter(center)
     src.SetNumberOfSides(n_sides)
     src.SetRadius(radius)
@@ -546,7 +546,7 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
         Number of points in circumferential direction.
 
     """
-    src = vtk.vtkDiskSource()
+    src = _vtk.vtkDiskSource()
     src.SetInnerRadius(inner)
     src.SetOuterRadius(outer)
     src.SetRadialResolution(r_res)
@@ -562,16 +562,16 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
 
 def Text3D(string, depth=0.5):
     """Create 3D text from a string."""
-    vec_text = vtk.vtkVectorText()
+    vec_text = _vtk.vtkVectorText()
     vec_text.SetText(string)
 
-    extrude = vtk.vtkLinearExtrusionFilter()
+    extrude = _vtk.vtkLinearExtrusionFilter()
     extrude.SetInputConnection(vec_text.GetOutputPort())
     extrude.SetExtrusionTypeToNormalExtrusion()
     extrude.SetVector(0, 0, 1)
     extrude.SetScaleFactor(depth)
 
-    tri_filter = vtk.vtkTriangleFilter()
+    tri_filter = _vtk.vtkTriangleFilter()
     tri_filter.SetInputConnection(extrude.GetOutputPort())
     tri_filter.Update()
     return pyvista.wrap(tri_filter.GetOutput())
@@ -581,7 +581,7 @@ def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,
             x_freq=60, y_freq=30, z_freq=40, x_mag=10, y_mag=18, z_mag=5,
             std=0.5, subsample_rate=1):
     """Create a wavelet."""
-    wavelet_source = vtk.vtkRTAnalyticSource()
+    wavelet_source = _vtk.vtkRTAnalyticSource()
     wavelet_source.SetWholeExtent(*extent)
     wavelet_source.SetCenter(center)
     wavelet_source.SetMaximum(maximum)
@@ -672,7 +672,7 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
     pointb[0] -= 1E-10
     pointb[1] -= 1E-10
 
-    arc = vtk.vtkArcSource()
+    arc = _vtk.vtkArcSource()
     arc.SetPoint1(*pointa)
     arc.SetPoint2(*pointb)
     arc.SetCenter(*center)
@@ -729,14 +729,14 @@ def Pyramid(points):
     check_valid_vector(points[3], 'points[3]')
     check_valid_vector(points[4], 'points[4]')
 
-    pyramid = vtk.vtkPyramid()
+    pyramid = _vtk.vtkPyramid()
     pyramid.GetPointIds().SetId(0, 0)
     pyramid.GetPointIds().SetId(1, 1)
     pyramid.GetPointIds().SetId(2, 2)
     pyramid.GetPointIds().SetId(3, 3)
     pyramid.GetPointIds().SetId(4, 4)
 
-    ug = vtk.vtkUnstructuredGrid()
+    ug = _vtk.vtkUnstructuredGrid()
     ug.SetPoints(pyvista.vtk_points(np.array(points), False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 

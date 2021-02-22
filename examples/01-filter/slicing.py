@@ -110,7 +110,7 @@ p.show(cpos=[1, -1, 1])
 # Multiple Slices in Vector Direction
 # +++++++++++++++++++++++++++++++++++
 #
-# Slice a mesh perpendicularly along a vector direction perpendicularly.
+# Slice a mesh along a vector direction perpendicularly.
 
 mesh = examples.download_brain()
 

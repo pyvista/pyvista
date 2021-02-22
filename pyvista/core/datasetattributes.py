@@ -1,26 +1,19 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
 from collections.abc import Iterable
-from typing import Union, Iterator, Optional, List, Tuple, Dict, Sequence, Any
 
 import numpy as np
-import vtk
+from typing import Union, Iterator, Optional, List, Tuple, Dict, Sequence, Any
 
+from pyvista import _vtk
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
 from .pyvista_ndarray import pyvista_ndarray
+
 from .._typing import Number
 
-# necessary for pyinstaller on VTK9
-if vtk.vtkVersion().GetVTKMajorVersion() >= 9:
-    from vtkmodules.numpy_interface.dataset_adapter import (VTKObjectWrapper,
-                                                            numpyTovtkDataArray)
-else:
-    from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper,
-                                                     numpyTovtkDataArray)
 
-
-class DataSetAttributes(VTKObjectWrapper):
+class DataSetAttributes(_vtk.VTKObjectWrapper):
     """Python friendly wrapper of ``vtk.DataSetAttributes``.
 
     Implement a ``dict`` like interface for interacting with vtkDataArrays.
@@ -39,7 +32,7 @@ class DataSetAttributes(VTKObjectWrapper):
         The array association type of the vtkobject.
     """
 
-    def __init__(self, vtkobject: vtk.vtkFieldData, dataset: vtk.vtkDataSet, association: FieldAssociation):
+    def __init__(self, vtkobject: _vtk.vtkFieldData, dataset: _vtk.vtkDataSet, association: FieldAssociation):
         """Initialize DataSetAttributes."""
         super().__init__(vtkobject=vtkobject)
         self.dataset = dataset
@@ -142,11 +135,11 @@ class DataSetAttributes(VTKObjectWrapper):
         if t_coords.shape[1] != 2:
             raise ValueError('Texture coordinates must only have 2 components,'
                              f' not ({t_coords.shape[1]})')
-        vtkarr = numpyTovtkDataArray(t_coords, name='Texture Coordinates')
+        vtkarr = _vtk.numpyTovtkDataArray(t_coords, name='Texture Coordinates')
         self.SetTCoords(vtkarr)
         self.Modified()
 
-    def get_array(self, key: Union[str, int]) -> Union[pyvista_ndarray, vtk.vtkDataArray, vtk.vtkAbstractArray]:
+    def get_array(self, key: Union[str, int]) -> Union[pyvista_ndarray, _vtk.vtkDataArray, _vtk.vtkAbstractArray]:
         """Get an array in this object.
 
         Parameters
@@ -168,7 +161,7 @@ class DataSetAttributes(VTKObjectWrapper):
             vtk_arr = self.GetAbstractArray(key)
             if vtk_arr is None:
                 raise KeyError(f'{key}')
-            if type(vtk_arr) == vtk.vtkAbstractArray:
+            if type(vtk_arr) == _vtk.vtkAbstractArray:
                 return vtk_arr
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:

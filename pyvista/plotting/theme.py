@@ -2,14 +2,13 @@
 
 import os
 
-import vtk
-
+from pyvista import _vtk
 from .colors import string_to_rgb, PARAVIEW_BACKGROUND
 
 MAX_N_COLOR_BARS = 10
-FONT_KEYS = {'arial': vtk.VTK_ARIAL,
-             'courier': vtk.VTK_COURIER,
-             'times': vtk.VTK_TIMES}
+FONT_KEYS = {'arial': _vtk.VTK_ARIAL,
+             'courier': _vtk.VTK_COURIER,
+             'times': _vtk.VTK_TIMES}
 
 rcParams = {
     'auto_close': True,  # DANGER: set to False with extreme caution

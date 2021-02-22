@@ -113,7 +113,7 @@ def test_read_plot3d(srr_mock, auto_detect):
     reader = args[0]
     assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
     assert reader.GetFileName().endswith('grid.in')
-    assert kwargs['filename'] == None
+    assert kwargs['filename'] is None
     assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
 
     # with grid and q
@@ -125,7 +125,7 @@ def test_read_plot3d(srr_mock, auto_detect):
     assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
     assert reader.GetFileName().endswith('grid.in')
     assert args[0].GetQFileName().endswith('q1.save')
-    assert kwargs['filename'] == None
+    assert kwargs['filename'] is None
     assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
 
 

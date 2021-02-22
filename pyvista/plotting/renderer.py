@@ -4,10 +4,9 @@ import collections.abc
 from weakref import proxy
 
 import numpy as np
-import vtk
-from vtk import vtkRenderer
 
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import wrap, check_depth_peeling
 from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
 from .tools import create_axes_orientation_box, create_axes_marker
@@ -32,7 +31,7 @@ def scale_point(camera, point, invert=False):
 
     """
     if invert:
-        mtx = vtk.vtkMatrix4x4()
+        mtx = _vtk.vtkMatrix4x4()
         mtx.DeepCopy(camera.GetModelTransformMatrix())
         mtx.Invert()
     else:
@@ -96,7 +95,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(vtkRenderer):
+class Renderer(_vtk.vtkRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -211,7 +210,7 @@ class Renderer(vtkRenderer):
             return
 
         for actor in self._actors.values():
-            if isinstance(actor, vtk.vtkCubeAxesActor):
+            if isinstance(actor, _vtk.vtkCubeAxesActor):
                 continue
             if (hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
                  and id(actor) != id(self.bounding_box_actor)):
@@ -313,14 +312,14 @@ class Renderer(vtkRenderer):
         poly.points = points
         poly.lines = lines
 
-        coordinate = vtk.vtkCoordinate()
+        coordinate = _vtk.vtkCoordinate()
         coordinate.SetCoordinateSystemToNormalizedViewport()
 
-        mapper = vtk.vtkPolyDataMapper2D()
+        mapper = _vtk.vtkPolyDataMapper2D()
         mapper.SetInputData(poly)
         mapper.SetTransformCoordinate(coordinate)
 
-        actor = vtk.vtkActor2D()
+        actor = _vtk.vtkActor2D()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(parse_color(color))
         actor.GetProperty().SetLineWidth(width)
@@ -359,10 +358,10 @@ class Renderer(vtkRenderer):
 
         """
         # Remove actor by that name if present
-        rv = self.remove_actor(name, reset_camera=False, render=render)
+        rv = self.remove_actor(name, reset_camera=False, render=False)
 
-        if isinstance(uinput, vtk.vtkMapper):
-            actor = vtk.vtkActor()
+        if isinstance(uinput, _vtk.vtkMapper):
+            actor = _vtk.vtkActor()
             actor.SetMapper(uinput)
         else:
             actor = uinput
@@ -448,11 +447,11 @@ class Renderer(vtkRenderer):
 
         """
         if isinstance(actor, pyvista.DataSet):
-            mapper = vtk.vtkDataSetMapper()
+            mapper = _vtk.vtkDataSetMapper()
             mesh = actor.copy()
             mesh.clear_arrays()
             mapper.SetInputData(mesh)
-            actor = vtk.vtkActor()
+            actor = _vtk.vtkActor()
             actor.SetMapper(mapper)
             prop = actor.GetProperty()
             if color is not None:
@@ -465,7 +464,7 @@ class Renderer(vtkRenderer):
             del self.axes_widget
         if interactive is None:
             interactive = rcParams['interactive']
-        self.axes_widget = vtk.vtkOrientationMarkerWidget()
+        self.axes_widget = _vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(actor)
         if hasattr(self.parent, 'iren'):
             self.axes_widget.SetInteractor(self.parent.iren)
@@ -679,7 +678,7 @@ class Renderer(vtkRenderer):
             bounds = self.bounds
 
         # create actor
-        cube_axes_actor = vtk.vtkCubeAxesActor()
+        cube_axes_actor = _vtk.vtkCubeAxesActor()
         if use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
             cube_axes_actor.SetUse2DMode(True)
         else:
@@ -760,7 +759,7 @@ class Renderer(vtkRenderer):
         cube_axes_actor.GetZAxesLinesProperty().SetColor(color)
 
         # empty arr
-        empty_str = vtk.vtkStringArray()
+        empty_str = _vtk.vtkStringArray()
         empty_str.InsertNextValue('')
 
         # show lines
@@ -824,7 +823,7 @@ class Renderer(vtkRenderer):
 
         A wrapped implementation of ``show_bounds`` to change default
         behaviour to use gridlines and showing the axes labels on the outer
-        edges. This is intended to be silimar to ``matplotlib``'s ``grid``
+        edges. This is intended to be similar to ``matplotlib``'s ``grid``
         function.
 
         """
@@ -885,16 +884,16 @@ class Renderer(vtkRenderer):
             color = rcParams['outline_color']
         rgb_color = parse_color(color)
         if outline:
-            self._bounding_box = vtk.vtkOutlineCornerSource()
+            self._bounding_box = _vtk.vtkOutlineCornerSource()
             self._bounding_box.SetCornerFactor(corner_factor)
         else:
-            self._bounding_box = vtk.vtkCubeSource()
+            self._bounding_box = _vtk.vtkCubeSource()
         self._bounding_box.SetBounds(self.bounds)
         self._bounding_box.Update()
         self._box_object = wrap(self._bounding_box.GetOutput())
         name = f'BoundingBox({hex(id(self._box_object))})'
 
-        mapper = vtk.vtkDataSetMapper()
+        mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._box_object)
         self.bounding_box_actor, prop = self.add_actor(mapper,
                                                        reset_camera=reset_camera,
@@ -1026,7 +1025,7 @@ class Renderer(vtkRenderer):
         if color is None:
             color = rcParams['floor_color']
         rgb_color = parse_color(color)
-        mapper = vtk.vtkDataSetMapper()
+        mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._floor)
         actor, prop = self.add_actor(mapper,
                                      reset_camera=reset_camera,
@@ -1251,7 +1250,7 @@ class Renderer(vtkRenderer):
         self.scale = [xscale, yscale, zscale]
 
         # Update the camera's coordinate system
-        transform = vtk.vtkTransform()
+        transform = _vtk.vtkTransform()
         transform.Scale(xscale, yscale, zscale)
         self.camera.SetModelTransformMatrix(transform.GetMatrix())
         self.parent.render()
@@ -1297,7 +1296,7 @@ class Renderer(vtkRenderer):
                 self.cube_axes_actor.SetUse2DMode(False)
             self.Modified()
 
-    def reset_camera(self, render=True):
+    def reset_camera(self, render=True, bounds=None):
         """Reset the camera of the active render window.
 
         The camera slides along the vector defined from camera
@@ -1307,9 +1306,15 @@ class Renderer(vtkRenderer):
         ----------
         render : bool
             Trigger a render after resetting the camera.
+        bounds : iterable(int)
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         """
-        self.ResetCamera()
+        if bounds is not None:
+            self.ResetCamera(*bounds)
+        else:
+            self.ResetCamera()
         if render:
             self.parent.render()
         self.Modified()
@@ -1403,14 +1408,14 @@ class Renderer(vtkRenderer):
         if hasattr(self, 'edl_pass'):
             return self
         # create the basic VTK render steps
-        basic_passes = vtk.vtkRenderStepsPass()
+        basic_passes = _vtk.vtkRenderStepsPass()
         # blur the resulting image
         # The blur delegates rendering the unblured image to the basic_passes
-        self.edl_pass = vtk.vtkEDLShading()
+        self.edl_pass = _vtk.vtkEDLShading()
         self.edl_pass.SetDelegatePass(basic_passes)
 
         # tell the renderer to use our render pass pipeline
-        self.glrenderer = vtk.vtkOpenGLRenderer.SafeDownCast(self)
+        self.glrenderer = _vtk.vtkOpenGLRenderer.SafeDownCast(self)
         self.glrenderer.SetPass(self.edl_pass)
         self.Modified()
         return self.glrenderer

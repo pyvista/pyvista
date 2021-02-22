@@ -4,9 +4,9 @@ import os
 from subprocess import PIPE, Popen
 
 import numpy as np
-import vtk
 
 import pyvista
+from pyvista import _vtk
 from .theme import parse_color, rcParams
 
 
@@ -38,14 +38,14 @@ def update_axes_label_color(axes_actor, color=None):
     if color is None:
         color = rcParams['font']['color']
     color = parse_color(color)
-    if isinstance(axes_actor, vtk.vtkAxesActor):
+    if isinstance(axes_actor, _vtk.vtkAxesActor):
         prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
         prop_y = axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
         prop_z = axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
         for prop in [prop_x, prop_y, prop_z]:
             prop.SetColor(color[0], color[1], color[2])
             prop.SetShadow(False)
-    elif isinstance(axes_actor, vtk.vtkAnnotatedCubeActor):
+    elif isinstance(axes_actor, _vtk.vtkAnnotatedCubeActor):
         axes_actor.GetTextEdgesProperty().SetColor(color)
 
     return
@@ -61,7 +61,7 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
         y_color = rcParams['axes']['y_color']
     if z_color is None:
         z_color = rcParams['axes']['z_color']
-    axes_actor = vtk.vtkAxesActor()
+    axes_actor = _vtk.vtkAxesActor()
     axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
     axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
     axes_actor.GetYAxisShaftProperty().SetColor(parse_color(y_color))
@@ -102,7 +102,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         z_color = rcParams['axes']['z_color']
     if edge_color is None:
         edge_color = rcParams['edge_color']
-    axes_actor = vtk.vtkAnnotatedCubeActor()
+    axes_actor = _vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     if xlabel is not None:
         axes_actor.SetXPlusFaceText(f"+{xlabel}")
@@ -149,17 +149,17 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         face_colors = (face_colors * 255).astype(np.uint8)
         cube.cell_arrays['face_colors'] = face_colors
 
-        cube_mapper = vtk.vtkPolyDataMapper()
+        cube_mapper = _vtk.vtkPolyDataMapper()
         cube_mapper.SetInputData(cube)
         cube_mapper.SetColorModeToDirectScalars()
         cube_mapper.Update()
 
-        cube_actor = vtk.vtkActor()
+        cube_actor = _vtk.vtkActor()
         cube_actor.SetMapper(cube_mapper)
         cube_actor.GetProperty().BackfaceCullingOn()
         cube_actor.GetProperty().SetOpacity(opacity)
 
-        prop_assembly = vtk.vtkPropAssembly()
+        prop_assembly = _vtk.vtkPropAssembly()
         prop_assembly.AddPart(axes_actor)
         prop_assembly.AddPart(cube_actor)
         actor = prop_assembly

@@ -1,33 +1,26 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-import collections
-import logging
-import numbers
-import os
 import pathlib
+import logging
+import os
 import warnings
+import numbers
+import collections
 
 import numpy as np
-import vtk
-from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
-                 VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_PYRAMID,
-                 VTK_QUADRATIC_QUAD, VTK_QUADRATIC_TETRA,
-                 VTK_QUADRATIC_TRIANGLE, VTK_QUADRATIC_WEDGE, VTK_TETRA,
-                 VTK_TRIANGLE, VTK_WEDGE, vtkPolyData, vtkStructuredGrid,
-                 vtkUnstructuredGrid)
-from vtk.util.numpy_support import (numpy_to_vtk, vtk_to_numpy)
 
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import abstract_class
-from pyvista.utilities.cells import CellArray, numpy_to_idarr, generate_cell_offsets, create_mixed_cells, \
-    get_mixed_cells
-from .common import Common
-from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters
+from pyvista.utilities.cells import (CellArray, numpy_to_idarr,
+                                     generate_cell_offsets,
+                                     create_mixed_cells,
+                                     get_mixed_cells)
+from .dataset import DataSet
+from .filters import PolyDataFilters, UnstructuredGridFilters, StructuredGridFilters
 from ..utilities.fileio import get_ext
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
-
-VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 
 class PointSet(DataSet):
@@ -50,7 +43,7 @@ class PointSet(DataSet):
             Coordinates for the center of mass.
 
         """
-        alg = vtk.vtkCenterOfMass()
+        alg = _vtk.vtkCenterOfMass()
         alg.SetInputDataObject(self)
         alg.SetUseScalarsAsWeights(scalars_weight)
         alg.Update()
@@ -60,7 +53,7 @@ class PointSet(DataSet):
         """Do a shallow copy the pointset."""
         # Set default points if needed
         if not to_copy.GetPoints():
-            to_copy.SetPoints(vtk.vtkPoints())
+            to_copy.SetPoints(_vtk.vtkPoints())
         return DataSet.shallow_copy(self, to_copy)
 
     def remove_cells(self, ind, inplace=True):
@@ -88,21 +81,21 @@ class PointSet(DataSet):
                 raise ValueError('Boolean array size must match the '
                                  f'number of cells ({self.n_cells}')
         ghost_cells = np.zeros(self.n_cells, np.uint8)
-        ghost_cells[ind] = vtk.vtkDataSetAttributes.DUPLICATECELL
+        ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
 
         if inplace:
             target = self
         else:
             target = self.copy()
 
-        target.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+        target.cell_arrays[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
         target.RemoveGhostCells()
 
         if not inplace:
             return target
 
 
-class PolyData(vtkPolyData, PointSet, PolyDataFilters):
+class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     """Extend the functionality of a vtk.vtkPolyData object.
 
     Can be initialized in several ways:
@@ -139,11 +132,15 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     """
 
-    _READERS = {'.ply': vtk.vtkPLYReader, '.stl': vtk.vtkSTLReader,
-                '.vtk': vtk.vtkPolyDataReader, '.vtp': vtk.vtkXMLPolyDataReader,
-                '.obj': vtk.vtkOBJReader}
-    _WRITERS = {'.ply': vtk.vtkPLYWriter, '.vtp': vtk.vtkXMLPolyDataWriter,
-                '.stl': vtk.vtkSTLWriter, '.vtk': vtk.vtkPolyDataWriter}
+    _READERS = {'.ply': _vtk.vtkPLYReader,
+                '.stl': _vtk.vtkSTLReader,
+                '.vtk': _vtk.vtkPolyDataReader,
+                '.vtp': _vtk.vtkXMLPolyDataReader,
+                '.obj': _vtk.vtkOBJReader}
+    _WRITERS = {'.ply': _vtk.vtkPLYWriter,
+                '.vtp': _vtk.vtkXMLPolyDataWriter,
+                '.stl': _vtk.vtkSTLWriter,
+                '.vtk': _vtk.vtkPolyDataWriter}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the polydata."""
@@ -154,7 +151,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         if not args:
             return
         elif len(args) == 1:
-            if isinstance(args[0], vtk.vtkPolyData):
+            if isinstance(args[0], _vtk.vtkPolyData):
                 if deep:
                     self.deep_copy(args[0])
                 else:
@@ -208,7 +205,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     @property
     def verts(self):
         """Get the vertex cells."""
-        return vtk_to_numpy(self.GetVerts().GetData())
+        return _vtk.vtk_to_numpy(self.GetVerts().GetData())
 
     @verts.setter
     def verts(self, verts):
@@ -218,7 +215,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     @property
     def lines(self):
         """Return a pointer to the lines as a numpy object."""
-        return vtk_to_numpy(self.GetLines().GetData()).ravel()
+        return _vtk.vtk_to_numpy(self.GetLines().GetData()).ravel()
 
     @lines.setter
     def lines(self, lines):
@@ -228,7 +225,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     @property
     def faces(self):
         """Return a pointer to the points as a numpy object."""
-        return vtk_to_numpy(self.GetPolys().GetData())
+        return _vtk.vtk_to_numpy(self.GetPolys().GetData())
 
     @faces.setter
     def faces(self, faces):
@@ -353,7 +350,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             Total volume of the mesh.
 
         """
-        mprop = vtk.vtkMassProperties()
+        mprop = _vtk.vtkMassProperties()
         mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
 
@@ -385,7 +382,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         confine smaller regions of space.
         """
         if not hasattr(self, '_obbTree'):
-            self._obbTree = vtk.vtkOBBTree()
+            self._obbTree = _vtk.vtkOBBTree()
             self._obbTree.SetDataSet(self)
             self._obbTree.BuildLocator()
 
@@ -394,14 +391,13 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     @property
     def n_open_edges(self):
         """Return the number of open edges on this mesh."""
-        alg = vtk.vtkFeatureEdges()
+        alg = _vtk.vtkFeatureEdges()
         alg.FeatureEdgesOff()
         alg.BoundaryEdgesOn()
         alg.NonManifoldEdgesOn()
         alg.SetInputDataObject(self)
         alg.Update()
         return alg.GetOutput().GetNumberOfCells()
-
 
     def __del__(self):
         """Delete the object."""
@@ -453,7 +449,7 @@ class PointGrid(PointSet):
         return surf.volume
 
 
-class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
+class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     """
     Extends the functionality of a vtk.vtkUnstructuredGrid object.
 
@@ -491,8 +487,10 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     """
 
-    _READERS = {'.vtu': vtk.vtkXMLUnstructuredGridReader, '.vtk': vtk.vtkUnstructuredGridReader}
-    _WRITERS = {'.vtu': vtk.vtkXMLUnstructuredGridWriter, '.vtk': vtk.vtkUnstructuredGridWriter}
+    _READERS = {'.vtu': _vtk.vtkXMLUnstructuredGridReader,
+                '.vtk': _vtk.vtkUnstructuredGridReader}
+    _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter,
+                '.vtk': _vtk.vtkUnstructuredGridWriter}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the unstructured grid."""
@@ -502,7 +500,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         if not len(args):
             return
         if len(args) == 1:
-            if isinstance(args[0], vtk.vtkUnstructuredGrid):
+            if isinstance(args[0], _vtk.vtkUnstructuredGrid):
                 if deep:
                     self.deep_copy(args[0])
                 else:
@@ -511,8 +509,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0])
 
-            elif isinstance(args[0], vtk.vtkStructuredGrid):
-                vtkappend = vtk.vtkAppendFilter()
+            elif isinstance(args[0], _vtk.vtkStructuredGrid):
+                vtkappend = _vtk.vtkAppendFilter()
                 vtkappend.AddInputData(args[0])
                 vtkappend.Update()
                 self.shallow_copy(vtkappend.GetOutput())
@@ -526,7 +524,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             self._from_cells_dict(args[0], args[1], deep)
             self._check_for_consistency()
 
-        elif len(args) == 3: # and VTK9:
+        elif len(args) == 3:  # and VTK9:
             arg0_is_arr = isinstance(args[0], np.ndarray)
             arg1_is_arr = isinstance(args[1], np.ndarray)
             arg2_is_arr = isinstance(args[2], np.ndarray)
@@ -552,7 +550,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         else:
             err_msg = 'Invalid parameters.  Initialization with arrays ' +\
                       'requires the following arrays:\n'
-            if VTK9:
+            if _vtk.VTK9:
                 raise TypeError(err_msg + '`cells`, `cell_type`, `points`')
             else:
                 raise TypeError(err_msg + '(`offset` optional), `cells`, `cell_type`, `points`')
@@ -570,7 +568,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             raise ValueError("Points array must be a [M, 3] array")
 
         nr_points = points.shape[0]
-        if VTK9:
+        if _vtk.VTK9:
             cell_types, cells = create_mixed_cells(cells_dict, nr_points)
             self._from_arrays(None, cells, cell_types, points, deep=deep)
         else:
@@ -636,14 +634,14 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
         cell_type_np = cell_type
-        cell_type = numpy_to_vtk(cell_type, deep=deep)
+        cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
 
         # Convert points to vtkPoints object
         points = pyvista.vtk_points(points, deep=deep)
         self.SetPoints(points)
 
         # vtk9 does not require an offset array
-        if VTK9:
+        if _vtk.VTK9:
             if offset is not None:
                 warnings.warn('VTK 9 no longer accepts an offset array',
                               stacklevel=3)
@@ -665,7 +663,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             raise ValueError(f'Number of cell types ({self.celltypes.size}) '
                              f'must match the number of cells {self.n_cells})')
 
-        if VTK9:
+        if _vtk.VTK9:
             if self.n_cells != self.offset.size - 1:
                 raise ValueError(f'Size of the offset ({self.offset.size}) '
                                  'must be one greater than the number of cells '
@@ -678,7 +676,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     @property
     def cells(self):
         """Legacy method: Return a pointer to the cells as a numpy object."""
-        return vtk_to_numpy(self.GetCells().GetData())
+        return _vtk.vtk_to_numpy(self.GetCells().GetData())
 
     @property
     def cells_dict(self):
@@ -700,8 +698,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     def cell_connectivity(self):
         """Return a the vtk cell connectivity as a numpy array."""
         carr = self.GetCells()
-        if VTK9:
-            return vtk_to_numpy(carr.GetConnectivityArray())
+        if _vtk.VTK9:
+            return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
         raise AttributeError('Install vtk>=9.0.0 for `cell_connectivity`\n'
                              'Otherwise, use the legacy `cells` method')
 
@@ -730,28 +728,28 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         lgrid = self.copy(deep)
 
         # grab the vtk object
-        vtk_cell_type = numpy_to_vtk(self.GetCellTypesArray(), deep=True)
-        celltype = vtk_to_numpy(vtk_cell_type)
-        celltype[celltype == VTK_QUADRATIC_TETRA] = VTK_TETRA
-        celltype[celltype == VTK_QUADRATIC_PYRAMID] = VTK_PYRAMID
-        celltype[celltype == VTK_QUADRATIC_WEDGE] = VTK_WEDGE
-        celltype[celltype == VTK_QUADRATIC_HEXAHEDRON] = VTK_HEXAHEDRON
+        vtk_cell_type = _vtk.numpy_to_vtk(self.GetCellTypesArray(), deep=True)
+        celltype = _vtk.vtk_to_numpy(vtk_cell_type)
+        celltype[celltype == _vtk.VTK_QUADRATIC_TETRA] = _vtk.VTK_TETRA
+        celltype[celltype == _vtk.VTK_QUADRATIC_PYRAMID] = _vtk.VTK_PYRAMID
+        celltype[celltype == _vtk.VTK_QUADRATIC_WEDGE] = _vtk.VTK_WEDGE
+        celltype[celltype == _vtk.VTK_QUADRATIC_HEXAHEDRON] = _vtk.VTK_HEXAHEDRON
 
         # track quad mask for later
-        quad_quad_mask = celltype == VTK_QUADRATIC_QUAD
-        celltype[quad_quad_mask] = VTK_QUAD
+        quad_quad_mask = celltype == _vtk.VTK_QUADRATIC_QUAD
+        celltype[quad_quad_mask] = _vtk.VTK_QUAD
 
-        quad_tri_mask = celltype == VTK_QUADRATIC_TRIANGLE
-        celltype[quad_tri_mask] = VTK_TRIANGLE
+        quad_tri_mask = celltype == _vtk.VTK_QUADRATIC_TRIANGLE
+        celltype[quad_tri_mask] = _vtk.VTK_TRIANGLE
 
         vtk_offset = self.GetCellLocationsArray()
-        cells = vtk.vtkCellArray()
+        cells = _vtk.vtkCellArray()
         cells.DeepCopy(self.GetCells())
         lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
 
         # fixing bug with display of quad cells
         if np.any(quad_quad_mask):
-            if VTK9:
+            if _vtk.VTK9:
                 quad_offset = lgrid.offset[:-1][quad_quad_mask]
                 base_point = lgrid.cell_connectivity[quad_offset]
                 lgrid.cell_connectivity[quad_offset + 4] = base_point
@@ -767,7 +765,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 lgrid.cells[quad_offset + 8] = base_point
 
         if np.any(quad_tri_mask):
-            if VTK9:
+            if _vtk.VTK9:
                 tri_offset = lgrid.offset[:-1][quad_tri_mask]
                 base_point = lgrid.cell_connectivity[tri_offset]
                 lgrid.cell_connectivity[tri_offset + 3] = base_point
@@ -785,20 +783,20 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     @property
     def celltypes(self):
         """Get the cell types array."""
-        return vtk_to_numpy(self.GetCellTypesArray())
+        return _vtk.vtk_to_numpy(self.GetCellTypesArray())
 
     @property
     def offset(self):
         """Get cell locations Array."""
         carr = self.GetCells()
-        if VTK9:
+        if _vtk.VTK9:
             # This will be the number of cells + 1.
-            return vtk_to_numpy(carr.GetOffsetsArray())
+            return _vtk.vtk_to_numpy(carr.GetOffsetsArray())
         else:  # this is no longer used in >= VTK9
-            return vtk_to_numpy(self.GetCellLocationsArray())
+            return _vtk.vtk_to_numpy(self.GetCellLocationsArray())
 
 
-class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
+class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     """Extend the functionality of a vtk.vtkStructuredGrid object.
 
     Can be initialized in several ways:
@@ -832,15 +830,17 @@ class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     """
 
-    _READERS = {'.vtk': vtk.vtkStructuredGridReader, '.vts': vtk.vtkXMLStructuredGridReader}
-    _WRITERS = {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
+    _READERS = {'.vtk': _vtk.vtkStructuredGridReader,
+                '.vts': _vtk.vtkXMLStructuredGridReader}
+    _WRITERS = {'.vtk': _vtk.vtkStructuredGridWriter,
+                '.vts': _vtk.vtkXMLStructuredGridWriter}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the structured grid."""
         super().__init__()
 
         if len(args) == 1:
-            if isinstance(args[0], vtk.vtkStructuredGrid):
+            if isinstance(args[0], _vtk.vtkStructuredGrid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], str):
                 self._from_file(args[0])
@@ -988,7 +988,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
                 raise ValueError('Boolean array size must match the '
                                  f'number of cells ({self.n_cells})')
         ghost_cells = np.zeros(self.n_cells, np.uint8)
-        ghost_cells[ind] = vtk.vtkDataSetAttributes.HIDDENCELL
+        ghost_cells[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
 
         # NOTE: cells cannot be removed from a structured grid, only
         # hidden setting ghost_cells to a value besides
@@ -996,7 +996,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
         # properly, additionally, calling self.RemoveGhostCells will
         # have no effect
 
-        self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+        self.cell_arrays[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
 
     def _reshape_point_array(self, array):
         """Reshape point data to a 3-D matrix."""

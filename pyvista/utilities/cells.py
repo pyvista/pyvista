@@ -1,11 +1,8 @@
 """pyvista wrapping of vtkCellArray."""
 import numpy as np
-from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
-from vtk import vtkCellArray
-import vtk
 
+from pyvista import _vtk
 import pyvista
-VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 
 def numpy_to_idarr(ind, deep=False, return_ind=False):
@@ -24,13 +21,13 @@ def numpy_to_idarr(ind, deep=False, return_ind=False):
         ind = np.ascontiguousarray(ind, dtype=pyvista.ID_TYPE)
 
     # must ravel or segfault when saving MultiBlock
-    vtk_idarr = numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
+    vtk_idarr = _vtk.numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
     if return_ind:
         return vtk_idarr, ind
     return vtk_idarr
 
 
-class CellArray(vtkCellArray):
+class CellArray(_vtk.vtkCellArray):
     """pyvista wrapping of vtkCellArray.
 
     Provides convenience functions to simplify creating a CellArray from
@@ -73,7 +70,7 @@ class CellArray(vtkCellArray):
     @property
     def cells(self):
         """Return a numpy array of the cells."""
-        return vtk_to_numpy(self.GetData()).ravel()
+        return _vtk.vtk_to_numpy(self.GetData()).ravel()
 
     @property
     def n_cells(self):
@@ -218,8 +215,11 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     --------
     Create the cell arrays containing two triangles.
 
+    This will generate cell arrays to generate a mesh with two
+    disconnected triangles from 6 points.
+
+    >>> import vtk
     >>> from pyvista.utilities.cells import create_mixed_cells
-    >>> #Will generate cell arrays two generate a mesh with two disconnected triangles from 6 points
     >>> cell_arrays = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
     >>> #VTK versions < 9.0: cell_types, cell_arr, cell_offsets = cell_arrays
     >>> #VTK versions >= 9.0: cell_types, cell_arr = cell_arrays
@@ -257,17 +257,17 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(np.concatenate([np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1).reshape([-1]))
 
-        if not VTK9:
+        if not _vtk.VTK9:
             final_cell_offsets.append(current_cell_offset + (nr_points_per_elem+1) * (np.arange(nr_elems)+1))
             current_cell_offset += final_cell_offsets[-1][-1]
 
     final_cell_types = np.concatenate(final_cell_types)
     final_cell_arr = np.concatenate(final_cell_arr)
 
-    if not VTK9:
+    if not _vtk.VTK9:
         final_cell_offsets = np.concatenate(final_cell_offsets)[:-1]
 
-    if not VTK9:
+    if not _vtk.VTK9:
         return final_cell_types, final_cell_arr, final_cell_offsets
     else:
         return final_cell_types, final_cell_arr
