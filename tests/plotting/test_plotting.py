@@ -1548,3 +1548,4 @@ def test_plot_remove_scalar_bar():
     plotter.remove_scalar_bar()
     # Regression test for issue #1055
     assert not plotter.scalar_widget.GetEnabled()
+    plotter.show(before_close_callback=verify_cache_image)
