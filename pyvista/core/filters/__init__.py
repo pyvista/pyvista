@@ -1,4 +1,4 @@
-"""Init for /filters/"""
+"""Init for /filters/."""
 
 from .algorithm import _get_output, _update_alg
 from .compositefilters import CompositeFilters
