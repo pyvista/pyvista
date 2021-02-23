@@ -1,7 +1,7 @@
 .. _ref_pyinstaller:
 
 Flask Application
-===============
+=================
 You can use ``pyvista`` in to make a flask application to display
 static plots.  See the following example as well as the demo at `Flask
 Example <https://github.com/pyvista/pyvista/raw/master/examples_flask>`__.
