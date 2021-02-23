@@ -3161,6 +3161,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def remove_scalar_bar(self):
         """Remove the scalar bar."""
         if hasattr(self, 'scalar_bar'):
+            if hasattr(self, 'scalar_widget'):
+                self.scalar_widget.SetEnabled(0)
             self.remove_actor(self.scalar_bar, reset_camera=False)
 
     def add_point_labels(self, points, labels, italic=False, bold=True,

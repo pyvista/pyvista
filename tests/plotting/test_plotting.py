@@ -1538,3 +1538,13 @@ def test_log_scale():
     plotter = pyvista.Plotter()
     plotter.add_mesh(mesh, log_scale=True)
     plotter.show()
+
+
+@skip_no_plotting
+def test_plot_remove_scalar_bar():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_scalar_bar(interactive=True)
+    plotter.remove_scalar_bar()
+    # Regression test for issue #1055
+    assert not plotter.scalar_widget.GetEnabled()
