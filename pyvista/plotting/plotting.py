@@ -3278,7 +3278,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif is_pyvista_dataset(points):
             vtkpoints = pyvista.PolyData(points.points)
             if isinstance(labels, str):
-                labels = points.point_arrays[labels].astype(str)
+                labels = points.point_arrays[labels]
         else:
             raise TypeError(f'Points type not usable: {type(points)}')
 
