@@ -4,9 +4,8 @@ By inheriting these classes into the wrapped VTK data structures, a user
 can easily apply filters in an intuitive manner.
 """
 
-import vtk
-
 import pyvista
+import pyvista._vtk as vtk
 from pyvista.utilities import (wrap, abstract_class)
 from .datasetfilters import DataSetFilters
 

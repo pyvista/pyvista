@@ -24,7 +24,7 @@ Example
 """
 
 import numpy as np
-import vtk
+import pyvista._vtk as vtk
 
 import pyvista
 from pyvista.utilities import (abstract_class)

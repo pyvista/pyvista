@@ -26,8 +26,8 @@ import collections.abc
 import logging
 
 import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
+from pyvista._vtk import vtk_to_numpy
+import pyvista._vtk as vtk
 
 import pyvista
 from pyvista.core.errors import NotAllTrianglesError
