@@ -1105,7 +1105,8 @@ class Renderer(_vtk.vtkRenderer):
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
-        self.camera.focus = scale_point(self.camera, point, invert=False)
+        self.camera.focal_point = scale_point(self.camera, point, invert=False)
+        self.camera_set = True
         self.Modified()
 
     def set_position(self, point, reset=False):
@@ -1125,6 +1126,7 @@ class Renderer(_vtk.vtkRenderer):
             if vector.ndim != 1:
                 vector = vector.ravel()
         self.camera.up = vector
+        self.camera_set = True
         self.Modified()
 
     def enable_parallel_projection(self):
