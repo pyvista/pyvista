@@ -8,6 +8,8 @@ import pytest
 
 import pyvista
 from pyvista import examples
+from pyvista.core.errors import VTKVersionError
+
 
 DATASETS = [
     examples.load_uniform(),  # UniformGrid
@@ -1099,6 +1101,7 @@ def test_transform_mesh(dataset, num_cell_arrays, num_point_arrays):
     assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
     assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
 
+    # ensure that none of the vector data is changed
     for name, array in dataset.point_arrays.items():
         assert transformed.point_arrays[name] == pytest.approx(array)
 
@@ -1116,6 +1119,13 @@ def test_transform_mesh_and_vectors(dataset, num_cell_arrays, num_point_arrays):
 
     for i in range(num_point_arrays):
         dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
+
+    # handle
+    f = pyvista._vtk.vtkTransformFilter()
+    if not hasattr(f, 'SetTransformAllInputVectors'):
+        with pytest.raises(VTKVersionError):
+            transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
+        return
 
     transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 

@@ -33,7 +33,7 @@ from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
                                wrap, ProgressMonitor, abstract_class)
 from pyvista.utilities.cells import numpy_to_idarr
-from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import (NotAllTrianglesError, VTKVersionError)
 from pyvista.utilities import transformations
 
 from typing import Union
@@ -2687,7 +2687,16 @@ class DataSetFilters:
         f = _vtk.vtkTransformFilter()
         f.SetInputDataObject(dataset)
         f.SetTransform(t)
-        f.SetTransformAllInputVectors(transform_all_input_vectors)
+
+        if hasattr(f, 'SetTransformAllInputVectors'):
+            f.SetTransformAllInputVectors(transform_all_input_vectors)
+        else:
+            # In VTK 8.1.2 and earlier, vtkTransformFilter does not support the transformation of all input vectors.
+            # Raise an error if the user requested for input vectors to be transformed and it is not supported
+            if transform_all_input_vectors:
+                raise VTKVersionError('The installed version of VTK does not support'
+                                      'transformation of all input vectors.')
+
         f.Update()
         res = pyvista.core.filters._get_output(f)
 
