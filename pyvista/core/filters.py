@@ -2640,7 +2640,8 @@ class DataSetFilters:
         if isinstance(dataset, _vtk.vtkPolyData):
             return output.extract_surface()
 
-    def transform(dataset, trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
+    def transform(dataset: _vtk.vtkDataSet,
+                  trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
                   transform_all_input_vectors=False, inplace=True):
         """Transform this mesh with a 4x4 transform.
 
@@ -2696,8 +2697,9 @@ class DataSetFilters:
 
         if inplace:
             if not isinstance(res, type(dataset)):
-                raise ValueError('Unable to perform in-place transformation. Input was `%s` but output is `%s`.' %
-                                 (dataset.GetClassName(), res.GetClassName()))
+                raise ValueError('Unable to perform in-place transformation. '
+                                 f'Input was `{dataset.GetClassName()}` '
+                                 f'but output is `{res.GetClassName()}`.')
             dataset.overwrite(res)
         else:
             return res
