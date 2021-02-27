@@ -32,7 +32,7 @@ from pyvista import _vtk
 from pyvista.core.filters.algorithm import _get_output, _update_alg
 from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
-                               wrap, ProgressMonitor, abstract_class)
+                               wrap, abstract_class)
 from pyvista.utilities.cells import numpy_to_idarr
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.utilities import transformations
