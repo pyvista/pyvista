@@ -38,6 +38,7 @@ from pyvista.utilities import transformations
 
 from typing import Union
 
+
 def _update_alg(alg, progress_bar=False, message=''):
     """Update an algorithm with or without a progress bar."""
     if progress_bar:
@@ -2719,7 +2720,7 @@ class DataSetFilters:
             When ``True``, modifies the dataset and returns nothing.
 
         transform_all_input_vectors: bool, optional
-            When ``True``, all input vectors are reflected. Otherwise, only the
+            When ``True``, all input vectors are transformed. Otherwise, only the
             points, normals and active vectors are transformed.
 
         Examples
