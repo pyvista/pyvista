@@ -2640,7 +2640,7 @@ class DataSetFilters:
         if isinstance(dataset, _vtk.vtkPolyData):
             return output.extract_surface()
 
-    def transform(dataset, trans: Union[vtk.vtkMatrix4x4, vtk.vtkTransform, np.ndarray],
+    def transform(dataset, trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
                   transform_all_input_vectors=False, inplace=True):
         """Transform this mesh with a 4x4 transform.
 
@@ -2653,11 +2653,11 @@ class DataSetFilters:
             When ``True``, all input vectors are transformed. Otherwise, only the
             points, normals and active vectors are transformed.
         """
-        if isinstance(trans, vtk.vtkMatrix4x4):
+        if isinstance(trans, _vtk.vtkMatrix4x4):
             m = trans
-            t = vtk.vtkTransform()
+            t = _vtk.vtkTransform()
             t.SetMatrix(m)
-        elif isinstance(trans, vtk.vtkTransform):
+        elif isinstance(trans, _vtk.vtkTransform):
             t = trans
             m = trans.GetMatrix()
         elif isinstance(trans, np.ndarray):
@@ -2666,7 +2666,7 @@ class DataSetFilters:
             elif trans.shape[0] != 4 or trans.shape[1] != 4:
                 raise ValueError('Transformation array must be 4x4')
             m = pyvista.vtkmatrix_from_array(trans)
-            t = vtk.vtkTransform()
+            t = _vtk.vtkTransform()
             t.SetMatrix(m)
         else:
             raise TypeError('Input transform must be either:\n'
@@ -2683,7 +2683,7 @@ class DataSetFilters:
         active_scalars_name = dataset.active_scalars_name
         dataset.set_active_scalars(None)
 
-        f = vtk.vtkTransformFilter()
+        f = _vtk.vtkTransformFilter()
         f.SetInputDataObject(dataset)
         f.SetTransform(t)
         f.SetTransformAllInputVectors(transform_all_input_vectors)
