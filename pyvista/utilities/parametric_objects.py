@@ -2,9 +2,9 @@
 
 from math import pi
 
-import vtk
 
 import pyvista
+from pyvista import _vtk
 from .geometric_objects import translate
 
 
@@ -40,7 +40,7 @@ def Spline(points, n_points=None):
     >>> spline = pv.Spline(points, 1000)
 
     """
-    spline_function = vtk.vtkParametricSpline()
+    spline_function = _vtk.vtkParametricSpline()
     spline_function.SetPoints(pyvista.vtk_points(points, False))
 
     # get interpolation density
@@ -77,7 +77,7 @@ def ParametricBohemianDome(a=None, **kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricBohemianDome()
+    parametric_function = _vtk.vtkParametricBohemianDome()
     if a is not None:
         parametric_function.SetA(a)
 
@@ -107,7 +107,7 @@ def ParametricBour(**kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricBour()
+    parametric_function = _vtk.vtkParametricBour()
 
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [1., 0., 0.])
@@ -149,7 +149,7 @@ def ParametricBoy(zscale=None, **kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricBoy()
+    parametric_function = _vtk.vtkParametricBoy()
     if zscale is not None:
         parametric_function.SetZScale(zscale)
 
@@ -183,7 +183,7 @@ def ParametricCatalanMinimal(**kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricCatalanMinimal()
+    parametric_function = _vtk.vtkParametricCatalanMinimal()
 
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [1., 0., 0.])
@@ -236,7 +236,7 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricConicSpiral()
+    parametric_function = _vtk.vtkParametricConicSpiral()
     if a is not None:
         parametric_function.SetA(a)
 
@@ -279,7 +279,7 @@ def ParametricCrossCap(**kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricCrossCap()
+    parametric_function = _vtk.vtkParametricCrossCap()
 
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [1., 0., 0.])
@@ -322,7 +322,7 @@ def ParametricDini(a=None, b=None, **kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricDini()
+    parametric_function = _vtk.vtkParametricDini()
     if a is not None:
         parametric_function.SetA(a)
 
@@ -373,7 +373,7 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricEllipsoid()
+    parametric_function = _vtk.vtkParametricEllipsoid()
     parametric_keywords(parametric_function, min_u=kwargs.pop("min_u", 0),
                         max_u=kwargs.pop("max_u", 2*pi),
                         min_v=kwargs.pop("min_v", 0.0),
@@ -423,7 +423,7 @@ def ParametricEnneper(**kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricEnneper()
+    parametric_function = _vtk.vtkParametricEnneper()
 
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [1., 0., 0.])
@@ -460,7 +460,7 @@ def ParametricFigure8Klein(radius=None, **kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricFigure8Klein()
+    parametric_function = _vtk.vtkParametricFigure8Klein()
     if radius is not None:
         parametric_function.SetRadius(radius)
 
@@ -490,7 +490,7 @@ def ParametricHenneberg(**kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricHenneberg()
+    parametric_function = _vtk.vtkParametricHenneberg()
 
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [1., 0., 0.])
@@ -523,7 +523,7 @@ def ParametricKlein(**kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricKlein()
+    parametric_function = _vtk.vtkParametricKlein()
 
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [1., 0., 0.])
@@ -563,7 +563,7 @@ def ParametricKuen(deltav0=None, **kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricKuen()
+    parametric_function = _vtk.vtkParametricKuen()
     if deltav0 is not None:
         parametric_function.SetDeltaV0(deltav0)
 
@@ -598,7 +598,7 @@ def ParametricMobius(radius=None, **kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricMobius()
+    parametric_function = _vtk.vtkParametricMobius()
     if radius is not None:
         parametric_function.SetRadius(radius)
 
@@ -639,7 +639,7 @@ def ParametricPluckerConoid(n=None, **kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricPluckerConoid()
+    parametric_function = _vtk.vtkParametricPluckerConoid()
     if n is not None:
         parametric_function.SetN(n)
 
@@ -674,7 +674,7 @@ def ParametricPseudosphere(**kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricPseudosphere()
+    parametric_function = _vtk.vtkParametricPseudosphere()
 
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [1., 0., 0.])
@@ -749,7 +749,7 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricRandomHills()
+    parametric_function = _vtk.vtkParametricRandomHills()
     if numberofhills is not None:
         parametric_function.SetNumberOfHills(numberofhills)
 
@@ -805,7 +805,7 @@ def ParametricRoman(radius=None, **kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricRoman()
+    parametric_function = _vtk.vtkParametricRoman()
     if radius is not None:
         parametric_function.SetRadius(radius)
 
@@ -858,7 +858,7 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricSuperEllipsoid()
+    parametric_function = _vtk.vtkParametricSuperEllipsoid()
     if xradius is not None:
         parametric_function.SetXRadius(xradius)
 
@@ -936,7 +936,7 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricSuperToroid()
+    parametric_function = _vtk.vtkParametricSuperToroid()
     if ringradius is not None:
         parametric_function.SetRingRadius(ringradius)
 
@@ -993,7 +993,7 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
 
     """
-    parametric_function = vtk.vtkParametricTorus()
+    parametric_function = _vtk.vtkParametricTorus()
     if ringradius is not None:
         parametric_function.SetRingRadius(ringradius)
 
@@ -1080,7 +1080,7 @@ def surface_from_para(parametric_function, u_res=100, v_res=100,
 
     """
     # convert to a mesh
-    para_source = vtk.vtkParametricFunctionSource()
+    para_source = _vtk.vtkParametricFunctionSource()
     para_source.SetParametricFunction(parametric_function)
     para_source.SetUResolution(u_res)
     para_source.SetVResolution(v_res)

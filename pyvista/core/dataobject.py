@@ -7,11 +7,10 @@ from pathlib import Path
 from typing import Union, Any, Dict, DefaultDict, Type
 
 import numpy as np
-import vtk
 
 import pyvista
-from pyvista.utilities import (FieldAssociation, fileio,
-                               abstract_class)
+from pyvista import _vtk
+from pyvista.utilities import (FieldAssociation, fileio, abstract_class)
 from .datasetattributes import DataSetAttributes
 
 log = logging.getLogger(__name__)
@@ -25,8 +24,8 @@ DEFAULT_VECTOR_KEY = '_vectors'
 class DataObject:
     """Methods common to all wrapped data objects."""
 
-    _READERS: Dict[str, Union[Type[vtk.vtkXMLReader], Type[vtk.vtkDataReader]]] = {}
-    _WRITERS: Dict[str, Union[Type[vtk.vtkXMLWriter], Type[vtk.vtkDataWriter]]] = {}
+    _READERS: Dict[str, Union[Type[_vtk.vtkXMLReader], Type[_vtk.vtkDataReader]]] = {}
+    _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
@@ -39,15 +38,15 @@ class DataObject:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
-    def shallow_copy(self, to_copy: vtk.vtkDataObject) -> vtk.vtkDataObject:
+    def shallow_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
         """Shallow copy the given mesh to this mesh."""
         return self.ShallowCopy(to_copy)
 
-    def deep_copy(self, to_copy: vtk.vtkDataObject) -> vtk.vtkDataObject:
+    def deep_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
         """Overwrite this mesh with the given mesh as a deep copy."""
         return self.DeepCopy(to_copy)
 
-    def _load_file(self, filename: Union[str, Path]) -> vtk.vtkDataObject:
+    def _load_file(self, filename: Union[str, Path]) -> _vtk.vtkDataObject:
         """Generically load a vtk object from file.
 
         Parameters
@@ -65,7 +64,9 @@ class DataObject:
             raise NotImplementedError(f'{self.__class__.__name__} readers are not specified,'
                                       ' this should be a dict of (file extension: vtkReader type)')
 
-        file_path = Path(filename).resolve()
+        file_path = Path(filename)
+        file_path = file_path.expanduser()
+        file_path = file_path.resolve()
         if not file_path.exists():
             raise FileNotFoundError(f'File {filename} does not exist')
 
@@ -108,7 +109,9 @@ class DataObject:
             raise NotImplementedError(f'{self.__class__.__name__} writers are not specified,'
                                       ' this should be a dict of (file extension: vtkWriter type)')
 
-        file_path = Path(filename).resolve()
+        file_path = Path(filename)
+        file_path = file_path.expanduser()
+        file_path = file_path.resolve()
         file_ext = file_path.suffix
         if file_ext not in self._WRITERS:
             raise ValueError('Invalid file extension for this data type.'
@@ -243,7 +246,7 @@ class DataObject:
         """
         return self.GetActualMemorySize()
 
-    def copy_structure(self, dataset: vtk.vtkDataSet):
+    def copy_structure(self, dataset: _vtk.vtkDataSet):
         """Copy the structure (geometry and topology) of the input dataset object.
 
         Examples
@@ -257,7 +260,7 @@ class DataObject:
         """
         self.CopyStructure(dataset)
 
-    def copy_attributes(self, dataset: vtk.vtkDataSet):
+    def copy_attributes(self, dataset: _vtk.vtkDataSet):
         """Copy the data attributes of the input dataset object.
 
         Examples
@@ -275,7 +278,7 @@ class DataObject:
     def __getstate__(self):
         """Support pickle. Serialize the VTK object to ASCII string."""
         state = self.__dict__.copy()
-        writer = vtk.vtkDataSetWriter()
+        writer = _vtk.vtkDataSetWriter()
         writer.SetInputDataObject(self)
         writer.SetWriteToOutputString(True)
         writer.SetFileTypeToASCII()
@@ -289,7 +292,7 @@ class DataObject:
         vtk_serialized = state.pop('vtk_serialized')
         self.__dict__.update(state)
 
-        reader = vtk.vtkDataSetReader()
+        reader = _vtk.vtkDataSetReader()
         reader.ReadFromInputStringOn()
         reader.SetInputString(vtk_serialized)
         reader.Update()

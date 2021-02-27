@@ -156,7 +156,7 @@ When plotting the values between nodes are interpolated across the cells.
 
 Cell data refers to arrays of values (scalars, vectors, etc.) that
 live throughout each cell of the mesh.
-That is the entire cell (2D face or 3D volume) has is assigned the value of
+That is the entire cell (2D face or 3D volume) is assigned the value of
 that attribute.
 
 .. testcode:: python
@@ -171,7 +171,7 @@ that attribute.
 
 
 Here's a comparison of point data vs. cell data and how point data is
-interpolated across cells when mapping colors unlike cell data which has a
+interpolated across cells when mapping colors. This is unlike cell data which has a
 single value across the cell's domain:
 
 .. testcode:: python

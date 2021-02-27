@@ -1,17 +1,19 @@
 """Transformations leveraging transforms3d library."""
 import numpy as np
-import transforms3d as tf3d
+
 
 
 def axis_angle_rotation(axis, angle, point=None, deg=True):
     """Return a 4x4 matrix for rotation about an axis by given angle, optionally about a given point."""
     if deg:
         angle *= np.pi / 180
+    import transforms3d as tf3d
     return tf3d.axangles.axangle2aff(axis, angle, point=point)
 
 
 def reflection(normal, point=None):
     """Return a 4x4 matrix for reflection across a normal about a point."""
+    import transforms3d as tf3d
     return tf3d.reflections.rfnorm2aff(normal, point=point)
 
 

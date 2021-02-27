@@ -8,12 +8,11 @@ import collections.abc
 import logging
 
 import numpy as np
-import vtk
 from typing import List, Tuple, Union, Optional, Any, cast
-from vtk import vtkMultiBlockDataSet
 
 import pyvista
 from pyvista.utilities import get_array, is_pyvista_dataset, wrap
+from pyvista import _vtk
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 from .._typing import Vector
@@ -22,7 +21,7 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
+class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     """A composite class to hold many data sets which can be iterated over.
 
     This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so that we can
@@ -63,10 +62,10 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     # Bind pyvista.plotting.plot to the object
     plot = pyvista.plot
-    _READERS = {'.vtm': vtk.vtkXMLMultiBlockDataReader,
-                '.vtmb': vtk.vtkXMLMultiBlockDataReader,
-                '.case': vtk.vtkGenericEnSightReader}
-    _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataWriter)
+    _READERS = {'.vtm': _vtk.vtkXMLMultiBlockDataReader,
+                '.vtmb': _vtk.vtkXMLMultiBlockDataReader,
+                '.case': _vtk.vtkGenericEnSightReader}
+    _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize multi block."""
@@ -75,7 +74,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         self.refs: Any = []
 
         if len(args) == 1:
-            if isinstance(args[0], vtk.vtkMultiBlockDataSet):
+            if isinstance(args[0], _vtk.vtkMultiBlockDataSet):
                 if deep:
                     self.deep_copy(args[0])
                 else:
@@ -241,7 +240,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     def append(self, data: DataSet):
         """Add a data set to the next block index."""
-        index = self.n_blocks # note off by one so use as index
+        index = self.n_blocks  # note off by one so use as index
         self[index] = data
         self.refs.append(data)
 
@@ -257,14 +256,14 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """Set a block's string name at the specified index."""
         if name is None:
             return
-        self.GetMetaData(index).Set(vtk.vtkCompositeDataSet.NAME(), name)
+        self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
     def get_block_name(self, index: int) -> Optional[str]:
         """Return the string name of the block at the given index."""
         meta = self.GetMetaData(index)
         if meta is not None:
-            return meta.Get(vtk.vtkCompositeDataSet.NAME())
+            return meta.Get(_vtk.vtkCompositeDataSet.NAME())
         return None
 
     def keys(self) -> List[Optional[str]]:
