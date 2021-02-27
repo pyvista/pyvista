@@ -24,7 +24,7 @@ Example
 """
 import collections.abc
 
-import vtk
+import pyvista._vtk as vtk
 
 import pyvista
 from pyvista.utilities import (abstract_class)
