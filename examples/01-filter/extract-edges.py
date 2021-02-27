@@ -1,6 +1,6 @@
 """
 Extract Edges
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 Extracts edges from a surface.
 """
