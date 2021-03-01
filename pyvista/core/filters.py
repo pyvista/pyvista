@@ -4766,6 +4766,16 @@ class PolyDataFilters(DataSetFilters):
         alg.Update()
         return _get_output(alg)
 
+    def silhouette(poly_data, camera, decimate=0.9, feature_angle=False):
+        poly_data = poly_data.decimate(decimate) if decimate is not None else poly_data
+        alg = _vtk.vtkPolyDataSilhouette()
+        alg.SetInputData(poly_data)
+        alg.SetCamera(camera)
+        alg.SetEnableFeatureAngle(feature_angle)
+        mapper = _vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(alg.GetOutputPort())
+        return mapper
+
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for unstructured grid datasets."""

@@ -302,6 +302,7 @@ if VTK9:
                                                vtkStructuredGridGeometryFilter,
                                                vtkCompositeDataGeometryFilter,
                                                vtkDataSetSurfaceFilter)
+    from vtkmodules.vtkFiltersHybrid import vtkPolyDataSilhouette
     from vtkmodules.vtkFiltersExtraction import (vtkExtractEdges,
                                                  vtkExtractGeometry,
                                                  vtkExtractGrid,
