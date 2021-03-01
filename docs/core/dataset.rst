@@ -20,7 +20,7 @@ set of common functionality which we wrap into the base class
 
 
 The DataSet Model
-----------------
+-----------------
 
 The :class:`pyvista.DataSet` class holds attributes that are *common* to all
 spatially referenced datasets in PyVista.
