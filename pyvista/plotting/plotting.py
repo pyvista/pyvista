@@ -1564,7 +1564,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         ##### Plot a single PyVista mesh #####
 
-        silhouette_params = rcParams['silhouette']
+        silhouette_params = rcParams['silhouette'].copy()
         if isinstance(silhouette, dict):
             silhouette_params.update(silhouette)
             silhouette = True
