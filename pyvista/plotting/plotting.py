@@ -1387,14 +1387,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If set to ``True``, then the number of unique values in the scalar
             array will be used as the ``n_colors`` argument.
 
-        silhouette : dict, optional
+        silhouette : dict, bool, optional
            As a dict, it contains the properties of the silhouette to display:
                * ``color`` (color of the silhouette)
                * ``line_width`` (edge width)
                * ``opacity`` (edge transparency between 0 and 1)
                * ``feature_angle`` (bool to display sharp edges)
                * ``decimate`` (level of decimation between 0 and 1 or None)
-           If None, no silhouette is displayed. Defaults to None.
+           If True, the default values are used and if False, no silhouette
+           is displayed. Defaults to False.
 
         use_transparency : bool, optional
             Invert the opacity mappings and make the values correspond to
@@ -1563,10 +1564,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         ##### Plot a single PyVista mesh #####
 
-        if silhouette is not None:
-            silhouette_params = rcParams['silhouette']
+        silhouette_params = rcParams['silhouette']
+        if isinstance(silhouette, dict):
             silhouette_params.update(silhouette)
-            del silhouette
+            silhouette = True
+        if silhouette:
             if silhouette_params["decimate"] is None:
                 silhouette_mesh = mesh
             else:
