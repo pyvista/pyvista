@@ -520,7 +520,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 itype = type(args[0])
                 raise TypeError(f'Cannot work with input type {itype}')
 
-        #Cell dictionary creation
+        # Cell dictionary creation
         elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
             self._from_cells_dict(args[0], args[1], deep)
             self._check_for_consistency()
@@ -575,8 +575,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         else:
             cell_types, cells, offset = create_mixed_cells(cells_dict, nr_points)
             self._from_arrays(offset, cells, cell_types, points, deep=deep)
-
-
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
@@ -834,13 +832,13 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         """
         # `GlobalWarningDisplayOff` is used below to hide errors during the cell blanking.
         # <https://discourse.vtk.org/t/error-during-the-cell-blanking-of-explicit-structured-grid/4863>
-        if not VTK9:
+        if not _vtk.VTK9:
             raise AttributeError('VTK 9 or higher is required.')
         s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
         s2 = self.cell_arrays.keys()
         if not s1.issubset(s2):
             raise TypeError("'BLOCK_I', 'BLOCK_J' and 'BLOCK_K' cell arrays are required.")
-        alg = vtk.vtkUnstructuredGridToExplicitStructuredGrid()
+        alg = _vtk.vtkUnstructuredGridToExplicitStructuredGrid()
         alg.GlobalWarningDisplayOff()
         alg.SetInputData(self)
         alg.SetInputArrayToProcess(0, 0, 0, 1, 'BLOCK_I')
@@ -1445,7 +1443,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         ...           (1, 0, 2),
         ...           (2, 3, 2)]
         >>> grid.cell_id(coords)
-        array([19, 31, 41, 54], dtype=int64)
+        array([19, 31, 41, 54])
 
         """
         # `vtk.vtkExplicitStructuredGrid.ComputeCellId` is not used here because this method
@@ -1493,7 +1491,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         array([[3, 4, 0],
                [3, 2, 1],
                [1, 0, 2],
-               [2, 3, 2]], dtype=int64)
+               [2, 3, 2]])
 
         """
         dims = self._dimensions()
@@ -1631,23 +1629,28 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     def compute_connectivity(self, inplace=True):
         """Compute the faces connectivity flags array.
 
-        This method checks the faces connectivity of the cells with their topological neighbors.
-        The result is stored in the array of integers ``'ConnectivityFlags'``. Each value in this
-        array must be interpreted as a binary number, where the digits shows the faces connectivity
-        of a cell with its topological neighbors -Z, +Z, -Y, +Y, -X and +X respectivelly. For
-        example, a cell with ``'ConnectivityFlags'`` equal to ``27`` (``011011``) indicates that
-        this cell is connected by faces with their neighbors ``(0, 0, 1)``, ``(0, -1, 0)``,
-        ``(-1, 0, 0)`` and ``(1, 0, 0)``.
+        This method checks the faces connectivity of the cells with
+        their topological neighbors.  The result is stored in the
+        array of integers ``'ConnectivityFlags'``. Each value in this
+        array must be interpreted as a binary number, where the digits
+        shows the faces connectivity of a cell with its topological
+        neighbors -Z, +Z, -Y, +Y, -X and +X respectivelly. For
+        example, a cell with ``'ConnectivityFlags'`` equal to ``27``
+        (``011011``) indicates that this cell is connected by faces
+        with their neighbors ``(0, 0, 1)``, ``(0, -1, 0)``, ``(-1, 0,
+        0)`` and ``(1, 0, 0)``.
 
         Parameters
         ----------
         inplace : bool, optional
-            This method is applied to this grid if ``True`` (default) or to a copy otherwise.
+            This method is applied to this grid if ``True`` (default)
+            or to a copy otherwise.
 
         Returns
         -------
         grid : ExplicitStructuredGrid or None
-            A deep copy of this grid if ``inplace=False`` or none otherwise.
+            A deep copy of this grid if ``inplace=False`` or none
+            otherwise.
 
         See Also
         --------

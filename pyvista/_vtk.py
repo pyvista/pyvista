@@ -221,6 +221,8 @@ if VTK9:
                                           vtkMatrix3x3)
     from vtkmodules.vtkCommonTransforms import vtkTransform
     from vtkmodules.vtkFiltersCore import (vtkAppendFilter,
+                                           vtkUnstructuredGridToExplicitStructuredGrid,
+                                           vtkExplicitStructuredGridToUnstructuredGrid,
                                            vtkCutter,
                                            vtkPointDataToCellData,
                                            vtkMassProperties,
