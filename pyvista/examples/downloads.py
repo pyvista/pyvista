@@ -6,16 +6,16 @@ import sys
 import zipfile
 
 import numpy as np
-import vtk
 
 import pyvista
+from pyvista import _vtk
 from pyvista.core.errors import DeprecationError
 
 # Helpers:
 
 def _check_examples_path():
     """Check if the examples path exists."""
-    if pyvista.EXAMPLES_PATH is None:
+    if not pyvista.EXAMPLES_PATH:
         raise FileNotFoundError('EXAMPLES_PATH does not exist.  Try setting the '
                                 'environment variable `PYVISTA_USERDATA_PATH` '
                                 'to a writable path and restarting python')
@@ -240,12 +240,12 @@ def download_sparse_points():
 
     """
     saved_file, _ = _download_file('sparsePoints.txt')
-    points_reader = vtk.vtkDelimitedTextReader()
+    points_reader = _vtk.vtkDelimitedTextReader()
     points_reader.SetFileName(saved_file)
     points_reader.DetectNumericColumnsOn()
     points_reader.SetFieldDelimiterCharacters('\t')
     points_reader.SetHaveHeaders(True)
-    table_points = vtk.vtkTableToPolyData()
+    table_points = _vtk.vtkTableToPolyData()
     table_points.SetInputConnection(points_reader.GetOutputPort())
     table_points.SetXColumn('x')
     table_points.SetYColumn('y')
@@ -535,7 +535,7 @@ def download_kitchen(split=False):
     }
     kitchen = pyvista.MultiBlock()
     for key, extent in extents.items():
-        alg = vtk.vtkStructuredGridGeometryFilter()
+        alg = _vtk.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
         alg.Update()

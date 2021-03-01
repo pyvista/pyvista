@@ -18,6 +18,7 @@ import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
+from pyvista.core.errors import DeprecationError
 
 
 ffmpeg_failed = False
@@ -101,7 +102,7 @@ def verify_cache_image(plotter):
     # cached image name
     image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
 
-    # simply save the last screenshot if it doesn't exist of the cache
+    # simply save the last screenshot if it doesn't exist or the cache
     # is being reset.
     if glb_reset_image_cache or not os.path.isfile(image_filename):
         return plotter.screenshot(image_filename)
@@ -189,27 +190,119 @@ def test_interactor_style():
     plotter.close()
 
 
-@skip_no_plotting
-def test_lighting():
-    plotter = pyvista.Plotter()
+def test_lighting_disable_3_lights():
+    with pytest.raises(DeprecationError):
+        pyvista.Plotter().disable_3_lights()
 
-    # test default disable_3_lights()
-    lights = list(plotter.renderer.GetLights())
-    assert all([light.GetSwitch() for light in lights])
+
+@skip_no_plotting
+def test_lighting_enable_three_lights():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(pyvista.Sphere())
 
     plotter.enable_3_lights()
-    lights = list(plotter.renderer.GetLights())
-    headlight = lights.pop(0)
-    assert not headlight.GetSwitch()
-    for i in range(len(lights)):
-        if i < 3:
-            assert lights[i].GetSwitch()
-        else:
-            assert not lights[i].GetSwitch()
-    assert lights[0].GetIntensity() == 1.0
-    assert lights[1].GetIntensity() == 0.6
-    assert lights[2].GetIntensity() == 0.5
-    plotter.close()
+    lights = plotter.renderer.lights
+    assert len(lights) == 3
+    for light in lights:
+        assert light.on
+
+    assert lights[0].intensity == 1.0
+    assert lights[1].intensity == 0.6
+    assert lights[2].intensity == 0.5
+
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_add_manual_light():
+    plotter = pyvista.Plotter(lighting=None)
+    plotter.add_mesh(pyvista.Sphere())
+
+    # test manual light addition
+    light = pyvista.Light()
+    plotter.add_light(light)
+    assert plotter.renderer.lights == [light]
+
+    # failing case
+    with pytest.raises(TypeError):
+        plotter.add_light('invalid')
+
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_remove_manual_light():
+    plotter = pyvista.Plotter(lighting=None)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.add_light(pyvista.Light())
+
+    # test light removal
+    plotter.remove_all_lights()
+    assert not plotter.renderer.lights
+
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_subplots():
+    plotter = pyvista.Plotter(shape='1|1')
+    plotter.add_mesh(pyvista.Sphere())
+    renderers = plotter.renderers
+
+    light = pyvista.Light()
+    plotter.remove_all_lights()
+    for renderer in renderers:
+        assert not renderer.lights
+
+    plotter.subplot(0)
+    plotter.add_light(light, only_active=True)
+    assert renderers[0].lights and not renderers[1].lights
+    plotter.add_light(light, only_active=False)
+    assert renderers[0].lights and renderers[1].lights
+    plotter.subplot(1)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.remove_all_lights(only_active=True)
+    assert renderers[0].lights and not renderers[1].lights
+
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_init_light_kit():
+    plotter = pyvista.Plotter(lighting='light kit')
+    plotter.add_mesh(pyvista.Sphere())
+    lights = plotter.renderer.lights
+    assert len(lights) == 5
+    assert lights[0].light_type == pyvista.Light.HEADLIGHT
+    for light in lights[1:]:
+        assert light.light_type == light.CAMERA_LIGHT
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_init_three_lights():
+    plotter = pyvista.Plotter(lighting='three lights')
+    plotter.add_mesh(pyvista.Sphere())
+    lights = plotter.renderer.lights
+    assert len(lights) == 3
+    for light in lights:
+        assert light.light_type == light.CAMERA_LIGHT
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_lighting_init_none():
+    # ``None`` already tested above
+    plotter = pyvista.Plotter(lighting='none')
+    plotter.add_mesh(pyvista.Sphere())
+    lights = plotter.renderer.lights
+    assert not lights
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_lighting_init_invalid():
+    with pytest.raises(ValueError):
+        pyvista.Plotter(lighting='invalid')
 
 
 @skip_no_plotting
@@ -439,6 +532,37 @@ def test_add_legend():
 
 
 @skip_no_plotting
+def test_legend_origin():
+    """Ensure the origin parameter of `add_legend` affects origin position."""
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    origin = [0, 0]
+    legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
+                                size=[0.1, 0.1], origin=origin)
+    assert list(origin) == list(legend.GetPosition())
+
+
+@skip_no_plotting
+def test_bad_legend_origin_and_size():
+    """Ensure bad parameters to origin/size raise ValueErrors."""
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    origin = [0, 0]
+    # test incorrect lengths
+    with pytest.raises(ValueError, match='origin'):
+        plotter.add_legend(labels=legend_labels, origin=(1, 2, 3))
+    with pytest.raises(ValueError, match='size'):
+        plotter.add_legend(labels=legend_labels, size=[])
+    # test non-sequences also raise
+    with pytest.raises(ValueError, match='origin'):
+        plotter.add_legend(labels=legend_labels, origin=len)
+    with pytest.raises(ValueError, match='size'):
+        plotter.add_legend(labels=legend_labels, size=type)
+
+
+@skip_no_plotting
 def test_add_axes_twice():
     plotter = pyvista.Plotter()
     plotter.add_axes()
@@ -462,9 +586,10 @@ def test_add_point_labels():
     with pytest.raises(ValueError):
         plotter.add_point_labels(points, range(n - 1))
 
-    plotter.add_point_labels(points, range(n), show_points=True, point_color='r', point_size=10)
-    plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r',
-                             point_size=10)
+    plotter.add_point_labels(points, range(n), show_points=True,
+                             point_color='r', point_size=10)
+    plotter.add_point_labels(points - 1, range(n), show_points=False,
+                             point_color='r', point_size=10)
     plotter.show(before_close_callback=verify_cache_image)
 
 
@@ -924,7 +1049,7 @@ def test_subplot_groups_fail():
         # Full overlap (outer)
         pyvista.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
- 
+
 @skip_no_plotting
 def test_link_views(sphere):
     plotter = pyvista.Plotter(shape=(1, 4))
@@ -1055,13 +1180,13 @@ def test_volume_rendering():
 
 
 @skip_no_plotting
-def test_plot_compar_four():
+def test_plot_compare_four():
     # Really just making sure no errors are thrown
     mesh = examples.load_uniform()
     data_a = mesh.contour()
     data_b = mesh.threshold_percent(0.5)
     data_c = mesh.decimate_boundary(0.5)
-    data_d = mesh.glyph()
+    data_d = mesh.glyph(scale=False)
     pyvista.plot_compare_four(data_a, data_b, data_c, data_d,
                               disply_kwargs={'color': 'w'},
                               show_kwargs={'before_close_callback': verify_cache_image})
@@ -1293,7 +1418,6 @@ def test_add_background_image_not_global():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-
 @skip_no_plotting
 def test_add_background_image_subplots():
     pl = pyvista.Plotter(shape=(2, 2))
@@ -1390,3 +1514,45 @@ def test_interactive_update():
     p = pyvista.Plotter()
     with pytest.warns(UserWarning):
         p.show(auto_close=True, interactive_update=True)
+
+
+def test_where_is():
+    plotter = pyvista.Plotter(shape=(2, 2))
+    plotter.subplot(0, 0)
+    plotter.add_mesh(pyvista.Box(), name='box')
+    plotter.subplot(0, 1)
+    plotter.add_mesh(pyvista.Sphere(), name='sphere')
+    plotter.subplot(1, 0)
+    plotter.add_mesh(pyvista.Box(), name='box')
+    plotter.subplot(1, 1)
+    plotter.add_mesh(pyvista.Cone(), name='cone')
+    places = plotter.where_is('box')
+    assert isinstance(places, list)
+    for loc in places:
+        assert isinstance(loc, tuple)
+
+
+@skip_no_plotting
+def test_log_scale():
+    mesh = examples.load_uniform()
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(mesh, log_scale=True)
+    plotter.show()
+
+
+@skip_no_plotting
+def test_set_focus():
+    plane = pyvista.Plane()
+    p = pyvista.Plotter()
+    p.add_mesh(plane, color="tan", show_edges=True)
+    p.set_focus((1, 0, 0))
+    p.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_set_viewup():
+    plane = pyvista.Plane()
+    p = pyvista.Plotter()
+    p.add_mesh(plane, color="tan", show_edges=True)
+    p.set_viewup((1.0, 1.0, 1.0))
+    p.show(before_close_callback=verify_cache_image)

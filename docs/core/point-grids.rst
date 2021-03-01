@@ -2,9 +2,9 @@ Point-Based Grids
 =================
 
 Structured and unstructured grids are designed to manage cells whereas a
-polydata object manage surfaces.  The ``vtk.UnstructuredGrid`` is derived class
+polydata object manage surfaces.  The ``vtk.UnstructuredGrid`` is a derived class
 from ``vtk.vtkUnstructuredGrid`` designed to make creation, array access, and
-plotting more straightforward than using the vtk object.  The same goes with a
+plotting more straightforward than using the vtk object.  The same applies to a
 ``vtk.StructuredGrid``.
 
 
@@ -144,7 +144,7 @@ A more complex plot can be created using:
 
 You can animate the motion of the beam by updating the positions and scalars of
 the grid copied to the plotting object.
-First you have to setup the plotting object:
+First you have to set up the plotting object:
 
 .. testcode:: python
 
@@ -155,7 +155,7 @@ First you have to setup the plotting object:
     plotter.add_axes()
     plotter.camera_position = cpos
 
-You then open the render window by plotting before opening movie file.
+You then open the render window by plotting before opening the movie file.
 Set auto_close to False so the plotter does not close automatically.
 Disabling interactive means the plot will automatically continue without waiting
 for the user to exit the window.
@@ -338,7 +338,7 @@ The following is a description of the methods available to a
 
 Methods in Common with Structured and Unstructured Grids
 --------------------------------------------------------
-These methods are in common to both ``pv.StructuredGrid`` and
+These methods are common to both ``pv.StructuredGrid`` and
 ``pv.UnstructuredGrid`` objects.
 
 

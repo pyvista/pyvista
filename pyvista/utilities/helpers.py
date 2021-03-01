@@ -5,27 +5,25 @@ import enum
 import logging
 import signal
 import sys
-import warnings
 from threading import Thread
 import threading
 import traceback
 
 import numpy as np
-import scooby
-import vtk
-import vtk.util.numpy_support as nps
 
+from pyvista import _vtk
 import pyvista
 from .fileio import from_meshio
+from . import transformations
 
 
 class FieldAssociation(enum.Enum):
     """Represents which type of vtk field a scalar or vector array is associated with."""
 
-    POINT = vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS
-    CELL = vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
-    NONE = vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
-    ROW = vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
+    POINT = _vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS
+    CELL = _vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
+    NONE = _vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
+    ROW = _vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
 
 
 def get_vtk_type(typ):
@@ -38,7 +36,7 @@ def get_vtk_type(typ):
         int : the integer type id specified in vtkType.h
 
     """
-    typ = nps.get_vtk_array_type(typ)
+    typ = _vtk.get_vtk_array_type(typ)
     # This handles a silly string type bug
     if typ == 3:
         return 13
@@ -47,7 +45,7 @@ def get_vtk_type(typ):
 
 def vtk_bit_array_to_char(vtkarr_bint):
     """Cast vtk bit array to a char array."""
-    vtkarr = vtk.vtkCharArray()
+    vtkarr = _vtk.vtkCharArray()
     vtkarr.DeepCopy(vtkarr_bint)
     return vtkarr
 
@@ -66,7 +64,7 @@ def convert_string_array(arr, name=None):
 
     """
     if isinstance(arr, np.ndarray):
-        vtkarr = vtk.vtkStringArray()
+        vtkarr = _vtk.vtkStringArray()
         ########### OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
@@ -114,27 +112,27 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         else:
             # This will handle numerical data
             arr = np.ascontiguousarray(arr)
-            vtk_data = nps.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
+            vtk_data = _vtk.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
 
         if isinstance(name, str):
             vtk_data.SetName(name)
         return vtk_data
     # Otherwise input must be a vtkDataArray
-    if not isinstance(arr, (vtk.vtkDataArray, vtk.vtkBitArray, vtk.vtkStringArray)):
+    if not isinstance(arr, (_vtk.vtkDataArray, _vtk.vtkBitArray, _vtk.vtkStringArray)):
         raise TypeError(f'Invalid input array type ({type(arr)}).')
     # Handle booleans
-    if isinstance(arr, vtk.vtkBitArray):
+    if isinstance(arr, _vtk.vtkBitArray):
         arr = vtk_bit_array_to_char(arr)
     # Handle string arrays
-    if isinstance(arr, vtk.vtkStringArray):
+    if isinstance(arr, _vtk.vtkStringArray):
         return convert_string_array(arr)
     # Convert from vtkDataArry to NumPy
-    return nps.vtk_to_numpy(arr)
+    return _vtk.vtk_to_numpy(arr)
 
 
 def is_pyvista_dataset(obj):
     """Return True if the Object is a PyVista wrapped dataset."""
-    return isinstance(obj, (pyvista.Common, pyvista.MultiBlock))
+    return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
 
 
 def point_array(mesh, name):
@@ -171,7 +169,7 @@ def parse_field_choice(field):
             field = FieldAssociation.POINT
         elif field in ['field', 'f', 'fields']:
             field = FieldAssociation.NONE
-        elif field in ['row', 'r',]:
+        elif field in ['row', 'r']:
             field = FieldAssociation.ROW
         else:
             raise ValueError(f'Data field ({field}) not supported.')
@@ -202,7 +200,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         Boolean to control whether to throw an error if array is not present.
 
     """
-    if isinstance(mesh, vtk.vtkTable):
+    if isinstance(mesh, _vtk.vtkTable):
         arr = row_array(mesh, name)
         if arr is None and err:
             raise KeyError(f'Data array ({name}) not present in this dataset.')
@@ -255,8 +253,8 @@ def vtk_points(points, deep=True):
     """Convert numpy points to a vtkPoints object."""
     if not points.flags['C_CONTIGUOUS']:
         points = np.ascontiguousarray(points)
-    vtkpts = vtk.vtkPoints()
-    vtkpts.SetData(nps.numpy_to_vtk(points, deep=deep))
+    vtkpts = _vtk.vtkPoints()
+    vtkpts.SetData(_vtk.numpy_to_vtk(points, deep=deep))
     return vtkpts
 
 
@@ -331,7 +329,7 @@ def lines_from_points(points, close=False):
     cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int_)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
     if close:
-        cells = np.append(cells, [[2, len(points)-1, 0],], axis=0)
+        cells = np.append(cells, [[2, len(points)-1, 0]], axis=0)
     poly.lines = cells
     return poly
 
@@ -405,8 +403,8 @@ def vector_poly_data(orig, vec):
         raise ValueError('vec array must be 3D')
 
     # Create vtk points and cells objects
-    vpts = vtk.vtkPoints()
-    vpts.SetData(nps.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
+    vpts = _vtk.vtkPoints()
+    vpts.SetData(_vtk.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
 
     npts = orig.shape[0]
     cells = np.empty((npts, 2), dtype=pyvista.ID_TYPE)
@@ -415,13 +413,13 @@ def vector_poly_data(orig, vec):
     vcells = pyvista.utilities.cells.CellArray(cells, npts)
 
     # Create vtkPolyData object
-    pdata = vtk.vtkPolyData()
+    pdata = _vtk.vtkPolyData()
     pdata.SetPoints(vpts)
     pdata.SetVerts(vcells)
 
     # Add vectors to polydata
     name = 'vectors'
-    vtkfloat = nps.numpy_to_vtk(np.ascontiguousarray(vec), deep=True)
+    vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(vec), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveVectors(name)
@@ -429,7 +427,7 @@ def vector_poly_data(orig, vec):
     # Add magnitude of vectors to polydata
     name = 'mag'
     scalars = (vec * vec).sum(1)**0.5
-    vtkfloat = nps.numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
+    vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveScalars(name)
@@ -458,9 +456,9 @@ def array_from_vtkmatrix(matrix):
         Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
 
     """
-    if isinstance(matrix, vtk.vtkMatrix3x3):
+    if isinstance(matrix, _vtk.vtkMatrix3x3):
         shape = (3, 3)
-    elif isinstance(matrix, vtk.vtkMatrix4x4):
+    elif isinstance(matrix, _vtk.vtkMatrix4x4):
         shape = (4, 4)
     else:
         raise TypeError('Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
@@ -485,9 +483,9 @@ def vtkmatrix_from_array(array):
     """
     array = np.asarray(array)
     if array.shape == (3, 3):
-        matrix = vtk.vtkMatrix3x3()
+        matrix = _vtk.vtkMatrix3x3()
     elif array.shape == (4, 4):
-        matrix = vtk.vtkMatrix4x4()
+        matrix = _vtk.vtkMatrix4x4()
     else:
         raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
     m, n = array.shape
@@ -690,16 +688,16 @@ def fit_plane_to_points(points, return_meta=False):
 
 def raise_not_matching(scalars, mesh):
     """Raise exception about inconsistencies."""
-    if isinstance(mesh, vtk.vtkTable):
+    if isinstance(mesh, _vtk.vtkTable):
         raise ValueError(f'Number of scalars ({scalars.size}) must match number of rows ({mesh.n_rows}).')
-    raise ValueError(f'Number of scalars ({scalars.size}) ' +
-                     f'must match either the number of points ({mesh.n_points}) ' +
+    raise ValueError(f'Number of scalars ({scalars.size}) '
+                     f'must match either the number of points ({mesh.n_points}) '
                      f'or the number of cells ({mesh.n_cells}).')
 
 
 def generate_plane(normal, origin):
-    """Return a vtk.vtkPlane."""
-    plane = vtk.vtkPlane()
+    """Return a _vtk.vtkPlane."""
+    plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
     normal = normal / np.linalg.norm(normal)
     plane.SetNormal(normal)
@@ -731,15 +729,15 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
 
     """
     # Try Depth Peeling with a basic scene
-    source = vtk.vtkSphereSource()
-    mapper = vtk.vtkPolyDataMapper()
+    source = _vtk.vtkSphereSource()
+    mapper = _vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(source.GetOutputPort())
-    actor = vtk.vtkActor()
+    actor = _vtk.vtkActor()
     actor.SetMapper(mapper)
     # requires opacity < 1
     actor.GetProperty().SetOpacity(0.5)
-    renderer = vtk.vtkRenderer()
-    renderWindow = vtk.vtkRenderWindow()
+    renderer = _vtk.vtkRenderer()
+    renderWindow = _vtk.vtkRenderWindow()
     renderWindow.AddRenderer(renderer)
     renderWindow.SetOffScreenRendering(True)
     renderWindow.SetAlphaBitPlanes(True)
@@ -794,7 +792,7 @@ class ProgressMonitor():
             from tqdm import tqdm
         except ImportError:
             raise ImportError("Please install `tqdm` to monitor algorithms.")
-        self.event_type = vtk.vtkCommand.ProgressEvent
+        self.event_type = _vtk.vtkCommand.ProgressEvent
         self.progress = 0.0
         self._last_progress = self.progress
         self.algorithm = algorithm
@@ -862,34 +860,54 @@ def abstract_class(cls_):
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
-    """Rotate points angle (in deg) about an axis."""
+    """Rotate points angle (in deg) about an axis.
+
+    Parameters
+    ----------
+    points : numpy.ndarray
+        Array of points with shape ``(N, 3)``
+
+    angle : float
+        Rotation angle.
+
+    inplace : bool, optional
+        Updates points in-place while returning nothing.
+
+    deg : bool, optional
+        If `True`, the angle is interpreted as degrees instead of
+        radians. Default is `True`.
+
+    axis : str, optional
+        Name of axis to rotate about. Valid options are ``'x'``, ``'y'``,
+        and ``'z'``. Default value is ``'z'``.
+
+    Returns
+    -------
+    points : numpy.ndarray
+        Rotated points.
+
+    Examples
+    --------
+    Rotate a set of points by 90 degrees about the x-axis in-place.
+    >>> import numpy as np
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> points = examples.load_airplane().points
+    >>> points_orig = points.copy()
+    >>> pyvista.axis_rotation(points, 90, axis='x', deg=True, inplace=True)
+    >>> assert np.all(np.isclose(points[:, 0], points_orig[:, 0]))
+    >>> assert np.all(np.isclose(points[:, 1], -points_orig[:, 2]))
+    >>> assert np.all(np.isclose(points[:, 2], points_orig[:, 1]))
+    """
     axis = axis.lower()
+    axis_to_vec = {
+        'x': (1, 0, 0),
+        'y': (0, 1, 0),
+        'z': (0, 0, 1)
+    }
 
-    # Copy original array to if not inplace
-    if not inplace:
-        points = points.copy()
+    if axis not in axis_to_vec:
+        raise ValueError('Invalid axis. Must be either "x", "y", or "z"')
 
-    # Convert angle to radians
-    if deg:
-        angle *= np.pi / 180
-
-    if axis == 'x':
-        y = points[:, 1] * np.cos(angle) - points[:, 2] * np.sin(angle)
-        z = points[:, 1] * np.sin(angle) + points[:, 2] * np.cos(angle)
-        points[:, 1] = y
-        points[:, 2] = z
-    elif axis == 'y':
-        x = points[:, 0] * np.cos(angle) + points[:, 2] * np.sin(angle)
-        z = - points[:, 0] * np.sin(angle) + points[:, 2] * np.cos(angle)
-        points[:, 0] = x
-        points[:, 2] = z
-    elif axis == 'z':
-        x = points[:, 0] * np.cos(angle) - points[:, 1] * np.sin(angle)
-        y = points[:, 0] * np.sin(angle) + points[:, 1] * np.cos(angle)
-        points[:, 0] = x
-        points[:, 1] = y
-    else:
-        raise ValueError('invalid axis. Must be either "x", "y", or "z"')
-
-    if not inplace:
-        return points
+    rot_mat = transformations.axis_angle_rotation(axis_to_vec[axis], angle, deg=deg)
+    return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)

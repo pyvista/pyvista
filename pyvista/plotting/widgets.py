@@ -1,9 +1,9 @@
 """Module dedicated to widgets."""
 
 import numpy as np
-import vtk
 
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import NORMALS, generate_plane, get_array, try_callback
 from .theme import rcParams, parse_color
 
@@ -70,7 +70,7 @@ class WidgetHelper:
         def _the_callback(box_widget, event_id):
             the_box = pyvista.PolyData()
             box_widget.GetPolyData(the_box)
-            planes = vtk.vtkPlanes()
+            planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
             if hasattr(callback, '__call__'):
                 if use_planes:
@@ -82,7 +82,7 @@ class WidgetHelper:
                 try_callback(callback, *args)
             return
 
-        box_widget = vtk.vtkBoxWidget()
+        box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(parse_color(color))
         box_widget.SetInteractor(self.iren)
         box_widget.SetCurrentRenderer(self.renderer)
@@ -91,7 +91,7 @@ class WidgetHelper:
         box_widget.SetTranslationEnabled(outline_translation)
         box_widget.PlaceWidget(bounds)
         box_widget.On()
-        box_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        box_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(box_widget, None)
 
         self.box_widgets.append(box_widget)
@@ -118,7 +118,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and clip
 
         invert : bool
@@ -142,7 +142,7 @@ class WidgetHelper:
 
         port = 1 if invert else 0
 
-        alg = vtk.vtkBoxClipDataSet()
+        alg = _vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(mesh)
         alg.GenerateClippedOutputOn()
 
@@ -177,7 +177,8 @@ class WidgetHelper:
                          assign_to_axis=None, tubing=False,
                          outline_translation=False,
                          origin_translation=True, implicit=True,
-                         pass_widget=False, test_callback=True):
+                         pass_widget=False, test_callback=True,
+                         normal_rotation=True):
         """Add a plane widget to the scene.
 
         This is useless without a callback function. You can pass a callable
@@ -225,15 +226,20 @@ class WidgetHelper:
             an implicit plane.
 
         implicit : bool
-            When ``True``, a ``vtkImplicitPlaneWidget`` is ued and when
+            When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
             ``False``, a ``vtkPlaneWidget`` is used.
 
         pass_widget : bool
             If true, the widget will be passed as the last argument of the
             callback
 
-        test_callback: bool
+        test_callback : bool
             If true, run the callback function after the widget is created.
+
+        normal_rotation : bool
+            Set the opacity of the normal vector arrow to 0 such that it is
+            effectively disabled. This prevents the user from rotating the
+            normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
         """
         if not hasattr(self, "plane_widgets"):
@@ -250,8 +256,11 @@ class WidgetHelper:
         if color is None:
             color = rcParams['font']['color']
 
+        if assign_to_axis:
+            normal_rotation = False
+
         def _the_callback(widget, event_id):
-            the_plane = vtk.vtkPlane()
+            the_plane = _vtk.vtkPlane()
             widget.GetPlane(the_plane)
             normal = the_plane.GetNormal()
             origin = the_plane.GetOrigin()
@@ -263,7 +272,7 @@ class WidgetHelper:
             return
 
         if implicit:
-            plane_widget = vtk.vtkImplicitPlaneWidget()
+            plane_widget = _vtk.vtkImplicitPlaneWidget()
             plane_widget.GetNormalProperty().SetColor(parse_color(color))
             plane_widget.GetOutlineProperty().SetColor(parse_color(color))
             plane_widget.GetOutlineProperty().SetColor(parse_color(color))
@@ -275,15 +284,18 @@ class WidgetHelper:
             _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(False)
 
             plane_widget.SetDrawPlane(False)
-            plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
-            plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+            plane_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _start_interact)
+            plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _stop_interact)
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
             plane_widget.SetOrigin(origin)
 
+            if not normal_rotation:
+                plane_widget.GetNormalProperty().SetOpacity(0)
+
         else:
             # Position of the small plane
-            source = vtk.vtkPlaneSource()
+            source = _vtk.vtkPlaneSource()
             source.SetNormal(normal)
             source.SetCenter(origin)
             source.SetPoint1(origin[0] + (bounds[1] - bounds[0]) * 0.01,
@@ -293,7 +305,7 @@ class WidgetHelper:
                              origin[1] + (bounds[3] - bounds[2]) * 0.01,
                              origin[2])
             source.Update()
-            plane_widget = vtk.vtkPlaneWidget()
+            plane_widget = _vtk.vtkPlaneWidget()
             plane_widget.SetHandleSize(.01)
             # Position of the widget
             plane_widget.SetInputData(source.GetOutput())
@@ -304,12 +316,15 @@ class WidgetHelper:
             plane_widget.GetPlaneProperty().SetColor(parse_color(color))  # self.C_LOT[fn])
             plane_widget.GetHandleProperty().SetColor(parse_color(color))
 
+            if not normal_rotation:
+                plane_widget.GetHandleProperty().SetOpacity(0)
+
         plane_widget.GetPlaneProperty().SetOpacity(0.5)
         plane_widget.SetInteractor(self.iren)
         plane_widget.SetCurrentRenderer(self.renderer)
 
         if assign_to_axis:
-            # TODO: how do we now disable/hide the arrow?
+            # Note that normal_rotation was forced to False
             if assign_to_axis in [0, "x", "X"]:
                 plane_widget.NormalToXAxisOn()
                 plane_widget.SetNormal(NORMALS["x"])
@@ -327,7 +342,7 @@ class WidgetHelper:
         plane_widget.Modified()
         plane_widget.UpdatePlacement()
         plane_widget.On()
-        plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
         if test_callback:
             _the_callback(plane_widget, None) # Trigger immediate update
 
@@ -345,7 +360,8 @@ class WidgetHelper:
     def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
                             widget_color=None, value=0.0, assign_to_axis=None,
                             tubing=False, origin_translation=True,
-                            outline_translation=False, implicit=True, **kwargs):
+                            outline_translation=False, implicit=True,
+                            normal_rotation=True, **kwargs):
         """Clip a mesh using a plane widget.
 
         Add a mesh to the scene with a plane widget that is used to clip
@@ -356,7 +372,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and clip
 
         normal : str or tuple(float)
@@ -364,6 +380,40 @@ class WidgetHelper:
 
         invert : bool
             Flag on whether to flip/invert the clip
+
+        widget_color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        value : float, optional
+            Set the clipping value along the normal direction.
+            The default value is 0.0.
+
+        assign_to_axis : str or int
+            Assign the normal of the plane to be parallel with a given axis:
+            options are (0, 'x'), (1, 'y'), or (2, 'z').
+
+        tubing : bool
+            When using an implicit plane wiget, this controls whether or not
+            tubing is shown around the plane's boundaries.
+
+        outline_translation : bool
+            If ``False``, the plane widget cannot be translated and is strictly
+            placed at the given bounds. Only valid when using an implicit
+            plane.
+
+        origin_translation : bool
+            If ``False``, the plane widget cannot be translated by its origin
+            and is strictly placed at the given origin. Only valid when using
+            an implicit plane.
+
+        implicit : bool
+            When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
+            ``False``, a ``vtkPlaneWidget`` is used.
+
+        normal_rotation : bool
+            Set the opacity of the normal vector arrow to 0 such that it is
+            effectively disabled. This prevents the user from rotating the
+            normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
@@ -377,13 +427,13 @@ class WidgetHelper:
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
-        if isinstance(mesh, vtk.vtkPolyData):
-            alg = vtk.vtkClipPolyData()
+        if isinstance(mesh, _vtk.vtkPolyData):
+            alg = _vtk.vtkClipPolyData()
         # elif isinstance(mesh, vtk.vtkImageData):
         #     alg = vtk.vtkClipVolume()
         #     alg.SetMixed3DCellGeneration(True)
         else:
-            alg = vtk.vtkTableBasedClipDataSet()
+            alg = _vtk.vtkTableBasedClipDataSet()
         alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
         alg.SetValue(value)
         alg.SetInsideOut(invert) # invert the clip if needed
@@ -405,7 +455,8 @@ class WidgetHelper:
                               assign_to_axis=assign_to_axis,
                               origin_translation=origin_translation,
                               outline_translation=outline_translation,
-                              implicit=implicit, origin=mesh.center)
+                              implicit=implicit, origin=mesh.center,
+                              normal_rotation=normal_rotation)
 
         actor = self.add_mesh(plane_clipped_mesh, **kwargs)
 
@@ -414,7 +465,8 @@ class WidgetHelper:
     def add_mesh_slice(self, mesh, normal='x', generate_triangles=False,
                        widget_color=None, assign_to_axis=None,
                        tubing=False, origin_translation=True,
-                       outline_translation=False, implicit=True, **kwargs):
+                       outline_translation=False, implicit=True,
+                       normal_rotation=True, **kwargs):
         """Slice a mesh using a plane widget.
 
         Add a mesh to the scene with a plane widget that is used to slice
@@ -425,7 +477,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and slice
 
         normal : str or tuple(float)
@@ -434,6 +486,37 @@ class WidgetHelper:
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
+
+        widget_color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        assign_to_axis : str or int
+            Assign the normal of the plane to be parallel with a given axis:
+            options are (0, 'x'), (1, 'y'), or (2, 'z').
+
+        tubing : bool
+            When using an implicit plane wiget, this controls whether or not
+            tubing is shown around the plane's boundaries.
+
+        outline_translation : bool
+            If ``False``, the plane widget cannot be translated and is strictly
+            placed at the given bounds. Only valid when using an implicit
+            plane.
+
+        origin_translation : bool
+            If ``False``, the plane widget cannot be translated by its origin
+            and is strictly placed at the given origin. Only valid when using
+            an implicit plane.
+
+        implicit : bool
+            When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
+            ``False``, a ``vtkPlaneWidget`` is used.
+
+        normal_rotation : bool
+            Set the opacity of the normal vector arrow to 0 such that it is
+            effectively disabled. This prevents the user from rotating the
+            normal. This is forced to ``False`` when ``assign_to_axis`` is set.
+
 
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
@@ -447,7 +530,7 @@ class WidgetHelper:
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
-        alg = vtk.vtkCutter() # Construct the cutter object
+        alg = _vtk.vtkCutter() # Construct the cutter object
         alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
         if not generate_triangles:
             alg.GenerateTrianglesOff()
@@ -470,7 +553,8 @@ class WidgetHelper:
                               assign_to_axis=assign_to_axis,
                               origin_translation=origin_translation,
                               outline_translation=outline_translation,
-                              implicit=implicit, origin=mesh.center)
+                              implicit=implicit, origin=mesh.center,
+                              normal_rotation=normal_rotation)
 
         actor = self.add_mesh(plane_sliced_mesh, **kwargs)
 
@@ -557,7 +641,7 @@ class WidgetHelper:
                 try_callback(callback, *args)
             return
 
-        line_widget = vtk.vtkLineWidget()
+        line_widget = _vtk.vtkLineWidget()
         line_widget.GetLineProperty().SetColor(parse_color(color))
         line_widget.SetInteractor(self.iren)
         line_widget.SetCurrentRenderer(self.renderer)
@@ -566,7 +650,7 @@ class WidgetHelper:
         line_widget.SetResolution(resolution)
         line_widget.Modified()
         line_widget.On()
-        line_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        line_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(line_widget, None)
 
         self.line_widgets.append(line_widget)
@@ -664,11 +748,11 @@ class WidgetHelper:
             slider_rep.SetTitleText(data[idx])
 
         if event_type == 'start':
-            slider_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, title_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, title_callback)
         elif event_type == 'end':
-            slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, title_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, title_callback)
         elif event_type == 'always':
-            slider_widget.AddObserver(vtk.vtkCommand.InteractionEvent, title_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.InteractionEvent, title_callback)
         else:
             raise ValueError("Expected value for `event_type` is 'start',"
                              f" 'end' or 'always': {event_type} was given.")
@@ -678,7 +762,8 @@ class WidgetHelper:
     def add_slider_widget(self, callback, rng, value=None, title=None,
                           pointa=(.4, .9), pointb=(.9, .9),
                           color=None, pass_widget=False,
-                          event_type='end', style=None):
+                          event_type='end', style=None,
+                          title_height=0.03, title_opacity=1.0, title_color=None, fmt=None):
         """Add a slider bar widget.
 
         This is useless without a callback function. You can pass a callable
@@ -722,6 +807,39 @@ class WidgetHelper:
         style : str, optional
             The name of the slider style. The list of available styles are in
             ``rcParams['slider_style']``. Defaults to None.
+
+        title_height: float, optional
+            Relative height of the title as compared to the length of the slider.
+
+        title_opacity: str, optional
+            Opacity of title. Defaults to 1.0.
+
+        title_color : string or 3 item list, optional
+            Either a string, rgb list, or hex color string.  Defaults to the value 
+            given in ``color``.
+
+        fmt : str, optional
+            String formatter used to format numerical data. Defaults to ``None``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> p = pv.Plotter()
+        >>> def create_mesh(value):
+        ...     res = int(value)
+        ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
+        ...     p.add_mesh(sphere, name="sphere", show_edges=True)
+        ...     return
+        >>> slider = p.add_slider_widget(
+        ...     create_mesh,
+        ...     [5, 100],
+        ...     title="Resolution",
+        ...     title_opacity=0.5,
+        ...     title_color="red",
+        ...     fmt="%0.9f",
+        ...     title_height=0.08,
+        ... )
+        >>> p.show()  # doctest:+SKIP
         """
         if not hasattr(self, "slider_widgets"):
             self.slider_widgets = []
@@ -734,13 +852,19 @@ class WidgetHelper:
         if color is None:
             color = rcParams['font']['color']
 
+        if title_color is None:
+            title_color = color
+
+        if fmt is None:
+            fmt = rcParams['font']['fmt']
+
         def normalize(point, viewport):
             return (point[0]*(viewport[2]-viewport[0]),point[1]*(viewport[3]-viewport[1]))
 
         pointa = normalize(pointa, self.renderer.GetViewport())
         pointb = normalize(pointb, self.renderer.GetViewport())
 
-        slider_rep = vtk.vtkSliderRepresentation2D()
+        slider_rep = _vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
         slider_rep.SetMinimumValue(min)
         slider_rep.SetMaximumValue(max)
@@ -785,20 +909,25 @@ class WidgetHelper:
                     try_callback(callback, value)
             return
 
-        slider_widget = vtk.vtkSliderWidget()
+        slider_widget = _vtk.vtkSliderWidget()
         slider_widget.SetInteractor(self.iren)
         slider_widget.SetCurrentRenderer(self.renderer)
         slider_widget.SetRepresentation(slider_rep)
+        slider_widget.GetRepresentation().SetTitleHeight(title_height)
+        slider_widget.GetRepresentation().GetTitleProperty().SetOpacity(title_opacity)
+        slider_widget.GetRepresentation().GetTitleProperty().SetColor(parse_color(title_color))
+        if fmt is not None:
+            slider_widget.GetRepresentation().SetLabelFormat(fmt)
         slider_widget.On()
         if not isinstance(event_type, str):
             raise TypeError("Expected type for `event_type` is str: "
                             f"{type(event_type)} was given.")
         if event_type == 'start':
-            slider_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _the_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _the_callback)
         elif event_type == 'end':
-            slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
         elif event_type == 'always':
-            slider_widget.AddObserver(vtk.vtkCommand.InteractionEvent, _the_callback)
+            slider_widget.AddObserver(_vtk.vtkCommand.InteractionEvent, _the_callback)
         else:
             raise ValueError("Expected value for `event_type` is 'start',"
                              f" 'end' or 'always': {event_type} was given.")
@@ -829,7 +958,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and threshold
 
         scalars : str
@@ -859,7 +988,7 @@ class WidgetHelper:
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
-        alg = vtk.vtkThreshold()
+        alg = _vtk.vtkThreshold()
         alg.SetInputDataObject(mesh)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
@@ -900,7 +1029,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and contour
 
         scalars : str
@@ -931,7 +1060,7 @@ class WidgetHelper:
             title = scalars
         mesh.set_active_scalars(scalars)
 
-        alg = vtk.vtkContourFilter()
+        alg = _vtk.vtkContourFilter()
         alg.SetInputDataObject(mesh)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
@@ -1030,7 +1159,7 @@ class WidgetHelper:
         ribbon = pyvista.PolyData()
 
         def _the_callback(widget, event_id):
-            para_source = vtk.vtkParametricFunctionSource()
+            para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
             polyline = pyvista.wrap(para_source.GetOutput())
@@ -1042,7 +1171,7 @@ class WidgetHelper:
                     try_callback(callback, polyline)
             return
 
-        spline_widget = vtk.vtkSplineWidget()
+        spline_widget = _vtk.vtkSplineWidget()
         spline_widget.GetLineProperty().SetColor(parse_color(color))
         spline_widget.SetNumberOfHandles(n_handles)
         spline_widget.SetInteractor(self.iren)
@@ -1056,7 +1185,7 @@ class WidgetHelper:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
         spline_widget.On()
-        spline_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        spline_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(spline_widget, None)
 
         if show_ribbon:
@@ -1088,7 +1217,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        mesh : pyvista.Common
+        mesh : pyvista.DataSet
             The input dataset to add to the scene and slice along the spline
 
         generate_triangles: bool, optional
@@ -1107,7 +1236,7 @@ class WidgetHelper:
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
-        alg = vtk.vtkCutter() # Construct the cutter object
+        alg = _vtk.vtkCutter() # Construct the cutter object
         alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
         if not generate_triangles:
             alg.GenerateTrianglesOff()
@@ -1120,7 +1249,7 @@ class WidgetHelper:
         def callback(spline):
             polyline = spline.GetCell(0)
             # create the plane for clipping
-            polyplane = vtk.vtkPolyPlane()
+            polyplane = _vtk.vtkPolyPlane()
             polyplane.SetPolyLine(polyline)
             alg.SetCutFunction(polyplane) # the cutter to use the poly planes
             alg.Update() # Perform the Cut
@@ -1225,7 +1354,7 @@ class WidgetHelper:
                 loc = center[i]
             else:
                 loc = center
-            sphere_widget = vtk.vtkSphereWidget()
+            sphere_widget = _vtk.vtkSphereWidget()
             sphere_widget.WIDGET_INDEX = indices[i] # Monkey patch the index
             if style in "wireframe":
                 sphere_widget.SetRepresentationToWireframe()
@@ -1241,7 +1370,7 @@ class WidgetHelper:
             sphere_widget.SetPhiResolution(phi_resolution)
             sphere_widget.Modified()
             sphere_widget.On()
-            sphere_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+            sphere_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
             self.sphere_widgets.append(sphere_widget)
 
         if test_callback is True:
@@ -1331,7 +1460,7 @@ class WidgetHelper:
             0., 0.
         ]
 
-        button_rep = vtk.vtkTexturedButtonRepresentation2D()
+        button_rep = _vtk.vtkTexturedButtonRepresentation2D()
         button_rep.SetNumberOfStates(2)
         button_rep.SetState(value)
         button_rep.SetButtonTexture(0, button_off)
@@ -1339,7 +1468,7 @@ class WidgetHelper:
         button_rep.SetPlaceFactor(1)
         button_rep.PlaceWidget(bounds)
 
-        button_widget = vtk.vtkButtonWidget()
+        button_widget = _vtk.vtkButtonWidget()
         button_widget.SetInteractor(self.iren)
         button_widget.SetRepresentation(button_rep)
         button_widget.SetCurrentRenderer(self.renderer)
@@ -1350,7 +1479,7 @@ class WidgetHelper:
             if hasattr(callback, '__call__'):
                 try_callback(callback, bool(state))
 
-        button_widget.AddObserver(vtk.vtkCommand.StateChangedEvent, _the_callback)
+        button_widget.AddObserver(_vtk.vtkCommand.StateChangedEvent, _the_callback)
         self.button_widgets.append(button_widget)
         return button_widget
 

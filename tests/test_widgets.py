@@ -55,6 +55,18 @@ def test_widget_plane():
     p.close()
 
     p = pyvista.Plotter()
+    func = lambda normal, origin: normal # Does nothing
+    p.add_mesh(mesh)
+    p.add_plane_widget(callback=func, assign_to_axis='z', implicit=True)
+    p.close()
+
+    p = pyvista.Plotter()
+    func = lambda normal, origin: normal # Does nothing
+    p.add_mesh(mesh)
+    p.add_plane_widget(callback=func, normal_rotation=False, implicit=False)
+    p.close()
+
+    p = pyvista.Plotter()
     p.add_mesh_clip_plane(mesh)
     p.close()
 
@@ -147,6 +159,29 @@ def test_widget_slider():
     p.add_mesh_isovalue(mesh)
     p.close()
 
+    p = pyvista.Plotter()
+    title_height = np.random.random()
+    s = p.add_slider_widget(callback=func, rng=[0,10], style="classic", title_height=title_height)
+    assert s.GetRepresentation().GetTitleHeight() == title_height
+    p.close()
+
+    p = pyvista.Plotter()
+    title_opacity = np.random.random()
+    s = p.add_slider_widget(callback=func, rng=[0,10], style="classic", title_opacity=title_opacity)
+    assert s.GetRepresentation().GetTitleProperty().GetOpacity() == title_opacity
+    p.close()
+
+    p = pyvista.Plotter()
+    title_color = "red"
+    s = p.add_slider_widget(callback=func, rng=[0,10], style="classic", title_color=title_color)
+    assert s.GetRepresentation().GetTitleProperty().GetColor() == pyvista.parse_color(title_color)
+    p.close()
+
+    p = pyvista.Plotter()
+    fmt = "%0.9f"
+    s = p.add_slider_widget(callback=func, rng=[0,10], style="classic", fmt=fmt)
+    assert s.GetRepresentation().GetLabelFormat() == fmt
+    p.close()
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_spline():

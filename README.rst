@@ -64,9 +64,8 @@ PyVista is...
 
 .. _Visualization Toolkit: https://vtk.org
 
-PyVista (formerly ``vtki``) is a helper module for the Visualization Toolkit
-(VTK) that takes a different approach on interfacing with VTK through NumPy and
-direct array access.
+PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
+through NumPy and direct array access through a variety of methods and classes.
 This package provides a Pythonic, well-documented interface exposing
 VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
 and visual integration of spatially referenced datasets.
@@ -169,8 +168,8 @@ Here are a few open-source projects that leverage PyVista:
 .. _pyansys: https://github.com/akaszynski/pyansys
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista
-.. _discretize: http://discretize.simpeg.xyz/en/master/
-.. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/api/generated/discretize.mixins.vtkModule.html
+.. _discretize: https://discretize.simpeg.xyz/en/master/
+.. _creating compelling visualizations: https://discretize.simpeg.xyz/en/master/api/generated/discretize.mixins.vtk_mod.InterfaceVTK.html
 .. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
 .. _tetgen: https://github.com/pyvista/tetgen

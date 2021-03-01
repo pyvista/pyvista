@@ -11,7 +11,7 @@ from pyvista import examples
 import numpy as np
 
 ###############################################################################
-# Computing the normals of a surace is quite easy using
+# Computing the normals of a surface is quite easy using
 # :class:`pyvista.PolyData`'s :func:`pyvista.PolyDataFilters.compute_normals`
 # method.
 

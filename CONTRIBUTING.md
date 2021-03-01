@@ -102,7 +102,7 @@ There are three general coding paradigms that we believe in:
 
 2. **Document everything!** At the least, include a docstring for any method
    or class added. Do not describe what you are doing but why you are doing
-   it and provide a for simple use cases for the new features.
+   it and provide a simple example for the new features.
 
 3. **Keep it tested**. We aim for a high test coverage. See
    testing for more details.
@@ -131,7 +131,7 @@ repository to your computer.  Then, create a new branch based on the
 your local repository.
 
 Next, add your new feature and commit it locally.  Be sure to commit
-often as it is often helpful to revert to past commits, especially if
+frequently as it is often helpful to revert to past commits, especially if
 your change is complex.  Also, be sure to test often.  See the
 [Testing Section](#testing) below for automating testing.
 

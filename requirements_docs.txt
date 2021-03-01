@@ -17,3 +17,8 @@ lxml
 trimesh
 vtk==8.1.2  # needed because 9.0.X has an issue with the plotter closing with iren
 pypandoc
+mypy
+mypy-extensions
+typed-ast
+typing-extensions
+

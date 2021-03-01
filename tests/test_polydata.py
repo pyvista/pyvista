@@ -28,6 +28,14 @@ except KeyError:
     CONDA_ENV = False
 
 
+def is_binary(filename):
+    """Return ``True`` when a file is binary"""
+    textchars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7f})
+    with open(filename, 'rb') as f:
+        data = f.read(1024)
+    return bool(data.translate(None, textchars))
+
+
 def test_init():
     mesh = pyvista.PolyData()
     assert not mesh.n_points
@@ -329,8 +337,18 @@ def test_invalid_curvature():
 @pytest.mark.parametrize('extension', pyvista.core.pointset.PolyData._WRITERS)
 def test_save(extension, binary, tmpdir):
     sphere = SPHERE.copy()
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp{extension}'))
     sphere.save(filename, binary)
+
+    if binary:
+        if extension == '.vtp':
+            assert 'binary' in open(filename).read(1000)
+        else:
+            is_binary(filename)
+    else:
+        with open(filename) as f:
+            fst = f.read(100).lower()
+            assert 'ascii' in fst or 'xml' in fst or 'solid' in fst
 
     mesh = pyvista.PolyData(filename)
     assert mesh.faces.shape == sphere.faces.shape

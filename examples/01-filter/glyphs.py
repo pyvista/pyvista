@@ -36,7 +36,7 @@ p.show()
 
 ###############################################################################
 # Another approach is to load the vectors directly to the mesh object and then
-# access the :attr:`pyvista.Common.arrows` property.
+# access the :attr:`pyvista.DataSet.arrows` property.
 
 sphere = pv.Sphere(radius=3.14)
 

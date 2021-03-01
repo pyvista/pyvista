@@ -55,18 +55,22 @@ docs/errors.txt
 docs/images/auto-generated
 **/myscreenshot.png
 
-# flycheck temp files
-flycheck*
-
 
 docs/external_examples.rst
 
 # hypothesis
 .hypothesis
 
+# emacs
+*#
+.#
+flycheck*
+
 # vim
 *.swp
 
-
 # benchmark cache from pytest-benchmark
 .benchmarks
+
+# PyCharm
+.idea/

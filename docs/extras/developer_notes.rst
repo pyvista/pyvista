@@ -122,7 +122,7 @@ There are three general coding paradigms that we believe in:
 
 2. **Document everything!** At the least, include a docstring for any
    method or class added. Do not describe what you are doing but why you
-   are doing it and provide a for simple use cases for the new features.
+   are doing it and provide simple use cases for the new features.
 
 3. **Keep it tested**. We aim for a high test coverage. See testing for
    more details.

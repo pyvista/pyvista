@@ -35,6 +35,23 @@ jobs:
     displayName: 'Run doctest'
 
 
+# DESCRIPTION: Static code check the spelling and documentation style.
+- job: StaticCodeCheck
+  pool:
+    vmImage: 'ubuntu-20.04'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.8'
+  - script: |
+      pip install .
+    displayName: 'Install pyvista'
+  - script: |
+      pip install mypy
+      make mypy
+    displayName: 'Run static code check'
+
+
 # DESCRIPTION: Core API and doc string testing for Linux
 - job: Linux
   pool:
@@ -155,18 +172,21 @@ jobs:
         conda activate pyvista-vtk$(VTK.VERSION)
         pytest -v --ignore=tests/plotting
       displayName: 'Test Core API'
+      continueOnError: true  # 'true' if future steps should run even if this step fails; defaults to 'false'
 
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-vtk$(VTK.VERSION)
         pytest -v tests/plotting --cov-report html
       displayName: 'Test Core Plotting API'
+      continueOnError: true  # 'true' if future steps should run even if this step fails; defaults to 'false'
 
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-vtk$(VTK.VERSION)
         pytest -v --doctest-modules pyvista
       displayName: 'Test Package Docstrings against VTK'
+      continueOnError: true  # 'true' if future steps should run even if this step fails; defaults to 'false'
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
 

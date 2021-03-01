@@ -212,22 +212,25 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
 
     plotter_kwargs['notebook'] = notebook
 
-    p = pyvista.Plotter(shape=(2,2), **plotter_kwargs)
+    pl = pyvista.Plotter(shape=(2, 2), **plotter_kwargs)
 
     for i in range(2):
         for j in range(2):
-            p.subplot(i, j)
-            p.add_mesh(datasets[i][j], **disply_kwargs)
-            p.add_text(labels[i][j])
+            pl.subplot(i, j)
+            pl.add_mesh(datasets[i][j], **disply_kwargs)
+            pl.add_text(labels[i][j])
             if is_pyvista_dataset(outline):
-                p.add_mesh(outline, color=outline_color)
+                pl.add_mesh(outline, color=outline_color)
             if camera_position is not None:
-                p.camera_position = camera_position
+                pl.camera_position = camera_position
 
     if link:
-        p.link_views()
+        pl.link_views()
+        # when linked, camera must be reset such that the view range
+        # of all subrender windows matches
+        pl.reset_camera()
 
-    return p.show(screenshot=screenshot, **show_kwargs)
+    return pl.show(screenshot=screenshot, **show_kwargs)
 
 
 def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
@@ -239,7 +242,7 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
 
     Parameters
     ----------
-    mesh : pyvista.Common or pyvista.MultiBlock
+    mesh : pyvista.DataSet or pyvista.MultiBlock
         Any PyVista or VTK mesh is supported. Also, any dataset that
         :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
         points.

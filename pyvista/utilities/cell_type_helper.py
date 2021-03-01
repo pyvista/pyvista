@@ -1,5 +1,9 @@
 """Helper module to query vtk cell sizes upon importing."""
-import vtk
+
+try:
+    from vtkmodules import vtkCommonDataModel
+except:
+    import vtk as vtkCommonDataModel
 
 vtkcell_types = [
     ['VTK_EMPTY_CELL', 'vtkEmptyCell'],
@@ -55,10 +59,10 @@ vtkcell_types = [
 # compute this at runtime as this is version dependent
 enum_cell_type_nr_points_map = {}
 for cell_num_str, cell_str in vtkcell_types:
-    if hasattr(vtk, cell_str) and hasattr(vtk, cell_num_str):
-      try:
-          cell_num = getattr(vtk, cell_num_str)
-          n_points = getattr(vtk, cell_str)().GetNumberOfPoints()
-          enum_cell_type_nr_points_map[cell_num] = n_points
-      except:
-          pass
+    if hasattr(vtkCommonDataModel, cell_str) and hasattr(vtkCommonDataModel, cell_num_str):
+        try:
+            cell_num = getattr(vtkCommonDataModel, cell_num_str)
+            n_points = getattr(vtkCommonDataModel, cell_str)().GetNumberOfPoints()
+            enum_cell_type_nr_points_map[cell_num] = n_points
+        except:
+            pass

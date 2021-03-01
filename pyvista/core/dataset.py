@@ -2,19 +2,20 @@
 
 import collections.abc
 import logging
-import warnings
-from pathlib import Path
+from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
 
 import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
-                               raise_not_matching, vtk_id_list_to_array, fileio,
-                               abstract_class, axis_rotation)
+                               raise_not_matching, vtk_id_list_to_array,
+                               abstract_class, axis_rotation, transformations)
+from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
-from .filters import DataSetFilters
+from .filters import DataSetFilters, _get_output
+from .pyvista_ndarray import pyvista_ndarray
+from .._typing import Vector
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -22,287 +23,80 @@ log.setLevel('CRITICAL')
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
 
-ActiveArrayInfo = collections.namedtuple('ActiveInfo', field_names=['association', 'name'])
+
+class ActiveArrayInfo:
+    """Active array info class with support for pickling."""
+
+    def __init__(self, association, name):
+        """Initialize."""
+        self.association = association
+        self.name = name
+
+    def __getstate__(self):
+        """Support pickling."""
+        state = self.__dict__.copy()
+        state['association'] = int(self.association.value)
+        return state
+
+    def __setstate__(self, state):
+        """Support unpickling."""
+        self.__dict__ = state.copy()
+        self.association = FieldAssociation(state['association'])
+
+    @property
+    def _namedtuple(self):
+        """Build a namedtuple on the fly to provide legacy support."""
+        named_tuple = collections.namedtuple('ActiveArrayInfo', ['association', 'name'])
+        return named_tuple(self.association, self.name)
+
+    def __iter__(self):
+        """Provide namedtuple-like __iter__."""
+        return self._namedtuple.__iter__()
+
+    def __repr__(self):
+        """Provide namedtuple-like __repr__."""
+        return self._namedtuple.__repr__()
+
+    def __getitem__(self, item):
+        """Provide namedtuple-like __getitem__."""
+        return self._namedtuple.__getitem__(item)
+
+    def __setitem__(self, key, value):
+        """Provide namedtuple-like __setitem__."""
+        self._namedtuple.__setitem__(key, value)
+
+    def __getattr__(self, item):
+        """Provide namedtuple-like __getattr__."""
+        self._namedtuple.__getattr__(item)
+
+    def __eq__(self, other):
+        """Check equivalence (useful for serialize/deserialize tests)."""
+        return self.name == other.name and \
+               int(self.association.value) == int(other.association.value)
 
 
 @abstract_class
-class DataObject:
-    """Methods common to all wrapped data objects."""
-
-    _READERS = None
-    _WRITERS = None
-
-    def __init__(self, *args, **kwargs):
-        """Initialize the data object."""
-        super().__init__()
-        # Remember which arrays come from numpy.bool arrays, because there is no direct
-        # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self.association_bitarray_names = collections.defaultdict(set)
-
-    def shallow_copy(self, to_copy):
-        """Shallow copy the given mesh to this mesh."""
-        return self.ShallowCopy(to_copy)
-
-    def deep_copy(self, to_copy):
-        """Overwrite this mesh with the given mesh as a deep copy."""
-        return self.DeepCopy(to_copy)
-
-    def _load_file(self, filename):
-        """Generically load a vtk object from file.
-
-        Parameters
-        ----------
-        filename : str, pathlib.Path
-            Filename of object to be loaded.  File/reader type is inferred from the
-            extension of the filename.
-
-        Notes
-        -----
-        Binary files load much faster than ASCII.
-
-        """
-        if self._READERS is None:
-            raise NotImplementedError(f'{self.__class__.__name__} readers are not specified,'
-                                      ' this should be a dict of (file extension: vtkReader type)')
-
-        file_path = Path(filename).resolve()
-        if not file_path.exists():
-            raise FileNotFoundError(f'File {filename} does not exist')
-
-        file_ext = file_path.suffix
-        if file_ext not in self._READERS:
-            valid_extensions = ', '.join(self._READERS.keys())
-            raise ValueError(f'Invalid file extension for {self.__class__.__name__}({file_ext}).'
-                             f' Must be one of: {valid_extensions}')
-
-        reader = self._READERS[file_ext]()
-        if file_ext == ".case":
-            reader.SetCaseFileName(str(file_path))
-        else:
-            reader.SetFileName(str(file_path))
-        reader.Update()
-        return reader.GetOutputDataObject(0)
-
-    def _from_file(self, filename):
-        self.shallow_copy(self._load_file(filename))
-
-    def save(self, filename, binary=True):
-        """Save this vtk object to file.
-
-        Parameters
-        ----------
-        filename : str, pathlib.Path
-         Filename of output file. Writer type is inferred from
-         the extension of the filename.
-
-        binary : bool, optional
-         If True, write as binary, else ASCII.
-
-        Notes
-        -----
-        Binary files write much faster than ASCII and have a smaller
-        file size.
-
-        """
-        if self._WRITERS is None:
-            raise NotImplementedError(f'{self.__class__.__name__} writers are not specified,'
-                                      ' this should be a dict of (file extension: vtkWriter type)')
-
-        file_path = Path(filename).resolve()
-        file_ext = file_path.suffix
-        if file_ext not in self._WRITERS:
-            raise ValueError('Invalid file extension for this data type.'
-                             f' Must be one of: {self._WRITERS.keys()}')
-
-        writer = self._WRITERS[file_ext]()
-        fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
-        writer.SetFileName(str(file_path))
-        writer.SetInputData(self)
-        writer.Write()
-
-    def get_data_range(self, arr=None, preference='field'):  # pragma: no cover
-        """Get the non-NaN min and max of a named array.
-
-        Parameters
-        ----------
-        arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the
-            active scalar is used
-
-        preference : str, optional
-            When scalars is specified, this is the preferred array type
-            to search for in the dataset.  Must be either ``'point'``,
-            ``'cell'``, or ``'field'``.
-
-        """
-        raise NotImplementedError(f'{type(self)} mesh type does not have a `get_data_range` method.')
-
-    def _get_attrs(self):  # pragma: no cover
-        """Return the representation methods (internal helper)."""
-        raise NotImplementedError('Called only by the inherited class')
-
-    def head(self, display=True, html=None):
-        """Return the header stats of this dataset.
-
-        If in IPython, this will be formatted to HTML. Otherwise returns a console friendly string.
-
-        """
-        # Generate the output
-        if html:
-            fmt = ""
-            # HTML version
-            fmt += "\n"
-            fmt += "<table>\n"
-            fmt += f"<tr><th>{type(self).__name__}</th><th>Information</th></tr>\n"
-            row = "<tr><td>{}</td><td>{}</td></tr>\n"
-            # now make a call on the object to get its attributes as a list of len 2 tuples
-            for attr in self._get_attrs():
-                try:
-                    fmt += row.format(attr[0], attr[2].format(*attr[1]))
-                except:
-                    fmt += row.format(attr[0], attr[2].format(attr[1]))
-            if hasattr(self, 'n_arrays'):
-                fmt += row.format('N Arrays', self.n_arrays)
-            fmt += "</table>\n"
-            fmt += "\n"
-            if display:
-                from IPython.display import display, HTML
-                display(HTML(fmt))
-                return
-            return fmt
-        # Otherwise return a string that is Python console friendly
-        fmt = f"{type(self).__name__} ({hex(id(self))})\n"
-        # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}:\t{}\n"
-        for attr in self._get_attrs():
-            try:
-                fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
-                fmt += row.format(attr[0], attr[2].format(attr[1]))
-        if hasattr(self, 'n_arrays'):
-            fmt += row.format('N Arrays', self.n_arrays)
-        return fmt
-
-    def _repr_html_(self):  # pragma: no cover
-        """Return a pretty representation for Jupyter notebooks.
-
-        This includes header details and information about all arrays.
-
-        """
-        raise NotImplementedError('Called only by the inherited class')
-
-    def copy_meta_from(self, ido):  # pragma: no cover
-        """Copy pyvista meta data onto this object from another object."""
-        pass  # called only by the inherited class
-
-    def copy(self, deep=True):
-        """Return a copy of the object.
-
-        Parameters
-        ----------
-        deep : bool, optional
-            When True makes a full copy of the object.
-
-        Returns
-        -------
-        newobject : same as input
-           Deep or shallow copy of the input.
-
-        """
-        thistype = type(self)
-        newobject = thistype()
-        if deep:
-            newobject.deep_copy(self)
-        else:
-            newobject.shallow_copy(self)
-        newobject.copy_meta_from(self)
-        return newobject
-
-    def add_field_array(self, scalars, name, deep=True):
-        """Add a field array."""
-        self.field_arrays.append(scalars, name, deep_copy=deep)
-
-    @property
-    def field_arrays(self):
-        """Return vtkFieldData as DataSetAttributes."""
-        return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
-
-    def clear_field_arrays(self):
-        """Remove all field arrays."""
-        self.field_arrays.clear()
-
-    @property
-    def memory_address(self):
-        """Get address of the underlying C++ object in format 'Addr=%p'."""
-        return self.GetInformation().GetAddressAsString("")
-
-    @property
-    def actual_memory_size(self):
-        """Return the actual size of the dataset object.
-
-        Returns
-        -------
-        int
-            The actual size of the dataset object in kibibytes (1024 bytes).
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> mesh = examples.load_airplane()
-        >>> mesh.actual_memory_size  # doctest:+SKIP
-        93
-
-        """
-        return self.GetActualMemorySize()
-
-    def copy_structure(self, dataset):
-        """Copy the structure (geometry and topology) of the input dataset object.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> source = pv.UniformGrid((10, 10, 5))
-        >>> target = pv.UniformGrid()
-        >>> target.copy_structure(source)
-        >>> target.plot(show_edges=True)  # doctest:+SKIP
-
-        """
-        self.CopyStructure(dataset)
-
-    def copy_attributes(self, dataset):
-        """Copy the data attributes of the input dataset object.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> source = pv.UniformGrid((10, 10, 5))
-        >>> source = source.compute_cell_sizes()
-        >>> target = pv.UniformGrid((10, 10, 5))
-        >>> target.copy_attributes(source)
-        >>> target.plot(scalars='Volume', show_edges=True)  # doctest:+SKIP
-
-        """
-        self.CopyAttributes(dataset)
-
-
-@abstract_class
-class Common(DataSetFilters, DataObject):
+class DataSet(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects."""
 
     # Simply bind pyvista.plotting.plot to the object
     plot = pyvista.plot
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
         super().__init__()
-        self._last_active_scalars_name = None
+        self._last_active_scalars_name: Optional[str] = None
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._textures = {}
+        self._textures: Dict[str, _vtk.vtkTexture] = {}
+
+    def __getattr__(self, item) -> Any:
+        """Get attribute from base class if not found."""
+        return super().__getattribute__(item)
 
     @property
-    def active_scalars_info(self):
+    def active_scalars_info(self) -> ActiveArrayInfo:
         """Return the active scalar's field and name: [field, name]."""
         field, name = self._active_scalars_info
         exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
@@ -316,14 +110,14 @@ class Common(DataSetFilters, DataObject):
                 first_arr = next((arr for arr in attributes if arr not in exclude), None)
                 if first_arr is not None:
                     self._active_scalars_info = ActiveArrayInfo(attributes.association, first_arr)
-                    attributes.active_scalars = first_arr
+                    attributes.active_scalars = first_arr  # type: ignore
                     break
             else:
                 self._active_scalars_info = ActiveArrayInfo(field, None)
         return self._active_scalars_info
 
     @property
-    def active_vectors_info(self):
+    def active_vectors_info(self) -> ActiveArrayInfo:
         """Return the active scalar's field and name: [field, name]."""
         if self._active_vectors_info.name is None:
             # Sometimes, precomputed normals aren't set as active
@@ -332,72 +126,81 @@ class Common(DataSetFilters, DataObject):
         return self._active_vectors_info
 
     @property
-    def active_tensors_info(self):
+    def active_tensors_info(self) -> ActiveArrayInfo:
         """Return the active tensor's field and name: [field, name]."""
         return self._active_tensors_info
 
     @property
-    def active_vectors(self):
+    def active_vectors(self) -> Optional[pyvista_ndarray]:
         """Return the active vectors array."""
         field, name = self.active_vectors_info
-        if name:
+        try:
             if field is FieldAssociation.POINT:
                 return self.point_arrays[name]
             if field is FieldAssociation.CELL:
                 return self.cell_arrays[name]
+        except KeyError:
+            return None
+        return None
 
     @property
-    def active_tensors(self):
+    def active_tensors(self) -> Optional[np.ndarray]:
         """Return the active tensors array."""
         field, name = self.active_tensors_info
-        if name:
+        try:
             if field is FieldAssociation.POINT:
                 return self.point_arrays[name]
             if field is FieldAssociation.CELL:
                 return self.cell_arrays[name]
+        except KeyError:
+            return None
+        return None
 
     @property
-    def active_tensors_name(self):
+    def active_tensors_name(self) -> str:
         """Return the name of the active tensor array."""
         return self.active_tensors_info.name
 
     @active_tensors_name.setter
-    def active_tensors_name(self, name):
+    def active_tensors_name(self, name: str):
         """Set the name of the active tensor."""
         self.set_active_tensors(name)
 
     @property
-    def active_vectors_name(self):
+    def active_vectors_name(self) -> str:
         """Return the name of the active vectors array."""
         return self.active_vectors_info.name
 
     @active_vectors_name.setter
-    def active_vectors_name(self, name):
+    def active_vectors_name(self, name: str):
         """Set the name of the active vector."""
         self.set_active_vectors(name)
 
     @property
-    def active_scalars_name(self):
+    def active_scalars_name(self) -> str:
         """Return the active scalar's name."""
         return self.active_scalars_info.name
 
     @active_scalars_name.setter
-    def active_scalars_name(self, name):
+    def active_scalars_name(self, name: str):
         """Set the name of the active scalar."""
         self.set_active_scalars(name)
 
     @property
-    def points(self):
+    def points(self) -> pyvista_ndarray:
         """Return a pointer to the points as a numpy object."""
-        pts = self.GetPoints()
-        if pts is None:
-            return None
-        vtk_data = pts.GetData()
-        # arr = vtk_to_numpy(vtk_data)
-        return pyvista.pyvista_ndarray(vtk_data, dataset=self)
+        _points = self.GetPoints()
+        try:
+            _points = _points.GetData()
+        except AttributeError:
+            # create an empty array
+            vtk_points = pyvista.vtk_points(np.empty((0, 3)), False)
+            self.SetPoints(vtk_points)
+            _points = self.GetPoints().GetData()
+        return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points):
+    def points(self, points: np.ndarray):
         """Set points without copying."""
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
@@ -411,7 +214,7 @@ class Common(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(self):
+    def arrows(self) -> Optional['pyvista.PolyData']:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points of the mesh and
@@ -424,17 +227,16 @@ class Common(DataSetFilters, DataObject):
             Active scalars represented as arrows.
 
         """
-        if self.active_vectors is not None:
-            name = self.active_vectors_name
-            return self.glyph(scale=name, orient=name)
+        name = self.active_vectors_name
+        return None if name is None else self.glyph(scale=name, orient=name)
 
     @property
-    def vectors(self):
+    def vectors(self) -> Optional[pyvista_ndarray]:
         """Return active vectors."""
         return self.active_vectors
 
     @vectors.setter
-    def vectors(self, array):
+    def vectors(self, array: np.ndarray):
         """Set the active vector."""
         if array.ndim != 2:
             raise ValueError('vector array must be a 2-dimensional array')
@@ -447,17 +249,17 @@ class Common(DataSetFilters, DataObject):
         self.active_vectors_name = DEFAULT_VECTOR_KEY
 
     @property
-    def t_coords(self):
+    def t_coords(self) -> Optional[pyvista_ndarray]:
         """Return the active texture coordinates on the points."""
         return self.point_arrays.t_coords
 
     @t_coords.setter
-    def t_coords(self, t_coords):
+    def t_coords(self, t_coords: np.ndarray):
         """Set the array to use as the texture coordinates."""
-        self.point_arrays.t_coords = t_coords
+        self.point_arrays.t_coords = t_coords  # type: ignore
 
     @property
-    def textures(self):
+    def textures(self) -> Dict[str, _vtk.vtkTexture]:
         """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
 
         When casting back to a VTK dataset or filtering this dataset, these textures
@@ -470,7 +272,7 @@ class Common(DataSetFilters, DataObject):
         """Clear the textures from this mesh."""
         self._textures.clear()
 
-    def _activate_texture(mesh, name):
+    def _activate_texture(mesh, name: str) -> _vtk.vtkTexture:
         """Grab a texture and update the active texture coordinates.
 
         This makes sure to not destroy old texture coordinates.
@@ -512,7 +314,7 @@ class Common(DataSetFilters, DataObject):
                 mesh.Modified()
         return texture
 
-    def set_active_scalars(self, name, preference='cell'):
+    def set_active_scalars(self, name: str, preference='cell'):
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -536,7 +338,7 @@ class Common(DataSetFilters, DataObject):
 
         self._active_scalars_info = ActiveArrayInfo(field, name)
 
-    def set_active_vectors(self, name, preference='point'):
+    def set_active_vectors(self, name: str, preference='point'):
         """Find the vectors by name and appropriately sets it as active.
 
         To deactivate any active vectors, pass ``None`` as the ``name``.
@@ -559,7 +361,7 @@ class Common(DataSetFilters, DataObject):
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
 
-    def set_active_tensors(self, name, preference='point'):
+    def set_active_tensors(self, name: str, preference='point'):
         """Find the tensors by name and appropriately sets it as active.
 
         To deactivate any active tensors, pass ``None`` as the ``name``.
@@ -582,7 +384,7 @@ class Common(DataSetFilters, DataObject):
 
         self._active_tensors_info = ActiveArrayInfo(field, name)
 
-    def rename_array(self, old_name, new_name, preference='cell'):
+    def rename_array(self, old_name: str, new_name: str, preference='cell'):
         """Change array name by searching for the array then renaming it."""
         _, field = get_array(self, old_name, preference=preference, info=True)
         was_active = False
@@ -600,22 +402,27 @@ class Common(DataSetFilters, DataObject):
             self.set_active_scalars(new_name, preference=field)
 
     @property
-    def active_scalars(self):
+    def active_scalars(self) -> Optional[pyvista_ndarray]:
         """Return the active scalars as an array."""
         field, name = self.active_scalars_info
-        if name is not None:
+        try:
             if field == FieldAssociation.POINT:
                 return self.point_arrays[name]
-            elif field == FieldAssociation.CELL:
+            if field == FieldAssociation.CELL:
                 return self.cell_arrays[name]
+        except KeyError:
+            return None
+        return None
 
-    def get_data_range(self, arr=None, preference='cell'):
+    def get_data_range(self,
+                       arr_var: Optional[Union[str, np.ndarray]] = None,
+                       preference='cell') -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
         """Get the non-NaN min and max of a named array.
 
         Parameters
         ----------
-        arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the
+        arr_var : str, np.ndarray, optional
+            The name of the array to get the range. If ``None``, the
             active scalars is used.
 
         preference : str, optional
@@ -624,18 +431,23 @@ class Common(DataSetFilters, DataObject):
             ``'cell'``, or ``'field'``.
 
         """
-        if arr is None:
-            # use active scalars array
-            _, arr = self.active_scalars_info
-        if isinstance(arr, str):
-            name = arr
+        if arr_var is None:  # use active scalars array
+            _, arr_var = self.active_scalars_info
+            if arr_var is None:
+                return (np.nan, np.nan)
+
+        if isinstance(arr_var, str):
+            name = arr_var
             # This can return None when an array is not found - expected
             arr = get_array(self, name, preference=preference)
             if arr is None:
                 # Raise a value error if fetching the range of an unknown array
                 raise ValueError(f'Array `{name}` not present.')
+        else:
+            arr = arr_var
+
         # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
@@ -645,7 +457,7 @@ class Common(DataSetFilters, DataObject):
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
 
-    def rotate_x(self, angle):
+    def rotate_x(self, angle: float):
         """Rotate mesh about the x-axis.
 
         Parameters
@@ -656,7 +468,7 @@ class Common(DataSetFilters, DataObject):
         """
         axis_rotation(self.points, angle, inplace=True, axis='x')
 
-    def rotate_y(self, angle):
+    def rotate_y(self, angle: float):
         """Rotate mesh about the y-axis.
 
         Parameters
@@ -667,7 +479,7 @@ class Common(DataSetFilters, DataObject):
         """
         axis_rotation(self.points, angle, inplace=True, axis='y')
 
-    def rotate_z(self, angle):
+    def rotate_z(self, angle: float):
         """Rotate mesh about the z-axis.
 
         Parameters
@@ -678,7 +490,7 @@ class Common(DataSetFilters, DataObject):
         """
         axis_rotation(self.points, angle, inplace=True, axis='z')
 
-    def translate(self, xyz):
+    def translate(self, xyz: Union[list, tuple, np.ndarray]):
         """Translate the mesh.
 
         Parameters
@@ -689,7 +501,7 @@ class Common(DataSetFilters, DataObject):
         """
         self.points += np.asarray(xyz)
 
-    def transform(self, trans):
+    def transform(self, trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray]):
         """Compute a transformation in place using a 4x4 transform.
 
         Parameters
@@ -698,9 +510,9 @@ class Common(DataSetFilters, DataObject):
             Accepts a vtk transformation object or a 4x4 transformation matrix.
 
         """
-        if isinstance(trans, vtk.vtkMatrix4x4):
+        if isinstance(trans, _vtk.vtkMatrix4x4):
             t = pyvista.array_from_vtkmatrix(trans)
-        elif isinstance(trans, vtk.vtkTransform):
+        elif isinstance(trans, _vtk.vtkTransform):
             t = pyvista.array_from_vtkmatrix(trans.GetMatrix())
         elif isinstance(trans, np.ndarray):
             if trans.ndim != 2:
@@ -718,19 +530,10 @@ class Common(DataSetFilters, DataObject):
             raise ValueError(
                 "Transform element (3,3), the inverse scale term, is zero")
 
-        # Normalize the transformation to account for the scale
-        t /= t[3, 3]
+        transformations.apply_transformation_to_points(t, self.points, inplace=True)
 
-        x = (self.points*t[0, :3]).sum(1) + t[0, -1]
-        y = (self.points*t[1, :3]).sum(1) + t[1, -1]
-        z = (self.points*t[2, :3]).sum(1) + t[2, -1]
 
-        # overwrite points
-        self.points[:, 0] = x
-        self.points[:, 1] = y
-        self.points[:, 2] = z
-
-    def copy_meta_from(self, ido):
+    def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object."""
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
@@ -738,7 +541,7 @@ class Common(DataSetFilters, DataObject):
         self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
 
     @property
-    def point_arrays(self):
+    def point_arrays(self) -> DataSetAttributes:
         """Return vtkPointData as DataSetAttributes."""
         return DataSetAttributes(self.GetPointData(), dataset=self, association=FieldAssociation.POINT)
 
@@ -757,32 +560,32 @@ class Common(DataSetFilters, DataObject):
         self.clear_field_arrays()
 
     @property
-    def cell_arrays(self):
+    def cell_arrays(self) -> DataSetAttributes:
         """Return vtkCellData as DataSetAttributes."""
         return DataSetAttributes(self.GetCellData(), dataset=self, association=FieldAssociation.CELL)
 
     @property
-    def n_points(self):
+    def n_points(self) -> int:
         """Return the number of points in the entire dataset."""
         return self.GetNumberOfPoints()
 
     @property
-    def n_cells(self):
+    def n_cells(self) -> int:
         """Return the number of cells in the entire dataset."""
         return self.GetNumberOfCells()
 
     @property
-    def number_of_points(self):  # pragma: no cover
+    def number_of_points(self) -> int:  # pragma: no cover
         """Return the number of points."""
         return self.GetNumberOfPoints()
 
     @property
-    def number_of_cells(self):  # pragma: no cover
+    def number_of_cells(self) -> int:  # pragma: no cover
         """Return the number of cells."""
         return self.GetNumberOfCells()
 
     @property
-    def bounds(self):
+    def bounds(self) -> List[float]:
         """Return the bounding box of this dataset.
 
         The form is: (xmin,xmax, ymin,ymax, zmin,zmax).
@@ -791,23 +594,26 @@ class Common(DataSetFilters, DataObject):
         return list(self.GetBounds())
 
     @property
-    def length(self):
+    def length(self) -> float:
         """Return the length of the diagonal of the bounding box."""
         return self.GetLength()
 
     @property
-    def center(self):
+    def center(self) -> Vector:
         """Return the center of the bounding box."""
         return list(self.GetCenter())
 
     @property
-    def extent(self):
+    def extent(self) -> Optional[list]:
         """Return the range of the bounding box."""
-        if hasattr(self, 'GetExtent'):
-            return list(self.GetExtent())
+        try:
+            _extent = list(self.GetExtent())
+        except AttributeError:
+            return None
+        return _extent
 
     @extent.setter
-    def extent(self, extent):
+    def extent(self, extent: List[float]):
         """Set the range of the bounding box."""
         if hasattr(self, 'SetExtent'):
             if len(extent) != 6:
@@ -817,7 +623,7 @@ class Common(DataSetFilters, DataObject):
             raise AttributeError('This mesh type does not handle extents.')
 
     @property
-    def volume(self):
+    def volume(self) -> float:
         """Return the mesh volume.
 
         Returns
@@ -829,14 +635,14 @@ class Common(DataSetFilters, DataObject):
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
         return np.sum(sizes.cell_arrays['Volume'])
 
-    def get_array(self, name, preference='cell', info=False):
+    def get_array(self, name: str, preference='cell', info=False) -> Union[Tuple, np.ndarray]:
         """Search both point, cell and field data for an array."""
         return get_array(self, name, preference=preference, info=info)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: Union[Iterable, str]) -> Union[Tuple, np.ndarray]:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
-            name, preference = index
+            name, preference = tuple(index)
         elif isinstance(index, str):
             name = index
             preference = 'cell'
@@ -845,10 +651,10 @@ class Common(DataSetFilters, DataObject):
                            ' Index must be a string name or a tuple of string name and string preference.')
         return self.get_array(name, preference=preference, info=False)
 
-    def _ipython_key_completions_(self):
+    def _ipython_key_completions_(self) -> List[str]:
         return self.array_names
 
-    def __setitem__(self, name, scalars):
+    def __setitem__(self, name: str, scalars: np.ndarray):
         """Add/set an array in the point_arrays, or cell_arrays accordingly.
 
         It depends on the array's length, or specified mode.
@@ -873,7 +679,7 @@ class Common(DataSetFilters, DataObject):
         return
 
     @property
-    def n_arrays(self):
+    def n_arrays(self) -> int:
         """Return the number of arrays present in the dataset."""
         n = self.GetPointData().GetNumberOfArrays()
         n += self.GetCellData().GetNumberOfArrays()
@@ -881,7 +687,7 @@ class Common(DataSetFilters, DataObject):
         return n
 
     @property
-    def array_names(self):
+    def array_names(self) -> List[str]:
         """Return a list of array names for the dataset.
 
         This makes sure to put the active scalars' name first in the list.
@@ -912,7 +718,7 @@ class Common(DataSetFilters, DataObject):
         #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return attrs
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         """Return a pretty representation for Jupyter notebooks.
 
         It includes header details and information about all arrays.
@@ -960,15 +766,15 @@ class Common(DataSetFilters, DataObject):
             fmt += "</td></tr> </table>"
         return fmt
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return the object representation."""
         return self.head(display=False, html=False)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def overwrite(self, mesh):
+    def overwrite(self, mesh: _vtk.vtkDataSet):
         """Overwrite this mesh inplace with the new mesh's geometries and data.
 
         Parameters
@@ -984,14 +790,14 @@ class Common(DataSetFilters, DataObject):
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
 
-    def cast_to_unstructured_grid(self):
+    def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
         """Get a new representation of this object as an :class:`pyvista.UnstructuredGrid`."""
-        alg = vtk.vtkAppendFilter()
+        alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
         alg.Update()
-        return pyvista.filters._get_output(alg)
+        return _get_output(alg)
 
-    def find_closest_point(self, point, n=1):
+    def find_closest_point(self, point: Iterable[float], n=1) -> int:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -1019,16 +825,16 @@ class Common(DataSetFilters, DataObject):
         if n < 1:
             raise ValueError("`n` must be a positive integer.")
 
-        locator = vtk.vtkPointLocator()
+        locator = _vtk.vtkPointLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
         if n > 1:
-            id_list = vtk.vtkIdList()
+            id_list = _vtk.vtkIdList()
             locator.FindClosestNPoints(n, point, id_list)
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)
 
-    def find_closest_cell(self, point):
+    def find_closest_cell(self, point: Union[int, np.ndarray]) -> Union[int, np.ndarray]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
@@ -1079,13 +885,13 @@ class Common(DataSetFilters, DataObject):
         else:
             raise TypeError("Given point must be an iterable or an array.")
 
-        locator = vtk.vtkCellLocator()
+        locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
         closest_cells = np.array([locator.FindCell(node) for node in point])
         return int(closest_cells[0]) if len(closest_cells) == 1 else closest_cells
 
-    def cell_n_points(self, ind):
+    def cell_n_points(self, ind: int) -> int:
         """Return the number of points in a cell.
 
         Parameters
@@ -1108,7 +914,7 @@ class Common(DataSetFilters, DataObject):
         """
         return self.GetCell(ind).GetPoints().GetNumberOfPoints()
 
-    def cell_points(self, ind):
+    def cell_points(self, ind: int) -> np.ndarray:
         """Return the points in a cell.
 
         Parameters
@@ -1135,10 +941,10 @@ class Common(DataSetFilters, DataObject):
         # A copy of the points must be returned to avoid overlapping them since the
         # `vtk.vtkExplicitStructuredGrid.GetCell` is an override method.
         points = self.GetCell(ind).GetPoints().GetData()
-        points = vtk_to_numpy(points)
+        points = _vtk.vtk_to_numpy(points)
         return points.copy()
 
-    def cell_bounds(self, ind):
+    def cell_bounds(self, ind: int) -> List[float]:
         """Return the bounding box of a cell.
 
         Parameters
@@ -1161,7 +967,7 @@ class Common(DataSetFilters, DataObject):
         """
         return list(self.GetCell(ind).GetBounds())
 
-    def cell_type(self, ind):
+    def cell_type(self, ind: int) -> int:
         """Return the type of a cell.
 
         Parameters

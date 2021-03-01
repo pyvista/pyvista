@@ -1,19 +1,9 @@
 """PyVista-like ITKwidgets plotter."""
 import numpy as np
-from scooby import meets_version
 
 import pyvista
 import pyvista as pv
 from .theme import parse_color
-
-HAS_ITK = False
-ITK_EXCEPTION = None
-try:
-    from itkwidgets import Viewer
-    from itkwidgets._transform_types import to_geometry
-    HAS_ITK = True
-except ImportError as e:  # pragma: no cover
-    ITK_EXCEPTION = e
 
 
 class PlotterITK():
@@ -36,14 +26,15 @@ class PlotterITK():
 
     def __init__(self, **kwargs):
         """Initialize the itkwidgets plotter."""
-        if not HAS_ITK:  # pragma: no cover
-            itk_import_err = ImportError("Please install `itkwidgets>=0.25.2`:\n%s" %
-                                         str(ITK_EXCEPTION))
-            raise itk_import_err
+        try:
+            import itkwidgets
+        except ImportError:
+            raise ImportError("Please install `itkwidgets>=0.25.2`")
 
         from itkwidgets import __version__
+        from scooby import meets_version
         if not meets_version(__version__, "0.25.2"):  # pragma: no cover
-            raise itk_import_err
+            raise ImportError("Please install `itkwidgets>=0.25.2`")
 
         self._point_sets = []
         self._geometries = []
@@ -60,7 +51,7 @@ class PlotterITK():
 
         Parameters
         ----------
-        points : np.ndarray or pyvista.Common
+        points : np.ndarray or pyvista.DataSet
             n x 3 numpy array of points or pyvista dataset with points.
 
         color : string or 3 item list, optional. Color of points (if visible).
@@ -113,7 +104,7 @@ class PlotterITK():
 
         Parameters
         ----------
-        mesh : pyvista.Common or pyvista.MultiBlock
+        mesh : pyvista.DataSet or pyvista.MultiBlock
             Any PyVista or VTK mesh is supported. Also, any dataset
             that :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
             points.
@@ -186,6 +177,7 @@ class PlotterITK():
         if 'vtkOriginalCellIds' in mesh.cell_arrays:
             mesh.cell_arrays.pop('vtkOriginalCellIds')
 
+        from itkwidgets._transform_types import to_geometry
         mesh = to_geometry(mesh)
         self._geometries.append(mesh)
         self._geometry_colors.append(pv.parse_color(color))
@@ -258,6 +250,7 @@ class PlotterITK():
         if self._camera_position is not None:
             kwargs.setdefault('camera', self._camera_position)
 
+        from itkwidgets import Viewer
         viewer = Viewer(geometries=self._geometries,
                         geometry_colors=self._geometry_colors,
                         geometry_opacities=self._geometry_opacities,
