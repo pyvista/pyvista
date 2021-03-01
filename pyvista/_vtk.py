@@ -411,7 +411,7 @@ else:  # pragma: no cover
         """Lazy import of the vtkPlot3DMetaReader."""
         return vtk.vtkPlot3DMetaReader()
 
-    class vtkExplicitStructuredGrid():
+    class vtkExplicitStructuredGrid():  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
         pass
