@@ -408,3 +408,8 @@ else:  # pragma: no cover
     def lazy_vtkPlot3DMetaReader():
         """Lazy import of the vtkPlot3DMetaReader."""
         return vtk.vtkPlot3DMetaReader()
+
+    class vtkExplicitStructuredGrid():
+        """Empty placeholder for VTK9 compatibility."""
+
+        pass
