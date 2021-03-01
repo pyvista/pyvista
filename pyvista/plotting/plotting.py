@@ -1208,7 +1208,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  render_points_as_spheres=None, render_lines_as_tubes=False,
                  smooth_shading=None, ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
-                 culling=None, rgb=False, categories=False,
+                 culling=None, rgb=False, categories=False, silhouette=None,
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
                  log_scale=False, render=True, **kwargs):
@@ -1387,6 +1387,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If set to ``True``, then the number of unique values in the scalar
             array will be used as the ``n_colors`` argument.
 
+        silhouette : dict, optional
+           As a dict, it contains the properties of the silhouette to display:
+               * ``color`` (color of the silhouette)
+               * ``line_width`` (edge width)
+               * ``opacity`` (edge transparency between 0 and 1)
+               * ``feature_angle`` (bool to display sharp edges)
+               * ``decimate`` (level of decimation between 0 and 1 or None)
+           If None, no silhouette is displayed. Defaults to None.
+
         use_transparency : bool, optional
             Invert the opacity mappings and make the values correspond to
             transparency.
@@ -1553,6 +1562,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return actors
 
         ##### Plot a single PyVista mesh #####
+
+        if silhouette is not None:
+            silhouette_params = rcParams['silhouette']
+            silhouette_params.update(silhouette)
+            del silhouette
+            if silhouette_params["decimate"] is None:
+                silhouette_mesh = mesh
+            else:
+                silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
+            alg = _vtk.vtkPolyDataSilhouette()
+            alg.SetInputData(silhouette_mesh)
+            alg.SetCamera(self.camera)
+            alg.SetEnableFeatureAngle(silhouette_params["feature_angle"])
+            mapper = make_mapper(_vtk.vtkDataSetMapper)
+            mapper.SetInputConnection(alg.GetOutputPort())
+            _, prop = self.add_actor(mapper)
+            prop.SetColor(parse_color(silhouette_params["color"]))
+            prop.SetOpacity(silhouette_params["opacity"])
+            prop.SetLineWidth(silhouette_params["line_width"])
+            del mapper
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
