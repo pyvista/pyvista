@@ -266,7 +266,8 @@ if VTK9:
                                               vtkDataSetTriangleFilter,
                                               vtkGradientFilter,
                                               vtkShrinkFilter,
-                                              vtkBooleanOperationPolyDataFilter)
+                                              vtkBooleanOperationPolyDataFilter,
+                                              vtkTransformFilter)
     from vtkmodules.vtkFiltersModeling import (vtkOutlineFilter,
                                                vtkRibbonFilter,
                                                vtkLinearExtrusionFilter,
