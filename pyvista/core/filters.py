@@ -4766,7 +4766,6 @@ class PolyDataFilters(DataSetFilters):
         alg.Update()
         return _get_output(alg)
 
-
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for unstructured grid datasets."""
