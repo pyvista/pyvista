@@ -439,6 +439,35 @@ def test_plot_show_bounds_params(grid, location):
 
 
 @skip_no_plotting
+def test_plot_silhouette_params():
+    cylinder = pyvista.Cylinder()
+
+    # silhouette=False
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(cylinder)
+    actors = list(plotter.renderer.GetActors())  # fetch actor list
+    assert len(actors) == 1  # only cylinder
+    plotter.show()
+
+    # silhouette=True and default properties
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(cylinder, silhouette=True)
+    actors = list(plotter.renderer.GetActors())  # fetch actor list
+    assert len(actors) == 2  # cylinder + silhouette
+    actor = actors[-1]  # get silhouette actor
+    props = actor.GetProperty()
+    assert props.GetColor() == pyvista.parse_color(pyvista.rcParams["silhouette"]["color"])
+    assert props.GetOpacity() == pyvista.rcParams["silhouette"]["opacity"]
+    assert props.GetLineWidth() == pyvista.rcParams["silhouette"]["line_width"]
+    plotter.show()
+
+    # cover other parameters
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(cylinder, silhouette=dict(decimate=None, feature_angle=True))
+    plotter.show()
+
+
+@skip_no_plotting
 def test_plotter_scale():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
