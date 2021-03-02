@@ -450,16 +450,14 @@ def test_plot_silhouette_params():
     # silhouette=False
     plotter = pyvista.Plotter()
     plotter.add_mesh(cylinder)
-    actors = list(plotter.renderer.GetActors())  # fetch actor list
-    assert len(actors) == 1  # only cylinder
+    assert len(list(plotter.renderer.GetActors())) == 1  # only cylinder
     plotter.show()
 
     # silhouette=True and default properties
     plotter = pyvista.Plotter()
     plotter.add_mesh(cylinder, silhouette=True)
-    actors = list(plotter.renderer.GetActors())  # fetch actor list
-    assert len(actors) == 2  # cylinder + silhouette
-    actor = actors[-1]  # get silhouette actor
+    assert len(list(plotter.renderer.GetActors())) == 2  # cylinder + silhouette
+    actor = list(plotter.renderer.GetActors())[0]  # get silhouette actor
     props = actor.GetProperty()
     assert props.GetColor() == pyvista.parse_color(pyvista.rcParams["silhouette"]["color"])
     assert props.GetOpacity() == pyvista.rcParams["silhouette"]["opacity"]
