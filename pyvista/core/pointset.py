@@ -113,32 +113,77 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         this PolyData object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
 
-        Otherwise, this is a points array or list, whic
+        Otherwise, this must be a points array or list containing one
+        or more points.  Each point must contain 3 dimensions.
 
+    faces : iterable, optional
+        Face connectivity array.  Faces must contain padding
+        indicating the number of points in the face.  For example, the
+        two faces ``[10, 11, 12]`` and ``[20, 21, 22, 23]`` will be
+        represented as ``[3, 10, 11, 12, 4, 20, 21, 22, 23]``.  This
+        lets you have an arbitrary number of points per face.
+
+        When not including the face connectivity array, each point
+        will be assigned to a single vertex.  This is used for point
+        clouds that have no connectivity.
+
+    n_faces : int, optional
+        Number of faces in the ``faces`` connectivity array.  While
+        optional, setting this speeds up the creation of the
+        ``PolyData``.
+
+    lines : iterable, optional
+        The line connectivity array.  Like ``faces``, this array
+        requires padding indicating the number of points in a line
+        segment.  For example, the two line segments ``[0, 1]`` and
+        ``[1, 2, 3, 4]`` will be represented as
+        ``[2, 0, 1, 4, 1, 2, 3, 4]``
+
+    n_lines : int, optional
+        Number of lines in the ``lines`` connectivity array.  While
+        optional, setting this speeds up the creation of the
+        ``PolyData``.
+
+    deep : bool, optional
+        Optional to copy the inputs, or to create a mesh from them
+        without copying them.  Setting ``deep=True`` ensures that the
+        original arrays can be modified outside the mesh without
+        affecting the mesh.
 
     Examples
     --------
-    >>> import pyvista
-    >>> from pyvista import examples
     >>> import vtk
     >>> import numpy as np
+    >>> from pyvista import examples
+    >>> import pyvista
 
-    >>> surf = pyvista.PolyData()  # Create an empty mesh
+    Create an empty mesh
 
-    >>> # Initialize from a vtk.vtkPolyData object
+    >>> mesh = pyvista.PolyData()
+
+    Initialize from a vtk.vtkPolyData object
+
     >>> vtkobj = vtk.vtkPolyData()
-    >>> surf = pyvista.PolyData(vtkobj)
+    >>> mesh = pyvista.PolyData(vtkobj)
 
-    >>> # initialize from just vertices
+    Initialize from just vertices
+
     >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0],])
-    >>> surf = pyvista.PolyData(vertices)
+    >>> mesh = pyvista.PolyData(vertices)
 
-    >>> # initialize from vertices and faces
-    >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]]).astype(np.int8)
-    >>> surf = pyvista.PolyData(vertices, faces)
+    Initialize from vertices and faces
 
-    >>>  # initialize from a filename
-    >>> surf = pyvista.PolyData(examples.antfile)
+    >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]])
+    >>> mesh = pyvista.PolyData(vertices, faces)
+
+    Initialize from vertices and lines
+
+    >>> lines = np.hstack([[2, 0, 1], [2, 1, 2]])
+    >>> mesh = pyvista.PolyData(vertices, lines=lines)
+
+    Initialize from a filename
+
+    >>> mesh = pyvista.PolyData(examples.antfile)
 
     """
 
@@ -170,6 +215,13 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
                     raise ValueError('No other arguments should be set when first '
                                      'parameter is a string')
             self._from_file(var_inp)  # is filename
+
+            # When loading files with just point arrays, create and
+            # set the polydata vertices
+            if self.n_points > 0 and self.n_cells == 0:
+                verts = self._make_vertex_cells(self.n_points)
+                self.verts = CellArray(verts, self.n_points, deep)
+
             return
 
         # PolyData-like

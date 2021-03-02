@@ -270,7 +270,7 @@ def vtk_points(points, deep=True):
         raise ValueError('Points array must contain three values per point.  \n'
                          f'Shape is {points.shape} and should be (X, 3)')
 
-    # points must be contigious
+    # points must be contiguous
     if not points.flags['C_CONTIGUOUS']:
         points = np.ascontiguousarray(points)
     vtkpts = _vtk.vtkPoints()
