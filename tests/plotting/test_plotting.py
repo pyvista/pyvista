@@ -439,7 +439,7 @@ def test_plot_show_bounds_params(grid, location):
 
 
 @skip_no_plotting
-def test_plot_silhouette_params():
+def test_plot_silhouette():
     grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
     plotter = pyvista.Plotter()
     with pytest.raises(TypeError, match="Expected type is `PolyData`"):

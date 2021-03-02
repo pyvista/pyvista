@@ -1392,7 +1392,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             feature is only available for a triangulated ``PolyData``.
             As a ``dict``, it contains the properties of the silhouette to display:
 
-                * ``color``: ``str`` or 3-items ``list``, color of the silhouette
+                * ``color``: ``str`` or 3-item ``list``, color of the silhouette
                 * ``line_width``: ``float``, edge width
                 * ``opacity``: ``float`` between 0 and 1, edge transparency
                 * ``feature_angle``: If ``True``, display sharp edges

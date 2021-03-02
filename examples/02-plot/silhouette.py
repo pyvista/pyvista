@@ -1,8 +1,8 @@
 """
 Silhouette Highlight
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
-Extract a subset of a polygonal mesh edges to generate an outline (silhouette)
+Extract a subset of the edges of a polygonal mesh to generate an outline (silhouette)
 of a mesh.
 """
 
