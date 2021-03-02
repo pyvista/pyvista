@@ -2,8 +2,8 @@
 Silhouette Highlight
 ~~~~~~~~~~~~~~~~~~~~
 
-Extract a subset of the edges of a polygonal mesh to generate an outline (silhouette)
-of a mesh.
+Extract a subset of the edges of a polygonal mesh to generate an outline
+(silhouette) of a mesh.
 """
 
 import pyvista
@@ -42,7 +42,7 @@ plotter.show()
 
 
 ###############################################################################
-# By default, the mesh uses a pretty aggressive decimation level but we might
+# By default, PyVista uses a pretty aggressive decimation level but we might
 # want to disable it. It is also possible to display sharp edges:
 cylinder = pyvista.Cylinder(center=(0, 0.04, 0), direction=(0, 1, 0),
                             radius=0.15, height=0.03).triangulate()
