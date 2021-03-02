@@ -608,7 +608,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_array(self, name: str, preference='cell', info=False) -> Union[Tuple, np.ndarray]:
         """Search both point, cell and field data for an array."""
-        return get_array(self, name, preference=preference, info=info)
+        return get_array(self, name, preference=preference, info=info, err=True)
 
     def __getitem__(self, index: Union[Iterable, str]) -> Union[Tuple, np.ndarray]:
         """Search both point, cell, and field data for an array."""
