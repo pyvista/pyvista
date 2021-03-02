@@ -43,7 +43,7 @@ plotter.show()
 
 ###############################################################################
 # By default, the mesh use a pretty aggressive decimation level but we might
-# want to disable it. It is also possible to display sharp edges.
+# want to disable it. It is also possible to display sharp edges:
 cylinder = pyvista.Cylinder(center=(0, 0.04, 0), direction=(0, 1, 0),
                             radius=0.15, height=0.03).triangulate()
 
@@ -67,7 +67,7 @@ plotter.add_text("Silhouette without sharp edges")
 plotter.view_isometric()
 plotter.subplot(0, 2)
 plotter.add_mesh(cylinder, color='tan', smooth_shading=True)
-plotter.add_text("No Silhouette")
+plotter.add_text("No silhouette")
 plotter.view_isometric()
 plotter.show()
 
