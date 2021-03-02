@@ -154,13 +154,11 @@ def test_invalid_init():
         pyvista.PolyData(np.array([1]))
 
     with pytest.raises(TypeError):
-        pyvista.PolyData(np.array([1]), 'woa')
+        pyvista.PolyData([1, 2, 3], 'woa')
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         pyvista.PolyData('woa', 'woa')
 
-    with pytest.raises(TypeError):
-        pyvista.PolyData('woa', 'woa', 'woa')
 
 
 def test_invalid_file():

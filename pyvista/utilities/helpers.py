@@ -258,6 +258,18 @@ def vtk_points(points, deep=True):
     if not np.issubdtype(points.dtype, np.number):
         raise TypeError('Points must be a numeric type')
 
+    # check dimensionality
+    if points.ndim == 1:
+        points = points.reshape((-1, 3))
+    elif points.ndim > 2:
+        raise ValueError('Dimension of ``points`` should be 1 or 2, not '
+                         f'{points.ndim}')
+
+    # verify shape
+    if points.shape[1] != 3:
+        raise ValueError('Points array must contain three values per point.  \n'
+                         f'Shape is {points.shape} and should be (X, 3)')
+
     # points must be contigious
     if not points.flags['C_CONTIGUOUS']:
         points = np.ascontiguousarray(points)
