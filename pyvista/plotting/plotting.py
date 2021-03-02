@@ -1584,7 +1584,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             prop.SetColor(parse_color(silhouette_params["color"]))
             prop.SetOpacity(silhouette_params["opacity"])
             prop.SetLineWidth(silhouette_params["line_width"])
-            del mapper
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
