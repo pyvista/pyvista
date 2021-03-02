@@ -464,7 +464,7 @@ def test_plot_silhouette_params():
     assert props.GetLineWidth() == pyvista.rcParams["silhouette"]["line_width"]
     plotter.show()
 
-    # cover other parameters
+    # cover other properties
     plotter = pyvista.Plotter()
     plotter.add_mesh(cylinder, silhouette=dict(decimate=None, feature_angle=True))
     plotter.show()
