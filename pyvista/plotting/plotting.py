@@ -1389,13 +1389,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         silhouette : dict, bool, optional
            As a dict, it contains the properties of the silhouette to display:
-               * ``color`` (color of the silhouette)
-               * ``line_width`` (edge width)
-               * ``opacity`` (edge transparency between 0 and 1)
-               * ``feature_angle`` (bool to display sharp edges)
-               * ``decimate`` (level of decimation between 0 and 1 or None)
-           If True, the default values are used and if False, no silhouette
-           is displayed. Defaults to False.
+
+                * ``color``: ``str`` or 3-items ``list``, color of the silhouette
+                * ``line_width``: ``float``, edge width
+                * ``opacity``: ``float`` between 0 and 1, edge transparency
+                * ``feature_angle``: If ``True``, display sharp edges
+                * ``decimate``: ``float`` between 0 and 1, level of decimation
+           If ``True``, the default values are used and if ``False``, no
+           silhouette is displayed. Defaults to ``False``.
 
         use_transparency : bool, optional
             Invert the opacity mappings and make the values correspond to
@@ -1569,10 +1570,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             silhouette_params.update(silhouette)
             silhouette = True
         if silhouette:
-            if silhouette_params["decimate"] is None:
-                silhouette_mesh = mesh
-            else:
+            if isinstance(silhouette_params["decimate"], float):
                 silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
+            else:
+                silhouette_mesh = mesh
             alg = _vtk.vtkPolyDataSilhouette()
             alg.SetInputData(silhouette_mesh)
             alg.SetCamera(self.camera)
