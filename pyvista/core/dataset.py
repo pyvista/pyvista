@@ -5,12 +5,12 @@ import logging
 from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
 
 import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
-                               raise_not_matching, vtk_id_list_to_array, abstract_class, axis_rotation, transformations)
+                               raise_not_matching, vtk_id_list_to_array,
+                               abstract_class, axis_rotation, transformations)
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -89,7 +89,7 @@ class DataSet(DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._textures: Dict[str, vtk.vtkTexture] = {}
+        self._textures: Dict[str, _vtk.vtkTexture] = {}
 
     def __getattr__(self, item) -> Any:
         """Get attribute from base class if not found."""
@@ -259,7 +259,7 @@ class DataSet(DataSetFilters, DataObject):
         self.point_arrays.t_coords = t_coords  # type: ignore
 
     @property
-    def textures(self) -> Dict[str, vtk.vtkTexture]:
+    def textures(self) -> Dict[str, _vtk.vtkTexture]:
         """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
 
         When casting back to a VTK dataset or filtering this dataset, these textures
@@ -272,7 +272,7 @@ class DataSet(DataSetFilters, DataObject):
         """Clear the textures from this mesh."""
         self._textures.clear()
 
-    def _activate_texture(mesh, name: str) -> vtk.vtkTexture:
+    def _activate_texture(mesh, name: str) -> _vtk.vtkTexture:
         """Grab a texture and update the active texture coordinates.
 
         This makes sure to not destroy old texture coordinates.
@@ -457,7 +457,7 @@ class DataSet(DataSetFilters, DataObject):
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
 
-    def rotate_x(self, angle: float):
+    def rotate_x(self, angle: float, transform_all_input_vectors=False):
         """Rotate mesh about the x-axis.
 
         Parameters
@@ -466,9 +466,10 @@ class DataSet(DataSetFilters, DataObject):
             Angle in degrees to rotate about the x-axis.
 
         """
-        axis_rotation(self.points, angle, inplace=True, axis='x')
+        t = transformations.axis_angle_rotation((1, 0, 0), angle, deg=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_y(self, angle: float):
+    def rotate_y(self, angle: float, transform_all_input_vectors=False):
         """Rotate mesh about the y-axis.
 
         Parameters
@@ -477,9 +478,10 @@ class DataSet(DataSetFilters, DataObject):
             Angle in degrees to rotate about the y-axis.
 
         """
-        axis_rotation(self.points, angle, inplace=True, axis='y')
+        t = transformations.axis_angle_rotation((0, 1, 0), angle, deg=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_z(self, angle: float):
+    def rotate_z(self, angle: float, transform_all_input_vectors=False):
         """Rotate mesh about the z-axis.
 
         Parameters
@@ -488,7 +490,8 @@ class DataSet(DataSetFilters, DataObject):
             Angle in degrees to rotate about the z-axis.
 
         """
-        axis_rotation(self.points, angle, inplace=True, axis='z')
+        t = transformations.axis_angle_rotation((0, 0, 1), angle, deg=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
     def translate(self, xyz: Union[list, tuple, np.ndarray]):
         """Translate the mesh.
@@ -500,38 +503,6 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         self.points += np.asarray(xyz)
-
-    def transform(self, trans: Union[vtk.vtkMatrix4x4, vtk.vtkTransform, np.ndarray]):
-        """Compute a transformation in place using a 4x4 transform.
-
-        Parameters
-        ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
-            Accepts a vtk transformation object or a 4x4 transformation matrix.
-
-        """
-        if isinstance(trans, vtk.vtkMatrix4x4):
-            t = pyvista.array_from_vtkmatrix(trans)
-        elif isinstance(trans, vtk.vtkTransform):
-            t = pyvista.array_from_vtkmatrix(trans.GetMatrix())
-        elif isinstance(trans, np.ndarray):
-            if trans.ndim != 2:
-                raise ValueError('Transformation array must be 4x4')
-            elif trans.shape[0] != 4 or trans.shape[1] != 4:
-                raise ValueError('Transformation array must be 4x4')
-            t = trans
-        else:
-            raise TypeError('Input transform must be either:\n'
-                            '\tvtk.vtkMatrix4x4\n'
-                            '\tvtk.vtkTransform\n'
-                            '\t4x4 np.ndarray\n')
-
-        if t[3, 3] == 0:
-            raise ValueError(
-                "Transform element (3,3), the inverse scale term, is zero")
-
-        transformations.apply_transformation_to_points(t, self.points, inplace=True)
-
 
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object."""
@@ -774,7 +745,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def overwrite(self, mesh: vtk.vtkDataSet):
+    def overwrite(self, mesh: _vtk.vtkDataSet):
         """Overwrite this mesh inplace with the new mesh's geometries and data.
 
         Parameters
@@ -792,7 +763,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
         """Get a new representation of this object as an :class:`pyvista.UnstructuredGrid`."""
-        alg = vtk.vtkAppendFilter()
+        alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
         alg.Update()
         return _get_output(alg)
@@ -825,11 +796,11 @@ class DataSet(DataSetFilters, DataObject):
         if n < 1:
             raise ValueError("`n` must be a positive integer.")
 
-        locator = vtk.vtkPointLocator()
+        locator = _vtk.vtkPointLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
         if n > 1:
-            id_list = vtk.vtkIdList()
+            id_list = _vtk.vtkIdList()
             locator.FindClosestNPoints(n, point, id_list)
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)
@@ -885,7 +856,7 @@ class DataSet(DataSetFilters, DataObject):
         else:
             raise TypeError("Given point must be an iterable or an array.")
 
-        locator = vtk.vtkCellLocator()
+        locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
         closest_cells = np.array([locator.FindCell(node) for node in point])
@@ -939,7 +910,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         points = self.GetCell(ind).GetPoints().GetData()
-        return vtk_to_numpy(points)
+        return _vtk.vtk_to_numpy(points)
 
     def cell_bounds(self, ind: int) -> List[float]:
         """Return the bounding box of a cell.

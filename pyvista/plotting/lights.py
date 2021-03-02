@@ -3,10 +3,14 @@
 from enum import IntEnum
 
 import numpy as np
-import vtk
-from vtk import vtkLight
 
-import pyvista
+# imports here rather than in _vtk to avoid circular imports
+try:
+    from vtkmodules.vtkRenderingCore import vtkLight, vtkLightActor
+    from vtkmodules.vtkCommonMath import vtkMatrix4x4
+except ImportError:
+    from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
+
 from .theme import parse_color
 from ..utilities.helpers import vtkmatrix_from_array
 
@@ -102,7 +106,7 @@ class Light(vtkLight):
 
         self.light_type = light_type
 
-        self._actor = vtk.vtkLightActor()
+        self._actor = vtkLightActor()
         self._actor.SetLight(self)
         self._actor.VisibilityOff()
 
@@ -607,7 +611,7 @@ class Light(vtkLight):
     @transform_matrix.setter
     def transform_matrix(self, matrix):
         """Set the 4x4 transformation matrix of the light."""
-        if matrix is None or isinstance(matrix, vtk.vtkMatrix4x4):
+        if matrix is None or isinstance(matrix, vtkMatrix4x4):
             trans = matrix
         else:
             try:
@@ -857,7 +861,7 @@ class Light(vtkLight):
             setattr(new_light, attr, value)
 
         if deep and self.transform_matrix is not None:
-            new_light.transform_matrix = vtk.vtkMatrix4x4()
+            new_light.transform_matrix = vtkMatrix4x4()
             new_light.transform_matrix.DeepCopy(self.transform_matrix)
         else:
             new_light.transform_matrix = self.transform_matrix

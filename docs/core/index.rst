@@ -34,7 +34,7 @@ PyVista has the following mesh types:
    :maxdepth: 2
 
    objects
-   common
+   dataset
    points
    point-grids
    grids

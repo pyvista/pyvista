@@ -34,7 +34,7 @@ class PlotterITK():
         from itkwidgets import __version__
         from scooby import meets_version
         if not meets_version(__version__, "0.25.2"):  # pragma: no cover
-            raise itk_import_err
+            raise ImportError("Please install `itkwidgets>=0.25.2`")
 
         self._point_sets = []
         self._geometries = []

@@ -10,9 +10,8 @@ import threading
 import traceback
 
 import numpy as np
-import vtk
-import vtk.util.numpy_support as nps
 
+from pyvista import _vtk
 import pyvista
 from .fileio import from_meshio
 from . import transformations
@@ -21,10 +20,10 @@ from . import transformations
 class FieldAssociation(enum.Enum):
     """Represents which type of vtk field a scalar or vector array is associated with."""
 
-    POINT = vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS
-    CELL = vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
-    NONE = vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
-    ROW = vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
+    POINT = _vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS
+    CELL = _vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
+    NONE = _vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
+    ROW = _vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
 
 
 def get_vtk_type(typ):
@@ -37,7 +36,7 @@ def get_vtk_type(typ):
         int : the integer type id specified in vtkType.h
 
     """
-    typ = nps.get_vtk_array_type(typ)
+    typ = _vtk.get_vtk_array_type(typ)
     # This handles a silly string type bug
     if typ == 3:
         return 13
@@ -46,7 +45,7 @@ def get_vtk_type(typ):
 
 def vtk_bit_array_to_char(vtkarr_bint):
     """Cast vtk bit array to a char array."""
-    vtkarr = vtk.vtkCharArray()
+    vtkarr = _vtk.vtkCharArray()
     vtkarr.DeepCopy(vtkarr_bint)
     return vtkarr
 
@@ -65,7 +64,7 @@ def convert_string_array(arr, name=None):
 
     """
     if isinstance(arr, np.ndarray):
-        vtkarr = vtk.vtkStringArray()
+        vtkarr = _vtk.vtkStringArray()
         ########### OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
@@ -113,22 +112,22 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         else:
             # This will handle numerical data
             arr = np.ascontiguousarray(arr)
-            vtk_data = nps.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
+            vtk_data = _vtk.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
 
         if isinstance(name, str):
             vtk_data.SetName(name)
         return vtk_data
     # Otherwise input must be a vtkDataArray
-    if not isinstance(arr, (vtk.vtkDataArray, vtk.vtkBitArray, vtk.vtkStringArray)):
+    if not isinstance(arr, (_vtk.vtkDataArray, _vtk.vtkBitArray, _vtk.vtkStringArray)):
         raise TypeError(f'Invalid input array type ({type(arr)}).')
     # Handle booleans
-    if isinstance(arr, vtk.vtkBitArray):
+    if isinstance(arr, _vtk.vtkBitArray):
         arr = vtk_bit_array_to_char(arr)
     # Handle string arrays
-    if isinstance(arr, vtk.vtkStringArray):
+    if isinstance(arr, _vtk.vtkStringArray):
         return convert_string_array(arr)
     # Convert from vtkDataArry to NumPy
-    return nps.vtk_to_numpy(arr)
+    return _vtk.vtk_to_numpy(arr)
 
 
 def is_pyvista_dataset(obj):
@@ -170,7 +169,7 @@ def parse_field_choice(field):
             field = FieldAssociation.POINT
         elif field in ['field', 'f', 'fields']:
             field = FieldAssociation.NONE
-        elif field in ['row', 'r',]:
+        elif field in ['row', 'r']:
             field = FieldAssociation.ROW
         else:
             raise ValueError(f'Data field ({field}) not supported.')
@@ -201,7 +200,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         Boolean to control whether to throw an error if array is not present.
 
     """
-    if isinstance(mesh, vtk.vtkTable):
+    if isinstance(mesh, _vtk.vtkTable):
         arr = row_array(mesh, name)
         if arr is None and err:
             raise KeyError(f'Data array ({name}) not present in this dataset.')
@@ -262,9 +261,8 @@ def vtk_points(points, deep=True):
     # points must be contigious
     if not points.flags['C_CONTIGUOUS']:
         points = np.ascontiguousarray(points)
-
-    vtkpts = vtk.vtkPoints()
-    vtkpts.SetData(nps.numpy_to_vtk(points, deep=deep))
+    vtkpts = _vtk.vtkPoints()
+    vtkpts.SetData(_vtk.numpy_to_vtk(points, deep=deep))
     return vtkpts
 
 
@@ -339,7 +337,7 @@ def lines_from_points(points, close=False):
     cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int_)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
     if close:
-        cells = np.append(cells, [[2, len(points)-1, 0],], axis=0)
+        cells = np.append(cells, [[2, len(points)-1, 0]], axis=0)
     poly.lines = cells
     return poly
 
@@ -413,8 +411,8 @@ def vector_poly_data(orig, vec):
         raise ValueError('vec array must be 3D')
 
     # Create vtk points and cells objects
-    vpts = vtk.vtkPoints()
-    vpts.SetData(nps.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
+    vpts = _vtk.vtkPoints()
+    vpts.SetData(_vtk.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
 
     npts = orig.shape[0]
     cells = np.empty((npts, 2), dtype=pyvista.ID_TYPE)
@@ -423,13 +421,13 @@ def vector_poly_data(orig, vec):
     vcells = pyvista.utilities.cells.CellArray(cells, npts)
 
     # Create vtkPolyData object
-    pdata = vtk.vtkPolyData()
+    pdata = _vtk.vtkPolyData()
     pdata.SetPoints(vpts)
     pdata.SetVerts(vcells)
 
     # Add vectors to polydata
     name = 'vectors'
-    vtkfloat = nps.numpy_to_vtk(np.ascontiguousarray(vec), deep=True)
+    vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(vec), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveVectors(name)
@@ -437,7 +435,7 @@ def vector_poly_data(orig, vec):
     # Add magnitude of vectors to polydata
     name = 'mag'
     scalars = (vec * vec).sum(1)**0.5
-    vtkfloat = nps.numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
+    vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveScalars(name)
@@ -466,9 +464,9 @@ def array_from_vtkmatrix(matrix):
         Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
 
     """
-    if isinstance(matrix, vtk.vtkMatrix3x3):
+    if isinstance(matrix, _vtk.vtkMatrix3x3):
         shape = (3, 3)
-    elif isinstance(matrix, vtk.vtkMatrix4x4):
+    elif isinstance(matrix, _vtk.vtkMatrix4x4):
         shape = (4, 4)
     else:
         raise TypeError('Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
@@ -493,9 +491,9 @@ def vtkmatrix_from_array(array):
     """
     array = np.asarray(array)
     if array.shape == (3, 3):
-        matrix = vtk.vtkMatrix3x3()
+        matrix = _vtk.vtkMatrix3x3()
     elif array.shape == (4, 4):
-        matrix = vtk.vtkMatrix4x4()
+        matrix = _vtk.vtkMatrix4x4()
     else:
         raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
     m, n = array.shape
@@ -697,16 +695,16 @@ def fit_plane_to_points(points, return_meta=False):
 
 def raise_not_matching(scalars, mesh):
     """Raise exception about inconsistencies."""
-    if isinstance(mesh, vtk.vtkTable):
+    if isinstance(mesh, _vtk.vtkTable):
         raise ValueError(f'Number of scalars ({scalars.size}) must match number of rows ({mesh.n_rows}).')
-    raise ValueError(f'Number of scalars ({scalars.size}) ' +
-                     f'must match either the number of points ({mesh.n_points}) ' +
+    raise ValueError(f'Number of scalars ({scalars.size}) '
+                     f'must match either the number of points ({mesh.n_points}) '
                      f'or the number of cells ({mesh.n_cells}).')
 
 
 def generate_plane(normal, origin):
-    """Return a vtk.vtkPlane."""
-    plane = vtk.vtkPlane()
+    """Return a _vtk.vtkPlane."""
+    plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
     normal = normal / np.linalg.norm(normal)
     plane.SetNormal(normal)
@@ -738,15 +736,15 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
 
     """
     # Try Depth Peeling with a basic scene
-    source = vtk.vtkSphereSource()
-    mapper = vtk.vtkPolyDataMapper()
+    source = _vtk.vtkSphereSource()
+    mapper = _vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(source.GetOutputPort())
-    actor = vtk.vtkActor()
+    actor = _vtk.vtkActor()
     actor.SetMapper(mapper)
     # requires opacity < 1
     actor.GetProperty().SetOpacity(0.5)
-    renderer = vtk.vtkRenderer()
-    renderWindow = vtk.vtkRenderWindow()
+    renderer = _vtk.vtkRenderer()
+    renderWindow = _vtk.vtkRenderWindow()
     renderWindow.AddRenderer(renderer)
     renderWindow.SetOffScreenRendering(True)
     renderWindow.SetAlphaBitPlanes(True)
@@ -801,7 +799,7 @@ class ProgressMonitor():
             from tqdm import tqdm
         except ImportError:
             raise ImportError("Please install `tqdm` to monitor algorithms.")
-        self.event_type = vtk.vtkCommand.ProgressEvent
+        self.event_type = _vtk.vtkCommand.ProgressEvent
         self.progress = 0.0
         self._last_progress = self.progress
         self.algorithm = algorithm

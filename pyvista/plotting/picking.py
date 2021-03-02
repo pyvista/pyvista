@@ -4,9 +4,9 @@ import logging
 import weakref
 
 import numpy as np
-import vtk
 
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import try_callback
 
 
@@ -148,7 +148,7 @@ class PickingHelper:
             return
 
         def through_pick_call_back(picker, event_id):
-            extract = vtk.vtkExtractGeometry()
+            extract = _vtk.vtkExtractGeometry()
             mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
             extract.SetInputData(mesh)
             extract.SetImplicitFunction(picker.GetFrustum())
@@ -160,8 +160,8 @@ class PickingHelper:
             picked = pyvista.MultiBlock()
             x0, y0, x1, y1 = renderer_().get_pick_position()
             if x0 >= 0:  # initial pick position is (-1, -1, -1, -1)
-                selector = vtk.vtkOpenGLHardwareSelector()
-                selector.SetFieldAssociation(vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
+                selector = _vtk.vtkOpenGLHardwareSelector()
+                selector.SetFieldAssociation(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
                 selector.SetRenderer(renderer_())
                 selector.SetArea(x0, y0, x1, y1)
                 selection = selector.Select()
@@ -171,8 +171,8 @@ class PickingHelper:
                         # No selection
                         continue
                     cids = pyvista.convert_array(selection_node.GetSelectionList())
-                    actor = selection_node.GetProperties().Get(vtk.vtkSelectionNode.PROP())
-                    if actor.GetProperty().GetRepresentation() != 2: # surface
+                    actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
+                    if actor.GetProperty().GetRepresentation() != 2:  # surface
                         logging.warning("Display representations other than `surface` will result in incorrect results.")
                     smesh = actor.GetMapper().GetInputAsDataSet()
                     smesh = smesh.copy()
@@ -180,22 +180,23 @@ class PickingHelper:
                     tri_smesh = smesh.extract_surface().triangulate()
                     cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
                     picked.append(smesh.extract_cells(cids_to_get))
+
             if len(picked) == 1:
                 self_().picked_cells = picked[0]
             else:
                 self_().picked_cells = picked
             return end_pick_helper(picker, event_id)
 
-        area_picker = vtk.vtkRenderedAreaPicker()
+        area_picker = _vtk.vtkRenderedAreaPicker()
         if through:
-            area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, through_pick_call_back)
+            area_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, through_pick_call_back)
         else:
             # NOTE: there can be issues with non-triangulated meshes
             # Reference:
             #     https://github.com/pyvista/pyvista/issues/277
             #     https://github.com/pyvista/pyvista/pull/281
             #     https://discourse.vtk.org/t/visible-cell-selection-hardwareselector-py-example-is-not-working-reliably/1262
-            area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
+            area_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
         self.enable_rubber_band_style()
         self.iren.SetPicker(area_picker)
@@ -275,10 +276,10 @@ class PickingHelper:
                 else:
                     try_callback(callback, self.picked_point)
 
-        point_picker = vtk.vtkPointPicker()
+        point_picker = _vtk.vtkPointPicker()
         point_picker.SetTolerance(tolerance)
         self.picker=point_picker
-        point_picker.AddObserver(vtk.vtkCommand.EndPickEvent, _end_pick_event)
+        point_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, _end_pick_event)
 
         self.enable_trackball_style()
         self.iren.SetPicker(point_picker)
@@ -444,7 +445,7 @@ class PickingHelper:
                 self.picked_geodesic = pyvista.PolyData(point)
             else:
                 surface = mesh.extract_surface().triangulate()
-                locator = vtk.vtkPointLocator()
+                locator = _vtk.vtkPointLocator()
                 locator.SetDataSet(surface)
                 locator.BuildLocator()
                 start_idx = locator.FindClosestPoint(mesh.points[self._last_picked_idx])
@@ -561,7 +562,7 @@ class PickingHelper:
         """Get corresponding click location in the 3D plot."""
         if self.click_position is None:
             self.store_click_position()
-        picker = vtk.vtkWorldPointPicker()
+        picker = _vtk.vtkWorldPointPicker()
         picker.Pick(self.click_position[0], self.click_position[1], 0, self.renderer)
         return picker.GetPickPosition()
 
@@ -569,7 +570,7 @@ class PickingHelper:
         """Get corresponding mouse location in the 3D plot."""
         if self.mouse_position is None:
             self.store_mouse_position()
-        picker = vtk.vtkWorldPointPicker()
+        picker = _vtk.vtkWorldPointPicker()
         picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
         return picker.GetPickPosition()
 

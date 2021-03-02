@@ -1,12 +1,15 @@
 import os
 import sys
 import platform
+import itertools
 
 import numpy as np
 import pytest
 
 import pyvista
 from pyvista import examples
+from pyvista.core.errors import VTKVersionError
+
 
 DATASETS = [
     examples.load_uniform(),  # UniformGrid
@@ -1075,48 +1078,148 @@ def test_shrink():
     assert shrunk.area < mesh.area
 
 
-def test_reflect_grid(grid):
-    reflected = grid.reflect((0, 0, 1), point=(0, 0, 6))
-    assert isinstance(reflected, type(grid))
-    assert reflected.n_cells == grid.n_cells
-    assert reflected.n_points == grid.n_points
+
+@pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
+                         itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
+def test_transform_mesh(dataset, num_cell_arrays, num_point_arrays):
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
+
+    for i in range(num_cell_arrays):
+        dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+
+    for i in range(num_point_arrays):
+        dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
+
+    # deactivate any active vectors!
+    # even if transform_all_input_vectors is False, vtkTransformfilter will
+    # transform active vectors
+    dataset.set_active_vectors(None)
+
+    transformed = dataset.transform(tf, transform_all_input_vectors=False, inplace=False)
+
+    assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
+    assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
+    assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
+
+    # ensure that none of the vector data is changed
+    for name, array in dataset.point_arrays.items():
+        assert transformed.point_arrays[name] == pytest.approx(array)
+
+    for name, array in dataset.cell_arrays.items():
+        assert transformed.cell_arrays[name] == pytest.approx(array)
 
 
-def test_reflect_struct_grid(struct_grid):
-    reflected = struct_grid.reflect((0, 0, 1), point=(0, 0, 6))
-    assert isinstance(reflected, type(struct_grid))
-    assert reflected.n_cells == struct_grid.n_cells
-    assert reflected.n_points == struct_grid.n_points
+@pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
+                         itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
+def test_transform_mesh_and_vectors(dataset, num_cell_arrays, num_point_arrays):
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
+
+    for i in range(num_cell_arrays):
+        dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+
+    for i in range(num_point_arrays):
+        dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
+
+    # handle
+    f = pyvista._vtk.vtkTransformFilter()
+    if not hasattr(f, 'SetTransformAllInputVectors'):
+        with pytest.raises(VTKVersionError):
+            transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
+        return
+
+    transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
+
+    assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
+    assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
+    assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
+
+    for i in range(num_cell_arrays):
+        assert dataset.cell_arrays['C%d' % i][:, 0] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 0])
+        assert dataset.cell_arrays['C%d' % i][:, 2] == pytest.approx(-transformed.cell_arrays['C%d' % i][:, 1])
+        assert dataset.cell_arrays['C%d' % i][:, 1] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 2])
+
+    for i in range(num_point_arrays):
+        assert dataset.point_arrays['P%d' % i][:, 0] == pytest.approx( transformed.point_arrays['P%d' % i][:, 0])
+        assert dataset.point_arrays['P%d' % i][:, 2] == pytest.approx(-transformed.point_arrays['P%d' % i][:, 1])
+        assert dataset.point_arrays['P%d' % i][:, 1] == pytest.approx( transformed.point_arrays['P%d' % i][:, 2])
 
 
-def test_reflect_mesh(airplane):
-    reflected = airplane.reflect((1, 0, 0))
-    assert isinstance(reflected, type(airplane))
-    assert reflected.n_cells == airplane.n_cells
-    assert reflected.n_points == airplane.n_points
+@pytest.mark.parametrize('dataset', [
+    examples.load_uniform(),  # UniformGrid
+    examples.load_rectilinear(),  # RectilinearGrid
+])
+def test_transform_inplace_bad_types(dataset):
+    # assert that transformations of these types throw the correct error
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
+    with pytest.raises(ValueError):
+        dataset.transform(tf, inplace=True)
 
-    assert np.allclose(airplane.points[:, 0], -reflected.points[:, 0])
-    assert np.allclose(airplane.points[:, 1:], reflected.points[:, 1:])
 
-
-def test_reflect_mesh_about_point(airplane):
+@pytest.mark.parametrize('dataset', DATASETS)
+def test_reflect_mesh_about_point(dataset):
     x_plane = 500
-    reflected = airplane.reflect((1, 0, 0), point=(x_plane, 0, 0))
-    assert isinstance(reflected, type(airplane))
-    assert reflected.n_cells == airplane.n_cells
-    assert reflected.n_points == airplane.n_points
-
-    assert np.allclose(x_plane - airplane.points[:, 0], reflected.points[:, 0] - x_plane)
-    assert np.allclose(airplane.points[:, 1:], reflected.points[:, 1:])
+    reflected = dataset.reflect((1, 0, 0), point=(x_plane, 0, 0))
+    assert reflected.n_cells == dataset.n_cells
+    assert reflected.n_points == dataset.n_points
+    assert np.allclose(x_plane - dataset.points[:, 0], reflected.points[:, 0] - x_plane)
+    assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
 
 
-def test_reflect_inplace(airplane):
-    orig = airplane.copy()
-    airplane.reflect((1, 0, 0), inplace=True)
-    assert airplane.n_cells == orig.n_cells
-    assert airplane.n_points == orig.n_points
-    assert np.allclose(airplane.points[:, 0], -orig.points[:, 0])
-    assert np.allclose(airplane.points[:, 1:], orig.points[:, 1:])
+@pytest.mark.parametrize('dataset', DATASETS)
+def test_reflect_mesh_with_vectors(dataset):
+    if hasattr(dataset, 'compute_normals'):
+        dataset.compute_normals(inplace=True)
+
+    # add vector data to cell and point arrays
+    dataset.cell_arrays['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
+                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
+    dataset.point_arrays['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
+                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
+
+    reflected = dataset.reflect((1, 0, 0), transform_all_input_vectors=True, inplace=False)
+
+    # assert isinstance(reflected, type(dataset))
+    assert reflected.n_cells == dataset.n_cells
+    assert reflected.n_points == dataset.n_points
+    assert np.allclose(dataset.points[:, 0], -reflected.points[:, 0])
+    assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
+
+    # assert normals are reflected
+    if hasattr(dataset, 'compute_normals'):
+        assert np.allclose(dataset.cell_arrays['Normals'][:, 0], -reflected.cell_arrays['Normals'][:, 0])
+        assert np.allclose(dataset.cell_arrays['Normals'][:, 1:], reflected.cell_arrays['Normals'][:, 1:])
+        assert np.allclose(dataset.point_arrays['Normals'][:, 0], -reflected.point_arrays['Normals'][:, 0])
+        assert np.allclose(dataset.point_arrays['Normals'][:, 1:], reflected.point_arrays['Normals'][:, 1:])
+
+    # assert other vector fields are reflected
+    assert np.allclose(dataset.cell_arrays['C'][:, 0], -reflected.cell_arrays['C'][:, 0])
+    assert np.allclose(dataset.cell_arrays['C'][:, 1:], reflected.cell_arrays['C'][:, 1:])
+    assert np.allclose(dataset.point_arrays['P'][:, 0], -reflected.point_arrays['P'][:, 0])
+    assert np.allclose(dataset.point_arrays['P'][:, 1:], reflected.point_arrays['P'][:, 1:])
+
+
+@pytest.mark.parametrize('dataset', [
+    examples.load_hexbeam(),  # UnstructuredGrid
+    examples.load_airplane(),  # PolyData
+    examples.load_structured(),  # StructuredGrid
+])
+def test_reflect_inplace(dataset):
+    orig = dataset.copy()
+    dataset.reflect((1, 0, 0), inplace=True)
+    assert dataset.n_cells == orig.n_cells
+    assert dataset.n_points == orig.n_points
+    assert np.allclose(dataset.points[:, 0], -orig.points[:, 0])
+    assert np.allclose(dataset.points[:, 1:], orig.points[:, 1:])
+
+
+@pytest.mark.parametrize('dataset', [
+    examples.load_uniform(),  # UniformGrid
+    examples.load_rectilinear(),  # RectilinearGrid
+])
+def test_transform_inplace_bad_types(dataset):
+    # assert that transformations of these types throw the correct error
+    with pytest.raises(ValueError):
+        dataset.reflect((1, 0, 0), inplace=True)
 
 
 def test_extrude_rotate():

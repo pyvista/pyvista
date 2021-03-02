@@ -122,8 +122,6 @@ def verify_cache_image(plotter):
                       f'{error}')
 
 
-
-
 @skip_no_plotting
 def test_plot(tmpdir):
     tmp_dir = tmpdir.mkdir("tmpdir2")
@@ -1540,3 +1538,21 @@ def test_log_scale():
     plotter = pyvista.Plotter()
     plotter.add_mesh(mesh, log_scale=True)
     plotter.show()
+
+
+@skip_no_plotting
+def test_set_focus():
+    plane = pyvista.Plane()
+    p = pyvista.Plotter()
+    p.add_mesh(plane, color="tan", show_edges=True)
+    p.set_focus((1, 0, 0))
+    p.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_set_viewup():
+    plane = pyvista.Plane()
+    p = pyvista.Plotter()
+    p.add_mesh(plane, color="tan", show_edges=True)
+    p.set_viewup((1.0, 1.0, 1.0))
+    p.show(before_close_callback=verify_cache_image)
