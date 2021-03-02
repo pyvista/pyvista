@@ -1,5 +1,5 @@
 """
-Silhouette Hightlight
+Silhouette Highlight
 ~~~~~~~~~~~~~~~~~~~~~
 
 Extract a subset of a polygonal mesh edges to generate an outline (silhouette)
@@ -29,7 +29,7 @@ plotter.show()
 
 ###############################################################################
 # Maybe the default parameters are not enough to really notice the silhouette.
-# But by using a ``dict``, it is possible to modifiy the properties of the
+# But by using a ``dict``, it is possible to modify the properties of the
 # outline. For example, color and width could be specified like so:
 plotter = pyvista.Plotter()
 silhouette = dict(
@@ -42,7 +42,7 @@ plotter.show()
 
 
 ###############################################################################
-# By default, the mesh use a pretty agressive decimation level but we might
+# By default, the mesh use a pretty aggressive decimation level but we might
 # want to disable it. It is also possible to display sharp edges.
 cylinder = pyvista.Cylinder(center=(0, 0.04, 0), direction=(0, 1, 0),
                             radius=0.15, height=0.03).triangulate()
