@@ -1388,15 +1388,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             array will be used as the ``n_colors`` argument.
 
         silhouette : dict, bool, optional
-           As a dict, it contains the properties of the silhouette to display:
+            If set to ``True``, plot a silhouette highlight for the mesh.
+            As a ``dict``, it contains the properties of the silhouette to display:
 
                 * ``color``: ``str`` or 3-items ``list``, color of the silhouette
                 * ``line_width``: ``float``, edge width
                 * ``opacity``: ``float`` between 0 and 1, edge transparency
                 * ``feature_angle``: If ``True``, display sharp edges
                 * ``decimate``: ``float`` between 0 and 1, level of decimation
-           If ``True``, the default values are used and if ``False``, no
-           silhouette is displayed. Defaults to ``False``.
 
         use_transparency : bool, optional
             Invert the opacity mappings and make the values correspond to
