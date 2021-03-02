@@ -1388,7 +1388,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             array will be used as the ``n_colors`` argument.
 
         silhouette : dict, bool, optional
-            If set to ``True``, plot a silhouette highlight for the mesh.
+            If set to ``True``, plot a silhouette highlight for the mesh. This
+            feature is only available for a triangulated ``PolyData``.
             As a ``dict``, it contains the properties of the silhouette to display:
 
                 * ``color``: ``str`` or 3-items ``list``, color of the silhouette
@@ -1570,7 +1571,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             silhouette = True
         if silhouette:
             if not isinstance(mesh, pyvista.PolyData):
-                raise TypeError(f"Expected type is PolyData but {type(mesh)} was given.")
+                raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
             if isinstance(silhouette_params["decimate"], float):
                 silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
             else:

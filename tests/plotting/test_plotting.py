@@ -442,7 +442,7 @@ def test_plot_show_bounds_params(grid, location):
 def test_plot_silhouette_params():
     grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
     plotter = pyvista.Plotter()
-    with pytest.raises(TypeError, match="Expected type is PolyData"):
+    with pytest.raises(TypeError, match="Expected type is `PolyData`"):
         plotter.add_mesh(grid, silhouette=True)
 
     cylinder = pyvista.Cylinder().triangulate()
