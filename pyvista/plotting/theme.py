@@ -72,8 +72,8 @@ rcParams = {
         'enabled': False,
     },
     'silhouette': {
-        'color': 'white',
-        'line_width': 1,
+        'color': 'black',
+        'line_width': 2,
         'opacity': 1.0,
         'feature_angle': False,
         'decimate': 0.9,
