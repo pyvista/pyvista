@@ -13,17 +13,14 @@ import pyvista
 def ncells_from_cells_py36(cells):
     """Get the number of cells from a VTK cell connectivity array.
 
-    Works on python <=3.6 due to the need for `__index__()`.
+    Works on on all Python>=3.5
     """
-    consumer = deque(maxlen=0)
-    it = cells.flat
-    for n_cells in count():
-        skip = next(it, None)
-        if skip is None:
-            break
-        consumer.extend(islice(it, int(skip)))
+    c = 0
+    n_cells = 0
+    while c < cells.size:
+        c += cells[c] + 1
+        n_cells += 1
     return n_cells
-
 
 def ncells_from_cells(cells):
     """Get the number of cells from a VTK cell connectivity array.
