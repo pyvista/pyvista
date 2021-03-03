@@ -1,5 +1,6 @@
 """pyvista wrapping of vtkCellArray."""
 
+import sys
 from collections import deque
 from itertools import islice, count
 
@@ -64,11 +65,21 @@ class CellArray(_vtk.vtkCellArray):
             if cells.ndim == 1:
                 consumer = deque(maxlen=0)
                 it = cells.flat
-                for n_cells in count():
-                    skip = next(it, None)
-                    if skip is None:
-                        break
-                    consumer.extend(islice(it, skip))
+
+                # islice can deal with numpy int64 in Python 3.7+
+                if sys.version_info.minor > 6:
+                    for n_cells in count():
+                        skip = next(it, None)
+                        if skip is None:
+                            break
+                        consumer.extend(islice(it, skip))
+                else:
+                    for n_cells in count():
+                        skip = next(it, None)
+                        if skip is None:
+                            break
+                        consumer.extend(islice(it, int(skip)))
+
             else:
                 n_cells = cells.shape[0]
 
