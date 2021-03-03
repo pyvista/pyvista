@@ -459,8 +459,9 @@ def test_plot_silhouette(tri_cylinder):
     # silhouette=True and default properties
     plotter = pyvista.Plotter()
     plotter.add_mesh(tri_cylinder, silhouette=True)
-    assert len(list(plotter.renderer.GetActors())) == 2  # cylinder + silhouette
-    actor = list(plotter.renderer.GetActors())[0]  # get silhouette actor
+    actors = list(plotter.renderer.GetActors())
+    assert len(actors) == 2  # cylinder + silhouette
+    actor = actors[0]  # get silhouette actor
     props = actor.GetProperty()
     assert props.GetColor() == pyvista.parse_color(pyvista.rcParams["silhouette"]["color"])
     assert props.GetOpacity() == pyvista.rcParams["silhouette"]["opacity"]
@@ -472,7 +473,7 @@ def test_plot_silhouette(tri_cylinder):
 def test_plot_silhouette_options(tri_cylinder):
     # cover other properties
     plotter = pyvista.Plotter()
-    plotter.add_mesh(tri_cylinder), silhouette=dict(decimate=None, feature_angle=True))
+    plotter.add_mesh(tri_cylinder, silhouette=dict(decimate=None, feature_angle=True))
     plotter.show(before_close_callback=verify_cache_image)
 
 
