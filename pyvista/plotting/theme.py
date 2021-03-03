@@ -71,6 +71,13 @@ rcParams = {
         'occlusion_ratio': 0.0,
         'enabled': False,
     },
+    'silhouette': {
+        'color': 'black',
+        'line_width': 2,
+        'opacity': 1.0,
+        'feature_angle': False,
+        'decimate': 0.9,
+    },
     'slider_style': {
         'classic': {
             'slider_length': 0.02,

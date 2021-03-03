@@ -1208,7 +1208,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  render_points_as_spheres=None, render_lines_as_tubes=False,
                  smooth_shading=None, ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
-                 culling=None, rgb=False, categories=False,
+                 culling=None, rgb=False, categories=False, silhouette=False,
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
                  log_scale=False, render=True, **kwargs):
@@ -1387,6 +1387,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If set to ``True``, then the number of unique values in the scalar
             array will be used as the ``n_colors`` argument.
 
+        silhouette : dict, bool, optional
+            If set to ``True``, plot a silhouette highlight for the mesh. This
+            feature is only available for a triangulated ``PolyData``.
+            As a ``dict``, it contains the properties of the silhouette to display:
+
+                * ``color``: ``str`` or 3-item ``list``, color of the silhouette
+                * ``line_width``: ``float``, edge width
+                * ``opacity``: ``float`` between 0 and 1, edge transparency
+                * ``feature_angle``: If ``True``, display sharp edges
+                * ``decimate``: ``float`` between 0 and 1, level of decimation
+
         use_transparency : bool, optional
             Invert the opacity mappings and make the values correspond to
             transparency.
@@ -1553,6 +1564,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return actors
 
         ##### Plot a single PyVista mesh #####
+
+        silhouette_params = dict(rcParams['silhouette'])
+        if isinstance(silhouette, dict):
+            silhouette_params.update(silhouette)
+            silhouette = True
+        if silhouette:
+            if not isinstance(mesh, pyvista.PolyData):
+                raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
+            if isinstance(silhouette_params["decimate"], float):
+                silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
+            else:
+                silhouette_mesh = mesh
+            alg = _vtk.vtkPolyDataSilhouette()
+            alg.SetInputData(silhouette_mesh)
+            alg.SetCamera(self.renderer.camera)
+            alg.SetEnableFeatureAngle(silhouette_params["feature_angle"])
+            mapper = make_mapper(_vtk.vtkDataSetMapper)
+            mapper.SetInputConnection(alg.GetOutputPort())
+            _, prop = self.add_actor(mapper)
+            prop.SetColor(parse_color(silhouette_params["color"]))
+            prop.SetOpacity(silhouette_params["opacity"])
+            prop.SetLineWidth(silhouette_params["line_width"])
 
         # Compute surface normals if using smooth shading
         if smooth_shading:

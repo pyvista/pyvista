@@ -439,6 +439,45 @@ def test_plot_show_bounds_params(grid, location):
 
 
 @skip_no_plotting
+def test_plot_silhouette_fail(hexbeam):
+    plotter = pyvista.Plotter()
+    with pytest.raises(TypeError, match="Expected type is `PolyData`"):
+        plotter.add_mesh(hexbeam, silhouette=True)
+
+
+@skip_no_plotting
+def test_plot_no_silhouette(tri_cylinder):
+    # silhouette=False
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(tri_cylinder)
+    assert len(list(plotter.renderer.GetActors())) == 1  # only cylinder
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_plot_silhouette(tri_cylinder):
+    # silhouette=True and default properties
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(tri_cylinder, silhouette=True)
+    actors = list(plotter.renderer.GetActors())
+    assert len(actors) == 2  # cylinder + silhouette
+    actor = actors[0]  # get silhouette actor
+    props = actor.GetProperty()
+    assert props.GetColor() == pyvista.parse_color(pyvista.rcParams["silhouette"]["color"])
+    assert props.GetOpacity() == pyvista.rcParams["silhouette"]["opacity"]
+    assert props.GetLineWidth() == pyvista.rcParams["silhouette"]["line_width"]
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_plot_silhouette_options(tri_cylinder):
+    # cover other properties
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(tri_cylinder, silhouette=dict(decimate=None, feature_angle=True))
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
 def test_plotter_scale():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
