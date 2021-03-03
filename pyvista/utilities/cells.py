@@ -60,7 +60,9 @@ class CellArray(_vtk.vtkCellArray):
     def _set_cells(self, cells, n_cells, deep):
         vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
 
-        # get number of cells if none
+        # get number of cells if None.  This is quite a performance
+        # bottleneck and we can consider adding a warning.  Good
+        # candidate for Cython or JIT compilation
         if n_cells is None:
             if cells.ndim == 1:
                 consumer = deque(maxlen=0)
@@ -73,12 +75,12 @@ class CellArray(_vtk.vtkCellArray):
                         if skip is None:
                             break
                         consumer.extend(islice(it, skip))
-                else:
-                    for n_cells in count():
-                        skip = next(it, None)
-                        if skip is None:
-                            break
-                        consumer.extend(islice(it, int(skip)))
+                else:  # About 20% slower
+                    c = 0
+                    n_cells = 0
+                    while c < cells.size:
+                        c += cells[c] + 1
+                        n_cells += 1
 
             else:
                 n_cells = cells.shape[0]
