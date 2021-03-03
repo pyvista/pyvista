@@ -5,6 +5,7 @@ import itertools
 
 import numpy as np
 import pytest
+from vtk import VTK_QUADRATIC_HEXAHEDRON
 
 import pyvista
 from pyvista import examples
@@ -901,7 +902,7 @@ def test_extract_surface():
     pts = np.vstack((lin_pts, quad_pts))
 
     cells = np.asarray([[20, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]], dtype=np.int64)
-    celltypes = np.array([vtk.VTK_QUADRATIC_HEXAHEDRON])
+    celltypes = np.array([VTK_QUADRATIC_HEXAHEDRON])
     if pyvista._vtk.VTK9:
         grid = pyvista.UnstructuredGrid(cells, celltypes, pts)
     else:
