@@ -754,6 +754,10 @@ def test_plot_over_line():
     mesh['foo'] = np.random.rand(mesh.n_cells, 3)
     mesh.plot_over_line(a, b, resolution=None, scalars='foo',
                         title='My Stuff', ylabel='3 Values', show=False)
+    # Should fail if scalar name does not exist
+    with pytest.raises(KeyError):
+        mesh.plot_over_line(a, b, resolution=None, scalars='invalid_array_name',
+                            title='My Stuff', ylabel='3 Values', show=False)
 
 
 def test_slice_along_line():
