@@ -22,6 +22,7 @@ def ncells_from_cells_py36(cells):
         n_cells += 1
     return n_cells
 
+
 def ncells_from_cells(cells):
     """Get the number of cells from a VTK cell connectivity array.
 
