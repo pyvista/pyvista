@@ -10,6 +10,36 @@ from pyvista import _vtk
 import pyvista
 
 
+def ncells_from_cells_py36(cells):
+    """Get the number of cells from a VTK cell connectivity array.
+
+    Works on python <=3.6 due to the need for `__index__()`.
+    """
+    consumer = deque(maxlen=0)
+    it = cells.flat
+    for n_cells in count():
+        skip = next(it, None)
+        if skip is None:
+            break
+        consumer.extend(islice(it, int(skip)))
+    return n_cells
+
+
+def ncells_from_cells(cells):
+    """Get the number of cells from a VTK cell connectivity array.
+
+    Works on python >=3.7
+    """
+    consumer = deque(maxlen=0)
+    it = cells.flat
+    for n_cells in count():
+        skip = next(it, None)
+        if skip is None:
+            break
+        consumer.extend(islice(it, skip))
+    return n_cells
+
+
 def numpy_to_idarr(ind, deep=False, return_ind=False):
     """Safely convert a numpy array to a vtkIdTypeArray."""
     ind = np.asarray(ind)
@@ -65,23 +95,10 @@ class CellArray(_vtk.vtkCellArray):
         # candidate for Cython or JIT compilation
         if n_cells is None:
             if cells.ndim == 1:
-                consumer = deque(maxlen=0)
-                it = cells.flat
-
-                # islice can deal with numpy int64 in Python 3.7+
                 if sys.version_info.minor > 6:
-                    for n_cells in count():
-                        skip = next(it, None)
-                        if skip is None:
-                            break
-                        consumer.extend(islice(it, skip))
+                    n_cells = ncells_from_cells_py36(cells)
                 else:  # About 20% slower
-                    c = 0
-                    n_cells = 0
-                    while c < cells.size:
-                        c += cells[c] + 1
-                        n_cells += 1
-
+                    n_cells = ncells_from_cells_py36(cells)
             else:
                 n_cells = cells.shape[0]
 
