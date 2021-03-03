@@ -1,4 +1,8 @@
 """pyvista wrapping of vtkCellArray."""
+
+from collections import deque
+from itertools import islice, count
+
 import numpy as np
 
 from pyvista import _vtk
@@ -54,14 +58,17 @@ class CellArray(_vtk.vtkCellArray):
 
     def _set_cells(self, cells, n_cells, deep):
         vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
+
         # get number of cells if none
         if n_cells is None:
             if cells.ndim == 1:
-                c = 0
-                n_cells = 0
-                while c < cells.size:
-                    c += cells[c] + 1
-                    n_cells += 1
+                consumer = deque(maxlen=0)
+                it = cells.flat
+                for n_cells in count():
+                    skip = next(it, None)
+                    if skip is None:
+                        break
+                    consumer.extend(islice(it, skip))
             else:
                 n_cells = cells.shape[0]
 
