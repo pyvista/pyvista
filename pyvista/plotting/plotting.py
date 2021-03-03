@@ -1578,7 +1578,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 silhouette_mesh = mesh
             alg = _vtk.vtkPolyDataSilhouette()
             alg.SetInputData(silhouette_mesh)
-            alg.SetCamera(self.camera)
+            alg.SetCamera(self.renderer.camera)
             alg.SetEnableFeatureAngle(silhouette_params["feature_angle"])
             mapper = make_mapper(_vtk.vtkDataSetMapper)
             mapper.SetInputConnection(alg.GetOutputPort())
