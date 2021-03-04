@@ -1164,7 +1164,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         shape0 = dims-1
         shape1 = 2*shape0
         ncells = np.prod(shape0)
-        cells = 8*np.ones((ncells, 9), dtype=np.int)
+        cells = 8*np.ones((ncells, 9), dtype=int)
         points, indices = np.unique(corners, axis=0, return_inverse=True)
         connectivity = np.asarray([[0, 1, 1, 0, 0, 1, 1, 0],
                                    [0, 0, 1, 1, 0, 0, 1, 1],
