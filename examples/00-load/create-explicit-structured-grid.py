@@ -34,7 +34,8 @@ zcorn = np.repeat(zcorn, (4*ni*nj))
 corners = np.stack((xcorn, ycorn, zcorn))
 corners = corners.transpose()
 
-dims = np.asarray((ni, nj, nk))+1
-grid = pv.ExplicitStructuredGrid(dims, corners)
-grid.compute_connectivity()
-grid.plot(show_edges=True)
+if pv._vtk.VTK9:
+    dims = np.asarray((ni, nj, nk))+1
+    grid = pv.ExplicitStructuredGrid(dims, corners)
+    grid.compute_connectivity()
+    grid.plot(show_edges=True)
