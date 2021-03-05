@@ -120,7 +120,7 @@ class PickingHelper:
                     renderer = self.renderers[index]
                     for actor in renderer._actors.values():
                         mapper = actor.GetMapper()
-                        if isinstance(mapper, vtk.vtkDataSetMapper) and mapper.GetInput() == mesh:
+                        if isinstance(mapper, _vtk.vtkDataSetMapper) and mapper.GetInput() == mesh:
                             loc = self_().index_to_loc(index)
                             self_().subplot(*loc)
                             break
