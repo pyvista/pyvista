@@ -732,7 +732,7 @@ def test_sample_over_line():
 
     expected_result = np.array([0.5, 1, 1.5])
     assert np.allclose(sampled_line[name], expected_result)
-    assert name in line.array_names # is name in sampled result
+    assert name in sampled_line.array_names # is name in sampled result
 
     # test no resolution
     sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
