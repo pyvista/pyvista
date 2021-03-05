@@ -95,7 +95,8 @@ class CellArray(_vtk.vtkCellArray):
             if cells.ndim == 1:
                 if sys.version_info.minor > 6:
                     n_cells = ncells_from_cells(cells)
-                else:  # About 20% slower
+                else:  # pragma: no cover
+                    # About 20% slower
                     n_cells = ncells_from_cells_py36(cells)
             else:
                 n_cells = cells.shape[0]

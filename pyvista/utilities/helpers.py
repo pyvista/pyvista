@@ -266,7 +266,7 @@ def vtk_points(points, deep=True):
 
     # verify shape
     if points.shape[1] != 3:
-        raise ValueError('Points array must contain three values per point.  \n'
+        raise ValueError('Points array must contain three values per point.  '
                          f'Shape is {points.shape} and should be (X, 3)')
 
     # points must be contiguous

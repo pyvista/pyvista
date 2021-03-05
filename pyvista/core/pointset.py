@@ -1,4 +1,5 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
+from textwrap import dedent
 import pathlib
 import logging
 import os
@@ -10,7 +11,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import abstract_class, assert_empty_kwargs
+from pyvista.utilities import abstract_class
 from pyvista.utilities.cells import (CellArray, numpy_to_idarr,
                                      generate_cell_offsets,
                                      create_mixed_cells,
@@ -108,7 +109,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
     Parameters
     ----------
-    var_inp : vtk.vtkPolyData, iterable, optional
+    var_inp : vtk.vtkPolyData, sequence, optional
         Flexible input type.  Can be a ``vtk.vtkPolyData``, in which case
         this PolyData object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
@@ -200,7 +201,6 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     def __init__(self, var_inp=None, faces=None, n_faces=None, lines=None,
                  n_lines=None, deep=False) -> None:
         """Initialize the polydata."""
-        points = None
         local_parms = locals()
         super().__init__()
 
@@ -209,8 +209,9 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             return
 
         # filename
+        opt_kwarg = ['faces', 'n_faces', 'lines', 'n_lines']
         if isinstance(var_inp, (str, pathlib.Path)):
-            for kwarg in ['faces', 'n_faces', 'lines']:
+            for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
                     raise ValueError('No other arguments should be set when first '
                                      'parameter is a string')
@@ -225,8 +226,8 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             return
 
         # PolyData-like
-        elif isinstance(var_inp, _vtk.vtkPolyData):
-            for kwarg in ['faces', 'n_faces', 'lines']:
+        if isinstance(var_inp, _vtk.vtkPolyData):
+            for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
                     raise ValueError('No other arguments should be set when first '
                                      'parameter is a PolyData')
@@ -237,19 +238,20 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             return
 
         # First parameter is points
-        elif isinstance(var_inp, (np.ndarray, list)):
-            points = var_inp
-            if not isinstance(points, np.ndarray):
-                points = np.array(points)
-            self.SetPoints(pyvista.vtk_points(points, deep=deep))
+        if isinstance(var_inp, (np.ndarray, list)):
+            self.SetPoints(pyvista.vtk_points(var_inp, deep=deep))
         else:
-            raise TypeError('Invalid Input type:\n\n'
-                      'Expected first argument to be either a:\n'
-                      '    - vtk.PolyData\n'
-                      '    - pyvista.PolyData\n'
-                      '    - numeric numpy.ndarray (1 or 2 dimensions)\n'
-                      '    - List (flat or nested with 3 points per vertex)\n\n'
-                      f'Instead got: {type(var_inp)}')
+            msg = f"""
+                Invalid Input type:
+
+                Expected first argument to be either a:
+                - vtk.PolyData
+                - pyvista.PolyData
+                - numeric numpy.ndarray (1 or 2 dimensions)
+                - List (flat or nested with 3 points per vertex)
+
+                Instead got: {type(var_inp)}"""
+            raise TypeError(dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
         if faces is None and lines is None:
