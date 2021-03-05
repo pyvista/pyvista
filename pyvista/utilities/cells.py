@@ -13,7 +13,7 @@ import pyvista
 def ncells_from_cells_py36(cells):
     """Get the number of cells from a VTK cell connectivity array.
 
-    Works on on all Python>=3.5
+    Works on all Python>=3.5
     """
     c = 0
     n_cells = 0
@@ -88,13 +88,13 @@ class CellArray(_vtk.vtkCellArray):
     def _set_cells(self, cells, n_cells, deep):
         vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
 
-        # get number of cells if None.  This is quite a performance
+        # Get number of cells if None.  This is quite a performance
         # bottleneck and we can consider adding a warning.  Good
         # candidate for Cython or JIT compilation
         if n_cells is None:
             if cells.ndim == 1:
                 if sys.version_info.minor > 6:
-                    n_cells = ncells_from_cells_py36(cells)
+                    n_cells = ncells_from_cells(cells)
                 else:  # About 20% slower
                     n_cells = ncells_from_cells_py36(cells)
             else:

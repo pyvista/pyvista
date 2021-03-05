@@ -250,9 +250,8 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
 
 
 def vtk_points(points, deep=True):
-    """Convert numpy or list of points to a vtkPoints object."""
-    if not isinstance(points, np.ndarray):
-        points = np.array(points)
+    """Convert numpy array or array-like to a vtkPoints object."""
+    points = np.asarray(points)
 
     # verify is numeric
     if not np.issubdtype(points.dtype, np.number):
@@ -260,7 +259,7 @@ def vtk_points(points, deep=True):
 
     # check dimensionality
     if points.ndim == 1:
-        points = points.reshape((-1, 3))
+        points = points.reshape(-1, 3)
     elif points.ndim > 2:
         raise ValueError('Dimension of ``points`` should be 1 or 2, not '
                          f'{points.ndim}')
@@ -271,8 +270,7 @@ def vtk_points(points, deep=True):
                          f'Shape is {points.shape} and should be (X, 3)')
 
     # points must be contiguous
-    if not points.flags['C_CONTIGUOUS']:
-        points = np.ascontiguousarray(points)
+    points = np.ascontiguousarray(points)
     vtkpts = _vtk.vtkPoints()
     vtkpts.SetData(_vtk.numpy_to_vtk(points, deep=deep))
     return vtkpts
