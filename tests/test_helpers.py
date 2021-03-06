@@ -5,6 +5,12 @@ import numpy as np
 import pyvista
 
 
+def test_wrap_pyvista_ndarray(sphere):
+    # sphere = pyvista.Sphere()
+    pd = pyvista.wrap(sphere.points)
+    assert isinstance(pd, pyvista.PolyData)
+
+
 def test_wrap_trimesh():
     points = [[0, 0, 0], [0, 0, 1], [0, 1, 0]]
     faces = [[0, 1, 2]]

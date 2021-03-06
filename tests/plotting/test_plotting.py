@@ -123,6 +123,17 @@ def verify_cache_image(plotter):
 
 
 @skip_no_plotting
+def test_plot_pyvista_ndarray(sphere):
+    # verify we can plot pyvista_ndarray
+    pyvista.plot(sphere.points)
+
+    plotter = pyvista.Plotter()
+    plotter.add_points(sphere.points)
+    plotter.add_points(sphere.points + 1)
+    plotter.show()
+
+
+@skip_no_plotting
 def test_plot(tmpdir):
     tmp_dir = tmpdir.mkdir("tmpdir2")
     filename = str(tmp_dir.join('tmp.png'))
