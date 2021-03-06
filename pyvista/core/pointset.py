@@ -117,7 +117,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         Otherwise, this must be a points array or list containing one
         or more points.  Each point must have 3 dimensions.
 
-    faces : iterable, optional
+    faces : sequence, optional
         Face connectivity array.  Faces must contain padding
         indicating the number of points in the face.  For example, the
         two faces ``[10, 11, 12]`` and ``[20, 21, 22, 23]`` will be
@@ -133,7 +133,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         optional, setting this speeds up the creation of the
         ``PolyData``.
 
-    lines : iterable, optional
+    lines : sequence, optional
         The line connectivity array.  Like ``faces``, this array
         requires padding indicating the number of points in a line
         segment.  For example, the two line segments ``[0, 1]`` and

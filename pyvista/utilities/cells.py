@@ -26,7 +26,7 @@ def ncells_from_cells_py36(cells):
 def ncells_from_cells(cells):
     """Get the number of cells from a VTK cell connectivity array.
 
-    Works on python >=3.7
+    Works on Python>=3.7
     """
     consumer = deque(maxlen=0)
     it = cells.flat
