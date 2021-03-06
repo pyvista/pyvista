@@ -1,8 +1,10 @@
 """
-Plot Over Circular Arc
-~~~~~~~~~~~~~~~~~~~~~~
+Plot Scalars Over a Circular Arc
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Plot the height of a dataset over a circular arc through that dataset
+Interpolate the scalars of a dataset over a circular arc through that
+dataset.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -13,11 +15,12 @@ from pyvista import examples
 # Volumetric Mesh
 # +++++++++++++++
 #
-# First a 3D mesh example to demonstrate
+# Add the height scalars to a uniform 3D mesh
 mesh = examples.load_uniform()
 mesh['height'] = mesh.points[:, 2]
 
-# Make two points and center to construct the circular arc between
+# Make two points at the bounds of the mesh and one at the center to
+# construct a circular arc.
 a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
 b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
 center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
@@ -36,4 +39,3 @@ p.show()
 ###############################################################################
 # Run the filter and produce a line plot
 mesh.plot_over_circular_arc(a, b, center, resolution=100, scalars='height')
-
