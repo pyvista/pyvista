@@ -10,7 +10,7 @@ from pyvista import _vtk
 import pyvista
 
 
-def ncells_from_cells_py36(cells):
+def ncells_from_cells_py36(cells):  # pragma: no cover
     """Get the number of cells from a VTK cell connectivity array.
 
     Works on all Python>=3.5
