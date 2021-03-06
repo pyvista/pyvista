@@ -2191,7 +2191,7 @@ class DataSetFilters:
         --------
         Sample a dataset onto a circular arc.
 
-        >>> import pyvista
+        >>> from pyvista import examples
         >>> uniform = examples.load_uniform()
         >>> uniform["height"] = uniform.points[:, 2]
         >>> pointa = [4.5, 4.5, 0.0]
