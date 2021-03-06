@@ -160,6 +160,12 @@ def test_invalid_init():
         pyvista.PolyData('woa', 'woa')
 
 
+    poly = pyvista.PolyData()
+    with pytest.raises(ValueError):
+        pyvista.PolyData(poly, 'woa')
+
+    with pytest.raises(TypeError):
+        pyvista.PolyData({'woa'})
 
 def test_invalid_file():
     with pytest.raises(FileNotFoundError):
