@@ -1148,9 +1148,7 @@ class Renderer(_vtk.vtkRenderer):
         """Reset the camera to use perspective projection."""
         # Fix the 'reset camera' effect produced by the VTK when parallel
         # projection is disabled.
-        # FIXME: `self.camera.GetFocalPoint()` and `self.camera.focal_point`
-        # are producing different results.
-        focus = self.camera.GetFocalPoint()
+        focus = self.camera.focal_point
         angle = np.radians(self.camera.view_angle)
         distance = self.camera.parallel_scale / np.sin(.5 * angle)
         direction = self.camera.direction

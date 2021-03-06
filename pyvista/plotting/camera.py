@@ -26,7 +26,6 @@ class Camera(_vtk.vtkCamera):
 
     def __init__(self):
         """Initialize a new camera descriptor."""
-        self._focus = self.GetFocalPoint()
         self._is_parallel_projection = False
 
     @property
@@ -66,7 +65,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl.camera.focal_point
         (0.0, 0.0, 0.0)
         """
-        return self._focus
+        return self.GetFocalPoint()
 
     @focal_point.setter
     def focal_point(self, point):
