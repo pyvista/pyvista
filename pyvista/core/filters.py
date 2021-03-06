@@ -2628,7 +2628,7 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> shrunk_mesh = mesh.shrink(shrink_factor=0.8)  # doctest:+SKIP
+        >>> shrunk_mesh = mesh.shrink(shrink_factor=0.8)
         """
         if not (0.0 <= shrink_factor <= 1.0):
             raise ValueError('`shrink_factor` should be between 0.0 and 1.0')
