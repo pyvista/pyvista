@@ -50,7 +50,7 @@ skip_no_plotting = pytest.mark.skipif(not system_supports_plotting(),
 
 # IMAGE warning/error thresholds (assumes using use_vtk)
 IMAGE_REGRESSION_ERROR = 500  # major differences
-IMAGE_REGRESSION_WARNING = 300  # minor differences
+IMAGE_REGRESSION_WARNING = 200  # minor differences
 
 
 # this must be a session fixture to ensure this runs before any other test

@@ -873,7 +873,7 @@ def test_decimate_boundary():
 
 
 def test_extract_surface():
-    # create a single hexahedral cell
+    # create a single quadratic hexahedral cell
     lin_pts = np.array([[-1, -1, -1], # node 0
                         [ 1, -1, -1], # node 1
                         [ 1,  1, -1], # node 2
@@ -908,7 +908,7 @@ def test_extract_surface():
     else:
         grid = pyvista.UnstructuredGrid(np.array([0]), cells, celltypes, pts)
 
-    # expect each face to be divided 6 times since's it has a midside node
+    # expect each face to be divided 6 times since it has a midside node
     surf = grid.extract_surface()
     assert surf.n_faces == 36
 

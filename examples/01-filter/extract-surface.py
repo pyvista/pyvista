@@ -15,8 +15,8 @@ from vtk import VTK_QUADRATIC_HEXAHEDRON
 ###############################################################################
 # Create a quadratic cell and extract its surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Here we create a single hexahedral cell and then extract its surface
-# to demonstrate how to extract the surface of a UnstructuredGrid.
+# Here we create a single quadratic hexahedral cell and then extract its surface
+# to demonstrate how to extract the surface of an UnstructuredGrid.
 
 
 lin_pts = np.array([[-1, -1, -1],  # point 0
@@ -51,7 +51,7 @@ pts = np.vstack((lin_pts, quad_pts))
 
 # If you are using vtk>=9, you do not need the offset array
 offset = np.array([0])
-cells = np.asarray(np.hstack((20, np.arange(20))), dtype=np.int64)
+cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
 celltypes = np.array([VTK_QUADRATIC_HEXAHEDRON])
 grid = pv.UnstructuredGrid(offset, cells, celltypes, pts)
 
@@ -64,8 +64,10 @@ surf.plot(show_scalar_bar=False)
 # Quadratic Surface Subdivision
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Should your UnstructuredGrid contain quadratic cells, you can
-# generate a smooth surface based on the "shape functions" of each
-# cell.
+# generate a smooth surface based on the position of the 
+# "mid-edge" nodes.  This allows the plotting of cells
+# containing curvature.  For additional reference, please see:
+# https://prod.sandia.gov/techlib-noauth/access-control.cgi/2004/041617.pdf
 
 surf_subdivided = grid.extract_surface(subdivision=5)
 surf_subdivided.plot(show_scalar_bar=False)
