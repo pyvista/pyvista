@@ -5,8 +5,12 @@ import numpy as np
 import pyvista
 
 
+def test_wrap_none():
+    # check against the "None" edge case
+    assert pyvista.wrap(None) is None
+
+
 def test_wrap_pyvista_ndarray(sphere):
-    # sphere = pyvista.Sphere()
     pd = pyvista.wrap(sphere.points)
     assert isinstance(pd, pyvista.PolyData)
 
