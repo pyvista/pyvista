@@ -291,7 +291,7 @@ class Camera(_vtk.vtkCamera):
 
     @property
     def direction(self):
-        """Get the vector in the direction from the camera position to the focal point.
+        """The vector in the direction from the camera position to the focal point.
 
         Examples
         --------
