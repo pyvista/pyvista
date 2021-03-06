@@ -2895,10 +2895,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clean the plotter of the memory."""
         for renderer in self.renderers:
             renderer.deep_clean()
-        self._shadow_renderer.deep_clean()
-        for renderer in self._background_renderers:
-            if renderer is not None:
-                renderer.deep_clean()
+        if hasattr(self, '_shadow_renderer'):
+            self._shadow_renderer.deep_clean()
+        if hasattr(self, '_background_renderers'):
+            for renderer in self._background_renderers:
+                if renderer is not None:
+                    renderer.deep_clean()
         # Do not remove the renderers on the clean
         if getattr(self, 'mesh', None) is not None:
             self.mesh.point_arrays = None
@@ -3896,11 +3898,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __del__(self):
         """Delete the plotter."""
-        if not self._closed:
-            self.close()
+        # We have to check here if it has the closed attribute as it
+        # may not exist should the plotter failed to initialize.
+        if hasattr(self, '_closed'):
+            if not self._closed:
+                self.close()
         self.deep_clean()
         del self.renderers
-        del self._shadow_renderer
+        if hasattr(self, '_shadow_renderer'):
+            del self._shadow_renderer
 
     def add_background_image(self, image_path, scale=1, auto_resize=True,
                              as_global=True):

@@ -2252,7 +2252,8 @@ class DataSetFilters:
         extract_sel.Update()
         return _get_output(extract_sel)
 
-    def extract_surface(dataset, pass_pointid=True, pass_cellid=True, inplace=False):
+    def extract_surface(dataset, pass_pointid=True, pass_cellid=True,
+                        nonlinear_subdivision=1):
         """Extract surface mesh of the grid.
 
         Parameters
@@ -2265,10 +2266,36 @@ class DataSetFilters:
             Adds a cell array "vtkOriginalPointIds" that idenfities which
             original cells these surface cells correspond to
 
+        nonlinear_subdivision : int, optional
+            If the input is an unstructured grid with nonlinear faces,
+            this parameter determines how many times the face is
+            subdivided into linear faces.
+
+            If 0, the output is the equivalent of its linear
+            counterpart (and the midpoints determining the nonlinear
+            interpolation are discarded). If 1 (the default), the
+            nonlinear face is triangulated based on the midpoints. If
+            greater than 1, the triangulated pieces are recursively
+            subdivided to reach the desired subdivision. Setting the
+            value to greater than 1 may cause some point data to not
+            be passed even if no nonlinear faces exist. This option
+            has no effect if the input is not an unstructured grid.
+
         Returns
         -------
-        extsurf : pyvista.PolyData
-            Surface mesh of the grid
+        pyvista.PolyData
+            Surface mesh of the grid.
+
+        Examples
+        --------
+        Extract the surface of an UnstructuredGrid.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> grid = examples.load_hexbeam()
+        >>> surf = grid.extract_surface()
+        >>> type(surf)
+        <class 'pyvista.core.pointset.PolyData'>
 
         """
         surf_filter = _vtk.vtkDataSetSurfaceFilter()
@@ -2277,13 +2304,15 @@ class DataSetFilters:
             surf_filter.PassThroughCellIdsOn()
         if pass_cellid:
             surf_filter.PassThroughPointIdsOn()
+
+        if nonlinear_subdivision != 1:
+            surf_filter.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
+
+        # available in 9.0.2
+        # surf_filter.SetDelegation(delegation)
+
         surf_filter.Update()
-
-        # TODO: Add
-        # surf_filter.SetNonlinearSubdivisionLevel(subdivision)
-
-        mesh = _get_output(surf_filter)
-        return mesh
+        return _get_output(surf_filter)
 
     def surface_indices(dataset):
         """Return the surface indices of a grid.

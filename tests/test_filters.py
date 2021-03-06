@@ -5,6 +5,7 @@ import itertools
 
 import numpy as np
 import pytest
+from vtk import VTK_QUADRATIC_HEXAHEDRON
 
 import pyvista
 from pyvista import examples
@@ -875,10 +876,59 @@ def test_decimate_boundary():
     assert boundary.n_points
 
 
+def test_extract_surface():
+    # create a single quadratic hexahedral cell
+    lin_pts = np.array([[-1, -1, -1], # node 0
+                        [ 1, -1, -1], # node 1
+                        [ 1,  1, -1], # node 2
+                        [-1,  1, -1], # node 3
+                        [-1, -1,  1], # node 4
+                        [ 1, -1,  1], # node 5
+                        [ 1,  1,  1], # node 6
+                        [-1,  1,  1]], np.double) # node 7
+
+    quad_pts = np.array([
+        (lin_pts[1] + lin_pts[0])/2,  # between point 0 and 1
+        (lin_pts[1] + lin_pts[2])/2,  # between point 1 and 2
+        (lin_pts[2] + lin_pts[3])/2,  # and so on...
+        (lin_pts[3] + lin_pts[0])/2,
+        (lin_pts[4] + lin_pts[5])/2,
+        (lin_pts[5] + lin_pts[6])/2,
+        (lin_pts[6] + lin_pts[7])/2,
+        (lin_pts[7] + lin_pts[4])/2,
+        (lin_pts[0] + lin_pts[4])/2,
+        (lin_pts[1] + lin_pts[5])/2,
+        (lin_pts[2] + lin_pts[6])/2,
+        (lin_pts[3] + lin_pts[7])/2])
+
+    # introduce a minor variation to the location of the mid-side points
+    quad_pts += np.random.random(quad_pts.shape)*0.25
+    pts = np.vstack((lin_pts, quad_pts))
+
+    cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
+    celltypes = np.array([VTK_QUADRATIC_HEXAHEDRON])
+    if pyvista._vtk.VTK9:
+        grid = pyvista.UnstructuredGrid(cells, celltypes, pts)
+    else:
+        grid = pyvista.UnstructuredGrid(np.array([0]), cells, celltypes, pts)
+
+    # expect each face to be divided 6 times since it has a midside node
+    surf = grid.extract_surface()
+    assert surf.n_faces == 36
+
+    # expect each face to be divided several more times than the linear extraction
+    surf_subdivided = grid.extract_surface(nonlinear_subdivision=5)
+    assert surf_subdivided.n_faces > surf.n_faces
+
+    # No subdivision, expect one face per cell
+    surf_no_subdivide = grid.extract_surface(nonlinear_subdivision=0)
+    assert surf_no_subdivide.n_faces == 6
+
+
 def test_merge_general():
     mesh = examples.load_uniform()
-    thresh = mesh.threshold_percent([0.2, 0.5]) # unstructured grid
-    con = mesh.contour() # poly data
+    thresh = mesh.threshold_percent([0.2, 0.5])  # unstructured grid
+    con = mesh.contour()  # poly data
     merged = thresh + con
     assert isinstance(merged, pyvista.UnstructuredGrid)
     merged = con + thresh
