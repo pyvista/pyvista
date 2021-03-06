@@ -28,20 +28,22 @@ lin_pts = np.array([[-1, -1, -1],  # point 0
                     [ 1,  1,  1],  # point 6
                     [-1,  1,  1]], np.double)  # point 7
 
-# these are the "midside" points of a quad cell
+# these are the "midside" points of a quad cell.  See the definition of a
+# vtkQuadraticHexahedron at:
+# https://vtk.org/doc/nightly/html/classvtkQuadraticHexahedron.html
 quad_pts = np.array([
-    (lin_pts[1] + lin_pts[0])/2.0,
-    (lin_pts[1] + lin_pts[2])/2.0,
-    (lin_pts[2] + lin_pts[3])/2.0,
-    (lin_pts[3] + lin_pts[0])/2.0,
-    (lin_pts[4] + lin_pts[5])/2.0,
-    (lin_pts[5] + lin_pts[6])/2.0,
-    (lin_pts[6] + lin_pts[7])/2.0,
-    (lin_pts[7] + lin_pts[4])/2.0,
-    (lin_pts[0] + lin_pts[4])/2.0,
-    (lin_pts[1] + lin_pts[5])/2.0,
-    (lin_pts[2] + lin_pts[6])/2.0,
-    (lin_pts[3] + lin_pts[7])/2.0], np.double)
+    (lin_pts[1] + lin_pts[0])/2,  # between point 0 and 1
+    (lin_pts[1] + lin_pts[2])/2,  # between point 1 and 2
+    (lin_pts[2] + lin_pts[3])/2,  # and so on...
+    (lin_pts[3] + lin_pts[0])/2,
+    (lin_pts[4] + lin_pts[5])/2,
+    (lin_pts[5] + lin_pts[6])/2,
+    (lin_pts[6] + lin_pts[7])/2,
+    (lin_pts[7] + lin_pts[4])/2,
+    (lin_pts[0] + lin_pts[4])/2,
+    (lin_pts[1] + lin_pts[5])/2,
+    (lin_pts[2] + lin_pts[6])/2,
+    (lin_pts[3] + lin_pts[7])/2])
 
 # introduce a minor variation to the location of the mid-side points
 quad_pts += np.random.random(quad_pts.shape)*0.3
@@ -61,13 +63,13 @@ surf.plot(show_scalar_bar=False)
 
 
 ###############################################################################
-# Quadratic Surface Subdivision
+# Nonlinear Surface Subdivision
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Should your UnstructuredGrid contain quadratic cells, you can
-# generate a smooth surface based on the position of the 
+# generate a smooth surface based on the position of the
 # "mid-edge" nodes.  This allows the plotting of cells
 # containing curvature.  For additional reference, please see:
 # https://prod.sandia.gov/techlib-noauth/access-control.cgi/2004/041617.pdf
 
-surf_subdivided = grid.extract_surface(subdivision=5)
+surf_subdivided = grid.extract_surface(nonlinear_subdivision=5)
 surf_subdivided.plot(show_scalar_bar=False)

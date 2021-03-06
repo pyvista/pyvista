@@ -2253,7 +2253,7 @@ class DataSetFilters:
         return _get_output(extract_sel)
 
     def extract_surface(dataset, pass_pointid=True, pass_cellid=True,
-                        subdivision=1):
+                        nonlinear_subdivision=1):
         """Extract surface mesh of the grid.
 
         Parameters
@@ -2266,7 +2266,7 @@ class DataSetFilters:
             Adds a cell array "vtkOriginalPointIds" that idenfities which
             original cells these surface cells correspond to
 
-        subdivision : int, optional
+        nonlinear_subdivision : int, optional
             If the input is an unstructured grid with nonlinear faces,
             this parameter determines how many times the face is
             subdivided into linear faces.
@@ -2283,12 +2283,12 @@ class DataSetFilters:
 
         Returns
         -------
-        extsurf : pyvista.PolyData
-            Surface mesh of the grid
+        pyvista.PolyData
+            Surface mesh of the grid.
 
         Examples
         --------
-        Extract the surface of an UnstructuredGrid
+        Extract the surface of an UnstructuredGrid.
 
         >>> import pyvista
         >>> from pyvista import examples
@@ -2305,15 +2305,14 @@ class DataSetFilters:
         if pass_cellid:
             surf_filter.PassThroughPointIdsOn()
 
-        if subdivision != 1:
-            surf_filter.SetNonlinearSubdivisionLevel(subdivision)
+        if nonlinear_subdivision != 1:
+            surf_filter.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
 
         # available in 9.0.2
         # surf_filter.SetDelegation(delegation)
 
         surf_filter.Update()
-        mesh = _get_output(surf_filter)
-        return mesh
+        return _get_output(surf_filter)
 
     def surface_indices(dataset):
         """Return the surface indices of a grid.
