@@ -276,3 +276,32 @@ class Camera(_vtk.vtkCamera):
         """Delete the camera."""
         self.RemoveAllObservers()
         self.parent = None
+
+    @property
+    def view_angle(self):
+        """Return the camera view angle.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.camera.view_angle
+        30.0
+
+        """
+        return self.GetViewAngle()
+
+    @property
+    def direction(self):
+        """Get the vector in the direction from the camera position to the
+        focal point.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.camera.direction  # doctest: +SKIP
+        (0.0, 0.0, -1.0)
+
+        """
+        return self.GetDirectionOfProjection()
