@@ -2193,7 +2193,7 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> uniform = examples.load_uniform()
-        >>> uniform[name] = uniform.points[:, 2]
+        >>> uniform["height"] = uniform.points[:, 2]
         >>> pointa = [4.5, 4.5, 0.0]
         >>> pointb = [4.5, 4.5, 9.0]
         >>> center = [0.0, 0.0, 0.0]
