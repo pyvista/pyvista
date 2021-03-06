@@ -692,7 +692,11 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
             arc.SetAngle(angle)
 
     arc.Update()
-    return pyvista.wrap(arc.GetOutput())
+    arc = pyvista.wrap(arc.GetOutput())
+    # Compute distance of every point along circular arc
+    distance = np.cumsum(np.append(0.0, np.sqrt(np.sum((arc.points[:-1]-arc.points[1:])**2, axis=1))))
+    arc['Distance'] = distance
+    return arc
 
 
 def Pyramid(points):

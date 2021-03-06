@@ -760,6 +760,55 @@ def test_plot_over_line():
                             title='My Stuff', ylabel='3 Values', show=False)
 
 
+def test_sample_over_circular_arc():
+    """Test that we get a circular arc."""
+
+    name = 'values'
+
+    uniform = examples.load_uniform()
+    uniform[name] = uniform.points[:, 2]
+
+    pointa = [4.5, 4.5, 0.0]
+    pointb = [4.5, 4.5, 9.0]
+    center = [0.0, 0.0, 0.0]
+    sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
+
+    expected_result = sampled_arc.points[:, 2]
+    assert np.allclose(sampled_arc[name], expected_result)
+    assert name in sampled_arc.array_names # is name in sampled result
+
+    # test no resolution
+    sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+    sampled_from_sphere = sphere.sample_over_circular_arc([3, 1, 1], [-3, -1, -1], [0, 0, 0])
+    assert sampled_from_sphere.n_points == sphere.n_cells + 1
+
+    # is sampled result a polydata object
+    assert isinstance(sampled_from_sphere, pyvista.PolyData)
+
+
+def test_plot_over_circular_arc():
+    """this requires matplotlib"""
+
+    pytest.importorskip('matplotlib')
+    mesh = examples.load_uniform()
+
+    # Make two points and center to construct the circular arc between
+    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
+    b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
+    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)
+
+    # Test multicomponent
+    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh.plot_over_circular_arc(a, b, center, resolution=None, scalars='foo',
+                                title='My Stuff', ylabel='3 Values', show=False)
+
+    # Should fail if scalar name does not exist
+    with pytest.raises(KeyError):
+        mesh.plot_over_circular_arc(a, b, center, resolution=None, scalars='invalid_array_name',
+                                    title='My Stuff', ylabel='3 Values', show=False)
+
+
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
