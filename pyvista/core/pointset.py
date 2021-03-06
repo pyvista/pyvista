@@ -1,4 +1,5 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
+from textwrap import dedent
 import pathlib
 import logging
 import os
@@ -18,6 +19,7 @@ from pyvista.utilities.cells import (CellArray, numpy_to_idarr,
 from .dataset import DataSet
 from .filters import PolyDataFilters, UnstructuredGridFilters, StructuredGridFilters
 from ..utilities.fileio import get_ext
+from .errors import DeprecationError
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -106,29 +108,88 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     - Using vertices and faces
     - From a file
 
+    Parameters
+    ----------
+    var_inp : vtk.vtkPolyData, str, sequence, optional
+        Flexible input type.  Can be a ``vtk.vtkPolyData``, in which case
+        this PolyData object will be copied if ``deep=True`` and will
+        be a shallow copy if ``deep=False``.
+
+        Also accepts a path, which may be local path as in
+        ``'my_mesh.stl'`` or global path like ``'/tmp/my_mesh.ply'``
+        or ``'C:/Users/user/my_mesh.ply'``.
+
+        Otherwise, this must be a points array or list containing one
+        or more points.  Each point must have 3 dimensions.
+
+    faces : sequence, optional
+        Face connectivity array.  Faces must contain padding
+        indicating the number of points in the face.  For example, the
+        two faces ``[10, 11, 12]`` and ``[20, 21, 22, 23]`` will be
+        represented as ``[3, 10, 11, 12, 4, 20, 21, 22, 23]``.  This
+        lets you have an arbitrary number of points per face.
+
+        When not including the face connectivity array, each point
+        will be assigned to a single vertex.  This is used for point
+        clouds that have no connectivity.
+
+    n_faces : int, optional
+        Number of faces in the ``faces`` connectivity array.  While
+        optional, setting this speeds up the creation of the
+        ``PolyData``.
+
+    lines : sequence, optional
+        The line connectivity array.  Like ``faces``, this array
+        requires padding indicating the number of points in a line
+        segment.  For example, the two line segments ``[0, 1]`` and
+        ``[1, 2, 3, 4]`` will be represented as
+        ``[2, 0, 1, 4, 1, 2, 3, 4]``.
+
+    n_lines : int, optional
+        Number of lines in the ``lines`` connectivity array.  While
+        optional, setting this speeds up the creation of the
+        ``PolyData``.
+
+    deep : bool, optional
+        Whether to copy the inputs, or to create a mesh from them
+        without copying them.  Setting ``deep=True`` ensures that the
+        original arrays can be modified outside the mesh without
+        affecting the mesh. Default is ``False``.
+
     Examples
     --------
-    >>> import pyvista
-    >>> from pyvista import examples
     >>> import vtk
     >>> import numpy as np
+    >>> from pyvista import examples
+    >>> import pyvista
 
-    >>> surf = pyvista.PolyData()  # Create an empty mesh
+    Create an empty mesh
 
-    >>> # Initialize from a vtk.vtkPolyData object
+    >>> mesh = pyvista.PolyData()
+
+    Initialize from a ``vtk.vtkPolyData`` object
+
     >>> vtkobj = vtk.vtkPolyData()
-    >>> surf = pyvista.PolyData(vtkobj)
+    >>> mesh = pyvista.PolyData(vtkobj)
 
-    >>> # initialize from just vertices
-    >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0],])
-    >>> surf = pyvista.PolyData(vertices)
+    Initialize from just vertices
 
-    >>> # initialize from vertices and faces
-    >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]]).astype(np.int8)
-    >>> surf = pyvista.PolyData(vertices, faces)
+    >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
+    >>> mesh = pyvista.PolyData(vertices)
 
-    >>>  # initialize from a filename
-    >>> surf = pyvista.PolyData(examples.antfile)
+    Initialize from vertices and faces
+
+    >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]])
+    >>> mesh = pyvista.PolyData(vertices, faces)
+
+    Initialize from vertices and lines
+
+    >>> lines = np.hstack([[2, 0, 1], [2, 1, 2]])
+    >>> mesh = pyvista.PolyData(vertices, lines=lines)
+
+    Initialize from a filename
+
+    >>> mesh = pyvista.PolyData(examples.antfile)
 
     """
 
@@ -142,50 +203,75 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
                 '.stl': _vtk.vtkSTLWriter,
                 '.vtk': _vtk.vtkPolyDataWriter}
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, var_inp=None, faces=None, n_faces=None, lines=None,
+                 n_lines=None, deep=False) -> None:
         """Initialize the polydata."""
+        local_parms = locals()
         super().__init__()
 
-        deep = kwargs.pop('deep', False)
-
-        if not args:
+        # allow empty input
+        if var_inp is None:
             return
-        elif len(args) == 1:
-            if isinstance(args[0], _vtk.vtkPolyData):
-                if deep:
-                    self.deep_copy(args[0])
-                else:
-                    self.shallow_copy(args[0])
-            elif isinstance(args[0], (str, pathlib.Path)):
-                self._from_file(args[0])
-            elif isinstance(args[0], (np.ndarray, list)):
-                if isinstance(args[0], list):
-                    points = np.asarray(args[0])
-                    if not np.issubdtype(points.dtype, np.number):
-                        raise TypeError('Points must be a numeric type')
-                else:
-                    points = args[0]
-                if points.ndim != 2:
-                    points = points.reshape((-1, 3))
-                cells = self._make_vertex_cells(points.shape[0])
-                self._from_arrays(points, cells, deep, verts=True)
-            else:
-                raise TypeError('Invalid input type')
 
-        elif len(args) == 2:
-            arg0_is_array = isinstance(args[0], np.ndarray)
-            arg1_is_array = isinstance(args[1], np.ndarray)
-            if arg0_is_array and arg1_is_array:
-                self._from_arrays(args[0], args[1], deep)
+        # filename
+        opt_kwarg = ['faces', 'n_faces', 'lines', 'n_lines']
+        if isinstance(var_inp, (str, pathlib.Path)):
+            for kwarg in opt_kwarg:
+                if local_parms[kwarg]:
+                    raise ValueError('No other arguments should be set when first '
+                                     'parameter is a string')
+            self._from_file(var_inp)  # is filename
+
+            # When loading files with just point arrays, create and
+            # set the polydata vertices
+            if self.n_points > 0 and self.n_cells == 0:
+                verts = self._make_vertex_cells(self.n_points)
+                self.verts = CellArray(verts, self.n_points, deep)
+
+            return
+
+        # PolyData-like
+        if isinstance(var_inp, _vtk.vtkPolyData):
+            for kwarg in opt_kwarg:
+                if local_parms[kwarg]:
+                    raise ValueError('No other arguments should be set when first '
+                                     'parameter is a PolyData')
+            if deep:
+                self.deep_copy(var_inp)
             else:
-                raise TypeError('Invalid input type')
+                self.shallow_copy(var_inp)
+            return
+
+        # First parameter is points
+        if isinstance(var_inp, (np.ndarray, list)):
+            self.SetPoints(pyvista.vtk_points(var_inp, deep=deep))
         else:
-            raise TypeError('Invalid input type')
+            msg = f"""
+                Invalid Input type:
 
-        # Check if need to make vertex cells
-        if self.n_points > 0 and self.n_cells == 0:
-            # make vertex cells
-            self.verts = self._make_vertex_cells(self.n_points)
+                Expected first argument to be either a:
+                - vtk.PolyData
+                - pyvista.PolyData
+                - numeric numpy.ndarray (1 or 2 dimensions)
+                - List (flat or nested with 3 points per vertex)
+
+                Instead got: {type(var_inp)}"""
+            raise TypeError(dedent(msg.strip('\n')))
+
+        # At this point, points have been setup, add faces and/or lines
+        if faces is None and lines is None:
+            # one cell per point (point cloud case)
+            verts = self._make_vertex_cells(self.n_points)
+            self.verts = CellArray(verts, self.n_points, deep)
+
+        elif faces is not None:
+            # here we use CellArray since we must specify deep and n_faces
+            self.faces = CellArray(faces, n_faces, deep)
+
+        # can always set lines
+        if lines is not None:
+            # here we use CellArray since we must specify deep and n_lines
+            self.lines = CellArray(lines, n_lines, deep)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -210,7 +296,10 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     @verts.setter
     def verts(self, verts):
         """Set the vertex cells."""
-        self.SetVerts(CellArray(verts))
+        if isinstance(verts, CellArray):
+            self.SetVerts(verts)
+        else:
+            self.SetVerts(CellArray(verts))
 
     @property
     def lines(self):
@@ -220,7 +309,10 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     @lines.setter
     def lines(self, lines):
         """Set the lines of the polydata."""
-        self.SetLines(CellArray(lines))
+        if isinstance(lines, CellArray):
+            self.SetLines(lines)
+        else:
+            self.SetLines(CellArray(lines))
 
     @property
     def faces(self):
@@ -230,7 +322,10 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     @faces.setter
     def faces(self, faces):
         """Set the face cells."""
-        self.SetPolys(CellArray(faces))
+        if isinstance(faces, CellArray):
+            self.SetPolys(faces)
+        else:
+            self.SetPolys(CellArray(faces))
 
     def is_all_triangles(self):
         """Return True if all the faces of the polydata are triangles."""
@@ -239,41 +334,6 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             return False
         # All we have are faces, check if all faces are indeed triangles
         return self.faces.size % 4 == 0 and (self.faces.reshape(-1, 4)[:, 0] == 3).all()
-
-    def _from_arrays(self, vertices, faces, deep=True, verts=False):
-        """Set polygons and points from numpy arrays.
-
-        Parameters
-        ----------
-        vertices : np.ndarray of dtype=np.float32 or np.float64
-            Vertex array.  3D points.
-
-        faces : np.ndarray of dtype=np.int64
-            Face index array.  Faces can contain any number of points.
-
-        verts : bool, optional
-            Faces array is a vertex array.
-
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import pyvista
-        >>> vertices = np.array([[0, 0, 0],
-        ...                      [1, 0, 0],
-        ...                      [1, 1, 0],
-        ...                      [0, 1, 0],
-        ...                      [0.5, 0.5, 1]])
-        >>> faces = np.hstack([[4, 0, 1, 2, 3],
-        ...                    [3, 0, 1, 4],
-        ...                    [3, 1, 2, 4]])  # one square and two triangles
-        >>> surf = pyvista.PolyData(vertices, faces)
-
-        """
-        self.SetPoints(pyvista.vtk_points(vertices, deep=deep))
-        if verts:
-            self.SetVerts(CellArray(faces))
-        else:
-            self.SetPolys(CellArray(faces))
 
     def __sub__(self, cutting_mesh):
         """Subtract two meshes."""
@@ -289,9 +349,10 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         return self.n_cells
 
     @property
-    def number_of_faces(self):
+    def number_of_faces(self):  # pragma: no cover
         """Return the number of cells."""
-        return self.n_cells
+        raise DeprecationError('``number_of_faces`` has been depreciated.  '
+                               'Please use ``n_faces``')
 
     def save(self, filename, binary=True):
         """Write a surface mesh to disk.
@@ -519,7 +580,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 itype = type(args[0])
                 raise TypeError(f'Cannot work with input type {itype}')
 
-        #Cell dictionary creation
+        # Cell dictionary creation
         elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
             self._from_cells_dict(args[0], args[1], deep)
             self._check_for_consistency()

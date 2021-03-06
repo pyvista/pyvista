@@ -154,13 +154,18 @@ def test_invalid_init():
         pyvista.PolyData(np.array([1]))
 
     with pytest.raises(TypeError):
-        pyvista.PolyData(np.array([1]), 'woa')
+        pyvista.PolyData([1, 2, 3], 'woa')
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         pyvista.PolyData('woa', 'woa')
 
+
+    poly = pyvista.PolyData()
+    with pytest.raises(ValueError):
+        pyvista.PolyData(poly, 'woa')
+
     with pytest.raises(TypeError):
-        pyvista.PolyData('woa', 'woa', 'woa')
+        pyvista.PolyData({'woa'})
 
 
 def test_invalid_file():
@@ -170,6 +175,24 @@ def test_invalid_file():
     with pytest.raises(ValueError):
         filename = os.path.join(test_path, 'test_polydata.py')
         pyvista.PolyData(filename)
+
+
+def test_lines_on_init():
+    lines = [2, 0, 1, 3, 2, 3, 4]
+    points = np.random.random((5, 3))
+    pd = pyvista.PolyData(points, lines=lines)
+    assert not pd.faces.size
+    assert np.array_equal(pd.lines, lines)
+    assert np.array_equal(pd.points, points)
+
+
+def test_polydata_repr_str():
+    pd = pyvista.PolyData()
+    assert repr(pd) == str(pd)
+    assert 'N Cells' in str(pd)
+    assert 'N Points' in str(pd)
+    assert 'X Bounds' in str(pd)
+    assert 'N Arrays' in str(pd)
 
 
 def test_geodesic(sphere):
