@@ -19,6 +19,7 @@ from pyvista.utilities.cells import (CellArray, numpy_to_idarr,
 from .dataset import DataSet
 from .filters import PolyDataFilters, UnstructuredGridFilters, StructuredGridFilters
 from ..utilities.fileio import get_ext
+from .errors import DeprecationError
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -109,10 +110,14 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
     Parameters
     ----------
-    var_inp : vtk.vtkPolyData, sequence, optional
+    var_inp : vtk.vtkPolyData, str, sequence, optional
         Flexible input type.  Can be a ``vtk.vtkPolyData``, in which case
         this PolyData object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
+
+        Also accepts a path, which may be local path as in
+        ``'my_mesh.stl'`` or global path like ``'/tmp/my_mesh.ply'``
+        or ``'C:/Users/user/my_mesh.ply'``.
 
         Otherwise, this must be a points array or list containing one
         or more points.  Each point must have 3 dimensions.
@@ -344,9 +349,10 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         return self.n_cells
 
     @property
-    def number_of_faces(self):
+    def number_of_faces(self):  # pragma: no cover
         """Return the number of cells."""
-        return self.n_cells
+        raise DeprecationError('``number_of_faces`` has been depreciated.  '
+                               'Please use ``n_faces``')
 
     def save(self, filename, binary=True):
         """Write a surface mesh to disk.

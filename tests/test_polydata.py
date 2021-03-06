@@ -167,6 +167,7 @@ def test_invalid_init():
     with pytest.raises(TypeError):
         pyvista.PolyData({'woa'})
 
+
 def test_invalid_file():
     with pytest.raises(FileNotFoundError):
         pyvista.PolyData('file.bad')
@@ -174,6 +175,24 @@ def test_invalid_file():
     with pytest.raises(ValueError):
         filename = os.path.join(test_path, 'test_polydata.py')
         pyvista.PolyData(filename)
+
+
+def test_lines_on_init():
+    lines = [2, 0, 1, 3, 2, 3, 4]
+    points = np.random.random((5, 3))
+    pd = pyvista.PolyData(points, lines=lines)
+    assert not pd.faces.size
+    assert np.allclose(pd.lines, lines)
+    assert np.allclose(pd.points, points)
+
+
+def test_polydata_repr_str():
+    pd = pyvista.PolyData()
+    assert pd.__repr__() == str(pd)
+    assert 'N Cells' in str(pd)
+    assert 'N Points' in str(pd)
+    assert 'X Bounds' in str(pd)
+    assert 'N Arrays' in str(pd)
 
 
 def test_geodesic(sphere):
