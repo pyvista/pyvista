@@ -182,13 +182,13 @@ def test_lines_on_init():
     points = np.random.random((5, 3))
     pd = pyvista.PolyData(points, lines=lines)
     assert not pd.faces.size
-    assert np.allclose(pd.lines, lines)
-    assert np.allclose(pd.points, points)
+    assert np.array_equal(pd.lines, lines)
+    assert np.array_equal(pd.points, points)
 
 
 def test_polydata_repr_str():
     pd = pyvista.PolyData()
-    assert pd.__repr__() == str(pd)
+    assert repr(pd) == str(pd)
     assert 'N Cells' in str(pd)
     assert 'N Points' in str(pd)
     assert 'X Bounds' in str(pd)
