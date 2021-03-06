@@ -78,7 +78,6 @@ class Camera(_vtk.vtkCamera):
         >>> pl.camera.focal_point = (2.0, 0.0, 0.0)
         """
         self.SetFocalPoint(point)
-        self._focus = self.GetFocalPoint()
 
     @property
     def model_transform_matrix(self):
