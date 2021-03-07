@@ -103,6 +103,7 @@ if VTK9:
                                         vtkPolyDataReader,
                                         vtkDataSetReader)
     from vtkmodules.vtkCommonDataModel import (vtkDataObject,
+                                               vtkExplicitStructuredGrid,
                                                vtkPyramid,
                                                vtkPlane,
                                                vtkPlanes,
@@ -220,6 +221,8 @@ if VTK9:
                                           vtkMatrix3x3)
     from vtkmodules.vtkCommonTransforms import vtkTransform
     from vtkmodules.vtkFiltersCore import (vtkAppendFilter,
+                                           vtkUnstructuredGridToExplicitStructuredGrid,
+                                           vtkExplicitStructuredGridToUnstructuredGrid,
                                            vtkCutter,
                                            vtkPointDataToCellData,
                                            vtkMassProperties,
@@ -409,3 +412,8 @@ else:  # pragma: no cover
     def lazy_vtkPlot3DMetaReader():
         """Lazy import of the vtkPlot3DMetaReader."""
         return vtk.vtkPlot3DMetaReader()
+
+    class vtkExplicitStructuredGrid():  # type: ignore
+        """Empty placeholder for VTK9 compatibility."""
+
+        pass

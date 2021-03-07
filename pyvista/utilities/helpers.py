@@ -620,6 +620,7 @@ def wrap(dataset):
             raise NotImplementedError('NumPy array could not be wrapped pyvista.')
 
     wrappers = {
+        'vtkExplicitStructuredGrid': pyvista.ExplicitStructuredGrid,
         'vtkUnstructuredGrid': pyvista.UnstructuredGrid,
         'vtkRectilinearGrid': pyvista.RectilinearGrid,
         'vtkStructuredGrid': pyvista.StructuredGrid,

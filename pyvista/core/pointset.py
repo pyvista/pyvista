@@ -17,7 +17,8 @@ from pyvista.utilities.cells import (CellArray, numpy_to_idarr,
                                      create_mixed_cells,
                                      get_mixed_cells)
 from .dataset import DataSet
-from .filters import PolyDataFilters, UnstructuredGridFilters, StructuredGridFilters
+from .filters import (PolyDataFilters, UnstructuredGridFilters,
+                      StructuredGridFilters, _get_output)
 from ..utilities.fileio import get_ext
 from .errors import DeprecationError
 
@@ -636,8 +637,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             cell_types, cells, offset = create_mixed_cells(cells_dict, nr_points)
             self._from_arrays(offset, cells, cell_types, points, deep=deep)
 
-
-
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
 
@@ -856,6 +855,60 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         else:  # this is no longer used in >= VTK9
             return _vtk.vtk_to_numpy(self.GetCellLocationsArray())
 
+    def cast_to_explicit_structured_grid(self):
+        """Cast to an explicit structured grid.
+
+        Returns
+        -------
+        ExplicitStructuredGrid
+            An explicit structured grid.
+
+        Raises
+        ------
+        TypeError
+            If the unstructured grid doesn't have the ``'BLOCK_I'``,
+            ``'BLOCK_J'`` and ``'BLOCK_K'`` cells arrays.
+
+        See Also
+        --------
+        ExplicitStructuredGrid.cast_to_unstructured_grid :
+            Cast an explicit structured grid to an unstructured grid.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        >>> grid = grid.cast_to_unstructured_grid()  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        >>> grid = grid.cast_to_explicit_structured_grid()  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        """
+        # `GlobalWarningDisplayOff` is used below to hide errors during the cell blanking.
+        # <https://discourse.vtk.org/t/error-during-the-cell-blanking-of-explicit-structured-grid/4863>
+        if not _vtk.VTK9:
+            raise AttributeError('VTK 9 or higher is required')
+        s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
+        s2 = self.cell_arrays.keys()
+        if not s1.issubset(s2):
+            raise TypeError("'BLOCK_I', 'BLOCK_J' and 'BLOCK_K' cell arrays are required")
+        alg = _vtk.vtkUnstructuredGridToExplicitStructuredGrid()
+        alg.GlobalWarningDisplayOff()
+        alg.SetInputData(self)
+        alg.SetInputArrayToProcess(0, 0, 0, 1, 'BLOCK_I')
+        alg.SetInputArrayToProcess(1, 0, 0, 1, 'BLOCK_J')
+        alg.SetInputArrayToProcess(2, 0, 0, 1, 'BLOCK_K')
+        alg.Update()
+        grid = _get_output(alg)
+        grid.cell_arrays.remove('ConnectivityFlags')  # unrequired
+        return grid
+
 
 class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     """Extend the functionality of a vtk.vtkStructuredGrid object.
@@ -875,14 +928,17 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     >>> import vtk
     >>> import numpy as np
 
-    >>> # Create empty grid
+    Create empty grid
+
     >>> grid = pyvista.StructuredGrid()
 
-    >>> # Initialize from a vtk.vtkStructuredGrid object
+    Initialize from a vtk.vtkStructuredGrid object
+
     >>> vtkgrid = vtk.vtkStructuredGrid()
     >>> grid = pyvista.StructuredGrid(vtkgrid)
 
-    >>> # Create from NumPy arrays
+    Create from NumPy arrays
+
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 2)
     >>> zrng = np.arange(-10, 10, 2)
@@ -1068,3 +1124,673 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         cell_dims = np.array(self.dimensions) - 1
         cell_dims[cell_dims == 0] = 1
         return array.reshape(cell_dims, order='F')
+
+
+class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
+    """Extend the functionality of a ``vtk.vtkExplicitStructuredGrid`` object.
+
+    Can be initialized by the following:
+
+    - Creating an empty grid
+    - From a ``vtk.vtkExplicitStructuredGrid`` or ``vtk.vtkUnstructuredGrid`` object
+    - From a VTU or VTK file
+    - From ``dims`` and ``corners`` arrays
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>>
+    >>> ni, nj, nk = 4, 5, 6
+    >>> si, sj, sk = 20, 10, 1
+    >>>
+    >>> xcorn = np.arange(0, (ni+1)*si, si)
+    >>> xcorn = np.repeat(xcorn, 2)
+    >>> xcorn = xcorn[1:-1]
+    >>> xcorn = np.tile(xcorn, 4*nj*nk)
+    >>>
+    >>> ycorn = np.arange(0, (nj+1)*sj, sj)
+    >>> ycorn = np.repeat(ycorn, 2)
+    >>> ycorn = ycorn[1:-1]
+    >>> ycorn = np.tile(ycorn, (2*ni, 2*nk))
+    >>> ycorn = np.transpose(ycorn)
+    >>> ycorn = ycorn.flatten()
+    >>>
+    >>> zcorn = np.arange(0, (nk+1)*sk, sk)
+    >>> zcorn = np.repeat(zcorn, 2)
+    >>> zcorn = zcorn[1:-1]
+    >>> zcorn = np.repeat(zcorn, (4*ni*nj))
+    >>>
+    >>> corners = np.stack((xcorn, ycorn, zcorn))
+    >>> corners = corners.transpose()
+    >>>
+    >>> dims = np.asarray((ni, nj, nk))+1
+    >>> grid = pv.ExplicitStructuredGrid(dims, corners)  # doctest: +SKIP
+    >>> grid.compute_connectivity()  # doctest: +SKIP
+    >>> grid.plot(show_edges=True)  # doctest: +SKIP
+
+    """
+
+    _READERS = {'.vtu': _vtk.vtkXMLUnstructuredGridReader,
+                '.vtk': _vtk.vtkUnstructuredGridReader}
+    _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter,
+                '.vtk': _vtk.vtkUnstructuredGridWriter}
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the explicit structured grid."""
+        if not _vtk.VTK9:
+            raise AttributeError('VTK 9 or higher is required')
+        super().__init__()
+        n = len(args)
+        if n == 1:
+            arg0 = args[0]
+            if isinstance(arg0, _vtk.vtkExplicitStructuredGrid):
+                self.deep_copy(arg0)
+            elif isinstance(arg0, _vtk.vtkUnstructuredGrid):
+                grid = arg0.cast_to_explicit_structured_grid()
+                self.deep_copy(grid)
+            elif isinstance(arg0, str):
+                grid = UnstructuredGrid(arg0)
+                grid = grid.cast_to_explicit_structured_grid()
+                self.deep_copy(grid)
+        elif n == 2:
+            arg0, arg1 = args
+            if isinstance(arg0, tuple):
+                arg0 = np.asarray(arg0)
+            if isinstance(arg1, list):
+                arg1 = np.asarray(arg1)
+            arg0_is_arr = isinstance(arg0, np.ndarray)
+            arg1_is_arr = isinstance(arg1, np.ndarray)
+            if all([arg0_is_arr, arg1_is_arr]):
+                self._from_arrays(arg0, arg1)
+
+    def __repr__(self):
+        """Return the standard representation."""
+        return DataSet.__repr__(self)
+
+    def __str__(self):
+        """Return the standard ``str`` representation."""
+        return DataSet.__str__(self)
+
+    def _from_arrays(self, dims, corners):
+        """Create a VTK explicit structured grid from NumPy arrays.
+
+        Parameters
+        ----------
+        dims : numpy.ndarray
+            An array of integers with shape (3,) containing the
+            topological dimensions of the grid.
+
+        corners : numpy.ndarray
+            An array of floats with shape (number of corners, 3)
+            containing the coordinates of the corner points.
+
+        """
+        shape0 = dims-1
+        shape1 = 2*shape0
+        ncells = np.prod(shape0)
+        cells = 8*np.ones((ncells, 9), dtype=int)
+        points, indices = np.unique(corners, axis=0, return_inverse=True)
+        connectivity = np.asarray([[0, 1, 1, 0, 0, 1, 1, 0],
+                                   [0, 0, 1, 1, 0, 0, 1, 1],
+                                   [0, 0, 0, 0, 1, 1, 1, 1]])
+        for c in range(ncells):
+            i, j, k = np.unravel_index(c, shape0, order='F')
+            coord = (2*i + connectivity[0],
+                     2*j + connectivity[1],
+                     2*k + connectivity[2])
+            cinds = np.ravel_multi_index(coord, shape1, order='F')
+            cells[c, 1:] = indices[cinds]
+        cells = cells.flatten()
+        points = pyvista.vtk_points(points)
+        cells = CellArray(cells, ncells)
+        self.SetDimensions(dims)
+        self.SetPoints(points)
+        self.SetCells(cells)
+
+    def cast_to_unstructured_grid(self):
+        """Cast to an unstructured grid.
+
+        Returns
+        -------
+        UnstructuredGrid
+            An unstructured grid. VTK adds the ``'BLOCK_I'``,
+            ``'BLOCK_J'`` and ``'BLOCK_K'`` cell arrays. These arrays
+            are required to restore the explicit structured grid.
+
+        Warnings
+        --------
+            The ghost cell array is disabled before casting the
+            unstructured grid in order to allow the original structure
+            and attributes data of the explicit structured grid to be
+            restored. If you don't need to restore the explicit
+            structured grid later or want to extract an unstructured
+            grid from the visible subgrid, use the ``extract_cells``
+            filter and the cell indices where the ghost cell array is
+            ``0``.
+
+        See Also
+        --------
+        DataSetFilters.extract_cells :
+            Extract a subset of a dataset.
+
+        UnstructuredGrid.cast_to_explicit_structured_grid :
+            Cast an unstructured grid to an explicit structured grid.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        >>> grid = grid.cast_to_unstructured_grid()  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        >>> grid = grid.cast_to_explicit_structured_grid()  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        """
+        grid = ExplicitStructuredGrid()
+        grid.copy_structure(self)
+        alg = _vtk.vtkExplicitStructuredGridToUnstructuredGrid()
+        alg.SetInputDataObject(grid)
+        alg.Update()
+        grid = _get_output(alg)
+        grid.cell_arrays.remove('vtkOriginalCellIds')  # unrequired
+        grid.copy_attributes(self)  # copy ghost cell array and other arrays
+        return grid
+
+    def save(self, filename, binary=True):
+        """Save this VTK object to file.
+
+        Parameters
+        ----------
+        filename : str
+            Output file name. VTU and VTK extensions are supported.
+        binary : bool, optional
+            If ``True`` (default), write as binary, else ASCII.
+
+        Warnings
+        --------
+        VTK adds the ``'BLOCK_I'``, ``'BLOCK_J'`` and ``'BLOCK_K'``
+        cell arrays. These arrays are required to restore the explicit
+        structured grid.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
+        >>> grid.save('grid.vtu')  # doctest: +SKIP
+
+        >>> grid = pv.ExplicitStructuredGrid('grid.vtu')  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        >>> grid.show_cells()  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        """
+        grid = self.cast_to_unstructured_grid()
+        grid.save(filename, binary)
+
+    def hide_cells(self, ind, inplace=True):
+        """Hide specific cells.
+
+        Hides cells by setting the ghost cell array to ``HIDDENCELL``.
+
+        Parameters
+        ----------
+        ind : int or iterable(int)
+            Cell indices to be hidden. A boolean array of the same
+            size as the number of cells also is acceptable.
+
+        inplace : bool, optional
+            This method is applied to this grid if ``True`` (default)
+            or to a copy otherwise.
+
+        Returns
+        -------
+        grid : ExplicitStructuredGrid or None
+            A deep copy of this grid if ``inplace=False`` or ``None`` otherwise.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        """
+        # `GlobalWarningDisplayOff` is used below to hide errors
+        # during the cell blanking.
+        # <https://discourse.vtk.org/t/error-during-the-cell-blanking-of-explicit-structured-grid/4863>
+        if inplace:
+            self.GlobalWarningDisplayOff()
+            ind = np.asarray(ind)
+            array = np.zeros(self.n_cells, dtype=np.uint8)
+            array[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
+            name = _vtk.vtkDataSetAttributes.GhostArrayName()
+            self.cell_arrays[name] = array
+        else:
+            grid = self.copy()
+            grid.hide_cells(ind)
+            return grid
+
+    def show_cells(self, inplace=True):
+        """Show hidden cells.
+
+        Shows hidden cells by setting the ghost cell array to ``0``
+        where ``HIDDENCELL``.
+
+        Parameters
+        ----------
+        inplace : bool, optional
+            This method is applied to this grid if ``True`` (default)
+            or to a copy otherwise.
+
+        Returns
+        -------
+        grid : ExplicitStructuredGrid or None
+            A deep copy of this grid if ``inplace=False`` or ``None``
+            otherwise.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        >>> grid.show_cells()  # doctest: +SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+
+        """
+        if inplace:
+            name = _vtk.vtkDataSetAttributes.GhostArrayName()
+            if name in self.cell_arrays.keys():
+                array = self.cell_arrays[name]
+                ind = np.argwhere(array == _vtk.vtkDataSetAttributes.HIDDENCELL)
+                array[ind] = 0
+        else:
+            grid = self.copy()
+            grid.show_cells()
+            return grid
+
+    def _dimensions(self):
+        # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
+        # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
+        # K directions.
+        dims = self.extent
+        dims = np.reshape(dims, (3, 2))
+        dims = np.diff(dims, axis=1)
+        dims = dims.flatten()
+        return dims+1
+
+    @property
+    def dimensions(self):
+        """Return the topological dimensions of the grid.
+
+        Returns
+        -------
+        tuple(int)
+            Number of sampling points in the I, J and Z directions respectively.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> grid.dimensions  # doctest: +SKIP
+        array([5, 6, 7])
+
+        """
+        return self._dimensions()
+
+    @property
+    def visible_bounds(self):
+        """Return the bounding box of the visible cells.
+
+        Different from `bounds`, which returns the bounding box of the
+        complete grid, this method returns the bounding box of the
+        visible cells, where the ghost cell array is not
+        ``HIDDENCELL``.
+
+        Returns
+        -------
+        list(float)
+            The limits of the visible grid in the X, Y and Z
+            directions respectively.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
+        >>> grid.bounds  # doctest: +SKIP
+        [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
+
+        >>> grid.visible_bounds  # doctest: +SKIP
+        [0.0, 80.0, 0.0, 50.0, 0.0, 4.0]
+
+        """
+        name = _vtk.vtkDataSetAttributes.GhostArrayName()
+        if name in self.cell_arrays:
+            array = self.cell_arrays[name]
+            grid = self.extract_cells(array == 0)
+            return grid.bounds
+        else:
+            return self.bounds
+
+    def cell_id(self, coords):
+        """Return the cell ID.
+
+        Parameters
+        ----------
+        coords : tuple(int), list(tuple(int)) or numpy.ndarray
+            Cell structured coordinates.
+
+        Returns
+        -------
+        ind : int, numpy.ndarray or None
+            Cell IDs. ``None`` if ``coords`` is outside the grid extent.
+
+        See Also
+        --------
+        ExplicitStructuredGrid.cell_coords :
+            Return the cell structured coordinates.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> grid.cell_id((3, 4, 0))  # doctest: +SKIP
+        19
+
+        >>> coords = [(3, 4, 0),
+        ...           (3, 2, 1),
+        ...           (1, 0, 2),
+        ...           (2, 3, 2)]
+        >>> grid.cell_id(coords)  # doctest: +SKIP
+        array([19, 31, 41, 54])
+
+        """
+        # `vtk.vtkExplicitStructuredGrid.ComputeCellId` is not used
+        # here because this method returns invalid cell IDs when
+        # `coords` is outside the grid extent.
+        if isinstance(coords, list):
+            coords = np.asarray(coords)
+        if isinstance(coords, np.ndarray) and coords.ndim == 2:
+            ncol = coords.shape[1]
+            coords = [coords[:, c] for c in range(ncol)]
+            coords = tuple(coords)
+        dims = self._dimensions()
+        try:
+            ind = np.ravel_multi_index(coords, dims-1, order='F')
+        except ValueError:
+            return None
+        else:
+            return ind
+
+    def cell_coords(self, ind):
+        """Return the cell structured coordinates.
+
+        Parameters
+        ----------
+        ind : int or iterable(int)
+            Cell IDs.
+
+        Returns
+        -------
+        coords : tuple(int), numpy.ndarray or None
+            Cell structured coordinates. ``None`` if ``ind`` is
+            outside the grid extent.
+
+        See Also
+        --------
+        ExplicitStructuredGrid.cell_id :
+            Return the cell ID.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> grid.cell_coords(19)  # doctest: +SKIP
+        (3, 4, 0)
+
+        >>> grid.cell_coords((19, 31, 41, 54))  # doctest: +SKIP
+        array([[3, 4, 0],
+               [3, 2, 1],
+               [1, 0, 2],
+               [2, 3, 2]])
+
+        """
+        dims = self._dimensions()
+        try:
+            coords = np.unravel_index(ind, dims-1, order='F')
+        except ValueError:
+            return None
+        else:
+            if isinstance(coords[0], np.ndarray):
+                coords = np.stack(coords, axis=1)
+            return coords
+
+    def neighbors(self, ind, rel='connectivity'):
+        """Return the indices of neighboring cells.
+
+        Parameters
+        ----------
+        ind : int or iterable(int)
+            Cell IDs.
+
+        rel : str, optional
+            Defines the neighborhood relationship. If
+            ``'topological'``, returns the ``(i-1, j, k)``, ``(i+1, j,
+            k)``, ``(i, j-1, k)``, ``(i, j+1, k)``, ``(i, j, k-1)``
+            and ``(i, j, k+1)`` cells. If ``'connectivity'``
+            (default), returns only the topological neighbors
+            considering faces connectivity. If ``'geometric'``,
+            returns the cells in the ``(i-1, j)``, ``(i+1, j)``,
+            ``(i,j-1)`` and ``(i, j+1)`` vertical cell groups whose
+            faces intersect.
+
+        Returns
+        -------
+        indices : list(int)
+            Indices of neighboring cells.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> cell = grid.extract_cells(31)  # doctest: +SKIP
+        >>> ind = grid.neighbors(31)  # doctest: +SKIP
+        >>> neighbors = grid.extract_cells(ind)  # doctest: +SKIP
+        >>>
+        >>> plotter = pv.Plotter()
+        >>> plotter.add_axes()  # doctest: +SKIP
+        >>> plotter.add_mesh(cell, color='r', show_edges=True)  # doctest: +SKIP
+        >>> plotter.add_mesh(neighbors, color='w', show_edges=True)  # doctest: +SKIP
+        >>> plotter.show()  # doctest: +SKIP
+
+        """
+        def connectivity(ind):
+            indices = []
+            cell_coords = self.cell_coords(ind)
+            cell_points = self.cell_points(ind)
+            if cell_points.shape[0] == 8:
+                faces = [[(-1, 0, 0), (0, 4, 7, 3), (1, 5, 6, 2)],
+                         [(+1, 0, 0), (1, 2, 6, 5), (0, 3, 7, 4)],
+                         [(0, -1, 0), (0, 1, 5, 4), (3, 2, 6, 7)],
+                         [(0, +1, 0), (3, 7, 6, 2), (0, 4, 5, 1)],
+                         [(0, 0, -1), (0, 3, 2, 1), (4, 7, 6, 5)],
+                         [(0, 0, +1), (4, 5, 6, 7), (0, 1, 2, 3)]]
+                for f in faces:
+                    coords = np.sum([cell_coords, f[0]], axis=0)
+                    ind = self.cell_id(coords)
+                    if ind:
+                        points = self.cell_points(ind)
+                        if points.shape[0] == 8:
+                            a1 = cell_points[f[1], :]
+                            a2 = points[f[2], :]
+                            if np.array_equal(a1, a2):
+                                indices.append(ind)
+            return indices
+
+        def topological(ind):
+            indices = []
+            cell_coords = self.cell_coords(ind)
+            cell_neighbors = [(-1, 0, 0), (1, 0, 0),
+                              (0, -1, 0), (0, 1, 0),
+                              (0, 0, -1), (0, 0, 1)]
+            for n in cell_neighbors:
+                coords = np.sum([cell_coords, n], axis=0)
+                ind = self.cell_id(coords)
+                if ind:
+                    indices.append(ind)
+            return indices
+
+        def geometric(ind):
+            indices = []
+            cell_coords = self.cell_coords(ind)
+            cell_points = self.cell_points(ind)
+            if cell_points.shape[0] == 8:
+                for k in [-1, 1]:
+                    coords = np.sum([cell_coords, (0, 0, k)], axis=0)
+                    ind = self.cell_id(coords)
+                    if ind:
+                        indices.append(ind)
+                faces = [[(-1, 0, 0), (0, 4, 3, 7), (1, 5, 2, 6)],
+                         [(+1, 0, 0), (2, 6, 1, 5), (3, 7, 0, 4)],
+                         [(0, -1, 0), (1, 5, 0, 4), (2, 6, 3, 7)],
+                         [(0, +1, 0), (3, 7, 2, 6), (0, 4, 1, 5)]]
+                nk = self.dimensions[2]
+                for f in faces:
+                    cell_z = cell_points[f[1], 2]
+                    cell_z = np.abs(cell_z)
+                    cell_z = cell_z.reshape((2, 2))
+                    cell_zmin = cell_z.min(axis=1)
+                    cell_zmax = cell_z.max(axis=1)
+                    coords = np.sum([cell_coords, f[0]], axis=0)
+                    for k in range(nk):
+                        coords[2] = k
+                        ind = self.cell_id(coords)
+                        if ind:
+                            points = self.cell_points(ind)
+                            if points.shape[0] == 8:
+                                z = points[f[2], 2]
+                                z = np.abs(z)
+                                z = z.reshape((2, 2))
+                                zmin = z.min(axis=1)
+                                zmax = z.max(axis=1)
+                                if ((zmax[0] > cell_zmin[0] and zmin[0] < cell_zmax[0]) or
+                                    (zmax[1] > cell_zmin[1] and zmin[1] < cell_zmax[1]) or
+                                    (zmin[0] > cell_zmax[0] and zmax[1] < cell_zmin[1]) or
+                                    (zmin[1] > cell_zmax[1] and zmax[0] < cell_zmin[0])):
+                                    indices.append(ind)
+            return indices
+
+        if isinstance(ind, int):
+            ind = [ind]
+        rel = eval(rel)
+        indices = set()
+        for i in ind:
+            indices.update(rel(i))
+        return sorted(indices)
+
+    def compute_connectivity(self, inplace=True):
+        """Compute the faces connectivity flags array.
+
+        This method checks the faces connectivity of the cells with
+        their topological neighbors.  The result is stored in the
+        array of integers ``'ConnectivityFlags'``. Each value in this
+        array must be interpreted as a binary number, where the digits
+        shows the faces connectivity of a cell with its topological
+        neighbors -Z, +Z, -Y, +Y, -X and +X respectively. For example,
+        a cell with ``'ConnectivityFlags'`` equal to ``27``
+        (``011011``) indicates that this cell is connected by faces
+        with their neighbors ``(0, 0, 1)``, ``(0, -1, 0)``,
+        ``(-1, 0, 0)`` and ``(1, 0, 0)``.
+
+        Parameters
+        ----------
+        inplace : bool, optional
+            This method is applied to this grid if ``True`` (default)
+            or to a copy otherwise.
+
+        Returns
+        -------
+        grid : ExplicitStructuredGrid or None
+            A deep copy of this grid if ``inplace=False`` or ``None``
+            otherwise.
+
+        See Also
+        --------
+        ExplicitStructuredGrid.compute_connections :
+            Compute an array with the number of connected cell faces.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>>
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> grid.compute_connectivity()  # doctest: +SKIP
+        >>> grid.plot(show_edges=True)  # doctest: +SKIP
+
+        """
+        if inplace:
+            self.ComputeFacesConnectivityFlagsArray()
+        else:
+            grid = self.copy()
+            grid.compute_connectivity()
+            return grid
+
+    def compute_connections(self, inplace=True):
+        """Compute an array with the number of connected cell faces.
+
+        This method calculates the number of topological cell
+        neighbors connected by faces. The results are stored in the
+        ``'number_of_connections'`` cell array.
+
+        Parameters
+        ----------
+        inplace : bool, optional
+            This method is applied to this grid if ``True`` (default)
+            or to a copy otherwise.
+
+        Returns
+        -------
+        grid : ExplicitStructuredGrid or None
+            A deep copy of this grid if ``inplace=False`` or ``None`` otherwise.
+
+        See Also
+        --------
+        ExplicitStructuredGrid.compute_connectivity :
+            Compute the faces connectivity flags array.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
+        >>> grid.compute_connections()  # doctest: +SKIP
+        >>> grid.plot(show_edges=True)  # doctest: +SKIP
+
+        """
+        if inplace:
+            if 'ConnectivityFlags' in self.cell_arrays:
+                array = self.cell_arrays['ConnectivityFlags']
+            else:
+                grid = self.compute_connectivity(inplace=False)
+                array = grid.cell_arrays['ConnectivityFlags']
+            array = array.reshape((-1, 1))
+            array = array.astype(np.uint8)
+            array = np.unpackbits(array, axis=1)
+            array = array.sum(axis=1)
+            self.cell_arrays['number_of_connections'] = array
+        else:
+            grid = self.copy()
+            grid.compute_connections()
+            return grid
