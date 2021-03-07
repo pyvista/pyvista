@@ -34,7 +34,8 @@ def test_distance(camera):
     position = np.random.random(3)
     camera.position = position
     camera.focal_point = focal_point
-    assert camera.distance == np.linalg.norm(focal_point - position, ord=2)
+    assert np.isclose(camera.distance, np.linalg.norm(focal_point - position, ord=2),
+                      rtol=1E-8)
 
 
 def test_thickness(camera):
