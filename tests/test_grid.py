@@ -830,6 +830,10 @@ def test_hide_cells(ind, struct_grid):
     sgrid_copy.hide_cells(ind)
     assert sgrid_copy.HasAnyBlankCells()
 
+    with pytest.raises(ValueError, match='Boolean array size must match'):
+        sgrid_copy.hide_cells(np.ones(10, dtype=np.bool))
+
+
 
 @pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
 def test_UnstructuredGrid_cast_to_explicit_structured_grid():
@@ -854,6 +858,10 @@ def test_ExplicitStructuredGrid_init():
     assert grid.n_cells == 120
     assert grid.n_points == 210
     assert grid.bounds == [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
+    assert repr(grid) == str(grid)
+    assert 'N Cells' in str(grid)
+    assert 'N Points' in str(grid)
+    assert 'N Arrays' in str(grid)
 
 
 @pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')

@@ -6,6 +6,8 @@ Creating an Explicit Structured Grid
 
 Create an explicit structured grid from NumPy arrays.
 
+Note this feature is only available for ``vtk>=9``.
+
 """
 
 import numpy as np

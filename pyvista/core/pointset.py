@@ -805,8 +805,8 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Raises
         ------
         TypeError
-            If the unstructured grid doesn't have the ``'BLOCK_I'``, ``'BLOCK_J'`` and
-            ``'BLOCK_K'`` cells arrays.
+            If the unstructured grid doesn't have the ``'BLOCK_I'``,
+            ``'BLOCK_J'`` and ``'BLOCK_K'`` cells arrays.
 
         See Also
         --------
@@ -867,14 +867,17 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     >>> import vtk
     >>> import numpy as np
 
-    >>> # Create empty grid
+    Create empty grid
+
     >>> grid = pyvista.StructuredGrid()
 
-    >>> # Initialize from a vtk.vtkStructuredGrid object
+    Initialize from a vtk.vtkStructuredGrid object
+
     >>> vtkgrid = vtk.vtkStructuredGrid()
     >>> grid = pyvista.StructuredGrid(vtkgrid)
 
-    >>> # Create from NumPy arrays
+    Create from NumPy arrays
+
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 2)
     >>> zrng = np.arange(-10, 10, 2)
@@ -1154,10 +1157,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Parameters
         ----------
         dims : numpy.ndarray
-            An array of integers with shape (3,) containing the topological dimensions of the grid.
+            An array of integers with shape (3,) containing the
+            topological dimensions of the grid.
+
         corners : numpy.ndarray
-            An array of floats with shape (number of corners, 3) containing the coordinates of the
-            corner points.
+            An array of floats with shape (number of corners, 3)
+            containing the coordinates of the corner points.
 
         """
         shape0 = dims-1
@@ -1188,21 +1193,26 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Returns
         -------
         UnstructuredGrid
-            An unstructured grid. VTK adds the ``'BLOCK_I'``, ``'BLOCK_J'`` and ``'BLOCK_K'`` cell
-            arrays. These arrays are required to restore the explicit structured grid.
+            An unstructured grid. VTK adds the ``'BLOCK_I'``,
+            ``'BLOCK_J'`` and ``'BLOCK_K'`` cell arrays. These arrays
+            are required to restore the explicit structured grid.
 
         Warnings
         --------
-            The ghost cell array is disabled before casting the unstructured grid in order to allow
-            the original structure and attributes data of the explicit structured grid to be
-            restored. If you don't need to restore the explicit structured grid later or want to
-            extract an unstructured grid from the visible subgrid, use the ``extract_cells`` filter
-            and the cell indices where the ghost cell array is ``0``.
+            The ghost cell array is disabled before casting the
+            unstructured grid in order to allow the original structure
+            and attributes data of the explicit structured grid to be
+            restored. If you don't need to restore the explicit
+            structured grid later or want to extract an unstructured
+            grid from the visible subgrid, use the ``extract_cells``
+            filter and the cell indices where the ghost cell array is
+            ``0``.
 
         See Also
         --------
         DataSetFilters.extract_cells :
             Extract a subset of a dataset.
+
         UnstructuredGrid.cast_to_explicit_structured_grid :
             Cast an unstructured grid to an explicit structured grid.
 
@@ -1244,8 +1254,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Warnings
         --------
-        VTK adds the ``'BLOCK_I'``, ``'BLOCK_J'`` and ``'BLOCK_K'`` cell arrays. These arrays are
-        required to restore the explicit structured grid.
+        VTK adds the ``'BLOCK_I'``, ``'BLOCK_J'`` and ``'BLOCK_K'``
+        cell arrays. These arrays are required to restore the explicit
+        structured grid.
 
         Examples
         --------
@@ -1273,15 +1284,17 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Parameters
         ----------
         ind : int or iterable(int)
-            Cell indices to be hidden. A boolean array of the same size as the number of cells also
-            is acceptable.
+            Cell indices to be hidden. A boolean array of the same
+            size as the number of cells also is acceptable.
+
         inplace : bool, optional
-            This method is applied to this grid if ``True`` (default) or to a copy otherwise.
+            This method is applied to this grid if ``True`` (default)
+            or to a copy otherwise.
 
         Returns
         -------
         grid : ExplicitStructuredGrid or None
-            A deep copy of this grid if ``inplace=False`` or none otherwise.
+            A deep copy of this grid if ``inplace=False`` or ``None`` otherwise.
 
         Examples
         --------
@@ -1291,7 +1304,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
 
         """
-        # `GlobalWarningDisplayOff` is used below to hide errors during the cell blanking.
+        # `GlobalWarningDisplayOff` is used below to hide errors
+        # during the cell blanking.
         # <https://discourse.vtk.org/t/error-during-the-cell-blanking-of-explicit-structured-grid/4863>
         if inplace:
             self.GlobalWarningDisplayOff()
@@ -1308,17 +1322,20 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     def show_cells(self, inplace=True):
         """Show hidden cells.
 
-        Shows hidden cells by setting the ghost cell array to ``0`` where ``HIDDENCELL``.
+        Shows hidden cells by setting the ghost cell array to ``0``
+        where ``HIDDENCELL``.
 
         Parameters
         ----------
         inplace : bool, optional
-            This method is applied to this grid if ``True`` (default) or to a copy otherwise.
+            This method is applied to this grid if ``True`` (default)
+            or to a copy otherwise.
 
         Returns
         -------
         grid : ExplicitStructuredGrid or None
-            A deep copy of this grid if ``inplace=False`` or none otherwise.
+            A deep copy of this grid if ``inplace=False`` or ``None``
+            otherwise.
 
         Examples
         --------
@@ -1375,14 +1392,16 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     def visible_bounds(self):
         """Return the bounding box of the visible cells.
 
-        Different from `bounds`, which returns the bounding box of the complete grid, this method
-        returns the bounding box of the visible cells, where the ghost cell array is not
+        Different from `bounds`, which returns the bounding box of the
+        complete grid, this method returns the bounding box of the
+        visible cells, where the ghost cell array is not
         ``HIDDENCELL``.
 
         Returns
         -------
         list(float)
-            The limits of the visible grid in the X, Y and Z directions respectively.
+            The limits of the visible grid in the X, Y and Z
+            directions respectively.
 
         Examples
         --------
@@ -1437,8 +1456,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         array([19, 31, 41, 54])
 
         """
-        # `vtk.vtkExplicitStructuredGrid.ComputeCellId` is not used here because this method
-        # returns invalid cell IDs when `coords` is outside the grid extent.
+        # `vtk.vtkExplicitStructuredGrid.ComputeCellId` is not used
+        # here because this method returns invalid cell IDs when
+        # `coords` is outside the grid extent.
         if isinstance(coords, list):
             coords = np.asarray(coords)
         if isinstance(coords, np.ndarray) and coords.ndim == 2:
@@ -1464,7 +1484,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Returns
         -------
         coords : tuple(int), numpy.ndarray or None
-            Cell structured coordinates. ``None`` if ``ind`` is outside the grid extent.
+            Cell structured coordinates. ``None`` if ``ind`` is
+            outside the grid extent.
 
         See Also
         --------
@@ -1502,12 +1523,16 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         ----------
         ind : int or iterable(int)
             Cell IDs.
+
         rel : str, optional
-            Defines the neighborhood relationship. If ``'topological'``, returns the
-            ``(i-1, j, k)``, ``(i+1, j, k)``, ``(i, j-1, k)``, ``(i, j+1, k)``, ``(i, j, k-1)`` and
-            ``(i, j, k+1)`` cells. If ``'connectivity'`` (default), returns only the topological
-            neighbors considering faces connectivity. If ``'geometric'``, returns the cells in the
-            ``(i-1, j)``, ``(i+1, j)``, ``(i, j-1)`` and ``(i, j+1)`` vertical cell groups whose
+            Defines the neighborhood relationship. If
+            ``'topological'``, returns the ``(i-1, j, k)``, ``(i+1, j,
+            k)``, ``(i, j-1, k)``, ``(i, j+1, k)``, ``(i, j, k-1)``
+            and ``(i, j, k+1)`` cells. If ``'connectivity'``
+            (default), returns only the topological neighbors
+            considering faces connectivity. If ``'geometric'``,
+            returns the cells in the ``(i-1, j)``, ``(i+1, j)``,
+            ``(i,j-1)`` and ``(i, j+1)`` vertical cell groups whose
             faces intersect.
 
         Returns
@@ -1618,23 +1643,28 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     def compute_connectivity(self, inplace=True):
         """Compute the faces connectivity flags array.
 
-        This method checks the faces connectivity of the cells with their topological neighbors.
-        The result is stored in the array of integers ``'ConnectivityFlags'``. Each value in this
-        array must be interpreted as a binary number, where the digits shows the faces connectivity
-        of a cell with its topological neighbors -Z, +Z, -Y, +Y, -X and +X respectively. For
-        example, a cell with ``'ConnectivityFlags'`` equal to ``27`` (``011011``) indicates that
-        this cell is connected by faces with their neighbors ``(0, 0, 1)``, ``(0, -1, 0)``,
+        This method checks the faces connectivity of the cells with
+        their topological neighbors.  The result is stored in the
+        array of integers ``'ConnectivityFlags'``. Each value in this
+        array must be interpreted as a binary number, where the digits
+        shows the faces connectivity of a cell with its topological
+        neighbors -Z, +Z, -Y, +Y, -X and +X respectively. For example,
+        a cell with ``'ConnectivityFlags'`` equal to ``27``
+        (``011011``) indicates that this cell is connected by faces
+        with their neighbors ``(0, 0, 1)``, ``(0, -1, 0)``,
         ``(-1, 0, 0)`` and ``(1, 0, 0)``.
 
         Parameters
         ----------
         inplace : bool, optional
-            This method is applied to this grid if ``True`` (default) or to a copy otherwise.
+            This method is applied to this grid if ``True`` (default)
+            or to a copy otherwise.
 
         Returns
         -------
         grid : ExplicitStructuredGrid or None
-            A deep copy of this grid if ``inplace=False`` or none otherwise.
+            A deep copy of this grid if ``inplace=False`` or ``None``
+            otherwise.
 
         See Also
         --------
@@ -1660,18 +1690,20 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     def compute_connections(self, inplace=True):
         """Compute an array with the number of connected cell faces.
 
-        This method calculates the number of topological cell neighbors connected by faces. The
-        results are stored in the ``'number_of_connections'`` cell array.
+        This method calculates the number of topological cell
+        neighbors connected by faces. The results are stored in the
+        ``'number_of_connections'`` cell array.
 
         Parameters
         ----------
         inplace : bool, optional
-            This method is applied to this grid if ``True`` (default) or to a copy otherwise.
+            This method is applied to this grid if ``True`` (default)
+            or to a copy otherwise.
 
         Returns
         -------
         grid : ExplicitStructuredGrid or None
-            A deep copy of this grid if ``inplace=False`` or none otherwise.
+            A deep copy of this grid if ``inplace=False`` or ``None`` otherwise.
 
         See Also
         --------
