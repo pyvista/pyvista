@@ -1136,11 +1136,28 @@ class Renderer(_vtk.vtkRenderer):
         often useful when viewing images or 2D datasets.
 
         """
+        # Fix the 'reset camera' effect produced by the VTK when parallel
+        # projection is enabled.
+        angle = np.radians(self.camera.view_angle)
+        self.camera.parallel_scale = self.camera.distance * np.sin(.5 * angle)
+
         self.camera.enable_parallel_projection()
         self.Modified()
 
     def disable_parallel_projection(self):
         """Reset the camera to use perspective projection."""
+        # Fix the 'reset camera' effect produced by the VTK when parallel
+        # projection is disabled.
+        focus = self.camera.focal_point
+        angle = np.radians(self.camera.view_angle)
+        distance = self.camera.parallel_scale / np.sin(.5 * angle)
+        direction = self.camera.direction
+        x = focus[0] - distance * direction[0]
+        y = focus[1] - distance * direction[1]
+        z = focus[2] - distance * direction[2]
+        self.camera.position = (x, y, z)
+        self.ResetCameraClippingRange()
+
         self.camera.disable_parallel_projection()
         self.Modified()
 
