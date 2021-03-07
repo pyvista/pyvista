@@ -816,16 +816,15 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Examples
         --------
         >>> from pyvista import examples
-        >>>
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
-        >>>
+
         >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
-        >>>
+
         >>> grid = grid.cast_to_unstructured_grid()  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
-        >>>
+
         >>> grid = grid.cast_to_explicit_structured_grid()  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
 
@@ -1210,16 +1209,15 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>>
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
-        >>>
+
         >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
-        >>>
+
         >>> grid = grid.cast_to_unstructured_grid()  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
-        >>>
+
         >>> grid = grid.cast_to_explicit_structured_grid()  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
 
@@ -1252,16 +1250,14 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> import pyvista as pv
-        >>>
         >>> from pyvista import examples
-        >>>
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
         >>> grid.save('grid.vtu')  # doctest: +SKIP
-        >>>
+
         >>> grid = pv.ExplicitStructuredGrid('grid.vtu')  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
-        >>>
+
         >>> grid.show_cells()  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
 
@@ -1290,7 +1286,6 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>>
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
@@ -1328,11 +1323,10 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>>
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
-        >>>
+
         >>> grid.show_cells()  # doctest: +SKIP
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
 
@@ -1370,7 +1364,6 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>>
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> grid.dimensions  # doctest: +SKIP
         array([5, 6, 7])
@@ -1394,11 +1387,11 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>>
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
         >>> grid.bounds  # doctest: +SKIP
         [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
+
         >>> grid.visible_bounds  # doctest: +SKIP
         [0.0, 80.0, 0.0, 50.0, 0.0, 4.0]
 
@@ -1432,10 +1425,10 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>>
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> grid.cell_id((3, 4, 0))  # doctest: +SKIP
         19
+
         >>> coords = [(3, 4, 0),
         ...           (3, 2, 1),
         ...           (1, 0, 2),
@@ -1481,10 +1474,10 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>>
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> grid.cell_coords(19)  # doctest: +SKIP
         (3, 4, 0)
+
         >>> grid.cell_coords((19, 31, 41, 54))  # doctest: +SKIP
         array([[3, 4, 0],
                [3, 2, 1],
@@ -1525,9 +1518,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> import pyvista as pv
-        >>>
         >>> from pyvista import examples
-        >>>
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> cell = grid.extract_cells(31)  # doctest: +SKIP
         >>> ind = grid.neighbors(31)  # doctest: +SKIP
@@ -1690,7 +1681,6 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>>
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> grid.compute_connections()  # doctest: +SKIP
         >>> grid.plot(show_edges=True)  # doctest: +SKIP
