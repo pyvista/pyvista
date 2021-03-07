@@ -523,12 +523,13 @@ def is_meshio_mesh(mesh):
 
 
 def wrap(dataset):
-    """Wrap any given VTK data object to its appropriate PyVista data object.
+    """Wrap any given VTK data object to its appropriate pyvista data object.
 
     Other formats that are supported include:
     * 2D :class:`numpy.ndarray` of XYZ vertices
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
     * 3D :class:`trimesh.Trimesh` mesh.
+    * 3D :class:`meshio` mesh.
 
     Parameters
     ----------
@@ -542,7 +543,7 @@ def wrap(dataset):
 
     Examples
     --------
-    Wrap a numpy array representing a random point cloud
+    Wrap a numpy array representing a random point cloud.
 
     >>> import numpy as np
     >>> import pyvista
@@ -557,7 +558,7 @@ def wrap(dataset):
       Z Bounds: 2.346e-03, 9.640e-01
       N Arrays: 0
 
-    Wrap a Trimesh object
+    Wrap a Trimesh object.
 
     >>> import trimesh
     >>> import pyvista
@@ -574,7 +575,7 @@ def wrap(dataset):
       Z Bounds: 0.000e+00, 1.000e+00
       N Arrays: 0
 
-    Wrap a VTK object
+    Wrap a VTK object.
 
     >>> import pyvista
     >>> import vtk
@@ -598,6 +599,26 @@ def wrap(dataset):
       N Arrays: 0
 
     """
+    # Return if None
+    if dataset is None:
+        return
+
+    # Check if dataset is a numpy array.  We do this first since
+    # pyvista_ndarray contains a VTK type that we don't want to
+    # directly wrap.
+    if isinstance(dataset, (np.ndarray, pyvista.pyvista_ndarray)):
+        if dataset.ndim == 1 and dataset.shape[0] == 3:
+            return pyvista.PolyData(dataset)
+        if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
+            return pyvista.PolyData(dataset)
+        elif dataset.ndim == 3:
+            mesh = pyvista.UniformGrid(dataset.shape)
+            mesh['values'] = dataset.ravel(order='F')
+            mesh.active_scalars_name = 'values'
+            return mesh
+        else:
+            raise NotImplementedError('NumPy array could not be wrapped pyvista.')
+
     wrappers = {
         'vtkUnstructuredGrid': pyvista.UnstructuredGrid,
         'vtkRectilinearGrid': pyvista.RectilinearGrid,
@@ -609,41 +630,31 @@ def wrap(dataset):
         'vtkTable': pyvista.Table,
         # 'vtkParametricSpline': pyvista.Spline,
     }
-    # Otherwise, we assume a VTK data object was passed
+
+    # Check if a dataset is a VTK type
     if hasattr(dataset, 'GetClassName'):
         key = dataset.GetClassName()
-    elif dataset is None:
-        return None
-    elif isinstance(dataset, np.ndarray):
-        if dataset.ndim == 1 and dataset.shape[0] == 3:
-            return pyvista.PolyData(dataset)
-        if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
-            return pyvista.PolyData(dataset)
-        elif dataset.ndim == 3:
-            mesh = pyvista.UniformGrid(dataset.shape)
-            mesh['values'] = dataset.ravel(order='F')
-            mesh.active_scalars_name = 'values'
-            return mesh
-        else:
-            print(dataset.shape, dataset)
-            raise NotImplementedError('NumPy array could not be converted to PyVista.')
-    elif is_meshio_mesh(dataset):
+        try:
+            return wrappers[key](dataset)
+        except KeyError:
+            logging.warning(f'VTK data type ({key}) is not currently supported by pyvista.')
+        return
+
+    # wrap meshio
+    if is_meshio_mesh(dataset):
         return from_meshio(dataset)
-    elif dataset.__class__.__name__ == 'Trimesh':
+
+    # wrap trimesh
+    if dataset.__class__.__name__ == 'Trimesh':
         # trimesh doesn't pad faces
         n_face = dataset.faces.shape[0]
         faces = np.empty((n_face, 4), dataset.faces.dtype)
         faces[:, 1:] = dataset.faces
         faces[:, 0] = 3
         return pyvista.PolyData(np.asarray(dataset.vertices), faces)
-    else:
-        raise NotImplementedError(f'Type ({type(dataset)}) not able to be wrapped into a PyVista mesh.')
-    try:
-        wrapped = wrappers[key](dataset)
-    except KeyError:
-        logging.warning(f'VTK data type ({key}) is not currently supported by pyvista.')
-        return dataset  # if not supported just passes the VTK data object
-    return wrapped
+
+    # otherwise, flag tell the user we can't wrap this object
+    raise NotImplementedError(f'Unable to wrap ({type(dataset)}) into a pyvista type.')
 
 
 def image_to_texture(image):
