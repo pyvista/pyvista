@@ -2748,7 +2748,7 @@ class DataSetFilters:
         res.set_active_scalars(active_scalars_name)
 
         if inplace:
-            if not isinstance(res, type(dataset)):
+            if not isinstance(dataset, type(res)):
                 raise ValueError('Unable to perform in-place transformation. '
                                  f'Input was `{dataset.GetClassName()}` '
                                  f'but output is `{res.GetClassName()}`.')
