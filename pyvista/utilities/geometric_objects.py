@@ -665,6 +665,11 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
     check_valid_vector(pointa, 'pointa')
     check_valid_vector(pointb, 'pointb')
     check_valid_vector(center, 'center')
+    if not np.isclose(
+        np.linalg.norm(np.array(pointa) - np.array(center)),
+        np.linalg.norm(np.array(pointb) - np.array(center)),
+    ):
+        raise ValueError("pointa and pointb are not equidistant from center")
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line

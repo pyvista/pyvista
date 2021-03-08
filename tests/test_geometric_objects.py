@@ -156,6 +156,10 @@ def test_circular_arc():
     distance = np.arange(0.0, 1.0 + 0.01, 0.01)*np.sqrt(2.0)*np.pi
     assert np.allclose(mesh['Distance'], distance)
 
+    # pointa and pointb are not equidistant from center
+    with pytest.raises(ValueError):
+        mesh = pyvista.CircularArc([-1, 0, 0], [-0.99, 0.001, 0], [0, 0, 0], 100)
+
 
 def test_pyramid():
     pointa = [1.0, 1.0, 1.0]
