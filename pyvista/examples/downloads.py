@@ -659,81 +659,64 @@ def download_gpr_path():
     return pyvista.PolyData(path)
 
 
-###############################################################################
-# the following need replacements since 3dgallery.gks.com went down
+def download_woman():
+    """Download scan of a woman.
 
-# def download_woman():
-#     """Download scan of a woman.
+    https://www.laserdesign.com/sample-files/full-body-scan-with-texture/
 
-#     https://www.laserdesign.com/sample-files/full-body-scan-with-texture/
-
-#     """
-#     url = "http://3dgallery.gks.com/2012/bodyscan/bodyscan3.php"
-#     filename, _ = _retrieve_file(url, 'woman.stl')
-#     return pyvista.read(filename)
+    """
+    return _download_and_read('woman.stl')
 
 
-# def download_lobster():
-#     """Download scan of a lobster.
+def download_lobster():
+    """Download scan of a lobster.
 
-#     https://www.laserdesign.com/lobster-scan-data
+    https://www.laserdesign.com/lobster-scan-data
 
-#     """
-#     url = "http://3dgallery.gks.com/2016/lobster/index2.php"
-#     filename, _ = _retrieve_file(url, 'lobster.ply')
-#     return pyvista.read(filename)
+    """
+    return _download_and_read('lobster.ply')
 
 
-# def download_face2():
-#     """Download scan of a man's face.
+def download_face2():
+    """Download scan of a man's face.
 
-#     https://www.laserdesign.com/sample-files/mans-face/
+    https://www.laserdesign.com/sample-files/mans-face/
 
-#     """
-#     url = "http://3dgallery.gks.com/2012/face/"
-#     filename, _ = _retrieve_file(url, 'man_face.stl')
-#     return pyvista.read(filename)
+    """
+    return _download_and_read('man_face.stl')
 
 
-# def download_urn():
-#     """Download scan of a burial urn.
+def download_urn():
+    """Download scan of a burial urn.
 
-#     https://www.laserdesign.com/sample-files/burial-urn/
+    https://www.laserdesign.com/sample-files/burial-urn/
 
-#     """
-#     url = "http://3dgallery.gks.com/2012/urn/urn3.php"
-#     filename, _ = _retrieve_file(url, 'urn.stl')
-#     return pyvista.read(filename)
+    """
+    return _download_and_read('urn.stl')
 
 
-# def download_pepper():
-#     """Download scan of a pepper (capsicum).
+def download_pepper():
+    """Download scan of a pepper (capsicum).
 
-#     https://www.laserdesign.com/sample-files/hot-red-pepper/
+    https://www.laserdesign.com/sample-files/hot-red-pepper/
 
-#     """
-#     url = "http://3dgallery.gks.com/2012/redpepper/redpepper2.php"
-#     filename, _ = _retrieve_file(url, 'pepper.ply')
-#     return pyvista.read(filename)
+    """
+    return _download_and_read('pepper.ply')
 
 
-# def download_drill():
-#     """Download scan of a power drill.
+def download_drill():
+    """Download scan of a power drill.
 
-#     https://www.laserdesign.com/drill-scan-data
+    https://www.laserdesign.com/drill-scan-data
 
-#     """
-#     url = "http://3dgallery.gks.com/2015/ryobi/index1.php"
-#     filename, _ = _retrieve_file(url, 'pepper.obj')
-#     return pyvista.read(filename)
+    """
+    return _download_and_read('drill.obj')
 
 
-# def download_action_figure():
-#     """Download scan of an action figure.
+def download_action_figure():
+    """Download scan of an action figure.
 
-#     https://www.laserdesign.com/sample-files/action-figure/
+    https://www.laserdesign.com/sample-files/action-figure/
 
-#     """
-#     url = "http://3dgallery.gks.com/2013/tigerfighter"
-#     filename, _ = _retrieve_file(url, 'tigerfighter.obj')
-#     return pyvista.read(filename)
+    """
+    return _download_and_read('tigerfighter.obj')
