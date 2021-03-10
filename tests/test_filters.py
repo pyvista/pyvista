@@ -768,9 +768,9 @@ def test_sample_over_circular_arc():
     uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
-    pointa = [4.5, 4.5, 0.0]
-    pointb = [4.5, 4.5, 9.0]
-    center = [0.0, 0.0, 0.0]
+    pointa = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[5]]
+    pointb = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[4]]
+    center = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[4]]
     sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
 
     expected_result = sampled_arc.points[:, 2]

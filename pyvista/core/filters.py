@@ -2197,9 +2197,9 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> uniform = examples.load_uniform()
         >>> uniform["height"] = uniform.points[:, 2]
-        >>> pointa = [4.5, 4.5, 0.0]
-        >>> pointb = [4.5, 4.5, 9.0]
-        >>> center = [0.0, 0.0, 0.0]
+        >>> pointa = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[5]]
+        >>> pointb = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[4]]
+        >>> center = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[4]]
         >>> sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
         """
         if resolution is None:
