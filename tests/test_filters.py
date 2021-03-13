@@ -820,7 +820,7 @@ def test_plot_over_circular_arc2():
     polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
     angle = 90
     center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-    mesh.plot_over_circular_arc2(center, polar=polar, angle=angle)
+    mesh.plot_over_circular_arc2(center, polar=polar, angle=angle, show=False)
 
     # Test multicomponent
     mesh['foo'] = np.random.rand(mesh.n_cells, 3)
