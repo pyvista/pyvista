@@ -2252,8 +2252,8 @@ class DataSetFilters:
         >>> uniform = examples.load_uniform()
         >>> uniform["height"] = uniform.points[:, 2]
         >>> normal = [0, 0, 1]
-        >>> polar = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-        >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+        >>> polar = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[5]]
+        >>> center = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[4]]
         >>> sampled_arc = uniform.sample_over_circular_arc2(center, normal=normal, polar=polar)
         """
         if resolution is None:
