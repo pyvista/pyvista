@@ -809,6 +809,30 @@ def test_plot_over_circular_arc():
                                     title='My Stuff', ylabel='3 Values', show=False)
 
 
+def test_plot_over_circular_arc2():
+    """this requires matplotlib"""
+
+    pytest.importorskip('matplotlib')
+    mesh = examples.load_uniform()
+
+    # Make center and normal/polar vector to construct the circular arc between
+    normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
+    polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
+    angle = 90
+    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    mesh.plot_over_circular_arc2(center, polar=polar, angle=angle)
+
+    # Test multicomponent
+    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh.plot_over_circular_arc2(center, polar=polar, angle=angle, resolution=None, scalars='foo',
+                                 title='My Stuff', ylabel='3 Values', show=False)
+
+    # Should fail if scalar name does not exist
+    with pytest.raises(KeyError):
+        mesh.plot_over_circular_arc2(center, polar=polar, angle=angle, resolution=None, scalars='invalid_array_name',
+                                     title='My Stuff', ylabel='3 Values', show=False)
+
+
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
