@@ -70,7 +70,7 @@ class DataObject:
         self._post_file_load_processing()
 
     def _post_file_load_processing(self):
-        """Executed after loading a dataset from file, to be optionally overridden by subclasses."""
+        """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
         pass
 
     def save(self, filename: str, binary=True):
