@@ -532,6 +532,37 @@ def test_load_structured_bad_filename():
         grid = pyvista.StructuredGrid(filename)
 
 
+def test_instantiate_by_filename():
+    ex = examples
+
+    # actual mapping of example file to datatype
+    fname_to_right_type = {
+        ex.antfile: pyvista.PolyData,
+        ex.planefile: pyvista.PolyData,
+        ex.hexbeamfile: pyvista.UnstructuredGrid,
+        ex.spherefile: pyvista.PolyData,
+        ex.uniformfile: pyvista.UniformGrid,
+        ex.rectfile: pyvista.RectilinearGrid
+    }
+
+    # a few combinations of wrong type
+    fname_to_wrong_type = {
+        ex.antfile: pyvista.UnstructuredGrid,   # actual data is PolyData
+        ex.planefile: pyvista.StructuredGrid,   # actual data is PolyData
+        ex.rectfile: pyvista.UnstructuredGrid,  # actual data is StructuredGrid
+    }
+
+    # load the files into the right types
+    for fname, right_type in fname_to_right_type.items():
+        data = right_type(fname)
+        assert data.n_points > 0
+
+    # load the files into the wrong types
+    for fname, wrong_type in fname_to_wrong_type.items():
+        with pytest.raises(ValueError):
+            data = wrong_type(fname)
+
+
 def test_create_rectilinear_grid_from_specs():
     # 3D example
     xrng = np.arange(-10, 10, 2)

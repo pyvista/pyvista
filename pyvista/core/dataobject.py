@@ -64,7 +64,8 @@ class DataObject:
     def _from_file(self, filename: Union[str, Path]):
         data = self._load_file(filename)
         if not isinstance(self, type(data)):
-            raise RuntimeError
+            raise ValueError(f'Reading file returned data of `{data.GetClassName()}`, '
+                             f'but `{self.GetClassName()}` was expected.')
         self.shallow_copy(data)
         self._post_file_load_processing()
 
