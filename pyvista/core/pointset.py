@@ -952,7 +952,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkStructuredGrid):
                 self.deep_copy(args[0])
-            elif isinstance(args[0], str):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0])
 
         elif len(args) == 3:
@@ -1180,7 +1180,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             elif isinstance(arg0, _vtk.vtkUnstructuredGrid):
                 grid = arg0.cast_to_explicit_structured_grid()
                 self.deep_copy(grid)
-            elif isinstance(arg0, str):
+            elif isinstance(arg0, (str, pathlib.Path)):
                 grid = UnstructuredGrid(arg0)
                 grid = grid.cast_to_explicit_structured_grid()
                 self.deep_copy(grid)
