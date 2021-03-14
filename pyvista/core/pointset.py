@@ -335,7 +335,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         if not len(faces) or len(self.lines) > 0 or len(self.verts) > 0:
             return False
 
-        # all we have are faces, check if all faces are indeed triangles
+        # All we have are faces, check if all faces are indeed triangles
         if faces.size % 4 == 0:
             return (faces[::4] == 3).all()
         return False
