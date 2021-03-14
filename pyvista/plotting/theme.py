@@ -11,6 +11,7 @@ FONT_KEYS = {'arial': _vtk.VTK_ARIAL,
              'times': _vtk.VTK_TIMES}
 
 rcParams = {
+    'jupyter_backend': None,
     'auto_close': True,  # DANGER: set to False with extreme caution
     'background': [0.3, 0.3, 0.3],
     'full_screen': False,

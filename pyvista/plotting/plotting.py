@@ -4389,7 +4389,6 @@ class Plotter(BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
-        disp = None
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and (not self.off_screen):
@@ -4410,10 +4409,12 @@ class Plotter(BasePlotter):
         # the closing routines that might try to still access that
         # render window.
         if not self.ren_win.IsCurrent():
-            self._clear_ren_win() # The ren_win is deleted
+            self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:
-                warnings.warn("`auto_close` ignored: by clicking the exit button, you have destroyed the render window and we have to close it out.")
+                warnings.warn("`auto_close` ignored: by clicking the exit button, "
+                              "you have destroyed the render window and we have to "
+                              "close it out.")
                 auto_close = True
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user presed the close button, then it destroys the
@@ -4422,48 +4423,17 @@ class Plotter(BasePlotter):
         #       See issues #135 and #186 for insight before editing the
         #       remainder of this function.
 
+        # handle plotter notebook
+        if self.notebook:
+            from ..jupyter.notebook import handle_plotter
+            return handle_plotter(self)
+
         # Get camera position before closing
         cpos = self.camera_position
-
-        if self.notebook and use_ipyvtk:
-            # Widgets do not work in spyder
-            if any('SPYDER' in name for name in os.environ):
-                warnings.warn('``use_ipyvtk`` is incompatible with Spyder.\n'
-                              'Use notebook=False for interactive '
-                              'plotting within spyder')
-
-            try:
-                from ipyvtk_simple.viewer import ViewInteractiveWidget
-            except ImportError:
-                raise ImportError('Please install `ipyvtk_simple` to use this feature:'
-                                  '\thttps://github.com/Kitware/ipyvtk-simple')
-            # Have to leave the Plotter open for the widget to use
-            auto_close = False
-            disp = ViewInteractiveWidget(self.ren_win, on_close=self.close,
-                                         transparent_background=self.image_transparent_background)
-
-        # If notebook is true and ipyvtk_simple display failed:
-        if self.notebook and (disp is None):
-            import PIL.Image
-            # sanity check
-            try:
-                import IPython
-            except ImportError:
-                raise ImportError('Install IPython to display image in a notebook')
-            if not hasattr(self, 'last_image'):
-                self.last_image = self.screenshot(screenshot, return_img=True)
-            disp = IPython.display.display(PIL.Image.fromarray(self.last_image))
 
         # Cleanup
         if auto_close:
             self.close()
-
-        # Simply display the result: either ipyvtk_simple object or image display
-        if self.notebook:
-            if return_viewer:  # developer option
-                return disp
-            from IPython import display
-            display.display_html(disp)
 
         # If user asked for screenshot, return as numpy array after camera
         # position
