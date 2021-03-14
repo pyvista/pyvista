@@ -1,6 +1,7 @@
 """ test pyvista.utilities """
 import pathlib
 import os
+import shutil
 
 import numpy as np
 import pytest
@@ -85,6 +86,37 @@ def test_read(tmpdir, use_pathlib):
     assert multi.n_blocks == 2
     assert isinstance(multi[1], pyvista.MultiBlock)
     assert multi[1].n_blocks == 2
+
+
+def test_read_force_ext(tmpdir):
+    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile,
+              ex.uniformfile, ex.rectfile)
+    types = (pyvista.PolyData, pyvista.PolyData, pyvista.UnstructuredGrid,
+             pyvista.PolyData, pyvista.UniformGrid, pyvista.RectilinearGrid)
+
+    dummy_extension = '.dummy'
+    for fname, type in zip(fnames, types):
+        root, original_ext = os.path.splitext(fname)
+        _, name = os.path.split(root)
+        new_fname = tmpdir / name + '.' + dummy_extension
+        shutil.copy(fname, new_fname)
+        data = fileio.read(new_fname, force_ext=original_ext)
+        assert isinstance(data, type)
+
+
+def test_read_force_ext_wrong_extension(tmpdir):
+    # try to read a .vtu file as .vts
+    # vtkXMLStructuredGridReader throws an error about the validity of the XML file
+    fname = tmpdir / 'airplane.vtu'
+    ex.load_airplane().cast_to_unstructured_grid().save(fname)
+    with pytest.raises(IOError):
+        fileio.read(fname, force_ext='.vts')
+
+    # try to read a .ply file as .vtm
+    # vtkXMLMultiBlockDataReader throws an error about the validity of the XML file
+    fname = ex.planefile
+    with pytest.raises(IOError):
+        fileio.read(fname, force_ext='.vtm')
 
 
 @mock.patch('pyvista.utilities.fileio.standard_reader_routine')

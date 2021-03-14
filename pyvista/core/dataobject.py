@@ -24,7 +24,6 @@ DEFAULT_VECTOR_KEY = '_vectors'
 class DataObject:
     """Methods common to all wrapped data objects."""
 
-    _READERS: Dict[str, Union[Type[_vtk.vtkXMLReader], Type[_vtk.vtkDataReader]]] = {}
     _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
 
     def __init__(self, *args, **kwargs) -> None:
@@ -60,32 +59,18 @@ class DataObject:
         Binary files load much faster than ASCII.
 
         """
-        if self._READERS is None:
-            raise NotImplementedError(f'{self.__class__.__name__} readers are not specified,'
-                                      ' this should be a dict of (file extension: vtkReader type)')
-
-        file_path = Path(filename)
-        file_path = file_path.expanduser()
-        file_path = file_path.resolve()
-        if not file_path.exists():
-            raise FileNotFoundError(f'File {filename} does not exist')
-
-        file_ext = file_path.suffix
-        if file_ext not in self._READERS:
-            valid_extensions = ', '.join(self._READERS.keys())
-            raise ValueError(f'Invalid file extension for {self.__class__.__name__}({file_ext}).'
-                             f' Must be one of: {valid_extensions}')
-
-        reader = self._READERS[file_ext]()
-        if file_ext == ".case":
-            reader.SetCaseFileName(str(file_path))
-        else:
-            reader.SetFileName(str(file_path))
-        reader.Update()
-        return reader.GetOutputDataObject(0)
+        return pyvista.read(filename)
 
     def _from_file(self, filename: Union[str, Path]):
-        self.shallow_copy(self._load_file(filename))
+        data = self._load_file(filename)
+        if not isinstance(self, type(data)):
+            raise RuntimeError
+        self.shallow_copy(data)
+        self._post_file_load_processing()
+
+    def _post_file_load_processing(self):
+        """Executed after loading a dataset from file, to be optionally overridden by subclasses."""
+        pass
 
     def save(self, filename: str, binary=True):
         """Save this vtk object to file.

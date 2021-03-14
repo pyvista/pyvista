@@ -352,7 +352,7 @@ def test_pathlib_read_write(tmpdir, hexbeam):
 
 def test_init_bad_filename():
     filename = os.path.join(test_path, 'test_grid.py')
-    with pytest.raises(ValueError):
+    with pytest.raises(IOError):
         grid = pyvista.UnstructuredGrid(filename)
 
     with pytest.raises(FileNotFoundError):
@@ -528,7 +528,7 @@ def test_load_structured_bad_filename():
         pyvista.StructuredGrid('not a file')
 
     filename = os.path.join(test_path, 'test_grid.py')
-    with pytest.raises(ValueError):
+    with pytest.raises(IOError):
         grid = pyvista.StructuredGrid(filename)
 
 
