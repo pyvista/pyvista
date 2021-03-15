@@ -135,7 +135,7 @@ def standard_reader_routine(reader, filename, attrs=None):
         if hasattr(reader, 'SetCaseFileName'):
             reader.SetCaseFileName(filename)
         else:
-        reader.SetFileName(filename)
+            reader.SetFileName(filename)
     # Apply any attributes listed
     for name, args in attrs.items():
         attr = getattr(reader, name)
