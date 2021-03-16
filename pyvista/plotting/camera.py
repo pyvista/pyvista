@@ -26,7 +26,6 @@ class Camera(_vtk.vtkCamera):
 
     def __init__(self):
         """Initialize a new camera descriptor."""
-        self._focus = self.GetFocalPoint()
         self._is_parallel_projection = False
 
     @property
@@ -66,7 +65,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl.camera.focal_point
         (0.0, 0.0, 0.0)
         """
-        return self._focus
+        return self.GetFocalPoint()
 
     @focal_point.setter
     def focal_point(self, point):
@@ -79,7 +78,6 @@ class Camera(_vtk.vtkCamera):
         >>> pl.camera.focal_point = (2.0, 0.0, 0.0)
         """
         self.SetFocalPoint(point)
-        self._focus = self.GetFocalPoint()
 
     @property
     def model_transform_matrix(self):
@@ -276,3 +274,31 @@ class Camera(_vtk.vtkCamera):
         """Delete the camera."""
         self.RemoveAllObservers()
         self.parent = None
+
+    @property
+    def view_angle(self):
+        """Return the camera view angle.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.camera.view_angle
+        30.0
+
+        """
+        return self.GetViewAngle()
+
+    @property
+    def direction(self):
+        """Vector from the camera position to the focal point.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.camera.direction  # doctest: +SKIP
+        (0.0, 0.0, -1.0)
+
+        """
+        return self.GetDirectionOfProjection()

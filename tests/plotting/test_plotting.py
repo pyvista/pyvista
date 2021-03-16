@@ -123,6 +123,17 @@ def verify_cache_image(plotter):
 
 
 @skip_no_plotting
+def test_plot_pyvista_ndarray(sphere):
+    # verify we can plot pyvista_ndarray
+    pyvista.plot(sphere.points)
+
+    plotter = pyvista.Plotter()
+    plotter.add_points(sphere.points)
+    plotter.add_points(sphere.points + 1)
+    plotter.show()
+
+
+@skip_no_plotting
 def test_plot(tmpdir):
     tmp_dir = tmpdir.mkdir("tmpdir2")
     filename = str(tmp_dir.join('tmp.png'))
@@ -436,6 +447,45 @@ def test_plot_show_bounds_params(grid, location):
     plotter.show_bounds(grid=grid, ticks='outside', location=location)
     plotter.show_bounds(grid=grid, ticks='both', location=location)
     plotter.show()
+
+
+@skip_no_plotting
+def test_plot_silhouette_fail(hexbeam):
+    plotter = pyvista.Plotter()
+    with pytest.raises(TypeError, match="Expected type is `PolyData`"):
+        plotter.add_mesh(hexbeam, silhouette=True)
+
+
+@skip_no_plotting
+def test_plot_no_silhouette(tri_cylinder):
+    # silhouette=False
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(tri_cylinder)
+    assert len(list(plotter.renderer.GetActors())) == 1  # only cylinder
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_plot_silhouette(tri_cylinder):
+    # silhouette=True and default properties
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(tri_cylinder, silhouette=True)
+    actors = list(plotter.renderer.GetActors())
+    assert len(actors) == 2  # cylinder + silhouette
+    actor = actors[0]  # get silhouette actor
+    props = actor.GetProperty()
+    assert props.GetColor() == pyvista.parse_color(pyvista.rcParams["silhouette"]["color"])
+    assert props.GetOpacity() == pyvista.rcParams["silhouette"]["opacity"]
+    assert props.GetLineWidth() == pyvista.rcParams["silhouette"]["line_width"]
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_plot_silhouette_options(tri_cylinder):
+    # cover other properties
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(tri_cylinder, silhouette=dict(decimate=None, feature_angle=True))
+    plotter.show(before_close_callback=verify_cache_image)
 
 
 @skip_no_plotting
@@ -1541,6 +1591,24 @@ def test_log_scale():
 
 
 @skip_no_plotting
+def test_set_focus():
+    plane = pyvista.Plane()
+    p = pyvista.Plotter()
+    p.add_mesh(plane, color="tan", show_edges=True)
+    p.set_focus((1, 0, 0))
+    p.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_set_viewup():
+    plane = pyvista.Plane()
+    p = pyvista.Plotter()
+    p.add_mesh(plane, color="tan", show_edges=True)
+    p.set_viewup((1.0, 1.0, 1.0))
+    p.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
 def test_plot_remove_scalar_bar():
     plotter = pyvista.Plotter()
     sphere = pyvista.Sphere()
@@ -1548,3 +1616,4 @@ def test_plot_remove_scalar_bar():
     plotter.add_scalar_bar(interactive=True)
     plotter.remove_scalar_bar()
     plotter.show(before_close_callback=verify_cache_image)
+

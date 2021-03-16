@@ -1208,7 +1208,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  render_points_as_spheres=None, render_lines_as_tubes=False,
                  smooth_shading=None, ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
-                 culling=None, rgb=False, categories=False,
+                 culling=None, rgb=False, categories=False, silhouette=False,
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
                  log_scale=False, render=True, **kwargs):
@@ -1387,6 +1387,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If set to ``True``, then the number of unique values in the scalar
             array will be used as the ``n_colors`` argument.
 
+        silhouette : dict, bool, optional
+            If set to ``True``, plot a silhouette highlight for the mesh. This
+            feature is only available for a triangulated ``PolyData``.
+            As a ``dict``, it contains the properties of the silhouette to display:
+
+                * ``color``: ``str`` or 3-item ``list``, color of the silhouette
+                * ``line_width``: ``float``, edge width
+                * ``opacity``: ``float`` between 0 and 1, edge transparency
+                * ``feature_angle``: If ``True``, display sharp edges
+                * ``decimate``: ``float`` between 0 and 1, level of decimation
+
         use_transparency : bool, optional
             Invert the opacity mappings and make the values correspond to
             transparency.
@@ -1427,8 +1438,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
             if not is_pyvista_dataset(mesh):
-                raise TypeError(f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
-)
+                raise TypeError(f'Object type ({type(mesh)}) not supported for plotting in PyVista.')
         ##### Parse arguments to be used for all meshes #####
 
         if scalar_bar_args is None:
@@ -1554,6 +1564,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return actors
 
         ##### Plot a single PyVista mesh #####
+
+        silhouette_params = dict(rcParams['silhouette'])
+        if isinstance(silhouette, dict):
+            silhouette_params.update(silhouette)
+            silhouette = True
+        if silhouette:
+            if not isinstance(mesh, pyvista.PolyData):
+                raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
+            if isinstance(silhouette_params["decimate"], float):
+                silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
+            else:
+                silhouette_mesh = mesh
+            alg = _vtk.vtkPolyDataSilhouette()
+            alg.SetInputData(silhouette_mesh)
+            alg.SetCamera(self.renderer.camera)
+            alg.SetEnableFeatureAngle(silhouette_params["feature_angle"])
+            mapper = make_mapper(_vtk.vtkDataSetMapper)
+            mapper.SetInputConnection(alg.GetOutputPort())
+            _, prop = self.add_actor(mapper)
+            prop.SetColor(parse_color(silhouette_params["color"]))
+            prop.SetOpacity(silhouette_params["opacity"])
+            prop.SetLineWidth(silhouette_params["line_width"])
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2863,10 +2895,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clean the plotter of the memory."""
         for renderer in self.renderers:
             renderer.deep_clean()
-        self._shadow_renderer.deep_clean()
-        for renderer in self._background_renderers:
-            if renderer is not None:
-                renderer.deep_clean()
+        if hasattr(self, '_shadow_renderer'):
+            self._shadow_renderer.deep_clean()
+        if hasattr(self, '_background_renderers'):
+            for renderer in self._background_renderers:
+                if renderer is not None:
+                    renderer.deep_clean()
         # Do not remove the renderers on the clean
         if getattr(self, 'mesh', None) is not None:
             self.mesh.point_arrays = None
@@ -3281,7 +3315,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif is_pyvista_dataset(points):
             vtkpoints = pyvista.PolyData(points.points)
             if isinstance(labels, str):
-                labels = points.point_arrays[labels].astype(str)
+                labels = points.point_arrays[labels]
         else:
             raise TypeError(f'Points type not usable: {type(points)}')
 
@@ -3866,11 +3900,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __del__(self):
         """Delete the plotter."""
-        if not self._closed:
-            self.close()
+        # We have to check here if it has the closed attribute as it
+        # may not exist should the plotter failed to initialize.
+        if hasattr(self, '_closed'):
+            if not self._closed:
+                self.close()
         self.deep_clean()
         del self.renderers
-        del self._shadow_renderer
+        if hasattr(self, '_shadow_renderer'):
+            del self._shadow_renderer
 
     def add_background_image(self, image_path, scale=1, auto_resize=True,
                              as_global=True):

@@ -75,3 +75,9 @@ def plane():
 @fixture()
 def spline():
     return examples.load_spline()
+
+
+@fixture()
+def tri_cylinder():
+    """Triangulated cylinder"""
+    return pyvista.Cylinder().triangulate()

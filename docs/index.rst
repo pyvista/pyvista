@@ -256,6 +256,7 @@ Extras
    extras/docker
    extras/developer_notes
    extras/pyinstaller
+   extras/flask
 
 Project Index
 *************

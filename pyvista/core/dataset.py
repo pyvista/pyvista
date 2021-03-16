@@ -457,7 +457,7 @@ class DataSet(DataSetFilters, DataObject):
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
 
-    def rotate_x(self, angle: float):
+    def rotate_x(self, angle: float, transform_all_input_vectors=False):
         """Rotate mesh about the x-axis.
 
         Parameters
@@ -466,9 +466,10 @@ class DataSet(DataSetFilters, DataObject):
             Angle in degrees to rotate about the x-axis.
 
         """
-        axis_rotation(self.points, angle, inplace=True, axis='x')
+        t = transformations.axis_angle_rotation((1, 0, 0), angle, deg=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_y(self, angle: float):
+    def rotate_y(self, angle: float, transform_all_input_vectors=False):
         """Rotate mesh about the y-axis.
 
         Parameters
@@ -477,9 +478,10 @@ class DataSet(DataSetFilters, DataObject):
             Angle in degrees to rotate about the y-axis.
 
         """
-        axis_rotation(self.points, angle, inplace=True, axis='y')
+        t = transformations.axis_angle_rotation((0, 1, 0), angle, deg=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_z(self, angle: float):
+    def rotate_z(self, angle: float, transform_all_input_vectors=False):
         """Rotate mesh about the z-axis.
 
         Parameters
@@ -488,7 +490,8 @@ class DataSet(DataSetFilters, DataObject):
             Angle in degrees to rotate about the z-axis.
 
         """
-        axis_rotation(self.points, angle, inplace=True, axis='z')
+        t = transformations.axis_angle_rotation((0, 0, 1), angle, deg=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
     def translate(self, xyz: Union[list, tuple, np.ndarray]):
         """Translate the mesh.
@@ -500,38 +503,6 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         self.points += np.asarray(xyz)
-
-    def transform(self, trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray]):
-        """Compute a transformation in place using a 4x4 transform.
-
-        Parameters
-        ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
-            Accepts a vtk transformation object or a 4x4 transformation matrix.
-
-        """
-        if isinstance(trans, _vtk.vtkMatrix4x4):
-            t = pyvista.array_from_vtkmatrix(trans)
-        elif isinstance(trans, _vtk.vtkTransform):
-            t = pyvista.array_from_vtkmatrix(trans.GetMatrix())
-        elif isinstance(trans, np.ndarray):
-            if trans.ndim != 2:
-                raise ValueError('Transformation array must be 4x4')
-            elif trans.shape[0] != 4 or trans.shape[1] != 4:
-                raise ValueError('Transformation array must be 4x4')
-            t = trans
-        else:
-            raise TypeError('Input transform must be either:\n'
-                            '\tvtk.vtkMatrix4x4\n'
-                            '\tvtk.vtkTransform\n'
-                            '\t4x4 np.ndarray\n')
-
-        if t[3, 3] == 0:
-            raise ValueError(
-                "Transform element (3,3), the inverse scale term, is zero")
-
-        transformations.apply_transformation_to_points(t, self.points, inplace=True)
-
 
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object."""
@@ -637,7 +608,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_array(self, name: str, preference='cell', info=False) -> Union[Tuple, np.ndarray]:
         """Search both point, cell and field data for an array."""
-        return get_array(self, name, preference=preference, info=info)
+        return get_array(self, name, preference=preference, info=info, err=True)
 
     def __getitem__(self, index: Union[Iterable, str]) -> Union[Tuple, np.ndarray]:
         """Search both point, cell, and field data for an array."""
@@ -938,8 +909,11 @@ class DataSet(DataSetFilters, DataObject):
          [907.53900146  55.49020004  83.65809631]]
 
         """
+        # A copy of the points must be returned to avoid overlapping them since the
+        # `vtk.vtkExplicitStructuredGrid.GetCell` is an override method.
         points = self.GetCell(ind).GetPoints().GetData()
-        return _vtk.vtk_to_numpy(points)
+        points = _vtk.vtk_to_numpy(points)
+        return points.copy()
 
     def cell_bounds(self, ind: int) -> List[float]:
         """Return the bounding box of a cell.
