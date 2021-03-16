@@ -34,8 +34,10 @@ from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
                                wrap, abstract_class)
 from pyvista.utilities.cells import numpy_to_idarr
-from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import (NotAllTrianglesError, VTKVersionError)
 from pyvista.utilities import transformations
+
+from typing import Union
 
 
 @abstract_class
@@ -2228,7 +2230,8 @@ class DataSetFilters:
         extract_sel.Update()
         return _get_output(extract_sel)
 
-    def extract_surface(dataset, pass_pointid=True, pass_cellid=True, inplace=False):
+    def extract_surface(dataset, pass_pointid=True, pass_cellid=True,
+                        nonlinear_subdivision=1):
         """Extract surface mesh of the grid.
 
         Parameters
@@ -2241,10 +2244,36 @@ class DataSetFilters:
             Adds a cell array "vtkOriginalPointIds" that idenfities which
             original cells these surface cells correspond to
 
+        nonlinear_subdivision : int, optional
+            If the input is an unstructured grid with nonlinear faces,
+            this parameter determines how many times the face is
+            subdivided into linear faces.
+
+            If 0, the output is the equivalent of its linear
+            counterpart (and the midpoints determining the nonlinear
+            interpolation are discarded). If 1 (the default), the
+            nonlinear face is triangulated based on the midpoints. If
+            greater than 1, the triangulated pieces are recursively
+            subdivided to reach the desired subdivision. Setting the
+            value to greater than 1 may cause some point data to not
+            be passed even if no nonlinear faces exist. This option
+            has no effect if the input is not an unstructured grid.
+
         Returns
         -------
-        extsurf : pyvista.PolyData
-            Surface mesh of the grid
+        pyvista.PolyData
+            Surface mesh of the grid.
+
+        Examples
+        --------
+        Extract the surface of an UnstructuredGrid.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> grid = examples.load_hexbeam()
+        >>> surf = grid.extract_surface()
+        >>> type(surf)
+        <class 'pyvista.core.pointset.PolyData'>
 
         """
         surf_filter = _vtk.vtkDataSetSurfaceFilter()
@@ -2253,13 +2282,15 @@ class DataSetFilters:
             surf_filter.PassThroughCellIdsOn()
         if pass_cellid:
             surf_filter.PassThroughPointIdsOn()
+
+        if nonlinear_subdivision != 1:
+            surf_filter.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
+
+        # available in 9.0.2
+        # surf_filter.SetDelegation(delegation)
+
         surf_filter.Update()
-
-        # TODO: Add
-        # surf_filter.SetNonlinearSubdivisionLevel(subdivision)
-
-        mesh = _get_output(surf_filter)
-        return mesh
+        return _get_output(surf_filter)
 
     def surface_indices(dataset):
         """Return the surface indices of a grid.
@@ -2604,7 +2635,7 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> shrunk_mesh = mesh.shrink(shrink_factor=0.8)  # doctest:+SKIP
+        >>> shrunk_mesh = mesh.shrink(shrink_factor=0.8)
         """
         if not (0.0 <= shrink_factor <= 1.0):
             raise ValueError('`shrink_factor` should be between 0.0 and 1.0')
@@ -2616,7 +2647,96 @@ class DataSetFilters:
         if isinstance(dataset, _vtk.vtkPolyData):
             return output.extract_surface()
 
-    def reflect(dataset, normal, point=None, inplace=False):
+    def transform(dataset: _vtk.vtkDataSet,
+                  trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
+                  transform_all_input_vectors=False, inplace=True):
+        """Transform this mesh with a 4x4 transform.
+
+        Parameters
+        ----------
+        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
+            Accepts a vtk transformation object or a 4x4 transformation matrix.
+
+        transform_all_input_vectors: bool, optional
+            When ``True``, all input vectors are transformed. Otherwise, only the
+            points, normals and active vectors are transformed.
+
+        Examples
+        --------
+        Translate a mesh by (50, 100, 200)
+
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+
+        Here is a 4x4 NumPy array is used, but vtk.vtkMatrix4x4 and
+        vtk.vtkTransform are also accepted.
+
+        >>> transform_matrix = np.array([[1, 0, 0, 50], [0, 1, 0, 100], [0, 0, 1, 200], [0, 0, 0, 1]])
+        >>> mesh.transform(transform_matrix, inplace=True)
+        >>> mesh.plot(show_edges=True)  # doctest:+SKIP
+        """
+        if isinstance(trans, _vtk.vtkMatrix4x4):
+            m = trans
+            t = _vtk.vtkTransform()
+            t.SetMatrix(m)
+        elif isinstance(trans, _vtk.vtkTransform):
+            t = trans
+            m = trans.GetMatrix()
+        elif isinstance(trans, np.ndarray):
+            if trans.ndim != 2:
+                raise ValueError('Transformation array must be 4x4')
+            elif trans.shape[0] != 4 or trans.shape[1] != 4:
+                raise ValueError('Transformation array must be 4x4')
+            m = pyvista.vtkmatrix_from_array(trans)
+            t = _vtk.vtkTransform()
+            t.SetMatrix(m)
+        else:
+            raise TypeError('Input transform must be either:\n'
+                            '\tvtk.vtkMatrix4x4\n'
+                            '\tvtk.vtkTransform\n'
+                            '\t4x4 np.ndarray\n')
+
+        if m.GetElement(3, 3) == 0:
+            raise ValueError(
+                "Transform element (3,3), the inverse scale term, is zero")
+
+        # vtkTransformFilter sometimes doesn't transform all vector arrays
+        # when there are active point/cell scalars. Use this workaround
+        active_scalars_name = dataset.active_scalars_name
+        dataset.set_active_scalars(None)
+
+        f = _vtk.vtkTransformFilter()
+        f.SetInputDataObject(dataset)
+        f.SetTransform(t)
+
+        if hasattr(f, 'SetTransformAllInputVectors'):
+            f.SetTransformAllInputVectors(transform_all_input_vectors)
+        else:
+            # In VTK 8.1.2 and earlier, vtkTransformFilter does not support the transformation of all input vectors.
+            # Raise an error if the user requested for input vectors to be transformed and it is not supported
+            if transform_all_input_vectors:
+                raise VTKVersionError('The installed version of VTK does not support'
+                                      'transformation of all input vectors.')
+
+        f.Update()
+        res = pyvista.core.filters._get_output(f)
+
+        # make the previously active scalars active again
+        dataset.set_active_scalars(active_scalars_name)
+        res.set_active_scalars(active_scalars_name)
+
+        if inplace:
+            if not isinstance(dataset, type(res)):
+                raise ValueError('Unable to perform in-place transformation. '
+                                 f'Input was `{dataset.GetClassName()}` '
+                                 f'but output is `{res.GetClassName()}`.')
+            dataset.overwrite(res)
+        else:
+            return res
+
+
+    def reflect(dataset, normal, point=None, inplace=False,
+                transform_all_input_vectors=False):
         """Reflect a dataset across a plane.
 
         Parameters
@@ -2631,6 +2751,10 @@ class DataSetFilters:
         inplace : bool, optional
             When ``True``, modifies the dataset and returns nothing.
 
+        transform_all_input_vectors: bool, optional
+            When ``True``, all input vectors are transformed. Otherwise, only the
+            points, normals and active vectors are transformed.
+
         Examples
         --------
         >>> from pyvista import examples
@@ -2640,12 +2764,8 @@ class DataSetFilters:
 
         """
         t = transformations.reflection(normal, point=point)
-        if inplace:
-            dataset.transform(t)
-        else:
-            mirror = dataset.copy()
-            mirror.transform(t)
-            return mirror
+        return dataset.transform(t, transform_all_input_vectors=transform_all_input_vectors,
+                                 inplace=inplace)
 
 
 @abstract_class

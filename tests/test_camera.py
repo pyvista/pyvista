@@ -34,7 +34,8 @@ def test_distance(camera):
     position = np.random.random(3)
     camera.position = position
     camera.focal_point = focal_point
-    camera.distance == np.linalg.norm(focal_point - position, ord=2)
+    assert np.isclose(camera.distance, np.linalg.norm(focal_point - position, ord=2),
+                      rtol=1E-8)
 
 
 def test_thickness(camera):
@@ -88,3 +89,11 @@ def test_clipping_range(camera):
         far_point = near_point - np.random.random(1)
         points = (near_point, far_point)
         camera.clipping_range = points
+
+
+def test_view_angle(camera):
+    assert camera.GetViewAngle() == camera.view_angle
+
+
+def test_direction(camera):
+    assert camera.GetDirectionOfProjection() == camera.direction

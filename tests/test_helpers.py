@@ -5,6 +5,16 @@ import numpy as np
 import pyvista
 
 
+def test_wrap_none():
+    # check against the "None" edge case
+    assert pyvista.wrap(None) is None
+
+
+def test_wrap_pyvista_ndarray(sphere):
+    pd = pyvista.wrap(sphere.points)
+    assert isinstance(pd, pyvista.PolyData)
+
+
 def test_wrap_trimesh():
     points = [[0, 0, 0], [0, 0, 1], [0, 1, 0]]
     faces = [[0, 1, 2]]
