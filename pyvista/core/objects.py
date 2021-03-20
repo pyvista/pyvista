@@ -316,7 +316,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def _from_file(self, filename):
         try:
-            image = self._load_file(filename)
+            image = pyvista.read(filename)
             if image.GetNumberOfPoints() < 2:
                 raise ValueError("Problem reading the image with VTK.")
             self._from_image_data(image)

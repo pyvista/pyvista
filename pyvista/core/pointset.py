@@ -200,7 +200,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
                 '.vtk': _vtk.vtkPolyDataWriter}
 
     def __init__(self, var_inp=None, faces=None, n_faces=None, lines=None,
-                 n_lines=None, deep=False) -> None:
+                 n_lines=None, deep=False, force_ext=None) -> None:
         """Initialize the polydata."""
         local_parms = locals()
         super().__init__()
@@ -216,7 +216,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
                 if local_parms[kwarg]:
                     raise ValueError('No other arguments should be set when first '
                                      'parameter is a string')
-            self._from_file(var_inp)  # is filename
+            self._from_file(var_inp, force_ext=force_ext)  # is filename
 
             return
 
@@ -564,7 +564,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                     self.shallow_copy(args[0])
 
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._from_file(args[0])
+                self._from_file(args[0], **kwargs)
 
             elif isinstance(args[0], _vtk.vtkStructuredGrid):
                 vtkappend = _vtk.vtkAppendFilter()
@@ -953,7 +953,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
             if isinstance(args[0], _vtk.vtkStructuredGrid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._from_file(args[0])
+                self._from_file(args[0], **kwargs)
 
         elif len(args) == 3:
             arg0_is_arr = isinstance(args[0], np.ndarray)

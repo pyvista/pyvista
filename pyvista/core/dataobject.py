@@ -45,24 +45,8 @@ class DataObject:
         """Overwrite this mesh with the given mesh as a deep copy."""
         return self.DeepCopy(to_copy)
 
-    def _load_file(self, filename: Union[str, Path]) -> _vtk.vtkDataObject:
-        """Generically load a vtk object from file.
-
-        Parameters
-        ----------
-        filename : str, pathlib.Path
-            Filename of object to be loaded.  File/reader type is inferred from the
-            extension of the filename.
-
-        Notes
-        -----
-        Binary files load much faster than ASCII.
-
-        """
-        return pyvista.read(filename)
-
-    def _from_file(self, filename: Union[str, Path]):
-        data = self._load_file(filename)
+    def _from_file(self, filename: Union[str, Path], **kwargs):
+        data = pyvista.read(filename, **kwargs)
         if not isinstance(self, type(data)):
             raise ValueError(f'Reading file returned data of `{data.GetClassName()}`, '
                              f'but `{self.GetClassName()}` was expected.')

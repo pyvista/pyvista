@@ -252,8 +252,6 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
     elif ext in ['.vtk']:
         # Attempt to use the legacy reader...
         return read_legacy(filename)
-    elif ext in ['.jpeg', '.jpg']:
-        return pyvista.Texture(filename).to_image()
     else:
         # Attempt find a reader in the readers mapping
         try:
