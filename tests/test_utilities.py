@@ -135,6 +135,36 @@ def test_read_legacy(srr_mock):
         pyvista.read_legacy('legacy.vtk')
 
 
+@mock.patch('pyvista.utilities.fileio.read_legacy')
+def test_pyvista_read_legacy(read_legacy_mock):
+    # check that reading a file with extension .vtk calls `read_legacy`
+    # use the globefile as a dummy because pv.read() checks for the existence of the file
+    pyvista.read(ex.globefile)
+    args, kwargs = read_legacy_mock.call_args
+    filename = args[0]
+    assert filename == ex.globefile
+
+
+@mock.patch('pyvista.utilities.fileio.read_exodus')
+def test_pyvista_read_exodus(read_exodus_mock):
+    # check that reading a file with extension .e calls `read_exodus`
+    # use the globefile as a dummy because pv.read() checks for the existence of the file
+    pyvista.read(ex.globefile, force_ext='.e')
+    args, kwargs = read_exodus_mock.call_args
+    filename = args[0]
+    assert filename == ex.globefile
+
+
+@mock.patch('pyvista.Texture')
+def test_pyvista_read_texture(texture_mock):
+    # check that reading a file with extension .jpg calls Texture constructor
+    # use the globefile as a dummy because pv.read() checks for the existence of the file
+    pyvista.read(ex.globefile, force_ext='.jpg')
+    args, kwargs = texture_mock.call_args
+    filename = args[0]
+    assert filename == ex.globefile
+
+
 @pytest.mark.parametrize('auto_detect', (True, False))
 @mock.patch('pyvista.utilities.fileio.standard_reader_routine')
 def test_read_plot3d(srr_mock, auto_detect):
