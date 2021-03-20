@@ -264,7 +264,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             self.lines = CellArray(lines, n_lines, deep)
 
     def _post_file_load_processing(self):
-        """Executed after loading a PolyData from file."""
+        """Execute after loading a PolyData from file."""
         # When loading files with just point arrays, create and
         # set the polydata vertices
         if self.n_points > 0 and self.n_cells == 0:
