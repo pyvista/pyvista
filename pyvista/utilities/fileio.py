@@ -193,6 +193,11 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
 
+    force_ext: str, optional
+        If specified, the reader will be chosen by an extension which
+        is different to its actual extension. For example, ``'.vts'``,
+        ``'.vtu'``.
+
     file_format : str, optional
         Format of file to read with meshio.
 
@@ -212,6 +217,9 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
 
     >>> mesh = pyvista.read("mesh.obj")  # doctest:+SKIP
     """
+    if file_format is not None and force_ext is not None:
+        raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
+
     if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
         for each in filename:
@@ -251,6 +259,11 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
             reader = get_reader(filename, force_ext=ext)
             return standard_reader_routine(reader, filename)
         except KeyError:
+            # Don't fall back to meshio if using `force_ext`, which is really
+            # just intended to be used with the native PyVista readers
+            if force_ext is not None:
+                from meshio._exceptions import ReadError
+                raise ReadError
             # Attempt read with meshio
             try:
                 from meshio._exceptions import ReadError
