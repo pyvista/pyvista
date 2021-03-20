@@ -238,6 +238,13 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
     if attrs is not None:
         reader = get_reader(filename, force_ext=ext)
         return standard_reader_routine(reader, filename, attrs=attrs)
+    elif ext in ['.e', '.exo']:
+        return read_exodus(filename)
+    elif ext in ['.vtk']:
+        # Attempt to use the legacy reader...
+        return read_legacy(filename)
+    elif ext in ['.jpeg', '.jpg']:
+        return pyvista.Texture(filename).to_image()
     else:
         # Attempt find a reader in the readers mapping
         try:
