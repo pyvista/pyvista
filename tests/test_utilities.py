@@ -155,16 +155,6 @@ def test_pyvista_read_exodus(read_exodus_mock):
     assert filename == ex.globefile
 
 
-@mock.patch('pyvista.Texture')
-def test_pyvista_read_texture(texture_mock):
-    # check that reading a file with extension .jpg calls Texture constructor
-    # use the globefile as a dummy because pv.read() checks for the existence of the file
-    pyvista.read(ex.globefile, force_ext='.jpg')
-    args, kwargs = texture_mock.call_args
-    filename = args[0]
-    assert filename == ex.globefile
-
-
 @pytest.mark.parametrize('auto_detect', (True, False))
 @mock.patch('pyvista.utilities.fileio.standard_reader_routine')
 def test_read_plot3d(srr_mock, auto_detect):
