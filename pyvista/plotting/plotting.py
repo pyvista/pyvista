@@ -2573,7 +2573,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mapper.scalar_range = clim[0], clim[1]
                 self._scalar_bar_mappers[title].append(mapper)
                 self._scalar_bar_ranges[title] = clim
-                self.scalar_bar.SetLookupTable(mapper.lookup_table)
+                self.scalar_bars[-1].SetLookupTable(mapper.lookup_table)
                 # Color bar already present and ready to be used so returning
                 return
 
@@ -2608,14 +2608,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         color = parse_color(color)
 
         # Create scalar bar
-        self.scalar_bar = _vtk.vtkScalarBarActor()
+        if hasattr(self, 'scalar_bars'):
+            self.scalar_bars.append(_vtk.vtkScalarBarActor())
+        else:
+            self.scalar_bars = [_vtk.vtkScalarBarActor()]
         if background_color is not None:
             background_color = parse_color(background_color, opacity=1.0)
             background_color = np.array(background_color) * 255
-            self.scalar_bar.GetBackgroundProperty().SetColor(background_color[0:3])
+            self.scalar_bars[-1].GetBackgroundProperty().SetColor(background_color[0:3])
 
             if fill:
-                self.scalar_bar.DrawBackgroundOn()
+                self.scalar_bars[-1].DrawBackgroundOn()
 
             lut = _vtk.vtkLookupTable()
             lut.DeepCopy(mapper.lookup_table)
@@ -2627,45 +2630,45 @@ class BasePlotter(PickingHelper, WidgetHelper):
             lut.SetTable(_vtk.numpy_to_vtk(ctable, array_type=_vtk.VTK_UNSIGNED_CHAR))
         else:
             lut = mapper.lookup_table
-        self.scalar_bar.SetLookupTable(lut)
+        self.scalar_bars[-1].SetLookupTable(lut)
         if n_colors is not None:
-            self.scalar_bar.SetMaximumNumberOfColors(n_colors)
+            self.scalar_bars[-1].SetMaximumNumberOfColors(n_colors)
 
         if n_labels < 1:
-            self.scalar_bar.DrawTickLabelsOff()
+            self.scalar_bars[-1].DrawTickLabelsOff()
         else:
-            self.scalar_bar.DrawTickLabelsOn()
-            self.scalar_bar.SetNumberOfLabels(n_labels)
+            self.scalar_bars[-1].DrawTickLabelsOn()
+            self.scalar_bars[-1].SetNumberOfLabels(n_labels)
 
         if nan_annotation:
-            self.scalar_bar.DrawNanAnnotationOn()
+            self.scalar_bars[-1].DrawNanAnnotationOn()
 
         if above_label:
-            self.scalar_bar.DrawAboveRangeSwatchOn()
-            self.scalar_bar.SetAboveRangeAnnotation(above_label)
+            self.scalar_bars[-1].DrawAboveRangeSwatchOn()
+            self.scalar_bars[-1].SetAboveRangeAnnotation(above_label)
         if below_label:
-            self.scalar_bar.DrawBelowRangeSwatchOn()
-            self.scalar_bar.SetBelowRangeAnnotation(below_label)
+            self.scalar_bars[-1].DrawBelowRangeSwatchOn()
+            self.scalar_bars[-1].SetBelowRangeAnnotation(below_label)
 
         # edit the size of the colorbar
-        self.scalar_bar.SetHeight(height)
-        self.scalar_bar.SetWidth(width)
-        self.scalar_bar.SetPosition(position_x, position_y)
+        self.scalar_bars[-1].SetHeight(height)
+        self.scalar_bars[-1].SetWidth(width)
+        self.scalar_bars[-1].SetPosition(position_x, position_y)
 
         if fmt is not None:
-            self.scalar_bar.SetLabelFormat(fmt)
+            self.scalar_bars[-1].SetLabelFormat(fmt)
 
         if vertical:
-            self.scalar_bar.SetOrientationToVertical()
+            self.scalar_bars[-1].SetOrientationToVertical()
         else:
-            self.scalar_bar.SetOrientationToHorizontal()
+            self.scalar_bars[-1].SetOrientationToHorizontal()
 
         if label_font_size is not None or title_font_size is not None:
-            self.scalar_bar.UnconstrainedFontSizeOn()
-            self.scalar_bar.AnnotationTextScalingOn()
+            self.scalar_bars[-1].UnconstrainedFontSizeOn()
+            self.scalar_bars[-1].AnnotationTextScalingOn()
 
-        label_text = self.scalar_bar.GetLabelTextProperty()
-        anno_text = self.scalar_bar.GetAnnotationTextProperty()
+        label_text = self.scalar_bars[-1].GetLabelTextProperty()
+        anno_text = self.scalar_bars[-1].GetAnnotationTextProperty()
         label_text.SetColor(color)
         anno_text.SetColor(color)
         label_text.SetShadow(shadow)
@@ -2688,8 +2691,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._scalar_bar_ranges[title] = clim
             self._scalar_bar_mappers[title] = [mapper]
 
-            self.scalar_bar.SetTitle(title)
-            title_text = self.scalar_bar.GetTitleTextProperty()
+            self.scalar_bars[-1].SetTitle(title)
+            title_text = self.scalar_bars[-1].GetTitleTextProperty()
 
             title_text.SetJustificationToCentered()
 
@@ -2705,7 +2708,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # set color
             title_text.SetColor(color)
 
-            self._scalar_bar_actors[title] = self.scalar_bar
+            self._scalar_bar_actors[title] = self.scalar_bars[-1]
 
         if interactive is None:
             interactive = rcParams['interactive']
@@ -2716,7 +2719,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if interactive:
             self.scalar_widget = _vtk.vtkScalarBarWidget()
-            self.scalar_widget.SetScalarBarActor(self.scalar_bar)
+            self.scalar_widget.SetScalarBarActor(self.scalar_bars[-1])
             self.scalar_widget.SetInteractor(self.iren)
             self.scalar_widget.SetEnabled(1)
             rep = self.scalar_widget.GetRepresentation()
@@ -2728,19 +2731,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._scalar_bar_widgets[title] = self.scalar_widget
 
         if use_opacity:
-            self.scalar_bar.SetUseOpacity(True)
+            self.scalar_bars[-1].SetUseOpacity(True)
 
         if outline:
-            self.scalar_bar.SetDrawFrame(True)
-            frame_prop = self.scalar_bar.GetFrameProperty()
+            self.scalar_bars[-1].SetDrawFrame(True)
+            frame_prop = self.scalar_bars[-1].GetFrameProperty()
             frame_prop.SetColor(color)
         else:
-            self.scalar_bar.SetDrawFrame(False)
+            self.scalar_bars[-1].SetDrawFrame(False)
 
-        self.add_actor(self.scalar_bar, reset_camera=False, pickable=False,
+        self.add_actor(self.scalar_bars[-1], reset_camera=False, pickable=False,
                        render=render)
 
-        return self.scalar_bar  # return the actor
+        return self.scalar_bars[-1]  # return the actor
 
     def update_scalars(self, scalars, mesh=None, render=True):
         """Update scalars of an object in the plotter.
@@ -2852,7 +2855,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer.remove_all_lights()
 
         # Clear the scalar bar
-        self.scalar_bar = None
+        self.scalar_bars = None
 
         # Grab screenshots of last render
         if self._store_image:
@@ -3194,10 +3197,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def remove_scalar_bar(self):
         """Remove the scalar bar."""
-        if hasattr(self, 'scalar_bar'):
+        if hasattr(self, 'scalar_bars'):
             if hasattr(self, 'scalar_widget'):
                 self.scalar_widget.SetEnabled(0)
-            self.remove_actor(self.scalar_bar, reset_camera=False)
+            for scalar_bar in self.scalar_bars:
+                self.remove_actor(scalar_bar, reset_camera=False)
 
     def add_point_labels(self, points, labels, italic=False, bold=True,
                          font_size=None, text_color=None,

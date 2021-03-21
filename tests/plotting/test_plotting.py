@@ -1611,7 +1611,6 @@ def test_set_viewup():
 @skip_no_plotting
 def test_plot_remove_scalar_bar():
     plotter = pyvista.Plotter()
-    sphere = pyvista.Sphere()
     plotter.add_mesh(sphere)
     plotter.add_scalar_bar(interactive=True)
     plotter.remove_scalar_bar()
