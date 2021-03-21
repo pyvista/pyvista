@@ -3,6 +3,14 @@
 Using ``itkwidgets``
 ~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+
+   As of version ``0.32.0``, ``itkwidgets`` does not support
+   Jupyterlab 3.  Attempting to run the following will return a
+   ``Model not found`` error within jupyterlab.
+
+   Track the progress of this in `Issue 405 <https://github.com/InsightSoftwareConsortium/itkwidgets/issues/405>`_.
+
 PyVista has an interface for visualizing plots in Jupyter.  The
 ``pyvista.PlotterITK`` class allows you interactively visualize a mesh
 within a jupyter notebook.  For those who prefer plotting within
@@ -60,7 +68,7 @@ For convenience, figures can also be plotted using the ``plot_itk`` function:
     mesh = pv.Sphere()
     z = mesh.points[:, 2]
 
-    # Plot using the ITKplotter
+    # Plot using the itkwidget
     pv.plot_itk(mesh, scalars=z)
 
 

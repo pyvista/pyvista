@@ -10,4 +10,3 @@ Plotting
    plotting
    widgets
    qt_plotting
-   notebook_plotting/index

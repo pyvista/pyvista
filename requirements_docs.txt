@@ -21,4 +21,4 @@ mypy
 mypy-extensions
 typed-ast
 typing-extensions
-
+jupyter_sphinx==0.3.2

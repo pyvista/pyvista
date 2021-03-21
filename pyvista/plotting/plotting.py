@@ -58,10 +58,41 @@ def close_all():
     _ALL_PLOTTERS.clear()
     return True
 
-
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
+
+
+def _warn_xserver():
+    """Check if plotting is supported and persist this state.
+
+    Check once and cache this value between calls.  Warn the user if
+    plotting is not supported.  This only works on Linux, but
+    this is probably fine since most headless servers are Linux.
+
+    """
+    if not hasattr(_warn_xserver, 'has_support'):
+        if os.name != 'nt':
+            _warn_xserver.has_support = pyvista.system_supports_plotting()
+        else:
+            # assume system supports plotting until we can find a
+            # better way of checking that this works in NT.
+            _warn_xserver.has_support = True
+
+    if not _warn_xserver.has_support:
+        # check if a display has been set
+        if 'DISPLAY' in os.environ:
+            return
+
+        # finally, check if using a backend that doesn't require an xserver
+        if rcParams['jupyter_backend'] in ['ipygany']:
+            return
+
+        warnings.warn('\n'
+                      'This system does not appear to be running an xserver.\n'
+                      'PyVista will likely segfault when rendering.\n\n'
+                      'Try starting a virtual frame buffer with xvfb, or using\n '
+                      ' ``pyvista.start_xvfb()``\n')
 
 
 @abstract_class
@@ -1799,33 +1830,40 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalar_bar_args.setdefault('below_label', 'Below')
 
             if cmap is not None:
-                if not _has_matplotlib():
-                    cmap = None
-                    logging.warning('Please install matplotlib for color maps.')
+                # ipygany uses different colormaps
+                if rcParams['jupyter_backend'] == 'ipygany':
+                    from ..jupyter.pv_ipygany import check_colormap
+                    check_colormap(cmap)
+                    # have to add the attribute to pass it to ipygany
+                    self.mapper.cmap = cmap
+                else:
+                    if not _has_matplotlib():
+                        cmap = None
+                        logging.warning('Please install matplotlib for color maps.')
 
-                cmap = get_cmap_safe(cmap)
-                if categories:
-                    if categories is True:
-                        n_colors = len(np.unique(scalars))
-                    elif isinstance(categories, int):
-                        n_colors = categories
-                ctable = cmap(np.linspace(0, 1, n_colors))*255
-                ctable = ctable.astype(np.uint8)
-                # Set opactities
-                if isinstance(opacity, np.ndarray) and not _custom_opac:
-                    ctable[:,-1] = opacity
-                if flip_scalars:
-                    ctable = np.ascontiguousarray(ctable[::-1])
-                table.SetTable(_vtk.numpy_to_vtk(ctable))
-                if _custom_opac:
-                    # need to round the colors here since we're
-                    # directly displaying the colors
-                    hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
-                    scalars = np.round(hue*n_colors)/n_colors
-                    scalars = cmap(scalars)*255
-                    scalars[:, -1] *= opacity
-                    scalars = scalars.astype(np.uint8)
-                    prepare_mapper(scalars)
+                    cmap = get_cmap_safe(cmap)
+                    if categories:
+                        if categories is True:
+                            n_colors = len(np.unique(scalars))
+                        elif isinstance(categories, int):
+                            n_colors = categories
+                    ctable = cmap(np.linspace(0, 1, n_colors))*255
+                    ctable = ctable.astype(np.uint8)
+                    # Set opactities
+                    if isinstance(opacity, np.ndarray) and not _custom_opac:
+                        ctable[:,-1] = opacity
+                    if flip_scalars:
+                        ctable = np.ascontiguousarray(ctable[::-1])
+                    table.SetTable(_vtk.numpy_to_vtk(ctable))
+                    if _custom_opac:
+                        # need to round the colors here since we're
+                        # directly displaying the colors
+                        hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
+                        scalars = np.round(hue*n_colors)/n_colors
+                        scalars = cmap(scalars)*255
+                        scalars[:, -1] *= opacity
+                        scalars = scalars.astype(np.uint8)
+                        prepare_mapper(scalars)
 
             else:  # no cmap specified
                 if flip_scalars:
@@ -4178,6 +4216,9 @@ class Plotter(BasePlotter):
 
         log.debug('Plotter init start')
 
+        # check if a plotting backend is enabled
+        _warn_xserver()
+
         def on_timer(iren, event_id):
             """Exit application if interactive renderer stops."""
             if event_id == 'TimerEvent':
@@ -4259,14 +4300,14 @@ class Plotter(BasePlotter):
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=None,
              screenshot=False, return_img=False, cpos=None, use_ipyvtk=None,
-             **kwargs):
+             jupyter_backend=None, **kwargs):
         """Display the plotting window.
 
         Notes
         -----
-        Please use the ``q``-key to close the plotter as some operating systems
-        (namely Windows) will experience issues saving a screenshot if the
-        exit button in the GUI is prressed.
+        Please use the ``q``-key to close the plotter as some
+        operating systems (namely Windows) will experience issues
+        saving a screenshot if the exit button in the GUI is pressed.
 
         Parameters
         ----------
@@ -4274,7 +4315,7 @@ class Plotter(BasePlotter):
             Title of plotting window.
 
         window_size : list, optional
-            Window size in pixels.  Defaults to [1024, 768]
+            Window size in pixels.  Defaults to ``[1024, 768]``
 
         interactive : bool, optional
             Enabled by default.  Allows user to pan and move figure.
@@ -4289,18 +4330,32 @@ class Plotter(BasePlotter):
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
-            window_size.  Default ``False``.
+            ``window_size``.  Default ``False``.
 
         cpos : list(tuple(floats))
-            The camera position to use
+            The camera position.  You can also set this with
+            ``Plotter.camera_position``.
 
         return_img : bool
             Returns a numpy array representing the last image along
             with the camera position.
 
         use_ipyvtk : bool, optional
-            Use the ``ipyvtk-simple`` ``ViewInteractiveWidget`` to
-            visualize the plot within a juyterlab notebook.
+            Deprecated.  Instead, set the backend either globally with
+            ``pyvista.set_jupyter_backend('ipyvtk_simple')`` or with
+            ``backend='ipyvtk_simple'``.
+
+        jupyter_backend : str, optional
+            Jupyter notebook plotting backend to use.  One of the
+            following:
+
+            * ``'none'`` : Do not display in the notebook.
+            * ``'static'`` : Display a static figure.
+            * ``'ipygany'`` : Show a ``ipygany`` widget
+            * ``'panel'`` : Show a ``panel`` widget.
+
+            This can also be set globally with
+            ``pyvista.set_jupyter_backend``
 
         Returns
         -------
@@ -4313,15 +4368,18 @@ class Plotter(BasePlotter):
 
         Examples
         --------
-        Show the plotting window and display it using the
-        ipyvtk-simple viewer
+        Simply show the plot.
 
-        >>> pl.show(use_ipyvtk=True)  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
 
         Take a screenshot interactively.  Screenshot will be of the
         last image shown.
 
         >>> pl.show(screenshot='my_image.png')  # doctest:+SKIP
+
+        Display an ``ipygany`` scene within a jupyter notebook
+
+        >>> pl.show(jupyter_backend='ipygany')  # doctest:+SKIP
 
         """
         # developer keyword argument: return notebook viewer
@@ -4344,8 +4402,14 @@ class Plotter(BasePlotter):
         elif auto_close is None:
             auto_close = rcParams['auto_close']
 
-        if use_ipyvtk is None:
-            use_ipyvtk = rcParams['use_ipyvtk']
+        if use_ipyvtk:
+            txt = textwrap.dedent("""\
+            use_ipyvtk is deprecated.  Set the backend
+            globally with ``pyvista.set_jupyter_backend("ipyvtk_simple"
+            or with ``backend="ipyvtk_simple"``)
+            """)
+            from pyvista.core.errors import DeprecationError
+            raise DeprecationError(txt)
 
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
@@ -4374,6 +4438,17 @@ class Plotter(BasePlotter):
         # Windows when running in interactive mode (python console,
         # Ipython console, Jupyter notebook) but only after the very
         # first render window
+
+        # handle plotter notebook
+        if self.notebook:
+            from ..jupyter.notebook import handle_plotter
+            if jupyter_backend is None:
+                jupyter_backend = rcParams['jupyter_backend']
+
+            if jupyter_backend != 'none':
+                disp = handle_plotter(self, backend=jupyter_backend,
+                                      return_viewer=return_viewer)
+                return disp
 
         self.render()
 
@@ -4422,11 +4497,6 @@ class Plotter(BasePlotter):
         #       kernel if code here tries to access that renderer.
         #       See issues #135 and #186 for insight before editing the
         #       remainder of this function.
-
-        # handle plotter notebook
-        if self.notebook:
-            from ..jupyter.notebook import handle_plotter
-            return handle_plotter(self)
 
         # Get camera position before closing
         cpos = self.camera_position
