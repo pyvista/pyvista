@@ -1606,3 +1606,15 @@ def test_set_viewup():
     p.add_mesh(plane, color="tan", show_edges=True)
     p.set_viewup((1.0, 1.0, 1.0))
     p.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_plot_remove_scalar_bar(sphere):
+    sphere['z'] = sphere.points[:, 2]
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere, show_scalar_bar=False)
+    plotter.add_scalar_bar(interactive=True)
+    assert len(plotter.scalar_bars) == 1
+    plotter.remove_scalar_bar()
+    assert len(plotter.scalar_bars) == 0
+    plotter.show(before_close_callback=verify_cache_image)
