@@ -36,6 +36,7 @@ from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
                     parse_font_family, rcParams)
 from .tools import normalize, opacity_transfer_function
 from .widgets import WidgetHelper
+from .scalar_bars import ScalarBars
 
 
 def _has_matplotlib():
@@ -262,10 +263,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._shadow_renderer.SetDraw(False)
 
         # This keeps track of scalars names already plotted and their ranges
-        self._scalar_bar_ranges = {}
-        self._scalar_bar_mappers = {}
-        self._scalar_bar_actors = {}
-        self._scalar_bar_widgets = {}
+        self._scalar_bars = ScalarBars(self)
+
         # track if the camera has been setup
         # self.camera_set = False
         self._first_time = True
@@ -295,6 +294,30 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Key bindings
         self.reset_key_events()
         log.debug('BasePlotter init stop')
+
+    @property
+    def scalar_bars(self):
+        """Plotter's scalar bars
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pyvista.set_plot_theme("document")
+        >>> sphere = pyvista.Sphere()
+        >>> sphere['Data'] = sphere.points[:, 2]
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.add_mesh(sphere, stitle='Data')
+        >>> plotter.scalar_bars
+        Scalar Bar Title     Interactive
+        "Data"               False
+
+        Select a scalar bar actor based on the title of the bar.
+
+        >>> plotter.scalar_bars['Data']  # doctest:+SKIP
+        (vtkmodules.vtkRenderingAnnotation.vtkScalarBarActor)0x7fcd3567ca00
+
+        """
+        return self._scalar_bars
 
     @property
     def _before_close_callback(self):
@@ -1904,7 +1927,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Add scalar bar if available
         if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
-            self.add_scalar_bar(stitle, **scalar_bar_args)
+            self.add_scalar_bar(title=stitle, **scalar_bar_args)
 
         self.renderer.Modified()
 
@@ -2311,7 +2334,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Add scalar bar
         if stitle is not None and show_scalar_bar:
-            self.add_scalar_bar(stitle, **scalar_bar_args)
+            self.add_scalar_bar(title=stitle, **scalar_bar_args)
 
         self.renderer.Modified()
 
@@ -2359,12 +2382,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for renderer in self._background_renderers:
             if renderer is not None:
                 renderer.clear()
-        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
-        self._scalar_bar_slot_lookup = {}
-        self._scalar_bar_ranges = {}
-        self._scalar_bar_mappers = {}
-        self._scalar_bar_actors = {}
-        self._scalar_bar_widgets = {}
+
+        self.scalar_bars.clear()
         self.mesh = None
 
     def link_views(self, views=0):
@@ -2417,299 +2436,33 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('Expected type is None, int, list or tuple:'
                             f'{type(views)} is given')
 
-    def add_scalar_bar(self, title=None, n_labels=5, italic=False,
-                       bold=False, title_font_size=None,
-                       label_font_size=None, color=None,
-                       font_family=None, shadow=False, mapper=None,
-                       width=None, height=None, position_x=None,
-                       position_y=None, vertical=None,
-                       interactive=None, fmt=None, use_opacity=True,
-                       outline=False, nan_annotation=False,
-                       below_label=None, above_label=None,
-                       background_color=None, n_colors=None, fill=False,
-                       render=True):
-        """Create scalar bar using the ranges as set by the last input mesh.
-
-        Parameters
-        ----------
-        title : string, optional
-            Title of the scalar bar.  Default None
-
-        n_labels : int, optional
-            Number of labels to use for the scalar bar.
-
-        italic : bool, optional
-            Italicises title and bar labels.  Default False.
-
-        bold  : bool, optional
-            Bolds title and bar labels.  Default True
-
-        title_font_size : float, optional
-            Sets the size of the title font.  Defaults to None and is sized
-            automatically.
-
-        label_font_size : float, optional
-            Sets the size of the title font.  Defaults to None and is sized
-            automatically.
-
-        color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.  For example:
-
-            * ``color='white'``
-            * ``color='w'``
-            * ``color=[1, 1, 1]``
-            * ``color='#FFFFFF'``
-
-        font_family : string, optional
-            Font family.  Must be either courier, times, or arial.
-
-        shadow : bool, optional
-            Adds a black shadow to the text.  Defaults to False
-
-        width : float, optional
-            The percentage (0 to 1) width of the window for the colorbar
-
-        height : float, optional
-            The percentage (0 to 1) height of the window for the colorbar
-
-        position_x : float, optional
-            The percentage (0 to 1) along the windows's horizontal
-            direction to place the bottom left corner of the colorbar
-
-        position_y : float, optional
-            The percentage (0 to 1) along the windows's vertical
-            direction to place the bottom left corner of the colorbar
-
-        interactive : bool, optional
-            Use a widget to control the size and location of the scalar bar.
-
-        use_opacity : bool, optional
-            Optionally display the opacity mapping on the scalar bar
-
-        outline : bool, optional
-            Optionally outline the scalar bar to make opacity mappings more
-            obvious.
-
-        nan_annotation : bool, optional
-            Annotate the NaN color
-
-        below_label : str, optional
-            String annotation for values below the scalars range
-
-        above_label : str, optional
-            String annotation for values above the scalars range
-
-        background_color : array, optional
-            The color used for the background in RGB format.
-
-        n_colors : int, optional
-            The maximum number of color displayed in the scalar bar.
-
-        fill : bool
-            Draw a filled box behind the scalar bar with the
-            ``background_color``
-
-        render : bool, optional
-            Force a render when True.  Default ``True``.
-
-        Notes
-        -----
-        Setting title_font_size, or label_font_size disables automatic font
-        sizing for both the title and label.
-
-        """
-        if interactive is None:
-            interactive = rcParams['interactive']
-        if font_family is None:
-            font_family = rcParams['font']['family']
-        if label_font_size is None:
-            label_font_size = rcParams['font']['label_size']
-        if title_font_size is None:
-            title_font_size = rcParams['font']['title_size']
-        if color is None:
-            color = rcParams['font']['color']
-        if fmt is None:
-            fmt = rcParams['font']['fmt']
-        if vertical is None:
-            if rcParams['colorbar_orientation'].lower() == 'vertical':
-                vertical = True
+    @wraps(ScalarBars.add_scalar_bar)
+    def add_scalar_bar(self, *args, **kwargs):
+        """Wrapper for ``ScalarBars.add_scalar_bar``"""
 
         # only render when the plotter has already been shown
+        render = kwargs.get('render', None)
         if render is None:
-            render = not self._first_time
-
-        # Automatically choose size if not specified
-        if width is None:
-            if vertical:
-                width = rcParams['colorbar_vertical']['width']
-            else:
-                width = rcParams['colorbar_horizontal']['width']
-        if height is None:
-            if vertical:
-                height = rcParams['colorbar_vertical']['height']
-            else:
-                height = rcParams['colorbar_horizontal']['height']
+            kwargs['render'] = not self._first_time
 
         # check if maper exists
+        mapper = kwargs.get('mapper', None)
         if mapper is None:
             if not hasattr(self, 'mapper') or self.mapper is None:
                 raise AttributeError('Mapper does not exist.  '
                                      'Add a mesh with scalars first.')
-            mapper = self.mapper
+            kwargs['mapper'] = self.mapper
 
-        if title:
-            # Check that this data hasn't already been plotted
-            if title in list(self._scalar_bar_ranges.keys()):
-                clim = list(self._scalar_bar_ranges[title])
-                newrng = mapper.scalar_range
-                oldmappers = self._scalar_bar_mappers[title]
-                # get max for range and reset everything
-                if newrng[0] < clim[0]:
-                    clim[0] = newrng[0]
-                if newrng[1] > clim[1]:
-                    clim[1] = newrng[1]
-                for mh in oldmappers:
-                    mh.scalar_range = clim[0], clim[1]
-                mapper.scalar_range = clim[0], clim[1]
-                self._scalar_bar_mappers[title].append(mapper)
-                self._scalar_bar_ranges[title] = clim
-                self.scalar_bars[-1].SetLookupTable(mapper.lookup_table)
-                # Color bar already present and ready to be used so returning
-                return
-
-        # Automatically choose location if not specified
-        if position_x is None or position_y is None:
-            try:
-                slot = min(self._scalar_bar_slots)
-                self._scalar_bar_slots.remove(slot)
-                self._scalar_bar_slot_lookup[title] = slot
-            except:
-                raise RuntimeError('Maximum number of color bars reached.')
-            if position_x is None:
-                if vertical:
-                    position_x = rcParams['colorbar_vertical']['position_x']
-                    position_x -= slot * (width + 0.2 * width)
-                else:
-                    position_x = rcParams['colorbar_horizontal']['position_x']
-
-            if position_y is None:
-                if vertical:
-                    position_y = rcParams['colorbar_vertical']['position_y']
-                else:
-                    position_y = rcParams['colorbar_horizontal']['position_y']
-                    position_y += slot * height
-        # Adjust to make sure on the screen
-        if position_x + width > 1:
-            position_x -= width
-        if position_y + height > 1:
-            position_y -= height
-
-        # parse color
-        color = parse_color(color)
-
-        # Create scalar bar
-        if hasattr(self, 'scalar_bars'):
-            self.scalar_bars.append(_vtk.vtkScalarBarActor())
+        # title can be the first and only arg
+        if len(args):
+            title = args[0]
         else:
-            self.scalar_bars = [_vtk.vtkScalarBarActor()]
-        if background_color is not None:
-            background_color = parse_color(background_color, opacity=1.0)
-            background_color = np.array(background_color) * 255
-            self.scalar_bars[-1].GetBackgroundProperty().SetColor(background_color[0:3])
+            title = kwargs.get('title', '')
+        if title is None:
+            title = ''
+        kwargs['title'] = title
 
-            if fill:
-                self.scalar_bars[-1].DrawBackgroundOn()
-
-            lut = _vtk.vtkLookupTable()
-            lut.DeepCopy(mapper.lookup_table)
-            ctable = _vtk.vtk_to_numpy(lut.GetTable())
-            alphas = ctable[:, -1][:, np.newaxis] / 255.
-            use_table = ctable.copy()
-            use_table[:, -1] = 255.
-            ctable = (use_table * alphas) + background_color * (1 - alphas)
-            lut.SetTable(_vtk.numpy_to_vtk(ctable, array_type=_vtk.VTK_UNSIGNED_CHAR))
-        else:
-            lut = mapper.lookup_table
-        self.scalar_bars[-1].SetLookupTable(lut)
-        if n_colors is not None:
-            self.scalar_bars[-1].SetMaximumNumberOfColors(n_colors)
-
-        if n_labels < 1:
-            self.scalar_bars[-1].DrawTickLabelsOff()
-        else:
-            self.scalar_bars[-1].DrawTickLabelsOn()
-            self.scalar_bars[-1].SetNumberOfLabels(n_labels)
-
-        if nan_annotation:
-            self.scalar_bars[-1].DrawNanAnnotationOn()
-
-        if above_label:
-            self.scalar_bars[-1].DrawAboveRangeSwatchOn()
-            self.scalar_bars[-1].SetAboveRangeAnnotation(above_label)
-        if below_label:
-            self.scalar_bars[-1].DrawBelowRangeSwatchOn()
-            self.scalar_bars[-1].SetBelowRangeAnnotation(below_label)
-
-        # edit the size of the colorbar
-        self.scalar_bars[-1].SetHeight(height)
-        self.scalar_bars[-1].SetWidth(width)
-        self.scalar_bars[-1].SetPosition(position_x, position_y)
-
-        if fmt is not None:
-            self.scalar_bars[-1].SetLabelFormat(fmt)
-
-        if vertical:
-            self.scalar_bars[-1].SetOrientationToVertical()
-        else:
-            self.scalar_bars[-1].SetOrientationToHorizontal()
-
-        if label_font_size is not None or title_font_size is not None:
-            self.scalar_bars[-1].UnconstrainedFontSizeOn()
-            self.scalar_bars[-1].AnnotationTextScalingOn()
-
-        label_text = self.scalar_bars[-1].GetLabelTextProperty()
-        anno_text = self.scalar_bars[-1].GetAnnotationTextProperty()
-        label_text.SetColor(color)
-        anno_text.SetColor(color)
-        label_text.SetShadow(shadow)
-        anno_text.SetShadow(shadow)
-
-        # Set font
-        label_text.SetFontFamily(parse_font_family(font_family))
-        anno_text.SetFontFamily(parse_font_family(font_family))
-        label_text.SetItalic(italic)
-        anno_text.SetItalic(italic)
-        label_text.SetBold(bold)
-        anno_text.SetBold(bold)
-        if label_font_size:
-            label_text.SetFontSize(label_font_size)
-            anno_text.SetFontSize(label_font_size)
-
-        # Set properties
-        if title:
-            clim = mapper.scalar_range
-            self._scalar_bar_ranges[title] = clim
-            self._scalar_bar_mappers[title] = [mapper]
-
-            self.scalar_bars[-1].SetTitle(title)
-            title_text = self.scalar_bars[-1].GetTitleTextProperty()
-
-            title_text.SetJustificationToCentered()
-
-            title_text.SetItalic(italic)
-            title_text.SetBold(bold)
-            title_text.SetShadow(shadow)
-            if title_font_size:
-                title_text.SetFontSize(title_font_size)
-
-            # Set font
-            title_text.SetFontFamily(parse_font_family(font_family))
-
-            # set color
-            title_text.SetColor(color)
-
-            self._scalar_bar_actors[title] = self.scalar_bars[-1]
-
+        interactive = kwargs.get('interactive', None)
         if interactive is None:
             interactive = rcParams['interactive']
             if self.shape != (1, 1):
@@ -2717,33 +2470,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif interactive and self.shape != (1, 1):
             raise ValueError('Interactive scalar bars disabled for multi-renderer plots')
 
-        if interactive:
-            self.scalar_widget = _vtk.vtkScalarBarWidget()
-            self.scalar_widget.SetScalarBarActor(self.scalar_bars[-1])
-            self.scalar_widget.SetInteractor(self.iren)
-            self.scalar_widget.SetEnabled(1)
-            rep = self.scalar_widget.GetRepresentation()
-            # self.scalar_widget.On()
-            if vertical is True or vertical is None:
-                rep.SetOrientation(1)  # 0 = Horizontal, 1 = Vertical
-            else:
-                rep.SetOrientation(0)  # 0 = Horizontal, 1 = Vertical
-            self._scalar_bar_widgets[title] = self.scalar_widget
+        return self.scalar_bars.add_scalar_bar(**kwargs)
 
-        if use_opacity:
-            self.scalar_bars[-1].SetUseOpacity(True)
-
-        if outline:
-            self.scalar_bars[-1].SetDrawFrame(True)
-            frame_prop = self.scalar_bars[-1].GetFrameProperty()
-            frame_prop.SetColor(color)
-        else:
-            self.scalar_bars[-1].SetDrawFrame(False)
-
-        self.add_actor(self.scalar_bars[-1], reset_camera=False, pickable=False,
-                       render=render)
-
-        return self.scalar_bars[-1]  # return the actor
 
     def update_scalars(self, scalars, mesh=None, render=True):
         """Update scalars of an object in the plotter.
@@ -2854,18 +2582,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for renderer in self.renderers:
             renderer.remove_all_lights()
 
-        # Clear the scalar bar
-        self.scalar_bars = None
-
         # Grab screenshots of last render
         if self._store_image:
             self.last_image = self.screenshot(None, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
-        if hasattr(self, 'scalar_widget'):
-            del self.scalar_widget
-
-        # reset scalar bar stuff
+        # reset scalar bars
         self.clear()
 
         self._clear_ren_win()
@@ -3195,13 +2917,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)
         return actor
 
-    def remove_scalar_bar(self):
-        """Remove the scalar bar."""
-        if hasattr(self, 'scalar_bars'):
-            if hasattr(self, 'scalar_widget'):
-                self.scalar_widget.SetEnabled(0)
-            for scalar_bar in self.scalar_bars:
-                self.remove_actor(scalar_bar, reset_camera=False)
+    @wraps(ScalarBars.remove_scalar_bar)
+    def remove_scalar_bar(self, *args, **kwargs):
+        """Remove the active scalar bar."""
+        self.scalar_bars.remove_scalar_bar(*args, **kwargs)
 
     def add_point_labels(self, points, labels, italic=False, bold=True,
                          font_size=None, text_color=None,
