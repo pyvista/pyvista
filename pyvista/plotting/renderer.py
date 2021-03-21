@@ -1521,27 +1521,3 @@ class Renderer(_vtk.vtkRenderer):
     def __del__(self):
         """Delete the renderer."""
         self.deep_clean()
-
-
-# def _remove_mapper_from_plotter(plotter, actor, reset_camera, render=False):
-#     """Remove this actor's mapper from the given plotter's _scalar_bar_mappers."""
-#     try:
-#         mapper = actor.GetMapper()
-#     except AttributeError:
-#         return
-
-#     for name in list(plotter.scalar_bars._scalar_bar_mappers.keys()):
-#         try:
-#             plotter._scalar_bar_mappers[name].remove(mapper)
-#         except ValueError:
-#             pass
-#         if len(plotter._scalar_bar_mappers[name]) < 1:
-#             slot = plotter._scalar_bar_slot_lookup.pop(name, None)
-#             if slot is not None:
-#                 plotter._scalar_bar_mappers.pop(name)
-#                 plotter._scalar_bar_ranges.pop(name)
-#                 plotter.remove_actor(plotter._scalar_bar_actors.pop(name),
-#                                      reset_camera=reset_camera,
-#                                      render=render)
-#                 plotter._scalar_bar_slots.add(slot)
-#     return

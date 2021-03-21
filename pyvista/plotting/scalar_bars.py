@@ -1,3 +1,5 @@
+"""PyVista Scalar bar module."""
+
 import numpy as np
 from pyvista import _vtk
 from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
@@ -5,9 +7,10 @@ from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
 
 
 class ScalarBars():
-    """Plotter Scalar Bars"""
+    """Plotter Scalar Bars."""
 
     def __init__(self, plotter):
+        """Initialize ScalarBars."""
         self._plotter = plotter
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
@@ -15,13 +18,14 @@ class ScalarBars():
         self._scalar_bar_widgets = {}
 
     def clear(self):
-        """Removes all scalar bars and resets all scalar bar properties"""
+        """Remove all scalar bars and resets all scalar bar properties."""
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
 
     def __repr__(self):
+        """Nice representation of this class."""
         lines = []
         lines.append('Scalar Bar Title     Interactive')
         for title, actor in self._scalar_bar_actors.items():
@@ -31,7 +35,7 @@ class ScalarBars():
         return '\n'.join(lines)
 
     def remove_scalar_bar(self, title=None, render=True):
-        """Remove a scalar bar
+        """Remove a scalar bar.
 
         Parameters
         ----------
@@ -63,21 +67,27 @@ class ScalarBars():
         self._plotter.remove_actor(actor, render=render)
 
     def __len__(self):
+        """Return the number of scalar bar actors."""
         return len(self._scalar_bar_actors)
 
     def __getitem__(self, index):
+        """Return a scalar bar actor."""
         return self._scalar_bar_actors[index]
 
     def keys(self):
+        """Scalar bar keys."""
         return self._scalar_bar_actors.keys()
 
     def values(self):
+        """Scalar bar values."""
         return self._scalar_bar_actors.values()
 
     def items(self):
+        """Scalar bar items."""
         return self._scalar_bar_actors.items()
 
     def __contains__(self, key):
+        """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 
     def add_scalar_bar(self, title='', mapper=None, n_labels=5, italic=False,
@@ -188,9 +198,9 @@ class ScalarBars():
         >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> plotter = pv.Plotter()
-        >>> plotter.add_mesh(sphere, show_scalar_bar=False)
-        >>> _ plotter.add_scalar_bar('Data', interactive=True, vertical=False,
-                                     outline=True, fmt='%10.5f')
+        >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
+        >>> _ = plotter.add_scalar_bar('Data', interactive=True, vertical=False,
+        ...                            outline=True, fmt='%10.5f')
 
         Notes
         -----

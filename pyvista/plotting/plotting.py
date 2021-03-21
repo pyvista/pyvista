@@ -297,7 +297,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def scalar_bars(self):
-        """Plotter's scalar bars
+        """Scalar bars.
 
         Examples
         --------
@@ -306,7 +306,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> sphere = pyvista.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> plotter = pyvista.Plotter()
-        >>> plotter.add_mesh(sphere, stitle='Data')
+        >>> _ = plotter.add_mesh(sphere, stitle='Data')
         >>> plotter.scalar_bars
         Scalar Bar Title     Interactive
         "Data"               False
@@ -2438,8 +2438,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @wraps(ScalarBars.add_scalar_bar)
     def add_scalar_bar(self, *args, **kwargs):
-        """Wrapper for ``ScalarBars.add_scalar_bar``"""
-
+        """Wrap for ``ScalarBars.add_scalar_bar``."""
         # only render when the plotter has already been shown
         render = kwargs.get('render', None)
         if render is None:
