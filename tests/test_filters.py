@@ -768,18 +768,55 @@ def test_sample_over_circular_arc():
     uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
-    pointa = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[5]]
-    pointb = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[4]]
-    center = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[4]]
-    sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
+    xmin = uniform.bounds[0]
+    xmax = uniform.bounds[1]
+    ymin = uniform.bounds[2]
+    zmin = uniform.bounds[4]
+    zmax = uniform.bounds[5]
+    pointa = [xmin, ymin, zmax]
+    pointb = [xmax, ymin, zmin]
+    center = [xmin, ymin, zmin]
+    sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center, 2)
 
-    expected_result = sampled_arc.points[:, 2]
+    expected_result = np.array([zmax, zmin+(zmax-zmin)*np.sin(np.pi/4.0), zmin])
     assert np.allclose(sampled_arc[name], expected_result)
     assert name in sampled_arc.array_names # is name in sampled result
 
     # test no resolution
     sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
     sampled_from_sphere = sphere.sample_over_circular_arc([3, 1, 1], [-3, -1, -1], [0, 0, 0])
+    assert sampled_from_sphere.n_points == sphere.n_cells + 1
+
+    # is sampled result a polydata object
+    assert isinstance(sampled_from_sphere, pyvista.PolyData)
+
+
+def test_sample_over_circular_arc2():
+    """Test that we get a circular arc2."""
+
+    name = 'values'
+
+    uniform = examples.load_uniform()
+    uniform[name] = uniform.points[:, 2]
+
+    xmin = uniform.bounds[0]
+    ymin = uniform.bounds[2]
+    ymax = uniform.bounds[3]
+    zmin = uniform.bounds[4]
+    zmax = uniform.bounds[5]
+    normal = [xmin, ymax, zmin]
+    polar = [xmin, ymin, zmax]
+    angle = 90
+    center = [xmin, ymin, zmin]
+    sampled_arc2 = uniform.sample_over_circular_arc2(center, resolution=2, normal=normal, polar=polar, angle=angle)
+
+    expected_result = np.array([zmax, zmin+(zmax-zmin)*np.sin(np.pi/4.0), zmin])
+    assert np.allclose(sampled_arc2[name], expected_result)
+    assert name in sampled_arc2.array_names # is name in sampled result
+
+    # test no resolution
+    sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+    sampled_from_sphere = sphere.sample_over_circular_arc2([0, 0, 0], polar=[3, 1, 1], angle=180)
     assert sampled_from_sphere.n_points == sphere.n_cells + 1
 
     # is sampled result a polydata object
