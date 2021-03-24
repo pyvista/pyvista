@@ -101,7 +101,8 @@ The following code creates the class and plots the meshes with various colors.
     # Add airplane mesh and make the color equal to the Y position.  Add a
     # scalar bar associated with this mesh
     plane_scalars = airplane.points[:, 1]
-    plotter.add_mesh(airplane, scalars=plane_scalars, stitle='Airplane Y\nLocation')
+    plotter.add_mesh(airplane, scalars=plane_scalars,
+                     scalar_bar_args={'title': 'Airplane Y\nLocation'})
 
     # Add annotation text
     plotter.add_text('Ants and Plane Example')

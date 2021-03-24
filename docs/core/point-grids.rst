@@ -118,7 +118,7 @@ A simple plot can be created by using:
 
 .. testcode:: python
 
-    grid.plot(scalars=d[:, 1], stitle='Y Displacement')
+    grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'})
 
 A more complex plot can be created using:
 
@@ -133,8 +133,9 @@ A more complex plot can be created using:
 
     # plot this displaced beam
     plotter = pv.Plotter()
-    plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
-                  rng=[-d.max(), d.max()])
+    plotter.add_mesh(grid, scalars=d[:, 1],
+                     scalar_bar_args={'title': 'Y Displacement'},
+                     rng=[-d.max(), d.max()])
     plotter.add_axes()
     plotter.camera_position = cpos
 
@@ -149,9 +150,10 @@ First you have to set up the plotting object:
 .. testcode:: python
 
     plotter = pv.Plotter()
-    plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
-                  show_edges=True, rng=[-d.max(), d.max()],
-                  interpolate_before_map=True)
+    plotter.add_mesh(grid, scalars=d[:, 1],
+                     scalar_bar_args={'title': 'Y Displacement'},
+                     show_edges=True, rng=[-d.max(), d.max()],
+                     interpolate_before_map=True)
     plotter.add_axes()
     plotter.camera_position = cpos
 
@@ -185,9 +187,11 @@ You can also render the beam as as a wire-frame object:
 
     # Animate plot as a wire-frame
     plotter = pv.Plotter()
-    plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement', show_edges=True,
-                  rng=[-d.max(), d.max()], interpolate_before_map=True,
-                  style='wireframe')
+    plotter.add_mesh(grid, scalars=d[:, 1],
+                     scalar_bar_args={'title': 'Y Displacement'},
+                     show_edges=True,
+                     rng=[-d.max(), d.max()], interpolate_before_map=True,
+                     style='wireframe')
     plotter.add_axes()
     plotter.camera_position = cpos
     plotter.show(interactive=False, auto_close=False, window_size=[800, 600])
@@ -253,7 +257,9 @@ to show the exact value of certain points.
     # Create plotting class and add the unstructured grid
     plotter = pv.Plotter(notebook=False)
     # color mesh according to z value
-    plotter.add_mesh(grid, scalars=values, stitle='Z Position', show_edges=True)
+    plotter.add_mesh(grid, scalars=values,
+                     scalar_bar_args={'title': 'Z Position'},
+                     show_edges=True)
 
     # Add labels to points on the yz plane (where x == 0)
     mask = grid.points[:, 0] == 0

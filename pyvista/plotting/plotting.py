@@ -65,6 +65,15 @@ log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
 
+USE_SCALAR_BAR_ARGS = """
+"stitle" is a depreciated keyword and will be removed in a future release.
+
+Use ``scalar_bar_args`` instead.  For example:
+
+scalar_bar_args={'title': 'Scalar Bar Title'}
+"""
+
+
 @abstract_class
 class BasePlotter(PickingHelper, WidgetHelper):
     """To be used by the Plotter and pyvistaqt.QtInteractor classes.
@@ -302,11 +311,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.set_plot_theme("document")
         >>> sphere = pyvista.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(sphere, stitle='Data')
+        >>> _ = plotter.add_mesh(sphere)
         >>> plotter.scalar_bars
         Scalar Bar Title     Interactive
         "Data"               False
@@ -1227,7 +1235,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  flip_scalars=False, lighting=None, n_colors=256,
                  interpolate_before_map=True, cmap=None, label=None,
                  reset_camera=None, scalar_bar_args=None, show_scalar_bar=None,
-                 stitle=None, multi_colors=False, name=None, texture=None,
+                 multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=None, render_lines_as_tubes=False,
                  smooth_shading=None, ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
@@ -1345,11 +1353,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If False, a scalar bar will not be added to the scene. Defaults
             to ``True``.
 
-        stitle : string, optional
-            Scalar bar title. By default the scalar bar is given a title of the
-            the scalars array used to color the mesh.
-            To create a bar with no title, use an empty string (i.e. '').
-
         multi_colors : bool, optional
             If a ``MultiBlock`` dataset is given this will color each
             block by a solid color using matplotlib's color cycler.
@@ -1456,6 +1459,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         actor: vtk.vtkActor
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Add a sphere to the plotter and show it with a custom scalar
+        bar title.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> sphere['Data'] = sphere.points[:, 2]
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(sphere, 
+        ...                      scalar_bar_args={'title': 'Z Position'})
+        >>> plotter.show()  # doctest:+SKIP
+
         """
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(mesh):
@@ -1507,6 +1523,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling = 'backface'
 
         rgb = kwargs.pop('rgba', rgb)
+
+        # account for legacy behavior
+        if 'stitle' in kwargs:  # pragma: no cover
+            warnings.warn(USE_SCALAR_BAR_ARGS)
+            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if "scalar" in kwargs:
             raise TypeError("`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?")
@@ -1640,8 +1661,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalars = mesh.active_scalars_name
                 # Don't allow plotting of string arrays by default
                 if scalars is not None:# and np.issubdtype(mesh.active_scalars.dtype, np.number):
-                    if stitle is None:
-                        stitle = scalars
+                    scalar_bar_args.setdefault('title', scalars)
                 else:
                     scalars = None
 
@@ -1665,8 +1685,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             original_scalar_name = scalars
             scalars = get_array(mesh, scalars,
                                 preference=preference, err=True)
-            if stitle is None:
-                stitle = original_scalar_name
+            scalar_bar_args.setdefault('title', original_scalar_name)
 
         if texture is True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -1729,10 +1748,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Set the array title for when it is added back to the mesh
         if _custom_opac:
             title = '__custom_rgba'
-        elif stitle is None:
-            title = 'Data'
         else:
-            title = stitle
+            title =  scalar_bar_args.get('title', 'Data')
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
 
@@ -1752,6 +1769,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 _using_labels = True
 
             if rgb:
+                show_scalar_bar = False
                 if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
                     raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
 
@@ -1925,9 +1943,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(actor, reset_camera=reset_camera, name=name, culling=culling,
                        pickable=pickable, render=render)
 
-        # Add scalar bar if available
-        if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
-            self.add_scalar_bar(title=stitle, **scalar_bar_args)
+        # Only show scalar bar if there are scalars
+        if show_scalar_bar and scalars is not None:
+            self.add_scalar_bar(**scalar_bar_args)
 
         self.renderer.Modified()
 
@@ -1938,7 +1956,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                    reset_camera=None, name=None, ambient=0.0, categories=False,
                    culling=False, multi_colors=False,
                    blending='composite', mapper=None,
-                   stitle=None, scalar_bar_args=None, show_scalar_bar=None,
+                   scalar_bar_args=None, show_scalar_bar=None,
                    annotations=None, pickable=True, preference="point",
                    opacity_unit_distance=None, shade=False,
                    diffuse=0.7, specular=0.2, specular_power=10.0,
@@ -2083,6 +2101,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap = kwargs.pop('colormap', cmap)
         culling = kwargs.pop("backface_culling", culling)
 
+        # account for legacy behavior
+        if 'stitle' in kwargs:  # pragma: no cover
+            warnings.warn(USE_SCALAR_BAR_ARGS)
+            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
+
         if "scalar" in kwargs:
             raise TypeError("`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?")
         assert_empty_kwargs(**kwargs)
@@ -2173,8 +2196,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalars = volume.active_scalars
             # Don't allow plotting of string arrays by default
             if scalars is not None and np.issubdtype(scalars.dtype, np.number):
-                if stitle is None:
-                    stitle = volume.active_scalars_info[1]
+                scalar_bar_args.setdefault('title', volume.active_scalars_info[1])
             else:
                 raise ValueError('No scalars to use for volume rendering.')
         elif isinstance(scalars, str):
@@ -2182,13 +2204,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         ##############
 
-        title = 'Data' if stitle is None else stitle
+        title = 'Data'
         if isinstance(scalars, str):
             title = scalars
             scalars = get_array(volume, scalars,
                                 preference=preference, err=True)
-            if stitle is None:
-                stitle = title
+            scalar_bar_args.setdefault('title', title)
 
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
@@ -2332,9 +2353,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                      name=name, culling=culling,
                                      pickable=pickable, render=render)
 
-        # Add scalar bar
-        if stitle is not None and show_scalar_bar:
-            self.add_scalar_bar(title=stitle, **scalar_bar_args)
+        # Add scalar bar if scalars are available
+        if show_scalar_bar and scalars is not None:
+            self.add_scalar_bar(**scalar_bar_args)
 
         self.renderer.Modified()
 

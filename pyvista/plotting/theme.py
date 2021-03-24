@@ -106,6 +106,17 @@ DEFAULT_THEME = dict(rcParams)
 
 def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme."""
+    allowed_themes = ['paraview',
+                      'pv',
+                      'document',
+                      'doc',
+                      'paper',
+                      'report',
+                      'night',
+                      'dark',
+                      'testing',
+                      'default']
+
     if theme.lower() in ['paraview', 'pv']:
         rcParams['background'] = PARAVIEW_BACKGROUND
         rcParams['cmap'] = 'coolwarm'
@@ -144,9 +155,22 @@ def set_plot_theme(theme):
         rcParams['axes']['x_color'] = 'tomato'
         rcParams['axes']['y_color'] = 'seagreen'
         rcParams['axes']['z_color'] = 'blue'
+    elif theme.lower() == 'testing':
+        # necessary for image regression.  Xvfb doesn't support
+        # multi-sampling, so we disable it here for consistency between
+        # desktops and remote testing
+        rcParams['off_screen'] = True
+        rcParams['multi_samples'] = 1
+        rcParams['window_size'] = [400, 400]
     elif theme.lower() in ['default']:
-        for k,v in DEFAULT_THEME.items():
+        # have to clear and overwrite since some rcParams are not set
+        # in the default theme
+        rcParams.clear()
+        for k, v in DEFAULT_THEME.items():
             rcParams[k] = v
+    else:
+        raise ValueError(f'Invalid theme {theme}.  Pick one of the following:\n'
+                         f'{allowed_themes}')
 
 
 def parse_color(color, opacity=None):

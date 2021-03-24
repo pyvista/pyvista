@@ -3186,8 +3186,9 @@ class PolyDataFilters(DataSetFilters):
             List of camera position, focal point, and view up
 
         """
+        kwargs.setdefault('scalar_bar_args', {'title': 'Curvature'})
         return poly_data.plot(scalars=poly_data.curvature(curv_type),
-                              stitle=f'{curv_type}\nCurvature', **kwargs)
+                              **kwargs)
 
     def triangulate(poly_data, inplace=False):
         """Return an all triangle mesh.
