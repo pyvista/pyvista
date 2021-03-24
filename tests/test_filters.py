@@ -778,7 +778,7 @@ def test_sample_over_circular_arc():
     center = [xmin, ymin, zmin]
     sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center, 2)
 
-    expected_result = np.array([zmax, zmin+(zmax-zmin)*np.sin(np.pi/4.0), zmin])
+    expected_result = zmin+(zmax-zmin)*np.sin([np.pi/2.0, np.pi/4.0, 0.0])
     assert np.allclose(sampled_arc[name], expected_result)
     assert name in sampled_arc.array_names # is name in sampled result
 
@@ -810,7 +810,7 @@ def test_sample_over_circular_arc2():
     center = [xmin, ymin, zmin]
     sampled_arc2 = uniform.sample_over_circular_arc2(center, resolution=2, normal=normal, polar=polar, angle=angle)
 
-    expected_result = np.array([zmax, zmin+(zmax-zmin)*np.sin(np.pi/4.0), zmin])
+    expected_result = zmin+(zmax-zmin)*np.sin([np.pi/2.0, np.pi/4.0, 0.0])
     assert np.allclose(sampled_arc2[name], expected_result)
     assert name in sampled_arc2.array_names # is name in sampled result
 
