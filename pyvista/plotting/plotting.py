@@ -1526,7 +1526,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(USE_SCALAR_BAR_ARGS)
+            warnings.warn(DeprecationWarning(USE_SCALAR_BAR_ARGS))
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if "scalar" in kwargs:
@@ -2107,7 +2107,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(USE_SCALAR_BAR_ARGS)
+            warnings.warn(DeprecationWarning(USE_SCALAR_BAR_ARGS))
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if "scalar" in kwargs:
