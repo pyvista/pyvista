@@ -1749,7 +1749,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if _custom_opac:
             title = '__custom_rgba'
         else:
-            title =  scalar_bar_args.get('title', 'Data')
+            title = scalar_bar_args.get('title', 'Data')
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
 
