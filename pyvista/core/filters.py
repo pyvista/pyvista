@@ -3170,12 +3170,12 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         curvtype : str, optional
-            One of the following strings indicating curvature type
+            One of the following strings indicating curvature type:
 
-            - Mean
-            - Gaussian
-            - Maximum
-            - Minimum
+            * ``'Mean'``
+            * ``'Gaussian'``
+            * ``'Maximum'``
+            * ``'Minimum'``
 
         **kwargs : optional
             See :func:`pyvista.plot`
@@ -3183,10 +3183,18 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         cpos : list
-            List of camera position, focal point, and view up
+            List of camera position, focal point, and view up.
 
+        Examples
+        --------
+        Plot the mean curvature of an example mesh.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> hills.plot_curvature(smooth_shading=True)  # doctest:+SKIP
         """
-        kwargs.setdefault('scalar_bar_args', {'title': 'Curvature'})
+        kwargs.setdefault('scalar_bar_args',
+                          {'title': f'{curv_type.capitalize()} Curvature'})
         return poly_data.plot(scalars=poly_data.curvature(curv_type),
                               **kwargs)
 

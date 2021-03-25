@@ -59,7 +59,8 @@ sphere.arrows.plot(scalars='GlyphScale')
 
 # plot the arrows and the sphere
 p = pv.Plotter()
-p.add_mesh(sphere.arrows, scalars='GlyphScale', lighting=False, stitle="Vector Magnitude")
+p.add_mesh(sphere.arrows, scalars='GlyphScale', lighting=False,
+           scalar_bar_args={'title': "Vector Magnitude"})
 p.add_mesh(sphere, color="grey", ambient=0.6, opacity=0.5, show_edges=False)
 p.show()
 
