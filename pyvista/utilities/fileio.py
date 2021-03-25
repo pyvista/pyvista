@@ -75,6 +75,13 @@ if (VTK_MAJOR >= 8 and VTK_MINOR >= 2):
         pass
 
 
+def _get_ext_force(filename, force_ext=None):
+    if force_ext:
+        return str(force_ext).lower()
+    else:
+        return get_ext(filename)
+
+
 def get_ext(filename):
     """Extract the extension of the filename."""
     ext = os.path.splitext(filename)[1].lower()
@@ -83,10 +90,7 @@ def get_ext(filename):
 
 def get_reader(filename, force_ext=None):
     """Get the corresponding reader based on file extension and instantiates it."""
-    if not force_ext:
-        ext = get_ext(filename)
-    else:
-        ext = force_ext
+    ext = _get_ext_force(filename, force_ext=force_ext)
     return READERS[ext]() # Get and instantiate the reader
 
 
@@ -234,10 +238,8 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
         raise FileNotFoundError(f'File ({filename}) not found')
-    if force_ext:
-        ext = str(force_ext).lower()
-    else:
-        ext = get_ext(filename)
+
+    ext = _get_ext_force(filename, force_ext)
 
     # Read file using meshio.read if file_format is present
     if file_format:
