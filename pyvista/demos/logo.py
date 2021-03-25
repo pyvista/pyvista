@@ -1,19 +1,18 @@
 """Generate the pyvista logo.
 
 Logos generated with:
-plot_logo(screenshot='/home/alex/python/pyvista/docs/_static/pyvista_logo.png', window_size=(1920, 1080))
-plot_logo(screenshot='/home/alex/python/pyvista/docs/_static/pyvista_logo_sm.png', window_size=(960, 400), off_screen=True)
-plot_logo(screenshot='/home/alex/python/pyvista/docs/_static/pyvista_logo_sm_sq.png', window_size=(960, 960), off_screen=True)
+plot_logo(screenshot='pyvista_logo.png', window_size=(1920, 1080))
+plot_logo(screenshot='pyvista_logo_sm.png', window_size=(960, 400), off_screen=True)
 
+# different camera angle for square plot
 cpos = [(-0.3654543687422538, 1.1098808905156292, 9.073223697728247),
         (2.553950615449191, 0.34145688392081264, 0.06127122762851659),
         (0.019308531920309947, 0.996708840795678, -0.07873161547192065)]
 
-plot_logo(screenshot='/home/alex/python/pyvista/docs/_static/pyvista_logo_sm_sq.png', window_size=(960, 960), cpos=cpos, off_screen=True)
+plot_logo(screenshot='pyvista_logo_sm_sq.png', window_size=(960, 960), cpos=cpos,
+          off_screen=True)
 
 """
-
-
 from pyvista import examples
 import pyvista
 from pyvista import _vtk
@@ -112,31 +111,29 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None, cpos=None):
     >>> demos.plot_logo()  # doctest:+SKIP
 
     """
-    mesh_letters = logo_letters()
-
-    if cpos is None:
-        cpos = [(0.9060226106040606, 0.7752122028710583, 5.148283455883558),
-                (2.553950615449191, 0.34145688392081264, 0.06127122762851659),
-                (0.019308531920309943, 0.9967088407956779, -0.07873161547192063)]
-
+    # initialize plotter
     if window_size is None:
         window_size = [960, 400]
-
-    # plot letters
     plotter = pyvista.Plotter(window_size=window_size, off_screen=off_screen)
 
+    mesh_letters = logo_letters()
+
+    # letter 'P'
     p_mesh = mesh_letters['P'].compute_normals(split_vertices=True)
     plotter.add_mesh(p_mesh, color='#376fa0', smooth_shading=True)
 
+    # letter 'y'
     p_mesh = mesh_letters['y'].compute_normals(split_vertices=True)
     plotter.add_mesh(p_mesh, color='#ffd040', smooth_shading=True)
 
+    # letter 'V'
     v_grid = pyvista.voxelize(mesh_letters['V'], density=0.08)
     v_grid_atom = atomize(v_grid)
     v_grid_atom['scalars'] = v_grid_atom.points[:, 0]
     plotter.add_mesh(v_grid_atom, scalars='scalars', show_edges=True,
                      cmap='winter', show_scalar_bar=False)
 
+    # letter 'i'
     i_grid = pyvista.voxelize(mesh_letters['i'], density=0.1)
 
     plotter.add_mesh(i_grid.extract_surface(),
@@ -144,24 +141,21 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None, cpos=None):
                      render_points_as_spheres=True, point_size=8)
     plotter.add_mesh(i_grid, style='wireframe', color='k', line_width=4)
 
+    # letter 's'
     mesh = mesh_letters['s']
     scalars = mesh.points[:, 0]
     plotter.add_mesh(mesh, scalars=scalars, style='wireframe', color='w',
                      show_edges=True, line_width=2, cmap='gist_heat',
                      backface_culling=True, render_lines_as_tubes=True)
 
-
+    # letter 't'
     mesh = mesh_letters['t']
     scalars = mesh.points[:, 0]
     plotter.add_mesh(mesh, scalars=scalars, show_edges=True,
                      cmap='autumn',
                      lighting=True)
 
-    plotter.set_background('white')
-    plotter.camera_position = [(-1.1029099, 1.7797911, 6.96313619),
-                               (1.8615100, 0.45990999415, 0.22499999403),
-                               (0.09854599850, 0.9838590478, -0.14936552500)]
-
+    # letter 'a'
     grid = examples.download_letter_a()
     grid.points[:, 0] += (mesh_letters['a'].center[0] - grid.center[0])
 
@@ -176,8 +170,13 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None, cpos=None):
     scalars = grid.points[cells[:, 1], 1]
     plotter.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens')
 
-    if cpos:
-        plotter.camera_position = cpos
+    # finalize plot and show it
+    plotter.set_background('white')
+    if cpos is None:
+        cpos = [(0.9060226106040606, 0.7752122028710583, 5.148283455883558),
+                (2.553950615449191, 0.34145688392081264, 0.06127122762851659),
+                (0.019308531920309943, 0.9967088407956779, -0.07873161547192063)]
+    plotter.camera_position = cpos
 
     if screenshot:  # pragma: no cover
         plotter.show(cpos=cpos, auto_close=False)
