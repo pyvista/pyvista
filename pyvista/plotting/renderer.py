@@ -537,6 +537,7 @@ class Renderer(_vtk.vtkRenderer):
 
     @property
     def axes_enabled(self):
+        """Return ``True`` when axes are enabled."""
         if hasattr(self, 'axes_widget'):
             return bool(self.axes_widget.GetEnabled())
         return False

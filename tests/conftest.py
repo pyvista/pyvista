@@ -1,5 +1,9 @@
+import os
 import numpy as np
 from pytest import fixture
+
+# env var testing, but be here before any pyvista imports
+os.environ['PYVISTA_JUPYTER_BACKEND'] = 'none'
 
 import pyvista
 from pyvista import examples

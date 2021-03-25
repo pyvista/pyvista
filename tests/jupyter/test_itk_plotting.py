@@ -22,6 +22,7 @@ SPHERE['z'] = SPHERE.points[:, 2]
 
 no_itk = pytest.mark.skipif(NO_PLOTTING or not HAS_ITK, reason="Requires system to support plotting and have itkwidgets.")
 
+
 @no_itk
 def test_itk_plotting():
     viewer = pyvista.plot_itk(SPHERE)

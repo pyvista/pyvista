@@ -4024,7 +4024,7 @@ class Plotter(BasePlotter):
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=None,
              screenshot=False, return_img=False, cpos=None, use_ipyvtk=None,
-             jupyter_backend=None, **kwargs):
+             jupyter_backend=None, return_viewer=False, **kwargs):
         """Display the plotting window.
 
         Notes
@@ -4081,14 +4081,21 @@ class Plotter(BasePlotter):
             This can also be set globally with
             ``pyvista.set_jupyter_backend``
 
+        return_viewer : bool, optional
+            Return the jupyterlab viewer, scene, or display object
+            when plotting with jupyter notebook.
+
         Returns
         -------
         cpos : list
-            List of camera position, focal point, and view up
+            List of camera position, focal point, and view up.
 
         image : np.ndarray
             Numpy array of the last image when either ``return_img=True``
             or ``screenshot`` is set.
+
+        widget
+            IPython widget when ``return_viewer==True``.
 
         Examples
         --------
@@ -4105,11 +4112,11 @@ class Plotter(BasePlotter):
 
         >>> pl.show(jupyter_backend='ipygany')  # doctest:+SKIP
 
-        """
-        # developer keyword argument: return notebook viewer
-        # normally suppressed since it's shown by default
-        return_viewer = kwargs.pop('return_viewer', False)
+        Return an ``ipygany`` scene.
 
+        >>> pl.show(jupyter_backend='ipygany', return_viewer=True)  # doctest:+SKIP
+
+        """
         # developer keyword argument: runs a function immediately prior to ``close``
         self._before_close_callback = kwargs.pop('before_close_callback', None)
         assert_empty_kwargs(**kwargs)

@@ -14,7 +14,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
-         **kwargs):
+         return_viewer=False, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -159,9 +159,11 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           return_img=return_img,
                           use_ipyvtk=use_ipyvtk,
                           jupyter_backend=jupyter_backend,
-                          before_close_callback=before_close_callback)
+                          before_close_callback=before_close_callback,
+                          return_viewer=return_viewer)
 
-    # Result will be handled by plotter.show(): cpos or [cpos, img]
+    # Result will be handled by plotter.show(): cpos or [cpos, img] or
+    # the jupyterlab scene when return_viewer is True
     return result
 
 

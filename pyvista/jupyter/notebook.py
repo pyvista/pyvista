@@ -25,12 +25,18 @@ PANEL_EXTENSION_SET = [False]
 
 def handle_plotter(plotter, backend=None, screenshot=None,
                    return_viewer=False):
-    """Show the ``pyvista`` plot in a jupyter enviornment
+    """Show the ``pyvista`` plot in a jupyter environment.
+
+    Parameters
+    ----------
+    return_viewer : bool, optional
+        Return the jupyterlab viewer, scene, or display object
+        when plotting with jupyter notebook.
 
     Returns
     -------
     IPython Widget
-        IPython widget when ``return_viewer==True``.  Otherwise, none.
+        IPython widget when ``return_viewer==True``.  Otherwise, ``None``.
 
     """
     if screenshot is False:
@@ -47,7 +53,7 @@ def handle_plotter(plotter, backend=None, screenshot=None,
 
 
 def show_static_image(plotter, screenshot, return_viewer):
-    """Display a static image to be displayed within a jupyter notebook"""
+    """Display a static image to be displayed within a jupyter notebook."""
     # Must render here, otherwise plotter will segfault.  Consider
     # moving to screenshot logic
     plotter.render()
@@ -70,7 +76,7 @@ def show_static_image(plotter, screenshot, return_viewer):
 
 
 def show_ipyvtk(plotter, return_viewer):
-    """Display an interactive viewer widget using ``ipyvtk_simple``"""
+    """Display an interactive viewer widget using ``ipyvtk_simple``."""
     if any('SPYDER' in name for name in os.environ):
         warnings.warn('``use_ipyvtk`` is incompatible with Spyder.\n'
                       'Use notebook=False for interactive '
@@ -92,7 +98,7 @@ def show_ipyvtk(plotter, return_viewer):
 
 
 def show_panel(plotter, return_viewer):
-    """Take the active renderer from a plotter and show it using ``panel``"""
+    """Take the active renderer from a plotter and show it using ``panel``."""
     if len(plotter.renderers) != 1:
         warnings.warn('Plotter has multiple renderers.  Only showing the active '
                       'renderer using ``panel``')
@@ -127,7 +133,7 @@ def show_panel(plotter, return_viewer):
 
 
 def build_panel_bounds(actor):
-    """Build a panel bounds actor using the plotter cube_axes_actor"""
+    """Build a panel bounds actor using the plotter cube_axes_actor."""
     bounds = {}
 
     n_ticks = 5

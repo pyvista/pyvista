@@ -1,4 +1,4 @@
-"""Support for the ipygany plotter"""
+"""Support for the ipygany plotter."""
 
 import warnings
 
@@ -15,7 +15,7 @@ except ImportError:
 
 try:
     from ipywidgets import (FloatSlider, FloatRangeSlider, Dropdown, Layout,
-                            Select, VBox, HBox, AppLayout, jslink)
+                            Select, VBox, HBox, AppLayout, jslink, HTML)
 except ImportError:
     raise ImportError('Install ``ipywidgets`` to use this feature.')
 
@@ -42,11 +42,10 @@ def pyvista_polydata_to_polymesh(obj):
     Returns
     -------
     PolyMesh
-        ``ipygany.PolyMesh`` object
+        ``ipygany.PolyMesh`` object.
 
     Examples
     --------
-
     Convert a pyvista mesh to a PolyMesh
 
     >>> import pyvista as pv
@@ -97,7 +96,7 @@ def pyvista_polydata_to_polymesh(obj):
 
 
 def color_float_to_hex(r, g, b):
-    """rgb to hex"""
+    """Convert RGB to hex."""
     def clamp(x):
         x = round(x*255)
         return max(0, min(x, 255))
@@ -113,6 +112,7 @@ class NotAllTrianglesError(ValueError):
 
 
 def check_colormap(cmap):
+    """Attempt to convert a colormap to ``ipygany``."""
     if cmap not in colormaps:
         # attempt to matplotlib cmaps to ipygany
         if cmap.capitalize() in colormaps:
@@ -127,7 +127,7 @@ def check_colormap(cmap):
 
 
 def ipygany_obj_from_actor(actor):
-    """Convert a vtk actor to a ipygany scene"""
+    """Convert a vtk actor to a ipygany scene."""
     mapper = actor.GetMapper()
     if mapper is None:
         return
@@ -150,7 +150,7 @@ def ipygany_obj_from_actor(actor):
 
 
 def ipygany_camera_from_plotter(plotter):
-    """Return an ipygany camera dict from a ``pyvista.Plotter`` object"""
+    """Return an ipygany camera dict from a ``pyvista.Plotter`` object."""
     position, target, up = plotter.camera_position
     # TODO: camera position appears twice as far within ipygany, adjust:
 
@@ -163,8 +163,7 @@ def ipygany_camera_from_plotter(plotter):
 
 
 def show_ipygany(plotter, return_viewer):
-    """Show a ipygany solution"""
-
+    """Show an ipygany scene."""
     # convert each mesh in the plotter to an ipygany scene
     actors = plotter.renderer._actors
     meshes = []
@@ -178,47 +177,47 @@ def show_ipygany(plotter, return_viewer):
                   background_color=bc_color,
                   camera=ipygany_camera_from_plotter(plotter))
 
-    width, height = plotter.window_size
+    # optionally size of the plotter
+    # width, height = plotter.window_size
     # scene.layout.width = f'{width}px'
     # scene.layout.height = f'{height}px'
 
     cbar = None
-    if hasattr(plotter, 'scalar_bar'):
+    if len(plotter.scalar_bars):
         for mesh in meshes:
             if isinstance(mesh, ipygany.IsoColor):
                 cbar = ipygany.ColorBar(mesh)
                 colored_mesh = mesh
                 break
 
-    # return scalar bar
+    # Simply return the scene
+    if return_viewer:
+        return scene
+
     if cbar is not None:
-        # breakpoint()
         # Colormap choice widget
         colormap_dd = Dropdown(
             options=colormaps,
             description='Colormap:'
         )
-        # sensible maximum width, or else it looks bad when window is large.
-        cbar.layout.max_width = '500px'
-
-    # # Create a slider that will dynamically change the boundaries of the colormap
-    # colormap_slider_range = FloatRangeSlider(value=[height_min, height_max],
-    #                                          min=height_min, max=height_max,
-    #                                          step=(height_max - height_min) / 100.)
-
-    # jslink((colored_mesh, 'range'), (colormap_slider_range, 'value'))
-
         jslink((colored_mesh, 'colormap'), (colormap_dd, 'index'))
 
-        # create app
-        # legend = VBox((colormap_dd, cbar))
-        legend = cbar
-        scene = AppLayout(header=colormap_dd,
-                          center=scene,
-                          footer=cbar,
-                          pane_heights=[0, 0, '150px'])
+        # sensible colorbar maximum width, or else it looks bad when
+        # window is large.
+        cbar.layout.max_width = '500px'
 
-    if return_viewer:
-        return scene
+        # Create a slider that will dynamically change the boundaries of the colormap
+        # colormap_slider_range = FloatRangeSlider(value=[height_min, height_max],
+        #                                          min=height_min, max=height_max,
+        #                                          step=(height_max - height_min) / 100.)
+
+        # jslink((colored_mesh, 'range'), (colormap_slider_range, 'value'))
+
+        # create app
+        title = HTML(value=f'<h3>{list(plotter.scalar_bars.keys())[0]}</h3>')
+        legend = VBox((title, colormap_dd, cbar))
+        scene = AppLayout(center=scene,
+                          footer=legend,
+                          pane_heights=[0, 0, '150px'])
 
     display.display_html(scene)
