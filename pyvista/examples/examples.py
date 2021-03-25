@@ -105,7 +105,8 @@ def plot_ants_plane(off_screen=None, notebook=None):
 
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]
-    plotter.add_mesh(airplane, scalars=plane_scalars, stitle='Plane Y\nLocation')
+    plotter.add_mesh(airplane, scalars=plane_scalars,
+                     scalar_bar_args={'title': 'Plane Y\nLocation'})
     plotter.add_text('Ants and Plane Example')
     plotter.show()
 
@@ -135,7 +136,8 @@ def beam_example(off_screen=None, notebook=None):
 
     # plot this displaced beam
     plotter = pyvista.Plotter(off_screen=off_screen, notebook=notebook)
-    plotter.add_mesh(grid, scalars=d, stitle='Y Displacement',
+    plotter.add_mesh(grid, scalars=d,
+                     scalar_bar_args={'title': 'Y Displacement'},
                      rng=[-d.max(), d.max()], cmap=cmap)
     plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
