@@ -2056,11 +2056,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If False, a scalar bar will not be added to the scene. Defaults
             to ``True``.
 
-        stitle : string, optional
-            Scalar bar title. By default the scalar bar is given a title of the
-            the scalars array used to color the mesh.
-            To create a bar with no title, use an empty string (i.e. '').
-
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float values in the
             scalars range to annotate on the scalar bar and the values are the
