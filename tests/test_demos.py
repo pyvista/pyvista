@@ -1,3 +1,4 @@
+import platform
 import pytest
 
 from pyvista import demos
@@ -28,6 +29,8 @@ def test_logo_voxel():
     assert grid.n_cells
 
 
+@pytest.mark.skipif(platform.system() == 'Darwin',
+                    reason='MacOS testing on Azure failes when downloading')
 @skip_no_plotting
 def test_plot_logo():
     # simply should not fail
