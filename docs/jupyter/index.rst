@@ -14,7 +14,7 @@ Plot with ``pyvista`` interactively within a `juptyer
     text.points *= 0.1
     text.translate([0, 1.4, 1.5])
     mesh += text
-    mesh['x'] = mesh.points[:, 0] * mesh.points[:, 2]
+    mesh['x'] = mesh.points[:, 0]
 
     mesh.plot(cpos='xy', jupyter_backend='ipygany', background='white',
               show_scalar_bar=False)
