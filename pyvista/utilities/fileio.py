@@ -133,9 +133,9 @@ def standard_reader_routine(reader, filename, attrs=None):
     if not isinstance(attrs, dict):
         raise TypeError('Attributes must be a dictionary of name and arguments.')
     if filename is not None:
-        if hasattr(reader, 'SetCaseFileName'):
+        try:
             reader.SetCaseFileName(filename)
-        else:
+        except AttributeError:
             reader.SetFileName(filename)
     # Apply any attributes listed
     for name, args in attrs.items():
