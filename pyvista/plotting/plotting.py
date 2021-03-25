@@ -1943,6 +1943,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(actor, reset_camera=reset_camera, name=name, culling=culling,
                        pickable=pickable, render=render)
 
+        # hide scalar bar if using special scalars
+        if scalar_bar_args.get('title', None) == '__custom_rgba':
+            show_scalar_bar = False
+
         # Only show scalar bar if there are scalars
         if show_scalar_bar and scalars is not None:
             self.add_scalar_bar(**scalar_bar_args)
