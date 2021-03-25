@@ -1526,7 +1526,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(DeprecationWarning(USE_SCALAR_BAR_ARGS))
+            warnings.warn(USE_SCALAR_BAR_ARGS, DeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if "scalar" in kwargs:
@@ -1944,7 +1944,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                        pickable=pickable, render=render)
 
         # hide scalar bar if using special scalars
-        if scalar_bar_args.get('title', None) == '__custom_rgba':
+        if scalar_bar_args.get('title') == '__custom_rgba':
             show_scalar_bar = False
 
         # Only show scalar bar if there are scalars
@@ -2102,7 +2102,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(DeprecationWarning(USE_SCALAR_BAR_ARGS))
+            warnings.warn(USE_SCALAR_BAR_ARGS, DeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if "scalar" in kwargs:
