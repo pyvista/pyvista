@@ -28,15 +28,16 @@ def glyphs(grid_sz=3, **kwargs):
                       factor=0.3, rng=(0, n - 1))
 
 
-def plot_glyphs(grid_sz, **kwargs):
+def plot_glyphs(grid_sz=3, **kwargs):
     """Plot several parametric supertoroids using VTK's glyph table functionality."""
     # construct the glyphs on top of the mesh; don't scale by scalars now
     mesh = glyphs(grid_sz)
 
     kwargs.setdefault('specular', 1)
     kwargs.setdefault('specular_power', 15)
+    kwargs.setdefault('smooth_shading', True)
 
     # create plotter and add our glyphs with some nontrivial lighting
     plotter = pv.Plotter()
-    plotter.mesh(mesh, smooth_shading=True, show_scalar_bar=False, **kwargs)
-    plotter.show()
+    plotter.add_mesh(mesh, show_scalar_bar=False, **kwargs)
+    return plotter.show()

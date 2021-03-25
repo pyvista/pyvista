@@ -7,8 +7,10 @@ skip_no_plotting = pytest.mark.skipif(not system_supports_plotting(),
                                       reason="Test requires system to support plotting")
 
 
-def test_glyphs():
-    demos.glyphs(2)
+
+@skip_no_plotting
+def test_plot_glyphs():
+    demos.plot_glyphs(2)
 
 
 def test_atomized():

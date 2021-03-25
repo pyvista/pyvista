@@ -39,7 +39,7 @@ warnings.filterwarnings(
 # -- General configuration ------------------------------------------------
 numfig = False
 html_show_sourcelink = False
-html_logo = './_static/pyvista_logo.png'
+html_logo = './_static/pyvista_logo_sm.png'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
