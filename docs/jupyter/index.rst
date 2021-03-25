@@ -26,12 +26,18 @@ The PyVista module supports a variety of backends when plotting within
 a jupyter notebook:
 
 * Server-side rendering with PyVista streaming to the notebook through
-  ``ipyvtk_simple``
-* Client-side rendering with ``itkwidgets``.
-* Client-side rendering with ``ipygany``.
-* Server and Client-side rendering with ``panel``.
+  ``ipyvtk_simple``.
+* Client-side rendering with ``ipygany`` using ``threejs``.
+* Client-side rendering using ``panel`` using ``vtk.js``.
+* Client-side rendering with ``itkwidgets`` using ``itklibraries``.
 * Static images.
 
+State of 3D Interactive Jupyterlab Plotting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+   This
 
 Usage
 ~~~~~
