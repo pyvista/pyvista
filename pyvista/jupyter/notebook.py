@@ -80,7 +80,8 @@ def show_ipyvtk(plotter, return_viewer):
     if any('SPYDER' in name for name in os.environ):
         warnings.warn('``use_ipyvtk`` is incompatible with Spyder.\n'
                       'Use notebook=False for interactive '
-                      'plotting within spyder')
+                      'plotting within spyder or disable it globally with:\n'
+                      'pyvista.set_jupyter_backend(None)')
 
     try:
         from ipyvtk_simple.viewer import ViewInteractiveWidget

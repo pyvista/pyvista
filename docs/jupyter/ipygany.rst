@@ -137,9 +137,9 @@ Show several widgets similtaniously using
                    bottom_left=scene_2,
                    bottom_right=scene_3)
 
+
 Scalar Bars
 -----------
-
 Scalar bars are automatically show when a plot has active scalars.
 For example, the St. Helens ``mesh`` from ``active_scalar_name`` is
 ``'Elevation'``.  Scalar bars, scalar bar title, and the colormap
