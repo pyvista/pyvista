@@ -125,7 +125,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     im2 = remove_alpha(to_img(im2))
 
     if im1.GetDimensions() != im2.GetDimensions():
-        raise RuntimeError('Input images %s and %s are not of equal size.')
+        raise RuntimeError('Input images are not the same size.')
 
     if use_vtk:
         img_diff = _vtk.vtkImageDifference()

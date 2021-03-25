@@ -688,7 +688,8 @@ def test_add_points():
                        [1, 1, 1]])
     n = points.shape[0]
 
-    plotter.add_points(points, scalars=np.arange(n), cmap=None, flip_scalars=True)
+    plotter.add_points(points, scalars=np.arange(n), cmap=None, flip_scalars=True,
+                       show_scalar_bar=False)
     plotter.show(before_close_callback=verify_cache_image)
 
 
@@ -737,7 +738,7 @@ def test_plot_cell_arrays():
     plotter = pyvista.Plotter()
     scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
-                     n_colors=5, rng=10)
+                     n_colors=5, rng=10, show_scalar_bar=False)
     plotter.show(before_close_callback=verify_cache_image)
 
 
@@ -746,7 +747,7 @@ def test_plot_clim():
     plotter = pyvista.Plotter()
     scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
-                     n_colors=5, clim=10)
+                     n_colors=5, clim=10, show_scalar_bar=False)
     plotter.show(before_close_callback=verify_cache_image)
     assert plotter.mapper.GetScalarRange() == (-10, 10)
 
@@ -840,14 +841,21 @@ def test_scalars_by_name():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-def test_themes():
-    old_rcParms = dict(pyvista.rcParams)  # must cache old rcParams
-    pyvista.set_plot_theme('paraview')
-    pyvista.set_plot_theme('document')
-    pyvista.set_plot_theme('night')
-    pyvista.set_plot_theme('default')
-    for key, value in old_rcParms.items():
-        pyvista.rcParams[key] = value
+@pytest.mark.parametrize('theme', ['paraview', 'document', 'night', 'default'])
+def test_themes(theme):
+    pyvista.set_plot_theme(theme)
+    if theme != 'default':
+        assert pyvista.rcParams != pyvista.DEFAULT_THEME
+        pyvista.set_plot_theme('default')
+    assert pyvista.rcParams == pyvista.DEFAULT_THEME
+
+    # always return to testing theme
+    pyvista.set_plot_theme('testing')
+
+
+def test_invalid_theme():
+    with pytest.raises(ValueError, match='Invalid theme'):
+        pyvista.set_plot_theme('this is not a valid theme')
 
 
 @skip_no_plotting
@@ -976,7 +984,7 @@ def test_multi_renderers():
     plotter.subplot(0, 0)
     plotter.add_text('Render Window 0', font_size=30)
     sphere = pyvista.Sphere()
-    plotter.add_mesh(sphere, scalars=sphere.points[:, 2])
+    plotter.add_mesh(sphere, scalars=sphere.points[:, 2], show_scalar_bar=False)
     plotter.add_scalar_bar('Z', vertical=True)
 
     plotter.subplot(0, 1)
@@ -1453,7 +1461,7 @@ def test_default_name_tracking():
 
 
 @skip_no_plotting
-def test_add_background_image_global():
+def test_add_background_image_global(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
     plotter.add_background_image(examples.mapfile, as_global=True)
@@ -1461,7 +1469,7 @@ def test_add_background_image_global():
 
 
 @skip_no_plotting
-def test_add_background_image_not_global():
+def test_add_background_image_not_global(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
     plotter.add_background_image(examples.mapfile, as_global=False)
@@ -1469,13 +1477,13 @@ def test_add_background_image_not_global():
 
 
 @skip_no_plotting
-def test_add_background_image_subplots():
+def test_add_background_image_subplots(airplane):
     pl = pyvista.Plotter(shape=(2, 2))
     pl.add_background_image(examples.mapfile, scale=1, as_global=False)
-    pl.add_mesh(examples.load_airplane())
+    pl.add_mesh(airplane)
     pl.subplot(1, 1)
     pl.add_background_image(examples.mapfile, scale=1, as_global=False)
-    pl.add_mesh(examples.load_airplane())
+    pl.add_mesh(airplane)
     pl.remove_background_image()
 
     # should error out as there's no background
