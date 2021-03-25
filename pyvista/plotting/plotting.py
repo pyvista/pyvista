@@ -73,6 +73,11 @@ Use ``scalar_bar_args`` instead.  For example:
 scalar_bar_args={'title': 'Scalar Bar Title'}
 """
 
+class PyvistaDeprecationWarning(Warning):
+    """Non-supressed Depreciation Warning."""
+
+    pass
+
 
 @abstract_class
 class BasePlotter(PickingHelper, WidgetHelper):
@@ -1526,7 +1531,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(USE_SCALAR_BAR_ARGS, DeprecationWarning)
+            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if "scalar" in kwargs:
@@ -2102,7 +2107,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(USE_SCALAR_BAR_ARGS, DeprecationWarning)
+            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if "scalar" in kwargs:
