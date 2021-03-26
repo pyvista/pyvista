@@ -1649,7 +1649,7 @@ class DataSetFilters:
         --------
         Probe the active scalars in ``grid`` at the points in ``mesh``
 
-        >>> import pyvista as pv
+        >>> import pyvista
         >>> from pyvista import examples
         >>> mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
         >>> grid = examples.load_uniform()
