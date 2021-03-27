@@ -1,4 +1,4 @@
-.. _ref_pyinstaller:
+.. _ref_flask:
 
 Flask Application
 =================
