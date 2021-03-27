@@ -348,6 +348,10 @@ jobs:
       make -C docs html
     displayName: 'Update figures from doctest'
 
+  - script: |
+      make -C docs html
+    displayName: 'Turn warnings into errors'
+
   # Push example notebooks to pyvista-examples
   - script: |
       pip install cookiecutter
