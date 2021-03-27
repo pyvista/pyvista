@@ -138,13 +138,19 @@ def ipygany_obj_from_actor(actor):
 
     # determine if there are active scalars
     scalars_name = mapper.GetArrayName()
-    if scalars_name:
-        mn, mx = mapper.GetScalarRange()
-        cmesh = IsoColor(pmesh, input=(scalars_name), min=mn, max=mx)
-        if hasattr(mapper, 'cmap'):
-            cmap = check_colormap(mapper.cmap)
-            cmesh.colormap = colormaps[cmap]
-        return cmesh
+    valid_mode = mapper.GetScalarModeAsString() in ['UsePointData', 'UseCellData']
+    if valid_mode:
+        if not scalars_name:
+            scalars_name = dataset.active_scalars_name
+
+        # ensure this is a valid scalar
+        if scalars_name in [data.name for data in pmesh.data]:
+            mn, mx = mapper.GetScalarRange()
+            cmesh = IsoColor(pmesh, input=(scalars_name), min=mn, max=mx)
+            if hasattr(mapper, 'cmap'):
+                cmap = check_colormap(mapper.cmap)
+                cmesh.colormap = colormaps[cmap]
+            return cmesh
 
     return pmesh
 
@@ -162,7 +168,7 @@ def ipygany_camera_from_plotter(plotter):
             'up': up}
 
 
-def show_ipygany(plotter, return_viewer):
+def show_ipygany(plotter, return_viewer, height=None, width=None):
     """Show an ipygany scene."""
     # convert each mesh in the plotter to an ipygany scene
     actors = plotter.renderer._actors
@@ -178,9 +184,10 @@ def show_ipygany(plotter, return_viewer):
                   camera=ipygany_camera_from_plotter(plotter))
 
     # optionally size of the plotter
-    # width, height = plotter.window_size
-    # scene.layout.width = f'{width}px'
-    # scene.layout.height = f'{height}px'
+    if height is not None:
+        scene.layout.height = f'{height}'
+    if width is not None:
+        scene.layout.width = f'{width}'
 
     cbar = None
     if len(plotter.scalar_bars):

@@ -66,8 +66,8 @@ def set_jupyter_backend(backend):
 
     >>> pv.set_jupyter_backend('static')
 
-    Disable all plotting within jupyterlab and display outside of
-    jupyterlab
+    Disable all plotting within JupyterLab and display using a
+    standard desktop VTK render window.
 
     >>> pv.set_jupyter_backend(None)  # or 'none'
 

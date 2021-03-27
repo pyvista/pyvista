@@ -1,17 +1,18 @@
-ipygany Viewer
-==============
-The `ipygany <https://github.com/QuantStack/ipygany>`_ module is a
-powerful module that enables pure plotting that leverages `threejs
-<https://threejs.org/>`_ through the `pythreejs widget
-<https://github.com/jupyter-widgets/pythreejs>`_.  It allows for
-embedded html documentation (as shown here), rapid plotting (as
-compared to the other client jupyterlab plotting modules like
-``panel`` or ``itkwidgets``), and looks great!
+.. _ipygany_ref:
 
-There is an excellent block post at `ipygany: Jupyter into the third
-dimension
-<https://blog.jupyter.org/ipygany-jupyter-into-the-third-dimension-29a97597fc33>`_,
-and without repeating too much here, includes the following features:
+Using ``ipygany`` with PyVista
+------------------------------
+The `ipygany <https://github.com/QuantStack/ipygany>`_ jupyterlab
+plotting backend is a powerful module that enables pure plotting that
+leverages `threejs <https://threejs.org/>`_ through the `pythreejs
+widget <https://github.com/jupyter-widgets/pythreejs>`_.  It allows
+for embedded html documentation (as shown here), rapid plotting (as
+compared to the other client jupyterlab plotting modules like
+``panel`` or ``itkwidgets``).
+
+There is an excellent block post at `ipygany: Jupyter into the third dimension <https://blog.jupyter.org/ipygany-jupyter-into-the-third-dimension-29a97597fc33>`_
+and without repeating too much here, ``ipygany`` includes the
+following features:
 
 - IsoColor: apply color-mapping to your mesh.
 - Warp: deform your mesh given a 3-D input data (e.g. displacement
@@ -27,7 +28,7 @@ and without repeating too much here, includes the following features:
 
 
 PyVista Wrapping
-----------------
+~~~~~~~~~~~~~~~~
 There are two approaches for plotting using ipygany with ``pyvista``.
 First, you can convert between pyvista meshes ``ipygany`` PolyMesh
 objects using the ``from_pyvista`` method from ``ipygany`` to enable a
@@ -76,12 +77,9 @@ This scene can then be added to any number of jupyterlab widgets and
 then shown as a complete widget.  For example, you could even display
 two side by side using ``ipywidgets.AppLayout``.
 
-Examples
---------
 
-Large Models
-------------
-
+Examples: Large Models
+~~~~~~~~~~~~~~~~~~~~~~
 This example shows a large mesh and demonstrates how even fairly large
 meshes, like the carburator example which contains 500,000 faces and
 250,000 points, can be quickly loaded.  This is, of course, bandwidth
@@ -103,8 +101,7 @@ dependent, as this mesh is around 6 MB.
 
 
 Returning Scenes
-----------------
-
+~~~~~~~~~~~~~~~~
 Show several widgets similtaniously using
 ``ipywidgets.TwoByTwoLayout``.  This is similar to the
 :ref:`ref_parametric_example`, except with interactive widgets.
@@ -139,7 +136,7 @@ Show several widgets similtaniously using
 
 
 Scalar Bars
------------
+~~~~~~~~~~~
 Scalar bars are automatically show when a plot has active scalars.
 For example, the St. Helens ``mesh`` from ``active_scalar_name`` is
 ``'Elevation'``.  Scalar bars, scalar bar title, and the colormap
@@ -150,7 +147,7 @@ dropdown menu are automatically added to the scene.
     # Load St Helens DEM and warp the topography
     mesh = examples.download_st_helens().warp_by_scalar()
 
-    # First a default plot
-    p = pv.Plotter()
-    p.add_mesh(mesh)
-    p.show()
+    pl = pv.Plotter()
+    pl.background_color = 'white'
+    pl.add_mesh(mesh)
+    pl.show()

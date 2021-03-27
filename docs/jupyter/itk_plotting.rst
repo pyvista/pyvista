@@ -1,7 +1,7 @@
-.. _jupyter_ref:
+.. _itk_plotting_ref:
 
-Using ``itkwidgets``
-~~~~~~~~~~~~~~~~~~~~
+Using ``itkwidgets`` with PyVista
+---------------------------------
 
 .. note::
 

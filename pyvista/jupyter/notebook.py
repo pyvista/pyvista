@@ -4,7 +4,8 @@ Support dynamic or static jupyter notebook plotting.
 Includes:
 
 * ``ipyvtk_simple``
-# ``panel``
+* ``panel``
+* ``ipyvtk_simple``
 
 """
 import warnings
@@ -13,7 +14,7 @@ import os
 import numpy as np
 
 # This module should not be imported at the __init__ level, only as a
-# lazy import
+# lazy import when trying to plot using jupyter notebooks
 try:
     import IPython
     from IPython import display
@@ -24,7 +25,7 @@ PANEL_EXTENSION_SET = [False]
 
 
 def handle_plotter(plotter, backend=None, screenshot=None,
-                   return_viewer=False):
+                   return_viewer=False, **kwargs):
     """Show the ``pyvista`` plot in a jupyter environment.
 
     Parameters
@@ -47,7 +48,7 @@ def handle_plotter(plotter, backend=None, screenshot=None,
         return show_panel(plotter, return_viewer)
     if backend == 'ipygany':
         from pyvista.jupyter.pv_ipygany import show_ipygany
-        return show_ipygany(plotter, return_viewer)
+        return show_ipygany(plotter, return_viewer, **kwargs)
 
     return show_static_image(plotter, screenshot, return_viewer)
 
@@ -99,31 +100,32 @@ def show_ipyvtk(plotter, return_viewer):
 
 
 def show_panel(plotter, return_viewer):
-    """Take the active renderer from a plotter and show it using ``panel``."""
-    if len(plotter.renderers) != 1:
-        warnings.warn('Plotter has multiple renderers.  Only showing the active '
-                      'renderer using ``panel``')
-
+    """Take the active renderer(s) from a plotter and show them using ``panel``."""
     try:
         import panel as pn
     except ImportError:
         raise ImportError('Install ``panel`` to use this feature')
 
+    # check if panel extension has been set
     if not PANEL_EXTENSION_SET[0]:
         pn.extension('vtk')
         PANEL_EXTENSION_SET[0] = True
 
-    width, height = plotter.window_size
-    axes_enabled = plotter.renderer.axes_enabled
-    pan = pn.panel(plotter.ren_win, width=width, height=height,
-                   orientation_widget=axes_enabled,
-                   enable_keybindings=False)
+    # only set window size if explicitly set within the plotter
+    sizing = {}
+    if not plotter._window_size_unset:
+        width, height = plotter.window_size
+        sizing = {'width': width,
+                  'height': height}
 
-    # sizing_mode='stretch_width'  # doesn't work when graphics saved/buggy
-    # ìnteractive_orientation_widget  # can't seem to be enabled
+    axes_enabled = plotter.renderer.axes_enabled
+    pan = pn.panel(plotter.ren_win,
+                   sizing_mode='stretch_width',
+                   orientation_widget=axes_enabled,
+                   enable_keybindings=False, **sizing)
 
     # if plotter.renderer.axes_enabled:
-        # pan.axes = build_panel_axes()
+    # pan.axes = build_panel_axes()
 
     if hasattr(plotter.renderer, 'cube_axes_actor'):
         pan.axes = build_panel_bounds(plotter.renderer.cube_axes_actor)

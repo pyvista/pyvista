@@ -1875,12 +1875,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalar_bar_args.setdefault('below_label', 'Below')
 
             if cmap is not None:
+                # have to add the attribute to pass it onward to some classes
+                if isinstance(cmap, str):
+                    self.mapper.cmap = cmap
                 # ipygany uses different colormaps
                 if rcParams['jupyter_backend'] == 'ipygany':
                     from ..jupyter.pv_ipygany import check_colormap
                     check_colormap(cmap)
-                    # have to add the attribute to pass it to ipygany
-                    self.mapper.cmap = cmap
                 else:
                     if not _has_matplotlib():
                         cmap = None
@@ -3986,7 +3987,9 @@ class Plotter(BasePlotter):
             off_screen = True
         self.off_screen = off_screen
 
+        self._window_size_unset = False
         if window_size is None:
+            self._window_size_unset = True
             window_size = rcParams['window_size']
         self.__prior_window_size = window_size
 
@@ -4143,6 +4146,7 @@ class Plotter(BasePlotter):
         """
         # developer keyword argument: runs a function immediately prior to ``close``
         self._before_close_callback = kwargs.pop('before_close_callback', None)
+        jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})
         assert_empty_kwargs(**kwargs)
 
         if interactive_update and auto_close is None:
@@ -4178,6 +4182,8 @@ class Plotter(BasePlotter):
         else:
             if window_size is None:
                 window_size = self.window_size
+            else:
+                self._window_size_unset = False
             self.ren_win.SetSize(window_size[0], window_size[1])
 
         # reset unless camera for the first render unless camera is set
@@ -4195,6 +4201,10 @@ class Plotter(BasePlotter):
         # first render window
 
         # handle plotter notebook
+        if jupyter_backend and not self.notebook:
+            warnings.warn('Not within a jupyter notebook environment.\n'
+                          'Ignoring ``jupyter_backend``.')
+
         if self.notebook:
             from ..jupyter.notebook import handle_plotter
             if jupyter_backend is None:
@@ -4202,7 +4212,8 @@ class Plotter(BasePlotter):
 
             if jupyter_backend != 'none':
                 disp = handle_plotter(self, backend=jupyter_backend,
-                                      return_viewer=return_viewer)
+                                      return_viewer=return_viewer,
+                                      **jupyter_kwargs)
                 return disp
 
         self.render()
