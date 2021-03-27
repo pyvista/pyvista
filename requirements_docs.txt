@@ -21,4 +21,5 @@ mypy
 mypy-extensions
 typed-ast
 typing-extensions
+pypandoc
 

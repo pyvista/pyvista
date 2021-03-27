@@ -311,6 +311,7 @@ jobs:
 
   - script: |
       sudo apt-get install python3-tk
+      sudo apt-get install pandoc
       pip install -r requirements_docs.txt
     displayName: 'Install dependencies'
 
