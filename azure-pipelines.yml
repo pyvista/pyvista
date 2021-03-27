@@ -349,7 +349,7 @@ jobs:
     displayName: 'Update figures from doctest'
 
   - script: |
-      make -C docs html
+      make -C docs html SPHINXOPTS="-W"
     displayName: 'Turn warnings into errors'
 
   # Push example notebooks to pyvista-examples
