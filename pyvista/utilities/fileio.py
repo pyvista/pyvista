@@ -153,23 +153,12 @@ def standard_reader_routine(reader, filename, attrs=None):
     # Perform the read
     reader.Update()
 
-    data = pyvista.wrap(reader.GetOutputDataObject(0))
-    data._post_file_load_processing()
-
     # Check reader for errors
     if observer.has_event_occurred():
         raise IOError(f'Error loading file using `{reader.GetClassName()}`.\n\t{observer.get_message()}')
 
-    # Check if data is empty - observer doesn't seem to work reliably?
-    data_empty = False
-    if isinstance(data, pyvista.MultiBlock):
-        data_empty = len(data) == 0
-    elif data.n_points == 0:
-        data_empty = True
-
-    if data_empty:
-        raise IOError(f'Error loading file using `{reader.GetClassName()}`.\n\tReturned empty dataset.')
-
+    data = pyvista.wrap(reader.GetOutputDataObject(0))
+    data._post_file_load_processing()
     return data
 
 
