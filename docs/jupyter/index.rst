@@ -41,7 +41,7 @@ The PyVista module supports a variety of backends when plotting within
 a jupyter notebook:
 
 * Server-side rendering with PyVista streaming to the notebook through
-  `ipyvtk-simple <https://github.com/Kitware/ipyvtk-simple/issues>`_
+  `ipyvtk-simple <https://github.com/Kitware/ipyvtk-simple/>`_
 * Client-side rendering with `ipygany <https://github.com/QuantStack/ipygany>`_ using ``threejs``.
 * Client-side rendering using `panel <https://github.com/holoviz/panel>`_ using ``vtk.js``.
 * Client-side rendering with `itkwidgets <https://github.com/InsightSoftwareConsortium/itkwidgets>`_ using ``itk.js`` and ``vtk.js``.

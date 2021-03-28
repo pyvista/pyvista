@@ -20,12 +20,7 @@ from pyvista import _vtk
 
 import numpy as np
 
-
-try:
-    THIS_PATH = os.path.dirname(os.path.realpath(__file__))
-except:
-    THIS_PATH = '/home/alex/python/pyvista/pyvista/demos/'
-
+THIS_PATH = os.path.dirname(os.path.realpath(__file__))
 
 LOGO_TITLE = 'PyVista'
 
@@ -138,12 +133,8 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None, cpos=None, **k
     v_grid = pyvista.voxelize(mesh_letters['V'], density=0.08)
     v_grid_atom = atomize(v_grid)
     v_grid_atom['scalars'] = v_grid_atom.points[:, 0]
-    if 'ipygany' in kwargs.get('jupyter_backend'):
-        cmap = 'plasma'
-    else:
-        cmap = 'winter'
     plotter.add_mesh(v_grid_atom, scalars='scalars', show_edges=True,
-                     cmap=cmap, show_scalar_bar=False)
+                     cmap='winter', show_scalar_bar=False)
 
     # letter 'i'
     i_grid = pyvista.voxelize(mesh_letters['i'], density=0.1)
@@ -156,24 +147,15 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None, cpos=None, **k
     # letter 's'
     mesh = mesh_letters['s']
     scalars = mesh.points[:, 0]
-    if 'ipygany' in kwargs.get('jupyter_backend'):
-        cmap = 'magma'
-    else:
-        cmap = 'gist_heat'
     plotter.add_mesh(mesh, scalars=scalars, style='wireframe', color='w',
-                     show_edges=True, line_width=2, cmap=cmap,
+                     show_edges=True, line_width=2, cmap='gist_heat',
                      backface_culling=True, render_lines_as_tubes=True)
 
     # letter 't'
     mesh = mesh_letters['t']
     scalars = mesh.points[:, 0]
-    if 'ipygany' in kwargs.get('jupyter_backend'):
-        cmap = 'inferno'
-    else:
-        cmap = 'autumn'
     plotter.add_mesh(mesh, scalars=scalars, show_edges=True,
-                     cmap=cmap,
-                     lighting=True)
+                     cmap='autumn', lighting=True)
 
     # letter 'a'
     grid = examples.download_letter_a()
@@ -305,19 +287,22 @@ def _for_landing_page(jupyter_backend='ipygany', **kwargs):
     #         (2.334051705055946, 0.3234730018006926, -0.008431173749159387),
     #         (0.019308531920309947, 0.996708840795678, -0.07873161547192065)]
 
-    x = 2.7
-    cpos = [(x, 0.306, 5),
-            (x, 0.306, 0.15),
-            (0.0, 1.0, 0.0)]
+    if jupyter_backend == 'ipygany':
+        x = 2.7
+        cpos = [(x, 0.306, 5),
+                (x, 0.306, 0.15),
+                (0.0, 1.0, 0.0)]
 
-    # cpos = 'xy'
-    # plotter.camera.zoom(10)
+        text = text_3d("I'm interactive!", depth=0.1)
+        text.points *= 0.15
+        text.translate([4, -0.4, 0])
 
-    text = text_3d("I'm interactive!", depth=0.1)
-    text.points *= 0.15
-    text.translate([4, -0.4, 0])
+        plotter.add_mesh(text, color='black')
 
-    plotter.add_mesh(text, color='black')
+    else:
+        cpos = [(0.9060226106040606, 0.7752122028710583, 5.148283455883558),
+                (2.553950615449191, 0.34145688392081264, 0.06127122762851659),
+                (0.019308531920309943, 0.9967088407956779, -0.07873161547192063)]
 
     plotter.background_color = 'white'
     plotter.remove_scalar_bar()

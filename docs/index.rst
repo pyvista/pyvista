@@ -1,6 +1,5 @@
 .. title:: PyVista
 
-
 .. jupyter-execute::
    :hide-code:
 

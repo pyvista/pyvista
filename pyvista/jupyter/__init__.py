@@ -4,6 +4,8 @@ import os
 from .. import rcParams
 from .itkplotter import PlotterITK
 
+ALLOWED_BACKENDS = ['ipyvtk_simple', 'panel', 'ipygany', 'static', 'none']
+
 
 def check_backend_env_var():
     """Set ipyvtk_vtk rcParam flag for interactive notebook rendering."""
@@ -79,12 +81,11 @@ def set_jupyter_backend(backend):
 
     try:
         import IPython
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise ImportError('Install IPython to display with pyvista in a notebook.')
 
-    allowed_backends = ['ipyvtk_simple', 'panel', 'ipygany', 'static', 'none']
-    if backend not in allowed_backends:
-        backend_list_str = ', '.join([f'"{item}"' for item in allowed_backends])
+    if backend not in ALLOWED_BACKENDS:
+        backend_list_str = ', '.join([f'"{item}"' for item in ALLOWED_BACKENDS])
         raise ValueError(f'Invalid Jupyter notebook plotting backend "{backend}".\n'
                          f'Use one of the following:\n{backend_list_str}')
 
@@ -92,13 +93,13 @@ def set_jupyter_backend(backend):
     if backend == 'ipyvtk_simple':
         try:
             import ipyvtk_simple
-        except ImportError:
-            raise ImportError('Please install `ipyvtk_simple` to use this feature')
+        except ImportError:    # pragma: no cover
+            raise ImportError('Please install `ipyvtk-simple` to use this feature')
 
     if backend == 'panel':
         try:
             import panel
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError('Please install `panel` to use this feature')
         panel.extension('vtk')
 
