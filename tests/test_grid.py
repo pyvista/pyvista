@@ -719,7 +719,7 @@ def test_cast_uniform_to_rectilinear():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.grid.RectilinearGrid._READERS)
+@pytest.mark.parametrize('extension', ['.vtk', '.vtr'])
 def test_save_rectilinear(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_rectilinear()
@@ -740,7 +740,7 @@ def test_save_rectilinear(extension, binary, tmpdir):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.grid.UniformGrid._READERS)
+@pytest.mark.parametrize('extension', ['.vtk', '.vti'])
 def test_save_uniform(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_uniform()

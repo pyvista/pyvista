@@ -282,21 +282,6 @@ class Table(_vtk.vtkTable, DataObject):
 class Texture(_vtk.vtkTexture, DataObject):
     """A helper class for vtkTextures."""
 
-    _READERS = {'.bmp': _vtk.vtkBMPReader,
-                '.dem': _vtk.vtkDEMReader,
-                '.dcm': _vtk.vtkDICOMImageReader,
-                '.img': _vtk.vtkDICOMImageReader,
-                '.jpeg': _vtk.vtkJPEGReader,
-                '.jpg': _vtk.vtkJPEGReader,
-                '.mhd': _vtk.vtkMetaImageReader,
-                '.nrrd': _vtk.vtkNrrdReader,
-                '.nhdr': _vtk.vtkNrrdReader,
-                '.png': _vtk.vtkPNGReader,
-                '.pnm': _vtk.vtkPNMReader,
-                '.slc': _vtk.vtkSLCReader,
-                '.tiff': _vtk.vtkTIFFReader,
-                '.tif': _vtk.vtkTIFFReader}
-
     def __init__(self, *args, **kwargs):
         """Initialize the texture."""
         super().__init__(*args, **kwargs)
