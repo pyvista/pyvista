@@ -1,7 +1,4 @@
-"""These classes hold methods to apply general filters to any data type.
-
-By inheriting these classes into the wrapped VTK data structures, a user
-can easily apply common filters in an intuitive manner.
+"""This class holds methods to apply general filters to UniformGrid.
 
 Example
 -------

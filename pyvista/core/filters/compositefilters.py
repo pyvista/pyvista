@@ -1,6 +1,6 @@
-"""These mixins add filters to composite datasets.
+"""This class holds methods to apply general filters to composite datasets.
 
-By inheriting these classes into the wrapped VTK data structures, a user
+By inheriting this class into the wrapped VTK data structures, a user
 can easily apply filters in an intuitive manner.
 """
 
