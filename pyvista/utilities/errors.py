@@ -67,7 +67,7 @@ class Observer:
             self.log_message(kind, alert)
 
     def has_event_occurred(self):
-        """Ask self if an error has occurred since last querried.
+        """Ask self if an error has occurred since last queried.
 
         This resets the observer's status.
 

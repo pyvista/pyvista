@@ -297,7 +297,7 @@ class Texture(_vtk.vtkTexture, DataObject):
             elif isinstance(args[0], str):
                 self._from_file(filename=args[0])
             else:
-                raise TypeError(f'Table unable to be made from ({type(args[0])})')
+                raise TypeError(f'Texture unable to be made from ({type(args[0])})')
 
     def _from_file(self, filename):
         try:
