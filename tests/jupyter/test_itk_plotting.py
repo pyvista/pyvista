@@ -40,8 +40,14 @@ def test_itk_plotting_points():
 
 @no_itk
 def test_itk_plotting_points_polydata():
-    points = pyvista.wrap(np.random.random((100, 3)))
-    viewer = pyvista.plot_itk(points)
+    points = pyvista.PolyData(np.random.random((100, 3)))
+    pl = pyvista.PlotterITK()
+    pl.add_points(points)
+
+    with pytest.raises(TypeError):
+        viewer = pl.add_points([1, 2, 3], point_size='foo')
+
+    viewer = pl.show()
     assert isinstance(viewer, itkwidgets.Viewer)
 
 
@@ -57,6 +63,12 @@ def test_itk_plotting_class():
 def test_itk_plotting_class_no_scalars():
     pl = pyvista.PlotterITK()
     pl.add_mesh(SPHERE, color='w')
+    with pytest.raises(ValueError):
+        pl.camera_position = 'xy'
+    with pytest.raises(ValueError):
+        pl.camera_position = [[1, 0, 0], [1, 0, 0]]
+    with pytest.raises(ValueError):
+        pl.camera_position = [[1, 0, 0], [1, 0, 0], [1]]
     pl.camera_position = [[1, 0, 0], [1, 0, 0], [1, 0, 0]]
     assert isinstance(pl.camera_position, list)
     pl.background_color = 'k'

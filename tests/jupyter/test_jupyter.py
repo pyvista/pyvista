@@ -3,8 +3,11 @@ import pytest
 import pyvista as pv
 from pyvista import jupyter
 
+ALLOWED_BACKENDS = list(jupyter.ALLOWED_BACKENDS)
+ALLOWED_BACKENDS.append(None)
 
-@pytest.mark.parametrize('backend', jupyter.ALLOWED_BACKENDS)
+
+@pytest.mark.parametrize('backend', ALLOWED_BACKENDS)
 def test_set_jupyter_backend_ipygany(backend):
     pv.set_jupyter_backend(backend)
     if backend == 'none':

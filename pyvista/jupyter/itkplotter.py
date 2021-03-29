@@ -265,7 +265,7 @@ class PlotterITK():
         try:
             from IPython import display
             display.display_html(viewer)
-        except ImportError:
+        except ImportError:  # pragma: no cover
             pass
 
         return viewer
