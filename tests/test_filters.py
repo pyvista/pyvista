@@ -1168,7 +1168,8 @@ def test_transform_mesh(dataset, num_cell_arrays, num_point_arrays):
 @pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
                          itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
 def test_transform_mesh_and_vectors(dataset, num_cell_arrays, num_point_arrays):
-    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
+      # rotate about x-axis by 90 degrees
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
     for i in range(num_cell_arrays):
         dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
