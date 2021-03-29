@@ -18,7 +18,7 @@ import numpy as np
 try:
     import IPython
     from IPython import display
-except ImportError:
+except ImportError:  # pragma: no cover
     raise ImportError('Install IPython to display an image in a notebook')
 
 PANEL_EXTENSION_SET = [False]
