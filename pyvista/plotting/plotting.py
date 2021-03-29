@@ -1788,7 +1788,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 elif scalars.ndim == 2 and (scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells):
                     if not isinstance(component, (int, type(None))):
                         raise TypeError('component must be either None or an integer')
-                    if component is None:
+                    elif component is None:
                         scalars = np.linalg.norm(scalars.copy(), axis=1)
                         title = '{}-normed'.format(title)
                     elif component < scalars.shape[1] and component >= 0:
