@@ -21,7 +21,6 @@ mesh["Velocity Vector"] = data
 ###############################################################################
 # The default behavior with no component specified is to use the vector
 # magnitude. We can access each component by specifying the component argument.
-###############################################################################
 dargs = dict(
     scalars="Velocity Vector",
     cmap="rainbow",
