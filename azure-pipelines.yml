@@ -301,7 +301,7 @@ jobs:
     displayName: Build pyvista doc examples cache
 
   - script: |
-      make -C docs html -b coverage
+      xvfb-run make -C docs html -b coverage
       cat docs/_build/coverage/python.txt
     displayName: 'Build documentation'
 
