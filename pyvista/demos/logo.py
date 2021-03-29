@@ -252,8 +252,9 @@ def _for_landing_page(jupyter_backend='ipygany', **kwargs):
     # src.morph(tgt, settings={'local_with_centroid': True, 'local_steps': 300})
 
     # t_mesh = t_cmesh.extract_all_edges().tube(radius=0.005, n_sides=4)
+    # t_mesh.extract_surface().save(...)
 
-    t_mesh_filename = os.path.join(THIS_PATH, 't_mesh.vtk')
+    t_mesh_filename = os.path.join(THIS_PATH, 't_mesh.ply')
     t_mesh = pyvista.read(t_mesh_filename)
 
     # letter 'a'
