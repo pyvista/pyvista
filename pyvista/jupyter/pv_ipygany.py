@@ -43,19 +43,6 @@ def pyvista_polydata_to_polymesh(obj):
     -------
     PolyMesh
         ``ipygany.PolyMesh`` object.
-
-    Examples
-    --------
-    Convert a pyvista mesh to a PolyMesh
-
-    >>> import pyvista as pv
-    >>> from ipygany import PolyMesh
-    >>> pv_mesh = pv.Sphere()
-    >>> mesh = PolyMesh.from_pyvista(pv_mesh)
-    >>> mesh
-    PolyMesh(data=[Data(components=[Component(array=array([-6.1232343e-17,
-    6.1232343e-17, -1.0811902e-01, -2.1497…
-
     """
     # attempt to wrap non-pyvista objects
     if not pv.is_pyvista_dataset(obj):
