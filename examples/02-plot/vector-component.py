@@ -14,7 +14,6 @@ import pyvista as pv
 ###############################################################################
 # Start with a plane containing a vector with value of [1, 2, 3]
 # everywhere. The magnitude of this vector is 3.74.
-###############################################################################
 mesh = pv.Plane()
 data = np.ones([mesh.n_cells, 3])
 data[:] = [1.0, 2.0, 3.0]
