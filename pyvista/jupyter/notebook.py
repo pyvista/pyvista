@@ -55,15 +55,13 @@ def handle_plotter(plotter, backend=None, screenshot=None,
 
 def show_static_image(plotter, screenshot, return_viewer):
     """Display a static image to be displayed within a jupyter notebook."""
-    # Must render here, otherwise plotter will segfault.  Consider
-    # moving to screenshot logic
-    plotter.render()
-
     import PIL.Image
 
     if not hasattr(plotter, 'last_image'):
+        # Must render here, otherwise plotter will segfault.
+        plotter.render()
         plotter.last_image = plotter.screenshot(screenshot, return_img=True)
-    disp = display.display(PIL.Image.fromarray(plotter.last_image))
+    image = PIL.Image.fromarray(plotter.last_image)
 
     # close plotter as this will be a static image and there is no
     # point to keeping the plotter around.
@@ -71,9 +69,9 @@ def show_static_image(plotter, screenshot, return_viewer):
 
     # Simply display the result: either ipyvtk_simple object or image display
     if return_viewer:
-        return disp
+        return image
     else:
-        display.display_html(disp)
+        display.display(image)
 
 
 def show_ipyvtk(plotter, return_viewer):
@@ -86,7 +84,7 @@ def show_ipyvtk(plotter, return_viewer):
 
     try:
         from ipyvtk_simple.viewer import ViewInteractiveWidget
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise ImportError('Please install `ipyvtk_simple` to use this feature:'
                           '\thttps://github.com/Kitware/ipyvtk-simple')
 
@@ -103,7 +101,7 @@ def show_panel(plotter, return_viewer):
     """Take the active renderer(s) from a plotter and show them using ``panel``."""
     try:
         import panel as pn
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise ImportError('Install ``panel`` to use this feature')
 
     # check if panel extension has been set

@@ -275,7 +275,7 @@ jobs:
     displayName: Install headless display
 
   - script: |
-      sudo apt-get install python3-tk pandoc libgl1-mesa-glx xvfb
+      sudo apt-get install python3-tk pandoc
       pip install -r requirements_docs.txt
     displayName: 'Install dependencies'
 

@@ -14,7 +14,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
-         return_viewer=False, **kwargs):
+         return_viewer=False, jupyter_kwargs={}, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -72,6 +72,9 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
         This can also be set globally with
         ``pyvista.set_jupyter_backend``
+
+    jupyter_kwargs : dict, optional
+        Keyword arguments for the Jupyter notebook plotting backend.
 
     **kwargs : optional keyword arguments
         See help(Plotter.add_mesh) for additional options.
@@ -160,6 +163,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           use_ipyvtk=use_ipyvtk,
                           jupyter_backend=jupyter_backend,
                           before_close_callback=before_close_callback,
+                          jupyter_kwargs=jupyter_kwargs,
                           return_viewer=return_viewer)
 
     # Result will be handled by plotter.show(): cpos or [cpos, img] or

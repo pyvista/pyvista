@@ -10,19 +10,19 @@ from traitlets import Enum
 # not to be imported at the init level
 try:
     import ipygany
-except ImportError:
+except ImportError:  # pragma: no cover
     raise ImportError('Install ``ipygany`` to use this feature.')
 
 try:
     from ipywidgets import (FloatSlider, FloatRangeSlider, Dropdown, Layout,
                             Select, VBox, HBox, AppLayout, jslink, HTML)
-except ImportError:
+except ImportError:  # pragma: no cover
     raise ImportError('Install ``ipywidgets`` to use this feature.')
 
 
 from ipygany.vtk_loader import get_ugrid_data
 from ipygany.ipygany import _grid_data_to_data_widget
-from ipygany import Scene, PolyMesh, Component, IsoColor
+from ipygany import Scene, PolyMesh, Component, IsoColor, PointCloud
 from ipygany.colormaps import colormaps
 
 import pyvista as pv
@@ -45,7 +45,7 @@ def pyvista_polydata_to_polymesh(obj):
         ``ipygany.PolyMesh`` object.
     """
     # attempt to wrap non-pyvista objects
-    if not pv.is_pyvista_dataset(obj):
+    if not pv.is_pyvista_dataset(obj):  # pragma: no cover
         mesh = pv.wrap(obj)
         if not pv.is_pyvista_dataset(mesh):
             raise TypeError(f'Object type ({type(mesh)}) cannot be converted to '
@@ -57,7 +57,7 @@ def pyvista_polydata_to_polymesh(obj):
     # convert the mesh to an all triangle polydata
     if not isinstance(obj, pv.PolyData):
         # unlikely case that mesh does not have extract_surface
-        if not hasattr(mesh, 'extract_surface'):
+        if not hasattr(mesh, 'extract_surface'):  # pragma: no cover
             mesh = mesh.cast_to_unstructured_grid()
         surf = mesh.extract_surface()
     else:
@@ -82,6 +82,13 @@ def pyvista_polydata_to_polymesh(obj):
     )
 
 
+def pyvista_object_to_pointcloud(pv_object):
+    """Convert any pyvista object into a ``ipygany.PointCloud``."""
+    pc = PointCloud(vertices=pv_object.points,
+                    data=_grid_data_to_data_widget(get_ugrid_data(pv_object)))
+    return pc
+
+
 def color_float_to_hex(r, g, b):
     """Convert RGB to hex."""
     def clamp(x):
@@ -89,13 +96,6 @@ def color_float_to_hex(r, g, b):
         return max(0, min(x, 255))
     return "#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))
 
-
-class NotAllTrianglesError(ValueError):
-    """Exception when a mesh does not contain all triangles."""
-
-    def __init__(self, message='Mesh must consist of only triangles'):
-        """Empty init."""
-        ValueError.__init__(self, message)
 
 
 def check_colormap(cmap):
@@ -113,14 +113,28 @@ def check_colormap(cmap):
     return cmap
 
 
-def ipygany_obj_from_actor(actor):
-    """Convert a vtk actor to a ipygany scene."""
+def ipygany_block_from_actor(actor):
+    """Convert a vtk actor to a ipygany Block."""
     mapper = actor.GetMapper()
     if mapper is None:
         return
     dataset = mapper.GetInputAsDataSet()
-    pmesh = pyvista_polydata_to_polymesh(dataset)
+
     prop = actor.GetProperty()
+    rep_type = prop.GetRepresentationAsString()
+
+    # check if missing faces as a polydata
+    if rep_type != 'Points' and isinstance(dataset, pv.PolyData):
+        if not dataset.faces.size and dataset.n_points:
+            rep_type = 'Points'
+
+    if rep_type == 'Points':
+        pmesh = pyvista_object_to_pointcloud(dataset)
+    elif rep_type == 'Wireframe':
+        warnings.warn('Wireframe style is not supported in ipygany')
+        return
+    else:
+        pmesh = pyvista_polydata_to_polymesh(dataset)
     pmesh.default_color = color_float_to_hex(*prop.GetColor())
 
     # determine if there are active scalars
@@ -161,7 +175,7 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
     actors = plotter.renderer._actors
     meshes = []
     for actor in actors.values():
-        ipygany_obj = ipygany_obj_from_actor(actor)
+        ipygany_obj = ipygany_block_from_actor(actor)
         if ipygany_obj is not None:
             meshes.append(ipygany_obj)
 
