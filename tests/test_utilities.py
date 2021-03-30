@@ -106,17 +106,19 @@ def test_read_force_ext(tmpdir):
 
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
-    # vtkXMLStructuredGridReader throws an error about the validity of the XML file
+    # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
+    # the returned dataset is empty
     fname = tmpdir / 'airplane.vtu'
     ex.load_airplane().cast_to_unstructured_grid().save(fname)
-    with pytest.raises(IOError):
-        fileio.read(fname, force_ext='.vts')
+    data = fileio.read(fname, force_ext='.vts')
+    assert data.n_points == 0
 
     # try to read a .ply file as .vtm
-    # vtkXMLMultiBlockDataReader throws an error about the validity of the XML file
+    # vtkXMLMultiBlockDataReader throws a VTK error about the validity of the XML file
+    # the returned dataset is empty
     fname = ex.planefile
-    with pytest.raises(IOError):
-        fileio.read(fname, force_ext='.vtm')
+    data = fileio.read(fname, force_ext='.vtm')
+    assert len(data) == 0
 
 
 @mock.patch('pyvista.utilities.fileio.standard_reader_routine')

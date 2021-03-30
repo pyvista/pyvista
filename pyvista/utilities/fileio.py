@@ -129,8 +129,6 @@ def standard_reader_routine(reader, filename, attrs=None):
         value.
 
     """
-    observer = pyvista.utilities.errors.Observer()
-    observer.observe(reader)
 
     if attrs is None:
         attrs = {}
@@ -152,10 +150,6 @@ def standard_reader_routine(reader, filename, attrs=None):
             attr()
     # Perform the read
     reader.Update()
-
-    # Check reader for errors
-    if observer.has_event_occurred():
-        raise IOError(f'Error loading file using `{reader.GetClassName()}`.\n\t{observer.get_message()}')
 
     data = pyvista.wrap(reader.GetOutputDataObject(0))
     data._post_file_load_processing()
