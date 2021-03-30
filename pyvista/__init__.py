@@ -56,10 +56,6 @@ REPR_VOLUME_MAX_CELLS = 1e6
 # Set where figures are saved
 FIGURE_PATH = None
 
-# Set up data directory
-USER_DATA_PATH = appdirs.user_data_dir('pyvista')
-if not os.path.exists(USER_DATA_PATH):
-    os.makedirs(USER_DATA_PATH)
 
 
 # allow user to override the examples path
@@ -67,6 +63,12 @@ if 'PYVISTA_USERDATA_PATH' in os.environ:
     USER_DATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
     if not os.path.isdir(USER_DATA_PATH):
         raise FileNotFoundError(f'Invalid PYVISTA_USERDATA_PATH at {USER_DATA_PATH}')
+
+else:
+    # Set up data directory
+    USER_DATA_PATH = appdirs.user_data_dir('pyvista')
+    if not os.path.exists(USER_DATA_PATH):
+        os.makedirs(USER_DATA_PATH)
 
 try:
     EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
