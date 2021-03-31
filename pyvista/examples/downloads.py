@@ -720,3 +720,13 @@ def download_action_figure():
 
     """
     return _download_and_read('tigerfighter.obj')
+
+
+def download_notch_stress():
+    """Download the FEA stress result from a notched beam."""
+    return _download_and_read('notch_stress.vtk')
+
+
+def download_notch_displacement():
+    """Download the FEA displacement result from a notched beam."""
+    return _download_and_read('notch_disp.vtk')
