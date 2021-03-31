@@ -2840,6 +2840,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def write_frame(self):
         """Write a single frame to the movie file."""
+        # if off screen, show has not been called and we must render
+        # before extracting an image
+        if self._first_time:
+            self._on_first_render_request()
+            self.render()
+
         if not hasattr(self, 'mwriter'):
             raise RuntimeError('This plotter has not opened a movie or GIF file.')
         self.update()
@@ -3383,7 +3389,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._first_time:
             self._on_first_render_request()
             self.render()
-        return self._save_image(self.image, filename, return_img)
+
+        return self._save_image(self.image, filename, return_img)    
 
     def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
                    size=None, name=None, origin=None):

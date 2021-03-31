@@ -52,7 +52,7 @@ simple sphere.
     pl.show(True)
 
 
-.. figure:: ../../images/user-generated/itk_plotting_sphere.png
+.. figure:: ../images/user-generated/itk_plotting_sphere.png
     :width: 600pt
 
     ITKwidgets with pyvista
