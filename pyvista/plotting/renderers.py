@@ -85,80 +85,59 @@ class Renderers():
             row_off = 1-np.concatenate(([0], row_off))
             col_off = np.cumsum(np.abs(col_weights))/np.sum(np.abs(col_weights))
             col_off = np.concatenate(([0], col_off))
+
             # Check and convert groups to internal format (Nx4 matrix
             # where every row contains the row and col index of the
             # top left cell
 
-            # together with the row and col index of the bottom right cell)
             if groups is not None:
-                if not isinstance(groups, collections.abc.Sequence):
-                    raise TypeError('"groups" should be a list or tuple')
+                assert isinstance(groups, collections.abc.Sequence), '"groups" should be a list or tuple'
                 for group in groups:
-                    if not (isinstance(group, collections.abc.Sequence) and len(group) == 2):
-                        raise ValueError('Each group entry should be a list or tuple of 2 elements')
+                    assert isinstance(group, collections.abc.Sequence) and len(group)==2, 'each group entry should be a list or tuple of 2 elements'
                     rows = group[0]
-                    if isinstance(rows, slice):
-                        rows = np.arange(self._shape[0], dtype=int)[rows]
+                    if isinstance(rows,slice):
+                        rows = np.arange(self.shape[0],dtype=int)[rows]
                     cols = group[1]
-                    if isinstance(cols, slice):
-                        cols = np.arange(self._shape[1], dtype=int)[cols]
-                    # Get the normalized group, i.e. extract top left
-                    # corner and bottom right corner from the given
-                    # rows and cols
-                    norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
-
+                    if isinstance(cols,slice):
+                        cols = np.arange(self.shape[1],dtype=int)[cols]
+                    # Get the normalized group, i.e. extract top left corner and bottom right corner from the given rows and cols
+                    norm_group = [np.min(rows),np.min(cols),np.max(rows),np.max(cols)]
                     # Check for overlap with already defined groups:
-                    for i in range(norm_group[0], norm_group[2]+1):
-                        for j in range(norm_group[1], norm_group[3]+1):
-                            if self.loc_to_group((i, j)) is not None:
-                                raise ValueError('Groups cannot overlap')
-                    self.groups = np.concatenate((self.groups, np.array([norm_group], dtype=int)), axis=0)
-
+                    for i in range(norm_group[0],norm_group[2]+1):
+                        for j in range(norm_group[1],norm_group[3]+1):
+                            assert self.loc_to_group((i,j)) is None, 'groups cannot overlap'
+                    self.groups = np.concatenate((self.groups,np.array([norm_group],dtype=int)),axis=0)
             # Create subplot renderers
             for row in range(shape[0]):
                 for col in range(shape[1]):
-                    group = self.loc_to_group((row, col))
+                    group = self.loc_to_group((row,col))
                     nb_rows = None
                     nb_cols = None
                     if group is not None:
-                        if row == self.groups[group, 0] and col == self.groups[group, 1]:
+                        if row==self.groups[group,0] and col==self.groups[group,1]:
                             # Only add renderer for first location of the group
-                            nb_rows = 1 + self.groups[group, 2] - self.groups[group, 0]
-                            nb_cols = 1 + self.groups[group, 3] - self.groups[group, 1]
+                            nb_rows = 1+self.groups[group,2]-self.groups[group,0]
+                            nb_cols = 1+self.groups[group,3]-self.groups[group,1]
                     else:
                         nb_rows = 1
                         nb_cols = 1
                     if nb_rows is not None:
-                        renderer = Renderer(self._plotter, border, border_color,
-                                            border_width)
+                        renderer = Renderer(self._plotter, border, border_color, border_width)
                         x0 = col_off[col]
                         y0 = row_off[row+nb_rows]
                         x1 = col_off[col+nb_cols]
                         y1 = row_off[row]
                         renderer.SetViewport(x0, y0, x1, y1)
-                        self._render_idxs[row, col] = len(self._renderers)
+                        self._render_idxs[row,col] = len(self)
                         self._renderers.append(renderer)
                     else:
-                        self._render_idxs[row, col] = self._render_idxs[self.groups[group, 0], self.groups[group, 1]]
-
-    # def loc_to_group(self, loc):
-    #     """Return group id of the given location index. Or None if this location is not part of any group."""
-    #     group_idxs = np.arange(self.groups.shape[0])
-    #     I = (loc[0]>=self.groups[:,0]) & (loc[0]<=self.groups[:,2]) & (loc[1]>=self.groups[:,1]) & (loc[1]<=self.groups[:,3])
-    #     group = group_idxs[I]
-    #     return None if group.size==0 else group[0]
+                        self._render_idxs[row,col] = self._render_idxs[self.groups[group,0],self.groups[group,1]]
 
     def loc_to_group(self, loc):
-        """Return group id of the given location index, or ``None`` if this location is not part of any group."""
+        """Return group id of the given location index. Or None if this location is not part of any group."""
         group_idxs = np.arange(self.groups.shape[0])
-
-        mask_a = (loc[0] >= self.groups[:, 0])
-        mask_b = (loc[0] <= self.groups[:, 2])
-        mask_c = (loc[1] >= self.groups[:, 1])
-        mask_d = (loc[1] <= self.groups[:, 3])
-        index = mask_a + mask_b + mask_c + mask_d
-
-        group = group_idxs[index]
+        I = (loc[0]>=self.groups[:,0]) & (loc[0]<=self.groups[:,2]) & (loc[1]>=self.groups[:,1]) & (loc[1]<=self.groups[:,3])
+        group = group_idxs[I]
         return None if group.size == 0 else group[0]
 
     def loc_to_index(self, loc):
@@ -204,7 +183,7 @@ class Renderers():
             yield renderer
 
     @property
-    def active_renderer_index(self):
+    def active_index(self):
         return self._active_index
 
     def index_to_loc(self, index):

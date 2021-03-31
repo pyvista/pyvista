@@ -250,11 +250,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         return self.renderers._shape
 
-    #### Manage the active Renderer ####
-    @wraps(Renderers.loc_to_group)
-    def loc_to_group(self, *args, **kwargs):
-        """Wrap ``Renderers.loc_to_group``."""
-        return self.renderers.loc_to_group(*args, **kwargs)
+    # #### Manage the active Renderer ####
+    # @wraps(Renderers.loc_to_group)
+    # def loc_to_group(self, *args, **kwargs):
+    #     """Wrap ``Renderers.loc_to_group``."""
+    #     return self.renderers.loc_to_group(*args, **kwargs)
 
     @wraps(Renderers.index_to_loc)
     def index_to_loc(self, *args, **kwargs):
@@ -3564,7 +3564,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         # verify no render exists
-        if self._background_renderers[self._active_renderer_index] is not None:
+        if self._background_renderers[self.renderers.active_index] is not None:
             raise RuntimeError('A background image already exists.  '
                                'Remove it with remove_background_image '
                                'before adding one')
@@ -3583,7 +3583,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         renderer = BackgroundRenderer(self, image_path, scale, view_port)
         renderer.SetLayer(1)
         self.ren_win.AddRenderer(renderer)
-        self._background_renderers[self._active_renderer_index] = renderer
+        self._background_renderers[self.renderers.active_index] = renderer
 
         # setup autoscaling of the image
         if auto_resize:  # pragma: no cover
@@ -3591,11 +3591,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def remove_background_image(self):
         """Remove the background image from the current subplot."""
-        renderer = self._background_renderers[self._active_renderer_index]
+        renderer = self._background_renderers[self.renderers.active_index]
         if renderer is None:
             raise RuntimeError('No background image to remove at this subplot')
         renderer.deep_clean()
-        self._background_renderers[self._active_renderer_index] = None
+        self._background_renderers[self.renderers.active_index] = None
 
     def _on_first_render_request(self, cpos=None):
         """Once an image or render is officially requested, run this routine.
