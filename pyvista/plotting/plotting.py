@@ -144,14 +144,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             title = rcParams['title']
         self.title = str(title)
 
-        # by default add border for multiple plots
-        if border is None:
-            if shape != (1, 1):
-                border = True
-            else:
-                border = False
-
-        # add render windows
+        # add renderers
         self.renderers = Renderers(self, shape, splitting_position, row_weights,
                                    col_weights, groups, border, border_color,
                                    border_width)
@@ -227,7 +220,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def shape(self):
-        """Shape of the renderers.
+        """Shape of the plotter.
 
         Examples
         --------
@@ -239,17 +232,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         (2, 2)
         """
         return self.renderers._shape
-
-    # #### Manage the active Renderer ####
-    # @wraps(Renderers.loc_to_group)
-    # def loc_to_group(self, *args, **kwargs):
-    #     """Wrap ``Renderers.loc_to_group``."""
-    #     return self.renderers.loc_to_group(*args, **kwargs)
-
-    @wraps(Renderers.index_to_loc)
-    def index_to_loc(self, *args, **kwargs):
-        """Wrap ``Renderers.index_to_loc``."""
-        return self.renderers.index_to_loc(*args, **kwargs)
 
     @property
     def renderer(self):
@@ -668,8 +650,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def background_color(self):
-        """Return the background color of the first render window."""
-        return self.renderers[0].GetBackground()
+        """Return the background color of the active render window."""
+        return self.renderers.active_renderer.GetBackground()
 
     @background_color.setter
     def background_color(self, color):
@@ -3631,7 +3613,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         places = []
         for index in range(len(self.renderers)):
             if name in self.renderers[index]._actors:
-                places.append(tuple(self.index_to_loc(index)))
+                places.append(tuple(self.renderers.index_to_loc(index)))
         return places
 
 

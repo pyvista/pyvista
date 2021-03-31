@@ -19,6 +19,13 @@ class Renderers():
         self._plotter = plotter
         self._renderers = []
 
+        # by default add border for multiple plots
+        if border is None:
+            if shape != (1, 1):
+                border = True
+            else:
+                border = False
+
         self.groups = np.empty((0, 4), dtype=int)
 
         if isinstance(shape, str):

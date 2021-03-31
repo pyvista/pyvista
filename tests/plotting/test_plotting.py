@@ -1635,7 +1635,7 @@ def test_index_vs_loc():
     vals = [0, 2, 4]
     expecteds = [(0, 0), (0, 2), (1, 1)]
     for val, expected in zip(vals, expecteds):
-        assert tuple(pl.index_to_loc(val)) == expected
+        assert tuple(pl.renderers.index_to_loc(val)) == expected
     # loc_to_index valid cases
     vals = [(0, 0), (0, 2), (1, 1)]
     expecteds = [0, 2, 4]
