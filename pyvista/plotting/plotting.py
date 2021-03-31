@@ -1461,7 +1461,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         component :  int, optional
             Set component of vector valued scalars to plot.  Must be nonnegative,
-            if supplied. If None, the magnitude of the vector is plotted.
+            if supplied. If ``None``, the magnitude of the vector is plotted.
 
         Returns
         -------
