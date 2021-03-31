@@ -305,14 +305,6 @@ jobs:
       cat docs/_build/coverage/python.txt
     displayName: 'Build documentation'
 
-  - script: |
-      make -C docs doctest
-    displayName: 'Test documentation code snippets'
-
-  - script: |
-      make -C docs html
-    displayName: 'Update figures from doctest'
-
   # Push example notebooks to pyvista-examples
   - script: |
       pip install cookiecutter

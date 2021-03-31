@@ -187,11 +187,12 @@ for the user to exit the window.
 .. jupyter-execute::
     :hide-code:
 
-    # copy to the right location
+    # move to the right location
+    # note that this will be executed relative to pyvista/docs
     import shutil
     import os
     shutil.move('beam.gif', 
-                os.path.join(os.getcwd(), '../images/auto-generated/beam.gif'))
+                os.path.join(os.getcwd(), './images/auto-generated/beam.gif'))
 
 .. image:: ../images/auto-generated/beam.gif
 
@@ -210,7 +211,7 @@ You can also render the beam as as a wire-frame object:
     plotter.add_axes()
     plotter.camera_position = cpos
 
-    #plotter.OpenMovie('beam.mp4')
+    #plotter.OpenMovie('beam_wireframe.mp4')
     plotter.open_gif('beam_wireframe.gif')
     for phase in np.linspace(0, 2*np.pi, 20):
         plotter.update_coordinates(grid.points + d*np.cos(phase), render=False)
@@ -224,10 +225,11 @@ You can also render the beam as as a wire-frame object:
     :hide-code:
 
     # move to the right location
+    # note that this will be executed relative to pyvista/docs
     import shutil
     import os
     shutil.move('beam_wireframe.gif', 
-                os.path.join(os.getcwd(), '../images/auto-generated/beam_wireframe.gif'))
+                 os.path.join(os.getcwd(), './images/auto-generated/beam_wireframe.gif'))
 
 .. image:: ../images/auto-generated/beam_wireframe.gif
 
