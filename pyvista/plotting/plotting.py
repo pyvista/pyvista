@@ -1247,7 +1247,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  culling=None, rgb=False, categories=False, silhouette=False,
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
-                 log_scale=False, render=True, **kwargs):
+                 log_scale=False, render=True, component=None, **kwargs):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
@@ -1458,6 +1458,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, optional
             Force a render when True.  Default ``True``.
+
+        component :  int, optional
+            Set component of vector valued scalars to plot.  Must be nonnegative,
+            if supplied. If ``None``, the magnitude of the vector is plotted.
 
         Returns
         -------
@@ -1782,8 +1786,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if rgb:
                     pass
                 elif scalars.ndim == 2 and (scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells):
-                    scalars = np.linalg.norm(scalars.copy(), axis=1)
-                    title = f'{title}-normed'
+                    if not isinstance(component, (int, type(None))):
+                        raise TypeError('component must be either None or an integer')
+                    elif component is None:
+                        scalars = np.linalg.norm(scalars.copy(), axis=1)
+                        title = '{}-normed'.format(title)
+                    elif component < scalars.shape[1] and component >= 0:
+                        scalars = scalars[:, component].copy()
+                        title = '{}-{}'.format(title, component)
+                    else:
+                        raise ValueError(
+                            ('component must be nonnegative and less than the '
+                             'dimensionality of the scalars array: {}').format(
+                                 scalars.shape[1]
+                             )
+                        )
                 else:
                     scalars = scalars.ravel()
 
