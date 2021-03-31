@@ -4,6 +4,7 @@
 *.pyd
 *.so
 *.o
+__pycache__/
 
 # Cython generated files #
 #pymeshfix/cython/_meshfix.cpp
@@ -74,3 +75,10 @@ flycheck*
 
 # PyCharm
 .idea/
+
+# virtual environments
+venv/
+.venv/
+
+# VSCode
+.vscode/

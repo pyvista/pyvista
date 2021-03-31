@@ -932,26 +932,120 @@ def test_plot_rgb():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+def setup_multicomponent_data():
+    """Create a dataset with vector values on points and cells."""
+    data = pyvista.Plane()
+
+    vector_values_points = np.empty((data.n_points, 3))
+    vector_values_points[:, :] = [3., 4., 0.]  # Vector has this value at all points
+
+    vector_values_cells = np.empty((data.n_cells, 3))
+    vector_values_cells[:, :] = [3., 4., 0.]  # Vector has this value at all cells
+
+    data['vector_values_points'] = vector_values_points
+    data['vector_values_cells'] = vector_values_cells
+
+    return data
+
+
 @skip_no_plotting
-def test_plot_multi_component_array():
-    """"Test adding a texture to a plot"""
-    image = pyvista.UniformGrid((3, 3, 3))
+def test_vector_array_with_cells_and_points():
+    """Test using vector valued data with and without component arg."""
+    data = setup_multicomponent_data()
 
-    # fixed this to allow for image regression testing
-    # image['array'] = np.random.randn(*image.dimensions).ravel(order='f')
-    image['array'] = np.array([-0.2080155 ,  0.45258783,  1.03826775,
-                                0.38214289,  0.69745718, -2.04209996,
-                                0.7361947 , -1.59777205,  0.74254271,
-                               -0.27793002, -1.5788904 , -0.71479534,
-                               -0.93487136, -0.95082609, -0.64480196,
-                               -1.79935993, -0.9481572 , -0.34988819,
-                                0.17934252,  0.30425682, -1.31709916,
-                                0.02550247, -0.27620985,  0.89869448,
-                               -0.13012903,  1.05667384,  1.52085349])
+    # test no component argument
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(data, scalars='vector_values_points')
+    p.show()
 
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(image, scalars='array')
-    plotter.show(before_close_callback=verify_cache_image)
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(data, scalars='vector_values_cells')
+    p.show()
+
+    # test component argument
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(data, scalars='vector_values_points', component=0)
+    p.show()
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(data, scalars='vector_values_cells', component=0)
+    p.show()
+
+
+@skip_no_plotting
+def test_vector_array():
+    """Test using vector valued data for image regression."""
+    data = setup_multicomponent_data()
+
+    p = pyvista.Plotter(shape=(2,2))
+    p.subplot(0,0)
+    p.add_mesh(data, scalars="vector_values_points")
+    p.subplot(0,1)
+    p.add_mesh(data.copy(), scalars="vector_values_points", component=0)
+    p.subplot(1,0)
+    p.add_mesh(data.copy(), scalars="vector_values_points", component=1)
+    p.subplot(1,1)
+    p.add_mesh(data.copy(), scalars="vector_values_points", component=2)
+    p.link_views()
+    p.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_vector_plotting_doesnt_modify_data():
+    """Test that the operations in plotting do not modify the data in the mesh."""
+    data = setup_multicomponent_data()
+
+    copy_vector_values_points = data["vector_values_points"].copy()
+    copy_vector_values_cells = data["vector_values_cells"].copy()
+
+    # test that adding a vector with no component parameter to a Plotter instance
+    # does not modify it.
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(data, scalars='vector_values_points')
+    p.show()
+    assert np.array_equal(data['vector_values_points'], copy_vector_values_points)
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(data, scalars='vector_values_cells')
+    p.show()
+    assert np.array_equal(data['vector_values_cells'], copy_vector_values_cells)
+
+    # test that adding a vector with a component parameter to a Plotter instance
+    # does not modify it.
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(data, scalars='vector_values_points', component=0)
+    p.show()
+    assert np.array_equal(data['vector_values_points'], copy_vector_values_points)
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(data, scalars='vector_values_cells', component=0)
+    p.show()
+    assert np.array_equal(data['vector_values_cells'], copy_vector_values_cells)
+
+
+@skip_no_plotting
+def test_vector_array_fail_with_incorrect_component():
+    """Test failure modes of component argument."""
+    data = setup_multicomponent_data()
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+
+    # Non-Integer
+    with pytest.raises(TypeError):
+        p.add_mesh(data, scalars='vector_values_points', component=1.5)
+        p.show()
+
+    # Component doesn't exist
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    with pytest.raises(ValueError):
+        p.add_mesh(data, scalars='vector_values_points', component=3)
+        p.show()
+
+    # Component doesn't exist
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    with pytest.raises(ValueError):
+        p.add_mesh(data, scalars='vector_values_points', component=-1)
+        p.show()
 
 
 @skip_no_plotting
