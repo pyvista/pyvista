@@ -3334,16 +3334,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         factor : float
-            A scaling factor when biulding the orbital extent
+            A scaling factor when building the orbital extent.
 
         n_points : int
-            number of points on the orbital path
+            Number of points on the orbital path.
 
         viewup : list(float)
-            the normal to the orbital plane
+            The normal to the orbital plane.
 
         shift : float, optional
-            shift the plane up/down from the center of the scene by this amount
+            Shift the plane up/down from the center of the scene by
+            this amount.
 
         """
         if viewup is None:
