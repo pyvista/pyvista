@@ -154,7 +154,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # add render windows
         self.renderers = Renderers(self, shape, splitting_position, row_weights,
-                                   col_weights)
+                                   col_weights, groups, border, border_color,
+                                   border_width)
 
         # each render will also have an associated background renderer
         self._background_renderers = [None for _ in range(len(self.renderers))]
@@ -263,7 +264,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def renderer(self):
         """Return the active renderer."""
-        return self.renderers[self._active_renderer_index]
+        return self.renderers.active_renderer
 
     @property
     def store_image(self):
@@ -287,15 +288,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Index of the subplot to activate along the columns.
 
         """
-        if len(self.shape) == 1:
-            self._active_renderer_index = index_row
-            return
-
-        if index_row < 0 or index_row >= self.shape[0]:
-            raise IndexError(f'Row index is out of range ({self.shape[0]})')
-        if index_column < 0 or index_column >= self.shape[1]:
-            raise IndexError(f'Column index is out of range ({self.shape[1]})')
-        self._active_renderer_index = self.loc_to_index((index_row, index_column))
+        self.renderers.set_active_renderer(index_row, index_column)
 
     #### Wrap Renderer methods ####
     @wraps(Renderer.add_floor)
@@ -2521,8 +2514,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
-        for renderer in self.renderers:
-            renderer.deep_clean()
+        if hasattr(self, 'renderers'):
+            self.renderers.deep_clean()
         if hasattr(self, '_shadow_renderer'):
             self._shadow_renderer.deep_clean()
         if hasattr(self, '_background_renderers'):
@@ -3532,7 +3525,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not self._closed:
                 self.close()
         self.deep_clean()
-        del self.renderers
+        if hasattr(self, 'renderers'):
+            del self.renderers
         if hasattr(self, '_shadow_renderer'):
             del self._shadow_renderer
 

@@ -10,9 +10,10 @@ class Renderers():
     """Renderers."""
 
     def __init__(self, plotter, shape=(1, 1), splitting_position=None,
-                 row_weights=None, col_weights=None):
+                 row_weights=None, col_weights=None, groups=None,
+                 border=None, border_color='k', border_width=2.0):
         """Initialize renderers"""
-        self._active_index = 0
+        self._active_index = 0  # index of the active renderer
         self._plotter = plotter
         self._renderers = []
 
@@ -93,7 +94,7 @@ class Renderers():
                 if not isinstance(groups, collections.abc.Sequence):
                     raise TypeError('"groups" should be a list or tuple')
                 for group in groups:
-                    if isinstance(group, collections.abc.Sequence) and len(group) == 2:
+                    if not (isinstance(group, collections.abc.Sequence) and len(group) == 2):
                         raise ValueError('Each group entry should be a list or tuple of 2 elements')
                     rows = group[0]
                     if isinstance(rows, slice):
@@ -105,6 +106,7 @@ class Renderers():
                     # corner and bottom right corner from the given
                     # rows and cols
                     norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
+
                     # Check for overlap with already defined groups:
                     for i in range(norm_group[0], norm_group[2]+1):
                         for j in range(norm_group[1], norm_group[3]+1):
@@ -139,6 +141,13 @@ class Renderers():
                     else:
                         self._render_idxs[row, col] = self._render_idxs[self.groups[group, 0], self.groups[group, 1]]
 
+    # def loc_to_group(self, loc):
+    #     """Return group id of the given location index. Or None if this location is not part of any group."""
+    #     group_idxs = np.arange(self.groups.shape[0])
+    #     I = (loc[0]>=self.groups[:,0]) & (loc[0]<=self.groups[:,2]) & (loc[1]>=self.groups[:,1]) & (loc[1]<=self.groups[:,3])
+    #     group = group_idxs[I]
+    #     return None if group.size==0 else group[0]
+
     def loc_to_group(self, loc):
         """Return group id of the given location index, or ``None`` if this location is not part of any group."""
         group_idxs = np.arange(self.groups.shape[0])
@@ -168,7 +177,7 @@ class Renderers():
 
         """
         if loc is None:
-            return self._active_renderer_index
+            return self._active_index
         elif isinstance(loc, (int, np.integer)):
             return loc
         elif isinstance(loc, (np.ndarray, collections.abc.Sequence)):
@@ -208,3 +217,39 @@ class Renderers():
         if len(args) < 1:
             raise IndexError(f'Index ({index}) is out of range.')
         return args[0]
+
+    @property
+    def active_renderer(self):
+        """Return the active renderer."""
+        return self._renderers[self._active_index]
+
+    @property
+    def shape(self):
+        return self._shape
+
+    def set_active_renderer(self, index_row, index_column=None):
+        """Set the index of the active renderer.
+
+        Parameters
+        ----------
+        index_row : int
+            Index of the subplot to activate along the rows.
+
+        index_column : int
+            Index of the subplot to activate along the columns.
+
+        """
+        if len(self.shape) == 1:
+            self._active_index = index_row
+            return
+
+        if index_row < 0 or index_row >= self.shape[0]:
+            raise IndexError(f'Row index is out of range ({self.shape[0]})')
+        if index_column < 0 or index_column >= self.shape[1]:
+            raise IndexError(f'Column index is out of range ({self.shape[1]})')
+        self._active_index = self.loc_to_index((index_row, index_column))
+
+    def deep_clean(self):
+        """Clean all renderers"""
+        for renderer in self:
+            renderer.deep_clean()
