@@ -1,18 +1,20 @@
-"""Renderers"""
+"""Organize Renderers for ``pyvista.Plotter``."""
 import collections
 
 import numpy as np
 
+from .background_renderer import BackgroundRenderer
 from .theme import rcParams
 from .renderer import Renderer
 
+
 class Renderers():
-    """Renderers."""
+    """Organize Renderers for ``pyvista.Plotter``."""
 
     def __init__(self, plotter, shape=(1, 1), splitting_position=None,
                  row_weights=None, col_weights=None, groups=None,
                  border=None, border_color='k', border_width=2.0):
-        """Initialize renderers"""
+        """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
         self._plotter = plotter
         self._renderers = []
@@ -133,11 +135,23 @@ class Renderers():
                     else:
                         self._render_idxs[row,col] = self._render_idxs[self.groups[group,0],self.groups[group,1]]
 
+        # each render will also have an associated background renderer
+        self._background_renderers = [None for _ in range(len(self))]
+
+        # create a shadow renderer that lives on top of all others
+        self._shadow_renderer = Renderer(self._plotter, border, border_color,
+                                         border_width)
+        self._shadow_renderer.SetViewport(0, 0, 1, 1)
+        self._shadow_renderer.SetDraw(False)
+
     def loc_to_group(self, loc):
-        """Return group id of the given location index. Or None if this location is not part of any group."""
+        """Return group id of the given location index or ``None`` if this location is not part of any group."""
         group_idxs = np.arange(self.groups.shape[0])
-        I = (loc[0]>=self.groups[:,0]) & (loc[0]<=self.groups[:,2]) & (loc[1]>=self.groups[:,1]) & (loc[1]<=self.groups[:,3])
-        group = group_idxs[I]
+        index = (loc[0] >= self.groups[:, 0]) & \
+                (loc[0] <= self.groups[:, 2]) & \
+                (loc[1] >= self.groups[:, 1]) & \
+                (loc[1] <= self.groups[:, 3])
+        group = group_idxs[index]
         return None if group.size == 0 else group[0]
 
     def loc_to_index(self, loc):
@@ -173,17 +187,21 @@ class Renderers():
             raise TypeError('"loc" must be an integer or a sequence.')
 
     def __getitem__(self, index):
+        """Return a renderer based on an index."""
         return self._renderers[index]
 
     def __len__(self):
+        """Return number of renderers."""
         return len(self._renderers)
 
     def __iter__(self):
+        """Return a iterable of renderers."""
         for renderer in self._renderers:
             yield renderer
 
     @property
     def active_index(self):
+        """Return the active index."""
         return self._active_index
 
     def index_to_loc(self, index):
@@ -204,6 +222,7 @@ class Renderers():
 
     @property
     def shape(self):
+        """Return the shape of the renderers."""
         return self._shape
 
     def set_active_renderer(self, index_row, index_column=None):
@@ -229,6 +248,151 @@ class Renderers():
         self._active_index = self.loc_to_index((index_row, index_column))
 
     def deep_clean(self):
-        """Clean all renderers"""
+        """Clean all renderers."""
+        # Do not remove the renderers on the clean
         for renderer in self:
             renderer.deep_clean()
+        if hasattr(self, '_shadow_renderer'):
+            self._shadow_renderer.deep_clean()
+        if hasattr(self, '_background_renderers'):
+            for renderer in self._background_renderers:
+                if renderer is not None:
+                    renderer.deep_clean()
+
+    def add_background_renderer(self, image_path, scale, as_global):
+        """Add a background image to the renderers.
+
+        Parameters
+        ----------
+        image_path : str
+            Path to an image file.
+
+        scale : float, optional
+            Scale the image larger or smaller relative to the size of
+            the window.  For example, a scale size of 2 will make the
+            largest dimension of the image twice as large as the
+            largest dimension of the render window.  Defaults to 1.
+
+        as_global : bool, optional
+            When multiple render windows are present, setting
+            ``as_global=False`` will cause the background to only
+            appear in one window.
+
+        Returns
+        pyvista.BackgroundRenderer
+            Newly created background renderer.
+
+        """
+        # verify no render exists
+        if as_global:
+            for renderer in self:
+                renderer.SetLayer(2)
+            view_port = None
+        else:
+            self.active_renderer.SetLayer(2)
+            view_port = self.active_renderer.GetViewport()
+
+        renderer = BackgroundRenderer(self._plotter, image_path, scale, view_port)
+        renderer.SetLayer(1)
+        self._background_renderers[self.active_index] = renderer
+        return renderer
+
+    @property
+    def has_active_background_renderer(self):
+        """Return ``True`` when Renderer has an active background renderer."""
+        return self._background_renderers[self.active_index] is not None
+
+    def clear_background_renderers(self):
+        """Clear all background renderers."""
+        for renderer in self._background_renderers:
+            if renderer is not None:
+                renderer.clear()
+
+    def clear(self):
+        """Clear all renders."""
+        for renderer in self:
+            renderer.clear()
+        self._shadow_renderer.clear()
+        self.clear_background_renderers()
+
+    def close(self):
+        """Close all renderers."""
+        for renderer in self:
+            renderer.close()
+
+        self._shadow_renderer.close()
+
+        for renderer in self._background_renderers:
+            if renderer is not None:
+                renderer.close()
+
+    def remove_all_lights(self):
+        """Remove all lights from all renderers."""
+        for renderer in self:
+            renderer.remove_all_lights()
+
+    @property
+    def shadow_renderer(self):
+        """Shadow renderer."""
+        return self._shadow_renderer
+
+    def set_background(self, color, top=None, all_renderers=True):
+        """Set the background color.
+
+        Parameters
+        ----------
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.  For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
+        top : string or 3 item list, optional, defaults to None
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the bottom and the color given in ``top``
+            will be the color at the top of the renderer.
+
+        all_renderers : bool
+            If True, applies to all renderers in subplots. If False, then
+            only applies to the active renderer.
+
+        Examples
+        --------
+        Set the background color to black.
+
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.set_background('black')
+        >>> plotter.background_color
+        (0.0, 0.0, 0.0)
+
+        Set the background color to white.
+
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.set_background('white')
+        >>> plotter.background_color
+        (1.0, 1.0, 1.0)
+
+        """
+        if all_renderers:
+            for renderer in self:
+                renderer.set_background(color, top=top)
+            self._shadow_renderer.set_background(color)
+        else:
+            self.active_renderer.set_background(color, top=top)
+
+    def remove_background_image(self):
+        """Remove the background image at the current renderer."""
+        renderer = self._background_renderers[self.active_index]
+        if renderer is None:
+            raise RuntimeError('No background image to remove at this subplot')
+        renderer.deep_clean()
+        self._background_renderers[self.active_index] = None
+
+    def __del__(self):
+        """Destructor."""
+        if hasattr(self, '_shadow_renderer'):
+            del self._shadow_renderer

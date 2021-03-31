@@ -1,4 +1,4 @@
-"""Pyvista plotting module."""
+"""PyVista plotting module."""
 
 import sys
 import pathlib
@@ -26,7 +26,6 @@ from pyvista.utilities import (assert_empty_kwargs, convert_array,
                                numpy_to_texture,
                                raise_not_matching, try_callback, wrap)
 from pyvista.utilities.regression import image_from_window
-from .background_renderer import BackgroundRenderer
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
@@ -157,15 +156,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                    col_weights, groups, border, border_color,
                                    border_width)
 
-        # each render will also have an associated background renderer
-        self._background_renderers = [None for _ in range(len(self.renderers))]
-
-        # create a shadow renderer that lives on top of all others
-        self._shadow_renderer = Renderer(
-            self, border, border_color, border_width)
-        self._shadow_renderer.SetViewport(0, 0, 1, 1)
-        self._shadow_renderer.SetDraw(False)
-
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bars = ScalarBars(self)
 
@@ -290,7 +280,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         self.renderers.set_active_renderer(index_row, index_column)
 
-    #### Wrap Renderer methods ####
     @wraps(Renderer.add_floor)
     def add_floor(self, *args, **kwargs):
         """Wrap ``Renderer.add_floor``."""
@@ -309,8 +298,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         only_active : bool
-            If ``True``, only change the active renderer. The default is that
-            every renderer is affected.
+            If ``True``, only change the active renderer. The default
+            is that every renderer is affected.
 
         """
         def _to_pos(elevation, azimuth):
@@ -686,8 +675,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def background_color(self, color):
         """Set the background color of all the render windows."""
         self.set_background(color)
-
-    #### Properties of the BasePlotter ####
 
     @property
     def window_size(self):
@@ -2273,13 +2260,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def clear(self):
         """Clear plot by removing all actors and properties."""
-        for renderer in self.renderers:
-            renderer.clear()
-        self._shadow_renderer.clear()
-        for renderer in self._background_renderers:
-            if renderer is not None:
-                renderer.clear()
-
+        self.renderers.clear()
         self.scalar_bars.clear()
         self.mesh = None
 
@@ -2470,13 +2451,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # must close out widgets first
         super().close()
         # Renderer has an axes widget, so close it
-        for renderer in self.renderers:
-            renderer.close()
-        self._shadow_renderer.close()
-
-        # Turn off the lights
-        for renderer in self.renderers:
-            renderer.remove_all_lights()
+        self.renderers.close()
+        self.renderers.remove_all_lights()
 
         # Grab screenshots of last render
         if self._store_image:
@@ -2516,13 +2492,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clean the plotter of the memory."""
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
-        if hasattr(self, '_shadow_renderer'):
-            self._shadow_renderer.deep_clean()
-        if hasattr(self, '_background_renderers'):
-            for renderer in self._background_renderers:
-                if renderer is not None:
-                    renderer.deep_clean()
-        # Do not remove the renderers on the clean
         if getattr(self, 'mesh', None) is not None:
             self.mesh.point_arrays = None
             self.mesh.cell_arrays = None
@@ -3348,35 +3317,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(self.legend, reset_camera=False, name=name, pickable=False)
         return self.legend
 
-    def set_background(self, color, top=None, all_renderers=True):
-        """Set the background color.
-
-        Parameters
-        ----------
-        color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.  For example:
-
-            * ``color='white'``
-            * ``color='w'``
-            * ``color=[1, 1, 1]``
-            * ``color='#FFFFFF'``
-
-        top : string or 3 item list, optional, defaults to None
-            If given, this will enable a gradient background where the
-            ``color`` argument is at the bottom and the color given in ``top``
-            will be the color at the top of the renderer.
-
-        all_renderers : bool
-            If True, applies to all renderers in subplots. If False, then
-            only applies to the active renderer.
-
-        """
-        if all_renderers:
-            for renderer in self.renderers:
-                renderer.set_background(color, top=top)
-            self._shadow_renderer.set_background(color)
-        else:
-            self.renderer.set_background(color, top=top)
+    @wraps(Renderers.set_background)
+    def set_background(self, *args, **kwargs):
+        """Wrap ``Renderers.set_background``."""
+        self.renderers.set_background(*args, **kwargs)
 
     def remove_legend(self):
         """Remove the legend actor."""
@@ -3520,15 +3464,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def __del__(self):
         """Delete the plotter."""
         # We have to check here if it has the closed attribute as it
-        # may not exist should the plotter failed to initialize.
+        # may not exist should the plotter have failed to initialize.
         if hasattr(self, '_closed'):
             if not self._closed:
                 self.close()
         self.deep_clean()
         if hasattr(self, 'renderers'):
             del self.renderers
-        if hasattr(self, '_shadow_renderer'):
-            del self._shadow_renderer
 
     def add_background_image(self, image_path, scale=1, auto_resize=True,
                              as_global=True):
@@ -3563,27 +3505,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.show() # doctest:+SKIP
 
         """
-        # verify no render exists
-        if self._background_renderers[self.renderers.active_index] is not None:
+        if self.renderers.has_active_background_renderer:
             raise RuntimeError('A background image already exists.  '
-                               'Remove it with remove_background_image '
+                               'Remove it with ``remove_background_image`` '
                                'before adding one')
 
         # Need to change the number of layers to support an additional
         # background layer
         self.ren_win.SetNumberOfLayers(3)
-        if as_global:
-            for renderer in self.renderers:
-                renderer.SetLayer(2)
-            view_port = None
-        else:
-            self.renderer.SetLayer(2)
-            view_port = self.renderer.GetViewport()
-
-        renderer = BackgroundRenderer(self, image_path, scale, view_port)
-        renderer.SetLayer(1)
+        renderer = self.renderers.add_background_renderer(image_path, scale, as_global)
         self.ren_win.AddRenderer(renderer)
-        self._background_renderers[self.renderers.active_index] = renderer
 
         # setup autoscaling of the image
         if auto_resize:  # pragma: no cover
@@ -3591,11 +3522,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def remove_background_image(self):
         """Remove the background image from the current subplot."""
-        renderer = self._background_renderers[self.renderers.active_index]
-        if renderer is None:
-            raise RuntimeError('No background image to remove at this subplot')
-        renderer.deep_clean()
-        self._background_renderers[self.renderers.active_index] = None
+        self.renderers.remove_background_image()
 
     def _on_first_render_request(self, cpos=None):
         """Once an image or render is officially requested, run this routine.
@@ -3846,14 +3773,14 @@ class Plotter(BasePlotter):
         number_or_layers = self.ren_win.GetNumberOfLayers()
         current_layer = self.renderer.GetLayer()
         self.ren_win.SetNumberOfLayers(number_or_layers + 1)
-        self.ren_win.AddRenderer(self._shadow_renderer)
-        self._shadow_renderer.SetLayer(current_layer + 1)
-        self._shadow_renderer.SetInteractive(False)  # never needs to capture
+        self.ren_win.AddRenderer(self.renderers.shadow_renderer)
+        self.renderers.shadow_renderer.SetLayer(current_layer + 1)
+        self.renderers.shadow_renderer.SetInteractive(False)  # never needs to capture
 
         if self.off_screen:
             self.ren_win.SetOffScreenRendering(1)
 
-        # Add ren win and interactor no matter what - necessary for ipyvtk_simple
+        # Add ren win and interactor
         self.iren = _vtk.vtkRenderWindowInteractor()
         self.iren.LightFollowCameraOff()
         self.iren.SetDesiredUpdateRate(30.0)
@@ -4032,7 +3959,7 @@ class Plotter(BasePlotter):
         # the closing routines that might try to still access that
         # render window.
         if not self.ren_win.IsCurrent():
-            self._clear_ren_win() # The ren_win is deleted
+            self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:
                 warnings.warn("`auto_close` ignored: by clicking the exit button, you have destroyed the render window and we have to close it out.")
