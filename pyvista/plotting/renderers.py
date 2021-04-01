@@ -176,9 +176,7 @@ class Renderers():
             Index of the render window.
 
         """
-        if loc is None:
-            return self._active_index
-        elif isinstance(loc, (int, np.integer)):
+        if isinstance(loc, (int, np.integer)):
             return loc
         elif isinstance(loc, (np.ndarray, collections.abc.Sequence)):
             if not len(loc) == 2:

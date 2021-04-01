@@ -1156,6 +1156,22 @@ def test_multi_renderers_subplot_ind_3x1():
 
 
 @skip_no_plotting
+def test_multi_renderers_subplot_ind_3x1_splitting_pos():
+    # Test subplot 3 on top, 1 on bottom
+    plotter = pyvista.Plotter(shape='3/1', splitting_position=0.5)
+    # First column
+    plotter.subplot(0)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.subplot(1)
+    plotter.add_mesh(pyvista.Cube())
+    plotter.subplot(2)
+    plotter.add_mesh(pyvista.Cylinder())
+    plotter.subplot(3)
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
 def test_multi_renderers_subplot_ind_1x3():
     # Test subplot 3 on bottom, 1 on top
     plotter = pyvista.Plotter(shape='1|3')
@@ -1643,13 +1659,25 @@ def test_index_vs_loc():
         assert pl.renderers.loc_to_index(val) == expected
         assert pl.renderers.loc_to_index(expected) == expected
 
-    # failing cases
-    with pytest.raises(TypeError):
-        pl.renderers.loc_to_index({1, 2})
+    # indexing failing cases
     with pytest.raises(TypeError):
         pl.renderers.index_to_loc(1.5)
+    with pytest.raises(IndexError):
+        pl.renderers.index_to_loc((-1))
     with pytest.raises(TypeError):
         pl.renderers.index_to_loc((1, 2))
+    with pytest.raises(IndexError):
+        pl.renderers.loc_to_index((-1, 0))
+    with pytest.raises(IndexError):
+        pl.renderers.loc_to_index((0, -1))
+    with pytest.raises(TypeError):
+        pl.renderers.loc_to_index({1, 2})
+    with pytest.raises(ValueError):
+        pl.renderers.loc_to_index((1, 2, 3))
+
+    # set active_renderer fails
+    with pytest.raises(IndexError):
+        pl.renderers.set_active_renderer(0, -1)
 
     # then: "1d" grid
     pl = pyvista.Plotter(shape='2|3')
