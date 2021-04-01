@@ -10,7 +10,7 @@
 
     <div class="banner">
         <h2>3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)</h2>
-        <a href="./examples/index.html"><img src="_static/pyvista_banner.png" alt="pyvista" width="100%"/></a>
+        <a href="./examples/index.html"><img src="_static/pyvista_banner_small.png" alt="pyvista" width="100%"/></a>
     </div>
 
 
