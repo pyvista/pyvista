@@ -535,6 +535,13 @@ class Renderer(_vtk.vtkRenderer):
             self.add_axes()
         self.Modified()
 
+    @property
+    def axes_enabled(self):
+        """Return ``True`` when axes are enabled."""
+        if hasattr(self, 'axes_widget'):
+            return bool(self.axes_widget.GetEnabled())
+        return False
+
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
                     show_yaxis=True, show_zaxis=True, show_xlabels=True,
                     show_ylabels=True, show_zlabels=True,

@@ -488,7 +488,7 @@ def test_glyph():
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
-    sphere = pyvista.Sphere(radius=3.14)
+    sphere = pyvista.Sphere(radius=3.14, theta_resolution=5, phi_resolution=5)
     sphere_sans_arrays = sphere.copy()
     # make cool swirly pattern
     vectors = np.vstack((np.sin(sphere.points[:, 0]),
@@ -505,7 +505,9 @@ def test_glyph():
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
                           clamping=False, rng=[1, 1])
     # passing one or more custom glyphs; many cases for full coverage
-    geoms = [pyvista.Sphere(), pyvista.Arrow(), pyvista.ParametricSuperToroid()]
+    geoms = [pyvista.Sphere(theta_resolution=5, phi_resolution=5),
+             pyvista.Arrow(tip_resolution=5, shaft_resolution=5),
+             pyvista.ParametricSuperToroid(u_res=10, v_res=10, w_res=10)]
     indices = range(len(geoms))
     result = sphere.glyph(geom=geoms[0])
     result = sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)))
@@ -1132,11 +1134,11 @@ def test_shrink():
     assert shrunk.area < mesh.area
 
 
-
 @pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
                          itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
 def test_transform_mesh(dataset, num_cell_arrays, num_point_arrays):
-    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
+    # rotate about x-axis by 90 degrees
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
     for i in range(num_cell_arrays):
         dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
@@ -1166,7 +1168,8 @@ def test_transform_mesh(dataset, num_cell_arrays, num_point_arrays):
 @pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
                          itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
 def test_transform_mesh_and_vectors(dataset, num_cell_arrays, num_point_arrays):
-    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
+      # rotate about x-axis by 90 degrees
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
     for i in range(num_cell_arrays):
         dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)

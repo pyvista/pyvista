@@ -66,6 +66,8 @@ jobs:
         python.version: '3.6'
       Python37:
         python.version: '3.7'
+      Python38:
+        python.version: '3.8'
 
   steps:
   - task: UsePythonVersion@0
@@ -123,7 +125,7 @@ jobs:
       python setup.py sdist
       twine upload --skip-existing dist/pyvista*
     displayName: 'Upload to PyPi'
-    condition: and(eq(variables['python.version'], '3.7'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
+    condition: and(eq(variables['python.version'], '3.8'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
     env:
       TWINE_USERNAME: $(twine.username)
       TWINE_PASSWORD: $(twine.password)
@@ -239,43 +241,6 @@ jobs:
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
 
-# DESCRIPTION: Core API testing for MacOS
-- job: macOS
-  variables:
-    python.architecture: 'x64'
-  strategy:
-    matrix:
-      Python36:
-        python.version: '3.6'
-      Python37:
-        python.version: '3.7'
-      Python38:
-        python.version: '3.8'
-  pool:
-    vmImage: 'macOS-10.15'
-  steps:
-    - script: .ci/macos-install-python.sh '$(python.version)'
-      displayName: Install Python
-
-    - script: |
-        python -m pip install wheel
-        python -m pip install -e .
-        python -c "import pyvista; print(pyvista.Report(gpu=False))"
-      displayName: 'Install PyVista'
-
-    - script: |
-        python -m pip install -r requirements_test.txt
-        python -m pip install pytest-azurepipelines
-      displayName: 'Install test dependencies'
-
-    - script: |
-        python -m pytest -v --cov pyvista --cov-report html --durations=0
-      displayName: 'Run Tests'
-
-  # don't run job on no-ci builds
-  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
-
-
 # Builds the documentation
 - job: BuildDocumentation
   pool:
@@ -304,13 +269,13 @@ jobs:
       pip install -e .
     displayName: Install pyvista
 
-  - script: |
+  - script: |      
       .ci/setup_headless_display.sh
       # python .ci/pyvista_test.py  # for debug
     displayName: Install headless display
 
   - script: |
-      sudo apt-get install python3-tk
+      sudo apt-get install python3-tk pandoc
       pip install -r requirements_docs.txt
     displayName: 'Install dependencies'
 
@@ -339,14 +304,6 @@ jobs:
       make -C docs html -b coverage
       cat docs/_build/coverage/python.txt
     displayName: 'Build documentation'
-
-  - script: |
-      make -C docs doctest
-    displayName: 'Test documentation code snippets'
-
-  - script: |
-      make -C docs html
-    displayName: 'Update figures from doctest'
 
   # Push example notebooks to pyvista-examples
   - script: |

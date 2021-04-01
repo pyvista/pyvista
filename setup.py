@@ -48,8 +48,13 @@ readme_file = os.path.join(filepath, 'README.rst')
 
 setup(
     name=package_name,
-    packages=[package_name, 'pyvista.examples', 'pyvista.core', 'pyvista.demos',
-              'pyvista.plotting', 'pyvista.utilities'],
+    packages=['pyvista',
+              'pyvista.examples',
+              'pyvista.core',
+              'pyvista.demos',
+              'pyvista.jupyter',
+              'pyvista.plotting',
+              'pyvista.utilities'],
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=io_open(readme_file, encoding="utf-8").read(),

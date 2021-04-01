@@ -1,10 +1,16 @@
 .. title:: PyVista
 
+.. jupyter-execute::
+   :hide-code:
+
+   from pyvista.demos import logo
+   logo._for_landing_page(height='200px')
+
 .. raw:: html
 
     <div class="banner">
-        <a href="./examples/index.html"><img src="_static/pyvista_banner.png" alt="pyvista" width="100%"/></a>
         <h2>3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)</h2>
+        <a href="./examples/index.html"><img src="_static/pyvista_banner.png" alt="pyvista" width="100%"/></a>
     </div>
 
 
@@ -196,10 +202,10 @@ for 3D visualization in our `external examples list <./external_examples.html>`_
    getting-started/installation
    getting-started/what-is-a-mesh
    getting-started/simple
+   jupyter/index
    examples/index
    external_examples
    optional_features
-
 
 Translating the documentation
 *****************************

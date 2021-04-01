@@ -722,6 +722,16 @@ def download_action_figure():
     return _download_and_read('tigerfighter.obj')
 
 
+def download_mars_jpg():
+    """Download and return the path of ``'mars.jpg'``."""
+    return _download_file('mars.jpg')[0]
+
+
+def download_stars_jpg():
+    """Download and return the path of ``'stars.jpg'``."""
+    return _download_file('stars.jpg')[0]
+
+
 def download_notch_stress():
     """Download the FEA stress result from a notched beam.
 

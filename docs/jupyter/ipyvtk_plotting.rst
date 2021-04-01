@@ -1,21 +1,26 @@
 .. _ipyvtk_plotting:
 
-Using ``ipyvtk-simple``
-~~~~~~~~~~~~~~~~~~~~~~~
+Using ``ipyvtk-simple`` with PyVista
+------------------------------------
+
+.. note::
+   As of version ``0.1.4``, ``ipyvtk-simple`` does not support
+   Jupyterlab 3.  Attempting to run the following will return a
+   ``Model not found`` error within jupyterlab.
 
 ``pyvista`` has the ability to display fully featured plots within a
-jupyterlab environment using ``ipyvtk-simple``.  This feature works by
-streaming the current render window to a canvas within jupyterlab and
+JupyterLab environment using ``ipyvtk-simple``.  This feature works by
+streaming the current render window to a canvas within JupyterLab and
 then passing any user actions from the canvas back to the VTK render
 window.
 
-While this isn't an exciting feature when jupyterlab is being run
+While this isn't an exciting feature when JupyterLab is being run
 locally, this has huge implications when plotting remotely as you can
 display any plot (except for those with multiple render windows) from
-jupyterlab.
+JupyterLab.
 
 For example, both sections of code will display an interactive canvas
-within jupyterlab:
+within JupyterLab:
 
 .. code:: python
 
@@ -72,8 +77,7 @@ On Linux, you can setup your jupyterlab environment with:
 
 
 Other Considerations
---------------------
-
+~~~~~~~~~~~~~~~~~~~~
 It may be worth using GPU acceleration, see :ref:`gpu_off_screen`.
 
 If you do not have GPU acceleration, be sure to start up a virtual
@@ -91,7 +95,9 @@ framebuffer using ``Xvfb``.  You can either start it using bash with:
     exec "$@"
 
 
-Or alternatively, start it using the built in ``pyvista.start_xvfb()``.  Please be sure to install ``xvfb`` and ``libgl1-mesa-glx`` with:
+Or alternatively, start it using the built in
+``pyvista.start_xvfb()``.  Please be sure to install ``xvfb`` and
+``libgl1-mesa-glx`` with:
 
 .. code-block:: bash
 

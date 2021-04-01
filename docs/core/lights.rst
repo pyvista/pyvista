@@ -9,30 +9,29 @@ access to lighting is necessary.
 Brief Example
 -------------
 
-Create a red spotlight that shines on the origin.
+Create a red spotlight that shines on the origin, then create a scene
+without lighting and add our light to it manually.
 
-.. testcode:: python
+.. jupyter-execute::
 
     import pyvista as pv
     from pyvista import examples
     light = pv.Light(position=(-1, 1, 1), color='red')
     light.positional = True
 
-Create a scene without lighting and add our light to it manually.
-
-.. testcode:: python
-
+    import pyvista as pv
+    from pyvista import examples
     plotter = pv.Plotter(lighting='none')
+    plotter.background_color = 'white'
     mesh = examples.download_bunny()
     mesh.rotate_x(90)
     mesh.rotate_z(180)
     plotter.add_mesh(mesh, specular=1.0, diffuse=0.7, smooth_shading=True)
     plotter.add_light(light)
-    plotter.show(screenshot='ominous_bunny.png')
-
-.. image:: ../images/auto-generated/ominous_bunny.png
+    plotter.show()
 
 For detailed examples please see :ref:`ref_light_examples`.
+
 
 Light API
 ---------

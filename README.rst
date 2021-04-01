@@ -101,7 +101,8 @@ Overview of Features
 --------------------
 
 * Extensive gallery of examples (see `Quick Examples`_)
-* Interactive plotting in Jupyter Notebooks (server-side rendering with `ipyvtk_simple`_)
+* Interactive plotting in Jupyter Notebooks using server-side rendering
+  with `ipyvtk_simple`_ or client-side rendering with ``panel`` or ``ipygany``.
 * Filtering/plotting tools built for interactivity (see `Widgets`_)
 * Direct access to mesh analysis and transformation routines (see Filters_)
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
@@ -156,7 +157,7 @@ integrated visualizations of large datasets in an intuitive, Pythonic manner.
 Here are a few open-source projects that leverage PyVista:
 
 * itkwidgets_: Interactive Jupyter widgets to visualize images, point sets, and meshes in 2D and 3D. Supports all PyVista mesh types.
-* pyansys_: Pythonic interface to ANSYS result, full, and archive files
+* ansys-mapdl-reader_: Pythonic interface to ANSYS results, full, and archive files
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
 * omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
 * discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return PyVista versions of their data types for `creating compelling visualizations`_.
@@ -165,7 +166,7 @@ Here are a few open-source projects that leverage PyVista:
 
 
 .. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
-.. _pyansys: https://github.com/akaszynski/pyansys
+.. _ansys-mapdl-reader: https://github.com/pyansys/pymapdl-reader
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista
 .. _discretize: https://discretize.simpeg.xyz/en/master/

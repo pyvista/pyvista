@@ -59,11 +59,41 @@ def close_all():
     _ALL_PLOTTERS.clear()
     return True
 
-
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
+
+def _warn_xserver():
+    """Check if plotting is supported and persist this state.
+
+    Check once and cache this value between calls.  Warn the user if
+    plotting is not supported.  This only works on Linux, but
+    this is probably fine since most headless servers are Linux.
+
+    """
+    if not hasattr(_warn_xserver, 'has_support'):
+        if os.name != 'nt':
+            _warn_xserver.has_support = pyvista.system_supports_plotting()
+        else:
+            # assume system supports plotting until we can find a
+            # better way of checking that this works in NT.
+            _warn_xserver.has_support = True
+
+    if not _warn_xserver.has_support:
+        # check if a display has been set
+        if 'DISPLAY' in os.environ:
+            return
+
+        # finally, check if using a backend that doesn't require an xserver
+        if rcParams['jupyter_backend'] in ['ipygany']:
+            return
+
+        warnings.warn('\n'
+                      'This system does not appear to be running an xserver.\n'
+                      'PyVista will likely segfault when rendering.\n\n'
+                      'Try starting a virtual frame buffer with xvfb, or using\n '
+                      ' ``pyvista.start_xvfb()``\n')
 
 USE_SCALAR_BAR_ARGS = """
 "stitle" is a depreciated keyword and will be removed in a future release.
@@ -1477,7 +1507,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> sphere = pyvista.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(sphere, 
+        >>> _ = plotter.add_mesh(sphere,
         ...                      scalar_bar_args={'title': 'Z Position'})
         >>> plotter.show()  # doctest:+SKIP
 
@@ -1862,33 +1892,41 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalar_bar_args.setdefault('below_label', 'Below')
 
             if cmap is not None:
-                if not _has_matplotlib():
-                    cmap = None
-                    logging.warning('Please install matplotlib for color maps.')
+                # have to add the attribute to pass it onward to some classes
+                if isinstance(cmap, str):
+                    self.mapper.cmap = cmap
+                # ipygany uses different colormaps
+                if rcParams['jupyter_backend'] == 'ipygany':
+                    from ..jupyter.pv_ipygany import check_colormap
+                    check_colormap(cmap)
+                else:
+                    if not _has_matplotlib():
+                        cmap = None
+                        logging.warning('Please install matplotlib for color maps.')
 
-                cmap = get_cmap_safe(cmap)
-                if categories:
-                    if categories is True:
-                        n_colors = len(np.unique(scalars))
-                    elif isinstance(categories, int):
-                        n_colors = categories
-                ctable = cmap(np.linspace(0, 1, n_colors))*255
-                ctable = ctable.astype(np.uint8)
-                # Set opactities
-                if isinstance(opacity, np.ndarray) and not _custom_opac:
-                    ctable[:,-1] = opacity
-                if flip_scalars:
-                    ctable = np.ascontiguousarray(ctable[::-1])
-                table.SetTable(_vtk.numpy_to_vtk(ctable))
-                if _custom_opac:
-                    # need to round the colors here since we're
-                    # directly displaying the colors
-                    hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
-                    scalars = np.round(hue*n_colors)/n_colors
-                    scalars = cmap(scalars)*255
-                    scalars[:, -1] *= opacity
-                    scalars = scalars.astype(np.uint8)
-                    prepare_mapper(scalars)
+                    cmap = get_cmap_safe(cmap)
+                    if categories:
+                        if categories is True:
+                            n_colors = len(np.unique(scalars))
+                        elif isinstance(categories, int):
+                            n_colors = categories
+                    ctable = cmap(np.linspace(0, 1, n_colors))*255
+                    ctable = ctable.astype(np.uint8)
+                    # Set opactities
+                    if isinstance(opacity, np.ndarray) and not _custom_opac:
+                        ctable[:,-1] = opacity
+                    if flip_scalars:
+                        ctable = np.ascontiguousarray(ctable[::-1])
+                    table.SetTable(_vtk.numpy_to_vtk(ctable))
+                    if _custom_opac:
+                        # need to round the colors here since we're
+                        # directly displaying the colors
+                        hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
+                        scalars = np.round(hue*n_colors)/n_colors
+                        scalars = cmap(scalars)*255
+                        scalars[:, -1] *= opacity
+                        scalars = scalars.astype(np.uint8)
+                        prepare_mapper(scalars)
 
             else:  # no cmap specified
                 if flip_scalars:
@@ -2819,6 +2857,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def write_frame(self):
         """Write a single frame to the movie file."""
+        # if off screen, show has not been called and we must render
+        # before extracting an image
+        if self._first_time:
+            self._on_first_render_request()
+            self.render()
+
         if not hasattr(self, 'mwriter'):
             raise RuntimeError('This plotter has not opened a movie or GIF file.')
         self.update()
@@ -3362,7 +3406,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._first_time:
             self._on_first_render_request()
             self.render()
-        return self._save_image(self.image, filename, return_img)
+
+        return self._save_image(self.image, filename, return_img)    
 
     def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
                    size=None, name=None, origin=None):
@@ -3944,6 +3989,9 @@ class Plotter(BasePlotter):
 
         log.debug('Plotter init start')
 
+        # check if a plotting backend is enabled
+        _warn_xserver()
+
         def on_timer(iren, event_id):
             """Exit application if interactive renderer stops."""
             if event_id == 'TimerEvent':
@@ -3963,7 +4011,9 @@ class Plotter(BasePlotter):
             off_screen = True
         self.off_screen = off_screen
 
+        self._window_size_unset = False
         if window_size is None:
+            self._window_size_unset = True
             window_size = rcParams['window_size']
         self.__prior_window_size = window_size
 
@@ -4025,14 +4075,14 @@ class Plotter(BasePlotter):
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=None,
              screenshot=False, return_img=False, cpos=None, use_ipyvtk=None,
-             **kwargs):
+             jupyter_backend=None, return_viewer=False, **kwargs):
         """Display the plotting window.
 
         Notes
         -----
-        Please use the ``q``-key to close the plotter as some operating systems
-        (namely Windows) will experience issues saving a screenshot if the
-        exit button in the GUI is prressed.
+        Please use the ``q``-key to close the plotter as some
+        operating systems (namely Windows) will experience issues
+        saving a screenshot if the exit button in the GUI is pressed.
 
         Parameters
         ----------
@@ -4040,7 +4090,7 @@ class Plotter(BasePlotter):
             Title of plotting window.
 
         window_size : list, optional
-            Window size in pixels.  Defaults to [1024, 768]
+            Window size in pixels.  Defaults to ``[1024, 768]``
 
         interactive : bool, optional
             Enabled by default.  Allows user to pan and move figure.
@@ -4055,47 +4105,72 @@ class Plotter(BasePlotter):
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
-            window_size.  Default ``False``.
+            ``window_size``.  Default ``False``.
 
         cpos : list(tuple(floats))
-            The camera position to use
+            The camera position.  You can also set this with
+            ``Plotter.camera_position``.
 
         return_img : bool
             Returns a numpy array representing the last image along
             with the camera position.
 
         use_ipyvtk : bool, optional
-            Use the ``ipyvtk-simple`` ``ViewInteractiveWidget`` to
-            visualize the plot within a juyterlab notebook.
+            Deprecated.  Instead, set the backend either globally with
+            ``pyvista.set_jupyter_backend('ipyvtk_simple')`` or with
+            ``backend='ipyvtk_simple'``.
+
+        jupyter_backend : str, optional
+            Jupyter notebook plotting backend to use.  One of the
+            following:
+
+            * ``'none'`` : Do not display in the notebook.
+            * ``'static'`` : Display a static figure.
+            * ``'ipygany'`` : Show a ``ipygany`` widget
+            * ``'panel'`` : Show a ``panel`` widget.
+
+            This can also be set globally with
+            ``pyvista.set_jupyter_backend``
+
+        return_viewer : bool, optional
+            Return the jupyterlab viewer, scene, or display object
+            when plotting with jupyter notebook.
 
         Returns
         -------
         cpos : list
-            List of camera position, focal point, and view up
+            List of camera position, focal point, and view up.
 
         image : np.ndarray
             Numpy array of the last image when either ``return_img=True``
             or ``screenshot`` is set.
 
+        widget
+            IPython widget when ``return_viewer==True``.
+
         Examples
         --------
-        Show the plotting window and display it using the
-        ipyvtk-simple viewer
+        Simply show the plot.
 
-        >>> pl.show(use_ipyvtk=True)  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
 
         Take a screenshot interactively.  Screenshot will be of the
         last image shown.
 
         >>> pl.show(screenshot='my_image.png')  # doctest:+SKIP
 
-        """
-        # developer keyword argument: return notebook viewer
-        # normally suppressed since it's shown by default
-        return_viewer = kwargs.pop('return_viewer', False)
+        Display an ``ipygany`` scene within a jupyter notebook
 
+        >>> pl.show(jupyter_backend='ipygany')  # doctest:+SKIP
+
+        Return an ``ipygany`` scene.
+
+        >>> pl.show(jupyter_backend='ipygany', return_viewer=True)  # doctest:+SKIP
+
+        """
         # developer keyword argument: runs a function immediately prior to ``close``
         self._before_close_callback = kwargs.pop('before_close_callback', None)
+        jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})
         assert_empty_kwargs(**kwargs)
 
         if interactive_update and auto_close is None:
@@ -4110,8 +4185,14 @@ class Plotter(BasePlotter):
         elif auto_close is None:
             auto_close = rcParams['auto_close']
 
-        if use_ipyvtk is None:
-            use_ipyvtk = rcParams['use_ipyvtk']
+        if use_ipyvtk:
+            txt = textwrap.dedent("""\
+            use_ipyvtk is deprecated.  Set the backend
+            globally with ``pyvista.set_jupyter_backend("ipyvtk_simple"
+            or with ``backend="ipyvtk_simple"``)
+            """)
+            from pyvista.core.errors import DeprecationError
+            raise DeprecationError(txt)
 
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
@@ -4125,6 +4206,8 @@ class Plotter(BasePlotter):
         else:
             if window_size is None:
                 window_size = self.window_size
+            else:
+                self._window_size_unset = False
             self.ren_win.SetSize(window_size[0], window_size[1])
 
         # reset unless camera for the first render unless camera is set
@@ -4141,6 +4224,22 @@ class Plotter(BasePlotter):
         # Ipython console, Jupyter notebook) but only after the very
         # first render window
 
+        # handle plotter notebook
+        if jupyter_backend and not self.notebook:
+            warnings.warn('Not within a jupyter notebook environment.\n'
+                          'Ignoring ``jupyter_backend``.')
+
+        if self.notebook:
+            from ..jupyter.notebook import handle_plotter
+            if jupyter_backend is None:
+                jupyter_backend = rcParams['jupyter_backend']
+
+            if jupyter_backend != 'none':
+                disp = handle_plotter(self, backend=jupyter_backend,
+                                      return_viewer=return_viewer,
+                                      **jupyter_kwargs)
+                return disp
+
         self.render()
 
         # This has to be after the first render for some reason
@@ -4155,7 +4254,6 @@ class Plotter(BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
-        disp = None
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and (not self.off_screen):
@@ -4176,10 +4274,12 @@ class Plotter(BasePlotter):
         # the closing routines that might try to still access that
         # render window.
         if not self.ren_win.IsCurrent():
-            self._clear_ren_win() # The ren_win is deleted
+            self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:
-                warnings.warn("`auto_close` ignored: by clicking the exit button, you have destroyed the render window and we have to close it out.")
+                warnings.warn("`auto_close` ignored: by clicking the exit button, "
+                              "you have destroyed the render window and we have to "
+                              "close it out.")
                 auto_close = True
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user presed the close button, then it destroys the
@@ -4191,45 +4291,9 @@ class Plotter(BasePlotter):
         # Get camera position before closing
         cpos = self.camera_position
 
-        if self.notebook and use_ipyvtk:
-            # Widgets do not work in spyder
-            if any('SPYDER' in name for name in os.environ):
-                warnings.warn('``use_ipyvtk`` is incompatible with Spyder.\n'
-                              'Use notebook=False for interactive '
-                              'plotting within spyder')
-
-            try:
-                from ipyvtk_simple.viewer import ViewInteractiveWidget
-            except ImportError:
-                raise ImportError('Please install `ipyvtk_simple` to use this feature:'
-                                  '\thttps://github.com/Kitware/ipyvtk-simple')
-            # Have to leave the Plotter open for the widget to use
-            auto_close = False
-            disp = ViewInteractiveWidget(self.ren_win, on_close=self.close,
-                                         transparent_background=self.image_transparent_background)
-
-        # If notebook is true and ipyvtk_simple display failed:
-        if self.notebook and (disp is None):
-            import PIL.Image
-            # sanity check
-            try:
-                import IPython
-            except ImportError:
-                raise ImportError('Install IPython to display image in a notebook')
-            if not hasattr(self, 'last_image'):
-                self.last_image = self.screenshot(screenshot, return_img=True)
-            disp = IPython.display.display(PIL.Image.fromarray(self.last_image))
-
         # Cleanup
         if auto_close:
             self.close()
-
-        # Simply display the result: either ipyvtk_simple object or image display
-        if self.notebook:
-            if return_viewer:  # developer option
-                return disp
-            from IPython import display
-            display.display_html(disp)
 
         # If user asked for screenshot, return as numpy array after camera
         # position

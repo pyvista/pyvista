@@ -13,3 +13,5 @@ hypothesis>=6.0.3
 sphinx_gallery
 trimesh
 ipyvtk-simple>=0.1.2
+panel
+ipygany
