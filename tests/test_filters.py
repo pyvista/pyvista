@@ -791,8 +791,8 @@ def test_sample_over_circular_arc():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-def test_sample_over_circular_arc2():
-    """Test that we get a circular arc2."""
+def test_sample_over_circular_arc_normal():
+    """Test that we get a circular arc_normal."""
 
     name = 'values'
 
@@ -808,15 +808,15 @@ def test_sample_over_circular_arc2():
     polar = [xmin, ymin, zmax]
     angle = 90
     center = [xmin, ymin, zmin]
-    sampled_arc2 = uniform.sample_over_circular_arc2(center, resolution=2, normal=normal, polar=polar, angle=angle)
+    sampled_arc_normal = uniform.sample_over_circular_arc_normal(center, resolution=2, normal=normal, polar=polar, angle=angle)
 
     expected_result = zmin+(zmax-zmin)*np.sin([np.pi/2.0, np.pi/4.0, 0.0])
-    assert np.allclose(sampled_arc2[name], expected_result)
-    assert name in sampled_arc2.array_names # is name in sampled result
+    assert np.allclose(sampled_arc_normal[name], expected_result)
+    assert name in sampled_arc_normal.array_names # is name in sampled result
 
     # test no resolution
     sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
-    sampled_from_sphere = sphere.sample_over_circular_arc2([0, 0, 0], polar=[3, 1, 1], angle=180)
+    sampled_from_sphere = sphere.sample_over_circular_arc_normal([0, 0, 0], polar=[3, 1, 1], angle=180)
     assert sampled_from_sphere.n_points == sphere.n_cells + 1
 
     # is sampled result a polydata object
@@ -842,11 +842,13 @@ def test_plot_over_circular_arc():
 
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
-        mesh.plot_over_circular_arc(a, b, center, resolution=None, scalars='invalid_array_name',
-                                    title='My Stuff', ylabel='3 Values', show=False)
+        mesh.plot_over_circular_arc(a, b, center, resolution=None,
+                                    scalars='invalid_array_name',
+                                    title='My Stuff', ylabel='3 Values',
+                                    show=False)
 
 
-def test_plot_over_circular_arc2():
+def test_plot_over_circular_arc_normal():
     """this requires matplotlib"""
 
     pytest.importorskip('matplotlib')
@@ -857,24 +859,29 @@ def test_plot_over_circular_arc2():
     polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
     angle = 90
     center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-    mesh.plot_over_circular_arc2(center, polar=polar, angle=angle, show=False)
+    mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle, show=False)
 
     # Test multicomponent
     mesh['foo'] = np.random.rand(mesh.n_cells, 3)
-    mesh.plot_over_circular_arc2(center, polar=polar, angle=angle, resolution=None, scalars='foo',
-                                 title='My Stuff', ylabel='3 Values', show=False)
+    mesh.plot_over_circular_arc_normal(center, polar=polar,
+                                       angle=angle, resolution=None,
+                                       scalars='foo', title='My Stuff',
+                                       ylabel='3 Values', show=False)
 
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
-        mesh.plot_over_circular_arc2(center, polar=polar, angle=angle, resolution=None, scalars='invalid_array_name',
-                                     title='My Stuff', ylabel='3 Values', show=False)
+        mesh.plot_over_circular_arc_normal(center, polar=polar,
+                                           angle=angle, resolution=None,
+                                           scalars='invalid_array_name',
+                                           title='My Stuff', ylabel='3 Values',
+                                           show=False)
 
 
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
     x = y = z = np.linspace(model.bounds[0], model.bounds[1], num=n)
-    points = np.c_[x,y,z]
+    points = np.c_[x, y, z]
     spline = pyvista.Spline(points, n)
     slc = model.slice_along_line(spline)
     assert slc.n_points > 0
