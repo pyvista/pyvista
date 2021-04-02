@@ -4502,8 +4502,9 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Compute the intersection between rays from the origin in directions
-        [1, 0, 0], [0, 1, 0] and [0, 0, 1], and a sphere with radius 0.5 centered at the origin
+        Compute the intersection between rays from the origin in
+        directions ``[1, 0, 0]``, ``[0, 1, 0]`` and ``[0, 0, 1]``, and
+        a sphere with radius 0.5 centered at the origin
 
         >>> import pyvista as pv # doctest: +SKIP
         ... sphere = pv.Sphere()
@@ -4523,7 +4524,7 @@ class PolyDataFilters(DataSetFilters):
                 "\tconda install trimesh rtree pyembree"
             )
 
-        faces_as_array = poly_data.faces.reshape((poly_data.number_of_faces, 4))[:, 1:]
+        faces_as_array = poly_data.faces.reshape((poly_data.n_faces, 4))[:, 1:]
         tmesh = trimesh.Trimesh(poly_data.points, faces_as_array)
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins, directions, multiple_hits=not first_point
