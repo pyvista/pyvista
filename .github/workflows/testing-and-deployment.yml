@@ -47,7 +47,7 @@ jobs:
     steps:
       - name: Install headless display
         run: |
-          setup_headless_display.sh
+          ./setup_headless_display.sh
 
       - name: Create Anaconda environment
         run: |
