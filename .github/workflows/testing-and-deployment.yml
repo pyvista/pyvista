@@ -43,6 +43,8 @@ jobs:
       CONDA_ALWAYS_YES: 1
       VTK_VERSION: 8.2
       conda_env: pyvista-vtk8.2
+      DISPLAY: ':99.0'
+      PYVISTA_OFF_SCREEN: True
 
     steps:
       - uses: actions/checkout@v2
