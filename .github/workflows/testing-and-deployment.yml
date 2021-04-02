@@ -37,9 +37,8 @@ jobs:
           python -m pytest -v --cov pyvista --cov-report xml --durations=0
 
 
-  LinuxConda
+  LinuxConda:
     runs-on: ubuntu-latest
-    vmImage: 'ubuntu-20.04'
     env:
       CONDA_ALWAYS_YES: 1
       VTK.VERSION: 8.2
