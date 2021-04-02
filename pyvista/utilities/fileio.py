@@ -129,7 +129,6 @@ def standard_reader_routine(reader, filename, attrs=None):
         value.
 
     """
-
     if attrs is None:
         attrs = {}
     if not isinstance(attrs, dict):
