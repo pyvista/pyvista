@@ -47,7 +47,7 @@ jobs:
     steps:
       - name: Install headless display
         run: |
-          .ci/setup_headless_display.sh      
+          ../../.ci/setup_headless_display.sh
 
       - name: Create Anaconda environment
         run: |
@@ -55,7 +55,7 @@ jobs:
           conda config --add channels conda-forge
           conda create -n ${{ env.conda_env }} -y --quiet python=3.8 mamba
           conda activate ${{ env.conda_env }}
-          sed -i -e 's/- vtk$/- vtk=$(VTK.VERSION)/' environment.yml
+          sed -i -e 's/- vtk$/- vtk=${{ env.VTK.VERSION }}' environment.yml
           mamba env update -n ${{ env.conda_env }} --file environment.yml
           pip install -e .
           conda list
