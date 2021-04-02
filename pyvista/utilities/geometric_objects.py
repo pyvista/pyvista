@@ -619,15 +619,16 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
         Resolution of 1 will just create a line.
 
     negative : bool, optional
-        By default the arc spans the shortest angular sector point1 and point2.
+        By default the arc spans the shortest angular sector between
+        ``pointa`` and ``pointb``.
 
-        By setting this to true, the longest angular sector is used
-        instead (i.e. the negative coterminal angle to the shortest
-        one).
+        By setting this to ``True``, the longest angular sector is
+        used instead (i.e. the negative coterminal angle to the
+        shortest one).
 
     Examples
     --------
-    Quarter arc centered at the origin in the xy plane
+    Create a quarter arc centered at the origin in the xy plane.
 
     >>> import pyvista
     >>> arc = pyvista.CircularArc([-1, 0, 0], [0, 1, 0], [0, 0, 0])
@@ -670,11 +671,12 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     return arc
 
 
-def CircularArc2(center, resolution=100, normal=None, polar=None, angle=None):
+def CircularArcFromNormal(center, resolution=100, normal=None,
+                          polar=None, angle=None):
     """Create a circular arc defined by normal to the plane of the arc, and an angle.
 
-    The number of segments composing the polyline is controlled by setting the
-    object resolution.
+    The number of segments composing the polyline is controlled by
+    setting the object resolution.
 
     Parameters
     ----------
@@ -690,21 +692,21 @@ def CircularArc2(center, resolution=100, normal=None, polar=None, angle=None):
         points in the positive Z direction.
 
     polar : np.ndarray or list, optional
-        (starting point of the arc).  By default it is the unit vector
-        in the positive x direction.
+        Starting point of the arc in polar coordinates.  By default it
+        is the unit vector in the positive x direction.
 
     angle : float, optional
-        Arc length (in degrees), beginning at the polar vector.  The
+        Arc length (in degrees) beginning at the polar vector.  The
         direction is counterclockwise.  By default it is 360.
 
     Examples
     --------
-    Quarter arc centered at the origin in the xy plane
+    Quarter arc centered at the origin in the xy plane.
 
     >>> import pyvista
     >>> normal = [0, 0, 1]
     >>> polar = [-1, 0, 0]
-    >>> arc = pyvista.CircularArc2([0, 0, 0], normal=normal, polar=polar)
+    >>> arc = pyvista.CircularArcFromNormal([0, 0, 0], normal=normal, polar=polar)
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=4)
     >>> _ = pl.show_bounds(location='all')
@@ -713,11 +715,11 @@ def CircularArc2(center, resolution=100, normal=None, polar=None, angle=None):
     """
     check_valid_vector(center, 'center')
     if normal is None:
-       normal = [0, 0, 1]
+        normal = [0, 0, 1]
     if polar is None:
-       polar = [1, 0, 0]
+        polar = [1, 0, 0]
     if angle is None:
-       angle = 90.0
+        angle = 90.0
 
     arc = _vtk.vtkArcSource()
     arc.SetCenter(*center)
@@ -734,7 +736,7 @@ def CircularArc2(center, resolution=100, normal=None, polar=None, angle=None):
     arc = pyvista.wrap(arc.GetOutput())
     # Compute distance of every point along circular arc
     center = np.array(center)
-    radius = np.sqrt(np.sum((arc.points[0]-center)**2, axis=0))
+    radius = np.sqrt(np.sum((arc.points[0] - center)**2, axis=0))
     angles = np.arange(0.0, 1.0 + 1.0/resolution, 1.0/resolution) * angle
     arc['Distance'] = radius * angles
     return arc

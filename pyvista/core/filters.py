@@ -2259,7 +2259,7 @@ class DataSetFilters:
         if resolution is None:
             resolution = int(dataset.n_cells)
         # Make a circular arc and sample the dataset
-        circular_arc = pyvista.CircularArc2(center, resolution=resolution, normal=normal, polar=polar)
+        circular_arc = pyvista.CircularArcFromNormal(center, resolution=resolution, normal=normal, polar=polar)
 
         sampled_circular_arc = circular_arc.sample(dataset, tolerance=tolerance)
         return sampled_circular_arc
