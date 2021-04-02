@@ -49,8 +49,7 @@ jobs:
 
       - name: Install headless display
         run: |
-          chmod +x setup_headless_display.sh
-          ./setup_headless_display.sh
+          .ci/setup_headless_display.sh
 
       - name: Create Anaconda environment
         run: |
