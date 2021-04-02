@@ -144,13 +144,28 @@ def test_circular_arc():
     resolution = 100
 
     mesh = pyvista.CircularArc(pointa, pointb, center, resolution)
-    assert mesh.n_points
-    assert mesh.n_cells
+    assert mesh.n_points == resolution + 1
+    assert mesh.n_cells == 1
+    distance = np.arange(0.0, 1.0 + 0.01, 0.01)*np.pi/2.0
+    assert np.allclose(mesh['Distance'], distance)
 
-    mesh = pyvista.CircularArc([-1, 0, 0], [0, 0, 1], [0, 0, 0], normal=[0, 0, 1],
-                               polar=[1, 0, 1], negative=True, angle=180)
-    assert mesh.n_points
-    assert mesh.n_cells
+    # pointa and pointb are not equidistant from center
+    with pytest.raises(ValueError):
+        mesh = pyvista.CircularArc([-1, 0, 0], [-0.99, 0.001, 0], [0, 0, 0], 100)
+
+
+def test_circular_arc_from_normal():
+    center = [0, 0, 0]
+    normal = [0, 0, 1]
+    polar = [-2.0, 0, 0]
+    angle = 90
+    resolution = 100
+
+    mesh = pyvista.CircularArcFromNormal(center, resolution, normal, polar, angle)
+    assert mesh.n_points == resolution + 1
+    assert mesh.n_cells == 1
+    distance = np.arange(0.0, 1.0 + 0.01, 0.01)*np.pi
+    assert np.allclose(mesh['Distance'], distance)
 
 
 def test_pyramid():

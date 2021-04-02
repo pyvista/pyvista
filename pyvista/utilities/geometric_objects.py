@@ -597,16 +597,11 @@ def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,
     return pyvista.wrap(wavelet_source.GetOutput())
 
 
-def CircularArc(pointa, pointb, center, resolution=100, normal=None,
-                polar=None, angle=None, negative=False):
+def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     """Create a circular arc defined by two endpoints and a center.
 
     The number of segments composing the polyline is controlled by
-    setting the object resolution.  Alternatively, one can use a
-    better API (that does not allow for inconsistent nor ambiguous
-    inputs), using a starting point (polar vector, measured from the
-    arc's center), a normal to the plane of the arc, and an angle
-    defining the arc length.
+    setting the object resolution.
 
     Parameters
     ----------
@@ -623,31 +618,17 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
         The number of segments of the polyline that draws the arc.
         Resolution of 1 will just create a line.
 
-    normal : np.ndarray or list
-        The normal vector to the plane of the arc.  By default it
-        points in the positive Z direction.
-
-    polar : np.ndarray or list
-        (starting point of the arc).  By default it is the unit vector
-        in the positive x direction. Note: This is only used when
-        normal has been input.
-
-    angle : float
-        Arc length (in degrees), beginning at the polar vector.  The
-        direction is counterclockwise by default; a negative value
-        draws the arc in the clockwise direction.  Note: This is only
-        used when normal has been input.
-
     negative : bool, optional
-        By default the arc spans the shortest angular sector point1 and point2.
+        By default the arc spans the shortest angular sector between
+        ``pointa`` and ``pointb``.
 
-        By setting this to true, the longest angular sector is used
-        instead (i.e. the negative coterminal angle to the shortest
-        one). This is only used when normal has not been input
+        By setting this to ``True``, the longest angular sector is
+        used instead (i.e. the negative coterminal angle to the
+        shortest one).
 
     Examples
     --------
-    Quarter arc centered at the origin in the xy plane
+    Create a quarter arc centered at the origin in the xy plane.
 
     >>> import pyvista
     >>> arc = pyvista.CircularArc([-1, 0, 0], [0, 1, 0], [0, 0, 0])
@@ -656,15 +637,15 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
     >>> _ = pl.show_bounds(location='all')
     >>> _ = pl.view_xy()
     >>> pl.show() # doctest:+SKIP
-
-    Quarter arc centered at the origin in the xz plane
-
-    >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0], normal=[0, 0, 1])
-    >>> arc.plot() # doctest:+SKIP
     """
     check_valid_vector(pointa, 'pointa')
     check_valid_vector(pointb, 'pointb')
     check_valid_vector(center, 'center')
+    if not np.isclose(
+        np.linalg.norm(np.array(pointa) - np.array(center)),
+        np.linalg.norm(np.array(pointb) - np.array(center)),
+    ):
+        raise ValueError("pointa and pointb are not equidistant from center")
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
@@ -679,20 +660,86 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
     arc.SetResolution(resolution)
     arc.SetNegative(negative)
 
-    if normal is not None:
-        arc.UseNormalAndAngleOn()
-        check_valid_vector(normal, 'normal')
-        arc.SetNormal(*normal)
-
-        if polar is not None:
-            check_valid_vector(polar, 'polar')
-            arc.SetPolarVector(*polar)
-
-        if angle is not None:
-            arc.SetAngle(angle)
-
     arc.Update()
-    return pyvista.wrap(arc.GetOutput())
+    angle = np.deg2rad(arc.GetAngle())
+    arc = pyvista.wrap(arc.GetOutput())
+    # Compute distance of every point along circular arc
+    center = np.array(center)
+    radius = np.sqrt(np.sum((arc.points[0]-center)**2, axis=0))
+    angles = np.arange(0.0, 1.0 + 1.0/resolution, 1.0/resolution) * angle
+    arc['Distance'] = radius * angles
+    return arc
+
+
+def CircularArcFromNormal(center, resolution=100, normal=None,
+                          polar=None, angle=None):
+    """Create a circular arc defined by normal to the plane of the arc, and an angle.
+
+    The number of segments composing the polyline is controlled by
+    setting the object resolution.
+
+    Parameters
+    ----------
+    center : np.ndarray or list
+        Center of the circle that defines the arc.
+
+    resolution : int, optional
+        The number of segments of the polyline that draws the arc.
+        Resolution of 1 will just create a line.
+
+    normal : np.ndarray or list, optional
+        The normal vector to the plane of the arc.  By default it
+        points in the positive Z direction.
+
+    polar : np.ndarray or list, optional
+        Starting point of the arc in polar coordinates.  By default it
+        is the unit vector in the positive x direction.
+
+    angle : float, optional
+        Arc length (in degrees) beginning at the polar vector.  The
+        direction is counterclockwise.  By default it is 360.
+
+    Examples
+    --------
+    Quarter arc centered at the origin in the xy plane.
+
+    >>> import pyvista
+    >>> normal = [0, 0, 1]
+    >>> polar = [-1, 0, 0]
+    >>> arc = pyvista.CircularArcFromNormal([0, 0, 0], normal=normal, polar=polar)
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(arc, color='k', line_width=4)
+    >>> _ = pl.show_bounds(location='all')
+    >>> _ = pl.view_xy()
+    >>> pl.show() # doctest:+SKIP
+    """
+    check_valid_vector(center, 'center')
+    if normal is None:
+        normal = [0, 0, 1]
+    if polar is None:
+        polar = [1, 0, 0]
+    if angle is None:
+        angle = 90.0
+
+    arc = _vtk.vtkArcSource()
+    arc.SetCenter(*center)
+    arc.SetResolution(resolution)
+    arc.UseNormalAndAngleOn()
+    check_valid_vector(normal, 'normal')
+    arc.SetNormal(*normal)
+    check_valid_vector(polar, 'polar')
+    arc.SetPolarVector(*polar)
+    assert np.allclose(np.array(arc.GetPolarVector()), np.array(polar))
+    arc.SetAngle(angle)
+    arc.Update()
+    angle = np.deg2rad(arc.GetAngle())
+    arc = pyvista.wrap(arc.GetOutput())
+    # Compute distance of every point along circular arc
+    center = np.array(center)
+    radius = np.sqrt(np.sum((arc.points[0] - center)**2, axis=0))
+    angles = np.arange(0.0, 1.0 + 1.0/resolution, 1.0/resolution) * angle
+    arc['Distance'] = radius * angles
+    return arc
 
 
 def Pyramid(points):

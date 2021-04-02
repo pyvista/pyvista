@@ -2165,6 +2165,323 @@ class DataSetFilters:
         if show:  # pragma: no cover
             return plt.show()
 
+    def sample_over_circular_arc(dataset, pointa, pointb, center,
+                                 resolution=None, tolerance=None):
+        """Sample a dataset over a circular arc.
+
+        Parameters
+        ----------
+        pointa : np.ndarray or list
+            Location in ``[x, y, z]``.
+
+        pointb : np.ndarray or list
+            Location in ``[x, y, z]``.
+
+        center : np.ndarray or list
+            Location in ``[x, y, z]``.
+
+        resolution : int, optional
+            Number of pieces to divide circular arc into. Defaults to
+            number of cells in the input mesh. Must be a positive
+            integer.
+
+        tolerance: float, optional
+            Tolerance used to compute whether a point in the source is
+            in a cell of the input.  If not given, tolerance is
+            automatically generated.
+
+        Examples
+        --------
+        Sample a dataset over a circular arc.
+
+        >>> from pyvista import examples
+        >>> uniform = examples.load_uniform()
+        >>> uniform["height"] = uniform.points[:, 2]
+        >>> pointa = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[5]]
+        >>> pointb = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[4]]
+        >>> center = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[4]]
+        >>> sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
+        """
+        if resolution is None:
+            resolution = int(dataset.n_cells)
+        # Make a circular arc and sample the dataset
+        circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
+
+        sampled_circular_arc = circular_arc.sample(dataset, tolerance=tolerance)
+        return sampled_circular_arc
+
+    def sample_over_circular_arc_normal(dataset, center, resolution=None, normal=None,
+                                        polar=None, angle=None, tolerance=None):
+        """Sample a dataset over a circular arc defined by a normal and polar vector and plot it.
+
+        The number of segments composing the polyline is controlled by
+        setting the object resolution.
+
+        Parameters
+        ----------
+        center : np.ndarray or list
+            Location in ``[x, y, z]``.
+
+        resolution : int, optional
+            Number of pieces to divide circular arc into. Defaults to
+            number of cells in the input mesh. Must be a positive
+            integer.
+
+        normal : np.ndarray or list, optional
+            The normal vector to the plane of the arc.  By default it
+            points in the positive Z direction.
+
+        polar : np.ndarray or list, optional
+            Starting point of the arc in polar coordinates.  By
+            default it is the unit vector in the positive x direction.
+
+        angle : float, optional
+            Arc length (in degrees), beginning at the polar vector.  The
+            direction is counterclockwise.  By default it is 360.
+
+        tolerance: float, optional
+            Tolerance used to compute whether a point in the source is
+            in a cell of the input.  If not given, tolerance is
+            automatically generated.
+
+        Examples
+        --------
+        Sample a dataset over a circular arc.
+
+        >>> from pyvista import examples
+        >>> uniform = examples.load_uniform()
+        >>> uniform["height"] = uniform.points[:, 2]
+        >>> normal = [0, 0, 1]
+        >>> polar = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[5]]
+        >>> center = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[4]]
+        >>> sampled_arc = uniform.sample_over_circular_arc_normal(center, normal=normal, polar=polar)
+        """
+        if resolution is None:
+            resolution = int(dataset.n_cells)
+        # Make a circular arc and sample the dataset
+        circular_arc = pyvista.CircularArcFromNormal(center,
+                                                     resolution=resolution,
+                                                     normal=normal,
+                                                     polar=polar)
+
+        sampled_circular_arc = circular_arc.sample(dataset, tolerance=tolerance)
+        return sampled_circular_arc
+
+    def plot_over_circular_arc(dataset, pointa, pointb, center,
+                               resolution=None, scalars=None,
+                               title=None, ylabel=None, figsize=None,
+                               figure=True, show=True, tolerance=None):
+        """Sample a dataset along a circular arc and plot it.
+
+        Plot the variables of interest in 2D where the X-axis is
+        distance from Point A and the Y-axis is the variable of
+        interest. Note that this filter returns ``None``.
+
+        Parameters
+        ----------
+        pointa : np.ndarray or list
+            Location in ``[x, y, z]``.
+
+        pointb : np.ndarray or list
+            Location in ``[x, y, z]``.
+
+        center : np.ndarray or list
+            Location in ``[x, y, z]``.
+
+        resolution : int, optional
+            Number of pieces to divide the circular arc into. Defaults
+            to number of cells in the input mesh. Must be a positive
+            integer.
+
+        scalars : str, optional
+            The string name of the variable in the input dataset to
+            probe. The active scalar is used by default.
+
+        title : str, optional
+            The string title of the ``matplotlib`` figure.
+
+        ylabel : str, optional
+            The string label of the Y-axis. Defaults to the variable name.
+
+        figsize : tuple(int), optional
+            The size of the new figure.
+
+        figure : bool, optional
+            Flag on whether or not to create a new figure.
+
+        show : bool, optional
+            Shows the ``matplotlib`` figure when ``True``.
+
+        tolerance: float, optional
+            Tolerance used to compute whether a point in the source is
+            in a cell of the input.  If not given, tolerance is
+            automatically generated.
+
+        Examples
+        --------
+        Sample a dataset along a high resolution circular arc and plot.
+
+        >>> from pyvista import examples
+        >>> mesh = examples.load_uniform()
+        >>> a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
+        >>> b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
+        >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+        >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)  # doctest:+SKIP
+        """
+        # Ensure matplotlib is available
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:  # pragma: no cover
+            raise ImportError('matplotlib must be installed to use this filter.')
+
+        # Sample on circular arc
+        sampled = DataSetFilters.sample_over_circular_arc(dataset,
+                                                          pointa,
+                                                          pointb,
+                                                          center,
+                                                          resolution,
+                                                          tolerance)
+
+        # Get variable of interest
+        if scalars is None:
+            field, scalars = dataset.active_scalars_info
+        values = sampled.get_array(scalars)
+        distance = sampled['Distance']
+
+        # create the matplotlib figure
+        if figure:
+            plt.figure(figsize=figsize)
+        # Plot it in 2D
+        if values.ndim > 1:
+            for i in range(values.shape[1]):
+                plt.plot(distance, values[:, i], label=f'Component {i}')
+            plt.legend()
+        else:
+            plt.plot(distance, values)
+        plt.xlabel('Distance')
+        if ylabel is None:
+            plt.ylabel(scalars)
+        else:
+            plt.ylabel(ylabel)
+        if title is None:
+            plt.title(f'{scalars} Profile')
+        else:
+            plt.title(title)
+        if show:  # pragma: no cover
+            return plt.show()
+
+    def plot_over_circular_arc_normal(dataset, center, resolution=None, normal=None,
+                                      polar=None, angle=None, scalars=None,
+                                      title=None, ylabel=None, figsize=None,
+                                      figure=True, show=True, tolerance=None):
+        """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
+
+        Plot the variables of interest in 2D where the X-axis is
+        distance from Point A and the Y-axis is the variable of
+        interest. Note that this filter returns ``None``.
+
+        Parameters
+        ----------
+        center : np.ndarray or list
+            Location in ``[x, y, z]``.
+
+        resolution : int, optional
+            number of pieces to divide circular arc into. Defaults to
+            number of cells in the input mesh. Must be a positive
+            integer.
+
+        normal : np.ndarray or list, optional
+            The normal vector to the plane of the arc.  By default it
+            points in the positive Z direction.
+
+        polar : np.ndarray or list, optional
+            (starting point of the arc).  By default it is the unit vector
+            in the positive x direction.
+
+        angle : float, optional
+            Arc length (in degrees), beginning at the polar vector.  The
+            direction is counterclockwise.  By default it is 360.
+
+        scalars : str, optional
+            The string name of the variable in the input dataset to
+            probe. The active scalar is used by default.
+
+        title : str, optional
+            The string title of the `matplotlib` figure
+
+        ylabel : str, optional
+            The string label of the Y-axis. Defaults to variable name
+
+        figsize : tuple(int), optional
+            the size of the new figure
+
+        figure : bool, optional
+            flag on whether or not to create a new figure
+
+        show : bool, optional
+            Shows the matplotlib figure
+
+        tolerance: float, optional
+            Tolerance used to compute whether a point in the source is
+            in a cell of the input.  If not given, tolerance is
+            automatically generated.
+
+        Examples
+        --------
+        Sample a dataset along a high resolution circular arc and plot.
+
+        >>> from pyvista import examples
+        >>> mesh = examples.load_uniform()
+        >>> normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
+        >>> polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
+        >>> angle = 90
+        >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+        >>> mesh.plot_over_circular_arc_normal(center, polar, angle)  # doctest:+SKIP
+
+        """
+        # Ensure matplotlib is available
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:  # pragma: no cover
+            raise ImportError('matplotlib must be installed to use this filter.')
+
+        # Sample on circular arc
+        sampled = DataSetFilters.sample_over_circular_arc_normal(dataset,
+                                                                 center,
+                                                                 resolution,
+                                                                 normal,
+                                                                 polar,
+                                                                 angle,
+                                                                 tolerance)
+
+        # Get variable of interest
+        if scalars is None:
+            field, scalars = dataset.active_scalars_info
+        values = sampled.get_array(scalars)
+        distance = sampled['Distance']
+
+        # create the matplotlib figure
+        if figure:
+            plt.figure(figsize=figsize)
+        # Plot it in 2D
+        if values.ndim > 1:
+            for i in range(values.shape[1]):
+                plt.plot(distance, values[:, i], label=f'Component {i}')
+            plt.legend()
+        else:
+            plt.plot(distance, values)
+        plt.xlabel('Distance')
+        if ylabel is None:
+            plt.ylabel(scalars)
+        else:
+            plt.ylabel(ylabel)
+        if title is None:
+            plt.title(f'{scalars} Profile')
+        else:
+            plt.title(title)
+        if show:  # pragma: no cover
+            return plt.show()
+
     def extract_cells(dataset, ind):
         """Return a subset of the grid.
 
