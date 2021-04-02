@@ -3,38 +3,38 @@ name: Unit Testing
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
-  macOS:
-    runs-on: macos-latest
-    name: Mac OS Unit Testing
-    strategy:
-      matrix:
-        python-version: ['3.6', '3.7', '3.8']
+  # macOS:
+  #   runs-on: macos-latest
+  #   name: Mac OS Unit Testing
+  #   strategy:
+  #     matrix:
+  #       python-version: ['3.6', '3.7', '3.8']
 
-    env:
-      ALLOW_PLOTTING: true
-      SHELLOPTS: 'errexit:pipefail'
+  #   env:
+  #     ALLOW_PLOTTING: true
+  #     SHELLOPTS: 'errexit:pipefail'
 
-    steps:
-      - uses: actions/checkout@v2
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
-        with:
-          python-version: ${{ matrix.python-version }}
+  #     - name: Set up Python ${{ matrix.python-version }}
+  #       uses: actions/setup-python@v1
+  #       with:
+  #         python-version: ${{ matrix.python-version }}
 
-      - name: Install PyVista
-        run: |
-          python -m pip install wheel
-          python -m pip install -e .
-          python -c "import pyvista; print(pyvista.Report(gpu=False))"
+  #     - name: Install PyVista
+  #       run: |
+  #         python -m pip install wheel
+  #         python -m pip install -e .
+  #         python -c "import pyvista; print(pyvista.Report(gpu=False))"
 
-      - name: Install test dependencies
-        run: |
-          python -m pip install -r requirements_test.txt
+  #     - name: Install test dependencies
+  #       run: |
+  #         python -m pip install -r requirements_test.txt
 
-      - name: Unit testing
-        run: |
-          python -m pytest -v --cov pyvista --cov-report xml --durations=0
+  #     - name: Unit testing
+  #       run: |
+  #         python -m pytest -v --cov pyvista --cov-report xml --durations=0
 
 
   LinuxConda:
@@ -47,6 +47,8 @@ jobs:
     steps:
       - name: Install headless display
         run: |
+          echo $(ls)
+          echo $(pwd)
           ../../.ci/setup_headless_display.sh
 
       - name: Create Anaconda environment
@@ -57,6 +59,11 @@ jobs:
           conda activate ${{ env.conda_env }}
           sed -i -e 's/- vtk$/- vtk=${{ env.VTK.VERSION }}' environment.yml
           mamba env update -n ${{ env.conda_env }} --file environment.yml
+
+      - name: Install PyVista
+        run: |
+          source /usr/share/miniconda/etc/profile.d/conda.sh
+          conda activate ${{ env.conda_env }}
           pip install -e .
           conda list
           which python
