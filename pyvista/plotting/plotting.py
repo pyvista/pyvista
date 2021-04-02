@@ -1,4 +1,4 @@
-"""Pyvista plotting module."""
+"""PyVista plotting module."""
 
 import sys
 import pathlib
@@ -26,17 +26,17 @@ from pyvista.utilities import (assert_empty_kwargs, convert_array,
                                numpy_to_texture,
                                raise_not_matching, try_callback, wrap)
 from pyvista.utilities.regression import image_from_window
-from .background_renderer import BackgroundRenderer
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .renderer import Renderer, Camera
-from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
-                    parse_font_family, rcParams)
+from .theme import (FONT_KEYS, parse_color, parse_font_family,
+                    rcParams)
 from .tools import normalize, opacity_transfer_function
 from .widgets import WidgetHelper
 from .scalar_bars import ScalarBars
+from .renderers import Renderers
 
 
 def _has_matplotlib():
@@ -96,7 +96,8 @@ def _warn_xserver():
                       ' ``pyvista.start_xvfb()``\n')
 
 USE_SCALAR_BAR_ARGS = """
-"stitle" is a depreciated keyword and will be removed in a future release.
+"stitle" is a depreciated keyword and will be removed in a future
+release.
 
 Use ``scalar_bar_args`` instead.  For example:
 
@@ -173,144 +174,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             title = rcParams['title']
         self.title = str(title)
 
-        # by default add border for multiple plots
-        if border is None:
-            if shape != (1, 1):
-                border = True
-            else:
-                border = False
-
-        # add render windows
-        self._active_renderer_index = 0
-        self.renderers = []
-
-        self.groups = np.empty((0,4),dtype=int)
-
-        if isinstance(shape, str):
-
-            if '|' in shape:
-                n = int(shape.split('|')[0])
-                m = int(shape.split('|')[1])
-                rangen = reversed(range(n))
-                rangem = reversed(range(m))
-            else:
-                m = int(shape.split('/')[0])
-                n = int(shape.split('/')[1])
-                rangen = range(n)
-                rangem = range(m)
-
-            if splitting_position is None:
-                splitting_position = rcParams['multi_rendering_splitting_position']
-
-            if splitting_position is None:
-                if n >= m:
-                    xsplit = m/(n+m)
-                else:
-                    xsplit = 1-n/(n+m)
-            else:
-                xsplit = splitting_position
-
-            for i in rangen:
-                arenderer = Renderer(self, border, border_color, border_width)
-                if '|' in shape:
-                    arenderer.SetViewport(0, i/n, xsplit, (i+1)/n)
-                else:
-                    arenderer.SetViewport(i/n, 0, (i+1)/n, xsplit)
-                self.renderers.append(arenderer)
-            for i in rangem:
-                arenderer = Renderer(self, border, border_color, border_width)
-                if '|' in shape:
-                    arenderer.SetViewport(xsplit, i/m, 1, (i+1)/m)
-                else:
-                    arenderer.SetViewport(i/m, xsplit, (i+1)/m, 1)
-                self.renderers.append(arenderer)
-
-            self.shape = (n+m,)
-            self._render_idxs = np.arange(n+m)
-
-        else:
-
-            if not isinstance(shape, (np.ndarray, collections.abc.Sequence)):
-                raise TypeError('"shape" should be a list, tuple or string descriptor')
-            if len(shape) != 2:
-                raise ValueError('"shape" must have length 2.')
-            shape = np.asarray(shape)
-            if not np.issubdtype(shape.dtype, np.integer) or (shape <= 0).any():
-                raise ValueError('"shape" must contain only positive integers.')
-            # always assign shape as a tuple
-            self.shape = tuple(shape)
-            self._render_idxs = np.empty(self.shape,dtype=int)
-            # Check if row and col weights correspond to given shape, or initialize them to defaults (equally weighted)
-            # and convert to normalized offsets
-            if row_weights is None:
-                row_weights = np.ones(shape[0])
-            if col_weights is None:
-                col_weights = np.ones(shape[1])
-            assert(np.array(row_weights).size==shape[0])
-            assert(np.array(col_weights).size==shape[1])
-            row_off = np.cumsum(np.abs(row_weights))/np.sum(np.abs(row_weights))
-            row_off = 1-np.concatenate(([0],row_off))
-            col_off = np.cumsum(np.abs(col_weights))/np.sum(np.abs(col_weights))
-            col_off = np.concatenate(([0],col_off))
-            # Check and convert groups to internal format (Nx4 matrix where every row contains the row and col index of the top left cell
-            # together with the row and col index of the bottom right cell)
-            if groups is not None:
-                assert isinstance(groups, collections.abc.Sequence), '"groups" should be a list or tuple'
-                for group in groups:
-                    assert isinstance(group, collections.abc.Sequence) and len(group)==2, 'each group entry should be a list or tuple of 2 elements'
-                    rows = group[0]
-                    if isinstance(rows,slice):
-                        rows = np.arange(self.shape[0],dtype=int)[rows]
-                    cols = group[1]
-                    if isinstance(cols,slice):
-                        cols = np.arange(self.shape[1],dtype=int)[cols]
-                    # Get the normalized group, i.e. extract top left corner and bottom right corner from the given rows and cols
-                    norm_group = [np.min(rows),np.min(cols),np.max(rows),np.max(cols)]
-                    # Check for overlap with already defined groups:
-                    for i in range(norm_group[0],norm_group[2]+1):
-                        for j in range(norm_group[1],norm_group[3]+1):
-                            assert self.loc_to_group((i,j)) is None, 'groups cannot overlap'
-                    self.groups = np.concatenate((self.groups,np.array([norm_group],dtype=int)),axis=0)
-            # Create subplot renderers
-            for row in range(shape[0]):
-                for col in range(shape[1]):
-                    group = self.loc_to_group((row,col))
-                    nb_rows = None
-                    nb_cols = None
-                    if group is not None:
-                        if row==self.groups[group,0] and col==self.groups[group,1]:
-                            # Only add renderer for first location of the group
-                            nb_rows = 1+self.groups[group,2]-self.groups[group,0]
-                            nb_cols = 1+self.groups[group,3]-self.groups[group,1]
-                    else:
-                        nb_rows = 1
-                        nb_cols = 1
-                    if nb_rows is not None:
-                        renderer = Renderer(self, border, border_color, border_width)
-                        x0 = col_off[col]
-                        y0 = row_off[row+nb_rows]
-                        x1 = col_off[col+nb_cols]
-                        y1 = row_off[row]
-                        renderer.SetViewport(x0, y0, x1, y1)
-                        self._render_idxs[row,col] = len(self.renderers)
-                        self.renderers.append(renderer)
-                    else:
-                        self._render_idxs[row,col] = self._render_idxs[self.groups[group,0],self.groups[group,1]]
-
-        # each render will also have an associated background renderer
-        self._background_renderers = [None for _ in range(len(self.renderers))]
-
-        # create a shadow renderer that lives on top of all others
-        self._shadow_renderer = Renderer(
-            self, border, border_color, border_width)
-        self._shadow_renderer.SetViewport(0, 0, 1, 1)
-        self._shadow_renderer.SetDraw(False)
+        # add renderers
+        self.renderers = Renderers(self, shape, splitting_position, row_weights,
+                                   col_weights, groups, border, border_color,
+                                   border_width)
 
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bars = ScalarBars(self)
 
         # track if the camera has been setup
-        # self.camera_set = False
         self._first_time = True
         # Keep track of the scale
         self._labels = []
@@ -376,62 +248,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.__before_close_callback = None
 
-    #### Manage the active Renderer ####
+    @property
+    def shape(self):
+        """Shape of the plotter.
 
-    def loc_to_group(self, loc):
-        """Return group id of the given location index. Or None if this location is not part of any group."""
-        group_idxs = np.arange(self.groups.shape[0])
-        I = (loc[0]>=self.groups[:,0]) & (loc[0]<=self.groups[:,2]) & (loc[1]>=self.groups[:,1]) & (loc[1]<=self.groups[:,3])
-        group = group_idxs[I]
-        return None if group.size==0 else group[0]
+        Examples
+        --------
+        Return the plotter shape.
 
-    def loc_to_index(self, loc):
-        """Return index of the render window given a location index.
-
-        Parameters
-        ----------
-        loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example,
-            ``loc=2`` or ``loc=(1, 1)``.
-
-        Returns
-        -------
-        idx : int
-            Index of the render window.
-
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter(shape=(2, 2))
+        >>> plotter.shape
+        (2, 2)
         """
-        if loc is None:
-            return self._active_renderer_index
-        elif isinstance(loc, (int, np.integer)):
-            return loc
-        elif isinstance(loc, (np.ndarray, collections.abc.Sequence)):
-            if not len(loc) == 2:
-                raise ValueError('"loc" must contain two items')
-            index_row = loc[0]
-            index_column = loc[1]
-            if index_row < 0 or index_row >= self.shape[0]:
-                raise IndexError(f'Row index is out of range ({self.shape[0]})')
-            if index_column < 0 or index_column >= self.shape[1]:
-                raise IndexError(f'Column index is out of range ({self.shape[1]})')
-            return self._render_idxs[index_row,index_column]
-        else:
-            raise TypeError('"loc" must be an integer or a sequence.')
-
-    def index_to_loc(self, index):
-        """Convert a 1D index location to the 2D location on the plotting grid."""
-        if not isinstance(index, (int, np.integer)):
-            raise TypeError('"index" must be a scalar integer.')
-        if len(self.shape) == 1:
-            return index
-        args = np.argwhere(self._render_idxs == index)
-        if len(args) < 1:
-            raise IndexError('Index ({}) is out of range.')
-        return args[0]
+        return self.renderers._shape
 
     @property
     def renderer(self):
         """Return the active renderer."""
-        return self.renderers[self._active_renderer_index]
+        return self.renderers.active_renderer
 
     @property
     def store_image(self):
@@ -455,17 +290,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Index of the subplot to activate along the columns.
 
         """
-        if len(self.shape) == 1:
-            self._active_renderer_index = index_row
-            return
+        self.renderers.set_active_renderer(index_row, index_column)
 
-        if index_row < 0 or index_row >= self.shape[0]:
-            raise IndexError(f'Row index is out of range ({self.shape[0]})')
-        if index_column < 0 or index_column >= self.shape[1]:
-            raise IndexError(f'Column index is out of range ({self.shape[1]})')
-        self._active_renderer_index = self.loc_to_index((index_row, index_column))
-
-    #### Wrap Renderer methods ####
     @wraps(Renderer.add_floor)
     def add_floor(self, *args, **kwargs):
         """Wrap ``Renderer.add_floor``."""
@@ -484,8 +310,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         only_active : bool
-            If ``True``, only change the active renderer. The default is that
-            every renderer is affected.
+            If ``True``, only change the active renderer. The default
+            is that every renderer is affected.
 
         """
         def _to_pos(elevation, azimuth):
@@ -854,15 +680,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def background_color(self):
-        """Return the background color of the first render window."""
-        return self.renderers[0].GetBackground()
+        """Return the background color of the active render window."""
+        return self.renderers.active_renderer.GetBackground()
 
     @background_color.setter
     def background_color(self, color):
         """Set the background color of all the render windows."""
         self.set_background(color)
-
-    #### Properties of the BasePlotter ####
 
     @property
     def window_size(self):
@@ -2456,13 +2280,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def clear(self):
         """Clear plot by removing all actors and properties."""
-        for renderer in self.renderers:
-            renderer.clear()
-        self._shadow_renderer.clear()
-        for renderer in self._background_renderers:
-            if renderer is not None:
-                renderer.clear()
-
+        self.renderers.clear()
         self.scalar_bars.clear()
         self.mesh = None
 
@@ -2653,13 +2471,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # must close out widgets first
         super().close()
         # Renderer has an axes widget, so close it
-        for renderer in self.renderers:
-            renderer.close()
-        self._shadow_renderer.close()
-
-        # Turn off the lights
-        for renderer in self.renderers:
-            renderer.remove_all_lights()
+        self.renderers.close()
+        self.renderers.remove_all_lights()
 
         # Grab screenshots of last render
         if self._store_image:
@@ -2697,15 +2510,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
-        for renderer in self.renderers:
-            renderer.deep_clean()
-        if hasattr(self, '_shadow_renderer'):
-            self._shadow_renderer.deep_clean()
-        if hasattr(self, '_background_renderers'):
-            for renderer in self._background_renderers:
-                if renderer is not None:
-                    renderer.deep_clean()
-        # Do not remove the renderers on the clean
+        if hasattr(self, 'renderers'):
+            self.renderers.deep_clean()
         if getattr(self, 'mesh', None) is not None:
             self.mesh.point_arrays = None
             self.mesh.cell_arrays = None
@@ -3538,35 +3344,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(self.legend, reset_camera=False, name=name, pickable=False)
         return self.legend
 
-    def set_background(self, color, top=None, all_renderers=True):
-        """Set the background color.
-
-        Parameters
-        ----------
-        color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.  For example:
-
-            * ``color='white'``
-            * ``color='w'``
-            * ``color=[1, 1, 1]``
-            * ``color='#FFFFFF'``
-
-        top : string or 3 item list, optional, defaults to None
-            If given, this will enable a gradient background where the
-            ``color`` argument is at the bottom and the color given in ``top``
-            will be the color at the top of the renderer.
-
-        all_renderers : bool
-            If True, applies to all renderers in subplots. If False, then
-            only applies to the active renderer.
-
-        """
-        if all_renderers:
-            for renderer in self.renderers:
-                renderer.set_background(color, top=top)
-            self._shadow_renderer.set_background(color)
-        else:
-            self.renderer.set_background(color, top=top)
+    @wraps(Renderers.set_background)
+    def set_background(self, *args, **kwargs):
+        """Wrap ``Renderers.set_background``."""
+        self.renderers.set_background(*args, **kwargs)
 
     def remove_legend(self):
         """Remove the legend actor."""
@@ -3580,16 +3361,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         factor : float
-            A scaling factor when biulding the orbital extent
+            A scaling factor when building the orbital extent.
 
         n_points : int
-            number of points on the orbital path
+            Number of points on the orbital path.
 
         viewup : list(float)
-            the normal to the orbital plane
+            The normal to the orbital plane.
 
         shift : float, optional
-            shift the plane up/down from the center of the scene by this amount
+            Shift the plane up/down from the center of the scene by
+            this amount.
 
         """
         if viewup is None:
@@ -3710,14 +3492,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def __del__(self):
         """Delete the plotter."""
         # We have to check here if it has the closed attribute as it
-        # may not exist should the plotter failed to initialize.
+        # may not exist should the plotter have failed to initialize.
         if hasattr(self, '_closed'):
             if not self._closed:
                 self.close()
         self.deep_clean()
-        del self.renderers
-        if hasattr(self, '_shadow_renderer'):
-            del self._shadow_renderer
+        if hasattr(self, 'renderers'):
+            del self.renderers
 
     def add_background_image(self, image_path, scale=1, auto_resize=True,
                              as_global=True):
@@ -3752,27 +3533,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.show() # doctest:+SKIP
 
         """
-        # verify no render exists
-        if self._background_renderers[self._active_renderer_index] is not None:
+        if self.renderers.has_active_background_renderer:
             raise RuntimeError('A background image already exists.  '
-                               'Remove it with remove_background_image '
+                               'Remove it with ``remove_background_image`` '
                                'before adding one')
 
         # Need to change the number of layers to support an additional
         # background layer
         self.ren_win.SetNumberOfLayers(3)
-        if as_global:
-            for renderer in self.renderers:
-                renderer.SetLayer(2)
-            view_port = None
-        else:
-            self.renderer.SetLayer(2)
-            view_port = self.renderer.GetViewport()
-
-        renderer = BackgroundRenderer(self, image_path, scale, view_port)
-        renderer.SetLayer(1)
+        renderer = self.renderers.add_background_renderer(image_path, scale, as_global)
         self.ren_win.AddRenderer(renderer)
-        self._background_renderers[self._active_renderer_index] = renderer
 
         # setup autoscaling of the image
         if auto_resize:  # pragma: no cover
@@ -3780,11 +3550,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def remove_background_image(self):
         """Remove the background image from the current subplot."""
-        renderer = self._background_renderers[self._active_renderer_index]
-        if renderer is None:
-            raise RuntimeError('No background image to remove at this subplot')
-        renderer.deep_clean()
-        self._background_renderers[self._active_renderer_index] = None
+        self.renderers.remove_background_image()
 
     def _on_first_render_request(self, cpos=None):
         """Once an image or render is officially requested, run this routine.
@@ -3892,7 +3658,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         places = []
         for index in range(len(self.renderers)):
             if name in self.renderers[index]._actors:
-                places.append(tuple(self.index_to_loc(index)))
+                places.append(tuple(self.renderers.index_to_loc(index)))
         return places
 
 
@@ -4040,14 +3806,14 @@ class Plotter(BasePlotter):
         number_or_layers = self.ren_win.GetNumberOfLayers()
         current_layer = self.renderer.GetLayer()
         self.ren_win.SetNumberOfLayers(number_or_layers + 1)
-        self.ren_win.AddRenderer(self._shadow_renderer)
-        self._shadow_renderer.SetLayer(current_layer + 1)
-        self._shadow_renderer.SetInteractive(False)  # never needs to capture
+        self.ren_win.AddRenderer(self.renderers.shadow_renderer)
+        self.renderers.shadow_renderer.SetLayer(current_layer + 1)
+        self.renderers.shadow_renderer.SetInteractive(False)  # never needs to capture
 
         if self.off_screen:
             self.ren_win.SetOffScreenRendering(1)
 
-        # Add ren win and interactor no matter what - necessary for ipyvtk_simple
+        # Add ren win and interactor
         self.iren = _vtk.vtkRenderWindowInteractor()
         self.iren.LightFollowCameraOff()
         self.iren.SetDesiredUpdateRate(30.0)

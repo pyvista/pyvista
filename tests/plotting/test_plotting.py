@@ -1156,6 +1156,22 @@ def test_multi_renderers_subplot_ind_3x1():
 
 
 @skip_no_plotting
+def test_multi_renderers_subplot_ind_3x1_splitting_pos():
+    # Test subplot 3 on top, 1 on bottom
+    plotter = pyvista.Plotter(shape='3/1', splitting_position=0.5)
+    # First column
+    plotter.subplot(0)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.subplot(1)
+    plotter.add_mesh(pyvista.Cube())
+    plotter.subplot(2)
+    plotter.add_mesh(pyvista.Cylinder())
+    plotter.subplot(3)
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
 def test_multi_renderers_subplot_ind_1x3():
     # Test subplot 3 on bottom, 1 on top
     plotter = pyvista.Plotter(shape='1|3')
@@ -1173,7 +1189,7 @@ def test_multi_renderers_subplot_ind_1x3():
 
 @skip_no_plotting
 def test_subplot_groups():
-    plotter = pyvista.Plotter(shape=(3,3), groups=[(1,[1,2]),(np.s_[:],0)])
+    plotter = pyvista.Plotter(shape=(3, 3), groups=[(1, [1, 2]), (np.s_[:], 0)])
     plotter.subplot(0, 0)
     plotter.add_mesh(pyvista.Sphere())
     plotter.subplot(0, 1)
@@ -1612,11 +1628,16 @@ def test_reset_camera_clipping_range():
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
 
-    default_clipping_range = pl.camera.clipping_range # get default clipping range
-    assert default_clipping_range != (10, 100) # make sure we assign something different than default
+     # get default clipping range
+    default_clipping_range = pl.camera.clipping_range
 
-    pl.camera.clipping_range = (10,100) # set clipping range to some random numbers
-    assert pl.camera.clipping_range == (10, 100) # make sure assignment is successful
+    # make sure we assign something different than default
+    assert default_clipping_range != (10, 100)
+
+    # set clipping range to some random numbers and make sure
+    # assignment is successful
+    pl.camera.clipping_range = (10, 100)
+    assert pl.camera.clipping_range == (10, 100)
 
     pl.reset_camera_clipping_range()
     assert pl.camera.clipping_range == default_clipping_range
@@ -1629,30 +1650,43 @@ def test_index_vs_loc():
     # index_to_loc valid cases
     vals = [0, 2, 4]
     expecteds = [(0, 0), (0, 2), (1, 1)]
-    for val,expected in zip(vals, expecteds):
-        assert tuple(pl.index_to_loc(val)) == expected
+    for val, expected in zip(vals, expecteds):
+        assert tuple(pl.renderers.index_to_loc(val)) == expected
     # loc_to_index valid cases
     vals = [(0, 0), (0, 2), (1, 1)]
     expecteds = [0, 2, 4]
-    for val,expected in zip(vals, expecteds):
-        assert pl.loc_to_index(val) == expected
-        assert pl.loc_to_index(expected) == expected
-    # failing cases
+    for val, expected in zip(vals, expecteds):
+        assert pl.renderers.loc_to_index(val) == expected
+        assert pl.renderers.loc_to_index(expected) == expected
+
+    # indexing failing cases
     with pytest.raises(TypeError):
-        pl.loc_to_index({1, 2})
+        pl.renderers.index_to_loc(1.5)
+    with pytest.raises(IndexError):
+        pl.renderers.index_to_loc((-1))
     with pytest.raises(TypeError):
-        pl.index_to_loc(1.5)
+        pl.renderers.index_to_loc((1, 2))
+    with pytest.raises(IndexError):
+        pl.renderers.loc_to_index((-1, 0))
+    with pytest.raises(IndexError):
+        pl.renderers.loc_to_index((0, -1))
     with pytest.raises(TypeError):
-        pl.index_to_loc((1, 2))
+        pl.renderers.loc_to_index({1, 2})
+    with pytest.raises(ValueError):
+        pl.renderers.loc_to_index((1, 2, 3))
+
+    # set active_renderer fails
+    with pytest.raises(IndexError):
+        pl.renderers.set_active_renderer(0, -1)
 
     # then: "1d" grid
     pl = pyvista.Plotter(shape='2|3')
     # valid cases
     for val in range(5):
-        assert pl.index_to_loc(val) == val
-        assert pl.index_to_loc(np.int_(val)) == val
-        assert pl.loc_to_index(val) == val
-        assert pl.loc_to_index(np.int_(val)) == val
+        assert pl.renderers.index_to_loc(val) == val
+        assert pl.renderers.index_to_loc(np.int_(val)) == val
+        assert pl.renderers.loc_to_index(val) == val
+        assert pl.renderers.loc_to_index(np.int_(val)) == val
 
 
 @skip_no_plotting
