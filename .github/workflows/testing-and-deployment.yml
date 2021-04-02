@@ -66,16 +66,16 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --add channels conda-forge
-          sed -i -e 's/- vtk$/- vtk=${{ env.VTK_VERSION }} /' environment.yml
+          sed -i -e 's/- vtk$/- vtk= ${{ env.VTK_VERSION }} /' environment.yml
           conda env create --quiet -n ${{ env.conda_env }} --file environment.yml
-          conda activate pyvista-vtk$(VTK.VERSION)
+          conda activate ${{ env.conda_env }}
+          conda list
 
       - name: Install PyVista
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
           pip install -e .
-          conda list
           which python
           python -c "import pyvista; print(pyvista.Report(gpu=False))"
 
