@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python>=3.5
   - numpy
-  - vtk=8.2
+  - vtk
   - scooby>=0.5.1
   - meshio>=4.0.3, <5.0
   - matplotlib
