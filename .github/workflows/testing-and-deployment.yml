@@ -53,10 +53,10 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --add channels conda-forge
-          conda create -n ${{ conda_env }} -y --quiet python=3.8 mamba
-          conda activate ${{ conda_env }}
+          conda create -n ${{ env.conda_env }} -y --quiet python=3.8 mamba
+          conda activate ${{ env.conda_env }}
           sed -i -e 's/- vtk$/- vtk=$(VTK.VERSION)/' environment.yml
-          mamba env update -n ${{ conda_env }} --file environment.yml
+          mamba env update -n ${{ env.conda_env }} --file environment.yml
           pip install -e .
           conda list
           which python
@@ -65,17 +65,17 @@ jobs:
       - name: Test Core API
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ conda_env }}
+          conda activate ${{ env.conda_env }}
           pytest -v --ignore=tests/plotting
 
       - name: Test Core Plotting
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ conda_env }}
+          conda activate ${{ env.conda_env }}
           pytest -v tests/plotting --cov-report html
 
       - name: Test Package Docstrings
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ conda_env }}
+          conda activate ${{ env.conda_env }}
           pytest -v --doctest-modules pyvista
