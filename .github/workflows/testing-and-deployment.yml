@@ -73,6 +73,7 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
+          pip install -r requirements_test.txt
           pytest -v --ignore=tests/plotting
 
       - name: Test Core Plotting
