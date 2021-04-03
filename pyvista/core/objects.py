@@ -285,7 +285,6 @@ class Texture(_vtk.vtkTexture, DataObject):
     def __init__(self, *args, **kwargs):
         """Initialize the texture."""
         super().__init__(*args, **kwargs)
-        assert_empty_kwargs(**kwargs)
 
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkTexture):
@@ -295,13 +294,13 @@ class Texture(_vtk.vtkTexture, DataObject):
             elif isinstance(args[0], _vtk.vtkImageData):
                 self._from_image_data(args[0])
             elif isinstance(args[0], str):
-                self._from_file(filename=args[0])
+                self._from_file(filename=args[0], **kwargs)
             else:
                 raise TypeError(f'Texture unable to be made from ({type(args[0])})')
 
-    def _from_file(self, filename):
+    def _from_file(self, filename, **kwargs):
         try:
-            image = pyvista.read(filename)
+            image = pyvista.read(filename, **kwargs)
             if image.GetNumberOfPoints() < 2:
                 raise ValueError("Problem reading the image with VTK.")
             self._from_image_data(image)
