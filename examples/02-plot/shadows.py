@@ -71,23 +71,23 @@ print(pl.show())
 
 
 ###############################################################################
+# shadows enabled
 
 plotter = pyvista.Plotter(lighting=None)
 
 for plane_y in [2, 5, 10]:
-    screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
+    screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5,
+                           j_size=5)
     plotter.add_mesh(screen, color='white')
 
 light = pyvista.Light(position=(0, 0, 0), focal_point=(0, 1, 0),
-                      color='cyan', intensity=5)
+                      color='cyan', intensity=10)
 light.positional = True
 light.cone_angle = 15
 light.attenuation_values = (2, 0, 0)
 light.show_actor()
-# light.actor.VisibilityOn()
 
 plotter.add_light(light)
-
 plotter.view_vector((1, -2, 2))
 plotter.enable_shadows()
 plotter.show()
