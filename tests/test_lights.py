@@ -297,9 +297,15 @@ def test_from_vtk():
         pyvista.Light('invalid')
 
 
+def test_add_vtk_light():
+    pl = pyvista.Plotter(lighting=None)
+    pl.add_light(vtk.vtkLight())
+    assert len(pl.renderer.lights) == 1
+
+
 def test_actors():
     light = pyvista.Light()
-    actor = light._actor
+    actor = light.actor
 
     # test showing
     assert not actor.GetVisibility()

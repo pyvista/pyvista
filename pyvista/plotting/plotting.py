@@ -442,6 +442,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.disable_parallel_projection``."""
         return self.renderer.disable_parallel_projection(*args, **kwargs)
 
+    @wraps(Renderer.enable_shadows)
+    def enable_shadows(self, *args, **kwargs):
+        """Wrap ``Renderer.enable_shadows``."""
+        return self.renderer.enable_shadows(*args, **kwargs)
+
+    @wraps(Renderer.disable_shadows)
+    def disable_shadows(self, *args, **kwargs):
+        """Wrap ``Renderer.disable_shadows``."""
+        return self.renderer.disable_shadows(*args, **kwargs)
+
     @property
     def parallel_projection(self):
         """Return parallel projection state of active render window."""

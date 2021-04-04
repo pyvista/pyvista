@@ -14,6 +14,7 @@ except ImportError:
 from .theme import parse_color
 from ..utilities.helpers import vtkmatrix_from_array
 
+
 class LightType(IntEnum):
     """An enumeration for the light types."""
 
@@ -32,31 +33,37 @@ class Light(vtkLight):
     Parameters
     ----------
     position : list or tuple, optional
-        The position of the light. The interpretation of the position depends
-        on the type of the light and whether the light has a transformation matrix.
-        See also the :py:attr:`position` property.
+        The position of the light. The interpretation of the position
+        depends on the type of the light and whether the light has a
+        transformation matrix.  See also the :py:attr:`position`
+        property.
 
     focal_point : list or tuple, optional
-        The focal point of the light. The interpretation of the focal point depends
-        on the type of the light and whether the light has a transformation matrix.
-        See also the :py:attr:`focal_point` property.
+        The focal point of the light. The interpretation of the focal
+        point depends on the type of the light and whether the light
+        has a transformation matrix.  See also the
+        :py:attr:`focal_point` property.
 
     color : string or 3-length sequence, optional
-        The color of the light. The ambient, diffuse and specular colors will
-        all be set to this color on creation.
+        The color of the light. The ambient, diffuse and specular
+        colors will all be set to this color on creation.
 
     light_type : string or int, optional
         The type of the light. If a string, one of ``'headlight'``,
-        ``'camera light'`` or ``'scene light'``. If an int, one of 1, 2 or 3,
-        respectively. The class constants ``Light.HEADLIGHT``, ``Light.CAMERA_LIGHT``
-        and ``Light.SCENE_LIGHT`` are also available, respectively.
+        ``'camera light'`` or ``'scene light'``. If an int, one of 1,
+        2 or 3, respectively. The class constants ``Light.HEADLIGHT``,
+        ``Light.CAMERA_LIGHT`` and ``Light.SCENE_LIGHT`` are also
+        available, respectively.
 
-        A headlight is attached to the camera, looking at its focal point along
-        the axis of the camera.
-        A camera light also moves with the camera, but it can occupy a general
-        position with respect to it.
-        A scene light is stationary with respect to the scene, as it does not
-        follow the camera. This is the default.
+        * A headlight is attached to the camera, looking at its focal
+        point along the axis of the camera.
+        * A camera light also moves with the camera, but it can occupy
+        a general position with respect to it.
+        * A scene light is stationary with respect to the scene, as it
+        does not follow the camera. This is the default.
+
+    intensity : float, optional
+        The brightness of the light (between 0 and 1).
 
     Examples
     --------
@@ -73,7 +80,8 @@ class Light(vtkLight):
     CAMERA_LIGHT = LightType.CAMERA_LIGHT
     SCENE_LIGHT = LightType.SCENE_LIGHT
 
-    def __init__(self, position=None, focal_point=None, color=None, light_type='scene light'):
+    def __init__(self, position=None, focal_point=None, color=None,
+                 light_type='scene light', intensity=None):
         """Initialize the light."""
         super().__init__()
 
@@ -93,12 +101,14 @@ class Light(vtkLight):
             type_normalized = light_type.replace(' ', '').lower()
             mapping = {'headlight': LightType.HEADLIGHT,
                        'cameralight': LightType.CAMERA_LIGHT,
-                       'scenelight': LightType.SCENE_LIGHT,
-                      }
+                       'scenelight': LightType.SCENE_LIGHT
+            }
             try:
                 light_type = mapping[type_normalized]
             except KeyError:
-                raise ValueError(f'Invalid light_type "{light_type_orig}"') from None
+                light_keys = ', '.join(mapping.keys())
+                raise ValueError(f'Invalid light_type "{light_type_orig}"\n'
+                                 f'Choose from one of the following {light_keys}') from None
         elif not isinstance(light_type, int):
             raise TypeError('Parameter light_type must be int or str,'
                             f' not {type(light_type).__name__}.')
@@ -106,9 +116,12 @@ class Light(vtkLight):
 
         self.light_type = light_type
 
-        self._actor = vtkLightActor()
-        self._actor.SetLight(self)
-        self._actor.VisibilityOff()
+        if intensity is not None:
+            self.intensity = intensity
+
+        self.actor = vtkLightActor()
+        self.actor.SetLight(self)
+        self.actor.VisibilityOff()
 
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
@@ -142,7 +155,7 @@ class Light(vtkLight):
 
     def __del__(self):
         """Clean up when the light is being destroyed."""
-        self._actor = None
+        self.actor = None
 
     #### Properties ####
 
@@ -362,7 +375,7 @@ class Light(vtkLight):
         >>> for light in light_bright, light_dim:
         ...     light.positional = True
         ...     plotter.add_light(light)
-        ... 
+        ...
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -407,10 +420,11 @@ class Light(vtkLight):
         light with a cone angle that is less than 90 degrees is known
         as a spotlight.
 
-        Attenuation and cone angles are only used for positional lights.
-        The :py:attr:`exponent` property is only used for spotlights.
-        Positional lights with a cone angle of at least 90 degrees don't
-        show angular dependence of their beams, but they display attenuation.
+        Attenuation and cone angles are only used for positional
+        lights.  The :py:attr:`exponent` property is only used for
+        spotlights.  Positional lights with a cone angle of at least
+        90 degrees don't show angular dependence of their beams, but
+        they display attenuation.
 
         If the light is changed to directional, its actor (if previousy
         shown) is automatically hidden.
@@ -867,7 +881,7 @@ class Light(vtkLight):
             new_light.transform_matrix = self.transform_matrix
 
         # light actors are private, always copy, but copy visibility state as well
-        new_light._actor.SetVisibility(self._actor.GetVisibility())
+        new_light.actor.SetVisibility(self.actor.GetVisibility())
 
         return new_light
 
@@ -967,8 +981,7 @@ class Light(vtkLight):
         """
         if not self.positional or self.cone_angle >= 90:
             return
-        self._actor.VisibilityOn()
-
+        self.actor.VisibilityOn()
 
     def hide_actor(self):
         """Hide the actor for a positional light that depicts the geometry of the beam.
@@ -978,4 +991,4 @@ class Light(vtkLight):
         """
         if not self.positional:
             return
-        self._actor.VisibilityOff()
+        self.actor.VisibilityOff()
