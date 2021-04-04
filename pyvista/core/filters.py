@@ -2085,7 +2085,7 @@ class DataSetFilters:
 
     def plot_over_line(dataset, pointa, pointb, resolution=None, scalars=None,
                        title=None, ylabel=None, figsize=None, figure=True,
-                       show=True, tolerance=None):
+                       show=True, tolerance=None, fname=None):
         """Sample a dataset along a high resolution line and plot.
 
         Plot the variables of interest in 2D where the X-axis is distance from
@@ -2127,6 +2127,9 @@ class DataSetFilters:
             Tolerance used to compute whether a point in the source is in a
             cell of the input.  If not given, tolerance is automatically generated.
 
+        fname : str
+            The string file name of the save figure.
+
         """
         # Ensure matplotlib is available
         try:
@@ -2162,6 +2165,8 @@ class DataSetFilters:
             plt.title(f'{scalars} Profile')
         else:
             plt.title(title)
+        if fname:
+            plt.savefig(fname)
         if show:  # pragma: no cover
             return plt.show()
 
@@ -2270,7 +2275,7 @@ class DataSetFilters:
     def plot_over_circular_arc(dataset, pointa, pointb, center,
                                resolution=None, scalars=None,
                                title=None, ylabel=None, figsize=None,
-                               figure=True, show=True, tolerance=None):
+                               figure=True, show=True, tolerance=None, fname=None):
         """Sample a dataset along a circular arc and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -2316,6 +2321,9 @@ class DataSetFilters:
             Tolerance used to compute whether a point in the source is
             in a cell of the input.  If not given, tolerance is
             automatically generated.
+
+        fname : str
+            The string file name of the save figure.
 
         Examples
         --------
@@ -2367,13 +2375,15 @@ class DataSetFilters:
             plt.title(f'{scalars} Profile')
         else:
             plt.title(title)
+        if fname:
+            plt.savefig(fname)
         if show:  # pragma: no cover
             return plt.show()
 
     def plot_over_circular_arc_normal(dataset, center, resolution=None, normal=None,
                                       polar=None, angle=None, scalars=None,
                                       title=None, ylabel=None, figsize=None,
-                                      figure=True, show=True, tolerance=None):
+                                      figure=True, show=True, tolerance=None, fname=None):
         """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -2425,6 +2435,9 @@ class DataSetFilters:
             Tolerance used to compute whether a point in the source is
             in a cell of the input.  If not given, tolerance is
             automatically generated.
+
+        fname : str
+            The string file name of the save figure.
 
         Examples
         --------
@@ -2479,6 +2492,8 @@ class DataSetFilters:
             plt.title(f'{scalars} Profile')
         else:
             plt.title(title)
+        if fname:
+            plt.savefig(fname)
         if show:  # pragma: no cover
             return plt.show()
 
