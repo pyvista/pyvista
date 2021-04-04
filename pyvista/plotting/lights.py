@@ -65,6 +65,9 @@ class Light(vtkLight):
     intensity : float, optional
         The brightness of the light (between 0 and 1).
 
+    cone_angle : float, optional
+        Cone angle of a positional light
+
     Examples
     --------
     Create a light at (10, 10, 10) and set its diffuse color to red.
@@ -81,7 +84,7 @@ class Light(vtkLight):
     SCENE_LIGHT = LightType.SCENE_LIGHT
 
     def __init__(self, position=None, focal_point=None, color=None,
-                 light_type='scene light', intensity=None):
+                 light_type='scene light', intensity=None, cone_angle=None):
         """Initialize the light."""
         super().__init__()
 
@@ -118,6 +121,9 @@ class Light(vtkLight):
 
         if intensity is not None:
             self.intensity = intensity
+
+        if cone_angle is not None:
+            self.cone_angle = cone_angle
 
         self.actor = vtkLightActor()
         self.actor.SetLight(self)
@@ -278,9 +284,10 @@ class Light(vtkLight):
     def world_position(self):
         """Return the world space position of the light.
 
-        The world space position is the :py:attr:`position` property transformed by
-        the light's transform matrix if it exists. The value of this read-only
-        property corresponds to the ``vtk.vtkLight.GetTransformedPosition()`` method.
+        The world space position is the :py:attr:`position` property
+        transformed by the light's transform matrix if it exists. The
+        value of this read-only property corresponds to the
+        ``vtk.vtkLight.GetTransformedPosition()`` method.
 
         Examples
         --------
@@ -307,10 +314,10 @@ class Light(vtkLight):
     def focal_point(self):
         """Return the focal point of the light.
 
-        Note: the focal point is defined in the coordinate space indicated
-        by the light's transformation matrix (if it exists). To get the
-        light's world space focal point, use the (read-only) :py:attr:`world_focal_point`
-        property.
+        Note: the focal point is defined in the coordinate space
+        indicated by the light's transformation matrix (if it
+        exists). To get the light's world space focal point, use the
+        (read-only) :py:attr:`world_focal_point` property.
 
         Examples
         --------
@@ -332,16 +339,17 @@ class Light(vtkLight):
     def world_focal_point(self):
         """Return the world space focal point of the light.
 
-        The world space focal point is the :py:attr:`focal_point` property
-        transformed by the light's transform matrix if it exists. The value of
-        this read-only property corresponds to the
-        ``vtk.vtkLight.GetTransformedFocalPoint()`` method.
+        The world space focal point is the :py:attr:`focal_point`
+        property transformed by the light's transform matrix if it
+        exists. The value of this read-only property corresponds to
+        the ``vtk.vtkLight.GetTransformedFocalPoint()`` method.
 
         Examples
         --------
-        Create a light with a transformation matrix that corresponds to a
-        90-degree rotation around the z axis and a shift by (0, 0, -1), and
-        check that the light's focal point transforms as expected.
+        Create a light with a transformation matrix that corresponds
+        to a 90-degree rotation around the z axis and a shift by (0,
+        0, -1), and check that the light's focal point transforms as
+        expected.
 
         >>> import numpy as np
         >>> import pyvista as pv
@@ -365,7 +373,7 @@ class Light(vtkLight):
         Examples
         --------
         Light the two sides of a cube with lights of different brightness.
-        
+
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> _ = plotter.add_mesh(pv.Cube(), color='cyan')
@@ -495,23 +503,24 @@ class Light(vtkLight):
     def cone_angle(self):
         """Return the cone angle of a positional light.
 
-        The angle is in degrees and is measured between the axis of the cone
-        and an extremal ray of the cone. A value smaller than 90 has spot
-        lighting effects, anything equal to and above 90 is just a positional
-        light, i.e. a spherical point source.
+        The angle is in degrees and is measured between the axis of
+        the cone and an extremal ray of the cone. A value smaller than
+        90 has spot lighting effects, anything equal to and above 90
+        is just a positional light, i.e. a spherical point source.
 
-        Regarding the angular distribution of the light, the cone angle merely
-        truncates the beam, the shape of which is defined by the :py:attr:`exponent`.
-        If the cone angle is at least 90 degrees then there is no angular dependence.
+        Regarding the angular distribution of the light, the cone
+        angle merely truncates the beam, the shape of which is defined
+        by the :py:attr:`exponent`.  If the cone angle is at least 90
+        degrees then there is no angular dependence.
 
-        If the light's cone angle is increased to 90 degrees or above, its actor
-        (if previousy shown) is automatically hidden.
+        If the light's cone angle is increased to 90 degrees or above,
+        its actor (if previousy shown) is automatically hidden.
 
         Examples
         --------
-        Plot three planes lit by three spotlights with varying cone angles.
-        Use a large exponent to cause a visible angular variation of the
-        intensity of the beams.
+        Plot three planes lit by three spotlights with varying cone
+        angles.  Use a large exponent to cause a visible angular
+        variation of the intensity of the beams.
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
@@ -540,21 +549,23 @@ class Light(vtkLight):
     def attenuation_values(self):
         """Return the quadratic attenuation constants.
 
-        The values are 3-length sequences which specify the constant, linear
-        and quadratic constants in this order. These parameters only have an
-        effect for positional lights.
+        The values are 3-length sequences which specify the constant,
+        linear and quadratic constants in this order. These parameters
+        only have an effect for positional lights.
 
-        Attenuation refers to the dampening of a beam of light as it gets further
-        away from the point source. The three constants describe three different
-        profiles for dampening with distance. A larger attenuation constant corresponds
-        to more rapid decay with distance.
+        Attenuation refers to the dampening of a beam of light as it
+        gets further away from the point source. The three constants
+        describe three different profiles for dampening with
+        distance. A larger attenuation constant corresponds to more
+        rapid decay with distance.
 
         Examples
         --------
-        Plot three cubes lit by two lights with different attenuation profiles.
-        The blue light has slower linear attenuation, the green one has quadratic
-        attenuation that makes it decay faster. Note that there are no shadow
-        effects included so each box gets lit by both lights.
+        Plot three cubes lit by two lights with different attenuation
+        profiles.  The blue light has slower linear attenuation, the
+        green one has quadratic attenuation that makes it decay
+        faster. Note that there are no shadow effects included so each
+        box gets lit by both lights.
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
@@ -587,25 +598,29 @@ class Light(vtkLight):
     def transform_matrix(self):
         """Return the transformation matrix of the light (if any).
 
-        The transformation matrix is ``None`` by default, and it is stored
-        as a ``vtk.vtkMatrix4x4`` object when set. If set, the light's
-        parameters (position and focal point) are transformed by the matrix
-        before being rendered. See also the :py:attr:`world_position` and
-        :py:attr:`world_focal_point` read-only properties that can differ from
-        :py:attr:`position` and :py:attr:`focal_point`, respectively.
+        The transformation matrix is ``None`` by default, and it is
+        stored as a ``vtk.vtkMatrix4x4`` object when set. If set, the
+        light's parameters (position and focal point) are transformed
+        by the matrix before being rendered. See also the
+        :py:attr:`world_position` and :py:attr:`world_focal_point`
+        read-only properties that can differ from :py:attr:`position`
+        and :py:attr:`focal_point`, respectively.
 
-        The 4-by-4 transformation matrix is a tool to encode a general linear
-        transformation and a translation (an affine transform). The 3-by-3 principal
-        submatrix (the top left corner of the matrix) encodes a three-dimensional
-        linear transformation (e.g. some rotation around the origin). The top three
-        elements in the last column of the matrix encode a three-dimensional
-        translation. The last row of the matrix is redundant.
+        The 4-by-4 transformation matrix is a tool to encode a general
+        linear transformation and a translation (an affine
+        transform). The 3-by-3 principal submatrix (the top left
+        corner of the matrix) encodes a three-dimensional linear
+        transformation (e.g. some rotation around the origin). The top
+        three elements in the last column of the matrix encode a
+        three-dimensional translation. The last row of the matrix is
+        redundant.
 
         Examples
         --------
-        Create a light with a transformation matrix that corresponds to a
-        90-degree rotation around the z axis and a shift by (0, 0, -1), and
-        check that the light's position transforms as expected.
+        Create a light with a transformation matrix that corresponds
+        to a 90-degree rotation around the z axis and a shift by (0,
+        0, -1), and check that the light's position transforms as
+        expected.
 
         >>> import numpy as np
         >>> import pyvista as pv
@@ -721,7 +736,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        Verify that four out of five lights of the default light kit are camera lights.
+        Verify that four out of five lights of the default light kit
+        are camera lights.
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter()
@@ -738,7 +754,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        Verify that none of the lights of the default light kit are scene lights.
+        Verify that none of the lights of the default light kit are
+        scene lights.
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter()
@@ -748,8 +765,6 @@ class Light(vtkLight):
 
         """
         return bool(self.LightTypeIsSceneLight())
-
-    #### Everything else ####
 
     def switch_on(self):
         """Switch on the light.
@@ -783,20 +798,20 @@ class Light(vtkLight):
     def set_direction_angle(self, elev, azim):
         """Set the position and focal point of a directional light.
 
-        The light is switched to directional (non-positional). The focal point
-        is set to the origin. The position is defined in terms of an elevation
-        and an azimuthal angle, both in degrees.
+        The light is switched to directional (non-positional). The
+        focal point is set to the origin. The position is defined in
+        terms of an elevation and an azimuthal angle, both in degrees.
 
         Note that the equivalent ``vtk.vtkLight.SetDirectionAngle()`` method
         uses a surprising coordinate system where the (x', y', z') axes of
         the method correspond to the (z, x, y) axes of the renderer.
-        This method reimplements the functionality in a way that `elev`
-        is the conventional elevation and `azim` is the conventional azimuth.
+        This method reimplements the functionality in a way that ``elev``
+        is the conventional elevation and ``azim`` is the conventional azimuth.
         In particular:
 
-          * `elev = 0`, `azim = 0` is the +x direction
-          * `elev = 0`, `azim = 90` is the +y direction
-          * `elev = 90`, `azim = 0` is the +z direction
+          * ``elev = 0``, ``azim = 0`` is the +x direction
+          * ``elev = 0``, ``azim = 90`` is the +y direction
+          * ``elev = 90``, ``azim = 0`` is the +z direction
 
         Parameters
         ----------
@@ -808,8 +823,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        Create a light that shines on the origin from a 30-degree elevation in
-        the xz plane.
+        Create a light that shines on the origin from a 30-degree
+        elevation in the xz plane.
 
         >>> import pyvista as pv
         >>> light = pv.Light()
@@ -829,20 +844,21 @@ class Light(vtkLight):
     def copy(self, deep=True):
         """Return a shallow or a deep copy of the light.
 
-        The only mutable attribute of ``Light`` objects is the transformation
-        matrix (if it exists). Thus asking for a shallow copy merely implies
-        that the returned light and the original share the transformation
-        matrix instance.
+        The only mutable attribute of ``Light`` objects is the
+        transformation matrix (if it exists). Thus asking for a
+        shallow copy merely implies that the returned light and the
+        original share the transformation matrix instance.
 
         Parameters
         ----------
         deep : bool
-            Whether to return a deep copy rather than a shallow one. Default ``True``.
+            Whether to return a deep copy rather than a shallow
+            one. Default ``True``.
 
         Examples
         --------
-        Create a light and check that it shares a transformation matrix with its
-        shallow copy.
+        Create a light and check that it shares a transformation
+        matrix with its shallow copy.
 
         >>> import pyvista as pv
         >>> light = pv.Light()
@@ -888,9 +904,9 @@ class Light(vtkLight):
     def set_headlight(self):
         """Set the light to be a headlight.
 
-        Headlights are fixed to the camera and always point to the focal
-        point of the camera. Calling this method will reset the light's
-        transformation matrix.
+        Headlights are fixed to the camera and always point to the
+        focal point of the camera. Calling this method will reset the
+        light's transformation matrix.
 
         """
         self.SetLightTypeToHeadlight()
@@ -898,12 +914,13 @@ class Light(vtkLight):
     def set_camera_light(self):
         """Set the light to be a camera light.
 
-        A camera light moves with the camera, but it can have an arbitrary
-        relative position to the camera. Camera lights are defined in a
-        coordinate space where the camera is located at (0, 0, 1), looking
-        towards (0, 0, 0) at a distance of 1, with up being (0, 1, 0).
-        Camera lights use the transformation matrix to establish this space.
-        Calling this method will reset the light's transformation matrix.
+        A camera light moves with the camera, but it can have an
+        arbitrary relative position to the camera. Camera lights are
+        defined in a coordinate space where the camera is located at
+        (0, 0, 1), looking towards (0, 0, 0) at a distance of 1, with
+        up being (0, 1, 0).  Camera lights use the transformation
+        matrix to establish this space.  Calling this method will
+        reset the light's transformation matrix.
 
         """
         self.SetLightTypeToCameraLight()
@@ -912,7 +929,8 @@ class Light(vtkLight):
         """Set the light to be a scene light.
 
         Scene lights are stationary with respect to the scene.
-        Calling this method will reset the light's transformation matrix.
+        Calling this method will reset the light's transformation
+        matrix.
 
         """
         self.SetLightTypeToSceneLight()

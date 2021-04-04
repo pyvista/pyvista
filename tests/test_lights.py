@@ -26,8 +26,11 @@ def test_init():
     focal_point = (2, 2, 2)
     color = (0.5, 0.5, 0.5)
     light_type = 'headlight'
+    cone_angle = 15
+    intensity = 2
     light = pyvista.Light(position=position, focal_point=focal_point,
-                          color=color, light_type=light_type)
+                          color=color, light_type=light_type,
+                          cone_angle=cone_angle, intensity=intensity)
     assert isinstance(light, pyvista.Light)
     assert light.position == position
     assert light.focal_point == focal_point
@@ -35,6 +38,8 @@ def test_init():
     assert light.diffuse_color == color
     assert light.specular_color == color
     assert light.light_type == light.HEADLIGHT
+    assert light.cone_angle == cone_angle
+    assert light.intensity == intensity
 
     # check repr too
     assert repr(light) is not None
