@@ -282,25 +282,9 @@ class Table(_vtk.vtkTable, DataObject):
 class Texture(_vtk.vtkTexture, DataObject):
     """A helper class for vtkTextures."""
 
-    _READERS = {'.bmp': _vtk.vtkBMPReader,
-                '.dem': _vtk.vtkDEMReader,
-                '.dcm': _vtk.vtkDICOMImageReader,
-                '.img': _vtk.vtkDICOMImageReader,
-                '.jpeg': _vtk.vtkJPEGReader,
-                '.jpg': _vtk.vtkJPEGReader,
-                '.mhd': _vtk.vtkMetaImageReader,
-                '.nrrd': _vtk.vtkNrrdReader,
-                '.nhdr': _vtk.vtkNrrdReader,
-                '.png': _vtk.vtkPNGReader,
-                '.pnm': _vtk.vtkPNMReader,
-                '.slc': _vtk.vtkSLCReader,
-                '.tiff': _vtk.vtkTIFFReader,
-                '.tif': _vtk.vtkTIFFReader}
-
     def __init__(self, *args, **kwargs):
         """Initialize the texture."""
         super().__init__(*args, **kwargs)
-        assert_empty_kwargs(**kwargs)
 
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkTexture):
@@ -310,13 +294,13 @@ class Texture(_vtk.vtkTexture, DataObject):
             elif isinstance(args[0], _vtk.vtkImageData):
                 self._from_image_data(args[0])
             elif isinstance(args[0], str):
-                self._from_file(filename=args[0])
+                self._from_file(filename=args[0], **kwargs)
             else:
-                raise TypeError(f'Table unable to be made from ({type(args[0])})')
+                raise TypeError(f'Texture unable to be made from ({type(args[0])})')
 
-    def _from_file(self, filename):
+    def _from_file(self, filename, **kwargs):
         try:
-            image = self._load_file(filename)
+            image = pyvista.read(filename, **kwargs)
             if image.GetNumberOfPoints() < 2:
                 raise ValueError("Problem reading the image with VTK.")
             self._from_image_data(image)

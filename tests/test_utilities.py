@@ -1,6 +1,7 @@
 """ test pyvista.utilities """
 import pathlib
 import os
+import shutil
 
 import numpy as np
 import pytest
@@ -87,6 +88,39 @@ def test_read(tmpdir, use_pathlib):
     assert multi[1].n_blocks == 2
 
 
+def test_read_force_ext(tmpdir):
+    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile,
+              ex.uniformfile, ex.rectfile)
+    types = (pyvista.PolyData, pyvista.PolyData, pyvista.UnstructuredGrid,
+             pyvista.PolyData, pyvista.UniformGrid, pyvista.RectilinearGrid)
+
+    dummy_extension = '.dummy'
+    for fname, type in zip(fnames, types):
+        root, original_ext = os.path.splitext(fname)
+        _, name = os.path.split(root)
+        new_fname = tmpdir / name + '.' + dummy_extension
+        shutil.copy(fname, new_fname)
+        data = fileio.read(new_fname, force_ext=original_ext)
+        assert isinstance(data, type)
+
+
+def test_read_force_ext_wrong_extension(tmpdir):
+    # try to read a .vtu file as .vts
+    # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
+    # the returned dataset is empty
+    fname = tmpdir / 'airplane.vtu'
+    ex.load_airplane().cast_to_unstructured_grid().save(fname)
+    data = fileio.read(fname, force_ext='.vts')
+    assert data.n_points == 0
+
+    # try to read a .ply file as .vtm
+    # vtkXMLMultiBlockDataReader throws a VTK error about the validity of the XML file
+    # the returned dataset is empty
+    fname = ex.planefile
+    data = fileio.read(fname, force_ext='.vtm')
+    assert len(data) == 0
+
+
 @mock.patch('pyvista.utilities.fileio.standard_reader_routine')
 def test_read_legacy(srr_mock):
     srr_mock.return_value = pyvista.read(ex.planefile)
@@ -101,6 +135,26 @@ def test_read_legacy(srr_mock):
     srr_mock.return_value = None
     with pytest.raises(RuntimeError):
         pyvista.read_legacy('legacy.vtk')
+
+
+@mock.patch('pyvista.utilities.fileio.read_legacy')
+def test_pyvista_read_legacy(read_legacy_mock):
+    # check that reading a file with extension .vtk calls `read_legacy`
+    # use the globefile as a dummy because pv.read() checks for the existence of the file
+    pyvista.read(ex.globefile)
+    args, kwargs = read_legacy_mock.call_args
+    filename = args[0]
+    assert filename == ex.globefile
+
+
+@mock.patch('pyvista.utilities.fileio.read_exodus')
+def test_pyvista_read_exodus(read_exodus_mock):
+    # check that reading a file with extension .e calls `read_exodus`
+    # use the globefile as a dummy because pv.read() checks for the existence of the file
+    pyvista.read(ex.globefile, force_ext='.e')
+    args, kwargs = read_exodus_mock.call_args
+    filename = args[0]
+    assert filename == ex.globefile
 
 
 @pytest.mark.parametrize('auto_detect', (True, False))

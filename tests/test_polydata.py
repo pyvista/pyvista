@@ -172,7 +172,7 @@ def test_invalid_file():
     with pytest.raises(FileNotFoundError):
         pyvista.PolyData('file.bad')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(IOError):
         filename = os.path.join(test_path, 'test_polydata.py')
         pyvista.PolyData(filename)
 

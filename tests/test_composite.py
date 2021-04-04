@@ -259,7 +259,7 @@ def test_multi_io_erros(tmpdir):
     with pytest.raises(FileNotFoundError):
         _ = MultiBlock('foo.vtm')
     # Load bad extension
-    with pytest.raises(ValueError):
+    with pytest.raises(IOError):
         _ = MultiBlock(bad_ext_name)
 
 

@@ -80,8 +80,6 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
 
     """
 
-    _READERS = {'.vtk': _vtk.vtkRectilinearGridReader,
-                '.vtr': _vtk.vtkXMLRectilinearGridReader}
     _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter,
                 '.vtr': _vtk.vtkXMLRectilinearGridWriter}
 
@@ -278,7 +276,6 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
 
     """
 
-    _READERS = {'.vtk': _vtk.vtkDataSetReader, '.vti': _vtk.vtkXMLImageDataReader}
     _WRITERS = {'.vtk': _vtk.vtkDataSetWriter, '.vti': _vtk.vtkXMLImageDataWriter}
 
     def __init__(self, *args, **kwargs):
