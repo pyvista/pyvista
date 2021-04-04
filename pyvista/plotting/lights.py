@@ -949,19 +949,19 @@ class Light(vtkLight):
 
         return light
 
-
     def show_actor(self):
         """Show an actor for a spotlight that depicts the geometry of the beam.
 
-        For a directional light or a positional light with :py:attr:`cone_angle`
-        of at least 90 degrees the method doesn't do anything. If the light is
-        changed so that it becomes a spotlight, this method has to be called again
-        for the actor to show. To hide the actor see :func:`hide_actor`.
+        For a directional light or a positional light with
+        :py:attr:`cone_angle` of at least 90 degrees the method
+        doesn't do anything. If the light is changed so that it
+        becomes a spotlight, this method has to be called again for
+        the actor to show. To hide the actor see :func:`hide_actor`.
 
         Examples
         --------
-        Create a scene containing a cube lit with a cyan spotlight and visualize the
-        light using an actor.
+        Create a scene containing a cube lit with a cyan spotlight and
+        visualize the light using an actor.
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter()
