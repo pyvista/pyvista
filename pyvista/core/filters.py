@@ -2322,8 +2322,8 @@ class DataSetFilters:
             in a cell of the input.  If not given, tolerance is
             automatically generated.
 
-        fname : str
-            The string file name of the save figure.
+        fname : str, optional
+            Save the figure this file name when set.
 
         Examples
         --------
