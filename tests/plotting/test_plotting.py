@@ -1744,21 +1744,75 @@ def verify_cache_image(plotter):
 #     p.show(before_close_callback=verify_cache_image)
 
 
-# @skip_no_plotting
-# def test_plot_remove_scalar_bar(sphere):
-#     sphere['z'] = sphere.points[:, 2]
-#     plotter = pyvista.Plotter()
-#     plotter.add_mesh(sphere, show_scalar_bar=False)
-#     plotter.add_scalar_bar(interactive=True)
-#     assert len(plotter.scalar_bars) == 1
-#     plotter.remove_scalar_bar()
-#     assert len(plotter.scalar_bars) == 0
-#     plotter.show(before_close_callback=verify_cache_image)
+@skip_no_plotting
+def test_plot_remove_scalar_bar(sphere):
+    sphere['z'] = sphere.points[:, 2]
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere, show_scalar_bar=False)
+    plotter.add_scalar_bar(interactive=True)
+    assert len(plotter.scalar_bars) == 1
+    plotter.remove_scalar_bar()
+    assert len(plotter.scalar_bars) == 0
+    plotter.show(before_close_callback=verify_cache_image)
 
 
 @skip_no_plotting
 def test_plot_shadows():
-    plotter = pyvista.Plotter(off_screen=False)
-    plotter.add_mesh(pyvista.Sphere())
+    plotter = pyvista.Plotter(lighting=None)
+
+    # add several planes
+    for plane_y in [2, 5, 10]:
+        screen = pyvista.Plane(center=(0, plane_y, 0),
+                               direction=(0, 1, 0),
+                               i_size=5, j_size=5)
+        plotter.add_mesh(screen, color='white')
+
+    light = pyvista.Light(position=(0, 0, 0), focal_point=(0, 1, 0),
+                          color='cyan', intensity=15, cone_angle=15)
+    light.positional = True
+    light.attenuation_values = (2, 0, 0)
+    light.show_actor()
+
+    plotter.add_light(light)
+    plotter.view_vector((1, -2, 2))
+
+    # verify shadows cannot be disabled when not enabled
+    with pytest.raises(RuntimeError, match='have not been enabled'):
+        plotter.disable_shadows()
+
     plotter.enable_shadows()
-    plotter.show()
+
+    # verify shadows cannot be enabled twice when not enabled
+    with pytest.raises(RuntimeError, match='already been enabled'):
+        plotter.enable_shadows()
+
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_plot_shadows_enable_disable():
+    """Test shadows are added and removed properly"""
+    plotter = pyvista.Plotter(lighting=None)
+
+    # add several planes
+    for plane_y in [2, 5, 10]:
+        screen = pyvista.Plane(center=(0, plane_y, 0),
+                               direction=(0, 1, 0),
+                               i_size=5, j_size=5)
+        plotter.add_mesh(screen, color='white')
+
+    light = pyvista.Light(position=(0, 0, 0), focal_point=(0, 1, 0),
+                          color='cyan', intensity=15, cone_angle=15)
+    light.positional = True
+    light.attenuation_values = (2, 0, 0)
+    light.show_actor()
+
+    plotter.add_light(light)
+    plotter.view_vector((1, -2, 2))
+
+    # add and remove and verify that the light passes through all via
+    # image cache
+    plotter.enable_shadows()
+    plotter.disable_shadows()
+
+    plotter.show(before_close_callback=verify_cache_image)

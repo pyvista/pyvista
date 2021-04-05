@@ -19,8 +19,9 @@ mesh.rotate_z(120)
 ###############################################################################
 # Using two lights, plot the Stanford Dragon with shadows.
 #
-# Note: There are significant plotting artifacts when rendering this
-# with ``off_screen=True``.  Plot this locally for a much better plot.
+# .. Note::
+#     There are significant plotting artifacts when rendering this
+#     with ``off_screen=True``.  Plot this locally for a much better plot.
 
 light1 = pyvista.Light(position=(0, 0.2, 1.0),
                        focal_point=(0, 0, 0),

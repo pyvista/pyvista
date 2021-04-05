@@ -66,7 +66,23 @@ class Light(vtkLight):
         The brightness of the light (between 0 and 1).
 
     cone_angle : float, optional
-        Cone angle of a positional light
+        Cone angle of a positional light in degrees.
+
+    show_actor : bool, optional
+        Show an actor for a spotlight that depicts the geometry of the
+        beam.
+
+    positional : bool, optional
+        Set if the light is positional.
+
+        The default is a directional light, i.e. an infinitely distant
+        point source. A positional light with a cone angle of at least
+        90 degrees acts like a spherical point source. A positional
+        light with a cone angle that is less than 90 degrees is known
+        as a spotlight.
+
+    exponent : int, optional
+        The exponent of the cosine used for spotlights.
 
     Examples
     --------
@@ -76,6 +92,12 @@ class Light(vtkLight):
     >>> light = pv.Light(position=(10, 10, 10))
     >>> light.diffuse_color = 1, 0, 0
 
+    Create a positional actor light at (0, 0, 3) with a cone angle of
+    30, exponent of 20, and a visible actor.
+
+    >>> light = pv.Light(position=(0, 0, 3), show_actor=True,
+    ...                  positional=True, cone_angle=30, exponent=20)
+
     """
 
     # pull in light type enum values as class constants
@@ -84,7 +106,8 @@ class Light(vtkLight):
     SCENE_LIGHT = LightType.SCENE_LIGHT
 
     def __init__(self, position=None, focal_point=None, color=None,
-                 light_type='scene light', intensity=None, cone_angle=None):
+                 light_type='scene light', intensity=None, cone_angle=None,
+                 show_actor=False, positional=None, exponent=None):
         """Initialize the light."""
         super().__init__()
 
@@ -125,9 +148,15 @@ class Light(vtkLight):
         if cone_angle is not None:
             self.cone_angle = cone_angle
 
+        if exponent is not None:
+            self.exponent = exponent
+
         self.actor = vtkLightActor()
         self.actor.SetLight(self)
-        self.actor.VisibilityOff()
+        self.actor.SetVisibility(show_actor)
+
+        if positional is not None:
+            self.positional = positional
 
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
