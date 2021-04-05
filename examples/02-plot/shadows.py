@@ -70,8 +70,9 @@ pl.show()
 
 
 ###############################################################################
-# Show light penetrating several planes.  Adjust the intensity of the
-# light to change how many planes the light can go through.
+# Show light penetrating several planes.  Adjust the light intensity
+# and the ``shadow_attenuation`` light to change how many planes the
+# light can go through.
 
 plotter = pyvista.Plotter(lighting=None, window_size=(800, 800))
 
@@ -83,6 +84,31 @@ for plane_y in [2, 5, 10]:
 
 light = pyvista.Light(position=(0, 0, 0), focal_point=(0, 1, 0),
                       color='cyan', intensity=15, cone_angle=15)
+light.positional = True
+light.attenuation_values = (2, 0, 0)
+light.show_actor()
+
+plotter.add_light(light)
+plotter.view_vector((1, -2, 2))
+plotter.enable_shadows()
+plotter.show()
+
+
+###############################################################################
+# Here, we use a lower shadow_attenuation value to demonstrate how the
+# light can travel through more planes.
+
+plotter = pyvista.Plotter(lighting=None, window_size=(800, 800))
+
+# add several planes
+for plane_y in [2, 5, 10]:
+    screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, 1, 0),
+                           i_size=5, j_size=5)
+    plotter.add_mesh(screen, color='white')
+
+light = pyvista.Light(position=(0, 0, 0), focal_point=(0, 1, 0),
+                      color='cyan', intensity=15, cone_angle=15,
+                      shadow_attenuation=.95)
 light.positional = True
 light.attenuation_values = (2, 0, 0)
 light.show_actor()

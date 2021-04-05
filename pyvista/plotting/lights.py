@@ -84,6 +84,13 @@ class Light(vtkLight):
     exponent : int, optional
         The exponent of the cosine used for spotlights.
 
+    shadow_attenuation : float, optional
+        The value of shadow attenuation.
+
+        By default a light will be completely blocked when in shadow
+        by setting this value to less than 1.0 you can control how
+        much light is attenuated when in shadow.
+
     Examples
     --------
     Create a light at (10, 10, 10) and set its diffuse color to red.
@@ -107,7 +114,8 @@ class Light(vtkLight):
 
     def __init__(self, position=None, focal_point=None, color=None,
                  light_type='scene light', intensity=None, cone_angle=None,
-                 show_actor=False, positional=None, exponent=None):
+                 show_actor=False, positional=None, exponent=None,
+                 shadow_attenuation=None):
         """Initialize the light."""
         super().__init__()
 
@@ -158,6 +166,9 @@ class Light(vtkLight):
         if positional is not None:
             self.positional = positional
 
+        if shadow_attenuation is not None:
+            self.shadow_attenuation = shadow_attenuation
+
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
         return (f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>')
@@ -192,7 +203,31 @@ class Light(vtkLight):
         """Clean up when the light is being destroyed."""
         self.actor = None
 
-    #### Properties ####
+    @property
+    def shadow_attenuation(self):
+        """Return the value of shadow attenuation.
+
+        By default a light will be completely blocked when in shadow
+        by setting this value to less than 1.0 you can control how
+        much light is attenuated when in shadow.
+
+        Examples
+        --------
+        Set the shadow attenuation to 0.5
+
+        >>> import pyvista as pv
+        >>> light = pv.Light()
+        >>> light.shadow_attenuation = 0.5
+        >>> light.shadow_attenuation
+        0.5
+
+        """
+        return self.GetShadowAttenuation()
+
+    @shadow_attenuation.setter
+    def shadow_attenuation(self, value):
+        """Set the shadow intensity."""
+        self.SetShadowAttenuation(value)    
 
     @property
     def ambient_color(self):
