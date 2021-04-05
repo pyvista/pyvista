@@ -17,7 +17,7 @@ from pyvista import examples
 
 cow = examples.download_cow()
 cow.rotate_x(90)
-plotter = pv.Plotter(lighting='none')
+plotter = pv.Plotter(lighting='none', window_size=(1000, 1000), off_screen=True)
 plotter.add_mesh(cow, color='white')
 floor = pv.Plane(center=(*cow.center[:2], cow.bounds[-2]),
                  i_size=30, j_size=25)
@@ -31,8 +31,11 @@ UFO.intensity = 3
 UFO.show_actor()
 plotter.add_light(UFO)
 
+# enable shadows to better demonstrate lighting
+plotter.enable_shadows()
+
 plotter.camera_position = [(28, 30, 22), (0.77, 0, -0.44), (0, 0, 1)]
-plotter.show()
+plotter.show(screenshot='/tmp/tmp.png')
 
 
 ###############################################################################
@@ -83,5 +86,3 @@ UFO.show_actor()
 plotter.add_light(UFO)
 
 plotter.show()
-
-

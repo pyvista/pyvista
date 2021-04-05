@@ -47,7 +47,7 @@ def test_init():
     assert light.intensity == intensity
     assert light.positional == positional
     assert light.actor.GetVisibility() == show_actor
-    assert light.shadow_attenuation = shadow_attenuation
+    assert light.shadow_attenuation == shadow_attenuation
 
     # check repr too
     assert repr(light) is not None
