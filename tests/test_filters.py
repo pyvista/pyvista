@@ -745,9 +745,11 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-def test_plot_over_line():
+def test_plot_over_line(tmpdir):
     """this requires matplotlib"""
     pytest.importorskip('matplotlib')
+    tmp_dir = tmpdir.mkdir("tmpdir")
+    filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
     # Make two points to construct the line between
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
@@ -756,7 +758,8 @@ def test_plot_over_line():
     # Test multicomponent
     mesh['foo'] = np.random.rand(mesh.n_cells, 3)
     mesh.plot_over_line(a, b, resolution=None, scalars='foo',
-                        title='My Stuff', ylabel='3 Values', show=False)
+                        title='My Stuff', ylabel='3 Values', show=False, fname=filename)
+    assert os.path.isfile(filename)
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_line(a, b, resolution=None, scalars='invalid_array_name',
@@ -826,17 +829,20 @@ def test_sample_over_circular_arc_normal():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-def test_plot_over_circular_arc():
+def test_plot_over_circular_arc(tmpdir):
     """this requires matplotlib"""
 
     pytest.importorskip('matplotlib')
     mesh = examples.load_uniform()
+    tmp_dir = tmpdir.mkdir("tmpdir")
+    filename = str(tmp_dir.join('tmp.png'))
 
     # Make two points and center to construct the circular arc between
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
     b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
     center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-    mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)
+    mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False, fname=filename)
+    assert os.path.isfile(filename)
 
     # Test multicomponent
     mesh['foo'] = np.random.rand(mesh.n_cells, 3)
@@ -851,18 +857,21 @@ def test_plot_over_circular_arc():
                                     show=False)
 
 
-def test_plot_over_circular_arc_normal():
+def test_plot_over_circular_arc_normal(tmpdir):
     """this requires matplotlib"""
 
     pytest.importorskip('matplotlib')
     mesh = examples.load_uniform()
+    tmp_dir = tmpdir.mkdir("tmpdir")
+    filename = str(tmp_dir.join('tmp.png'))
 
     # Make center and normal/polar vector to construct the circular arc between
     normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
     polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
     angle = 90
     center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-    mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle, show=False)
+    mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle, show=False, fname=filename)
+    assert os.path.isfile(filename)
 
     # Test multicomponent
     mesh['foo'] = np.random.rand(mesh.n_cells, 3)
