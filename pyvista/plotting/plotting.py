@@ -3223,7 +3223,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._on_first_render_request()
             self.render()
 
-        return self._save_image(self.image, filename, return_img)    
+        return self._save_image(self.image, filename, return_img)
 
     def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
                    size=None, name=None, origin=None):

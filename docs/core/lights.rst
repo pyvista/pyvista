@@ -73,14 +73,14 @@ scenarios.  For example, you can position a light directly above an
 actor (in this case, a sphere), to create a shadow directly below it.
 
 The following example uses a positional light to create an
-eclipse-like shadow below a sphere by controling the cone angle and
+eclipse-like shadow below a sphere by controlling the cone angle and
 exponent values of the light.
 
 .. jupyter-execute::
 
     import pyvista as pv
 
-    plotter = pv.Plotter(lighting=None)
+    plotter = pv.Plotter(lighting=None, window_size=(800, 800))
 
     # create a top down light
     light = pv.Light(position=(0, 0, 3), show_actor=True, positional=True,
@@ -103,11 +103,9 @@ exponent values of the light.
     plotter.show()
 
 .. Note::
-
-   VTK has known issues when rendering shadows using off-screen
-   rendering or rendering on some integrated processors (e.g. Intel
-   GPUs).  For example, the shadow shown here looks oblong when it
-   should be circular.
+   VTK has known issues when rendering shadows on certain window
+   sizes.  Be prepared to experiment with the ``window_size``
+   parameter.
 
 
 API reference

@@ -20,8 +20,9 @@ mesh.rotate_z(120)
 # Using two lights, plot the Stanford Dragon with shadows.
 #
 # .. Note::
-#     There are significant plotting artifacts when rendering this
-#     with ``off_screen=True``.  Plot this locally for a much better plot.
+#    VTK has known issues when rendering shadows on certain window
+#    sizes.  Be prepared to experiment with the ``window_size``
+#    parameter.
 
 light1 = pyvista.Light(position=(0, 0.2, 1.0),
                        focal_point=(0, 0, 0),
@@ -57,7 +58,7 @@ mesh = mesh.copy()
 mesh.rotate_z(30)
 
 # create the plotter with custom lighting
-pl = pyvista.Plotter(lighting=None)
+pl = pyvista.Plotter(lighting=None, window_size=(800, 800))
 pl.add_light(light1)
 pl.add_light(light2)
 pl.add_mesh(mesh, ambient=0.2, diffuse=0.5, specular=0.5, specular_power=90,
@@ -72,7 +73,7 @@ pl.show()
 # Show light penetrating several planes.  Adjust the intensity of the
 # light to change how many planes the light can go through.
 
-plotter = pyvista.Plotter(lighting=None)
+plotter = pyvista.Plotter(lighting=None, window_size=(800, 800))
 
 # add several planes
 for plane_y in [2, 5, 10]:
