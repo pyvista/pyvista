@@ -135,8 +135,7 @@ class Light(vtkLight):
             type_normalized = light_type.replace(' ', '').lower()
             mapping = {'headlight': LightType.HEADLIGHT,
                        'cameralight': LightType.CAMERA_LIGHT,
-                       'scenelight': LightType.SCENE_LIGHT
-            }
+                       'scenelight': LightType.SCENE_LIGHT}
             try:
                 light_type = mapping[type_normalized]
             except KeyError:

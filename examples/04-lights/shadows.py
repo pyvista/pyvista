@@ -1,9 +1,8 @@
 """
-Lights and Shadows
-~~~~~~~~~~~~~~~~~~
+Shadows
+~~~~~~~
 
 Demonstrate the usage of lights and shadows in PyVista.
-
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -22,7 +21,8 @@ mesh.rotate_z(120)
 # .. Note::
 #    VTK has known issues when rendering shadows on certain window
 #    sizes.  Be prepared to experiment with the ``window_size``
-#    parameter.
+#    parameter.  An initial window size of ``(1000, 1000)`` seems to
+#    work well, which can be manually resized without issue.
 
 light1 = pyvista.Light(position=(0, 0.2, 1.0),
                        focal_point=(0, 0, 0),
