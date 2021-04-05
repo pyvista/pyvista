@@ -13,6 +13,7 @@ from .tools import create_axes_orientation_box, create_axes_marker
 from .camera import Camera
 from .lights import LightType
 
+
 def scale_point(camera, point, invert=False):
     """Scale a point using the camera's transform matrix.
 
@@ -1484,6 +1485,7 @@ class Renderer(_vtk.vtkRenderer):
         self._shadow_pass = _vtk.vtkCameraPass()
         self._shadow_pass.SetDelegatePass(seq)
         self.SetPass(self._shadow_pass)
+        self.Modified()
 
     def disable_shadows(self):
         """Disable shadows."""
