@@ -1816,3 +1816,26 @@ def test_plot_shadows_enable_disable():
     plotter.disable_shadows()
 
     plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_plot_lighting_change_positional_true_false():
+    light = pyvista.Light(positional=True, show_actor=True)
+
+    plotter = pyvista.Plotter(lighting=None)
+    plotter.add_light(light)
+    light.positional = False
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_plot_lighting_change_positional_false_true():
+    light = pyvista.Light(positional=False, show_actor=True)
+
+    plotter = pyvista.Plotter(lighting=None)
+
+    plotter.add_light(light)
+    light.positional = True
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.show(before_close_callback=verify_cache_image)

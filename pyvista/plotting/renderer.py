@@ -404,12 +404,14 @@ class Renderer(_vtk.vtkRenderer):
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
         actor.SetPickable(pickable)
-
         self.ResetCameraClippingRange()
-
         self.Modified()
 
-        return actor, actor.GetProperty()
+        prop = None
+        if hasattr(actor, 'GetProperty'):
+            prop = actor.GetProperty()
+
+        return actor, prop
 
     def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
                            xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
@@ -1094,6 +1096,10 @@ class Renderer(_vtk.vtkRenderer):
             self.AddActor(light.actor)
 
         self.Modified()
+
+        # we add the renderer to add/remove the light actor if
+        # positional is modified
+        light.renderer = self
 
     @property
     def lights(self):

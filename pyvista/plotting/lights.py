@@ -128,6 +128,7 @@ class Light(vtkLight):
                  attenuation_values=None):
         """Initialize the light."""
         super().__init__()
+        self._renderer = None
 
         if position is not None:
             self.position = position
@@ -511,7 +512,7 @@ class Light(vtkLight):
         90 degrees don't show angular dependence of their beams, but
         they display attenuation.
 
-        If the light is changed to directional, its actor (if previousy
+        If the light is changed to directional, its actor (if previously
         shown) is automatically hidden.
 
         Examples
@@ -532,6 +533,13 @@ class Light(vtkLight):
         if not state:
             self.hide_actor()
         self.SetPositional(state)
+
+        # add or remove the actor from the renderer
+        if self._renderer is not None:
+            if state:
+                self._renderer.add_actor(self.actor, render=False)
+            else:
+                self._renderer.remove_actor(self.actor, render=False)
 
     @property
     def exponent(self):
@@ -1087,3 +1095,13 @@ class Light(vtkLight):
         if not self.positional:
             return
         self.actor.VisibilityOff()
+
+    @property
+    def renderer(self):
+        """Return the Renderer associated with this plotter."""
+        return self._renderer
+
+    @renderer.setter
+    def renderer(self, obj):
+        """Assign the renderer associated with this light."""
+        self._renderer = obj
