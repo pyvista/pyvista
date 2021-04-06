@@ -1768,23 +1768,20 @@ def test_plot_shadows():
         plotter.add_mesh(screen, color='white')
 
     light = pyvista.Light(position=(0, 0, 0), focal_point=(0, 1, 0),
-                          color='cyan', intensity=15, cone_angle=15)
-    light.positional = True
-    light.attenuation_values = (2, 0, 0)
-    light.show_actor()
+                          color='cyan', intensity=15, cone_angle=15,
+                          positional=True, show_actor=True,
+                          attenuation_values=(2, 0, 0))
 
     plotter.add_light(light)
     plotter.view_vector((1, -2, 2))
 
-    # verify shadows cannot be disabled when not enabled
-    with pytest.raises(RuntimeError, match='have not been enabled'):
-        plotter.disable_shadows()
+    # verify disabling shadows when not enabled does nothing
+    plotter.disable_shadows()
 
     plotter.enable_shadows()
 
-    # verify shadows cannot be enabled twice when not enabled
-    with pytest.raises(RuntimeError, match='already been enabled'):
-        plotter.enable_shadows()
+    # verify shadows can safely be enabled twice
+    plotter.enable_shadows()
 
     plotter.show(before_close_callback=verify_cache_image)
 

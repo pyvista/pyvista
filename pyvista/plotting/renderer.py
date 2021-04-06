@@ -333,7 +333,7 @@ class Renderer(_vtk.vtkRenderer):
 
     @property
     def actors(self):
-        """Return a dictionary of actors assigned to this renderer"""
+        """Return a dictionary of actors assigned to this renderer."""
         return self._actors
 
     def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
@@ -1501,7 +1501,8 @@ class Renderer(_vtk.vtkRenderer):
             return
 
         self.SetPass(None)
-        self._shadow_pass.ReleaseGraphicsResources(self.parent.ren_win)
+        if hasattr(self.parent, 'ren_win'):
+            self._shadow_pass.ReleaseGraphicsResources(self.parent.ren_win)
         self._shadow_pass = None
         self.Modified()
 

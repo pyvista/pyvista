@@ -132,6 +132,7 @@ class Light(vtkLight):
         """Initialize the light."""
         super().__init__()
         self._renderers = []
+        self.actor = None
 
         if position is not None:
             self.position = position
@@ -173,10 +174,6 @@ class Light(vtkLight):
         if exponent is not None:
             self.exponent = exponent
 
-        self.actor = vtkLightActor()
-        self.actor.SetLight(self)
-        self.actor.SetVisibility(show_actor)
-
         if positional is not None:
             self.positional = positional
 
@@ -185,6 +182,11 @@ class Light(vtkLight):
 
         if attenuation_values is not None:
             self.attenuation_values = attenuation_values
+
+        # Add the light actor
+        self.actor = vtkLightActor()
+        self.actor.SetLight(self)
+        self.actor.SetVisibility(show_actor)
 
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
@@ -543,16 +545,20 @@ class Light(vtkLight):
         self._check_actor()
 
     def _check_actor(self):
-        """Check if the light actor needs to be added or removed.
+        """Check if the light actor should be added or removed from attached renderers.
 
         This should be called whenever positional state or cone angle
         are changed.
 
         """
-        # add or remove the actor from the renderer
-        actor_state = self.cone_angle < 90 & self.positional
+        if self.actor is None:
+            # only should occur on __init__
+            return
+
+        actor_state = self.cone_angle < 90 and self.positional
         actor_name = self.actor.GetAddressAsString("")
 
+        # add or remove the actor from the renderer
         for renderer in self._renderers:
             if actor_state:
                 if actor_name not in renderer.actors:
@@ -1129,7 +1135,7 @@ class Light(vtkLight):
         return self._renderers
 
     def add_renderer(self, renderer):
-        """Add a renderer to this light"""
+        """Attach a renderer to this light."""
         # quick check to avoid adding twice
         if renderer not in self.renderers:
             self.renderers.append(renderer)
