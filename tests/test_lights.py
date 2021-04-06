@@ -19,7 +19,9 @@ configuration = [
     ('cone_angle', 45, 'SetConeAngle'),
     ('attenuation_values', (3, 2, 1), 'SetAttenuationValues'),
     ('transform_matrix', np.arange(4 * 4).reshape(4, 4), 'SetTransformMatrix'),
+    ('shadow_attenuation', 0.5, 'SetShadowAttenuation'),
 ]
+
 
 def test_init():
     position = (1, 1, 1)

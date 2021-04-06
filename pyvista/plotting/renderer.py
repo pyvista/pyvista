@@ -331,6 +331,11 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
         return actor
 
+    @property
+    def actors(self):
+        """Return a dictionary of actors assigned to this renderer"""
+        return self._actors
+
     def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
                   pickable=True, render=True):
         """Add an actor to render window.
@@ -1090,16 +1095,11 @@ class Renderer(_vtk.vtkRenderer):
             raise TypeError(f'Expected Light instance, got {type(light).__name__} instead.')
         self._lights.append(light)
         self.AddLight(light)
-
-        # only add an actor for non-directional lights
-        if light.positional:
-            self.AddActor(light.actor)
-
         self.Modified()
 
         # we add the renderer to add/remove the light actor if
-        # positional is modified
-        light.renderer = self
+        # positional or cone angle is modified
+        light.add_renderer(self)
 
     @property
     def lights(self):

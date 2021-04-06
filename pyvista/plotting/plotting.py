@@ -3590,14 +3590,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The light to be added.
 
         only_active : bool
-            If ``True``, only add the light to the active renderer. The default
-            is that every renderer adds the light. To add the light to an arbitrary
-            renderer, see the ``add_light`` method of the Renderer class.
+            If ``True``, only add the light to the active
+            renderer. The default is that every renderer adds the
+            light. To add the light to an arbitrary renderer, see the
+            ``add_light`` method of the Renderer class.
 
         Examples
         --------
-        Create a plotter that we initialize with no lights, and add a cube and a
-        single headlight to it.
+        Create a plotter that we initialize with no lights, and add a
+        cube and a single headlight to it.
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')

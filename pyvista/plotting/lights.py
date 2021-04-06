@@ -131,7 +131,7 @@ class Light(vtkLight):
                  attenuation_values=None):
         """Initialize the light."""
         super().__init__()
-        self._renderer = None
+        self._renderers = []
 
         if position is not None:
             self.position = position
@@ -197,6 +197,7 @@ class Light(vtkLight):
             'light_type', 'position', 'focal_point', 'ambient_color',
             'diffuse_color', 'specular_color', 'intensity', 'on',
             'positional', 'exponent', 'cone_angle', 'attenuation_values',
+            'shadow_attenuation',
         ]
         for attr in native_attrs:
             if getattr(self, attr) != getattr(other, attr):
@@ -219,7 +220,7 @@ class Light(vtkLight):
     def __del__(self):
         """Clean up when the light is being destroyed."""
         self.actor = None
-        self._renderer = None
+        self._renderers = []
 
     @property
     def shadow_attenuation(self):
@@ -539,35 +540,52 @@ class Light(vtkLight):
         if not state:
             self.hide_actor()
         self.SetPositional(state)
+        self._check_actor()
 
+    def _check_actor(self):
+        """Check if the light actor needs to be added or removed.
+
+        This should be called whenever positional state or cone angle
+        are changed.
+
+        """
         # add or remove the actor from the renderer
-        if self._renderer is not None:
-            if state:
-                self._renderer.add_actor(self.actor, render=False)
+        actor_state = self.cone_angle < 90 & self.positional
+        actor_name = self.actor.GetAddressAsString("")
+
+        for renderer in self._renderers:
+            if actor_state:
+                if actor_name not in renderer.actors:
+                    renderer.add_actor(self.actor, render=False)
             else:
-                self._renderer.remove_actor(self.actor, render=False)
+                if actor_name in renderer.actors:
+                    renderer.remove_actor(self.actor, render=False)
 
     @property
     def exponent(self):
         """Return the exponent of the cosine used for spotlights.
 
-        With a spotlight (a positional light with cone angle less than 90 degrees)
-        the shape of the light beam within the light cone varies with the angle from
-        the light's axis, and the variation of the intensity depends as the cosine
-        of this angle raised to an exponent, which is 1 by default. Increasing the
-        exponent makes the beam sharper (more focused around the axis), decreasing
-        it spreads the beam out.
+        With a spotlight (a positional light with cone angle less than
+        90 degrees) the shape of the light beam within the light cone
+        varies with the angle from the light's axis, and the variation
+        of the intensity depends as the cosine of this angle raised to
+        an exponent, which is 1 by default. Increasing the exponent
+        makes the beam sharper (more focused around the axis),
+        decreasing it spreads the beam out.
 
-        Note that since the angular dependence defined by this property and the
-        truncation performed by the :py:attr:`cone_angle` are independent, for
-        spotlights with narrow beams (small :py:attr:`cone_angle`) it is harder
-        to see the angular variation of the intensity, and a lot higher exponent
-        might be necessary to visibly impact the angular distribution of the beam.
+        Note that since the angular dependence defined by this
+        property and the truncation performed by the
+        :py:attr:`cone_angle` are independent, for spotlights with
+        narrow beams (small :py:attr:`cone_angle`) it is harder to see
+        the angular variation of the intensity, and a lot higher
+        exponent might be necessary to visibly impact the angular
+        distribution of the beam.
 
         Examples
         --------
-        Plot three planes lit by three spotlights with exponents of 1, 2 and 5.
-        The one with the lowest exponent has the broadest beam.
+        Plot three planes lit by three spotlights with exponents of 1,
+        2 and 5.  The one with the lowest exponent has the broadest
+        beam.
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
@@ -635,6 +653,7 @@ class Light(vtkLight):
         if angle >= 90:
             self.hide_actor()
         self.SetConeAngle(angle)
+        self._check_actor()
 
     @property
     def attenuation_values(self):
@@ -974,6 +993,7 @@ class Light(vtkLight):
             'exponent',
             'cone_angle',
             'attenuation_values',
+            'shadow_attenuation',
         ]
         new_light = Light()
 
@@ -1055,6 +1075,7 @@ class Light(vtkLight):
         light.attenuation_values = vtk_light.GetAttenuationValues()
         trans = vtk_light.GetTransformMatrix()
         light.transform_matrix = trans
+        light.shadow_attenuation = vtk_light.GetShadowAttenuation()
 
         return light
 
@@ -1103,11 +1124,15 @@ class Light(vtkLight):
         self.actor.VisibilityOff()
 
     @property
-    def renderer(self):
-        """Return the Renderer associated with this plotter."""
-        return self._renderer
+    def renderers(self):
+        """Return the renderers associated with this light."""
+        return self._renderers
 
-    @renderer.setter
-    def renderer(self, obj):
-        """Assign the renderer associated with this light."""
-        self._renderer = obj
+    def add_renderer(self, renderer):
+        """Add a renderer to this light"""
+        # quick check to avoid adding twice
+        if renderer not in self.renderers:
+            self.renderers.append(renderer)
+
+        # verify that the renderer has the light actor if applicable
+        self._check_actor()
