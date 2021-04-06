@@ -65,13 +65,6 @@ class Light(vtkLight):
     intensity : float, optional
         The brightness of the light (between 0 and 1).
 
-    cone_angle : float, optional
-        Cone angle of a positional light in degrees.
-
-    show_actor : bool, optional
-        Show an actor for a spotlight that depicts the geometry of the
-        beam.
-
     positional : bool, optional
         Set if the light is positional.
 
@@ -80,6 +73,13 @@ class Light(vtkLight):
         90 degrees acts like a spherical point source. A positional
         light with a cone angle that is less than 90 degrees is known
         as a spotlight.
+
+    cone_angle : float, optional
+        Cone angle of a positional light in degrees.
+
+    show_actor : bool, optional
+        Show an actor for a spotlight that depicts the geometry of the
+        beam.
 
     exponent : int, optional
         The exponent of the cosine used for spotlights.
@@ -113,9 +113,9 @@ class Light(vtkLight):
     SCENE_LIGHT = LightType.SCENE_LIGHT
 
     def __init__(self, position=None, focal_point=None, color=None,
-                 light_type='scene light', intensity=None, cone_angle=None,
-                 show_actor=False, positional=None, exponent=None,
-                 shadow_attenuation=None):
+                 light_type='scene light', intensity=None,
+                 positional=None, cone_angle=None, show_actor=False,
+                 exponent=None, shadow_attenuation=None):
         """Initialize the light."""
         super().__init__()
 
