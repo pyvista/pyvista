@@ -54,7 +54,6 @@ base_mesh = pyvista.Cube(center,
 
 # rotate base and mesh to get a better view
 base_mesh.rotate_z(30)
-mesh = mesh.copy()
 mesh.rotate_z(30)
 
 # create the plotter with custom lighting
@@ -83,9 +82,8 @@ for plane_y in [2, 5, 10]:
     plotter.add_mesh(screen, color='white')
 
 light = pyvista.Light(position=(0, 0, 0), focal_point=(0, 1, 0),
-                      color='cyan', intensity=15, cone_angle=15)
-light.positional = True
-light.attenuation_values = (2, 0, 0)
+                      color='cyan', intensity=15, positional=True,
+                      cone_angle=15, attenuation_values=(2, 0, 0))
 light.show_actor()
 
 plotter.add_light(light)

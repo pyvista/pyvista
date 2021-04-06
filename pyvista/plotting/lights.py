@@ -55,12 +55,14 @@ class Light(vtkLight):
         ``Light.CAMERA_LIGHT`` and ``Light.SCENE_LIGHT`` are also
         available, respectively.
 
-        * A headlight is attached to the camera, looking at its focal
-        point along the axis of the camera.
-        * A camera light also moves with the camera, but it can occupy
-        a general position with respect to it.
-        * A scene light is stationary with respect to the scene, as it
-        does not follow the camera. This is the default.
+            - A headlight is attached to the camera, looking at its
+              focal point along the axis of the camera.
+
+            - A camera light also moves with the camera, but it can
+              occupy a general position with respect to it.
+
+            - A scene light is stationary with respect to the scene,
+              as it does not follow the camera. This is the default.
 
     intensity : float, optional
         The brightness of the light (between 0 and 1).
@@ -91,6 +93,13 @@ class Light(vtkLight):
         by setting this value to less than 1.0 you can control how
         much light is attenuated when in shadow.
 
+    attenuation_values : sequence, optional
+        Quadratic attenuation constants.
+
+        The values are 3-length sequences which specify the constant,
+        linear and quadratic constants in this order. These parameters
+        only have an effect for positional lights.
+
     Examples
     --------
     Create a light at (10, 10, 10) and set its diffuse color to red.
@@ -115,7 +124,8 @@ class Light(vtkLight):
     def __init__(self, position=None, focal_point=None, color=None,
                  light_type='scene light', intensity=None,
                  positional=None, cone_angle=None, show_actor=False,
-                 exponent=None, shadow_attenuation=None):
+                 exponent=None, shadow_attenuation=None,
+                 attenuation_values=None):
         """Initialize the light."""
         super().__init__()
 
@@ -168,6 +178,9 @@ class Light(vtkLight):
 
         if shadow_attenuation is not None:
             self.shadow_attenuation = shadow_attenuation
+
+        if attenuation_values is not None:
+            self.attenuation_values = attenuation_values
 
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
