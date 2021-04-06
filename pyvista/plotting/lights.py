@@ -90,14 +90,16 @@ class Light(vtkLight):
     shadow_attenuation : float, optional
         The value of shadow attenuation.
 
-        By default a light will be completely blocked when in shadow
-        by setting this value to less than 1.0 you can control how
-        much light is attenuated when in shadow.
+        By default a light will be completely blocked when in shadow.
+        By setting this value to less than 1.0 you can control how
+        much light is attenuated when in shadow. Note that changing
+        the :py:attr:`attenuation_values` of the light can make it pass
+        through objects even if its shadow attenuation is 1.
 
     attenuation_values : sequence, optional
         Quadratic attenuation constants.
 
-        The values are 3-length sequences which specify the constant,
+        The values are a 3-length sequence which specifies the constant,
         linear and quadratic constants in this order. These parameters
         only have an effect for positional lights.
 
@@ -217,14 +219,17 @@ class Light(vtkLight):
     def __del__(self):
         """Clean up when the light is being destroyed."""
         self.actor = None
+        self._renderer = None
 
     @property
     def shadow_attenuation(self):
         """Return the value of shadow attenuation.
 
-        By default a light will be completely blocked when in shadow
-        by setting this value to less than 1.0 you can control how
-        much light is attenuated when in shadow.
+        By default a light will be completely blocked when in shadow.
+        By setting this value to less than 1.0 you can control how
+        much light is attenuated when in shadow. Note that changing
+        the :py:attr:`attenuation_values` of the light can make it pass
+        through objects even if its shadow attenuation is 1.
 
         Examples
         --------

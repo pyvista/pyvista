@@ -1476,7 +1476,8 @@ class Renderer(_vtk.vtkRenderer):
     def enable_shadows(self):
         """Enable shadows."""
         if self._shadow_pass is not None:
-            raise RuntimeError('Shadows have already been enabled for this renderer.')
+            # shadows are already enabled for this renderer
+            return
 
         shadows = _vtk.vtkShadowMapPass()
 
@@ -1496,7 +1497,9 @@ class Renderer(_vtk.vtkRenderer):
     def disable_shadows(self):
         """Disable shadows."""
         if self._shadow_pass is None:
-            raise RuntimeError('Shadows have not been enabled for this renderer.')
+            # shadows are already disabled
+            return
+
         self.SetPass(None)
         self._shadow_pass.ReleaseGraphicsResources(self.parent.ren_win)
         self._shadow_pass = None
@@ -1562,7 +1565,7 @@ class Renderer(_vtk.vtkRenderer):
         if hasattr(self, '_box_object'):
             self.remove_bounding_box(render=render)
         if self._shadow_pass is not None:
-            self._shadow_pass = None
+            self.disable_shadows()
 
         self.remove_floors(render=render)
         self.RemoveAllViewProps()
