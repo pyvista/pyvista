@@ -210,7 +210,7 @@ class Renderer(_vtk.vtkRenderer):
             return
 
         for actor in self._actors.values():
-            if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
+            if isinstance(actor, _vtk.vtkCubeAxesActor):
                 continue
             if (hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
                  and id(actor) != id(self.bounding_box_actor)):
