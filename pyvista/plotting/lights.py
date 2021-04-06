@@ -8,7 +8,7 @@ import numpy as np
 try:
     from vtkmodules.vtkRenderingCore import vtkLight, vtkLightActor
     from vtkmodules.vtkCommonMath import vtkMatrix4x4
-except ImportError:
+except ImportError:  # pragma: no cover
     from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
 
 from .theme import parse_color
@@ -222,7 +222,7 @@ class Light(vtkLight):
     def __del__(self):
         """Clean up when the light is being destroyed."""
         self.actor = None
-        self._renderers = []
+        self._renderers.clear()
 
     @property
     def shadow_attenuation(self):

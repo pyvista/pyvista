@@ -30,13 +30,15 @@ def test_init():
     light_type = 'headlight'
     cone_angle = 15
     intensity = 2
+    exponent = 1.5
     positional = True
     show_actor = False
     shadow_attenuation = 0.5
     light = pyvista.Light(position=position, focal_point=focal_point,
                           color=color, light_type=light_type,
                           cone_angle=cone_angle, intensity=intensity,
-                          show_actor=show_actor, positional=positional,
+                          exponent=exponent, show_actor=show_actor,
+                          positional=positional,
                           shadow_attenuation=shadow_attenuation)
     assert isinstance(light, pyvista.Light)
     assert light.position == position
@@ -47,6 +49,7 @@ def test_init():
     assert light.light_type == light.HEADLIGHT
     assert light.cone_angle == cone_angle
     assert light.intensity == intensity
+    assert light.exponent == exponent
     assert light.positional == positional
     assert light.actor.GetVisibility() == show_actor
     assert light.shadow_attenuation == shadow_attenuation
