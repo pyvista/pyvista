@@ -35,7 +35,7 @@ plotter.add_light(UFO)
 plotter.enable_shadows()
 
 plotter.camera_position = [(28, 30, 22), (0.77, 0, -0.44), (0, 0, 1)]
-plotter.show(screenshot='/tmp/tmp.png')
+plotter.show()
 
 
 ###############################################################################
