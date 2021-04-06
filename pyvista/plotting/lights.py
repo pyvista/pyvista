@@ -222,7 +222,7 @@ class Light(vtkLight):
     def __del__(self):
         """Clean up when the light is being destroyed."""
         self.actor = None
-        self._renderers = []
+        self._renderers.clear()
 
     @property
     def shadow_attenuation(self):
