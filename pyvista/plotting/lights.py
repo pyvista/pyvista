@@ -56,11 +56,11 @@ class Light(vtkLight):
         available, respectively.
 
         * A headlight is attached to the camera, looking at its focal
-        point along the axis of the camera.
+          point along the axis of the camera.
         * A camera light also moves with the camera, but it can occupy
-        a general position with respect to it.
+          a general position with respect to it.
         * A scene light is stationary with respect to the scene, as it
-        does not follow the camera. This is the default.
+          does not follow the camera. This is the default.
 
     intensity : float, optional
         The brightness of the light (between 0 and 1).
