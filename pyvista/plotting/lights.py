@@ -83,8 +83,9 @@ class Light(vtkLight):
         Show an actor for a spotlight that depicts the geometry of the
         beam.
 
-    exponent : int, optional
-        The exponent of the cosine used for spotlights.
+    exponent : float, optional
+        The exponent of the cosine used for spotlights. See also the
+        :py:attr:`exponent` property.
 
     shadow_attenuation : float, optional
         The value of shadow attenuation.
