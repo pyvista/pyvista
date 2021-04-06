@@ -139,9 +139,10 @@ class Light(vtkLight):
             try:
                 light_type = mapping[type_normalized]
             except KeyError:
-                light_keys = ', '.join(mapping.keys())
-                raise ValueError(f'Invalid light_type "{light_type_orig}"\n'
-                                 f'Choose from one of the following {light_keys}') from None
+                light_keys = ', '.join(mapping)
+                msg = (f'Invalid light_type "{light_type_orig}"\n'
+                       f'Choose from one of the following: {light_keys}')
+                raise ValueError(msg) from None
         elif not isinstance(light_type, int):
             raise TypeError('Parameter light_type must be int or str,'
                             f' not {type(light_type).__name__}.')
