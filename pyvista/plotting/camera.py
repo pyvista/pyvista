@@ -298,6 +298,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista
         >>> plotter = pyvista.Plotter()
+        >>> plotter.camera.direction = (0.0, 0.0, -1.0)
         >>> plotter.camera.direction
         (0.0, 0.0, -1.0)
 
