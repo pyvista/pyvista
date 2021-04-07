@@ -328,7 +328,6 @@ class Camera(_vtk.vtkCamera):
         6
 
         """
-
         frustum_planes = [0] * 24
         self.GetFrustumPlanes(aspect, frustum_planes)
         planes = _vtk.vtkPlanes()
