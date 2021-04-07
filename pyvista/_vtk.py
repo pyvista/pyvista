@@ -304,7 +304,8 @@ if VTK9:
                                               vtkRegularPolygonSource,
                                               vtkLineSource,
                                               vtkPointSource,
-                                              vtkArrowSource)
+                                              vtkArrowSource,
+                                              vtkFrustumSource)
     from vtkmodules.vtkFiltersGeometry import (vtkGeometryFilter,
                                                vtkStructuredGridGeometryFilter,
                                                vtkCompositeDataGeometryFilter,
