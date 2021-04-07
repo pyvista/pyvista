@@ -11,6 +11,7 @@ from pyvista.utilities import wrap, check_depth_peeling
 from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
 from .tools import create_axes_orientation_box, create_axes_marker
 from .camera import Camera
+from .lights import LightType
 
 
 def scale_point(camera, point, invert=False):
@@ -121,6 +122,8 @@ class Renderer(_vtk.vtkRenderer):
         self._camera = Camera()
         self.SetActiveCamera(self._camera)
 
+        self._shadow_pass = None
+
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
@@ -210,7 +213,7 @@ class Renderer(_vtk.vtkRenderer):
             return
 
         for actor in self._actors.values():
-            if isinstance(actor, _vtk.vtkCubeAxesActor):
+            if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
                 continue
             if (hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
                  and id(actor) != id(self.bounding_box_actor)):
@@ -328,6 +331,11 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
         return actor
 
+    @property
+    def actors(self):
+        """Return a dictionary of actors assigned to this renderer."""
+        return self._actors
+
     def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
                   pickable=True, render=True):
         """Add an actor to render window.
@@ -401,12 +409,14 @@ class Renderer(_vtk.vtkRenderer):
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
         actor.SetPickable(pickable)
-
         self.ResetCameraClippingRange()
-
         self.Modified()
 
-        return actor, actor.GetProperty()
+        prop = None
+        if hasattr(actor, 'GetProperty'):
+            prop = actor.GetProperty()
+
+        return actor, prop
 
     def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
                            xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
@@ -1076,13 +1086,20 @@ class Renderer(_vtk.vtkRenderer):
             self.Modified()
 
     def add_light(self, light):
-        """Add a Light to the renderer."""
+        """Add a light to the renderer."""
+        # convert from a vtk type if applicable
+        if isinstance(light, _vtk.vtkLight) and not isinstance(light, pyvista.Light):
+            light = pyvista.Light.from_vtk(light)
+
         if not isinstance(light, pyvista.Light):
-            raise TypeError('Expected Light instance, got {type(light).__name__} instead.')
+            raise TypeError(f'Expected Light instance, got {type(light).__name__} instead.')
         self._lights.append(light)
         self.AddLight(light)
-        self.AddActor(light._actor)
         self.Modified()
+
+        # we add the renderer to add/remove the light actor if
+        # positional or cone angle is modified
+        light.add_renderer(self)
 
     @property
     def lights(self):
@@ -1455,7 +1472,39 @@ class Renderer(_vtk.vtkRenderer):
         self.edl_pass.ReleaseGraphicsResources(self.parent.ren_win)
         del self.edl_pass
         self.Modified()
-        return
+
+    def enable_shadows(self):
+        """Enable shadows."""
+        if self._shadow_pass is not None:
+            # shadows are already enabled for this renderer
+            return
+
+        shadows = _vtk.vtkShadowMapPass()
+
+        passes = _vtk.vtkRenderPassCollection()
+        passes.AddItem(shadows.GetShadowMapBakerPass())
+        passes.AddItem(shadows)
+
+        seq = _vtk.vtkSequencePass()
+        seq.SetPasses(passes)
+
+        # Tell the renderer to use our render pass pipeline
+        self._shadow_pass = _vtk.vtkCameraPass()
+        self._shadow_pass.SetDelegatePass(seq)
+        self.SetPass(self._shadow_pass)
+        self.Modified()
+
+    def disable_shadows(self):
+        """Disable shadows."""
+        if self._shadow_pass is None:
+            # shadows are already disabled
+            return
+
+        self.SetPass(None)
+        if hasattr(self.parent, 'ren_win'):
+            self._shadow_pass.ReleaseGraphicsResources(self.parent.ren_win)
+        self._shadow_pass = None
+        self.Modified()
 
     def get_pick_position(self):
         """Get the pick position/area as x0, y0, x1, y1."""
@@ -1516,6 +1565,8 @@ class Renderer(_vtk.vtkRenderer):
             del self.edl_pass
         if hasattr(self, '_box_object'):
             self.remove_bounding_box(render=render)
+        if self._shadow_pass is not None:
+            self.disable_shadows()
 
         self.remove_floors(render=render)
         self.RemoveAllViewProps()

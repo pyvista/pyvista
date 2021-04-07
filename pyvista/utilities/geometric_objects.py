@@ -50,11 +50,12 @@ def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
 
     surf.transform(trans)
     if not np.allclose(center, [0., 0., 0.]):
-        surf.points += np.array(center)
+        surf.points[:] += np.array(center)
 
 
-def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
-             resolution=100, capping=True, **kwargs):
+def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
+             radius=0.5, height=1.0, resolution=100, capping=True,
+             **kwargs):
     """Create the surface of a cylinder.
 
     See also :func:`pyvista.CylinderStructured`.

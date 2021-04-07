@@ -72,14 +72,31 @@ light_types
 # Custom lighting
 # ===============
 #
-# We can introduce our own lighting from scratch by disabling any lighting
-# on plotter initialization. Adding a single scene light to a scene will
-# often result in ominous visuals due to objects having larger regions in
-# shadow:
+# We can introduce our own lighting from scratch by disabling any
+# lighting on plotter initialization. Adding a single scene light to a
+# scene will often result in ominous visuals due to objects having
+# larger regions in shadow.
 
-plotter = pv.Plotter(lighting='none')
-plotter.add_mesh(mesh, color='white')
+plotter = pv.Plotter(lighting='none', window_size=(1000, 1000))
+plotter.add_mesh(mesh, color='white', smooth_shading=True)
 light = pv.Light()
-light.set_direction_angle(30, 0)
+light.set_direction_angle(30, -20)
 plotter.add_light(light)
+plotter.show()
+
+
+###############################################################################
+# Custom lighting with shadows
+# ============================
+#
+# Here, we ``enable_shadows`` to enhance the effect that the lighting
+# angle has.  It has a subtle, but realistic effect.  Notice the sharp
+# shadows due to the mountaintop.
+
+plotter = pv.Plotter(lighting='none', window_size=(1000, 1000))
+plotter.add_mesh(mesh, color='white', smooth_shading=True)
+light = pv.Light()
+light.set_direction_angle(20, -20)
+plotter.add_light(light)
+plotter.enable_shadows()
 plotter.show()

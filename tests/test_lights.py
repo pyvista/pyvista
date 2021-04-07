@@ -19,15 +19,27 @@ configuration = [
     ('cone_angle', 45, 'SetConeAngle'),
     ('attenuation_values', (3, 2, 1), 'SetAttenuationValues'),
     ('transform_matrix', np.arange(4 * 4).reshape(4, 4), 'SetTransformMatrix'),
+    ('shadow_attenuation', 0.5, 'SetShadowAttenuation'),
 ]
+
 
 def test_init():
     position = (1, 1, 1)
     focal_point = (2, 2, 2)
     color = (0.5, 0.5, 0.5)
     light_type = 'headlight'
+    cone_angle = 15
+    intensity = 2
+    exponent = 1.5
+    positional = True
+    show_actor = False
+    shadow_attenuation = 0.5
     light = pyvista.Light(position=position, focal_point=focal_point,
-                          color=color, light_type=light_type)
+                          color=color, light_type=light_type,
+                          cone_angle=cone_angle, intensity=intensity,
+                          exponent=exponent, show_actor=show_actor,
+                          positional=positional,
+                          shadow_attenuation=shadow_attenuation)
     assert isinstance(light, pyvista.Light)
     assert light.position == position
     assert light.focal_point == focal_point
@@ -35,6 +47,12 @@ def test_init():
     assert light.diffuse_color == color
     assert light.specular_color == color
     assert light.light_type == light.HEADLIGHT
+    assert light.cone_angle == cone_angle
+    assert light.intensity == intensity
+    assert light.exponent == exponent
+    assert light.positional == positional
+    assert light.actor.GetVisibility() == show_actor
+    assert light.shadow_attenuation == shadow_attenuation
 
     # check repr too
     assert repr(light) is not None
@@ -297,9 +315,15 @@ def test_from_vtk():
         pyvista.Light('invalid')
 
 
+def test_add_vtk_light():
+    pl = pyvista.Plotter(lighting=None)
+    pl.add_light(vtk.vtkLight())
+    assert len(pl.renderer.lights) == 1
+
+
 def test_actors():
     light = pyvista.Light()
-    actor = light._actor
+    actor = light.actor
 
     # test showing
     assert not actor.GetVisibility()

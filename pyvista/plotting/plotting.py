@@ -442,6 +442,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.disable_parallel_projection``."""
         return self.renderer.disable_parallel_projection(*args, **kwargs)
 
+    @wraps(Renderer.enable_shadows)
+    def enable_shadows(self, *args, **kwargs):
+        """Wrap ``Renderer.enable_shadows``."""
+        return self.renderer.enable_shadows(*args, **kwargs)
+
+    @wraps(Renderer.disable_shadows)
+    def disable_shadows(self, *args, **kwargs):
+        """Wrap ``Renderer.disable_shadows``."""
+        return self.renderer.disable_shadows(*args, **kwargs)
+
     @property
     def parallel_projection(self):
         """Return parallel projection state of active render window."""
@@ -3213,7 +3223,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._on_first_render_request()
             self.render()
 
-        return self._save_image(self.image, filename, return_img)    
+        return self._save_image(self.image, filename, return_img)
 
     def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
                    size=None, name=None, origin=None):
@@ -3580,14 +3590,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The light to be added.
 
         only_active : bool
-            If ``True``, only add the light to the active renderer. The default
-            is that every renderer adds the light. To add the light to an arbitrary
-            renderer, see the ``add_light`` method of the Renderer class.
+            If ``True``, only add the light to the active
+            renderer. The default is that every renderer adds the
+            light. To add the light to an arbitrary renderer, see the
+            ``add_light`` method of the Renderer class.
 
         Examples
         --------
-        Create a plotter that we initialize with no lights, and add a cube and a
-        single headlight to it.
+        Create a plotter that we initialize with no lights, and add a
+        cube and a single headlight to it.
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')

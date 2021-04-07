@@ -43,6 +43,10 @@ if VTK9:
                                                 vtkRenderStepsPass,
                                                 vtkEDLShading,
                                                 vtkOpenGLRenderer,
+                                                vtkShadowMapPass,
+                                                vtkSequencePass,
+                                                vtkCameraPass,
+                                                vtkRenderPassCollection,
                                                 vtkOpenGLTexture)
     from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
     from vtkmodules.vtkIOPLY import (vtkPLYReader,

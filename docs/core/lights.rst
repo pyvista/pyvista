@@ -65,6 +65,49 @@ from the source, but their beam is isotropic in space. In contrast, directional
 lights act as infinitely distant point sources, so they are unidirectional but they do
 not attenuate.
 
+
+Shadows
+-------
+With directed lights, it is possible to create complex lighting
+scenarios.  For example, you can position a light directly above an
+actor (in this case, a sphere), to create a shadow directly below it.
+
+The following example uses a positional light to create an
+eclipse-like shadow below a sphere by controlling the cone angle and
+exponent values of the light.
+
+.. jupyter-execute::
+
+    import pyvista as pv
+
+    plotter = pv.Plotter(lighting=None, window_size=(800, 800))
+
+    # create a top down light
+    light = pv.Light(position=(0, 0, 3), show_actor=True, positional=True,
+                     cone_angle=30, exponent=20, intensity=1.5)
+    plotter.add_light(light)
+
+    # add a sphere to the plotter
+    sphere = pv.Sphere(radius=0.3, center=(0, 0, 1))
+    plotter.add_mesh(sphere, ambient=0.2, diffuse=0.5, specular=0.8,
+                     specular_power=30, smooth_shading=True,
+                     color='dodgerblue')
+
+    # add the grid
+    grid = pv.Plane(i_size=4, j_size=4)
+    plotter.add_mesh(grid, ambient=0, diffuse=0.5, specular=0.8, color='white')
+
+    # setup and show the plotter
+    plotter.enable_shadows()
+    plotter.set_background('darkgrey')
+    plotter.show()
+
+.. Note::
+   VTK has known issues when rendering shadows on certain window
+   sizes.  Be prepared to experiment with the ``window_size``
+   parameter.
+
+
 API reference
 ~~~~~~~~~~~~~
 
