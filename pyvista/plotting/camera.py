@@ -305,6 +305,18 @@ class Camera(_vtk.vtkCamera):
         """
         return self.GetDirectionOfProjection()
 
+    @direction.setter
+    def direction(self, direction):
+        """Set the vector from the camera position to the focal point.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.camera.direction = (0.0, 0.0, -1.0)
+
+        """
+
     def view_frustum(self, aspect=1.0):
         """Get the view frustum.
 

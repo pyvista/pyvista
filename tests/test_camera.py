@@ -97,6 +97,9 @@ def test_view_angle(camera):
 
 def test_direction(camera):
     assert camera.GetDirectionOfProjection() == camera.direction
+    direction = (0.0, 0.0, -1.0)
+    camera.direction = direction
+    assert camera.direction == direction
 
 
 def test_view_frustum(camera):
