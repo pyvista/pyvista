@@ -325,7 +325,7 @@ def _style_factory(klass):
 
     try:
         from vtkmodules import vtkInteractionStyle
-    except ImportError:
+    except ImportError:  # pragma: no cover
         import vtk as vtkInteractionStyle
 
     class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):

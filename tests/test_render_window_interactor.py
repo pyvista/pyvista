@@ -28,7 +28,7 @@ def test_remove_observer():
 
 def test_track_mouse_position():
     pl = pyvista.Plotter()
-    # pl.track_mouse_position()
+    pl.track_mouse_position()
     pl.show(auto_close=False)
     assert pl.mouse_position is None
     x, y = 10, 20
@@ -39,7 +39,7 @@ def test_track_mouse_position():
     assert _vtk.vtkCommand.MouseMoveEvent not in pl.iren._observers
 
 
-def test_track_click_position():
+def test_track_click_position_multi_render():
     points = []
     def callback(mouse_point):
         points.append(mouse_point)

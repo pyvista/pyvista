@@ -191,3 +191,22 @@ def test_enable_fly_to_right_click(sphere):
     # ensure callback was called and camera position changes due to "fly"
     assert cpos_before != pl.camera_position
     assert point
+
+
+def test_enable_fly_to_right_click_multi_render(sphere):
+    """Same as enable as fly_to_right_click except with two renders for coverage"""
+    point = []
+    def callback(click_point):
+        point.append(click_point)
+
+    pl = pyvista.Plotter(shape=(1, 2))
+    pl.add_mesh(sphere)
+    pl.enable_fly_to_right_click(callback=callback)
+    pl.show(auto_close=False)
+    width, height = pl.window_size
+    cpos_before = pl.camera_position
+    pl.iren._mouse_right_button_press(width//4, height//2)
+
+    # ensure callback was called and camera position changes due to "fly"
+    assert cpos_before != pl.camera_position
+    assert point
