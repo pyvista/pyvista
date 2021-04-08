@@ -894,13 +894,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Hide the axes orientation widget in all renderers."""
         for renderer in self.renderers:
             renderer.hide_axes()
-        return
 
     def show_axes_all(self):
         """Show the axes orientation widget in all renderers."""
         for renderer in self.renderers:
             renderer.show_axes()
-        return
 
     def isometric_view_interactive(self):
         """Set the current interactive render window to isometric view."""
@@ -916,16 +914,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         stime : int, optional
-            Duration of timer that interrupt vtkRenderWindowInteractor in
-            milliseconds.
+            Duration of timer that interrupt vtkRenderWindowInteractor
+            in milliseconds.
 
         force_redraw : bool, optional
             Call ``render`` immediately.
 
         """
-        if self.off_screen:
-            return
-
         if stime <= 0:
             stime = 1
 
