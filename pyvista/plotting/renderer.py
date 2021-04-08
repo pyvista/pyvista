@@ -115,6 +115,7 @@ class Renderer(_vtk.vtkRenderer):
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
+        self._floor = None
         self._floors = []
         self._floor_kwargs = []
         # this keeps track of lights added manually to prevent garbage collection
@@ -940,8 +941,8 @@ class Renderer(_vtk.vtkRenderer):
                   offset=0.0, pickable=False, store_floor_kwargs=True):
         """Show a floor mesh.
 
-        This generates planes at the boundaries of the scene to behave like
-        floors or walls.
+        This generates planes at the boundaries of the scene to behave
+        like floors or walls.
 
         Parameters
         ----------
@@ -963,29 +964,40 @@ class Renderer(_vtk.vtkRenderer):
             Either a string, rgb list, or hex color string.
 
         line_width : int
-            Thickness of the edges. Only if ``show_edges`` is ``True``
+            Thickness of the edges. Only if ``show_edges`` is ``True``.
 
         opacity : float
-            The opacity of the generated surface
+            The opacity of the generated surface.
 
         show_edges : bool
             Flag on whether to show the mesh edges for tiling.
 
         ine_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
-            representations.  Default None.
+            representations.  Default ``None``.
 
         lighting : bool, optional
-            Enable or disable view direction lighting.  Default False.
+            Enable or disable view direction lighting.  Default ``False``.
 
         edge_color : string or 3 item list, optional
             Color of of the edges of the mesh.
 
-        pad : float
-            Percentage padding between 0 and 1
+        pad : float, optional
+            Percentage padding between 0 and 1.
 
-        offset : float
-            Percentage offset along plane normal
+        offset : float, optional
+            Percentage offset along plane normal.
+
+        Examples
+        --------
+        Add a floor below a sphere and plot it.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Sphere())
+        >>> _ = pl.add_floor()
+        >>> pl.show()  # doctest:+SKIP
+
         """
         if store_floor_kwargs:
             kwargs = locals()
@@ -996,32 +1008,32 @@ class Renderer(_vtk.vtkRenderer):
         center = np.array(self.center)
         if face.lower() in '-z':
             center[2] = self.bounds[4] - (ranges[2] * offset)
-            normal = (0,0,1)
+            normal = (0, 0, 1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '-y':
             center[1] = self.bounds[2] - (ranges[1] * offset)
-            normal = (0,1,0)
+            normal = (0, 1, 0)
             i_size = ranges[0]
             j_size = ranges[2]
         elif face.lower() in '-x':
             center[0] = self.bounds[0] - (ranges[0] * offset)
-            normal = (1,0,0)
+            normal = (1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
         elif face.lower() in '+z':
             center[2] = self.bounds[5] + (ranges[2] * offset)
-            normal = (0,0,-1)
+            normal = (0, 0, -1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '+y':
             center[1] = self.bounds[3] + (ranges[1] * offset)
-            normal = (0,-1,0)
+            normal = (0, -1, 0)
             i_size = ranges[0]
             j_size = ranges[2]
         elif face.lower() in '+x':
             center[0] = self.bounds[1] + (ranges[0] * offset)
-            normal = (-1,0,0)
+            normal = (-1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
         else:
@@ -1030,8 +1042,8 @@ class Renderer(_vtk.vtkRenderer):
                                     i_size=i_size, j_size=j_size,
                                     i_resolution=i_resolution,
                                     j_resolution=j_resolution)
-        name = f'Floor({face})'
-        # use floor
+        self._floor.clear_arrays()
+
         if lighting is None:
             lighting = rcParams['lighting']
 
@@ -1046,7 +1058,7 @@ class Renderer(_vtk.vtkRenderer):
         mapper.SetInputData(self._floor)
         actor, prop = self.add_actor(mapper,
                                      reset_camera=reset_camera,
-                                     name=name, pickable=pickable)
+                                     name=f'Floor({face})', pickable=pickable)
 
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
