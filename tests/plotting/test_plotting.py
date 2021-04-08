@@ -621,6 +621,14 @@ def test_add_axes_twice():
 
 
 @skip_no_plotting
+def test_hide_axes():
+    plotter = pyvista.Plotter()
+    plotter.add_axes()
+    plotter.hide_axes()
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
 def test_add_point_labels():
     plotter = pyvista.Plotter()
 

@@ -121,13 +121,13 @@ class RenderWindowInteractor(_vtk.vtkRenderWindowInteractor):
                 else:
                     callback(self._plotter.pick_click_position())
 
+        self._click_observer = event
         self.add_observer(event, _click_callback)
 
     def untrack_click_position(self):
         """Stop tracking the click position."""
-        if self._click_observer is not None:
-            self.RemoveObserver(self._click_observer)
-            self._click_observer = None
+        self.RemoveObserver(self._click_observer)
+        self._click_observer = None
 
     def clear_key_event_callbacks(self):
         """Clear key event callbacks."""

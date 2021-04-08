@@ -43,7 +43,7 @@ def _has_matplotlib():
     try:
         import matplotlib
         return True
-    except ImportError:
+    except ImportError:  # pragma: no cover
         return False
 
 
@@ -64,7 +64,7 @@ log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
 
-def _warn_xserver():
+def _warn_xserver():  # pragma: no cover
     """Check if plotting is supported and persist this state.
 
     Check once and cache this value between calls.  Warn the user if

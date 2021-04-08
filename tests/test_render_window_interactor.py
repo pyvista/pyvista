@@ -26,6 +26,11 @@ def test_remove_observer():
     assert _vtk.vtkCommand.MouseMoveEvent not in pl.iren._observers
 
 
+def test_clear_key_event_callbacks():
+    pl = pyvista.Plotter()
+    pl.reset_key_events()
+
+
 def test_track_mouse_position():
     pl = pyvista.Plotter()
     pl.track_mouse_position()
