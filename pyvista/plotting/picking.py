@@ -29,10 +29,10 @@ class PickingHelper:
                             start=False, **kwargs):
         """Enable picking at cells.
 
-        Press "r" to enable retangle based selection.  Press "r" again
-        to turn it off. Selection will be saved to
-        ``self.picked_cells``. Also press "p" to pick a single cell
-        under the mouse location.
+        Press ``"r"`` to enable retangle based selection.  Press
+        ``"r"`` again to turn it off. Selection will be saved to
+        ``self.picked_cells``. Also press ``"p"`` to pick a single
+        cell under the mouse location.
 
         When using ``through=False``, and multiple meshes are being
         picked, the picked cells in ````self.picked_cells`` will be a
@@ -214,7 +214,7 @@ class PickingHelper:
             self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
 
         if start:
-            self._style_class.StartSelect()
+            self.iren._style_class.StartSelect()
 
         return
 

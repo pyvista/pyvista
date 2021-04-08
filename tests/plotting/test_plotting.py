@@ -197,7 +197,7 @@ def test_interactor_style():
     )
     for interaction in interactions:
         getattr(plotter, f'enable_{interaction}_style')()
-        assert plotter._style_class is not None
+        assert plotter.iren._style_class is not None
     plotter.close()
 
 

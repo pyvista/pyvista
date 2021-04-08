@@ -18,7 +18,7 @@ def test_cell_picking():
     for through in (False, True):
         plotter = pyvista.Plotter(
             window_size=(100, 100),
-            off_screen=False
+            # off_screen=False
         )
         plotter.enable_cell_picking(
             mesh=sphere,
@@ -48,6 +48,29 @@ def test_cell_picking():
     plotter.close()
 
 
+def test_enable_cell_picking_interactive():
+
+    n_cells = []
+    def callback(picked_cells):
+        n_cells.append(picked_cells.n_cells)
+
+    pl = pyvista.Plotter(off_screen=True)
+    pl.add_mesh(pyvista.Sphere())
+    pl.enable_cell_picking(callback=callback)
+    pl.show(auto_close=False, interactive=False)
+
+    width, height = pl.window_size
+
+    # simulate "r" keypress
+    pl.iren._simulate_keypress('r')
+    pl.iren._mouse_left_button_press(width//2, height//2)
+    pl.iren._mouse_left_button_release(width, height)
+
+    pl.close()
+    assert n_cells[0]
+
+
+
 @skip_no_vtk9
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_point_picking():
@@ -55,7 +78,7 @@ def test_point_picking():
     for use_mesh in (False, True):
         plotter = pyvista.Plotter(
             window_size=(100, 100),
-            off_screen=False
+            # off_screen=False
         )
         plotter.add_mesh(sphere)
         plotter.enable_point_picking(
@@ -76,7 +99,7 @@ def test_path_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
         window_size=(100, 100),
-        off_screen=False
+        # off_screen=False
     )
     plotter.add_mesh(sphere)
     plotter.enable_path_picking(
@@ -90,7 +113,7 @@ def test_path_picking():
     # pick nothing
     picker.Pick(0, 0, 0, renderer)
     # 'c' to clear
-    clear_callback = plotter._key_press_event_callbacks['c']
+    clear_callback = plotter.iren._key_press_event_callbacks['c']
     clear_callback[0]()
     plotter.close()
 
@@ -101,7 +124,7 @@ def test_geodesic_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
         window_size=(100, 100),
-        off_screen=False
+        # off_screen=False
     )
     plotter.add_mesh(sphere)
     plotter.enable_geodesic_picking(
@@ -117,7 +140,7 @@ def test_geodesic_picking():
     # pick nothing
     picker.Pick(0, 0, 0, renderer)
     # 'c' to clear
-    clear_callback = plotter._key_press_event_callbacks['c']
+    clear_callback = plotter.iren._key_press_event_callbacks['c']
     clear_callback[0]()
     plotter.close()
 
@@ -128,7 +151,7 @@ def test_horizon_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
         window_size=(100, 100),
-        off_screen=False
+        # off_screen=False
     )
     plotter.add_mesh(sphere)
     plotter.enable_horizon_picking(
@@ -146,6 +169,25 @@ def test_horizon_picking():
     # pick nothing
     picker.Pick(0, 0, 0, renderer)
     # 'c' to clear
-    clear_callback = plotter._key_press_event_callbacks['c']
+    clear_callback = plotter.iren._key_press_event_callbacks['c']
     clear_callback[0]()
     plotter.close()
+
+
+def test_enable_fly_to_right_click(sphere):
+
+    point = []
+    def callback(click_point):
+        point.append(click_point)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.enable_fly_to_right_click(callback=callback)
+    pl.show(auto_close=False)
+    width, height = pl.window_size
+    cpos_before = pl.camera_position
+    pl.iren._mouse_right_button_press(width//2, height//2)
+
+    # ensure callback was called and camera position changes due to "fly"
+    assert cpos_before != pl.camera_position
+    assert point

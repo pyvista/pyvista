@@ -37,7 +37,7 @@ from .tools import normalize, opacity_transfer_function
 from .widgets import WidgetHelper
 from .scalar_bars import ScalarBars
 from .renderers import Renderers
-
+from .render_window_interactor import RenderWindowInteractor
 
 def _has_matplotlib():
     try:
@@ -186,9 +186,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._first_time = True
         # Keep track of the scale
         self._labels = []
-        # Set default style
-        self._style = 'RubberBandPick'
-        self._style_class = None
+
         # this helps managing closed plotters
         self._closed = False
 
@@ -742,37 +740,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             log.debug('Rendering')
             self.ren_win.Render()
 
-    def add_key_event(self, key, callback):
-        """Add a function to callback when the given key is pressed.
-
-        These are non-unique - thus a key could map to many callback
-        functions. The callback function must not have any arguments.
-
-        Parameters
-        ----------
-        key : str
-            The key to trigger the event
-
-        callback : callable
-            A callable that takes no arguments
-
-        """
-        if not hasattr(callback, '__call__'):
-            raise TypeError('callback must be callable.')
-        self._key_press_event_callbacks[key].append(callback)
-
-    def _add_observer(self, event, call):
-        call = partial(try_callback, call)
-        self._observers[event] = self.iren.AddObserver(event, call)
-
-    def _remove_observer(self, event):
-        if event in self._observers:
-            self.iren.RemoveObserver(event)
-            del self._observers[event]
+    @wraps(RenderWindowInteractor.add_key_event)
+    def add_key_event(self, *args, **kwargs):
+        """Wrap RenderWindowInteractor.add_key_event."""
+        if hasattr(self, 'iren'):
+            self.iren.add_key_event(*args, **kwargs)
 
     def clear_events_for_key(self, key):
         """Remove the callbacks associated to the key."""
-        self._key_press_event_callbacks.pop(key)
+        self.iren.clear_events_for_key(key)
 
     def store_mouse_position(self, *args):
         """Store mouse position."""
@@ -790,66 +766,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def track_mouse_position(self):
         """Keep track of the mouse position.
 
-        This will potentially slow down the interactor. No callbacks supported
-        here - use :func:`pyvista.BasePlotter.track_click_position` instead.
+        This will potentially slow down the interactor. No callbacks
+        supported here - use
+        :func:`pyvista.BasePlotter.track_click_position` instead.
 
         """
-        if hasattr(self, "iren"):
-            self._add_observer(_vtk.vtkCommand.MouseMoveEvent,
-                               self.store_mouse_position)
+        self.iren.track_mouse_position(self.store_mouse_position)
 
     def untrack_mouse_position(self):
         """Stop tracking the mouse position."""
-        self._remove_observer(_vtk.vtkCommand.MouseMoveEvent)
+        self.iren.untrack_mouse_position()
 
-    def track_click_position(self, callback=None, side="right",
-                             viewport=False):
-        """Keep track of the click position.
-
-        By default, it only tracks right clicks.
-
-        Parameters
-        ----------
-        callback : callable
-            A callable method that will use the click position. Passes the
-            click position as a length two tuple.
-
-        side : str
-            The side of the mouse for the button to track (left or right).
-            Default is left. Also accepts ``'r'`` or ``'l'``.
-
-        viewport: bool
-            If ``True``, uses the normalized viewport coordinate system
-            (values between 0.0 and 1.0 and support for HiDPI) when passing the
-            click position to the callback
-
-        """
-        if not hasattr(self, "iren"):
-            return
-
-        side = str(side).lower()
-        if side in ["right", "r"]:
-            event = _vtk.vtkCommand.RightButtonPressEvent
-        elif side in ["left", "l"]:
-            event = _vtk.vtkCommand.LeftButtonPressEvent
-        else:
-            raise TypeError(f"Side ({side}) not supported. Try `left` or `right`")
-
-        def _click_callback(obj, event):
-            self.store_click_position()
-            if hasattr(callback, '__call__'):
-                if viewport:
-                    callback(self.click_position)
-                else:
-                    callback(self.pick_click_position())
-
-        self._add_observer(event, _click_callback)
+    @wraps(RenderWindowInteractor.track_click_position)
+    def track_click_position(self, *args, **kwargs):
+        """Wrap RenderWindowInteractor.track_click_position."""
+        self.iren.track_click_position(*args, **kwargs)
 
     def untrack_click_position(self):
         """Stop tracking the click position."""
-        if hasattr(self, "_click_observer"):
-            self.iren.RemoveObserver(self._click_observer)
-            del self._click_observer
+        self.iren.untrack_click_position()
 
     def _prep_for_close(self):
         """Make sure a screenshot is acquired before closing.
@@ -881,10 +816,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
-        self._key_press_event_callbacks = collections.defaultdict(list)
+        if hasattr(self, 'iren'):
+            self.iren.clear_key_event_callbacks()
 
         self.add_key_event('q', self._prep_for_close) # Add no matter what
-        b_left_down_callback = lambda: self._add_observer('LeftButtonPressEvent', self.left_button_down)
+        b_left_down_callback = lambda: self.iren.add_observer('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
         self.add_key_event('C', lambda: self.enable_cell_picking())
@@ -893,16 +829,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))
         self.add_key_event('minus', lambda: self.increment_point_size_and_line_width(-1))
 
-    def key_press_event(self, obj, event):
-        """Listen for key press event."""
-        key = self.iren.GetKeySym()
-        log.debug(f'Key {key} pressed')
-        self._last_key = key
-        if key in self._key_press_event_callbacks.keys():
-            # Note that defaultdict's will never throw a key error
-            callbacks = self._key_press_event_callbacks[key]
-            for func in callbacks:
-                func()
+    @wraps(RenderWindowInteractor.key_press_event)
+    def key_press_event(self, *args, **kwargs):
+        """Wrap RenderWindowInteractor.key_press_event."""
+        self.iren.key_press_event(*args, **kwargs)
 
     def left_button_down(self, obj, event_type):
         """Register the event for a left button down click."""
@@ -920,128 +850,45 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if np.any(np.isnan(self.pickpoint)):
             self.pickpoint[:] = 0
 
-    def update_style(self):
-        """Update the camera interactor style."""
-        if self._style_class is None:
-            # We need an actually custom style to handle button up events
-            self._style_class = _style_factory(self._style)(self)
-        return self.iren.SetInteractorStyle(self._style_class)
-
+    @wraps(RenderWindowInteractor.enable_trackball_style)
     def enable_trackball_style(self):
-        """Set the interactive style to trackball camera.
+        """Wrap RenderWindowInteractor.enable_trackball_style."""
+        self.iren.enable_trackball_style()
 
-        The trackball camera is the default interactor style.
-
-        """
-        self._style = 'TrackballCamera'
-        self._style_class = None
-        return self.update_style()
-
+    @wraps(RenderWindowInteractor.enable_trackball_actor_style)
     def enable_trackball_actor_style(self):
-        """Set the interactive style to trackball actor.
+        """Wrap RenderWindowInteractor.enable_trackball_actor_style."""
+        self.iren.enable_trackball_actor_style()
 
-        This allows to rotate actors around the scene.
-
-        """
-        self._style = 'TrackballActor'
-        self._style_class = None
-        return self.update_style()
-
+    @wraps(RenderWindowInteractor.enable_image_style)
     def enable_image_style(self):
-        """Set the interactive style to image.
+        """Wrap RenderWindowInteractor.enable_image_style."""
+        self.iren.enable_image_style()
 
-        Controls:
-         - Left Mouse button triggers window level events
-         - CTRL Left Mouse spins the camera around its view plane normal
-         - SHIFT Left Mouse pans the camera
-         - CTRL SHIFT Left Mouse dollys (a positional zoom) the camera
-         - Middle mouse button pans the camera
-         - Right mouse button dollys the camera.
-         - SHIFT Right Mouse triggers pick events
-
-        """
-        self._style = 'Image'
-        self._style_class = None
-        return self.update_style()
-
+    @wraps(RenderWindowInteractor.enable_joystick_style)
     def enable_joystick_style(self):
-        """Set the interactive style to joystick.
+        """Wrap RenderWindowInteractor.enable_joystick_style."""
+        self.iren.enable_joystick_style()
 
-        It allows the user to move (rotate, pan, etc.) the camera, the point of
-        view for the scene.  The position of the mouse relative to the center of
-        the scene determines the speed at which the camera moves, and the speed
-        of the mouse movement determines the acceleration of the camera, so the
-        camera continues to move even if the mouse if not moving.
-
-        For a 3-button mouse, the left button is for rotation, the right button
-        for zooming, the middle button for panning, and ctrl + left button for
-        spinning.  (With fewer mouse buttons, ctrl + shift + left button is
-        for zooming, and shift + left button is for panning.)
-
-        """
-        self._style = 'JoystickCamera'
-        self._style_class = None
-        return self.update_style()
-
+    @wraps(RenderWindowInteractor.enable_zoom_style)
     def enable_zoom_style(self):
-        """Set the interactive style to rubber band zoom.
+        """Wrap RenderWindowInteractor.enable_zoom_style."""
+        self.iren.enable_zoom_style()
 
-        This interactor style allows the user to draw a rectangle in the render
-        window using the left mouse button.  When the mouse button is released,
-        the current camera zooms by an amount determined from the shorter side
-        of the drawn rectangle.
-
-        """
-        self._style = 'RubberBandZoom'
-        self._style_class = None
-        return self.update_style()
-
+    @wraps(RenderWindowInteractor.enable_terrain_style)
     def enable_terrain_style(self):
-        """Set the interactive style to terrain.
+        """Wrap RenderWindowInteractor.enable_terrain_style."""
+        self.iren.enable_terrain_style()
 
-        Used to manipulate a camera which is viewing a scene with a natural
-        view up, e.g., terrain. The camera in such a scene is manipulated by
-        specifying azimuth (angle around the view up vector) and elevation
-        (the angle from the horizon).
-
-        """
-        self._style = 'Terrain'
-        self._style_class = None
-        return self.update_style()
-
+    @wraps(RenderWindowInteractor.enable_rubber_band_style)
     def enable_rubber_band_style(self):
-        """Set the interactive style to rubber band picking.
+        """Wrap RenderWindowInteractor.enable_rubber_band_style."""
+        self.iren.enable_rubber_band_style()
 
-        This interactor style allows the user to draw a rectangle in the render
-        window by hitting 'r' and then using the left mouse button.
-        When the mouse button is released, the attached picker operates on the
-        pixel in the center of the selection rectangle. If the picker happens to
-        be a vtkAreaPicker it will operate on the entire selection rectangle.
-        When the 'p' key is hit the above pick operation occurs on a 1x1
-        rectangle. In other respects it behaves the same as its parent class.
-
-        """
-        self._style = 'RubberBandPick'
-        self._style_class = None
-        return self.update_style()
-
+    @wraps(RenderWindowInteractor.enable_rubber_band_2d_style)
     def enable_rubber_band_2d_style(self):
-        """Set the interactive style to rubber band 2d.
-
-        Camera rotation is not allowed with this interactor style. Zooming
-        affects the camera's parallel scale only, and assumes that the camera
-        is in parallel projection mode. The style also allows draws a rubber
-        band using the left button. All camera changes invoke
-        StartInteractionEvent when the button is pressed, InteractionEvent
-        when the mouse (or wheel) is moved, and EndInteractionEvent when the
-        button is released. The bindings are as follows: Left mouse - Select
-        (invokes a SelectionChangedEvent). Right mouse - Zoom.
-        Middle mouse - Pan. Scroll wheel - Zoom.
-
-        """
-        self._style = 'RubberBand2D'
-        self._style_class = None
-        return self.update_style()
+        """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
+        self.iren.enable_rubber_band_2d_style()
 
     def hide_axes_all(self):
         """Hide the axes orientation widget in all renderers."""
@@ -3556,7 +3403,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # setup autoscaling of the image
         if auto_resize:  # pragma: no cover
-            self._add_observer('ModifiedEvent', renderer.resize)
+            self.iren.add_observer('ModifiedEvent', renderer.resize)
 
     def remove_background_image(self):
         """Remove the background image from the current subplot."""
@@ -3825,14 +3672,12 @@ class Plotter(BasePlotter):
             self.ren_win.SetOffScreenRendering(1)
 
         # Add ren win and interactor
-        self.iren = _vtk.vtkRenderWindowInteractor()
+        self.iren = RenderWindowInteractor(self)
         self.iren.LightFollowCameraOff()
         self.iren.SetDesiredUpdateRate(30.0)
         self.iren.SetRenderWindow(self.ren_win)
         self.enable_trackball_style()  # internally calls update_style()
-        self._observers = {}    # Map of events to observers of self.iren
-        self._add_observer("KeyPressEvent", self.key_press_event)
-        self.update_style()
+        self.iren.add_observer("KeyPressEvent", self.key_press_event)
 
         # Set background
         self.set_background(rcParams['background'])
@@ -3841,7 +3686,7 @@ class Plotter(BasePlotter):
         self.window_size = window_size
 
         # add timer event if interactive render exists
-        self._add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
+        self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
 
         if rcParams["depth_peeling"]["enabled"]:
             if self.enable_depth_peeling():
@@ -4036,7 +3881,7 @@ class Plotter(BasePlotter):
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
-                self.update_style()
+                self.iren.update_style()
                 if not interactive_update:
                     self.iren.Start()
                 self.iren.Initialize()
@@ -4115,49 +3960,6 @@ class Plotter(BasePlotter):
                              font_size=font_size, color=color, font=font,
                              shadow=shadow, name='title', viewport=False)
 
-
-def _style_factory(klass):
-    """Create a subclass with capturing ability, return it."""
-    # We have to use a custom subclass for this because the default ones
-    # swallow the release events
-    # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
-
-    try:
-        from vtkmodules import vtkInteractionStyle
-    except ImportError:
-        import vtk as vtkInteractionStyle
-
-    class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
-
-        def __init__(self, parent):
-            super().__init__()
-            self._parent = weakref.ref(parent)
-            self.AddObserver(
-                "LeftButtonPressEvent",
-                partial(try_callback, self._press))
-            self.AddObserver(
-                "LeftButtonReleaseEvent",
-                partial(try_callback, self._release))
-
-        def _press(self, obj, event):
-            # Figure out which renderer has the event and disable the
-            # others
-            super().OnLeftButtonDown()
-            parent = self._parent()
-            if len(parent.renderers) > 1:
-                click_pos = parent.iren.GetEventPosition()
-                for renderer in parent.renderers:
-                    interact = renderer.IsInViewport(*click_pos)
-                    renderer.SetInteractive(interact)
-
-        def _release(self, obj, event):
-            super().OnLeftButtonUp()
-            parent = self._parent()
-            if len(parent.renderers) > 1:
-                for renderer in parent.renderers:
-                    renderer.SetInteractive(True)
-
-    return CustomStyle
 
 
 # Tracks created plotters.  At the end of the file as we need to
