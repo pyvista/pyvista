@@ -39,6 +39,7 @@ from .scalar_bars import ScalarBars
 from .renderers import Renderers
 from .render_window_interactor import RenderWindowInteractor
 
+
 def _has_matplotlib():
     try:
         import matplotlib
@@ -1661,7 +1662,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop.SetSpecular(specular)
         prop.SetSpecularPower(specular_power)
 
-        if pbr and VTK9:
+        if pbr and _vtk.VTK9:
             prop.SetInterpolationToPBR()
             prop.SetMetallic(metallic)
             prop.SetRoughness(roughness)

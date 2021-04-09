@@ -639,21 +639,21 @@ def download_vtk_logo():
     return _download_and_read("vtk.png", texture=True)
 
 
-
 def download_sky_box_cube_map():
     """Download a skybox cube map texture."""
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
     images = ['skybox2-' + suffix + '.jpg' for suffix in sets]
     texture = pyvista.Texture()
-    texture.cube_map = True # Must be set prior to setting images
+    texture.cube_map = True  # Must be set prior to setting images
     for i, fn in enumerate(images):
         image = _download_and_read(fn)
-        flip = vtk.vtkImageFlip()
+        flip = _vtk.vtkImageFlip()
         flip.SetInputDataObject(image)
         flip.SetFilteredAxis(1)  # flip y axis
         flip.Update()
         texture.SetInputDataObject(i, flip.GetOutput())
     return texture
+
 
 def download_backward_facing_step():
     """Download an ensight gold case of a fluid simulation."""
