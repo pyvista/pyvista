@@ -28,7 +28,7 @@ def plot_example():
 # environments.
 #
 # Here's an example of our default plotting theme - this is what you would see
-# by default after running any of our examnples.
+# by default after running any of our examples.
 
 pv.set_plot_theme("default")
 

@@ -1,10 +1,16 @@
 .. title:: PyVista
 
+.. jupyter-execute::
+   :hide-code:
+
+   from pyvista.demos import logo
+   logo._for_landing_page(height='200px')
+
 .. raw:: html
 
     <div class="banner">
-        <img src="_static/pyvista_logo.png" alt="pyvista" width="500px">
         <h2>3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)</h2>
+        <a href="./examples/index.html"><img src="_static/pyvista_banner_small.png" alt="pyvista" width="100%"/></a>
     </div>
 
 
@@ -140,8 +146,8 @@ Here are a few open-source projects that leverage PyVista:
 .. _pyansys: https://github.com/akaszynski/pyansys
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista
-.. _discretize: http://discretize.simpeg.xyz/en/master/
-.. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/api/generated/discretize.mixins.vtkModule.html
+.. _discretize: https://discretize.simpeg.xyz/en/master/
+.. _creating compelling visualizations: https://discretize.simpeg.xyz/en/master/api/generated/discretize.mixins.vtk_mod.InterfaceVTK.html
 .. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
 .. _tetgen: https://github.com/pyvista/tetgen
@@ -156,6 +162,17 @@ If you are using PyVista in your scientific research, please help our scientific
 visibility by citing our work! Head over to :ref:`citation_ref` to learn more
 about citing PyVista.
 
+Videos
+======
+
+Here are some videos that you can watch to learn pyvista:
+
+- PyConJP2020 talk "How to plot unstructured mesh file on Jupyter Notebook" (15 minutes):
+
+  - Video: https://youtu.be/X3Z54Kw4I6Y
+  - Material: https://docs.google.com/presentation/d/1M_cnS66ja81u_mHACjaUsDj1wSeeEtnEevk_IMZ8-dg/edit?usp=sharing
+
+If there is any material that we can add, please  `report <https://github.com/pyvista/pyvista/issues>`_ .
 
 Getting Started
 ***************
@@ -185,8 +202,31 @@ for 3D visualization in our `external examples list <./external_examples.html>`_
    getting-started/installation
    getting-started/what-is-a-mesh
    getting-started/simple
+   jupyter/index
    examples/index
    external_examples
+   optional_features
+
+Translating the documentation
+*****************************
+
+The recommended way for new contributors to translate ``pyvista``'s documentation is to
+join the translation team on Transifex.
+
+There is a `pyvista translation page`_ for pyvista (master) documentation.
+
+1. Login to transifex_ service.
+2. Go to `pyvista translation page`_.
+3. Click ``Request language`` and fill form.
+4. Wait acceptance by transifex pyvista translation maintainers.
+5. (After acceptance) Translate on transifex.
+6. You can see the translated document in `Read The Docs`_.
+
+Details can be found here: https://docs.transifex.com/getting-started-1/translators
+
+.. _`pyvista translation page`: https://www.transifex.com/getfem-doc/pyvista-doc/
+.. _Transifex: https://www.transifex.com/
+.. _`Read The Docs`: https://pyvista-doc.readthedocs.io/en/latest
 
 
 API Reference
@@ -210,8 +250,19 @@ Highlights of the API include:
    plotting/index
    utilities/index
 
+Extras
+******
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Extras
+   :hidden:
 
+   extras/building_vtk
+   extras/docker
+   extras/developer_notes
+   extras/pyinstaller
+   extras/flask
 
 Project Index
 *************

@@ -7,23 +7,22 @@ import sys
 
 import numpy as np
 import scooby
-import vtk
 
 import pyvista
-
+from pyvista import _vtk
 
 def set_error_output_file(filename):
     """Set a file to write out the VTK errors."""
     filename = os.path.abspath(os.path.expanduser(filename))
-    fileOutputWindow = vtk.vtkFileOutputWindow()
+    fileOutputWindow = _vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)
-    outputWindow = vtk.vtkOutputWindow()
+    outputWindow = _vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow
 
 
 class Observer:
-    """A standerd class for observing VTK objects."""
+    """A standard class for observing VTK objects."""
 
     def __init__(self, event_type='ErrorEvent', log=True):
         """Initialize observer."""
@@ -68,7 +67,7 @@ class Observer:
             self.log_message(kind, alert)
 
     def has_event_occurred(self):
-        """Ask self if an error has occurred since last querried.
+        """Ask self if an error has occurred since last queried.
 
         This resets the observer's status.
 
@@ -80,8 +79,8 @@ class Observer:
     def get_message(self, etc=False):
         """Get the last set error message.
 
-        Return
-        ------
+        Returns
+        -------
             str: the last set error message
 
         """
@@ -102,8 +101,8 @@ class Observer:
 
 def send_errors_to_logging():
     """Send all VTK error/warning messages to Python's logging module."""
-    error_output = vtk.vtkStringOutputWindow()
-    error_win = vtk.vtkOutputWindow()
+    error_output = _vtk.vtkStringOutputWindow()
+    error_win = _vtk.vtkOutputWindow()
     error_win.SetInstance(error_output)
     obs = Observer()
     return obs.observe(error_output)
@@ -179,7 +178,7 @@ class GPUInfo():
         """Representation method."""
         content = "\n"
         for k, v in self.get_info():
-            content += "{:>18}".format(k)+' : {}\n'.format(v)
+            content += f"{k:>18} : {v}\n"
         content += "\n"
         return content
 
@@ -218,13 +217,13 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = ['matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'panel', 'scipy', 'itkwidgets', 'tqdm']
+                    'cmocean', 'ipyvtk_simple', 'scipy', 'itkwidgets', 'tqdm']
 
         # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.
         if gpu:
             try:
-                extra_meta = [(t[1], t[0]) for t in GPUInfo().get_info()]
+                extra_meta = GPUInfo().get_info()
             except:
                 extra_meta = ("GPU Details", "error")
         else:
@@ -246,12 +245,12 @@ def assert_empty_kwargs(**kwargs):
         return True
     caller = sys._getframe(1).f_code.co_name
     keys = list(kwargs.keys())
-    bad_arguments = ', '.join(['"%s"' % key for key in keys])
+    bad_arguments = ', '.join([f'"{key}"' for key in keys])
     if n == 1:
         grammar = "is an invalid keyword argument"
     else:
         grammar = "are invalid keyword arguments"
-    message = "{} {} for `{}`".format(bad_arguments, grammar, caller)
+    message = f"{bad_arguments} {grammar} for `{caller}`"
     raise TypeError(message)
 
 
@@ -260,4 +259,4 @@ def check_valid_vector(point, name=''):
     if np.array(point).size != 3:
         if name == '':
             name = 'Vector'
-        raise TypeError('%s must be a length three tuple of floats.' % name)
+        raise TypeError(f'{name} must be a length three tuple of floats.')

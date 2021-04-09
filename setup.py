@@ -2,11 +2,8 @@
 Installation file for python pyvista module
 """
 import os
-import platform
-import sys
-import warnings
+# import sys
 from io import open as io_open
-
 from setuptools import setup
 
 package_name = 'pyvista'
@@ -17,30 +14,47 @@ version_file = os.path.join(filepath, package_name, '_version.py')
 with io_open(version_file, mode='r') as fd:
     exec(fd.read())
 
+# leaving this out for conda compatibility...
+# python3_9_linux_wheel = 'https://github.com/pyvista/pyvista/releases/download/0.27.0/vtk-9.0.1-cp39-cp39-manylinux2010_x86_64.whl'
+
+# # Python 3.9 isn't supported at the moment
+# if sys.version_info.minor == 9:
+#     # but, the user might have installed vtk from a non-pypi wheel.
+#     try:
+#         import vtk
+#     except ImportError:
+#         note = ''
+#         if os.name == 'linux':
+#             note = '\n\nHowever there is an unofficial Linux wheel build by the ``pyvista`` team at ' + python3_9_linux_wheel
+
+#         raise RuntimeError('There are no official Python 3.9 wheels for VTK on yet.  '
+#                            'Please use Python 3.6 through 3.8, or build and install '
+#                            'VTK from source with a wheel.  Please see:\n'
+#                            'https://docs.pyvista.org/building_vtk.html' + note)
+
+
 # pre-compiled vtk available for python3
 install_requires = ['numpy',
                     'imageio',
+                    'pillow',
                     'appdirs',
                     'scooby>=0.5.1',
                     'meshio>=4.0.3, <5.0',
+                    'vtk',
+                    'transforms3d==0.3.1'
                     ]
-
-# add vtk if not windows and 2.7
-py_ver = int(sys.version[0])
-if os.name == 'nt' and (py_ver < 3 or '64' not in platform.architecture()[0]):
-    warnings.warn('\nYou will need to install VTK manually.'
-                  '  Try using Anaconda.  See:\n'
-                  'https://anaconda.org/anaconda/vtk')
-else:
-    install_requires.append(['vtk'])
-
 
 readme_file = os.path.join(filepath, 'README.rst')
 
 setup(
     name=package_name,
-    packages=[package_name, 'pyvista.examples', 'pyvista.core',
-              'pyvista.plotting', 'pyvista.utilities'],
+    packages=['pyvista',
+              'pyvista.examples',
+              'pyvista.core',
+              'pyvista.demos',
+              'pyvista.jupyter',
+              'pyvista.plotting',
+              'pyvista.utilities'],
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=io_open(readme_file, encoding="utf-8").read(),
@@ -55,7 +69,6 @@ setup(
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
         'Operating System :: MacOS',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
@@ -66,8 +79,10 @@ setup(
     package_data={'pyvista.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
                                        'hexbeam.vtk', 'sphere.ply',
                                        'uniform.vtk', 'rectilinear.vtk',
-                                       'globe.vtk', '2k_earth_daymap.jpg']},
-    python_requires='>=3.5.*',
+                                       'globe.vtk', '2k_earth_daymap.jpg'],
+    },
+
+    python_requires='>=3.6.*',
     install_requires=install_requires,
     extras_require={
         'colormaps': ['matplotlib', 'colorcet', 'cmocean']

@@ -52,7 +52,6 @@ import sys
 import time
 import zipfile
 
-import vtk
 
 FILENAME_EXTENSION = '.vtkjs'
 
@@ -99,7 +98,7 @@ def get_ref(dest_dir, md5):
 # -----------------------------------------------------------------------------
 
 
-objIds = []
+objIds = []  # type: ignore
 
 
 def get_object_id(obj):
@@ -116,6 +115,8 @@ def get_object_id(obj):
 
 def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
     """Dump vtkjs data array."""
+    # import here to avoid circular imports
+    from pyvista import _vtk
     if root is None:
         root = {}
     if not array:
@@ -124,7 +125,7 @@ def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
     if array.GetDataType() == 12:
         # IdType need to be converted to Uint32
         array_size = array.GetNumberOfTuples() * array.GetNumberOfComponents()
-        new_array = vtk.vtkTypeUInt32Array()
+        new_array = _vtk.vtkTypeUInt32Array()
         new_array.SetNumberOfTuples(array_size)
         for i in range(array_size):
             new_array.SetValue(i, -1 if array.GetValue(i) < 0 else array.GetValue(i))
@@ -425,6 +426,8 @@ def mkdir_p(path):
 
 def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
     """Export a plotter's rendering window to the VTKjs format."""
+    # import here to avoid circular imports
+    from pyvista import _vtk
     sceneName = os.path.split(filename)[1]
     doCompressArrays = compress_arrays
 
@@ -457,24 +460,23 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     if dataObject.GetNumberOfBlocks() == 1:
                         dataset = dataObject.GetBlock(0)
                     else:
-                        gf = vtk.vtkCompositeDataGeometryFilter()
+                        gf = _vtk.vtkCompositeDataGeometryFilter()
                         gf.SetInputData(dataObject)
                         gf.Update()
                         dataset = gf.GetOutput()
                 else:
                     dataset = mapper.GetInput()
 
-                if dataset and not isinstance(dataset, (vtk.vtkPolyData, vtk.vtkImageData)):
+                if dataset and not isinstance(dataset, (_vtk.vtkPolyData, _vtk.vtkImageData)):
                     # All data must be PolyData surfaces
-                    gf = vtk.vtkGeometryFilter()
+                    gf = _vtk.vtkGeometryFilter()
                     gf.SetInputData(dataset)
                     gf.Update()
                     dataset = gf.GetOutputDataObject(0)
 
 
                 if dataset:# and dataset.GetPoints(): # NOTE: vtkImageData does not have points
-                    componentName = 'data_%d_%d' % (
-                        rIdx, rpIdx)  # getComponentName(renProp)
+                    componentName = f'data_{rIdx}_{rpIdx}' # getComponentName(renProp)
                     scalarVisibility = mapper.GetScalarVisibility()
                     #arrayAccessMode = mapper.GetArrayAccessMode()
                     #colorArrayName = mapper.GetArrayName() #TODO: if arrayAccessMode == 1 else mapper.GetArrayId()
@@ -524,7 +526,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     textureName = None
                     if renProp.GetTexture() and renProp.GetTexture().GetInput():
                         textureData = renProp.GetTexture().GetInput()
-                        textureName = 'texture_%d' % get_object_id(textureData)
+                        textureName = f'texture_{get_object_id(textureData)}'
                         textureToSave[textureName] = textureData
 
                     representation = renProp.GetProperty().GetRepresentation(
@@ -588,18 +590,18 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
         write_data_set('', val, output_dir, None, new_name=key,
                        compress=doCompressArrays)
 
-    cameraClippingRange = plotter.camera.GetClippingRange()
+    cameraClippingRange = plotter.camera.clipping_range
 
     sceneDescription = {
         "fetchGzip": doCompressArrays,
         "background": plotter.background_color,
         "camera": {
-            "focalPoint": plotter.camera.GetFocalPoint(),
-            "position": plotter.camera.GetPosition(),
-            "viewUp": plotter.camera.GetViewUp(),
+            "focalPoint": plotter.camera.focal_point,
+            "position": plotter.camera.position,
+            "viewUp": plotter.camera.up,
             "clippingRange": [elt for elt in cameraClippingRange],
         },
-        "centerOfRotation": plotter.camera.GetFocalPoint(),
+        "centerOfRotation": plotter.camera.focal_point,
         "scene": sceneComponents
     }
 
@@ -611,7 +613,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
 
     # Now zip up the results and get rid of the temp directory
     sceneFileName = os.path.join(
-        root_output_directory, '%s%s' % (sceneName, FILENAME_EXTENSION))
+        root_output_directory, f'{sceneName}{FILENAME_EXTENSION}')
 
     try:
         import zlib
@@ -625,8 +627,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
         for dirName, subdirList, fileList in os.walk(output_dir):
             for fname in fileList:
                 fullPath = os.path.join(dirName, fname)
-                relPath = '%s/%s' % (sceneName,
-                                     os.path.relpath(fullPath, output_dir))
+                relPath = f'{sceneName}/{os.path.relpath(fullPath, output_dir)}'
                 zf.write(fullPath, arcname=relPath, compress_type=compression)
     finally:
         zf.close()
@@ -644,7 +645,7 @@ def convert_dropbox_url(url):
 def generate_viewer_url(dataURL):
     """Generate viewer url with data link."""
     viewerURL = "http://viewer.pyvista.org/"
-    return viewerURL + '%s%s' % ("?fileURL=", dataURL)
+    return viewerURL + f'?fileURL={dataURL}'
 
 
 def get_vtkjs_url(*args):

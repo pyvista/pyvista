@@ -15,7 +15,7 @@ Empty Object
 ~~~~~~~~~~~~
 A polydata object can be initialized with:
 
-.. testcode:: python
+.. jupyter-execute::
 
     import pyvista
     grid = pyvista.PolyData()
@@ -33,17 +33,26 @@ Initialize from a File
 Both binary and ASCII .ply, .stl, and .vtk files can be read using PyVista.
 For example, the PyVista package contains example meshes and these can be loaded with:
 
-.. testcode:: python
+.. jupyter-execute::
+    :hide-code:
+
+    import pyvista
+    pyvista.set_jupyter_backend('panel')
+    pyvista.set_plot_theme('document')
+
+
+.. jupyter-execute::
 
     import pyvista
     from pyvista import examples
 
     # Load mesh
     mesh = pyvista.PolyData(examples.planefile)
+    mesh
 
 This mesh can then be written to a vtk file using:
 
-.. testcode:: python
+.. jupyter-execute::
 
     mesh.save('plane.vtk')
 
@@ -56,21 +65,29 @@ These meshes are identical.
     mesh_from_vtk = pyvista.PolyData('plane.vtk')
     print(np.allclose(mesh_from_vtk.points, mesh.points))
 
-.. testcleanup:: python
 
-   import os
-   try:
-       os.remove('plane.vtk')
-   except FileNotFoundError:
-       pass
+.. jupyter-execute::
+    :hide-code:
+
+    import os
+    try:
+        os.remove('plane.vtk')
+    except FileNotFoundError:
+        pass
+
 
 Mesh Manipulation and Plotting
 ------------------------------
-Meshes can be directly manipulated using NumPy or with the built-in translation
-and rotation routines.
-This example loads two meshes and moves, scales, and copies them.
+Meshes can be directly manipulated using NumPy or with the built-in
+translation and rotation routines.  This example loads two meshes and
+moves, scales, copies them, and finally plots them.
 
-.. testcode:: python
+To plot more than one mesh a plotting class must be created to manage
+the plotting.  The following code creates the class and plots the
+meshes with various colors.
+
+
+.. jupyter-execute::
 
     import pyvista
     from pyvista import examples
@@ -88,11 +105,6 @@ This example loads two meshes and moves, scales, and copies them.
     ant_copy = ant.copy()
     ant_copy.translate([30, 0, -10])
 
-To plot more than one mesh a plotting class must be created to manage the plotting.
-The following code creates the class and plots the meshes with various colors.
-
-.. testcode:: python
-
     # Create plotting object
     plotter = pyvista.Plotter()
     plotter.add_mesh(ant, 'r')
@@ -101,14 +113,12 @@ The following code creates the class and plots the meshes with various colors.
     # Add airplane mesh and make the color equal to the Y position.  Add a
     # scalar bar associated with this mesh
     plane_scalars = airplane.points[:, 1]
-    plotter.add_mesh(airplane, scalars=plane_scalars, stitle='Airplane Y\nLocation')
+    plotter.add_mesh(airplane, scalars=plane_scalars,
+                     scalar_bar_args={'title': 'Airplane Y\nLocation'})
 
     # Add annotation text
     plotter.add_text('Ants and Plane Example')
-    plotter.show(screenshot='AntsAndPlane.png')
-
-.. image:: ../images/auto-generated/AntsAndPlane.png
-
+    plotter.show()
 
 
 pyvista.PolyData Grid Class Methods

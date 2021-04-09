@@ -4,7 +4,7 @@ Subdivide Cells
 
 Increase the number of triangles in a single, connected triangular mesh.
 
-The :func:`pyvista.PolyDataFilters.subdivide` filter utilitizes three different
+The :func:`pyvista.PolyDataFilters.subdivide` filter utilizes three different
 subdivision algorithms to subdivide a mesh's cells: `butterfly`, `loop`,
 or `linear`.
 """
@@ -40,7 +40,7 @@ def plot_subdivisions(mesh, a, b):
         for i in range(2):
             p.subplot(row, i+1)
             p.add_mesh(mesh.subdivide(subs[i], subfilter=subfilter), **display_args)
-            p.add_text("{} subdivision of {}".format(subfilter, subs[i]))
+            p.add_text(f"{subfilter} subdivision of {subs[i]}")
     row_plot(0, "linear")
     row_plot(1, "butterfly")
     row_plot(2, "loop")

@@ -1,3 +1,4 @@
+import pathlib
 import os
 import weakref
 
@@ -46,6 +47,50 @@ def test_init_from_unstructured(hexbeam):
     assert not np.any(grid.points == hexbeam.points)
 
 
+def test_init_from_numpy_arrays():
+    offset = np.array([0, 9])
+    cells = [
+        [8, 0, 1, 2, 3, 4, 5, 6, 7],
+        [8, 8, 9, 10, 11, 12, 13, 14, 15]
+    ]
+    cells = np.array(cells).ravel()
+    cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON])
+    cell1 = np.array(
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 0, 1],
+            [1, 1, 1],
+            [0, 1, 1],
+        ]
+    )
+
+    cell2 = np.array(
+        [
+            [0, 0, 2],
+            [1, 0, 2],
+            [1, 1, 2],
+            [0, 1, 2],
+            [0, 0, 3],
+            [1, 0, 3],
+            [1, 1, 3],
+            [0, 1, 3],
+        ]
+    )
+
+    points = np.vstack((cell1, cell2))
+    if VTK9:
+        grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+    else:
+        grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
+
+    assert grid.number_of_points == 16
+    assert grid.number_of_cells == 2
+
+
 def test_init_bad_input():
     with pytest.raises(TypeError):
         unstruct_grid = pyvista.UnstructuredGrid(np.array(1))
@@ -56,8 +101,7 @@ def test_init_bad_input():
                                                  np.array(1),
                                                  'woa')
 
-
-def test_init_from_arrays():
+def create_hex_example():
     cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
     cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int32)
 
@@ -80,13 +124,23 @@ def test_init_from_arrays():
                       [0, 1, 3]])
 
     points = np.vstack((cell1, cell2)).astype(np.int32)
+    offset = np.array([0, 9], np.int8)
+
+    return offset, cells, cell_type, points
+
+#Try both with and without an offset array
+@pytest.mark.parametrize('specify_offset', [False, True])
+def test_init_from_arrays(specify_offset):
+    offset, cells, cell_type, points = create_hex_example()
 
     if VTK9:
         grid = pyvista.UnstructuredGrid(cells, cell_type, points, deep=False)
-        assert np.allclose(grid.cells, cells)
     else:
-        offset = np.array([0, 9], np.int8)
-        grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points, deep=False)
+        if specify_offset:
+            grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points, deep=False)
+        else:
+            grid = pyvista.UnstructuredGrid(cells, cell_type, points, deep=False)
+
         assert np.allclose(grid.offset, offset)
 
     assert grid.n_cells == 2
@@ -98,6 +152,145 @@ def test_init_from_arrays():
         with pytest.raises(AttributeError):
             grid.cell_connectivity
 
+@pytest.mark.parametrize('multiple_cell_types', [False, True])
+@pytest.mark.parametrize('flat_cells', [False, True])
+def test_init_from_dict(multiple_cell_types, flat_cells):
+    #Try mixed construction
+    vtk8_offsets, vtk_cell_format, cell_type, points = create_hex_example()
+
+    vtk9_offsets = np.array([0, 8, 16])
+    cells_hex = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
+    input_cells_dict = {vtk.VTK_HEXAHEDRON: cells_hex}
+    
+    if multiple_cell_types:
+        cells_quad = np.array([[16, 17, 18, 19]])
+    
+        cell3 = np.array([[0, 0, -1],
+                          [1, 0, -1],
+                          [1, 1, -1],
+                          [0, 1, -1]])
+
+
+        points = np.vstack((points, cell3))
+        input_cells_dict[vtk.VTK_QUAD] = cells_quad
+
+        #Update expected vtk cell arrays
+        vtk_cell_format = np.concatenate([vtk_cell_format, [4], np.squeeze(cells_quad)])
+        vtk8_offsets = np.concatenate([vtk8_offsets, [18]])
+        vtk9_offsets = np.concatenate([vtk9_offsets, [20]])
+        cell_type = np.concatenate([cell_type, [vtk.VTK_QUAD]])
+
+    if flat_cells:
+        input_cells_dict = {k: v.reshape([-1]) for k, v in input_cells_dict.items()}
+
+
+    grid = pyvista.UnstructuredGrid(input_cells_dict, points, deep=False)
+
+    if VTK9:
+        assert np.all(grid.offset == vtk9_offsets)
+    else:
+        assert np.all(grid.offset == vtk8_offsets)
+
+    assert grid.n_cells == (3 if multiple_cell_types else 2)
+    assert np.all(grid.cells == vtk_cell_format)
+
+    if VTK9:
+        assert np.allclose(grid.cell_connectivity, (np.arange(20) if multiple_cell_types else np.arange(16)))
+    else:
+        with pytest.raises(AttributeError):
+            grid.cell_connectivity
+
+    #Now fetch the arrays
+    output_cells_dict = grid.cells_dict
+
+    assert np.all(output_cells_dict[vtk.VTK_HEXAHEDRON].reshape([-1]) == input_cells_dict[vtk.VTK_HEXAHEDRON].reshape([-1]))
+
+    if multiple_cell_types:
+        assert np.all(output_cells_dict[vtk.VTK_QUAD].reshape([-1]) == input_cells_dict[vtk.VTK_QUAD].reshape([-1]))
+
+
+    #Test for some errors
+    #Invalid index (<0)
+    input_cells_dict[vtk.VTK_HEXAHEDRON] -= 1
+
+    with pytest.raises(ValueError):
+        pyvista.UnstructuredGrid(input_cells_dict, points, deep=False)
+
+    # Restore
+    input_cells_dict[vtk.VTK_HEXAHEDRON] += 1
+
+    # Invalid index (>= nr_points)
+    input_cells_dict[vtk.VTK_HEXAHEDRON].flat[0] = points.shape[0]
+
+    with pytest.raises(ValueError):
+        pyvista.UnstructuredGrid(input_cells_dict, points, deep=False)
+
+    input_cells_dict[vtk.VTK_HEXAHEDRON] -= 1
+
+    # Incorrect size
+    with pytest.raises(ValueError):
+        pyvista.UnstructuredGrid({vtk.VTK_HEXAHEDRON: cells_hex.reshape([-1])[:-1]}, points, deep=False)
+
+    # Unknown cell type
+    with pytest.raises(ValueError):
+        pyvista.UnstructuredGrid({255: cells_hex}, points, deep=False)
+
+    # Dynamic sizes cell type
+    with pytest.raises(ValueError):
+        pyvista.UnstructuredGrid({vtk.VTK_POLYGON: cells_hex.reshape([-1])}, points, deep=False)
+
+    # Non-integer arrays
+    with pytest.raises(ValueError):
+        pyvista.UnstructuredGrid({vtk.VTK_HEXAHEDRON: cells_hex.reshape([-1])[:-1].astype(np.float32)}, points)
+
+    # Invalid point dimensions
+    with pytest.raises(ValueError):
+        pyvista.UnstructuredGrid(input_cells_dict, points[..., :-1])
+
+
+def test_cells_dict_hexbeam_file():
+    grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
+    cells = np.delete(grid.cells, np.arange(0, grid.cells.size, 9)).reshape([-1, 8])
+
+    assert np.all(grid.cells_dict[vtk.VTK_HEXAHEDRON] == cells)
+
+
+def test_cells_dict_variable_length():
+    cells_poly = np.concatenate([[5], np.arange(5)])
+    cells_types = np.array([vtk.VTK_POLYGON])
+    points = np.random.normal(size=(5, 3))
+    grid = pyvista.UnstructuredGrid(cells_poly, cells_types, points)
+
+    # Dynamic sizes cell types are currently unsupported
+    with pytest.raises(ValueError):
+        grid.cells_dict
+
+    grid.celltypes[:] = 255
+    # Unknown cell types
+    with pytest.raises(ValueError):
+        grid.cells_dict
+
+
+def test_cells_dict_empty_grid():
+    grid = pyvista.UnstructuredGrid()
+    assert grid.cells_dict is None
+
+
+def test_cells_dict_alternating_cells():
+    cells = np.concatenate([[4], [1, 2, 3, 4], [3], [0, 1, 2], [4], [0, 1, 5, 6]])
+    cells_types = np.array([vtk.VTK_QUAD, vtk.VTK_TRIANGLE, vtk.VTK_QUAD])
+    points = np.random.normal(size=(3+2*2, 3))
+    grid = pyvista.UnstructuredGrid(cells, cells_types, points)
+
+    cells_dict = grid.cells_dict
+
+    if VTK9:
+        assert np.all(grid.offset == np.array([0, 4, 7, 11]))
+    else:
+        assert np.all(grid.offset == np.array([0, 5, 9]))
+
+    assert np.all(cells_dict[vtk.VTK_QUAD] == np.array([cells[1:5], cells[-4:]]))
+    assert np.all(cells_dict[vtk.VTK_TRIANGLE] == [0, 1, 2])
 
 def test_destructor():
     ugrid = examples.load_hexbeam()
@@ -128,7 +321,7 @@ def test_triangulate_inplace(hexbeam):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.pointset.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     hexbeam.save(filename, binary)
 
     grid = pyvista.UnstructuredGrid(filename)
@@ -141,9 +334,25 @@ def test_save(extension, binary, tmpdir, hexbeam):
     assert isinstance(grid, pyvista.UnstructuredGrid)
 
 
+def test_pathlib_read_write(tmpdir, hexbeam):
+    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
+    assert not path.is_file()
+    hexbeam.save(path)
+    assert path.is_file()
+
+    grid = pyvista.UnstructuredGrid(path)
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+
+    grid = pyvista.read(path)
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+    assert isinstance(grid, pyvista.UnstructuredGrid)
+
+
 def test_init_bad_filename():
     filename = os.path.join(test_path, 'test_grid.py')
-    with pytest.raises(ValueError):
+    with pytest.raises(IOError):
         grid = pyvista.UnstructuredGrid(filename)
 
     with pytest.raises(FileNotFoundError):
@@ -267,6 +476,25 @@ def test_init_structured(struct_grid):
     assert np.allclose(grid_a.points, grid.points)
 
 
+def test_slice_structured(struct_grid):
+    sliced = struct_grid[1, :, 1:3]  # three different kinds of slices
+    assert sliced.dimensions == [1, struct_grid.dimensions[1], 2]
+
+    # check that points are in the right place
+    assert struct_grid.x[1, :, 1:3].ravel() == pytest.approx(sliced.x.ravel())
+    assert struct_grid.y[1, :, 1:3].ravel() == pytest.approx(sliced.y.ravel())
+    assert struct_grid.z[1, :, 1:3].ravel() == pytest.approx(sliced.z.ravel())
+
+    with pytest.raises(RuntimeError):
+        # fancy indexing error
+        struct_grid[[1, 2, 3], :, 1:3]
+
+    with pytest.raises(RuntimeError):
+        # incorrect number of dims error
+        struct_grid[:, :]
+
+
+
 def test_invalid_init_structured():
     xrng = np.arange(-10, 10, 2)
     yrng = np.arange(-10, 10, 2)
@@ -280,7 +508,7 @@ def test_invalid_init_structured():
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.pointset.StructuredGrid._WRITERS)
 def test_save_structured(extension, binary, tmpdir, struct_grid):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     struct_grid.save(filename, binary)
 
     grid = pyvista.StructuredGrid(filename)
@@ -300,8 +528,39 @@ def test_load_structured_bad_filename():
         pyvista.StructuredGrid('not a file')
 
     filename = os.path.join(test_path, 'test_grid.py')
-    with pytest.raises(ValueError):
+    with pytest.raises(IOError):
         grid = pyvista.StructuredGrid(filename)
+
+
+def test_instantiate_by_filename():
+    ex = examples
+
+    # actual mapping of example file to datatype
+    fname_to_right_type = {
+        ex.antfile: pyvista.PolyData,
+        ex.planefile: pyvista.PolyData,
+        ex.hexbeamfile: pyvista.UnstructuredGrid,
+        ex.spherefile: pyvista.PolyData,
+        ex.uniformfile: pyvista.UniformGrid,
+        ex.rectfile: pyvista.RectilinearGrid
+    }
+
+    # a few combinations of wrong type
+    fname_to_wrong_type = {
+        ex.antfile: pyvista.UnstructuredGrid,   # actual data is PolyData
+        ex.planefile: pyvista.StructuredGrid,   # actual data is PolyData
+        ex.rectfile: pyvista.UnstructuredGrid,  # actual data is StructuredGrid
+    }
+
+    # load the files into the right types
+    for fname, right_type in fname_to_right_type.items():
+        data = right_type(fname)
+        assert data.n_points > 0
+
+    # load the files into the wrong types
+    for fname, wrong_type in fname_to_wrong_type.items():
+        with pytest.raises(ValueError):
+            data = wrong_type(fname)
 
 
 def test_create_rectilinear_grid_from_specs():
@@ -358,6 +617,14 @@ def test_read_rectilinear_grid_from_file():
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
     assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
+    assert grid.n_arrays == 1
+
+
+def test_read_rectilinear_grid_from_pathlib():
+    grid = pyvista.RectilinearGrid(pathlib.Path(examples.rectfile))
+    assert grid.n_cells == 16146
+    assert grid.n_points == 18144
+    assert grid.bounds == [-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0]
     assert grid.n_arrays == 1
 
 
@@ -426,6 +693,15 @@ def test_read_uniform_grid_from_file():
     assert grid.dimensions == [10, 10, 10]
 
 
+def test_read_uniform_grid_from_pathlib():
+    grid = pyvista.UniformGrid(pathlib.Path(examples.uniformfile))
+    assert grid.n_cells == 729
+    assert grid.n_points == 1000
+    assert grid.bounds == [0.0, 9.0, 0.0, 9.0, 0.0, 9.0]
+    assert grid.n_arrays == 2
+    assert grid.dimensions == [10, 10, 10]
+
+
 def test_cast_uniform_to_structured():
     grid = examples.load_uniform()
     structured = grid.cast_to_structured_grid()
@@ -443,9 +719,9 @@ def test_cast_uniform_to_rectilinear():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.grid.RectilinearGrid._READERS)
+@pytest.mark.parametrize('extension', ['.vtk', '.vtr'])
 def test_save_rectilinear(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_rectilinear()
     ogrid.save(filename, binary)
     grid = pyvista.RectilinearGrid(filename)
@@ -464,9 +740,9 @@ def test_save_rectilinear(extension, binary, tmpdir):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.grid.UniformGrid._READERS)
+@pytest.mark.parametrize('extension', ['.vtk', '.vti'])
 def test_save_uniform(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_uniform()
     ogrid.save(filename, binary)
     grid = pyvista.UniformGrid(filename)
@@ -584,3 +860,242 @@ def test_hide_cells(ind, struct_grid):
     sgrid_copy = struct_grid.copy()
     sgrid_copy.hide_cells(ind)
     assert sgrid_copy.HasAnyBlankCells()
+
+    with pytest.raises(ValueError, match='Boolean array size must match'):
+        sgrid_copy.hide_cells(np.ones(10, dtype=np.bool))
+
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_UnstructuredGrid_cast_to_explicit_structured_grid():
+    grid = examples.load_explicit_structured()
+    grid.hide_cells(range(80, 120))
+    grid = grid.cast_to_unstructured_grid()
+    grid = grid.cast_to_explicit_structured_grid()
+    assert grid.n_cells == 120
+    assert grid.n_points == 210
+    assert grid.bounds == [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
+    assert 'BLOCK_I' in grid.cell_arrays
+    assert 'BLOCK_J' in grid.cell_arrays
+    assert 'BLOCK_K' in grid.cell_arrays
+    assert 'vtkGhostType' in grid.cell_arrays
+    assert np.count_nonzero(grid.cell_arrays['vtkGhostType']) == 40
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_init():
+    grid = examples.load_explicit_structured()
+    assert isinstance(grid, pyvista.ExplicitStructuredGrid)
+    assert grid.n_cells == 120
+    assert grid.n_points == 210
+    assert grid.bounds == [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
+    assert repr(grid) == str(grid)
+    assert 'N Cells' in str(grid)
+    assert 'N Points' in str(grid)
+    assert 'N Arrays' in str(grid)
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
+    block_i = np.asarray('''
+    0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0
+    1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1
+    2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2
+    3 0 1 2 3 0 1 2 3
+    '''.split(), dtype=int)
+
+    block_j = np.asarray('''
+    0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4
+    4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3
+    3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2
+    2 3 3 3 3 4 4 4 4
+    '''.split(), dtype=int)
+
+    block_k = np.asarray('''
+    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+    1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+    3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5 5 5 5
+    5 5 5 5 5 5 5 5 5
+    '''.split(), dtype=int)
+
+    grid = examples.load_explicit_structured()
+    grid = grid.cast_to_unstructured_grid()
+    assert isinstance(grid, pyvista.UnstructuredGrid)
+    assert 'BLOCK_I' in grid.cell_arrays
+    assert 'BLOCK_J' in grid.cell_arrays
+    assert 'BLOCK_K' in grid.cell_arrays
+    assert np.array_equal(grid.cell_arrays['BLOCK_I'], block_i)
+    assert np.array_equal(grid.cell_arrays['BLOCK_J'], block_j)
+    assert np.array_equal(grid.cell_arrays['BLOCK_K'], block_k)
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_save():
+    grid = examples.load_explicit_structured()
+    grid.hide_cells(range(80, 120))
+    grid.save('grid.vtu')
+    grid = pyvista.ExplicitStructuredGrid('grid.vtu')
+    assert grid.n_cells == 120
+    assert grid.n_points == 210
+    assert grid.bounds == [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
+    assert np.count_nonzero(grid.cell_arrays['vtkGhostType']) == 40
+    os.remove('grid.vtu')
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_hide_cells():
+    ghost = np.asarray('''
+     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+     0  0  0  0  0  0  0  0 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32
+    32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32
+    '''.split(), dtype=np.uint8)
+
+    grid = examples.load_explicit_structured()
+
+    copy = grid.hide_cells(range(80, 120), inplace=False)
+    assert isinstance(copy, pyvista.ExplicitStructuredGrid)
+    assert 'vtkGhostType' in copy.cell_arrays
+    assert 'vtkGhostType' not in grid.cell_arrays
+    assert np.array_equal(copy.cell_arrays['vtkGhostType'], ghost)
+
+    copy = grid.hide_cells(range(80, 120), inplace=True)
+    assert copy is None
+    assert 'vtkGhostType' in grid.cell_arrays
+    assert np.array_equal(grid.cell_arrays['vtkGhostType'], ghost)
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_show_cells():
+    grid = examples.load_explicit_structured()
+    grid.hide_cells(range(80, 120), inplace=True)
+
+    copy = grid.show_cells(inplace=False)
+    assert isinstance(copy, pyvista.ExplicitStructuredGrid)
+    assert 'vtkGhostType' in copy.cell_arrays
+    assert np.count_nonzero(copy.cell_arrays['vtkGhostType']) == 0
+    assert np.count_nonzero(grid.cell_arrays['vtkGhostType']) == 40
+
+    copy = grid.show_cells(inplace=True)
+    assert copy is None
+    assert np.count_nonzero(grid.cell_arrays['vtkGhostType']) == 0
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_dimensions():
+    grid = examples.load_explicit_structured()
+    assert isinstance(grid.dimensions, np.ndarray)
+    assert np.issubdtype(grid.dimensions.dtype, np.integer)
+    assert grid.dimensions.shape == (3,)
+    assert np.array_equal(grid.dimensions, [5, 6, 7])
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_visible_bounds():
+    grid = examples.load_explicit_structured()
+    grid.hide_cells(range(80, 120))
+    assert isinstance(grid.visible_bounds, list)
+    assert all(isinstance(x, float) for x in grid.visible_bounds)
+    assert len(grid.visible_bounds) == 6
+    assert grid.visible_bounds == [0.0, 80.0, 0.0, 50.0, 0.0, 4.0]
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_cell_id():
+    grid = examples.load_explicit_structured()
+
+    ind = grid.cell_id((3, 4, 0))
+    assert np.issubdtype(ind, np.integer)
+    assert ind == 19
+
+    ind = grid.cell_id([(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)])
+    assert isinstance(ind, np.ndarray)
+    assert np.issubdtype(ind.dtype, np.integer)
+    assert np.array_equal(ind, [19, 31, 41, 54])
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_cell_coords():
+    grid = examples.load_explicit_structured()
+
+    coords = grid.cell_coords(19)
+    assert isinstance(coords, tuple)
+    assert all(np.issubdtype(c, np.integer) for c in coords)
+    assert coords == (3, 4, 0)
+
+    coords = grid.cell_coords((19, 31, 41, 54))
+    assert isinstance(coords, np.ndarray)
+    assert np.issubdtype(coords.dtype, np.integer)
+    assert np.array_equal(coords, [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)])
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_neighbors():
+    grid = examples.load_explicit_structured()
+
+    indices = grid.neighbors(0, rel='topological')
+    assert isinstance(indices, list)
+    assert all(np.issubdtype(ind, np.integer) for ind in indices)
+    assert indices == [1, 4, 20]
+
+    indices = grid.neighbors(0, rel='connectivity')
+    assert isinstance(indices, list)
+    assert all(np.issubdtype(ind, np.integer) for ind in indices)
+    assert indices == [1, 4, 20]
+
+    indices = grid.neighbors(0, rel='geometric')
+    assert isinstance(indices, list)
+    assert all(np.issubdtype(ind, np.integer) for ind in indices)
+    assert indices == [1, 4, 20]
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_compute_connectivity():
+    connectivity = np.asarray('''
+    42 43 43 41 46 47 47 45 46 47 47 45 46 47 47 45 38 39 39 37 58 59 59 57
+    62 63 63 61 62 63 63 61 62 63 63 61 54 55 55 53 58 59 59 57 62 63 63 61
+    62 63 63 61 62 63 63 61 54 55 55 53 58 59 59 57 62 63 63 61 62 63 63 61
+    62 63 63 61 54 55 55 53 58 59 59 57 62 63 63 61 62 63 63 61 62 63 63 61
+    54 55 55 53 26 27 27 25 30 31 31 29 30 31 31 29 30 31 31 29 22 23 23 21
+    '''.split(), dtype=int)
+
+    grid = examples.load_explicit_structured()
+    assert 'ConnectivityFlags' not in grid.cell_arrays
+
+    copy = grid.compute_connectivity(inplace=False)
+    assert isinstance(copy, pyvista.ExplicitStructuredGrid)
+    assert 'ConnectivityFlags' in copy.cell_arrays
+    assert 'ConnectivityFlags' not in grid.cell_arrays
+    assert np.array_equal(copy.cell_arrays['ConnectivityFlags'], connectivity)
+
+    copy = grid.compute_connectivity(inplace=True)
+    assert copy is None
+    assert 'ConnectivityFlags' in grid.cell_arrays
+    assert np.array_equal(grid.cell_arrays['ConnectivityFlags'], connectivity)
+
+
+@pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
+def test_ExplicitStructuredGrid_compute_connections():
+    connections = np.asarray('''
+    3 4 4 3 4 5 5 4 4 5 5 4 4 5 5 4 3 4 4 3 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4
+    5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4 5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6
+    6 5 4 5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4 5 5 4 3 4 4 3 4 5 5 4 4 5 5
+    4 4 5 5 4 3 4 4 3
+    '''.split(), dtype=int)
+
+    grid = examples.load_explicit_structured()
+    assert 'number_of_connections' not in grid.cell_arrays
+
+    copy = grid.compute_connections(inplace=False)
+    assert isinstance(copy, pyvista.ExplicitStructuredGrid)
+    assert 'number_of_connections' in copy.cell_arrays
+    assert 'number_of_connections' not in grid.cell_arrays
+    assert np.array_equal(copy.cell_arrays['number_of_connections'],
+                          connections)
+
+    copy = grid.compute_connections(inplace=True)
+    assert copy is None
+    assert 'number_of_connections' in grid.cell_arrays
+    assert np.array_equal(grid.cell_arrays['number_of_connections'],
+                          connections)

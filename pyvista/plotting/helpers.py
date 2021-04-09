@@ -12,39 +12,40 @@ from .theme import rcParams
 def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
-         text='', return_img=False, eye_dome_lighting=False, use_panel=None,
-         volume=False, parallel_projection=False, **kwargs):
+         text='', return_img=False, eye_dome_lighting=False, volume=False,
+         parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
+         return_viewer=False, jupyter_kwargs={}, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
     ----------
     item : vtk or numpy object
-        VTK object or numpy array to be plotted.
+        VTK object or ``numpy`` array to be plotted.
 
     off_screen : bool
-        Plots off screen when True.  Helpful for saving screenshots
+        Plots off screen when ``True``.  Helpful for saving screenshots
         without a window popping up.
 
     full_screen : bool, optional
-        Opens window in full screen.  When enabled, ignores window_size.
-        Default False.
+        Opens window in full screen.  When enabled, ignores ``window_size``.
+        Default ``False``.
 
     screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
-        help(pyvistanterface.Plotter.screenshot).  Default disabled.
+        ``help(pyvista.Plotter.screenshot)``.  Default ``False``.
 
-        When True, takes screenshot and returns numpy array of image.
+        When ``True``, takes screenshot and returns ``numpy`` array of image.
 
     window_size : list, optional
-        Window size in pixels.  Defaults to [1024, 768]
+        Window size in pixels.  Defaults to ``[1024, 768]``
 
     show_bounds : bool, optional
-        Shows mesh bounds when True.  Default False. Alias ``show_grid`` also
-        accepted.
+        Shows mesh bounds when ``True``.  Default ``False``. Alias
+        ``show_grid`` also accepted.
 
     notebook : bool, optional
-        When True, the resulting plot is placed inline a jupyter notebook.
-        Assumes a jupyter console is active.
+        When ``True``, the resulting plot is placed inline a jupyter
+        notebook.  Assumes a jupyter console is active.
 
     show_axes : bool, optional
         Shows a vtk axes widget.  Enabled by default.
@@ -54,6 +55,26 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     volume : bool, optional
         Use the ``add_volume`` method for volume rendering.
+
+    use_ipyvtk : bool, optional
+        Deprecated.  Instead, set the backend either globally with
+        ``pyvista.set_jupyter_backend('ipyvtk_simple')`` or with
+        ``backend='ipyvtk_simple'``.
+
+    jupyter_backend : str, optional
+        Jupyter notebook plotting backend to use.  One of the
+        following:
+
+        * ``'none'`` : Do not display in the notebook.
+        * ``'static'`` : Display a static figure.
+        * ``'ipygany'`` : Show a ``ipygany`` widget
+        * ``'panel'`` : Show a ``panel`` widget.
+
+        This can also be set globally with
+        ``pyvista.set_jupyter_backend``
+
+    jupyter_kwargs : dict, optional
+        Keyword arguments for the Jupyter notebook plotting backend.
 
     **kwargs : optional keyword arguments
         See help(Plotter.add_mesh) for additional options.
@@ -73,9 +94,11 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if notebook is None:
         notebook = scooby.in_ipykernel()
 
+    # undocumented kwarg used within pytest to run a function before closing
+    before_close_callback = kwargs.pop('before_close_callback', None)
+
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
-    height = kwargs.get('height', 400)
     auto_close = kwargs.get('auto_close', rcParams['auto_close'])
 
     if notebook:
@@ -132,19 +155,19 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         plotter.enable_parallel_projection()
 
     result = plotter.show(window_size=window_size,
-                          auto_close=False,
+                          auto_close=auto_close,
                           interactive=interactive,
                           full_screen=full_screen,
                           screenshot=screenshot,
                           return_img=return_img,
-                          use_panel=use_panel,
-                          height=height)
+                          use_ipyvtk=use_ipyvtk,
+                          jupyter_backend=jupyter_backend,
+                          before_close_callback=before_close_callback,
+                          jupyter_kwargs=jupyter_kwargs,
+                          return_viewer=return_viewer)
 
-    # close and return camera position and maybe image
-    if auto_close:
-        plotter.close()
-
-    # Result will be handled by plotter.show(): cpos or [cpos, img]
+    # Result will be handled by plotter.show(): cpos or [cpos, img] or
+    # the jupyterlab scene when return_viewer is True
     return result
 
 
@@ -165,7 +188,25 @@ def plot_arrows(cent, direction, **kwargs):
 
     Returns
     -------
-    Same as Plot.  See help(pyvista.Plot)
+    Same as ``pyvista.plot``.  See ``help(pyvista.plot)``
+
+    Examples
+    --------
+    Plot a single random arrow.
+
+    >>> import numpy as np
+    >>> import pyvista
+    >>> cent = np.random.random(3)
+    >>> direction = np.random.random(3)
+    >>> pyvista.plot_arrows(cent, direction)  # doctest:+SKIP
+
+    Plot 100 random arrows.
+
+    >>> import numpy as np
+    >>> import pyvista
+    >>> cent = np.random.random((100, 3))
+    >>> direction = np.random.random((100, 3))
+    >>> pyvista.plot_arrows(cent, direction)  # doctest:+SKIP
 
     """
     return plot([cent, direction], **kwargs)
@@ -192,22 +233,25 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
 
     plotter_kwargs['notebook'] = notebook
 
-    p = pyvista.Plotter(shape=(2,2), **plotter_kwargs)
+    pl = pyvista.Plotter(shape=(2, 2), **plotter_kwargs)
 
     for i in range(2):
         for j in range(2):
-            p.subplot(i, j)
-            p.add_mesh(datasets[i][j], **disply_kwargs)
-            p.add_text(labels[i][j])
+            pl.subplot(i, j)
+            pl.add_mesh(datasets[i][j], **disply_kwargs)
+            pl.add_text(labels[i][j])
             if is_pyvista_dataset(outline):
-                p.add_mesh(outline, color=outline_color)
+                pl.add_mesh(outline, color=outline_color)
             if camera_position is not None:
-                p.camera_position = camera_position
+                pl.camera_position = camera_position
 
     if link:
-        p.link_views()
+        pl.link_views()
+        # when linked, camera must be reset such that the view range
+        # of all subrender windows matches
+        pl.reset_camera()
 
-    return p.show(screenshot=screenshot, **show_kwargs)
+    return pl.show(screenshot=screenshot, **show_kwargs)
 
 
 def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
@@ -219,7 +263,7 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
 
     Parameters
     ----------
-    mesh : pyvista.Common or pyvista.MultiBlock
+    mesh : pyvista.DataSet or pyvista.MultiBlock
         Any PyVista or VTK mesh is supported. Also, any dataset that
         :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
         points.

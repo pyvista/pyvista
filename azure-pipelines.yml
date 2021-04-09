@@ -24,7 +24,7 @@ jobs:
 # DESCRIPTION: Quickly check the spelling and documentation style
 - job: CodeSpellStyle
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: 'ubuntu-20.04'
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -35,22 +35,39 @@ jobs:
     displayName: 'Run doctest'
 
 
+# DESCRIPTION: Static code check the spelling and documentation style.
+- job: StaticCodeCheck
+  pool:
+    vmImage: 'ubuntu-20.04'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.8'
+  - script: |
+      pip install .
+    displayName: 'Install pyvista'
+  - script: |
+      pip install mypy
+      make mypy
+    displayName: 'Run static code check'
+
+
 # DESCRIPTION: Core API and doc string testing for Linux
 - job: Linux
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
 
   strategy:
     matrix:
-      Python35:
-        python.version: '3.5'
       Python36:
         python.version: '3.6'
       Python37:
         python.version: '3.7'
+      Python38:
+        python.version: '3.8'
 
   steps:
   - task: UsePythonVersion@0
@@ -91,9 +108,7 @@ jobs:
 
   - script: |
       pip install pytest-azurepipelines
-      cd tests
       pytest -v --cov pyvista --cov-report html
-      cd ..
     displayName: 'Test Core API'
 
   - script: |
@@ -110,7 +125,7 @@ jobs:
       python setup.py sdist
       twine upload --skip-existing dist/pyvista*
     displayName: 'Upload to PyPi'
-    condition: and(eq(variables['python.version'], '3.7'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
+    condition: and(eq(variables['python.version'], '3.8'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
     env:
       TWINE_USERNAME: $(twine.username)
       TWINE_PASSWORD: $(twine.password)
@@ -123,15 +138,15 @@ jobs:
 # DESCRIPTION: Core API and doc string testing across VTK versions using conda
 - job: LinuxConda
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
 
   strategy:
     matrix:
-      VTKv81:
-        VTK.VERSION: 8.1
+      # VTKv81:
+      #   VTK.VERSION: 8.1
       VTKv82:
         VTK.VERSION: 8.2
 
@@ -151,34 +166,41 @@ jobs:
         pip install -e .
         conda list
         which python
-        python -c "import pyvista; print(pyvista.Report())"
+        python -c "import pyvista; print(pyvista.Report(gpu=False))"
       displayName: Create Anaconda environment
 
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-vtk$(VTK.VERSION)
-        pytest -v --cov pyvista --cov-report html
-      displayName: 'Test Core API against VTK'
+        pytest -v --ignore=tests/plotting
+      displayName: 'Test Core API'
+      continueOnError: true  # 'true' if future steps should run even if this step fails; defaults to 'false'
+
+    - script: |
+        source /usr/share/miniconda/etc/profile.d/conda.sh
+        conda activate pyvista-vtk$(VTK.VERSION)
+        pytest -v tests/plotting --cov-report html
+      displayName: 'Test Core Plotting API'
+      continueOnError: true  # 'true' if future steps should run even if this step fails; defaults to 'false'
 
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-vtk$(VTK.VERSION)
         pytest -v --doctest-modules pyvista
       displayName: 'Test Package Docstrings against VTK'
+      continueOnError: true  # 'true' if future steps should run even if this step fails; defaults to 'false'
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
 
 # DESCRIPTION: Core API testing for Windows
 - job: Windows
   pool:
-    vmIMage: 'VS2017-Win2016'
+    vmIMage: 'windows-2019'
   variables:
     AZURE_CI_WINDOWS: 'true'
   strategy:
     maxParallel: 4
     matrix:
-      Python35-64bit:
-        python.version: '3.5'
       Python36-64bit:
         python.version: '3.6'
       Python37-64bit:
@@ -196,11 +218,6 @@ jobs:
       $PYVISTA_VERSION = $(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)") | Out-String
       echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
     displayName: 'Store pip cache path and pyvista version'
-  - task: Cache@2
-    inputs:
-      key: 'PIP_WHEEL_CACHE | $(Agent.OS) | "$(python.version)" | "$(PYVISTA_VERSION)"'
-      path: $(PIP_CACHE_PATH)
-    displayName: Cache pip
   - powershell: |
       Set-StrictMode -Version Latest
       $ErrorActionPreference = "Stop"
@@ -211,7 +228,7 @@ jobs:
   - script: |
       pip install wheel
       pip install .
-      python -c "import pyvista; print(pyvista.Report())"
+      python -c "import pyvista; print(pyvista.Report(gpu=False))"
     displayName: 'Install PyVista'
   - script: |
       pip install -r requirements_test.txt
@@ -224,48 +241,10 @@ jobs:
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
 
-# DESCRIPTION: Core API testing for MacOS
-- job: macOS
-  variables:
-    python.architecture: 'x64'
-  strategy:
-    matrix:
-      # Skipping Python 3.5: Python 3.5 not supported on Azure Mac OS
-      Python36:
-        python.version: '3.6'
-      Python37:
-        python.version: '3.7'
-      Python38:
-        python.version: '3.8'
-  pool:
-    vmImage: 'macOS-10.15'
-  steps:
-    - script: .ci/macos-install-python.sh '$(python.version)'
-      displayName: Install Python
-
-    - script: |
-        python setup.py sdist
-        python setup.py install
-        python -c "import pyvista; print(pyvista.Report())"
-      displayName: 'Install PyVista'
-
-    - script: |
-        python -m pip install -r requirements_test.txt
-        python -m pip install pytest-azurepipelines pytest-xdist
-      displayName: 'Install test dependencies'
-
-    - script: |
-        python -m pytest -v --cov pyvista --cov-report html --durations=0 -n 2
-      displayName: 'Run Tests'
-
-  # don't run job on no-ci builds
-  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
-
-
 # Builds the documentation
 - job: BuildDocumentation
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
 
   variables:
     DISPLAY: ':99.0'
@@ -290,13 +269,13 @@ jobs:
       pip install -e .
     displayName: Install pyvista
 
-  - script: |
+  - script: |      
       .ci/setup_headless_display.sh
       # python .ci/pyvista_test.py  # for debug
     displayName: Install headless display
 
   - script: |
-      sudo apt-get install python3-tk
+      sudo apt-get install python3-tk pandoc
       pip install -r requirements_docs.txt
     displayName: 'Install dependencies'
 
@@ -325,14 +304,6 @@ jobs:
       make -C docs html -b coverage
       cat docs/_build/coverage/python.txt
     displayName: 'Build documentation'
-
-  - script: |
-      make -C docs doctest
-    displayName: 'Test documentation code snippets'
-
-  - script: |
-      make -C docs html
-    displayName: 'Update figures from doctest'
 
   # Push example notebooks to pyvista-examples
   - script: |
@@ -384,6 +355,7 @@ jobs:
       rm -rf *
       cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
       cp $BUILD_SOURCESDIRECTORY/docs/README.md .
+      cp $BUILD_SOURCESDIRECTORY/docs/ads.txt .
       touch .nojekyll
       echo "docs.pyvista.org" >> CNAME
       git add .
@@ -402,6 +374,7 @@ jobs:
       git checkout -b gh-pages
       cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
       cp $BUILD_SOURCESDIRECTORY/docs/README.md .
+      cp $BUILD_SOURCESDIRECTORY/docs/ads.txt .
       touch .nojekyll
       echo "dev.pyvista.org" >> CNAME
       git add .

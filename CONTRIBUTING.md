@@ -102,7 +102,7 @@ There are three general coding paradigms that we believe in:
 
 2. **Document everything!** At the least, include a docstring for any method
    or class added. Do not describe what you are doing but why you are doing
-   it and provide a for simple use cases for the new features.
+   it and provide a simple example for the new features.
 
 3. **Keep it tested**. We aim for a high test coverage. See
    testing for more details.
@@ -131,7 +131,7 @@ repository to your computer.  Then, create a new branch based on the
 your local repository.
 
 Next, add your new feature and commit it locally.  Be sure to commit
-often as it is often helpful to revert to past commits, especially if
+frequently as it is often helpful to revert to past commits, especially if
 your change is complex.  Also, be sure to test often.  See the
 [Testing Section](#testing) below for automating testing.
 
@@ -164,8 +164,8 @@ any given branch is introducing before looking at the code.
 - `maint/`: for general maintenance of the repository or CI routines
 - `doc/`: for any changes only pertaining to documentation
 - `no-ci/`: for low impact activity that should NOT trigger the CI routines
+- `testing/`: improvements or changes to testing
 - `release/`: releases (see below)
-
 
 #### Testing
 
@@ -175,12 +175,13 @@ so we ask that you perform the following sequence locally to track down any new
 issues from your changes.
 
 To run our comprehensive suite of unit tests, install all the dependencies
-listed in ``requirements_test.txt``, ``requirements_docs.txt``:
+listed in ``requirements_test.txt``, ``requirements_docs.txt``, ``requirements_style.txt``:
 
 
 ```bash
 pip install -r requirements_test.txt
 pip install -r requirements_docs.txt
+pip install -r requirements_style.txt
 ```
 
 Then, if you have everything installed, you can run the various test suites.

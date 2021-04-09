@@ -28,3 +28,19 @@ class InvalidCameraError(ValueError):
     def __init__(self, message=CAMERA_ERROR_MESSAGE):
         """Empty init."""
         ValueError.__init__(self, message)
+
+
+class DeprecationError(RuntimeError):
+    """Used for depreciated methods and functions."""
+
+    def __init__(self, message='This feature has been depreciated'):
+        """Empty init."""
+        RuntimeError.__init__(self, message)
+
+
+class VTKVersionError(RuntimeError):
+    """Requested feature is not supported by the installed VTK version."""
+
+    def __init__(self, message='The requested feature is not supported by the installed VTK version.'):
+        """Empty init."""
+        RuntimeError.__init__(self, message)

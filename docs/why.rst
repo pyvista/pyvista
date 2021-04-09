@@ -1,13 +1,14 @@
 Why PyVista?
 ============
 
-VTK is an excellent visualization toolkit, and with Python bindings it should be
-able to combine the speed of C++ with the rapid prototyping of Python.
-However, despite this VTK code programmed in Python generally looks the same as
-its C++ counterpart.  This module seeks to simplify mesh creation and plotting
-without losing functionality.
+VTK is an excellent visualization toolkit, and with Python bindings it
+should be able to combine the speed of C++ with the rapid prototyping
+of Python.  However, despite this VTK code programmed in Python
+generally looks the same as its C++ counterpart.  This module seeks to
+simplify mesh creation and plotting without losing functionality.
 
-Compare two approaches for loading and plotting a surface mesh from a file:
+Compare two approaches for loading and plotting a surface mesh from a
+file:
 
 
 Plotting a Mesh using Python's VTK
@@ -78,7 +79,14 @@ Advanced Plotting with Numpy
 
 When combined with numpy, you can make some truly spectacular plots:
 
-.. testcode:: python
+.. jupyter-execute::
+    :hide-code:
+
+    import pyvista
+    pyvista.set_jupyter_backend('ipygany')
+    pyvista.set_plot_theme('document')
+
+.. jupyter-execute::
 
     import pyvista
     import numpy as np
@@ -97,18 +105,16 @@ When combined with numpy, you can make some truly spectacular plots:
     direction = np.sin(points)**3
 
     # plot using the plotting class
-    plobj = pyvista.Plotter()
-    plobj.add_arrows(points, direction, 0.5)
-    plobj.show(screenshot='vectorfield.png')
-
-.. image:: ./images/auto-generated/vectorfield.png
+    pl = pyvista.Plotter()
+    pl.add_arrows(points, direction, 0.5)
+    pl.show()
 
 
-While not everything can be simplified without losing functionality, many of the
-objects can.  For example, triangular surface meshes in VTK can be subdivided
-but every other object in VTK cannot.  It then makes sense that a subdivided
-method be added to the existing triangular surface mesh.
-That way, subdivision can be performed with:
+While not everything can be simplified without losing functionality,
+many of the objects can.  For example, triangular surface meshes in
+VTK can be subdivided but every other object in VTK cannot.  It then
+makes sense that a subdivided method be added to the existing
+triangular surface mesh.  That way, subdivision can be performed with:
 
 
 .. code:: python
@@ -117,9 +123,9 @@ That way, subdivision can be performed with:
     mesh = examples.load_ant()
     submesh = mesh.subdivide(3, 'linear')
 
-Additionally, the docstrings for all methods in PyVista are intended to be used
-within interactive coding sessions. This allows users to use sophisticated
-processing routines on the fly with immediate access to a description of how to
-use those methods:
+Additionally, the docstrings for all methods in PyVista are intended
+to be used within interactive coding sessions. This allows users to
+use sophisticated processing routines on the fly with immediate access
+to a description of how to use those methods:
 
 .. figure:: ./images/gifs/documentation.gif

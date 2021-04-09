@@ -13,7 +13,7 @@ from pyvista import examples
 ###############################################################################
 # Computing mass properties such as the volume or area of datasets in PyVista
 # is quite easy using the :func:`pyvista.DataSetFilters.compute_cell_sizes`
-# filter and the :attr:`pyvista.Common.volume` property on all PyVista meshes.
+# filter and the :attr:`pyvista.DataSet.volume` property on all PyVista meshes.
 #
 # Let's get started with a simple gridded mesh:
 
@@ -67,9 +67,9 @@ hvol = np.sum(volumes[idx])
 idx = np.argwhere(~classifier)
 lvol = np.sum(volumes[idx])
 
-print("Low grade volume: {}".format(lvol))
-print("High grade volume: {}".format(hvol))
-print("Original volume: {}".format(dataset.volume))
+print(f"Low grade volume: {lvol}")
+print(f"High grade volume: {hvol}")
+print(f"Original volume: {dataset.volume}")
 
 ###############################################################################
 # Or better yet, you could simply extract the largest volume from your
@@ -110,7 +110,7 @@ threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
 bodies = threshed.split_bodies()
 
 for i, body in enumerate(bodies):
-    print("Body {} volume: {:.3f}".format(i, body.volume))
+    print(f"Body {i} volume: {body.volume:.3f}")
 
 ###############################################################################
 
@@ -151,7 +151,7 @@ for key in bodies.keys():
 # Print out the volumes for each body:
 
 for i, body in enumerate(bodies):
-    print("Body {:02d} volume: {:.3f}".format(i, body.volume))
+    print(f"Body {i:02d} volume: {body.volume:.3f}")
 
 ###############################################################################
 # And visualize all the different volumes:

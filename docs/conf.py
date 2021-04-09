@@ -28,7 +28,7 @@ if not os.path.exists(pyvista.FIGURE_PATH):
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
 
-# SG warnins
+# SG warnings
 import warnings
 warnings.filterwarnings(
     "ignore",
@@ -39,7 +39,7 @@ warnings.filterwarnings(
 # -- General configuration ------------------------------------------------
 numfig = False
 html_show_sourcelink = False
-html_logo = './_static/pyvista_logo.png'
+html_logo = './_static/pyvista_logo_sm.png'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -53,6 +53,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx_gallery.gen_gallery',
               'sphinx.ext.extlinks',
               'sphinx.ext.coverage',
+              'jupyter_sphinx',
               ]
 
 
@@ -71,7 +72,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'PyVista'
 year = datetime.date.today().year
-copyright = u'2017-{}, The PyVista Developers'.format(year)
+copyright = f'2017-{year}, The PyVista Developers'
 author = u'Alex Kaszynski and Bane Sullivan'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -107,6 +108,8 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 sphinx_gallery_conf = {
+    # convert rst to md for ipynb
+    'pypandoc': True,
     # path to your examples scripts
     "examples_dirs": ["../examples/"],
     # path where to save gallery generated examples
@@ -201,6 +204,10 @@ latex_documents = [
      author, 'manual'),
 ]
 
+# -- Options for gettext output -------------------------------------------
+
+# To specify names to enable gettext extracting and translation applying for i18n additionally. You can specify below names:
+gettext_additional_targets = ['raw'] 
 
 # -- Options for manual page output ---------------------------------------
 
@@ -229,6 +236,11 @@ notfound_context = {
         'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.',
 }
 notfound_no_urls_prefix = True
+
+
+# Copy button customization ---------------------------------------------------
+# exclude traditional Python prompts from the copied code
+copybutton_prompt_text = ">>> "
 
 
 # -- Autosummary options
@@ -270,12 +282,12 @@ class AutoAutoSummary(Autosummary):
             c = getattr(m, class_name)
             if 'methods' in self.options:
                 _, methods = self.get_members(c, ['method'], ['__init__'])
-                self.content = ["~%s.%s" % (clazz, method) for method in methods if not method.startswith('_')]
+                self.content = [f"~{clazz}.{method}" for method in methods if not method.startswith('_')]
             if 'attributes' in self.options:
                 _, attribs = self.get_members(c, ['attribute', 'property'])
-                self.content = ["~%s.%s" % (clazz, attrib) for attrib in attribs if not attrib.startswith('_')]
+                self.content = [f"~{clazz}.{attrib}" for attrib in attribs if not attrib.startswith('_')]
         except:
-            print('Something went wrong when autodocumenting {}'.format(clazz))
+            print(f'Something went wrong when autodocumenting {clazz}')
         finally:
             return super().run()
 

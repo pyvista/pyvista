@@ -2,7 +2,7 @@ import sys
 from string import ascii_letters, digits, whitespace
 
 import numpy as np
-from hypothesis import given, settings
+from hypothesis import given, settings, HealthCheck
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import integers, lists, text
 from pytest import fixture, mark, raises
@@ -126,13 +126,13 @@ def test_contains_should_contain_when_added(insert_arange_narray):
     assert 'sample_array' in dsa
 
 
-@settings(max_examples=20)
+@settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_append_should_accept_scalar_value(scalar, hexbeam_point_attributes):
     hexbeam_point_attributes.append(narray=scalar, name='int_array')
 
 
-@settings(max_examples=20)
+@settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_append_scalar_value_should_give_array(scalar, hexbeam_point_attributes):
     hexbeam_point_attributes.append(narray=scalar, name='int_array')
@@ -140,12 +140,14 @@ def test_append_scalar_value_should_give_array(scalar, hexbeam_point_attributes)
     assert np.array_equal(expected, hexbeam_point_attributes['int_array'])
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=lists(text(alphabet=ascii_letters + digits + whitespace), max_size=16))
 def test_append_string_lists_should_equal(arr, hexbeam_field_attributes):
     hexbeam_field_attributes['string_arr'] = arr
     assert arr == hexbeam_field_attributes['string_arr'].tolist()
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
 def test_append_string_array_should_equal(arr, hexbeam_field_attributes):
     hexbeam_field_attributes['string_arr'] = arr
@@ -179,6 +181,14 @@ def test_pop_should_return_array(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     other_array = dsa.pop('sample_array')
     assert np.array_equal(other_array, sample_array)
+
+
+def test_should_pop_array(insert_arange_narray):
+    dsa, sample_array = insert_arange_narray
+    key = 'invalid_key'
+    assert key not in dsa
+    default = 20
+    assert dsa.pop(key, default) is default
 
 
 @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
@@ -260,3 +270,12 @@ def test_active_scalars_setter(hexbeam_point_attributes):
     dsa.active_scalars = 'sample_point_scalars'
     assert dsa.active_scalars is not None
     assert dsa.GetScalars().GetName() == 'sample_point_scalars'
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(arr=arrays(dtype='U', shape=10))
+def test_preserve_field_arrays_after_extract_cells(hexbeam, arr):
+    # https://github.com/pyvista/pyvista/pull/934
+    hexbeam.field_arrays["foo"] = arr
+    extracted = hexbeam.extract_cells([0, 1, 2, 3])
+    assert "foo" in extracted.field_arrays

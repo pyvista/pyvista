@@ -5,15 +5,16 @@ import shutil
 import sys
 import zipfile
 
-import vtk
+import numpy as np
 
 import pyvista
+from pyvista import _vtk
 
 # Helpers:
 
 def _check_examples_path():
     """Check if the examples path exists."""
-    if pyvista.EXAMPLES_PATH is None:
+    if not pyvista.EXAMPLES_PATH:
         raise FileNotFoundError('EXAMPLES_PATH does not exist.  Try setting the '
                                 'environment variable `PYVISTA_USERDATA_PATH` '
                                 'to a writable path and restarting python')
@@ -35,7 +36,7 @@ def _decompress(filename):
 
 
 def _get_vtk_file_url(filename):
-    return 'https://github.com/pyvista/vtk-data/raw/master/Data/{}'.format(filename)
+    return f'https://github.com/pyvista/vtk-data/raw/master/Data/{filename}'
 
 
 def _retrieve_file(url, filename):
@@ -64,9 +65,11 @@ def _retrieve_file(url, filename):
         local_path = local_path[:-4]
     return local_path, resp
 
+
 def _download_file(filename):
     url = _get_vtk_file_url(filename)
     return _retrieve_file(url, filename)
+
 
 def _download_and_read(filename, texture=False, file_format=None):
     saved_file, _ = _download_file(filename)
@@ -81,54 +84,67 @@ def download_masonry_texture():
     """Download masonry texture."""
     return _download_and_read('masonry.bmp', texture=True)
 
+
 def download_usa_texture():
     """Download usa texture."""
     return _download_and_read('usa_image.jpg', texture=True)
+
 
 def download_puppy_texture():
     """Download puppy texture."""
     return _download_and_read('puppy.jpg', texture=True)
 
+
 def download_puppy():
     """Download puppy dataset."""
     return _download_and_read('puppy.jpg')
+
 
 def download_usa():
     """Download usa dataset."""
     return _download_and_read('usa.vtk')
 
+
 def download_st_helens():
     """Download Saint Helens dataset."""
     return _download_and_read('SainteHelens.dem')
+
 
 def download_bunny():
     """Download bunny dataset."""
     return _download_and_read('bunny.ply')
 
+
 def download_bunny_coarse():
     """Download coarse bunny dataset."""
     return _download_and_read('Bunny.vtp')
+
 
 def download_cow():
     """Download cow dataset."""
     return _download_and_read('cow.vtp')
 
+
 def download_cow_head():
     """Download cow head dataset."""
     return _download_and_read('cowHead.vtp')
+
 
 def download_faults():
     """Download faults dataset."""
     return _download_and_read('faults.vtk')
 
+
 def download_tensors():
     """Download tensors dataset."""
     return _download_and_read('tensors.vtk')
+
 
 def download_head():
     """Download head dataset."""
     _download_file('HeadMRVolume.raw')
     return _download_and_read('HeadMRVolume.mhd')
+
 
 def download_bolt_nut():
     """Download bolt nut dataset."""
@@ -137,41 +153,51 @@ def download_bolt_nut():
     blocks['nut'] = _download_and_read('nut.slc')
     return blocks
 
+
 def download_clown():
     """Download clown dataset."""
     return _download_and_read('clown.facet')
+
 
 def download_topo_global():
     """Download topo dataset."""
     return _download_and_read('EarthModels/ETOPO_10min_Ice.vtp')
 
+
 def download_topo_land():
     """Download topo land dataset."""
     return _download_and_read('EarthModels/ETOPO_10min_Ice_only-land.vtp')
+
 
 def download_coastlines():
     """Download coastlines dataset."""
     return _download_and_read('EarthModels/Coastlines_Los_Alamos.vtp')
 
+
 def download_knee():
     """Download knee dataset."""
     return _download_and_read('DICOM_KNEE.dcm')
+
 
 def download_knee_full():
     """Download full knee dataset."""
     return _download_and_read('vw_knee.slc')
 
+
 def download_lidar():
     """Download lidar dataset."""
     return _download_and_read('kafadar-lidar-interp.vtp')
+
 
 def download_exodus():
     """Sample ExodusII data file."""
     return _download_and_read('mesh_fs8.exo')
 
+
 def download_nefertiti():
     """Download mesh of Queen Nefertiti."""
     return _download_and_read('Nefertiti.obj.zip')
+
 
 def download_blood_vessels():
     """Download data representing the bifurcation of blood vessels."""
@@ -181,17 +207,21 @@ def download_blood_vessels():
     mesh.set_active_vectors('velocity')
     return mesh
 
-def download_iron_pot():
-    """Download iron pot dataset."""
+
+def download_iron_protein():
+    """Download iron protein dataset."""
     return _download_and_read('ironProt.vtk')
+
 
 def download_tetrahedron():
     """Download tetrahedron dataset."""
     return _download_and_read('Tetrahedron.vtu')
 
+
 def download_saddle_surface():
     """Download saddle surface dataset."""
     return _download_and_read('InterpolatingOnSTL_final.stl')
+
 
 def download_sparse_points():
     """Download sparse points dataset.
@@ -200,12 +230,12 @@ def download_sparse_points():
 
     """
     saved_file, _ = _download_file('sparsePoints.txt')
-    points_reader = vtk.vtkDelimitedTextReader()
+    points_reader = _vtk.vtkDelimitedTextReader()
     points_reader.SetFileName(saved_file)
     points_reader.DetectNumericColumnsOn()
     points_reader.SetFieldDelimiterCharacters('\t')
     points_reader.SetHaveHeaders(True)
-    table_points = vtk.vtkTableToPolyData()
+    table_points = _vtk.vtkTableToPolyData()
     table_points.SetInputConnection(points_reader.GetOutputPort())
     table_points.SetXColumn('x')
     table_points.SetYColumn('y')
@@ -213,49 +243,61 @@ def download_sparse_points():
     table_points.Update()
     return pyvista.wrap(table_points.GetOutput())
 
+
 def download_foot_bones():
     """Download foot bones dataset."""
     return _download_and_read('fsu/footbones.ply')
+
 
 def download_guitar():
     """Download guitar dataset."""
     return _download_and_read('fsu/stratocaster.ply')
 
+
 def download_quadratic_pyramid():
     """Download quadratic pyramid dataset."""
     return _download_and_read('QuadraticPyramid.vtu')
+
 
 def download_bird():
     """Download bird dataset."""
     return _download_and_read('Pileated.jpg')
 
+
 def download_bird_texture():
     """Download bird texture."""
     return _download_and_read('Pileated.jpg', texture=True)
+
 
 def download_office():
     """Download office dataset."""
     return _download_and_read('office.binary.vtk')
 
+
 def download_horse_points():
     """Download horse points dataset."""
     return _download_and_read('horsePoints.vtp')
+
 
 def download_horse():
     """Download horse dataset."""
     return _download_and_read('horse.vtp')
 
+
 def download_cake_easy():
     """Download cake dataset."""
     return _download_and_read('cake_easy.jpg')
+
 
 def download_cake_easy_texture():
     """Download cake texture."""
     return _download_and_read('cake_easy.jpg', texture=True)
 
+
 def download_rectilinear_grid():
     """Download rectilinear grid dataset."""
     return _download_and_read('RectilinearGrid.vtr')
+
 
 def download_gourds(zoom=False):
     """Download gourds dataset."""
@@ -263,31 +305,38 @@ def download_gourds(zoom=False):
         return _download_and_read('Gourds.png')
     return _download_and_read('Gourds2.jpg')
 
+
 def download_gourds_texture(zoom=False):
     """Download gourds texture."""
     if zoom:
         return _download_and_read('Gourds.png', texture=True)
     return _download_and_read('Gourds2.jpg', texture=True)
 
+
 def download_unstructured_grid():
     """Download unstructured grid dataset."""
     return _download_and_read('uGridEx.vtk')
+
 
 def download_letter_k():
     """Download letter k dataset."""
     return _download_and_read('k.vtk')
 
+
 def download_letter_a():
     """Download letter a dataset."""
     return _download_and_read('a_grid.vtk')
+
 
 def download_poly_line():
     """Download polyline dataset."""
     return _download_and_read('polyline.vtk')
 
+
 def download_cad_model():
     """Download cad dataset."""
     return _download_and_read('42400-IDGH.stl')
+
 
 def download_frog():
     """Download frog dataset."""
@@ -295,95 +344,118 @@ def download_frog():
     _download_file('froggy/frog.zraw')
     return _download_and_read('froggy/frog.mhd')
 
+
 def download_prostate():
     """Download prostate dataset."""
     return _download_and_read('prostate.img')
 
+
 def download_filled_contours():
     """Download filled contours dataset."""
     return _download_and_read('filledContours.vtp')
+
 
 def download_doorman():
     """Download doorman dataset."""
     # TODO: download textures as well
     return _download_and_read('doorman/doorman.obj')
 
+
 def download_mug():
     """Download mug dataset."""
     return _download_and_read('mug.e')
+
 
 def download_oblique_cone():
     """Download oblique cone dataset."""
     return _download_and_read('ObliqueCone.vtp')
 
+
 def download_emoji():
     """Download emoji dataset."""
     return _download_and_read('emote.jpg')
+
 
 def download_emoji_texture():
     """Download emoji texture."""
     return _download_and_read('emote.jpg', texture=True)
 
+
 def download_teapot():
     """Download teapot dataset."""
     return _download_and_read('teapot.g')
+
 
 def download_brain():
     """Download brain dataset."""
     return _download_and_read('brain.vtk')
 
+
 def download_structured_grid():
     """Download structured grid dataset."""
     return _download_and_read('StructuredGrid.vts')
+
 
 def download_structured_grid_two():
     """Download structured grid two dataset."""
     return _download_and_read('SampleStructGrid.vtk')
 
+
 def download_trumpet():
     """Download trumpet dataset."""
     return _download_and_read('trumpet.obj')
+
 
 def download_face():
     """Download face dataset."""
     # TODO: there is a texture with this
     return _download_and_read('fran_cut.vtk')
 
+
 def download_sky_box_nz():
     """Download skybox-nz dataset."""
     return _download_and_read('skybox-nz.jpg')
+
 
 def download_sky_box_nz_texture():
     """Download skybox-nz texture."""
     return _download_and_read('skybox-nz.jpg', texture=True)
 
+
 def download_disc_quads():
     """Download disc quads dataset."""
     return _download_and_read('Disc_BiQuadraticQuads_0_0.vtu')
+
 
 def download_honolulu():
     """Download honolulu dataset."""
     return _download_and_read('honolulu.vtk')
 
+
 def download_motor():
     """Download motor dataset."""
     return _download_and_read('motor.g')
+
 
 def download_tri_quadratic_hexahedron():
     """Download tri quadratic hexahedron dataset."""
     return _download_and_read('TriQuadraticHexahedron.vtu')
 
+
 def download_human():
     """Download human dataset."""
     return _download_and_read('Human.vtp')
+
 
 def download_vtk():
     """Download vtk dataset."""
     return _download_and_read('vtk.vtp')
 
+
 def download_spider():
     """Download spider dataset."""
     return _download_and_read('spider.ply')
+
 
 def download_carotid():
     """Download carotid dataset."""
@@ -392,29 +464,36 @@ def download_carotid():
     mesh.set_active_vectors('vectors')
     return mesh
 
+
 def download_blow():
     """Download blow dataset."""
     return _download_and_read('blow.vtk')
+
 
 def download_shark():
     """Download shark dataset."""
     return _download_and_read('shark.ply')
 
+
 def download_dragon():
     """Download dragon dataset."""
     return _download_and_read('dragon.ply')
+
 
 def download_armadillo():
     """Download armadillo dataset."""
     return _download_and_read('Armadillo.ply')
 
+
 def download_gears():
     """Download gears dataset."""
     return _download_and_read('gears.stl')
 
+
 def download_torso():
     """Download torso dataset."""
     return _download_and_read('Torso.vtp')
+
 
 def download_kitchen(split=False):
     """Download structured grid of kitchen with velocity field.
@@ -446,7 +525,7 @@ def download_kitchen(split=False):
     }
     kitchen = pyvista.MultiBlock()
     for key, extent in extents.items():
-        alg = vtk.vtkStructuredGridGeometryFilter()
+        alg = _vtk.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
         alg.Update()
@@ -469,7 +548,7 @@ def download_tetra_dc_mesh():
     filename = os.path.join(local_path, 'mesh-inverse.vtu')
     inv = pyvista.read(filename)
     inv.set_active_scalars('Resistivity(log10)')
-    return pyvista.MultiBlock({'forward':fwd, 'inverse':inv})
+    return pyvista.MultiBlock({'forward': fwd, 'inverse': inv})
 
 
 def download_model_with_variance():
@@ -477,104 +556,19 @@ def download_model_with_variance():
     return _download_and_read("model_with_variance.vtu")
 
 
+def download_thermal_probes():
+    """Download thermal probes dataset."""
+    return _download_and_read("probes.vtp")
+
+
 def download_carburator():
-    """Download scan of a carburator.
-
-    https://www.laserdesign.com/sample-files/carburetor/
-
-    """
-    url = "http://3dgallery.gks.com/2012/carburator/carburator2.php"
-    filename, _ = _retrieve_file(url, 'carburator.ply')
-    return pyvista.read(filename)
-
-
-def download_woman():
-    """Download scan of a woman.
-
-    https://www.laserdesign.com/sample-files/full-body-scan-with-texture/
-
-    """
-    url = "http://3dgallery.gks.com/2012/bodyscan/bodyscan3.php"
-    filename, _ = _retrieve_file(url, 'woman.stl')
-    return pyvista.read(filename)
-
-
-def download_lobster():
-    """Download scan of a lobster.
-
-    https://www.laserdesign.com/lobster-scan-data
-
-    """
-    url = "http://3dgallery.gks.com/2016/lobster/index2.php"
-    filename, _ = _retrieve_file(url, 'lobster.ply')
-    return pyvista.read(filename)
-
-
-def download_face2():
-    """Download scan of a man's face.
-
-    https://www.laserdesign.com/sample-files/mans-face/
-
-    """
-    url = "http://3dgallery.gks.com/2012/face/"
-    filename, _ = _retrieve_file(url, 'man_face.stl')
-    return pyvista.read(filename)
-
-
-def download_urn():
-    """Download scan of a burial urn.
-
-    https://www.laserdesign.com/sample-files/burial-urn/
-
-    """
-    url = "http://3dgallery.gks.com/2012/urn/urn3.php"
-    filename, _ = _retrieve_file(url, 'urn.stl')
-    return pyvista.read(filename)
-
-
-def download_pepper():
-    """Download scan of a burial urn.
-
-    https://www.laserdesign.com/sample-files/hot-red-pepper/
-
-    """
-    url = "http://3dgallery.gks.com/2012/redpepper/redpepper2.php"
-    filename, _ = _retrieve_file(url, 'pepper.ply')
-    return pyvista.read(filename)
-
-
-def download_drill():
-    """Download scan of a power drill.
-
-    https://www.laserdesign.com/drill-scan-data
-
-    """
-    url = "http://3dgallery.gks.com/2015/ryobi/index1.php"
-    filename, _ = _retrieve_file(url, 'pepper.obj')
-    return pyvista.read(filename)
-
-
-
-def download_action_figure():
-    """Download scan of an action figure.
-
-    https://www.laserdesign.com/sample-files/action-figure/
-
-    """
-    url = "http://3dgallery.gks.com/2013/tigerfighter"
-    filename, _ = _retrieve_file(url, 'tigerfighter.obj')
-    return pyvista.read(filename)
+    """Download scan of a carburator."""
+    return _download_and_read("carburetor.ply")
 
 
 def download_turbine_blade():
-    """Download scan of a turbine blade.
-
-    https://www.laserdesign.com/sample-files/blade/
-
-    """
-    url = "http://3dgallery.gks.com/2012/blade/blade.php"
-    filename, _ = _retrieve_file(url, 'turbine_blade.stl')
-    return pyvista.read(filename)
+    """Download scan of a turbine blade."""
+    return _download_and_read('turbineblade.ply')
 
 
 def download_pine_roots():
@@ -593,7 +587,7 @@ def download_crater_imagery():
 
 
 def download_dolfin():
-    """Download crater texture."""
+    """Download dolfin mesh."""
     return _download_and_read('dolfin_fine.xml', file_format="dolfin-xml")
 
 
@@ -645,6 +639,7 @@ def download_vtk_logo():
     return _download_and_read("vtk.png", texture=True)
 
 
+
 def download_sky_box_cube_map():
     """Download a skybox cube map texture."""
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
@@ -659,3 +654,112 @@ def download_sky_box_cube_map():
         flip.Update()
         texture.SetInputDataObject(i, flip.GetOutput())
     return texture
+
+def download_backward_facing_step():
+    """Download an ensight gold case of a fluid simulation."""
+    folder, _ = _download_file('EnSight.zip')
+    filename = os.path.join(folder, "foam_case_0_0_0_0.case")
+    return pyvista.read(filename)
+
+
+def download_gpr_data_array():
+    """Download GPR example data array."""
+    saved_file, _ = _download_file("gpr-example/data.npy")
+    return np.load(saved_file)
+
+
+def download_gpr_path():
+    """Download GPR example path."""
+    saved_file, _ = _download_file("gpr-example/path.txt")
+    path = np.loadtxt(saved_file, skiprows=1)
+    return pyvista.PolyData(path)
+
+
+def download_woman():
+    """Download scan of a woman.
+
+    https://www.laserdesign.com/sample-files/full-body-scan-with-texture/
+
+    """
+    return _download_and_read('woman.stl')
+
+
+def download_lobster():
+    """Download scan of a lobster.
+
+    https://www.laserdesign.com/lobster-scan-data
+
+    """
+    return _download_and_read('lobster.ply')
+
+
+def download_face2():
+    """Download scan of a man's face.
+
+    https://www.laserdesign.com/sample-files/mans-face/
+
+    """
+    return _download_and_read('man_face.stl')
+
+
+def download_urn():
+    """Download scan of a burial urn.
+
+    https://www.laserdesign.com/sample-files/burial-urn/
+
+    """
+    return _download_and_read('urn.stl')
+
+
+def download_pepper():
+    """Download scan of a pepper (capsicum).
+
+    https://www.laserdesign.com/sample-files/hot-red-pepper/
+
+    """
+    return _download_and_read('pepper.ply')
+
+
+def download_drill():
+    """Download scan of a power drill.
+
+    https://www.laserdesign.com/drill-scan-data
+
+    """
+    return _download_and_read('drill.obj')
+
+
+def download_action_figure():
+    """Download scan of an action figure.
+
+    https://www.laserdesign.com/sample-files/action-figure/
+
+    """
+    return _download_and_read('tigerfighter.obj')
+
+
+def download_mars_jpg():
+    """Download and return the path of ``'mars.jpg'``."""
+    return _download_file('mars.jpg')[0]
+
+
+def download_stars_jpg():
+    """Download and return the path of ``'stars.jpg'``."""
+    return _download_file('stars.jpg')[0]
+
+
+def download_notch_stress():
+    """Download the FEA stress result from a notched beam.
+
+    Notes
+    -----
+    This file may have issues being read in on VTK 8.1.2
+
+    """
+    return _download_and_read('notch_stress.vtk')
+
+
+def download_notch_displacement():
+    """Download the FEA displacement result from a notched beam."""
+    return _download_and_read('notch_disp.vtu')
+

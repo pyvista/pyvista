@@ -1,3 +1,4 @@
+import pathlib
 import os
 from math import pi
 
@@ -17,7 +18,22 @@ SPHERE_SHIFTED = pyvista.Sphere(center=[0.5, 0.5, 0.5],
 
 SPHERE_DENSE = pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
+CUBE_DENSE = pyvista.Cube()
+
 test_path = os.path.dirname(os.path.abspath(__file__))
+
+try:
+    CONDA_ENV = os.environ['CONDA_ALWAYS_YES'] == "1"
+except KeyError:
+    CONDA_ENV = False
+
+
+def is_binary(filename):
+    """Return ``True`` when a file is binary"""
+    textchars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7f})
+    with open(filename, 'rb') as f:
+        data = f.read(1024)
+    return bool(data.translate(None, textchars))
 
 
 def test_init():
@@ -138,22 +154,45 @@ def test_invalid_init():
         pyvista.PolyData(np.array([1]))
 
     with pytest.raises(TypeError):
-        pyvista.PolyData(np.array([1]), 'woa')
+        pyvista.PolyData([1, 2, 3], 'woa')
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         pyvista.PolyData('woa', 'woa')
 
+
+    poly = pyvista.PolyData()
+    with pytest.raises(ValueError):
+        pyvista.PolyData(poly, 'woa')
+
     with pytest.raises(TypeError):
-        pyvista.PolyData('woa', 'woa', 'woa')
+        pyvista.PolyData({'woa'})
 
 
 def test_invalid_file():
     with pytest.raises(FileNotFoundError):
         pyvista.PolyData('file.bad')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(IOError):
         filename = os.path.join(test_path, 'test_polydata.py')
         pyvista.PolyData(filename)
+
+
+def test_lines_on_init():
+    lines = [2, 0, 1, 3, 2, 3, 4]
+    points = np.random.random((5, 3))
+    pd = pyvista.PolyData(points, lines=lines)
+    assert not pd.faces.size
+    assert np.array_equal(pd.lines, lines)
+    assert np.array_equal(pd.points, points)
+
+
+def test_polydata_repr_str():
+    pd = pyvista.PolyData()
+    assert repr(pd) == str(pd)
+    assert 'N Cells' in str(pd)
+    assert 'N Points' in str(pd)
+    assert 'X Bounds' in str(pd)
+    assert 'N Arrays' in str(pd)
 
 
 def test_geodesic(sphere):
@@ -195,6 +234,20 @@ def test_ray_trace_plot():
                                    off_screen=True)
     assert np.any(points)
     assert np.any(ind)
+
+
+@pytest.mark.skipif(not CONDA_ENV, reason="Requires libspatialindex dependency only installable via conda")
+def test_multi_ray_trace():
+    pytest.importorskip('rtree')
+    pytest.importorskip('pyembree')
+    pytest.importorskip('trimesh')
+    sphere = SPHERE.copy()
+    origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 1]]
+    directions = [[0, 0, -1]] * 4
+    points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
+    assert np.any(points)
+    assert np.any(ind_r)
+    assert np.any(ind_t)
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
@@ -277,6 +330,21 @@ def test_boolean_difference():
     assert sub_mesh.n_cells
 
 
+def test_intersection():
+    sphere = SPHERE.copy()
+    sphere_shifted = SPHERE_SHIFTED.copy()
+    intersection, first, second = sphere.intersection(sphere_shifted, split_first=True, split_second=True)
+
+    assert intersection.n_points
+    assert first.n_points > sphere.n_points
+    assert second.n_points > sphere_shifted.n_points
+
+    intersection, first, second = sphere.intersection(sphere_shifted, split_first=False, split_second=False)
+    assert intersection.n_points
+    assert first.n_points == sphere.n_points
+    assert second.n_points == sphere_shifted.n_points
+
+
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
 def test_curvature(curv_type):
     sphere = SPHERE.copy()
@@ -295,10 +363,35 @@ def test_invalid_curvature():
 @pytest.mark.parametrize('extension', pyvista.core.pointset.PolyData._WRITERS)
 def test_save(extension, binary, tmpdir):
     sphere = SPHERE.copy()
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp{extension}'))
     sphere.save(filename, binary)
 
+    if binary:
+        if extension == '.vtp':
+            assert 'binary' in open(filename).read(1000)
+        else:
+            is_binary(filename)
+    else:
+        with open(filename) as f:
+            fst = f.read(100).lower()
+            assert 'ascii' in fst or 'xml' in fst or 'solid' in fst
+
     mesh = pyvista.PolyData(filename)
+    assert mesh.faces.shape == sphere.faces.shape
+    assert mesh.points.shape == sphere.points.shape
+
+
+def test_pathlib_read_write(tmpdir, sphere):
+    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
+    sphere.save(path)
+    assert path.is_file()
+
+    mesh = pyvista.PolyData(path)
+    assert mesh.faces.shape == sphere.faces.shape
+    assert mesh.points.shape == sphere.points.shape
+
+    mesh = pyvista.read(path)
+    assert isinstance(mesh, pyvista.PolyData)
     assert mesh.faces.shape == sphere.faces.shape
     assert mesh.points.shape == sphere.points.shape
 
@@ -313,6 +406,10 @@ def test_triangulate_filter(plane):
     assert not plane.is_all_triangles()
     plane.triangulate(inplace=True)
     assert plane.is_all_triangles()
+    # Make a point cloud and assert false
+    assert not pyvista.PolyData(plane.points).is_all_triangles()
+    # Extract lines and make sure false
+    assert not plane.extract_all_edges().is_all_triangles()
 
 
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
@@ -437,6 +534,9 @@ def test_area():
     ideal_area = 4*pi*radius**2
     assert np.isclose(dense_sphere.area, ideal_area, rtol=1E-3)
 
+    dense_cube = CUBE_DENSE.copy()
+    ideal_area = 6*np.cbrt(CUBE_DENSE.volume)**2
+    assert np.isclose(dense_cube.area, ideal_area, rtol=1E-3)
 
 def test_volume():
     dense_sphere = SPHERE_DENSE.copy()
@@ -651,9 +751,7 @@ def test_flip_normals(sphere):
     sphere_flipped = sphere.copy()
     sphere_flipped.flip_normals()
 
-
-    # TODO: Check why this fails on Mac OS and Windows on Azure
-    # sphere.compute_normals(inplace=True)
-    # sphere_flipped.compute_normals(inplace=True)
-    # assert np.allclose(sphere_flipped.point_arrays['Normals'],
-    #                    -sphere.point_arrays['Normals'])
+    sphere.compute_normals(inplace=True)
+    sphere_flipped.compute_normals(inplace=True)
+    assert np.allclose(sphere_flipped.point_arrays['Normals'],
+                       -sphere.point_arrays['Normals'])

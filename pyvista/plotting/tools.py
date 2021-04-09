@@ -4,17 +4,17 @@ import os
 from subprocess import PIPE, Popen
 
 import numpy as np
-import vtk
 
 import pyvista
+from pyvista import _vtk
 from .theme import parse_color, rcParams
 
 
 def system_supports_plotting():
     """Check if x server is running.
 
-    Return
-    ------
+    Returns
+    -------
     system_supports_plotting : bool
         True when on Linux and running an xserver.  Returns None when
         on a non-linux platform.
@@ -38,14 +38,14 @@ def update_axes_label_color(axes_actor, color=None):
     if color is None:
         color = rcParams['font']['color']
     color = parse_color(color)
-    if isinstance(axes_actor, vtk.vtkAxesActor):
+    if isinstance(axes_actor, _vtk.vtkAxesActor):
         prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
         prop_y = axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
         prop_z = axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
         for prop in [prop_x, prop_y, prop_z]:
             prop.SetColor(color[0], color[1], color[2])
             prop.SetShadow(False)
-    elif isinstance(axes_actor, vtk.vtkAnnotatedCubeActor):
+    elif isinstance(axes_actor, _vtk.vtkAnnotatedCubeActor):
         axes_actor.GetTextEdgesProperty().SetColor(color)
 
     return
@@ -61,7 +61,7 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
         y_color = rcParams['axes']['y_color']
     if z_color is None:
         z_color = rcParams['axes']['z_color']
-    axes_actor = vtk.vtkAxesActor()
+    axes_actor = _vtk.vtkAxesActor()
     axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
     axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
     axes_actor.GetYAxisShaftProperty().SetColor(parse_color(y_color))
@@ -102,17 +102,17 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         z_color = rcParams['axes']['z_color']
     if edge_color is None:
         edge_color = rcParams['edge_color']
-    axes_actor = vtk.vtkAnnotatedCubeActor()
+    axes_actor = _vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     if xlabel is not None:
-        axes_actor.SetXPlusFaceText("+{}".format(xlabel))
-        axes_actor.SetXMinusFaceText("-{}".format(xlabel))
+        axes_actor.SetXPlusFaceText(f"+{xlabel}")
+        axes_actor.SetXMinusFaceText(f"-{xlabel}")
     if ylabel is not None:
-        axes_actor.SetYPlusFaceText("+{}".format(ylabel))
-        axes_actor.SetYMinusFaceText("-{}".format(ylabel))
+        axes_actor.SetYPlusFaceText(f"+{ylabel}")
+        axes_actor.SetYMinusFaceText(f"-{ylabel}")
     if zlabel is not None:
-        axes_actor.SetZPlusFaceText("+{}".format(zlabel))
-        axes_actor.SetZMinusFaceText("-{}".format(zlabel))
+        axes_actor.SetZPlusFaceText(f"+{zlabel}")
+        axes_actor.SetZMinusFaceText(f"-{zlabel}")
     axes_actor.SetFaceTextVisibility(not labels_off)
     axes_actor.SetTextEdgesVisibility(False)
     # axes_actor.GetTextEdgesProperty().SetColor(parse_color(edge_color))
@@ -149,17 +149,17 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         face_colors = (face_colors * 255).astype(np.uint8)
         cube.cell_arrays['face_colors'] = face_colors
 
-        cube_mapper = vtk.vtkPolyDataMapper()
+        cube_mapper = _vtk.vtkPolyDataMapper()
         cube_mapper.SetInputData(cube)
         cube_mapper.SetColorModeToDirectScalars()
         cube_mapper.Update()
 
-        cube_actor = vtk.vtkActor()
+        cube_actor = _vtk.vtkActor()
         cube_actor.SetMapper(cube_mapper)
         cube_actor.GetProperty().BackfaceCullingOn()
         cube_actor.GetProperty().SetOpacity(opacity)
 
-        prop_assembly = vtk.vtkPropAssembly()
+        prop_assembly = _vtk.vtkPropAssembly()
         prop_assembly.AddPart(axes_actor)
         prop_assembly.AddPart(cube_actor)
         actor = prop_assembly
@@ -250,14 +250,14 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
     transfer_func['linear_r'] = transfer_func['linear'][::-1]
     transfer_func['sigmoid_r'] = transfer_func['sigmoid'][::-1]
     for i in range(3, 11):
-        k = 'sigmoid_{}'.format(i)
-        rk = '{}_r'.format(k)
+        k = f'sigmoid_{i}'
+        rk = f'{k}_r'
         transfer_func[rk] = transfer_func[k][::-1]
     if isinstance(mapping, str):
         try:
             return transfer_func[mapping]
         except KeyError:
-            raise KeyError('opactiy transfer function ({}) unknown.'.format(mapping))
+            raise KeyError(f'opactiy transfer function ({mapping}) unknown.')
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
         if mapping.size == n_colors:
@@ -285,6 +285,6 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
-            raise RuntimeError('Transfer function cannot have more values than `n_colors`. This has {} elements'.format(mapping.size))
+            raise RuntimeError(f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements')
         return mapping
-    raise TypeError('Transfer function type ({}) not understood'.format(type(mapping)))
+    raise TypeError(f'Transfer function type ({type(mapping)}) not understood')

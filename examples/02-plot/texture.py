@@ -45,6 +45,18 @@ curvsurf.texture_map_to_plane(inplace=True)
 
 curvsurf.plot(texture=tex)
 
+###############################################################################
+# Display scalar data along with a texture by ensuring the
+# ``interpolate_before_map`` setting is ``False`` and specifying both the
+# ``texture`` and ``scalars`` arguments.
+
+elevated = curvsurf.elevation()
+
+elevated.plot(scalars='Elevation',
+              cmap='terrain',
+              texture=tex,
+              interpolate_before_map=False)
+
 
 ###############################################################################
 # Note that this process can be completed with any image texture!
@@ -138,7 +150,7 @@ puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 # produce 4 repetitions of the same texture on this mesh.
 #
 # Then we must associate those texture coordinates with the mesh through the
-# :attr:`pyvista.Common.t_coords` property.
+# :attr:`pyvista.DataSet.t_coords` property.
 
 curvsurf.t_coords = puppy_coords
 
@@ -148,3 +160,44 @@ curvsurf.t_coords = puppy_coords
 # use the puppy image
 tex = examples.download_puppy_texture()
 curvsurf.plot(texture=tex, cpos="xy")
+
+
+###############################################################################
+# Spherical Texture Coordinates
+# +++++++++++++++++++++++++++++
+# We have a built in convienance method for mapping textures to spherical
+# coordinate systems much like the planar mapping demoed above.
+mesh = pv.Sphere()
+tex = examples.download_masonry_texture()
+
+mesh.texture_map_to_sphere(inplace=True)
+mesh.plot(texture=tex)
+
+
+
+###############################################################################
+# The helper method above does not always produce the desired texture
+# coordinates, so sometimes it must be done manually. Here is a great, user
+# contributed example from `this support issue <https://github.com/pyvista/pyvista-support/issues/257>`_
+#
+# Manually create the texture coordinates for a globe map. First, we create
+# the mesh that will be used as the globe. Note the `start_theta` for a slight
+# overlappig
+sphere = pv.Sphere(radius=1,
+                   theta_resolution=120,
+                   phi_resolution=120,
+                   start_theta=270.001,
+                   end_theta=270)
+
+# Initialize the texture coordinates array
+sphere.t_coords = np.zeros((sphere.points.shape[0], 2))
+
+# Populate by manually calculating
+for i in range(sphere.points.shape[0]):
+    sphere.t_coords[i] = [0.5 + np.arctan2(-sphere.points[i, 0],
+                                           sphere.points[i, 1])/(2 * np.pi),
+                          0.5 + np.arcsin(sphere.points[i, 2])/np.pi]
+
+# And let's display it with a world map
+tex = examples.load_globe_texture()
+sphere.plot(texture=tex)

@@ -5,8 +5,6 @@ General Utilities
 
 .. autofunction:: pyvista.set_error_output_file
 
-.. autofunction:: pyvista.trans_from_matrix
-
 .. autofunction:: pyvista.is_inside_bounds
 
 
@@ -20,6 +18,10 @@ Object Conversions
 .. autofunction:: pyvista.image_to_texture
 
 .. autofunction:: pyvista.numpy_to_texture
+
+.. autofunction:: pyvista.array_from_vtkmatrix
+
+.. autofunction:: pyvista.vtkmatrix_from_array
 
 
 File IO
@@ -66,3 +68,8 @@ Array Access
 .. autofunction:: pyvista.vtk_bit_array_to_char
 
 .. autofunction:: pyvista.convert_string_array
+
+
+Image Comparison and Regression
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: pyvista.compare_images

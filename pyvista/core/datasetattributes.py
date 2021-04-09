@@ -3,93 +3,98 @@
 from collections.abc import Iterable
 
 import numpy as np
-import vtk
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, numpyTovtkDataArray
+from typing import Union, Iterator, Optional, List, Tuple, Dict, Sequence, Any
 
+from pyvista import _vtk
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
 from .pyvista_ndarray import pyvista_ndarray
 
+from .._typing import Number
 
-class DataSetAttributes(VTKObjectWrapper):
+
+class DataSetAttributes(_vtk.VTKObjectWrapper):
     """Python friendly wrapper of ``vtk.DataSetAttributes``.
 
     Implement a ``dict`` like interface for interacting with vtkDataArrays.
 
     Parameters
-        ----------
-        vtkobject : vtkFieldData
-            The vtk object to wrap as a DataSetAttribute, usually an
-             instance of ``vtk.vtkCellData``, ``vtk.vtkPointData``, or
-             ``vtk.vtkFieldData``.
+    ----------
+    vtkobject : vtkFieldData
+        The vtk object to wrap as a DataSetAttribute, usually an
+        instance of ``vtk.vtkCellData``, ``vtk.vtkPointData``, or
+        ``vtk.vtkFieldData``.
 
-        dataset : vtkDataSet
-            The vtkDataSet containing the vtkobject.
+    dataset : vtkDataSet
+        The vtkDataSet containing the vtkobject.
 
-        association : FieldAssociation
-            The array association type of the vtkobject.
+    association : FieldAssociation
+        The array association type of the vtkobject.
     """
 
-    def __init__(self, vtkobject, dataset, association):
+    def __init__(self, vtkobject: _vtk.vtkFieldData, dataset: _vtk.vtkDataSet, association: FieldAssociation):
         """Initialize DataSetAttributes."""
         super().__init__(vtkobject=vtkobject)
         self.dataset = dataset
         self.association = association
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Printable representation of DataSetAttributes."""
         return 'pyvista DataSetAttributes\n' \
                'Association: {}\n' \
                'Contains keys:\n' \
                '\t{}'.format(self.association.name, '\n\t'.join(self.keys()))
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Union[int, str]) -> pyvista_ndarray:
         """Implement [] operator.
 
         Accepts an array name or an index.
         """
         return self.get_array(key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: np.ndarray):
         """Implement setting with the [] operator."""
         self.append(narray=value, name=key)
 
-    def __delitem__(self, key: [str, int]):
+    def __delitem__(self, key: Union[str, int]):
         """Implement del with array name or index."""
         self.remove(key)
 
-    def __contains__(self, name: str):
+    def __contains__(self, name: str) -> bool:
         """Implement 'in' operator."""
         return name in self.keys()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         """Implement for loop iteration."""
         for array in self.keys():
             yield array
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of arrays."""
         return self.VTKObject.GetNumberOfArrays()
 
     @property
-    def active_scalars(self):
+    def active_scalars(self) -> Optional[pyvista_ndarray]:
         """Return the active scalar array as pyvista_ndarray."""
         self._raise_field_data_no_scalars_vectors()
         if self.GetScalars() is not None:
             return pyvista_ndarray(self.GetScalars(), dataset=self.dataset, association=self.association)
+        return None
 
     @active_scalars.setter
-    def active_scalars(self, name: str):
+    def active_scalars(self, name: str) -> None:
         """Set the active scalars by name."""
         self._raise_field_data_no_scalars_vectors()
         self.SetActiveScalars(name)
 
     @property
-    def active_vectors(self):
+    def active_vectors(self) -> Optional[np.ndarray]:
         """Return the active vectors as a pyvista_ndarray."""
         self._raise_field_data_no_scalars_vectors()
-        if self.GetVectors() is not None:
-            return pyvista_ndarray(self.GetVectors(), dataset=self.dataset, association=self.association)
+        vectors = self.GetVectors()
+        if vectors is not None:
+            return pyvista_ndarray(vectors, dataset=self.dataset, association=self.association)
+        return None
 
     @active_vectors.setter
     def active_vectors(self, name: str):
@@ -98,7 +103,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.SetActiveVectors(name)
 
     @property
-    def valid_array_len(self):
+    def valid_array_len(self) -> int:
         """Return the length an ndarray should be when added to the dataset.
 
         If there are no restrictions, return ``None``
@@ -107,13 +112,15 @@ class DataSetAttributes(VTKObjectWrapper):
             return self.dataset.GetNumberOfPoints()
         if self.association == FieldAssociation.CELL:
             return self.dataset.GetNumberOfCells()
+        return 0
 
     @property
-    def t_coords(self):
+    def t_coords(self) -> Optional[pyvista_ndarray]:
         """Return the active texture coordinates."""
         t_coords = self.GetTCoords()
         if t_coords is not None:
             return pyvista_ndarray(t_coords, dataset=self.dataset, association=self.association)
+        return None
 
     @t_coords.setter
     def t_coords(self, t_coords: np.ndarray):
@@ -124,15 +131,15 @@ class DataSetAttributes(VTKObjectWrapper):
             raise ValueError('Texture coordinates must be a 2-dimensional array')
         valid_length = self.valid_array_len
         if t_coords.shape[0] != valid_length:
-            raise ValueError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], valid_length))
+            raise ValueError(f'Number of texture coordinates ({t_coords.shape[0]}) must match number of points ({valid_length})')
         if t_coords.shape[1] != 2:
             raise ValueError('Texture coordinates must only have 2 components,'
-                             ' not ({})'.format(t_coords.shape[1]))
-        vtkarr = numpyTovtkDataArray(t_coords, name='Texture Coordinates')
+                             f' not ({t_coords.shape[1]})')
+        vtkarr = _vtk.numpyTovtkDataArray(t_coords, name='Texture Coordinates')
         self.SetTCoords(vtkarr)
         self.Modified()
 
-    def get_array(self, key):
+    def get_array(self, key: Union[str, int]) -> Union[pyvista_ndarray, _vtk.vtkDataArray, _vtk.vtkAbstractArray]:
         """Get an array in this object.
 
         Parameters
@@ -153,15 +160,16 @@ class DataSetAttributes(VTKObjectWrapper):
         if vtk_arr is None:
             vtk_arr = self.GetAbstractArray(key)
             if vtk_arr is None:
-                raise KeyError('{}'.format(key))
-            if type(vtk_arr) == vtk.vtkAbstractArray:
+                raise KeyError(f'{key}')
+            if type(vtk_arr) == _vtk.vtkAbstractArray:
                 return vtk_arr
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
             narray = narray.view(np.bool_)
         return narray
 
-    def append(self, narray, name, deep_copy=False, active_vectors=True, active_scalars=True):
+    def append(self, narray: Union[Sequence[Number], Number, np.ndarray], name: str, deep_copy=False,
+               active_vectors=True, active_scalars=True) -> None:
         """Add an array to this object.
 
         Parameters
@@ -190,8 +198,6 @@ class DataSetAttributes(VTKObjectWrapper):
             array_len = self.dataset.GetNumberOfPoints()
         elif self.association == FieldAssociation.CELL:
             array_len = self.dataset.GetNumberOfCells()
-        elif self.association == FieldAssociation.ROW:
-            array_len = narray.shape[0]
         else:
             array_len = narray.shape[0] if isinstance(narray, np.ndarray) else 1
 
@@ -202,8 +208,7 @@ class DataSetAttributes(VTKObjectWrapper):
             narray = tmparray
 
         if narray.shape[0] != array_len:
-            raise ValueError('narray length of ({}) != required length ({})'.format(
-                narray.shape[0], array_len))
+            raise ValueError(f'narray length of ({narray.shape[0]}) != required length ({array_len})')
 
         if narray.dtype == np.bool_:
             self.dataset.association_bitarray_names[self.association].add(name)
@@ -243,17 +248,16 @@ class DataSetAttributes(VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         try:
             if active_scalars or self.active_scalars is None:
-                self.active_scalars = name
+                self.active_scalars = name  # type: ignore
             if active_vectors or self.active_vectors is None:
                 # verify this is actually vector data
                 if len(shape) == 2 and shape[1] == 3:
-                    self.active_vectors = name
+                    self.active_vectors = name  # type: ignore
         except TypeError:
             pass
         self.VTKObject.Modified()
 
-
-    def remove(self, key):
+    def remove(self, key: Union[int, str]) -> None:
         """Remove an array.
 
         Parameters
@@ -262,7 +266,7 @@ class DataSetAttributes(VTKObjectWrapper):
             The name or index of the array to remove.
         """
         self._raise_index_out_of_bounds(index=key)
-        name = self.get_array(key).GetName()
+        name = self.get_array(key).GetName()  # type: ignore
         try:
             self.dataset.association_bitarray_names[self.association].remove(name)
         except KeyError:
@@ -270,13 +274,17 @@ class DataSetAttributes(VTKObjectWrapper):
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
-    def pop(self, key):
+    def pop(self, key: Union[int, str], default=pyvista_ndarray(array=[])) -> pyvista_ndarray:
         """Remove an array and return it.
 
         Parameters
         ----------
         key : int, str
             The name or index of the array to remove and return.
+
+        default : anything
+            If default is not given and key is not in the dictionary,
+            a KeyError is raised.
 
         Returns
         -------
@@ -289,14 +297,19 @@ class DataSetAttributes(VTKObjectWrapper):
             copy = vtk_arr.NewInstance()
             copy.DeepCopy(vtk_arr)
             vtk_arr = copy
-        self.remove(key)
+        try:
+            self.remove(key)
+        except KeyError:
+            if default in self.pop.__defaults__:  # type: ignore
+                raise
+            return default
         return pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
 
-    def items(self):
+    def items(self) -> List[Tuple[str, pyvista_ndarray]]:
         """Return a list of (array name, array value)."""
         return list(zip(self.keys(), self.values()))
 
-    def keys(self):
+    def keys(self) -> List[str]:
         """Return the names of the arrays as a list."""
         keys = []
         for i in range(self.GetNumberOfArrays()):
@@ -305,7 +318,7 @@ class DataSetAttributes(VTKObjectWrapper):
                 keys.append(name)
         return keys
 
-    def values(self):
+    def values(self) -> List[pyvista_ndarray]:
         """Return the arrays as a list."""
         values = []
         for name in self.keys():
@@ -319,7 +332,7 @@ class DataSetAttributes(VTKObjectWrapper):
         for array_name in self.keys():
             self.remove(key=array_name)
 
-    def update(self, array_dict):
+    def update(self, array_dict: Union[Dict[str, np.ndarray], 'DataSetAttributes']):
         """Update arrays in this object.
 
         For each key, value given, add the pair, if it already exists,
@@ -333,11 +346,11 @@ class DataSetAttributes(VTKObjectWrapper):
         for name, array in array_dict.items():
             self[name] = array.copy()
 
-    def _raise_index_out_of_bounds(self, index):
+    def _raise_index_out_of_bounds(self, index: Any):
         max_index = self.VTKObject.GetNumberOfArrays()
         if isinstance(index, int):
             if index < 0 or index >= self.VTKObject.GetNumberOfArrays():
-                raise KeyError('Array index ({}) out of range [0, {}]'.format(index, max_index))
+                raise KeyError(f'Array index ({index}) out of range [0, {max_index}]')
 
     def _raise_field_data_no_scalars_vectors(self):
         if self.association == FieldAssociation.NONE:

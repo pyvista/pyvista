@@ -8,3 +8,6 @@ from .geometric_objects import *
 from .helpers import *
 from .parametric_objects import *
 from .sphinx_gallery import Scraper, _get_sg_image_scraper
+from .regression import compare_images
+from . import transformations
+from .xvfb import start_xvfb

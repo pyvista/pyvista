@@ -3,23 +3,17 @@
 The data objects does not have any sort of spatial reference.
 
 """
-
 import numpy as np
-import vtk
 
+from pyvista import _vtk
 import pyvista
 from pyvista.utilities import (FieldAssociation, assert_empty_kwargs, get_array,
                                row_array)
-from .common import DataObject
+from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
 
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
 
-
-class Table(vtk.vtkTable, DataObject):
+class Table(_vtk.vtkTable, DataObject):
     """Wrapper for the ``vtkTable`` class.
 
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
@@ -38,7 +32,7 @@ class Table(vtk.vtkTable, DataObject):
         """Initialize the table."""
         super().__init__(*args, **kwargs)
         if len(args) == 1:
-            if isinstance(args[0], vtk.vtkTable):
+            if isinstance(args[0], _vtk.vtkTable):
                 deep = kwargs.get('deep', True)
                 if deep:
                     self.deep_copy(args[0])
@@ -48,17 +42,17 @@ class Table(vtk.vtkTable, DataObject):
                 self._from_arrays(args[0])
             elif isinstance(args[0], dict):
                 self._from_dict(args[0])
-            elif pd is not None and isinstance(args[0], pd.DataFrame):
+            elif 'pandas.core.frame.DataFrame' in str(type(args[0])):
                 self._from_pandas(args[0])
             else:
-                raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
+                raise TypeError(f'Table unable to be made from ({type(args[0])})')
 
     def _from_arrays(self, arrays):
         if not arrays.ndim == 2:
             raise ValueError('Only 2D arrays are supported by Tables.')
         np_table = arrays.T
         for i, array in enumerate(np_table):
-            self.row_arrays['Array {}'.format(i)] = array
+            self.row_arrays[f'Array {i}'] = array
         return
 
     def _from_dict(self, array_dict):
@@ -105,8 +99,8 @@ class Table(vtk.vtkTable, DataObject):
         name : str
             Name of row scalars to retrieve.
 
-        Return
-        ------
+        Returns
+        -------
         scalars : np.ndarray
             Numpy array of scalars
 
@@ -209,7 +203,7 @@ class Table(vtk.vtkTable, DataObject):
             fmt += "\n"
             fmt += "<table>\n"
             titles = ["Name", "Type", "N Comp", "Min", "Max"]
-            fmt += "<tr>" + "".join(["<th>{}</th>".format(t) for t in titles]) + "</tr>\n"
+            fmt += "<tr>" + "".join([f"<th>{t}</th>" for t in titles]) + "</tr>\n"
             row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"
             row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
 
@@ -244,8 +238,10 @@ class Table(vtk.vtkTable, DataObject):
 
     def to_pandas(self):
         """Create a Pandas DataFrame from this Table."""
-        if pd is None:
-            raise ImportError('You must have Pandas installed.')
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError('Install ``pandas`` to use this feature.')
         data_frame = pd.DataFrame()
         for name, array in self.items():
             data_frame[name] = array
@@ -283,24 +279,34 @@ class Table(vtk.vtkTable, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
 
-class Texture(vtk.vtkTexture):
+class Texture(_vtk.vtkTexture, DataObject):
     """A helper class for vtkTextures."""
 
     def __init__(self, *args, **kwargs):
         """Initialize the texture."""
-        assert_empty_kwargs(**kwargs)
+        super().__init__(*args, **kwargs)
 
         if len(args) == 1:
-            if isinstance(args[0], vtk.vtkTexture):
+            if isinstance(args[0], _vtk.vtkTexture):
                 self._from_texture(args[0])
             elif isinstance(args[0], np.ndarray):
                 self._from_array(args[0])
-            elif isinstance(args[0], vtk.vtkImageData):
+            elif isinstance(args[0], _vtk.vtkImageData):
                 self._from_image_data(args[0])
             elif isinstance(args[0], str):
-                self._from_texture(pyvista.read_texture(args[0]))
+                self._from_file(filename=args[0], **kwargs)
             else:
-                raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
+                raise TypeError(f'Texture unable to be made from ({type(args[0])})')
+
+    def _from_file(self, filename, **kwargs):
+        try:
+            image = pyvista.read(filename, **kwargs)
+            if image.GetNumberOfPoints() < 2:
+                raise ValueError("Problem reading the image with VTK.")
+            self._from_image_data(image)
+        except (KeyError, ValueError):
+            from imageio import imread
+            self._from_array(imread(filename))
 
     def _from_texture(self, texture):
         image = texture.GetInput()
@@ -313,37 +319,31 @@ class Texture(vtk.vtkTexture):
         return self.Update()
 
     def _from_array(self, image):
-        if image.ndim not in [2,3]:
+        """Create a texture from a np.ndarray."""
+        if not 2 <= image.ndim <= 3:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
             raise ValueError('Input image must be nn by nm by RGB[A]')
 
         if image.ndim == 3:
-            if image.shape[2] != 3 and image.shape[2] != 4:
+            if not 3 <= image.shape[2] <= 4:
                 raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
-
             n_components = image.shape[2]
-
         elif image.ndim == 2:
             n_components = 1
 
         grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
         grid.point_arrays['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, n_components), order='F')
         grid.set_active_scalars('Image')
-
         return self._from_image_data(grid)
 
-    def flip(self, axis):
-        """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
-        if axis < 0 or axis > 1:
-            raise ValueError("Axis {} out of bounds".format(axis))
-        ax = [1, 0]
-        array = self.to_array()
-        array = np.flip(array, axis=ax[axis])
-        return self._from_array(array)
+    @property
+    def repeat(self):
+        """Repeat the texture."""
+        return self.GetRepeat()
 
-    def to_image(self):
-        """Return the texture as an image."""
-        return self.GetInput()
+    @repeat.setter
+    def repeat(self, flag):
+        self.SetRepeat(flag)
 
     @property
     def n_components(self):
@@ -351,8 +351,20 @@ class Texture(vtk.vtkTexture):
         image = self.to_image()
         return image.active_scalars.shape[1]
 
+    def flip(self, axis):
+        """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
+        if not 0 <= axis <= 1:
+            raise ValueError(f"Axis {axis} out of bounds")
+        array = self.to_array()
+        array = np.flip(array, axis=1 - axis)
+        return self._from_array(array)
+
+    def to_image(self):
+        """Return the texture as an image."""
+        return self.GetInput()
+
     def to_array(self):
-        """Return the texture as an array."""
+        """Return the texture as a np.ndarray."""
         image = self.to_image()
 
         if image.active_scalars.ndim > 1:
@@ -365,6 +377,7 @@ class Texture(vtk.vtkTexture):
     def plot(self, *args, **kwargs):
         """Plot the texture as image data by itself."""
         return self.to_image().plot(*args, **kwargs)
+
 
     @property
     def repeat(self):

@@ -8,6 +8,5 @@ Plotting
    :maxdepth: 2
 
    plotting
-   itk_plotting
    widgets
    qt_plotting

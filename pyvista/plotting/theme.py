@@ -2,22 +2,24 @@
 
 import os
 
-import vtk
-
+from pyvista import _vtk
 from .colors import string_to_rgb, PARAVIEW_BACKGROUND
 
 MAX_N_COLOR_BARS = 10
-FONT_KEYS = {'arial': vtk.VTK_ARIAL,
-             'courier': vtk.VTK_COURIER,
-             'times': vtk.VTK_TIMES}
+FONT_KEYS = {'arial': _vtk.VTK_ARIAL,
+             'courier': _vtk.VTK_COURIER,
+             'times': _vtk.VTK_TIMES}
 
 rcParams = {
-    'auto_close': True, # DANGER: set to False with extreme caution
+    'jupyter_backend': 'static',
+    'auto_close': True,  # DANGER: set to False with extreme caution
     'background': [0.3, 0.3, 0.3],
+    'full_screen': False,
     'camera': {
         'position': [1, 1, 1],
         'viewup': [0, 0, 1],
     },
+    'notebook': None,
     'window_size': [1024, 768],
     'font': {
         'family': 'arial',
@@ -51,7 +53,7 @@ rcParams = {
     'lighting': True,
     'interactive': False,
     'render_points_as_spheres': False,
-    'use_panel': False,
+    'use_ipyvtk': False,
     'transparent_background': False,
     'title': 'PyVista',
     'axes': {
@@ -64,10 +66,18 @@ rcParams = {
     'multi_samples': 4,
     'multi_rendering_splitting_position': None,
     'volume_mapper': 'fixed_point' if os.name == 'nt' else 'smart',
+    'smooth_shading': False,
     'depth_peeling': {
         'number_of_peels': 4,
         'occlusion_ratio': 0.0,
         'enabled': False,
+    },
+    'silhouette': {
+        'color': 'black',
+        'line_width': 2,
+        'opacity': 1.0,
+        'feature_angle': False,
+        'decimate': 0.9,
     },
     'slider_style': {
         'classic': {
@@ -97,6 +107,17 @@ DEFAULT_THEME = dict(rcParams)
 
 def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme."""
+    allowed_themes = ['paraview',
+                      'pv',
+                      'document',
+                      'doc',
+                      'paper',
+                      'report',
+                      'night',
+                      'dark',
+                      'testing',
+                      'default']
+
     if theme.lower() in ['paraview', 'pv']:
         rcParams['background'] = PARAVIEW_BACKGROUND
         rcParams['cmap'] = 'coolwarm'
@@ -135,9 +156,22 @@ def set_plot_theme(theme):
         rcParams['axes']['x_color'] = 'tomato'
         rcParams['axes']['y_color'] = 'seagreen'
         rcParams['axes']['z_color'] = 'blue'
+    elif theme.lower() == 'testing':
+        # necessary for image regression.  Xvfb doesn't support
+        # multi-sampling, so we disable it here for consistency between
+        # desktops and remote testing
+        rcParams['off_screen'] = True
+        rcParams['multi_samples'] = 1
+        rcParams['window_size'] = [400, 400]
     elif theme.lower() in ['default']:
-        for k,v in DEFAULT_THEME.items():
+        # have to clear and overwrite since some rcParams are not set
+        # in the default theme
+        rcParams.clear()
+        for k, v in DEFAULT_THEME.items():
             rcParams[k] = v
+    else:
+        raise ValueError(f'Invalid theme {theme}.  Pick one of the following:\n'
+                         f'{allowed_themes}')
 
 
 def parse_color(color, opacity=None):
@@ -155,13 +189,13 @@ def parse_color(color, opacity=None):
     elif len(color) == 4:
         color = color[:3]
     else:
-        raise ValueError("""
-    Invalid color input: ({})
+        raise ValueError(f"""
+    Invalid color input: ({color})
     Must be string, rgb list, or hex color string.  For example:
         color='white'
         color='w'
         color=[1, 1, 1]
-        color='#FFFFFF'""".format(color))
+        color='#FFFFFF'""")
     if opacity is not None and isinstance(opacity, (float, int)):
         color = [color[0], color[1], color[2], opacity]
     return color

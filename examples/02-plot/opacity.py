@@ -96,19 +96,22 @@ knee = examples.download_knee()
 # And here we inspect the DICOM image with a few different opacity mappings:
 p = pv.Plotter(shape=(2, 2), border=False)
 
-p.add_mesh(knee, cmap="bone", stitle="No Opacity")
+p.add_mesh(knee, cmap="bone", scalar_bar_args={'title': "No Opacity"})
 p.view_xy()
 
 p.subplot(0, 1)
-p.add_mesh(knee, cmap="bone", opacity="linear", stitle="Linear Opacity")
+p.add_mesh(knee, cmap="bone", opacity="linear",
+           scalar_bar_args={'title': "Linear Opacity"})
 p.view_xy()
 
 p.subplot(1, 0)
-p.add_mesh(knee, cmap="bone", opacity="sigmoid", stitle="Sigmoidal Opacity")
+p.add_mesh(knee, cmap="bone", opacity="sigmoid",
+           scalar_bar_args={'title': "Sigmoidal Opacity"})
 p.view_xy()
 
 p.subplot(1, 1)
-p.add_mesh(knee, cmap="bone", opacity="geom_r", stitle="Log Scale Opacity")
+p.add_mesh(knee, cmap="bone", opacity="geom_r",
+           scalar_bar_args={'title': "Log Scale Opacity"})
 p.view_xy()
 
 p.show()
@@ -132,17 +135,23 @@ contours.array_names
 ###############################################################################
 # Make sure to flag ``use_transparency=True`` since we want areas of high
 # variance to have high transparency.
+#
+# Also, since the opacity array must be between 0 and 1, we normalize
+# the temperature variance array by the maximum value.  That way high
+# variance will be completely transparent.
 
-p = pv.Plotter(shape=(1,2))
+contours['Temperature_var'] /= contours['Temperature_var'].max()
 
-p.subplot(0,0)
+p = pv.Plotter(shape=(1, 2))
+
+p.subplot(0, 0)
 p.add_text('Opacity by Array')
 p.add_mesh(contours.copy(), scalars='Temperature',
            opacity='Temperature_var',
            use_transparency=True,
            cmap='bwr')
 
-p.subplot(0,1)
+p.subplot(0, 1)
 p.add_text('No Opacity')
 p.add_mesh(contours, scalars='Temperature',
            cmap='bwr')

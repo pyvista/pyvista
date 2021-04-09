@@ -9,4 +9,9 @@ colorcet
 cmocean
 itkwidgets>=0.25.2
 tqdm
-hypothesis>=5.8.0
+hypothesis>=6.0.3
+sphinx_gallery
+trimesh
+ipyvtk-simple>=0.1.2
+panel
+ipygany

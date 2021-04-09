@@ -1,8 +1,8 @@
 """
 .. _glyph_example:
 
-Plotting Glyphs (Vectors)
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Plotting Glyphs (Vectors or PolyData)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
@@ -17,7 +17,7 @@ import numpy as np
 
 mesh = examples.download_carotid().threshold(145, scalars="scalars")
 
-# Make a geometric obhect to use as the glyph
+# Make a geometric object to use as the glyph
 geom = pv.Arrow()  # This could be any dataset
 
 # Perform the glyph
@@ -36,7 +36,7 @@ p.show()
 
 ###############################################################################
 # Another approach is to load the vectors directly to the mesh object and then
-# access the :attr:`pyvista.Common.arrows` property.
+# access the :attr:`pyvista.DataSet.arrows` property.
 
 sphere = pv.Sphere(radius=3.14)
 
@@ -59,7 +59,8 @@ sphere.arrows.plot(scalars='GlyphScale')
 
 # plot the arrows and the sphere
 p = pv.Plotter()
-p.add_mesh(sphere.arrows, scalars='GlyphScale', lighting=False, stitle="Vector Magnitude")
+p.add_mesh(sphere.arrows, scalars='GlyphScale', lighting=False,
+           scalar_bar_args={'title': "Vector Magnitude"})
 p.add_mesh(sphere, color="grey", ambient=0.6, opacity=0.5, show_edges=False)
 p.show()
 
