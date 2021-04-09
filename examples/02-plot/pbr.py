@@ -83,7 +83,7 @@ plotter.add_mesh(action_figure, color='linen', pbr=True,
                  smooth_shading=True)
 
 # enable shadows (optional)
-# plotter.enable_shadows()
+plotter.enable_shadows()
 
 # setup lighting
 light = pv.Light((-2, 2, 0), (0, 0, 0), 'white', cone_angle=90, intensity=1.4)
@@ -91,6 +91,11 @@ plotter.add_light(light)
 
 light = pv.Light((2, 0, 0), (0, 0, 0), (0.509, 0.0862, 0.0549), cone_angle=90)
 plotter.add_light(light)
+
+
+light = pv.Light((0, 0, 10), (0, 0, 0), 'white', cone_angle=90)
+plotter.add_light(light)
+
 
 # plot with a good camera position
 plotter.camera_position = [(-7, 140., 265),

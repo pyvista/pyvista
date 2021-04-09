@@ -378,24 +378,14 @@ class Texture(_vtk.vtkTexture, DataObject):
         """Plot the texture as image data by itself."""
         return self.to_image().plot(*args, **kwargs)
 
-
     @property
-    def repeat(self):
-        """Repeat the texture."""
-        return self.GetRepeat()
+    def cube_map(self):
+        """Return ``True`` if cube mapping is enabled and ``False`` otherwise.
 
-    @repeat.setter
-    def repeat(self, flag):
-        self.SetRepeat(flag)
-
-    @property
-    def cube_map(self, flag):
-        """
-        Return True if cube mapping is enabled and False otherwise.
-
-        Is this texture a cube map, if so it needs 6 inputs, one for each
-        side of the cube. You must set this before connecting the inputs.
-        The inputs must all have the same size, data type, and depth.
+        Is this texture a cube map, if so it needs 6 inputs, one for
+        each side of the cube. You must set this before connecting the
+        inputs.  The inputs must all have the same size, data type,
+        and depth.
         """
         return self.GetCubeMap()
 
