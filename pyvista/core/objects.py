@@ -240,14 +240,14 @@ class Table(_vtk.vtkTable, DataObject):
         """Create a Pandas DataFrame from this Table."""
         try:
             import pandas as pd
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError('Install ``pandas`` to use this feature.')
         data_frame = pd.DataFrame()
         for name, array in self.items():
             data_frame[name] = array
         return data_frame
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):  # pragma: no cover
         """Save the table."""
         raise NotImplementedError("Please use the `to_pandas` method and "
                                   "harness Pandas' wonderful file IO methods.")
@@ -387,7 +387,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         inputs.  The inputs must all have the same size, data type,
         and depth.
         """
-        return self.GetCubeMap()
+        return bool(self.GetCubeMap())
 
     @cube_map.setter
     def cube_map(self, flag):

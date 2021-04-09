@@ -765,7 +765,7 @@ def download_notch_displacement():
 
 
 def download_louis_louvre():
-    """Download the Louis XIV de France, Louvre, Paris
+    """Download the Louis XIV de France, Louvre, Paris.
 
     Statue found in the Napoléon Courtyard of Louvre Palace. It is a
     copy in plomb of the original statue in Versailles, made by
