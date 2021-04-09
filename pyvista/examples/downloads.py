@@ -196,7 +196,7 @@ def download_exodus():
 
 def download_nefertiti():
     """Download mesh of Queen Nefertiti."""
-    return _download_and_read('Nefertiti.obj.zip')
+    return _download_and_read('nefertiti.ply.zip')
 
 
 def download_blood_vessels():
@@ -763,3 +763,16 @@ def download_notch_displacement():
     """Download the FEA displacement result from a notched beam."""
     return _download_and_read('notch_disp.vtu')
 
+
+def download_louis_louvre():
+    """Download the Louis XIV de France, Louvre, Paris
+
+    Statue found in the Napoléon Courtyard of Louvre Palace. It is a
+    copy in plomb of the original statue in Versailles, made by
+    Bernini and Girardon.
+
+    Credit goes to
+    https://sketchfab.com/3d-models/louis-xiv-de-france-louvre-paris-a0cc0e7eee384c99838dff2857b8158c
+
+    """
+    return _download_and_read('louis.ply')

@@ -71,34 +71,34 @@ p.show()
 ###############################################################################
 # Combine custom lighting, shadows, and physically based rendering.
 
-# download and cleanup the action figure
-action_figure = examples.download_action_figure()
-action_figure.clean(inplace=True)
+# download louis model
+mesh = examples.download_louis_louvre()
+mesh.rotate_z(140)
 
 plotter = pv.Plotter(lighting=None)
 plotter.set_background('black')
 
-plotter.add_mesh(action_figure, color='linen', pbr=True,
-                 metallic=0.8, roughness=0.3, diffuse=1,
+plotter.add_mesh(mesh, color='linen', pbr=True,
+                 metallic=0.5, roughness=0.5, diffuse=1,
                  smooth_shading=True)
 
 # enable shadows (optional)
-plotter.enable_shadows()
+# plotter.enable_shadows()
 
 # setup lighting
-light = pv.Light((-2, 2, 0), (0, 0, 0), 'white', cone_angle=90, intensity=1.4)
+light = pv.Light((-2, 2, 0), (0, 0, 0), 'white', cone_angle=90)
 plotter.add_light(light)
 
-light = pv.Light((2, 0, 0), (0, 0, 0), (0.509, 0.0862, 0.0549), cone_angle=90)
+light = pv.Light((2, 0, 0), (0, 0, 0), (0.7, 0.0862, 0.0549), cone_angle=90)
 plotter.add_light(light)
-
 
 light = pv.Light((0, 0, 10), (0, 0, 0), 'white', cone_angle=90)
 plotter.add_light(light)
 
 
 # plot with a good camera position
-plotter.camera_position = [(-7, 140., 265),
-                           (1.58, 3.0, 35.5),
-                           (0.1, 0.855, -0.509)]
+plotter.camera_position = [(9.51, 13.92, 15.81),
+                           (-2.836, -0.93, 10.2),
+                           (-0.22, -0.18, 0.959)]
 cpos = plotter.show()
+
