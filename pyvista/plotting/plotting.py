@@ -3,7 +3,6 @@
 import sys
 import pathlib
 import collections.abc
-from functools import partial
 from typing import Sequence
 import logging
 import os
@@ -13,18 +12,18 @@ import warnings
 import weakref
 from functools import wraps
 from threading import Thread
+from typing import Dict
 
 import numpy as np
 import scooby
-from typing import Dict
 
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import (assert_empty_kwargs, convert_array,
                                convert_string_array, get_array,
                                is_pyvista_dataset, abstract_class,
-                               numpy_to_texture,
-                               raise_not_matching, try_callback, wrap)
+                               numpy_to_texture, raise_not_matching,
+                               wrap)
 from pyvista.utilities.regression import image_from_window
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
@@ -59,6 +58,7 @@ def close_all():
         p.deep_clean()
     _ALL_PLOTTERS.clear()
     return True
+
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -1101,6 +1101,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         smooth_shading : bool, optional
             Enable smooth shading when ``True``.  Computes point
             normals enables VTK's phong shading algorithm.
+            Automatically enabled when ``pbr=True``.
 
         ambient : float, optional
             When lighting is enabled, this is the amount of light from
@@ -1246,7 +1247,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             lighting = rcParams['lighting']
 
         if smooth_shading is None:
-            smooth_shading = rcParams['smooth_shading']
+            if pbr:
+                smooth_shading = True
+            else:
+                smooth_shading = rcParams['smooth_shading']
 
         # supported aliases
         clim = kwargs.pop('rng', clim)
