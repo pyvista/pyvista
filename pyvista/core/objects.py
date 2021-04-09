@@ -389,7 +389,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         """
         return self.GetCubeMap()
 
-    @repeat.setter
+    @cube_map.setter
     def cube_map(self, flag):
         """Enable cube mapping if ``flag`` is True, disable it otherwise."""
         self.SetCubeMap(flag)
