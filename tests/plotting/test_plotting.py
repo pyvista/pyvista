@@ -1,6 +1,7 @@
 """
 See the image regression notes in docs/extras/developer_notes.rst
 """
+import time
 import platform
 import warnings
 import inspect
@@ -134,6 +135,26 @@ def test_plot_pyvista_ndarray(sphere):
 
 
 @skip_no_plotting
+def test_plot_increment_point_size():
+    points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
+    pl = pyvista.Plotter()
+    pl.add_points(points + 1)
+    pl.add_lines(points)
+    pl.increment_point_size_and_line_width(5)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_plot_update(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.update()
+    time.sleep(0.1)
+    pl.update()
+    pl.update(force_redraw=True)
+
+
+@skip_no_plotting
 def test_plot(tmpdir):
     tmp_dir = tmpdir.mkdir("tmpdir2")
     filename = str(tmp_dir.join('tmp.png'))
@@ -197,7 +218,7 @@ def test_interactor_style():
     )
     for interaction in interactions:
         getattr(plotter, f'enable_{interaction}_style')()
-        assert plotter._style_class is not None
+        assert plotter.iren._style_class is not None
     plotter.close()
 
 
@@ -618,6 +639,38 @@ def test_add_axes_twice():
     plotter.add_axes()
     plotter.add_axes(interactive=True)
     plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_hide_axes():
+    plotter = pyvista.Plotter()
+    plotter.add_axes()
+    plotter.hide_axes()
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_show_axes_all():
+    plotter = pyvista.Plotter()
+    plotter.show_axes_all()
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_hide_axes_all():
+    plotter = pyvista.Plotter()
+    plotter.hide_axes_all()
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_isometric_view_interactive(sphere):
+    plotter_iso = pyvista.Plotter()
+    plotter_iso.add_mesh(sphere)
+    plotter_iso.camera_position = 'xy'
+    cpos_old = plotter_iso.camera_position
+    plotter_iso.isometric_view_interactive()
+    assert not plotter_iso.camera_position == cpos_old
 
 
 @skip_no_plotting
