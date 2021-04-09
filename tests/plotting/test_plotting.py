@@ -126,6 +126,7 @@ def verify_cache_image(plotter):
 
 @skip_not_vtk9
 @skip_no_plotting
+@pytest.mark.skipif(os.name == 'nt', reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere):
     """Test PBR rendering"""
     texture = examples.load_globe_texture()
