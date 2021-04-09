@@ -387,7 +387,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         inputs.  The inputs must all have the same size, data type,
         and depth.
         """
-        return bool(self.GetCubeMap())
+        return self.GetCubeMap()
 
     @cube_map.setter
     def cube_map(self, flag):
@@ -399,7 +399,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return Texture(self.to_image().copy())
 
     def to_skybox(self):
-        """Return the texture as a ``vtkSkyBox`` if cube mapping is supported."""
+        """Return the texture as a ``vtkSkybox`` if cube mapping is enabled."""
         if self.cube_map:
             skybox = _vtk.vtkSkybox()
             skybox.SetTexture(self)

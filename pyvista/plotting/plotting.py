@@ -1099,8 +1099,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the width with ``line_width``.
 
         smooth_shading : bool, optional
-            Enable smooth shading when ``True``.  Computes point
-            normals enables VTK's phong shading algorithm.
+            Enable smooth shading when ``True`` using either the 
+            Gouraud or Phong shading algorithm.  When ``False``, use
+            flat shading.
             Automatically enabled when ``pbr=True``.
 
         ambient : float, optional
@@ -1129,12 +1130,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Does not render faces that are culled. Options are
             ``'front'`` or ``'back'``. This can be helpful for dense
             surface meshes, especially when edges are visible, but can
-            cause flat meshes to be partially displayed.  Defaults
+            cause flat meshes to be partially displayed.  Defaults to
             ``False``.
 
         rgb : bool, optional
             If an 2 dimensional array is passed as the scalars, plot
-            those values as RGB(A) colors! ``rgba`` is also accepted
+            those values as RGB(A) colors! ``rgba`` is also an accepted
             alias for this.  Opacity (the A) is optional.
 
         categories : bool, optional
@@ -1161,12 +1162,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         below_color : string or 3 item list, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``below_label`` to ``'Below'``
+            ``below_label`` to ``'Below'``.
 
         above_color : string or 3 item list, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
-            ``above_label`` to ``'Above'``
+            ``above_label`` to ``'Above'``.
 
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float
@@ -1174,7 +1175,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             and the values are the the string annotations.
 
         pickable : bool, optional
-            Set whether this mesh is pickable
+            Set whether this mesh is pickable.
 
         log_scale : bool, optional
             Use log scale when mapping data to colors. Scalars less
@@ -1186,16 +1187,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``PolyData``.  Use the ``color`` argument to set the base
             color. This is only available in VTK>=9.
 
-        metallic : float
+        metallic : float, optional
             Usually this value is either 0 or 1 for a real material
             but any value in between is valid. This parameter is only
-            used by PBR interpolation. Default value is 0.0
+            used by PBR interpolation. Default value is 0.0.
 
-        roughness : float
+        roughness : float, optional
             This value has to be between 0 (glossy) and 1 (rough). A
             glossy material has reflections and a high specular
             part. This parameter is only used by PBR
-            Interpolation. Default value is 0.5
+            interpolation. Default value is 0.5.
 
         render : bool, optional
             Force a render when ``True``.  Default ``True``.
