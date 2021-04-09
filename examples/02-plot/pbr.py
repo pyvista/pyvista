@@ -92,7 +92,7 @@ plotter.add_light(light)
 light = pv.Light((2, 0, 0), (0, 0, 0), (0.509, 0.0862, 0.0549), cone_angle=90)
 plotter.add_light(light)
 
-# plot wit ha good camera position
+# plot with a good camera position
 plotter.camera_position = [(-7, 140., 265),
                            (1.58, 3.0, 35.5),
                            (0.1, 0.855, -0.509)]
