@@ -400,7 +400,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return Texture(self.to_image().copy())
 
     def to_skybox(self):
-        """Return the texture as a ``vtkSkyBox`` if cube mapping is supported."""
+        """Return the texture as a ``vtkSkybox`` if cube mapping is enabled."""
         if self.cube_map:
             skybox = _vtk.vtkSkybox()
             skybox.SetTexture(self)

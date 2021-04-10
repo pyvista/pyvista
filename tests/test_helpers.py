@@ -50,8 +50,8 @@ def test_skybox(tmpdir):
         image = Image.new('RGB', (10, 10))
         image.save(os.path.join(path, suffix + '.jpg'))
 
-    skybox = pyvista.skybox(path)
-    assert isinstance(skybox, vtk.vtkOpenGLSkybox)
+    skybox = pyvista.cubemap(path)
+    assert isinstance(skybox, pyvista.Texture)
 
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
-        pyvista.skybox('')
+        pyvista.cubemap('')

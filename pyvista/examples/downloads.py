@@ -646,9 +646,9 @@ def download_sky_box_cube_map():
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
     images = [prefix + suffix + '.jpg' for suffix in sets]
     for image in images:
-        _download_file(images)
+        _download_file(image)
 
-    return pyvista.skybox(pyvista.EXAMPLES_PATH, prefix)
+    return pyvista.cubemap(pyvista.EXAMPLES_PATH, prefix)
 
 
 def download_backward_facing_step():
@@ -761,7 +761,7 @@ def download_notch_displacement():
 
 
 def download_louis_louvre():
-    """Download the Louis XIV de France, Louvre, Paris.
+    """Download the Louis XIV de France statue at the Louvre, Paris.
 
     Statue found in the Napoléon Courtyard of Louvre Palace. It is a
     copy in plomb of the original statue in Versailles, made by

@@ -8,7 +8,7 @@ that functionality in PyVista. Read the `blog about PBR
 
 PBR is only supported for :class:`pyvista.PolyData` and can be
 triggered via the ``pbr`` keyword argument of ``add_mesh``. Also use
-the ``metallic`` and ``roughness` arguments for further control.
+the ``metallic`` and ``roughness`` arguments for further control.
 
 Let's show off this functionality by rendering a high quality mesh of
 a statue as though it were metallic.
@@ -23,19 +23,17 @@ mesh = examples.download_nefertiti()
 mesh.rotate_x(-90.)  # rotate to orient with the skybox
 
 # Download skybox
-texture = examples.download_sky_box_cube_map()
-skybox = texture.to_skybox()
+cubemap = examples.download_sky_box_cube_map()
 
 
 ###############################################################################
 # Let's render the mesh with a base color of "linen" to give it a metal looking
 # finish.
 p = pv.Plotter()
-p.add_actor(skybox)
-p.set_environment_texture(texture)  # For reflecting the environment off the mesh
+p.add_actor(cubemap.to_skybox())
+p.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
 p.add_mesh(mesh, color='linen',
-           pbr=True, metallic=0.8, roughness=.1,
-           smooth_shading=True,
+           pbr=True, metallic=0.8, roughness=0.1,
            diffuse=1)
 
 # Define a nice camera perspective
@@ -55,14 +53,13 @@ p.show(cpos=cpos)
 colors = ['red', 'teal', 'black', 'orange', 'silver']
 
 p = pv.Plotter()
-p.set_environment_texture(texture)
+p.set_environment_texture(cubemap)
 
 for i in range(5):
     for j in range(6):
         sphere = pv.Sphere(radius=0.5, center=(0.0, 4 - i, j))
         p.add_mesh(sphere, color=colors[i],
-                   pbr=True, metallic=i*2/8, roughness=j*2/10,
-                   smooth_shading=True)
+                   pbr=True, metallic=i/4, roughness=j/5)
 
 p.view_vector((-1, 0, 0), (0, 1, 0))
 p.show()
@@ -78,18 +75,17 @@ mesh.rotate_z(140)
 plotter = pv.Plotter(lighting=None)
 plotter.set_background('black')
 plotter.add_mesh(mesh, color='linen', pbr=True,
-                 metallic=1.0, roughness=0.2, diffuse=1,
-                 smooth_shading=True)
+                 metallic=0.5, roughness=0.5, diffuse=1)
 
 
 # setup lighting
-light = pv.Light((-2, 2, 0), (0, 0, 0), 'white', cone_angle=90, intensity=1.5)
+light = pv.Light((-2, 2, 0), (0, 0, 0), 'white')
 plotter.add_light(light)
 
-light = pv.Light((2, 0, 0), (0, 0, 0), (0.7, 0.0862, 0.0549), cone_angle=90)
+light = pv.Light((2, 0, 0), (0, 0, 0), (0.7, 0.0862, 0.0549))
 plotter.add_light(light)
 
-light = pv.Light((0, 0, 10), (0, 0, 0), 'white', cone_angle=90)
+light = pv.Light((0, 0, 10), (0, 0, 0), 'white')
 plotter.add_light(light)
 
 
