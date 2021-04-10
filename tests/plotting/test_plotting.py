@@ -10,6 +10,7 @@ import os
 from weakref import proxy
 from pathlib import Path
 
+from PIL import Image
 import imageio
 import numpy as np
 import pytest
@@ -979,9 +980,14 @@ def test_plot_texture():
 
 
 @skip_no_plotting
-def test_plot_texture_alone():
+def test_plot_texture_alone(tmpdir):
     """"Test adding a texture to a plot"""
-    texture = examples.load_globe_texture()
+    path = str(tmpdir.mkdir("tmpdir"))
+    image = Image.new('RGB', (10, 10), color='blue')
+    filename = os.path.join(path, 'tmp.jpg')
+    image.save(filename)
+
+    texture = pyvista.read_texture(filename)
     texture.plot(rgba=True, before_close_callback=verify_cache_image)
 
 
