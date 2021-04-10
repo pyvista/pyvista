@@ -985,7 +985,7 @@ def cubemap(path='', prefix='', ext='.jpg'):
     Examples
     --------
     >>> import pyvista
-    >>> skybox = pyvista.skybox('my_directory', 'skybox', '.jpeg')  # doctest:+SKIP
+    >>> skybox = pyvista.cubemap('my_directory', 'skybox', '.jpeg')  # doctest:+SKIP
     """
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
     image_paths = [os.path.join(path, f'{prefix}{suffix}{ext}') for suffix in sets]
@@ -1000,7 +1000,7 @@ def cubemap(path='', prefix='', ext='.jpg'):
     texture = pyvista.Texture()
     texture.cube_map = True  # Must be set prior to setting images
 
-    # add each image to the skybox
+    # add each image to the cubemap
     for i, fn in enumerate(image_paths):
         image = pyvista.read(fn)
         flip = _vtk.vtkImageFlip()
