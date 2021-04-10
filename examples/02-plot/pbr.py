@@ -69,7 +69,7 @@ p.show()
 
 
 ###############################################################################
-# Combine custom lighting, shadows, and physically based rendering.
+# Combine custom lighting and physically based rendering.
 
 # download louis model
 mesh = examples.download_louis_louvre()
@@ -77,16 +77,13 @@ mesh.rotate_z(140)
 
 plotter = pv.Plotter(lighting=None)
 plotter.set_background('black')
-
 plotter.add_mesh(mesh, color='linen', pbr=True,
-                 metallic=0.5, roughness=0.5, diffuse=1,
+                 metallic=1.0, roughness=0.2, diffuse=1,
                  smooth_shading=True)
 
-# enable shadows (optional)
-# plotter.enable_shadows()
 
 # setup lighting
-light = pv.Light((-2, 2, 0), (0, 0, 0), 'white', cone_angle=90)
+light = pv.Light((-2, 2, 0), (0, 0, 0), 'white', cone_angle=90, intensity=1.5)
 plotter.add_light(light)
 
 light = pv.Light((2, 0, 0), (0, 0, 0), (0.7, 0.0862, 0.0549), cone_angle=90)
@@ -101,4 +98,3 @@ plotter.camera_position = [(9.51, 13.92, 15.81),
                            (-2.836, -0.93, 10.2),
                            (-0.22, -0.18, 0.959)]
 cpos = plotter.show()
-

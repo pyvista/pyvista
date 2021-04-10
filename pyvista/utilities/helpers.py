@@ -1,5 +1,6 @@
 """Supporting functions for polydata and grid objects."""
 
+import os
 import collections.abc
 import enum
 import logging
@@ -940,3 +941,70 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
 
     rot_mat = transformations.axis_angle_rotation(axis_to_vec[axis], angle, deg=deg)
     return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
+
+
+def skybox(path='', prefix='', ext='.jpg'):
+    """Construct a skybox from 6 images.
+
+    Each of the 6 images must be in the following format:
+
+    - <prefix>negx<ext>
+    - <prefix>negy<ext>
+    - <prefix>negz<ext>
+    - <prefix>posx<ext>
+    - <prefix>posy<ext>
+    - <prefix>posz<ext>
+
+    Prefix may be empty, and extension will default to ``'.jpg'``
+
+    For example, if you have 6 images with the skybox2 prefix:
+
+    - ``'skybox2-negx.jpg'``
+    - ``'skybox2-negy.jpg'``
+    - ``'skybox2-negz.jpg'``
+    - ``'skybox2-posx.jpg'``
+    - ``'skybox2-posy.jpg'``
+    - ``'skybox2-posz.jpg'``
+
+    Parameters
+    ----------
+    prefix : str, optional
+        Prefix to the filename.
+
+    ext : str, optional
+        The filename extension.  For example ``'.jpg'``
+
+    path : str, optional
+        Directory containing the skybox images.
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> skybox = pyvista.skybox('my_directory', 'skybox', '.jpeg')  # doctest:+SKIP
+    """
+    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+    image_paths = [os.path.join(path, f'{prefix}{suffix}{ext}') for suffix in sets]
+
+    for image_path in image_paths:
+        if not os.path.isfile(image_path):
+            file_str = '\n'.join(image_paths)
+            raise FileNotFoundError(f'Unable to locate {image_path}\n'
+                                    'Expected to find the following files:\n'
+                                    f'{file_str}')
+
+    texture = pyvista.Texture()
+    texture.cube_map = True  # Must be set prior to setting images
+
+    # add each image to the skybox
+    for i, fn in enumerate(image_paths):
+        image = pyvista.read(fn)
+        flip = _vtk.vtkImageFlip()
+        flip.SetInputDataObject(image)
+        flip.SetFilteredAxis(1)  # flip y axis
+        flip.Update()
+        texture.SetInputDataObject(i, flip.GetOutput())
+
+    return texture.to_skybox()

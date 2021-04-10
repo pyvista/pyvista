@@ -9,6 +9,7 @@ from pyvista import _vtk
 import pyvista
 from pyvista.utilities import (FieldAssociation, assert_empty_kwargs, get_array,
                                row_array)
+from .filters import _get_output
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
 
@@ -387,7 +388,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         inputs.  The inputs must all have the same size, data type,
         and depth.
         """
-        return bool(self.GetCubeMap())
+        return self.GetCubeMap()
 
     @cube_map.setter
     def cube_map(self, flag):
@@ -404,3 +405,11 @@ class Texture(_vtk.vtkTexture, DataObject):
             skybox = _vtk.vtkSkybox()
             skybox.SetTexture(self)
             return skybox
+
+    def flip(self):
+        """Return a flipped texture"""
+        flip = _vtk.vtkImageFlip()
+        flip.SetInputDataObject(self)
+        flip.SetFilteredAxis(1)  # flip y axis
+        flip.Update()
+        return _get_output(flip)

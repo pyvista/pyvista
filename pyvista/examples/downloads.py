@@ -1,3 +1,4 @@
+
 """Functions to download sample datasets from the VTK data repository."""
 
 import os
@@ -641,18 +642,13 @@ def download_vtk_logo():
 
 def download_sky_box_cube_map():
     """Download a skybox cube map texture."""
+    prefix = 'skybox2-'
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
-    images = ['skybox2-' + suffix + '.jpg' for suffix in sets]
-    texture = pyvista.Texture()
-    texture.cube_map = True  # Must be set prior to setting images
-    for i, fn in enumerate(images):
-        image = _download_and_read(fn)
-        flip = _vtk.vtkImageFlip()
-        flip.SetInputDataObject(image)
-        flip.SetFilteredAxis(1)  # flip y axis
-        flip.Update()
-        texture.SetInputDataObject(i, flip.GetOutput())
-    return texture
+    images = [prefix + suffix + '.jpg' for suffix in sets]
+    for image in images:
+        _download_file(images)
+
+    return pyvista.skybox(pyvista.EXAMPLES_PATH, prefix)
 
 
 def download_backward_facing_step():
