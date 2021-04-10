@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from vtk import VTK_QUADRATIC_HEXAHEDRON
 
+from pyvista._vtk import VTK9
 import pyvista
 from pyvista import examples
 from pyvista.core.errors import VTKVersionError
@@ -1348,6 +1349,7 @@ def test_reflect_mesh_about_point(dataset):
     assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
 
 
+@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
 @pytest.mark.parametrize('dataset', DATASETS)
 def test_reflect_mesh_with_vectors(dataset):
     if hasattr(dataset, 'compute_normals'):

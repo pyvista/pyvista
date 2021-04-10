@@ -172,6 +172,7 @@ def test_plot_increment_point_size():
     pl.show(before_close_callback=verify_cache_image)
 
 
+@skip_not_vtk9
 @skip_no_plotting
 def test_plot_update(sphere):
     pl = pyvista.Plotter()
@@ -812,12 +813,6 @@ def test_show_axes():
     plotter = pyvista.Plotter()
     plotter.show_axes()
     plotter.show(before_close_callback=verify_cache_image)
-
-
-@skip_no_plotting
-def test_update():
-    plotter = pyvista.Plotter()
-    plotter.update()
 
 
 @skip_no_plotting

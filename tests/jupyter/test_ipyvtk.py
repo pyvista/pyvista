@@ -19,7 +19,7 @@ skip_no_ipyvtk = pytest.mark.skipif(not has_ipyvtk_simple,
 def test_set_jupyter_backend_ipyvtk_simple():
     pv.set_jupyter_backend('ipyvtk_simple')
     assert pv.rcParams['jupyter_backend'] == 'ipyvtk_simple'
-    pv.set_jupyter_backend('panel')
+    pv.set_jupyter_backend(None)
 
 
 @skip_no_ipyvtk
