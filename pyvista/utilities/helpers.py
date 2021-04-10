@@ -979,7 +979,8 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
     Returns
     -------
-    
+    pyvista.Texture
+        Texture with cubemap.
 
     Examples
     --------
