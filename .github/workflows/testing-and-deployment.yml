@@ -37,7 +37,6 @@ jobs:
           pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
-        continue-on-error: true
         run: |
           pytest -v tests/plotting
 
