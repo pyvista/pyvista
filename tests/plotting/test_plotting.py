@@ -1439,7 +1439,7 @@ def test_volume_rendering():
     data['b'].rename_array('Spatial Point Data', 'b')
     data['c'].rename_array('Spatial Point Data', 'c')
     data['d'].rename_array('Spatial Point Data', 'd')
-    data.plot(volume=True, multi_colors=True, )
+    data.plot(volume=True, multi_colors=True)
 
     # Check that NumPy arrays work
     arr = vol["Spatial Point Data"].reshape(vol.dimensions)
