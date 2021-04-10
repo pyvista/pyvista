@@ -220,7 +220,6 @@ def test_texture():
 
 def test_skybox():
     texture = examples.load_globe_texture()
-    breakpoint()
     texture.cube_map = False
     assert texture.cube_map is False
 

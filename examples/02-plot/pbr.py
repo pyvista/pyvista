@@ -72,6 +72,7 @@ p.show()
 mesh = examples.download_louis_louvre()
 mesh.rotate_z(140)
 
+
 plotter = pv.Plotter(lighting=None)
 plotter.set_background('black')
 plotter.add_mesh(mesh, color='linen', pbr=True,

@@ -1678,7 +1678,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop.SetSpecular(specular)
         prop.SetSpecularPower(specular_power)
 
-        if pbr and _vtk.VTK9:
+        if pbr:
+            if not _vtk.VTK9:  # pragma: no cover
+                raise RuntimeError('Physically based rendering requires VTK 9 '
+                                   'or newer')
             prop.SetInterpolationToPBR()
             prop.SetMetallic(metallic)
             prop.SetRoughness(roughness)

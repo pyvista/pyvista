@@ -405,11 +405,3 @@ class Texture(_vtk.vtkTexture, DataObject):
             skybox = _vtk.vtkSkybox()
             skybox.SetTexture(self)
             return skybox
-
-    def flip(self):
-        """Return a flipped texture"""
-        flip = _vtk.vtkImageFlip()
-        flip.SetInputDataObject(self)
-        flip.SetFilteredAxis(1)  # flip y axis
-        flip.Update()
-        return _get_output(flip)
