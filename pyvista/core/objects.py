@@ -9,7 +9,6 @@ from pyvista import _vtk
 import pyvista
 from pyvista.utilities import (FieldAssociation, assert_empty_kwargs, get_array,
                                row_array)
-from .filters import _get_output
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
 

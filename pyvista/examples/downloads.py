@@ -1,4 +1,3 @@
-
 """Functions to download sample datasets from the VTK data repository."""
 
 import os
