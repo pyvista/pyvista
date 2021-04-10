@@ -972,10 +972,10 @@ def cubemap(path='', prefix='', ext='.jpg'):
         Prefix to the filename.
 
     ext : str, optional
-        The filename extension.  For example ``'.jpg'``
+        The filename extension.  For example ``'.jpg'``.
 
     path : str, optional
-        Directory containing the skybox images.
+        Directory containing the cubemap images.
 
     Returns
     -------
