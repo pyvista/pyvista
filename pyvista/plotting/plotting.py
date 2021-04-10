@@ -1009,7 +1009,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         point_size : float, optional
             Point size of any nodes in the dataset plotted. Also
-            applicable when style='points'. Default ``5.0``
+            applicable when style='points'. Default ``5.0``.
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
@@ -1046,7 +1046,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             not present in the color map.
 
         cmap : str, list, optional
-            Name of the Matplotlib colormap to us when mapping the
+            Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only
             applicable for when displaying ``scalars``. Requires
             Matplotlib to be installed.  ``colormap`` is also an
