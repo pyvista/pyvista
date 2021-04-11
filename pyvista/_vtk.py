@@ -151,6 +151,7 @@ if VTK9:
                                                    vtkLegendBoxActor,
                                                    vtkCubeAxesActor)
     from vtkmodules.vtkRenderingCore import (vtkTexture,
+                                             vtkSkybox,
                                              vtkPropAssembly,
                                              vtkRenderer,
                                              vtkMapper,
@@ -325,6 +326,7 @@ if VTK9:
     from vtkmodules.vtkImagingCore import (vtkExtractVOI,
                                            vtkImageExtractComponents,
                                            vtkImageDifference,
+                                           vtkImageFlip,
                                            vtkRTAnalyticSource)
     from vtkmodules.vtkFiltersFlowPaths import vtkStreamTracer
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid

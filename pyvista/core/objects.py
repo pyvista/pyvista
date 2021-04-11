@@ -240,14 +240,14 @@ class Table(_vtk.vtkTable, DataObject):
         """Create a Pandas DataFrame from this Table."""
         try:
             import pandas as pd
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError('Install ``pandas`` to use this feature.')
         data_frame = pd.DataFrame()
         for name, array in self.items():
             data_frame[name] = array
         return data_frame
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):  # pragma: no cover
         """Save the table."""
         raise NotImplementedError("Please use the `to_pandas` method and "
                                   "harness Pandas' wonderful file IO methods.")
@@ -378,6 +378,29 @@ class Texture(_vtk.vtkTexture, DataObject):
         """Plot the texture as image data by itself."""
         return self.to_image().plot(*args, **kwargs)
 
+    @property
+    def cube_map(self):
+        """Return ``True`` if cube mapping is enabled and ``False`` otherwise.
+
+        Is this texture a cube map, if so it needs 6 inputs, one for
+        each side of the cube. You must set this before connecting the
+        inputs.  The inputs must all have the same size, data type,
+        and depth.
+        """
+        return self.GetCubeMap()
+
+    @cube_map.setter
+    def cube_map(self, flag):
+        """Enable cube mapping if ``flag`` is True, disable it otherwise."""
+        self.SetCubeMap(flag)
+
     def copy(self):
         """Make a copy of this texture."""
         return Texture(self.to_image().copy())
+
+    def to_skybox(self):
+        """Return the texture as a ``vtkSkybox`` if cube mapping is enabled."""
+        if self.cube_map:
+            skybox = _vtk.vtkSkybox()
+            skybox.SetTexture(self)
+            return skybox

@@ -45,11 +45,13 @@ def test_ipygany_from_show(sphere):
     assert viewer.children
 
 
+@skip_no_ipygany
 def test_check_colormap_fail():
     with pytest.raises(ValueError, match='is not supported'):
         check_colormap('notacolormap')
 
 
+@skip_no_ipygany
 @pytest.mark.filterwarnings("ignore")
 def test_wireframe(sphere):
     # this is expected to warn and plot nothing as it's unsupported

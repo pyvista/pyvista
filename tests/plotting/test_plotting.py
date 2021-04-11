@@ -10,12 +10,14 @@ import os
 from weakref import proxy
 from pathlib import Path
 
+from PIL import Image
 import imageio
 import numpy as np
 import pytest
 import vtk
 
 import pyvista
+from pyvista._vtk import VTK9
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
@@ -32,8 +34,6 @@ try:
 except:
     ffmpeg_failed = True
 
-OFF_SCREEN = True
-VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 sphere = pyvista.Sphere()
 sphere_b = pyvista.Sphere(1.0)
@@ -46,8 +46,13 @@ IMAGE_CACHE_DIR = os.path.join(Path(__file__).parent.absolute(), 'image_cache')
 if not os.path.isdir(IMAGE_CACHE_DIR):
     os.mkdir(IMAGE_CACHE_DIR)
 
+# always set on azure CI
+AZURE_CI_WINDOWS = os.environ.get('AZURE_CI_WINDOWS', 'false').lower() == 'true'
+
 skip_no_plotting = pytest.mark.skipif(not system_supports_plotting(),
                                       reason="Test requires system to support plotting")
+
+skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 
 # IMAGE warning/error thresholds (assumes using use_vtk)
 IMAGE_REGRESSION_ERROR = 500  # major differences
@@ -123,6 +128,29 @@ def verify_cache_image(plotter):
                       f'{error}')
 
 
+@skip_not_vtk9
+@skip_no_plotting
+@pytest.mark.skipif(AZURE_CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
+def test_pbr(sphere):
+    """Test PBR rendering"""
+    texture = examples.load_globe_texture()
+
+    pl = pyvista.Plotter(lighting=None)
+    pl.set_environment_texture(texture)
+    pl.add_light(pyvista.Light())
+    pl.add_mesh(sphere,
+                color='w',
+                pbr=True, metallic=0.8, roughness=0.2,
+                smooth_shading=True,
+                diffuse=1)
+    pl.add_mesh(pyvista.Sphere(center=(0, 0, 1)),
+                color='w',
+                pbr=True, metallic=0.0, roughness=1.0,
+                smooth_shading=True,
+                diffuse=1)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 @skip_no_plotting
 def test_plot_pyvista_ndarray(sphere):
     # verify we can plot pyvista_ndarray
@@ -144,6 +172,7 @@ def test_plot_increment_point_size():
     pl.show(before_close_callback=verify_cache_image)
 
 
+@skip_not_vtk9
 @skip_no_plotting
 def test_plot_update(sphere):
     pl = pyvista.Plotter()
@@ -396,10 +425,12 @@ def test_set_camera_position_invalid(cpos, sphere):
     with pytest.raises(pyvista.core.errors.InvalidCameraError):
         plotter.camera_position = cpos
 
+
 @skip_no_plotting
 def test_parallel_projection():
     plotter = pyvista.Plotter()
     assert isinstance(plotter.parallel_projection, bool)
+
 
 @skip_no_plotting
 @pytest.mark.parametrize("state", [True, False])
@@ -408,10 +439,12 @@ def test_set_parallel_projection(state):
     plotter.parallel_projection = state
     assert plotter.parallel_projection == state
 
+
 @skip_no_plotting
 def test_parallel_scale():
     plotter = pyvista.Plotter()
     assert isinstance(plotter.parallel_scale, float)
+
 
 @skip_no_plotting
 @pytest.mark.parametrize("value", [1, 1.5, 0.3, 10])
@@ -420,11 +453,13 @@ def test_set_parallel_scale(value):
     plotter.parallel_scale = value
     assert plotter.parallel_scale == value
 
+
 @skip_no_plotting
 def test_set_parallel_scale_invalid():
     plotter = pyvista.Plotter()
     with pytest.raises(TypeError):
         plotter.parallel_scale = "invalid"
+
 
 @skip_no_plotting
 def test_plot_no_active_scalars():
@@ -781,12 +816,6 @@ def test_show_axes():
 
 
 @skip_no_plotting
-def test_update():
-    plotter = pyvista.Plotter()
-    plotter.update()
-
-
-@skip_no_plotting
 def test_plot_cell_arrays():
     plotter = pyvista.Plotter()
     scalars = np.arange(sphere.n_faces)
@@ -946,6 +975,18 @@ def test_plot_texture():
 
 
 @skip_no_plotting
+def test_plot_texture_alone(tmpdir):
+    """"Test adding a texture to a plot"""
+    path = str(tmpdir.mkdir("tmpdir"))
+    image = Image.new('RGB', (10, 10), color='blue')
+    filename = os.path.join(path, 'tmp.jpg')
+    image.save(filename)
+
+    texture = pyvista.read_texture(filename)
+    texture.plot(rgba=True, before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
 def test_plot_texture_associated():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -1007,20 +1048,20 @@ def test_vector_array_with_cells_and_points():
     data = setup_multicomponent_data()
 
     # test no component argument
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter()
     p.add_mesh(data, scalars='vector_values_points')
     p.show()
 
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter()
     p.add_mesh(data, scalars='vector_values_cells')
     p.show()
 
     # test component argument
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter()
     p.add_mesh(data, scalars='vector_values_points', component=0)
     p.show()
 
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter()
     p.add_mesh(data, scalars='vector_values_cells', component=0)
     p.show()
 
@@ -1053,24 +1094,24 @@ def test_vector_plotting_doesnt_modify_data():
 
     # test that adding a vector with no component parameter to a Plotter instance
     # does not modify it.
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter()
     p.add_mesh(data, scalars='vector_values_points')
     p.show()
     assert np.array_equal(data['vector_values_points'], copy_vector_values_points)
 
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter()
     p.add_mesh(data, scalars='vector_values_cells')
     p.show()
     assert np.array_equal(data['vector_values_cells'], copy_vector_values_cells)
 
     # test that adding a vector with a component parameter to a Plotter instance
     # does not modify it.
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter()
     p.add_mesh(data, scalars='vector_values_points', component=0)
     p.show()
     assert np.array_equal(data['vector_values_points'], copy_vector_values_points)
 
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter()
     p.add_mesh(data, scalars='vector_values_cells', component=0)
     p.show()
     assert np.array_equal(data['vector_values_cells'], copy_vector_values_cells)
@@ -1081,7 +1122,7 @@ def test_vector_array_fail_with_incorrect_component():
     """Test failure modes of component argument."""
     data = setup_multicomponent_data()
 
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter()
 
     # Non-Integer
     with pytest.raises(TypeError):
@@ -1089,13 +1130,13 @@ def test_vector_array_fail_with_incorrect_component():
         p.show()
 
     # Component doesn't exist
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter()
     with pytest.raises(ValueError):
         p.add_mesh(data, scalars='vector_values_points', component=3)
         p.show()
 
     # Component doesn't exist
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter()
     with pytest.raises(ValueError):
         p.add_mesh(data, scalars='vector_values_points', component=-1)
         p.show()
@@ -1117,7 +1158,7 @@ def test_camera():
     plotter.show(before_close_callback=verify_cache_image)
     plotter.camera_position = None
 
-    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
     plotter.camera.zoom(5)
     plotter.camera.up = 0, 0, 10
@@ -1393,7 +1434,7 @@ def test_volume_rendering():
     data['b'].rename_array('Spatial Point Data', 'b')
     data['c'].rename_array('Spatial Point Data', 'c')
     data['d'].rename_array('Spatial Point Data', 'd')
-    data.plot(off_screen=OFF_SCREEN, volume=True, multi_colors=True, )
+    data.plot(volume=True, multi_colors=True)
 
     # Check that NumPy arrays work
     arr = vol["Spatial Point Data"].reshape(vol.dimensions)

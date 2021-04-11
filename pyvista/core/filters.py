@@ -3069,7 +3069,7 @@ class DataSetFilters:
             # In VTK 8.1.2 and earlier, vtkTransformFilter does not support the transformation of all input vectors.
             # Raise an error if the user requested for input vectors to be transformed and it is not supported
             if transform_all_input_vectors:
-                raise VTKVersionError('The installed version of VTK does not support'
+                raise VTKVersionError('The installed version of VTK does not support '
                                       'transformation of all input vectors.')
 
         f.Update()

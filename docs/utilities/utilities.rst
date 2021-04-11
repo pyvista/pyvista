@@ -23,6 +23,8 @@ Object Conversions
 
 .. autofunction:: pyvista.vtkmatrix_from_array
 
+.. autofunction:: pyvista.cubemap
+
 
 File IO
 ~~~~~~~

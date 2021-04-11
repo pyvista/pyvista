@@ -1,6 +1,9 @@
+import os
 import pytest
 import trimesh
 import numpy as np
+from PIL import Image
+import vtk
 
 import pyvista
 
@@ -38,3 +41,17 @@ def test_make_tri_mesh(sphere):
 
     assert np.allclose(sphere.points, mesh.points)
     assert np.allclose(sphere.faces, mesh.faces)
+
+
+def test_skybox(tmpdir):
+    path = str(tmpdir.mkdir("tmpdir"))
+    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+    for suffix in sets:
+        image = Image.new('RGB', (10, 10))
+        image.save(os.path.join(path, suffix + '.jpg'))
+
+    skybox = pyvista.cubemap(path)
+    assert isinstance(skybox, pyvista.Texture)
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pyvista.cubemap('')

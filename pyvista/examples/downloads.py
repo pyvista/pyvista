@@ -196,7 +196,7 @@ def download_exodus():
 
 def download_nefertiti():
     """Download mesh of Queen Nefertiti."""
-    return _download_and_read('Nefertiti.obj.zip')
+    return _download_and_read('nefertiti.ply.zip')
 
 
 def download_blood_vessels():
@@ -639,6 +639,17 @@ def download_vtk_logo():
     return _download_and_read("vtk.png", texture=True)
 
 
+def download_sky_box_cube_map():
+    """Download a skybox cube map texture."""
+    prefix = 'skybox2-'
+    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+    images = [prefix + suffix + '.jpg' for suffix in sets]
+    for image in images:
+        _download_file(image)
+
+    return pyvista.cubemap(pyvista.EXAMPLES_PATH, prefix)
+
+
 def download_backward_facing_step():
     """Download an ensight gold case of a fluid simulation."""
     folder, _ = _download_file('EnSight.zip')
@@ -746,3 +757,17 @@ def download_notch_stress():
 def download_notch_displacement():
     """Download the FEA displacement result from a notched beam."""
     return _download_and_read('notch_disp.vtu')
+
+
+def download_louis_louvre():
+    """Download the Louis XIV de France statue at the Louvre, Paris.
+
+    Statue found in the Napoléon Courtyard of Louvre Palace. It is a
+    copy in plomb of the original statue in Versailles, made by
+    Bernini and Girardon.
+
+    Credit goes to
+    https://sketchfab.com/3d-models/louis-xiv-de-france-louvre-paris-a0cc0e7eee384c99838dff2857b8158c
+
+    """
+    return _download_and_read('louis.ply')
