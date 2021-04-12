@@ -47,8 +47,8 @@ plotter.add_mesh(
 plotter.show(cpos="xy")
 
 ###############################################################################
-# Create the spring
-# ~~~~~~~~~~~~~~~~~
+# Create a spring
+# ~~~~~~~~~~~~~~~
 
 # Create the spring profile (a circle).
 plotter = pyvista.Plotter(shape=(1, 1))
