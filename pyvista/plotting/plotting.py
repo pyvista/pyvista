@@ -728,15 +728,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Return an image array of current render window.
 
         To retrieve an image after the render window has been closed,
-        set: `plotter.store_image = True` before closing the plotter.
+        set: ``plotter.store_image = True`` before closing the plotter.
         """
         if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
             return self.last_image
 
-        if not self._first_time:
-            raise AttributeError('This plotter has not yet been setup and rendered '
-                                 'with ``show``.  Consider setting ``off_screen=True``'
-                                 'For off screen rendering.\n')
+        if not self._rendered:
+            raise AttributeError('\nThis plotter has not yet been setup and rendered '
+                                 'with ``show()``.\n'
+                                 'Consider setting ``off_screen=True`` '
+                                 'for off screen rendering.\n')
+
+        if not hasattr(self, 'ren_win'):
+            raise AttributeError('\n\nTo retrieve an image after the render window '
+                                 'has been closed, set:\n\n'
+                                 ' ``plotter.store_image = True``\n\n'
+                                 'before closing the plotter.')
 
         data = image_from_window(self.ren_win)
         if self.image_transparent_background:
