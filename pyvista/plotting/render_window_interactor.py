@@ -347,7 +347,7 @@ class RenderWindowInteractor():
         return timer_id
 
     def start(self):
-        """Start interations."""
+        """Start interactions."""
         self.interactor.Start()
 
     def initialize(self):
