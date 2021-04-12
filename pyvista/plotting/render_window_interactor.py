@@ -73,7 +73,7 @@ class RenderWindowInteractor():
             del self._observers[event]
 
     def remove_observers(self):
-        for obs in self._observers.values():
+        for obs in list(self._observers.values()):
             self.remove_observer(obs)
 
     def clear_events_for_key(self, key):
