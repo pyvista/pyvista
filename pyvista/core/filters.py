@@ -5059,8 +5059,8 @@ class PolyDataFilters(DataSetFilters):
         dradius : float, optional
             Change in radius during sweep process.
 
-    angle : float, optional
-        The angle of rotation.
+        angle : float, optional
+            The angle of rotation.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
