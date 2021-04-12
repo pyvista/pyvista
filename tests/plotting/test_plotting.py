@@ -1930,3 +1930,16 @@ def test_plot_lighting_change_positional_false_true():
     light.positional = True
     plotter.add_mesh(pyvista.Sphere())
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plotter_image():
+    plotter = pyvista.Plotter()
+    plotter.show()
+    with pytest.raises(AttributeError, match='To retrieve an image after'):
+        plotter.image
+
+    plotter = pyvista.Plotter()
+    wsz = tuple(plotter.window_size)
+    plotter.store_image = True
+    plotter.show()
+    assert plotter.image.shape[:2] == wsz

@@ -188,6 +188,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Keep track of the scale
         self._labels = []
 
+        # track if render window has ever been rendered
+        self._rendered = False
+
         # this helps managing closed plotters
         self._closed = False
 
@@ -725,16 +728,29 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Return an image array of current render window.
 
         To retrieve an image after the render window has been closed,
-        set: `plotter.store_image = True` before closing the plotter.
+        set: ``plotter.store_image = True`` before closing the plotter.
         """
         if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
             return self.last_image
 
+        if not self._rendered:
+            raise AttributeError('\nThis plotter has not yet been setup and rendered '
+                                 'with ``show()``.\n'
+                                 'Consider setting ``off_screen=True`` '
+                                 'for off screen rendering.\n')
+
+        if not hasattr(self, 'ren_win'):
+            raise AttributeError('\n\nTo retrieve an image after the render window '
+                                 'has been closed, set:\n\n'
+                                 ' ``plotter.store_image = True``\n\n'
+                                 'before closing the plotter.')
+
         data = image_from_window(self.ren_win)
         if self.image_transparent_background:
             return data
-        else:  # ignore alpha channel
-            return data[:, :, :-1]
+
+        # ignore alpha channel
+        return data[:, :, :-1]
 
     def render(self):
         """Render the main window.
@@ -744,6 +760,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'ren_win') and not self._first_time:
             log.debug('Rendering')
             self.ren_win.Render()
+            self._rendered = True
 
     @wraps(RenderWindowInteractor.add_key_event)
     def add_key_event(self, *args, **kwargs):
