@@ -188,6 +188,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Keep track of the scale
         self._labels = []
 
+        # track if render window has ever been rendered
+        self._rendered = False
+
         # this helps managing closed plotters
         self._closed = False
 
@@ -730,11 +733,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
             return self.last_image
 
+        if not self._first_time:
+            raise AttributeError('This plotter has not yet been setup and rendered '
+                                 'with ``show``.  Consider setting ``off_screen=True``'
+                                 'For off screen rendering.\n')
+
         data = image_from_window(self.ren_win)
         if self.image_transparent_background:
             return data
-        else:  # ignore alpha channel
-            return data[:, :, :-1]
+
+        # ignore alpha channel
+        return data[:, :, :-1]
 
     def render(self):
         """Render the main window.
@@ -744,6 +753,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'ren_win') and not self._first_time:
             log.debug('Rendering')
             self.ren_win.Render()
+            self._rendered = True
 
     @wraps(RenderWindowInteractor.add_key_event)
     def add_key_event(self, *args, **kwargs):
