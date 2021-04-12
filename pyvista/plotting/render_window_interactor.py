@@ -137,7 +137,7 @@ class RenderWindowInteractor():
 
     def untrack_click_position(self):
         """Stop tracking the click position."""
-        self.interactor.RemoveObserver(self._click_observer)
+        self.remove_observer(self._click_observer)
         self._click_observer = None
 
     def clear_key_event_callbacks(self):
