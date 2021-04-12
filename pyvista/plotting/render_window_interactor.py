@@ -22,14 +22,14 @@ class RenderWindowInteractor():
 
     """
 
-    def __init__(self, plotter, desired_update_rate=30, follow_camera=True,
+    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True,
                  interactor=None):
         """Initialize."""
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
         self.interactor = interactor
         self.interactor.SetDesiredUpdateRate(desired_update_rate)
-        if not follow_camera:
+        if not light_follow_camera:
             self.interactor.LightFollowCameraOff()
 
         # Map of events to observers
