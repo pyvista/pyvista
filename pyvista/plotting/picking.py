@@ -203,7 +203,7 @@ class PickingHelper:
             area_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
         self.enable_rubber_band_style()
-        self.iren.SetPicker(area_picker)
+        self.iren.set_picker(area_picker)
 
         # Now add text about cell-selection
         if show_message:
@@ -290,7 +290,7 @@ class PickingHelper:
         point_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, _end_pick_event)
 
         self.enable_trackball_style()
-        self.iren.SetPicker(point_picker)
+        self.iren.set_picker(point_picker)
 
         # Now add text about cell-selection
         if show_message:

@@ -759,13 +759,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Store mouse position."""
         if not hasattr(self, "iren"):
             raise AttributeError("This plotting window is not interactive.")
-        self.mouse_position = self.iren.GetEventPosition()
+        self.mouse_position = self.iren.get_event_position()
 
     def store_click_position(self, *args):
         """Store click position in viewport coordinates."""
         if not hasattr(self, "iren"):
             raise AttributeError("This plotting window is not interactive.")
-        self.click_position = self.iren.GetEventPosition()
+        self.click_position = self.iren.get_event_position()
         self.mouse_position = self.click_position
 
     def track_mouse_position(self):
@@ -846,7 +846,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # must raise a runtime error as this causes a segfault on VTK9
                 raise ValueError('Invoking helper with no framebuffer')
         # Get 2D click location on window
-        click_pos = self.iren.GetEventPosition()
+        click_pos = self.iren.get_event_position()
 
         # Get corresponding click location in the 3D plot
         picker = _vtk.vtkWorldPointPicker()
@@ -907,7 +907,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def isometric_view_interactive(self):
         """Set the current interactive render window to isometric view."""
-        interactor = self.iren.GetInteractorStyle()
+        interactor = self.iren.get_interactor_style()
         renderer = interactor.GetCurrentRenderer()
         if renderer is None:
             renderer = self.renderer
@@ -933,13 +933,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if Plotter.last_update_time > curr_time:
             Plotter.last_update_time = curr_time
 
-        update_rate = self.iren.GetDesiredUpdateRate()
+        update_rate = self.iren.get_desired_update_rate()
         if (curr_time - Plotter.last_update_time) > (1.0/update_rate):
-            self.right_timer_id = self.iren.CreateRepeatingTimer(stime)
-
-            self.iren.Start()
-            self.iren.DestroyTimer(self.right_timer_id)
-
+            self.right_timer_id = self.iren.create_timer(stime)
             self.render()
             Plotter.last_update_time = curr_time
         elif force_redraw:
@@ -2383,15 +2379,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self._clear_ren_win()
 
-        self._style_class = None
-
-        if hasattr(self, '_observers'):
-            for obs in self._observers.values():
-                self.iren.RemoveObservers(obs)
-            del self._observers
-
         if self.iren is not None:
-            self.iren.TerminateApp()
+            self.iren.remove_observers()
+            self.iren.terminate_app()
             self.iren = None
 
         if hasattr(self, 'textActor'):
@@ -3291,7 +3281,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         NumberOfFlyFrames. The LOD desired frame rate is used.
 
         """
-        return self.iren.FlyTo(self.renderer, *point)
+        return self.iren.fly_to(self.renderer, point)
 
     def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None,
                       write_frames=False, threaded=False):
@@ -3661,7 +3651,7 @@ class Plotter(BasePlotter):
         def on_timer(iren, event_id):
             """Exit application if interactive renderer stops."""
             if event_id == 'TimerEvent':
-                self.iren.TerminateApp()
+                self.iren.terminate_app()
 
         if off_screen is None:
             off_screen = pyvista.OFF_SCREEN
@@ -3715,9 +3705,7 @@ class Plotter(BasePlotter):
 
         # Add ren win and interactor
         self.iren = RenderWindowInteractor(self)
-        self.iren.LightFollowCameraOff()
-        self.iren.SetDesiredUpdateRate(30.0)
-        self.iren.SetRenderWindow(self.ren_win)
+        self.iren.set_render_window(self.ren_win)
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
 
@@ -3881,7 +3869,7 @@ class Plotter(BasePlotter):
         # For Windows issues. Resolves #186, #1018 and #1078
         if os.name == 'nt' and pyvista.IS_INTERACTIVE and not pyvista.VERY_FIRST_RENDER:
             if interactive and (not self.off_screen):
-                self.iren.Start()
+                self.iren.start()
         pyvista.VERY_FIRST_RENDER = False
         # for some reason iren needs to start before rendering on
         # Windows when running in interactive mode (python console,
@@ -3925,8 +3913,8 @@ class Plotter(BasePlotter):
                 log.debug('Starting iren')
                 self.iren.update_style()
                 if not interactive_update:
-                    self.iren.Start()
-                self.iren.Initialize()
+                    self.iren.start()
+                self.iren.initialize()
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
                 self.close()

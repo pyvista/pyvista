@@ -389,7 +389,7 @@ class ScalarBars():
         if interactive:
             scalar_widget = _vtk.vtkScalarBarWidget()
             scalar_widget.SetScalarBarActor(scalar_bar)
-            scalar_widget.SetInteractor(self._plotter.iren)
+            scalar_widget.SetInteractor(self._plotter.iren.interactor)
             scalar_widget.SetEnabled(1)
             rep = scalar_widget.GetRepresentation()
 
