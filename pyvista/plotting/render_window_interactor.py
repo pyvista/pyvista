@@ -73,6 +73,7 @@ class RenderWindowInteractor():
             del self._observers[event]
 
     def remove_observers(self):
+        """Remove all observers."""
         for obs in list(self._observers.values()):
             self.remove_observer(obs)
 
@@ -327,39 +328,50 @@ class RenderWindowInteractor():
         self.interactor.MouseMoveEvent()
 
     def get_event_position(self):
+        """Get the event position."""
         return self.interactor.GetEventPosition()
 
     def get_interactor_style(self):
+        """Get the interactor style."""
         return self.interactor.GetInteractorStyle()
 
     def get_desired_update_rate(self):
+        """Get the desired update rate."""
         return self.interactor.GetDesiredUpdateRate()
 
-    def create_timer(self, stime):
+    def create_repeating_timer(self, stime):
+        """Create a repeating timer."""
         timer_id = self.interactor.CreateRepeatingTimer(stime)
         self.interactor.Start()
         self.interactor.DestroyTimer(timer_id)
         return timer_id
 
     def start(self):
+        """Start interations."""
         self.interactor.Start()
 
     def initialize(self):
+        """Initialize the interactor."""
         self.interactor.Initialize()
 
     def set_render_window(self, ren_win):
+        """Set the render window."""
         self.interactor.SetRenderWindow(ren_win)
 
     def get_picker(self):
+        """Get the piccker."""
         return self.interactor.GetPicker()
 
     def set_picker(self, picker):
+        """Set the picker."""
         self.interactor.SetPicker(picker)
 
     def fly_to(self, renderer, point):
+        """Fly to the given point."""
         self.interactor.FlyTo(renderer, *point)
 
     def terminate_app(self):
+        """Terminate the app."""
         self.interactor.TerminateApp()
 
 
