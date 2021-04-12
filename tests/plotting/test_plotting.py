@@ -1788,7 +1788,7 @@ def test_interactive_update():
     # Regression test for #1053
     p = pyvista.Plotter()
     p.show(interactive_update=True)
-    assert isinstance(p.iren, vtk.vtkRenderWindowInteractor)
+    assert isinstance(p.iren.interactor, vtk.vtkRenderWindowInteractor)
     p.close()
 
     p = pyvista.Plotter()

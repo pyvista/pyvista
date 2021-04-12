@@ -13,7 +13,7 @@ log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
 
-class RenderWindowInteractor(_vtk.vtkRenderWindowInteractor):
+class RenderWindowInteractor():
     """Wrap vtk.vtkRenderWindowInteractor.
 
     This class has been added for the purpose of making some methods
@@ -22,9 +22,15 @@ class RenderWindowInteractor(_vtk.vtkRenderWindowInteractor):
 
     """
 
-    def __init__(self, plotter):
+    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True,
+                 interactor=None):
         """Initialize."""
-        super(RenderWindowInteractor).__init__()
+        if interactor is None:
+            interactor = _vtk.vtkRenderWindowInteractor()
+        self.interactor = interactor
+        self.interactor.SetDesiredUpdateRate(desired_update_rate)
+        if not light_follow_camera:
+            self.interactor.LightFollowCameraOff()
 
         # Map of events to observers
         self._observers = {}
@@ -58,13 +64,18 @@ class RenderWindowInteractor(_vtk.vtkRenderWindowInteractor):
     def add_observer(self, event, call):
         """Add an observer."""
         call = partial(try_callback, call)
-        self._observers[event] = self.AddObserver(event, call)
+        self._observers[event] = self.interactor.AddObserver(event, call)
 
     def remove_observer(self, event):
         """Remove an observer."""
         if event in self._observers:
-            self.RemoveObserver(event)
+            self.interactor.RemoveObserver(event)
             del self._observers[event]
+
+    def remove_observers(self):
+        """Remove all observers."""
+        for obs in list(self._observers.values()):
+            self.remove_observer(obs)
 
     def clear_events_for_key(self, key):
         """Remove the callbacks associated to the key."""
@@ -126,7 +137,7 @@ class RenderWindowInteractor(_vtk.vtkRenderWindowInteractor):
 
     def untrack_click_position(self):
         """Stop tracking the click position."""
-        self.RemoveObserver(self._click_observer)
+        self.remove_observer(self._click_observer)
         self._click_observer = None
 
     def clear_key_event_callbacks(self):
@@ -135,7 +146,7 @@ class RenderWindowInteractor(_vtk.vtkRenderWindowInteractor):
 
     def key_press_event(self, obj, event):
         """Listen for key press event."""
-        key = self.GetKeySym()
+        key = self.interactor.GetKeySym()
         log.debug(f'Key {key} pressed')
         self._last_key = key
         if key in self._key_press_event_callbacks.keys():
@@ -149,7 +160,7 @@ class RenderWindowInteractor(_vtk.vtkRenderWindowInteractor):
         if self._style_class is None:
             # We need an actually custom style to handle button up events
             self._style_class = _style_factory(self._style)(self)
-        return self.SetInteractorStyle(self._style_class)
+        return self.interactor.SetInteractorStyle(self._style_class)
 
     def enable_trackball_style(self):
         """Set the interactive style to trackball camera.
@@ -274,8 +285,8 @@ class RenderWindowInteractor(_vtk.vtkRenderWindowInteractor):
         """Simulate a keypress."""
         if len(key) > 1:
             raise ValueError('Only accepts a single key')
-        self.SetKeyCode(key)
-        self.CharEvent()
+        self.interactor.SetKeyCode(key)
+        self.interactor.CharEvent()
 
     def _mouse_left_button_press(self, x=None, y=None):  # pragma: no cover
         """Simulate a left mouse button press.
@@ -286,13 +297,13 @@ class RenderWindowInteractor(_vtk.vtkRenderWindowInteractor):
         """
         if x is not None and y is not None:
             self._mouse_move(x, y)
-        self.LeftButtonPressEvent()
+        self.interactor.LeftButtonPressEvent()
 
     def _mouse_left_button_release(self, x=None, y=None):  # pragma: no cover
         """Simulate a left mouse button release."""
         if x is not None and y is not None:
             self._mouse_move(x, y)
-        self.LeftButtonReleaseEvent()
+        self.interactor.LeftButtonReleaseEvent()
 
     def _mouse_right_button_press(self, x=None, y=None):  # pragma: no cover
         """Simulate a right mouse button press.
@@ -303,18 +314,65 @@ class RenderWindowInteractor(_vtk.vtkRenderWindowInteractor):
         """
         if x is not None and y is not None:
             self._mouse_move(x, y)
-        self.RightButtonPressEvent()
+        self.interactor.RightButtonPressEvent()
 
     def _mouse_right_button_release(self, x=None, y=None):  # pragma: no cover
         """Simulate a right mouse button release."""
         if x is not None and y is not None:
             self._mouse_move(x, y)
-        self.RightButtonReleaseEvent()
+        self.interactor.RightButtonReleaseEvent()
 
     def _mouse_move(self, x, y):  # pragma: no cover
         """Simulate moving the mouse to ``(x, y)`` screen coordinates."""
-        self.SetEventInformation(x, y)
-        self.MouseMoveEvent()
+        self.interactor.SetEventInformation(x, y)
+        self.interactor.MouseMoveEvent()
+
+    def get_event_position(self):
+        """Get the event position."""
+        return self.interactor.GetEventPosition()
+
+    def get_interactor_style(self):
+        """Get the interactor style."""
+        return self.interactor.GetInteractorStyle()
+
+    def get_desired_update_rate(self):
+        """Get the desired update rate."""
+        return self.interactor.GetDesiredUpdateRate()
+
+    def create_repeating_timer(self, stime):
+        """Create a repeating timer."""
+        timer_id = self.interactor.CreateRepeatingTimer(stime)
+        self.interactor.Start()
+        self.interactor.DestroyTimer(timer_id)
+        return timer_id
+
+    def start(self):
+        """Start interactions."""
+        self.interactor.Start()
+
+    def initialize(self):
+        """Initialize the interactor."""
+        self.interactor.Initialize()
+
+    def set_render_window(self, ren_win):
+        """Set the render window."""
+        self.interactor.SetRenderWindow(ren_win)
+
+    def get_picker(self):
+        """Get the piccker."""
+        return self.interactor.GetPicker()
+
+    def set_picker(self, picker):
+        """Set the picker."""
+        self.interactor.SetPicker(picker)
+
+    def fly_to(self, renderer, point):
+        """Fly to the given point."""
+        self.interactor.FlyTo(renderer, *point)
+
+    def terminate_app(self):
+        """Terminate the app."""
+        self.interactor.TerminateApp()
 
 
 def _style_factory(klass):
@@ -346,7 +404,7 @@ def _style_factory(klass):
             super().OnLeftButtonDown()
             parent = self._parent()
             if len(parent._plotter.renderers) > 1:
-                click_pos = parent.GetEventPosition()
+                click_pos = parent.get_event_position()
                 for renderer in parent._plotter.renderers:
                     interact = renderer.IsInViewport(*click_pos)
                     renderer.SetInteractive(interact)

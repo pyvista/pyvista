@@ -84,7 +84,7 @@ class WidgetHelper:
 
         box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(parse_color(color))
-        box_widget.SetInteractor(self.iren)
+        box_widget.SetInteractor(self.iren.interactor)
         box_widget.SetCurrentRenderer(self.renderer)
         box_widget.SetPlaceFactor(factor)
         box_widget.SetRotationEnabled(rotation_enabled)
@@ -320,7 +320,7 @@ class WidgetHelper:
                 plane_widget.GetHandleProperty().SetOpacity(0)
 
         plane_widget.GetPlaneProperty().SetOpacity(0.5)
-        plane_widget.SetInteractor(self.iren)
+        plane_widget.SetInteractor(self.iren.interactor)
         plane_widget.SetCurrentRenderer(self.renderer)
 
         if assign_to_axis:
@@ -643,7 +643,7 @@ class WidgetHelper:
 
         line_widget = _vtk.vtkLineWidget()
         line_widget.GetLineProperty().SetColor(parse_color(color))
-        line_widget.SetInteractor(self.iren)
+        line_widget.SetInteractor(self.iren.interactor)
         line_widget.SetCurrentRenderer(self.renderer)
         line_widget.SetPlaceFactor(factor)
         line_widget.PlaceWidget(bounds)
@@ -910,7 +910,7 @@ class WidgetHelper:
             return
 
         slider_widget = _vtk.vtkSliderWidget()
-        slider_widget.SetInteractor(self.iren)
+        slider_widget.SetInteractor(self.iren.interactor)
         slider_widget.SetCurrentRenderer(self.renderer)
         slider_widget.SetRepresentation(slider_rep)
         slider_widget.GetRepresentation().SetTitleHeight(title_height)
@@ -1174,7 +1174,7 @@ class WidgetHelper:
         spline_widget = _vtk.vtkSplineWidget()
         spline_widget.GetLineProperty().SetColor(parse_color(color))
         spline_widget.SetNumberOfHandles(n_handles)
-        spline_widget.SetInteractor(self.iren)
+        spline_widget.SetInteractor(self.iren.interactor)
         spline_widget.SetCurrentRenderer(self.renderer)
         spline_widget.SetPlaceFactor(factor)
         spline_widget.PlaceWidget(bounds)
@@ -1362,7 +1362,7 @@ class WidgetHelper:
                 sphere_widget.SetRepresentationToSurface()
             sphere_widget.GetSphereProperty().SetColor(parse_color(colors[i]))
             sphere_widget.GetSelectedSphereProperty().SetColor(parse_color(selected_color))
-            sphere_widget.SetInteractor(self.iren)
+            sphere_widget.SetInteractor(self.iren.interactor)
             sphere_widget.SetCurrentRenderer(self.renderer)
             sphere_widget.SetRadius(radius)
             sphere_widget.SetCenter(loc)
@@ -1469,7 +1469,7 @@ class WidgetHelper:
         button_rep.PlaceWidget(bounds)
 
         button_widget = _vtk.vtkButtonWidget()
-        button_widget.SetInteractor(self.iren)
+        button_widget.SetInteractor(self.iren.interactor)
         button_widget.SetRepresentation(button_rep)
         button_widget.SetCurrentRenderer(self.renderer)
         button_widget.On()
