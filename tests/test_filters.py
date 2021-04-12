@@ -1431,7 +1431,7 @@ def test_extrude_rotate():
     xmax = poly.bounds[1]
     ymin = poly.bounds[2]
     ymax = poly.bounds[3]
-    assert (xmin == 0.0) and (xmax == 1.0) and (ymin == 0.0) and (ymax == 1.0)
+    assert (xmin == line.bounds[0]) and (xmax == line.bounds[1]) and (ymin == line.bounds[0]) and (ymax == line.bounds[1])
 
 
 def test_extrude_rotate_inplace():
