@@ -30,7 +30,7 @@ def test_cell_picking():
 
         # simulate the pick
         renderer = plotter.renderer
-        picker = plotter.iren.GetPicker()
+        picker = plotter.iren.get_picker()
         picker.Pick(50, 50, 0, renderer)
 
         # pick nothing
@@ -107,7 +107,7 @@ def test_point_picking():
         )
         # simulate the pick
         renderer = plotter.renderer
-        picker = plotter.iren.GetPicker()
+        picker = plotter.iren.get_picker()
         picker.Pick(50, 50, 0, renderer)
         plotter.close()
 
@@ -126,7 +126,7 @@ def test_path_picking():
     )
     # simulate the pick
     renderer = plotter.renderer
-    picker = plotter.iren.GetPicker()
+    picker = plotter.iren.get_picker()
     picker.Pick(50, 50, 0, renderer)
     # pick nothing
     picker.Pick(0, 0, 0, renderer)
@@ -151,7 +151,7 @@ def test_geodesic_picking():
     )
     # simulate the pick
     renderer = plotter.renderer
-    picker = plotter.iren.GetPicker()
+    picker = plotter.iren.get_picker()
     picker.Pick(50, 50, 0, renderer)
     picker.Pick(45, 45, 0, renderer)
     # pick nothing
@@ -177,7 +177,7 @@ def test_horizon_picking():
     )
     # simulate the pick
     renderer = plotter.renderer
-    picker = plotter.iren.GetPicker()
+    picker = plotter.iren.get_picker()
     # at least 3 picks
     picker.Pick(50, 50, 0, renderer)
     picker.Pick(49, 50, 0, renderer)
