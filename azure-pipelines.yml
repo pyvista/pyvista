@@ -245,7 +245,8 @@ jobs:
 
   # run this twice since VTK9 fails to close render windows
   - script: |
-      (make -C docs html -b coverage; make -C docs html -b coverage)
+      make -C docs html || true  # will fail on VTK9
+      make -C docs html -b coverage
       cat docs/_build/coverage/python.txt
     displayName: 'Build documentation'
 
