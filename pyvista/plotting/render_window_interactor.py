@@ -74,7 +74,7 @@ class RenderWindowInteractor():
 
     def remove_observers(self):
         for obs in self._observers.values():
-            self.interactor.RemoveObservers(obs)
+            self.remove_observer(obs)
 
     def clear_events_for_key(self, key):
         """Remove the callbacks associated to the key."""
