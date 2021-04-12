@@ -5053,10 +5053,10 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Overwrites the original mesh inplace.
 
-        translation : float
+        translation : float, optional
             Total amount of translation along the z-axis.
 
-        dradius : float
+        dradius : float, optional
             Change in radius during sweep process.
 
         progress_bar : bool, optional
