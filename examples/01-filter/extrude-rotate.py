@@ -51,8 +51,7 @@ plotter.show(cpos="xy")
 # ~~~~~~~~~~~~~~~
 
 # Create the spring profile (a circle).
-plotter = pyvista.Plotter(shape=(1, 1))
-plotter.subplot(0, 0)
+plotter = pyvista.Plotter()
 
 vertices = np.array(
     [
