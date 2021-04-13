@@ -5012,7 +5012,8 @@ class PolyDataFilters(DataSetFilters):
             return output
         poly_data.overwrite(output)
 
-    def extrude_rotate(poly_data, resolution=30, inplace=False, progress_bar=False):
+    def extrude_rotate(poly_data, resolution=30, inplace=False,
+                       translation=0.0, dradius=0.0, angle=360.0, progress_bar=False):
         """Sweep polygonal data creating "skirt" from free edges and lines, and lines from vertices.
 
         This is a modeling filter.
@@ -5052,6 +5053,15 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Overwrites the original mesh inplace.
 
+        translation : float, optional
+            Total amount of translation along the z-axis.
+
+        dradius : float, optional
+            Change in radius during sweep process.
+
+        angle : float, optional
+            The angle of rotation.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -5067,6 +5077,9 @@ class PolyDataFilters(DataSetFilters):
         alg = _vtk.vtkRotationalExtrusionFilter()
         alg.SetInputData(poly_data)
         alg.SetResolution(resolution)
+        alg.SetTranslation(translation)
+        alg.SetDeltaRadius(dradius)
+        alg.SetAngle(angle)
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
         if not inplace:

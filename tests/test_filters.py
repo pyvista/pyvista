@@ -1418,6 +1418,21 @@ def test_extrude_rotate():
     assert poly.n_cells == line.n_points - 1
     assert poly.n_points == (resolution + 1)*line.n_points
 
+    translation = 10.0
+    dradius = 1.0
+    poly = line.extrude_rotate(translation=translation, dradius=dradius)
+    zmax = poly.bounds[5]
+    assert zmax == translation
+    xmax = poly.bounds[1]
+    assert xmax == line.bounds[1] + dradius
+
+    poly = line.extrude_rotate(angle=90.0)
+    xmin = poly.bounds[0]
+    xmax = poly.bounds[1]
+    ymin = poly.bounds[2]
+    ymax = poly.bounds[3]
+    assert (xmin == line.bounds[0]) and (xmax == line.bounds[1]) and (ymin == line.bounds[0]) and (ymax == line.bounds[1])
+
 
 def test_extrude_rotate_inplace():
     resolution = 4
