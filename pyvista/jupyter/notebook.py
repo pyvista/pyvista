@@ -21,6 +21,8 @@ try:
 except ImportError:  # pragma: no cover
     raise ImportError('Install IPython to display an image in a notebook')
 
+from pyvista import _vtk
+
 PANEL_EXTENSION_SET = [False]
 
 
@@ -91,6 +93,9 @@ def show_ipyvtk(plotter, return_viewer):
     # Have to leave the Plotter open for the widget to use
     disp = ViewInteractiveWidget(plotter.ren_win, on_close=plotter.close,
                                  transparent_background=plotter.image_transparent_background)
+
+    for renderer in plotter.renderers:
+        renderer.AddObserver(_vtk.vtkCommand.ModifiedEvent, lambda *args: disp.update_canvas())
 
     if return_viewer:
         return disp
