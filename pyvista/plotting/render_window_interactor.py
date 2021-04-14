@@ -358,6 +358,10 @@ class RenderWindowInteractor():
         """Set the render window."""
         self.interactor.SetRenderWindow(ren_win)
 
+    def process_events(self):
+        """Process events."""
+        self.interactor.ProcessEvents()
+
     def get_picker(self):
         """Get the piccker."""
         return self.interactor.GetPicker()

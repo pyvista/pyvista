@@ -3920,7 +3920,7 @@ class Plotter(BasePlotter):
                 self.iren.update_style()
                 if not interactive_update:
                     if os.name == 'nt':
-                        self.iren.interactor.ProcessEvents()  # Resolves #1260
+                        self.iren.process_events()  # Resolves #1260
                     self.iren.start()
                 self.iren.initialize()
             except KeyboardInterrupt:
