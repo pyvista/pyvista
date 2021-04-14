@@ -3882,13 +3882,6 @@ class Plotter(BasePlotter):
         # reset unless camera for the first render unless camera is set
         self._on_first_render_request(cpos)
 
-        # Render
-        # For Windows issues opening/closing plotting window.  Resolves #1260
-        if os.name == 'nt' and not VERY_FIRST_RENDER[0]:
-            if interactive and not self.off_screen:
-                self.iren.interactor.Start()
-        VERY_FIRST_RENDER[0] = False
-
         # handle plotter notebook
         if jupyter_backend and not self.notebook:
             warnings.warn('Not within a jupyter notebook environment.\n'
@@ -3926,7 +3919,9 @@ class Plotter(BasePlotter):
                 log.debug('Starting iren')
                 self.iren.update_style()
                 if not interactive_update:
-                    self.iren.interactor.Start()
+                    if os.name == 'nt':
+                        self.iren.interactor.ProcessEvents()  # Resolves #1260
+                    self.iren.start()
                 self.iren.initialize()
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
