@@ -348,7 +348,6 @@ class RenderWindowInteractor():
 
     def start(self):
         """Start interactions."""
-        print('start')
         self.interactor.Start()
 
     def initialize(self):
