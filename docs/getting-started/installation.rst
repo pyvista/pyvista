@@ -60,7 +60,7 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``itkwidgets``                    | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
-| ``ipyvtk_simple``                 | Interactive notebook rendering          |
+| ``ipyvtklink``                 | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``sphinx_gallery``                | Capturing PyVista output for docs       |
 +-----------------------------------+-----------------------------------------+
@@ -201,7 +201,7 @@ After logging into the remote server, install Miniconda and related packages:
     conda create --name vtk_env python=3.7
     conda activate vtk_env
     conda install nodejs  # required when importing pyvista in Jupyter
-    pip install jupyter pyvista ipyvtk_simple
+    pip install jupyter pyvista ipyvtklink
 
     # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
     # https://stackoverflow.com/q/32389599

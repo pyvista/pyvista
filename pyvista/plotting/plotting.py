@@ -3786,8 +3786,8 @@ class Plotter(BasePlotter):
 
         use_ipyvtk : bool, optional
             Deprecated.  Instead, set the backend either globally with
-            ``pyvista.set_jupyter_backend('ipyvtk_simple')`` or with
-            ``backend='ipyvtk_simple'``.
+            ``pyvista.set_jupyter_backend('ipyvtklink')`` or with
+            ``backend='ipyvtklink'``.
 
         jupyter_backend : str, optional
             Jupyter notebook plotting backend to use.  One of the
@@ -3857,8 +3857,8 @@ class Plotter(BasePlotter):
         if use_ipyvtk:
             txt = textwrap.dedent("""\
             use_ipyvtk is deprecated.  Set the backend
-            globally with ``pyvista.set_jupyter_backend("ipyvtk_simple"
-            or with ``backend="ipyvtk_simple"``)
+            globally with ``pyvista.set_jupyter_backend("ipyvtklink"
+            or with ``backend="ipyvtklink"``)
             """)
             from pyvista.core.errors import DeprecationError
             raise DeprecationError(txt)

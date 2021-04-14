@@ -3,9 +3,9 @@ Support dynamic or static jupyter notebook plotting.
 
 Includes:
 
-* ``ipyvtk_simple``
+* ``ipyvtklink``
 * ``panel``
-* ``ipyvtk_simple``
+* ``ipyvtklink``
 
 """
 import warnings
@@ -44,7 +44,7 @@ def handle_plotter(plotter, backend=None, screenshot=None,
     """
     if screenshot is False:
         screenshot = None
-    if backend == 'ipyvtk_simple':
+    if backend == 'ipyvtklink':
         return show_ipyvtk(plotter, return_viewer)
     if backend == 'panel':
         return show_panel(plotter, return_viewer)
@@ -69,7 +69,7 @@ def show_static_image(plotter, screenshot, return_viewer):
     # point to keeping the plotter around.
     plotter.close()
 
-    # Simply display the result: either ipyvtk_simple object or image display
+    # Simply display the result: either ipyvtklink object or image display
     if return_viewer:
         return image
     else:
@@ -77,7 +77,7 @@ def show_static_image(plotter, screenshot, return_viewer):
 
 
 def show_ipyvtk(plotter, return_viewer):
-    """Display an interactive viewer widget using ``ipyvtk_simple``."""
+    """Display an interactive viewer widget using ``ipyvtklink``."""
     if any('SPYDER' in name for name in os.environ):
         warnings.warn('``use_ipyvtk`` is incompatible with Spyder.\n'
                       'Use notebook=False for interactive '
@@ -85,10 +85,10 @@ def show_ipyvtk(plotter, return_viewer):
                       'pyvista.set_jupyter_backend(None)')
 
     try:
-        from ipyvtk_simple.viewer import ViewInteractiveWidget
+        from ipyvtklink.viewer import ViewInteractiveWidget
     except ImportError:  # pragma: no cover
-        raise ImportError('Please install `ipyvtk_simple` to use this feature:'
-                          '\thttps://github.com/Kitware/ipyvtk-simple')
+        raise ImportError('Please install `ipyvtklink` to use this feature:'
+                          '\thttps://github.com/Kitware/ipyvtklink')
 
     # Have to leave the Plotter open for the widget to use
     disp = ViewInteractiveWidget(plotter.ren_win, on_close=plotter.close,

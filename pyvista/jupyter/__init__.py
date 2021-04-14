@@ -4,7 +4,7 @@ import os
 from .. import rcParams
 from .itkplotter import PlotterITK
 
-ALLOWED_BACKENDS = ['ipyvtk_simple', 'panel', 'ipygany', 'static', 'none']
+ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'none']
 
 
 def check_backend_env_var():
@@ -21,11 +21,11 @@ def set_jupyter_backend(backend):
     backend : str
         Jupyter backend to use when plotting.  Must be one of the following:
 
-        * ``'ipyvtk_simple'`` : Render remotely and stream the
+        * ``'ipyvtklink'`` : Render remotely and stream the
           resulting VTK images back to the client.  Supports all VTK
           methods, but suffers from lag due to remote rendering.
           Requires that a virtual framebuffer be setup when displaying
-          on a headless server.  Must have ``ipyvtk_simple`` installed.
+          on a headless server.  Must have ``ipyvtklink`` installed.
 
         * ``'panel'`` : Convert the VTK render window to a vtkjs
           object and then visualize that within jupyterlab. Supports
@@ -60,9 +60,9 @@ def set_jupyter_backend(backend):
 
     >>> pv.set_jupyter_backend('panel')
 
-    Enable the ipyvtk_simple backend.
+    Enable the ipyvtklink backend.
 
-    >>> pv.set_jupyter_backend('ipyvtk_simple')
+    >>> pv.set_jupyter_backend('ipyvtklink')
 
     Just show static images.
 
@@ -90,11 +90,11 @@ def set_jupyter_backend(backend):
                          f'Use one of the following:\n{backend_list_str}')
 
     # verify required packages are installed
-    if backend == 'ipyvtk_simple':
+    if backend == 'ipyvtklink':
         try:
-            import ipyvtk_simple
+            import ipyvtklink
         except ImportError:    # pragma: no cover
-            raise ImportError('Please install `ipyvtk-simple` to use this feature')
+            raise ImportError('Please install `ipyvtklink` to use this feature')
 
     if backend == 'panel':
         try:
