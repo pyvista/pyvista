@@ -5,7 +5,6 @@ Includes:
 
 * ``ipyvtklink``
 * ``panel``
-* ``ipyvtklink``
 
 """
 import warnings
