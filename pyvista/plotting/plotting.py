@@ -4388,9 +4388,9 @@ class Plotter(BasePlotter):
                 self.update_style()
                 if not interactive_update:
                     if os.name == 'nt':
-                        self.iren.process_events()  # Resolves #1260
-                    self.iren.start()
-                self.iren.initialize()
+                        self.iren.ProcessEvents()  # Resolves #1260
+                    self.iren.Start()
+                self.iren.Initialize()
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
                 self.close()
