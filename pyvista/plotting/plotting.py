@@ -48,7 +48,7 @@ def _has_matplotlib():
 
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
-
+VERY_FIRST_RENDER = [True]  # windows plotter helper
 
 def close_all():
     """Close all open/active plotters and clean up memory."""
@@ -3882,17 +3882,6 @@ class Plotter(BasePlotter):
         # reset unless camera for the first render unless camera is set
         self._on_first_render_request(cpos)
 
-        # Render
-        # For Windows issues. Resolves #186, #1018 and #1078
-        if os.name == 'nt' and pyvista.IS_INTERACTIVE and not pyvista.VERY_FIRST_RENDER:
-            if interactive and (not self.off_screen):
-                self.iren.start()
-        pyvista.VERY_FIRST_RENDER = False
-        # for some reason iren needs to start before rendering on
-        # Windows when running in interactive mode (python console,
-        # Ipython console, Jupyter notebook) but only after the very
-        # first render window
-
         # handle plotter notebook
         if jupyter_backend and not self.notebook:
             warnings.warn('Not within a jupyter notebook environment.\n'
@@ -3925,11 +3914,13 @@ class Plotter(BasePlotter):
             self.last_image_depth = self.get_image_depth()
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
-        if interactive and (not self.off_screen):
+        if interactive and not self.off_screen:
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
                 self.iren.update_style()
                 if not interactive_update:
+                    if os.name == 'nt':
+                        self.iren.process_events()  # Resolves #1260
                     self.iren.start()
                 self.iren.initialize()
             except KeyboardInterrupt:
