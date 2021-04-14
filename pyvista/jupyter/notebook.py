@@ -43,13 +43,18 @@ def handle_plotter(plotter, backend=None, screenshot=None,
     """
     if screenshot is False:
         screenshot = None
-    if backend == 'ipyvtklink':
-        return show_ipyvtk(plotter, return_viewer)
-    if backend == 'panel':
-        return show_panel(plotter, return_viewer)
-    if backend == 'ipygany':
-        from pyvista.jupyter.pv_ipygany import show_ipygany
-        return show_ipygany(plotter, return_viewer, **kwargs)
+
+    try:
+        if backend == 'ipyvtklink':
+            return show_ipyvtk(plotter, return_viewer)
+        if backend == 'panel':
+            return show_panel(plotter, return_viewer)
+        if backend == 'ipygany':
+            from pyvista.jupyter.pv_ipygany import show_ipygany
+            return show_ipygany(plotter, return_viewer, **kwargs)
+    except ImportError as e:
+        warnings.warn(f'Failed to use notebook backend: \n\n{e}\n\n'
+                      'Falling back to a static output.')
 
     return show_static_image(plotter, screenshot, return_viewer)
 
@@ -86,8 +91,8 @@ def show_ipyvtk(plotter, return_viewer):
     try:
         from ipyvtklink.viewer import ViewInteractiveWidget
     except ImportError:  # pragma: no cover
-        raise ImportError('Please install `ipyvtklink` to use this feature:'
-                          '\thttps://github.com/Kitware/ipyvtklink')
+        raise ImportError('Please install `ipyvtklink` to use this feature: '
+                          'https://github.com/Kitware/ipyvtklink')
 
     # Have to leave the Plotter open for the widget to use
     disp = ViewInteractiveWidget(plotter.ren_win, on_close=plotter.close,
