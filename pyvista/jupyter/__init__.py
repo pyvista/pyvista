@@ -84,6 +84,15 @@ def set_jupyter_backend(backend):
     except ImportError:  # pragma: no cover
         raise ImportError('Install IPython to display with pyvista in a notebook.')
 
+    if backend == 'ipyvtk_simple':
+        try:
+            import ipyvtklink
+        except ImportError:
+            raise ImportError('Please install `ipyvtklink`. `ipyvtk_simple` '
+                              'is deprecated.')
+        else:
+            backend = 'ipyvtklink'
+
     if backend not in ALLOWED_BACKENDS:
         backend_list_str = ', '.join([f'"{item}"' for item in ALLOWED_BACKENDS])
         raise ValueError(f'Invalid Jupyter notebook plotting backend "{backend}".\n'
