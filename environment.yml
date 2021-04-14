@@ -28,6 +28,6 @@ dependencies:
   - pyembree
   - panel
   - ipygany
+  - ipyvtklink
   - pip:
       - pytest-memprof
-      - ipyvtklink>=0.2.1
