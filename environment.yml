@@ -30,4 +30,4 @@ dependencies:
   - ipygany
   - pip:
       - pytest-memprof
-      - ipyvtklink>=0.1.2
+      - ipyvtklink>=0.2.0
