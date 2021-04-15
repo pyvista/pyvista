@@ -271,8 +271,7 @@ def vtk_points(points, deep=True):
                          f'Shape is {points.shape} and should be (X, 3)')
 
     # points must be contiguous
-    if not points.flags['C_CONTIGUOUS']:
-        points = np.ascontiguousarray(points)
+    points = np.require(points, requirements=['C'])
     vtkpts = _vtk.vtkPoints()
     vtk_arr = _vtk.numpy_to_vtk(points, deep=deep)
     vtkpts.SetData(vtk_arr)
