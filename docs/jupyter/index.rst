@@ -41,7 +41,7 @@ The PyVista module supports a variety of backends when plotting within
 a jupyter notebook:
 
 * Server-side rendering with PyVista streaming to the notebook through
-  `ipyvtk-simple <https://github.com/Kitware/ipyvtk-simple/>`_
+  `ipyvtklink <https://github.com/Kitware/ipyvtklink/>`_
 * Client-side rendering with `ipygany <https://github.com/QuantStack/ipygany>`_ using ``threejs``.
 * Client-side rendering using `panel <https://github.com/holoviz/panel>`_ using ``vtk.js``.
 * Client-side rendering with `itkwidgets <https://github.com/InsightSoftwareConsortium/itkwidgets>`_ using ``itk.js`` and ``vtk.js``.
@@ -97,12 +97,12 @@ jupyter notebook plotting modules:
 +---------------+--------------+--------------------+---------+----------------------+
 | ipygany       | Yes          | Client             | threejs | No                   |
 +---------------+--------------+--------------------+---------+----------------------+
-| ipyvtk_simple | No           | Server             | vtk     | Yes                  |
+| ipyvtklink    | Yes          | Server             | vtk     | Yes                  |
 +---------------+--------------+--------------------+---------+----------------------+
 | itkwidgets    | No           | Client             | vtk.js  | Yes                  |
 +---------------+--------------+--------------------+---------+----------------------+
 
-At the moment, ``itkwidgets`` and ``ipyvtk_simple`` are incompatible
+At the moment, ``itkwidgets`` and ``ipyvtklink`` are incompatible
 with Jupyterlab 3, and will result in a "Error displaying widget:
 model not found" message from juptyer.  Additionally, all the modules
 other than ``ipygany`` require a framebuffer, which can be setup on a

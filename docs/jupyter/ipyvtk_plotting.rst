@@ -1,15 +1,15 @@
 .. _ipyvtk_plotting:
 
-Using ``ipyvtk-simple`` with PyVista
+Using ``ipyvtklink`` with PyVista
 ------------------------------------
 
 .. note::
-   As of version ``0.1.4``, ``ipyvtk-simple`` does not support
+   As of version ``0.1.4``, ``ipyvtklink`` does not support
    Jupyterlab 3.  Attempting to run the following will return a
    ``Model not found`` error within jupyterlab.
 
 ``pyvista`` has the ability to display fully featured plots within a
-JupyterLab environment using ``ipyvtk-simple``.  This feature works by
+JupyterLab environment using ``ipyvtklink``.  This feature works by
 streaming the current render window to a canvas within JupyterLab and
 then passing any user actions from the canvas back to the VTK render
 window.

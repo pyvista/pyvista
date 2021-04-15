@@ -58,8 +58,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     use_ipyvtk : bool, optional
         Deprecated.  Instead, set the backend either globally with
-        ``pyvista.set_jupyter_backend('ipyvtk_simple')`` or with
-        ``backend='ipyvtk_simple'``.
+        ``pyvista.set_jupyter_backend('ipyvtklink')`` or with
+        ``backend='ipyvtklink'``.
 
     jupyter_backend : str, optional
         Jupyter notebook plotting backend to use.  One of the
