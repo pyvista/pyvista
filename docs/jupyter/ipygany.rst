@@ -81,7 +81,7 @@ two side by side using ``ipywidgets.AppLayout``.
 Examples: Large Models
 ~~~~~~~~~~~~~~~~~~~~~~
 This example shows a large mesh and demonstrates how even fairly large
-meshes, like the carburator example which contains 500,000 faces and
+meshes, like the carburetor example which contains 500,000 faces and
 250,000 points, can be quickly loaded.  This is, of course, bandwidth
 dependent, as this mesh is around 6 MB.
 
@@ -102,7 +102,7 @@ dependent, as this mesh is around 6 MB.
 
 Returning Scenes
 ~~~~~~~~~~~~~~~~
-Show several widgets similtaniously using
+Show several widgets simultaneously using
 ``ipywidgets.TwoByTwoLayout``.  This is similar to the
 :ref:`ref_parametric_example`, except with interactive widgets.
 
@@ -137,7 +137,7 @@ Show several widgets similtaniously using
 
 Scalar Bars
 ~~~~~~~~~~~
-Scalar bars are automatically show when a plot has active scalars.
+Scalar bars are automatically shown when a plot has active scalars.
 For example, the St. Helens ``mesh`` from ``active_scalar_name`` is
 ``'Elevation'``.  Scalar bars, scalar bar title, and the colormap
 dropdown menu are automatically added to the scene.
