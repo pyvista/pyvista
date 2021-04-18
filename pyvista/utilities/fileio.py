@@ -2,6 +2,7 @@
 
 import pathlib
 import os
+import warnings
 
 import numpy as np
 
@@ -75,15 +76,22 @@ if (VTK_MAJOR >= 8 and VTK_MINOR >= 2):
         pass
 
 
+def _get_ext_force(filename, force_ext=None):
+    if force_ext:
+        return str(force_ext).lower()
+    else:
+        return get_ext(filename)
+
+
 def get_ext(filename):
     """Extract the extension of the filename."""
     ext = os.path.splitext(filename)[1].lower()
     return ext
 
 
-def get_reader(filename):
+def get_reader(filename, force_ext=None):
     """Get the corresponding reader based on file extension and instantiates it."""
-    ext = get_ext(filename)
+    ext = _get_ext_force(filename, force_ext=force_ext)
     return READERS[ext]() # Get and instantiate the reader
 
 
@@ -122,12 +130,18 @@ def standard_reader_routine(reader, filename, attrs=None):
         value.
 
     """
+    observer = pyvista.utilities.errors.Observer()
+    observer.observe(reader)
+
     if attrs is None:
         attrs = {}
     if not isinstance(attrs, dict):
         raise TypeError('Attributes must be a dictionary of name and arguments.')
     if filename is not None:
-        reader.SetFileName(filename)
+        try:
+            reader.SetCaseFileName(filename)
+        except AttributeError:
+            reader.SetFileName(filename)
     # Apply any attributes listed
     for name, args in attrs.items():
         attr = getattr(reader, name)
@@ -139,7 +153,15 @@ def standard_reader_routine(reader, filename, attrs=None):
             attr()
     # Perform the read
     reader.Update()
-    return pyvista.wrap(reader.GetOutputDataObject(0))
+
+    # Check reader for errors
+    if observer.has_event_occurred():
+        warnings.warn(f'The VTK reader `{reader.GetClassName()}` raised an error while reading the file.\n'
+                      f'\t"{observer.get_message()}"')
+
+    data = pyvista.wrap(reader.GetOutputDataObject(0))
+    data._post_file_load_processing()
+    return data
 
 
 def read_legacy(filename):
@@ -159,7 +181,7 @@ def read_legacy(filename):
     return output
 
 
-def read(filename, attrs=None, file_format=None):
+def read(filename, attrs=None, force_ext=None, file_format=None):
     """Read any VTK file.
 
     It will figure out what reader to use then wrap the VTK object for
@@ -177,6 +199,11 @@ def read(filename, attrs=None, file_format=None):
         dictionary are the attribute/method names and values are the
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
+
+    force_ext: str, optional
+        If specified, the reader will be chosen by an extension which
+        is different to its actual extension. For example, ``'.vts'``,
+        ``'.vtu'``.
 
     file_format : str, optional
         Format of file to read with meshio.
@@ -197,6 +224,9 @@ def read(filename, attrs=None, file_format=None):
 
     >>> mesh = pyvista.read("mesh.obj")  # doctest:+SKIP
     """
+    if file_format is not None and force_ext is not None:
+        raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
+
     if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
         for each in filename:
@@ -210,7 +240,8 @@ def read(filename, attrs=None, file_format=None):
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
         raise FileNotFoundError(f'File ({filename}) not found')
-    ext = get_ext(filename)
+
+    ext = _get_ext_force(filename, force_ext)
 
     # Read file using meshio.read if file_format is present
     if file_format:
@@ -218,33 +249,24 @@ def read(filename, attrs=None, file_format=None):
 
     # From the extension, decide which reader to use
     if attrs is not None:
-        reader = get_reader(filename)
+        reader = get_reader(filename, force_ext=ext)
         return standard_reader_routine(reader, filename, attrs=attrs)
-    elif ext in '.vti': # ImageData
-        return pyvista.UniformGrid(filename)
-    elif ext in '.vtr': # RectilinearGrid
-        return pyvista.RectilinearGrid(filename)
-    elif ext in '.vtu': # UnstructuredGrid
-        return pyvista.UnstructuredGrid(filename)
-    elif ext in ['.ply', '.obj', '.stl']: # PolyData
-        return pyvista.PolyData(filename)
-    elif ext in '.vts': # StructuredGrid
-        return pyvista.StructuredGrid(filename)
-    elif ext in ['.vtm', '.vtmb', '.case']:
-        return pyvista.MultiBlock(filename)
     elif ext in ['.e', '.exo']:
         return read_exodus(filename)
     elif ext in ['.vtk']:
         # Attempt to use the legacy reader...
         return read_legacy(filename)
-    elif ext in ['.jpeg', '.jpg']:
-        return pyvista.Texture(filename).to_image()
     else:
         # Attempt find a reader in the readers mapping
         try:
-            reader = get_reader(filename)
+            reader = get_reader(filename, force_ext=ext)
             return standard_reader_routine(reader, filename)
         except KeyError:
+            # Don't fall back to meshio if using `force_ext`, which is really
+            # just intended to be used with the native PyVista readers
+            if force_ext is not None:
+                from meshio._exceptions import ReadError
+                raise ReadError
             # Attempt read with meshio
             try:
                 from meshio._exceptions import ReadError
@@ -467,6 +489,9 @@ def from_meshio(mesh):
 
     # Set cell data
     grid.cell_arrays.update(cell_data)
+
+    # Call datatype-specific post-load processing
+    grid._post_file_load_processing()
 
     return grid
 

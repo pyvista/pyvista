@@ -67,7 +67,7 @@ class Observer:
             self.log_message(kind, alert)
 
     def has_event_occurred(self):
-        """Ask self if an error has occurred since last querried.
+        """Ask self if an error has occurred since last queried.
 
         This resets the observer's status.
 
@@ -217,7 +217,7 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = ['matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'ipyvtk_simple', 'scipy', 'itkwidgets', 'tqdm']
+                    'cmocean', 'ipyvtklink', 'scipy', 'itkwidgets', 'tqdm']
 
         # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.

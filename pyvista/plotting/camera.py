@@ -2,6 +2,7 @@
 
 import numpy as np
 
+import pyvista
 from pyvista import _vtk
 
 
@@ -50,7 +51,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.camera.position = 2.0, 1.0, 1.0
+        >>> pl.camera.position = (2.0, 1.0, 1.0)
         """
         self.SetPosition(value)
 
@@ -245,7 +246,7 @@ class Camera(_vtk.vtkCamera):
 
     @property
     def clipping_range(self):
-        """Return the Clipping range.
+        """Return the location of the near and far clipping planes along the direction of projection.
 
         Examples
         --------
@@ -258,7 +259,7 @@ class Camera(_vtk.vtkCamera):
 
     @clipping_range.setter
     def clipping_range(self, points):
-        """Set the clipping range.
+        """Set the location of the near and far clipping planes along the direction of projection.
 
         Examples
         --------
@@ -302,3 +303,40 @@ class Camera(_vtk.vtkCamera):
 
         """
         return self.GetDirectionOfProjection()
+
+    def view_frustum(self, aspect=1.0):
+        """Get the view frustum.
+
+        Parameters
+        ----------
+        aspect : float, optional
+            The aspect of the viewport to compute the planes. Default to 1.0.
+
+        Returns
+        -------
+        frustum : pv.PolyData
+            View frustum.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> frustum = plotter.camera.view_frustum(1.0)
+        >>> frustum.n_points
+        8
+        >>> frustum.n_cells
+        6
+
+        """
+        frustum_planes = [0] * 24
+        self.GetFrustumPlanes(aspect, frustum_planes)
+        planes = _vtk.vtkPlanes()
+        planes.SetFrustumPlanes(frustum_planes)
+
+        frustum_source = _vtk.vtkFrustumSource()
+        frustum_source.ShowLinesOff()
+        frustum_source.SetPlanes(planes)
+        frustum_source.Update()
+
+        frustum = pyvista.wrap(frustum_source.GetOutput())
+        return frustum

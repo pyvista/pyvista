@@ -1,9 +1,7 @@
 """PyVista-like ITKwidgets plotter."""
 import numpy as np
 
-import pyvista
 import pyvista as pv
-from .theme import parse_color
 
 
 class PlotterITK():
@@ -28,7 +26,7 @@ class PlotterITK():
         """Initialize the itkwidgets plotter."""
         try:
             import itkwidgets
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError("Please install `itkwidgets>=0.25.2`")
 
         from itkwidgets import __version__
@@ -198,7 +196,7 @@ class PlotterITK():
 
         >>> plotter.background_color = 'k'
         """
-        self._background_color = parse_color(color)
+        self._background_color = pv.parse_color(color)
 
     @property
     def camera_position(self):
@@ -214,9 +212,9 @@ class PlotterITK():
         else:
             # check if a valid camera position
             if not len(camera_location) == 3:
-                raise pyvista.core.errors.InvalidCameraError
+                raise pv.core.errors.InvalidCameraError
             elif any([len(item) != 3 for item in camera_location]):
-                raise pyvista.core.errors.InvalidCameraError
+                raise pv.core.errors.InvalidCameraError
 
         self._camera_position = camera_location
 
@@ -267,7 +265,7 @@ class PlotterITK():
         try:
             from IPython import display
             display.display_html(viewer)
-        except ImportError:
+        except ImportError:  # pragma: no cover
             pass
 
         return viewer

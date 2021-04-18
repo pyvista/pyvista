@@ -1,4 +1,4 @@
-.. _ref_pyinstaller:
+.. _ref_flask:
 
 Flask Application
 =================
@@ -6,7 +6,7 @@ You can use ``pyvista`` in to make a flask application to display
 static plots.  See the following example as well as the demo at `Flask
 Example <https://github.com/pyvista/pyvista/raw/master/examples_flask>`__.
 
-For dynamic examples, it's recommended to use `Jupyter Notebooks <https://jupyter.org/>`__.  See our documentation regarding this at :ref:`ipyvtk_plotting`.
+For dynamic examples, it's recommended to use `Jupyter Notebooks <https://jupyter.org/>`__.  See our documentation regarding this at :ref:`jupyter_plotting`.
 
 
 .. figure:: ../images/user-generated/flask_example.png

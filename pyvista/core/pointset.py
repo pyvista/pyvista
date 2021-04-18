@@ -194,18 +194,13 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
     """
 
-    _READERS = {'.ply': _vtk.vtkPLYReader,
-                '.stl': _vtk.vtkSTLReader,
-                '.vtk': _vtk.vtkPolyDataReader,
-                '.vtp': _vtk.vtkXMLPolyDataReader,
-                '.obj': _vtk.vtkOBJReader}
     _WRITERS = {'.ply': _vtk.vtkPLYWriter,
                 '.vtp': _vtk.vtkXMLPolyDataWriter,
                 '.stl': _vtk.vtkSTLWriter,
                 '.vtk': _vtk.vtkPolyDataWriter}
 
     def __init__(self, var_inp=None, faces=None, n_faces=None, lines=None,
-                 n_lines=None, deep=False) -> None:
+                 n_lines=None, deep=False, force_ext=None) -> None:
         """Initialize the polydata."""
         local_parms = locals()
         super().__init__()
@@ -221,13 +216,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
                 if local_parms[kwarg]:
                     raise ValueError('No other arguments should be set when first '
                                      'parameter is a string')
-            self._from_file(var_inp)  # is filename
-
-            # When loading files with just point arrays, create and
-            # set the polydata vertices
-            if self.n_points > 0 and self.n_cells == 0:
-                verts = self._make_vertex_cells(self.n_points)
-                self.verts = CellArray(verts, self.n_points, deep)
+            self._from_file(var_inp, force_ext=force_ext)  # is filename
 
             return
 
@@ -273,6 +262,14 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         if lines is not None:
             # here we use CellArray since we must specify deep and n_lines
             self.lines = CellArray(lines, n_lines, deep)
+
+    def _post_file_load_processing(self):
+        """Execute after loading a PolyData from file."""
+        # When loading files with just point arrays, create and
+        # set the polydata vertices
+        if self.n_points > 0 and self.n_cells == 0:
+            verts = self._make_vertex_cells(self.n_points)
+            self.verts = CellArray(verts, self.n_points, deep=False)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -553,8 +550,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     """
 
-    _READERS = {'.vtu': _vtk.vtkXMLUnstructuredGridReader,
-                '.vtk': _vtk.vtkUnstructuredGridReader}
     _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter,
                 '.vtk': _vtk.vtkUnstructuredGridWriter}
 
@@ -573,7 +568,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                     self.shallow_copy(args[0])
 
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._from_file(args[0])
+                self._from_file(args[0], **kwargs)
 
             elif isinstance(args[0], _vtk.vtkStructuredGrid):
                 vtkappend = _vtk.vtkAppendFilter()
@@ -951,8 +946,6 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     """
 
-    _READERS = {'.vtk': _vtk.vtkStructuredGridReader,
-                '.vts': _vtk.vtkXMLStructuredGridReader}
     _WRITERS = {'.vtk': _vtk.vtkStructuredGridWriter,
                 '.vts': _vtk.vtkXMLStructuredGridWriter}
 
@@ -963,8 +956,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkStructuredGrid):
                 self.deep_copy(args[0])
-            elif isinstance(args[0], str):
-                self._from_file(args[0])
+            elif isinstance(args[0], (str, pathlib.Path)):
+                self._from_file(args[0], **kwargs)
 
         elif len(args) == 3:
             arg0_is_arr = isinstance(args[0], np.ndarray)
@@ -1175,8 +1168,6 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     """
 
-    _READERS = {'.vtu': _vtk.vtkXMLUnstructuredGridReader,
-                '.vtk': _vtk.vtkUnstructuredGridReader}
     _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter,
                 '.vtk': _vtk.vtkUnstructuredGridWriter}
 
@@ -1193,7 +1184,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             elif isinstance(arg0, _vtk.vtkUnstructuredGrid):
                 grid = arg0.cast_to_explicit_structured_grid()
                 self.deep_copy(grid)
-            elif isinstance(arg0, str):
+            elif isinstance(arg0, (str, pathlib.Path)):
                 grid = UnstructuredGrid(arg0)
                 grid = grid.cast_to_explicit_structured_grid()
                 self.deep_copy(grid)

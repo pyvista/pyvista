@@ -26,6 +26,8 @@ dependencies:
   - trimesh
   - rtree
   - pyembree
+  - panel
+  - ipygany
+  - ipyvtklink
   - pip:
       - pytest-memprof
-      - ipyvtk-simple>=0.1.2

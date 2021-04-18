@@ -4,7 +4,7 @@ import numpy as np
 import scooby
 
 import pyvista
-from pyvista.utilities import is_pyvista_dataset, assert_empty_kwargs
+from pyvista.utilities import is_pyvista_dataset
 from .plotting import Plotter
 from .theme import rcParams
 
@@ -13,38 +13,39 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
-         parallel_projection=False, use_ipyvtk=None, **kwargs):
+         parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
+         return_viewer=False, jupyter_kwargs={}, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
     ----------
     item : vtk or numpy object
-        VTK object or numpy array to be plotted.
+        VTK object or ``numpy`` array to be plotted.
 
     off_screen : bool
-        Plots off screen when True.  Helpful for saving screenshots
+        Plots off screen when ``True``.  Helpful for saving screenshots
         without a window popping up.
 
     full_screen : bool, optional
-        Opens window in full screen.  When enabled, ignores window_size.
-        Default False.
+        Opens window in full screen.  When enabled, ignores ``window_size``.
+        Default ``False``.
 
     screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
-        help(pyvistanterface.Plotter.screenshot).  Default disabled.
+        ``help(pyvista.Plotter.screenshot)``.  Default ``False``.
 
-        When True, takes screenshot and returns numpy array of image.
+        When ``True``, takes screenshot and returns ``numpy`` array of image.
 
     window_size : list, optional
-        Window size in pixels.  Defaults to [1024, 768]
+        Window size in pixels.  Defaults to ``[1024, 768]``
 
     show_bounds : bool, optional
-        Shows mesh bounds when True.  Default False. Alias ``show_grid`` also
-        accepted.
+        Shows mesh bounds when ``True``.  Default ``False``. Alias
+        ``show_grid`` also accepted.
 
     notebook : bool, optional
-        When True, the resulting plot is placed inline a jupyter notebook.
-        Assumes a jupyter console is active.
+        When ``True``, the resulting plot is placed inline a jupyter
+        notebook.  Assumes a jupyter console is active.
 
     show_axes : bool, optional
         Shows a vtk axes widget.  Enabled by default.
@@ -56,8 +57,24 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         Use the ``add_volume`` method for volume rendering.
 
     use_ipyvtk : bool, optional
-        Use the ``ipyvtk-simple`` ``ViewInteractiveWidget`` to
-        visualize the plot within a juyterlab notebook.
+        Deprecated.  Instead, set the backend either globally with
+        ``pyvista.set_jupyter_backend('ipyvtklink')`` or with
+        ``backend='ipyvtklink'``.
+
+    jupyter_backend : str, optional
+        Jupyter notebook plotting backend to use.  One of the
+        following:
+
+        * ``'none'`` : Do not display in the notebook.
+        * ``'static'`` : Display a static figure.
+        * ``'ipygany'`` : Show a ``ipygany`` widget
+        * ``'panel'`` : Show a ``panel`` widget.
+
+        This can also be set globally with
+        ``pyvista.set_jupyter_backend``
+
+    jupyter_kwargs : dict, optional
+        Keyword arguments for the Jupyter notebook plotting backend.
 
     **kwargs : optional keyword arguments
         See help(Plotter.add_mesh) for additional options.
@@ -144,9 +161,13 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           screenshot=screenshot,
                           return_img=return_img,
                           use_ipyvtk=use_ipyvtk,
-                          before_close_callback=before_close_callback)
+                          jupyter_backend=jupyter_backend,
+                          before_close_callback=before_close_callback,
+                          jupyter_kwargs=jupyter_kwargs,
+                          return_viewer=return_viewer)
 
-    # Result will be handled by plotter.show(): cpos or [cpos, img]
+    # Result will be handled by plotter.show(): cpos or [cpos, img] or
+    # the jupyterlab scene when return_viewer is True
     return result
 
 

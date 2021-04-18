@@ -9,6 +9,7 @@ from pyvista.utilities import *
 from pyvista.core import *
 from pyvista.utilities.misc import _get_vtk_id_type
 from pyvista import _vtk
+from pyvista.jupyter import set_jupyter_backend, PlotterITK
 
 # Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
@@ -56,10 +57,6 @@ REPR_VOLUME_MAX_CELLS = 1e6
 # Set where figures are saved
 FIGURE_PATH = None
 
-# Set up data directory
-USER_DATA_PATH = appdirs.user_data_dir('pyvista')
-if not os.path.exists(USER_DATA_PATH):
-    os.makedirs(USER_DATA_PATH)
 
 
 # allow user to override the examples path
@@ -67,6 +64,12 @@ if 'PYVISTA_USERDATA_PATH' in os.environ:
     USER_DATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
     if not os.path.isdir(USER_DATA_PATH):
         raise FileNotFoundError(f'Invalid PYVISTA_USERDATA_PATH at {USER_DATA_PATH}')
+
+else:
+    # Set up data directory
+    USER_DATA_PATH = appdirs.user_data_dir('pyvista')
+    if not os.path.exists(USER_DATA_PATH):
+        os.makedirs(USER_DATA_PATH)
 
 try:
     EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
@@ -85,15 +88,6 @@ except Exception as e:
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 
-# Set ipyvtk_vtk rcParam flag for interactive notebook rendering
-try:
-    if os.environ['PYVISTA_USE_IPYVTK'].lower() == 'false':
-        rcParams['use_ipyvtk'] = False
-    elif os.environ['PYVISTA_USE_IPYVTK'].lower() == 'true':
-        rcParams['use_ipyvtk'] = True
-except KeyError:
-    pass
-
 # Set preferred plot theme
 try:
     theme = os.environ['PYVISTA_PLOT_THEME'].lower()
@@ -101,12 +95,5 @@ try:
 except KeyError:
     pass
 
-
 # Set a parameter to control default print format for floats
 FLOAT_FORMAT = "{:.3e}"
-
-VERY_FIRST_RENDER = [True]
-
-# Check if python is running in interactive mode (see
-# https://stackoverflow.com/a/64523765)
-IS_INTERACTIVE = hasattr(sys, 'ps1')

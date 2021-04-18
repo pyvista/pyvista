@@ -97,3 +97,9 @@ def test_view_angle(camera):
 
 def test_direction(camera):
     assert camera.GetDirectionOfProjection() == camera.direction
+
+
+def test_view_frustum(camera):
+    frustum = camera.view_frustum(1.0)
+    assert frustum.n_points == 8
+    assert frustum.n_cells == 6

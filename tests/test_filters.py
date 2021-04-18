@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from vtk import VTK_QUADRATIC_HEXAHEDRON
 
+from pyvista._vtk import VTK9
 import pyvista
 from pyvista import examples
 from pyvista.core.errors import VTKVersionError
@@ -488,7 +489,7 @@ def test_glyph():
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
-    sphere = pyvista.Sphere(radius=3.14)
+    sphere = pyvista.Sphere(radius=3.14, theta_resolution=5, phi_resolution=5)
     sphere_sans_arrays = sphere.copy()
     # make cool swirly pattern
     vectors = np.vstack((np.sin(sphere.points[:, 0]),
@@ -505,7 +506,9 @@ def test_glyph():
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
                           clamping=False, rng=[1, 1])
     # passing one or more custom glyphs; many cases for full coverage
-    geoms = [pyvista.Sphere(), pyvista.Arrow(), pyvista.ParametricSuperToroid()]
+    geoms = [pyvista.Sphere(theta_resolution=5, phi_resolution=5),
+             pyvista.Arrow(tip_resolution=5, shaft_resolution=5),
+             pyvista.ParametricSuperToroid(u_res=10, v_res=10, w_res=10)]
     indices = range(len(geoms))
     result = sphere.glyph(geom=geoms[0])
     result = sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)))
@@ -743,9 +746,11 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-def test_plot_over_line():
+def test_plot_over_line(tmpdir):
     """this requires matplotlib"""
     pytest.importorskip('matplotlib')
+    tmp_dir = tmpdir.mkdir("tmpdir")
+    filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
     # Make two points to construct the line between
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
@@ -754,18 +759,142 @@ def test_plot_over_line():
     # Test multicomponent
     mesh['foo'] = np.random.rand(mesh.n_cells, 3)
     mesh.plot_over_line(a, b, resolution=None, scalars='foo',
-                        title='My Stuff', ylabel='3 Values', show=False)
+                        title='My Stuff', ylabel='3 Values', show=False, fname=filename)
+    assert os.path.isfile(filename)
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_line(a, b, resolution=None, scalars='invalid_array_name',
                             title='My Stuff', ylabel='3 Values', show=False)
 
 
+def test_sample_over_circular_arc():
+    """Test that we get a circular arc."""
+
+    name = 'values'
+
+    uniform = examples.load_uniform()
+    uniform[name] = uniform.points[:, 2]
+
+    xmin = uniform.bounds[0]
+    xmax = uniform.bounds[1]
+    ymin = uniform.bounds[2]
+    zmin = uniform.bounds[4]
+    zmax = uniform.bounds[5]
+    pointa = [xmin, ymin, zmax]
+    pointb = [xmax, ymin, zmin]
+    center = [xmin, ymin, zmin]
+    sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center, 2)
+
+    expected_result = zmin+(zmax-zmin)*np.sin([np.pi/2.0, np.pi/4.0, 0.0])
+    assert np.allclose(sampled_arc[name], expected_result)
+    assert name in sampled_arc.array_names # is name in sampled result
+
+    # test no resolution
+    sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+    sampled_from_sphere = sphere.sample_over_circular_arc([3, 1, 1], [-3, -1, -1], [0, 0, 0])
+    assert sampled_from_sphere.n_points == sphere.n_cells + 1
+
+    # is sampled result a polydata object
+    assert isinstance(sampled_from_sphere, pyvista.PolyData)
+
+
+def test_sample_over_circular_arc_normal():
+    """Test that we get a circular arc_normal."""
+
+    name = 'values'
+
+    uniform = examples.load_uniform()
+    uniform[name] = uniform.points[:, 2]
+
+    xmin = uniform.bounds[0]
+    ymin = uniform.bounds[2]
+    ymax = uniform.bounds[3]
+    zmin = uniform.bounds[4]
+    zmax = uniform.bounds[5]
+    normal = [xmin, ymax, zmin]
+    polar = [xmin, ymin, zmax]
+    angle = 90
+    center = [xmin, ymin, zmin]
+    sampled_arc_normal = uniform.sample_over_circular_arc_normal(center, resolution=2, normal=normal, polar=polar, angle=angle)
+
+    expected_result = zmin+(zmax-zmin)*np.sin([np.pi/2.0, np.pi/4.0, 0.0])
+    assert np.allclose(sampled_arc_normal[name], expected_result)
+    assert name in sampled_arc_normal.array_names # is name in sampled result
+
+    # test no resolution
+    sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+    sampled_from_sphere = sphere.sample_over_circular_arc_normal([0, 0, 0], polar=[3, 1, 1], angle=180)
+    assert sampled_from_sphere.n_points == sphere.n_cells + 1
+
+    # is sampled result a polydata object
+    assert isinstance(sampled_from_sphere, pyvista.PolyData)
+
+
+def test_plot_over_circular_arc(tmpdir):
+    """this requires matplotlib"""
+
+    pytest.importorskip('matplotlib')
+    mesh = examples.load_uniform()
+    tmp_dir = tmpdir.mkdir("tmpdir")
+    filename = str(tmp_dir.join('tmp.png'))
+
+    # Make two points and center to construct the circular arc between
+    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
+    b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
+    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False, fname=filename)
+    assert os.path.isfile(filename)
+
+    # Test multicomponent
+    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh.plot_over_circular_arc(a, b, center, resolution=None, scalars='foo',
+                                title='My Stuff', ylabel='3 Values', show=False)
+
+    # Should fail if scalar name does not exist
+    with pytest.raises(KeyError):
+        mesh.plot_over_circular_arc(a, b, center, resolution=None,
+                                    scalars='invalid_array_name',
+                                    title='My Stuff', ylabel='3 Values',
+                                    show=False)
+
+
+def test_plot_over_circular_arc_normal(tmpdir):
+    """this requires matplotlib"""
+
+    pytest.importorskip('matplotlib')
+    mesh = examples.load_uniform()
+    tmp_dir = tmpdir.mkdir("tmpdir")
+    filename = str(tmp_dir.join('tmp.png'))
+
+    # Make center and normal/polar vector to construct the circular arc between
+    normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
+    polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
+    angle = 90
+    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle, show=False, fname=filename)
+    assert os.path.isfile(filename)
+
+    # Test multicomponent
+    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh.plot_over_circular_arc_normal(center, polar=polar,
+                                       angle=angle, resolution=None,
+                                       scalars='foo', title='My Stuff',
+                                       ylabel='3 Values', show=False)
+
+    # Should fail if scalar name does not exist
+    with pytest.raises(KeyError):
+        mesh.plot_over_circular_arc_normal(center, polar=polar,
+                                           angle=angle, resolution=None,
+                                           scalars='invalid_array_name',
+                                           title='My Stuff', ylabel='3 Values',
+                                           show=False)
+
+
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
     x = y = z = np.linspace(model.bounds[0], model.bounds[1], num=n)
-    points = np.c_[x,y,z]
+    points = np.c_[x, y, z]
     spline = pyvista.Spline(points, n)
     slc = model.slice_along_line(spline)
     assert slc.n_points > 0
@@ -1132,11 +1261,11 @@ def test_shrink():
     assert shrunk.area < mesh.area
 
 
-
 @pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
                          itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
 def test_transform_mesh(dataset, num_cell_arrays, num_point_arrays):
-    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
+    # rotate about x-axis by 90 degrees
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
     for i in range(num_cell_arrays):
         dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
@@ -1166,7 +1295,8 @@ def test_transform_mesh(dataset, num_cell_arrays, num_point_arrays):
 @pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
                          itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
 def test_transform_mesh_and_vectors(dataset, num_cell_arrays, num_point_arrays):
-    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
+      # rotate about x-axis by 90 degrees
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
     for i in range(num_cell_arrays):
         dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
@@ -1219,6 +1349,7 @@ def test_reflect_mesh_about_point(dataset):
     assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
 
 
+@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
 @pytest.mark.parametrize('dataset', DATASETS)
 def test_reflect_mesh_with_vectors(dataset):
     if hasattr(dataset, 'compute_normals'):
@@ -1286,6 +1417,21 @@ def test_extrude_rotate():
     poly = line.extrude_rotate(resolution=resolution)
     assert poly.n_cells == line.n_points - 1
     assert poly.n_points == (resolution + 1)*line.n_points
+
+    translation = 10.0
+    dradius = 1.0
+    poly = line.extrude_rotate(translation=translation, dradius=dradius)
+    zmax = poly.bounds[5]
+    assert zmax == translation
+    xmax = poly.bounds[1]
+    assert xmax == line.bounds[1] + dradius
+
+    poly = line.extrude_rotate(angle=90.0)
+    xmin = poly.bounds[0]
+    xmax = poly.bounds[1]
+    ymin = poly.bounds[2]
+    ymax = poly.bounds[3]
+    assert (xmin == line.bounds[0]) and (xmax == line.bounds[1]) and (ymin == line.bounds[0]) and (ymax == line.bounds[1])
 
 
 def test_extrude_rotate_inplace():

@@ -11,6 +11,7 @@ from pyvista.utilities import wrap, check_depth_peeling
 from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
 from .tools import create_axes_orientation_box, create_axes_marker
 from .camera import Camera
+from .lights import LightType
 
 
 def scale_point(camera, point, invert=False):
@@ -114,12 +115,15 @@ class Renderer(_vtk.vtkRenderer):
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
+        self._floor = None
         self._floors = []
         self._floor_kwargs = []
         # this keeps track of lights added manually to prevent garbage collection
         self._lights = []
         self._camera = Camera()
         self.SetActiveCamera(self._camera)
+
+        self._shadow_pass = None
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -210,7 +214,7 @@ class Renderer(_vtk.vtkRenderer):
             return
 
         for actor in self._actors.values():
-            if isinstance(actor, _vtk.vtkCubeAxesActor):
+            if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
                 continue
             if (hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
                  and id(actor) != id(self.bounding_box_actor)):
@@ -328,6 +332,11 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
         return actor
 
+    @property
+    def actors(self):
+        """Return a dictionary of actors assigned to this renderer."""
+        return self._actors
+
     def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
                   pickable=True, render=True):
         """Add an actor to render window.
@@ -401,12 +410,14 @@ class Renderer(_vtk.vtkRenderer):
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
         actor.SetPickable(pickable)
-
         self.ResetCameraClippingRange()
-
         self.Modified()
 
-        return actor, actor.GetProperty()
+        prop = None
+        if hasattr(actor, 'GetProperty'):
+            prop = actor.GetProperty()
+
+        return actor, prop
 
     def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
                            xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
@@ -467,7 +478,7 @@ class Renderer(_vtk.vtkRenderer):
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(actor)
         if hasattr(self.parent, 'iren'):
-            self.axes_widget.SetInteractor(self.parent.iren)
+            self.axes_widget.SetInteractor(self.parent.iren.interactor)
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
         self.axes_widget.SetCurrentRenderer(self)
@@ -534,6 +545,13 @@ class Renderer(_vtk.vtkRenderer):
         else:
             self.add_axes()
         self.Modified()
+
+    @property
+    def axes_enabled(self):
+        """Return ``True`` when axes are enabled."""
+        if hasattr(self, 'axes_widget'):
+            return bool(self.axes_widget.GetEnabled())
+        return False
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
                     show_yaxis=True, show_zaxis=True, show_xlabels=True,
@@ -923,8 +941,8 @@ class Renderer(_vtk.vtkRenderer):
                   offset=0.0, pickable=False, store_floor_kwargs=True):
         """Show a floor mesh.
 
-        This generates planes at the boundaries of the scene to behave like
-        floors or walls.
+        This generates planes at the boundaries of the scene to behave
+        like floors or walls.
 
         Parameters
         ----------
@@ -946,29 +964,40 @@ class Renderer(_vtk.vtkRenderer):
             Either a string, rgb list, or hex color string.
 
         line_width : int
-            Thickness of the edges. Only if ``show_edges`` is ``True``
+            Thickness of the edges. Only if ``show_edges`` is ``True``.
 
         opacity : float
-            The opacity of the generated surface
+            The opacity of the generated surface.
 
         show_edges : bool
             Flag on whether to show the mesh edges for tiling.
 
         ine_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
-            representations.  Default None.
+            representations.  Default ``None``.
 
         lighting : bool, optional
-            Enable or disable view direction lighting.  Default False.
+            Enable or disable view direction lighting.  Default ``False``.
 
         edge_color : string or 3 item list, optional
             Color of of the edges of the mesh.
 
-        pad : float
-            Percentage padding between 0 and 1
+        pad : float, optional
+            Percentage padding between 0 and 1.
 
-        offset : float
-            Percentage offset along plane normal
+        offset : float, optional
+            Percentage offset along plane normal.
+
+        Examples
+        --------
+        Add a floor below a sphere and plot it.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Sphere())
+        >>> _ = pl.add_floor()
+        >>> pl.show()  # doctest:+SKIP
+
         """
         if store_floor_kwargs:
             kwargs = locals()
@@ -979,32 +1008,32 @@ class Renderer(_vtk.vtkRenderer):
         center = np.array(self.center)
         if face.lower() in '-z':
             center[2] = self.bounds[4] - (ranges[2] * offset)
-            normal = (0,0,1)
+            normal = (0, 0, 1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '-y':
             center[1] = self.bounds[2] - (ranges[1] * offset)
-            normal = (0,1,0)
+            normal = (0, 1, 0)
             i_size = ranges[0]
             j_size = ranges[2]
         elif face.lower() in '-x':
             center[0] = self.bounds[0] - (ranges[0] * offset)
-            normal = (1,0,0)
+            normal = (1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
         elif face.lower() in '+z':
             center[2] = self.bounds[5] + (ranges[2] * offset)
-            normal = (0,0,-1)
+            normal = (0, 0, -1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '+y':
             center[1] = self.bounds[3] + (ranges[1] * offset)
-            normal = (0,-1,0)
+            normal = (0, -1, 0)
             i_size = ranges[0]
             j_size = ranges[2]
         elif face.lower() in '+x':
             center[0] = self.bounds[1] + (ranges[0] * offset)
-            normal = (-1,0,0)
+            normal = (-1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
         else:
@@ -1013,8 +1042,8 @@ class Renderer(_vtk.vtkRenderer):
                                     i_size=i_size, j_size=j_size,
                                     i_resolution=i_resolution,
                                     j_resolution=j_resolution)
-        name = f'Floor({face})'
-        # use floor
+        self._floor.clear_arrays()
+
         if lighting is None:
             lighting = rcParams['lighting']
 
@@ -1029,7 +1058,7 @@ class Renderer(_vtk.vtkRenderer):
         mapper.SetInputData(self._floor)
         actor, prop = self.add_actor(mapper,
                                      reset_camera=reset_camera,
-                                     name=name, pickable=pickable)
+                                     name=f'Floor({face})', pickable=pickable)
 
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
@@ -1069,13 +1098,20 @@ class Renderer(_vtk.vtkRenderer):
             self.Modified()
 
     def add_light(self, light):
-        """Add a Light to the renderer."""
+        """Add a light to the renderer."""
+        # convert from a vtk type if applicable
+        if isinstance(light, _vtk.vtkLight) and not isinstance(light, pyvista.Light):
+            light = pyvista.Light.from_vtk(light)
+
         if not isinstance(light, pyvista.Light):
-            raise TypeError('Expected Light instance, got {type(light).__name__} instead.')
+            raise TypeError(f'Expected Light instance, got {type(light).__name__} instead.')
         self._lights.append(light)
         self.AddLight(light)
-        self.AddActor(light._actor)
         self.Modified()
+
+        # we add the renderer to add/remove the light actor if
+        # positional or cone angle is modified
+        light.add_renderer(self)
 
     @property
     def lights(self):
@@ -1448,7 +1484,39 @@ class Renderer(_vtk.vtkRenderer):
         self.edl_pass.ReleaseGraphicsResources(self.parent.ren_win)
         del self.edl_pass
         self.Modified()
-        return
+
+    def enable_shadows(self):
+        """Enable shadows."""
+        if self._shadow_pass is not None:
+            # shadows are already enabled for this renderer
+            return
+
+        shadows = _vtk.vtkShadowMapPass()
+
+        passes = _vtk.vtkRenderPassCollection()
+        passes.AddItem(shadows.GetShadowMapBakerPass())
+        passes.AddItem(shadows)
+
+        seq = _vtk.vtkSequencePass()
+        seq.SetPasses(passes)
+
+        # Tell the renderer to use our render pass pipeline
+        self._shadow_pass = _vtk.vtkCameraPass()
+        self._shadow_pass.SetDelegatePass(seq)
+        self.SetPass(self._shadow_pass)
+        self.Modified()
+
+    def disable_shadows(self):
+        """Disable shadows."""
+        if self._shadow_pass is None:
+            # shadows are already disabled
+            return
+
+        self.SetPass(None)
+        if hasattr(self.parent, 'ren_win'):
+            self._shadow_pass.ReleaseGraphicsResources(self.parent.ren_win)
+        self._shadow_pass = None
+        self.Modified()
 
     def get_pick_position(self):
         """Get the pick position/area as x0, y0, x1, y1."""
@@ -1493,6 +1561,22 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
         return
 
+    def set_environment_texture(self, texture):
+        """Set the environment texture used for image based lighting.
+
+        This texture is supposed to represent the scene background. If
+        it is not a cubemap, the texture is supposed to represent an
+        equirectangular projection. If used with raytracing backends,
+        the texture must be an equirectangular projection and must be
+        constructed with a valid vtkImageData. Warning, this texture
+        must be expressed in linear color space. If the texture is in
+        sRGB color space, set the color flag on the texture or set the
+        argument isSRGB to true.
+        """
+        self.UseImageBasedLightingOn()
+        self.SetEnvironmentTexture(texture)
+        self.Modified()
+
     def close(self):
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
@@ -1509,6 +1593,8 @@ class Renderer(_vtk.vtkRenderer):
             del self.edl_pass
         if hasattr(self, '_box_object'):
             self.remove_bounding_box(render=render)
+        if self._shadow_pass is not None:
+            self.disable_shadows()
 
         self.remove_floors(render=render)
         self.RemoveAllViewProps()

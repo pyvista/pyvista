@@ -53,6 +53,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx_gallery.gen_gallery',
               'sphinx.ext.extlinks',
               'sphinx.ext.coverage',
+              'jupyter_sphinx',
               ]
 
 
@@ -126,7 +127,7 @@ sphinx_gallery_conf = {
     "image_scrapers": ('pyvista', 'matplotlib'),
     'first_notebook_cell': ("%matplotlib inline\n"
                             "from pyvista import set_plot_theme\n"
-                            "set_plot_theme('document')"),
+                            "set_plot_theme('document')\n"),
 }
 
 
@@ -206,7 +207,7 @@ latex_documents = [
 # -- Options for gettext output -------------------------------------------
 
 # To specify names to enable gettext extracting and translation applying for i18n additionally. You can specify below names:
-gettext_additional_targets = ['raw'] 
+gettext_additional_targets = ['raw']
 
 # -- Options for manual page output ---------------------------------------
 

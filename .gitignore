@@ -4,6 +4,7 @@
 *.pyd
 *.so
 *.o
+__pycache__/
 
 # Cython generated files #
 #pymeshfix/cython/_meshfix.cpp
@@ -25,6 +26,8 @@ dist/
 # doc generated
 docs/_build
 wiki/
+docs/core/beam.gif
+docs/core/beam_wireframe.gif
 
 # testing coverage and cache
 .pytest_cache/
@@ -74,3 +77,10 @@ flycheck*
 
 # PyCharm
 .idea/
+
+# virtual environments
+venv/
+.venv/
+
+# VSCode
+.vscode/

@@ -172,7 +172,7 @@ def test_invalid_file():
     with pytest.raises(FileNotFoundError):
         pyvista.PolyData('file.bad')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(IOError):
         filename = os.path.join(test_path, 'test_polydata.py')
         pyvista.PolyData(filename)
 
@@ -238,6 +238,9 @@ def test_ray_trace_plot():
 
 @pytest.mark.skipif(not CONDA_ENV, reason="Requires libspatialindex dependency only installable via conda")
 def test_multi_ray_trace():
+    pytest.importorskip('rtree')
+    pytest.importorskip('pyembree')
+    pytest.importorskip('trimesh')
     sphere = SPHERE.copy()
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 1]]
     directions = [[0, 0, -1]] * 4

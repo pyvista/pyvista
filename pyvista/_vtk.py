@@ -43,6 +43,10 @@ if VTK9:
                                                 vtkRenderStepsPass,
                                                 vtkEDLShading,
                                                 vtkOpenGLRenderer,
+                                                vtkShadowMapPass,
+                                                vtkSequencePass,
+                                                vtkCameraPass,
+                                                vtkRenderPassCollection,
                                                 vtkOpenGLTexture)
     from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
     from vtkmodules.vtkIOPLY import (vtkPLYReader,
@@ -147,6 +151,7 @@ if VTK9:
                                                    vtkLegendBoxActor,
                                                    vtkCubeAxesActor)
     from vtkmodules.vtkRenderingCore import (vtkTexture,
+                                             vtkSkybox,
                                              vtkPropAssembly,
                                              vtkRenderer,
                                              vtkMapper,
@@ -300,7 +305,8 @@ if VTK9:
                                               vtkRegularPolygonSource,
                                               vtkLineSource,
                                               vtkPointSource,
-                                              vtkArrowSource)
+                                              vtkArrowSource,
+                                              vtkFrustumSource)
     from vtkmodules.vtkFiltersGeometry import (vtkGeometryFilter,
                                                vtkStructuredGridGeometryFilter,
                                                vtkCompositeDataGeometryFilter,
@@ -320,6 +326,7 @@ if VTK9:
     from vtkmodules.vtkImagingCore import (vtkExtractVOI,
                                            vtkImageExtractComponents,
                                            vtkImageDifference,
+                                           vtkImageFlip,
                                            vtkRTAnalyticSource)
     from vtkmodules.vtkFiltersFlowPaths import vtkStreamTracer
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid

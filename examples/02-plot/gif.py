@@ -18,13 +18,8 @@ z = np.sin(r)
 grid = pv.StructuredGrid(x, y, z)
 
 # Create a plotter object and set the scalars to the Z height
-plotter = pv.Plotter()
+plotter = pv.Plotter(notebook=False, off_screen=True)
 plotter.add_mesh(grid, scalars=z.ravel(), smooth_shading=True)
-
-print('Orient the view, then press "q" to close window and produce movie')
-
-# setup camera and close
-plotter.show(auto_close=False)
 
 # Open a gif
 plotter.open_gif("wave.gif")
@@ -41,10 +36,8 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 
     # must update normals when smooth shading is enabled
     plotter.mesh.compute_normals(cell_normals=False, inplace=True)
-    plotter.write_frame()  # this will trigger the render
+    plotter.render()
+    plotter.write_frame()
 
-    # otherwise, when not writing frames, render with:
-    # plotter.render()
-
-# Close movie and delete object
+# Closes and finalizes movie
 plotter.close()

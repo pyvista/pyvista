@@ -240,14 +240,14 @@ class Table(_vtk.vtkTable, DataObject):
         """Create a Pandas DataFrame from this Table."""
         try:
             import pandas as pd
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError('Install ``pandas`` to use this feature.')
         data_frame = pd.DataFrame()
         for name, array in self.items():
             data_frame[name] = array
         return data_frame
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):  # pragma: no cover
         """Save the table."""
         raise NotImplementedError("Please use the `to_pandas` method and "
                                   "harness Pandas' wonderful file IO methods.")
@@ -282,25 +282,9 @@ class Table(_vtk.vtkTable, DataObject):
 class Texture(_vtk.vtkTexture, DataObject):
     """A helper class for vtkTextures."""
 
-    _READERS = {'.bmp': _vtk.vtkBMPReader,
-                '.dem': _vtk.vtkDEMReader,
-                '.dcm': _vtk.vtkDICOMImageReader,
-                '.img': _vtk.vtkDICOMImageReader,
-                '.jpeg': _vtk.vtkJPEGReader,
-                '.jpg': _vtk.vtkJPEGReader,
-                '.mhd': _vtk.vtkMetaImageReader,
-                '.nrrd': _vtk.vtkNrrdReader,
-                '.nhdr': _vtk.vtkNrrdReader,
-                '.png': _vtk.vtkPNGReader,
-                '.pnm': _vtk.vtkPNMReader,
-                '.slc': _vtk.vtkSLCReader,
-                '.tiff': _vtk.vtkTIFFReader,
-                '.tif': _vtk.vtkTIFFReader}
-
     def __init__(self, *args, **kwargs):
         """Initialize the texture."""
         super().__init__(*args, **kwargs)
-        assert_empty_kwargs(**kwargs)
 
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkTexture):
@@ -310,13 +294,13 @@ class Texture(_vtk.vtkTexture, DataObject):
             elif isinstance(args[0], _vtk.vtkImageData):
                 self._from_image_data(args[0])
             elif isinstance(args[0], str):
-                self._from_file(filename=args[0])
+                self._from_file(filename=args[0], **kwargs)
             else:
-                raise TypeError(f'Table unable to be made from ({type(args[0])})')
+                raise TypeError(f'Texture unable to be made from ({type(args[0])})')
 
-    def _from_file(self, filename):
+    def _from_file(self, filename, **kwargs):
         try:
-            image = self._load_file(filename)
+            image = pyvista.read(filename, **kwargs)
             if image.GetNumberOfPoints() < 2:
                 raise ValueError("Problem reading the image with VTK.")
             self._from_image_data(image)
@@ -394,6 +378,29 @@ class Texture(_vtk.vtkTexture, DataObject):
         """Plot the texture as image data by itself."""
         return self.to_image().plot(*args, **kwargs)
 
+    @property
+    def cube_map(self):
+        """Return ``True`` if cube mapping is enabled and ``False`` otherwise.
+
+        Is this texture a cube map, if so it needs 6 inputs, one for
+        each side of the cube. You must set this before connecting the
+        inputs.  The inputs must all have the same size, data type,
+        and depth.
+        """
+        return self.GetCubeMap()
+
+    @cube_map.setter
+    def cube_map(self, flag):
+        """Enable cube mapping if ``flag`` is True, disable it otherwise."""
+        self.SetCubeMap(flag)
+
     def copy(self):
         """Make a copy of this texture."""
         return Texture(self.to_image().copy())
+
+    def to_skybox(self):
+        """Return the texture as a ``vtkSkybox`` if cube mapping is enabled."""
+        if self.cube_map:
+            skybox = _vtk.vtkSkybox()
+            skybox.SetTexture(self)
+            return skybox

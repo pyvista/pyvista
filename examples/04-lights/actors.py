@@ -3,12 +3,12 @@ Light Actors
 ~~~~~~~~~~~~
 
 Positional lights in PyVista have customizable beam shapes, see the
-:ref:`ref_light_beam_shape_example` example. Spotlights are special in the sense that
-they are unidirectional lights with a finite position, so they can be visualized
-using a cone.
+:ref:`ref_light_beam_shape_example` example. Spotlights are special in
+the sense that they are unidirectional lights with a finite position,
+so they can be visualized using a cone.
 
-This is exactly the purpose of a ``vtk.vtkLightActor``, the functionality of which
-can be enabled for spotlights:
+This is exactly the purpose of a ``vtk.vtkLightActor``, the
+functionality of which can be enabled for spotlights:
 """
 # sphinx_gallery_thumbnail_number = 1
 import numpy as np
@@ -17,7 +17,7 @@ from pyvista import examples
 
 cow = examples.download_cow()
 cow.rotate_x(90)
-plotter = pv.Plotter(lighting='none')
+plotter = pv.Plotter(lighting='none', window_size=(1000, 1000))
 plotter.add_mesh(cow, color='white')
 floor = pv.Plane(center=(*cow.center[:2], cow.bounds[-2]),
                  i_size=30, j_size=25)
@@ -30,6 +30,9 @@ UFO.exponent = 10
 UFO.intensity = 3
 UFO.show_actor()
 plotter.add_light(UFO)
+
+# enable shadows to better demonstrate lighting
+plotter.enable_shadows()
 
 plotter.camera_position = [(28, 30, 22), (0.77, 0, -0.44), (0, 0, 1)]
 plotter.show()
@@ -83,5 +86,3 @@ UFO.show_actor()
 plotter.add_light(UFO)
 
 plotter.show()
-
-
