@@ -9,7 +9,7 @@ Create an animated MP4 movie of a rendering scene
 import pyvista as pv
 import numpy as np
 
-filename = "./images/auto-generated/sphere-shrinking.mp4"
+filename = "sphere-shrinking.mp4"
 
 mesh = pv.Sphere()
 mesh.cell_arrays["data"] = np.random.random(mesh.n_cells)
