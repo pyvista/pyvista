@@ -127,7 +127,7 @@ to each PyVista data object:
     from pyvista import examples
 
     mesh = examples.load_airplane()
-    mesh.plot(screenshot='airplane.png')
+    mesh.plot(screenshot='./images/auto-generated/airplane.png')
 
 
 You can also create the plotter to highly control the scene. First, instantiate
