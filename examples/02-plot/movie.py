@@ -42,3 +42,6 @@ for i in range(100):
 
 # Be sure to close the plotter when finished
 plotter.close()
+
+###############################################################################
+# .. figure:: ../../images/auto-generated/sphere-shrinking.mp4
