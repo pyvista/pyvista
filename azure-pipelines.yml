@@ -127,7 +127,7 @@ jobs:
     displayName: 'Upload to PyPi'
     condition: and(eq(variables['python.version'], '3.8'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
     env:
-      TWINE_USERNAME: $(twine.username)
+      TWINE_USERNAME: __token__
       TWINE_PASSWORD: $(twine.password)
       TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
