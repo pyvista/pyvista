@@ -130,6 +130,9 @@ to each PyVista data object:
     mesh.plot(screenshot='./images/auto-generated/airplane.png')
 
 
+.. image:: ../images/auto-generated/airplane.png
+
+
 You can also create the plotter to highly control the scene. First, instantiate
 a plotter such as :class:`pyvista.Plotter` or :class:`pyvistaqt.BackgroundPlotter`:
 
