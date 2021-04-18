@@ -337,7 +337,7 @@ jobs:
     displayName: Build pyvista doc examples cache
 
   - script: |
-      make -C docs html -b coverage
+      make -C docs html -b coverage SPHINXOPTS="-W"
       cat docs/_build/coverage/python.txt
     displayName: 'Build documentation'
 
@@ -348,10 +348,6 @@ jobs:
   - script: |
       make -C docs html
     displayName: 'Update figures from doctest'
-
-  - script: |
-      make -C docs html SPHINXOPTS="-W"
-    displayName: 'Turn warnings into errors'
 
   # Push example notebooks to pyvista-examples
   - script: |
