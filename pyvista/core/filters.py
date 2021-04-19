@@ -1366,7 +1366,7 @@ class DataSetFilters:
             the given normal will be used to project the warp.
 
         inplace : bool
-            If True, the points of the give dataset will be updated.
+            If True, the points of the given dataset will be updated.
 
         """
         factor = kwargs.pop('scale_factor', factor)
