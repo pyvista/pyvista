@@ -86,6 +86,13 @@ To plot more than one mesh a plotting class must be created to manage
 the plotting.  The following code creates the class and plots the
 meshes with various colors.
 
+.. jupyter-execute::
+   :hide-code:
+
+   # must have this here as our global backend may not be static
+   import pyvista
+   pyvista.set_jupyter_backend('static')
+
 
 .. jupyter-execute::
 
