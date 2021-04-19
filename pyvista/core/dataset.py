@@ -205,13 +205,10 @@ class DataSet(DataSetFilters, DataObject):
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
             if points.VTKObject is not None:
-                try:
-                    self.GetPoints().SetData(points.VTKObject)
-                    self.GetPoints().Modified()
-                    self.Modified()
-                    return
-                except TypeError:
-                    pass
+                self.GetPoints().SetData(points.VTKObject)
+                self.GetPoints().Modified()
+                self.Modified()
+                return
 
         # otherwise, wrap and use the array
         if not isinstance(points, np.ndarray):
