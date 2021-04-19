@@ -12,6 +12,14 @@ Brief Example
 Create a frustum of camera, then create a scene of inside frustum.
 
 .. jupyter-execute::
+   :hide-code:
+
+   # must have this here as our global backend may not be static and
+   # panel, ipyvtk-simple, and ipygany do not display this example well.
+   import pyvista
+   pyvista.set_jupyter_backend('static')
+
+.. jupyter-execute::
 
     import pyvista as pv
     import numpy as np

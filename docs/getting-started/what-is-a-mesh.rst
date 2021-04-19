@@ -36,6 +36,7 @@ You can create one by defining a 2D array XYZ coordinates like so:
 .. jupyter-execute::
     :hide-code:
 
+    # backend may not be panel, so we have to set this here.
     import pyvista as pv
     pv.set_jupyter_backend('panel')
     pv.set_plot_theme('document')
