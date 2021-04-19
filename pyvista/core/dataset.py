@@ -202,6 +202,15 @@ class DataSet(DataSetFilters, DataObject):
     @points.setter
     def points(self, points: np.ndarray):
         """Set points without copying."""
+        if isinstance(points, pyvista_ndarray):
+            # simply set the underlying data
+            if points.VTKObject is not None:
+                self.GetPoints().SetData(points.VTKObject)
+                self.GetPoints().Modified()
+                self.Modified()
+                return
+
+        # otherwise, wrap and use the array
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
         vtk_points = pyvista.vtk_points(points, False)
