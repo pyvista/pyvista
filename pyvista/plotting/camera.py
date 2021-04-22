@@ -345,7 +345,7 @@ class Camera(_vtk.vtkCamera):
     def roll(self):
         """Rotate the camera about the direction of projection.
 
-           This will spin the camera about its axis.
+        This will spin the camera about its axis.
 
         Examples
         --------
@@ -360,7 +360,7 @@ class Camera(_vtk.vtkCamera):
     def roll(self, angle):
         """Set the rotate of the camera about the direction of projection.
 
-           This will spin the camera about its axis.
+        This will spin the camera about its axis.
 
         Examples
         --------
@@ -371,11 +371,11 @@ class Camera(_vtk.vtkCamera):
         self.SetRoll(angle)
 
     def vertical_rotate(self, angle):
-        """Rotate the camera about the cross product of the negative of
-           the direction of projection and the view up vector, using the
-           focal point as the center of rotation.
+        """Vertical rotation of the scene.
 
-           The result is a vertical rotation of the scene.
+        Rotate the camera about the cross product of the negative of
+        the direction of projection and the view up vector, using the
+        focal point as the center of rotation.
 
         Parameters
         ----------
@@ -395,12 +395,11 @@ class Camera(_vtk.vtkCamera):
         self.Elevation(angle)
 
     def horizontal_rotate(self, angle):
-        """Rotate the camera about the view up vector centered at the focal
-           point.
+        """Horizontal rotation of the camera.
 
-           Note that the view up vector is whatever was set via SetViewUp,
-           and is not necessarily perpendicular to the direction of projection.
-           The result is a horizontal rotation of the camera.
+        Rotate the camera about the view up vector centered at the focal
+        point. Note that the view up vector is whatever was set via SetViewUp,
+        and is not necessarily perpendicular to the direction of projection.
 
         Parameters
         ----------
