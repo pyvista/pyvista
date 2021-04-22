@@ -103,3 +103,26 @@ def test_view_frustum(camera):
     frustum = camera.view_frustum(1.0)
     assert frustum.n_points == 8
     assert frustum.n_cells == 6
+
+
+def test_roll(camera):
+    angle = 360.0*(np.random.rand()-0.5)
+    camera.roll = angle
+    assert np.allclose(camera.GetRoll(), angle)
+    assert np.allclose(camera.roll, angle)
+
+
+def test_vertical_rotate(camera):
+    camera.up = (0.0, 0.0, 1.0)
+    camera.position = (1.0, 0.0, 0.0)
+    camera.focal_point = (0.0, 0.0, 0.0)
+    camera.vertical_rotate(90.0)
+    assert np.allclose(camera.position, (0.0, 0.0, 1.0))
+
+
+def test_horizontal_rotate(camera):
+    camera.up = (0.0, 0.0, 1.0)
+    camera.position = (1.0, 0.0, 0.0)
+    camera.focal_point = (0.0, 0.0, 0.0)
+    camera.horizontal_rotate(90.0)
+    assert np.allclose(camera.position, (0.0, 1.0, 0.0))

@@ -340,3 +340,82 @@ class Camera(_vtk.vtkCamera):
 
         frustum = pyvista.wrap(frustum_source.GetOutput())
         return frustum
+
+    @property
+    def roll(self):
+        """Rotate the camera about the direction of projection.
+
+           This will spin the camera about its axis.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.roll
+        -120.00000000000001
+        """
+        return self.GetRoll()
+
+    @roll.setter
+    def roll(self, angle):
+        """Set the rotate of the camera about the direction of projection.
+
+           This will spin the camera about its axis.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.roll = 45.0
+        """
+        self.SetRoll(angle)
+
+    def vertical_rotate(self, angle):
+        """Rotate the camera about the cross product of the negative of
+           the direction of projection and the view up vector, using the
+           focal point as the center of rotation.
+
+           The result is a vertical rotation of the scene.
+
+        Parameters
+        ----------
+        angle : float
+           Rotate angle.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.vertical_rotate(45.0)
+        """
+        self.Elevation(angle)
+
+    def horizontal_rotate(self, angle):
+        """Rotate the camera about the view up vector centered at the focal
+           point.
+
+           Note that the view up vector is whatever was set via SetViewUp,
+           and is not necessarily perpendicular to the direction of projection.
+           The result is a horizontal rotation of the camera.
+
+        Parameters
+        ----------
+        angle : float
+           Rotate angle.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.vertical_rotate(45.0)
+
+        """
+        self.Azimuth(angle)
