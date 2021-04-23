@@ -6,7 +6,7 @@ colorcet
 cmocean
 Sphinx
 sphinx-autobuild
-sphinx-rtd-theme
+pydata-sphinx-theme
 sphinxcontrib-napoleon
 sphinxcontrib-websupport
 pytest-sphinx

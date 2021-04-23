@@ -141,7 +141,7 @@ using ``pip`` on Python >= 3.6::
 
     pip install pyvista
 
-You can also visit `PyPi <https://pypi.org/project/pyvista/>`_,
+You can also visit `PyPI <https://pypi.org/project/pyvista/>`_,
 `Anaconda <https://anaconda.org/conda-forge/pyvista>`_, or
 `GitHub <https://github.com/pyvista/pyvista>`_ to download the source.
 
