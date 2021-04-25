@@ -50,7 +50,7 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
    :hidden:
 
    about
-   getting-started/index
+   user-guide/index
    examples/index
    api
    extras/index

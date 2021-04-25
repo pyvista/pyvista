@@ -1,18 +1,9 @@
-Getting Started
-***************
+User Guide
+**********
+
 
 Installation
 ============
-
-.. toctree::
-   :hidden:
-
-   installation
-   what-is-a-mesh
-   simple
-   ../jupyter/index
-   ../optional_features
-
 
 .. panels::
     :card: + install-card
@@ -57,20 +48,17 @@ Installation
         :classes: btn-outline-primary btn-block stretched-link
 
 
-What is a Mesh?
-===============
-
-
-Basic API Usage
-===============
-
-
-Jupyter Notebook Plotting
-=========================
-
-
-Optional Features
+Table of Contents
 =================
+
+.. toctree::
+   :maxdepth: 2
+
+   installation
+   what-is-a-mesh
+   simple
+   ../jupyter/index
+   ../optional_features
 
 
 
