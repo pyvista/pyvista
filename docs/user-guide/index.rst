@@ -19,9 +19,9 @@ This basic example demonstrates three key features of PyVista:
 .. jupyter-execute::
    :hide-code:
 
-   # must have this here as our global backend may not be static
+   # using ipyvtk as it loads faster
    import pyvista
-   pyvista.set_jupyter_backend('ipygany')  # using ipyvtk as it loads faster
+   pyvista.set_jupyter_backend('ipygany')
 
 
 Here, we download the `Stanford dragon mesh

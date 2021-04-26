@@ -75,7 +75,8 @@ def pyvista_polydata_to_polymesh(obj):
     if not triangle_indices.size:
         warnings.warn('Unable to convert mesh to triangular PolyMesh')
 
-    return PolyMesh(
+    # for speed, only convert the active scalars later
+    return trimesh, PolyMesh(
         vertices=trimesh.points,
         triangle_indices=triangle_indices,
         data=_grid_data_to_data_widget(get_ugrid_data(trimesh))
@@ -134,24 +135,26 @@ def ipygany_block_from_actor(actor):
         warnings.warn('Wireframe style is not supported in ipygany')
         return
     else:
-        pmesh = pyvista_polydata_to_polymesh(dataset)
+        tmesh, pmesh = pyvista_polydata_to_polymesh(dataset)
     pmesh.default_color = color_float_to_hex(*prop.GetColor())
 
     # determine if there are active scalars
-    scalars_name = mapper.GetArrayName()
+    # scalars_name = mapper.GetArrayName()
     valid_mode = mapper.GetScalarModeAsString() in ['UsePointData', 'UseCellData']
     if valid_mode:
-        if not scalars_name:
-            scalars_name = dataset.active_scalars_name
-
-        # ensure this is a valid scalar
-        if scalars_name in [data.name for data in pmesh.data]:
-            mn, mx = mapper.GetScalarRange()
-            cmesh = IsoColor(pmesh, input=(scalars_name), min=mn, max=mx)
-            if hasattr(mapper, 'cmap'):
-                cmap = check_colormap(mapper.cmap)
-                cmesh.colormap = colormaps[cmap]
-            return cmesh
+        # if not scalars_name:
+        scalars_name = dataset.active_scalars_name
+        
+        # Copy this data directly from the mesh
+        components = [ipygany.Component('X', tmesh.active_scalars.astype(np.float32))]
+        pmesh.data = [ipygany.Data(scalars_name, components)]
+        # breakpoint()
+        mn, mx = mapper.GetScalarRange()
+        cmesh = IsoColor(pmesh, input=(scalars_name), min=mn, max=mx)
+        if hasattr(mapper, 'cmap'):
+            cmap = check_colormap(mapper.cmap)
+            cmesh.colormap = colormaps[cmap]
+        return cmesh
 
     return pmesh
 
@@ -227,5 +230,5 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
         scene = AppLayout(center=scene,
                           footer=legend,
                           pane_heights=[0, 0, '150px'])
-
+    # breakpoint()
     display.display_html(scene)

@@ -22,16 +22,16 @@ PyVista is...
 
 .. _Visualization Toolkit: https://vtk.org
 
+PyVista is a helper module for the Visualization Toolkit (VTK) that
+takes a different approach on interfacing with VTK through NumPy and
+direct array access.  This package provides a Pythonic,
+well-documented interface exposing VTK's powerful visualization
+backend to facilitate rapid prototyping, analysis, and visual
+integration of spatially referenced datasets.
 
-PyVista (formerly ``vtki``) is a helper module for the Visualization Toolkit
-(VTK) that takes a different approach on interfacing with VTK through NumPy and
-direct array access.
-This package provides a Pythonic, well-documented interface exposing
-VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
-and visual integration of spatially referenced datasets.
-
-This module can be used for scientific plotting for presentations and research
-papers as well as a supporting module for other mesh dependent Python modules.
+This module can be used for scientific plotting for presentations and
+research papers as well as a supporting module for other mesh
+dependent Python modules.
 
 .. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
    :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
@@ -55,6 +55,35 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
    api
    extras/index
 
+
+Brief Examples
+**************
+Here are some brief interactive examples that demonstrate how you
+might want to use PyVista:
+
+
+Visualization of Finite Element Results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Plot the 'X' component of elastic stress of a 3D notch specimen.
+
+.. jupyter-execute::
+   :hide-code:
+
+   # must have this here as our global backend may not be static
+   import pyvista
+   pyvista.set_jupyter_backend('ipygany')  # using ipyvtk as it loads faster
+   pyvista.rcParams['background'] = [1, 1, 1]
+
+.. jupyter-execute::
+
+   from pyvista import examples
+   mesh = examples.download_notch_stress()
+   mesh.plot(scalars='Nodal Stress', component=0, cmap='Turbo', show_scalar_bar=False)
+
+
+Visualization of Something Else
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To be added...
 
 
 Translating
