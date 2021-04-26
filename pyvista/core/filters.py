@@ -1847,7 +1847,7 @@ class DataSetFilters:
                     max_steps=2000, terminal_speed=1e-12, max_error=1e-6,
                     max_time=None, compute_vorticity=True, rotation_scale=1.0,
                     interpolator_type='point', start_position=(0.0, 0.0, 0.0),
-                    return_source=False, pointa=None, pointb=None):
+                    return_source=False, pointa=None, pointb=None, source=None):
         """Integrate a vector field to generate streamlines.
 
         The integration is performed using a specified integrator, by default
@@ -1953,6 +1953,10 @@ class DataSetFilters:
             The coordinates of a start and end point for a line source. This
             will override the sphere point source.
 
+        source : pyvista.DataSet <- TODO this isn't correct, what is the right type?
+            A point object, the points of which provide the starting points of the
+            streamlines.  This will override both sphere and line sources.
+
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
@@ -1977,23 +1981,27 @@ class DataSetFilters:
             source_center = dataset.center
         if source_radius is None:
             source_radius = dataset.length / 10.0
-        if pointa is not None and pointb is not None:
-            source = _vtk.vtkLineSource()
-            source.SetPoint1(pointa)
-            source.SetPoint2(pointb)
-            source.SetResolution(n_points)
-        else:
-            source = _vtk.vtkPointSource()
-            source.SetCenter(source_center)
-            source.SetRadius(source_radius)
-            source.SetNumberOfPoints(n_points)
+        # TODO check that type of input_source is OK
+
         # Build the algorithm
         alg = _vtk.vtkStreamTracer()
         # Inputs
         alg.SetInputDataObject(dataset)
-        # NOTE: not sure why we can't pass a PolyData object
-        #       setting the connection is the only I could get it to work
-        alg.SetSourceConnection(source.GetOutputPort())
+        if source is None:
+            if pointa is not None and pointb is not None:
+                source = _vtk.vtkLineSource()
+                source.SetPoint1(pointa)
+                source.SetPoint2(pointb)
+                source.SetResolution(n_points)
+            else:
+                source = _vtk.vtkPointSource()
+                source.SetCenter(source_center)
+                source.SetRadius(source_radius)
+                source.SetNumberOfPoints(n_points)
+            alg.SetSourceConnection(source.GetOutputPort())
+        else:
+            alg.SetSourceData(source)
+
         # general parameters
         alg.SetComputeVorticity(compute_vorticity)
         alg.SetInitialIntegrationStep(initial_step_length)

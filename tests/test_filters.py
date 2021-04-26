@@ -725,6 +725,18 @@ def test_streamlines(uniform_vec):
         uniform_vec.streamlines('vectors', step_unit='not valid')
 
 
+def test_streamlines_dataset(uniform_vec):
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
+    source = pyvista.PolyData(vertices)
+    stream = uniform_vec.streamlines('vectors', source=source)
+    assert all([stream.n_points, stream.n_cells])
+
+    # this one fails
+    # source = pyvista.UniformGrid([3, 3, 3], [1, 1, 1], [0, 0, 0])
+    # stream = uniform_vec.streamlines('vectors', source=source)
+    # assert all([stream.n_points, stream.n_cells])
+
+
 def test_sample_over_line():
     """Test that we get a sampled line."""
     name = 'values'
