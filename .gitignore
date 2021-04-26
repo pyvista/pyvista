@@ -26,8 +26,9 @@ dist/
 # doc generated
 docs/_build
 wiki/
-docs/core/beam.gif
-docs/core/beam_wireframe.gif
+**/beam.gif
+**/beam_wireframe.gif
+
 
 # testing coverage and cache
 .pytest_cache/
