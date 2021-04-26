@@ -1306,9 +1306,8 @@ class Renderer(_vtk.vtkRenderer):
         self.scale = [xscale, yscale, zscale]
 
         # Update the camera's coordinate system
-        transform = _vtk.vtkTransform()
-        transform.Scale(xscale, yscale, zscale)
-        self.camera.SetModelTransformMatrix(transform.GetMatrix())
+        transform = np.diag([xscale, yscale, zscale, 1.0])
+        self.camera.model_transform_matrix = transform
         self.parent.render()
         if reset_camera:
             self.update_bounds_axes()
