@@ -7,74 +7,64 @@ the in the side panel for the individual sections demonstrating the
 key concepts of PyVista.
 
 
-Installation
-============
+Simple Interactive Example
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+This basic example demonstrates three key features of PyVista:
 
-.. panels::
-    :card: + install-card
-    :column: col-lg-6 col-md-6 col-sm-12 col-xs-12 p-3
-
-    Working with conda?
-    ^^^^^^^^^^^^^^^^^^^
-
-    PyVista is available on `conda-forge <https://anaconda.org/conda-forge/pyvista>`_
-
-    ++++++++++++++++++++++
-
-    .. code-block:: bash
-
-        conda install -c conda-forge pyvista
-
-    ---
-
-    Prefer pip?
-    ^^^^^^^^^^^
-
-    PyVista can be installed via pip from `PyPI <https://pypi.org/project/pyvista>`__.
-
-    ++++
-
-    .. code-block:: bash
-
-        pip install pyvista
-
-    ---
-    :column: col-12 p-3
-
-    In-depth instructions?
-    ^^^^^^^^^^^^^^^^^^^^^^
-
-    Installing a specific version? Installing from source? Check the advanced
-    installation page.
-
-    .. link-button:: installation
-        :type: ref
-        :text: Installing PyVista
-        :classes: btn-outline-primary btn-block stretched-link
+- Simple ``numpy`` and ``matplotlib`` like interface
+- Variety of built-in examples
+- Intuitive plotting with keyword arguments.
 
 
-Table of Contents
-=================
+.. jupyter-execute::
+   :hide-code:
+
+   # must have this here as our global backend may not be static
+   import pyvista
+   pyvista.set_jupyter_backend('ipygany')  # using ipyvtk as it loads faster
+
+
+Here, we download the `Stanford dragon mesh
+<http://graphics.stanford.edu/data/3Dscanrep/>`_, color it according
+to height, and plot it using a web-viewer.  This same example will run
+identically locally.
+
+.. jupyter-execute::
+
+    from pyvista import examples
+
+    mesh = examples.download_dragon()
+    mesh['scalars'] = mesh.points[:, 1]
+    mesh.plot(background='white', cpos='xy', cmap='plasma', show_scalar_bar=False)
+
+With just a few lines of code we downloaded a sample mesh from the
+web, added scalars to it based on the points of the mesh, and plotted
+it while controlling the orientation, color, and data presented in the
+visualization.
+
+The following sections explain the details of the how and why of
+PyVista's interface.
+
+User Guide Contents
+===================
 
 .. toctree::
    :maxdepth: 2
 
-   installation
    what-is-a-mesh
    simple
-   ../jupyter/index
-   ../optional_features
-
+   jupyter/index
+   optional_features
 
 
 Videos
 ======
+Here are some videos that you can watch to learn PyVista:
 
-Here are some videos that you can watch to learn pyvista:
-
-- PyConJP2020 talk "How to plot unstructured mesh file on Jupyter Notebook" (15 minutes):
+- PyConJP2020 talk "How to plot unstructured mesh file on Jupyter
+  Notebook" (15 minutes):
 
   - `Video <https://youtu.be/X3Z54Kw4I6Y>`_
   - `Material <https://docs.google.com/presentation/d/1M_cnS66ja81u_mHACjaUsDj1wSeeEtnEevk_IMZ8-dg/edit?usp=sharing>`_
 
-If there is any material that we can add, please  `report <https://github.com/pyvista/pyvista/issues>`_ .
+If there is any material that we can add, please `report <https://github.com/pyvista/pyvista/issues>`_ .

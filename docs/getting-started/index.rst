@@ -1,11 +1,12 @@
-About
-*****
+Getting Started
+***************
 
 .. toctree::
    :hidden:
 
    why
    authors
+   installation
    external_examples
 
 
@@ -48,6 +49,51 @@ About
         :text: Learn more
         :classes: btn-outline-primary btn-block stretched-link
 
+
+Installation
+============
+
+.. panels::
+    :card: + install-card
+    :column: col-lg-6 col-md-6 col-sm-12 col-xs-12 p-3
+
+    Working with conda?
+    ^^^^^^^^^^^^^^^^^^^
+
+    PyVista is available on `conda-forge <https://anaconda.org/conda-forge/pyvista>`_
+
+    ++++++++++++++++++++++
+
+    .. code-block:: bash
+
+        conda install -c conda-forge pyvista
+
+    ---
+
+    Prefer pip?
+    ^^^^^^^^^^^
+
+    PyVista can be installed via pip from `PyPI <https://pypi.org/project/pyvista>`__.
+
+    ++++
+
+    .. code-block:: bash
+
+        pip install pyvista
+
+    ---
+    :column: col-12 p-3
+
+    In-depth instructions?
+    ^^^^^^^^^^^^^^^^^^^^^^
+
+    Installing a specific version? Installing from source? Check the advanced
+    installation page.
+
+    .. link-button:: installation
+        :type: ref
+        :text: Installing PyVista
+        :classes: btn-outline-primary btn-block stretched-link
 
 
 Support

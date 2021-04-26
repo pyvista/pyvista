@@ -11,7 +11,7 @@ def format_icon(title, description, link, image):
 
 .. only:: html
 
-    .. figure:: ./images/external-examples/{}
+    .. figure:: ../images/external-examples/{}
        :target: {}
 
        {}
@@ -116,7 +116,7 @@ articles = dict(
 ###############################################################################
 
 def make_example_gallery():
-    filename = "./external_examples.rst"
+    filename = "./getting-started/external_examples.rst"
     if os.path.exists(filename):
         os.remove(filename)
     with open(filename, "w") as f:
