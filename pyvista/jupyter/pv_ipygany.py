@@ -1,5 +1,6 @@
 """Support for the ipygany plotter."""
 
+from array import array
 import warnings
 
 import numpy as np
@@ -28,10 +29,10 @@ from ipygany.colormaps import colormaps
 import pyvista as pv
 
 
-# will not be necessary after
-# https://github.com/QuantStack/ipygany/pull/98#issuecomment-799191830
 def pyvista_polydata_to_polymesh(obj):
     """Import a mesh from ``pyvista`` or ``vtk``.
+
+    Copies over the active scalars and only the active scalars.
 
     Parameters
     ----------
@@ -75,11 +76,18 @@ def pyvista_polydata_to_polymesh(obj):
     if not triangle_indices.size:
         warnings.warn('Unable to convert mesh to triangular PolyMesh')
 
+    # only copy active scalars
+    data = []
+    if trimesh.active_scalars is not None:
+        arr = array('f', trimesh.active_scalars)
+        components = [ipygany.Component('X1', arr)]
+        data = [ipygany.Data(trimesh.active_scalars_name, components)]
+
     # for speed, only convert the active scalars later
-    return trimesh, PolyMesh(
+    return PolyMesh(
         vertices=trimesh.points,
         triangle_indices=triangle_indices,
-        data=_grid_data_to_data_widget(get_ugrid_data(trimesh))
+        data=data
     )
 
 
@@ -135,26 +143,21 @@ def ipygany_block_from_actor(actor):
         warnings.warn('Wireframe style is not supported in ipygany')
         return
     else:
-        tmesh, pmesh = pyvista_polydata_to_polymesh(dataset)
+        pmesh = pyvista_polydata_to_polymesh(dataset)
     pmesh.default_color = color_float_to_hex(*prop.GetColor())
 
     # determine if there are active scalars
-    # scalars_name = mapper.GetArrayName()
     valid_mode = mapper.GetScalarModeAsString() in ['UsePointData', 'UseCellData']
     if valid_mode:
-        # if not scalars_name:
-        scalars_name = dataset.active_scalars_name
-        
-        # Copy this data directly from the mesh
-        components = [ipygany.Component('X', tmesh.active_scalars.astype(np.float32))]
-        pmesh.data = [ipygany.Data(scalars_name, components)]
-        # breakpoint()
-        mn, mx = mapper.GetScalarRange()
-        cmesh = IsoColor(pmesh, input=(scalars_name), min=mn, max=mx)
-        if hasattr(mapper, 'cmap'):
-            cmap = check_colormap(mapper.cmap)
-            cmesh.colormap = colormaps[cmap]
-        return cmesh
+        # verify dataset is in pmesh
+        names = [dataset.name for dataset in pmesh.data]
+        if dataset.active_scalars_name in names:
+            mn, mx = mapper.GetScalarRange()
+            cmesh = IsoColor(pmesh, input=dataset.active_scalars_name, min=mn, max=mx)
+            if hasattr(mapper, 'cmap'):
+                cmap = check_colormap(mapper.cmap)
+                cmesh.colormap = colormaps[cmap]
+            return cmesh
 
     return pmesh
 

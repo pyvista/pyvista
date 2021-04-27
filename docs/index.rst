@@ -62,8 +62,8 @@ Here are some brief interactive examples that demonstrate how you
 might want to use PyVista:
 
 
-Visualization of Finite Element Results
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Finite Element Results
+~~~~~~~~~~~~~~~~~~~~~~
 Plot the 'X' component of elastic stress of a 3D notch specimen.
 
 .. jupyter-execute::
@@ -81,9 +81,50 @@ Plot the 'X' component of elastic stress of a 3D notch specimen.
    mesh.plot(scalars='Nodal Stress', component=0, cmap='Turbo', show_scalar_bar=False)
 
 
-Visualization of Something Else
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To be added...
+Meltwater from Antarctica
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Visualize the cumulative meltwater from Antarctica.
+
+.. jupyter-execute::
+
+    import numpy
+
+    mesh = examples.download_antarctica_velocity()
+    mesh["magnitude"] = numpy.linalg.norm(mesh["ssavelocity"], axis=1)
+    vel_dargs = dict(scalars="magnitude", clim=[1e-1, 1e2], cmap='Blues')
+    mesh.plot(cpos="xy", **vel_dargs)
+
+
+Maps and Geoscience
+~~~~~~~~~~~~~~~~~~~
+Download the surface elevation map of Mount St Helens and plot it.
+
+.. jupyter-execute::
+
+    mesh = examples.download_st_helens()
+    warped = mesh.warp_by_scalar('Elevation')
+    warped.plot(cmap='Cividis')
+
+
+Simple Point Cloud with Numpy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Easily integrate with numpy and create a variety of geometry and plot
+it.  You could use any geometry to create your glyphs, or even plot
+the points directly.
+
+.. jupyter-execute::
+
+    import numpy as np
+    import pyvista
+
+    point_cloud = np.random.random((100, 3))
+    pdata = pyvista.PolyData(point_cloud)
+    pdata['orig_sphere'] = np.arange(100)
+
+    # create many spheres from the point cloud
+    sphere = pyvista.Sphere(radius=0.02)
+    pc = pdata.glyph(scale=False, geom=sphere)
+    pc.plot(background='black', cmap='Reds', show_scalar_bar=False)
 
 
 Translating
