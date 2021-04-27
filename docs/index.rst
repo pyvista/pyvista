@@ -62,10 +62,6 @@ Here are some brief interactive examples that demonstrate how you
 might want to use PyVista:
 
 
-Finite Element Results
-~~~~~~~~~~~~~~~~~~~~~~
-Plot the 'X' component of elastic stress of a 3D notch specimen.
-
 .. jupyter-execute::
    :hide-code:
 
@@ -74,26 +70,6 @@ Plot the 'X' component of elastic stress of a 3D notch specimen.
    pyvista.set_jupyter_backend('ipygany')  # using ipyvtk as it loads faster
    pyvista.rcParams['background'] = [1, 1, 1]
 
-.. jupyter-execute::
-
-   from pyvista import examples
-   mesh = examples.download_notch_stress()
-   mesh.plot(scalars='Nodal Stress', component=0, cmap='Turbo', show_scalar_bar=False)
-
-
-Meltwater from Antarctica
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Visualize the cumulative meltwater from Antarctica.
-
-.. jupyter-execute::
-
-    import numpy
-
-    mesh = examples.download_antarctica_velocity()
-    mesh["magnitude"] = numpy.linalg.norm(mesh["ssavelocity"], axis=1)
-    vel_dargs = dict(scalars="magnitude", clim=[1e-1, 1e2], cmap='Blues')
-    mesh.plot(cpos="xy", **vel_dargs)
-
 
 Maps and Geoscience
 ~~~~~~~~~~~~~~~~~~~
@@ -101,9 +77,22 @@ Download the surface elevation map of Mount St Helens and plot it.
 
 .. jupyter-execute::
 
+    from pyvista import examples
     mesh = examples.download_st_helens()
     warped = mesh.warp_by_scalar('Elevation')
-    warped.plot(cmap='Cividis')
+    warped.plot(cmap='spectral')
+
+
+Finite Element Analysis
+~~~~~~~~~~~~~~~~~~~~~~~
+Plot the 'X' component of elastic stress of a 3D notch specimen.
+
+.. jupyter-execute::
+
+   from pyvista import examples
+   mesh = examples.download_notch_stress()
+   mesh.plot(scalars='Nodal Stress', component=0, cmap='Turbo',
+             cpos='xy', show_scalar_bar=False)
 
 
 Simple Point Cloud with Numpy
@@ -127,11 +116,58 @@ the points directly.
     pc.plot(background='black', cmap='Reds', show_scalar_bar=False)
 
 
+Plot a Spline
+~~~~~~~~~~~~~
+Generate a spline from an array of numpy points.
+
+.. jupyter-execute::
+
+    import numpy as np
+    import pyvista
+
+    # Make the xyz points
+    theta = np.linspace(-10 * np.pi, 10 * np.pi, 100)
+    z = np.linspace(-2, 2, 100)
+    r = z**2 + 1
+    x = r * np.sin(theta)
+    y = r * np.cos(theta)
+    points = np.column_stack((x, y, z))
+
+    spline = pyvista.Spline(points, 1000).tube(radius=0.1)
+
+    # done here to get it to render online
+    line = spline.cast_to_unstructured_grid().extract_surface()
+    line.plot(show_scalar_bar=False)
+
+
+Boolean Operations on Meshes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Combine two meshes and attempts to create a manifold mesh.
+
+.. jupyter-execute::
+
+    import pyvista
+    import numpy as np
+
+    def make_cube():
+        x = np.linspace(-0.5, 0.5, 25)
+        grid = pyvista.StructuredGrid(*np.meshgrid(x, x, x))
+        return grid.extract_surface().triangulate()
+
+    # Create to example PolyData meshes for boolean operations
+    sphere = pyvista.Sphere(radius=0.65, center=(0, 0, 0))
+    cube = make_cube()
+
+    # Perform the union
+    union = sphere.boolean_union(cube)
+    union.plot(color='darkgrey')
+
+
+
 Translating
 ***********
-
-The recommended way for new contributors to translate ``pyvista``'s documentation is to
-join the translation team on Transifex.
+The recommended way for new contributors to translate ``pyvista``'s
+documentation is to join the translation team on Transifex.
 
 There is a `pyvista translation page`_ for pyvista (master) documentation.
 

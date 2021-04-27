@@ -219,6 +219,9 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
         # sensible colorbar maximum width, or else it looks bad when
         # window is large.
         cbar.layout.max_width = '500px'
+        cbar.layout.min_height = '50px'  # stop from getting squished
+        # cbar.layout.height = '20%'  # stop from getting squished
+        # cbar.layout.max_height = ''
 
         # Create a slider that will dynamically change the boundaries of the colormap
         # colormap_slider_range = FloatRangeSlider(value=[height_min, height_max],
@@ -233,5 +236,5 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
         scene = AppLayout(center=scene,
                           footer=legend,
                           pane_heights=[0, 0, '150px'])
-    # breakpoint()
+
     display.display_html(scene)
