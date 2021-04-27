@@ -402,10 +402,6 @@ class Camera(_vtk.vtkCamera):
         angle : float
            Rotate angle.
 
-        Returns
-        -------
-        None
-
         Examples
         --------
         >>> import pyvista
