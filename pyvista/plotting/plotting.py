@@ -3919,8 +3919,16 @@ class Plotter(BasePlotter):
                 log.debug('Starting iren')
                 self.iren.update_style()
                 if not interactive_update:
-                    if os.name == 'nt':
-                        self.iren.process_events()  # Resolves #1260
+
+                    # Resolves #1260
+                    if os.name == 'nt':  
+                        if _vtk.VTK9:
+                            self.iren.process_events()
+                        else:
+                            if not VERY_FIRST_RENDER[0]:
+                                self.iren.start()
+                            VERY_FIRST_RENDER[0] = False
+
                     self.iren.start()
                 self.iren.initialize()
             except KeyboardInterrupt:

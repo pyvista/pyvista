@@ -360,7 +360,16 @@ class RenderWindowInteractor():
 
     def process_events(self):
         """Process events."""
+        # Note: This is only available in VTK 9+
+        if not self.initialized:
+            raise RuntimeError('Render window interactor must be initialized '
+                               'before processing events.')
         self.interactor.ProcessEvents()
+
+    @property
+    def initialized(self):
+        """Return if the interactor has been initialized."""
+        return self.interactor.GetInitialized()
 
     def get_picker(self):
         """Get the piccker."""
