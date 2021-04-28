@@ -360,15 +360,11 @@ class RenderWindowInteractor():
 
     def process_events(self):
         """Process events."""
-        # this is only available in VTK 9+
+        # Note: This is only available in VTK 9+
         if not self.initialized:
             raise RuntimeError('Render window interactor must be initialized '
                                'before processing events.')
-
-        if hasattr(self.interactor, 'ProcessEvents'):
-            self.interactor.ProcessEvents()
-        else:  # must be < VTK9
-            self.interactor.Start()
+        self.interactor.ProcessEvents()
 
     @property
     def initialized(self):
