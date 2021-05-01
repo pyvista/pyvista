@@ -28,6 +28,9 @@ class Camera(_vtk.vtkCamera):
     def __init__(self):
         """Initialize a new camera descriptor."""
         self._is_parallel_projection = False
+        self._position = (1.0, 1.0, 1.0)
+        self._vertical_rotate = 0.0
+        self._horizontal_rotate = 0.0
 
     @property
     def position(self):
@@ -41,7 +44,7 @@ class Camera(_vtk.vtkCamera):
         (1.0, 1.0, 1.0)
 
         """
-        return self.GetPosition()
+        return self._position
 
     @position.setter
     def position(self, value):
@@ -53,7 +56,10 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.position = (2.0, 1.0, 1.0)
         """
+        self._position = value
         self.SetPosition(value)
+        self.vertical_rotate = self._vertical_rotate
+        self.horizontal_rotate = self._horizontal_rotate
 
     @property
     def focal_point(self):
@@ -370,43 +376,61 @@ class Camera(_vtk.vtkCamera):
         """
         self.SetRoll(angle)
 
-    def vertical_rotate(self, angle):
+    @property
+    def vertical_rotate(self):
         """Vertical rotation of the scene.
 
         Rotate the camera about the cross product of the negative of
         the direction of projection and the view up vector, using the
         focal point as the center of rotation.
 
-        Parameters
-        ----------
-        angle : float
-           Rotate angle.
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.vertical_rotate
+        0.0
+        """
+        return self._vertical_rotate
+
+    @vertical_rotate.setter
+    def vertical_rotate(self, angle):
+        """Set the vertical rotation of the scene.
 
         Examples
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.camera.vertical_rotate(45.0)
+        >>> pl.camera.vertical_rotate = 45.0
         """
+        self._vertical_rotate = angle
         self.Elevation(angle)
 
-    def horizontal_rotate(self, angle):
+    @property
+    def horizontal_rotate(self):
         """Horizontal rotation of the camera.
 
         Rotate the camera about the view up vector centered at the focal
         point. Note that the view up vector is whatever was set via SetViewUp,
         and is not necessarily perpendicular to the direction of projection.
 
-        Parameters
-        ----------
-        angle : float
-           Rotate angle.
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.vertical_rotate
+        0.0
+        """
+        return self._horizontal_rotate
+
+    @horizontal_rotate.setter
+    def horizontal_rotate(self, angle):
+        """Set the horizontal rotation of the camera.
 
         Examples
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.camera.vertical_rotate(45.0)
-
         """
+        self._horizontal_rotate = angle
         self.Azimuth(angle)

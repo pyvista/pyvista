@@ -113,16 +113,31 @@ def test_roll(camera):
 
 
 def test_vertical_rotate(camera):
+    position = (1.0, 0.0, 0.0)
+    vertical_rotate = 90.0
     camera.up = (0.0, 0.0, 1.0)
-    camera.position = (1.0, 0.0, 0.0)
+    camera.position = position
     camera.focal_point = (0.0, 0.0, 0.0)
-    camera.vertical_rotate(90.0)
-    assert np.allclose(camera.position, (0.0, 0.0, 1.0))
+    camera.vertical_rotate = vertical_rotate
+    assert np.allclose(camera.position, position)
+    assert np.allclose(camera.GetPosition(), (0.0, 0.0, 1.0))
+    assert camera.vertical_rotate == vertical_rotate
+
+    camera.position = (2.0, 0.0, 0.0)
+    assert np.allclose(camera.GetPosition(), (0.0, 0.0, 2.0))
 
 
 def test_horizontal_rotate(camera):
+    position = (1.0, 0.0, 0.0)
+    horizontal_rotate = 90.0
     camera.up = (0.0, 0.0, 1.0)
-    camera.position = (1.0, 0.0, 0.0)
+    camera.position = position
     camera.focal_point = (0.0, 0.0, 0.0)
-    camera.horizontal_rotate(90.0)
-    assert np.allclose(camera.position, (0.0, 1.0, 0.0))
+    camera.horizontal_rotate = horizontal_rotate
+    assert np.allclose(camera.position, position)
+    assert np.allclose(camera.GetPosition(), (0.0, 1.0, 0.0))
+    assert camera.horizontal_rotate == horizontal_rotate
+    camera.position = np.random.rand(3)
+
+    camera.position = (2.0, 0.0, 0.0)
+    assert np.allclose(camera.GetPosition(), (0.0, 2.0, 0.0))
