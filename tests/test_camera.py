@@ -121,7 +121,7 @@ def test_vertical_rotate(camera):
     camera.vertical_rotate = vertical_rotate
     assert np.allclose(camera.position, (0.0, 0.0, 1.0))
     assert np.allclose(camera.GetPosition(), (0.0, 0.0, 1.0))
-    assert camera.vertical_rotate == vertical_rotate
+    assert np.allclose(camera.vertical_rotate, vertical_rotate)
 
     camera.position = (2.0, 0.0, 0.0)
     assert np.allclose(camera.GetPosition(), (0.0, 0.0, 2.0))
@@ -139,7 +139,7 @@ def test_horizontal_rotate(camera):
     camera.horizontal_rotate = horizontal_rotate
     assert np.allclose(camera.position, (0.0, 1.0, 0.0))
     assert np.allclose(camera.GetPosition(), (0.0, 1.0, 0.0))
-    assert camera.horizontal_rotate == horizontal_rotate
+    assert np.allclose(camera.horizontal_rotate, horizontal_rotate)
     camera.position = np.random.rand(3)
 
     camera.position = (2.0, 0.0, 0.0)
