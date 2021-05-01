@@ -56,8 +56,8 @@ class Camera(_vtk.vtkCamera):
         >>> pl.camera.position = (2.0, 1.0, 1.0)
         """
         self.SetPosition(value)
-        self.Elevation(self._vertical_rotate)
-        self.Azimuth(self._horizontal_rotate)
+        self._vertical_rotate = 0.0
+        self._horizontal_rotate = 0.0
 
     @property
     def focal_point(self):
