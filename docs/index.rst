@@ -73,7 +73,7 @@ might want to use PyVista:
 
 Maps and Geoscience
 ~~~~~~~~~~~~~~~~~~~
-Download the surface elevation map of Mount St Helens and plot it.
+Download the surface elevation map of Mount St. Helens and plot it.
 
 .. jupyter-execute::
 
@@ -97,8 +97,8 @@ Plot the 'X' component of elastic stress of a 3D notch specimen.
 
 Simple Point Cloud with Numpy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Easily integrate with numpy and create a variety of geometry and plot
-it.  You could use any geometry to create your glyphs, or even plot
+Easily integrate with NumPy and create a variety of geometries and plot
+them.  You could use any geometry to create your glyphs, or even plot
 the points directly.
 
 .. jupyter-execute::
@@ -118,7 +118,7 @@ the points directly.
 
 Plot a Spline
 ~~~~~~~~~~~~~
-Generate a spline from an array of numpy points.
+Generate a spline from an array of NumPy points.
 
 .. jupyter-execute::
 
@@ -142,7 +142,7 @@ Generate a spline from an array of numpy points.
 
 Boolean Operations on Meshes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Combine two meshes and attempts to create a manifold mesh.
+Combine two meshes to create a manifold mesh.
 
 .. jupyter-execute::
 
@@ -154,7 +154,7 @@ Combine two meshes and attempts to create a manifold mesh.
         grid = pyvista.StructuredGrid(*np.meshgrid(x, x, x))
         return grid.extract_surface().triangulate()
 
-    # Create to example PolyData meshes for boolean operations
+    # Create example PolyData meshes for boolean operations
     sphere = pyvista.Sphere(radius=0.65, center=(0, 0, 0))
     cube = make_cube()
 
@@ -166,7 +166,7 @@ Combine two meshes and attempts to create a manifold mesh.
 
 Translating
 ***********
-The recommended way for new contributors to translate ``pyvista``'s
+The recommended way for new contributors to translate PyVista's
 documentation is to join the translation team on Transifex.
 
 There is a `pyvista translation page`_ for pyvista (master) documentation.
