@@ -28,7 +28,6 @@ class Camera(_vtk.vtkCamera):
     def __init__(self):
         """Initialize a new camera descriptor."""
         self._is_parallel_projection = False
-        self._position = (1.0, 1.0, 1.0)
         self._vertical_rotate = 0.0
         self._horizontal_rotate = 0.0
 
@@ -44,7 +43,7 @@ class Camera(_vtk.vtkCamera):
         (1.0, 1.0, 1.0)
 
         """
-        return self._position
+        return self.GetPosition()
 
     @position.setter
     def position(self, value):
@@ -56,10 +55,9 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.position = (2.0, 1.0, 1.0)
         """
-        self._position = value
         self.SetPosition(value)
-        self.vertical_rotate = self._vertical_rotate
-        self.horizontal_rotate = self._horizontal_rotate
+        self.Elevation(self._vertical_rotate)
+        self.Azimuth(self._horizontal_rotate)
 
     @property
     def focal_point(self):
@@ -403,6 +401,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.vertical_rotate = 45.0
         """
+        self.Elevation(-self._vertical_rotate)
         self._vertical_rotate = angle
         self.Elevation(angle)
 
@@ -433,5 +432,6 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.horizontal_rotate = 45.0
         """
+        self.Azimuth(-self._horizontal_rotate)
         self._horizontal_rotate = angle
         self.Azimuth(angle)
