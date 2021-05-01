@@ -418,7 +418,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.camera.vertical_rotate
+        >>> pl.camera.horizontal_rotate
         0.0
         """
         return self._horizontal_rotate
@@ -431,6 +431,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
+        >>> pl.camera.horizontal_rotate = 45.0
         """
         self._horizontal_rotate = angle
         self.Azimuth(angle)
