@@ -700,7 +700,7 @@ def test_streamlines_type(uniform_vec, integrator_type):
 
 
 @pytest.mark.parametrize('interpolator_type', ['point', 'cell'])
-def test_streamlines(uniform_vec, interpolator_type):
+def test_streamlines_cell_point(uniform_vec, interpolator_type):
     stream = uniform_vec.streamlines('vectors',
                                      interpolator_type=interpolator_type)
     assert all([stream.n_points, stream.n_cells])
