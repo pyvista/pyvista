@@ -212,6 +212,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.reset_key_events()
         log.debug('BasePlotter init stop')
 
+        self._image_depth_null = None
+        self.last_image_depth = None
+        self.last_image = None
+
     @property
     def scalar_bars(self):
         """Scalar bars.
@@ -723,15 +727,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         return self.get_image_depth()
 
-    @property
-    def image(self):
-        """Return an image array of current render window.
-
-        To retrieve an image after the render window has been closed,
-        set: ``plotter.store_image = True`` before closing the plotter.
-        """
-        if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
-            return self.last_image
+    def _check_rendered(self):
+        """Check if the render window has been show and raise an exception if not."""
 
         if not self._rendered:
             raise AttributeError('\nThis plotter has not yet been setup and rendered '
@@ -739,11 +736,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                  'Consider setting ``off_screen=True`` '
                                  'for off screen rendering.\n')
 
+    def _check_has_ren_win(self):
+        """Check if render window attribute exists and raise an exception if not."""
         if not hasattr(self, 'ren_win'):
             raise AttributeError('\n\nTo retrieve an image after the render window '
                                  'has been closed, set:\n\n'
                                  ' ``plotter.store_image = True``\n\n'
                                  'before closing the plotter.')
+
+    @property
+    def image(self):
+        """Return an image array of current render window.
+
+        To retrieve an image after the render window has been closed,
+        set: ``plotter.store_image = True`` before closing the plotter.
+        """
+        if not hasattr(self, 'ren_win') and self.last_image is not None:
+            return self.last_image
+
+        self._check_rendered()
+        self._check_has_ren_win()
 
         data = image_from_window(self.ren_win)
         if self.image_transparent_background:
@@ -2599,17 +2611,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        fill_value : float
-            Fill value for points in image that don't include objects in scene.
-            To not use a fill value, pass ``None``.
+        fill_value : float, optional
+            Fill value for points in image that do not include objects
+            in scene.  To not use a fill value, pass ``None``.
 
-        reset_camera_clipping_range : bool
-            Reset the camera clipping range to include data in view?
+        reset_camera_clipping_range : bool, optional
+            Reset the camera clipping range to include data in view.
 
         Returns
         -------
         image_depth : numpy.ndarray
-            Image of depth values from camera orthogonal to image plane
+            Image of depth values from camera orthogonal to image
+            plane.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(pyvista.Sphere())
+        >>> plotter.show()  # doctest:+SKIP
+        >>> zval = plotter.get_image_depth()  # doctest:+SKIP
 
         Notes
         -----
@@ -2617,11 +2638,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         right-handed coordinate system.
 
         """
-        if not hasattr(self, 'ren_win') and hasattr(self, 'last_image_depth'):
+        # allow no render window
+        if not hasattr(self, 'ren_win') and self.last_image_depth is not None:
             zval = self.last_image_depth.copy()
             if fill_value is not None:
                 zval[self._image_depth_null] = fill_value
             return zval
+
+        self._check_rendered()
+        self._check_has_ren_win()
 
         # Ensure points in view are within clipping range of renderer?
         if reset_camera_clipping_range:
@@ -3103,7 +3128,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not hasattr(self, 'ren_win'):
             # If plotter has been closed...
             # check if last_image exists
-            if hasattr(self, 'last_image'):
+            if self.last_image is not None:
                 # Save last image
                 return self._save_image(self.last_image, filename, return_img)
             # Plotter hasn't been rendered or was improperly closed

@@ -1390,11 +1390,11 @@ def test_image_properties():
     p.add_mesh(mesh)
     p.store_image = True
     assert p.store_image is True
-    p.show() # close plotter
+    p.show()  # close plotter
     # Get RGB image
     _ = p.image
-    # Get the depth image
-    _ = p.get_image_depth()
+    # verify property matches method while testing both available
+    assert np.allclose(p.image_depth, p.get_image_depth(), equal_nan=True)
     p.close()
 
     # gh-920
