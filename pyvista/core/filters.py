@@ -1852,18 +1852,25 @@ class DataSetFilters:
 
         The integration is performed using a specified integrator, by default
         Runge-Kutta2. This supports integration through any type of dataset.
-        Thus if the dataset contains 2D cells like polygons or triangles, the
-        integration is constrained to lie on the surface defined by 2D cells.
+        If the dataset contains 2D cells like polygons or triangles and the
+        ``surface_streamlines`` parameter is used, the integration is constrained
+        to lie on the surface defined by 2D cells.
 
         This produces polylines as the output, with each cell
         (i.e., polyline) representing a streamline. The attribute values
         associated with each streamline are stored in the cell data, whereas
         those associated with streamline-points are stored in the point data.
 
-        This uses a Sphere as the source - set it's location and radius via
-        the ``source_center`` and ``source_radius`` keyword arguments.
-        You can retrieve the source as :class:`pyvista.PolyData` by specifying
-        ``return_source=True``.
+        The default behavior uses a Sphere as the source - set it's location and 
+        radius via the ``source_center`` and ``source_radius`` keyword arguments.
+        ``n_points`` defines the number of starting points on the sphere surface.
+
+        Alternatively, a Line source can be used by specifying ``pointa`` and ``pointb``.
+        ``n_points`` again defines the number of points on the line.  You can retrieve the
+        source as :class:`pyvista.PolyData` by specifying ``return_source=True``.
+        
+        An arbitrary ``pyvista.DataSet`` can also be provided for the starting points using
+        the ``source`` keyword argument.
 
         Parameters
         ----------
@@ -1879,7 +1886,7 @@ class DataSetFilters:
             the diagonal of the dataset's spatial extent
 
         n_points : int
-            Number of particles present in source sphere
+            Number of particles present in source sphere or line
 
         integrator_type : int
             The integrator type to be used for streamline generation.
@@ -1954,7 +1961,7 @@ class DataSetFilters:
             will override the sphere point source.
 
         source : pyvista.DataSet <- TODO this isn't correct, what is the right type?
-            A point object, the points of which provide the starting points of the
+            The points of the source provide the starting points of the
             streamlines.  This will override both sphere and line sources.
 
         """
