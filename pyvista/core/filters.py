@@ -1988,7 +1988,7 @@ class DataSetFilters:
             source_center = dataset.center
         if source_radius is None:
             source_radius = dataset.length / 10.0
-        # TODO check that type of input_source is OK
+        # TODO check that type of source is OK
 
         # Build the algorithm
         alg = _vtk.vtkStreamTracer()
@@ -1996,16 +1996,16 @@ class DataSetFilters:
         alg.SetInputDataObject(dataset)
         if source is None:
             if pointa is not None and pointb is not None:
-                source = _vtk.vtkLineSource()
-                source.SetPoint1(pointa)
-                source.SetPoint2(pointb)
-                source.SetResolution(n_points)
+                input_source = _vtk.vtkLineSource()
+                input_source.SetPoint1(pointa)
+                input_source.SetPoint2(pointb)
+                input_source.SetResolution(n_points)
             else:
-                source = _vtk.vtkPointSource()
-                source.SetCenter(source_center)
-                source.SetRadius(source_radius)
-                source.SetNumberOfPoints(n_points)
-            alg.SetSourceConnection(source.GetOutputPort())
+                input_source = _vtk.vtkPointSource()
+                input_source.SetCenter(source_center)
+                input_source.SetRadius(source_radius)
+                input_source.SetNumberOfPoints(n_points)
+            alg.SetSourceConnection(input_source.GetOutputPort())
         else:
             alg.SetSourceData(source)
 
@@ -2045,9 +2045,10 @@ class DataSetFilters:
         alg.Update()
         output = _get_output(alg)
         if return_source:
-            source.Update()
-            src = pyvista.wrap(source.GetOutput())
-            return output, src
+            if not source:
+                input_source.Update()
+                source = pyvista.wrap(input_source.GetOutput())
+            return output, source
         return output
 
     def decimate_boundary(dataset, target_reduction=0.5):
