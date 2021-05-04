@@ -1,5 +1,6 @@
 """Support for the ipygany plotter."""
 
+from array import array
 import warnings
 
 import numpy as np
@@ -28,10 +29,10 @@ from ipygany.colormaps import colormaps
 import pyvista as pv
 
 
-# will not be necessary after
-# https://github.com/QuantStack/ipygany/pull/98#issuecomment-799191830
 def pyvista_polydata_to_polymesh(obj):
     """Import a mesh from ``pyvista`` or ``vtk``.
+
+    Copies over the active scalars and only the active scalars.
 
     Parameters
     ----------
@@ -75,10 +76,18 @@ def pyvista_polydata_to_polymesh(obj):
     if not triangle_indices.size:
         warnings.warn('Unable to convert mesh to triangular PolyMesh')
 
+    # only copy active scalars
+    data = []
+    if trimesh.active_scalars is not None:
+        arr = array('f', trimesh.active_scalars)
+        components = [ipygany.Component('X1', arr)]
+        data = [ipygany.Data(trimesh.active_scalars_name, components)]
+
+    # for speed, only convert the active scalars later
     return PolyMesh(
         vertices=trimesh.points,
         triangle_indices=triangle_indices,
-        data=_grid_data_to_data_widget(get_ugrid_data(trimesh))
+        data=data
     )
 
 
@@ -138,16 +147,13 @@ def ipygany_block_from_actor(actor):
     pmesh.default_color = color_float_to_hex(*prop.GetColor())
 
     # determine if there are active scalars
-    scalars_name = mapper.GetArrayName()
     valid_mode = mapper.GetScalarModeAsString() in ['UsePointData', 'UseCellData']
     if valid_mode:
-        if not scalars_name:
-            scalars_name = dataset.active_scalars_name
-
-        # ensure this is a valid scalar
-        if scalars_name in [data.name for data in pmesh.data]:
+        # verify dataset is in pmesh
+        names = [dataset.name for dataset in pmesh.data]
+        if dataset.active_scalars_name in names:
             mn, mx = mapper.GetScalarRange()
-            cmesh = IsoColor(pmesh, input=(scalars_name), min=mn, max=mx)
+            cmesh = IsoColor(pmesh, input=dataset.active_scalars_name, min=mn, max=mx)
             if hasattr(mapper, 'cmap'):
                 cmap = check_colormap(mapper.cmap)
                 cmesh.colormap = colormaps[cmap]
@@ -213,6 +219,9 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
         # sensible colorbar maximum width, or else it looks bad when
         # window is large.
         cbar.layout.max_width = '500px'
+        cbar.layout.min_height = '50px'  # stop from getting squished
+        # cbar.layout.height = '20%'  # stop from getting squished
+        # cbar.layout.max_height = ''
 
         # Create a slider that will dynamically change the boundaries of the colormap
         # colormap_slider_range = FloatRangeSlider(value=[height_min, height_max],

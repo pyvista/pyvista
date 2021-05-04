@@ -2,7 +2,7 @@
 
 Building VTK
 ============
-Kitware provides Python wheels for VTK at `PyPi VTK <https://pypi.org/project/vtk/>`_, but there are situations where you
+Kitware provides Python wheels for VTK at `PyPI VTK <https://pypi.org/project/vtk/>`_, but there are situations where you
 may need to build VTK from source (e.g. new release of Python, EGL
 rendering, additional features, etc).  As ``pyvista`` does not provide
 ``vtk``, you will have to build it manually.
