@@ -728,7 +728,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.get_image_depth()
 
     def _check_rendered(self):
-        """Check if the render window has been show and raise an exception if not."""
+        """Check if the render window has been shown and raise an exception if not."""
         if not self._rendered:
             raise AttributeError('\nThis plotter has not yet been setup and rendered '
                                  'with ``show()``.\n'
