@@ -728,7 +728,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.get_image_depth()
 
     def _check_rendered(self):
-        """Check if the render window has been show and raise an exception if not."""
+        """Check if the render window has been shown and raise an exception if not."""
         if not self._rendered:
             raise AttributeError('\nThis plotter has not yet been setup and rendered '
                                  'with ``show()``.\n'
@@ -2626,7 +2626,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista
         >>> plotter = pyvista.Plotter()
+<<<<<<< HEAD
         >>> _ = plotter.add_mesh(pyvista.Sphere())
+=======
+        >>> actor = plotter.add_mesh(pyvista.Sphere())
+        >>> plotter.store_image = True
+>>>>>>> 6089a7de1f9adca10ed390296dfb666b84f9d9d4
         >>> cpos = plotter.show()
         >>> zval = plotter.get_image_depth()
 
