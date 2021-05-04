@@ -278,7 +278,7 @@ class DataSetFilters:
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(sphere, scalars='implicit_distance', cmap='bwr')
         >>> _ = pl.add_mesh(plane, color='w', style='wireframe')
-        >>> pl.show()  # doctest:+SKIP
+        >>> cpos = pl.show()
 
         """
         function = _vtk.vtkImplicitPolyDataDistance()
@@ -1073,7 +1073,7 @@ class DataSetFilters:
         >>> sphere = pyvista.Sphere()
         >>> sphere.texture_map_to_sphere(inplace=True)
         >>> tex = examples.download_puppy_texture()  # doctest:+SKIP
-        >>> sphere.plot(texture=tex)  # doctest:+SKIP
+        >>> cpos = sphere.plot(texture=tex)
         """
         alg = _vtk.vtkTextureMapToSphere()
         if center is None:
@@ -2334,7 +2334,7 @@ class DataSetFilters:
         >>> a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
         >>> b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-        >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)  # doctest:+SKIP
+        >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)
         """
         # Ensure matplotlib is available
         try:
@@ -2449,7 +2449,7 @@ class DataSetFilters:
         >>> polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
         >>> angle = 90
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-        >>> mesh.plot_over_circular_arc_normal(center, polar, angle)  # doctest:+SKIP
+        >>> mesh.plot_over_circular_arc_normal(center, polar, angle)
 
         """
         # Ensure matplotlib is available
@@ -3009,25 +3009,31 @@ class DataSetFilters:
         Parameters
         ----------
         trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
-            Accepts a vtk transformation object or a 4x4 transformation matrix.
+            Accepts a vtk transformation object or a 4x4
+            transformation matrix.
 
         transform_all_input_vectors: bool, optional
-            When ``True``, all input vectors are transformed. Otherwise, only the
-            points, normals and active vectors are transformed.
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
 
         Examples
         --------
-        Translate a mesh by (50, 100, 200)
+        Translate a mesh by ``(50, 100, 200)``
 
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
-        Here is a 4x4 NumPy array is used, but vtk.vtkMatrix4x4 and
-        vtk.vtkTransform are also accepted.
+        Here is a 4x4 ``numpy`` array is used, but
+        ``vtk.vtkMatrix4x4`` and ``vtk.vtkTransform`` are also
+        accepted.
 
-        >>> transform_matrix = np.array([[1, 0, 0, 50], [0, 1, 0, 100], [0, 0, 1, 200], [0, 0, 0, 1]])
+        >>> transform_matrix = np.array([[1, 0, 0, 50],
+        ...                              [0, 1, 0, 100],
+        ...                              [0, 0, 1, 200],
+        ...                              [0, 0, 0, 1]])
         >>> mesh.transform(transform_matrix, inplace=True)
-        >>> mesh.plot(show_edges=True)  # doctest:+SKIP
+        >>> cpos = mesh.plot(show_edges=True)
         """
         if isinstance(trans, _vtk.vtkMatrix4x4):
             m = trans
@@ -3114,7 +3120,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
         >>> mesh = mesh.reflect((0, 0, 1), point=(0, 0, -100))
-        >>> mesh.plot(show_edges=True)  # doctest:+SKIP
+        >>> cpos = mesh.plot(show_edges=True)
 
         """
         t = transformations.reflection(normal, point=point)
@@ -3523,7 +3529,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> hills.plot_curvature(smooth_shading=True)  # doctest:+SKIP
+        >>> cpos = hills.plot_curvature(smooth_shading=True)
         """
         kwargs.setdefault('scalar_bar_args',
                           {'title': f'{curv_type.capitalize()} Curvature'})
@@ -3777,22 +3783,24 @@ class PolyDataFilters(DataSetFilters):
         vtkLoopSubdivisionFilter
         vtkLinearSubdivisionFilter
 
-        Linear subdivision results in the fastest mesh subdivision, but it
-        does not smooth mesh edges, but rather splits each triangle into 4
-        smaller triangles.
+        Linear subdivision results in the fastest mesh subdivision,
+        but it does not smooth mesh edges, but rather splits each
+        triangle into 4 smaller triangles.
 
-        Butterfly and loop subdivision perform smoothing when dividing, and may
-        introduce artifacts into the mesh when dividing.
+        Butterfly and loop subdivision perform smoothing when
+        dividing, and may introduce artifacts into the mesh when
+        dividing.
 
-        Subdivision filter appears to fail for multiple part meshes.  Should
-        be one single mesh.
+        Subdivision filter appears to fail for multiple part meshes.
+        Should be one single mesh.
 
         Parameters
         ----------
         nsub : int
-            Number of subdivisions.  Each subdivision creates 4 new triangles,
-            so the number of resulting triangles is nface*4**nsub where nface
-            is the current number of faces.
+            Number of subdivisions.  Each subdivision creates 4 new
+            triangles, so the number of resulting triangles is
+            ``nface*4**nsub`` where nface is the current number of
+            faces.
 
         subfilter : string, optional
             Can be one of the following: 'butterfly', 'loop', 'linear'
@@ -3803,18 +3811,18 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         mesh : Polydata object
-            pyvista polydata object.  None when inplace=True
+            pyvista polydata object.  ``None`` when ``inplace=True``
 
         Examples
         --------
         >>> from pyvista import examples
         >>> import pyvista
         >>> mesh = pyvista.PolyData(examples.planefile)
-        >>> submesh = mesh.subdivide(1, 'loop') # doctest:+SKIP
+        >>> submesh = mesh.subdivide(1, 'loop')
 
         Alternatively, update the mesh in-place
 
-        >>> mesh.subdivide(1, 'loop', inplace=True) # doctest:+SKIP
+        >>> submesh = mesh.subdivide(1, 'loop', inplace=True)
 
         """
         subfilter = subfilter.lower()
@@ -4226,8 +4234,8 @@ class PolyDataFilters(DataSetFilters):
               absolute=True, progress_bar=False, **kwargs):
         """Clean the mesh.
 
-        This merges duplicate points, removes unused points, and/or removes
-        degenerate cells.
+        This merges duplicate points, removes unused points, and/or
+        removes degenerate cells.
 
         Parameters
         ----------
@@ -4236,26 +4244,28 @@ class PolyDataFilters(DataSetFilters):
 
         tolerance : float, optional
             Set merging tolerance.  When enabled merging is set to
-            absolute distance. If ``absolute`` is False, then the merging
-            tolerance is a fraction of the bounding box length. The alias
-            ``merge_tol`` is also excepted.
+            absolute distance. If ``absolute`` is False, then the
+            merging tolerance is a fraction of the bounding box
+            length. The alias ``merge_tol`` is also excepted.
 
         lines_to_points : bool, optional
-            Turn on/off conversion of degenerate lines to points.  Enabled by
-            default.
+            Turn on/off conversion of degenerate lines to points.
+            Enabled by default.
 
         polys_to_lines : bool, optional
-            Turn on/off conversion of degenerate polys to lines.  Enabled by
-            default.
+            Turn on/off conversion of degenerate polys to lines.
+            Enabled by default.
 
         strips_to_polys : bool, optional
             Turn on/off conversion of degenerate strips to polys.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.  Default True.
+            Updates mesh in-place while returning nothing.  Default
+            ``True``.
 
         absolute : bool, optional
-            Control if ``tolerance`` is an absolute distance or a fraction.
+            Control if ``tolerance`` is an absolute distance or a
+            fraction.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -4328,15 +4338,15 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Plot the path between two points on a sphere
+        Plot the path between two points on a sphere.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> path = sphere.geodesic(0, 100)
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(sphere)
-        >>> _ = pl.add_mesh(path, line_width=5, color='k')
-        >>> pl.show()  # doctest:+SKIP
+        >>> actor = pl.add_mesh(sphere)
+        >>> actor = pl.add_mesh(path, line_width=5, color='k')
+        >>> cpos = pl.show()
 
         """
         if start_vertex < 0 or end_vertex > poly_data.n_points - 1:
@@ -4705,9 +4715,9 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.plot_normals(mag=0.1)  # doctest:+SKIP
+        >>> cpos = sphere.plot_normals(mag=0.1)
         >>> sphere.flip_normals()
-        >>> sphere.plot_normals(mag=0.1)  # doctest:+SKIP
+        >>> cpos = sphere.plot_normals(mag=0.1)
 
         """
         if not poly_data.is_all_triangles:
@@ -4724,37 +4734,41 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         tol : float
-            Specify a tolerance to control discarding of closely spaced
-            points. This tolerance is specified as a fraction of the diagonal
-            length of the bounding box of the points.
+            Specify a tolerance to control discarding of closely
+            spaced points. This tolerance is specified as a fraction
+            of the diagonal length of the bounding box of the points.
 
         alpha : float
-            Specify alpha (or distance) value to control output of this
-            filter. For a non-zero alpha value, only edges or triangles
-            contained within a sphere centered at mesh vertices will be
-            output. Otherwise, only triangles will be output.
+            Specify alpha (or distance) value to control output of
+            this filter. For a non-zero alpha value, only edges or
+            triangles contained within a sphere centered at mesh
+            vertices will be output. Otherwise, only triangles will be
+            output.
 
         offset : float
-            Specify a multiplier to control the size of the initial, bounding
-            Delaunay triangulation.
+            Specify a multiplier to control the size of the initial,
+            bounding Delaunay triangulation.
 
         bound : bool
-            Boolean controls whether bounding triangulation points (and
-            associated triangles) are included in the output. (These are
-            introduced as an initial triangulation to begin the triangulation
-            process. This feature is nice for debugging output.)
+            Boolean controls whether bounding triangulation points
+            (and associated triangles) are included in the
+            output. (These are introduced as an initial triangulation
+            to begin the triangulation process. This feature is nice
+            for debugging output.)
 
         inplace : bool
-            If True, overwrite this mesh with the triangulated mesh.
+            If ``True``, overwrite this mesh with the triangulated
+            mesh.
 
         edge_source : pyvista.PolyData, optional
-            Specify the source object used to specify constrained edges and
-            loops. (This is optional.) If set, and lines/polygons are
-            defined, a constrained triangulation is created. The
-            lines/polygons are assumed to reference points in the input point
-            set (i.e. point ids are identical in the input and source). Note
-            that this method does not connect the pipeline. See
-            SetSourceConnection for connecting the pipeline.
+            Specify the source object used to specify constrained
+            edges and loops. If set, and lines/polygons are defined, a
+            constrained triangulation is created. The lines/polygons
+            are assumed to reference points in the input point set
+            (i.e. point ids are identical in the input and
+            source). Note that this method does not connect the
+            pipeline. See SetSourceConnection for connecting the
+            pipeline.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -4794,14 +4808,14 @@ class PolyDataFilters(DataSetFilters):
     def compute_arc_length(poly_data):
         """Compute the arc length over the length of the probed line.
 
-        It adds a new point-data array named "arc_length" with the
+        It adds a new point-data array named ``"arc_length"`` with the
         computed arc length for each of the polylines in the
         input. For all other cell types, the arc length is set to 0.
 
         Returns
         -------
         arc_length : float
-            Arc length of the length of the probed line
+            Arc length of the length of the probed line.
 
         Examples
         --------
@@ -4812,7 +4826,7 @@ class PolyDataFilters(DataSetFilters):
         >>> print(f'Length is {length:.3f}')
         Length is 0.812
 
-        This is identical to the geodesic_distance
+        This is identical to the geodesic_distance.
 
         >>> length = sphere.geodesic_distance(0, 100)
         >>> print(f'Length is {length:.3f}')
@@ -4821,7 +4835,7 @@ class PolyDataFilters(DataSetFilters):
         You can also plot the arc_length
 
         >>> arc = path.compute_arc_length()
-        >>> arc.plot(scalars="arc_length")  # doctest:+SKIP
+        >>> cpos = arc.plot(scalars="arc_length")
 
         """
         alg = _vtk.vtkAppendArcLength()
@@ -4878,24 +4892,21 @@ class PolyDataFilters(DataSetFilters):
                normal=None, tcoords=False, preference='points'):
         """Create a ribbon of the lines in this dataset.
 
-        Note
-        ----
-        If there are no lines in the input dataset, then the output will be
-        an empty PolyData mesh.
-
         Parameters
         ----------
         width : float
-            Set the "half" width of the ribbon. If the width is allowed to
-            vary, this is the minimum width. The default is 10% the length
+            Set the "half" width of the ribbon. If the width is
+            allowed to vary, this is the minimum width. The default is
+            10% the length
 
         scalars : str, optional
-            String name of the scalars array to use to vary the ribbon width.
-            This is only used if a scalars array is specified.
+            String name of the scalars array to use to vary the ribbon
+            width.  This is only used if a scalars array is specified.
 
         angle : float
-            Set the offset angle of the ribbon from the line normal. (The
-            angle is expressed in degrees.) The default is 0.0
+            Set the offset angle of the ribbon from the line
+            normal. (The angle is expressed in degrees.) The default
+            is 0.0
 
         factor : float
             Set the maximum ribbon width in terms of a multiple of the
@@ -4905,9 +4916,10 @@ class PolyDataFilters(DataSetFilters):
             Normal to use as default
 
         tcoords : bool, str, optional
-            If True, generate texture coordinates along the ribbon. This can
-            also be specified to generate the texture coordinates in the
-            following ways: ``'length'``, ``'normalized'``,
+            If True, generate texture coordinates along the
+            ribbon. This can also be specified to generate the texture
+            coordinates in the following ways: ``'length'``,
+            ``'normalized'``,
 
         Examples
         --------
@@ -4917,7 +4929,13 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere = pv.Sphere()
         >>> path = sphere.geodesic(0, 100)
         >>> ribbon = path.ribbon()
-        >>> pv.plot([sphere, ribbon])  # doctest:+SKIP
+        >>> cpos = pv.plot([sphere, ribbon])
+
+
+        Notes
+        -----
+        If there are no lines in the input dataset, then the output
+        will be an empty ``pyvista.PolyData`` mesh.
 
         """
         if scalars is not None:
@@ -5000,7 +5018,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1])
-        >>> mesh.plot()  # doctest:+SKIP
+        >>> cpos = mesh.plot()
         """
         alg = _vtk.vtkLinearExtrusionFilter()
         alg.SetExtrusionTypeToVectorExtrusion()
@@ -5070,7 +5088,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
         >>> mesh = line.extrude_rotate(resolution = 4)
-        >>> mesh.show() # doctest:+SKIP
+        >>> cpos = mesh.show()
         """
         if resolution <= 0:
             raise ValueError('`resolution` should be positive')
@@ -5090,46 +5108,49 @@ class PolyDataFilters(DataSetFilters):
               pass_cell_ids=False, pass_point_ids=False):
         """Strip poly data cells.
 
-        Generates triangle strips and/or poly-lines from input polygons,
-        triangle strips, and lines.
+        Generates triangle strips and/or poly-lines from input
+        polygons, triangle strips, and lines.
 
         Polygons are assembled into triangle strips only if they are
-        triangles; other types of polygons are passed through to the output
-        and not stripped. (Use  ``triangulate`` filter to triangulate
-        non-triangular polygons prior to running this filter if you need to
-        strip all the data.) The filter will pass through (to the output)
-        vertices if they are present in the input polydata. Also note that if
-        triangle strips or polylines are defined in the input they are passed
-        through and not joined nor extended. (If you wish to strip these use
-        ``triangulate`` filter to fragment the input into triangles and lines
-        prior to running this filter.)
+        triangles; other types of polygons are passed through to the
+        output and not stripped. (Use ``triangulate`` filter to
+        triangulate non-triangular polygons prior to running this
+        filter if you need to strip all the data.) The filter will
+        pass through (to the output) vertices if they are present in
+        the input polydata.
+
+        Also note that if triangle strips or polylines are defined in
+        the input they are passed through and not joined nor
+        extended. (If you wish to strip these use ``triangulate``
+        filter to fragment the input into triangles and lines prior to
+        running this filter.)
 
         Parameters
         ----------
-        join : bool
-            If on, the output polygonal segments will be joined if they are
-            contiguous. This is useful after slicing a surface. The default
-            is off.
+        join : bool, optional
+            If ``True``, the output polygonal segments will be joined
+            if they are contiguous. This is useful after slicing a
+            surface. The default is ``False``.
 
-        max_length : int
-            Specify the maximum number of triangles in a triangle strip,
-            and/or the maximum number of lines in a poly-line.
+        max_length : int, optional
+            Specify the maximum number of triangles in a triangle
+            strip, and/or the maximum number of lines in a poly-line.
 
-        pass_cell_data : bool
-            Enable/Disable passing of the CellData in the input to the output
-            as FieldData. Note the field data is transformed.
+        pass_cell_data : bool, optional
+            Enable/Disable passing of the CellData in the input to the
+            output as FieldData. Note the field data is transformed.
 
-        pass_cell_ids : bool
-            If on, the output polygonal dataset will have a celldata array
-            that holds the cell index of the original 3D cell that produced
-            each output cell. This is useful for picking. The default is off
-            to conserve memory.
+        pass_cell_ids : bool, optional
+            If ``True``, the output polygonal dataset will have a
+            celldata array that holds the cell index of the original
+            3D cell that produced each output cell. This is useful for
+            picking. The default is ``False`` to conserve memory.
 
-        pass_point_ids : bool
-            If on, the output polygonal dataset will have a pointdata array
-            that holds the point index of the original vertex that produced
-            each output vertex. This is useful for picking. The default is
-            off to conserve memory.
+        pass_point_ids : bool, optional
+            If ``True``, the output polygonal dataset will have a
+            pointdata array that holds the point index of the original
+            vertex that produced each output vertex. This is useful
+            for picking. The default is ``False`` to conserve memory.
 
         Examples
         --------

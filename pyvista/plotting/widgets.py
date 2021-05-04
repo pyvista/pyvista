@@ -824,12 +824,11 @@ class WidgetHelper:
         Examples
         --------
         >>> import pyvista as pv
-        >>> p = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> def create_mesh(value):
         ...     res = int(value)
         ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
-        ...     p.add_mesh(sphere, name="sphere", show_edges=True)
-        ...     return
+        ...     pl.add_mesh(sphere, name="sphere", show_edges=True)
         >>> slider = p.add_slider_widget(
         ...     create_mesh,
         ...     [5, 100],
@@ -839,15 +838,13 @@ class WidgetHelper:
         ...     fmt="%0.9f",
         ...     title_height=0.08,
         ... )
-        >>> p.show()  # doctest:+SKIP
+        >>> cpos = pl.show()
         """
         if not hasattr(self, "slider_widgets"):
             self.slider_widgets = []
 
-        min, max = rng
-
         if value is None:
-            value = ((max-min) / 2) + min
+            value = ((rng[1] - rng[0]) / 2) + rng[0]
 
         if color is None:
             color = rcParams['font']['color']

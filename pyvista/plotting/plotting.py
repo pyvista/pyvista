@@ -1246,7 +1246,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(sphere,
         ...                      scalar_bar_args={'title': 'Z Position'})
-        >>> plotter.show()  # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         # Convert the VTK data object to a pyvista wrapped object if necessary
@@ -2627,8 +2627,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(pyvista.Sphere())
-        >>> plotter.show()  # doctest:+SKIP
-        >>> zval = plotter.get_image_depth()  # doctest:+SKIP
+        >>> cpos = plotter.show()
+        >>> zval = plotter.get_image_depth()
 
         Notes
         -----
@@ -2992,7 +2992,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> direction = np.random.random((10, 3))
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_arrows(cent, direction, mag=2)
-        >>> plotter.show()  # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         if cent.shape != direction.shape:  # pragma: no cover
@@ -3110,7 +3110,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> sphere = pyvista.Sphere()
         >>> plotter = pyvista.Plotter(off_screen=True)
         >>> actor = plotter.add_mesh(sphere)
-        >>> plotter.screenshot('screenshot.png') # doctest:+SKIP
+        >>> plotter.screenshot('screenshot.png')  # doctest:+SKIP
 
         """
         if window_size is not None:
@@ -3204,7 +3204,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(mesh, label='My Mesh')
         >>> _ = plotter.add_mesh(othermesh, 'k', label='My Other Mesh')
         >>> _ = plotter.add_legend()
-        >>> plotter.show() # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         Alternative manual example
 
@@ -3219,7 +3219,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(mesh)
         >>> _ = plotter.add_mesh(othermesh, 'k')
         >>> _ = plotter.add_legend(legend_entries)
-        >>> plotter.show() # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         self.legend = _vtk.vtkLegendBoxActor()
@@ -3459,7 +3459,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(pyvista.Sphere())
         >>> plotter.add_background_image(examples.mapfile)
-        >>> plotter.show() # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         if self.renderers.has_active_background_renderer:
@@ -3508,7 +3508,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         light : Light or vtkLight
             The light to be added.
 
-        only_active : bool
+        only_active : bool, optional
             If ``True``, only add the light to the active
             renderer. The default is that every renderer adds the
             light. To add the light to an arbitrary renderer, see the
@@ -3524,7 +3524,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(pv.Cube())
         >>> light = pv.Light(color='cyan', light_type='headlight')
         >>> plotter.add_light(light)
-        >>> plotter.show()  # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         renderers = [self.renderer] if only_active else self.renderers
@@ -3602,30 +3602,32 @@ class Plotter(BasePlotter):
     >>> mesh = examples.load_hexbeam()
     >>> another_mesh = examples.load_uniform()
     >>> plotter = pyvista.Plotter()
-    >>> _ = plotter.add_mesh(mesh, color='red')
-    >>> _ = plotter.add_mesh(another_mesh, color='blue')
-    >>> plotter.show() # doctest:+SKIP
+    >>> actor = plotter.add_mesh(mesh, color='red')
+    >>> actor = plotter.add_mesh(another_mesh, color='blue')
+    >>> cpos = plotter.show()
 
     Parameters
     ----------
     off_screen : bool, optional
-        Renders off screen when True.  Useful for automated screenshots.
+        Renders off screen when ``True``.  Useful for automated
+        screenshots.
 
     notebook : bool, optional
-        When True, the resulting plot is placed inline a jupyter notebook.
-        Assumes a jupyter console is active.  Automatically enables off_screen.
+        When ``True``, the resulting plot is placed inline a jupyter
+        notebook.  Assumes a jupyter console is active.  Automatically
+        enables ``off_screen``.
 
     shape : list or tuple, optional
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
-        with ``shape=(2, 2)``.  By default there is only one render window.
-        Can also accept a string descriptor as shape. E.g.:
+        with ``shape=(2, 2)``.  By default there is only one render
+        window.  Can also accept a string descriptor as shape. E.g.:
 
             * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
             * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, optional
-        Draw a border around each render window.  Default False.
+        Draw a border around each render window.  Default ``False``.
 
     border_color : string or 3 item list, optional, defaults to white
         Either a string, rgb list, or hex color string.  For example:
@@ -3636,21 +3638,21 @@ class Plotter(BasePlotter):
             * ``color='#FFFFFF'``
 
     window_size : list, optional
-        Window size in pixels.  Defaults to [1024, 768]
+        Window size in pixels.  Defaults to ``[1024, 768]``.
 
-    multi_samples : int
-        The number of multi-samples used to mitigate aliasing. 4 is a good
-        default but 8 will have better results with a potential impact on
-        performance.
+    multi_samples : int, optional
+        The number of multi-samples used to mitigate aliasing. 4 is a
+        good default but 8 will have better results with a potential
+        impact on performance.
 
-    line_smoothing : bool
-        If True, enable line smothing
+    line_smoothing : bool, optional
+        If ``True``, enable line smothing.
 
-    point_smoothing : bool
-        If True, enable point smothing
+    point_smoothing : bool, optional
+        If ``True``, enable point smothing.
 
-    polygon_smoothing : bool
-        If True, enable polygon smothing
+    polygon_smoothing : bool, optional
+        If ``True``, enable polygon smothing.
 
     lighting : str, optional
         What lighting to set up for the plotter.
@@ -3660,8 +3662,8 @@ class Plotter(BasePlotter):
             * ``'three lights'``: illumination using 3 lights.
             * ``'none'``: no light sources at instantiation.
 
-        The default is a Light Kit (to be precise, 5 separate lights
-        that act like a Light Kit).
+        The default is a ``'light_kit'`` (to be precise, 5 separate
+        lights that act like a Light Kit).
 
     """
 
