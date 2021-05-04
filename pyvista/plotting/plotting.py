@@ -2626,9 +2626,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(pyvista.Sphere())
-        >>> plotter.show()  # doctest:+SKIP
-        >>> zval = plotter.get_image_depth()  # doctest:+SKIP
+        >>> actor = plotter.add_mesh(pyvista.Sphere())
+        >>> plotter.store_image = True
+        >>> cpos = plotter.show()
+        >>> zval = plotter.get_image_depth()
 
         Notes
         -----
