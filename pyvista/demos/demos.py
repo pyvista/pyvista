@@ -56,13 +56,13 @@ def orientation_cube():
     >>> from pyvista import demos
     >>> ocube = demos.orientation_cube()
     >>> pl = pyvista.Plotter()
-    >>> pl.add_mesh(ocube['cube'], show_edges=True)
-    >>> pl.add_mesh(ocube['x_p'], color='blue')
-    >>> pl.add_mesh(ocube['x_n'], color='blue')
-    >>> pl.add_mesh(ocube['y_p'], color='green')
-    >>> pl.add_mesh(ocube['y_n'], color='green')
-    >>> pl.add_mesh(ocube['z_p'], color='red')
-    >>> pl.add_mesh(ocube['z_n'], color='red')
+    >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
+    >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
+    >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
+    >>> _ = pl.add_mesh(ocube['y_p'], color='green')
+    >>> _ = pl.add_mesh(ocube['y_n'], color='green')
+    >>> _ = pl.add_mesh(ocube['z_p'], color='red')
+    >>> _ = pl.add_mesh(ocube['z_n'], color='red')
     >>> pl.show_axes()
     >>> pl.show()  # doctest:+SKIP
 
