@@ -367,7 +367,7 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricEllipsoid()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricEllipsoid()
@@ -402,9 +402,9 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
 def ParametricEnneper(**kwargs):
     """Generate Enneper's surface.
 
-    ParametricEnneper generates Enneper's surface.
-    Enneper's surface is a a self-intersecting minimal surface
-    possessing constant negative Gaussian curvature
+    ParametricEnneper generates Enneper's surface.  Enneper's surface
+    is a a self-intersecting minimal surface possessing constant
+    negative Gaussian curvature.
 
     Returns
     -------
@@ -417,7 +417,7 @@ def ParametricEnneper(**kwargs):
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricEnneper()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricEnneper()
@@ -446,7 +446,7 @@ def ParametricFigure8Klein(radius=None, **kwargs):
     Returns
     -------
     surf : pyvista.PolyData
-        ParametricFigure8Klein surface
+        ParametricFigure8Klein surface.
 
     Examples
     --------
@@ -454,7 +454,7 @@ def ParametricFigure8Klein(radius=None, **kwargs):
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricFigure8Klein()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricFigure8Klein()
@@ -484,7 +484,7 @@ def ParametricHenneberg(**kwargs):
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricHenneberg()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricHenneberg()
@@ -517,7 +517,7 @@ def ParametricKlein(**kwargs):
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricKlein()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricKlein()
@@ -557,7 +557,7 @@ def ParametricKuen(deltav0=None, **kwargs):
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricKuen()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricKuen()
@@ -592,7 +592,7 @@ def ParametricMobius(radius=None, **kwargs):
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricMobius()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricMobius()
@@ -633,7 +633,7 @@ def ParametricPluckerConoid(n=None, **kwargs):
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricPluckerConoid()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricPluckerConoid()
@@ -668,7 +668,7 @@ def ParametricPseudosphere(**kwargs):
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricPseudosphere()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricPseudosphere()
@@ -743,7 +743,7 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricRandomHills()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricRandomHills()
@@ -799,7 +799,7 @@ def ParametricRoman(radius=None, **kwargs):
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricRoman()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricRoman()
@@ -852,7 +852,7 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricSuperEllipsoid()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricSuperEllipsoid()
@@ -930,7 +930,7 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricSuperToroid()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricSuperToroid()
@@ -987,7 +987,7 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricTorus()
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricTorus()

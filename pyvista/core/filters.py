@@ -1073,7 +1073,7 @@ class DataSetFilters:
         >>> sphere = pyvista.Sphere()
         >>> sphere.texture_map_to_sphere(inplace=True)
         >>> tex = examples.download_puppy_texture()  # doctest:+SKIP
-        >>> cpos = sphere.plot(texture=tex)
+        >>> cpos = sphere.plot(texture=tex)  # doctest:+SKIP
         """
         alg = _vtk.vtkTextureMapToSphere()
         if center is None:
@@ -2449,7 +2449,7 @@ class DataSetFilters:
         >>> polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
         >>> angle = 90
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-        >>> mesh.plot_over_circular_arc_normal(center, polar, angle)
+        >>> mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle)  # doctest:+SKIP
 
         """
         # Ensure matplotlib is available
@@ -3967,75 +3967,82 @@ class PolyDataFilters(DataSetFilters):
         else:
             return mesh
 
-    def compute_normals(poly_data, cell_normals=True, point_normals=True,
-                        split_vertices=False, flip_normals=False,
-                        consistent_normals=True,
+    def compute_normals(poly_data, cell_normals=True,
+                        point_normals=True, split_vertices=False,
+                        flip_normals=False, consistent_normals=True,
                         auto_orient_normals=False,
                         non_manifold_traversal=True,
                         feature_angle=30.0, inplace=False):
         """Compute point and/or cell normals for a mesh.
 
-        The filter can reorder polygons to insure consistent orientation across
-        polygon neighbors. Sharp edges can be split and points duplicated
-        with separate normals to give crisp (rendered) surface definition. It is
-        also possible to globally flip the normal orientation.
+        The filter can reorder polygons to insure consistent
+        orientation across polygon neighbors. Sharp edges can be split
+        and points duplicated with separate normals to give crisp
+        (rendered) surface definition. It is also possible to globally
+        flip the normal orientation.
 
-        The algorithm works by determining normals for each polygon and then
-        averaging them at shared points. When sharp edges are present, the edges
-        are split and new points generated to prevent blurry edges (due to
-        Gouraud shading).
+        The algorithm works by determining normals for each polygon
+        and then averaging them at shared points. When sharp edges are
+        present, the edges are split and new points generated to
+        prevent blurry edges (due to Gouraud shading).
 
         Parameters
         ----------
         cell_normals : bool, optional
-            Calculation of cell normals. Defaults to True.
+            Calculation of cell normals. Defaults to ``True``.
 
         point_normals : bool, optional
-            Calculation of point normals. Defaults to True.
+            Calculation of point normals. Defaults to ``True``.
 
         split_vertices : bool, optional
-            Splitting of sharp edges. Defaults to False.
+            Splitting of sharp edges. Defaults to ``False``.
 
         flip_normals : bool, optional
-            Set global flipping of normal orientation. Flipping modifies both
-            the normal direction and the order of a cell's points. Defaults to
-            False.
+            Set global flipping of normal orientation. Flipping
+            modifies both the normal direction and the order of a
+            cell's points. Defaults to ``False``.
 
         consistent_normals : bool, optional
-            Enforcement of consistent polygon ordering. Defaults to True.
+            Enforcement of consistent polygon ordering. Defaults to ``True``.
 
         auto_orient_normals : bool, optional
             Turn on/off the automatic determination of correct normal
-            orientation. NOTE: This assumes a completely closed surface (i.e. no
-            boundary edges) and no non-manifold edges. If these constraints do
-            not hold, all bets are off. This option adds some computational
-            complexity, and is useful if you don't want to have to inspect the
-            rendered image to determine whether to turn on the FlipNormals flag.
-            However, this flag can work with the FlipNormals flag, and if both
-            are set, all the normals in the output will point "inward". Defaults
-            to False.
+            orientation. NOTE: This assumes a completely closed
+            surface (i.e. no boundary edges) and no non-manifold
+            edges. If these constraints do not hold, all bets are
+            off. This option adds some computational complexity, and
+            is useful if you do not want to have to inspect the
+            rendered image to determine whether to turn on the
+            ``flip_normals`` flag.  However, this flag can work with
+            the ``flip_normals`` flag, and if both are set, all the
+            normals in the output will point "inward". Defaults to
+            ``False``.
 
         non_manifold_traversal : bool, optional
-            Turn on/off traversal across non-manifold edges. Changing this may
-            prevent problems where the consistency of polygonal ordering is
-            corrupted due to topological loops. Defaults to True.
+            Turn on/off traversal across non-manifold edges. Changing
+            this may prevent problems where the consistency of
+            polygonal ordering is corrupted due to topological
+            loops. Defaults to ``True``.
 
         feature_angle : float, optional
-            The angle that defines a sharp edge. If the difference in angle
-            across neighboring polygons is greater than this value, the shared
-            edge is considered "sharp". Defaults to 30.0.
+            The angle that defines a sharp edge. If the difference in
+            angle across neighboring polygons is greater than this
+            value, the shared edge is considered "sharp". Defaults to
+            30.0.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing. Defaults to False.
+            Updates mesh in-place while returning nothing. Defaults to
+            ``False``.
 
         Returns
         -------
         mesh : pyvista.PolyData
-            Updated mesh with cell and point normals if inplace=False
+            Updated mesh with cell and point normals if
+            ``inplace=False``.
 
         Examples
         --------
-        Compute the point normals of the surface of a sphere
+        Compute the point normals of the surface of a sphere.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
@@ -4059,13 +4066,13 @@ class PolyDataFilters(DataSetFilters):
         -----
         Previous arrays named "Normals" will be overwritten.
 
-        Normals are computed only for polygons and triangle strips. Normals are
-        not computed for lines or vertices.
+        Normals are computed only for polygons and triangle
+        strips. Normals are not computed for lines or vertices.
 
-        Triangle strips are broken up into triangle polygons. You may want to
-        restrip the triangles.
+        Triangle strips are broken up into triangle polygons. You may
+        want to restrip the triangles.
 
-        May be easier to run mesh.point_normals or mesh.cell_normals
+        May be easier to run ``mesh.point_normals`` or ``mesh.cell_normals``
 
         """
         normal = _vtk.vtkPolyDataNormals()
@@ -4095,17 +4102,18 @@ class PolyDataFilters(DataSetFilters):
                             tolerance=1e-06, inplace=False):
         """Clip a closed polydata surface with a plane.
 
-        This currently only supports one plane but could be implemented to
-        handle a plane collection.
+        This currently only supports one plane but could be
+        implemented to handle a plane collection.
 
-        It will produce a new closed surface by creating new polygonal faces
-        where the input data was clipped.
+        It will produce a new closed surface by creating new polygonal
+        faces where the input data was clipped.
 
-        Non-manifold surfaces should not be used as input for this filter.
-        The input surface should have no open edges, and must not have any
-        edges that are shared by more than two faces. In addition, the input
-        surface should not self-intersect, meaning that the faces of the
-        surface should only touch at their edges.
+        Non-manifold surfaces should not be used as input for this
+        filter.  The input surface should have no open edges, and must
+        not have any edges that are shared by more than two faces. In
+        addition, the input surface should not self-intersect, meaning
+        that the faces of the surface should only touch at their
+        edges.
 
         Parameters
         ----------
@@ -4118,7 +4126,7 @@ class PolyDataFilters(DataSetFilters):
 
         origin : list, optional
             Coordinate of the origin (e.g. ``[1, 0, 0]``).  Defaults
-            to ``[0, 0, 0]```
+            to ``[0, 0, 0]``.
 
         tolerance : float, optional
             The tolerance for creating new points while clipping.  If
@@ -4126,7 +4134,8 @@ class PolyDataFilters(DataSetFilters):
             might be produced.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing. Defaults to False.
+            Updates mesh in-place while returning ``None``. Defaults to
+            ``False``.
 
         Returns
         -------
@@ -4579,7 +4588,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        edge_color : str, etc.
+        edge_color : str, optional
             The color of the edges when they are added to the plotter.
 
         kwargs : optional
@@ -4589,7 +4598,7 @@ class PolyDataFilters(DataSetFilters):
         """
         edges = DataSetFilters.extract_feature_edges(poly_data)
 
-        plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', False),
+        plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', None),
                                   notebook=kwargs.pop('notebook', None))
         plotter.add_mesh(edges, color=edge_color, style='wireframe', label='Edges')
         plotter.add_mesh(poly_data, label='Mesh', **kwargs)
@@ -4598,8 +4607,35 @@ class PolyDataFilters(DataSetFilters):
 
     def plot_normals(poly_data, show_mesh=True, mag=1.0, flip=False,
                      use_every=1, **kwargs):
-        """Plot the point normals of a mesh."""
-        plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', False),
+        """Plot the point normals of a mesh.
+
+        Parameters
+        ----------
+        show_mesh : bool, optional
+            Plot the mesh itself.  Defaults to ``True``.
+
+        mag : float, optional
+            Size magnitude of the normal arrows.  Defaults to 1.0.
+
+        flip : bool, optional
+            Flip the normal direction when ``True``.  Default
+            ``False``.
+
+        use_every : int, optional
+            Display every nth normal.  By default every normal is
+            displayed.  Display every 10th normal by setting this
+            parameter to 10.
+
+        Examples
+        --------
+        Plot the normals of a sphere.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> cpos = sphere.plot_normals(mag=0.1)
+
+        """
+        plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', None),
                                   notebook=kwargs.pop('notebook', None))
         if show_mesh:
             plotter.add_mesh(poly_data, **kwargs)
@@ -4608,7 +4644,7 @@ class PolyDataFilters(DataSetFilters):
         if flip:
             normals *= -1
         plotter.add_arrows(poly_data.points[::use_every],
-                           normals[::use_every], mag=mag)
+                           normals[::use_every], mag=mag, show_scalar_bar=False)
         return plotter.show()
 
     def remove_points(poly_data, remove, mode='any', keep_scalars=True, inplace=False):
@@ -4619,33 +4655,34 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         remove : np.ndarray
-            If remove is a bool array, points that are True will be
-            removed.  Otherwise, it is treated as a list of indices.
+            If remove is a bool array, points that are ``True`` will
+            be removed.  Otherwise, it is treated as a list of
+            indices.
 
         mode : str, optional
-            When 'all', only faces containing all points flagged for
-            removal will be removed.  Default 'all'
+            When ``'all'``, only faces containing all points flagged
+            for removal will be removed.  Default ``'all'``
 
         keep_scalars : bool, optional
-            When True, point and cell scalars will be passed on to the
-            new mesh.
+            When ``True``, point and cell scalars will be passed on to
+            the new mesh.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place while returning ``None``.
 
         Returns
         -------
         mesh : pyvista.PolyData
             Mesh without the points flagged for removal.  Not returned
-            when inplace=False.
+            when ``inplace=False``.
 
         ridx : np.ndarray
             Indices of new points relative to the original mesh.  Not
-            returned when inplace=False.
+            returned when ``inplace=False``.
 
         Examples
         --------
-        Remove the first 100 points from a sphere
+        Remove the first 100 points from a sphere.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
@@ -4733,30 +4770,30 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        tol : float
+        tol : float, optional
             Specify a tolerance to control discarding of closely
             spaced points. This tolerance is specified as a fraction
             of the diagonal length of the bounding box of the points.
 
-        alpha : float
+        alpha : float, optional
             Specify alpha (or distance) value to control output of
             this filter. For a non-zero alpha value, only edges or
             triangles contained within a sphere centered at mesh
             vertices will be output. Otherwise, only triangles will be
             output.
 
-        offset : float
+        offset : float, optional
             Specify a multiplier to control the size of the initial,
             bounding Delaunay triangulation.
 
-        bound : bool
+        bound : bool, optional
             Boolean controls whether bounding triangulation points
-            (and associated triangles) are included in the
-            output. (These are introduced as an initial triangulation
+            and associated triangles are included in the
+            output. These are introduced as an initial triangulation
             to begin the triangulation process. This feature is nice
-            for debugging output.)
+            for debugging output.
 
-        inplace : bool
+        inplace : bool, optional
             If ``True``, overwrite this mesh with the triangulated
             mesh.
 
@@ -4903,23 +4940,21 @@ class PolyDataFilters(DataSetFilters):
             String name of the scalars array to use to vary the ribbon
             width.  This is only used if a scalars array is specified.
 
-        angle : float
-            Set the offset angle of the ribbon from the line
-            normal. (The angle is expressed in degrees.) The default
-            is 0.0
+        angle : float, optional
+            Angle in degrees of the offset angle of the ribbon from
+            the line normal. The default is 0.0
 
-        factor : float
+        factor : float, optional
             Set the maximum ribbon width in terms of a multiple of the
             minimum width. The default is 2.0
 
         normal : tuple(float), optional
-            Normal to use as default
+            Normal to use as default.
 
         tcoords : bool, str, optional
             If True, generate texture coordinates along the
             ribbon. This can also be specified to generate the texture
-            coordinates in the following ways: ``'length'``,
-            ``'normalized'``,
+            coordinates with either ``'length'`` or ``'normalized'``
 
         Examples
         --------
@@ -4930,7 +4965,6 @@ class PolyDataFilters(DataSetFilters):
         >>> path = sphere.geodesic(0, 100)
         >>> ribbon = path.ribbon()
         >>> cpos = pv.plot([sphere, ribbon])
-
 
         Notes
         -----
@@ -5065,7 +5099,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        resolution : int
+        resolution : int, optional
             Number of pieces to divide line into.
 
         inplace : bool, optional
@@ -5088,7 +5122,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
         >>> mesh = line.extrude_rotate(resolution = 4)
-        >>> cpos = mesh.show()
+        >>> cpos = mesh.plot()
         """
         if resolution <= 0:
             raise ValueError('`resolution` should be positive')
@@ -5179,7 +5213,8 @@ class UnstructuredGridFilters(DataSetFilters):
                     progress_bar=False):
         """Apply a delaunay 2D filter along the best fitting plane.
 
-        This extracts the grid's points and performs the triangulation on those alone.
+        This extracts the grid's points and performs the triangulation
+        on those alone.
 
         Parameters
         ----------
@@ -5199,14 +5234,15 @@ class StructuredGridFilters(DataSetFilters):
     def extract_subset(dataset, voi, rate=(1, 1, 1), boundary=False):
         """Select piece (e.g., volume of interest).
 
-        To use this filter set the VOI ivar which are i-j-k min/max indices
-        that specify a rectangular region in the data. (Note that these are
-        0-offset.) You can also specify a sampling rate to subsample the
-        data.
+        To use this filter set the VOI ivar which are i-j-k min/max
+        indices that specify a rectangular region in the data. (Note
+        that these are 0-offset.) You can also specify a sampling rate
+        to subsample the data.
 
-        Typical applications of this filter are to extract a slice from a
-        volume for image processing, subsampling large volumes to reduce data
-        size, or extracting regions of a volume with interesting data.
+        Typical applications of this filter are to extract a slice
+        from a volume for image processing, subsampling large volumes
+        to reduce data size, or extracting regions of a volume with
+        interesting data.
 
         Parameters
         ----------
@@ -5215,17 +5251,18 @@ class StructuredGridFilters(DataSetFilters):
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
-        rate : tuple(int)
+        rate : tuple(int), optional
             Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
-            Default: ``(1, 1, 1)``
+            Default: ``(1, 1, 1)``.
 
-        boundary : bool
-            Control whether to enforce that the "boundary" of the grid is
-            output in the subsampling process. (This only has effect
-            when the rate in any direction is not equal to 1). When
-            this is on, the subsampling will always include the boundary of
-            the grid even though the sample rate is not an even multiple of
-            the grid dimensions.  By default this is ``False``.
+        boundary : bool, optional
+            Control whether to enforce that the "boundary" of the grid
+            is output in the subsampling process. (This only has
+            effect when the rate in any direction is not equal to
+            1). When this is on, the subsampling will always include
+            the boundary of the grid even though the sample rate is
+            not an even multiple of the grid dimensions.  By default
+            this is ``False``.
 
         Examples
         --------
@@ -5255,10 +5292,10 @@ class StructuredGridFilters(DataSetFilters):
     def concatenate(dataset, other, axis, tolerance=0.0):
         """Concatenate a structured grids to this grid.
 
-        Joins structured grids into a single structured grid.
-        Grids must be of compatible dimension, and must be coincident
-        along the seam. Grids must have the same point and cell data.
-        Field data is ignored.
+        Joins structured grids into a single structured grid.  Grids
+        must be of compatible dimension, and must be coincident along
+        the seam. Grids must have the same point and cell data.  Field
+        data is ignored.
 
         Parameters
         ----------
@@ -5268,7 +5305,7 @@ class StructuredGridFilters(DataSetFilters):
         axis : int
             Axis along which to concatenate.
 
-        tolerance : float
+        tolerance : float, optional
             Tolerance for point coincidence along joining seam.
 
         Returns

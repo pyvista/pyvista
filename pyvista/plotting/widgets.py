@@ -829,7 +829,7 @@ class WidgetHelper:
         ...     res = int(value)
         ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
         ...     pl.add_mesh(sphere, name="sphere", show_edges=True)
-        >>> slider = p.add_slider_widget(
+        >>> slider = pl.add_slider_widget(
         ...     create_mesh,
         ...     [5, 100],
         ...     title="Resolution",
