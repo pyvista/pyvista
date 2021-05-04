@@ -44,4 +44,4 @@ Perform many ray traces simultaneously with a PolyData Object
     p.show()
 
 
-.. image:: ./images/user-generated/ray_trace.png
+.. image:: ../images/user-generated/ray_trace.png

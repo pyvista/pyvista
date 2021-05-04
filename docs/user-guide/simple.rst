@@ -146,6 +146,8 @@ execution of the code after calling ``show``.
 
 .. testcode:: python
 
+    mesh = examples.load_airplane()
+
     plotter = pv.Plotter()    # instantiate the plotter
     plotter.add_mesh(mesh)    # add a mesh to the scene
     cpos = plotter.show()     # show the rendering window

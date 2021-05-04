@@ -255,12 +255,12 @@ The main features of our branching model are:
   side-effects or bugs that were not caught through unit testing.
 - There will be one or many `release/` branches based on minor
   releases (for example `release/0.24`) which contain a stable version
-  of the code base that is also reflected on PyPi/.  Hotfixes from
+  of the code base that is also reflected on PyPI/.  Hotfixes from
   `fix/` branches should be merged both to master and to these
   branches.  When necessary to create a new patch release these
   release branches will have their `__version__.py` updated and be
   tagged with a patched semantic version (e.g. `0.24.1`).  This
-  triggers CI to push to PyPi, and allow us to rapidly push hotfixes
+  triggers CI to push to PyPI, and allow us to rapidly push hotfixes
   for past versions of `pyvista` without having to worry about
   untested features.
 - When a minor release candidate is ready, a new `release` branch will

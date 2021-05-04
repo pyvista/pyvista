@@ -1581,9 +1581,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Scalars interpolation approach
                 if scalars.shape[0] == mesh.n_points:
                     self.mesh.point_arrays.append(scalars, title, True)
+                    self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUsePointData()
                 elif scalars.shape[0] == mesh.n_cells:
                     self.mesh.cell_arrays.append(scalars, title, True)
+                    self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUseCellData()
                 else:
                     raise_not_matching(scalars, mesh)

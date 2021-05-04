@@ -128,4 +128,4 @@ to be used within interactive coding sessions. This allows users to
 use sophisticated processing routines on the fly with immediate access
 to a description of how to use those methods:
 
-.. figure:: ./images/gifs/documentation.gif
+.. figure:: ../images/gifs/documentation.gif
