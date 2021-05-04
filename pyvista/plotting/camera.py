@@ -28,8 +28,8 @@ class Camera(_vtk.vtkCamera):
     def __init__(self):
         """Initialize a new camera descriptor."""
         self._is_parallel_projection = False
-        self._vertical_rotate = 0.0
-        self._horizontal_rotate = 0.0
+        self._elevation = 0.0
+        self._azimuth = 0.0
 
     @property
     def position(self):
@@ -56,8 +56,8 @@ class Camera(_vtk.vtkCamera):
         >>> pl.camera.position = (2.0, 1.0, 1.0)
         """
         self.SetPosition(value)
-        self._vertical_rotate = 0.0
-        self._horizontal_rotate = 0.0
+        self._elevation = 0.0
+        self._azimuth = 0.0
 
     @property
     def focal_point(self):
@@ -237,8 +237,8 @@ class Camera(_vtk.vtkCamera):
     def enable_parallel_projection(self, flag=True):
         """Enable parallel projection.
 
-        The camera will have a parallel projection. Parallel projection is
-        often useful when viewing images or 2D datasets.
+        The camera will have a parallel projection. Parallel
+        projection is often useful when viewing images or 2D datasets.
 
         """
         self._is_parallel_projection = flag
@@ -314,7 +314,8 @@ class Camera(_vtk.vtkCamera):
         Parameters
         ----------
         aspect : float, optional
-            The aspect of the viewport to compute the planes. Default to 1.0.
+            The aspect of the viewport to compute the planes. Defaults
+            to 1.0.
 
         Returns
         -------
@@ -375,7 +376,7 @@ class Camera(_vtk.vtkCamera):
         self.SetRoll(angle)
 
     @property
-    def vertical_rotate(self):
+    def elevation(self):
         """Vertical rotation of the scene.
 
         Rotate the camera about the cross product of the negative of
@@ -386,52 +387,55 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.camera.vertical_rotate
+        >>> pl.camera.elevation
         0.0
         """
-        return self._vertical_rotate
+        return self._elevation
 
-    @vertical_rotate.setter
-    def vertical_rotate(self, angle):
+    @elevation.setter
+    def elevation(self, angle):
         """Set the vertical rotation of the scene.
 
         Examples
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.camera.vertical_rotate = 45.0
+        >>> pl.camera.elevation = 45.0
         """
-        self.Elevation(-self._vertical_rotate)
-        self._vertical_rotate = angle
+        if self._elevation:
+            self.Elevation(-self._elevation)
+        self._elevation = angle
         self.Elevation(angle)
 
     @property
-    def horizontal_rotate(self):
-        """Horizontal rotation of the camera.
+    def azimuth(self):
+        """Azimuth of the camera.
 
-        Rotate the camera about the view up vector centered at the focal
-        point. Note that the view up vector is whatever was set via SetViewUp,
-        and is not necessarily perpendicular to the direction of projection.
+        Rotate the camera about the view up vector centered at the
+        focal point. Note that the view up vector is whatever was set
+        via SetViewUp, and is not necessarily perpendicular to the
+        direction of projection.
 
         Examples
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.camera.horizontal_rotate
+        >>> pl.camera.azimuth
         0.0
         """
-        return self._horizontal_rotate
+        return self._azimuth
 
-    @horizontal_rotate.setter
-    def horizontal_rotate(self, angle):
-        """Set the horizontal rotation of the camera.
+    @azimuth.setter
+    def azimuth(self, angle):
+        """Set the azimuth rotation of the camera.
 
         Examples
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.camera.horizontal_rotate = 45.0
+        >>> pl.camera.azimuth = 45.0
         """
-        self.Azimuth(-self._horizontal_rotate)
-        self._horizontal_rotate = angle
+        if self._azimuth:
+            self.Azimuth(-self._azimuth)
+        self._azimuth = angle
         self.Azimuth(angle)

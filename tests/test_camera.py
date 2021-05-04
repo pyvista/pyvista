@@ -112,37 +112,37 @@ def test_roll(camera):
     assert np.allclose(camera.roll, angle)
 
 
-def test_vertical_rotate(camera):
+def test_elevation(camera):
     position = (1.0, 0.0, 0.0)
-    vertical_rotate = 90.0
+    elevation = 90.0
     camera.up = (0.0, 0.0, 1.0)
     camera.position = position
     camera.focal_point = (0.0, 0.0, 0.0)
-    camera.vertical_rotate = vertical_rotate
+    camera.elevation = elevation
     assert np.allclose(camera.position, (0.0, 0.0, 1.0))
     assert np.allclose(camera.GetPosition(), (0.0, 0.0, 1.0))
-    assert np.allclose(camera.vertical_rotate, vertical_rotate)
+    assert np.allclose(camera.elevation, elevation)
 
     camera.position = (2.0, 0.0, 0.0)
     assert np.allclose(camera.GetPosition(), (2.0, 0.0, 0.0))
 
-    camera.vertical_rotate = 180.0
+    camera.elevation = 180.0
     assert np.allclose(camera.GetPosition(), (-2.0, 0.0, 0.0))
 
 
-def test_horizontal_rotate(camera):
+def test_azimuth(camera):
     position = (1.0, 0.0, 0.0)
-    horizontal_rotate = 90.0
+    azimuth = 90.0
     camera.up = (0.0, 0.0, 1.0)
     camera.position = position
     camera.focal_point = (0.0, 0.0, 0.0)
-    camera.horizontal_rotate = horizontal_rotate
+    camera.azimuth = azimuth
     assert np.allclose(camera.position, (0.0, 1.0, 0.0))
     assert np.allclose(camera.GetPosition(), (0.0, 1.0, 0.0))
-    assert np.allclose(camera.horizontal_rotate, horizontal_rotate)
+    assert np.allclose(camera.azimuth, azimuth)
 
     camera.position = (2.0, 0.0, 0.0)
     assert np.allclose(camera.GetPosition(), (2.0, 0.0, 0.0))
 
-    camera.horizontal_rotate = 180.0
+    camera.azimuth = 180.0
     assert np.allclose(camera.GetPosition(), (-2.0, 0.0, 0.0))

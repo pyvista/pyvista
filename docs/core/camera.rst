@@ -1,9 +1,10 @@
 Cameras
 =======
-The :class:`pyvista.Camera` class adds additional functionality and a pythonic API
-to the ``vtk.vtkCamera`` class. :class:`pyvista.Camera` objects come with a default
-set of cameras that work well in most cases, but in many situations a more hands-on
-access to camera is necessary.
+The :class:`pyvista.Camera` class adds additional functionality and a
+pythonic API to the ``vtk.vtkCamera`` class. :class:`pyvista.Camera`
+objects come with a default set of cameras that work well in most
+cases, but in many situations a more hands-on approach to using the
+camera is necessary.
 
 
 Brief Example
@@ -46,14 +47,14 @@ Create a frustum of camera, then create a scene of inside frustum.
     xyz = camera.position + unit_vector * 0.6 - np.mean(bunny.points, axis=0)
     bunny.translate(xyz)
 
-    p = pv.Plotter(shape=(2, 1))
-    p.subplot(0, 0)
-    p.add_text("Camera Position")
-    p.add_mesh(bunny)
-    p.add_mesh(frustum, style="wireframe")
-    p.add_mesh(bunny)
-    p.add_mesh(line, color="b")
-    p.add_point_labels(
+    pl = pv.Plotter(shape=(2, 1))
+    pl.subplot(0, 0)
+    pl.add_text("Camera Position")
+    pl.add_mesh(bunny)
+    pl.add_mesh(frustum, style="wireframe")
+    pl.add_mesh(bunny)
+    pl.add_mesh(line, color="b")
+    pl.add_point_labels(
         [
             position,
             camera.position + unit_vector * near_range,
@@ -68,16 +69,75 @@ Create a frustum of camera, then create a scene of inside frustum.
         point_color="red",
         text_color="black",
     )
-    p.camera.position = (1.1, 1.5, 0.0)
-    p.camera.focal_point = (0.2, 0.3, 0.3)
-    p.camera.up = (0.0, 1.0, 0.0)
-    p.camera.zoom(1.4)
+    pl.camera.position = (1.1, 1.5, 0.0)
+    pl.camera.focal_point = (0.2, 0.3, 0.3)
+    pl.camera.up = (0.0, 1.0, 0.0)
+    pl.camera.zoom(1.4)
 
-    p.subplot(1, 0)
-    p.add_text("Camera View")
-    p.add_mesh(bunny)
-    p.camera = camera
-    p.show()
+    pl.subplot(1, 0)
+    pl.add_text("Camera View")
+    pl.add_mesh(bunny)
+    pl.camera = camera
+    pl.show()
+
+
+
+Controlling Camera Rotation
+---------------------------
+In addition to directly controlling the camera position by setting it
+via the :py:attr:`pyvista.Camera.position` property, you can also
+directly control the :py:attr:`pyvista.Camera.roll`,
+:py:attr:`pyvista.Camera.elevation`, and
+:py:attr:`pyvista.Camera.azimuth` of the camera.
+
+.. image:: ../images/user-generated/TestCameraModel1.png
+
+For example, you can modify the roll.  First, generate a plot of an
+orientation cube while initially setting the camera position to look
+at the ``'yz'``.
+
+.. jupyter-execute::
+
+   import pyvista
+   from pyvista import demos
+   pl = demos.orientation_plotter()
+   pl.camera_position = 'yz'
+   pl.show()
+
+Here we modify the roll in-place.
+
+.. jupyter-execute::
+
+   import pyvista
+   from pyvista import demos
+   pl = demos.orientation_plotter()
+   pl.camera_position = 'yz'
+   pl.camera.roll += 10
+   pl.show()
+
+And here we offset the azimuth of the camera by 45 degrees to look at
+the ``X+`` and ``Y+`` faces.
+
+.. jupyter-execute::
+
+   import pyvista
+   from pyvista import demos
+   pl = demos.orientation_plotter()
+   pl.camera_position = 'yz'
+   pl.camera.azimuth = 45
+   pl.show()
+
+Here, we move upward by setting the elevation of the camera to 45
+degrees to see the ``X+`` and ``Z+`` faces.
+
+.. jupyter-execute::
+
+   import pyvista
+   from pyvista import demos
+   pl = demos.orientation_plotter()
+   pl.camera_position = 'yz'
+   pl.camera.elevation = 45
+   pl.show()
 
 
 API reference
