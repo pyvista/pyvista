@@ -1570,9 +1570,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Scalars interpolation approach
                 if scalars.shape[0] == mesh.n_points:
                     self.mesh.point_arrays.append(scalars, title, True)
+                    self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUsePointData()
                 elif scalars.shape[0] == mesh.n_cells:
                     self.mesh.cell_arrays.append(scalars, title, True)
+                    self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUseCellData()
                 else:
                     raise_not_matching(scalars, mesh)
@@ -3919,8 +3921,16 @@ class Plotter(BasePlotter):
                 log.debug('Starting iren')
                 self.iren.update_style()
                 if not interactive_update:
-                    if os.name == 'nt':
-                        self.iren.process_events()  # Resolves #1260
+
+                    # Resolves #1260
+                    if os.name == 'nt':  
+                        if _vtk.VTK9:
+                            self.iren.process_events()
+                        else:
+                            if not VERY_FIRST_RENDER[0]:
+                                self.iren.start()
+                            VERY_FIRST_RENDER[0] = False
+
                     self.iren.start()
                 self.iren.initialize()
             except KeyboardInterrupt:
