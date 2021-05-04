@@ -1559,7 +1559,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 elif scalars.ndim == 2 and (scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells):
                     if not isinstance(component, (int, type(None))):
                         raise TypeError('component must be either None or an integer')
-                    elif component is None:
+                    if component is None:
                         scalars = np.linalg.norm(scalars.copy(), axis=1)
                         title = '{}-normed'.format(title)
                     elif component < scalars.shape[1] and component >= 0:
@@ -1611,7 +1611,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Set scalars range
             if clim is None:
                 clim = [np.nanmin(scalars), np.nanmax(scalars)]
-            elif isinstance(clim, float) or isinstance(clim, int):
+            elif isinstance(clim, (int, float)):
                 clim = [-clim, clim]
 
             if log_scale:
@@ -2292,7 +2292,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError('Interactive scalar bars disabled for multi-renderer plots')
 
         return self.scalar_bars.add_scalar_bar(**kwargs)
-
 
     def update_scalars(self, scalars, mesh=None, render=True):
         """Update scalars of an object in the plotter.
