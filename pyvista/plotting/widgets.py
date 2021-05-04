@@ -863,8 +863,8 @@ class WidgetHelper:
 
         slider_rep = _vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
-        slider_rep.SetMinimumValue(min)
-        slider_rep.SetMaximumValue(max)
+        slider_rep.SetMinimumValue(rng[0])
+        slider_rep.SetMaximumValue(rng[1])
         slider_rep.SetValue(value)
         slider_rep.SetTitleText(title)
         slider_rep.GetTitleProperty().SetColor(parse_color(color))
