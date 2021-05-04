@@ -1931,6 +1931,7 @@ def test_plot_lighting_change_positional_false_true(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
+@skip_no_plotting
 def test_plotter_image():
     plotter = pyvista.Plotter()
     plotter.show()
