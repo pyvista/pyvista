@@ -2670,10 +2670,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
 
             # Consider image values outside clipping range as nans
-            args = np.logical_or(zval < -far, np.isclose(zval, -far))
-        self._image_depth_null = args
+            self._image_depth_null = np.logical_or(zval < -far, np.isclose(zval, -far))
+
         if fill_value is not None:
-            zval[args] = fill_value
+            zval[self._image_depth_null] = fill_value
 
         return zval
 
