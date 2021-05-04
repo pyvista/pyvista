@@ -12,8 +12,15 @@ FONT_KEYS = {'arial': _vtk.VTK_ARIAL,
 
 
 def _load_default():
-    """Generate the default theme."""
-    rcParams = {
+    """Generate the default theme.
+
+    This is generated when called rather than provided statically to
+    avoid parameters internal to the dictionary to being overwritten.
+    These are not protected via ``dict(rcParams)`` as they do not copy
+    internal lists.
+
+    """
+    return {
         'jupyter_backend': 'ipyvtklink',
         'auto_close': True,  # DANGER: set to False with extreme caution
         'background': [0.3, 0.3, 0.3],
@@ -105,7 +112,6 @@ def _load_default():
             },
         },
     }
-    return rcParams
 
 
 rcParams = _load_default()
@@ -113,7 +119,7 @@ DEFAULT_THEME = dict(rcParams)
 
 
 def _reset_rcParams():
-    """Reset rcParams"""
+    """Reset rcParams in-place."""
     rcParams.clear()
     rcParams.update(_load_default())
 
