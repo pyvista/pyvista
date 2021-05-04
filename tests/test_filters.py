@@ -706,12 +706,15 @@ def test_streamlines_cell_point(uniform_vec, interpolator_type):
     assert all([stream.n_points, stream.n_cells])
 
 
-def test_streamlines(uniform_vec):
+def test_streamlines_return_source(uniform_vec):
     stream, src = uniform_vec.streamlines('vectors', return_source=True,
                                           pointa=(0.0, 0.0, 0.0),
                                           pointb=(1.1, 1.1, 0.1))
+    assert isinstance(src, pyvista.DataSet)
     assert all([stream.n_points, stream.n_cells, src.n_points])
 
+
+def test_streamlines_errors(uniform_vec):
     with pytest.raises(ValueError):
         uniform_vec.streamlines('vectors', integration_direction='not valid')
 
@@ -730,6 +733,9 @@ def test_streamlines_dataset(uniform_vec):
     source = pyvista.PolyData(vertices)
     stream = uniform_vec.streamlines('vectors', source=source)
     assert all([stream.n_points, stream.n_cells])
+
+    stream, src = uniform_vec.streamlines('vectors', source=source, return_source=True)
+    assert src == source
 
     # this one fails
     # source = pyvista.UniformGrid([3, 3, 3], [1, 1, 1], [0, 0, 0])
