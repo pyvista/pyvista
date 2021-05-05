@@ -68,7 +68,7 @@ def ParametricBohemianDome(a=None, **kwargs):
 
     Examples
     --------
-    Create a ParametricBohemianDome mes.h
+    Create a ParametricBohemianDome mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricBohemianDome()
@@ -98,7 +98,7 @@ def ParametricBour(**kwargs):
 
     Examples
     --------
-    Create a ParametricBour mesh
+    Create a ParametricBour mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricBour()
@@ -129,8 +129,7 @@ def ParametricBoy(zscale=None, **kwargs):
     Parameters
     ----------
     zscale : float, optional
-        The scale factor for the z-coordinate.  Default is 18, giving
-        a nice shape.
+        The scale factor for the z-coordinate.
 
     Returns
     -------
@@ -202,7 +201,7 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
     ----------
     a : float, optional
         The scale factor.
-        Default is 0.2
+        Default is 0.2.
 
     b : float, optional
         The A function coefficient.
@@ -403,7 +402,7 @@ def ParametricEnneper(**kwargs):
     """Generate Enneper's surface.
 
     ParametricEnneper generates Enneper's surface.  Enneper's surface
-    is a a self-intersecting minimal surface possessing constant
+    is a self-intersecting minimal surface possessing constant
     negative Gaussian curvature.
 
     Returns

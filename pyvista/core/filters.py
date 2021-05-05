@@ -3024,7 +3024,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
-        Here is a 4x4 ``numpy`` array is used, but
+        Here a 4x4 ``numpy`` array is used, but
         ``vtk.vtkMatrix4x4`` and ``vtk.vtkTransform`` are also
         accepted.
 
@@ -3799,7 +3799,7 @@ class PolyDataFilters(DataSetFilters):
         nsub : int
             Number of subdivisions.  Each subdivision creates 4 new
             triangles, so the number of resulting triangles is
-            ``nface*4**nsub`` where nface is the current number of
+            ``nface*4**nsub`` where ``nface`` is the current number of
             faces.
 
         subfilter : string, optional
@@ -3811,7 +3811,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         mesh : Polydata object
-            pyvista polydata object.  ``None`` when ``inplace=True``
+            pyvista polydata object.  ``None`` when ``inplace=True``.
 
         Examples
         --------
@@ -4072,7 +4072,7 @@ class PolyDataFilters(DataSetFilters):
         Triangle strips are broken up into triangle polygons. You may
         want to restrip the triangles.
 
-        May be easier to run ``mesh.point_normals`` or ``mesh.cell_normals``
+        May be easier to run ``mesh.point_normals`` or ``mesh.cell_normals``.
 
         """
         normal = _vtk.vtkPolyDataNormals()
@@ -4126,7 +4126,7 @@ class PolyDataFilters(DataSetFilters):
 
         origin : list, optional
             Coordinate of the origin (e.g. ``[1, 0, 0]``).  Defaults
-            to ``[0, 0, 0]``.
+            to the center of the mesh.
 
         tolerance : float, optional
             The tolerance for creating new points while clipping.  If
@@ -4253,7 +4253,7 @@ class PolyDataFilters(DataSetFilters):
 
         tolerance : float, optional
             Set merging tolerance.  When enabled merging is set to
-            absolute distance. If ``absolute`` is False, then the
+            absolute distance. If ``absolute`` is ``False``, then the
             merging tolerance is a fraction of the bounding box
             length. The alias ``merge_tol`` is also excepted.
 
@@ -4269,7 +4269,7 @@ class PolyDataFilters(DataSetFilters):
             Turn on/off conversion of degenerate strips to polys.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.  Default
+            Updates mesh in-place while returning ``None``.  Default
             ``True``.
 
         absolute : bool, optional
@@ -4661,7 +4661,7 @@ class PolyDataFilters(DataSetFilters):
 
         mode : str, optional
             When ``'all'``, only faces containing all points flagged
-            for removal will be removed.  Default ``'all'``
+            for removal will be removed.  Default ``'any'``.
 
         keep_scalars : bool, optional
             When ``True``, point and cell scalars will be passed on to
@@ -4803,9 +4803,7 @@ class PolyDataFilters(DataSetFilters):
             constrained triangulation is created. The lines/polygons
             are assumed to reference points in the input point set
             (i.e. point ids are identical in the input and
-            source). Note that this method does not connect the
-            pipeline. See SetSourceConnection for connecting the
-            pipeline.
+            source).
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -4931,10 +4929,10 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        width : float
+        width : float, optional
             Set the "half" width of the ribbon. If the width is
             allowed to vary, this is the minimum width. The default is
-            10% the length
+            10% the length.
 
         scalars : str, optional
             String name of the scalars array to use to vary the ribbon
@@ -4942,7 +4940,7 @@ class PolyDataFilters(DataSetFilters):
 
         angle : float, optional
             Angle in degrees of the offset angle of the ribbon from
-            the line normal. The default is 0.0
+            the line normal. The default is 0.0.
 
         factor : float, optional
             Set the maximum ribbon width in terms of a multiple of the
@@ -4952,9 +4950,9 @@ class PolyDataFilters(DataSetFilters):
             Normal to use as default.
 
         tcoords : bool, str, optional
-            If True, generate texture coordinates along the
+            If ``True``, generate texture coordinates along the
             ribbon. This can also be specified to generate the texture
-            coordinates with either ``'length'`` or ``'normalized'``
+            coordinates with either ``'length'`` or ``'normalized'``.
 
         Examples
         --------
@@ -5173,6 +5171,7 @@ class PolyDataFilters(DataSetFilters):
         pass_cell_data : bool, optional
             Enable/Disable passing of the CellData in the input to the
             output as FieldData. Note the field data is transformed.
+            Default is ``False``.
 
         pass_cell_ids : bool, optional
             If ``True``, the output polygonal dataset will have a
@@ -5260,7 +5259,7 @@ class StructuredGridFilters(DataSetFilters):
             is output in the subsampling process. (This only has
             effect when the rate in any direction is not equal to
             1). When this is on, the subsampling will always include
-            the boundary of the grid even though the sample rate is
+            the boundary of the grid even if the sample rate is
             not an even multiple of the grid dimensions.  By default
             this is ``False``.
 

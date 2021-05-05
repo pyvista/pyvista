@@ -301,8 +301,7 @@ def line_segments_from_points(points):
 
     Examples
     --------
-    This example plots two line segments at right angles to each other
-    line.
+    This example plots two line segments at right angles to each other.
 
     >>> import pyvista
     >>> import numpy as np
