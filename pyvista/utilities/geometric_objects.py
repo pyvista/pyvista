@@ -738,7 +738,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
     # Compute distance of every point along circular arc
     center = np.array(center)
     radius = np.sqrt(np.sum((arc.points[0] - center)**2, axis=0))
-    angles = np.arange(0.0, 1.0 + 1.0/resolution, 1.0/resolution) * angle
+    angles = np.linspace(0.0, angle, resolution+1)
     arc['Distance'] = radius * angles
     return arc
 
