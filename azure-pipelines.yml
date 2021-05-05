@@ -108,7 +108,7 @@ jobs:
 
   - script: |
       pip install pytest-azurepipelines
-      pytest -v --cov pyvista --cov-report html
+      pytest -v --cov pyvista --cov-report html -n 4
     displayName: 'Test Core API'
 
   - script: |
@@ -177,7 +177,7 @@ jobs:
       pip install -r requirements_test.txt
     displayName: 'Install test dependencies'
   - script: |
-      python -m pytest --cov -v .
+      python -m pytest --cov -v . -n 4
     displayName: 'Run Tests'
 
   # don't run job on no-ci builds
