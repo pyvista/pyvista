@@ -663,7 +663,7 @@ class Renderer(_vtk.vtkRenderer):
         padding : float, optional
             An optional percent padding along each axial direction to
             cushion the datasets in the scene from the axes
-            annotations. Defaults to ``False``.
+            annotations. Defaults to 0 (no padding).
 
         Returns
         -------
@@ -951,8 +951,8 @@ class Renderer(_vtk.vtkRenderer):
         Parameters
         ----------
         face : str, optional
-            The face at which to place the plane. Options are (``-z``,
-            ``-y``, ``-x``, ``+z``, ``+y``, and ``+z``). Where the -/+
+            The face at which to place the plane. Options are (``'-z'``,
+            ``'-y'``, ``'-x'``, ``'+z'``, ``'+y'``, and ``'+z'``). Where the -/+
             sign indicates on which side of the axis the plane will
             lie.  For example, ``'-z'`` would generate a floor on the
             XY-plane and the bottom of the scene (minimum z).

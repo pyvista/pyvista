@@ -3641,7 +3641,8 @@ class Plotter(BasePlotter):
             * ``color='#FFFFFF'``
 
     window_size : list, optional
-        Window size in pixels.  Defaults to ``[1024, 768]``.
+        Window size in pixels.  Defaults to ``[1024, 768]``, unless
+        set differently in ``rcParams``.
 
     multi_samples : int, optional
         The number of multi-samples used to mitigate aliasing. 4 is a
@@ -3649,13 +3650,13 @@ class Plotter(BasePlotter):
         impact on performance.
 
     line_smoothing : bool, optional
-        If ``True``, enable line smothing.
+        If ``True``, enable line smoothing.
 
     point_smoothing : bool, optional
-        If ``True``, enable point smothing.
+        If ``True``, enable point smoothing.
 
     polygon_smoothing : bool, optional
-        If ``True``, enable polygon smothing.
+        If ``True``, enable polygon smoothing.
 
     lighting : str, optional
         What lighting to set up for the plotter.

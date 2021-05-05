@@ -184,7 +184,7 @@ def plot_arrows(cent, direction, **kwargs):
         Must contain the same number of items as cent.
 
     **kwargs : additional arguments, optional
-        See ``help(pyvista.Plot)``.
+        See ``help(pyvista.plot)``.
 
     Returns
     -------
