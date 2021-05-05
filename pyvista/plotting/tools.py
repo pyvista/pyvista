@@ -1,5 +1,6 @@
 """Module containing useful plotting tools."""
 
+import platform
 import os
 from subprocess import PIPE, Popen
 
@@ -16,19 +17,33 @@ def system_supports_plotting():
     Returns
     -------
     system_supports_plotting : bool
-        True when on Linux and running an xserver.  Returns None when
-        on a non-linux platform.
+        True when on Linux and running an xserver.  Returns ``None``
+        when on a non-linux platform.
 
     """
-    try:
-        if os.environ['ALLOW_PLOTTING'].lower() == 'true':
+    if os.environ.get('ALLOW_PLOTTING', '').lower() == 'true':
+        return True
+
+    # Windows case
+    if os.name == 'nt':
+        return False
+
+    # mac case
+    if platform.system() == 'Darwin':
+        # check if finder available
+        proc = Popen(["pgrep", "-qx", "Finder"], stdout=PIPE, stderr=PIPE)
+        proc.communicate()
+        if proc.returncode == 0:
             return True
-    except KeyError:
-        pass
+
+        # display variable set, likely available
+        return 'DISPLAY' in os.environ
+
+    # Linux case
     try:
-        p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
-        p.communicate()
-        return p.returncode == 0
+        proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
+        proc.communicate()
+        return proc.returncode == 0
     except:
         return False
 
