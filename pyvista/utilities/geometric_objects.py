@@ -698,7 +698,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
 
     angle : float, optional
         Arc length (in degrees) beginning at the polar vector.  The
-        direction is counterclockwise.  By default it is 360.
+        direction is counterclockwise.  By default it is 90.
 
     Examples
     --------
