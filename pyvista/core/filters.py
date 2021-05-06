@@ -993,9 +993,9 @@ class DataSetFilters:
             TOP LEFT CORNER of the plane
 
         inplace : bool, optional
-            If True, the new texture coordinates will be added to the dataset
-            inplace. If False (default), a new dataset is returned with the
-            textures coordinates
+            If True, the new texture coordinates will be added to this
+            dataset. If False (default), a new dataset is returned
+            with the textures coordinates
 
         name : str, optional
             The string name to give the new texture coordinates if applying
@@ -1412,8 +1412,7 @@ class DataSetFilters:
             be used to enhance the warping effect.
 
         inplace : bool, optional
-            If True, the function will update the mesh in-place and
-            return ``None``.
+            If True, the function will update the mesh in-place.
 
         Returns
         -------
@@ -2693,7 +2692,7 @@ class DataSetFilters:
             Defaults to True
 
         inplace : bool, optional
-            Return new mesh or overwrite input.
+            Updates existing dataset with the extracted features.
 
         Returns
         -------
@@ -2750,7 +2749,7 @@ class DataSetFilters:
         Returns
         -------
         merged_grid : vtk.UnstructuredGrid
-            Merged grid..
+            Merged grid.
 
         Notes
         -----

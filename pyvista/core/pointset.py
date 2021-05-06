@@ -94,8 +94,7 @@ class PointSet(DataSet):
         target.cell_arrays[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
         target.RemoveGhostCells()
 
-        if not inplace:
-            return target
+        return target
 
 
 class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
@@ -1370,6 +1369,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             array[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
             name = _vtk.vtkDataSetAttributes.GhostArrayName()
             self.cell_arrays[name] = array
+            return self
         else:
             grid = self.copy()
             grid.hide_cells(ind)
@@ -1389,9 +1389,10 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        grid : ExplicitStructuredGrid or None
-            A deep copy of this grid if ``inplace=False`` or ``None``
-            otherwise.
+        grid : ExplicitStructuredGrid
+            A deep copy of this grid if ``inplace=False`` with the
+            hidden cells shown.  Otherwise, this dataset with the
+            shown cells.
 
         Examples
         --------
@@ -1410,6 +1411,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                 array = self.cell_arrays[name]
                 ind = np.argwhere(array == _vtk.vtkDataSetAttributes.HIDDENCELL)
                 array[ind] = 0
+            return self
         else:
             grid = self.copy()
             grid.show_cells()
@@ -1718,9 +1720,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        grid : ExplicitStructuredGrid or None
-            A deep copy of this grid if ``inplace=False`` or ``None``
-            otherwise.
+        grid : ExplicitStructuredGrid
+            A deep copy of this grid if ``inplace=False``.
 
         See Also
         --------
@@ -1738,6 +1739,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         """
         if inplace:
             self.ComputeFacesConnectivityFlagsArray()
+            return self
         else:
             grid = self.copy()
             grid.compute_connectivity()
@@ -1785,6 +1787,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             array = np.unpackbits(array, axis=1)
             array = array.sum(axis=1)
             self.cell_arrays['number_of_connections'] = array
+            return self
         else:
             grid = self.copy()
             grid.compute_connections()
