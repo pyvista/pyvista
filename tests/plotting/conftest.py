@@ -8,6 +8,11 @@ import vtk
 
 import pyvista
 
+# this is set here as well in conftest one level up.
+pyvista.set_plot_theme('testing')
+pyvista.OFF_SCREEN = True
+
+
 def pytest_addoption(parser):
     parser.addoption("--reset_image_cache", action='store_true', default=False)
     parser.addoption("--ignore_image_cache", action='store_true', default=False)
