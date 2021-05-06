@@ -201,7 +201,7 @@ python -m pytest -n <NUMCORE> --cov pyvista
 ```
 
 Run all code examples in the docstrings.  Be sure to export the
-``PYVISTA_OFF_SCREEN`` environmental variable to disable off_screen
+``PYVISTA_OFF_SCREEN`` environmental variable to enable off-screen
 plotting.
 
 ```bash
