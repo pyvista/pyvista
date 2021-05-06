@@ -265,7 +265,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> plane = pv.Plane()
-        >>> sphere.compute_implicit_distance(plane, inplace=True)
+        >>> _ = sphere.compute_implicit_distance(plane, inplace=True)
         >>> dist = sphere['implicit_distance']
         >>> print(type(dist))
         <class 'numpy.ndarray'>
@@ -285,7 +285,7 @@ class DataSetFilters:
         function.FunctionValue(points, dists)
         if inplace:
             dataset.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
-            return
+            return dataset
         result = dataset.copy()
         result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
         return result
@@ -307,7 +307,7 @@ class DataSetFilters:
             Set the clipping value.  The default value is 0.0.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Update mesh in-place.
 
         Returns
         -------
@@ -351,6 +351,7 @@ class DataSetFilters:
 
         if inplace:
             dataset.overwrite(result)
+            return dataset
         else:
             return result
 
@@ -1068,7 +1069,7 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
-        >>> sphere.texture_map_to_sphere(inplace=True)
+        >>> sphere = sphere.texture_map_to_sphere()
         >>> tex = examples.download_puppy_texture()  # doctest:+SKIP
         >>> sphere.plot(texture=tex)  # doctest:+SKIP
         """
@@ -3029,7 +3030,7 @@ class DataSetFilters:
         vtk.vtkTransform are also accepted.
 
         >>> transform_matrix = np.array([[1, 0, 0, 50], [0, 1, 0, 100], [0, 0, 1, 200], [0, 0, 0, 1]])
-        >>> mesh.transform(transform_matrix, inplace=True)
+        >>> mesh = mesh.transform(transform_matrix)
         >>> mesh.plot(show_edges=True)  # doctest:+SKIP
         """
         if isinstance(trans, _vtk.vtkMatrix4x4):
@@ -4044,7 +4045,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.compute_normals(cell_normals=False, inplace=True)
+        >>> sphere = sphere.compute_normals(cell_normals=False)
         >>> normals = sphere['Normals']
         >>> normals.shape
         (842, 3)
@@ -4217,8 +4218,9 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere_with_hole = pv.Sphere(end_theta=330)
-        >>> sphere_with_hole.fill_holes(1000, inplace=True)
-        >>> edges = sphere_with_hole.extract_feature_edges(feature_edges=False, manifold_edges=False)
+        >>> sphere = sphere_with_hole.fill_holes(1000)
+        >>> edges = sphere.extract_feature_edges(feature_edges=False,
+        ...                                      manifold_edges=False)
         >>> assert edges.n_cells == 0
 
         """
