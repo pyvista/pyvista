@@ -3020,6 +3020,9 @@ class DataSetFilters:
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
+        inplace : bool, optional
+            When ``True``, modifies the dataset inplace.
+
         Examples
         --------
         Translate a mesh by ``(50, 100, 200)``
@@ -3035,8 +3038,8 @@ class DataSetFilters:
         ...                              [0, 1, 0, 100],
         ...                              [0, 0, 1, 200],
         ...                              [0, 0, 0, 1]])
-        >>> mesh.transform(transform_matrix)
-        >>> cpos = mesh.plot(show_edges=True)
+        >>> transformed = mesh.transform(transform_matrix)
+        >>> cpos = transformed.plot(show_edges=True)
         """
         if isinstance(trans, _vtk.vtkMatrix4x4):
             m = trans
