@@ -182,7 +182,7 @@ def test_copy(grid):
     assert np.all(grid_copy_shallow.points[0] == grid.points[0])
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
 @given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
 def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
     trans = vtk.vtkTransform()
