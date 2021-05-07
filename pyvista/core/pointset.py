@@ -77,7 +77,7 @@ class PointSet(DataSet):
 
         >>> import pyvista
         >>> letter_a = pyvista.examples.download_letter_a()
-        >>> letter_a.remove_cells(range(1000))
+        >>> trimmed = letter_a.remove_cells(range(1000))
         """
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
