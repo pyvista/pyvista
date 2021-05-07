@@ -115,7 +115,7 @@ class DataSetFilters:
             The default value is 0.0.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         return_clipped : bool, optional
             Return both unclipped and clipped parts of the dataset.
@@ -123,10 +123,8 @@ class DataSetFilters:
         Returns
         -------
         mesh : pyvista.PolyData or tuple(pyvista.PolyData)
-            Clipped mesh when ``inplace=False``.  When
-            ``inplace=True``, ``None``. When ``return_clipped=True``,
-            a tuple containing the unclipped and clipped datasets,
-            regardless of the setting of ``inplace``.
+            Clipped mesh when ``return_clipped=False``,
+            otherwise a tuple containing the unclipped and clipped datasets.
 
         Examples
         --------
@@ -158,13 +156,12 @@ class DataSetFilters:
                                                     invert=invert, value=value,
                                                     return_clipped=return_clipped)
         if inplace:
-            overwrite_with = result[0] if return_clipped else result
-            dataset.overwrite(overwrite_with)
             if return_clipped:
-                # normally if inplace=True, filters return None. But if
-                # return_clipped=True, the user still wants the clipped data,
-                # so return both the unclipped and clipped data as a tuple
-                return result
+                dataset.overwrite(result[0])
+                return dataset, result[1]
+            else:
+                dataset.overwrite(result)
+                return dataset
         else:
             return result
 
@@ -268,7 +265,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> plane = pv.Plane()
-        >>> sphere.compute_implicit_distance(plane, inplace=True)
+        >>> _ = sphere.compute_implicit_distance(plane, inplace=True)
         >>> dist = sphere['implicit_distance']
         >>> print(type(dist))
         <class 'numpy.ndarray'>
@@ -288,7 +285,7 @@ class DataSetFilters:
         function.FunctionValue(points, dists)
         if inplace:
             dataset.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
-            return
+            return dataset
         result = dataset.copy()
         result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
         return result
@@ -310,7 +307,7 @@ class DataSetFilters:
             Set the clipping value.  The default value is 0.0.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Update mesh in-place.
 
         Returns
         -------
@@ -354,6 +351,7 @@ class DataSetFilters:
 
         if inplace:
             dataset.overwrite(result)
+            return dataset
         else:
             return result
 
@@ -995,9 +993,9 @@ class DataSetFilters:
             TOP LEFT CORNER of the plane
 
         inplace : bool, optional
-            If True, the new texture coordinates will be added to the dataset
-            inplace. If False (default), a new dataset is returned with the
-            textures coordinates
+            If True, the new texture coordinates will be added to this
+            dataset. If False (default), a new dataset is returned
+            with the textures coordinates
 
         name : str, optional
             The string name to give the new texture coordinates if applying
@@ -1033,7 +1031,7 @@ class DataSetFilters:
         dataset.GetPointData().AddArray(t_coords)
         # CRITICAL:
         dataset.GetPointData().AddArray(otc) # Add old ones back at the end
-        return # No return type because it is inplace
+        return dataset
 
     def texture_map_to_sphere(dataset, center=None, prevent_seam=True,
                               inplace=False, name='Texture Coordinates'):
@@ -1071,7 +1069,7 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
-        >>> sphere.texture_map_to_sphere(inplace=True)
+        >>> sphere = sphere.texture_map_to_sphere()
         >>> tex = examples.download_puppy_texture()  # doctest:+SKIP
         >>> cpos = sphere.plot(texture=tex)  # doctest:+SKIP
         """
@@ -1094,7 +1092,7 @@ class DataSetFilters:
         dataset.GetPointData().AddArray(t_coords)
         # CRITICAL:
         dataset.GetPointData().AddArray(otc)  # Add old ones back at the end
-        return  # No return type because it is inplace
+        return dataset
 
     def compute_cell_sizes(dataset, length=True, area=True, volume=True,
                            progress_bar=False):
@@ -1302,7 +1300,7 @@ class DataSetFilters:
         Parameters
         ----------
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         Returns
         -------
@@ -1313,6 +1311,7 @@ class DataSetFilters:
         mesh = DataSetFilters.connectivity(dataset, largest=True)
         if inplace:
             dataset.overwrite(mesh)
+            return dataset
         else:
             return mesh
 
@@ -1390,8 +1389,9 @@ class DataSetFilters:
             if isinstance(dataset, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
                 raise TypeError("This filter cannot be applied inplace for this mesh type.")
             dataset.overwrite(output)
-            return
-        return output
+            return dataset
+        else:
+            return output
 
     def warp_by_vector(dataset, vectors=None, factor=1.0, inplace=False):
         """Warp the dataset's points by a point data vectors array's values.
@@ -1412,8 +1412,7 @@ class DataSetFilters:
             be used to enhance the warping effect.
 
         inplace : bool, optional
-            If True, the function will update the mesh in-place and
-            return ``None``.
+            If True, the function will update the mesh in-place.
 
         Returns
         -------
@@ -1440,8 +1439,9 @@ class DataSetFilters:
         warped_mesh = _get_output(alg)
         if inplace:
             dataset.overwrite(warped_mesh)
-            return
-        return warped_mesh
+            return dataset
+        else:
+            return warped_mesh
 
     def cell_data_to_point_data(dataset, pass_cell_data=False):
         """Transform cell data into point data.
@@ -1523,12 +1523,12 @@ class DataSetFilters:
         Parameters
         ----------
         inplace : bool, optional
-            Updates mesh in-place while returning ``None``.
+            Updates mesh in-place.
 
         Returns
         -------
         mesh : pyvista.UnstructuredGrid
-            Mesh containing only triangles. ``None`` when ``inplace=True``
+            Mesh containing only triangles.
 
         """
         alg = _vtk.vtkDataSetTriangleFilter()
@@ -1538,6 +1538,7 @@ class DataSetFilters:
         mesh = _get_output(alg)
         if inplace:
             dataset.overwrite(mesh)
+            return dataset
         else:
             return mesh
 
@@ -2691,12 +2692,12 @@ class DataSetFilters:
             Defaults to True
 
         inplace : bool, optional
-            Return new mesh or overwrite input.
+            Updates existing dataset with the extracted features.
 
         Returns
         -------
         edges : pyvista.vtkPolyData
-            Extracted edges. None if inplace=True.
+            Extracted edges.
 
         """
         if not isinstance(dataset, _vtk.vtkPolyData):
@@ -2714,6 +2715,7 @@ class DataSetFilters:
         mesh = _get_output(featureEdges)
         if inplace:
             dataset.overwrite(mesh)
+            return dataset
         else:
             return mesh
 
@@ -2747,7 +2749,7 @@ class DataSetFilters:
         Returns
         -------
         merged_grid : vtk.UnstructuredGrid
-            Merged grid.  Returned when inplace is False.
+            Merged grid.
 
         Notes
         -----
@@ -2777,6 +2779,7 @@ class DataSetFilters:
         if inplace:
             if type(dataset) == type(merged):
                 dataset.deep_copy(merged)
+                return dataset
             else:
                 raise TypeError(f"Mesh type {type(dataset)} cannot be overridden by output.")
         else:
@@ -3017,6 +3020,9 @@ class DataSetFilters:
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
+        inplace : bool, optional
+            When ``True``, modifies the dataset inplace.
+
         Examples
         --------
         Translate a mesh by ``(50, 100, 200)``
@@ -3032,8 +3038,8 @@ class DataSetFilters:
         ...                              [0, 1, 0, 100],
         ...                              [0, 0, 1, 200],
         ...                              [0, 0, 0, 1]])
-        >>> mesh.transform(transform_matrix, inplace=True)
-        >>> cpos = mesh.plot(show_edges=True)
+        >>> transformed = mesh.transform(transform_matrix)
+        >>> cpos = transformed.plot(show_edges=True)
         """
         if isinstance(trans, _vtk.vtkMatrix4x4):
             m = trans
@@ -3091,9 +3097,9 @@ class DataSetFilters:
                                  f'Input was `{dataset.GetClassName()}` '
                                  f'but output is `{res.GetClassName()}`.')
             dataset.overwrite(res)
+            return dataset
         else:
             return res
-
 
     def reflect(dataset, normal, point=None, inplace=False,
                 transform_all_input_vectors=False):
@@ -3109,7 +3115,7 @@ class DataSetFilters:
             specified, this is the origin.
 
         inplace : bool, optional
-            When ``True``, modifies the dataset and returns nothing.
+            When ``True``, modifies the dataset inplace.
 
         transform_all_input_vectors: bool, optional
             When ``True``, all input vectors are transformed. Otherwise, only the
@@ -3264,12 +3270,12 @@ class PolyDataFilters(DataSetFilters):
             Mesh making the cut
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         Returns
         -------
         mesh : pyvista.PolyData
-            The cut mesh when inplace=False
+            The cut mesh.
 
         """
         if not isinstance(cut, pyvista.PolyData):
@@ -3290,6 +3296,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(bfilter)
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -3304,12 +3311,12 @@ class PolyDataFilters(DataSetFilters):
             The mesh to add.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         Returns
         -------
         joinedmesh : pyvista.PolyData
-            Initial mesh and the new mesh when inplace=False.
+            The joined mesh.
 
         """
         if not isinstance(mesh, pyvista.PolyData):
@@ -3323,6 +3330,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(vtkappend)
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -3341,12 +3349,12 @@ class PolyDataFilters(DataSetFilters):
             The mesh to perform a union against.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         Returns
         -------
         union : pyvista.PolyData
-            The union mesh when inplace=False.
+            The union mesh.
 
         """
         if not isinstance(mesh, pyvista.PolyData):
@@ -3362,6 +3370,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(bfilter)
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -3374,12 +3383,12 @@ class PolyDataFilters(DataSetFilters):
             The mesh to perform a union against.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         Returns
         -------
         union : pyvista.PolyData
-            The union mesh when inplace=False.
+            The union mesh.
 
         """
         if not isinstance(mesh, pyvista.PolyData):
@@ -3395,6 +3404,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(bfilter)
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -3544,12 +3554,12 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         Returns
         -------
         mesh : pyvista.PolyData
-            Mesh containing only triangles.  None when inplace=True
+            Mesh containing only triangles.
 
         """
         trifilter = _vtk.vtkTriangleFilter()
@@ -3561,6 +3571,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(trifilter)
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -3599,12 +3610,12 @@ class PolyDataFilters(DataSetFilters):
             Boolean flag to control smoothing of feature edges.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         Returns
         -------
         mesh : pyvista.PolyData
-            Smoothed mesh. None when inplace=True.
+            Smoothed mesh.
 
         Examples
         --------
@@ -3634,6 +3645,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg)
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -3675,12 +3687,12 @@ class PolyDataFilters(DataSetFilters):
             will not occur. This may limit the maximum reduction that may be achieved.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         Returns
         -------
         mesh : pyvista.PolyData
-            Decimated mesh. None when inplace=True.
+            Decimated mesh.
 
         """
         alg = _vtk.vtkDecimatePro()
@@ -3696,6 +3708,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg)
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -3726,12 +3739,12 @@ class PolyDataFilters(DataSetFilters):
             The field preference when searching for the scalars array by name.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         Returns
         -------
         mesh : pyvista.PolyData
-            Tube-filtered mesh. None when inplace=True.
+            Tube-filtered mesh.
 
         Examples
         --------
@@ -3772,6 +3785,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(tube)
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -3806,12 +3820,12 @@ class PolyDataFilters(DataSetFilters):
             Can be one of the following: 'butterfly', 'loop', 'linear'
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         Returns
         -------
         mesh : Polydata object
-            pyvista polydata object.  ``None`` when ``inplace=True``.
+            ``pyvista`` polydata object.
 
         Examples
         --------
@@ -3844,6 +3858,7 @@ class PolyDataFilters(DataSetFilters):
         submesh = _get_output(sfilter)
         if inplace:
             poly_data.overwrite(submesh)
+            return poly_data
         else:
             return submesh
 
@@ -3912,7 +3927,7 @@ class PolyDataFilters(DataSetFilters):
             See scalars weight parameter. Defaults to 0.1.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -3920,7 +3935,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         outmesh : pyvista.PolyData
-            Decimated mesh.  None when inplace=True.
+            Decimated mesh.
 
         Examples
         --------
@@ -3964,6 +3979,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg)
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -4031,14 +4047,12 @@ class PolyDataFilters(DataSetFilters):
             30.0.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing. Defaults to
-            ``False``.
+            Updates mesh in-place. Defaults to ``False``.
 
         Returns
         -------
         mesh : pyvista.PolyData
-            Updated mesh with cell and point normals if
-            ``inplace=False``.
+            Updated mesh with cell and point normals.
 
         Examples
         --------
@@ -4046,7 +4060,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.compute_normals(cell_normals=False, inplace=True)
+        >>> sphere = sphere.compute_normals(cell_normals=False)
         >>> normals = sphere['Normals']
         >>> normals.shape
         (842, 3)
@@ -4095,6 +4109,7 @@ class PolyDataFilters(DataSetFilters):
 
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -4134,14 +4149,12 @@ class PolyDataFilters(DataSetFilters):
             might be produced.
 
         inplace : bool, optional
-            Updates mesh in-place while returning ``None``. Defaults to
-            ``False``.
+            Updates mesh in-place. Defaults to ``False``.
 
         Returns
         -------
         clipped_mesh : pyvista.PolyData
-            The clipped mesh resulting from this operation when
-            ``inplace==False``.  Otherwise, ``None``.
+            The clipped mesh.
 
         Examples
         --------
@@ -4183,6 +4196,7 @@ class PolyDataFilters(DataSetFilters):
 
         if inplace:
             poly_data.overwrite(result)
+            return poly_data
         else:
             return result
 
@@ -4212,7 +4226,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         mesh : pyvista.PolyData
-            Mesh with holes filled.  None when inplace=True
+            Mesh with holes filled.
 
         Examples
         --------
@@ -4220,8 +4234,9 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere_with_hole = pv.Sphere(end_theta=330)
-        >>> sphere_with_hole.fill_holes(1000, inplace=True)
-        >>> edges = sphere_with_hole.extract_feature_edges(feature_edges=False, manifold_edges=False)
+        >>> sphere = sphere_with_hole.fill_holes(1000)
+        >>> edges = sphere.extract_feature_edges(feature_edges=False,
+        ...                                      manifold_edges=False)
         >>> assert edges.n_cells == 0
 
         """
@@ -4235,6 +4250,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg)
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -4269,8 +4285,7 @@ class PolyDataFilters(DataSetFilters):
             Turn on/off conversion of degenerate strips to polys.
 
         inplace : bool, optional
-            Updates mesh in-place while returning ``None``.  Default
-            ``True``.
+            Updates mesh in-place. Default ``False``.
 
         absolute : bool, optional
             Control if ``tolerance`` is an absolute distance or a
@@ -4282,7 +4297,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         mesh : pyvista.PolyData
-            Cleaned mesh.  ``None`` when ``inplace=True``
+            Cleaned mesh.
 
         Examples
         --------
@@ -4322,6 +4337,7 @@ class PolyDataFilters(DataSetFilters):
 
         if inplace:
             poly_data.overwrite(output)
+            return poly_data
         else:
             return output
 
@@ -4378,6 +4394,7 @@ class PolyDataFilters(DataSetFilters):
 
         if inplace:
             poly_data.overwrite(output)
+            return poly_data
         else:
             return output
 
@@ -4491,7 +4508,6 @@ class PolyDataFilters(DataSetFilters):
             plotter.show()
 
         return intersection_points, intersection_cells
-
 
     def multi_ray_trace(poly_data, origins, directions, first_point=False, retry=False):
         """Perform multiple ray trace calculations.
@@ -4668,17 +4684,15 @@ class PolyDataFilters(DataSetFilters):
             the new mesh.
 
         inplace : bool, optional
-            Updates mesh in-place while returning ``None``.
+            Updates mesh in-place.  Defaults to ``False``.
 
         Returns
         -------
         mesh : pyvista.PolyData
-            Mesh without the points flagged for removal.  Not returned
-            when ``inplace=False``.
+            Mesh without the points flagged for removal.
 
         ridx : np.ndarray
-            Indices of new points relative to the original mesh.  Not
-            returned when ``inplace=False``.
+            Indices of new points relative to the original mesh.
 
         Examples
         --------
@@ -4686,7 +4700,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> reduced_sphere = sphere.remove_points(range(100))
+        >>> reduced_sphere, ridx = sphere.remove_points(range(100))
 
         """
         remove = np.asarray(remove)
@@ -4739,6 +4753,7 @@ class PolyDataFilters(DataSetFilters):
         # Return vtk surface and reverse indexing array
         if inplace:
             poly_data.overwrite(newmesh)
+            return poly_data, ridx
         else:
             return newmesh, ridx
 
@@ -4837,6 +4852,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg).triangulate()
         if inplace:
             poly_data.overwrite(mesh)
+            return poly_data
         else:
             return mesh
 
@@ -4878,7 +4894,6 @@ class PolyDataFilters(DataSetFilters):
         alg.Update()
         return _get_output(alg)
 
-
     def project_points_to_plane(poly_data, origin=None, normal=(0, 0, 1),
                                 inplace=False):
         """Project points of this mesh to a plane.
@@ -4919,9 +4934,7 @@ class PolyDataFilters(DataSetFilters):
         # Perform projection in place on the copied mesh
         f = lambda p: plane.ProjectPoint(p, p)
         np.apply_along_axis(f, 1, mesh.points)
-        if not inplace:
-            return mesh
-        return
+        return mesh
 
     def ribbon(poly_data, width=None, scalars=None, angle=0.0, factor=2.0,
                normal=None, tcoords=False, preference='points'):
@@ -5038,7 +5051,7 @@ class PolyDataFilters(DataSetFilters):
             Direction and length to extrude the mesh in.
 
         inplace : bool, optional
-            Overwrites the original mesh inplace.
+            Overwrites the original mesh in-place.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -5058,9 +5071,12 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(poly_data)
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
-        if not inplace:
+        if inplace:
+            poly_data.overwrite(output)
+            return poly_data
+        else:
             return output
-        poly_data.overwrite(output)
+
 
     def extrude_rotate(poly_data, resolution=30, inplace=False,
                        translation=0.0, dradius=0.0, angle=360.0, progress_bar=False):
@@ -5132,9 +5148,11 @@ class PolyDataFilters(DataSetFilters):
         alg.SetAngle(angle)
         _update_alg(alg, progress_bar, 'Extruding')
         output = pyvista.wrap(alg.GetOutput())
-        if not inplace:
+        if inplace:
+            poly_data.overwrite(output)
+            return poly_data
+        else:
             return output
-        poly_data.overwrite(output)
 
     def strip(poly_data, join=False, max_length=1000, pass_cell_data=False,
               pass_cell_ids=False, pass_point_ids=False):
@@ -5203,6 +5221,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetPassThroughPointIds(pass_point_ids)
         alg.Update()
         return _get_output(alg)
+
 
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):

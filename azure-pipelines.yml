@@ -108,7 +108,7 @@ jobs:
 
   - script: |
       pip install pytest-azurepipelines
-      pytest -v --cov pyvista --cov-report html
+      pytest -v --cov pyvista --cov-report html -n 4
     displayName: 'Test Core API'
 
   - script: |
@@ -180,12 +180,8 @@ jobs:
     displayName: 'Install test dependencies'
 
   - script: |
-      python -m pytest --cov -v . --ignore=tests/plotting
+      python -m pytest --cov -v .
     displayName: 'Test Core API'
-
-  - script: |
-      python -m pytest --cov -v tests/plotting
-    displayName: 'Test Plotting'
 
   # don't run job on no-ci builds
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
