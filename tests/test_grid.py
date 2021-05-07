@@ -960,8 +960,8 @@ def test_ExplicitStructuredGrid_hide_cells():
     assert 'vtkGhostType' not in grid.cell_arrays
     assert np.array_equal(copy.cell_arrays['vtkGhostType'], ghost)
 
-    copy = grid.hide_cells(range(80, 120), inplace=True)
-    assert copy is None
+    out = grid.hide_cells(range(80, 120), inplace=True)
+    assert out is grid
     assert 'vtkGhostType' in grid.cell_arrays
     assert np.array_equal(grid.cell_arrays['vtkGhostType'], ghost)
 
@@ -977,8 +977,8 @@ def test_ExplicitStructuredGrid_show_cells():
     assert np.count_nonzero(copy.cell_arrays['vtkGhostType']) == 0
     assert np.count_nonzero(grid.cell_arrays['vtkGhostType']) == 40
 
-    copy = grid.show_cells(inplace=True)
-    assert copy is None
+    out = grid.show_cells(inplace=True)
+    assert out is grid
     assert np.count_nonzero(grid.cell_arrays['vtkGhostType']) == 0
 
 
@@ -1069,8 +1069,8 @@ def test_ExplicitStructuredGrid_compute_connectivity():
     assert 'ConnectivityFlags' not in grid.cell_arrays
     assert np.array_equal(copy.cell_arrays['ConnectivityFlags'], connectivity)
 
-    copy = grid.compute_connectivity(inplace=True)
-    assert copy is None
+    out = grid.compute_connectivity(inplace=True)
+    assert out is grid
     assert 'ConnectivityFlags' in grid.cell_arrays
     assert np.array_equal(grid.cell_arrays['ConnectivityFlags'], connectivity)
 
@@ -1094,8 +1094,8 @@ def test_ExplicitStructuredGrid_compute_connections():
     assert np.array_equal(copy.cell_arrays['number_of_connections'],
                           connections)
 
-    copy = grid.compute_connections(inplace=True)
-    assert copy is None
+    out = grid.compute_connections(inplace=True)
+    assert out is grid
     assert 'number_of_connections' in grid.cell_arrays
     assert np.array_equal(grid.cell_arrays['number_of_connections'],
                           connections)
