@@ -447,25 +447,25 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
     Parameters
     ----------
     center : np.ndarray or list
-        Center in [x, y, z]. middle of the axis of the cone.
+        Center in [x, y, z]. Middle of the axis of the cone.
 
     direction : np.ndarray or list
-        Direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. Orientation vector of the cone.
 
     height : float
         Height along the cone in its specified direction.
 
     radius : float
-        Base radius of the cone
+        Base radius of the cone.
 
     capping : bool
         Turn on/off whether to cap the base of the cone with a polygon.
 
     angle : float
-        The angle degrees between the axis of the cone and a generatrix.
+        The angle in degrees between the axis of the cone and a generatrix.
 
     resolution : int
-        Number of facets used to represent the cone
+        Number of facets used to represent the cone.
 
     """
     src = _vtk.vtkConeSource()
@@ -488,25 +488,21 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
 
 
 def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
-    """Create a polygonal disk with a hole in the center.
-
-    The disk has zero height. The user can specify the inner and outer radius
-    of the disk, and the radial and circumferential resolution of the polygonal
-    representation.
+    """Create a polygon.
 
     Parameters
     ----------
     center : np.ndarray or list
-        Center in [x, y, z]. middle of the axis of the polygon.
+        Center in [x, y, z]. Middle of the axis of the polygon.
 
     radius : float
-        The radius of the polygon
+        The radius of the polygon.
 
     normal : np.ndarray or list
-        Direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. Orientation vector of the polygon.
 
     n_sides : int
-        Number of sides of the polygon
+        Number of sides of the polygon.
 
     """
     src = _vtk.vtkRegularPolygonSource()
@@ -529,21 +525,21 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
     Parameters
     ----------
     center : np.ndarray or list
-        Center in [x, y, z]. middle of the axis of the disc.
+        Center in [x, y, z]. Middle of the axis of the disc.
 
     inner : float
-        The inner radius
+        The inner radius.
 
     outer : float
-        The outer radius
+        The outer radius.
 
     normal : np.ndarray or list
-        Direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. Orientation vector of the disc.
 
     r_res: int
         Number of points in radius direction.
 
-    r_res: int
+    c_res: int
         Number of points in circumferential direction.
 
     """
