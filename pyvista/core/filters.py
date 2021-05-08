@@ -3025,7 +3025,7 @@ class DataSetFilters:
 
         Examples
         --------
-        Translate a mesh by ``(50, 100, 200)``
+        Translate a mesh by ``(50, 100, 200)``.
 
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
@@ -3817,10 +3817,10 @@ class PolyDataFilters(DataSetFilters):
             faces.
 
         subfilter : string, optional
-            Can be one of the following: 'butterfly', 'loop', 'linear'
+            Can be one of the following: 'butterfly', 'loop', 'linear'.
 
         inplace : bool, optional
-            Updates mesh in-place.
+            Updates mesh in-place. Default ``False``.
 
         Returns
         -------
@@ -3834,7 +3834,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh = pyvista.PolyData(examples.planefile)
         >>> submesh = mesh.subdivide(1, 'loop')
 
-        Alternatively, update the mesh in-place
+        Alternatively, update the mesh in-place.
 
         >>> submesh = mesh.subdivide(1, 'loop', inplace=True)
 
@@ -4789,28 +4789,29 @@ class PolyDataFilters(DataSetFilters):
             Specify a tolerance to control discarding of closely
             spaced points. This tolerance is specified as a fraction
             of the diagonal length of the bounding box of the points.
+            Defaults to ``1e-05``.
 
         alpha : float, optional
             Specify alpha (or distance) value to control output of
             this filter. For a non-zero alpha value, only edges or
             triangles contained within a sphere centered at mesh
             vertices will be output. Otherwise, only triangles will be
-            output.
+            output. Defaults to ``0.0``.
 
         offset : float, optional
             Specify a multiplier to control the size of the initial,
-            bounding Delaunay triangulation.
+            bounding Delaunay triangulation. Defaults to ``1.0``.
 
         bound : bool, optional
             Boolean controls whether bounding triangulation points
             and associated triangles are included in the
             output. These are introduced as an initial triangulation
             to begin the triangulation process. This feature is nice
-            for debugging output.
+            for debugging output. Default ``False``.
 
         inplace : bool, optional
             If ``True``, overwrite this mesh with the triangulated
-            mesh.
+            mesh. Default ``False``.
 
         edge_source : pyvista.PolyData, optional
             Specify the source object used to specify constrained
@@ -4821,7 +4822,8 @@ class PolyDataFilters(DataSetFilters):
             source).
 
         progress_bar : bool, optional
-            Display a progress bar to indicate progress.
+            Display a progress bar to indicate progress. Default
+            ``False``.
 
         Examples
         --------
