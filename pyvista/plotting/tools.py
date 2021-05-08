@@ -16,7 +16,7 @@ SUPPORTS_OPENGL = [None]
 SUPPORTS_PLOTTING = [None]
 
 def supports_open_gl():
-    """Return if the system supports OpenGL"""
+    """Return if the system supports OpenGL."""
     if SUPPORTS_OPENGL[0] is None:
         ren_win = _vtk.vtkRenderWindow()
         SUPPORTS_OPENGL[0] = bool(ren_win.SupportsOpenGL())
@@ -24,7 +24,7 @@ def supports_open_gl():
 
 
 def _system_supports_plotting():
-    """Check if the enviornment supports plotting on Windows, Linux, or Mac OS.
+    """Check if the environment supports plotting on Windows, Linux, or Mac OS.
 
     Returns
     -------
@@ -61,7 +61,7 @@ def _system_supports_plotting():
 
 
 def system_supports_plotting():
-    """Check if the enviornment supports plotting.
+    """Check if the environment supports plotting.
 
     Returns
     -------

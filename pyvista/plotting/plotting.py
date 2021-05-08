@@ -69,10 +69,15 @@ def _warn_xserver():  # pragma: no cover
     """Check if plotting is supported and persist this state.
 
     Check once and cache this value between calls.  Warn the user if
-    plotting is not supported.  This only works on Linux, but
-    this is probably fine since most headless servers are Linux.
+    plotting is not supported.  Configured to check on Linux and Mac
+    OS since the Windows check is not quick.
 
     """
+    # disable windows check until we can get a fast way of verifying
+    # if windows has a windows manager (which it generally does)
+    if os.name == 'nt':
+        return
+
     if not hasattr(_warn_xserver, 'has_support'):
         _warn_xserver.has_support = pyvista.system_supports_plotting()
 
@@ -85,13 +90,16 @@ def _warn_xserver():  # pragma: no cover
         if rcParams['jupyter_backend'] in ['ipygany']:
             return
 
-        # TODO: check if VTK has EGL support
+        # Check if VTK has EGL support
+        if 'EGL' in str(type(_vtk.vtkRenderWindow())):
+            return
 
         warnings.warn('\n'
                       'This system does not appear to be running an xserver.\n'
                       'PyVista will likely segfault when rendering.\n\n'
                       'Try starting a virtual frame buffer with xvfb, or using\n '
                       ' ``pyvista.start_xvfb()``\n')
+
 
 USE_SCALAR_BAR_ARGS = """
 "stitle" is a depreciated keyword and will be removed in a future
