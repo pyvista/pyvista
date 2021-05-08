@@ -74,12 +74,7 @@ def _warn_xserver():  # pragma: no cover
 
     """
     if not hasattr(_warn_xserver, 'has_support'):
-        if os.name != 'nt':
-            _warn_xserver.has_support = pyvista.system_supports_plotting()
-        else:
-            # assume system supports plotting until we can find a
-            # better way of checking that this works in NT.
-            _warn_xserver.has_support = True
+        _warn_xserver.has_support = pyvista.system_supports_plotting()
 
     if not _warn_xserver.has_support:
         # check if a display has been set
@@ -89,6 +84,8 @@ def _warn_xserver():  # pragma: no cover
         # finally, check if using a backend that doesn't require an xserver
         if rcParams['jupyter_backend'] in ['ipygany']:
             return
+
+        # TODO: check if VTK has EGL support
 
         warnings.warn('\n'
                       'This system does not appear to be running an xserver.\n'
