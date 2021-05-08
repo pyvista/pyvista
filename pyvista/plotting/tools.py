@@ -66,7 +66,7 @@ def system_supports_plotting():
     Returns
     -------
     system_supports_plotting : bool
-        ``True`` When system supports plotting.
+        ``True`` when system supports plotting.
 
     """
     if SUPPORTS_PLOTTING[0] is None:
