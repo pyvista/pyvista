@@ -2268,7 +2268,8 @@ class DataSetFilters:
         circular_arc = pyvista.CircularArcFromNormal(center,
                                                      resolution=resolution,
                                                      normal=normal,
-                                                     polar=polar)
+                                                     polar=polar,
+                                                     angle=angle)
 
         sampled_circular_arc = circular_arc.sample(dataset, tolerance=tolerance)
         return sampled_circular_arc

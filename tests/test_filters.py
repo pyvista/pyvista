@@ -813,11 +813,13 @@ def test_sample_over_circular_arc_normal():
     zmax = uniform.bounds[5]
     normal = [xmin, ymax, zmin]
     polar = [xmin, ymin, zmax]
-    angle = 90
+    angle = 90.0*np.random.rand()
+    resolution = np.random.randint(10000)
     center = [xmin, ymin, zmin]
-    sampled_arc_normal = uniform.sample_over_circular_arc_normal(center, resolution=2, normal=normal, polar=polar, angle=angle)
+    sampled_arc_normal = uniform.sample_over_circular_arc_normal(center, resolution=resolution, normal=normal, polar=polar, angle=angle)
+    angles = np.linspace(np.pi/2.0, np.pi/2.0-np.deg2rad(angle), resolution+1)
 
-    expected_result = zmin+(zmax-zmin)*np.sin([np.pi/2.0, np.pi/4.0, 0.0])
+    expected_result = zmin+(zmax-zmin)*np.sin(angles)
     assert np.allclose(sampled_arc_normal[name], expected_result)
     assert name in sampled_arc_normal.array_names # is name in sampled result
 
