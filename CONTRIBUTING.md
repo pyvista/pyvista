@@ -192,13 +192,25 @@ Run the primary test suite and generate coverage report:
 python -m pytest -v --cov pyvista
 ```
 
-Run all code examples in the docstrings:
+Unit testing can take some time, if you wish to speed it up, set the
+number of processors with the ``-n`` flag.  This uses ``pytest-xdist``
+to leverage multiple processes.  Example usage:
 
 ```bash
+python -m pytest -n <NUMCORE> --cov pyvista
+```
+
+Run all code examples in the docstrings.  Be sure to export the
+``PYVISTA_OFF_SCREEN`` environmental variable to enable off-screen
+plotting.
+
+```bash
+export PYVISTA_OFF_SCREEN=True
 python -m pytest -v --doctest-modules pyvista
 ```
 
-Run documentation testing by running
+Run documentation testing by running:
+
 ```bash
 make
 ```

@@ -362,9 +362,7 @@ class ScalarBars():
             anno_text.SetFontSize(label_font_size)
 
         # Set properties
-        # if title:
-        clim = mapper.scalar_range
-        self._scalar_bar_ranges[title] = clim
+        self._scalar_bar_ranges[title] = mapper.scalar_range
         self._scalar_bar_mappers[title] = [mapper]
 
         scalar_bar.SetTitle(title)

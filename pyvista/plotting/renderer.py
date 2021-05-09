@@ -554,63 +554,66 @@ class Renderer(_vtk.vtkRenderer):
         return False
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
-                    show_yaxis=True, show_zaxis=True, show_xlabels=True,
-                    show_ylabels=True, show_zlabels=True,
-                    bold=True, font_size=None,
-                    font_family=None, color=None,
-                    xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                    use_2d=False, grid=None, location='closest', ticks=None,
+                    show_yaxis=True, show_zaxis=True,
+                    show_xlabels=True, show_ylabels=True,
+                    show_zlabels=True, bold=True, font_size=None,
+                    font_family=None, color=None, xlabel='X Axis',
+                    ylabel='Y Axis', zlabel='Z Axis', use_2d=False,
+                    grid=None, location='closest', ticks=None,
                     all_edges=False, corner_factor=0.5, fmt=None,
                     minor_ticks=False, padding=0.0, render=None):
         """Add bounds axes.
 
-        Shows the bounds of the most recent input mesh unless mesh is specified.
+        Shows the bounds of the most recent input mesh unless mesh is
+        specified.
 
         Parameters
         ----------
-        mesh : vtkPolydata or unstructured grid, optional
-            Input mesh to draw bounds axes around
+        mesh : pyvista.DataSet or pyvista.MultiBlock
+            Input mesh to draw bounds axes around.
 
         bounds : list or tuple, optional
             Bounds to override mesh bounds.
-            [xmin, xmax, ymin, ymax, zmin, zmax]
+            ``[xmin, xmax, ymin, ymax, zmin, zmax]``
 
         show_xaxis : bool, optional
-            Makes x axis visible.  Default True.
+            Makes x axis visible.  Default ``True``.
 
         show_yaxis : bool, optional
-            Makes y axis visible.  Default True.
+            Makes y axis visible.  Default ``True``.
 
         show_zaxis : bool, optional
-            Makes z axis visible.  Default True.
+            Makes z axis visible.  Default ``True``.
 
         show_xlabels : bool, optional
-            Shows x labels.  Default True.
+            Shows x labels.  Default ``True``.
 
         show_ylabels : bool, optional
-            Shows y labels.  Default True.
+            Shows y labels.  Default ``True``.
 
         show_zlabels : bool, optional
-            Shows z labels.  Default True.
+            Shows z labels.  Default ``True``.
 
         italic : bool, optional
-            Italicises axis labels and numbers.  Default False.
+            Italicises axis labels and numbers.  Default ``False``.
 
         bold : bool, optional
-            Bolds axis labels and numbers.  Default True.
+            Bolds axis labels and numbers.  Default ``True``.
 
         shadow : bool, optional
-            Adds a black shadow to the text.  Default False.
+            Adds a black shadow to the text.  Default ``False``.
 
         font_size : float, optional
             Sets the size of the label font.  Defaults to 16.
 
         font_family : string, optional
-            Font family.  Must be either courier, times, or arial.
+            Font family.  Must be either ``'courier'``, ``'times'``,
+            or ``'arial'``.
 
         color : string or 3 item list, optional
             Color of all labels and axis titles.  Default white.
-            Either a string, rgb list, or hex color string.  For example:
+            Either a string, rgb list, or hex color string.  For
+            example:
 
             * ``color='white'``
             * ``color='w'``
@@ -618,13 +621,13 @@ class Renderer(_vtk.vtkRenderer):
             * ``color='#FFFFFF'``
 
         xlabel : string, optional
-            Title of the x axis.  Default "X Axis"
+            Title of the x axis.  Default ``"X Axis"``.
 
         ylabel : string, optional
-            Title of the y axis.  Default "Y Axis"
+            Title of the y axis.  Default ``"Y Axis"``.
 
         zlabel : string, optional
-            Title of the z axis.  Default "Z Axis"
+            Title of the z axis.  Default ``"Z Axis"``.
 
         use_2d : bool, optional
             A bug with vtk 6.3 in Windows seems to cause this function
@@ -655,17 +658,17 @@ class Renderer(_vtk.vtkRenderer):
 
         corner_factor : float, optional
             If ``all_edges````, this is the factor along each axis to
-            draw the default box. Dafuault is 0.5 to show the full box.
+            draw the default box. Default is 0.5 to show the full box.
 
         padding : float, optional
-            An optional percent padding along each axial direction to cushion
-            the datasets in the scene from the axes annotations. Defaults to
-            have no padding
+            An optional percent padding along each axial direction to
+            cushion the datasets in the scene from the axes
+            annotations. Defaults to 0 (no padding).
 
         Returns
         -------
         cube_axes_actor : vtk.vtkCubeAxesActor
-            Bounds actor
+            Bounds actor.
 
         Examples
         --------
@@ -673,9 +676,9 @@ class Renderer(_vtk.vtkRenderer):
         >>> from pyvista import examples
         >>> mesh = pyvista.Sphere()
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(mesh)
-        >>> _ = plotter.show_bounds(grid='front', location='outer', all_edges=True)
-        >>> plotter.show() # doctest:+SKIP
+        >>> actor = plotter.add_mesh(mesh)
+        >>> actor = plotter.show_bounds(grid='front', location='outer', all_edges=True)
+        >>> cpos = plotter.show()
 
         """
         self.remove_bounds_axes()
@@ -822,7 +825,8 @@ class Renderer(_vtk.vtkRenderer):
             cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
             cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
 
-        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False)
+        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False,
+                       render=render)
         self.cube_axes_actor = cube_axes_actor
 
         if all_edges:
@@ -840,9 +844,9 @@ class Renderer(_vtk.vtkRenderer):
         """Show gridlines and axes labels.
 
         A wrapped implementation of ``show_bounds`` to change default
-        behaviour to use gridlines and showing the axes labels on the outer
-        edges. This is intended to be similar to ``matplotlib``'s ``grid``
-        function.
+        behaviour to use gridlines and showing the axes labels on the
+        outer edges. This is intended to be similar to
+        ``matplotlib``'s ``grid`` function.
 
         """
         kwargs.setdefault('grid', 'back')
@@ -946,30 +950,31 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
-        face : str
-            The face at which to place the plane. Options are (-z, -y,
-            -x, +z, +y, and +z). Where the -/+ sign indicates on which
-            side of the axis the plane will lie.  For example,
-            ``'-z'`` would generate a floor on the XY-plane and the
-            bottom of the scene (minimum z).
+        face : str, optional
+            The face at which to place the plane. Options are (``'-z'``,
+            ``'-y'``, ``'-x'``, ``'+z'``, ``'+y'``, and ``'+z'``). Where the -/+
+            sign indicates on which side of the axis the plane will
+            lie.  For example, ``'-z'`` would generate a floor on the
+            XY-plane and the bottom of the scene (minimum z).
 
-        i_resolution : int
+        i_resolution : int, optional
             Number of points on the plane in the i direction.
 
-        j_resolution : int
+        j_resolution : int, optional
             Number of points on the plane in the j direction.
 
         color : string or 3 item list, optional
             Color of all labels and axis titles.  Default gray.
             Either a string, rgb list, or hex color string.
 
-        line_width : int
-            Thickness of the edges. Only if ``show_edges`` is ``True``.
+        line_width : int, optional
+            Thickness of the edges. Only if ``show_edges`` is
+            ``True``.
 
-        opacity : float
+        opacity : float, optional
             The opacity of the generated surface.
 
-        show_edges : bool
+        show_edges : bool, optional
             Flag on whether to show the mesh edges for tiling.
 
         ine_width : float, optional
@@ -977,7 +982,8 @@ class Renderer(_vtk.vtkRenderer):
             representations.  Default ``None``.
 
         lighting : bool, optional
-            Enable or disable view direction lighting.  Default ``False``.
+            Enable or disable view direction lighting.  Default
+            ``False``.
 
         edge_color : string or 3 item list, optional
             Color of of the edges of the mesh.
@@ -994,9 +1000,9 @@ class Renderer(_vtk.vtkRenderer):
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(pyvista.Sphere())
-        >>> _ = pl.add_floor()
-        >>> pl.show()  # doctest:+SKIP
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.add_floor()
+        >>> cpos = pl.show()
 
         """
         if store_floor_kwargs:

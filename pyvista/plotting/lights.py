@@ -459,7 +459,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        Light the two sides of a cube with lights of different brightness.
+        Light the two sides of a cube with lights of different
+        brightness.
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
@@ -471,7 +472,7 @@ class Light(vtkLight):
         ...     light.positional = True
         ...     plotter.add_light(light)
         ...
-        >>> plotter.show()  # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         return self.GetIntensity()
@@ -604,7 +605,7 @@ class Light(vtkLight):
         ...     plotter.add_light(light)
         ...
         >>> plotter.view_xy()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         return self.GetExponent()
@@ -648,7 +649,7 @@ class Light(vtkLight):
         ...     plotter.add_light(light)
         ...
         >>> plotter.view_xy()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         return self.GetConeAngle()
@@ -700,7 +701,7 @@ class Light(vtkLight):
         ...     plotter.add_light(light)
         ...
         >>> plotter.view_vector((-1, -1, 1))
-        >>> plotter.show()  # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         return self.GetAttenuationValues()
@@ -1112,7 +1113,7 @@ class Light(vtkLight):
         >>> spotlight.exponent = 40
         >>> spotlight.show_actor()
         >>> plotter.add_light(spotlight)
-        >>> plotter.show()  # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         if not self.positional or self.cone_angle >= 90:

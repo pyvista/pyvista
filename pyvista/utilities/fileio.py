@@ -92,7 +92,7 @@ def get_ext(filename):
 def get_reader(filename, force_ext=None):
     """Get the corresponding reader based on file extension and instantiates it."""
     ext = _get_ext_force(filename, force_ext=force_ext)
-    return READERS[ext]() # Get and instantiate the reader
+    return READERS[ext]()  # Get and instantiate the reader
 
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
@@ -124,10 +124,10 @@ def standard_reader_routine(reader, filename, attrs=None):
         The string filename to the data file to read.
 
     attrs : dict, optional
-        A dictionary of attributes to call on the reader. Keys of dictionary are
-        the attribute/method names and values are the arguments passed to those
-        calls. If you do not have any attributes to call, pass ``None`` as the
-        value.
+        A dictionary of attributes to call on the reader. Keys of
+        dictionary are the attribute/method names and values are the
+        arguments passed to those calls. If you do not have any
+        attributes to call, pass ``None`` as the value.
 
     """
     observer = pyvista.utilities.errors.Observer()
@@ -382,25 +382,26 @@ def read_exodus(filename,
 
 def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
     """Read a Plot3D grid file (e.g., grid.in) and optional q file(s).
-    
+
     Parameters
     ----------
     filename : str
         The string filename to the data file to read.
 
     q_filenames : str or tuple(str), optional
-        The string filename of the q-file, or iterable of such filenames.
+        The string filename of the q-file, or iterable of such
+        filenames.
 
     auto_detect : bool, optional
-        When this option is turned on, the reader will try to figure out the
-        values of various options such as byte order, byte count etc. Default is
-        True.
+        When this option is turned on, the reader will try to figure
+        out the values of various options such as byte order, byte
+        count etc. Default is ``True``.
 
     attrs : dict, optional
-        A dictionary of attributes to call on the reader. Keys of dictionary are
-        the attribute/method names and values are the arguments passed to those
-        calls. If you do not have any attributes to call, pass ``None`` as the
-        value.
+        A dictionary of attributes to call on the reader. Keys of
+        dictionary are the attribute/method names and values are the
+        arguments passed to those calls. If you do not have any
+        attributes to call, pass ``None`` as the value.
 
     Returns
     -------
@@ -506,13 +507,14 @@ def read_meshio(filename, file_format=None):
     return from_meshio(mesh)
 
 
-def save_meshio(filename, mesh, file_format = None, **kwargs):
+def save_meshio(filename, mesh, file_format=None, **kwargs):
     """Save mesh to file using meshio.
 
     Parameters
     ----------
     mesh : pyvista.DataSet
         Any PyVista mesh/spatial data type.
+
     file_format : str
         File type for meshio to save.
 

@@ -93,13 +93,13 @@ def logo_basic():
 
     >>> from pyvista import demos
     >>> logo = demos.logo_basic()
-    >>> logo.plot(smooth_shading=True)  # doctest:+SKIP
+    >>> cpos = logo.plot(smooth_shading=True)
 
     Add scalars and plot the logo.
 
     >>> logo['x_coord'] = logo.points[:, 0]
-    >>> logo.plot(scalars='x_coord', cmap='Spectral',
-    ...           smooth_shading=True, cpos='xy')  # doctest:+SKIP
+    >>> cpos = logo.plot(scalars='x_coord', cmap='Spectral',
+    ...                  smooth_shading=True, cpos='xy')
 
     """
     return logo_letters(merge=True).compute_normals(split_vertices=True)
@@ -111,7 +111,7 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None, cpos=None, **k
     Examples
     --------
     >>> from pyvista import demos
-    >>> demos.plot_logo()  # doctest:+SKIP
+    >>> cpos = demos.plot_logo()
 
     """
     # initialize plotter

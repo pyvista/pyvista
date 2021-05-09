@@ -108,7 +108,7 @@ jobs:
 
   - script: |
       pip install pytest-azurepipelines
-      pytest -v --cov pyvista --cov-report html
+      pytest -v --cov pyvista --cov-report html -n 4
     displayName: 'Test Core API'
 
   - script: |
@@ -168,17 +168,20 @@ jobs:
       git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
       powershell gl-ci-helpers/appveyor/install_opengl.ps1
     displayName: 'Install OpenGL'
+
   - script: |
       pip install wheel
       pip install .
       python -c "import pyvista; print(pyvista.Report(gpu=False))"
     displayName: 'Install PyVista'
+
   - script: |
       pip install -r requirements_test.txt
     displayName: 'Install test dependencies'
+
   - script: |
       python -m pytest --cov -v .
-    displayName: 'Run Tests'
+    displayName: 'Test Core API'
 
   # don't run job on no-ci builds
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))

@@ -184,7 +184,7 @@ def plot_arrows(cent, direction, **kwargs):
         Must contain the same number of items as cent.
 
     **kwargs : additional arguments, optional
-        See help(pyvista.Plot)
+        See ``help(pyvista.plot)``.
 
     Returns
     -------
@@ -198,7 +198,7 @@ def plot_arrows(cent, direction, **kwargs):
     >>> import pyvista
     >>> cent = np.random.random(3)
     >>> direction = np.random.random(3)
-    >>> pyvista.plot_arrows(cent, direction)  # doctest:+SKIP
+    >>> cpos = pyvista.plot_arrows(cent, direction)
 
     Plot 100 random arrows.
 
@@ -206,7 +206,7 @@ def plot_arrows(cent, direction, **kwargs):
     >>> import pyvista
     >>> cent = np.random.random((100, 3))
     >>> direction = np.random.random((100, 3))
-    >>> pyvista.plot_arrows(cent, direction)  # doctest:+SKIP
+    >>> cpos = pyvista.plot_arrows(cent, direction)
 
     """
     return plot([cent, direction], **kwargs)

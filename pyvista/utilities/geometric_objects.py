@@ -90,7 +90,7 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
     >>> import pyvista
     >>> import numpy as np
     >>> cylinder = pyvista.Cylinder(np.array([1, 2, 3]), np.array([1, 1, 1]), 1, 1)
-    >>> cylinder.plot() # doctest:+SKIP
+    >>> cpos = cylinder.plot()
     """
     capping = kwargs.pop('cap_ends', capping)
     assert_empty_kwargs(**kwargs)
@@ -633,7 +633,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     >>> _ = pl.add_mesh(arc, color='k', line_width=4)
     >>> _ = pl.show_bounds(location='all')
     >>> _ = pl.view_xy()
-    >>> pl.show() # doctest:+SKIP
+    >>> cpos = pl.show()
     """
     check_valid_vector(pointa, 'pointa')
     check_valid_vector(pointb, 'pointb')
@@ -708,7 +708,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
     >>> _ = pl.add_mesh(arc, color='k', line_width=4)
     >>> _ = pl.show_bounds(location='all')
     >>> _ = pl.view_xy()
-    >>> pl.show() # doctest:+SKIP
+    >>> cpos = pl.show()
     """
     check_valid_vector(center, 'center')
     if normal is None:
@@ -762,7 +762,7 @@ def Pyramid(points):
     >>> pointd = [1.0, -1.0, 1.0]
     >>> pointe = [0.0, 0.0, 0.0]
     >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
-    >>> pyramid.plot() # doctest:+SKIP
+    >>> cpos = pyramid.plot()
     """
     if len(points) != 5:
         raise TypeError('Points must be given as length 5 np.ndarray or list')

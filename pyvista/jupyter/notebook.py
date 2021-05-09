@@ -63,7 +63,7 @@ def show_static_image(plotter, screenshot, return_viewer):
     """Display a static image to be displayed within a jupyter notebook."""
     import PIL.Image
 
-    if not hasattr(plotter, 'last_image'):
+    if plotter.last_image is None:
         # Must render here, otherwise plotter will segfault.
         plotter.render()
         plotter.last_image = plotter.screenshot(screenshot, return_img=True)
@@ -76,8 +76,7 @@ def show_static_image(plotter, screenshot, return_viewer):
     # Simply display the result: either ipyvtklink object or image display
     if return_viewer:
         return image
-    else:
-        display.display(image)
+    display.display(image)
 
 
 def show_ipyvtk(plotter, return_viewer):

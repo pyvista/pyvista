@@ -48,7 +48,7 @@ def _has_matplotlib():
 
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
-VERY_FIRST_RENDER = [True]  # windows plotter helper
+VERY_FIRST_RENDER = True  # windows plotter helper
 
 def close_all():
     """Close all open/active plotters and clean up memory."""
@@ -69,17 +69,17 @@ def _warn_xserver():  # pragma: no cover
     """Check if plotting is supported and persist this state.
 
     Check once and cache this value between calls.  Warn the user if
-    plotting is not supported.  This only works on Linux, but
-    this is probably fine since most headless servers are Linux.
+    plotting is not supported.  Configured to check on Linux and Mac
+    OS since the Windows check is not quick.
 
     """
+    # disable windows check until we can get a fast way of verifying
+    # if windows has a windows manager (which it generally does)
+    if os.name == 'nt':
+        return
+
     if not hasattr(_warn_xserver, 'has_support'):
-        if os.name != 'nt':
-            _warn_xserver.has_support = pyvista.system_supports_plotting()
-        else:
-            # assume system supports plotting until we can find a
-            # better way of checking that this works in NT.
-            _warn_xserver.has_support = True
+        _warn_xserver.has_support = pyvista.system_supports_plotting()
 
     if not _warn_xserver.has_support:
         # check if a display has been set
@@ -90,11 +90,16 @@ def _warn_xserver():  # pragma: no cover
         if rcParams['jupyter_backend'] in ['ipygany']:
             return
 
+        # Check if VTK has EGL support
+        if 'EGL' in str(type(_vtk.vtkRenderWindow())):
+            return
+
         warnings.warn('\n'
                       'This system does not appear to be running an xserver.\n'
                       'PyVista will likely segfault when rendering.\n\n'
                       'Try starting a virtual frame buffer with xvfb, or using\n '
                       ' ``pyvista.start_xvfb()``\n')
+
 
 USE_SCALAR_BAR_ARGS = """
 "stitle" is a depreciated keyword and will be removed in a future
@@ -211,6 +216,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Key bindings
         self.reset_key_events()
         log.debug('BasePlotter init stop')
+
+        self._image_depth_null = None
+        self.last_image_depth = None
+        self.last_image = None
 
     @property
     def scalar_bars(self):
@@ -723,6 +732,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         return self.get_image_depth()
 
+    def _check_rendered(self):
+        """Check if the render window has been shown and raise an exception if not."""
+        if not self._rendered:
+            raise AttributeError('\nThis plotter has not yet been setup and rendered '
+                                 'with ``show()``.\n'
+                                 'Consider setting ``off_screen=True`` '
+                                 'for off screen rendering.\n')
+
+    def _check_has_ren_win(self):
+        """Check if render window attribute exists and raise an exception if not."""
+        if not hasattr(self, 'ren_win'):
+            raise AttributeError('\n\nTo retrieve an image after the render window '
+                                 'has been closed, set:\n\n'
+                                 ' ``plotter.store_image = True``\n\n'
+                                 'before closing the plotter.')
+
     @property
     def image(self):
         """Return an image array of current render window.
@@ -730,20 +755,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         To retrieve an image after the render window has been closed,
         set: ``plotter.store_image = True`` before closing the plotter.
         """
-        if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
+        if not hasattr(self, 'ren_win') and self.last_image is not None:
             return self.last_image
 
-        if not self._rendered:
-            raise AttributeError('\nThis plotter has not yet been setup and rendered '
-                                 'with ``show()``.\n'
-                                 'Consider setting ``off_screen=True`` '
-                                 'for off screen rendering.\n')
-
-        if not hasattr(self, 'ren_win'):
-            raise AttributeError('\n\nTo retrieve an image after the render window '
-                                 'has been closed, set:\n\n'
-                                 ' ``plotter.store_image = True``\n\n'
-                                 'before closing the plotter.')
+        self._check_rendered()
+        self._check_has_ren_win()
 
         data = image_from_window(self.ren_win)
         if self.image_transparent_background:
@@ -1235,7 +1251,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(sphere,
         ...                      scalar_bar_args={'title': 'Z Position'})
-        >>> plotter.show()  # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         # Convert the VTK data object to a pyvista wrapped object if necessary
@@ -1547,7 +1563,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 elif scalars.ndim == 2 and (scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells):
                     if not isinstance(component, (int, type(None))):
                         raise TypeError('component must be either None or an integer')
-                    elif component is None:
+                    if component is None:
                         scalars = np.linalg.norm(scalars.copy(), axis=1)
                         title = '{}-normed'.format(title)
                     elif component < scalars.shape[1] and component >= 0:
@@ -1601,7 +1617,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Set scalars range
             if clim is None:
                 clim = [np.nanmin(scalars), np.nanmax(scalars)]
-            elif isinstance(clim, float) or isinstance(clim, int):
+            elif isinstance(clim, (int, float)):
                 clim = [-clim, clim]
 
             if log_scale:
@@ -2283,7 +2299,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return self.scalar_bars.add_scalar_bar(**kwargs)
 
-
     def update_scalars(self, scalars, mesh=None, render=True):
         """Update scalars of an object in the plotter.
 
@@ -2601,17 +2616,27 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        fill_value : float
-            Fill value for points in image that don't include objects in scene.
-            To not use a fill value, pass ``None``.
+        fill_value : float, optional
+            Fill value for points in image that do not include objects
+            in scene.  To not use a fill value, pass ``None``.
 
-        reset_camera_clipping_range : bool
-            Reset the camera clipping range to include data in view?
+        reset_camera_clipping_range : bool, optional
+            Reset the camera clipping range to include data in view.
 
         Returns
         -------
         image_depth : numpy.ndarray
-            Image of depth values from camera orthogonal to image plane
+            Image of depth values from camera orthogonal to image
+            plane.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> actor = plotter.add_mesh(pyvista.Sphere())
+        >>> plotter.store_image = True
+        >>> cpos = plotter.show()
+        >>> zval = plotter.get_image_depth()
 
         Notes
         -----
@@ -2619,11 +2644,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         right-handed coordinate system.
 
         """
-        if not hasattr(self, 'ren_win') and hasattr(self, 'last_image_depth'):
+        # allow no render window
+        if not hasattr(self, 'ren_win') and self.last_image_depth is not None:
             zval = self.last_image_depth.copy()
             if fill_value is not None:
                 zval[self._image_depth_null] = fill_value
             return zval
+
+        self._check_rendered()
+        self._check_has_ren_win()
 
         # Ensure points in view are within clipping range of renderer?
         if reset_camera_clipping_range:
@@ -2646,10 +2675,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
 
             # Consider image values outside clipping range as nans
-            args = np.logical_or(zval < -far, np.isclose(zval, -far))
-        self._image_depth_null = args
+            self._image_depth_null = np.logical_or(zval < -far, np.isclose(zval, -far))
+
         if fill_value is not None:
-            zval[args] = fill_value
+            zval[self._image_depth_null] = fill_value
 
         return zval
 
@@ -2971,7 +3000,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> direction = np.random.random((10, 3))
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_arrows(cent, direction, mag=2)
-        >>> plotter.show()  # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         if cent.shape != direction.shape:  # pragma: no cover
@@ -3089,7 +3118,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> sphere = pyvista.Sphere()
         >>> plotter = pyvista.Plotter(off_screen=True)
         >>> actor = plotter.add_mesh(sphere)
-        >>> plotter.screenshot('screenshot.png') # doctest:+SKIP
+        >>> plotter.screenshot('screenshot.png')  # doctest:+SKIP
 
         """
         if window_size is not None:
@@ -3105,7 +3134,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not hasattr(self, 'ren_win'):
             # If plotter has been closed...
             # check if last_image exists
-            if hasattr(self, 'last_image'):
+            if self.last_image is not None:
                 # Save last image
                 return self._save_image(self.last_image, filename, return_img)
             # Plotter hasn't been rendered or was improperly closed
@@ -3183,7 +3212,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(mesh, label='My Mesh')
         >>> _ = plotter.add_mesh(othermesh, 'k', label='My Other Mesh')
         >>> _ = plotter.add_legend()
-        >>> plotter.show() # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         Alternative manual example
 
@@ -3198,7 +3227,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(mesh)
         >>> _ = plotter.add_mesh(othermesh, 'k')
         >>> _ = plotter.add_legend(legend_entries)
-        >>> plotter.show() # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         self.legend = _vtk.vtkLegendBoxActor()
@@ -3438,7 +3467,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(pyvista.Sphere())
         >>> plotter.add_background_image(examples.mapfile)
-        >>> plotter.show() # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         if self.renderers.has_active_background_renderer:
@@ -3487,7 +3516,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         light : Light or vtkLight
             The light to be added.
 
-        only_active : bool
+        only_active : bool, optional
             If ``True``, only add the light to the active
             renderer. The default is that every renderer adds the
             light. To add the light to an arbitrary renderer, see the
@@ -3503,7 +3532,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(pv.Cube())
         >>> light = pv.Light(color='cyan', light_type='headlight')
         >>> plotter.add_light(light)
-        >>> plotter.show()  # doctest:+SKIP
+        >>> cpos = plotter.show()
 
         """
         renderers = [self.renderer] if only_active else self.renderers
@@ -3581,30 +3610,32 @@ class Plotter(BasePlotter):
     >>> mesh = examples.load_hexbeam()
     >>> another_mesh = examples.load_uniform()
     >>> plotter = pyvista.Plotter()
-    >>> _ = plotter.add_mesh(mesh, color='red')
-    >>> _ = plotter.add_mesh(another_mesh, color='blue')
-    >>> plotter.show() # doctest:+SKIP
+    >>> actor = plotter.add_mesh(mesh, color='red')
+    >>> actor = plotter.add_mesh(another_mesh, color='blue')
+    >>> cpos = plotter.show()
 
     Parameters
     ----------
     off_screen : bool, optional
-        Renders off screen when True.  Useful for automated screenshots.
+        Renders off screen when ``True``.  Useful for automated
+        screenshots.
 
     notebook : bool, optional
-        When True, the resulting plot is placed inline a jupyter notebook.
-        Assumes a jupyter console is active.  Automatically enables off_screen.
+        When ``True``, the resulting plot is placed inline a jupyter
+        notebook.  Assumes a jupyter console is active.  Automatically
+        enables ``off_screen``.
 
     shape : list or tuple, optional
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
-        with ``shape=(2, 2)``.  By default there is only one render window.
-        Can also accept a string descriptor as shape. E.g.:
+        with ``shape=(2, 2)``.  By default there is only one render
+        window.  Can also accept a string descriptor as shape. E.g.:
 
             * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
             * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, optional
-        Draw a border around each render window.  Default False.
+        Draw a border around each render window.  Default ``False``.
 
     border_color : string or 3 item list, optional, defaults to white
         Either a string, rgb list, or hex color string.  For example:
@@ -3615,21 +3646,22 @@ class Plotter(BasePlotter):
             * ``color='#FFFFFF'``
 
     window_size : list, optional
-        Window size in pixels.  Defaults to [1024, 768]
+        Window size in pixels.  Defaults to ``[1024, 768]``, unless
+        set differently in ``rcParams``.
 
-    multi_samples : int
-        The number of multi-samples used to mitigate aliasing. 4 is a good
-        default but 8 will have better results with a potential impact on
-        performance.
+    multi_samples : int, optional
+        The number of multi-samples used to mitigate aliasing. 4 is a
+        good default but 8 will have better results with a potential
+        impact on performance.
 
-    line_smoothing : bool
-        If True, enable line smothing
+    line_smoothing : bool, optional
+        If ``True``, enable line smoothing.
 
-    point_smoothing : bool
-        If True, enable point smothing
+    point_smoothing : bool, optional
+        If ``True``, enable point smoothing.
 
-    polygon_smoothing : bool
-        If True, enable polygon smothing
+    polygon_smoothing : bool, optional
+        If ``True``, enable polygon smoothing.
 
     lighting : str, optional
         What lighting to set up for the plotter.
@@ -3639,8 +3671,8 @@ class Plotter(BasePlotter):
             * ``'three lights'``: illumination using 3 lights.
             * ``'none'``: no light sources at instantiation.
 
-        The default is a Light Kit (to be precise, 5 separate lights
-        that act like a Light Kit).
+        The default is a ``'light_kit'`` (to be precise, 5 separate
+        lights that act like a Light Kit).
 
     """
 
@@ -3923,13 +3955,14 @@ class Plotter(BasePlotter):
                 if not interactive_update:
 
                     # Resolves #1260
-                    if os.name == 'nt':  
+                    if os.name == 'nt':
                         if _vtk.VTK9:
                             self.iren.process_events()
                         else:
-                            if not VERY_FIRST_RENDER[0]:
+                            global VERY_FIRST_RENDER
+                            if not VERY_FIRST_RENDER:
                                 self.iren.start()
-                            VERY_FIRST_RENDER[0] = False
+                            VERY_FIRST_RENDER = False
 
                     self.iren.start()
                 self.iren.initialize()

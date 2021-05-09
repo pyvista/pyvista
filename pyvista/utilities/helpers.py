@@ -301,13 +301,13 @@ def line_segments_from_points(points):
 
     Examples
     --------
-    This example plots two line segments at right angles to each other line.
+    This example plots two line segments at right angles to each other.
 
     >>> import pyvista
     >>> import numpy as np
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
     >>> lines = pyvista.lines_from_points(points)
-    >>> lines.plot() # doctest:+SKIP
+    >>> cpos = lines.plot()
 
     """
     if len(points) % 2 != 0:
@@ -370,7 +370,7 @@ def make_tri_mesh(points, faces):
         triangle mesh.
 
     faces : np.ndarray
-        Array of indices with shape (M, 3) containing the triangle
+        Array of indices with shape ``(M, 3)`` containing the triangle
         indices.
 
     Returns
@@ -391,7 +391,7 @@ def make_tri_mesh(points, faces):
     >>> faces = np.array([[0, 1, 4], [4, 7, 6], [2, 5, 4], [4, 5, 8],
     ...                   [0, 4, 3], [3, 4, 6], [1, 2, 4], [4, 8, 7]])
     >>> tri_mesh = pyvista.make_tri_mesh(points, faces)
-    >>> tri_mesh.plot(show_edges=True) # doctest:+SKIP
+    >>> cpos = tri_mesh.plot(show_edges=True)
 
     """
     if points.shape[1] != 3:
