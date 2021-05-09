@@ -12,15 +12,16 @@ from .theme import parse_color, rcParams
 
 
 # Track render window support and plotting
-SUPPORTS_OPENGL = [None]
-SUPPORTS_PLOTTING = [None]
+SUPPORTS_OPENGL = None
+SUPPORTS_PLOTTING = None
 
 def supports_open_gl():
     """Return if the system supports OpenGL."""
-    if SUPPORTS_OPENGL[0] is None:
+    global SUPPORTS_OPENGL
+    if SUPPORTS_OPENGL is None:
         ren_win = _vtk.vtkRenderWindow()
-        SUPPORTS_OPENGL[0] = bool(ren_win.SupportsOpenGL())
-    return SUPPORTS_OPENGL[0]
+        SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
+    return SUPPORTS_OPENGL
 
 
 def _system_supports_plotting():
@@ -69,11 +70,12 @@ def system_supports_plotting():
         ``True`` when system supports plotting.
 
     """
-    if SUPPORTS_PLOTTING[0] is None:
-        SUPPORTS_PLOTTING[0] = _system_supports_plotting()
+    global SUPPORTS_PLOTTING
+    if SUPPORTS_PLOTTING is None:
+        SUPPORTS_PLOTTING = _system_supports_plotting()
 
     # always use the cached response
-    return SUPPORTS_PLOTTING[0]
+    return SUPPORTS_PLOTTING
 
 
 def update_axes_label_color(axes_actor, color=None):

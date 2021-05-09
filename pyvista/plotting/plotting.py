@@ -48,7 +48,7 @@ def _has_matplotlib():
 
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
-VERY_FIRST_RENDER = [True]  # windows plotter helper
+VERY_FIRST_RENDER = True  # windows plotter helper
 
 def close_all():
     """Close all open/active plotters and clean up memory."""
@@ -3955,13 +3955,14 @@ class Plotter(BasePlotter):
                 if not interactive_update:
 
                     # Resolves #1260
-                    if os.name == 'nt':  
+                    if os.name == 'nt':
                         if _vtk.VTK9:
                             self.iren.process_events()
                         else:
-                            if not VERY_FIRST_RENDER[0]:
+                            global VERY_FIRST_RENDER
+                            if not VERY_FIRST_RENDER:
                                 self.iren.start()
-                            VERY_FIRST_RENDER[0] = False
+                            VERY_FIRST_RENDER = False
 
                     self.iren.start()
                 self.iren.initialize()
