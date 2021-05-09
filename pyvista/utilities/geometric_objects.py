@@ -50,7 +50,7 @@ def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
 
     surf.transform(trans)
     if not np.allclose(center, [0., 0., 0.]):
-        surf.points[:] += np.array(center)
+        surf.points += np.array(center)
 
 
 def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
@@ -90,7 +90,7 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
     >>> import pyvista
     >>> import numpy as np
     >>> cylinder = pyvista.Cylinder(np.array([1, 2, 3]), np.array([1, 1, 1]), 1, 1)
-    >>> cylinder.plot() # doctest:+SKIP
+    >>> cpos = cylinder.plot()
     """
     capping = kwargs.pop('cap_ends', capping)
     assert_empty_kwargs(**kwargs)
@@ -447,25 +447,25 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
     Parameters
     ----------
     center : np.ndarray or list
-        Center in [x, y, z]. middle of the axis of the cone.
+        Center in [x, y, z]. Middle of the axis of the cone.
 
     direction : np.ndarray or list
-        Direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. Orientation vector of the cone.
 
     height : float
         Height along the cone in its specified direction.
 
     radius : float
-        Base radius of the cone
+        Base radius of the cone.
 
     capping : bool
         Turn on/off whether to cap the base of the cone with a polygon.
 
     angle : float
-        The angle degrees between the axis of the cone and a generatrix.
+        The angle in degrees between the axis of the cone and a generatrix.
 
     resolution : int
-        Number of facets used to represent the cone
+        Number of facets used to represent the cone.
 
     """
     src = _vtk.vtkConeSource()
@@ -488,25 +488,21 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
 
 
 def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
-    """Create a polygonal disk with a hole in the center.
-
-    The disk has zero height. The user can specify the inner and outer radius
-    of the disk, and the radial and circumferential resolution of the polygonal
-    representation.
+    """Create a polygon.
 
     Parameters
     ----------
     center : np.ndarray or list
-        Center in [x, y, z]. middle of the axis of the polygon.
+        Center in [x, y, z]. Middle of the axis of the polygon.
 
     radius : float
-        The radius of the polygon
+        The radius of the polygon.
 
     normal : np.ndarray or list
-        Direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. Orientation vector of the polygon.
 
     n_sides : int
-        Number of sides of the polygon
+        Number of sides of the polygon.
 
     """
     src = _vtk.vtkRegularPolygonSource()
@@ -529,21 +525,21 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
     Parameters
     ----------
     center : np.ndarray or list
-        Center in [x, y, z]. middle of the axis of the disc.
+        Center in [x, y, z]. Middle of the axis of the disc.
 
     inner : float
-        The inner radius
+        The inner radius.
 
     outer : float
-        The outer radius
+        The outer radius.
 
     normal : np.ndarray or list
-        Direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. Orientation vector of the disc.
 
     r_res: int
         Number of points in radius direction.
 
-    r_res: int
+    c_res: int
         Number of points in circumferential direction.
 
     """
@@ -637,7 +633,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     >>> _ = pl.add_mesh(arc, color='k', line_width=4)
     >>> _ = pl.show_bounds(location='all')
     >>> _ = pl.view_xy()
-    >>> pl.show() # doctest:+SKIP
+    >>> cpos = pl.show()
     """
     check_valid_vector(pointa, 'pointa')
     check_valid_vector(pointb, 'pointb')
@@ -698,7 +694,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
 
     angle : float, optional
         Arc length (in degrees) beginning at the polar vector.  The
-        direction is counterclockwise.  By default it is 360.
+        direction is counterclockwise.  By default it is 90.
 
     Examples
     --------
@@ -712,7 +708,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
     >>> _ = pl.add_mesh(arc, color='k', line_width=4)
     >>> _ = pl.show_bounds(location='all')
     >>> _ = pl.view_xy()
-    >>> pl.show() # doctest:+SKIP
+    >>> cpos = pl.show()
     """
     check_valid_vector(center, 'center')
     if normal is None:
@@ -738,7 +734,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
     # Compute distance of every point along circular arc
     center = np.array(center)
     radius = np.sqrt(np.sum((arc.points[0] - center)**2, axis=0))
-    angles = np.arange(0.0, 1.0 + 1.0/resolution, 1.0/resolution) * angle
+    angles = np.linspace(0.0, angle, resolution+1)
     arc['Distance'] = radius * angles
     return arc
 
@@ -766,7 +762,7 @@ def Pyramid(points):
     >>> pointd = [1.0, -1.0, 1.0]
     >>> pointe = [0.0, 0.0, 0.0]
     >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
-    >>> pyramid.plot() # doctest:+SKIP
+    >>> cpos = pyramid.plot()
     """
     if len(points) != 5:
         raise TypeError('Points must be given as length 5 np.ndarray or list')

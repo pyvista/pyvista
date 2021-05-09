@@ -12,6 +12,7 @@ cylindrical shell, and sweeping a circle creates a torus.
 
 """
 import pyvista
+import numpy as np
 
 # create a line and rotate it about the Z-axis
 resolution = 10
@@ -44,3 +45,32 @@ plotter.add_mesh(
 )
 
 plotter.show(cpos="xy")
+
+###############################################################################
+# Create a spring
+# ~~~~~~~~~~~~~~~
+
+# Create the spring profile (a circle).
+plotter = pyvista.Plotter()
+
+vertices = np.array(
+    [
+        [1.0, 0.0, 0.0],
+        [1.0732, 0.0, -0.1768],
+        [1.25, 0.0, -0.25],
+        [1.4268, 0.0, -0.1768],
+        [1.5, 0.0, 0.00],
+        [1.4268, 0.0, 0.1768],
+        [1.25, 0.0, 0.25],
+        [1.0732, 0.0, 0.1768],
+    ]
+)
+faces = np.hstack([[8, 0, 1, 2, 3, 4, 5, 6, 7]])
+profile = pyvista.PolyData(vertices, faces)
+
+# Extrude the profile to make a spring.
+spring = profile.extrude_rotate(resolution=360, translation=6.0, dradius=1.0, angle=2160.0)
+plotter.add_text("Spring", font_size=24)
+plotter.add_mesh(spring, color="tan", show_edges=True)
+
+plotter.show(cpos="zx")

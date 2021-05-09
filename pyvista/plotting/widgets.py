@@ -84,7 +84,7 @@ class WidgetHelper:
 
         box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(parse_color(color))
-        box_widget.SetInteractor(self.iren)
+        box_widget.SetInteractor(self.iren.interactor)
         box_widget.SetCurrentRenderer(self.renderer)
         box_widget.SetPlaceFactor(factor)
         box_widget.SetRotationEnabled(rotation_enabled)
@@ -320,7 +320,7 @@ class WidgetHelper:
                 plane_widget.GetHandleProperty().SetOpacity(0)
 
         plane_widget.GetPlaneProperty().SetOpacity(0.5)
-        plane_widget.SetInteractor(self.iren)
+        plane_widget.SetInteractor(self.iren.interactor)
         plane_widget.SetCurrentRenderer(self.renderer)
 
         if assign_to_axis:
@@ -643,7 +643,7 @@ class WidgetHelper:
 
         line_widget = _vtk.vtkLineWidget()
         line_widget.GetLineProperty().SetColor(parse_color(color))
-        line_widget.SetInteractor(self.iren)
+        line_widget.SetInteractor(self.iren.interactor)
         line_widget.SetCurrentRenderer(self.renderer)
         line_widget.SetPlaceFactor(factor)
         line_widget.PlaceWidget(bounds)
@@ -824,13 +824,12 @@ class WidgetHelper:
         Examples
         --------
         >>> import pyvista as pv
-        >>> p = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> def create_mesh(value):
         ...     res = int(value)
         ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
-        ...     p.add_mesh(sphere, name="sphere", show_edges=True)
-        ...     return
-        >>> slider = p.add_slider_widget(
+        ...     pl.add_mesh(sphere, name="sphere", show_edges=True)
+        >>> slider = pl.add_slider_widget(
         ...     create_mesh,
         ...     [5, 100],
         ...     title="Resolution",
@@ -839,15 +838,13 @@ class WidgetHelper:
         ...     fmt="%0.9f",
         ...     title_height=0.08,
         ... )
-        >>> p.show()  # doctest:+SKIP
+        >>> cpos = pl.show()
         """
         if not hasattr(self, "slider_widgets"):
             self.slider_widgets = []
 
-        min, max = rng
-
         if value is None:
-            value = ((max-min) / 2) + min
+            value = ((rng[1] - rng[0]) / 2) + rng[0]
 
         if color is None:
             color = rcParams['font']['color']
@@ -866,8 +863,8 @@ class WidgetHelper:
 
         slider_rep = _vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
-        slider_rep.SetMinimumValue(min)
-        slider_rep.SetMaximumValue(max)
+        slider_rep.SetMinimumValue(rng[0])
+        slider_rep.SetMaximumValue(rng[1])
         slider_rep.SetValue(value)
         slider_rep.SetTitleText(title)
         slider_rep.GetTitleProperty().SetColor(parse_color(color))
@@ -910,7 +907,7 @@ class WidgetHelper:
             return
 
         slider_widget = _vtk.vtkSliderWidget()
-        slider_widget.SetInteractor(self.iren)
+        slider_widget.SetInteractor(self.iren.interactor)
         slider_widget.SetCurrentRenderer(self.renderer)
         slider_widget.SetRepresentation(slider_rep)
         slider_widget.GetRepresentation().SetTitleHeight(title_height)
@@ -1174,7 +1171,7 @@ class WidgetHelper:
         spline_widget = _vtk.vtkSplineWidget()
         spline_widget.GetLineProperty().SetColor(parse_color(color))
         spline_widget.SetNumberOfHandles(n_handles)
-        spline_widget.SetInteractor(self.iren)
+        spline_widget.SetInteractor(self.iren.interactor)
         spline_widget.SetCurrentRenderer(self.renderer)
         spline_widget.SetPlaceFactor(factor)
         spline_widget.PlaceWidget(bounds)
@@ -1362,7 +1359,7 @@ class WidgetHelper:
                 sphere_widget.SetRepresentationToSurface()
             sphere_widget.GetSphereProperty().SetColor(parse_color(colors[i]))
             sphere_widget.GetSelectedSphereProperty().SetColor(parse_color(selected_color))
-            sphere_widget.SetInteractor(self.iren)
+            sphere_widget.SetInteractor(self.iren.interactor)
             sphere_widget.SetCurrentRenderer(self.renderer)
             sphere_widget.SetRadius(radius)
             sphere_widget.SetCenter(loc)
@@ -1469,7 +1466,7 @@ class WidgetHelper:
         button_rep.PlaceWidget(bounds)
 
         button_widget = _vtk.vtkButtonWidget()
-        button_widget.SetInteractor(self.iren)
+        button_widget.SetInteractor(self.iren.interactor)
         button_widget.SetRepresentation(button_rep)
         button_widget.SetCurrentRenderer(self.renderer)
         button_widget.On()

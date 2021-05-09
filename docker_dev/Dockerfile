@@ -18,7 +18,7 @@ RUN conda env update --name base --file /tmp/environment.yml
 RUN conda run conda install -y nodejs
 RUN conda run jupyter labextension install $(cat /tmp/labextensions.txt)
 
-RUN pip install ipyvtk-simple==0.1.2
+RUN pip install ipyvtklink==0.2.1
 
 # COPY vtk-9.0.20201105-cp38-cp38-linux_x86_64.whl /tmp/
 # RUN pip install /tmp/vtk-9.0.20201105-cp38-cp38-linux_x86_64.whl

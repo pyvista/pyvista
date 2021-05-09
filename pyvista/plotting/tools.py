@@ -1,5 +1,6 @@
 """Module containing useful plotting tools."""
 
+import platform
 import os
 from subprocess import PIPE, Popen
 
@@ -10,27 +11,71 @@ from pyvista import _vtk
 from .theme import parse_color, rcParams
 
 
-def system_supports_plotting():
-    """Check if x server is running.
+# Track render window support and plotting
+SUPPORTS_OPENGL = None
+SUPPORTS_PLOTTING = None
+
+def supports_open_gl():
+    """Return if the system supports OpenGL."""
+    global SUPPORTS_OPENGL
+    if SUPPORTS_OPENGL is None:
+        ren_win = _vtk.vtkRenderWindow()
+        SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
+    return SUPPORTS_OPENGL
+
+
+def _system_supports_plotting():
+    """Check if the environment supports plotting on Windows, Linux, or Mac OS.
 
     Returns
     -------
     system_supports_plotting : bool
-        True when on Linux and running an xserver.  Returns None when
-        on a non-linux platform.
+        ``True`` when system supports plotting.
 
     """
-    try:
-        if os.environ['ALLOW_PLOTTING'].lower() == 'true':
+    if os.environ.get('ALLOW_PLOTTING', '').lower() == 'true':
+        return True
+
+    # Windows case
+    if os.name == 'nt':
+        # actually have to check here.  Somewhat expensive.
+        return supports_open_gl()
+
+    # mac case
+    if platform.system() == 'Darwin':
+        # check if finder available
+        proc = Popen(["pgrep", "-qx", "Finder"], stdout=PIPE, stderr=PIPE)
+        proc.communicate()
+        if proc.returncode == 0:
             return True
-    except KeyError:
-        pass
+
+        # display variable set, likely available
+        return 'DISPLAY' in os.environ
+
+    # Linux case
     try:
-        p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
-        p.communicate()
-        return p.returncode == 0
-    except:
+        proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
+        proc.communicate()
+        return proc.returncode == 0
+    except OSError:
         return False
+
+
+def system_supports_plotting():
+    """Check if the environment supports plotting.
+
+    Returns
+    -------
+    system_supports_plotting : bool
+        ``True`` when system supports plotting.
+
+    """
+    global SUPPORTS_PLOTTING
+    if SUPPORTS_PLOTTING is None:
+        SUPPORTS_PLOTTING = _system_supports_plotting()
+
+    # always use the cached response
+    return SUPPORTS_PLOTTING
 
 
 def update_axes_label_color(axes_actor, color=None):

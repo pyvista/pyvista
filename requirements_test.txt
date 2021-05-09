@@ -12,6 +12,7 @@ tqdm
 hypothesis>=6.0.3
 sphinx_gallery
 trimesh
-ipyvtk-simple>=0.1.2
+ipyvtklink>=0.2.1
 panel
 ipygany
+pytest-xdist

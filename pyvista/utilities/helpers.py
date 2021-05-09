@@ -113,8 +113,8 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         else:
             # This will handle numerical data
             arr = np.ascontiguousarray(arr)
-            vtk_data = _vtk.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
-
+            vtk_data = _vtk.numpy_to_vtk(num_array=arr, deep=deep,
+                                         array_type=array_type)
         if isinstance(name, str):
             vtk_data.SetName(name)
         return vtk_data
@@ -252,7 +252,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
 
 def vtk_points(points, deep=True):
     """Convert numpy array or array-like to a vtkPoints object."""
-    points = np.asarray(points)
+    points = np.asanyarray(points)
 
     # verify is numeric
     if not np.issubdtype(points.dtype, np.number):
@@ -271,26 +271,28 @@ def vtk_points(points, deep=True):
                          f'Shape is {points.shape} and should be (X, 3)')
 
     # points must be contiguous
-    points = np.ascontiguousarray(points)
+    points = np.require(points, requirements=['C'])
     vtkpts = _vtk.vtkPoints()
-    vtkpts.SetData(_vtk.numpy_to_vtk(points, deep=deep))
+    vtk_arr = _vtk.numpy_to_vtk(points, deep=deep)
+    vtkpts.SetData(vtk_arr)
     return vtkpts
 
 
 def line_segments_from_points(points):
     """Generate non-connected line segments from points.
 
-    Assumes points are ordered as line segments and an even number of points
-    are
+    Assumes points are ordered as line segments and an even number of
+    points.
 
     Parameters
     ----------
     points : np.ndarray
-        Points representing line segments. An even number must be given as
-        every two vertices represent a single line segment. For example, two
-        line segments would be represented as:
+        Points representing line segments. An even number must be
+        given as every two vertices represent a single line
+        segment. For example, two line segments would be represented
+        as:
 
-        np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
+        ``np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])``
 
     Returns
     -------
@@ -299,13 +301,13 @@ def line_segments_from_points(points):
 
     Examples
     --------
-    This example plots two line segments at right angles to each other line.
+    This example plots two line segments at right angles to each other.
 
     >>> import pyvista
     >>> import numpy as np
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
     >>> lines = pyvista.lines_from_points(points)
-    >>> lines.plot() # doctest:+SKIP
+    >>> cpos = lines.plot()
 
     """
     if len(points) % 2 != 0:
@@ -368,7 +370,7 @@ def make_tri_mesh(points, faces):
         triangle mesh.
 
     faces : np.ndarray
-        Array of indices with shape (M, 3) containing the triangle
+        Array of indices with shape ``(M, 3)`` containing the triangle
         indices.
 
     Returns
@@ -389,7 +391,7 @@ def make_tri_mesh(points, faces):
     >>> faces = np.array([[0, 1, 4], [4, 7, 6], [2, 5, 4], [4, 5, 8],
     ...                   [0, 4, 3], [3, 4, 6], [1, 2, 4], [4, 8, 7]])
     >>> tri_mesh = pyvista.make_tri_mesh(points, faces)
-    >>> tri_mesh.plot(show_edges=True) # doctest:+SKIP
+    >>> cpos = tri_mesh.plot(show_edges=True)
 
     """
     if points.shape[1] != 3:

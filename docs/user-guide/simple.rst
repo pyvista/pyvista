@@ -121,16 +121,21 @@ To get started, try out the :func:`pyvista.plot` convenience method that is bind
 to each PyVista data object:
 
 
-.. testcode:: python
+.. jupyter-execute::
+   :hide-code:
+
+   # must have this here as our global backend may not be static
+   import pyvista
+   pyvista.set_jupyter_backend('static')
+
+
+.. jupyter-execute::
 
     import pyvista as pv
     from pyvista import examples
 
     mesh = examples.load_airplane()
-    mesh.plot(screenshot='airplane.png')
-
-
-.. image:: ../images/auto-generated/airplane.png
+    mesh.plot()
 
 
 You can also create the plotter to highly control the scene. First, instantiate
@@ -140,6 +145,8 @@ The :class:`pyvista.Plotter` will create a rendering window that will pause the
 execution of the code after calling ``show``.
 
 .. testcode:: python
+
+    mesh = examples.load_airplane()
 
     plotter = pv.Plotter()    # instantiate the plotter
     plotter.add_mesh(mesh)    # add a mesh to the scene

@@ -102,14 +102,14 @@ Overview of Features
 
 * Extensive gallery of examples (see `Quick Examples`_)
 * Interactive plotting in Jupyter Notebooks using server-side rendering
-  with `ipyvtk_simple`_ or client-side rendering with ``panel`` or ``ipygany``.
+  with `ipyvtklink`_ or client-side rendering with ``panel`` or ``ipygany``.
 * Filtering/plotting tools built for interactivity (see `Widgets`_)
 * Direct access to mesh analysis and transformation routines (see Filters_)
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
 * Import meshes from many common formats (use ``pyvista.read()``). Support for all formats handled by `meshio`_ is built-in!
 * Export meshes as VTK, STL, OBJ, or PLY (``mesh.save()``) file types or any formats supported by meshio_ (``pyvista.save_meshio()``)
 
-.. _ipyvtk_simple: https://github.com/Kitware/ipyvtk-simple
+.. _ipyvtklink: https://github.com/Kitware/ipyvtklink
 .. _Widgets: https://docs.pyvista.org/plotting/widgets.html
 .. _Filters: https://docs.pyvista.org/core/filters.html
 .. _Plotting: https://docs.pyvista.org/plotting/index.html
@@ -141,7 +141,7 @@ using ``pip`` on Python >= 3.6::
 
     pip install pyvista
 
-You can also visit `PyPi <https://pypi.org/project/pyvista/>`_,
+You can also visit `PyPI <https://pypi.org/project/pyvista/>`_,
 `Anaconda <https://anaconda.org/conda-forge/pyvista>`_, or
 `GitHub <https://github.com/pyvista/pyvista>`_ to download the source.
 

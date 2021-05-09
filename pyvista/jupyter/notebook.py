@@ -3,9 +3,8 @@ Support dynamic or static jupyter notebook plotting.
 
 Includes:
 
-* ``ipyvtk_simple``
+* ``ipyvtklink``
 * ``panel``
-* ``ipyvtk_simple``
 
 """
 import warnings
@@ -20,6 +19,8 @@ try:
     from IPython import display
 except ImportError:  # pragma: no cover
     raise ImportError('Install IPython to display an image in a notebook')
+
+from pyvista import _vtk
 
 PANEL_EXTENSION_SET = [False]
 
@@ -42,13 +43,18 @@ def handle_plotter(plotter, backend=None, screenshot=None,
     """
     if screenshot is False:
         screenshot = None
-    if backend == 'ipyvtk_simple':
-        return show_ipyvtk(plotter, return_viewer)
-    if backend == 'panel':
-        return show_panel(plotter, return_viewer)
-    if backend == 'ipygany':
-        from pyvista.jupyter.pv_ipygany import show_ipygany
-        return show_ipygany(plotter, return_viewer, **kwargs)
+
+    try:
+        if backend == 'ipyvtklink':
+            return show_ipyvtk(plotter, return_viewer)
+        if backend == 'panel':
+            return show_panel(plotter, return_viewer)
+        if backend == 'ipygany':
+            from pyvista.jupyter.pv_ipygany import show_ipygany
+            return show_ipygany(plotter, return_viewer, **kwargs)
+    except ImportError as e:
+        warnings.warn(f'Failed to use notebook backend: \n\n{e}\n\n'
+                      'Falling back to a static output.')
 
     return show_static_image(plotter, screenshot, return_viewer)
 
@@ -57,7 +63,7 @@ def show_static_image(plotter, screenshot, return_viewer):
     """Display a static image to be displayed within a jupyter notebook."""
     import PIL.Image
 
-    if not hasattr(plotter, 'last_image'):
+    if plotter.last_image is None:
         # Must render here, otherwise plotter will segfault.
         plotter.render()
         plotter.last_image = plotter.screenshot(screenshot, return_img=True)
@@ -67,15 +73,14 @@ def show_static_image(plotter, screenshot, return_viewer):
     # point to keeping the plotter around.
     plotter.close()
 
-    # Simply display the result: either ipyvtk_simple object or image display
+    # Simply display the result: either ipyvtklink object or image display
     if return_viewer:
         return image
-    else:
-        display.display(image)
+    display.display(image)
 
 
 def show_ipyvtk(plotter, return_viewer):
-    """Display an interactive viewer widget using ``ipyvtk_simple``."""
+    """Display an interactive viewer widget using ``ipyvtklink``."""
     if any('SPYDER' in name for name in os.environ):
         warnings.warn('``use_ipyvtk`` is incompatible with Spyder.\n'
                       'Use notebook=False for interactive '
@@ -83,14 +88,17 @@ def show_ipyvtk(plotter, return_viewer):
                       'pyvista.set_jupyter_backend(None)')
 
     try:
-        from ipyvtk_simple.viewer import ViewInteractiveWidget
+        from ipyvtklink.viewer import ViewInteractiveWidget
     except ImportError:  # pragma: no cover
-        raise ImportError('Please install `ipyvtk_simple` to use this feature:'
-                          '\thttps://github.com/Kitware/ipyvtk-simple')
+        raise ImportError('Please install `ipyvtklink` to use this feature: '
+                          'https://github.com/Kitware/ipyvtklink')
 
     # Have to leave the Plotter open for the widget to use
     disp = ViewInteractiveWidget(plotter.ren_win, on_close=plotter.close,
                                  transparent_background=plotter.image_transparent_background)
+
+    for renderer in plotter.renderers:
+        renderer.AddObserver(_vtk.vtkCommand.ModifiedEvent, lambda *args: disp.update_canvas())
 
     if return_viewer:
         return disp

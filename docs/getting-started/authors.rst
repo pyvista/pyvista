@@ -8,14 +8,14 @@ section, please be sure to head over to the `Contributors Graph`_.
 .. _Contributors Graph: https://github.com/pyvista/pyvista/graphs/contributors/
 
 
-.. include:: ../CITATION.rst
+.. include:: ../../CITATION.rst
 
 
-.. include:: ../AUTHORS.rst
+.. include:: ../../AUTHORS.rst
 
 
 
 License
 -------
 
-.. include:: ../LICENSE
+.. include:: ../../LICENSE

@@ -362,9 +362,7 @@ class ScalarBars():
             anno_text.SetFontSize(label_font_size)
 
         # Set properties
-        # if title:
-        clim = mapper.scalar_range
-        self._scalar_bar_ranges[title] = clim
+        self._scalar_bar_ranges[title] = mapper.scalar_range
         self._scalar_bar_mappers[title] = [mapper]
 
         scalar_bar.SetTitle(title)
@@ -389,7 +387,7 @@ class ScalarBars():
         if interactive:
             scalar_widget = _vtk.vtkScalarBarWidget()
             scalar_widget.SetScalarBarActor(scalar_bar)
-            scalar_widget.SetInteractor(self._plotter.iren)
+            scalar_widget.SetInteractor(self._plotter.iren.interactor)
             scalar_widget.SetEnabled(1)
             rep = scalar_widget.GetRepresentation()
 

@@ -84,16 +84,16 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
 
     Examples
     --------
-    Compare two active plotters
+    Compare two active plotters.
 
     >>> import pyvista
     >>> pl1 = pyvista.Plotter()
     >>> _ = pl1.add_mesh(pyvista.Sphere(), smooth_shading=True)
     >>> pl2 = pyvista.Plotter()
     >>> _ = pl2.add_mesh(pyvista.Sphere(), smooth_shading=False)
-    >>> pyvista.compare_images(pl1, pl2)  # doctest:+SKIP
+    >>> error = pyvista.compare_images(pl1, pl2)
 
-    Compare two active plotters
+    Compare images from file.
 
     >>> import pyvista
     >>> img1 = pyvista.read('img1.png')  # doctest:+SKIP

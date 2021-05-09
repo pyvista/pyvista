@@ -813,11 +813,13 @@ def test_sample_over_circular_arc_normal():
     zmax = uniform.bounds[5]
     normal = [xmin, ymax, zmin]
     polar = [xmin, ymin, zmax]
-    angle = 90
+    angle = 90.0*np.random.rand()
+    resolution = np.random.randint(10000)
     center = [xmin, ymin, zmin]
-    sampled_arc_normal = uniform.sample_over_circular_arc_normal(center, resolution=2, normal=normal, polar=polar, angle=angle)
+    sampled_arc_normal = uniform.sample_over_circular_arc_normal(center, resolution=resolution, normal=normal, polar=polar, angle=angle)
+    angles = np.linspace(np.pi/2.0, np.pi/2.0-np.deg2rad(angle), resolution+1)
 
-    expected_result = zmin+(zmax-zmin)*np.sin([np.pi/2.0, np.pi/4.0, 0.0])
+    expected_result = zmin+(zmax-zmin)*np.sin(angles)
     assert np.allclose(sampled_arc_normal[name], expected_result)
     assert name in sampled_arc_normal.array_names # is name in sampled result
 
@@ -1417,6 +1419,21 @@ def test_extrude_rotate():
     poly = line.extrude_rotate(resolution=resolution)
     assert poly.n_cells == line.n_points - 1
     assert poly.n_points == (resolution + 1)*line.n_points
+
+    translation = 10.0
+    dradius = 1.0
+    poly = line.extrude_rotate(translation=translation, dradius=dradius)
+    zmax = poly.bounds[5]
+    assert zmax == translation
+    xmax = poly.bounds[1]
+    assert xmax == line.bounds[1] + dradius
+
+    poly = line.extrude_rotate(angle=90.0)
+    xmin = poly.bounds[0]
+    xmax = poly.bounds[1]
+    ymin = poly.bounds[2]
+    ymax = poly.bounds[3]
+    assert (xmin == line.bounds[0]) and (xmax == line.bounds[1]) and (ymin == line.bounds[0]) and (ymax == line.bounds[1])
 
 
 def test_extrude_rotate_inplace():

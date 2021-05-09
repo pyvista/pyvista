@@ -16,7 +16,7 @@ RUN conda env update --name base --file /tmp/environment.yml
 RUN conda run conda install -y nodejs
 RUN conda run jupyter labextension install $(cat /tmp/labextensions.txt)
 
-RUN pip install ipyvtk-simple==0.1.2
+RUN pip install ipyvtklink==0.2.1
 
 # allow jupyterlab for ipyvtk
 ENV DISPLAY=:99.0
