@@ -714,6 +714,11 @@ def test_streamlines_return_source(uniform_vec):
     assert all([stream.n_points, stream.n_cells, src.n_points])
 
 
+def test_streamlines_start_position(uniform_vec):
+    stream = uniform_vec.streamlines('vectors', start_position=(0.5, 0.0, 0.0))
+
+    assert all([stream.n_points, stream.n_cells])
+
 def test_streamlines_errors(uniform_vec):
     with pytest.raises(ValueError):
         uniform_vec.streamlines('vectors', integration_direction='not valid')
@@ -727,20 +732,21 @@ def test_streamlines_errors(uniform_vec):
     with pytest.raises(ValueError):
         uniform_vec.streamlines('vectors', step_unit='not valid')
 
+    with pytest.raises(ValueError):
+        uniform_vec.streamlines('vectors', pointa=(0, 0, 0))
+    with pytest.raises(ValueError):
+        uniform_vec.streamlines('vectors', pointb=(0, 0, 0))
 
-def test_streamlines_dataset(uniform_vec):
-    vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
+
+def test_streamlines_from_source(uniform_vec):
+    vertices = np.array([[0, 0, 0], [0.5, 0, 0], [0.5, 0.5, 0], [0, 0.5, 0]])
     source = pyvista.PolyData(vertices)
-    stream = uniform_vec.streamlines('vectors', source=source)
+    stream = uniform_vec.streamlines_from_source(source, 'vectors')
     assert all([stream.n_points, stream.n_cells])
 
-    stream, src = uniform_vec.streamlines('vectors', source=source, return_source=True)
-    assert src == source
-
-    # this one fails
-    # source = pyvista.UniformGrid([3, 3, 3], [1, 1, 1], [0, 0, 0])
-    # stream = uniform_vec.streamlines('vectors', source=source)
-    # assert all([stream.n_points, stream.n_cells])
+    source = pyvista.UniformGrid([5, 5, 5], [0.1, 0.1, 0.1], [0, 0, 0])
+    stream = uniform_vec.streamlines_from_source(source, 'vectors')
+    assert all([stream.n_points, stream.n_cells])
 
 
 def test_sample_over_line():

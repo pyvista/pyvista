@@ -1841,13 +1841,9 @@ class DataSetFilters:
 
     def streamlines(dataset, vectors=None, source_center=None,
                     source_radius=None, n_points=100,
-                    integrator_type=45, integration_direction='both',
-                    surface_streamlines=False, initial_step_length=0.5,
-                    step_unit='cl', min_step_length=0.01, max_step_length=1.0,
-                    max_steps=2000, terminal_speed=1e-12, max_error=1e-6,
-                    max_time=None, compute_vorticity=True, rotation_scale=1.0,
-                    interpolator_type='point', start_position=(0.0, 0.0, 0.0),
-                    return_source=False, pointa=None, pointb=None, source=None):
+                    start_position=None,
+                    return_source=False, pointa=None, pointb=None,
+                    **kwargs):
         """Integrate a vector field to generate streamlines.
 
         The integration is performed using a specified integrator, by default
@@ -1864,30 +1860,96 @@ class DataSetFilters:
         The default behavior uses a Sphere as the source - set it's location and 
         radius via the ``source_center`` and ``source_radius`` keyword arguments.
         ``n_points`` defines the number of starting points on the sphere surface.
-
         Alternatively, a Line source can be used by specifying ``pointa`` and ``pointb``.
-        ``n_points`` again defines the number of points on the line.  You can retrieve the
+        ``n_points`` again defines the number of points on the line.
+        
+        You can retrieve the
         source as :class:`pyvista.PolyData` by specifying ``return_source=True``.
         
-        An arbitrary ``pyvista.DataSet`` can also be provided for the starting points using
-        the ``source`` keyword argument.
+        Optional parameters from ``streamlines_from_source`` can be used here to
+        control the generation of streamlines.
 
         Parameters
         ----------
-        vectors : str
+        vectors : str, optional
             The string name of the active vector field to integrate across
 
-        source_center : tuple(float)
+        source_center : tuple(float), optional
             Length 3 tuple of floats defining the center of the source
             particles. Defaults to the center of the dataset
 
-        source_radius : float
+        source_radius : float, optional
             Float radius of the source particle cloud. Defaults to one-tenth of
             the diagonal of the dataset's spatial extent
 
-        n_points : int
+        n_points : int, optional
             Number of particles present in source sphere or line
 
+        start_position : tuple(float), optional
+            A single point.  This will override the sphere point source.
+
+        return_source : bool, optional
+            Return the source particles as :class:`pyvista.PolyData` as well as the
+            streamlines. This will be the second value returned if ``True``.
+
+        pointa, pointb : tuple(float), optional
+            The coordinates of a start and end point for a line source. This
+            will override the sphere and start_position point source.
+        """
+
+        if source_center is None:
+            source_center = dataset.center
+        if source_radius is None:
+            source_radius = dataset.length / 10.0
+
+        # A single point at start_position
+        if start_position is not None:
+            source_center = start_position
+            source_radius = 0.
+            n_points = 1
+
+        if (
+            (pointa is not None and pointb is None) or 
+            (pointa is None and pointb is not None)
+        ):
+            raise ValueError("Both pointa and pointb must be provided") 
+        elif pointa is not None and pointb is not None:
+            source = _vtk.vtkLineSource()
+            source.SetPoint1(pointa)
+            source.SetPoint2(pointb)
+            source.SetResolution(n_points)
+        else:
+            source = _vtk.vtkPointSource()
+            source.SetCenter(source_center)
+            source.SetRadius(source_radius)
+            source.SetNumberOfPoints(n_points)
+        source.Update()
+        input_source = pyvista.wrap(source.GetOutput())
+        output = dataset.streamlines_from_source(input_source, vectors, **kwargs)
+        if return_source:
+            return output, input_source
+        return output
+
+
+    def streamlines_from_source(dataset, source, vectors=None, 
+                    integrator_type=45, integration_direction='both',
+                    surface_streamlines=False, initial_step_length=0.5,
+                    step_unit='cl', min_step_length=0.01, max_step_length=1.0,
+                    max_steps=2000, terminal_speed=1e-12, max_error=1e-6,
+                    max_time=None, compute_vorticity=True, rotation_scale=1.0,
+                    interpolator_type='point'):
+        """
+        Generate streamlines of vectors from the points of a source mesh.
+        
+        Parameters:
+        -----------
+        source : pyvista.DataSet <- TODO this isn't correct, what is the right type?
+            The points of the source provide the starting points of the
+            streamlines.  This will override both sphere and line sources.
+
+        vectors : str
+            The string name of the active vector field to integrate across
+        
         integrator_type : int
             The integrator type to be used for streamline generation.
             The default is Runge-Kutta45. The recognized solvers are:
@@ -1948,22 +2010,7 @@ class DataSetFilters:
         rotation_scale : float
             This can be used to scale the rate with which the streamribbons
             twist. The default is 1.
-
-        start_position : tuple(float)
-            Set the start position. Default is ``(0.0, 0.0, 0.0)``
-
-        return_source : bool
-            Return the source particles as :class:`pyvista.PolyData` as well as the
-            streamlines. This will be the second value returned if ``True``.
-
-        pointa, pointb : tuple(float)
-            The coordinates of a start and end point for a line source. This
-            will override the sphere point source.
-
-        source : pyvista.DataSet <- TODO this isn't correct, what is the right type?
-            The points of the source provide the starting points of the
-            streamlines.  This will override both sphere and line sources.
-
+        
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
@@ -1983,31 +2030,12 @@ class DataSetFilters:
         if max_time is None:
             max_velocity = dataset.get_data_range()[-1]
             max_time = 4.0 * dataset.GetLength() / max_velocity
-        # Generate the source
-        if source_center is None:
-            source_center = dataset.center
-        if source_radius is None:
-            source_radius = dataset.length / 10.0
-        # TODO check that type of source is OK
-
+        
         # Build the algorithm
         alg = _vtk.vtkStreamTracer()
         # Inputs
         alg.SetInputDataObject(dataset)
-        if source is None:
-            if pointa is not None and pointb is not None:
-                input_source = _vtk.vtkLineSource()
-                input_source.SetPoint1(pointa)
-                input_source.SetPoint2(pointb)
-                input_source.SetResolution(n_points)
-            else:
-                input_source = _vtk.vtkPointSource()
-                input_source.SetCenter(source_center)
-                input_source.SetRadius(source_radius)
-                input_source.SetNumberOfPoints(n_points)
-            alg.SetSourceConnection(input_source.GetOutputPort())
-        else:
-            alg.SetSourceData(source)
+        alg.SetSourceData(source)
 
         # general parameters
         alg.SetComputeVorticity(compute_vorticity)
@@ -2019,7 +2047,6 @@ class DataSetFilters:
         alg.SetMaximumPropagation(max_time)
         alg.SetMinimumIntegrationStep(min_step_length)
         alg.SetRotationScale(rotation_scale)
-        alg.SetStartPosition(start_position)
         alg.SetSurfaceStreamlines(surface_streamlines)
         alg.SetTerminalSpeed(terminal_speed)
         # Model parameters
@@ -2043,13 +2070,7 @@ class DataSetFilters:
             alg.SetInterpolatorTypeToDataSetPointLocator()
         # run the algorithm
         alg.Update()
-        output = _get_output(alg)
-        if return_source:
-            if not source:
-                input_source.Update()
-                source = pyvista.wrap(input_source.GetOutput())
-            return output, source
-        return output
+        return _get_output(alg)
 
     def decimate_boundary(dataset, target_reduction=0.5):
         """Return a decimated version of a triangulation of the boundary.
