@@ -1896,7 +1896,6 @@ class DataSetFilters:
             The coordinates of a start and end point for a line source. This
             will override the sphere and start_position point source.
         """
-
         if source_center is None:
             source_center = dataset.center
         if source_radius is None:
