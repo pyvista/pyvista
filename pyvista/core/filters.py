@@ -1943,7 +1943,7 @@ class DataSetFilters:
         
         Parameters:
         -----------
-        source : pyvista.DataSet <- TODO this isn't correct, what is the right type?
+        source : pyvista.DataSet
             The points of the source provide the starting points of the
             streamlines.  This will override both sphere and line sources.
 
@@ -2010,7 +2010,6 @@ class DataSetFilters:
         rotation_scale : float
             This can be used to scale the rate with which the streamribbons
             twist. The default is 1.
-        
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
@@ -2030,7 +2029,9 @@ class DataSetFilters:
         if max_time is None:
             max_velocity = dataset.get_data_range()[-1]
             max_time = 4.0 * dataset.GetLength() / max_velocity
-        
+        if not isinstance(source, pyvista.DataSet):
+            raise TypeError("source must be a pyvista.DataSet")
+
         # Build the algorithm
         alg = _vtk.vtkStreamTracer()
         # Inputs
