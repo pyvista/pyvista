@@ -562,6 +562,7 @@ def test_plot_add_scalar_bar(sphere):
     plotter.add_scalar_bar(label_font_size=10, title_font_size=20, title='woa',
                            interactive=True, vertical=True)
     plotter.add_scalar_bar(background_color='white', n_colors=256)
+    assert isinstance(plotter.scalar_bar, vtk.vtkScalarBarActor)
     plotter.show(before_close_callback=verify_cache_image)
 
 
