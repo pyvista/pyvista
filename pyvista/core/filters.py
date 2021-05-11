@@ -1852,19 +1852,13 @@ class DataSetFilters:
         ``surface_streamlines`` parameter is used, the integration is constrained
         to lie on the surface defined by 2D cells.
 
-        This produces polylines as the output, with each cell
-        (i.e., polyline) representing a streamline. The attribute values
-        associated with each streamline are stored in the cell data, whereas
-        those associated with streamline-points are stored in the point data.
-
         The default behavior uses a Sphere as the source - set it's location and 
         radius via the ``source_center`` and ``source_radius`` keyword arguments.
         ``n_points`` defines the number of starting points on the sphere surface.
         Alternatively, a Line source can be used by specifying ``pointa`` and ``pointb``.
         ``n_points`` again defines the number of points on the line.
         
-        You can retrieve the
-        source as :class:`pyvista.PolyData` by specifying ``return_source=True``.
+        You can retrieve the source by specifying ``return_source=True``.
         
         Optional parameters from ``streamlines_from_source`` can be used here to
         control the generation of streamlines.
@@ -1895,6 +1889,17 @@ class DataSetFilters:
         pointa, pointb : tuple(float), optional
             The coordinates of a start and end point for a line source. This
             will override the sphere and start_position point source.
+
+        Returns:
+        --------
+        streamlines : pyvista.PolyData
+            This produces polylines as the output, with each cell
+            (i.e., polyline) representing a streamline. The attribute values
+            associated with each streamline are stored in the cell data, whereas
+            those associated with streamline-points are stored in the point data.
+
+        source : pyvista.PolyData
+            Only returned if `return_source=True`
         """
         if source_center is None:
             source_center = dataset.center
@@ -2009,6 +2014,14 @@ class DataSetFilters:
         rotation_scale : float
             This can be used to scale the rate with which the streamribbons
             twist. The default is 1.
+
+        Returns:
+        --------
+        streamlines : pyvista.PolyData
+            This produces polylines as the output, with each cell
+            (i.e., polyline) representing a streamline. The attribute values
+            associated with each streamline are stored in the cell data, whereas
+            those associated with streamline-points are stored in the point data.
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
