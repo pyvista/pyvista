@@ -1846,12 +1846,6 @@ class DataSetFilters:
                     **kwargs):
         """Integrate a vector field to generate streamlines.
 
-        The integration is performed using a specified integrator, by default
-        Runge-Kutta2. This supports integration through any type of dataset.
-        If the dataset contains 2D cells like polygons or triangles and the
-        ``surface_streamlines`` parameter is used, the integration is constrained
-        to lie on the surface defined by 2D cells.
-
         The default behavior uses a Sphere as the source - set it's location and 
         radius via the ``source_center`` and ``source_radius`` keyword arguments.
         ``n_points`` defines the number of starting points on the sphere surface.
@@ -1860,24 +1854,24 @@ class DataSetFilters:
         
         You can retrieve the source by specifying ``return_source=True``.
         
-        Optional parameters from ``streamlines_from_source`` can be used here to
+        Optional keyword parameters from ``streamlines_from_source`` can be used here to
         control the generation of streamlines.
 
         Parameters
         ----------
         vectors : str, optional
-            The string name of the active vector field to integrate across
+            The string name of the active vector field to integrate across.
 
         source_center : tuple(float), optional
             Length 3 tuple of floats defining the center of the source
-            particles. Defaults to the center of the dataset
+            particles. Defaults to the center of the dataset.
 
         source_radius : float, optional
             Float radius of the source particle cloud. Defaults to one-tenth of
-            the diagonal of the dataset's spatial extent
+            the diagonal of the dataset's spatial extent.
 
         n_points : int, optional
-            Number of particles present in source sphere or line
+            Number of particles present in source sphere or line.
 
         start_position : tuple(float), optional
             A single point.  This will override the sphere point source.
@@ -1899,7 +1893,8 @@ class DataSetFilters:
             those associated with streamline-points are stored in the point data.
 
         source : pyvista.PolyData
-            Only returned if `return_source=True`
+            The points of the source are the seed points for the streamlines.
+            Only returned if `return_source=True`.
         """
         if source_center is None:
             source_center = dataset.center
@@ -1945,73 +1940,79 @@ class DataSetFilters:
         """
         Generate streamlines of vectors from the points of a source mesh.
         
+        The integration is performed using a specified integrator, by default
+        Runge-Kutta2. This supports integration through any type of dataset.
+        If the dataset contains 2D cells like polygons or triangles and the
+        ``surface_streamlines`` parameter is used, the integration is constrained
+        to lie on the surface defined by 2D cells.
+
         Parameters:
         -----------
         source : pyvista.DataSet
             The points of the source provide the starting points of the
             streamlines.  This will override both sphere and line sources.
 
-        vectors : str
-            The string name of the active vector field to integrate across
+        vectors : str, optional
+            The string name of the active vector field to integrate across.
         
-        integrator_type : int
+        integrator_type : int, optional
             The integrator type to be used for streamline generation.
             The default is Runge-Kutta45. The recognized solvers are:
             RUNGE_KUTTA2 (``2``),  RUNGE_KUTTA4 (``4``), and RUNGE_KUTTA45
             (``45``). Options are ``2``, ``4``, or ``45``. Default is ``45``.
 
-        integration_direction : str
+        integration_direction : str, optional
             Specify whether the streamline is integrated in the upstream or
             downstream directions (or both). Options are ``'both'``,
             ``'backward'``, or ``'forward'``.
 
-        surface_streamlines : bool
-            Compute streamlines on a surface. Default ``False``
+        surface_streamlines : bool, optional
+            Compute streamlines on a surface. Default ``False``.
 
-        initial_step_length : float
+        initial_step_length : float, optional
             Initial step size used for line integration, expressed ib length
             unitsL or cell length units (see ``step_unit`` parameter).
             either the starting size for an adaptive integrator, e.g., RK45, or
-            the constant / fixed size for non-adaptive ones, i.e., RK2 and RK4)
+            the constant / fixed size for non-adaptive ones, i.e., RK2 and RK4).
 
-        step_unit : str
+        step_unit : str, optional
             Uniform integration step unit. The valid unit is now limited to
             only LENGTH_UNIT (``'l'``) and CELL_LENGTH_UNIT (``'cl'``).
             Default is CELL_LENGTH_UNIT: ``'cl'``.
 
-        min_step_length : float
+        min_step_length : float, optional
             Minimum step size used for line integration, expressed in length or
-            cell length units. Only valid for an adaptive integrator, e.g., RK45
+            cell length units. Only valid for an adaptive integrator, e.g., RK45.
 
-        max_step_length : float
+        max_step_length : float, optional
             Maximum step size used for line integration, expressed in length or
-            cell length units. Only valid for an adaptive integrator, e.g., RK45
+            cell length units. Only valid for an adaptive integrator, e.g., RK45.
 
-        max_steps : int
+        max_steps : int, optional
             Maximum number of steps for integrating a streamline.
             Defaults to ``2000``
 
-        terminal_speed : float
+        terminal_speed : float, optional
             Terminal speed value, below which integration is terminated.
 
-        max_error : float
+        max_error : float, optional
             Maximum error tolerated throughout streamline integration.
 
-        max_time : float
+        max_time : float, optional
             Specify the maximum length of a streamline expressed in LENGTH_UNIT.
 
-        compute_vorticity : bool
+        compute_vorticity : bool, optional
             Vorticity computation at streamline points (necessary for generating
             proper stream-ribbons using the ``vtkRibbonFilter``.
 
-        interpolator_type : str
+        interpolator_type : str, optional
             Set the type of the velocity field interpolator to locate cells
             during streamline integration either by points or cells.
             The cell locator is more robust then the point locator. Options
             are ``'point'`` or ``'cell'`` (abbreviations of ``'p'`` and ``'c'``
             are also supported).
 
-        rotation_scale : float
+        rotation_scale : float, optional
             This can be used to scale the rate with which the streamribbons
             twist. The default is 1.
 
