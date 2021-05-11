@@ -661,7 +661,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     angle = np.deg2rad(arc.GetAngle())
     arc = pyvista.wrap(arc.GetOutput())
     # Compute distance of every point along circular arc
-    center = np.array(center)
+    center = np.array(center).ravel()
     radius = np.sqrt(np.sum((arc.points[0]-center)**2, axis=0))
     angles = np.arange(0.0, 1.0 + 1.0/resolution, 1.0/resolution) * angle
     arc['Distance'] = radius * angles
