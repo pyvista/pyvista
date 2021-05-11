@@ -2,8 +2,7 @@
 
 import numpy as np
 from pyvista import _vtk
-from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
-                    parse_font_family, rcParams)
+from .theme import parse_font_family, parse_color, rcParams
 
 
 class ScalarBars():
