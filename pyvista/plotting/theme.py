@@ -29,40 +29,99 @@ class Theme():
 
     def __init__(self):
         """Initialize the theme."""
-        self._jupyter_backend = None
-        self._auto_close = None
-        self._background = None
-        self._full_screen = None
-        self._camera = None
+        self._jupyter_backend = 'ipyvtklink'
+        self._auto_close = True  # DANGER: set to False with extreme caution
+        self._background = [0.3, 0.3, 0.3]
+        self._full_screen = False
+        self._camera = {
+            'position': [1, 1, 1],
+            'viewup': [0, 0, 1],
+        }
+
         self._notebook = None
-        self._window_size = None
-        self._font = None
-        self._cmap = None
-        self._color = None
-        self._nan_color = None
-        self._edge_color = None
-        self._outline_color = None
-        self._floor_color = None
-        self._colorbar_orientation = None
-        self._colorbar_horizontal = None
-        self._colorbar_vertical = None
-        self._show_scalar_bar = None
-        self._show_edges = None
-        self._lighting = None
-        self._interactive = None
-        self._render_points_as_spheres = None
-        self._use_ipyvtk = None
-        self._transparent_background = None
-        self._title = None
-        self._axes = None
-        self._multi_samples = None
+        self._window_size = [1024, 768]
+        self._font = {
+            'family': 'arial',
+            'size': 12,
+            'title_size': None,
+            'label_size': None,
+            'color': [1, 1, 1],
+            'fmt': None,
+        }
+
+        self._cmap = 'viridis'
+        self._color = 'white'
+        self._nan_color = 'darkgray'
+        self._edge_color = 'black'
+        self._outline_color = 'white'
+        self._floor_color = 'gray'
+        self._colorbar_orientation = 'horizontal'
+        self._colorbar_horizontal = {
+            'width': 0.6,
+            'height': 0.08,
+            'position_x': 0.35,
+            'position_y': 0.05,
+        }
+        self._colorbar_vertical = {
+            'width': 0.08,
+            'height': 0.45,
+            'position_x': 0.9,
+            'position_y': 0.02,
+        }
+        self._show_scalar_bar = True
+        self._show_edges = False
+        self._lighting = True
+        self._interactive = False
+        self._render_points_as_spheres = False
+        self._use_ipyvtk = False
+        self._transparent_background = False
+        self._title = 'PyVista'
+        self._axes = {
+            'x_color': 'tomato',
+            'y_color': 'seagreen',
+            'z_color': 'mediumblue',
+            'box': False,
+            'show': True,
+        }
+        self._multi_samples = 4
         self._multi_rendering_splitting_position = None
-        self._volume_mapper = None
-        self._smooth_shading = None
-        self._depth_peeling = None
-        self._silhouette = None
-        self._slider_style = None
-        self.restore_defaults()
+        self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
+        self._smooth_shading = False
+        self._depth_peeling = {
+            'number_of_peels': 4,
+            'occlusion_ratio': 0.0,
+            'enabled': False,
+        }
+        self._silhouette = {
+            'color': 'black',
+            'line_width': 2,
+            'opacity': 1.0,
+            'feature_angle': False,
+            'decimate': 0.9,
+        },
+        self._slider_style = {
+            'classic': {
+                'slider_length': 0.02,
+                'slider_width': 0.04,
+                'slider_color': (0.5, 0.5, 0.5),
+                'tube_width': 0.005,
+                'tube_color': (1, 1, 1),
+                'cap_opacity': 1,
+                'cap_length': 0.01,
+                'cap_width': 0.02,
+            },
+            'modern': {
+                'slider_length': 0.02,
+                'slider_width': 0.04,
+                'slider_color': (0.43137255, 0.44313725, 0.45882353),
+                'tube_width': 0.04,
+                'tube_color': (0.69803922, 0.70196078, 0.70980392),
+                'cap_opacity': 0,
+                'cap_length': 0.01,
+                'cap_width': 0.02,
+            },
+        },
+
 
     @property
     def background(self):
@@ -662,98 +721,7 @@ class Theme():
 
     def restore_defaults(self):
         """Restore the theme defaults."""
-        self._jupyter_backend = 'ipyvtklink'
-        self._auto_close = True  # DANGER: set to False with extreme caution
-        self._background = [0.3, 0.3, 0.3]
-        self._full_screen = False
-        self._camera = {
-            'position': [1, 1, 1],
-            'viewup': [0, 0, 1],
-        }
-
-        self._notebook = None
-        self._window_size = [1024, 768]
-        self._font = {
-            'family': 'arial',
-            'size': 12,
-            'title_size': None,
-            'label_size': None,
-            'color': [1, 1, 1],
-            'fmt': None,
-        }
-
-        self._cmap = 'viridis'
-        self._color = 'white'
-        self._nan_color = 'darkgray'
-        self._edge_color = 'black'
-        self._outline_color = 'white'
-        self._floor_color = 'gray'
-        self._colorbar_orientation = 'horizontal'
-        self._colorbar_horizontal = {
-            'width': 0.6,
-            'height': 0.08,
-            'position_x': 0.35,
-            'position_y': 0.05,
-        }
-        self._colorbar_vertical = {
-            'width': 0.08,
-            'height': 0.45,
-            'position_x': 0.9,
-            'position_y': 0.02,
-        }
-        self._show_scalar_bar = True
-        self._show_edges = False
-        self._lighting = True
-        self._interactive = False
-        self._render_points_as_spheres = False
-        self._use_ipyvtk = False
-        self._transparent_background = False
-        self._title = 'PyVista'
-        self._axes = {
-            'x_color': 'tomato',
-            'y_color': 'seagreen',
-            'z_color': 'mediumblue',
-            'box': False,
-            'show': True,
-        }
-        self._multi_samples = 4
-        self._multi_rendering_splitting_position = None
-        self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
-        self._smooth_shading = False
-        self._depth_peeling = {
-            'number_of_peels': 4,
-            'occlusion_ratio': 0.0,
-            'enabled': False,
-        }
-        self._silhouette = {
-            'color': 'black',
-            'line_width': 2,
-            'opacity': 1.0,
-            'feature_angle': False,
-            'decimate': 0.9,
-        },
-        self._slider_style = {
-            'classic': {
-                'slider_length': 0.02,
-                'slider_width': 0.04,
-                'slider_color': (0.5, 0.5, 0.5),
-                'tube_width': 0.005,
-                'tube_color': (1, 1, 1),
-                'cap_opacity': 1,
-                'cap_length': 0.01,
-                'cap_width': 0.02,
-            },
-            'modern': {
-                'slider_length': 0.02,
-                'slider_width': 0.04,
-                'slider_color': (0.43137255, 0.44313725, 0.45882353),
-                'tube_width': 0.04,
-                'tube_color': (0.69803922, 0.70196078, 0.70980392),
-                'cap_opacity': 0,
-                'cap_length': 0.01,
-                'cap_width': 0.02,
-            },
-        },
+        self.__init__()
 
     def __repr__(self):
         """User friendly representation of the pyvista theme."""
