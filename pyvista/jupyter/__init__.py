@@ -119,7 +119,7 @@ def set_jupyter_backend(backend):
     if backend == 'none':
         backend = None
 
-    rcParams['jupyter_backend'] = backend
+    pyvista.theme._jupyter_backend = backend
 
 
 # this will run on __init__ to set the backend

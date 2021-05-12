@@ -2960,7 +2960,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             String name of the point data array to use.
 
         fmt : str
-            String formatter used to format numerical data
+            String formatter used to format numerical data.
 
         """
         if not is_pyvista_dataset(points):
