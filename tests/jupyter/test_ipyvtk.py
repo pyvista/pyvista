@@ -17,9 +17,9 @@ skip_no_ipyvtk = pytest.mark.skipif(not has_ipyvtklink,
 
 @skip_no_ipyvtk
 def test_set_jupyter_backend_ipyvtklink():
-    pv.defaults.jupyter_backend = 'ipyvtklink'
-    assert pv.defaults.jupyter_backend == 'ipyvtklink'
-    pv.defaults.jupyter_backend = None
+    pv.global_theme.jupyter_backend = 'ipyvtklink'
+    assert pv.global_theme.jupyter_backend == 'ipyvtklink'
+    pv.global_theme.jupyter_backend = None
 
 
 @skip_no_ipyvtk

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import pyvista
-from pyvista import examples, defaults
+from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 
 NO_PLOTTING = not system_supports_plotting()
@@ -103,13 +103,13 @@ def test_widget_line():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_text_slider():
     p = pyvista.Plotter()
-    func = lambda value: value # Does nothing
+    func = lambda value: value  # Does nothing
     p.add_mesh(mesh)
     with pytest.raises(TypeError, match='must be a list'):
         p.add_text_slider_widget(callback=func, data='foo')
     with pytest.raises(ValueError, match='list of values is empty'):
         p.add_text_slider_widget(callback=func, data=[])
-    for style in defaults.slider_style.keys():
+    for style in pyvista.global_theme.slider_style.keys():
         p.add_text_slider_widget(callback=func, data=['foo', 'bar'], style=style)
     p.close()
 
@@ -117,19 +117,19 @@ def test_widget_text_slider():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_slider():
     p = pyvista.Plotter()
-    func = lambda value: value # Does nothing
+    func = lambda value: value  # Does nothing
     p.add_mesh(mesh)
-    p.add_slider_widget(callback=func, rng=[0,10], style="classic")
+    p.add_slider_widget(callback=func, rng=[0, 10], style="classic")
     p.close()
 
     p = pyvista.Plotter()
     for event_type in ['start', 'end', 'always']:
-        p.add_slider_widget(callback=func, rng=[0,10],
+        p.add_slider_widget(callback=func, rng=[0, 10],
                             event_type=event_type)
     with pytest.raises(TypeError, match='type for ``style``'):
-        p.add_slider_widget(callback=func, rng=[0,10], style=0)
+        p.add_slider_widget(callback=func, rng=[0, 10], style=0)
     with pytest.raises(KeyError, match='styles available'):
-        p.add_slider_widget(callback=func, rng=[0,10], style="foo")
+        p.add_slider_widget(callback=func, rng=[0, 10], style="foo")
     with pytest.raises(TypeError, match='type for `event_type`'):
         p.add_slider_widget(callback=func, rng=[0,10],
                             event_type=0)

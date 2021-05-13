@@ -76,7 +76,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
 
-    
+    theme : pyvista.Theme, optional
+        Plot specific theme.
 
     **kwargs : optional keyword arguments
         See help(Plotter.add_mesh) for additional options.
@@ -109,7 +110,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
-    auto_close = kwargs.get('auto_close', pyvista.defaults.auto_close)
+    auto_close = kwargs.get('auto_close', pyvista.global_theme.auto_close)
 
     if notebook:
         off_screen = notebook

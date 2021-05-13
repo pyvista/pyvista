@@ -5,7 +5,6 @@ from pytest import fixture
 import pyvista
 from pyvista import examples
 
-pyvista.defaults.load_theme(pyvista.themes._TestingTheme())
 pyvista.OFF_SCREEN = True
 
 

@@ -2,12 +2,11 @@
 
 import os
 
-from pyvista import _vtk
 from .plotting.colors import PARAVIEW_BACKGROUND
 from .plotting.tools import parse_color
 
 
-ALLOWED_THEMES = ['paraview', 'document', 'night', 'default']
+ALLOWED_THEMES = ['paraview', 'document', 'dark', 'night', 'default']
 
 
 def set_plot_theme(theme):
@@ -24,14 +23,14 @@ def set_plot_theme(theme):
             pyvista.defaults.restore_defaults()
         else:
             raise ValueError(f'Expected one of the following themes:\n{ALLOWED_THEMES}')
-    elif isinstance(theme, Theme):
+    elif isinstance(theme, DefaultTheme):
         pyvista.defaults.load_theme(theme)
     else:
         raise TypeError(f'Expected a pyvista.Theme or str, not '
                         f'a {type(theme)}')
 
 
-class Theme():
+class DefaultTheme():
     """PyVista default theme."""
 
     def __init__(self):
@@ -999,8 +998,45 @@ class Theme():
     def name(self, name):
         self._name = name
 
+    def load_theme(self, theme):
+        """Overwrite the current them with a theme.
 
-class DarkTheme(Theme):
+        Examples
+        --------
+        Create a custom theme from the default theme and load it into
+        pyvista.
+
+        >>> import pyvista
+        >>> from pyvista.themes import DefaultTheme
+        >>> my_theme = DefaultTheme()
+        >>> my_theme.font['size'] = 20
+        >>> my_theme.font['title_size'] = 40
+        >>> my_theme.cmap = 'jet'
+        ...
+        >>> pyvista.defaults.load_theme(my_theme)
+        >>> pyvista.defaults.font['size']
+        20
+
+        Create a custom theme from the dark theme and load it into
+        pyvista.
+
+        >>> from pyvista.themes import DarkTheme
+        >>> my_theme = DarkTheme()
+        >>> my_theme.show_edges = True
+        >>> pyvista.defaults.load_theme(my_theme)
+        >>> pyvista.defaults.show_edges
+        True
+
+        """
+        if not isinstance(theme, DefaultTheme):
+            raise TypeError('``theme`` must be a pyvista theme like '
+                            '``pyvista.themes.DefaultTheme``')
+
+        for name, value in vars(theme).items():
+            setattr(self, name, value)
+
+
+class DarkTheme(DefaultTheme):
     """Dark mode theme.
 
     Black background, "viridis" colormap, tan meshes, white (hidden) edges.
@@ -1033,7 +1069,7 @@ class DarkTheme(Theme):
         self._axes['z_color'] = 'blue'
 
 
-class ParaViewTheme(Theme):
+class ParaViewTheme(DefaultTheme):
     """Set the theme to a paraview-like theme.
 
     Examples
@@ -1066,7 +1102,7 @@ class ParaViewTheme(Theme):
         self._axes['z_color'] = 'green'
 
 
-class DocumentTheme(Theme):
+class DocumentTheme(DefaultTheme):
     """Set the global theme to the document theme.
 
     This theme uses a white background, the "viridis" colormap,
@@ -1104,7 +1140,7 @@ class DocumentTheme(Theme):
         self._axes['z_color'] = 'blue'
 
 
-class _TestingTheme(Theme):
+class _TestingTheme(DefaultTheme):
     """Low resolution testing theme for ``pytest``.
 
     Necessary for image regression.  Xvfb doesn't support
@@ -1119,8 +1155,8 @@ class _TestingTheme(Theme):
         self._window_size = [400, 400]
 
 
-class Defaults(Theme):
-    """Global PyVista defaults.
+class _GlobalTheme(DefaultTheme):
+    """Global PyVista theme.
 
     Examples
     --------
@@ -1138,39 +1174,3 @@ class Defaults(Theme):
     def __init__(self):
         """Initialize the base theme."""
         super().__init__()
-
-    def load_theme(self, theme):
-        """Overwrite the current defaults with a theme.
-
-        Examples
-        --------
-        Create a custom theme from the default theme and load it into
-        pyvista.
-
-        >>> import pyvista
-        >>> from pyvista.themes import Theme
-        >>> my_theme = Theme()
-        >>> my_theme.font['size'] = 20
-        >>> my_theme.font['title_size'] = 40
-        >>> my_theme.cmap = 'jet'
-        ...
-        >>> pyvista.defaults.load_theme(my_theme)
-        >>> pyvista.defaults.font['size']
-        20
-
-        Create a custom theme from the dark theme and load it into
-        pyvista.
-
-        >>> from pyvista.themes import DarkTheme
-        >>> my_theme = DarkTheme()
-        >>> my_theme.show_edges = True
-        >>> pyvista.defaults.load_theme(my_theme)
-        >>> pyvista.defaults.show_edges
-        True
-
-        """
-        if not isinstance(theme, Theme):
-            raise TypeError('``theme`` must be a ``pyvista.Theme``')
-
-        for name, value in vars(theme).items():
-            setattr(self, name, value)

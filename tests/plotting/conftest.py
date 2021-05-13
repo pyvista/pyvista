@@ -4,12 +4,11 @@ memory leaks for all plotting tests
 import gc
 
 import pytest
-import vtk
 
 import pyvista
 
 # this is set here as well in conftest one level up.
-pyvista.defaults.load_theme(pyvista.themes._TestingTheme())
+pyvista.global_theme.load_theme(pyvista.themes._TestingTheme())
 pyvista.OFF_SCREEN = True
 
 

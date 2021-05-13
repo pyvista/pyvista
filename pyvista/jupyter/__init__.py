@@ -6,7 +6,6 @@ from .itkplotter import PlotterITK
 ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'none']
 
 
-
 def set_jupyter_backend(backend):
     """Set the plotting backend for a jupyter notebook.
 
@@ -113,8 +112,4 @@ def set_jupyter_backend(backend):
     if backend == 'none':
         backend = None
 
-    pyvista.defaults._jupyter_backend = backend
-
-
-# this will run on __init__ to set the backend
-# check_backend_env_var()
+    pyvista.global_theme._jupyter_backend = backend

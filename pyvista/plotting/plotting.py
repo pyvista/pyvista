@@ -19,6 +19,7 @@ import scooby
 
 import pyvista
 from pyvista import _vtk
+from pyvista.themes import DefaultTheme
 from pyvista.utilities import (assert_empty_kwargs, convert_array,
                                convert_string_array, get_array,
                                is_pyvista_dataset, abstract_class,
@@ -86,7 +87,7 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # finally, check if using a backend that doesn't require an xserver
-        if pyvista.defaults.jupyter_backend in ['ipygany']:
+        if pyvista.global_theme.jupyter_backend in ['ipygany']:
             return
 
         # Check if VTK has EGL support
@@ -173,7 +174,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Initialize base plotter."""
         log.debug('BasePlotter init start')
         if theme is None:
-            self._theme = pyvista.defaults
+            self._theme = pyvista.global_theme
         else:
             if not isinstance(theme, pyvista.themes.Theme):
                 raise TypeError('Expected pyvista.Theme for ``theme``, not '

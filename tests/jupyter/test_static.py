@@ -23,13 +23,13 @@ def test_set_jupyter_backend_ipygany_fail():
 @pytest.mark.parametrize('backend', [None, 'none'])
 def test_set_jupyter_backend_none(backend):
     pv.set_jupyter_backend(backend)
-    assert pv.defaults.jupyter_backend is None
+    assert pv.global_theme.jupyter_backend is None
 
 
 @skip_no_ipython
 def test_set_jupyter_backend_ipygany():
     pv.set_jupyter_backend('static')
-    assert pv.defaults.jupyter_backend == 'static'
+    assert pv.global_theme.jupyter_backend == 'static'
     pv.set_jupyter_backend(None)
 
 

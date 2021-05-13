@@ -14,12 +14,12 @@ from pyvista.core import *
 from pyvista.utilities.misc import _get_vtk_id_type
 from pyvista import _vtk
 from pyvista.jupyter import set_jupyter_backend, PlotterITK
-from pyvista.themes import Defaults, set_plot_theme
+from pyvista.themes import _GlobalTheme, set_plot_theme
 
 # Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
-defaults = Defaults()
+global_theme = _GlobalTheme()
 
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()

@@ -262,7 +262,7 @@ class Renderer(_vtk.vtkRenderer):
         ----------
         number_of_peels : int
             The maximum number of peeling layers. Initial value is 4
-            and is set in the ``pyvista.defaults``. A special value of
+            and is set in the ``pyvista.global_theme``. A special value of
             0 means no maximum limit.  It has to be a positive value.
 
         occlusion_ratio : float

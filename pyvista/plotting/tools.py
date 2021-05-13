@@ -86,7 +86,7 @@ def system_supports_plotting():
 def update_axes_label_color(axes_actor, color=None):
     """Set the axes label color (internale helper)."""
     if color is None:
-        color = pyvista.defaults.font['color']
+        color = pyvista.global_theme.font['color']
     color = parse_color(color)
     if isinstance(axes_actor, _vtk.vtkAxesActor):
         prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
@@ -106,11 +106,11 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
                        labels_off=False, line_width=2):
     """Return an axis actor to add in the scene."""
     if x_color is None:
-        x_color = pyvista.defaults.axes['x_color']
+        x_color = pyvista.global_theme.axes['x_color']
     if y_color is None:
-        y_color = pyvista.defaults.axes['y_color']
+        y_color = pyvista.global_theme.axes['y_color']
     if z_color is None:
-        z_color = pyvista.defaults.axes['z_color']
+        z_color = pyvista.global_theme.axes['z_color']
     axes_actor = _vtk.vtkAxesActor()
     axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
     axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
@@ -145,13 +145,13 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
                                 labels_off=False, opacity=0.5,):
     """Create a Box axes orientation widget with labels."""
     if x_color is None:
-        x_color = pyvista.defaults.axes['x_color']
+        x_color = pyvista.global_theme.axes['x_color']
     if y_color is None:
-        y_color = pyvista.defaults.axes['y_color']
+        y_color = pyvista.global_theme.axes['y_color']
     if z_color is None:
-        z_color = pyvista.defaults.axes['z_color']
+        z_color = pyvista.global_theme.axes['z_color']
     if edge_color is None:
-        edge_color = pyvista.defaults.edge_color
+        edge_color = pyvista.global_theme.edge_color
     axes_actor = _vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     if xlabel is not None:
@@ -348,7 +348,7 @@ def parse_color(color, opacity=None, default_color=None):
     """
     if color is None:
         if default_color is None:
-            color = pyvista.defaults.color
+            color = pyvista.global_theme.color
         else:
             color = default_color
     if isinstance(color, str):

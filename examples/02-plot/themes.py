@@ -75,18 +75,18 @@ plotter.show()
 
 
 ###############################################################################
-# Modifying Global Defaults
-# ~~~~~~~~~~~~~~~~~~~~~~~~~
+# Modifying the Global Theme
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can control how meshes are displayed by setting individual
 # parameters when plotting like ``mesh.plot(show_edges=True)``, or by
 # setting a global theme.  You can also control individual parameters
-# how all meshes are displayed by default via ``pyvista.defaults``.
+# how all meshes are displayed by default via ``pyvista.global_theme``.
 #
 # Here, we print out the current global defaults for all ``pyvista``
 # meshes.  These values have been changed by the previous "Document"
 # theme.
 
-pv.defaults
+pv.global_theme
 
 
 ###############################################################################
@@ -95,7 +95,7 @@ pv.defaults
 # change this default behavior globally by changing the default
 # parameter.
 
-pv.defaults.show_edges = True
+pv.global_theme.show_edges = True
 pv.Sphere().plot()
 
 
@@ -104,9 +104,9 @@ pv.Sphere().plot()
 # Not that the figure's color was reset to the default "white" color
 # rather than the "tan" color default with the document theme.  Under
 # the hood, each theme applied changes the global plot defaults stored
-# within ``pyvista.defaults.``
+# within ``pyvista.global_theme.``
 
-pv.defaults.restore_defaults()
+pv.global_theme.restore_defaults()
 pv.Sphere().plot()
 
 
@@ -127,7 +127,7 @@ my_theme.lighting = False
 my_theme.show_edges = True
 my_theme.axes['box'] = True
 
-pv.defaults.load_theme(my_theme)
+pv.global_theme.load_theme(my_theme)
 pv.Sphere().plot()
 
 
