@@ -250,9 +250,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @theme.setter
     def theme(self, theme):
-        if not isinstance(theme, pyvista.themes.Theme):
-            raise TypeError('Expected an instance of pyvista.Theme, not '
-                            f'{type(theme)}')
+        if not isinstance(theme, pyvista.themes.DefaultTheme):
+            raise TypeError('Expected a pyvista theme like ``pyvista.DefaultTheme``, '
+                            f'not {type(theme)}')
         self._theme = theme
 
     @property
