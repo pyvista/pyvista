@@ -2,13 +2,10 @@ import os
 import numpy as np
 from pytest import fixture
 
-# env var testing, but be here before any pyvista imports
-os.environ['PYVISTA_JUPYTER_BACKEND'] = 'none'
-
 import pyvista
 from pyvista import examples
 
-pyvista.set_plot_theme('testing')
+pyvista.defaults.load_theme(pyvista.themes._TestingTheme())
 pyvista.OFF_SCREEN = True
 
 

@@ -1,16 +1,10 @@
 """Jupyter notebook plotting module."""
 
-import os
-from .. import rcParams
+import pyvista
 from .itkplotter import PlotterITK
 
 ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'none']
 
-
-def check_backend_env_var():
-    """Set ipyvtk_vtk rcParam flag for interactive notebook rendering."""
-    if 'PYVISTA_JUPYTER_BACKEND' in os.environ:
-        set_jupyter_backend(os.environ['PYVISTA_JUPYTER_BACKEND'])
 
 
 def set_jupyter_backend(backend):
@@ -114,13 +108,13 @@ def set_jupyter_backend(backend):
 
     if backend == 'ipygany':
         # raises an import error when fail
-        import pyvista.jupyter.pv_ipygany
+        from pyvista.jupyter import pv_ipygany
 
     if backend == 'none':
         backend = None
 
-    pyvista.theme._jupyter_backend = backend
+    pyvista.defaults._jupyter_backend = backend
 
 
 # this will run on __init__ to set the backend
-check_backend_env_var()
+# check_backend_env_var()

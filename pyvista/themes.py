@@ -2,35 +2,41 @@
 
 import os
 
-import pyvista
 from pyvista import _vtk
-from .colors import string_to_rgb, PARAVIEW_BACKGROUND
-from pyvista.jupyter import ALLOWED_BACKENDS
+from .plotting.colors import PARAVIEW_BACKGROUND
+from .plotting.tools import parse_color
 
-MAX_N_COLOR_BARS = 10
-FONT_KEYS = {'arial': _vtk.VTK_ARIAL,
-             'courier': _vtk.VTK_COURIER,
-             'times': _vtk.VTK_TIMES}
+
+ALLOWED_THEMES = ['paraview', 'document', 'night', 'default']
+
+
+def set_plot_theme(theme):
+    """Set the plotting parameters to a predefined theme."""
+    import pyvista
+    if isinstance(theme, str):
+        if theme.lower() in ['paraview', 'pv']:
+            pyvista.defaults.load_theme(ParaViewTheme())
+        elif theme.lower() in ['document', 'doc', 'paper', 'report']:
+            pyvista.defaults.load_theme(DocumentTheme())
+        elif theme.lower() in ['night', 'dark']:
+            pyvista.defaults.load_theme(DarkTheme())
+        elif theme.lower() in ['default']:
+            pyvista.defaults.restore_defaults()
+        else:
+            raise ValueError(f'Expected one of the following themes:\n{ALLOWED_THEMES}')
+    elif isinstance(theme, Theme):
+        pyvista.defaults.load_theme(theme)
+    else:
+        raise TypeError(f'Expected a pyvista.Theme or str, not '
+                        f'a {type(theme)}')
 
 
 class Theme():
-    """PyVista global theme.
-
-    Stores and sets the global theme in ``pyvista``.
-
-    Examples
-    --------
-    Change the default background color to white.
-
-    >>> import pyvista
-    >>> pyvista.theme.color = 'white'
-
-    """
+    """PyVista default theme."""
 
     def __init__(self):
         """Initialize the theme."""
-        self._jupyter_backend = 'ipyvtklink'
-        self._auto_close = True  # DANGER: set to False with extreme caution
+        self._name = 'default'
         self._background = [0.3, 0.3, 0.3]
         self._full_screen = False
         self._camera = {
@@ -83,7 +89,18 @@ class Theme():
             'box': False,
             'show': True,
         }
-        self._multi_samples = 4
+
+        # Grab system flag for anti-aliasing
+        try:
+            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', 4))
+        except ValueError:
+            self._multi_samples = 4
+
+        # Grab system flag for auto-closing
+        self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
+
+        self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'ipyvtklink')
+
         self._multi_rendering_splitting_position = None
         self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
         self._smooth_shading = False
@@ -98,7 +115,7 @@ class Theme():
             'opacity': 1.0,
             'feature_angle': False,
             'decimate': 0.9,
-        },
+        }
         self._slider_style = {
             'classic': {
                 'slider_length': 0.02,
@@ -120,8 +137,7 @@ class Theme():
                 'cap_length': 0.01,
                 'cap_width': 0.02,
             },
-        },
-
+        }
 
     @property
     def background(self):
@@ -132,7 +148,7 @@ class Theme():
         Set the default global background of all plots to white.
 
         >>> import pyvista
-        >>> pyvista.theme.background = 'white'
+        >>> pyvista.defaults.background = 'white'
         """
         return self._background
 
@@ -204,6 +220,7 @@ class Theme():
 
     @jupyter_backend.setter
     def jupyter_backend(self, value):
+        import pyvista
         pyvista.set_jupyter_backend(value)
 
     @property
@@ -216,7 +233,7 @@ class Theme():
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.theme.auto_close = False
+        >>> pyvista.defaults.auto_close = False
 
         """
         return self._auto_close
@@ -232,7 +249,7 @@ class Theme():
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.theme.full_screen = True
+        >>> pyvista.defaults.full_screen = True
         """
         return self._full_screen
 
@@ -242,23 +259,23 @@ class Theme():
 
     @property
     def camera(self):
-        """Return or set the default camera position
+        """Return or set the default camera position.
 
         Examples
         --------
         Set both the position and view of the camera.
 
         >>> import pyvista
-        >>> pyvista.theme.camera = {'position': [1, 1, 1],
-        ...                         'viewup': [0, 0, 1]}
+        >>> pyvista.defaults.camera = {'position': [1, 1, 1],
+        ...                            'viewup': [0, 0, 1]}
 
         Set the default position of the camera
 
-        >>> pyvista.theme.camera['position'] = [1, 1, 1]
+        >>> pyvista.defaults.camera['position'] = [1, 1, 1]
 
         Set the default view of the camera
 
-        >>> pyvista.theme.camera['viewup'] = [0, 0, 1]
+        >>> pyvista.defaults.camera['viewup'] = [0, 0, 1]
 
         """
         return self._camera
@@ -277,7 +294,7 @@ class Theme():
 
     @property
     def notebook(self):
-        """Return or set the state of notebook plotting
+        """Return or set the state of notebook plotting.
 
         Setting this to ``True`` always enables notebook plotting,
         while setting it to ``False`` disables plotting even when
@@ -288,7 +305,7 @@ class Theme():
         Disable all jupyter notebook plotting
 
         >>> import pyvista
-        >>> pyvista.theme.notebook = False
+        >>> pyvista.defaults.notebook = False
 
         """
 
@@ -305,7 +322,7 @@ class Theme():
         Set window size to ``[400, 400]``
 
         >>> import pyvista
-        >>> pyvista.theme.window_size = [400, 400]
+        >>> pyvista.defaults.window_size = [400, 400]
 
         """
         return self._window_size
@@ -315,7 +332,7 @@ class Theme():
         if not len(window_size) == 2:
             raise ValueError('Expected a length 2 iterable for ``window_size``')
 
-        # ensure positve size
+        # ensure positive size
         if window_size[0] < 0 or window_size[1] < 0:
             raise ValueError('Window size must be a positive value')
 
@@ -331,27 +348,27 @@ class Theme():
         'arial', 'courier', or 'times'.
 
         >>> import pyvista
-        >>> pyvista.theme.font['family'] = 'arial'
+        >>> pyvista.defaults.font['family'] = 'arial'
 
         Set the default font size to 20.
 
-        >>> pyvista.theme.font['size'] = 20
+        >>> pyvista.defaults.font['size'] = 20
 
         Set the default title size to 40
 
-        >>> pyvista.theme.font['title_size'] = 40
+        >>> pyvista.defaults.font['title_size'] = 40
 
         Set the default label size to 10
 
-        >>> pyvista.theme.font['label_size'] = 10
+        >>> pyvista.defaults.font['label_size'] = 10
 
         Set the default text color to 'grey'
 
-        >>> pyvista.theme.font['color'] = 'grey'
+        >>> pyvista.defaults.font['color'] = 'grey'
 
         String formatter used to format numerical data to '%.6e'
 
-        >>> pyvista.theme.font['color'] = '%.6e'
+        >>> pyvista.defaults.font['color'] = '%.6e'
 
         """
         return self._font
@@ -379,7 +396,7 @@ class Theme():
         Set the default global colormap to 'jet'
 
         >>> import pyvista
-        >>> pyvista.theme.cmap = 'jet'
+        >>> pyvista.defaults.cmap = 'jet'
 
         """
         return self._cmap
@@ -407,7 +424,7 @@ class Theme():
         Set the default mesh color to 'red'
 
         >>> import pyvista
-        >>> pyvista.theme.color = 'red'
+        >>> pyvista.defaults.color = 'red'
 
         """
         return self._color
@@ -425,7 +442,7 @@ class Theme():
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.theme.nan_color = 'darkgray'
+        >>> pyvista.defaults.nan_color = 'darkgray'
         """
         return self._nan_color
 
@@ -442,7 +459,7 @@ class Theme():
         Set the global edge color to 'blue'
 
         >>> import pyvista
-        >>> pyvista.theme.edge_color = 'blue'
+        >>> pyvista.defaults.edge_color = 'blue'
         """
         return self._edge_color
 
@@ -457,7 +474,7 @@ class Theme():
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.theme.outline_color = 'white'
+        >>> pyvista.defaults.outline_color = 'white'
         """
         return self._outline_color
 
@@ -472,7 +489,7 @@ class Theme():
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.theme.floor_color = 'black'
+        >>> pyvista.defaults.floor_color = 'black'
         """
         return self._floor_color
 
@@ -482,14 +499,14 @@ class Theme():
 
     @property
     def colorbar_orientation(self):
-        """Return or set the default global colorbar orientation
+        """Return or set the default global colorbar orientation.
 
         Must be either ``'vertical'`` or ``'horizontal'``.
 
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.theme.colorbar_orientation = 'horizontal'
+        >>> pyvista.defaults.colorbar_orientation = 'horizontal'
         """
         return self._colorbar_orientation
 
@@ -502,14 +519,14 @@ class Theme():
 
     @property
     def colorbar_horizontal(self):
-        """Default orientation when the colorbar is set to 'horizontal'
+        """Return or set the default parameters of a horizontal colorbar.
 
         Examples
         --------
         Set the default colorbar width to 0.6
 
         >>> import pyvista
-        >>> pyvista.theme.colorbar_horizontal['width'] = 0.6
+        >>> pyvista.defaults.colorbar_horizontal['width'] = 0.6
 
         Set all the parameters of the colorbar
 
@@ -518,28 +535,29 @@ class Theme():
         ... 'height': 0.08,
         ... 'position_x': 0.35,
         ... 'position_y': 0.05}
-        >>> pyvista.theme.colorbar_horizontal = colorbar_parm
+        >>> pyvista.defaults.colorbar_horizontal = colorbar_parm
 
         """
         return self._colorbar_horizontal
 
     @colorbar_horizontal.setter
     def colorbar_horizontal(self, colorbar_horizontal):
-        for key in colorbar_horizontal:
+        for key, value in colorbar_horizontal.items():
             if key not in self._colorbar_horizontal:
-                raise KeyError(f'Invalid key {key} for colorbar_horizontal')
-        self._colorbar_horizontal = colorbar_horizontal
+                raise KeyError(f'Invalid key {key} for colorbar_horizontal'
+                               f'Permitted keys are: {", ".join(self._colorbar_horizontal)}')
+            self._colorbar_horizontal[key] = value
 
     @property
     def colorbar_vertical(self):
-        """Default orientation when the colorbar is set to 'vertical'
+        """Return or set the default parameters of a vertical colorbar.
 
         Examples
         --------
         Set the default colorbar width to 0.45
 
         >>> import pyvista
-        >>> pyvista.theme.colorbar_vertical['width'] = 0.45
+        >>> pyvista.defaults.colorbar_vertical['width'] = 0.45
 
         Set all the parameters of the colorbar
 
@@ -548,17 +566,18 @@ class Theme():
         ... 'height': 0.45,
         ... 'position_x': 0.9,
         ... 'position_y': 0.02}
-        >>> pyvista.theme.colorbar_vertical = colorbar_parm
+        >>> pyvista.defaults.colorbar_vertical = colorbar_parm
 
         """
         return self._colorbar_vertical
 
     @colorbar_vertical.setter
     def colorbar_vertical(self, colorbar_vertical):
-        for key in colorbar_vertical:
+        for key, value in colorbar_vertical.items():
             if key not in self._colorbar_vertical:
-                raise KeyError(f'Invalid key {key} for colorbar_vertical')
-        self._colorbar_vertical = colorbar_vertical
+                raise KeyError(f'Invalid key {key} for colorbar_vertical'
+                               f'Permitted keys are: {", ".join(self._colorbar_vertical)}')
+            self._colorbar_vertical[key] = value
 
     @property
     def show_scalar_bar(self):
@@ -569,7 +588,7 @@ class Theme():
         Show the scalar bar by default when scalars are available.
 
         >>> import pyvista
-        >>> pyvista.theme.show_scalar_bar = True
+        >>> pyvista.defaults.show_scalar_bar = True
 
         """
         return self._show_scalar_bar
@@ -587,7 +606,7 @@ class Theme():
         Show edges globally by default.
 
         >>> import pyvista
-        >>> pyvista.theme.show_edges = True
+        >>> pyvista.defaults.show_edges = True
 
         """
         return self._show_edges
@@ -605,7 +624,7 @@ class Theme():
         Disable lighting globally
 
         >>> import pyvista
-        >>> pyvista.theme.lighting = False
+        >>> pyvista.defaults.lighting = False
         """
         return self._lighting
 
@@ -615,6 +634,15 @@ class Theme():
 
     @property
     def interactive(self):
+        """Return or set the default global ``interactive`` parameter.
+
+        Examples
+        --------
+        Make all plots non-interactive globally.
+
+        >>> import pyvista
+        >>> pyvista.defaults.interactive = False
+        """
         return self._interactive
 
     @interactive.setter
@@ -623,6 +651,15 @@ class Theme():
 
     @property
     def render_points_as_spheres(self):
+        """Return or set the default global ``render_points_as_spheres`` parameter.
+
+        Examples
+        --------
+        Render points as spheres by default globally to ``True``.
+
+        >>> import pyvista
+        >>> pyvista.defaults.render_points_as_spheres = True
+        """
         return self._render_points_as_spheres
 
     @render_points_as_spheres.setter
@@ -631,16 +668,25 @@ class Theme():
 
     @property
     def use_ipyvtk(self):
-        from pyvista.core.errors import DeprecationError
-        raise DeprecationError('DEPRECATED: Please use ``jupyter_backend``')
+        """Return or set the default global ``use_ipyvtk`` parameter.
 
-    @use_ipyvtk.setter
-    def use_ipyvtk(self, use_ipyvtk):
+        This parameter has been deprecated in favor of
+        ``jupyter_backend``.
+        """
         from pyvista.core.errors import DeprecationError
         raise DeprecationError('DEPRECATED: Please use ``jupyter_backend``')
 
     @property
     def transparent_background(self):
+        """Return or set the default global ``transparent_background`` parameter.
+
+        Examples
+        --------
+        Set transparent_background globally to ``True``
+
+        >>> import pyvista
+        >>> pyvista.defaults.transparent_background = True
+        """
         return self._transparent_background
 
     @transparent_background.setter
@@ -649,6 +695,17 @@ class Theme():
 
     @property
     def title(self):
+        """Return or set the default global ``title`` parameter.
+
+        This is the VTK render window title.
+
+        Examples
+        --------
+        Set title globally to 'plot'
+
+        >>> import pyvista
+        >>> pyvista.defaults.title = 'plot'
+        """
         return self._title
 
     @title.setter
@@ -657,6 +714,17 @@ class Theme():
 
     @property
     def multi_samples(self):
+        """Return or set the default global ``multi_samples`` parameter.
+
+        Set the number of multisamples to enable hardware antialiasing.
+
+        Examples
+        --------
+        Set the default number of multisamples to 2.
+
+        >>> import pyvista
+        >>> pyvista.defaults.multi_samples = 2
+        """
         return self._multi_samples
 
     @multi_samples.setter
@@ -665,6 +733,16 @@ class Theme():
 
     @property
     def multi_rendering_splitting_position(self):
+        """Return or set the default global ``multi_rendering_splitting_position`` parameter.
+
+        Examples
+        --------
+        Set multi_rendering_splitting_position globally to 0.5 (the
+        middle of the window).
+
+        >>> import pyvista
+        >>> pyvista.defaults.multi_rendering_splitting_position = 0.5
+        """
         return self._multi_rendering_splitting_position
 
     @multi_rendering_splitting_position.setter
@@ -673,14 +751,45 @@ class Theme():
 
     @property
     def volume_mapper(self):
+        """Return or set the default global ``volume_mapper`` parameter.
+
+        Must be one of the following strings, which are mapped to the
+        following VTK volume mappers.
+
+        ``'fixed_point'`` : ``vtk.vtkFixedPointVolumeRayCastMapper``
+        ``'gpu'`` : ``vtk.vtkGPUVolumeRayCastMapper``
+        ``'open_gl'`` : ``vtk.vtkOpenGLGPUVolumeRayCastMapper``
+        ``'smart'`` : ``vtk.vtkSmartVolumeMapper``
+
+        Examples
+        --------
+        Set default volume mapper globally to 'gpu'.
+
+        >>> import pyvista
+        >>> pyvista.defaults.volume_mapper = 'gpu'
+        """
         return self._volume_mapper
 
     @volume_mapper.setter
-    def volume_mapper(self, volume_mapper):
-        self._volume_mapper = volume_mapper
+    def volume_mapper(self, mapper):
+        mappers = ['fixed_point', 'gpu', 'open_gl', 'smart']
+        if mapper not in mappers:
+            raise TypeError(f"Mapper ({mapper}) unknown. Available volume mappers "
+                            f"include:\n {', '.join(mappers)}")
+
+        self._volume_mapper = mapper
 
     @property
     def smooth_shading(self):
+        """Return or set the global default ``smooth_shading`` parameter.
+
+        Examples
+        --------
+        Set the global smooth_shading parameter default to ``True``.
+
+        >>> import pyvista
+        >>> pyvista.defaults.smooth_shading = True
+        """
         return self._smooth_shading
 
     @smooth_shading.setter
@@ -689,22 +798,103 @@ class Theme():
 
     @property
     def depth_peeling(self):
+        """Return or set the global default ``depth_peeling`` parameter.
+
+        self._depth_peeling = {
+            'number_of_peels': 4,
+            'occlusion_ratio': 0.0,
+            'enabled': False,
+        }
+
+        Examples
+        --------
+        Set the global depth_peeling parameter default to be enabled
+        with 8 peels.
+
+        >>> import pyvista
+        >>> pyvista.defaults.depth_peeling = {
+        ...     'number_of_peels': 8,
+        ...     'occlusion_ratio': 0.0,
+        ...     'enabled': False}
+        """
         return self._depth_peeling
 
     @depth_peeling.setter
     def depth_peeling(self, depth_peeling):
-        self._depth_peeling = depth_peeling
+        for key, value in depth_peeling.items():
+            if key not in self._depth_peeling:
+                raise KeyError(f'Invalid key ``{key}`` for depth_peeling.\n'
+                               f'Permitted keys are: {", ".join(self._depth_peeling)}')
+            self._depth_peeling[key] = value
 
     @property
     def silhouette(self):
+        """Return or set the global default ``silhouette`` parameter.
+
+        Examples
+        --------
+        Set the silhouette parameter dictionary
+
+        >>> import pyvista
+        >>> pyvista.defaults.silhouette = {
+        ...    'color': 'black',
+        ...    'line_width': 2,
+        ...    'opacity': 1.0,
+        ...    'feature_angle': False,
+        ...    'decimate': 0.9}
+
+        Set a single value of the silhouette.
+
+        >>> pyvista.defaults.silhouette['opacity'] = 0.5
+
+        """
         return self._silhouette
 
     @silhouette.setter
     def silhouette(self, silhouette):
-        self._silhouette = silhouette
+        for key, value in silhouette.items():
+            if key not in self._silhouette:
+                raise KeyError(f'Invalid key ``{key}`` for silhouette.\n'
+                               f'Permitted keys are: {", ".join(self._silhouette)}')
+            self._silhouette[key] = value
 
     @property
     def slider_style(self):
+        """Return or set the global default ``slider_style`` parameter.
+
+        Examples
+        --------
+        Set the ``slider_style`` dictionary.
+
+        >>> import pyvista
+        >>> pyvista.defaults.slider_style = {
+        ...     'classic': {
+        ...         'slider_length': 0.02,
+        ...         'slider_width': 0.04,
+        ...         'slider_color': (0.5, 0.5, 0.5),
+        ...         'tube_width': 0.005,
+        ...         'tube_color': (1, 1, 1),
+        ...         'cap_opacity': 1,
+        ...         'cap_length': 0.01,
+        ...         'cap_width': 0.02,
+        ...     },
+        ...     'modern': {
+        ...         'slider_length': 0.02,
+        ...         'slider_width': 0.04,
+        ...         'slider_color': (0.43137255, 0.44313725, 0.45882353),
+        ...         'tube_width': 0.04,
+        ...         'tube_color': (0.69803922, 0.70196078, 0.70980392),
+        ...         'cap_opacity': 0,
+        ...         'cap_length': 0.01,
+        ...         'cap_width': 0.02,
+        ...     },
+        ... }
+
+        Set a single slider style parameter
+
+        >>> pyvista.defaults.slider_style['classic']['slider_length'] = 0.05
+
+        """
         return self._slider_style
 
     @slider_style.setter
@@ -713,6 +903,26 @@ class Theme():
 
     @property
     def axes(self):
+        """Return or set the global default ``axes`` parameter.
+
+        Examples
+        --------
+        Set the axes dictionary.
+
+        >>> import pyvista
+        >>> pyvista.defaults.axes = {
+        ...     'x_color': 'tomato',
+        ...     'y_color': 'seagreen',
+        ...     'z_color': 'mediumblue',
+        ...     'box': False,
+        ...     'show': True,
+        ... }
+
+        Set a single axes theme value
+
+        >>> pyvista.defaults.axes['x_color'] = 'black'
+
+        """
         return self._axes
 
     @axes.setter
@@ -720,24 +930,128 @@ class Theme():
         self._axes = axes
 
     def restore_defaults(self):
-        """Restore the theme defaults."""
-        self.__init__()
-
-    def __repr__(self):
-        """User friendly representation of the pyvista theme."""
-        txt = ['PyVista Theme']
-        txt.append(f'Background Color : {self.background}')
-
-    def set_to_paraview(self):
-        """Set the theme to a paraview-like theme.
+        """Restore the theme defaults.
 
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.theme.set_to_paraview()
+        >>> pyvista.defaults.restore_defaults()
 
         """
-        self.restore_defaults()
+        self.__init__()
+
+    def __repr__(self):
+        """User friendly representation of the current theme."""
+        txt = [f'{self.name.capitalize()} Theme']
+        parm = {
+            'Background': 'background',
+            'Jupyter backend': 'jupyter_backend',
+            'Full screen': 'full_screen',
+            'Window size': 'window_size',
+            'Camera': 'camera',
+            'Notebook': 'notebook',
+            'Font': 'font',
+            'Auto close': 'auto_close',
+            'Colormap': 'cmap',
+            'Color': 'color',
+            'NAN color': 'nan_color',
+            'Edge color': 'edge_color',
+            'Outline color': 'outline_color',
+            'Floor color': 'floor_color',
+            'Colorbar orientation': 'colorbar_orientation',
+            'Colorbar - horizontal': 'colorbar_horizontal',
+            'Colorbar - vertical': 'colorbar_vertical',
+            'Show scalar bar': 'show_scalar_bar',
+            'Show edges': 'show_edges',
+            'Lighting': 'lighting',
+            'Interactive': 'interactive',
+            'Render points as spheres': 'render_points_as_spheres',
+            'Transparent Background': 'transparent_background',
+            'Title': 'title',
+            'Axes': 'axes',
+            'Multi-samples': 'multi_samples',
+            'Multi-renderer Split Pos': 'multi_rendering_splitting_position',
+            'Volume mapper': 'volume_mapper',
+            'Smooth shading': 'smooth_shading',
+            'Depth peeling': 'depth_peeling',
+            'Silhouette': 'silhouette',
+        }
+        for name, attr in parm.items():
+            setting = getattr(self, attr)
+            if isinstance(setting, dict):
+                txt.append(f'{name:<25}')
+                for key, item in setting.items():
+                    txt.append(f'    {key:<21}: {item}')
+            else:
+                txt.append(f'{name:<25}: {setting}')
+
+        max_len = max([len(entry) for entry in txt])
+        txt.insert(1, '-'*max_len)
+
+        return '\n'.join(txt)
+
+    @property
+    def name(self):
+        """Return or set the name of the theme."""
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
+
+
+class DarkTheme(Theme):
+    """Dark mode theme.
+
+    Black background, "viridis" colormap, tan meshes, white (hidden) edges.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import themes
+    >>> pyvista.set_plot_theme(themes.DarkTheme())
+
+    Alternatively, set via a string.
+
+    >>> pyvista.set_plot_theme('dark')
+
+    """
+
+    def __init__(self):
+        """Initialize the theme."""
+        super().__init__()
+        self._name = 'dark'
+        self._background = 'black'
+        self._cmap = 'viridis'
+        self._font['color'] = 'white'
+        self._show_edges = False
+        self._color = 'tan'
+        self._outline_color = 'white'
+        self._edge_color = 'white'
+        self._axes['x_color'] = 'tomato'
+        self._axes['y_color'] = 'seagreen'
+        self._axes['z_color'] = 'blue'
+
+
+class ParaViewTheme(Theme):
+    """Set the theme to a paraview-like theme.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import themes
+    >>> pyvista.set_plot_theme(themes.ParaViewTheme())
+
+    Alternatively, set via a string.
+
+    >>> pyvista.set_plot_theme('paraview')
+
+    """
+
+    def __init__(self):
+        """Initialize theme."""
+        super().__init__()
+        self._name = 'paraview'
         self._background = PARAVIEW_BACKGROUND
         self._cmap = 'coolwarm'
         self._font['family'] = 'arial'
@@ -751,20 +1065,30 @@ class Theme():
         self._axes['y_color'] = 'gold'
         self._axes['z_color'] = 'green'
 
-    def set_to_document(self):
-        """Set the global theme to the document theme.
 
-        This theme uses a white background, the "viridis" colormap,
-        disables edges and black fonts.  Best used for presentations,
-        papers, etc.
+class DocumentTheme(Theme):
+    """Set the global theme to the document theme.
 
-        Examples
-        --------
-        >>> import pyvista
-        >>> pyvista.theme.set_to_document()
+    This theme uses a white background, the "viridis" colormap,
+    disables edges and black fonts.  Best used for presentations,
+    papers, etc.
 
-        """
-        self.restore_defaults()
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import themes
+    >>> pyvista.set_plot_theme(themes.DocumentTheme())
+
+    Alternatively, set via a string.
+
+    >>> pyvista.set_plot_theme('document')
+
+    """
+
+    def __init__(self):
+        """Initialize the theme."""
+        super().__init__()
+        self._name = 'document'
         self._background = 'white'
         self._cmap = 'viridis'
         self._font['size'] = 18
@@ -779,75 +1103,74 @@ class Theme():
         self._axes['y_color'] = 'seagreen'
         self._axes['z_color'] = 'blue'
 
-    def _set_to_testing(self):
-        """Low resolution testing theme.
 
-        Necessary for image regression.  Xvfb doesn't support
-        multi-sampling, so we disable it here for consistency between
-        desktops and remote testing.
-        """
-        self.restore_defaults()
-        self._off_screen = True
+class _TestingTheme(Theme):
+    """Low resolution testing theme for ``pytest``.
+
+    Necessary for image regression.  Xvfb doesn't support
+    multi-sampling, so we disable it here for consistency between
+    desktops and remote testing.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._name = 'testing'
         self._multi_samples = 1
         self._window_size = [400, 400]
 
-    def set_to_dark(self):
-        """Set the global theme to dark mode.
 
-        Black background, "viridis" colormap, tan meshes, white (hidden) edges.
+class Defaults(Theme):
+    """Global PyVista defaults.
+
+    Examples
+    --------
+    Change the default background color to white.
+
+    >>> import pyvista
+    >>> pyvista.defaults.color = 'white'
+
+    Show edges by default.
+
+    >>> pyvista.defaults.show_edges = True
+
+    """
+
+    def __init__(self):
+        """Initialize the base theme."""
+        super().__init__()
+
+    def load_theme(self, theme):
+        """Overwrite the current defaults with a theme.
 
         Examples
         --------
+        Create a custom theme from the default theme and load it into
+        pyvista.
+
         >>> import pyvista
-        >>> pyvista.theme.set_to_dark()
+        >>> from pyvista.themes import Theme
+        >>> my_theme = Theme()
+        >>> my_theme.font['size'] = 20
+        >>> my_theme.font['title_size'] = 40
+        >>> my_theme.cmap = 'jet'
+        ...
+        >>> pyvista.defaults.load_theme(my_theme)
+        >>> pyvista.defaults.font['size']
+        20
+
+        Create a custom theme from the dark theme and load it into
+        pyvista.
+
+        >>> from pyvista.themes import DarkTheme
+        >>> my_theme = DarkTheme()
+        >>> my_theme.show_edges = True
+        >>> pyvista.defaults.load_theme(my_theme)
+        >>> pyvista.defaults.show_edges
+        True
 
         """
-        self.restore_defaults()
-        self._background = 'black'
-        self._cmap = 'viridis'
-        self._font['color'] = 'white'
-        self._show_edges = False
-        self._color = 'tan'
-        self._outline_color = 'white'
-        self._edge_color = 'white'
-        self._axes['x_color'] = 'tomato'
-        self._axes['y_color'] = 'seagreen'
-        self._axes['z_color'] = 'blue'
+        if not isinstance(theme, Theme):
+            raise TypeError('``theme`` must be a ``pyvista.Theme``')
 
-
-def parse_color(color, opacity=None):
-    """Parse color into a vtk friendly rgb list.
-
-    Values returned will be between 0 and 1.
-
-    """
-    if color is None:
-        color = pyvista.theme.color
-    if isinstance(color, str):
-        color = string_to_rgb(color)
-    elif len(color) == 3:
-        pass
-    elif len(color) == 4:
-        color = color[:3]
-    else:
-        raise ValueError(f"""
-    Invalid color input: ({color})
-    Must be string, rgb list, or hex color string.  For example:
-        color='white'
-        color='w'
-        color=[1, 1, 1]
-        color='#FFFFFF'""")
-    if opacity is not None and isinstance(opacity, (float, int)):
-        color = [color[0], color[1], color[2], opacity]
-    return color
-
-
-def parse_font_family(font_family):
-    """Check font name."""
-    # check font name
-    font_family = font_family.lower()
-    if font_family not in ['courier', 'times', 'arial']:
-        raise ValueError('Font must be either "courier", "times" '
-                         'or "arial"')
-
-    return FONT_KEYS[font_family]
+        for name, value in vars(theme).items():
+            setattr(self, name, value)

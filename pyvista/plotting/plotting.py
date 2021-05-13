@@ -30,9 +30,8 @@ from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .renderer import Renderer, Camera
-from .theme import (FONT_KEYS, parse_color, parse_font_family,
-                    rcParams)
-from .tools import normalize, opacity_transfer_function
+from .tools import (normalize, opacity_transfer_function, parse_color,
+                    parse_font_family, FONT_KEYS)
 from .widgets import WidgetHelper
 from .scalar_bars import ScalarBars
 from .renderers import Renderers
@@ -87,7 +86,7 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # finally, check if using a backend that doesn't require an xserver
-        if rcParams['jupyter_backend'] in ['ipygany']:
+        if pyvista.defaults.jupyter_backend in ['ipygany']:
             return
 
         # Check if VTK has EGL support
@@ -159,6 +158,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         The default is a Light Kit (to be precise, 5 separate lights
         that act like a Light Kit).
 
+    theme : pyvista.Theme, optional
+        Plot specific theme.
+
     """
 
     mouse_position = None
@@ -167,17 +169,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def __init__(self, shape=(1, 1), border=None, border_color='k',
                  border_width=2.0, title=None, splitting_position=None,
                  groups=None, row_weights=None, col_weights=None,
-                 lighting='light kit'):
+                 lighting='light kit', theme=None):
         """Initialize base plotter."""
         log.debug('BasePlotter init start')
-        self.image_transparent_background = rcParams['transparent_background']
+        if theme is None:
+            self._theme = pyvista.defaults
+        else:
+            if not isinstance(theme, pyvista.themes.Theme):
+                raise TypeError('Expected pyvista.Theme for ``theme``, not '
+                                f'{type(theme)}')
+            self._theme = theme
+
+        self.image_transparent_background = self._theme.transparent_background
 
         # optional function to be called prior to closing
         self.__before_close_callback = None
         self._store_image = False
         self.mesh = None
         if title is None:
-            title = rcParams['title']
+            title = self._theme.title
         self.title = str(title)
 
         # add renderers
@@ -220,6 +230,29 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._image_depth_null = None
         self.last_image_depth = None
         self.last_image = None
+
+    @property
+    def theme(self):
+        """Return or set the theme used for this plotter.
+
+        Examples
+        --------
+        Use the dark theme for a plotter.
+
+        >>> import pyvista
+        >>> from pyvista import themes
+        >>> pl = pyvista.Plotter()
+        >>> pl.theme = themes.DarkTheme()
+
+        """
+        return self._theme
+
+    @theme.setter
+    def theme(self, theme):
+        if not isinstance(theme, pyvista.themes.Theme):
+            raise TypeError('Expected an instance of pyvista.Theme, not '
+                            f'{type(theme)}')
+        self._theme = theme
 
     @property
     def scalar_bar(self):
@@ -1270,22 +1303,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar_bar_args = {'n_colors': n_colors}
 
         if show_edges is None:
-            show_edges = rcParams['show_edges']
+            show_edges = self._theme.show_edges
 
         if edge_color is None:
-            edge_color = rcParams['edge_color']
+            edge_color = self._theme.edge_color
 
         if show_scalar_bar is None:
-            show_scalar_bar = rcParams['show_scalar_bar']
+            show_scalar_bar = self._theme.show_scalar_bar
 
         if lighting is None:
-            lighting = rcParams['lighting']
+            lighting = self._theme.lighting
 
         if smooth_shading is None:
             if pbr:
                 smooth_shading = True
             else:
-                smooth_shading = rcParams['smooth_shading']
+                smooth_shading = self._theme.smooth_shading
 
         # supported aliases
         clim = kwargs.pop('rng', clim)
@@ -1293,17 +1326,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         culling = kwargs.pop("backface_culling", culling)
 
         if render_points_as_spheres is None:
-            render_points_as_spheres = rcParams['render_points_as_spheres']
+            render_points_as_spheres = self._theme.render_points_as_spheres
 
         if name is None:
             name = f'{type(mesh).__name__}({mesh.memory_address})'
 
         if nan_color is None:
-            nan_color = rcParams['nan_color']
+            nan_color = self._theme.nan_color
         nan_color = list(parse_color(nan_color))
         nan_color.append(nan_opacity)
         if color is True:
-            color = rcParams['color']
+            color = self._theme.color
 
         if texture is False:
             texture = None
@@ -1398,7 +1431,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         ##### Plot a single PyVista mesh #####
 
-        silhouette_params = dict(rcParams['silhouette'])
+        silhouette_params = dict(self._theme.silhouette)
         if isinstance(silhouette, dict):
             silhouette_params.update(silhouette)
             silhouette = True
@@ -1533,7 +1566,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Scalars formatting ==================================================
         if cmap is None:  # Set default map if matplotlib is available
             if _has_matplotlib():
-                cmap = rcParams['cmap']
+                cmap = self._theme.cmap
         # Set the array title for when it is added back to the mesh
         if _custom_opac:
             title = '__custom_rgba'
@@ -1648,7 +1681,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if isinstance(cmap, str):
                     self.mapper.cmap = cmap
                 # ipygany uses different colormaps
-                if rcParams['jupyter_backend'] == 'ipygany':
+                if self._theme.jupyter_backend == 'ipygany':
                     from ..jupyter.pv_ipygany import check_colormap
                     check_colormap(cmap)
                 else:
@@ -1697,7 +1730,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if style == 'wireframe':
             prop.SetRepresentationToWireframe()
             if color is None:
-                color = rcParams['outline_color']
+                color = self._theme.outline_color
         elif style == 'points':
             prop.SetRepresentationToPoints()
         elif style == 'surface':
@@ -1729,7 +1762,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if show_edges:
             prop.EdgeVisibilityOn()
 
-        rgb_color = parse_color(color)
+        rgb_color = parse_color(color, default_color=self._theme.color)
         prop.SetColor(rgb_color)
         if isinstance(opacity, (float, int)):
             prop.SetOpacity(opacity)
@@ -1863,36 +1896,39 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         mapper : str, optional
             Volume mapper to use given by name. Options include:
-            ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, and ``'smart'``.
-            If ``None`` the ``"volume_mapper"`` in the ``rcParams`` is used.
+            ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, and
+            ``'smart'``.  If ``None`` the ``"volume_mapper"`` in the
+            ``self._theme`` is used.
 
         scalar_bar_args : dict, optional
-            Dictionary of keyword arguments to pass when adding the scalar bar
-            to the scene. For options, see
+            Dictionary of keyword arguments to pass when adding the
+            scalar bar to the scene. For options, see
             :func:`pyvista.BasePlotter.add_scalar_bar`.
 
         show_scalar_bar : bool
-            If False, a scalar bar will not be added to the scene. Defaults
-            to ``True``.
+            If ``False``, a scalar bar will not be added to the
+            scene. Defaults to ``True``.
 
         annotations : dict, optional
-            Pass a dictionary of annotations. Keys are the float values in the
-            scalars range to annotate on the scalar bar and the values are the
-            the string annotations.
+            Pass a dictionary of annotations. Keys are the float
+            values in the scalars range to annotate on the scalar bar
+            and the values are the the string annotations.
 
         opacity_unit_distance : float
-            Set/Get the unit distance on which the scalar opacity transfer
-            function is defined. Meaning that over that distance, a given
-            opacity (from the transfer function) is accumulated. This is
-            adjusted for the actual sampling distance during rendering. By
-            default, this is the length of the diagonal of the bounding box of
-            the volume divided by the dimensions.
+            Set/Get the unit distance on which the scalar opacity
+            transfer function is defined. Meaning that over that
+            distance, a given opacity (from the transfer function) is
+            accumulated. This is adjusted for the actual sampling
+            distance during rendering. By default, this is the length
+            of the diagonal of the bounding box of the volume divided
+            by the dimensions.
 
         shade : bool
-            Default off. If shading is turned on, the mapper may perform
-            shading calculations - in some cases shading does not apply
-            (for example, in a maximum intensity projection) and therefore
-            shading will not be performed even if this flag is on.
+            Default off. If shading is turned on, the mapper may
+            perform shading calculations - in some cases shading does
+            not apply (for example, in a maximum intensity projection)
+            and therefore shading will not be performed even if this
+            flag is on.
 
         diffuse : float, optional
             The diffuse lighting coefficient. Default 1.0
@@ -1932,13 +1968,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar_bar_args = {}
 
         if show_scalar_bar is None:
-            show_scalar_bar = rcParams['show_scalar_bar']
+            show_scalar_bar = self._theme.show_scalar_bar
 
         if culling is True:
             culling = 'backface'
 
         if mapper is None:
-            mapper = rcParams["volume_mapper"]
+            mapper = self._theme.volume_mapper
 
         # only render when the plotter has already been shown
         if render is None:
@@ -2093,7 +2129,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if cmap is None:  # Set default map if matplotlib is available
             if _has_matplotlib():
-                cmap = rcParams['cmap']
+                cmap = self._theme.cmap
 
         if cmap is not None:
             if not _has_matplotlib():
@@ -2296,7 +2332,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         interactive = kwargs.get('interactive', None)
         if interactive is None:
-            interactive = rcParams['interactive']
+            interactive = self._theme.interactive
             if self.shape != (1, 1):
                 interactive = False
         elif interactive and self.shape != (1, 1):
@@ -2495,11 +2531,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if font is None:
-            font = rcParams['font']['family']
+            font = self._theme.font['family']
         if font_size is None:
-            font_size = rcParams['font']['size']
+            font_size = self._theme.font['size']
         if color is None:
-            color = rcParams['font']['color']
+            color = self._theme.font['color']
         if position is None:
             # Set the position of the text to the top left corner
             window_size = self.window_size
@@ -2855,13 +2891,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if font_family is None:
-            font_family = rcParams['font']['family']
+            font_family = self._theme.font['family']
         if font_size is None:
-            font_size = rcParams['font']['size']
+            font_size = self._theme.font['size']
         if point_color is None:
-            point_color = rcParams['color']
+            point_color = self._theme.color
         if text_color is None:
-            text_color = rcParams['font']['color']
+            text_color = self._theme.font['color']
 
         if isinstance(points, (list, tuple)):
             points = np.array(points)
@@ -2968,7 +3004,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(labels, str):
             raise TypeError('labels must be a string name of the scalars array to use')
         if fmt is None:
-            fmt = rcParams['font']['fmt']
+            fmt = self._theme.font['fmt']
         if fmt is None:
             fmt = '%.6e'
         scalars = points.point_arrays[labels]
@@ -3131,7 +3167,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # configure image filter
         if transparent_background is None:
-            transparent_background = rcParams['transparent_background']
+            transparent_background = self._theme.transparent_background
         self.image_transparent_background = transparent_background
 
         # This if statement allows you to save screenshots of closed plotters
@@ -3317,7 +3353,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if viewup is None:
-            viewup = rcParams['camera']['viewup']
+            viewup = self._theme.camera['viewup']
         center = np.array(self.center)
         bnds = np.array(self.bounds)
         radius = (bnds[1] - bnds[0]) * factor
@@ -3367,7 +3403,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if focus is None:
             focus = self.center
         if viewup is None:
-            viewup = rcParams['camera']['viewup']
+            viewup = self._theme.camera['viewup']
         if path is None:
             path = self.generate_orbital_path(viewup=viewup)
         if not is_pyvista_dataset(path):
@@ -3652,7 +3688,7 @@ class Plotter(BasePlotter):
 
     window_size : list, optional
         Window size in pixels.  Defaults to ``[1024, 768]``, unless
-        set differently in ``rcParams``.
+        set differently in ``self._theme.window_size``.
 
     multi_samples : int, optional
         The number of multi-samples used to mitigate aliasing. 4 is a
@@ -3679,6 +3715,9 @@ class Plotter(BasePlotter):
         The default is a ``'light_kit'`` (to be precise, 5 separate
         lights that act like a Light Kit).
 
+    theme : pyvista.Theme, optional
+        Plot specific theme.
+
     """
 
     last_update_time = 0.0
@@ -3689,7 +3728,8 @@ class Plotter(BasePlotter):
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, title=None, lighting='light kit'):
+                 splitting_position=None, title=None, lighting='light kit',
+                 theme=None):
         """Initialize a vtk plotting object."""
         super().__init__(shape=shape, border=border,
                          border_color=border_color,
@@ -3697,7 +3737,7 @@ class Plotter(BasePlotter):
                          groups=groups, row_weights=row_weights,
                          col_weights=col_weights,
                          splitting_position=splitting_position,
-                         title=title, lighting=lighting)
+                         title=title, lighting=lighting, theme=theme)
 
         log.debug('Plotter init start')
 
@@ -3713,8 +3753,8 @@ class Plotter(BasePlotter):
             off_screen = pyvista.OFF_SCREEN
 
         if notebook is None:
-            if rcParams['notebook'] is not None:
-                notebook = rcParams['notebook']
+            if self._theme.notebook is not None:
+                notebook = self._theme.notebook
             else:
                 notebook = scooby.in_ipykernel()
 
@@ -3726,11 +3766,11 @@ class Plotter(BasePlotter):
         self._window_size_unset = False
         if window_size is None:
             self._window_size_unset = True
-            window_size = rcParams['window_size']
+            window_size = self._theme.window_size
         self.__prior_window_size = window_size
 
         if multi_samples is None:
-            multi_samples = rcParams['multi_samples']
+            multi_samples = self._theme.multi_samples
 
         # initialize render window
         self.ren_win = _vtk.vtkRenderWindow()
@@ -3766,7 +3806,7 @@ class Plotter(BasePlotter):
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
 
         # Set background
-        self.set_background(rcParams['background'])
+        self.set_background(self._theme.background)
 
         # Set window size
         self.window_size = window_size
@@ -3774,7 +3814,7 @@ class Plotter(BasePlotter):
         # add timer event if interactive render exists
         self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
 
-        if rcParams["depth_peeling"]["enabled"]:
+        if self._theme.depth_peeling["enabled"]:
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
@@ -3891,7 +3931,7 @@ class Plotter(BasePlotter):
                 """)
             )
         elif auto_close is None:
-            auto_close = rcParams['auto_close']
+            auto_close = self._theme.auto_close
 
         if use_ipyvtk:
             txt = textwrap.dedent("""\
@@ -3906,7 +3946,7 @@ class Plotter(BasePlotter):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
 
         if full_screen is None:
-            full_screen = rcParams['full_screen']
+            full_screen = self._theme.full_screen
 
         if full_screen:
             self.ren_win.SetFullScreen(True)
@@ -3929,7 +3969,7 @@ class Plotter(BasePlotter):
         if self.notebook:
             from ..jupyter.notebook import handle_plotter
             if jupyter_backend is None:
-                jupyter_backend = rcParams['jupyter_backend']
+                jupyter_backend = self._theme.jupyter_backend
 
             if jupyter_backend != 'none':
                 disp = handle_plotter(self, backend=jupyter_backend,

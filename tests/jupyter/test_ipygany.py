@@ -16,9 +16,9 @@ skip_no_ipygany = pytest.mark.skipif(not has_ipygany,
 
 @skip_no_ipygany
 def test_set_jupyter_backend_ipygany():
-    pv.set_jupyter_backend('ipygany')
-    assert pv.rcParams['jupyter_backend'] == 'ipygany'
-    pv.set_jupyter_backend(None)
+    pv.defaults.jupyter_backend = 'ipygany'
+    assert pv.defaults.jupyter_backend == 'ipygany'
+    pv.defaults.jupyter_backend = None
 
 
 @skip_no_ipygany

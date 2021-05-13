@@ -1,8 +1,9 @@
 """
-Change the Theme
-~~~~~~~~~~~~~~~~
+Control Global and Local Plotting Themes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PyVista has a few coloring themes for you to choose!
+
 """
 import pyvista as pv
 from pyvista import examples
@@ -21,25 +22,23 @@ def plot_example():
 
 
 ###############################################################################
-# PyVista's default color theme is chosen to be generally easy on your eyes
-# and is best used when working long hours on your visualization project.
-# The grey background and warm colormaps are chosen to make sure 3D renderings
-# do not drastically change the brightness of your screen when working in dark
-# environments.
+# PyVista's default color theme is chosen to be generally easy on your
+# eyes and is best used when working long hours on your visualization
+# project.  The grey background and warm colormaps are chosen to make
+# sure 3D renderings do not drastically change the brightness of your
+# screen when working in dark environments.
 #
-# Here's an example of our default plotting theme - this is what you would see
-# by default after running any of our examples.
-
-pv.set_plot_theme("default")
+# Here's an example of our default plotting theme - this is what you
+# would see by default after running any of our examples.
 
 plot_example()
 
 ###############################################################################
 # PyVista also ships with a few plotting themes:
 #
-# * ``'ParaView'``: this is designed to mimic ParaView's default plotting theme
-# * ``'night'``: this is designed to be night-mode friendly with dark backgrounds and color schemes
-# * ``'document'``: this is built for use in document style plotting and making publication quality figures
+# * ``'ParaView'``: this is designed to mimic ParaView's default plotting theme.
+# * ``'night'``: this is designed to be night-mode friendly with dark backgrounds and color schemes.
+# * ``'document'``: this is built for use in document style plotting and making publication quality figures.
 
 ###############################################################################
 # Demo the ``'ParaView'`` theme
@@ -73,3 +72,92 @@ plotter.show_grid()
 # Here we set the gradient
 plotter.set_background("royalblue", top="aliceblue")
 plotter.show()
+
+
+###############################################################################
+# Modifying Global Defaults
+# ~~~~~~~~~~~~~~~~~~~~~~~~~
+# You can control how meshes are displayed by setting individual
+# parameters when plotting like ``mesh.plot(show_edges=True)``, or by
+# setting a global theme.  You can also control individual parameters
+# how all meshes are displayed by default via ``pyvista.defaults``.
+#
+# Here, we print out the current global defaults for all ``pyvista``
+# meshes.  These values have been changed by the previous "Document"
+# theme.
+
+pv.defaults
+
+
+###############################################################################
+# By default, edges are not shown on meshes unless explicitly
+# specified when plotting a mesh via ``show_edges=True``.  You can
+# change this default behavior globally by changing the default
+# parameter.
+
+pv.defaults.show_edges = True
+pv.Sphere().plot()
+
+
+###############################################################################
+# You can reset pyvista to default behavior with ``restore_defaults``.
+# Not that the figure's color was reset to the default "white" color
+# rather than the "tan" color default with the document theme.  Under
+# the hood, each theme applied changes the global plot defaults stored
+# within ``pyvista.defaults.``
+
+pv.defaults.restore_defaults()
+pv.Sphere().plot()
+
+
+###############################################################################
+# Creating a Custom Theme and Applying it Globally
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# You can create a custom theme by modifying one of the existing
+# themes and then loading it into the global plotting defaults.
+#
+# Here, we create a dark theme that plots meshes red by default while
+# showing edges.
+
+from pyvista import themes
+
+my_theme = themes.DarkTheme()
+my_theme.color = 'red'
+my_theme.lighting = False
+my_theme.show_edges = True
+my_theme.axes['box'] = True
+
+pv.defaults.load_theme(my_theme)
+pv.Sphere().plot()
+
+
+###############################################################################
+# Creating a Custom Theme and Applying it to a Single Plotter
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# In this example, we create a custom theme from the base "default"
+# theme and then apply it to a single plotter.  Note that this does
+# not change the behavior of the global "defaults", which are still
+# set to the modified ``DarkTheme``.
+#
+# This approach carries the advantage that you can maintain several
+# themes and apply them to one or more plotters.
+
+from pyvista import themes
+
+my_theme = themes.Theme()
+my_theme.color = 'black'
+my_theme.lighting = True
+my_theme.show_edges = True
+my_theme.edge_color = 'white'
+my_theme.background = 'white'
+
+pv.Sphere().plot(theme=my_theme)
+
+
+###############################################################################
+# Alternatively, set the theme of an instance of ``Plotter``.
+
+pl = pv.Plotter(theme=my_theme)
+# pl.theme = my_theme  # alternatively use the setter
+pl.add_mesh(pv.Cube())
+pl.show()

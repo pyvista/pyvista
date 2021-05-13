@@ -9,7 +9,7 @@ import vtk
 import pyvista
 
 # this is set here as well in conftest one level up.
-pyvista.set_plot_theme('testing')
+pyvista.defaults.load_theme(pyvista.themes._TestingTheme())
 pyvista.OFF_SCREEN = True
 
 

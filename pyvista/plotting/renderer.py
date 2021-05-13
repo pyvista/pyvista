@@ -6,10 +6,10 @@ from weakref import proxy
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+from pyvista import _vtk, MAX_N_COLOR_BARS
 from pyvista.utilities import wrap, check_depth_peeling
-from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
-from .tools import create_axes_orientation_box, create_axes_marker
+from .tools import (create_axes_orientation_box, create_axes_marker,
+                    parse_color, parse_font_family)
 from .camera import Camera
 from .lights import LightType
 
@@ -26,9 +26,10 @@ def scale_point(camera, point, invert=False):
         Length 3 tuple of the point coordinates.
 
     invert : bool
-        If True, invert the matrix to transform the point out of the
-        camera's transformed space. Default is False to transform a
-        point from world coordinates to the camera's transformed space.
+        If ``True``, invert the matrix to transform the point out of
+        the camera's transformed space. Default is ``False`` to
+        transform a point from world coordinates to the camera's
+        transformed space.
 
     """
     if invert:
@@ -111,6 +112,7 @@ class Renderer(_vtk.vtkRenderer):
         super().__init__()
         self._actors = {}
         self.parent = parent
+        self._theme = parent.theme
         self.camera_set = False
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
@@ -259,23 +261,24 @@ class Renderer(_vtk.vtkRenderer):
         Parameters
         ----------
         number_of_peels : int
-            The maximum number of peeling layers. Initial value is 4 and is set
-            in the ``rcParams``. A special value of 0 means no maximum limit.
-            It has to be a positive value.
+            The maximum number of peeling layers. Initial value is 4
+            and is set in the ``pyvista.defaults``. A special value of
+            0 means no maximum limit.  It has to be a positive value.
 
         occlusion_ratio : float
-            The threshold under which the deepth peeling algorithm stops to
-            iterate over peel layers. This is the ratio of the number of pixels
-            that have been touched by the last layer over the total number of
-            pixels of the viewport area. Initial value is 0.0, meaning
-            rendering have to be exact. Greater values may speed-up the
-            rendering with small impact on the quality.
+            The threshold under which the depth peeling algorithm
+            stops to iterate over peel layers. This is the ratio of
+            the number of pixels that have been touched by the last
+            layer over the total number of pixels of the viewport
+            area. Initial value is 0.0, meaning rendering have to be
+            exact. Greater values may speed-up the rendering with
+            small impact on the quality.
 
         """
         if number_of_peels is None:
-            number_of_peels = rcParams["depth_peeling"]["number_of_peels"]
+            number_of_peels = self._theme.depth_peeling["number_of_peels"]
         if occlusion_ratio is None:
-            occlusion_ratio = rcParams["depth_peeling"]["occlusion_ratio"]
+            occlusion_ratio = self._theme.depth_peeling["occlusion_ratio"]
         depth_peeling_supported = check_depth_peeling(number_of_peels,
                                                       occlusion_ratio)
         if depth_peeling_supported:
@@ -474,7 +477,7 @@ class Renderer(_vtk.vtkRenderer):
             self.Modified()
             del self.axes_widget
         if interactive is None:
-            interactive = rcParams['interactive']
+            interactive = self._theme.interactive
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(actor)
         if hasattr(self.parent, 'iren'):
@@ -507,13 +510,13 @@ class Renderer(_vtk.vtkRenderer):
             The opacity of the marker.
         """
         if interactive is None:
-            interactive = rcParams['interactive']
+            interactive = self._theme.interactive
         if hasattr(self, 'axes_widget'):
             self.axes_widget.EnabledOff()
             self.Modified()
             del self.axes_widget
         if box is None:
-            box = rcParams['axes']['box']
+            box = self._theme.axes['box']
         if box:
             if box_args is None:
                 box_args = {}
@@ -684,13 +687,13 @@ class Renderer(_vtk.vtkRenderer):
         self.remove_bounds_axes()
 
         if font_family is None:
-            font_family = rcParams['font']['family']
+            font_family = self._theme.font['family']
         if font_size is None:
-            font_size = rcParams['font']['size']
+            font_size = self._theme.font['size']
         if color is None:
-            color = rcParams['font']['color']
+            color = self._theme.font['color']
         if fmt is None:
-            fmt = rcParams['font']['fmt']
+            fmt = self._theme.font['fmt']
 
         color = parse_color(color)
 
@@ -899,11 +902,11 @@ class Renderer(_vtk.vtkRenderer):
 
         """
         if lighting is None:
-            lighting = rcParams['lighting']
+            lighting = self._theme.lighting
 
         self.remove_bounding_box()
         if color is None:
-            color = rcParams['outline_color']
+            color = self._theme.outline_color
         rgb_color = parse_color(color)
         if outline:
             self._bounding_box = _vtk.vtkOutlineCornerSource()
@@ -1051,14 +1054,14 @@ class Renderer(_vtk.vtkRenderer):
         self._floor.clear_arrays()
 
         if lighting is None:
-            lighting = rcParams['lighting']
+            lighting = self._theme.lighting
 
         if edge_color is None:
-            edge_color = rcParams['edge_color']
+            edge_color = self._theme.edge_color
 
         self.remove_bounding_box()
         if color is None:
-            color = rcParams['floor_color']
+            color = self._theme.floor_color
         rgb_color = parse_color(color)
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._floor)
@@ -1329,12 +1332,12 @@ class Renderer(_vtk.vtkRenderer):
         focal_pt = self.center
         if any(np.isnan(focal_pt)):
             focal_pt = (0.0, 0.0, 0.0)
-        position = np.array(rcParams['camera']['position']).astype(float)
+        position = np.array(self._theme.camera['position']).astype(float)
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
         cpos = [position + np.array(focal_pt),
-                focal_pt, rcParams['camera']['viewup']]
+                focal_pt, self._theme.camera['viewup']]
         return cpos
 
     def update_bounds_axes(self):
@@ -1402,7 +1405,7 @@ class Renderer(_vtk.vtkRenderer):
         """Point the camera in the direction of the given vector."""
         focal_pt = self.center
         if viewup is None:
-            viewup = rcParams['camera']['viewup']
+            viewup = self._theme.camera['viewup']
         cpos = CameraPosition(vector + np.array(focal_pt),
                 focal_pt, viewup)
         self.camera_position = cpos
@@ -1546,12 +1549,12 @@ class Renderer(_vtk.vtkRenderer):
 
         top : string or 3 item list, optional, defaults to None
             If given, this will enable a gradient background where the
-            ``color`` argument is at the bottom and the color given in ``top``
-            will be the color at the top of the renderer.
+            ``color`` argument is at the bottom and the color given in
+            ``top`` will be the color at the top of the renderer.
 
         """
         if color is None:
-            color = rcParams['background']
+            color = self._theme.background
 
         use_gradient = False
         if top is not None:

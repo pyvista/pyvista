@@ -6,7 +6,6 @@ import scooby
 import pyvista
 from pyvista.utilities import is_pyvista_dataset
 from .plotting import Plotter
-from .theme import rcParams
 
 
 def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
@@ -14,7 +13,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
-         return_viewer=False, jupyter_kwargs={}, **kwargs):
+         return_viewer=False, jupyter_kwargs={}, theme=None, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -27,14 +26,15 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         without a window popping up.
 
     full_screen : bool, optional
-        Opens window in full screen.  When enabled, ignores ``window_size``.
-        Default ``False``.
+        Opens window in full screen.  When enabled, ignores
+        ``window_size``.  Default ``False``.
 
     screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
         ``help(pyvista.Plotter.screenshot)``.  Default ``False``.
 
-        When ``True``, takes screenshot and returns ``numpy`` array of image.
+        When ``True``, takes screenshot and returns ``numpy`` array of
+        image.
 
     window_size : list, optional
         Window size in pixels.  Defaults to ``[1024, 768]``
@@ -76,6 +76,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
 
+    
+
     **kwargs : optional keyword arguments
         See help(Plotter.add_mesh) for additional options.
 
@@ -90,6 +92,14 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         [Window height x Window width x 4] for transparent_background=True
         Returned only when screenshot enabled
 
+    Examples
+    --------
+    Plot a simple sphere while showing its edges.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Sphere()
+    >>> mesh.plot(show_edges=True)  # doctest:+SKIP
+
     """
     if notebook is None:
         notebook = scooby.in_ipykernel()
@@ -99,11 +109,11 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
-    auto_close = kwargs.get('auto_close', rcParams['auto_close'])
+    auto_close = kwargs.get('auto_close', pyvista.defaults.auto_close)
 
     if notebook:
         off_screen = notebook
-    plotter = Plotter(off_screen=off_screen, notebook=notebook)
+    plotter = Plotter(off_screen=off_screen, notebook=notebook, theme=theme)
     if show_axes:
         plotter.add_axes()
 

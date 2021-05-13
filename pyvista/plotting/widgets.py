@@ -5,7 +5,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import NORMALS, generate_plane, get_array, try_callback
-from .theme import rcParams, parse_color
+from .tools import parse_color
 
 
 class WidgetHelper:
@@ -65,7 +65,7 @@ class WidgetHelper:
             bounds = self.bounds
 
         if color is None:
-            color = rcParams['font']['color']
+            color = pyvista.defaults.font['color']
 
         def _the_callback(box_widget, event_id):
             the_box = pyvista.PolyData()
@@ -254,7 +254,7 @@ class WidgetHelper:
             normal = NORMALS[normal.lower()]
 
         if color is None:
-            color = rcParams['font']['color']
+            color = pyvista.defaults.font['color']
 
         if assign_to_axis:
             normal_rotation = False
@@ -625,7 +625,7 @@ class WidgetHelper:
             bounds = self.bounds
 
         if color is None:
-            color = rcParams['font']['color']
+            color = pyvista.defaults.font['color']
 
         def _the_callback(widget, event_id):
             pointa = widget.GetPoint1()
@@ -702,8 +702,8 @@ class WidgetHelper:
             slider interacts with the callback.
 
         style : str, optional
-            The name of the slider style. The list of available styles are in
-            ``rcParams['slider_style']``. Defaults to None.
+            The name of the slider style. The list of available styles
+            are in ``pyvista.defaults.slider_style``. Defaults to ``None``.
 
         Returns
         -------
@@ -805,8 +805,8 @@ class WidgetHelper:
             slider interacts with the callback.
 
         style : str, optional
-            The name of the slider style. The list of available styles are in
-            ``rcParams['slider_style']``. Defaults to None.
+            The name of the slider style. The list of available styles
+            are in ``pyvista.defaults.slider_style``. Defaults to ``None``.
 
         title_height: float, optional
             Relative height of the title as compared to the length of the slider.
@@ -847,13 +847,13 @@ class WidgetHelper:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
 
         if color is None:
-            color = rcParams['font']['color']
+            color = pyvista.defaults.font['color']
 
         if title_color is None:
             title_color = color
 
         if fmt is None:
-            fmt = rcParams['font']['fmt']
+            fmt = pyvista.defaults.font['fmt']
 
         def normalize(point, viewport):
             return (point[0]*(viewport[2]-viewport[0]),point[1]*(viewport[3]-viewport[1]))
@@ -884,10 +884,10 @@ class WidgetHelper:
             if not isinstance(style, str):
                 raise TypeError("Expected type for ``style`` is str but"
                                 f" {type(style)} was given.")
-            style_params = rcParams['slider_style'].get(style, None)
+            style_params = pyvista.defaults.slider_style.get(style, None)
             if style_params is None:
                 raise KeyError("The requested style does not exist: "
-                               f"{style}. The styles available are {list(rcParams['slider_style'].keys())}.")
+                               f"{style}. The styles available are {list(pyvista.defaults.slider_style.keys())}.")
             slider_rep.SetSliderLength(style_params['slider_length'])
             slider_rep.SetSliderWidth(style_params['slider_width'])
             slider_rep.GetSliderProperty().SetColor(style_params['slider_color'])
@@ -1148,7 +1148,7 @@ class WidgetHelper:
             self.spline_widgets = []
 
         if color is None:
-            color = rcParams['color']
+            color = pyvista.defaults.color
 
         if bounds is None:
             bounds = self.bounds
@@ -1318,7 +1318,7 @@ class WidgetHelper:
             self.sphere_widgets = []
 
         if color is None:
-            color = rcParams['color']
+            color = pyvista.defaults.color
 
         center = np.array(center)
         num = 1

@@ -26,3 +26,21 @@ def test_font():
     assert font == vtk.VTK_TIMES
     with pytest.raises(ValueError):
         pyvista.parse_font_family('not a font')
+
+
+
+# @pytest.mark.parametrize('theme', ['paraview', 'document', 'night', 'default'])
+# def test_themes(theme):
+#     pyvista.set_plot_theme(theme)
+#     if theme != 'default':
+#         assert pyvista.rcParams != pyvista.DEFAULT_THEME
+#         pyvista.set_plot_theme('default')
+#     assert pyvista.rcParams == pyvista.DEFAULT_THEME
+
+#     # always return to testing theme
+#     pyvista.set_plot_theme('testing')
+
+
+# def test_invalid_theme():
+#     with pytest.raises(ValueError, match='Invalid theme'):
+#         pyvista.set_plot_theme('this is not a valid theme')

@@ -1,8 +1,12 @@
 """PyVista package for 3D plotting and mesh analysis."""
+
+MAX_N_COLOR_BARS = 10
+
 import warnings
 import os
 import appdirs
 
+# Load default theme.  Must be loaded first.
 from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
@@ -10,9 +14,12 @@ from pyvista.core import *
 from pyvista.utilities.misc import _get_vtk_id_type
 from pyvista import _vtk
 from pyvista.jupyter import set_jupyter_backend, PlotterITK
+from pyvista.themes import Defaults, set_plot_theme
 
 # Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
+
+defaults = Defaults()
 
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
@@ -37,19 +44,6 @@ BUILDING_GALLERY = False
 if 'PYVISTA_BUILDING_GALLERY' in os.environ:
     if os.environ['PYVISTA_BUILDING_GALLERY'].lower() == 'true':
         BUILDING_GALLERY = True
-
-# Grab system flag for anti-aliasing
-try:
-    rcParams['multi_samples'] = int(os.environ['PYVISTA_MULTI_SAMPLES'])
-except KeyError:
-    pass
-
-# Grab system flag for auto-closing
-try:
-    # This only sets to false if PYVISTA_AUTO_CLOSE is false
-    rcParams['auto_close'] = not os.environ['PYVISTA_AUTO_CLOSE'].lower() == 'false'
-except KeyError:
-    pass
 
 # A threshold for the max cells to compute a volume for when repr-ing
 REPR_VOLUME_MAX_CELLS = 1e6
@@ -89,11 +83,8 @@ except Exception as e:
 send_errors_to_logging()
 
 # Set preferred plot theme
-try:
-    theme = os.environ['PYVISTA_PLOT_THEME'].lower()
-    set_plot_theme(theme)
-except KeyError:
-    pass
+if 'PYVISTA_PLOT_THEME' in os.environ:
+    set_plot_theme(os.environ['PYVISTA_PLOT_THEME'].lower())
 
 # Set a parameter to control default print format for floats
 FLOAT_FORMAT = "{:.3e}"
