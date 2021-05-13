@@ -1,28 +1,22 @@
 """Module managing different plotting theme parameters."""
 
+import warnings
+from enum import Enum
 import os
 
 from .plotting.colors import PARAVIEW_BACKGROUND
 from .plotting.tools import parse_color
-
-
-ALLOWED_THEMES = ['paraview', 'document', 'dark', 'night', 'default']
+from .utilities.misc import PyvistaDeprecationWarning
 
 
 def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme."""
     import pyvista
     if isinstance(theme, str):
-        if theme.lower() in ['paraview', 'pv']:
-            pyvista.global_theme.load_theme(ParaViewTheme())
-        elif theme.lower() in ['document', 'doc', 'paper', 'report']:
-            pyvista.global_theme.load_theme(DocumentTheme())
-        elif theme.lower() in ['night', 'dark']:
-            pyvista.global_theme.load_theme(DarkTheme())
-        elif theme.lower() in ['default']:
-            pyvista.global_theme.restore_defaults()
-        else:
-            raise ValueError(f'Expected one of the following themes:\n{ALLOWED_THEMES}')
+        if theme == 'night':
+            warnings.warn('use "dark" instead of "night" theme', PyvistaDeprecationWarning)
+        new_theme = ALLOWED_THEMES[theme].value()
+        pyvista.global_theme.load_theme(new_theme)
     elif isinstance(theme, DefaultTheme):
         pyvista.global_theme.load_theme(theme)
     else:
@@ -31,7 +25,27 @@ def set_plot_theme(theme):
 
 
 class DefaultTheme():
-    """PyVista default theme."""
+    """PyVista default theme.
+
+    Examples
+    --------
+    Change the global default background color to white.
+
+    >>> import pyvista
+    >>> pyvista.global_theme.color = 'white'
+
+    Show edges by default.
+
+    >>> pyvista.global_theme.show_edges = True
+
+    Create a new theme from the DefaultTheme and apply it globally.
+
+    >>> my_theme = pyvista.themes.DefaultTheme()
+    >>> my_theme.color = 'red'
+    >>> my_theme.background_color = 'white'
+    >>> pyvista.global_theme.load_theme(my_theme)
+
+    """
 
     def __init__(self):
         """Initialize the theme."""
@@ -92,7 +106,7 @@ class DefaultTheme():
         # Grab system flag for anti-aliasing
         try:
             self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', 4))
-        except ValueError:
+        except ValueError:  # pragma: no cover
             self._multi_samples = 4
 
         # Grab system flag for auto-closing
@@ -150,6 +164,16 @@ class DefaultTheme():
         >>> pyvista.global_theme.background = 'white'
         """
         return self._background
+
+    def __eq__(self, other_theme):
+        if not isinstance(other_theme, DefaultTheme):
+            return False
+
+        for name, value in vars(other_theme).items():
+            if not getattr(self, name) == value:
+                return False
+
+        return True
 
     @background.setter
     def background(self, new_background):
@@ -285,9 +309,9 @@ class DefaultTheme():
             raise TypeError(f'Expected ``camera`` to be a dict, not {type(camera)}')
 
         if 'position' not in camera:
-            raise ValueError('Expected the "position" key in the camera dictionary')
+            raise KeyError('Expected the "position" key in the camera dict')
         if 'viewup' not in camera:
-            raise ValueError('Expected the "viewup" key in the camera dictionary')
+            raise KeyError('Expected the "viewup" key in the camera dict')
 
         self._camera = camera
 
@@ -307,6 +331,7 @@ class DefaultTheme():
         >>> pyvista.global_theme.notebook = False
 
         """
+        return self._notebook
 
     @notebook.setter
     def notebook(self, value):
@@ -1155,22 +1180,9 @@ class _TestingTheme(DefaultTheme):
         self._window_size = [400, 400]
 
 
-class _GlobalTheme(DefaultTheme):
-    """Global PyVista theme.
-
-    Examples
-    --------
-    Change the default background color to white.
-
-    >>> import pyvista
-    >>> pyvista.global_theme.color = 'white'
-
-    Show edges by default.
-
-    >>> pyvista.global_theme.show_edges = True
-
-    """
-
-    def __init__(self):
-        """Initialize the base theme."""
-        super().__init__()
+class ALLOWED_THEMES(Enum):
+    paraview = ParaViewTheme
+    document = DocumentTheme
+    dark = DarkTheme
+    default = DefaultTheme
+    testing = _TestingTheme

@@ -68,7 +68,7 @@ might want to use PyVista:
    # must have this here as our global backend may not be static
    import pyvista
    pyvista.set_jupyter_backend('ipygany')  # using ipyvtk as it loads faster
-   pyvista.rcParams['background'] = [1, 1, 1]
+   pyvista.global_theme.background = 'white'
 
 
 Maps and Geoscience

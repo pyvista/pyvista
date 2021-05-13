@@ -144,7 +144,7 @@ pv.Sphere().plot()
 
 from pyvista import themes
 
-my_theme = themes.Theme()
+my_theme = themes.DefaultTheme()
 my_theme.color = 'black'
 my_theme.lighting = True
 my_theme.show_edges = True

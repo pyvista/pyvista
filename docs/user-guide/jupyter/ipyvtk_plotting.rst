@@ -1,7 +1,7 @@
 .. _ipyvtk_plotting:
 
 Using ``ipyvtklink`` with PyVista
-------------------------------------
+---------------------------------
 
 .. note::
    As of version ``0.1.4``, ``ipyvtklink`` does not support
@@ -33,14 +33,14 @@ within JupyterLab:
     # long example
     plotter = pv.Plotter(notebook=True)
     plotter.add_mesh(sphere)
-    plotter.show(use_ipyvtk=True)
+    plotter.show(jupyter_backend='ipyvtklink')
 
-For convenience, you can enable ``use_ipyvtk`` by default with:
+For convenience, you can enable ``ipyvtklink`` by default with:
 
 .. code:: python
 
     import pyvista
-    pyvista.rcParams['use_ipyvtk'] = True
+    pyvista.global_theme.jupyter_backend = 'ipyvtklink'
 
 
 Installation

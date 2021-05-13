@@ -25,7 +25,8 @@ from pyvista.utilities import (assert_empty_kwargs, convert_array,
                                is_pyvista_dataset, abstract_class,
                                numpy_to_texture, raise_not_matching,
                                wrap)
-from pyvista.utilities.regression import image_from_window
+from ..utilities.regression import image_from_window
+from ..utilities.misc import PyvistaDeprecationWarning
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
@@ -37,7 +38,6 @@ from .widgets import WidgetHelper
 from .scalar_bars import ScalarBars
 from .renderers import Renderers
 from .render_window_interactor import RenderWindowInteractor
-
 
 def _has_matplotlib():
     try:
@@ -110,11 +110,6 @@ Use ``scalar_bar_args`` instead.  For example:
 scalar_bar_args={'title': 'Scalar Bar Title'}
 """
 
-class PyvistaDeprecationWarning(Warning):
-    """Non-supressed Depreciation Warning."""
-
-    pass
-
 
 @abstract_class
 class BasePlotter(PickingHelper, WidgetHelper):
@@ -176,10 +171,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if theme is None:
             self._theme = pyvista.global_theme
         else:
-            if not isinstance(theme, pyvista.themes.Theme):
+            if not isinstance(theme, pyvista.themes.DefaultTheme):
                 raise TypeError('Expected pyvista.Theme for ``theme``, not '
                                 f'{type(theme)}')
-            self._theme = theme
+            self._theme = pyvista.themes.DefaultTheme()
+            self._theme.load_theme(theme)
 
         self.image_transparent_background = self._theme.transparent_background
 

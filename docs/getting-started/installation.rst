@@ -245,7 +245,7 @@ In your ``conf.py``, add the following:
 
     # Optional - set parameters like theme or window size
     pyvista.set_plot_theme('document')
-    pyvista.rcParams['window_size'] = np.array([1024, 768]) * 2
+    pyvista.global_theme.window_size = np.array([1024, 768]) * 2
 
     ...
 
