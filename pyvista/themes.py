@@ -1,7 +1,7 @@
 """Module managing different plotting theme parameters."""
 
+import json
 from typing import Union
-from collections.abc import Iterable
 
 import warnings
 from enum import Enum
@@ -10,6 +10,20 @@ import os
 from .plotting.colors import PARAVIEW_BACKGROUND, get_cmap_safe
 from .plotting.tools import parse_color, parse_font_family
 from .utilities.misc import PyvistaDeprecationWarning
+
+
+def load_theme(filename):
+    """Load a theme from a file.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> theme = pyvista.themes.DefaultTheme()
+    >>> theme.save('my_theme.json')  # doctest:+SKIP
+    >>> loaded_theme = pyvista.load_theme('my_theme.json')  # doctest:+SKIP
+
+    """
+    return DefaultTheme.fromdict(json.load(open(filename)))
 
 
 def set_plot_theme(theme):
@@ -27,8 +41,35 @@ def set_plot_theme(theme):
         raise TypeError(f'Expected a pyvista.Theme or str, not '
                         f'a {type(theme)}')
 
+class _ThemeConfig():
+    """Provide common methods for theme configuration classes."""
 
-class _DepthPeelingConfig():
+    @classmethod
+    def fromdict(cls, dict_):
+        """Create from a dictionary."""
+        inst = cls()
+        for key, value in dict_.items():
+            if not hasattr(inst, key):
+                raise KeyError(f'Invalid key "{key}" for {inst.__class__.__name__}')
+            attr = getattr(inst, key)
+            if hasattr(getattr(inst, key), 'fromdict'):
+                attr.fromdict(value)
+            else:
+                setattr(inst, key, value)
+        return inst
+
+    def __eq__(self, other):
+        if not isinstance(self, other.__class__):
+            return False
+
+        for name, value in vars(other).items():
+            if not getattr(self, name) == value:
+                return False
+
+        return True
+
+
+class _DepthPeelingConfig(_ThemeConfig):
     """PyVista depth peeling configuration.
 
     Examples
@@ -107,18 +148,8 @@ class _DepthPeelingConfig():
             txt.append(f'    {name:<21}: {setting}')
         return '\n'.join(txt)
 
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
 
-        for name, value in vars(other).items():
-            if not getattr(self, name) == value:
-                return False
-
-        return True
-
-
-class _SilhouetteConfig():
+class _SilhouetteConfig(_ThemeConfig):
     """PyVista silhouette configuration.
 
     Examples
@@ -240,18 +271,8 @@ class _SilhouetteConfig():
             txt.append(f'    {name:<21}: {setting}')
         return '\n'.join(txt)
 
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
 
-        for name, value in vars(other).items():
-            if not getattr(self, name) == value:
-                return False
-
-        return True
-
-
-class _ColorbarConfig():
+class _ColorbarConfig(_ThemeConfig):
     """PyVista colorbar configuration.
 
     Examples
@@ -263,11 +284,11 @@ class _ColorbarConfig():
 
     """
 
-    def __init__(self, width, height, position_x, position_y):
-        self._width = width
-        self._height = height
-        self._position_x = position_x
-        self._position_y = position_y
+    def __init__(self):
+        self._width = None
+        self._height = None
+        self._position_x = None
+        self._position_y = None
 
     @property
     def width(self) -> float:
@@ -347,18 +368,8 @@ class _ColorbarConfig():
 
         return '\n'.join(txt)
 
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
 
-        for name, value in vars(other).items():
-            if not getattr(self, name) == value:
-                return False
-
-        return True
-
-
-class _AxesConfig():
+class _AxesConfig(_ThemeConfig):
     """PyVista axes configuration.
 
     Examples
@@ -399,16 +410,6 @@ class _AxesConfig():
             txt.append(f'    {name:<21}: {setting}')
 
         return '\n'.join(txt)
-
-    def __eq__(self, other):
-        if not isinstance(other, _AxesConfig):
-            return False
-
-        for name, value in vars(other).items():
-            if not getattr(self, name) == value:
-                return False
-
-        return True
 
     @property
     def x_color(self) -> tuple:
@@ -490,7 +491,7 @@ class _AxesConfig():
         self._show = bool(show)
 
 
-class _Font():
+class _Font(_ThemeConfig):
     """PyVista plotter font configuration.
 
     Examples
@@ -530,16 +531,6 @@ class _Font():
         self._label_size = None
         self._color = [1, 1, 1]
         self._fmt = None
-
-    def __eq__(self, other_font):
-        if not isinstance(other_font, _Font):
-            return False
-
-        for name, value in vars(other_font).items():
-            if not getattr(self, name) == value:
-                return False
-
-        return True
 
     def __repr__(self):
         txt = ['']
@@ -672,26 +663,28 @@ class _Font():
         self._fmt = fmt
 
 
-class _SliderStyleConfig():
+class _SliderStyleConfig(_ThemeConfig):
 
-    def __init__(self, name, slider_length, slider_width, slider_color,
-                 tube_width, tube_color, cap_opacity, cap_length,
-                 cap_width):
+    def __init__(self):
         """Initialize the slider style configuration."""
-        self._name = name
-        self._slider_length = slider_length
-        self._slider_width = slider_width
-        self._slider_color = slider_color
-        self._tube_width = tube_width
-        self._tube_color = tube_color
-        self._cap_opacity = cap_opacity
-        self._cap_length = cap_length
-        self._cap_width = cap_width
+        self._name = None
+        self._slider_length = None
+        self._slider_width = None
+        self._slider_color = None
+        self._tube_width = None
+        self._tube_color = None
+        self._cap_opacity = None
+        self._cap_length = None
+        self._cap_width = None
 
     @property
     def name(self) -> str:
         """Return the name of the slider style configuration."""
         return self._name
+
+    @name.setter
+    def name(self, name: str):
+        self._name = name
 
     @property
     def cap_width(self) -> float:
@@ -838,18 +831,8 @@ class _SliderStyleConfig():
             txt.append(f'        {name:<17}: {setting}')
         return '\n'.join(txt)
 
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
 
-        for name, value in vars(other).items():
-            if not getattr(self, name) == value:
-                return False
-
-        return True
-
-
-class _SliderConfig():
+class _SliderConfig(_ThemeConfig):
     """PyVista slider configuration.
 
     Examples
@@ -881,27 +864,27 @@ class _SliderConfig():
 
     def __init__(self):
         """Initialize the slider configuration."""
-        self._classic = _SliderStyleConfig('classic',
-                                         0.02,  # slider_length
-                                         0.04,  # slider_width
-                                         (0.5, 0.5, 0.5),  # slider_color
-                                         0.005,  # tube_width
-                                         (1, 1, 1),  # tube_color'
-                                         1,  # cap_opacity
-                                         0.01,  # cap_length
-                                         0.02,  # cap_width
-        )
+        self._classic = _SliderStyleConfig()
+        self._classic.name = 'classic'
+        self._classic.slider_length = 0.02
+        self._classic.slider_width = 0.04
+        self._classic.slider_color = (0.5, 0.5, 0.5)
+        self._classic.tube_width = 0.005
+        self._classic.tube_color = (1, 1, 1)
+        self._classic.cap_opacity = 1
+        self._classic.cap_length = 0.01
+        self._classic.cap_width = 0.02
 
-        self._modern = _SliderStyleConfig('modern',
-                                          0.02,  # slider_length
-                                          0.04,  # slider_width
-                                          (0.43137255, 0.44313725, 0.45882353), # slider_color
-                                          0.04, # tube_width
-                                          (0.69803922, 0.70196078, 0.70980392), # tube_color
-                                          0, # cap_opacity
-                                          0.01, # cap_length
-                                          0.02, # cap_width
-        )
+        self._modern = _SliderStyleConfig()
+        self._modern.name = 'modern'
+        self._modern.slider_length = 0.02
+        self._modern.slider_width = 0.04
+        self._modern.slider_color = (0.43137255, 0.44313725, 0.45882353)
+        self._modern.tube_width = 0.04
+        self._modern.tube_color = (0.69803922, 0.70196078, 0.70980392)
+        self._modern.cap_opacity = 0
+        self._modern.cap_length = 0.01
+        self._modern.cap_width = 0.02
 
     @property
     def classic(self) -> _SliderStyleConfig:
@@ -924,22 +907,12 @@ class _SliderConfig():
             txt.append(f'    {name:<21}: {setting}')
         return '\n'.join(txt)
 
-    def __eq__(self, other):
-        if not isinstance(other, _SliderConfig):
-            return False
-
-        for name, value in vars(other).items():
-            if not getattr(self, name) == value:
-                return False
-
-        return True
-
     def __iter__(self):
         for style in [self._classic, self._modern]:
             yield style.name
 
 
-class DefaultTheme():
+class DefaultTheme(_ThemeConfig):
     """PyVista default theme.
 
     Examples
@@ -982,14 +955,18 @@ class DefaultTheme():
         self._outline_color = 'white'
         self._floor_color = 'gray'
         self._colorbar_orientation = 'horizontal'
-        self._colorbar_horizontal = _ColorbarConfig(width=0.6,
-                                                    height=0.08,
-                                                    position_x=0.35,
-                                                    position_y=0.05)
-        self._colorbar_vertical = _ColorbarConfig(width=0.08,
-                                                  height=0.45,
-                                                  position_x=0.9,
-                                                  position_y=0.02)
+
+        self._colorbar_horizontal = _ColorbarConfig()
+        self._colorbar_horizontal.width = 0.6
+        self._colorbar_horizontal.height = 0.08
+        self._colorbar_horizontal.position_x = 0.35
+        self._colorbar_horizontal.position_y = 0.05
+
+        self._colorbar_vertical = _ColorbarConfig()
+        self._colorbar_horizontal.width = 0.08
+        self._colorbar_horizontal.height = 0.45
+        self._colorbar_horizontal.position_x = 0.9
+        self._colorbar_horizontal.position_y = 0.02
 
         self._show_scalar_bar = True
         self._show_edges = False
@@ -1035,17 +1012,6 @@ class DefaultTheme():
     @background.setter
     def background(self, new_background):
         self._background = parse_color(new_background)
-
-    def __eq__(self, other_theme):
-        """Check equality."""
-        if not isinstance(other_theme, DefaultTheme):
-            return False
-
-        for name, value in vars(other_theme).items():
-            if not getattr(self, name) == value:
-                return False
-
-        return True
 
     @property
     def jupyter_backend(self):
@@ -1822,6 +1788,35 @@ class DefaultTheme():
 
         for name, value in vars(theme).items():
             setattr(self, name, value)
+
+    def _to_dict(self):
+        """Recursively convert to a dictionary for serialization."""
+        def to_dict(dict_):
+            dict_out = {}
+            for key, value in dict_.items():
+                if hasattr(value, '__dict__'):
+                    dict_out[key] = to_dict(value.__dict__)
+                else:
+                    dict_out[key] = value
+            return dict_out
+
+        return to_dict(self.__dict__)
+
+    def save(self, filename):
+        """Serialize this theme to a json file.
+
+        Examples
+        --------
+        Export and then load back in a theme.
+
+        >>> import pyvista
+        >>> theme = pyvista.themes.DefaultTheme()
+        >>> theme.background = 'white'
+        >>> theme.save('my_theme.json')  # doctest:+SKIP
+        >>> loaded_theme = pyvista.load_theme('my_theme.json')  # doctest:+SKIP
+        """
+        with open(filename, 'w') as f:
+            json.dump(self._to_dict(), f)
 
 
 class DarkTheme(DefaultTheme):

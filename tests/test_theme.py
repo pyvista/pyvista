@@ -349,3 +349,9 @@ def test_plotter_set_theme():
         # global defaults
         pyvista.global_theme.load_theme(pyvista.themes._TestingTheme())
 
+
+def test_load_theme(default_theme, tmpdir):
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
+    default_theme.save(filename)
+    loaded_theme = pyvista.load_theme(filename)
+    assert loaded_theme == default_theme
