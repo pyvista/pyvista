@@ -1274,41 +1274,48 @@ class WidgetHelper:
         Parameters
         ----------
         callback : callable
-            The function to call back when the widget is modified. It takes a
-            single argument: the center of the sphere as a XYZ coordinate.
+            The function to call back when the widget is modified. It
+            takes a single argument: the center of the sphere as a XYZ
+            coordinate.
 
         center : tuple(float)
-            Length 3 array for the XYZ coordinate of the sphere's center
-            when placing it in the scene. If more than one location is passed,
-            then that many widgets will be added and the callback will also
-            be passed the integer index of that widget.
+            Length 3 array for the XYZ coordinate of the sphere's
+            center when placing it in the scene. If more than one
+            location is passed, then that many widgets will be added
+            and the callback will also be passed the integer index of
+            that widget.
 
-        radius : float
-            The radius of the sphere
+        radius : float, optional
+            The radius of the sphere.
 
         theta_resolution: int , optional
-            Set the number of points in the longitude direction (ranging from
-            start_theta to end_theta).
+            Set the number of points in the longitude direction.
 
         phi_resolution : int, optional
-            Set the number of points in the latitude direction (ranging from
-            start_phi to end_phi).
+            Set the number of points in the latitude direction.
 
-        color : str
-            The color of the sphere's surface
+        color : string or 3 item iterable, optional
+            The color of the sphere's surface.  Either a string, rgb
+            list, or hex color string.  For example:
 
-        style : str
-            Representation style: surface or wireframe
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
-        selected_color : str
+        style : str, optional
+            Representation style: ``'surface'`` or ``'wireframe'``
+
+        selected_color : str, optional
             Color of the widget when selected during interaction
 
         pass_widget : bool
-            If true, the widget will be passed as the last argument of the
-            callback
+            If ``True``, the widget will be passed as the last
+            argument of the callback.
 
-        test_callback: bool
-            if true, run the callback function after the widget is created.
+        test_callback: bool, optional
+            if ``True``, run the callback function after the widget is
+            created.
 
         """
         if not hasattr(self, "sphere_widgets"):
@@ -1323,7 +1330,10 @@ class WidgetHelper:
             num = len(center)
 
         if isinstance(color, (list, tuple, np.ndarray)):
-            colors = color
+            if len(color) == num and not isinstance(color[0], float):
+                colors = color
+            else:
+                colors = [color] * num
         else:
             colors = [color] * num
 

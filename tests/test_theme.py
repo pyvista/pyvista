@@ -350,8 +350,8 @@ def test_plotter_set_theme():
         pyvista.global_theme.load_theme(pyvista.themes._TestingTheme())
 
 
-def test_load_theme(default_theme, tmpdir):
+def test_load_theme(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
-    default_theme.save(filename)
+    pyvista.themes.DarkTheme().save(filename)
     loaded_theme = pyvista.load_theme(filename)
-    assert loaded_theme == default_theme
+    assert loaded_theme == pyvista.themes.DarkTheme()

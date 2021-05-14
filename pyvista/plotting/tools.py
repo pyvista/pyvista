@@ -356,6 +356,8 @@ def parse_color(color, opacity=None, default_color=None):
             color = pyvista.global_theme.color
         else:
             color = default_color
+    if isinstance(color, float):
+        breakpoint()
     if isinstance(color, str):
         color = string_to_rgb(color)
     elif len(color) == 3:

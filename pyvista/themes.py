@@ -1,8 +1,7 @@
 """Module managing different plotting theme parameters."""
 
 import json
-from typing import Union
-
+from typing import Union, Iterable, Sized, Collection, List
 import warnings
 from enum import Enum
 import os
@@ -23,7 +22,7 @@ def load_theme(filename):
     >>> loaded_theme = pyvista.load_theme('my_theme.json')  # doctest:+SKIP
 
     """
-    return DefaultTheme.fromdict(json.load(open(filename)))
+    return DefaultTheme.from_dict(json.load(open(filename)))
 
 
 def set_plot_theme(theme):
@@ -45,26 +44,43 @@ class _ThemeConfig():
     """Provide common methods for theme configuration classes."""
 
     @classmethod
-    def fromdict(cls, dict_):
+    def from_dict(cls, dict_):
         """Create from a dictionary."""
         inst = cls()
         for key, value in dict_.items():
             if not hasattr(inst, key):
                 raise KeyError(f'Invalid key "{key}" for {inst.__class__.__name__}')
             attr = getattr(inst, key)
-            if hasattr(getattr(inst, key), 'fromdict'):
-                attr.fromdict(value)
+            if hasattr(attr, 'from_dict'):
+                setattr(inst, key, attr.from_dict(value))
             else:
                 setattr(inst, key, value)
         return inst
+
+    def to_dict(self) -> dict:
+        """Return silhouette parameters as a dictionary."""
+        # remove the first underscore in each entry
+        dict_ = {}
+        for key, value in vars(self).items():
+            key = key[1:]
+            if hasattr(value, 'to_dict'):
+                dict_[key] = value.to_dict()
+            else:
+                dict_[key] = value
+        return dict_
 
     def __eq__(self, other):
         if not isinstance(self, other.__class__):
             return False
 
         for name, value in vars(other).items():
-            if not getattr(self, name) == value:
-                return False
+            attr = getattr(self, name)
+            if isinstance(attr, (tuple, list)):
+                if tuple(attr) != tuple(value):
+                    return False
+            else:
+                if not attr == value:
+                    return False
 
         return True
 
@@ -164,7 +180,7 @@ class _SilhouetteConfig(_ThemeConfig):
     """
 
     def __init__(self):
-        self._color = 'black'
+        self._color = parse_color('black')
         self._line_width = 2
         self._opacity = 1.0
         self._feature_angle = None
@@ -251,11 +267,6 @@ class _SilhouetteConfig(_ThemeConfig):
     @decimate.setter
     def decimate(self, decimate: float):
         self._decimate = float(decimate)
-
-    def to_dict(self) -> dict:
-        """Return silhouette parameters as a dictionary."""
-        # remove the first underscore in each entry
-        return dict((key[1:], value) for key, value in vars(self).items())
 
     def __repr__(self):
         txt = ['']
@@ -390,9 +401,9 @@ class _AxesConfig(_ThemeConfig):
     """
 
     def __init__(self):
-        self._x_color = 'tomato'
-        self._y_color = 'seagreen'
-        self._z_color = 'mediumblue'
+        self._x_color = parse_color('tomato')
+        self._y_color = parse_color('seagreen')
+        self._z_color = parse_color('mediumblue')
         self._box = False
         self._show = True
 
@@ -891,10 +902,22 @@ class _SliderConfig(_ThemeConfig):
         """Return the Classic slider configuration."""
         return self._classic
 
+    @classic.setter
+    def classic(self, config: _SliderStyleConfig):
+        if not isinstance(config, _SliderStyleConfig):
+            raise TypeError('Configuration type must be `_SliderStyleConfig`')
+        self._classic = config
+
     @property
     def modern(self) -> _SliderStyleConfig:
         """Return the Modern slider configuration."""
         return self._modern
+
+    @modern.setter
+    def modern(self, config: _SliderStyleConfig):
+        if not isinstance(config, _SliderStyleConfig):
+            raise TypeError('Configuration type must be `_SliderStyleConfig`')
+        self._modern = config
 
     def __repr__(self):
         txt = ['']
@@ -938,7 +961,7 @@ class DefaultTheme(_ThemeConfig):
     def __init__(self):
         """Initialize the theme."""
         self._name = 'default'
-        self._background = [0.3, 0.3, 0.3]
+        self._background = parse_color([0.3, 0.3, 0.3])
         self._full_screen = False
         self._camera = {
             'position': [1, 1, 1],
@@ -949,11 +972,11 @@ class DefaultTheme(_ThemeConfig):
         self._window_size = [1024, 768]
         self._font = _Font()
         self._cmap = 'viridis'
-        self._color = 'white'
-        self._nan_color = 'darkgray'
-        self._edge_color = 'black'
-        self._outline_color = 'white'
-        self._floor_color = 'gray'
+        self._color = parse_color('white')
+        self._nan_color = parse_color('darkgray')
+        self._edge_color = parse_color('black')
+        self._outline_color = parse_color('white')
+        self._floor_color = parse_color('gray')
         self._colorbar_orientation = 'horizontal'
 
         self._colorbar_horizontal = _ColorbarConfig()
@@ -963,17 +986,16 @@ class DefaultTheme(_ThemeConfig):
         self._colorbar_horizontal.position_y = 0.05
 
         self._colorbar_vertical = _ColorbarConfig()
-        self._colorbar_horizontal.width = 0.08
-        self._colorbar_horizontal.height = 0.45
-        self._colorbar_horizontal.position_x = 0.9
-        self._colorbar_horizontal.position_y = 0.02
+        self._colorbar_vertical.width = 0.08
+        self._colorbar_vertical.height = 0.45
+        self._colorbar_vertical.position_x = 0.9
+        self._colorbar_vertical.position_y = 0.02
 
         self._show_scalar_bar = True
         self._show_edges = False
         self._lighting = True
         self._interactive = False
         self._render_points_as_spheres = False
-        self._use_ipyvtk = False
         self._transparent_background = False
         self._title = 'PyVista'
         self._axes = _AxesConfig()
@@ -1014,7 +1036,7 @@ class DefaultTheme(_ThemeConfig):
         self._background = parse_color(new_background)
 
     @property
-    def jupyter_backend(self):
+    def jupyter_backend(self) -> str:
         """Return or set the jupyter notebook plotting backend.
 
         Jupyter backend to use when plotting.  Must be one of the
@@ -1076,12 +1098,12 @@ class DefaultTheme(_ThemeConfig):
         return self._jupyter_backend
 
     @jupyter_backend.setter
-    def jupyter_backend(self, value):
+    def jupyter_backend(self, value: 'str'):
         import pyvista
         pyvista.set_jupyter_backend(value)
 
     @property
-    def auto_close(self):
+    def auto_close(self) -> bool:
         """Automatically close the figures when finished plotting.
 
         .. DANGER::
@@ -1096,11 +1118,11 @@ class DefaultTheme(_ThemeConfig):
         return self._auto_close
 
     @auto_close.setter
-    def auto_close(self, value):
+    def auto_close(self, value: bool):
         self._auto_close = value
 
     @property
-    def full_screen(self):
+    def full_screen(self) -> bool:
         """Return if figures are show in full screen.
 
         Examples
@@ -1111,7 +1133,7 @@ class DefaultTheme(_ThemeConfig):
         return self._full_screen
 
     @full_screen.setter
-    def full_screen(self, value):
+    def full_screen(self, value: bool):
         self._full_screen = value
 
     @property
@@ -1150,7 +1172,7 @@ class DefaultTheme(_ThemeConfig):
         self._camera = camera
 
     @property
-    def notebook(self):
+    def notebook(self) -> Union[bool, None]:
         """Return or set the state of notebook plotting.
 
         Setting this to ``True`` always enables notebook plotting,
@@ -1168,11 +1190,11 @@ class DefaultTheme(_ThemeConfig):
         return self._notebook
 
     @notebook.setter
-    def notebook(self, value):
+    def notebook(self, value: Union[bool, None]):
         self._notebook = value
 
     @property
-    def window_size(self):
+    def window_size(self) -> List[int]:
         """Return or set the default render window size.
 
         Examples
@@ -1186,7 +1208,7 @@ class DefaultTheme(_ThemeConfig):
         return self._window_size
 
     @window_size.setter
-    def window_size(self, window_size):
+    def window_size(self, window_size: List[int]):
         if not len(window_size) == 2:
             raise ValueError('Expected a length 2 iterable for ``window_size``')
 
@@ -1197,7 +1219,7 @@ class DefaultTheme(_ThemeConfig):
         self._window_size = window_size
 
     @property
-    def font(self):
+    def font(self) -> _Font:
         """Return or set the default font size, family, and/or color.
 
         Examples
@@ -1230,6 +1252,12 @@ class DefaultTheme(_ThemeConfig):
 
         """
         return self._font
+
+    @font.setter
+    def font(self, config: _Font):
+        if not isinstance(config, _Font):
+            raise TypeError('Configuration type must be `_Font`')
+        self._font = config
 
     @property
     def cmap(self):
@@ -1390,6 +1418,12 @@ class DefaultTheme(_ThemeConfig):
         """
         return self._colorbar_horizontal
 
+    @colorbar_horizontal.setter
+    def colorbar_horizontal(self, config: _ColorbarConfig):
+        if not isinstance(config, _ColorbarConfig):
+            raise TypeError('Configuration type must be `_ColorbarConfig`')
+        self._colorbar_horizontal = config
+
     @property
     def colorbar_vertical(self) -> _ColorbarConfig:
         """Return or set the default parameters of a vertical colorbar.
@@ -1408,6 +1442,12 @@ class DefaultTheme(_ThemeConfig):
 
         """
         return self._colorbar_vertical
+
+    @colorbar_vertical.setter
+    def colorbar_vertical(self, config: _ColorbarConfig):
+        if not isinstance(config, _ColorbarConfig):
+            raise TypeError('Configuration type must be `_ColorbarConfig`')
+        self._colorbar_vertical = config
 
     @property
     def show_scalar_bar(self) -> bool:
@@ -1496,15 +1536,15 @@ class DefaultTheme(_ThemeConfig):
     def render_points_as_spheres(self, render_points_as_spheres: bool):
         self._render_points_as_spheres = render_points_as_spheres
 
-    @property
-    def use_ipyvtk(self):  # pragma: no cover
-        """Return or set the default global ``use_ipyvtk`` parameter.
+    # @property
+    # def use_ipyvtk(self):  # pragma: no cover
+    #     """Return or set the default global ``use_ipyvtk`` parameter.
 
-        This parameter has been deprecated in favor of
-        ``jupyter_backend``.
-        """
-        from pyvista.core.errors import DeprecationError
-        raise DeprecationError('DEPRECATED: Please use ``jupyter_backend``')
+    #     This parameter has been deprecated in favor of
+    #     ``jupyter_backend``.
+    #     """
+    #     from pyvista.core.errors import DeprecationError
+    #     raise DeprecationError('DEPRECATED: Please use ``jupyter_backend``')
 
     @property
     def transparent_background(self) -> bool:
@@ -1643,6 +1683,12 @@ class DefaultTheme(_ThemeConfig):
         """
         return self._depth_peeling
 
+    @depth_peeling.setter
+    def depth_peeling(self, config: _DepthPeelingConfig):
+        if not isinstance(config, _DepthPeelingConfig):
+            raise TypeError('Configuration type must be `_DepthPeelingConfig`')
+        self._depth_peeling = config
+
     @property
     def silhouette(self) -> _SilhouetteConfig:
         """Return or set the global default ``silhouette`` configuration.
@@ -1659,10 +1705,22 @@ class DefaultTheme(_ThemeConfig):
         """
         return self._silhouette
 
+    @silhouette.setter
+    def silhouette(self, config: _SilhouetteConfig):
+        if not isinstance(config, _SilhouetteConfig):
+            raise TypeError('Configuration type must be `_SilhouetteConfig`')
+        self._silhouette = config
+
     @property
-    def slider_style(self) -> _SliderStyleConfig:
+    def slider_style(self) -> _SliderConfig:
         """Return the global default slider_style configuration."""
         return self._slider_style
+
+    @slider_style.setter
+    def slider_style(self, config: _SliderConfig):
+        if not isinstance(config, _SliderConfig):
+            raise TypeError('Configuration type must be `_SliderConfig`')
+        self._slider_style = config
 
     @property
     def axes(self) -> _AxesConfig:
@@ -1685,6 +1743,12 @@ class DefaultTheme(_ThemeConfig):
 
         """
         return self._axes
+
+    @axes.setter
+    def axes(self, config: _AxesConfig):
+        if not isinstance(config, _AxesConfig):
+            raise TypeError('Configuration type must be `_AxesConfig`')
+        self._axes = config
 
     def restore_defaults(self):
         """Restore the theme defaults.
@@ -1789,19 +1853,6 @@ class DefaultTheme(_ThemeConfig):
         for name, value in vars(theme).items():
             setattr(self, name, value)
 
-    def _to_dict(self):
-        """Recursively convert to a dictionary for serialization."""
-        def to_dict(dict_):
-            dict_out = {}
-            for key, value in dict_.items():
-                if hasattr(value, '__dict__'):
-                    dict_out[key] = to_dict(value.__dict__)
-                else:
-                    dict_out[key] = value
-            return dict_out
-
-        return to_dict(self.__dict__)
-
     def save(self, filename):
         """Serialize this theme to a json file.
 
@@ -1816,7 +1867,7 @@ class DefaultTheme(_ThemeConfig):
         >>> loaded_theme = pyvista.load_theme('my_theme.json')  # doctest:+SKIP
         """
         with open(filename, 'w') as f:
-            json.dump(self._to_dict(), f)
+            json.dump(self.to_dict(), f)
 
 
 class DarkTheme(DefaultTheme):
@@ -1839,17 +1890,17 @@ class DarkTheme(DefaultTheme):
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self._name = 'dark'
-        self._background = 'black'
-        self._cmap = 'viridis'
-        self._font.color = 'white'
-        self._show_edges = False
-        self._color = 'tan'
-        self._outline_color = 'white'
-        self._edge_color = 'white'
-        self._axes.x_color = 'tomato'
-        self._axes.y_color = 'seagreen'
-        self._axes.z_color = 'blue'
+        self.name = 'dark'
+        self.background = 'black'
+        self.cmap = 'viridis'
+        self.font.color = 'white'
+        self.show_edges = False
+        self.color = 'tan'
+        self.outline_color = 'white'
+        self.edge_color = 'white'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'seagreen'
+        self.axes.z_color = 'blue'
 
 
 class ParaViewTheme(DefaultTheme):
@@ -1870,19 +1921,19 @@ class ParaViewTheme(DefaultTheme):
     def __init__(self):
         """Initialize theme."""
         super().__init__()
-        self._name = 'paraview'
-        self._background = PARAVIEW_BACKGROUND
-        self._cmap = 'coolwarm'
-        self._font.family = 'arial'
-        self._font.label_size = 16
-        self._font.color = 'white'
-        self._show_edges = False
-        self._color = 'white'
-        self._outline_color = 'white'
-        self._edge_color = 'black'
-        self._axes.x_color = 'tomato'
-        self._axes.y_color = 'gold'
-        self._axes.z_color = 'green'
+        self.name = 'paraview'
+        self.background = tuple(PARAVIEW_BACKGROUND)
+        self.cmap = 'coolwarm'
+        self.font.family = 'arial'
+        self.font.label_size = 16
+        self.font.color = 'white'
+        self.show_edges = False
+        self.color = 'white'
+        self.outline_color = 'white'
+        self.edge_color = 'black'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'gold'
+        self.axes.z_color = 'green'
 
 
 class DocumentTheme(DefaultTheme):
@@ -1907,20 +1958,20 @@ class DocumentTheme(DefaultTheme):
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self._name = 'document'
-        self._background = 'white'
-        self._cmap = 'viridis'
-        self._font.size = 18
-        self._font.title_size = 18
-        self._font.label_size = 18
-        self._font.color = 'black'
-        self._show_edges = False
-        self._color = 'tan'
-        self._outline_color = 'black'
-        self._edge_color = 'black'
-        self._axes.x_color = 'tomato'
-        self._axes.y_color = 'seagreen'
-        self._axes.z_color = 'blue'
+        self.name = 'document'
+        self.background = 'white'
+        self.cmap = 'viridis'
+        self.font.size = 18
+        self.font.title_size = 18
+        self.font.label_size = 18
+        self.font.color = 'black'
+        self.show_edges = False
+        self.color = 'tan'
+        self.outline_color = 'black'
+        self.edge_color = 'black'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'seagreen'
+        self.axes.z_color = 'blue'
 
 
 class _TestingTheme(DefaultTheme):
@@ -1933,9 +1984,9 @@ class _TestingTheme(DefaultTheme):
 
     def __init__(self):
         super().__init__()
-        self._name = 'testing'
-        self._multi_samples = 1
-        self._window_size = [400, 400]
+        self.name = 'testing'
+        self.multi_samples = 1
+        self.window_size = [400, 400]
 
 
 class ALLOWED_THEMES(Enum):
