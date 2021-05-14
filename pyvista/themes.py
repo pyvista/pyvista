@@ -16,6 +16,7 @@ def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme."""
     import pyvista
     if isinstance(theme, str):
+        theme = theme.lower()
         if theme == 'night':  # pragma: no cover
             warnings.warn('use "dark" instead of "night" theme', PyvistaDeprecationWarning)
         new_theme = ALLOWED_THEMES[theme].value()

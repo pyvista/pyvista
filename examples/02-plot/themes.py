@@ -37,21 +37,21 @@ plot_example()
 # PyVista also ships with a few plotting themes:
 #
 # * ``'ParaView'``: this is designed to mimic ParaView's default plotting theme.
-# * ``'night'``: this is designed to be night-mode friendly with dark backgrounds and color schemes.
+# * ``'dark'``: this is designed to be night-mode friendly with dark backgrounds and color schemes.
 # * ``'document'``: this is built for use in document style plotting and making publication quality figures.
 
 ###############################################################################
 # Demo the ``'ParaView'`` theme
 
-pv.set_plot_theme("ParaView")
+pv.set_plot_theme("paraview")
 
 plot_example()
 
 
 ###############################################################################
-# Demo the ``'night'`` theme
+# Demo the ``'dark'`` theme
 
-pv.set_plot_theme("night")
+pv.set_plot_theme("dark")
 
 plot_example()
 
@@ -125,7 +125,7 @@ my_theme = themes.DarkTheme()
 my_theme.color = 'red'
 my_theme.lighting = False
 my_theme.show_edges = True
-my_theme.axes['box'] = True
+my_theme.axes.box = True
 
 pv.global_theme.load_theme(my_theme)
 pv.Sphere().plot()
