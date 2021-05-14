@@ -1,5 +1,6 @@
 """Module containing useful plotting tools."""
 
+from enum import Enum
 import platform
 import os
 from subprocess import PIPE, Popen
@@ -11,9 +12,13 @@ from pyvista import _vtk
 from .colors import string_to_rgb
 
 
-FONT_KEYS = {'arial': _vtk.VTK_ARIAL,
-             'courier': _vtk.VTK_COURIER,
-             'times': _vtk.VTK_TIMES}
+class FONTS(Enum):
+    """Font families available to PyVista."""
+
+    arial = _vtk.VTK_ARIAL
+    courier = _vtk.VTK_COURIER
+    times = _vtk.VTK_TIMES
+
 
 # Track render window support and plotting
 SUPPORTS_OPENGL = None
@@ -86,7 +91,7 @@ def system_supports_plotting():
 def update_axes_label_color(axes_actor, color=None):
     """Set the axes label color (internale helper)."""
     if color is None:
-        color = pyvista.global_theme.font['color']
+        color = pyvista.global_theme.font.color
     color = parse_color(color)
     if isinstance(axes_actor, _vtk.vtkAxesActor):
         prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
@@ -106,11 +111,11 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
                        labels_off=False, line_width=2):
     """Return an axis actor to add in the scene."""
     if x_color is None:
-        x_color = pyvista.global_theme.axes['x_color']
+        x_color = pyvista.global_theme.axes.x_color
     if y_color is None:
-        y_color = pyvista.global_theme.axes['y_color']
+        y_color = pyvista.global_theme.axes.y_color
     if z_color is None:
-        z_color = pyvista.global_theme.axes['z_color']
+        z_color = pyvista.global_theme.axes.z_color
     axes_actor = _vtk.vtkAxesActor()
     axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
     axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
@@ -145,11 +150,11 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
                                 labels_off=False, opacity=0.5,):
     """Create a Box axes orientation widget with labels."""
     if x_color is None:
-        x_color = pyvista.global_theme.axes['x_color']
+        x_color = pyvista.global_theme.axes.x_color
     if y_color is None:
-        y_color = pyvista.global_theme.axes['y_color']
+        y_color = pyvista.global_theme.axes.y_color
     if z_color is None:
-        z_color = pyvista.global_theme.axes['z_color']
+        z_color = pyvista.global_theme.axes.z_color
     if edge_color is None:
         edge_color = pyvista.global_theme.edge_color
     axes_actor = _vtk.vtkAnnotatedCubeActor()
@@ -372,10 +377,9 @@ def parse_color(color, opacity=None, default_color=None):
 
 def parse_font_family(font_family):
     """Check font name."""
-    # check font name
     font_family = font_family.lower()
-    if font_family not in ['courier', 'times', 'arial']:
-        raise ValueError('Font must be either "courier", "times" '
-                         'or "arial"')
+    if font_family not in FONTS._member_names_:
+        raise ValueError('Font must one of the following:\n'
+                         f"{', '.join(FONTS._member_names_)}")
 
-    return FONT_KEYS[font_family]
+    return FONTS[font_family].value

@@ -65,7 +65,7 @@ class WidgetHelper:
             bounds = self.bounds
 
         if color is None:
-            color = pyvista.global_theme.font['color']
+            color = pyvista.global_theme.font.color
 
         def _the_callback(box_widget, event_id):
             the_box = pyvista.PolyData()
@@ -254,7 +254,7 @@ class WidgetHelper:
             normal = NORMALS[normal.lower()]
 
         if color is None:
-            color = pyvista.global_theme.font['color']
+            color = pyvista.global_theme.font.color
 
         if assign_to_axis:
             normal_rotation = False
@@ -625,7 +625,7 @@ class WidgetHelper:
             bounds = self.bounds
 
         if color is None:
-            color = pyvista.global_theme.font['color']
+            color = pyvista.global_theme.font.color
 
         def _the_callback(widget, event_id):
             pointa = widget.GetPoint1()
@@ -847,16 +847,16 @@ class WidgetHelper:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
 
         if color is None:
-            color = pyvista.global_theme.font['color']
+            color = pyvista.global_theme.font.color
 
         if title_color is None:
             title_color = color
 
         if fmt is None:
-            fmt = pyvista.global_theme.font['fmt']
+            fmt = pyvista.global_theme.font.fmt
 
         def normalize(point, viewport):
-            return (point[0]*(viewport[2]-viewport[0]),point[1]*(viewport[3]-viewport[1]))
+            return (point[0]*(viewport[2]-viewport[0]), point[1]*(viewport[3]-viewport[1]))
 
         pointa = normalize(pointa, self.renderer.GetViewport())
         pointb = normalize(pointb, self.renderer.GetViewport())
@@ -884,18 +884,15 @@ class WidgetHelper:
             if not isinstance(style, str):
                 raise TypeError("Expected type for ``style`` is str but"
                                 f" {type(style)} was given.")
-            style_params = pyvista.global_theme.slider_style.get(style, None)
-            if style_params is None:
-                raise KeyError("The requested style does not exist: "
-                               f"{style}. The styles available are {list(pyvista.global_theme.slider_style.keys())}.")
-            slider_rep.SetSliderLength(style_params['slider_length'])
-            slider_rep.SetSliderWidth(style_params['slider_width'])
-            slider_rep.GetSliderProperty().SetColor(style_params['slider_color'])
-            slider_rep.SetTubeWidth(style_params['tube_width'])
-            slider_rep.GetTubeProperty().SetColor(style_params['tube_color'])
-            slider_rep.GetCapProperty().SetOpacity(style_params['cap_opacity'])
-            slider_rep.SetEndCapLength(style_params['cap_length'])
-            slider_rep.SetEndCapWidth(style_params['cap_width'])
+            slider_style = getattr(pyvista.global_theme.slider_style, style)
+            slider_rep.SetSliderLength(slider_style.slider_length)
+            slider_rep.SetSliderWidth(slider_style.slider_width)
+            slider_rep.GetSliderProperty().SetColor(slider_style.slider_color)
+            slider_rep.SetTubeWidth(slider_style.tube_width)
+            slider_rep.GetTubeProperty().SetColor(slider_style.tube_color)
+            slider_rep.GetCapProperty().SetOpacity(slider_style.cap_opacity)
+            slider_rep.SetEndCapLength(slider_style.cap_length)
+            slider_rep.SetEndCapWidth(slider_style.cap_width)
 
         def _the_callback(widget, event):
             value = widget.GetRepresentation().GetValue()

@@ -39,3 +39,4 @@ coverage-html:
 mypy:
 	@echo "Running mypy static type checking"
 	mypy pyvista/core/ --no-incremental
+	mypy pyvista/themes.py --no-incremental

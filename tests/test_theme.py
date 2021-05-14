@@ -10,6 +10,74 @@ def default_theme():
     return pyvista.themes.DefaultTheme()
 
 
+@pytest.mark.parametrize('parm', [('enabled', True),
+                                  ('occlusion_ratio', 0.5),
+                                  ('number_of_peels', 2)]
+)
+def test_depth_peeling_config(default_theme, parm):
+    attr, value = parm
+    assert hasattr(default_theme.depth_peeling, attr)
+    setattr(default_theme.depth_peeling, attr, value)
+    assert getattr(default_theme.depth_peeling, attr) == value
+
+
+def test_depth_peeling_eq(default_theme):
+    my_theme = pyvista.themes.DefaultTheme()
+    my_theme.depth_peeling.enabled = not my_theme.depth_peeling.enabled
+    assert my_theme.depth_peeling != default_theme.depth_peeling
+    assert my_theme.depth_peeling != 1
+
+
+@pytest.mark.parametrize('parm', [('color', (0.1, 0.1, 0.1)),
+                                  ('line_width', 1),
+                                  ('opacity', 2.0),
+                                  ('feature_angle', 20),
+                                  ('decimate', 0.5),
+])
+def test_silhouette_config(default_theme, parm):
+    attr, value = parm
+    assert hasattr(default_theme.silhouette, attr)
+    setattr(default_theme.silhouette, attr, value)
+    assert getattr(default_theme.silhouette, attr) == value
+
+
+def test_depth_silhouette_eq(default_theme):
+    my_theme = pyvista.themes.DefaultTheme()
+    my_theme.silhouette.opacity = 0.11111
+    assert my_theme.silhouette != default_theme.silhouette
+    assert my_theme.silhouette != 1
+
+
+@pytest.mark.parametrize('parm', [('slider_length', 0.03),
+                                  ('slider_width', 0.02),
+                                  ('slider_color', (0.5, 0.5, 0.3)),
+                                  ('tube_width', 0.02),
+                                  ('tube_color', (0.5, 0.5, 0.5)),
+                                  ('cap_opacity', 0.5),
+                                  ('cap_length', 0.02),
+                                  ('cap_width', 0.04)
+])
+@pytest.mark.parametrize('slider_type', ('modern', 'classic'))
+def test_slider_style_config(default_theme, parm, slider_type):
+    attr, value = parm
+
+    slider_style = getattr(default_theme.slider_style, 'modern')
+    assert hasattr(slider_style, attr)
+    setattr(slider_style, attr, value)
+    assert getattr(slider_style, attr) == value
+
+
+def test_slider_style_config_eq(default_theme):
+    assert default_theme.slider_style.modern != default_theme.slider_style.classic
+    assert default_theme.slider_style.modern != 1
+
+
+def test_slider_style_eq(default_theme):
+    my_theme = pyvista.themes.DefaultTheme()
+    my_theme.slider_style.modern.slider_length *= 2
+    assert default_theme.slider_style != my_theme.slider_style
+
+
 def test_invalid_color_str_single_char():
     with pytest.raises(ValueError):
         colors.string_to_rgb('x')
@@ -33,6 +101,93 @@ def test_font():
         pyvista.parse_font_family('not a font')
 
 
+def test_font_eq(default_theme):
+    defa_theme = pyvista.themes.DefaultTheme()
+    assert defa_theme.font == default_theme.font
+
+    paraview_theme = pyvista.themes.ParaViewTheme()
+    assert paraview_theme.font != default_theme.font
+    assert paraview_theme.font != 1
+
+
+def test_font_family(default_theme):
+    font = 'courier'
+    default_theme.font.family = font
+    assert default_theme.font.family == font
+
+    with pytest.raises(ValueError):
+        default_theme.font.family = 'bla'
+
+
+def test_font_title_size(default_theme):
+    default_theme.font.title_size = None
+    assert default_theme.font.title_size is None
+
+
+def test_font_label_size(default_theme):
+    default_theme.font.label_size = None
+    assert default_theme.font.label_size is None
+
+
+def test_font_fmt(default_theme):
+    fmt = '%.6e'
+    default_theme.font.fmt = fmt
+    assert default_theme.font.fmt == fmt
+
+
+def test_axes_eq(default_theme):
+    assert default_theme.axes == pyvista.themes.DefaultTheme().axes
+
+    theme = pyvista.themes.DefaultTheme()
+    theme.axes.box = True
+    assert default_theme.axes != theme.axes
+    assert default_theme.axes != 1
+
+
+def test_axes_box(default_theme):
+    new_value = not default_theme.axes.box
+    default_theme.axes.box = new_value
+    assert default_theme.axes.box == new_value
+
+
+def test_axes_show(default_theme):
+    new_value = not default_theme.axes.show
+    default_theme.axes.show = new_value
+    assert default_theme.axes.show == new_value
+
+
+def test_colorbar_eq(default_theme):
+    theme = pyvista.themes.DefaultTheme()
+    assert default_theme.colorbar_horizontal == theme.colorbar_horizontal
+
+    assert default_theme.colorbar_horizontal != 1
+    assert default_theme.colorbar_horizontal != theme.colorbar_vertical
+
+
+def test_colorbar_height(default_theme):
+    height = 0.3
+    default_theme.colorbar_horizontal.height = height
+    assert default_theme.colorbar_horizontal.height == height
+
+
+def test_colorbar_width(default_theme):
+    width = 0.3
+    default_theme.colorbar_horizontal.width = width
+    assert default_theme.colorbar_horizontal.width == width
+
+
+def test_colorbar_position_x(default_theme):
+    position_x = 0.3
+    default_theme.colorbar_horizontal.position_x = position_x
+    assert default_theme.colorbar_horizontal.position_x == position_x
+
+
+def test_colorbar_position_y(default_theme):
+    position_y = 0.3
+    default_theme.colorbar_horizontal.position_y = position_y
+    assert default_theme.colorbar_horizontal.position_y == position_y
+
+
 @pytest.mark.parametrize('theme', pyvista.themes.ALLOWED_THEMES)
 def test_themes(theme):
     try:
@@ -48,25 +203,24 @@ def test_invalid_theme():
         pyvista.set_plot_theme('this is not a valid theme')
 
 
-def test_background(default_theme):
-    color = [0.1, 0.2, 0.3]
-    default_theme.background = color
-    assert default_theme.background == color
+def test_invalid_theme_type_error():
+    with pytest.raises(TypeError):
+        pyvista.set_plot_theme(1)
 
 
-def test_auto_close(default_theme):
-    auto_close = not default_theme.auto_close
-    default_theme.auto_close = auto_close
-    assert default_theme.auto_close == auto_close
+def test_set_theme():
+    theme = pyvista.themes.DarkTheme()
+    try:
+        pyvista.set_plot_theme(theme)
+        assert pyvista.global_theme == theme
+    finally:
+        # always return to testing theme
+        pyvista.set_plot_theme('testing')
 
 
-def test_font(default_theme):
-    font = 'courier'
-    default_theme.auto_close = font
-    assert default_theme.auto_close == font
-
-    # with pytest.raises(ValueError):
-        # default_theme.auto_close = 'bla'
+def test_invalid_load_theme(default_theme):
+    with pytest.raises(TypeError):
+        default_theme.load_theme(123)
 
 
 def test_window_size(default_theme):
@@ -77,20 +231,8 @@ def test_window_size(default_theme):
         default_theme.window_size = [-1, -2]
 
     window_size = [1, 1]
-    default_theme.notebook = window_size
-    assert default_theme.notebook == window_size
-
-
-def test_notebook(default_theme):
-    notebook = not default_theme.notebook
-    default_theme.notebook = notebook
-    assert default_theme.notebook == notebook
-
-
-def test_full_screen(default_theme):
-    full_screen = not default_theme.full_screen
-    default_theme.full_screen = full_screen
-    assert default_theme.full_screen == full_screen
+    default_theme.window_size = window_size
+    assert default_theme.window_size == window_size
 
 
 def test_camera(default_theme):
@@ -108,13 +250,74 @@ def test_camera(default_theme):
     assert default_theme.camera == camera
 
 
-def test_repr():
-    theme = pyvista.themes.DefaultTheme()
-    rep = str(theme)
+def test_cmap(default_theme):
+    cmap = 'jet'
+    default_theme.cmap = cmap
+    assert default_theme.cmap == cmap
+
+    with pytest.raises(ValueError, match='not a valid value'):
+        default_theme.cmap = 'not a color map'
+
+
+def test_volume_mapper(default_theme):
+    assert hasattr(default_theme, 'volume_mapper')
+    volume_mapper = 'gpu'
+    default_theme.volume_mapper = volume_mapper
+    assert default_theme.volume_mapper == volume_mapper
+
+    with pytest.raises(ValueError, match='unknown'):
+        default_theme.volume_mapper = 'invalid'
+
+
+
+@pytest.mark.parametrize('parm', [('background', (0.1, 0.2, 0.3)),
+                                  ('auto_close', False),
+                                  ('notebook', False),
+                                  ('full_screen', True),
+                                  ('nan_color', (0.5, 0.5, 0.5)),
+                                  ('edge_color', (1.0, 0.0, 0.0)),
+                                  ('outline_color', (1.0, 0.0, 0.0)),
+                                  ('floor_color', (1.0, 0.0, 0.0)),
+                                  ('show_scalar_bar', False),
+                                  ('lighting', False),
+                                  ('interactive', 'False'),
+                                  ('render_points_as_spheres', True),
+                                  ('transparent_background', True),
+                                  ('title', 'test_title'),
+                                  ('multi_samples', 10),
+                                  ('multi_rendering_splitting_position', 0.1),
+                                  ('smooth_shading', True),
+                                  ('name', 'test_theme'),
+])
+def test_theme_parm(default_theme, parm):
+    attr, value = parm
+    assert hasattr(default_theme, attr)
+    setattr(default_theme, attr, value)
+    assert getattr(default_theme, attr) == value
+
+
+def test_theme_colorbar_orientation(default_theme):
+    orient = 'vertical'
+    default_theme.colorbar_orientation = orient
+    assert default_theme.colorbar_orientation == orient
+
+    with pytest.raises(ValueError):
+        default_theme.colorbar_orientation = 'invalid'
+
+
+def test_restore_defaults(default_theme):
+    orig_value = default_theme.show_edges
+    default_theme.show_edges = not orig_value
+    default_theme.restore_defaults()
+    assert default_theme.show_edges == orig_value
+
+
+def test_repr(default_theme):
+    rep = str(default_theme)
     assert 'Background' in rep
-    assert theme.cmap in rep
-    assert str(theme.colorbar_orientation) in rep
-    assert theme._name.capitalize() in rep
+    assert default_theme.cmap in rep
+    assert str(default_theme.colorbar_orientation) in rep
+    assert default_theme._name.capitalize() in rep
 
 
 def test_theme_eq():
@@ -145,3 +348,4 @@ def test_plotter_set_theme():
         # need "finally" here if the test fails and we mess up the
         # global defaults
         pyvista.global_theme.load_theme(pyvista.themes._TestingTheme())
+

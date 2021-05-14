@@ -19,7 +19,6 @@ import scooby
 
 import pyvista
 from pyvista import _vtk
-from pyvista.themes import DefaultTheme
 from pyvista.utilities import (assert_empty_kwargs, convert_array,
                                convert_string_array, get_array,
                                is_pyvista_dataset, abstract_class,
@@ -33,7 +32,7 @@ from .mapper import make_mapper
 from .picking import PickingHelper
 from .renderer import Renderer, Camera
 from .tools import (normalize, opacity_transfer_function, parse_color,
-                    parse_font_family, FONT_KEYS)
+                    parse_font_family, FONTS)
 from .widgets import WidgetHelper
 from .scalar_bars import ScalarBars
 from .renderers import Renderers
@@ -1216,7 +1215,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 * ``color``: ``str`` or 3-item ``list``, color of the silhouette
                 * ``line_width``: ``float``, edge width
                 * ``opacity``: ``float`` between 0 and 1, edge transparency
-                * ``feature_angle``: If ``True``, display sharp edges
+                * ``feature_angle``: If a ``float``, display sharp edges
+                  exceeding that angle in degrees.
                 * ``decimate``: ``float`` between 0 and 1, level of decimation
 
         use_transparency : bool, optional
@@ -1428,7 +1428,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         ##### Plot a single PyVista mesh #####
 
-        silhouette_params = dict(self._theme.silhouette)
+        silhouette_params = self._theme.silhouette.to_dict()
         if isinstance(silhouette, dict):
             silhouette_params.update(silhouette)
             silhouette = True
@@ -1442,7 +1442,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             alg = _vtk.vtkPolyDataSilhouette()
             alg.SetInputData(silhouette_mesh)
             alg.SetCamera(self.renderer.camera)
-            alg.SetEnableFeatureAngle(silhouette_params["feature_angle"])
+            if silhouette_params["feature_angle"] is not None:
+                alg.SetEnableFeatureAngle(True)
+                alg.SetFeatureAngle(silhouette_params["feature_angle"])
+            else:
+                alg.SetEnableFeatureAngle(False)
             mapper = make_mapper(_vtk.vtkDataSetMapper)
             mapper.SetInputConnection(alg.GetOutputPort())
             _, prop = self.add_actor(mapper)
@@ -1696,7 +1700,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     ctable = ctable.astype(np.uint8)
                     # Set opactities
                     if isinstance(opacity, np.ndarray) and not _custom_opac:
-                        ctable[:,-1] = opacity
+                        ctable[:, -1] = opacity
                     if flip_scalars:
                         ctable = np.ascontiguousarray(ctable[::-1])
                     table.SetTable(_vtk.numpy_to_vtk(ctable))
@@ -2528,11 +2532,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if font is None:
-            font = self._theme.font['family']
+            font = self._theme.font.family
         if font_size is None:
-            font_size = self._theme.font['size']
+            font_size = self._theme.font.size
         if color is None:
-            color = self._theme.font['color']
+            color = self._theme.font.color
         if position is None:
             # Set the position of the text to the top left corner
             window_size = self.window_size
@@ -2581,7 +2585,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
 
         self.textActor.GetTextProperty().SetColor(parse_color(color))
-        self.textActor.GetTextProperty().SetFontFamily(FONT_KEYS[font])
+        self.textActor.GetTextProperty().SetFontFamily(FONTS[font].value)
         self.textActor.GetTextProperty().SetShadow(shadow)
 
         self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False)
@@ -2888,13 +2892,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if font_family is None:
-            font_family = self._theme.font['family']
+            font_family = self._theme.font.family
         if font_size is None:
-            font_size = self._theme.font['size']
+            font_size = self._theme.font.size
         if point_color is None:
             point_color = self._theme.color
         if text_color is None:
-            text_color = self._theme.font['color']
+            text_color = self._theme.font.color
 
         if isinstance(points, (list, tuple)):
             points = np.array(points)
@@ -3001,7 +3005,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(labels, str):
             raise TypeError('labels must be a string name of the scalars array to use')
         if fmt is None:
-            fmt = self._theme.font['fmt']
+            fmt = self._theme.font.fmt
         if fmt is None:
             fmt = '%.6e'
         scalars = points.point_arrays[labels]
@@ -3811,7 +3815,7 @@ class Plotter(BasePlotter):
         # add timer event if interactive render exists
         self.iren.add_observer(_vtk.vtkCommand.TimerEvent, on_timer)
 
-        if self._theme.depth_peeling["enabled"]:
+        if self._theme.depth_peeling.enabled:
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()

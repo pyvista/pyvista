@@ -22,6 +22,10 @@ from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
 global_theme = _GlobalTheme()
 
+# Set preferred plot theme
+if 'PYVISTA_PLOT_THEME' in os.environ:
+    set_plot_theme(os.environ['PYVISTA_PLOT_THEME'].lower())
+
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
 
@@ -83,9 +87,7 @@ except Exception as e:
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 
-# Set preferred plot theme
-if 'PYVISTA_PLOT_THEME' in os.environ:
-    set_plot_theme(os.environ['PYVISTA_PLOT_THEME'].lower())
 
-# Set a parameter to control default print format for floats
+# Set a parameter to control default print format for floats outside
+# of the plotter
 FLOAT_FORMAT = "{:.3e}"

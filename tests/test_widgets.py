@@ -109,7 +109,7 @@ def test_widget_text_slider():
         p.add_text_slider_widget(callback=func, data='foo')
     with pytest.raises(ValueError, match='list of values is empty'):
         p.add_text_slider_widget(callback=func, data=[])
-    for style in pyvista.global_theme.slider_style.keys():
+    for style in pyvista.global_theme.slider_style:
         p.add_text_slider_widget(callback=func, data=['foo', 'bar'], style=style)
     p.close()
 
@@ -128,20 +128,20 @@ def test_widget_slider():
                             event_type=event_type)
     with pytest.raises(TypeError, match='type for ``style``'):
         p.add_slider_widget(callback=func, rng=[0, 10], style=0)
-    with pytest.raises(KeyError, match='styles available'):
+    with pytest.raises(AttributeError):
         p.add_slider_widget(callback=func, rng=[0, 10], style="foo")
     with pytest.raises(TypeError, match='type for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0,10],
+        p.add_slider_widget(callback=func, rng=[0, 10],
                             event_type=0)
     with pytest.raises(ValueError, match='value for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0,10],
+        p.add_slider_widget(callback=func, rng=[0, 10],
                             event_type='foo')
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda value, widget: value # Does nothing
+    func = lambda value, widget: value  # Does nothing
     p.add_mesh(mesh)
-    p.add_slider_widget(callback=func, rng=[0,10], style="modern",
+    p.add_slider_widget(callback=func, rng=[0, 10], style="modern",
                         pass_widget=True)
     p.close()
 
@@ -161,27 +161,28 @@ def test_widget_slider():
 
     p = pyvista.Plotter()
     title_height = np.random.random()
-    s = p.add_slider_widget(callback=func, rng=[0,10], style="classic", title_height=title_height)
+    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_height=title_height)
     assert s.GetRepresentation().GetTitleHeight() == title_height
     p.close()
 
     p = pyvista.Plotter()
     title_opacity = np.random.random()
-    s = p.add_slider_widget(callback=func, rng=[0,10], style="classic", title_opacity=title_opacity)
+    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_opacity=title_opacity)
     assert s.GetRepresentation().GetTitleProperty().GetOpacity() == title_opacity
     p.close()
 
     p = pyvista.Plotter()
     title_color = "red"
-    s = p.add_slider_widget(callback=func, rng=[0,10], style="classic", title_color=title_color)
+    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_color=title_color)
     assert s.GetRepresentation().GetTitleProperty().GetColor() == pyvista.parse_color(title_color)
     p.close()
 
     p = pyvista.Plotter()
     fmt = "%0.9f"
-    s = p.add_slider_widget(callback=func, rng=[0,10], style="classic", fmt=fmt)
+    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", fmt=fmt)
     assert s.GetRepresentation().GetLabelFormat() == fmt
     p.close()
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_spline():

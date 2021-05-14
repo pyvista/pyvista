@@ -11,7 +11,6 @@ from pyvista.utilities import wrap, check_depth_peeling
 from .tools import (create_axes_orientation_box, create_axes_marker,
                     parse_color, parse_font_family)
 from .camera import Camera
-from .lights import LightType
 
 
 def scale_point(camera, point, invert=False):
@@ -276,9 +275,9 @@ class Renderer(_vtk.vtkRenderer):
 
         """
         if number_of_peels is None:
-            number_of_peels = self._theme.depth_peeling["number_of_peels"]
+            number_of_peels = self._theme.depth_peeling.number_of_peels
         if occlusion_ratio is None:
-            occlusion_ratio = self._theme.depth_peeling["occlusion_ratio"]
+            occlusion_ratio = self._theme.depth_peeling.occlusion_ratio
         depth_peeling_supported = check_depth_peeling(number_of_peels,
                                                       occlusion_ratio)
         if depth_peeling_supported:
@@ -516,7 +515,7 @@ class Renderer(_vtk.vtkRenderer):
             self.Modified()
             del self.axes_widget
         if box is None:
-            box = self._theme.axes['box']
+            box = self._theme.axes.box
         if box:
             if box_args is None:
                 box_args = {}
@@ -687,13 +686,13 @@ class Renderer(_vtk.vtkRenderer):
         self.remove_bounds_axes()
 
         if font_family is None:
-            font_family = self._theme.font['family']
+            font_family = self._theme.font.family
         if font_size is None:
-            font_size = self._theme.font['size']
+            font_size = self._theme.font.size
         if color is None:
-            color = self._theme.font['color']
+            color = self._theme.font.color
         if fmt is None:
-            fmt = self._theme.font['fmt']
+            fmt = self._theme.font.fmt
 
         color = parse_color(color)
 

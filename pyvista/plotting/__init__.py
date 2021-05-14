@@ -8,7 +8,7 @@ from .helpers import plot, plot_arrows, plot_compare_four, plot_itk
 from .plotting import BasePlotter, Plotter, close_all
 from .renderer import CameraPosition, Renderer, scale_point
 from .tools import (create_axes_marker, create_axes_orientation_box,
-                    opacity_transfer_function, FONT_KEYS,
+                    opacity_transfer_function, FONTS,
                     system_supports_plotting, parse_color,
                     parse_font_family)
 from .widgets import WidgetHelper
