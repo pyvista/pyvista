@@ -51,7 +51,7 @@ Now, the mesh will be plotted with the new global parameters:
 
     dragon.plot(cpos='xy')
 
-This is identical to plotting the mesh with the following the parameters:
+This is identical to plotting the mesh with the following parameters:
 
 .. code:: python
 
@@ -68,7 +68,7 @@ apply it globally with:
    # create a theme based off the DocumentTheme
    my_theme = pyvista.themes.DocumentTheme()
    my_theme.cmap = 'jet'
-   my_theme.show_edge = True
+   my_theme.show_edges = True
 
    # apply it globally
    pyvista.global_theme.load_theme(my_theme)
@@ -80,6 +80,8 @@ Alternatively, you can save the theme to disk to be used later with:
    my_theme.save('my_theme.json')
 
 And then subsequently loaded in a new session of pyvista with:
+
+.. code:: python
 
    pyvista.global_theme.load_theme('my_theme.json')
 
