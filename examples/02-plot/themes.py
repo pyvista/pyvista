@@ -9,7 +9,7 @@ import pyvista as pv
 from pyvista import examples
 
 ###############################################################################
-#  Define a simple plotting routine for comparing the themes
+#  Define a simple plotting routine for comparing the themes.
 
 mesh = examples.download_st_helens().warp_by_scalar()
 
@@ -41,7 +41,7 @@ plot_example()
 # * ``'document'``: this is built for use in document style plotting and making publication quality figures.
 
 ###############################################################################
-# Demo the ``'ParaView'`` theme
+# Demo the ``'ParaView'`` theme.
 
 pv.set_plot_theme("paraview")
 
@@ -49,14 +49,14 @@ plot_example()
 
 
 ###############################################################################
-# Demo the ``'dark'`` theme
+# Demo the ``'dark'`` theme.
 
 pv.set_plot_theme("dark")
 
 plot_example()
 
 ###############################################################################
-# Demo the ``'document'`` theme
+# Demo the ``'document'`` theme.
 
 
 pv.set_plot_theme("document")
@@ -101,7 +101,7 @@ pv.Sphere().plot()
 
 ###############################################################################
 # You can reset pyvista to default behavior with ``restore_defaults``.
-# Not that the figure's color was reset to the default "white" color
+# Note that the figure's color was reset to the default "white" color
 # rather than the "tan" color default with the document theme.  Under
 # the hood, each theme applied changes the global plot defaults stored
 # within ``pyvista.global_theme.``
