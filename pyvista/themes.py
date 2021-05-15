@@ -140,8 +140,7 @@ class _ThemeConfig():
         return dict_
 
     def __eq__(self, other):
-        # different subclasses should always be unequal
-        if type(other) != type(self):
+        if not isinstance(self, type(other)):
             return False
 
         for name, value in vars(other).items():
