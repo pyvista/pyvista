@@ -14,13 +14,14 @@ from pyvista.core import *
 from pyvista.utilities.misc import _get_vtk_id_type
 from pyvista import _vtk
 from pyvista.jupyter import set_jupyter_backend, PlotterITK
-from pyvista.themes import set_plot_theme, load_theme
+from pyvista.themes import set_plot_theme, load_theme, _rcParams
 from pyvista.themes import DefaultTheme as _GlobalTheme  # hide this
 
 # Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
 global_theme = _GlobalTheme()
+rcParams = _rcParams()  # raises DeprecationError when used
 
 # Set preferred plot theme
 if 'PYVISTA_PLOT_THEME' in os.environ:

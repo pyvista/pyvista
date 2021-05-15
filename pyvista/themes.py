@@ -39,6 +39,17 @@ import os
 from .plotting.colors import PARAVIEW_BACKGROUND, get_cmap_safe
 from .plotting.tools import parse_color, parse_font_family
 from .utilities.misc import PyvistaDeprecationWarning
+from .core.errors import DeprecationError
+
+
+class _rcParams(dict):  # pragma: no cover
+    """Reference to the deprecated rcParams dictionary."""
+
+    def __getitem__(self, key):
+        raise DeprecationError('rcParams is deprecated.  Please use ``pyvista.global_theme``')
+
+    def __setitem__(self, key, value):
+        raise DeprecationError('rcParams is deprecated.  Please use ``pyvista.global_theme``')
 
 
 def load_theme(filename):
