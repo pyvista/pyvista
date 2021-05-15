@@ -24,7 +24,7 @@ def start_xvfb(wait=3, window_size=None):
 
     window_size : list, optional
         Window size of the virtual frame buffer.  Defaults to
-        ``pyvista.defaults.window_size``.
+        ``pyvista.global_theme.window_size``.
 
     Examples
     --------
@@ -32,7 +32,7 @@ def start_xvfb(wait=3, window_size=None):
     >>> pyvista.start_xvfb()  # doctest:+SKIP
 
     """
-    from pyvista import defaults
+    from pyvista import global_theme
 
     if os.name != 'posix':
         raise OSError('`start_xvfb` is only supported on Linux')
@@ -42,7 +42,7 @@ def start_xvfb(wait=3, window_size=None):
 
     # use current default window size
     if window_size is None:
-        window_size = defaults.window_size
+        window_size = global_theme.window_size
     window_size_parm = '%dx%dx24' % tuple(window_size)
     display_num = ':99'
     os.system(f'Xvfb {display_num} -screen 0 {window_size_parm} > /dev/null 2>&1 &')
