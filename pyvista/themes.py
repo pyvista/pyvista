@@ -1123,7 +1123,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def full_screen(self) -> bool:
-        """Return if figures are show in full screen.
+        """Return if figures are shown in full screen.
 
         Examples
         --------
@@ -1261,7 +1261,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def cmap(self):
-        """Return or set the default global colormap of pyvista.
+        """Return or set the default colormap of pyvista.
 
         See available Matplotlib colormaps.  Only applicable for when
         displaying ``scalars``. Requires Matplotlib to be installed.
@@ -1318,7 +1318,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def nan_color(self) -> tuple:
-        """Return or set the default global NAN color.
+        """Return or set the default NAN color.
 
         This color is used to plot all NAN values.
 
@@ -1335,7 +1335,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def edge_color(self) -> tuple:
-        """Return or set the default global edge color.
+        """Return or set the default edge color.
 
         Examples
         --------
@@ -1382,7 +1382,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def colorbar_orientation(self) -> str:
-        """Return or set the default global colorbar orientation.
+        """Return or set the default colorbar orientation.
 
         Must be either ``'vertical'`` or ``'horizontal'``.
 
@@ -1469,7 +1469,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def show_edges(self) -> bool:
-        """Return or set the global default edge visibility.
+        """Return or set the default edge visibility.
 
         Examples
         --------
@@ -1487,7 +1487,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def lighting(self) -> bool:
-        """Return or set the default global ``lighting``.
+        """Return or set the default ``lighting``.
 
         Examples
         --------
@@ -1504,7 +1504,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def interactive(self) -> bool:
-        """Return or set the default global ``interactive`` parameter.
+        """Return or set the default ``interactive`` parameter.
 
         Examples
         --------
@@ -1521,7 +1521,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def render_points_as_spheres(self) -> bool:
-        """Return or set the default global ``render_points_as_spheres`` parameter.
+        """Return or set the default ``render_points_as_spheres`` parameter.
 
         Examples
         --------
@@ -1548,7 +1548,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def transparent_background(self) -> bool:
-        """Return or set the default global ``transparent_background`` parameter.
+        """Return or set the default ``transparent_background`` parameter.
 
         Examples
         --------
@@ -1565,7 +1565,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def title(self) -> str:
-        """Return or set the default global ``title`` parameter.
+        """Return or set the default ``title`` parameter.
 
         This is the VTK render window title.
 
@@ -1584,7 +1584,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def multi_samples(self) -> int:
-        """Return or set the default global ``multi_samples`` parameter.
+        """Return or set the default ``multi_samples`` parameter.
 
         Set the number of multisamples to enable hardware antialiasing.
 
@@ -1603,7 +1603,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def multi_rendering_splitting_position(self) -> float:
-        """Return or set the default global ``multi_rendering_splitting_position`` parameter.
+        """Return or set the default ``multi_rendering_splitting_position`` parameter.
 
         Examples
         --------
@@ -1621,7 +1621,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def volume_mapper(self) -> str:
-        """Return or set the default global ``volume_mapper`` parameter.
+        """Return or set the default ``volume_mapper`` parameter.
 
         Must be one of the following strings, which are mapped to the
         following VTK volume mappers.
@@ -1651,7 +1651,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def smooth_shading(self) -> bool:
-        """Return or set the global default ``smooth_shading`` parameter.
+        """Return or set the default ``smooth_shading`` parameter.
 
         Examples
         --------
@@ -1668,7 +1668,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def depth_peeling(self) -> _DepthPeelingConfig:
-        """Return or set the global default depth peeling parameters.
+        """Return or set the default depth peeling parameters.
 
         Examples
         --------
@@ -1691,7 +1691,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def silhouette(self) -> _SilhouetteConfig:
-        """Return or set the global default ``silhouette`` configuration.
+        """Return or set the default ``silhouette`` configuration.
 
         Examples
         --------
@@ -1713,7 +1713,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def slider_style(self) -> _SliderConfig:
-        """Return the global default slider_style configuration."""
+        """Return the default slider_style configuration."""
         return self._slider_style
 
     @slider_style.setter
@@ -1724,7 +1724,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def axes(self) -> _AxesConfig:
-        """Return or set the global default ``axes`` parameter.
+        """Return or set the default ``axes`` parameter.
 
         Examples
         --------
@@ -1817,7 +1817,7 @@ class DefaultTheme(_ThemeConfig):
         self._name = name
 
     def load_theme(self, theme):
-        """Overwrite the current them with a theme.
+        """Overwrite the current theme with a theme.
 
         Examples
         --------
@@ -1904,7 +1904,7 @@ class DarkTheme(DefaultTheme):
 
 
 class ParaViewTheme(DefaultTheme):
-    """Set the theme to a paraview-like theme.
+    """A paraview-like theme.
 
     Examples
     --------
@@ -1937,7 +1937,7 @@ class ParaViewTheme(DefaultTheme):
 
 
 class DocumentTheme(DefaultTheme):
-    """Set the global theme to the document theme.
+    """A document theme well suited for papers and presentations.
 
     This theme uses a white background, the "viridis" colormap,
     disables edges and black fonts.  Best used for presentations,
