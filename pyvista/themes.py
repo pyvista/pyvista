@@ -107,7 +107,8 @@ def set_plot_theme(theme):
         pyvista.global_theme.load_theme(theme)
     else:
         raise TypeError(f'Expected a pyvista.Theme or str, not '
-                        f'a {type(theme)}')
+                        f'a {type(theme).__name__}')
+
 
 class _ThemeConfig():
     """Provide common methods for theme configuration classes."""
@@ -118,7 +119,7 @@ class _ThemeConfig():
         inst = cls()
         for key, value in dict_.items():
             if not hasattr(inst, key):
-                raise KeyError(f'Invalid key "{key}" for {inst.__class__.__name__}')
+                raise KeyError(f'Invalid key "{key}" for {cls.__name__}')
             attr = getattr(inst, key)
             if hasattr(attr, 'from_dict'):
                 setattr(inst, key, attr.from_dict(value))
@@ -127,7 +128,7 @@ class _ThemeConfig():
         return inst
 
     def to_dict(self) -> dict:
-        """Return silhouette parameters as a dictionary."""
+        """Return theme config parameters as a dictionary."""
         # remove the first underscore in each entry
         dict_ = {}
         for key, value in vars(self).items():
@@ -139,7 +140,8 @@ class _ThemeConfig():
         return dict_
 
     def __eq__(self, other):
-        if not isinstance(self, other.__class__):
+        # different subclasses should always be unequal
+        if type(other) != type(self):
             return False
 
         for name, value in vars(other).items():
@@ -159,7 +161,7 @@ class _DepthPeelingConfig(_ThemeConfig):
 
     Examples
     --------
-    Set global depth parameters.
+    Set global depth peeling parameters.
 
     >>> import pyvista
     >>> pyvista.global_theme.depth_peeling.number_of_peels = 1
@@ -225,7 +227,7 @@ class _DepthPeelingConfig(_ThemeConfig):
         txt = ['']
         parm = {
             'Number': 'number_of_peels',
-            'Occulusion ratio': 'occlusion_ratio',
+            'Occlusion ratio': 'occlusion_ratio',
             'Enabled': 'enabled',
         }
         for name, attr in parm.items():
@@ -239,7 +241,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     Examples
     --------
-    Set global silhouette parameters
+    Set global silhouette parameters.
 
     >>> import pyvista
     >>> pyvista.global_theme.silhouette.color = 'grey'
@@ -321,7 +323,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @property
     def decimate(self) -> float:
-        """Return or set the amount to decimate the silhoutte.
+        """Return or set the amount to decimate the silhouette.
 
         Parameter must be between 0 and 1.
 
@@ -335,6 +337,10 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @decimate.setter
     def decimate(self, decimate: float):
+        decimate = float(decimate)
+        if not 0 <= decimate <= 1:
+            raise ValueError('Silhouette decimation must be '
+                             'between 0 and 1.')
         self._decimate = float(decimate)
 
     def __repr__(self):
@@ -357,7 +363,7 @@ class _ColorbarConfig(_ThemeConfig):
 
     Examples
     --------
-    Set the color bar width.
+    Set the colorbar width.
 
     >>> import pyvista
     >>> pyvista.global_theme.colorbar_horizontal.width = 0.2
@@ -454,16 +460,16 @@ class _AxesConfig(_ThemeConfig):
 
     Examples
     --------
-    Set the x axis color to black
+    Set the x axis color to black.
 
     >>> import pyvista
     >>> pyvista.global_theme.axes.x_color = 'black'
 
-    Show axes by default
+    Show axes by default.
 
     >>> pyvista.global_theme.axes.show = True
 
-    Use the ``vtk.vtkCubeAxesActor``
+    Use the ``vtk.vtkCubeAxesActor``.
 
     >>> pyvista.global_theme.axes.box = True
 
@@ -493,7 +499,7 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def x_color(self) -> tuple:
-        """Return or set x axes color.
+        """Return or set x axis color.
 
         Examples
         --------
@@ -508,7 +514,7 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def y_color(self) -> tuple:
-        """Return or set y axes color.
+        """Return or set y axis color.
 
         Examples
         --------
@@ -523,7 +529,7 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def z_color(self) -> tuple:
-        """Return or set z axes color.
+        """Return or set z axis color.
 
         Examples
         --------
@@ -550,11 +556,11 @@ class _AxesConfig(_ThemeConfig):
 
     @box.setter
     def box(self, box: bool):
-        self._box = box
+        self._box = bool(box)
 
     @property
     def show(self) -> bool:
-        """Show or the axes actor.
+        """Show or hide the axes actor.
 
         Examples
         --------
@@ -730,7 +736,7 @@ class _Font(_ThemeConfig):
 
         Examples
         --------
-        Set the string formatter used to format numerical data to '%.6e'
+        Set the string formatter used to format numerical data to '%.6e'.
 
         >>> import pyvista
         >>> pyvista.global_theme.font.fmt = '%.6e'
@@ -744,6 +750,7 @@ class _Font(_ThemeConfig):
 
 
 class _SliderStyleConfig(_ThemeConfig):
+    """PyVista configuration for a single slider style."""
 
     def __init__(self):
         """Initialize the slider style configuration."""
@@ -913,7 +920,7 @@ class _SliderStyleConfig(_ThemeConfig):
 
 
 class _SliderConfig(_ThemeConfig):
-    """PyVista slider configuration.
+    """PyVista configuration encompassing all slider styles.
 
     Examples
     --------
