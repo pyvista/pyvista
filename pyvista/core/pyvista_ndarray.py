@@ -54,4 +54,9 @@ class pyvista_ndarray(np.ndarray):
         if self.VTKObject is not None:
             self.VTKObject.Modified()
 
+        # the associated dataset should also be marked as modified
+        dataset = self.dataset.Get()
+        if dataset is not None:
+            dataset.Modified()
+
     __getattr__ = _vtk.VTKArray.__getattr__
