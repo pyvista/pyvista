@@ -10,6 +10,17 @@ def default_theme():
     return pyvista.themes.DefaultTheme()
 
 
+def test_backwards_compatibility():
+    color = (0.1, 0.4, 0.7)
+    pyvista.rcParams['color'] = color
+    assert pyvista.rcParams['color'] == color
+
+    # test nested values
+    init_value = pyvista.rcParams['axes']['show']
+    pyvista.rcParams['axes']['show'] = not init_value
+    assert pyvista.rcParams['axes']['show'] is not init_value
+
+
 @pytest.mark.parametrize('parm', [('enabled', True),
                                   ('occlusion_ratio', 0.5),
                                   ('number_of_peels', 2)]

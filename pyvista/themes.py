@@ -46,10 +46,22 @@ class _rcParams(dict):  # pragma: no cover
     """Reference to the deprecated rcParams dictionary."""
 
     def __getitem__(self, key):
-        raise DeprecationError('rcParams is deprecated.  Please use ``pyvista.global_theme``')
+        import pyvista  # avoids circular import
+        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
+                      DeprecationWarning)
+        return getattr(pyvista.global_theme, key)
 
     def __setitem__(self, key, value):
-        raise DeprecationError('rcParams is deprecated.  Please use ``pyvista.global_theme``')
+        import pyvista  # avoids circular import
+        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
+                      DeprecationWarning)
+        setattr(pyvista.global_theme, key, value)
+
+    def __repr__(self):
+        """Use the repr of global_theme"""
+        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
+                      DeprecationWarning)
+        return repr(pyvista.global_theme)
 
 
 def load_theme(filename):
@@ -157,6 +169,20 @@ class _ThemeConfig():
                     return False
 
         return True
+
+    def __getitem__(self, key):
+        """Get a value via a key.
+
+        Implemented here for backwards compatibility.
+        """
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        """Set a value via a key.
+
+        Implemented here for backwards compatibility.
+        """
+        setattr(self, key, value)
 
 
 class _DepthPeelingConfig(_ThemeConfig):
