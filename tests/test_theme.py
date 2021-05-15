@@ -1,8 +1,11 @@
+import warnings
+
 import pytest
 import vtk
 
 import pyvista
 from pyvista import colors
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 @pytest.fixture
@@ -12,13 +15,19 @@ def default_theme():
 
 def test_backwards_compatibility():
     color = (0.1, 0.4, 0.7)
-    pyvista.rcParams['color'] = color
-    assert pyvista.rcParams['color'] == color
+    with pytest.warns(PyvistaDeprecationWarning):
+        pyvista.rcParams['color'] = color
+    
+    # ignore remaining deprecation warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore',
+                                category=PyvistaDeprecationWarning)
+        assert pyvista.rcParams['color'] == color
 
-    # test nested values
-    init_value = pyvista.rcParams['axes']['show']
-    pyvista.rcParams['axes']['show'] = not init_value
-    assert pyvista.rcParams['axes']['show'] is not init_value
+        # test nested values
+        init_value = pyvista.rcParams['axes']['show']
+        pyvista.rcParams['axes']['show'] = not init_value
+        assert pyvista.rcParams['axes']['show'] is not init_value
 
 
 @pytest.mark.parametrize('parm', [('enabled', True),
