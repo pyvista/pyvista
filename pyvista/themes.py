@@ -1072,7 +1072,7 @@ class DefaultTheme(_ThemeConfig):
 
     >>> my_theme = pyvista.themes.DefaultTheme()
     >>> my_theme.color = 'red'
-    >>> my_theme.background_color = 'white'
+    >>> my_theme.background = 'white'
     >>> pyvista.global_theme.load_theme(my_theme)
 
     """
