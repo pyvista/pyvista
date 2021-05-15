@@ -1279,12 +1279,12 @@ class WidgetHelper:
         ----------
         callback : callable
             The function to call back when the widget is modified. It
-            takes a single argument: the center of the sphere as a XYZ
-            coordinate.  If multiple centers are passed in the
-            ``center`` parameter, the callback must accept an index of
-            that widget.
+            takes a single argument: the center of the sphere as an
+            XYZ coordinate coordinate (a 3-length sequence).  If
+            multiple centers are passed in the ``center`` parameter,
+            the callback must accept an index of that widget.
 
-        center : tuple(float)
+        center : tuple(float), optional
             Length 3 array for the XYZ coordinate of the sphere's
             center when placing it in the scene. If more than one
             location is passed, then that many widgets will be added
@@ -1294,7 +1294,7 @@ class WidgetHelper:
         radius : float, optional
             The radius of the sphere.
 
-        theta_resolution: int , optional
+        theta_resolution: int, optional
             Set the number of points in the longitude direction.
 
         phi_resolution : int, optional
@@ -1312,12 +1312,12 @@ class WidgetHelper:
             * ``color='#FFFFFF'``
 
         style : str, optional
-            Representation style: ``'surface'`` or ``'wireframe'``
+            Representation style: ``'surface'`` or ``'wireframe'``.
 
         selected_color : str, optional
-            Color of the widget when selected during interaction
+            Color of the widget when selected during interaction.
 
-        pass_widget : bool
+        pass_widget : bool, optional
             If ``True``, the widget will be passed as the last
             argument of the callback.
 

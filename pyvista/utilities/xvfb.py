@@ -24,7 +24,7 @@ def start_xvfb(wait=3, window_size=None):
 
     window_size : list, optional
         Window size of the virtual frame buffer.  Defaults to
-        ``pyvista.defaults.window_size``.
+        ``pyvista.global_theme.window_size``.
 
     Examples
     --------
