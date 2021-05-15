@@ -100,6 +100,7 @@ def set_plot_theme(theme):
         theme = theme.lower()
         if theme == 'night':  # pragma: no cover
             warnings.warn('use "dark" instead of "night" theme', PyvistaDeprecationWarning)
+            theme = 'dark'
         new_theme = _ALLOWED_THEMES[theme].value()
         pyvista.global_theme.load_theme(new_theme)
     elif isinstance(theme, DefaultTheme):
