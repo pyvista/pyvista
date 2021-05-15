@@ -10,7 +10,7 @@ from .plotting import Plotter
 
 def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
-         show_bounds=False, show_axes=True, notebook=None, background=None,
+         show_bounds=False, show_axes=None, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
          return_viewer=False, jupyter_kwargs={}, theme=None, **kwargs):
@@ -48,7 +48,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         notebook.  Assumes a jupyter console is active.
 
     show_axes : bool, optional
-        Shows a vtk axes widget.  Enabled by default.
+        Shows a vtk axes widget.  If ``None``, enabled according to
+        ``pyvista.global_theme.axes.show``.
 
     text : str, optional
         Adds text at the bottom of the plot.
@@ -115,6 +116,9 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if notebook:
         off_screen = notebook
     plotter = Plotter(off_screen=off_screen, notebook=notebook, theme=theme)
+
+    if show_axes is None:
+        show_axes = pyvista.global_theme.axes.show
     if show_axes:
         plotter.add_axes()
 

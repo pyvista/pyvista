@@ -55,7 +55,7 @@ User Guide Contents
    simple
    jupyter/index
    optional_features
-
+   themes
 
 Videos
 ======

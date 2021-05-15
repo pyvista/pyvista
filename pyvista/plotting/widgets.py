@@ -1245,8 +1245,8 @@ class WidgetHelper:
             # create the plane for clipping
             polyplane = _vtk.vtkPolyPlane()
             polyplane.SetPolyLine(polyline)
-            alg.SetCutFunction(polyplane) # the cutter to use the poly planes
-            alg.Update() # Perform the Cut
+            alg.SetCutFunction(polyplane)  # the cutter to use the poly planes
+            alg.Update()  # Perform the Cut
             spline_sliced_mesh.shallow_copy(alg.GetOutput())
 
         self.add_spline_widget(callback=callback, bounds=mesh.bounds,
@@ -1258,9 +1258,7 @@ class WidgetHelper:
                                initial_points=initial_points,
                                closed=closed)
 
-        actor = self.add_mesh(spline_sliced_mesh, **kwargs)
-
-        return actor
+        return self.add_mesh(spline_sliced_mesh, **kwargs)
 
     def add_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,
                           theta_resolution=30, phi_resolution=30,

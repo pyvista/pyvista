@@ -1,7 +1,37 @@
-"""Module managing different plotting theme parameters."""
+"""API description for managing plotting theme parameters in pyvista.
+
+Examples
+--------
+Apply a built-in theme
+
+>>> import pyvista
+>>> pyvista.set_plot_theme('default')
+>>> pyvista.set_plot_theme('document')
+>>> pyvista.set_plot_theme('dark')
+>>> pyvista.set_plot_theme('paraview')
+
+Load a theme into pyvista
+
+>>> theme = pyvista.themes.DefaultTheme()
+>>> theme.save('my_theme.json')  # doctest:+SKIP
+>>> loaded_theme = pyvista.load_theme('my_theme.json')  # doctest:+SKIP
+
+Create a custom theme from the default theme and load it into
+pyvista.
+
+>>> my_theme = pyvista.themes.DefaultTheme()
+>>> my_theme.font.size = 20
+>>> my_theme.font.title_size = 40
+>>> my_theme.cmap = 'jet'
+...
+>>> pyvista.global_theme.load_theme(my_theme)
+>>> pyvista.global_theme.font.size
+20
+
+"""
 
 import json
-from typing import Union, Iterable, Sized, Collection, List
+from typing import Union, List
 import warnings
 from enum import Enum
 import os
@@ -26,13 +56,40 @@ def load_theme(filename):
 
 
 def set_plot_theme(theme):
-    """Set the plotting parameters to a predefined theme."""
+    """Set the plotting parameters to a predefined theme using a string.
+
+    Parameters
+    ----------
+    theme : str
+        Theme name.  Either ``'default'``, ``'document'``, ``'dark'``,
+        or ``'paraview'``.
+
+    Examples
+    --------
+    Set to the default theme.
+
+    >>> import pyvista
+    >>> pyvista.set_plot_theme('default')
+
+    Set to the document theme.
+
+    >>> pyvista.set_plot_theme('document')
+
+    Set to the dark theme.
+
+    >>> pyvista.set_plot_theme('dark')
+
+    Set to the ParaView theme.
+
+    >>> pyvista.set_plot_theme('paraview')
+
+    """
     import pyvista
     if isinstance(theme, str):
         theme = theme.lower()
         if theme == 'night':  # pragma: no cover
             warnings.warn('use "dark" instead of "night" theme', PyvistaDeprecationWarning)
-        new_theme = ALLOWED_THEMES[theme].value()
+        new_theme = _ALLOWED_THEMES[theme].value()
         pyvista.global_theme.load_theme(new_theme)
     elif isinstance(theme, DefaultTheme):
         pyvista.global_theme.load_theme(theme)
@@ -1626,10 +1683,10 @@ class DefaultTheme(_ThemeConfig):
         Must be one of the following strings, which are mapped to the
         following VTK volume mappers.
 
-        ``'fixed_point'`` : ``vtk.vtkFixedPointVolumeRayCastMapper``
-        ``'gpu'`` : ``vtk.vtkGPUVolumeRayCastMapper``
-        ``'open_gl'`` : ``vtk.vtkOpenGLGPUVolumeRayCastMapper``
-        ``'smart'`` : ``vtk.vtkSmartVolumeMapper``
+        * ``'fixed_point'`` : ``vtk.vtkFixedPointVolumeRayCastMapper``
+        * ``'gpu'`` : ``vtk.vtkGPUVolumeRayCastMapper``
+        * ``'open_gl'`` : ``vtk.vtkOpenGLGPUVolumeRayCastMapper``
+        * ``'smart'`` : ``vtk.vtkSmartVolumeMapper``
 
         Examples
         --------
@@ -1846,6 +1903,9 @@ class DefaultTheme(_ThemeConfig):
         True
 
         """
+        if isinstance(theme, str):
+            theme = load_theme(theme)
+
         if not isinstance(theme, DefaultTheme):
             raise TypeError('``theme`` must be a pyvista theme like '
                             '``pyvista.themes.DefaultTheme``')
@@ -1987,10 +2047,11 @@ class _TestingTheme(DefaultTheme):
         self.name = 'testing'
         self.multi_samples = 1
         self.window_size = [400, 400]
+        self.axes.show = False
 
 
-class ALLOWED_THEMES(Enum):
-    """Themes available to PyVista."""
+class _ALLOWED_THEMES(Enum):
+    """Global built-in themes available to PyVista."""
 
     paraview = ParaViewTheme
     document = DocumentTheme
