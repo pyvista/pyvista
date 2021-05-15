@@ -120,7 +120,7 @@ def set_plot_theme(theme):
     elif isinstance(theme, DefaultTheme):
         pyvista.global_theme.load_theme(theme)
     else:
-        raise TypeError(f'Expected a ``pyvista.DefaultTheme`` or ``str``, not '
+        raise TypeError(f'Expected a ``pyvista.themes.DefaultTheme`` or ``str``, not '
                         f'a {type(theme).__name__}')
 
 

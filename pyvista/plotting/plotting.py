@@ -154,7 +154,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         that act like a Light Kit).
 
     theme : pyvista.Theme, optional
-        Plot specific theme.
+        Plot-specific theme.
 
     """
 
@@ -246,8 +246,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @theme.setter
     def theme(self, theme):
         if not isinstance(theme, pyvista.themes.DefaultTheme):
-            raise TypeError('Expected a pyvista theme like ``pyvista.DefaultTheme``, '
-                            f'not {type(theme)}')
+            raise TypeError('Expected a pyvista theme like '
+                            '``pyvista.themes.DefaultTheme``, '
+                            f'not {type(theme).__name__}.')
         self._theme = theme
 
     @property
@@ -3689,7 +3690,8 @@ class Plotter(BasePlotter):
 
     window_size : list, optional
         Window size in pixels.  Defaults to ``[1024, 768]``, unless
-        set differently in ``self._theme.window_size``.
+        set differently in the relevant theme's ``window_size``
+        property.
 
     multi_samples : int, optional
         The number of multi-samples used to mitigate aliasing. 4 is a
@@ -3717,7 +3719,7 @@ class Plotter(BasePlotter):
         lights that act like a Light Kit).
 
     theme : pyvista.Theme, optional
-        Plot specific theme.
+        Plot-specific theme.
 
     """
 
