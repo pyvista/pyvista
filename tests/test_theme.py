@@ -320,6 +320,12 @@ def test_repr(default_theme):
     assert default_theme._name.capitalize() in rep
 
 
+def test_theme_slots(default_theme):
+    # verify we can't create an arbitrary attribute
+    with pytest.raises(AttributeError, match='has no attribute'):
+        default_theme.new_attr = 1
+
+
 def test_theme_eq():
     defa_theme0 = pyvista.themes.DefaultTheme()
     defa_theme1 = pyvista.themes.DefaultTheme()

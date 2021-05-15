@@ -113,6 +113,8 @@ def set_plot_theme(theme):
 class _ThemeConfig():
     """Provide common methods for theme configuration classes."""
 
+    __slots__ = []
+
     @classmethod
     def from_dict(cls, dict_):
         """Create from a dictionary."""
@@ -131,7 +133,8 @@ class _ThemeConfig():
         """Return theme config parameters as a dictionary."""
         # remove the first underscore in each entry
         dict_ = {}
-        for key, value in vars(self).items():
+        for key in self.__slots__:
+            value = getattr(self, key)
             key = key[1:]
             if hasattr(value, 'to_dict'):
                 dict_[key] = value.to_dict()
@@ -143,13 +146,14 @@ class _ThemeConfig():
         if not isinstance(self, type(other)):
             return False
 
-        for name, value in vars(other).items():
-            attr = getattr(self, name)
+        for attr_name in other.__slots__:
+            attr = getattr(self, attr_name)
+            other_attr = getattr(other, attr_name)
             if isinstance(attr, (tuple, list)):
-                if tuple(attr) != tuple(value):
+                if tuple(attr) != tuple(other_attr):
                     return False
             else:
-                if not attr == value:
+                if not attr == other_attr:
                     return False
 
         return True
@@ -168,6 +172,10 @@ class _DepthPeelingConfig(_ThemeConfig):
     >>> pyvista.global_theme.depth_peeling.enabled = True
 
     """
+
+    __slots__ = ['_number_of_peels',
+                 '_occlusion_ratio',
+                 '_enabled']
 
     def __init__(self):
         self._number_of_peels = 4
@@ -249,6 +257,12 @@ class _SilhouetteConfig(_ThemeConfig):
 
     """
 
+    __slots__ = ['_color',
+                 '_line_width',
+                 '_opacity',
+                 '_feature_angle',
+                 '_decimate']
+
     def __init__(self):
         self._color = parse_color('black')
         self._line_width = 2
@@ -273,20 +287,20 @@ class _SilhouetteConfig(_ThemeConfig):
         self._color = parse_color(color)
 
     @property
-    def line_width(self) -> int:
+    def line_width(self) -> float:
         """Return or set the silhouette line width.
 
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.global_theme.silhouette.line_width = 2
+        >>> pyvista.global_theme.silhouette.line_width = 2.0
 
         """
         return self._line_width
 
     @line_width.setter
-    def line_width(self, line_width: int):
-        self._line_width = int(line_width)
+    def line_width(self, line_width: float):
+        self._line_width = float(line_width)
 
     @property
     def opacity(self) -> float:
@@ -368,6 +382,11 @@ class _ColorbarConfig(_ThemeConfig):
     >>> pyvista.global_theme.colorbar_horizontal.width = 0.2
 
     """
+
+    __slots__ = ['_width',
+                 '_height',
+                 '_position_x',
+                 '_position_y']
 
     def __init__(self):
         self._width = None
@@ -473,6 +492,12 @@ class _AxesConfig(_ThemeConfig):
     >>> pyvista.global_theme.axes.box = True
 
     """
+
+    __slots__ = ['_x_color',
+                 '_y_color',
+                 '_z_color',
+                 '_box',
+                 '_show']
 
     def __init__(self):
         self._x_color = parse_color('tomato')
@@ -608,6 +633,13 @@ class _Font(_ThemeConfig):
     >>> pyvista.global_theme.font.fmt = '%.6e'
 
     """
+
+    __slots__ = ['_family',
+                 '_size',
+                 '_title_size',
+                 '_label_size',
+                 '_color',
+                 '_fmt']
 
     def __init__(self):
         self._family = 'arial'
@@ -750,6 +782,16 @@ class _Font(_ThemeConfig):
 
 class _SliderStyleConfig(_ThemeConfig):
     """PyVista configuration for a single slider style."""
+
+    __slots__ = ['_name',
+                 '_slider_length',
+                 '_slider_width',
+                 '_slider_color',
+                 '_tube_width',
+                 '_tube_color',
+                 '_cap_opacity',
+                 '_cap_length',
+                 '_cap_width']
 
     def __init__(self):
         """Initialize the slider style configuration."""
@@ -947,6 +989,9 @@ class _SliderConfig(_ThemeConfig):
 
     """
 
+    __slots__ = ['_classic',
+                 '_modern']
+
     def __init__(self):
         """Initialize the slider configuration."""
         self._classic = _SliderStyleConfig()
@@ -1031,6 +1076,40 @@ class DefaultTheme(_ThemeConfig):
     >>> pyvista.global_theme.load_theme(my_theme)
 
     """
+
+    __slots__ = ['_name',
+                 '_background',
+                 '_jupyter_backend',
+                 '_full_screen',
+                 '_window_size',
+                 '_camera',
+                 '_notebook',
+                 '_font',
+                 '_auto_close',
+                 '_cmap',
+                 '_color',
+                 '_nan_color',
+                 '_edge_color',
+                 '_outline_color',
+                 '_floor_color',
+                 '_colorbar_orientation',
+                 '_colorbar_horizontal',
+                 '_colorbar_vertical',
+                 '_show_scalar_bar',
+                 '_show_edges',
+                 '_lighting',
+                 '_interactive',
+                 '_render_points_as_spheres',
+                 '_transparent_background',
+                 '_title',
+                 '_axes',
+                 '_multi_samples',
+                 '_multi_rendering_splitting_position',
+                 '_volume_mapper',
+                 '_smooth_shading',
+                 '_depth_peeling',
+                 '_silhouette',
+                 '_slider_styles']
 
     def __init__(self):
         """Initialize the theme."""
@@ -1773,7 +1852,7 @@ class DefaultTheme(_ThemeConfig):
 
         >>> import pyvista
         >>> pyvista.global_theme.silhouette.color = 'grey'
-        >>> pyvista.global_theme.silhouette.line_width = 2
+        >>> pyvista.global_theme.silhouette.line_width = 2.0
         >>> pyvista.global_theme.silhouette.feature_angle = 20
 
         """
@@ -1927,8 +2006,8 @@ class DefaultTheme(_ThemeConfig):
             raise TypeError('``theme`` must be a pyvista theme like '
                             '``pyvista.themes.DefaultTheme``')
 
-        for name, value in vars(theme).items():
-            setattr(self, name, value)
+        for attr_name in theme.__slots__:
+            setattr(self, attr_name, getattr(theme, attr_name))
 
     def save(self, filename):
         """Serialize this theme to a json file.
