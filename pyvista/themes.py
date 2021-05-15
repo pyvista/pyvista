@@ -772,7 +772,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.global_theme.slider_style.modern.cap_width = 0.02
+        >>> pyvista.global_theme.slider_styles.modern.cap_width = 0.02
 
         """
         return self._cap_width
@@ -788,7 +788,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.global_theme.slider_style.modern.cap_length = 0.01
+        >>> pyvista.global_theme.slider_styles.modern.cap_length = 0.01
 
         """
         return self._cap_length
@@ -804,7 +804,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.global_theme.slider_style.modern.cap_opacity = 1.0
+        >>> pyvista.global_theme.slider_styles.modern.cap_opacity = 1.0
 
         """
         return self._cap_opacity
@@ -820,8 +820,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.global_theme.slider_style.modern.tube_color = 'black'
-
+        >>> pyvista.global_theme.slider_styles.modern.tube_color = 'black'
         """
         return self._tube_color
 
@@ -836,7 +835,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.global_theme.slider_style.modern.tube_width = 0.005
+        >>> pyvista.global_theme.slider_styles.modern.tube_width = 0.005
 
         """
         return self._tube_width
@@ -852,7 +851,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.global_theme.slider_style.modern.slider_color = 'grey'
+        >>> pyvista.global_theme.slider_styles.modern.slider_color = 'grey'
 
         """
         return self._slider_color
@@ -868,7 +867,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.global_theme.slider_style.modern.slider_width = 0.04
+        >>> pyvista.global_theme.slider_styles.modern.slider_width = 0.04
 
         """
         return self._slider_width
@@ -884,7 +883,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.global_theme.slider_style.modern.slider_length = 0.02
+        >>> pyvista.global_theme.slider_styles.modern.slider_length = 0.02
 
         """
         return self._slider_length
@@ -919,25 +918,25 @@ class _SliderConfig(_ThemeConfig):
     Set the classic slider configuration.
 
     >>> import pyvista
-    >>> pyvista.global_theme.slider_style.classic.slider_length = 0.02
-    >>> pyvista.global_theme.slider_style.classic.slider_width = 0.04
-    >>> pyvista.global_theme.slider_style.classic.slider_color = (0.5, 0.5, 0.5)
-    >>> pyvista.global_theme.slider_style.classic.tube_width = 0.005
-    >>> pyvista.global_theme.slider_style.classic.tube_color = (1, 1, 1)
-    >>> pyvista.global_theme.slider_style.classic.cap_opacity = 1
-    >>> pyvista.global_theme.slider_style.classic.cap_length = 0.01
-    >>> pyvista.global_theme.slider_style.classic.cap_width = 0.02
+    >>> pyvista.global_theme.slider_styles.classic.slider_length = 0.02
+    >>> pyvista.global_theme.slider_styles.classic.slider_width = 0.04
+    >>> pyvista.global_theme.slider_styles.classic.slider_color = (0.5, 0.5, 0.5)
+    >>> pyvista.global_theme.slider_styles.classic.tube_width = 0.005
+    >>> pyvista.global_theme.slider_styles.classic.tube_color = (1, 1, 1)
+    >>> pyvista.global_theme.slider_styles.classic.cap_opacity = 1
+    >>> pyvista.global_theme.slider_styles.classic.cap_length = 0.01
+    >>> pyvista.global_theme.slider_styles.classic.cap_width = 0.02
 
     Set the modern slider configuration.
 
-    >>> pyvista.global_theme.slider_style.modern.slider_length = 0.02
-    >>> pyvista.global_theme.slider_style.modern.slider_width = 0.04
-    >>> pyvista.global_theme.slider_style.modern.slider_color = (0.43, 0.44, 0.45)
-    >>> pyvista.global_theme.slider_style.modern.tube_width = 0.04
-    >>> pyvista.global_theme.slider_style.modern.tube_color = (0.69, 0.70, 0.709)
-    >>> pyvista.global_theme.slider_style.modern.cap_opacity = 0
-    >>> pyvista.global_theme.slider_style.modern.cap_length = 0.01
-    >>> pyvista.global_theme.slider_style.modern.cap_width = 0.02
+    >>> pyvista.global_theme.slider_styles.modern.slider_length = 0.02
+    >>> pyvista.global_theme.slider_styles.modern.slider_width = 0.04
+    >>> pyvista.global_theme.slider_styles.modern.slider_color = (0.43, 0.44, 0.45)
+    >>> pyvista.global_theme.slider_styles.modern.tube_width = 0.04
+    >>> pyvista.global_theme.slider_styles.modern.tube_color = (0.69, 0.70, 0.709)
+    >>> pyvista.global_theme.slider_styles.modern.cap_opacity = 0
+    >>> pyvista.global_theme.slider_styles.modern.cap_length = 0.01
+    >>> pyvista.global_theme.slider_styles.modern.cap_width = 0.02
 
     """
 
@@ -1084,7 +1083,7 @@ class DefaultTheme(_ThemeConfig):
         self._smooth_shading = False
         self._depth_peeling = _DepthPeelingConfig()
         self._silhouette = _SilhouetteConfig()
-        self._slider_style = _SliderConfig()
+        self._slider_styles = _SliderConfig()
 
     @property
     def background(self):
@@ -1780,15 +1779,15 @@ class DefaultTheme(_ThemeConfig):
         self._silhouette = config
 
     @property
-    def slider_style(self) -> _SliderConfig:
+    def slider_styles(self) -> _SliderConfig:
         """Return the default slider_style configuration."""
-        return self._slider_style
+        return self._slider_styles
 
-    @slider_style.setter
-    def slider_style(self, config: _SliderConfig):
+    @slider_styles.setter
+    def slider_styles(self, config: _SliderConfig):
         if not isinstance(config, _SliderConfig):
             raise TypeError('Configuration type must be `_SliderConfig`')
-        self._slider_style = config
+        self._slider_styles = config
 
     @property
     def axes(self) -> _AxesConfig:
@@ -1865,7 +1864,7 @@ class DefaultTheme(_ThemeConfig):
             'Smooth shading': 'smooth_shading',
             'Depth peeling': 'depth_peeling',
             'Silhouette': 'silhouette',
-            'Slider Style': 'slider_style',
+            'Slider Style': 'slider_styles',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)

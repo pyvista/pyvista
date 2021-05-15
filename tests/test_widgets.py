@@ -109,7 +109,7 @@ def test_widget_text_slider():
         p.add_text_slider_widget(callback=func, data='foo')
     with pytest.raises(ValueError, match='list of values is empty'):
         p.add_text_slider_widget(callback=func, data=[])
-    for style in pyvista.global_theme.slider_style:
+    for style in pyvista.global_theme.slider_styles:
         p.add_text_slider_widget(callback=func, data=['foo', 'bar'], style=style)
     p.close()
 

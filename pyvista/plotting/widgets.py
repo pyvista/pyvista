@@ -703,7 +703,8 @@ class WidgetHelper:
 
         style : str, optional
             The name of the slider style. The list of available styles
-            are in ``pyvista.global_theme.slider_style``. Defaults to ``None``.
+            are in ``pyvista.global_theme.slider_styles``. Defaults to
+            ``None``.
 
         Returns
         -------
@@ -766,60 +767,65 @@ class WidgetHelper:
                           title_height=0.03, title_opacity=1.0, title_color=None, fmt=None):
         """Add a slider bar widget.
 
-        This is useless without a callback function. You can pass a callable
-        function that takes a single argument, the value of this slider widget,
-        and performs a task with that value.
+        This is useless without a callback function. You can pass a
+        callable function that takes a single argument, the value of
+        this slider widget, and performs a task with that value.
 
         Parameters
         ----------
         callback : callable
-            The method called every time the slider is updated. This should take
-            a single parameter: the float value of the slider
+            The method called every time the slider is updated. This
+            should take a single parameter: the float value of the
+            slider.
 
         rng : tuple(float)
-            Length two tuple of the minimum and maximum ranges of the slider
+            Length two tuple of the minimum and maximum ranges of the
+            slider.
 
         value : float, optional
-            The starting value of the slider
+            The starting value of the slider.
 
-        title : str
-            The string label of the slider widget
+        title : str, optional
+            The string label of the slider widget.
 
-        pointa : tuple(float)
-            The relative coordinates of the left point of the slider on the
-            display port
+        pointa : tuple(float), optional
+            The relative coordinates of the left point of the slider
+            on the display port.
 
         pointb : tuple(float)
-            The relative coordinates of the right point of the slider on the
-            display port
+            The relative coordinates of the right point of the slider
+            on the display port
 
-        color : string or 3 item list, optional, defaults to white
+        color : string or 3 item list, optional
             Either a string, rgb list, or hex color string.
 
-        pass_widget : bool
-            If true, the widget will be passed as the last argument of the
-            callback
+        pass_widget : bool, optional
+            If ``True``, the widget will be passed as the last
+            argument of the callback.
 
-        event_type : str
-            Either 'start', 'end' or 'always', this defines how often the
-            slider interacts with the callback.
+        event_type : str, optional
+            Either ``'start'``, ``'end'`` or ``'always'``, this
+            defines how often the slider interacts with the callback.
 
         style : str, optional
             The name of the slider style. The list of available styles
-            are in ``pyvista.global_theme.slider_style``. Defaults to ``None``.
+            are in ``pyvista.global_theme.slider_styles``. Defaults to
+            ``None``.
 
         title_height: float, optional
-            Relative height of the title as compared to the length of the slider.
+            Relative height of the title as compared to the length of
+            the slider.
 
         title_opacity: str, optional
             Opacity of title. Defaults to 1.0.
 
         title_color : string or 3 item list, optional
-            Either a string, rgb list, or hex color string.  Defaults to the value 
-            given in ``color``.
+            Either a string, rgb list, or hex color string.  Defaults
+            to the value given in ``color``.
 
         fmt : str, optional
-            String formatter used to format numerical data. Defaults to ``None``.
+            String formatter used to format numerical data. Defaults
+            to ``None``.
 
         Examples
         --------
@@ -884,7 +890,7 @@ class WidgetHelper:
             if not isinstance(style, str):
                 raise TypeError("Expected type for ``style`` is str but"
                                 f" {type(style)} was given.")
-            slider_style = getattr(pyvista.global_theme.slider_style, style)
+            slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
             slider_rep.SetSliderWidth(slider_style.slider_width)
             slider_rep.GetSliderProperty().SetColor(slider_style.slider_color)
@@ -1274,7 +1280,9 @@ class WidgetHelper:
         callback : callable
             The function to call back when the widget is modified. It
             takes a single argument: the center of the sphere as a XYZ
-            coordinate.
+            coordinate.  If multiple centers are passed in the
+            ``center`` parameter, the callback must accept an index of
+            that widget.
 
         center : tuple(float)
             Length 3 array for the XYZ coordinate of the sphere's
@@ -1293,8 +1301,10 @@ class WidgetHelper:
             Set the number of points in the latitude direction.
 
         color : string or 3 item iterable, optional
-            The color of the sphere's surface.  Either a string, rgb
-            list, or hex color string.  For example:
+            The color of the sphere's surface.  If multiple centers
+            are passed, then this must be a list of colors.  Each
+            color is either a string, rgb list, or hex color string.
+            For example:
 
             * ``color='white'``
             * ``color='w'``

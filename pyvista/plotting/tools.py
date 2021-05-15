@@ -378,8 +378,7 @@ def parse_color(color, opacity=None, default_color=None):
 def parse_font_family(font_family):
     """Check font name."""
     font_family = font_family.lower()
-    if font_family not in FONTS._member_names_:
-        raise ValueError('Font must one of the following:\n'
-                         f"{', '.join(FONTS._member_names_)}")
-
+    fonts = [font.name for font in FONTS]
+    if font_family not in fonts:
+        raise ValueError('Font must one of the following:\n{", ".join(fonts)}')
     return FONTS[font_family].value

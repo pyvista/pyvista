@@ -57,25 +57,25 @@ def test_depth_silhouette_eq(default_theme):
                                   ('cap_length', 0.02),
                                   ('cap_width', 0.04)
 ])
-@pytest.mark.parametrize('slider_type', ('modern', 'classic'))
-def test_slider_style_config(default_theme, parm, slider_type):
+@pytest.mark.parametrize('style', ('modern', 'classic'))
+def test_slider_style_config(default_theme, parm, style):
     attr, value = parm
 
-    slider_style = getattr(default_theme.slider_style, 'modern')
+    slider_style = getattr(default_theme.slider_styles, style)
     assert hasattr(slider_style, attr)
     setattr(slider_style, attr, value)
     assert getattr(slider_style, attr) == value
 
 
 def test_slider_style_config_eq(default_theme):
-    assert default_theme.slider_style.modern != default_theme.slider_style.classic
-    assert default_theme.slider_style.modern != 1
+    assert default_theme.slider_styles.modern != default_theme.slider_styles.classic
+    assert default_theme.slider_styles.modern != 1
 
 
 def test_slider_style_eq(default_theme):
     my_theme = pyvista.themes.DefaultTheme()
-    my_theme.slider_style.modern.slider_length *= 2
-    assert default_theme.slider_style != my_theme.slider_style
+    my_theme.slider_styles.modern.slider_length *= 2
+    assert default_theme.slider_styles != my_theme.slider_styles
 
 
 def test_invalid_color_str_single_char():
