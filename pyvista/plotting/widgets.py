@@ -1273,8 +1273,8 @@ class WidgetHelper:
         ----------
         callback : callable
             The function to call back when the widget is modified. It
-            takes a single argument: the center of the sphere as a XYZ
-            coordinate.
+            takes a single argument: the center of the sphere as an XYZ
+            coordinate (a 3-length sequence).
 
         center : tuple(float)
             Length 3 array for the XYZ coordinate of the sphere's
@@ -1286,13 +1286,13 @@ class WidgetHelper:
         radius : float, optional
             The radius of the sphere.
 
-        theta_resolution: int , optional
+        theta_resolution: int, optional
             Set the number of points in the longitude direction.
 
         phi_resolution : int, optional
             Set the number of points in the latitude direction.
 
-        color : string or 3 item iterable, optional
+        color : str or 3 item iterable, optional
             The color of the sphere's surface.  Either a string, rgb
             list, or hex color string.  For example:
 
@@ -1302,10 +1302,10 @@ class WidgetHelper:
             * ``color='#FFFFFF'``
 
         style : str, optional
-            Representation style: ``'surface'`` or ``'wireframe'``
+            Representation style: ``'surface'`` or ``'wireframe'``.
 
         selected_color : str, optional
-            Color of the widget when selected during interaction
+            Color of the widget when selected during interaction.
 
         pass_widget : bool
             If ``True``, the widget will be passed as the last
