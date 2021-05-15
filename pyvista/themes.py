@@ -47,20 +47,20 @@ class _rcParams(dict):  # pragma: no cover
 
     def __getitem__(self, key):
         import pyvista  # avoids circular import
-        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
-                      DeprecationWarning)
+        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``.',
+                      PyvistaDeprecationWarning)
         return getattr(pyvista.global_theme, key)
 
     def __setitem__(self, key, value):
         import pyvista  # avoids circular import
-        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
-                      DeprecationWarning)
+        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``.',
+                      PyvistaDeprecationWarning)
         setattr(pyvista.global_theme, key, value)
 
     def __repr__(self):
         """Use the repr of global_theme."""
-        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
-                      DeprecationWarning)
+        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``.',
+                      PyvistaDeprecationWarning)
         return repr(pyvista.global_theme)
 
 
