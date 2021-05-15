@@ -113,7 +113,7 @@ def set_plot_theme(theme):
 class _ThemeConfig():
     """Provide common methods for theme configuration classes."""
 
-    __slots__ = []
+    __slots__: List[str] = []
 
     @classmethod
     def from_dict(cls, dict_):
