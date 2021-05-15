@@ -1,4 +1,5 @@
 """ test pyvista.utilities """
+import warnings
 import pathlib
 import os
 import shutil
@@ -110,14 +111,18 @@ def test_read_force_ext_wrong_extension(tmpdir):
     # the returned dataset is empty
     fname = tmpdir / 'airplane.vtu'
     ex.load_airplane().cast_to_unstructured_grid().save(fname)
-    data = fileio.read(fname, force_ext='.vts')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        data = fileio.read(fname, force_ext='.vts')
     assert data.n_points == 0
 
     # try to read a .ply file as .vtm
     # vtkXMLMultiBlockDataReader throws a VTK error about the validity of the XML file
     # the returned dataset is empty
     fname = ex.planefile
-    data = fileio.read(fname, force_ext='.vtm')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        data = fileio.read(fname, force_ext='.vtm')
     assert len(data) == 0
 
 
