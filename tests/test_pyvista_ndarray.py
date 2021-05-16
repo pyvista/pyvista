@@ -1,9 +1,10 @@
 import numpy as np
 import pytest
+import vtk as _vtk
 
 from pyvista import pyvista_ndarray
 from pyvista import examples
-
+from unittest import mock
 
 def test_slices_are_associated():
     dataset = examples.load_structured()
@@ -27,14 +28,30 @@ def test_copies_are_not_associated():
     assert not np.shares_memory(points, points_2)
 
 
-def test_isequal():
+def test_modifying_modifies_dataset():
     dataset = examples.load_structured()
-    dataset_2 = examples.load_structured()
+    points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
 
-    dataset.points[:, -1] = np.inf
-    dataset_2.points[:, -1] = np.inf
+    dataset_modified = mock.Mock()
+    array_modified = mock.Mock()
+    dataset.AddObserver(_vtk.vtkCommand.ModifiedEvent, dataset_modified)
+    points.AddObserver(_vtk.vtkCommand.ModifiedEvent, array_modified)
 
-    assert np.allclose(dataset.points, dataset_2.points, equal_nan=True)
+    # __setitem__ calls dataset.Modified() and points.Modified()
+    points[:] *= 0.5
+    assert dataset_modified.call_count == 1
+    assert array_modified.call_count == 1
+
+    # __setitem__ with single-indices works does same
+    points[0, 0] = 0.5
+    assert dataset_modified.call_count == 2
+    assert array_modified.call_count == 2
+
+    # setting all new points calls dataset.Modified()
+    dataset.points = points.copy()
+    assert dataset_modified.call_count == 3
+    assert array_modified.call_count == 2
+
 
 # TODO: This currently doesn't work for single element indexing operations!
 # in these cases, the __array_finalize__ method is not called
