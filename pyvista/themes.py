@@ -59,6 +59,7 @@ class _rcParams(dict):  # pragma: no cover
 
     def __repr__(self):
         """Use the repr of global_theme."""
+        import pyvista  # avoids circular import
         warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
                       DeprecationWarning)
         return repr(pyvista.global_theme)

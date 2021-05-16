@@ -1,11 +1,8 @@
-import warnings
-
 import pytest
 import vtk
 
 import pyvista
 from pyvista import colors
-from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 @pytest.fixture
