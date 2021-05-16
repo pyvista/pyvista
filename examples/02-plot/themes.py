@@ -19,7 +19,7 @@ def plot_example():
     p = pv.Plotter()
     p.add_mesh(mesh)
     p.add_bounding_box()
-    return p.show()
+    p.show()
 
 
 ###############################################################################
@@ -32,7 +32,7 @@ def plot_example():
 # Here's an example of our default plotting theme - this is what you
 # would see by default after running any of our examples locally.
 
-pyvista.set_plot_theme('default')
+pv.set_plot_theme('default')
 plot_example()
 
 ###############################################################################
@@ -72,7 +72,7 @@ plotter.add_mesh(mesh)
 plotter.show_grid()
 # Here we set the gradient
 plotter.set_background("royalblue", top="aliceblue")
-plotter.show()
+cpos = plotter.show()
 
 
 ###############################################################################
@@ -97,7 +97,7 @@ pv.global_theme
 # parameter.
 
 pv.global_theme.show_edges = True
-pv.Sphere().plot()
+cpos = pv.Sphere().plot()
 
 
 ###############################################################################
@@ -108,7 +108,7 @@ pv.Sphere().plot()
 # within ``pyvista.global_theme.``
 
 pv.global_theme.restore_defaults()
-pv.Sphere().plot()
+cpos = pv.Sphere().plot()
 
 
 ###############################################################################
@@ -129,7 +129,7 @@ my_theme.show_edges = True
 my_theme.axes.box = True
 
 pv.global_theme.load_theme(my_theme)
-pv.Sphere().plot()
+cpos = pv.Sphere().plot()
 
 
 ###############################################################################
@@ -152,7 +152,7 @@ my_theme.show_edges = True
 my_theme.edge_color = 'white'
 my_theme.background = 'white'
 
-pv.Sphere().plot(theme=my_theme)
+cpos = pv.Sphere().plot(theme=my_theme)
 
 
 ###############################################################################
@@ -161,7 +161,7 @@ pv.Sphere().plot(theme=my_theme)
 pl = pv.Plotter(theme=my_theme)
 # pl.theme = my_theme  # alternatively use the setter
 pl.add_mesh(pv.Cube())
-pl.show()
+cpos = pl.show()
 
 
 ###############################################################################

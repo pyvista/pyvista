@@ -381,7 +381,7 @@ def test_theme_eq():
     assert defa_theme0 != dark_theme
 
     # for coverage
-    assert defa_theme0 != 'apple', 'wrong type test failed'
+    assert defa_theme0 != 'apple'
 
 
 def test_plotter_set_theme():
