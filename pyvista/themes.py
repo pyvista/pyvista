@@ -1282,9 +1282,9 @@ class DefaultTheme(_ThemeConfig):
         return self._jupyter_backend
 
     @jupyter_backend.setter
-    def jupyter_backend(self, value: 'str'):
-        import pyvista
-        pyvista.set_jupyter_backend(value)
+    def jupyter_backend(self, backend: 'str'):
+        from pyvista.jupyter import _validate_jupyter_backend
+        self._jupyter_backend = _validate_jupyter_backend(backend)
 
     @property
     def auto_close(self) -> bool:
