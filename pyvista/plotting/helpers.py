@@ -77,7 +77,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
 
-    theme : pyvista.Theme, optional
+    theme : pyvista.DefaultTheme, optional
         Plot specific theme.
 
     **kwargs : optional keyword arguments
@@ -106,19 +106,22 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if notebook is None:
         notebook = scooby.in_ipykernel()
 
+    if theme is None:
+        theme = pyvista.global_theme
+
     # undocumented kwarg used within pytest to run a function before closing
     before_close_callback = kwargs.pop('before_close_callback', None)
 
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
-    auto_close = kwargs.get('auto_close', pyvista.global_theme.auto_close)
+    auto_close = kwargs.get('auto_close', theme.auto_close)
 
     if notebook:
         off_screen = notebook
     plotter = Plotter(off_screen=off_screen, notebook=notebook, theme=theme)
 
     if show_axes is None:
-        show_axes = pyvista.global_theme.axes.show
+        show_axes = theme.axes.show
     if show_axes:
         plotter.add_axes()
 
@@ -305,7 +308,7 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
     smooth_shading : bool, optional
         Smooth mesh surface mesh by taking into account surface
         normals.  Surface will appear smoother while sharp edges will
-        still look sharp.  Default False.
+        still look sharp.  Default ``False``.
 
     Returns
     --------

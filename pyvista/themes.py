@@ -47,13 +47,13 @@ class _rcParams(dict):  # pragma: no cover
 
     def __getitem__(self, key):
         import pyvista  # avoids circular import
-        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
+        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``.',
                       DeprecationWarning)
         return getattr(pyvista.global_theme, key)
 
     def __setitem__(self, key, value):
         import pyvista  # avoids circular import
-        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
+        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``.',
                       DeprecationWarning)
         setattr(pyvista.global_theme, key, value)
 
@@ -81,7 +81,9 @@ def load_theme(filename):
     >>> loaded_theme = pyvista.load_theme('my_theme.json')  # doctest:+SKIP
 
     """
-    return DefaultTheme.from_dict(json.load(open(filename)))
+    with open(filename) as f:
+        theme_dict = json.load(f)
+    return DefaultTheme.from_dict(theme_dict)
 
 
 def set_plot_theme(theme):
@@ -124,7 +126,7 @@ def set_plot_theme(theme):
     elif isinstance(theme, DefaultTheme):
         pyvista.global_theme.load_theme(theme)
     else:
-        raise TypeError(f'Expected a ``pyvista.DefaultTheme`` or ``str``, not '
+        raise TypeError(f'Expected a ``pyvista.themes.DefaultTheme`` or ``str``, not '
                         f'a {type(theme).__name__}')
 
 
@@ -1096,7 +1098,7 @@ class DefaultTheme(_ThemeConfig):
 
     >>> pyvista.global_theme.show_edges = True
 
-    Create a new theme from the DefaultTheme and apply it globally.
+    Create a new theme from the default theme and apply it globally.
 
     >>> my_theme = pyvista.themes.DefaultTheme()
     >>> my_theme.color = 'red'
@@ -1201,7 +1203,7 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def background(self):
-        """Return or set the default background color of a pyvista plot.
+        """Return or set the default background color of pyvista plots.
 
         Examples
         --------
@@ -1242,7 +1244,7 @@ class DefaultTheme(_ThemeConfig):
           framebuffer.  Must have ``ipygany`` installed.
 
         * ``'static'`` : Display a single static image within the
-          Jupyterlab environment.  Still requires that a virtual
+          JupyterLab environment.  Still requires that a virtual
           framebuffer be setup when displaying on a headless server,
           but does not require any additional modules to be installed.
 
@@ -1308,6 +1310,8 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
+        Set windows to be full screen by default.
+
         >>> import pyvista
         >>> pyvista.global_theme.full_screen = True
         """
@@ -1327,13 +1331,13 @@ class DefaultTheme(_ThemeConfig):
 
         >>> import pyvista
         >>> pyvista.global_theme.camera = {'position': [1, 1, 1],
-        ...                            'viewup': [0, 0, 1]}
+        ...                                'viewup': [0, 0, 1]}
 
-        Set the default position of the camera
+        Set the default position of the camera.
 
         >>> pyvista.global_theme.camera['position'] = [1, 1, 1]
 
-        Set the default view of the camera
+        Set the default view of the camera.
 
         >>> pyvista.global_theme.camera['viewup'] = [0, 0, 1]
 
@@ -1343,12 +1347,13 @@ class DefaultTheme(_ThemeConfig):
     @camera.setter
     def camera(self, camera):
         if not isinstance(camera, dict):
-            raise TypeError(f'Expected ``camera`` to be a dict, not {type(camera)}')
+            raise TypeError('Expected ``camera`` to be a dict, not '
+                            f'{type(camera).__name__}.')
 
         if 'position' not in camera:
-            raise KeyError('Expected the "position" key in the camera dict')
+            raise KeyError('Expected the "position" key in the camera dict.')
         if 'viewup' not in camera:
-            raise KeyError('Expected the "viewup" key in the camera dict')
+            raise KeyError('Expected the "viewup" key in the camera dict.')
 
         self._camera = camera
 
@@ -1362,7 +1367,7 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Disable all jupyter notebook plotting
+        Disable all jupyter notebook plotting.
 
         >>> import pyvista
         >>> pyvista.global_theme.notebook = False
@@ -1380,7 +1385,7 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Set window size to ``[400, 400]``
+        Set window size to ``[400, 400]``.
 
         >>> import pyvista
         >>> pyvista.global_theme.window_size = [400, 400]
@@ -1390,12 +1395,12 @@ class DefaultTheme(_ThemeConfig):
 
     @window_size.setter
     def window_size(self, window_size: List[int]):
-        if not len(window_size) == 2:
-            raise ValueError('Expected a length 2 iterable for ``window_size``')
+        if len(window_size) != 2:
+            raise ValueError('Expected a length 2 iterable for ``window_size``.')
 
         # ensure positive size
         if window_size[0] < 0 or window_size[1] < 0:
-            raise ValueError('Window size must be a positive value')
+            raise ValueError('Window size must be a positive value.')
 
         self._window_size = window_size
 
@@ -1415,19 +1420,19 @@ class DefaultTheme(_ThemeConfig):
 
         >>> pyvista.global_theme.font.size = 20
 
-        Set the default title size to 40
+        Set the default title size to 40.
 
         >>> pyvista.global_theme.font.title_size = 40
 
-        Set the default label size to 10
+        Set the default label size to 10.
 
         >>> pyvista.global_theme.font.label_size = 10
 
-        Set the default text color to 'grey'
+        Set the default text color to 'grey'.
 
         >>> pyvista.global_theme.font.color = 'grey'
 
-        String formatter used to format numerical data to '%.6e'
+        String formatter used to format numerical data to '%.6e'.
 
         >>> pyvista.global_theme.font.fmt = '%.6e'
 
@@ -1437,7 +1442,7 @@ class DefaultTheme(_ThemeConfig):
     @font.setter
     def font(self, config: _Font):
         if not isinstance(config, _Font):
-            raise TypeError('Configuration type must be `_Font`')
+            raise TypeError('Configuration type must be `_Font`.')
         self._font = config
 
     @property
@@ -1446,9 +1451,8 @@ class DefaultTheme(_ThemeConfig):
 
         See available Matplotlib colormaps.  Only applicable for when
         displaying ``scalars``. Requires Matplotlib to be installed.
-        ``colormap`` is also an accepted alias for this. If
-        ``colorcet`` or ``cmocean`` are installed, their colormaps can
-        be specified by name.
+        If ``colorcet`` or ``cmocean`` are installed, their colormaps
+        can be specified by name.
 
         You can also specify a list of colors to override an existing
         colormap with a custom one.  For example, to create a three
@@ -1456,7 +1460,7 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Set the default global colormap to 'jet'
+        Set the default global colormap to 'jet'.
 
         >>> import pyvista
         >>> pyvista.global_theme.cmap = 'jet'
@@ -1475,8 +1479,8 @@ class DefaultTheme(_ThemeConfig):
 
         Used for meshes without ``scalars``.
 
-        A string or 3 item list, optional, defaults to white
-        Either a string, rgb list, or hex color string.  For example:
+        When setting, the value must be either a string, rgb list,
+        or hex color string.  For example:
 
         * ``color='white'``
         * ``color='w'``
@@ -1485,7 +1489,7 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Set the default mesh color to 'red'
+        Set the default mesh color to 'red'.
 
         >>> import pyvista
         >>> pyvista.global_theme.color = 'red'
@@ -1499,14 +1503,15 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def nan_color(self) -> tuple:
-        """Return or set the default NAN color.
+        """Return or set the default NaN color.
 
-        This color is used to plot all NAN values.
+        This color is used to plot all NaN values.
 
         Examples
         --------
         >>> import pyvista
         >>> pyvista.global_theme.nan_color = 'darkgray'
+
         """
         return self._nan_color
 
@@ -1520,10 +1525,11 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Set the global edge color to 'blue'
+        Set the global edge color to 'blue'.
 
         >>> import pyvista
         >>> pyvista.global_theme.edge_color = 'blue'
+
         """
         return self._edge_color
 
@@ -1539,6 +1545,7 @@ class DefaultTheme(_ThemeConfig):
         --------
         >>> import pyvista
         >>> pyvista.global_theme.outline_color = 'white'
+
         """
         return self._outline_color
 
@@ -1554,6 +1561,7 @@ class DefaultTheme(_ThemeConfig):
         --------
         >>> import pyvista
         >>> pyvista.global_theme.floor_color = 'black'
+
         """
         return self._floor_color
 
@@ -1571,6 +1579,7 @@ class DefaultTheme(_ThemeConfig):
         --------
         >>> import pyvista
         >>> pyvista.global_theme.colorbar_orientation = 'horizontal'
+
         """
         return self._colorbar_orientation
 
@@ -1587,12 +1596,12 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Set the default horizontal colorbar width to 0.6
+        Set the default horizontal colorbar width to 0.6.
 
         >>> import pyvista
         >>> pyvista.global_theme.colorbar_horizontal.width = 0.6
 
-        Set the default horizontal colorbar height to 0.2
+        Set the default horizontal colorbar height to 0.2.
 
         >>> pyvista.global_theme.colorbar_horizontal.height = 0.2
 
@@ -1602,7 +1611,7 @@ class DefaultTheme(_ThemeConfig):
     @colorbar_horizontal.setter
     def colorbar_horizontal(self, config: _ColorbarConfig):
         if not isinstance(config, _ColorbarConfig):
-            raise TypeError('Configuration type must be `_ColorbarConfig`')
+            raise TypeError('Configuration type must be `_ColorbarConfig`.')
         self._colorbar_horizontal = config
 
     @property
@@ -1611,12 +1620,12 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Set the default colorbar width to 0.45
+        Set the default colorbar width to 0.45.
 
         >>> import pyvista
         >>> pyvista.global_theme.colorbar_vertical.width = 0.45
 
-        Set the default colorbar height to 0.8
+        Set the default colorbar height to 0.8.
 
         >>> import pyvista
         >>> pyvista.global_theme.colorbar_vertical.height = 0.8
@@ -1627,7 +1636,7 @@ class DefaultTheme(_ThemeConfig):
     @colorbar_vertical.setter
     def colorbar_vertical(self, config: _ColorbarConfig):
         if not isinstance(config, _ColorbarConfig):
-            raise TypeError('Configuration type must be `_ColorbarConfig`')
+            raise TypeError('Configuration type must be `_ColorbarConfig`.')
         self._colorbar_vertical = config
 
     @property
@@ -1672,7 +1681,7 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Disable lighting globally
+        Disable lighting globally.
 
         >>> import pyvista
         >>> pyvista.global_theme.lighting = False
@@ -1698,7 +1707,7 @@ class DefaultTheme(_ThemeConfig):
 
     @interactive.setter
     def interactive(self, interactive: bool):
-        self._interactive = interactive
+        self._interactive = bool(interactive)
 
     @property
     def render_points_as_spheres(self) -> bool:
@@ -1706,7 +1715,7 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Render points as spheres by default globally to ``True``.
+        Render points as spheres by default globally.
 
         >>> import pyvista
         >>> pyvista.global_theme.render_points_as_spheres = True
@@ -1715,17 +1724,7 @@ class DefaultTheme(_ThemeConfig):
 
     @render_points_as_spheres.setter
     def render_points_as_spheres(self, render_points_as_spheres: bool):
-        self._render_points_as_spheres = render_points_as_spheres
-
-    # @property
-    # def use_ipyvtk(self):  # pragma: no cover
-    #     """Return or set the default global ``use_ipyvtk`` parameter.
-
-    #     This parameter has been deprecated in favor of
-    #     ``jupyter_backend``.
-    #     """
-    #     from pyvista.core.errors import DeprecationError
-    #     raise DeprecationError('DEPRECATED: Please use ``jupyter_backend``')
+        self._render_points_as_spheres = bool(render_points_as_spheres)
 
     @property
     def transparent_background(self) -> bool:
@@ -1733,10 +1732,11 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Set transparent_background globally to ``True``
+        Set transparent_background globally to ``True``.
 
         >>> import pyvista
         >>> pyvista.global_theme.transparent_background = True
+
         """
         return self._transparent_background
 
@@ -1752,10 +1752,11 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Set title globally to 'plot'
+        Set title globally to 'plot'.
 
         >>> import pyvista
         >>> pyvista.global_theme.title = 'plot'
+
         """
         return self._title
 
@@ -1775,6 +1776,7 @@ class DefaultTheme(_ThemeConfig):
 
         >>> import pyvista
         >>> pyvista.global_theme.multi_samples = 2
+
         """
         return self._multi_samples
 
@@ -1793,6 +1795,7 @@ class DefaultTheme(_ThemeConfig):
 
         >>> import pyvista
         >>> pyvista.global_theme.multi_rendering_splitting_position = 0.5
+
         """
         return self._multi_rendering_splitting_position
 
@@ -1818,6 +1821,7 @@ class DefaultTheme(_ThemeConfig):
 
         >>> import pyvista
         >>> pyvista.global_theme.volume_mapper = 'gpu'
+
         """
         return self._volume_mapper
 
@@ -1840,6 +1844,7 @@ class DefaultTheme(_ThemeConfig):
 
         >>> import pyvista
         >>> pyvista.global_theme.smooth_shading = True
+
         """
         return self._smooth_shading
 
@@ -1867,7 +1872,7 @@ class DefaultTheme(_ThemeConfig):
     @depth_peeling.setter
     def depth_peeling(self, config: _DepthPeelingConfig):
         if not isinstance(config, _DepthPeelingConfig):
-            raise TypeError('Configuration type must be `_DepthPeelingConfig`')
+            raise TypeError('Configuration type must be `_DepthPeelingConfig`.')
         self._depth_peeling = config
 
     @property
@@ -1894,31 +1899,31 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def slider_styles(self) -> _SliderConfig:
-        """Return the default slider_style configuration."""
+        """Return the default slider style configurations."""
         return self._slider_styles
 
     @slider_styles.setter
     def slider_styles(self, config: _SliderConfig):
         if not isinstance(config, _SliderConfig):
-            raise TypeError('Configuration type must be `_SliderConfig`')
+            raise TypeError('Configuration type must be `_SliderConfig`.')
         self._slider_styles = config
 
     @property
     def axes(self) -> _AxesConfig:
-        """Return or set the default ``axes`` parameter.
+        """Return or set the default ``axes`` configuration.
 
         Examples
         --------
-        Set the x axis color to black
+        Set the x axis color to black.
 
         >>> import pyvista
         >>> pyvista.global_theme.axes.x_color = 'black'
 
-        Show axes by default
+        Show axes by default.
 
         >>> pyvista.global_theme.axes.show = True
 
-        Use the ``vtk.vtkCubeAxesActor``
+        Use the ``vtk.vtkCubeAxesActor``.
 
         >>> pyvista.global_theme.axes.box = True
 
@@ -1928,7 +1933,7 @@ class DefaultTheme(_ThemeConfig):
     @axes.setter
     def axes(self, config: _AxesConfig):
         if not isinstance(config, _AxesConfig):
-            raise TypeError('Configuration type must be `_AxesConfig`')
+            raise TypeError('Configuration type must be `_AxesConfig`.')
         self._axes = config
 
     def restore_defaults(self):
@@ -1957,7 +1962,7 @@ class DefaultTheme(_ThemeConfig):
             'Auto close': 'auto_close',
             'Colormap': 'cmap',
             'Color': 'color',
-            'NAN color': 'nan_color',
+            'NaN color': 'nan_color',
             'Edge color': 'edge_color',
             'Outline color': 'outline_color',
             'Floor color': 'floor_color',
@@ -1978,13 +1983,11 @@ class DefaultTheme(_ThemeConfig):
             'Smooth shading': 'smooth_shading',
             'Depth peeling': 'depth_peeling',
             'Silhouette': 'silhouette',
-            'Slider Style': 'slider_styles',
+            'Slider Styles': 'slider_styles',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
             txt.append(f'{name:<25}: {setting}')
-
-        max_len = max([len(entry) for entry in txt])
 
         return '\n'.join(txt)
 
@@ -2003,7 +2006,7 @@ class DefaultTheme(_ThemeConfig):
         Examples
         --------
         Create a custom theme from the default theme and load it into
-        pyvista.
+        the global theme of pyvista.
 
         >>> import pyvista
         >>> from pyvista.themes import DefaultTheme
@@ -2032,7 +2035,7 @@ class DefaultTheme(_ThemeConfig):
 
         if not isinstance(theme, DefaultTheme):
             raise TypeError('``theme`` must be a pyvista theme like '
-                            '``pyvista.themes.DefaultTheme``')
+                            '``pyvista.themes.DefaultTheme``.')
 
         for attr_name in theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
@@ -2049,6 +2052,7 @@ class DefaultTheme(_ThemeConfig):
         >>> theme.background = 'white'
         >>> theme.save('my_theme.json')  # doctest:+SKIP
         >>> loaded_theme = pyvista.load_theme('my_theme.json')  # doctest:+SKIP
+
         """
         with open(filename, 'w') as f:
             json.dump(self.to_dict(), f)
@@ -2061,6 +2065,8 @@ class DarkTheme(DefaultTheme):
 
     Examples
     --------
+    Make the dark theme the global default.
+
     >>> import pyvista
     >>> from pyvista import themes
     >>> pyvista.set_plot_theme(themes.DarkTheme())
@@ -2092,6 +2098,8 @@ class ParaViewTheme(DefaultTheme):
 
     Examples
     --------
+    Make the paraview-like theme the global default.
+
     >>> import pyvista
     >>> from pyvista import themes
     >>> pyvista.set_plot_theme(themes.ParaViewTheme())
@@ -2123,12 +2131,14 @@ class ParaViewTheme(DefaultTheme):
 class DocumentTheme(DefaultTheme):
     """A document theme well suited for papers and presentations.
 
-    This theme uses a white background, the "viridis" colormap,
-    disables edges and black fonts.  Best used for presentations,
+    This theme uses a white background, black fonts, the "viridis"
+    colormap, and it disables edges.  Best used for presentations,
     papers, etc.
 
     Examples
     --------
+    Make the document theme the global default.
+
     >>> import pyvista
     >>> from pyvista import themes
     >>> pyvista.set_plot_theme(themes.DocumentTheme())

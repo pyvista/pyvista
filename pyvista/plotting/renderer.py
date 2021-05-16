@@ -269,8 +269,8 @@ class Renderer(_vtk.vtkRenderer):
             stops to iterate over peel layers. This is the ratio of
             the number of pixels that have been touched by the last
             layer over the total number of pixels of the viewport
-            area. Initial value is 0.0, meaning rendering have to be
-            exact. Greater values may speed-up the rendering with
+            area. Initial value is 0.0, meaning rendering has to be
+            exact. Greater values may speed up the rendering with
             small impact on the quality.
 
         """

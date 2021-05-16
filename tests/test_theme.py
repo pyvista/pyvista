@@ -1,8 +1,11 @@
+import warnings
+
 import pytest
 import vtk
 
 import pyvista
 from pyvista import colors
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 @pytest.fixture
@@ -324,7 +327,7 @@ def test_volume_mapper(default_theme):
                                   ('floor_color', (1.0, 0.0, 0.0)),
                                   ('show_scalar_bar', False),
                                   ('lighting', False),
-                                  ('interactive', 'False'),
+                                  ('interactive', False),
                                   ('render_points_as_spheres', True),
                                   ('transparent_background', True),
                                   ('title', 'test_title'),
