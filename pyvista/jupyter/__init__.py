@@ -7,7 +7,11 @@ ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'none']
 
 
 def _validate_jupyter_backend(backend):
-    """Validate a jupyter backend is valid."""
+    """Validate that a jupyter backend is valid.
+
+    Returns the normalized name of the backend. Raises if the backend is invalid.
+
+    """
     # Must be a string
     if backend is None:
         backend = 'none'
@@ -37,13 +41,13 @@ def _validate_jupyter_backend(backend):
         try:
             import ipyvtklink
         except ImportError:    # pragma: no cover
-            raise ImportError('Please install `ipyvtklink` to use this feature')
+            raise ImportError('Please install `ipyvtklink` to use this feature.')
 
     if backend == 'panel':
         try:
             import panel
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install `panel` to use this feature')
+            raise ImportError('Please install `panel` to use this feature.')
         panel.extension('vtk')
 
     if backend == 'ipygany':
@@ -53,6 +57,7 @@ def _validate_jupyter_backend(backend):
     if backend == 'none':
         backend = None
     return backend
+
 
 def set_jupyter_backend(backend):
     """Set the plotting backend for a jupyter notebook.
