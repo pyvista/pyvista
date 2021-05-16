@@ -126,9 +126,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, optional
-        Draw a border around each render window.  Default False.
+        Draw a border around each render window.  Default ``False``.
 
-    border_color : string or 3 item list, optional, defaults to white
+    border_color : string or 3 item list, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -153,7 +153,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         The default is a Light Kit (to be precise, 5 separate lights
         that act like a Light Kit).
 
-    theme : pyvista.Theme, optional
+    theme : pyvista.DefaultTheme, optional
         Plot-specific theme.
 
     """
@@ -167,13 +167,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  lighting='light kit', theme=None):
         """Initialize base plotter."""
         log.debug('BasePlotter init start')
+        self._theme = pyvista.themes.DefaultTheme()
         if theme is None:
-            self._theme = pyvista.global_theme
+            # copy global theme to ensure local plot theme is fixed
+            # after creation.
+            self._theme.load_theme(pyvista.global_theme)
         else:
             if not isinstance(theme, pyvista.themes.DefaultTheme):
-                raise TypeError('Expected pyvista.Theme for ``theme``, not '
+                raise TypeError('Expected ``pyvista.DefaultTheme`` for ``theme``, not '
                                 f'{type(theme)}')
-            self._theme = pyvista.themes.DefaultTheme()
             self._theme.load_theme(theme)
 
         self.image_transparent_background = self._theme.transparent_background
