@@ -39,11 +39,11 @@ class pyvista_ndarray(np.ndarray):
         # attributes of this class
         _vtk.VTKArray.__array_finalize__(self, obj)
         if np.shares_memory(self, obj):
-            self.dataset = getattr(obj, 'dataset', _vtk.vtkWeakReference())
+            self.dataset = getattr(obj, 'dataset', None)
             self.association = getattr(obj, 'association', FieldAssociation.NONE)
             self.VTKObject = getattr(obj, 'VTKObject', None)
         else:
-            self.dataset = _vtk.vtkWeakReference()
+            self.dataset = None
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
@@ -60,8 +60,7 @@ class pyvista_ndarray(np.ndarray):
 
         # the associated dataset should also be marked as modified
         dataset = self.dataset
-        if dataset is not None:
-            if dataset.Get():
-                dataset.Get().Modified()
+        if dataset is not None and dataset.Get():
+            dataset.Get().Modified()
 
     __getattr__ = _vtk.VTKArray.__getattr__
