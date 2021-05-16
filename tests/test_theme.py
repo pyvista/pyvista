@@ -11,14 +11,18 @@ def default_theme():
 
 
 def test_backwards_compatibility():
-    color = (0.1, 0.4, 0.7)
-    pyvista.rcParams['color'] = color
-    assert pyvista.rcParams['color'] == color
+    try:
+        color = (0.1, 0.4, 0.7)
+        pyvista.rcParams['color'] = color
+        assert pyvista.rcParams['color'] == color
 
-    # test nested values
-    init_value = pyvista.rcParams['axes']['show']
-    pyvista.rcParams['axes']['show'] = not init_value
-    assert pyvista.rcParams['axes']['show'] is not init_value
+        # test nested values
+        init_value = pyvista.rcParams['axes']['show']
+        pyvista.rcParams['axes']['show'] = not init_value
+        assert pyvista.rcParams['axes']['show'] is not init_value
+    finally:
+        # always return to testing theme
+        pyvista.set_plot_theme('testing')
 
 
 @pytest.mark.parametrize('parm', [('enabled', True),
@@ -41,7 +45,7 @@ def test_depth_peeling_eq(default_theme):
 
 @pytest.mark.parametrize('parm', [('color', (0.1, 0.1, 0.1)),
                                   ('line_width', 1),
-                                  ('opacity', 2.0),
+                                  ('opacity', 1.0),
                                   ('feature_angle', 20),
                                   ('decimate', 0.5),
 ])
@@ -57,6 +61,14 @@ def test_depth_silhouette_eq(default_theme):
     my_theme.silhouette.opacity = 0.11111
     assert my_theme.silhouette != default_theme.silhouette
     assert my_theme.silhouette != 1
+
+
+def test_depth_silhouette_opacity_outside_clamp(default_theme):
+    my_theme = pyvista.themes.DefaultTheme()
+    with pytest.raises(ValueError):
+        my_theme.silhouette.opacity = 10
+    with pytest.raises(ValueError):
+        my_theme.silhouette.opacity = -1
 
 
 @pytest.mark.parametrize('parm', [('slider_length', 0.03),
@@ -153,6 +165,27 @@ def test_axes_eq(default_theme):
     theme.axes.box = True
     assert default_theme.axes != theme.axes
     assert default_theme.axes != 1
+
+
+def test_theme_wrong_type(default_theme):
+    with pytest.raises(TypeError):
+        default_theme.font = None
+    with pytest.raises(TypeError):
+        default_theme.colorbar_horizontal = None
+    with pytest.raises(TypeError):
+        default_theme.colorbar_vertical = None
+    with pytest.raises(TypeError):
+        default_theme.depth_peeling = None
+    with pytest.raises(TypeError):
+        default_theme.silhouette = None
+    with pytest.raises(TypeError):
+        default_theme.slider_styles = None
+    with pytest.raises(TypeError):
+        default_theme.slider_styles.classic = None
+    with pytest.raises(TypeError):
+        default_theme.slider_styles.modern = None
+    with pytest.raises(TypeError):
+        default_theme.axes = None
 
 
 def test_axes_box(default_theme):
@@ -354,21 +387,14 @@ def test_plotter_set_theme():
     my_theme.color = [1, 0, 0]
     pl = pyvista.Plotter(theme=my_theme)
     assert pl.theme.color == my_theme.color
-
-    # test that the plotter theme isn't overridden by the global theme
-    try:
-        other_color = [0, 0, 0]
-        pyvista.global_theme.color = other_color
-        assert pyvista.global_theme.color == other_color
-        assert pl.theme.color == my_theme.color
-    finally:
-        # need "finally" here if the test fails and we mess up the
-        # global defaults
-        pyvista.global_theme.load_theme(pyvista.themes._TestingTheme())
+    assert pyvista.global_theme.color != pl.theme.color
 
 
-def test_load_theme(tmpdir):
+def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
     pyvista.themes.DarkTheme().save(filename)
     loaded_theme = pyvista.load_theme(filename)
     assert loaded_theme == pyvista.themes.DarkTheme()
+
+    default_theme.load_theme(filename)
+    assert default_theme == pyvista.themes.DarkTheme()

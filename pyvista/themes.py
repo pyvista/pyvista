@@ -58,10 +58,16 @@ class _rcParams(dict):  # pragma: no cover
         setattr(pyvista.global_theme, key, value)
 
     def __repr__(self):
-        """Use the repr of global_theme"""
+        """Use the repr of global_theme."""
         warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
                       DeprecationWarning)
         return repr(pyvista.global_theme)
+
+
+def _check_between_zero_and_one(value: float, value_name: str = 'value'):
+    """Check if a value is between zero and one."""
+    if value < 0 or value > 1:
+        raise ValueError('{value_name} must be between 0 and 1.')
 
 
 def load_theme(filename):
@@ -132,8 +138,6 @@ class _ThemeConfig():
         """Create from a dictionary."""
         inst = cls()
         for key, value in dict_.items():
-            if not hasattr(inst, key):
-                raise KeyError(f'Invalid key "{key}" for {cls.__name__}')
             attr = getattr(inst, key)
             if hasattr(attr, 'from_dict'):
                 setattr(inst, key, attr.from_dict(value))
@@ -342,6 +346,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @opacity.setter
     def opacity(self, opacity: float):
+        _check_between_zero_and_one(opacity, 'opacity')
         self._opacity = float(opacity)
 
     @property
@@ -376,10 +381,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @decimate.setter
     def decimate(self, decimate: float):
-        decimate = float(decimate)
-        if not 0 <= decimate <= 1:
-            raise ValueError('Silhouette decimation must be '
-                             'between 0 and 1.')
+        _check_between_zero_and_one(decimate, 'decimate')
         self._decimate = float(decimate)
 
     def __repr__(self):
