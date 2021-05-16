@@ -3682,7 +3682,7 @@ class Plotter(BasePlotter):
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : string or 3 item list, optional, defaults to white
+    border_color : string or 3 item list, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -3720,7 +3720,7 @@ class Plotter(BasePlotter):
         The default is a ``'light_kit'`` (to be precise, 5 separate
         lights that act like a Light Kit).
 
-    theme : pyvista.Theme, optional
+    theme : pyvista.DefaultTheme, optional
         Plot-specific theme.
 
     """
