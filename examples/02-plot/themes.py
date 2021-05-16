@@ -2,7 +2,8 @@
 Control Global and Local Plotting Themes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-PyVista has a few coloring themes for you to choose!
+PyVista allows you to set global and local plotting themes to easily
+set default plotting parameters.
 
 """
 import pyvista as pv
@@ -29,8 +30,9 @@ def plot_example():
 # screen when working in dark environments.
 #
 # Here's an example of our default plotting theme - this is what you
-# would see by default after running any of our examples.
+# would see by default after running any of our examples locally.
 
+pyvista.set_plot_theme('default')
 plot_example()
 
 ###############################################################################
@@ -56,8 +58,7 @@ pv.set_plot_theme("dark")
 plot_example()
 
 ###############################################################################
-# Demo the ``'document'`` theme.
-
+# Demo the ``'document'`` theme.  This theme is used on our online examples.
 
 pv.set_plot_theme("document")
 
@@ -161,3 +162,8 @@ pl = pv.Plotter(theme=my_theme)
 # pl.theme = my_theme  # alternatively use the setter
 pl.add_mesh(pv.Cube())
 pl.show()
+
+
+###############################################################################
+# Reset to use the document theme
+pv.set_plot_theme("document")
