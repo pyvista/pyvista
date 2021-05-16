@@ -3140,7 +3140,7 @@ class CompositeFilters:
     """An internal class to manage filters/algorithms for composite datasets."""
 
     def extract_geometry(composite):
-        """Combine the geomertry of all blocks into a single ``PolyData`` object.
+        """Combine the geometry of all blocks into a single ``PolyData`` object.
 
         Place this filter at the end of a pipeline before a polydata
         consumer such as a polydata mapper to extract geometry from all blocks
