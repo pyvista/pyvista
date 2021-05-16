@@ -153,7 +153,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         The default is a Light Kit (to be precise, 5 separate lights
         that act like a Light Kit).
 
-    theme : pyvista.DefaultTheme, optional
+    theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
     """
@@ -174,8 +174,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._theme.load_theme(pyvista.global_theme)
         else:
             if not isinstance(theme, pyvista.themes.DefaultTheme):
-                raise TypeError('Expected ``pyvista.DefaultTheme`` for ``theme``, not '
-                                f'{type(theme)}')
+                raise TypeError('Expected ``pyvista.themes.DefaultTheme`` for '
+                                f'``theme``, not {type(theme).__name__}.')
             self._theme.load_theme(theme)
 
         self.image_transparent_background = self._theme.transparent_background
@@ -3720,7 +3720,7 @@ class Plotter(BasePlotter):
         The default is a ``'light_kit'`` (to be precise, 5 separate
         lights that act like a Light Kit).
 
-    theme : pyvista.DefaultTheme, optional
+    theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
     """

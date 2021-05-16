@@ -77,7 +77,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
 
-    theme : pyvista.DefaultTheme, optional
+    theme : pyvista.themes.DefaultTheme, optional
         Plot specific theme.
 
     **kwargs : optional keyword arguments
