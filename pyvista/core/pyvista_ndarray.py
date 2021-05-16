@@ -39,9 +39,13 @@ class pyvista_ndarray(np.ndarray):
         # attributes of this class
         _vtk.VTKArray.__array_finalize__(self, obj)
         if np.shares_memory(self, obj):
-            self.dataset = getattr(obj, 'dataset', None)
-            self.association = getattr(obj, 'association', None)
+            self.dataset = getattr(obj, 'dataset', _vtk.vtkWeakReference())
+            self.association = getattr(obj, 'association', FieldAssociation.NONE)
             self.VTKObject = getattr(obj, 'VTKObject', None)
+        else:
+            self.dataset = _vtk.vtkWeakReference()
+            self.association = FieldAssociation.NONE
+            self.VTKObject = None
 
     def __setitem__(self, key: int, value):
         """Implement [] set operator.
@@ -55,8 +59,9 @@ class pyvista_ndarray(np.ndarray):
             self.VTKObject.Modified()
 
         # the associated dataset should also be marked as modified
-        dataset = self.dataset.Get()
+        dataset = self.dataset
         if dataset is not None:
-            dataset.Modified()
+            if dataset.Get():
+                dataset.Get().Modified()
 
     __getattr__ = _vtk.VTKArray.__getattr__
