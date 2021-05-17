@@ -5,7 +5,6 @@ import warnings
 
 import numpy as np
 from IPython import display
-from traitlets import Enum
 
 
 # not to be imported at the init level

@@ -15,7 +15,7 @@ skip_no_ipython = pytest.mark.skipif(not has_ipython,
                                      reason="Requires IPython package")
 
 
-def test_set_jupyter_backend_ipygany_fail():
+def test_set_jupyter_backend_fail():
     with pytest.raises(ValueError, match='Invalid Jupyter notebook plotting backend'):
         pv.set_jupyter_backend('not a backend')
 
@@ -23,13 +23,13 @@ def test_set_jupyter_backend_ipygany_fail():
 @pytest.mark.parametrize('backend', [None, 'none'])
 def test_set_jupyter_backend_none(backend):
     pv.set_jupyter_backend(backend)
-    assert pv.rcParams['jupyter_backend'] is None
+    assert pv.global_theme.jupyter_backend is None
 
 
 @skip_no_ipython
-def test_set_jupyter_backend_ipygany():
+def test_set_jupyter_backend_static():
     pv.set_jupyter_backend('static')
-    assert pv.rcParams['jupyter_backend'] == 'static'
+    assert pv.global_theme.jupyter_backend == 'static'
     pv.set_jupyter_backend(None)
 
 

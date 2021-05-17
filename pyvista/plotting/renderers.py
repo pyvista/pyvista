@@ -3,8 +3,8 @@ import collections
 
 import numpy as np
 
+import pyvista
 from .background_renderer import BackgroundRenderer
-from .theme import rcParams
 from .renderer import Renderer
 
 
@@ -41,7 +41,7 @@ class Renderers():
                 rangem = range(m)
 
             if splitting_position is None:
-                splitting_position = rcParams['multi_rendering_splitting_position']
+                splitting_position = pyvista.global_theme.multi_rendering_splitting_position
 
             if splitting_position is None:
                 if n >= m:
