@@ -28,7 +28,7 @@ class ScalarBars():
         """Nice representation of this class."""
         lines = []
         lines.append('Scalar Bar Title     Interactive')
-        for title, actor in self._scalar_bar_actors.items():
+        for title in self._scalar_bar_actors:
             interactive = title in self._scalar_bar_widgets
             title = f'"{title}"'
             lines.append(f'{title:20} {str(interactive):5}')
@@ -46,14 +46,14 @@ class ScalarBars():
             except ValueError:
                 pass
             if len(self._scalar_bar_mappers[name]) < 1:
-                slot = self._scalar_bar_slot_lookup.pop(name, None)
+                slot = self._plotter._scalar_bar_slot_lookup.pop(name, None)
                 if slot is not None:
                     self._scalar_bar_mappers.pop(name)
                     self._scalar_bar_ranges.pop(name)
                     self._plotter.remove_actor(self._scalar_bar_actors.pop(name),
                                                reset_camera=reset_camera,
                                                render=render)
-                    self._scalar_bar_slots.add(slot)
+                    self._plotter._scalar_bar_slots.add(slot)
             return
 
     def remove_scalar_bar(self, title=None, render=True):

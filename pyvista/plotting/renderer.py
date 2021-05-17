@@ -1281,8 +1281,7 @@ class Renderer(_vtk.vtkRenderer):
             return False
 
         # ensure any scalar bars associated with this actor are removed
-        
-
+        self.parent.scalar_bars._remove_mapper_from_plotter(actor)
         self.RemoveActor(actor)
 
         if name is None:
