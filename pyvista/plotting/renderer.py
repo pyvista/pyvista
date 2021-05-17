@@ -1280,6 +1280,9 @@ class Renderer(_vtk.vtkRenderer):
         if actor is None:
             return False
 
+        # ensure any scalar bars associated with this actor are removed
+        
+
         self.RemoveActor(actor)
 
         if name is None:

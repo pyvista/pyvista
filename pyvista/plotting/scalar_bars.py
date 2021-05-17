@@ -34,6 +34,28 @@ class ScalarBars():
             lines.append(f'{title:20} {str(interactive):5}')
         return '\n'.join(lines)
 
+    def _remove_mapper_from_plotter(self, actor, reset_camera=False, render=False):
+        """Remove an actor's mapper from the given plotter's _scalar_bar_mappers."""
+        try:
+            mapper = actor.GetMapper()
+        except AttributeError:
+            return
+        for name in list(self._scalar_bar_mappers.keys()):
+            try:
+                self._scalar_bar_mappers[name].remove(mapper)
+            except ValueError:
+                pass
+            if len(self._scalar_bar_mappers[name]) < 1:
+                slot = self._scalar_bar_slot_lookup.pop(name, None)
+                if slot is not None:
+                    self._scalar_bar_mappers.pop(name)
+                    self._scalar_bar_ranges.pop(name)
+                    self._plotter.remove_actor(self._scalar_bar_actors.pop(name),
+                                               reset_camera=reset_camera,
+                                               render=render)
+                    self._scalar_bar_slots.add(slot)
+            return
+
     def remove_scalar_bar(self, title=None, render=True):
         """Remove a scalar bar.
 
