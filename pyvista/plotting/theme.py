@@ -1,3 +1,3 @@
-"""Here for backwards compatibility with pyvistaqt"""
+"""Here for backwards compatibility with pyvistaqt."""
 
-from pyvista import rcParams
+from pyvista import rcParams  # pragma: no cover
