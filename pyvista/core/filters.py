@@ -1854,8 +1854,8 @@ class DataSetFilters:
         
         You can retrieve the source by specifying ``return_source=True``.
         
-        Optional keyword parameters from ``streamlines_from_source`` can be used here to
-        control the generation of streamlines.
+        Optional keyword parameters from :func:`pyvista.DataSetFilters.streamlines_from_source`
+        can be used here to control the generation of streamlines.
 
         Parameters
         ----------
