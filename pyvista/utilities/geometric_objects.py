@@ -15,9 +15,9 @@ vtkPyramid
 
 """
 import numpy as np
-import vtk
 
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import assert_empty_kwargs, check_valid_vector
 
 NORMALS = {
@@ -53,8 +53,9 @@ def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
         surf.points += np.array(center)
 
 
-def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
-             resolution=100, capping=True, **kwargs):
+def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
+             radius=0.5, height=1.0, resolution=100, capping=True,
+             **kwargs):
     """Create the surface of a cylinder.
 
     See also :func:`pyvista.CylinderStructured`.
@@ -89,11 +90,11 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     >>> import pyvista
     >>> import numpy as np
     >>> cylinder = pyvista.Cylinder(np.array([1, 2, 3]), np.array([1, 1, 1]), 1, 1)
-    >>> cylinder.plot() # doctest:+SKIP
+    >>> cpos = cylinder.plot()
     """
     capping = kwargs.pop('cap_ends', capping)
     assert_empty_kwargs(**kwargs)
-    cylinderSource = vtk.vtkCylinderSource()
+    cylinderSource = _vtk.vtkCylinderSource()
     cylinderSource.SetRadius(radius)
     cylinderSource.SetHeight(height)
     cylinderSource.SetCapping(capping)
@@ -215,7 +216,7 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
 
     """
     # Create arrow object
-    arrow = vtk.vtkArrowSource()
+    arrow = _vtk.vtkArrowSource()
     arrow.SetTipLength(tip_length)
     arrow.SetTipRadius(tip_radius)
     arrow.SetTipResolution(tip_resolution)
@@ -276,7 +277,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
         Sphere mesh.
 
     """
-    sphere = vtk.vtkSphereSource()
+    sphere = _vtk.vtkSphereSource()
     sphere.SetRadius(radius)
     sphere.SetThetaResolution(theta_resolution)
     sphere.SetPhiResolution(phi_resolution)
@@ -301,7 +302,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
         Location of the centroid in [x, y, z]
 
     direction : list or tuple or np.ndarray
-        Direction cylinder points to  in [x, y, z]
+        Direction of the plane's normal in [x, y, z]
 
     i_size : float
         Size of the plane in the i direction.
@@ -321,7 +322,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
         Plane mesh
 
     """
-    planeSource = vtk.vtkPlaneSource()
+    planeSource = _vtk.vtkPlaneSource()
     planeSource.SetXResolution(i_resolution)
     planeSource.SetYResolution(j_resolution)
     planeSource.Update()
@@ -356,7 +357,7 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
         raise TypeError('Point A must be a length three tuple of floats.')
     if np.array(pointb).size != 3:
         raise TypeError('Point B must be a length three tuple of floats.')
-    src = vtk.vtkLineSource()
+    src = _vtk.vtkLineSource()
     src.SetPoint1(*pointa)
     src.SetPoint2(*pointb)
     src.SetResolution(resolution)
@@ -395,7 +396,7 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=N
         ignored. ``(xMin,xMax, yMin,yMax, zMin,zMax)``
 
     """
-    src = vtk.vtkCubeSource()
+    src = _vtk.vtkCubeSource()
     if bounds is not None:
         if np.array(bounds).size != 6:
             raise TypeError('Bounds must be given as length 6 tuple: (xMin,xMax, yMin,yMax, zMin,zMax)')
@@ -428,7 +429,7 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
     """
     if np.array(bounds).size != 6:
         raise TypeError('Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)')
-    src = vtk.vtkTessellatedBoxSource()
+    src = _vtk.vtkTessellatedBoxSource()
     src.SetLevel(level)
     if quads:
        src.QuadsOn()
@@ -446,28 +447,28 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
     Parameters
     ----------
     center : np.ndarray or list
-        Center in [x, y, z]. middle of the axis of the cone.
+        Center in [x, y, z]. Middle of the axis of the cone.
 
     direction : np.ndarray or list
-        Direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. Orientation vector of the cone.
 
     height : float
         Height along the cone in its specified direction.
 
     radius : float
-        Base radius of the cone
+        Base radius of the cone.
 
     capping : bool
         Turn on/off whether to cap the base of the cone with a polygon.
 
     angle : float
-        The angle degrees between the axis of the cone and a generatrix.
+        The angle in degrees between the axis of the cone and a generatrix.
 
     resolution : int
-        Number of facets used to represent the cone
+        Number of facets used to represent the cone.
 
     """
-    src = vtk.vtkConeSource()
+    src = _vtk.vtkConeSource()
     src.SetCapping(capping)
     src.SetDirection(direction)
     src.SetCenter(center)
@@ -487,28 +488,24 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
 
 
 def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
-    """Create a polygonal disk with a hole in the center.
-
-    The disk has zero height. The user can specify the inner and outer radius
-    of the disk, and the radial and circumferential resolution of the polygonal
-    representation.
+    """Create a polygon.
 
     Parameters
     ----------
     center : np.ndarray or list
-        Center in [x, y, z]. middle of the axis of the polygon.
+        Center in [x, y, z]. Middle of the axis of the polygon.
 
     radius : float
-        The radius of the polygon
+        The radius of the polygon.
 
     normal : np.ndarray or list
-        Direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. Orientation vector of the polygon.
 
     n_sides : int
-        Number of sides of the polygon
+        Number of sides of the polygon.
 
     """
-    src = vtk.vtkRegularPolygonSource()
+    src = _vtk.vtkRegularPolygonSource()
     src.SetCenter(center)
     src.SetNumberOfSides(n_sides)
     src.SetRadius(radius)
@@ -528,25 +525,25 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
     Parameters
     ----------
     center : np.ndarray or list
-        Center in [x, y, z]. middle of the axis of the disc.
+        Center in [x, y, z]. Middle of the axis of the disc.
 
     inner : float
-        The inner radius
+        The inner radius.
 
     outer : float
-        The outer radius
+        The outer radius.
 
     normal : np.ndarray or list
-        Direction vector in [x, y, z]. orientation vector of the cone.
+        Direction vector in [x, y, z]. Orientation vector of the disc.
 
     r_res: int
         Number of points in radius direction.
 
-    r_res: int
+    c_res: int
         Number of points in circumferential direction.
 
     """
-    src = vtk.vtkDiskSource()
+    src = _vtk.vtkDiskSource()
     src.SetInnerRadius(inner)
     src.SetOuterRadius(outer)
     src.SetRadialResolution(r_res)
@@ -562,16 +559,16 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
 
 def Text3D(string, depth=0.5):
     """Create 3D text from a string."""
-    vec_text = vtk.vtkVectorText()
+    vec_text = _vtk.vtkVectorText()
     vec_text.SetText(string)
 
-    extrude = vtk.vtkLinearExtrusionFilter()
+    extrude = _vtk.vtkLinearExtrusionFilter()
     extrude.SetInputConnection(vec_text.GetOutputPort())
     extrude.SetExtrusionTypeToNormalExtrusion()
     extrude.SetVector(0, 0, 1)
     extrude.SetScaleFactor(depth)
 
-    tri_filter = vtk.vtkTriangleFilter()
+    tri_filter = _vtk.vtkTriangleFilter()
     tri_filter.SetInputConnection(extrude.GetOutputPort())
     tri_filter.Update()
     return pyvista.wrap(tri_filter.GetOutput())
@@ -581,7 +578,7 @@ def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,
             x_freq=60, y_freq=30, z_freq=40, x_mag=10, y_mag=18, z_mag=5,
             std=0.5, subsample_rate=1):
     """Create a wavelet."""
-    wavelet_source = vtk.vtkRTAnalyticSource()
+    wavelet_source = _vtk.vtkRTAnalyticSource()
     wavelet_source.SetWholeExtent(*extent)
     wavelet_source.SetCenter(center)
     wavelet_source.SetMaximum(maximum)
@@ -597,16 +594,11 @@ def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,
     return pyvista.wrap(wavelet_source.GetOutput())
 
 
-def CircularArc(pointa, pointb, center, resolution=100, normal=None,
-                polar=None, angle=None, negative=False):
+def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     """Create a circular arc defined by two endpoints and a center.
 
     The number of segments composing the polyline is controlled by
-    setting the object resolution.  Alternatively, one can use a
-    better API (that does not allow for inconsistent nor ambiguous
-    inputs), using a starting point (polar vector, measured from the
-    arc's center), a normal to the plane of the arc, and an angle
-    defining the arc length.
+    setting the object resolution.
 
     Parameters
     ----------
@@ -623,31 +615,17 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
         The number of segments of the polyline that draws the arc.
         Resolution of 1 will just create a line.
 
-    normal : np.ndarray or list
-        The normal vector to the plane of the arc.  By default it
-        points in the positive Z direction.
-
-    polar : np.ndarray or list
-        (starting point of the arc).  By default it is the unit vector
-        in the positive x direction. Note: This is only used when
-        normal has been input.
-
-    angle : float
-        Arc length (in degrees), beginning at the polar vector.  The
-        direction is counterclockwise by default; a negative value
-        draws the arc in the clockwise direction.  Note: This is only
-        used when normal has been input.
-
     negative : bool, optional
-        By default the arc spans the shortest angular sector point1 and point2.
+        By default the arc spans the shortest angular sector between
+        ``pointa`` and ``pointb``.
 
-        By setting this to true, the longest angular sector is used
-        instead (i.e. the negative coterminal angle to the shortest
-        one). This is only used when normal has not been input
+        By setting this to ``True``, the longest angular sector is
+        used instead (i.e. the negative coterminal angle to the
+        shortest one).
 
     Examples
     --------
-    Quarter arc centered at the origin in the xy plane
+    Create a quarter arc centered at the origin in the xy plane.
 
     >>> import pyvista
     >>> arc = pyvista.CircularArc([-1, 0, 0], [0, 1, 0], [0, 0, 0])
@@ -655,16 +633,16 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
     >>> _ = pl.add_mesh(arc, color='k', line_width=4)
     >>> _ = pl.show_bounds(location='all')
     >>> _ = pl.view_xy()
-    >>> pl.show() # doctest:+SKIP
-
-    Quarter arc centered at the origin in the xz plane
-
-    >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0], normal=[0, 0, 1])
-    >>> arc.plot() # doctest:+SKIP
+    >>> cpos = pl.show()
     """
     check_valid_vector(pointa, 'pointa')
     check_valid_vector(pointb, 'pointb')
     check_valid_vector(center, 'center')
+    if not np.isclose(
+        np.linalg.norm(np.array(pointa) - np.array(center)),
+        np.linalg.norm(np.array(pointb) - np.array(center)),
+    ):
+        raise ValueError("pointa and pointb are not equidistant from center")
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
@@ -672,27 +650,93 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
     pointb[0] -= 1E-10
     pointb[1] -= 1E-10
 
-    arc = vtk.vtkArcSource()
+    arc = _vtk.vtkArcSource()
     arc.SetPoint1(*pointa)
     arc.SetPoint2(*pointb)
     arc.SetCenter(*center)
     arc.SetResolution(resolution)
     arc.SetNegative(negative)
 
-    if normal is not None:
-        arc.UseNormalAndAngleOn()
-        check_valid_vector(normal, 'normal')
-        arc.SetNormal(*normal)
-
-        if polar is not None:
-            check_valid_vector(polar, 'polar')
-            arc.SetPolarVector(*polar)
-
-        if angle is not None:
-            arc.SetAngle(angle)
-
     arc.Update()
-    return pyvista.wrap(arc.GetOutput())
+    angle = np.deg2rad(arc.GetAngle())
+    arc = pyvista.wrap(arc.GetOutput())
+    # Compute distance of every point along circular arc
+    center = np.array(center).ravel()
+    radius = np.sqrt(np.sum((arc.points[0]-center)**2, axis=0))
+    angles = np.arange(0.0, 1.0 + 1.0/resolution, 1.0/resolution) * angle
+    arc['Distance'] = radius * angles
+    return arc
+
+
+def CircularArcFromNormal(center, resolution=100, normal=None,
+                          polar=None, angle=None):
+    """Create a circular arc defined by normal to the plane of the arc, and an angle.
+
+    The number of segments composing the polyline is controlled by
+    setting the object resolution.
+
+    Parameters
+    ----------
+    center : np.ndarray or list
+        Center of the circle that defines the arc.
+
+    resolution : int, optional
+        The number of segments of the polyline that draws the arc.
+        Resolution of 1 will just create a line.
+
+    normal : np.ndarray or list, optional
+        The normal vector to the plane of the arc.  By default it
+        points in the positive Z direction.
+
+    polar : np.ndarray or list, optional
+        Starting point of the arc in polar coordinates.  By default it
+        is the unit vector in the positive x direction.
+
+    angle : float, optional
+        Arc length (in degrees) beginning at the polar vector.  The
+        direction is counterclockwise.  By default it is 90.
+
+    Examples
+    --------
+    Quarter arc centered at the origin in the xy plane.
+
+    >>> import pyvista
+    >>> normal = [0, 0, 1]
+    >>> polar = [-1, 0, 0]
+    >>> arc = pyvista.CircularArcFromNormal([0, 0, 0], normal=normal, polar=polar)
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(arc, color='k', line_width=4)
+    >>> _ = pl.show_bounds(location='all')
+    >>> _ = pl.view_xy()
+    >>> cpos = pl.show()
+    """
+    check_valid_vector(center, 'center')
+    if normal is None:
+        normal = [0, 0, 1]
+    if polar is None:
+        polar = [1, 0, 0]
+    if angle is None:
+        angle = 90.0
+
+    arc = _vtk.vtkArcSource()
+    arc.SetCenter(*center)
+    arc.SetResolution(resolution)
+    arc.UseNormalAndAngleOn()
+    check_valid_vector(normal, 'normal')
+    arc.SetNormal(*normal)
+    check_valid_vector(polar, 'polar')
+    arc.SetPolarVector(*polar)
+    assert np.allclose(np.array(arc.GetPolarVector()), np.array(polar))
+    arc.SetAngle(angle)
+    arc.Update()
+    angle = np.deg2rad(arc.GetAngle())
+    arc = pyvista.wrap(arc.GetOutput())
+    # Compute distance of every point along circular arc
+    center = np.array(center)
+    radius = np.sqrt(np.sum((arc.points[0] - center)**2, axis=0))
+    angles = np.linspace(0.0, angle, resolution+1)
+    arc['Distance'] = radius * angles
+    return arc
 
 
 def Pyramid(points):
@@ -718,7 +762,7 @@ def Pyramid(points):
     >>> pointd = [1.0, -1.0, 1.0]
     >>> pointe = [0.0, 0.0, 0.0]
     >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
-    >>> pyramid.plot() # doctest:+SKIP
+    >>> cpos = pyramid.plot()
     """
     if len(points) != 5:
         raise TypeError('Points must be given as length 5 np.ndarray or list')
@@ -729,14 +773,14 @@ def Pyramid(points):
     check_valid_vector(points[3], 'points[3]')
     check_valid_vector(points[4], 'points[4]')
 
-    pyramid = vtk.vtkPyramid()
+    pyramid = _vtk.vtkPyramid()
     pyramid.GetPointIds().SetId(0, 0)
     pyramid.GetPointIds().SetId(1, 1)
     pyramid.GetPointIds().SetId(2, 2)
     pyramid.GetPointIds().SetId(3, 3)
     pyramid.GetPointIds().SetId(4, 4)
 
-    ug = vtk.vtkUnstructuredGrid()
+    ug = _vtk.vtkUnstructuredGrid()
     ug.SetPoints(pyvista.vtk_points(np.array(points), False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 

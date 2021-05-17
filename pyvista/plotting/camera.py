@@ -1,10 +1,12 @@
 """Module containing pyvista implementation of vtkCamera."""
 
 import numpy as np
-import vtk
+
+import pyvista
+from pyvista import _vtk
 
 
-class Camera(vtk.vtkCamera):
+class Camera(_vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Examples
@@ -25,8 +27,9 @@ class Camera(vtk.vtkCamera):
 
     def __init__(self):
         """Initialize a new camera descriptor."""
-        self._focus = self.GetFocalPoint()
         self._is_parallel_projection = False
+        self._elevation = 0.0
+        self._azimuth = 0.0
 
     @property
     def position(self):
@@ -50,9 +53,11 @@ class Camera(vtk.vtkCamera):
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.camera.position = 2.0, 1.0, 1.0
+        >>> pl.camera.position = (2.0, 1.0, 1.0)
         """
         self.SetPosition(value)
+        self._elevation = 0.0
+        self._azimuth = 0.0
 
     @property
     def focal_point(self):
@@ -65,7 +70,7 @@ class Camera(vtk.vtkCamera):
         >>> pl.camera.focal_point
         (0.0, 0.0, 0.0)
         """
-        return self._focus
+        return self.GetFocalPoint()
 
     @focal_point.setter
     def focal_point(self, point):
@@ -78,7 +83,6 @@ class Camera(vtk.vtkCamera):
         >>> pl.camera.focal_point = (2.0, 0.0, 0.0)
         """
         self.SetFocalPoint(point)
-        self._focus = self.GetFocalPoint()
 
     @property
     def model_transform_matrix(self):
@@ -113,7 +117,7 @@ class Camera(vtk.vtkCamera):
                                   [0., 0., 0., 1.]])
         >>> pl.camera.model_transform_matrix = trans_mat
         """
-        vtk_matrix = vtk.vtkMatrix4x4()
+        vtk_matrix = _vtk.vtkMatrix4x4()
         vtk_matrix.DeepCopy(matrix.ravel())
         self.SetModelTransformMatrix(vtk_matrix)
 
@@ -233,8 +237,8 @@ class Camera(vtk.vtkCamera):
     def enable_parallel_projection(self, flag=True):
         """Enable parallel projection.
 
-        The camera will have a parallel projection. Parallel projection is
-        often useful when viewing images or 2D datasets.
+        The camera will have a parallel projection. Parallel
+        projection is often useful when viewing images or 2D datasets.
 
         """
         self._is_parallel_projection = flag
@@ -246,7 +250,7 @@ class Camera(vtk.vtkCamera):
 
     @property
     def clipping_range(self):
-        """Return the Clipping range.
+        """Return the location of the near and far clipping planes along the direction of projection.
 
         Examples
         --------
@@ -259,7 +263,7 @@ class Camera(vtk.vtkCamera):
 
     @clipping_range.setter
     def clipping_range(self, points):
-        """Set the clipping range.
+        """Set the location of the near and far clipping planes along the direction of projection.
 
         Examples
         --------
@@ -275,3 +279,163 @@ class Camera(vtk.vtkCamera):
         """Delete the camera."""
         self.RemoveAllObservers()
         self.parent = None
+
+    @property
+    def view_angle(self):
+        """Return the camera view angle.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.camera.view_angle
+        30.0
+
+        """
+        return self.GetViewAngle()
+
+    @property
+    def direction(self):
+        """Vector from the camera position to the focal point.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.camera.direction  # doctest: +SKIP
+        (0.0, 0.0, -1.0)
+
+        """
+        return self.GetDirectionOfProjection()
+
+    def view_frustum(self, aspect=1.0):
+        """Get the view frustum.
+
+        Parameters
+        ----------
+        aspect : float, optional
+            The aspect of the viewport to compute the planes. Defaults
+            to 1.0.
+
+        Returns
+        -------
+        frustum : pv.PolyData
+            View frustum.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> frustum = plotter.camera.view_frustum(1.0)
+        >>> frustum.n_points
+        8
+        >>> frustum.n_cells
+        6
+
+        """
+        frustum_planes = [0] * 24
+        self.GetFrustumPlanes(aspect, frustum_planes)
+        planes = _vtk.vtkPlanes()
+        planes.SetFrustumPlanes(frustum_planes)
+
+        frustum_source = _vtk.vtkFrustumSource()
+        frustum_source.ShowLinesOff()
+        frustum_source.SetPlanes(planes)
+        frustum_source.Update()
+
+        frustum = pyvista.wrap(frustum_source.GetOutput())
+        return frustum
+
+    @property
+    def roll(self):
+        """Rotate the camera about the direction of projection.
+
+        This will spin the camera about its axis.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.roll
+        -120.00000000000001
+        """
+        return self.GetRoll()
+
+    @roll.setter
+    def roll(self, angle):
+        """Set the rotate of the camera about the direction of projection.
+
+        This will spin the camera about its axis.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.roll = 45.0
+        """
+        self.SetRoll(angle)
+
+    @property
+    def elevation(self):
+        """Vertical rotation of the scene.
+
+        Rotate the camera about the cross product of the negative of
+        the direction of projection and the view up vector, using the
+        focal point as the center of rotation.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.elevation
+        0.0
+        """
+        return self._elevation
+
+    @elevation.setter
+    def elevation(self, angle):
+        """Set the vertical rotation of the scene.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.elevation = 45.0
+        """
+        if self._elevation:
+            self.Elevation(-self._elevation)
+        self._elevation = angle
+        self.Elevation(angle)
+
+    @property
+    def azimuth(self):
+        """Azimuth of the camera.
+
+        Rotate the camera about the view up vector centered at the
+        focal point. Note that the view up vector is whatever was set
+        via SetViewUp, and is not necessarily perpendicular to the
+        direction of projection.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.azimuth
+        0.0
+        """
+        return self._azimuth
+
+    @azimuth.setter
+    def azimuth(self, angle):
+        """Set the azimuth rotation of the camera.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.azimuth = 45.0
+        """
+        if self._azimuth:
+            self.Azimuth(-self._azimuth)
+        self._azimuth = angle
+        self.Azimuth(angle)

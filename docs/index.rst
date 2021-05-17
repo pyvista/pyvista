@@ -1,12 +1,192 @@
 .. title:: PyVista
 
+.. jupyter-execute::
+   :hide-code:
+
+   from pyvista.demos import logo
+   logo._for_landing_page(height='200px')
+
 .. raw:: html
 
     <div class="banner">
-        <a href="./examples/index.html"><img src="_static/pyvista_banner.png" alt="pyvista" width="100%"/></a>
         <h2>3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)</h2>
+        <a href="./examples/index.html"><img src="_static/pyvista_banner_small.png" alt="pyvista" width="100%"/></a>
     </div>
 
+
+PyVista is...
+
+* *"VTK for humans"*: a high-level API to the `Visualization Toolkit`_ (VTK)
+* mesh data structures and filtering methods for spatial datasets
+* 3D plotting made simple and built for large/complex data geometries
+
+.. _Visualization Toolkit: https://vtk.org
+
+PyVista is a helper module for the Visualization Toolkit (VTK) that
+takes a different approach on interfacing with VTK through NumPy and
+direct array access.  This package provides a Pythonic,
+well-documented interface exposing VTK's powerful visualization
+backend to facilitate rapid prototyping, analysis, and visual
+integration of spatially referenced datasets.
+
+This module can be used for scientific plotting for presentations and
+research papers as well as a supporting module for other mesh
+dependent Python modules.
+
+.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
+   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
+
+Share this project on Twitter: |tweet|
+
+
+.. |binder| image:: https://static.mybinder.org/badge_logo.svg
+   :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
+   :alt: Launch on Binder
+
+Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
+
+
+.. toctree::
+   :hidden:
+
+   getting-started/index
+   user-guide/index
+   examples/index
+   api
+   extras/index
+
+
+Brief Examples
+**************
+Here are some brief interactive examples that demonstrate how you
+might want to use PyVista:
+
+
+.. jupyter-execute::
+   :hide-code:
+
+   # must have this here as our global backend may not be static
+   import pyvista
+   pyvista.set_jupyter_backend('ipygany')  # using ipyvtk as it loads faster
+   pyvista.global_theme.background = 'white'
+
+
+Maps and Geoscience
+~~~~~~~~~~~~~~~~~~~
+Download the surface elevation map of Mount St. Helens and plot it.
+
+.. jupyter-execute::
+
+    from pyvista import examples
+    mesh = examples.download_st_helens()
+    warped = mesh.warp_by_scalar('Elevation')
+    warped.plot(cmap='spectral')
+
+
+Finite Element Analysis
+~~~~~~~~~~~~~~~~~~~~~~~
+Plot the 'X' component of elastic stress of a 3D notch specimen.
+
+.. jupyter-execute::
+
+   from pyvista import examples
+   mesh = examples.download_notch_stress()
+   mesh.plot(scalars='Nodal Stress', component=0, cmap='Turbo',
+             cpos='xy', show_scalar_bar=False)
+
+
+Simple Point Cloud with Numpy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Easily integrate with NumPy and create a variety of geometries and plot
+them.  You could use any geometry to create your glyphs, or even plot
+the points directly.
+
+.. jupyter-execute::
+
+    import numpy as np
+    import pyvista
+
+    point_cloud = np.random.random((100, 3))
+    pdata = pyvista.PolyData(point_cloud)
+    pdata['orig_sphere'] = np.arange(100)
+
+    # create many spheres from the point cloud
+    sphere = pyvista.Sphere(radius=0.02)
+    pc = pdata.glyph(scale=False, geom=sphere)
+    pc.plot(background='black', cmap='Reds', show_scalar_bar=False)
+
+
+Plot a Spline
+~~~~~~~~~~~~~
+Generate a spline from an array of NumPy points.
+
+.. jupyter-execute::
+
+    import numpy as np
+    import pyvista
+
+    # Make the xyz points
+    theta = np.linspace(-10 * np.pi, 10 * np.pi, 100)
+    z = np.linspace(-2, 2, 100)
+    r = z**2 + 1
+    x = r * np.sin(theta)
+    y = r * np.cos(theta)
+    points = np.column_stack((x, y, z))
+
+    spline = pyvista.Spline(points, 1000).tube(radius=0.1)
+
+    # done here to get it to render online
+    line = spline.cast_to_unstructured_grid().extract_surface()
+    line.plot(show_scalar_bar=False)
+
+
+Boolean Operations on Meshes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Combine two meshes to create a manifold mesh.
+
+.. jupyter-execute::
+
+    import pyvista
+    import numpy as np
+
+    def make_cube():
+        x = np.linspace(-0.5, 0.5, 25)
+        grid = pyvista.StructuredGrid(*np.meshgrid(x, x, x))
+        return grid.extract_surface().triangulate()
+
+    # Create example PolyData meshes for boolean operations
+    sphere = pyvista.Sphere(radius=0.65, center=(0, 0, 0))
+    cube = make_cube()
+
+    # Perform the union
+    union = sphere.boolean_union(cube)
+    union.plot(color='darkgrey')
+
+
+
+Translating
+***********
+The recommended way for new contributors to translate PyVista's
+documentation is to join the translation team on Transifex.
+
+There is a `pyvista translation page`_ for pyvista (master) documentation.
+
+1. Login to transifex_ service.
+2. Go to `pyvista translation page`_.
+3. Click ``Request language`` and fill form.
+4. Wait acceptance by transifex pyvista translation maintainers.
+5. (After acceptance) Translate on transifex.
+6. You can see the translated document in `Read The Docs`_.
+
+Details can be found here: https://docs.transifex.com/getting-started-1/translators
+
+.. _`pyvista translation page`: https://www.transifex.com/getfem-doc/pyvista-doc/
+.. _Transifex: https://www.transifex.com/
+.. _`Read The Docs`: https://pyvista-doc.readthedocs.io/en/latest
+
+
+Status
+******
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
@@ -62,200 +242,6 @@
 | Community            | |slack| |gitter|       |
 +----------------------+------------------------+
 
-
-About
-*****
-
-PyVista is...
-
-* *"VTK for humans"*: a high-level API to the `Visualization Toolkit`_ (VTK)
-* mesh data structures and filtering methods for spatial datasets
-* 3D plotting made simple and built for large/complex data geometries
-
-.. _Visualization Toolkit: https://vtk.org
-
-
-PyVista (formerly ``vtki``) is a helper module for the Visualization Toolkit
-(VTK) that takes a different approach on interfacing with VTK through NumPy and
-direct array access.
-This package provides a Pythonic, well-documented interface exposing
-VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
-and visual integration of spatially referenced datasets.
-
-This module can be used for scientific plotting for presentations and research
-papers as well as a supporting module for other mesh dependent Python modules.
-
-.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
-   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
-
-Share this project on Twitter: |tweet|
-
-
-.. |binder| image:: https://static.mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
-   :alt: Launch on Binder
-
-Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
-
-
-.. toctree::
-   :hidden:
-
-   self
-   why
-   authors
-
-
-Support
-=======
-
-For general questions about the project, its applications, or about software
-usage, please create an issue in the `pyvista/pyvista-support`_ repository
-where the community can collectively address your questions. You are also
-welcome to join us on Slack_ or send one of the developers an email.
-The project support team can be reached at `info@pyvista.org`_.
-
-.. _pyvista/pyvista-support: https://github.com/pyvista/pyvista-support
-.. _Slack: http://slack.pyvista.org
-.. _info@pyvista.org: mailto:info@pyvista.org
-
-
-Connections
-===========
-
-PyVista is a powerful tool that researchers can harness to create compelling,
-integrated visualizations of large datasets in an intuitive, Pythonic manner.
-Here are a few open-source projects that leverage PyVista:
-
-* itkwidgets_: Interactive Jupyter widgets to visualize images, point sets, and meshes in 2D and 3D. Supports all PyVista mesh types.
-* pyansys_: Pythonic interface to ANSYS result, full, and archive files
-* PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
-* omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
-* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return PyVista versions of their data types for `creating compelling visualizations`_.
-* pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix software.
-* tetgen_: Python Interface to Hang Si's C++ TetGen Library
-
-
-.. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
-.. _pyansys: https://github.com/akaszynski/pyansys
-.. _PVGeo: https://github.com/OpenGeoVis/PVGeo
-.. _omfvista: https://github.com/OpenGeoVis/omfvista
-.. _discretize: http://discretize.simpeg.xyz/en/master/
-.. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/api/generated/discretize.mixins.vtkModule.html
-.. _pymeshfix: https://github.com/pyvista/pymeshfix
-.. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
-.. _tetgen: https://github.com/pyvista/tetgen
-
-
-Citing PyVista
-==============
-
-There is a `paper about PyVista <https://doi.org/10.21105/joss.01450>`_!
-
-If you are using PyVista in your scientific research, please help our scientific
-visibility by citing our work! Head over to :ref:`citation_ref` to learn more
-about citing PyVista.
-
-Videos
-======
-
-Here are some videos that you can watch to learn pyvista:
-
-- PyConJP2020 talk "How to plot unstructured mesh file on Jupyter Notebook" (15 minutes):
-
-  - Video: https://youtu.be/X3Z54Kw4I6Y
-  - Material: https://docs.google.com/presentation/d/1M_cnS66ja81u_mHACjaUsDj1wSeeEtnEevk_IMZ8-dg/edit?usp=sharing
-
-If there is any material that we can add, please  `report <https://github.com/pyvista/pyvista/issues>`_ .
-
-Getting Started
-***************
-
-If you have a working copy of VTK, installation is simply::
-
-    $ pip install pyvista
-
-You can also visit `PyPi <https://pypi.org/project/pyvista/>`_ or
-`GitHub <https://github.com/pyvista/pyvista>`_ to download the source.
-
-See :ref:`install_ref` for more details.
-
-
-Be sure to head over to the `examples gallery <./examples/index.html>`_
-to explore different use cases of PyVista and to start visualizing 3D data in
-Python! Also, please explore the list of external projects leveraging PyVista
-for 3D visualization in our `external examples list <./external_examples.html>`_
-
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Getting Started
-   :hidden:
-
-   getting-started/installation
-   getting-started/what-is-a-mesh
-   getting-started/simple
-   examples/index
-   external_examples
-   optional_features
-
-
-Translating the documentation
-*****************************
-
-The recommended way for new contributors to translate ``pyvista``'s documentation is to
-join the translation team on Transifex.
-
-There is a `pyvista translation page`_ for pyvista (master) documentation.
-
-1. Login to transifex_ service.
-2. Go to `pyvista translation page`_.
-3. Click ``Request language`` and fill form.
-4. Wait acceptance by transifex pyvista translation maintainers.
-5. (After acceptance) Translate on transifex.
-6. You can see the translated document in `Read The Docs`_.
-
-Details can be found here: https://docs.transifex.com/getting-started-1/translators
-
-.. _`pyvista translation page`: https://www.transifex.com/getfem-doc/pyvista-doc/
-.. _Transifex: https://www.transifex.com/
-.. _`Read The Docs`: https://pyvista-doc.readthedocs.io/en/latest
-
-
-API Reference
-*************
-
-In this section, you can learn more about how PyVista wraps different VTK mesh
-types and how you can leverage powerful 3D plotting and mesh analysis tools.
-Highlights of the API include:
-
-* Pythonic interface to VTK's Python-C++ bindings
-* Filtering/plotting tools built for interactivity (see :ref:`widgets`)
-* Direct access to common VTK filters (see :ref:`filters_ref`)
-* Intuitive plotting routines with ``matplotlib`` similar syntax (see :ref:`plotting_ref`)
-
-.. toctree::
-   :maxdepth: 2
-   :caption: API Reference
-   :hidden:
-
-   core/index
-   plotting/index
-   utilities/index
-
-Extras
-******
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Extras
-   :hidden:
-
-   extras/building_vtk
-   extras/docker
-   extras/developer_notes
-   extras/pyinstaller
 
 Project Index
 *************

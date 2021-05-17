@@ -1,8 +1,12 @@
 # Simple makefile to simplify repetitive build env management tasks under posix
 
 CODESPELL_DIRS ?= ./
-CODESPELL_SKIP ?= "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,./docs/_build/*,./docs/images/*,./dist/*,*~,.hypothesis*,./docs/examples/*"
+CODESPELL_SKIP ?= "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,./docs/_build/*,./docs/images/*,./dist/*,*~,.hypothesis*,./docs/examples/*,*.mypy_cache/*,*cover"
 CODESPELL_IGNORE ?= "ignore_words.txt"
+
+# doctest modules must be off screen to avoid plotting everything
+doctest-modules: export PYVISTA_OFF_SCREEN = True
+
 
 all: doctest
 
@@ -31,3 +35,8 @@ coverage-xml:
 coverage-html:
 	@echo "Reporting HTML coverage"
 	@pytest -v --cov pyvista --cov-report html
+
+mypy:
+	@echo "Running mypy static type checking"
+	mypy pyvista/core/ --no-incremental
+	mypy pyvista/themes.py --no-incremental

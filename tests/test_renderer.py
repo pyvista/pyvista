@@ -27,3 +27,8 @@ def test_plotter_camera_position():
 def test_renderer_set_viewup():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.renderer.set_viewup([1, 1, 1])
+
+
+def test_reset_camera():
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.reset_camera(bounds=(-1, 1, -1, 1, -1, 1))

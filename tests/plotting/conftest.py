@@ -4,9 +4,13 @@ memory leaks for all plotting tests
 import gc
 
 import pytest
-import vtk
 
 import pyvista
+
+# these are set here because we only need them for plotting tests
+pyvista.global_theme.load_theme(pyvista.themes._TestingTheme())
+pyvista.OFF_SCREEN = True
+
 
 def pytest_addoption(parser):
     parser.addoption("--reset_image_cache", action='store_true', default=False)

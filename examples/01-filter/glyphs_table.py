@@ -1,10 +1,11 @@
 """
-.. _glyph_example:
+.. _glyph_table_example:
 
-Plotting Glyphs (PolyData)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Table of Glyphs
+~~~~~~~~~~~~~~~
 
-Use parameters in a dataset to plot and orient glyphs/geometric objects.
+``vtk`` supports tables of glyphs from which glyphs are looked
+up. This example demonstrates this functionality.
 """
 
 import pyvista as pv
@@ -12,16 +13,13 @@ import numpy as np
 
 
 ###############################################################################
-# Table of Glyphs
-#
-# ``vtk`` supports tables of glyphs from which glyphs are looked
-# up. This example demonstrates this functionality.
 #
 # We can allow tables of glyphs in a backward-compatible way by
 # allowing a sequence of geometries as well as single (scalar)
-# geometries to be passed as the geom kwarg of glyph. An indices
-# optional keyword is added, which is mandatory in case geom is a
-# sequence, and in this case has to be the same length.
+# geometries to be passed as the ``geom`` kwarg of :func:`pyvista.DataSetFilters.glyph`.
+# An ``indices`` optional keyword specifies the index of each glyph geometry in
+# the table, and it has to be the same length as ``geom`` if specified. If it is
+# absent a default value of ``range(len(geom))`` is assumed.
 
 # get dataset for the glyphs: supertoroids in xy plane
 # use N random kinds of toroids over a mesh with 27 points

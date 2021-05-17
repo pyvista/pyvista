@@ -1,6 +1,8 @@
 # Minimal makefile for Sphinx documentation
 #
 
+export PYVISTA_OFF_SCREEN := True
+
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = python -msphinx
@@ -14,12 +16,16 @@ help:
 
 .PHONY: help Makefile
 
+.PHONY: all
+all:
+    echo PYVISTA_OFF_SCREEN: $$PYVISTA_OFF_SCREEN
+
 clean:
 	rm -rf $(BUILDDIR)/*
 	rm -rf examples/
 	rm -f errors.txt
 	rm -rf images/auto-generated
-	rm -f external_examples.rst
+	rm -f getting-started/external_examples.rst
 
 
 # Catch-all target: route all unknown targets to Sphinx using the new

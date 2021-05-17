@@ -28,6 +28,14 @@ except KeyError:
     CONDA_ENV = False
 
 
+def is_binary(filename):
+    """Return ``True`` when a file is binary"""
+    textchars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7f})
+    with open(filename, 'rb') as f:
+        data = f.read(1024)
+    return bool(data.translate(None, textchars))
+
+
 def test_init():
     mesh = pyvista.PolyData()
     assert not mesh.n_points
@@ -146,22 +154,45 @@ def test_invalid_init():
         pyvista.PolyData(np.array([1]))
 
     with pytest.raises(TypeError):
-        pyvista.PolyData(np.array([1]), 'woa')
+        pyvista.PolyData([1, 2, 3], 'woa')
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         pyvista.PolyData('woa', 'woa')
 
+
+    poly = pyvista.PolyData()
+    with pytest.raises(ValueError):
+        pyvista.PolyData(poly, 'woa')
+
     with pytest.raises(TypeError):
-        pyvista.PolyData('woa', 'woa', 'woa')
+        pyvista.PolyData({'woa'})
 
 
 def test_invalid_file():
     with pytest.raises(FileNotFoundError):
         pyvista.PolyData('file.bad')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(IOError):
         filename = os.path.join(test_path, 'test_polydata.py')
         pyvista.PolyData(filename)
+
+
+def test_lines_on_init():
+    lines = [2, 0, 1, 3, 2, 3, 4]
+    points = np.random.random((5, 3))
+    pd = pyvista.PolyData(points, lines=lines)
+    assert not pd.faces.size
+    assert np.array_equal(pd.lines, lines)
+    assert np.array_equal(pd.points, points)
+
+
+def test_polydata_repr_str():
+    pd = pyvista.PolyData()
+    assert repr(pd) == str(pd)
+    assert 'N Cells' in str(pd)
+    assert 'N Points' in str(pd)
+    assert 'X Bounds' in str(pd)
+    assert 'N Arrays' in str(pd)
 
 
 def test_geodesic(sphere):
@@ -207,6 +238,9 @@ def test_ray_trace_plot():
 
 @pytest.mark.skipif(not CONDA_ENV, reason="Requires libspatialindex dependency only installable via conda")
 def test_multi_ray_trace():
+    pytest.importorskip('rtree')
+    pytest.importorskip('pyembree')
+    pytest.importorskip('trimesh')
     sphere = SPHERE.copy()
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 1]]
     directions = [[0, 0, -1]] * 4
@@ -329,8 +363,18 @@ def test_invalid_curvature():
 @pytest.mark.parametrize('extension', pyvista.core.pointset.PolyData._WRITERS)
 def test_save(extension, binary, tmpdir):
     sphere = SPHERE.copy()
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp{extension}'))
     sphere.save(filename, binary)
+
+    if binary:
+        if extension == '.vtp':
+            assert 'binary' in open(filename).read(1000)
+        else:
+            is_binary(filename)
+    else:
+        with open(filename) as f:
+            fst = f.read(100).lower()
+            assert 'ascii' in fst or 'xml' in fst or 'solid' in fst
 
     mesh = pyvista.PolyData(filename)
     assert mesh.faces.shape == sphere.faces.shape

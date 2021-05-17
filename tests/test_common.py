@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 import pytest
 import vtk
@@ -6,9 +7,12 @@ from hypothesis.extra.numpy import arrays, array_shapes
 from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
 
+from .test_filters import DATASETS
+
 import pyvista
 from pyvista import examples, Texture
 
+HYPOTHESIS_MAX_EXAMPLES = 20
 
 @pytest.fixture()
 def grid():
@@ -178,11 +182,11 @@ def test_copy(grid):
     assert np.all(grid_copy_shallow.points[0] == grid.points[0])
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(rotate_amounts=n_numbers(3), translate_amounts=n_numbers(3))
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
 def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
     trans = vtk.vtkTransform()
-    trans.RotateWXYZ(0, *rotate_amounts)
+    trans.RotateWXYZ(*rotate_amounts)
     trans.Translate(translate_amounts)
     trans.Update()
 
@@ -192,8 +196,24 @@ def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amo
     grid_a.transform(trans)
     grid_b.transform(trans.GetMatrix())
     grid_c.transform(pyvista.array_from_vtkmatrix(trans.GetMatrix()))
+
+    # treat INF as NAN (necessary for allclose)
+    grid_a.points[np.isinf(grid_a.points)] = np.nan
     assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
     assert np.allclose(grid_a.points, grid_c.points, equal_nan=True)
+
+    # test non homogeneous transform
+    trans_rotate_only = vtk.vtkTransform()
+    trans_rotate_only.RotateWXYZ(*rotate_amounts)
+    trans_rotate_only.Update()
+
+    grid_d = grid.copy()
+    grid_d.transform(trans_rotate_only)
+
+    from pyvista.utilities.transformations import apply_transformation_to_points
+    trans_arr = pyvista.array_from_vtkmatrix(trans_rotate_only.GetMatrix())[:3, :3]
+    trans_pts = apply_transformation_to_points(trans_arr, grid.points)
+    assert np.allclose(grid_d.points, trans_pts, equal_nan=True)
 
 
 def test_translate_should_fail_given_none(grid):
@@ -201,7 +221,21 @@ def test_translate_should_fail_given_none(grid):
         grid.transform(None)
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_translate_should_fail_bad_points_or_transform(grid):
+    points = np.random.random((10, 2))
+    bad_points = np.random.random((10, 2))
+    trans = np.random.random((4, 4))
+    bad_trans = np.random.random((2, 4))
+    with pytest.raises(ValueError):
+        pyvista.utilities.transformations.apply_transformation_to_points(trans, bad_points)
+
+    with pytest.raises(ValueError):
+        pyvista.utilities.transformations.apply_transformation_to_points(bad_trans, points)
+
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture],
+          max_examples=HYPOTHESIS_MAX_EXAMPLES)
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
 def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
     assume(array.shape != (4, 4))
@@ -218,7 +252,8 @@ def test_translate_should_translate_grid(grid, axis_amounts):
     assert np.allclose(grid_copy.points, grid_points)
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture],
+          max_examples=HYPOTHESIS_MAX_EXAMPLES)
 @given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
 @pytest.mark.parametrize('axis', ('x', 'y', 'z'))
 def test_rotate_should_match_vtk_rotation(angle, axis, grid):
@@ -346,7 +381,7 @@ def test_bitarray_field(grid):
 def test_html_repr(grid):
     """
     This just tests to make sure no errors are thrown on the HTML
-    representation method for Common datasets.
+    representation method for DataSet.
     """
     assert grid._repr_html_() is not None
 
@@ -356,7 +391,7 @@ def test_html_repr(grid):
 def test_print_repr(grid, display, html):
     """
     This just tests to make sure no errors are thrown on the text friendly
-    representation method for Common datasets.
+    representation method for DataSet.
     """
     result = grid.head(display=display, html=html)
     if display and html:
@@ -671,18 +706,18 @@ def test_set_cell_vectors(grid):
 
 def test_axis_rotation_invalid():
     with pytest.raises(ValueError):
-        pyvista.core.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pyvista.core.dataset.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pyvista.core.common.axis_rotation(p, 1, False, axis='x')
+    p_out = pyvista.core.dataset.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
 
 
 def test_bad_instantiation():
     with pytest.raises(TypeError):
-        pyvista.Common()
+        pyvista.DataSet()
     with pytest.raises(TypeError):
         pyvista.Grid()
     with pytest.raises(TypeError):
@@ -870,7 +905,7 @@ def test_setting_points_from_self(grid):
 
 def test_empty_points():
     pdata = pyvista.PolyData()
-    assert pdata.points is None
+    assert np.allclose(pdata.points, np.empty(3))
 
 
 def test_no_active():
@@ -891,7 +926,7 @@ def test_get_data_range(grid):
         rng = mesh.get_data_range('some data')
 
     # Test with some data
-    rng = grid.get_data_range() # active scalars
+    rng = grid.get_data_range()  # active scalars
     assert len(rng) == 2
     assert np.allclose(rng, (1, 302))
 
@@ -902,3 +937,87 @@ def test_get_data_range(grid):
     rng = grid.get_data_range('sample_cell_scalars')
     assert len(rng) == 2
     assert np.allclose(rng, (1, 40))
+
+
+def test_actual_memory_size(grid):
+    size = grid.actual_memory_size
+    assert isinstance(size, int)
+    assert size >= 0
+
+
+def test_copy_structure(grid):
+    classname = grid.__class__.__name__
+    copy = eval(f'pyvista.{classname}')()
+    copy.copy_structure(grid)
+    assert copy.n_cells == grid.n_cells
+    assert copy.n_points == grid.n_points
+    assert len(copy.field_arrays) == 0
+    assert len(copy.cell_arrays) == 0
+    assert len(copy.point_arrays) == 0
+
+
+def test_copy_attributes(grid):
+    classname = grid.__class__.__name__
+    copy = eval(f'pyvista.{classname}')()
+    copy.copy_attributes(grid)
+    assert copy.n_cells == 0
+    assert copy.n_points == 0
+    assert copy.field_arrays.keys() == grid.field_arrays.keys()
+    assert copy.cell_arrays.keys() == grid.cell_arrays.keys()
+    assert copy.point_arrays.keys() == grid.point_arrays.keys()
+
+
+def test_cell_n_points(grid):
+    npoints = grid.cell_n_points(0)
+    assert isinstance(npoints, int)
+    assert npoints >= 0
+
+
+def test_cell_points(grid):
+    points = grid.cell_points(0)
+    assert isinstance(points, np.ndarray)
+    assert points.ndim == 2
+    assert points.shape[0] > 0
+    assert points.shape[1] == 3
+
+
+def test_cell_bounds(grid):
+    bounds = grid.cell_bounds(0)
+    assert isinstance(bounds, list)
+    assert len(bounds) == 6
+
+
+def test_cell_type(grid):
+    ctype = grid.cell_type(0)
+    assert isinstance(ctype, int)
+
+
+@pytest.mark.parametrize('dataset', DATASETS)
+def test_serialize_deserialize(dataset):
+    dataset_2 = pickle.loads(pickle.dumps(dataset))
+
+    # check python attributes are the same
+    for attr in dataset.__dict__:
+        assert getattr(dataset_2, attr) == getattr(dataset, attr)
+
+    # check data is the same
+    for attr in ('n_cells', 'n_points', 'n_arrays'):
+        if hasattr(dataset, attr):
+            assert getattr(dataset_2, attr) == getattr(dataset, attr)
+
+    for attr in ('cells', 'points'):
+        if hasattr(dataset, attr):
+            assert getattr(dataset_2, attr) == \
+                   pytest.approx(getattr(dataset, attr))
+
+    for name in dataset.point_arrays:
+        assert dataset_2.point_arrays[name] == \
+               pytest.approx(dataset.point_arrays[name])
+
+    for name in dataset.cell_arrays:
+        assert dataset_2.cell_arrays[name] == \
+               pytest.approx(dataset.cell_arrays[name])
+
+    for name in dataset.field_arrays:
+        assert dataset_2.field_arrays[name] == \
+               pytest.approx(dataset.field_arrays[name])

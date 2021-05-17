@@ -102,7 +102,7 @@ There are three general coding paradigms that we believe in:
 
 2. **Document everything!** At the least, include a docstring for any method
    or class added. Do not describe what you are doing but why you are doing
-   it and provide a for simple use cases for the new features.
+   it and provide a simple example for the new features.
 
 3. **Keep it tested**. We aim for a high test coverage. See
    testing for more details.
@@ -131,7 +131,7 @@ repository to your computer.  Then, create a new branch based on the
 your local repository.
 
 Next, add your new feature and commit it locally.  Be sure to commit
-often as it is often helpful to revert to past commits, especially if
+frequently as it is often helpful to revert to past commits, especially if
 your change is complex.  Also, be sure to test often.  See the
 [Testing Section](#testing) below for automating testing.
 
@@ -192,13 +192,25 @@ Run the primary test suite and generate coverage report:
 python -m pytest -v --cov pyvista
 ```
 
-Run all code examples in the docstrings:
+Unit testing can take some time, if you wish to speed it up, set the
+number of processors with the ``-n`` flag.  This uses ``pytest-xdist``
+to leverage multiple processes.  Example usage:
 
 ```bash
+python -m pytest -n <NUMCORE> --cov pyvista
+```
+
+Run all code examples in the docstrings.  Be sure to export the
+``PYVISTA_OFF_SCREEN`` environmental variable to enable off-screen
+plotting.
+
+```bash
+export PYVISTA_OFF_SCREEN=True
 python -m pytest -v --doctest-modules pyvista
 ```
 
-Run documentation testing by running
+Run documentation testing by running:
+
 ```bash
 make
 ```
@@ -255,12 +267,12 @@ The main features of our branching model are:
   side-effects or bugs that were not caught through unit testing.
 - There will be one or many `release/` branches based on minor
   releases (for example `release/0.24`) which contain a stable version
-  of the code base that is also reflected on PyPi/.  Hotfixes from
+  of the code base that is also reflected on PyPI/.  Hotfixes from
   `fix/` branches should be merged both to master and to these
   branches.  When necessary to create a new patch release these
   release branches will have their `__version__.py` updated and be
   tagged with a patched semantic version (e.g. `0.24.1`).  This
-  triggers CI to push to PyPi, and allow us to rapidly push hotfixes
+  triggers CI to push to PyPI, and allow us to rapidly push hotfixes
   for past versions of `pyvista` without having to worry about
   untested features.
 - When a minor release candidate is ready, a new `release` branch will
