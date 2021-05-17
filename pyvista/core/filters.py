@@ -4582,18 +4582,19 @@ class PolyDataFilters(DataSetFilters):
         )
         if retry:
             ray_tuples = [(id_r, l, id_t) for id_r, l, id_t in zip(index_ray, locations, index_tri)]
-            for id_r in range(len(origins)):
-                if id_r not in index_ray:
-                    origin = np.array(origins[id_r])
-                    vector = np.array(directions[id_r])
-                    unit_vector = vector / np.sqrt(np.sum(np.power(vector, 2)))
-                    second_point = origin + (unit_vector * poly_data.length)
-                    locs, indexes = poly_data.ray_trace(origin, second_point, first_point=first_point)
-                    if locs.any():
-                        if first_point:
-                            locs = locs.reshape([1, 3])
-                        for loc, id_t in zip(locs, indexes):
-                            ray_tuples.append((id_r, loc, id_t))
+            all_ray_indices = np.arange(len(origins))
+            retry_ray_indices = np.setdiff1d(all_ray_indices, index_ray)
+            for id_r in retry_ray_indices:
+                origin = np.array(origins[id_r])
+                vector = np.array(directions[id_r])
+                unit_vector = vector / np.sqrt(np.sum(np.power(vector, 2)))
+                second_point = origin + (unit_vector * poly_data.length)
+                locs, indexes = poly_data.ray_trace(origin, second_point, first_point=first_point)
+                if locs.any():
+                    if first_point:
+                        locs = locs.reshape([1, 3])
+                    for loc, id_t in zip(locs, indexes):
+                        ray_tuples.append((id_r, loc, id_t))
             sorted_results = sorted(ray_tuples, key=lambda x: x[0])
             locations = np.array([loc for id_r, loc, id_t in sorted_results])
             index_ray = np.array([id_r for id_r, loc, id_t in sorted_results])
