@@ -1894,7 +1894,7 @@ class DataSetFilters:
 
         source : pyvista.PolyData
             The points of the source are the seed points for the streamlines.
-            Only returned if `return_source=True`.
+            Only returned if ``return_source=True``.
         """
         if source_center is None:
             source_center = dataset.center
