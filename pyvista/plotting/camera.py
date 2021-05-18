@@ -5,7 +5,6 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-
 class Camera(_vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
@@ -30,6 +29,49 @@ class Camera(_vtk.vtkCamera):
         self._is_parallel_projection = False
         self._elevation = 0.0
         self._azimuth = 0.0
+
+    def __repr__(self):
+       """Print a repr specifying the id of the camera and its camera type."""
+       return (f'<{self.__class__.__name__} at {hex(id(self))}>')
+
+    def __eq__(self, other):
+        """Compare whether the relevant attributes of two camera are equal."""
+        # attributes which are native python types and thus implement __eq__
+
+        native_attrs = [
+            'position',
+            'focal_point',
+            'is_parallel_projection',
+            'distance',
+            'thickness',
+            'parallel_scale',
+            'up',
+            'clipping_range',
+            'view_angle',
+            'roll',
+        ]
+        for attr in native_attrs:
+            if not np.allclose(getattr(self, attr), getattr(other, attr)):
+                return False
+
+        # check model transformation matrix element by element (if it exists)
+        this_trans = self.model_transform_matrix
+        that_trans = other.model_transform_matrix
+        trans_count = sum(1 for trans in [this_trans, that_trans] if trans is not None)
+        if trans_count == 1:
+            # either but not both are None
+            return False
+        if trans_count == 2:
+            for i in range(4):
+                for j in range(4):
+                    if this_trans[i, j] != that_trans[i, j]:
+                        return False
+        return True
+
+    def __del__(self):
+        """Delete the camera."""
+        self.RemoveAllObservers()
+        self.parent = None
 
     @property
     def position(self):
@@ -138,6 +180,18 @@ class Camera(_vtk.vtkCamera):
         1.732050807568
         """
         return self.GetDistance()
+
+    @distance.setter
+    def distance(self, distance):
+        """Set the distance from the camera position to the focal point.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera.distance = 1.732
+        """
+        self.SetDistance(distance)
 
     @property
     def thickness(self):
@@ -275,11 +329,6 @@ class Camera(_vtk.vtkCamera):
             raise ValueError(f'Near point must be lower than the far point.')
         self.SetClippingRange(points[0], points[1])
 
-    def __del__(self):
-        """Delete the camera."""
-        self.RemoveAllObservers()
-        self.parent = None
-
     @property
     def view_angle(self):
         """Return the camera view angle.
@@ -293,6 +342,18 @@ class Camera(_vtk.vtkCamera):
 
         """
         return self.GetViewAngle()
+
+    @view_angle.setter
+    def view_angle(self, value):
+        """Set the camera view angle.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.camera.view_angle = 60.0
+        """
+        self.SetViewAngle(value)
 
     @property
     def direction(self):
@@ -439,3 +500,47 @@ class Camera(_vtk.vtkCamera):
             self.Azimuth(-self._azimuth)
         self._azimuth = angle
         self.Azimuth(angle)
+
+    def copy(self):
+        """Return a shallow or a deep copy of the camera.
+
+        The only mutable attribute of ``Camera`` objects is the
+        transformation matrix (if it exists). Thus asking for a
+        shallow copy merely implies that the returned camera and the
+        original share the transformation matrix instance.
+
+        Examples
+        --------
+        Create a camera and check that it shares a transformation
+        matrix with its shallow copy.
+
+        >>> import pyvista as pv
+        >>> camera = pv.Camera()
+        >>> camera.model_transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+        >>> shallow_copied = camera.copy()
+        >>> shallow_copied == camera
+        True
+
+        """
+        immutable_attrs = [
+            'position',
+            'focal_point',
+            'model_transform_matrix',
+            'distance',
+            'thickness',
+            'parallel_scale',
+            'up',
+            'clipping_range',
+            'view_angle',
+            'roll',
+        ]
+        new_camera = Camera()
+
+        for attr in immutable_attrs:
+            value = getattr(self, attr)
+            print(attr)
+            setattr(new_camera, attr, value)
+
+        new_camera.enable_parallel_projection(self.is_parallel_projection)
+
+        return new_camera
