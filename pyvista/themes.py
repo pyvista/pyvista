@@ -1140,7 +1140,8 @@ class DefaultTheme(_ThemeConfig):
                  '_smooth_shading',
                  '_depth_peeling',
                  '_silhouette',
-                 '_slider_styles']
+                 '_slider_styles',
+                 '_use_ipyvtk']
 
     def __init__(self):
         """Initialize the theme."""
@@ -1194,6 +1195,7 @@ class DefaultTheme(_ThemeConfig):
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
         self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'ipyvtklink')
+        self._use_ipyvtk = self._jupyter_backend == 'ipyvtklink'
 
         self._multi_rendering_splitting_position = None
         self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
@@ -2057,6 +2059,18 @@ class DefaultTheme(_ThemeConfig):
         """
         with open(filename, 'w') as f:
             json.dump(self.to_dict(), f)
+
+    @property
+    def use_ipyvtk(self):  # pragma: no cover
+        """Depricated in favor of ``jupyter_backend``."""
+        return self._use_ipyvtk
+
+    @use_ipyvtk.setter
+    def use_ipyvtk(self, value):  # pragma: no cover
+        if value:
+            self.jupyter_backend = 'ipyvtklink'
+        else:
+            self.jupyter_backend = 'static'
 
 
 class DarkTheme(DefaultTheme):
