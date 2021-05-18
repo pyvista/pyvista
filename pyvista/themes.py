@@ -2064,7 +2064,8 @@ class DefaultTheme(_ThemeConfig):
     def use_ipyvtk(self):  # pragma: no cover
         """Set or return the usage of "ipyvtk" as a jupyter backend.
 
-        Deprecated in favor of ``jupyter_backend``."""
+        Deprecated in favor of ``jupyter_backend``.
+        """
         warnings.warn('use_ipyvtk is deprecated.  Please use '
                       '``pyvista.jupyter_backend``', DeprecationWarning)
         return self._use_ipyvtk
