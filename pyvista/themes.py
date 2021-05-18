@@ -1140,8 +1140,7 @@ class DefaultTheme(_ThemeConfig):
                  '_smooth_shading',
                  '_depth_peeling',
                  '_silhouette',
-                 '_slider_styles',
-                 '_use_ipyvtk']
+                 '_slider_styles']
 
     def __init__(self):
         """Initialize the theme."""
@@ -1195,7 +1194,7 @@ class DefaultTheme(_ThemeConfig):
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
         self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'ipyvtklink')
-        self._use_ipyvtk = self._jupyter_backend == 'ipyvtklink'
+        self._jupyter_backend == 'ipyvtklink'
 
         self._multi_rendering_splitting_position = None
         self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
@@ -2068,7 +2067,7 @@ class DefaultTheme(_ThemeConfig):
         """
         warnings.warn('use_ipyvtk is deprecated.  Please use '
                       '``pyvista.global_theme.jupyter_backend =``', DeprecationWarning)
-        return self._use_ipyvtk
+        return self.jupyter_backend
 
     @use_ipyvtk.setter
     def use_ipyvtk(self, value):  # pragma: no cover
