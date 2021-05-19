@@ -516,7 +516,10 @@ class Camera(_vtk.vtkCamera):
 
         >>> import pyvista as pv
         >>> camera = pv.Camera()
-        >>> camera.model_transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+        >>> camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
+                                                      [0., 1., 0., 0.],
+                                                      [0., 0., 1., 0.],
+                                                      [0., 0., 0., 1.]])
         >>> shallow_copied = camera.copy()
         >>> shallow_copied == camera
         True
@@ -538,7 +541,6 @@ class Camera(_vtk.vtkCamera):
 
         for attr in immutable_attrs:
             value = getattr(self, attr)
-            print(attr)
             setattr(new_camera, attr, value)
 
         new_camera.enable_parallel_projection(self.is_parallel_projection)
