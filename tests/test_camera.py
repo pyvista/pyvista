@@ -48,7 +48,7 @@ def test_distance(camera):
     camera.focal_point = focal_point
     assert np.isclose(camera.distance, np.linalg.norm(focal_point - position, ord=2),
                       rtol=1E-8)
-    distance = np.random.random(1)
+    distance = np.random.random()
     camera.distance = distance
     assert np.isclose(camera.distance, distance)
 
