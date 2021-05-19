@@ -1194,7 +1194,6 @@ class DefaultTheme(_ThemeConfig):
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
         self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'ipyvtklink')
-        self._jupyter_backend == 'ipyvtklink'
 
         self._multi_rendering_splitting_position = None
         self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
@@ -2067,7 +2066,7 @@ class DefaultTheme(_ThemeConfig):
         """
         warnings.warn('use_ipyvtk is deprecated.  Please use '
                       '``pyvista.global_theme.jupyter_backend =``', DeprecationWarning)
-        return self.jupyter_backend
+        return self.jupyter_backend == 'ipyvtklink'
 
     @use_ipyvtk.setter
     def use_ipyvtk(self, value):  # pragma: no cover
