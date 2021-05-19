@@ -36,7 +36,7 @@ class Camera(_vtk.vtkCamera):
        return (f'<{self.__class__.__name__} at {hex(id(self))}>')
 
     def __eq__(self, other):
-        """Compare whether the relevant attributes of two camera are equal."""
+        """Compare whether the relevant attributes of two cameras are equal."""
         # attributes which are native python types and thus implement __eq__
 
         native_attrs = [
