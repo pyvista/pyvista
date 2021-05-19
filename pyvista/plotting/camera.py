@@ -42,6 +42,7 @@ class Camera(_vtk.vtkCamera):
         native_attrs = [
             'position',
             'focal_point',
+            'model_transform_matrix',
             'is_parallel_projection',
             'distance',
             'thickness',
@@ -55,18 +56,6 @@ class Camera(_vtk.vtkCamera):
             if not np.allclose(getattr(self, attr), getattr(other, attr)):
                 return False
 
-        # check model transformation matrix element by element (if it exists)
-        this_trans = self.model_transform_matrix
-        that_trans = other.model_transform_matrix
-        trans_count = sum(1 for trans in [this_trans, that_trans] if trans is not None)
-        if trans_count == 1:
-            # either but not both are None
-            return False
-        if trans_count == 2:
-            for i in range(4):
-                for j in range(4):
-                    if this_trans[i, j] != that_trans[i, j]:
-                        return False
         return True
 
     def __del__(self):
