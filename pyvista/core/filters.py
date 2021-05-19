@@ -1885,8 +1885,8 @@ class DataSetFilters:
             The coordinates of a start and end point for a line source. This
             will override the sphere and start_position point source.
 
-        Returns:
-        --------
+        Returns
+        -------
         streamlines : pyvista.PolyData
             This produces polylines as the output, with each cell
             (i.e., polyline) representing a streamline. The attribute values
@@ -2017,8 +2017,8 @@ class DataSetFilters:
             This can be used to scale the rate with which the streamribbons
             twist. The default is 1.
 
-        Returns:
-        --------
+        Returns
+        -------
         streamlines : pyvista.PolyData
             This produces polylines as the output, with each cell
             (i.e., polyline) representing a streamline. The attribute values
