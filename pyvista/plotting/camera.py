@@ -5,6 +5,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
+
 class Camera(_vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
