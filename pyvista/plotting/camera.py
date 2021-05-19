@@ -492,7 +492,7 @@ class Camera(_vtk.vtkCamera):
         self.Azimuth(angle)
 
     def copy(self):
-        """Return a shallow or a deep copy of the camera.
+        """Return a copy of the camera.
 
         The only mutable attribute of ``Camera`` objects is the
         transformation matrix (if it exists). Thus asking for a
