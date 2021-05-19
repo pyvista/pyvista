@@ -517,9 +517,9 @@ class Camera(_vtk.vtkCamera):
         >>> import pyvista as pv
         >>> camera = pv.Camera()
         >>> camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
-                                                      [0., 1., 0., 0.],
-                                                      [0., 0., 1., 0.],
-                                                      [0., 0., 0., 1.]])
+        ...                                           [0., 1., 0., 0.],
+        ...                                           [0., 0., 1., 0.],
+        ...                                           [0., 0., 0., 1.]])
         >>> shallow_copied = camera.copy()
         >>> shallow_copied == camera
         True
