@@ -11,20 +11,34 @@ from pyvista.plotting import system_supports_plotting
 from pyvista.core.errors import NotAllTrianglesError
 
 radius = 0.5
-SPHERE = pyvista.Sphere(radius, theta_resolution=10, phi_resolution=10)
 
-SPHERE_SHIFTED = pyvista.Sphere(center=[0.5, 0.5, 0.5],
-                                theta_resolution=10, phi_resolution=10)
+@pytest.fixture
+def sphere():
+    # this shadows the main sphere fixture from conftest!
+    return pyvista.Sphere(radius, theta_resolution=10, phi_resolution=10)
 
-SPHERE_DENSE = pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
-CUBE_DENSE = pyvista.Cube()
+@pytest.fixture
+def sphere_shifted():
+    return pyvista.Sphere(center=[0.5, 0.5, 0.5],
+                          theta_resolution=10, phi_resolution=10)
+
+
+@pytest.fixture
+def sphere_dense():
+    return pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
+
+
+@pytest.fixture
+def cube_dense():
+    return pyvista.Cube()
+
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
 
 def is_binary(filename):
-    """Return ``True`` when a file is binary"""
+    """Return ``True`` when a file is binary."""
     textchars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7f})
     with open(filename, 'rb') as f:
         data = f.read(1024)
@@ -215,16 +229,14 @@ def test_geodesic_distance(sphere):
     assert isinstance(distance, float)
 
 
-def test_ray_trace():
-    sphere = SPHERE.copy()
+def test_ray_trace(sphere):
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])
     assert np.any(points)
     assert np.any(ind)
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_ray_trace_plot():
-    sphere = SPHERE.copy()
+def test_ray_trace_plot(sphere):
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1], plot=True, first_point=True,
                                    off_screen=True)
     assert np.any(points)
@@ -244,20 +256,17 @@ def test_multi_ray_trace(sphere):
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_plot_curvature():
-    sphere = SPHERE.copy()
+def test_plot_curvature(sphere):
     cpos = sphere.plot_curvature(off_screen=True)
     assert isinstance(cpos, pyvista.CameraPosition)
 
 
-def test_edge_mask():
-    sphere = SPHERE.copy()
+def test_edge_mask(sphere):
     mask = sphere.edge_mask(10)
 
 
-def test_boolean_cut_inplace():
-    sub_mesh = SPHERE.copy()
-    sphere_shifted = SPHERE_SHIFTED.copy()
+def test_boolean_cut_inplace(sphere, sphere_shifted):
+    sub_mesh = sphere
     sub_mesh.boolean_cut(sphere_shifted, inplace=True)
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
@@ -268,17 +277,13 @@ def test_boolean_cut_fail(plane):
         plane - plane
 
 
-def test_subtract():
-    sphere = SPHERE.copy()
-    sphere_shifted = SPHERE_SHIFTED.copy()
+def test_subtract(sphere, sphere_shifted):
     sub_mesh = sphere - sphere_shifted
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
 
 
-def test_add():
-    sphere = SPHERE.copy()
-    sphere_shifted = SPHERE_SHIFTED.copy()
+def test_add(sphere, sphere_shifted):
     add_mesh = sphere + sphere_shifted
 
     npoints = sphere.n_points + sphere_shifted.n_points
@@ -288,31 +293,25 @@ def test_add():
     assert add_mesh.n_faces == nfaces
 
 
-def test_boolean_add_inplace():
-    sphere = SPHERE.copy()
-    sphere_shifted = SPHERE_SHIFTED.copy()
-    sub_mesh = sphere.copy()
+def test_boolean_add_inplace(sphere, sphere_shifted):
+    sub_mesh = sphere
     sub_mesh.boolean_add(sphere_shifted, inplace=True)
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
 
 
-def test_boolean_union_inplace():
-    sphere = SPHERE.copy()
-    sphere_shifted = SPHERE_SHIFTED.copy()
+def test_boolean_union_inplace(sphere, sphere_shifted):
     sub_mesh = sphere.boolean_union(sphere_shifted)
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
 
-    sub_mesh = sphere.copy()
+    sub_mesh = sphere
     sub_mesh.boolean_union(sphere_shifted, inplace=True)
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
 
 
-def test_boolean_difference():
-    sphere = SPHERE.copy()
-    sphere_shifted = SPHERE_SHIFTED.copy()
+def test_boolean_difference(sphere, sphere_shifted):
     sub_mesh = sphere.copy()
     sub_mesh.boolean_difference(sphere_shifted, inplace=True)
     assert sub_mesh.n_points
@@ -323,9 +322,7 @@ def test_boolean_difference():
     assert sub_mesh.n_cells
 
 
-def test_intersection():
-    sphere = SPHERE.copy()
-    sphere_shifted = SPHERE_SHIFTED.copy()
+def test_intersection(sphere, sphere_shifted):
     intersection, first, second = sphere.intersection(sphere_shifted, split_first=True, split_second=True)
 
     assert intersection.n_points
@@ -339,23 +336,20 @@ def test_intersection():
 
 
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
-def test_curvature(curv_type):
-    sphere = SPHERE.copy()
+def test_curvature(sphere, curv_type):
     curv = sphere.curvature(curv_type)
     assert np.any(curv)
     assert curv.size == sphere.n_points
 
 
-def test_invalid_curvature():
-    sphere = SPHERE.copy()
+def test_invalid_curvature(sphere):
     with pytest.raises(ValueError):
         curv = sphere.curvature('not valid')
 
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.core.pointset.PolyData._WRITERS)
-def test_save(extension, binary, tmpdir):
-    sphere = SPHERE.copy()
+def test_save(sphere, extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp{extension}'))
     sphere.save(filename, binary)
 
@@ -389,8 +383,7 @@ def test_pathlib_read_write(tmpdir, sphere):
     assert mesh.points.shape == sphere.points.shape
 
 
-def test_invalid_save():
-    sphere = SPHERE.copy()
+def test_invalid_save(sphere):
     with pytest.raises(ValueError):
         sphere.save('file.abc')
 
@@ -406,8 +399,7 @@ def test_triangulate_filter(plane):
 
 
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
-def test_subdivision(subfilter):
-    sphere = SPHERE.copy()
+def test_subdivision(sphere, subfilter):
     mesh = sphere.subdivide(1, subfilter)
     assert mesh.n_points > sphere.n_points
     assert mesh.n_faces > sphere.n_faces
@@ -418,16 +410,14 @@ def test_subdivision(subfilter):
     assert mesh.n_faces > sphere.n_faces
 
 
-def test_invalid_subdivision():
-    sphere = SPHERE.copy()
+def test_invalid_subdivision(sphere):
     with pytest.raises(ValueError):
         mesh = sphere.subdivide(1, 'not valid')
 
 
-def test_extract_feature_edges():
+def test_extract_feature_edges(sphere):
     # Test extraction of NO edges
-    mesh = SPHERE.copy()
-    edges = mesh.extract_feature_edges(90)
+    edges = sphere.extract_feature_edges(90)
     assert not edges.n_points
 
     mesh = pyvista.Cube() # use a mesh that actually has strongly defined edges
@@ -438,9 +428,7 @@ def test_extract_feature_edges():
     assert mesh.n_points == more_edges.n_points
 
 
-def test_decimate():
-    sphere = SPHERE.copy()
-    mesh = sphere.copy()
+def test_decimate(sphere):
     mesh = sphere.decimate(0.5)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
@@ -450,9 +438,7 @@ def test_decimate():
     assert mesh.n_faces < sphere.n_faces
 
 
-def test_decimate_pro():
-    sphere = SPHERE.copy()
-    mesh = sphere.copy()
+def test_decimate_pro(sphere):
     mesh = sphere.decimate_pro(0.5)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
@@ -462,9 +448,8 @@ def test_decimate_pro():
     assert mesh.n_faces < sphere.n_faces
 
 
-def test_compute_normals():
-    sphere = SPHERE.copy()
-    sphere_normals = SPHERE.copy()
+def test_compute_normals(sphere):
+    sphere_normals = sphere
     sphere_normals.compute_normals(inplace=True)
 
     point_normals = sphere_normals.point_arrays['Normals']
@@ -473,23 +458,19 @@ def test_compute_normals():
     assert cell_normals.shape[0] == sphere.n_cells
 
 
-def test_point_normals():
-    sphere = SPHERE.copy()
+def test_point_normals(sphere):
     assert sphere.point_normals.shape[0] == sphere.n_points
 
 
-def test_cell_normals():
-    sphere = SPHERE.copy()
+def test_cell_normals(sphere):
     assert sphere.cell_normals.shape[0] == sphere.n_cells
 
 
-def test_face_normals():
-    sphere = SPHERE.copy()
+def test_face_normals(sphere):
     assert sphere.face_normals.shape[0] == sphere.n_faces
 
 
-def test_clip_plane():
-    sphere = SPHERE.copy()
+def test_clip_plane(sphere):
     clipped_sphere = sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], invert=False)
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
@@ -521,20 +502,18 @@ def test_clean(sphere):
     assert cleaned.n_points == mesh.n_points
 
 
-def test_area():
-    dense_sphere = SPHERE_DENSE.copy()
+def test_area(sphere_dense, cube_dense):
     radius = 0.5
     ideal_area = 4*pi*radius**2
-    assert np.isclose(dense_sphere.area, ideal_area, rtol=1E-3)
+    assert np.isclose(sphere_dense.area, ideal_area, rtol=1E-3)
 
-    dense_cube = CUBE_DENSE.copy()
-    ideal_area = 6*np.cbrt(CUBE_DENSE.volume)**2
-    assert np.isclose(dense_cube.area, ideal_area, rtol=1E-3)
+    ideal_area = 6*np.cbrt(cube_dense.volume)**2
+    assert np.isclose(cube_dense.area, ideal_area, rtol=1E-3)
 
-def test_volume():
-    dense_sphere = SPHERE_DENSE.copy()
+
+def test_volume(sphere_dense):
     ideal_volume = (4/3.0)*pi*radius**3
-    assert np.isclose(dense_sphere.volume, ideal_volume, rtol=1E-3)
+    assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1E-3)
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
@@ -549,8 +528,7 @@ def test_plot_normals(sphere, flip):
     sphere.plot_normals(off_screen=True, flip=flip)
 
 
-def test_remove_points_any():
-    sphere = SPHERE.copy()
+def test_remove_points_any(sphere):
     remove_mask = np.zeros(sphere.n_points, np.bool_)
     remove_mask[:3] = True
     sphere_mod, ind = sphere.remove_points(remove_mask, inplace=False, mode='any')
@@ -558,8 +536,7 @@ def test_remove_points_any():
     assert np.allclose(sphere_mod.points, sphere.points[ind])
 
 
-def test_remove_points_all():
-    sphere = SPHERE.copy()
+def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
     sphere_copy.cell_arrays['ind'] = np.arange(sphere_copy.n_faces)
     remove = sphere.faces[1:4]
@@ -592,8 +569,7 @@ def test_vertice_cells_on_read(tmpdir):
     assert recovered.n_cells == 100
 
 
-def test_center_of_mass():
-    sphere = SPHERE.copy()
+def test_center_of_mass(sphere):
     assert np.allclose(sphere.center_of_mass(), [0, 0, 0])
     cloud = pyvista.PolyData(np.random.rand(100, 3))
     assert len(cloud.center_of_mass()) == 3
