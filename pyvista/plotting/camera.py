@@ -54,8 +54,17 @@ class Camera(_vtk.vtkCamera):
             if getattr(self, attr) != getattr(other, attr):
                 return False
 
-        if not np.allclose(self.model_transform_matrix, other.model_transform_matrix):
+        this_trans = self.model_transform_matrix
+        that_trans = other.model_transform_matrix
+        trans_count = sum(1 for trans in [this_trans, that_trans] if trans is not None)
+        if trans_count == 1:
+            # either but not both are None
             return False
+        if trans_count == 2:
+            for i in range(4):
+                for j in range(4):
+                    if this_trans[i, j] != that_trans[i, j]:
+                        return False
 
         return True
 
