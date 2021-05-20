@@ -513,6 +513,7 @@ class Camera(_vtk.vtkCamera):
         matrix with its shallow copy.
 
         >>> import pyvista as pv
+        >>> import numpy as np
         >>> camera = pv.Camera()
         >>> camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
         ...                                           [0., 1., 0., 0.],
