@@ -42,19 +42,20 @@ class Camera(_vtk.vtkCamera):
         native_attrs = [
             'position',
             'focal_point',
-            'model_transform_matrix',
             'is_parallel_projection',
             'distance',
             'thickness',
             'parallel_scale',
-            'up',
             'clipping_range',
             'view_angle',
             'roll',
         ]
         for attr in native_attrs:
-            if not np.allclose(getattr(self, attr), getattr(other, attr)):
+            if getattr(self, attr) != getattr(other, attr):
                 return False
+
+        if not np.allclose(self.model_transform_matrix, other.model_transform_matrix):
+            return False
 
         return True
 

@@ -189,7 +189,6 @@ def test_eq():
         setattr(other, name, changed_value)
         assert camera != other
         setattr(other, name, original_value)
-        assert camera == other
 
     # sanity check that we managed to restore the original state
     assert camera == other
