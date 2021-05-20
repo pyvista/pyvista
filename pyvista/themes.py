@@ -2058,6 +2058,26 @@ class DefaultTheme(_ThemeConfig):
         with open(filename, 'w') as f:
             json.dump(self.to_dict(), f)
 
+    @property
+    def use_ipyvtk(self):  # pragma: no cover
+        """Set or return the usage of "ipyvtk" as a jupyter backend.
+
+        Deprecated in favor of ``jupyter_backend``.
+        """
+        warnings.warn('use_ipyvtk is deprecated.  Please use '
+                      '``pyvista.global_theme.jupyter_backend``', DeprecationWarning)
+        return self.jupyter_backend == 'ipyvtklink'
+
+    @use_ipyvtk.setter
+    def use_ipyvtk(self, value):  # pragma: no cover
+        warnings.warn('use_ipyvtk is deprecated.  Please use '
+                      '``pyvista.global_theme.jupyter_backend``', DeprecationWarning)
+
+        if value:
+            self.jupyter_backend = 'ipyvtklink'
+        else:
+            self.jupyter_backend = 'static'
+
 
 class DarkTheme(DefaultTheme):
     """Dark mode theme.
