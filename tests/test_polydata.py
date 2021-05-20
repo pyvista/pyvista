@@ -231,11 +231,10 @@ def test_ray_trace_plot():
     assert np.any(ind)
 
 
-def test_multi_ray_trace():
+def test_multi_ray_trace(sphere):
     pytest.importorskip('rtree')
     pytest.importorskip('pyembree')
     pytest.importorskip('trimesh')
-    sphere = SPHERE.copy()
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 1]]
     directions = [[0, 0, -1]] * 4
     points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
