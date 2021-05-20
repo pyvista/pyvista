@@ -22,11 +22,6 @@ CUBE_DENSE = pyvista.Cube()
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
-try:
-    CONDA_ENV = os.environ['CONDA_ALWAYS_YES'] == "1"
-except KeyError:
-    CONDA_ENV = False
-
 
 def is_binary(filename):
     """Return ``True`` when a file is binary"""
@@ -236,7 +231,6 @@ def test_ray_trace_plot():
     assert np.any(ind)
 
 
-@pytest.mark.skipif(not CONDA_ENV, reason="Requires libspatialindex dependency only installable via conda")
 def test_multi_ray_trace():
     pytest.importorskip('rtree')
     pytest.importorskip('pyembree')
