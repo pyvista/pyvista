@@ -19,7 +19,8 @@ DATASETS = [
     examples.load_hexbeam(),  # UnstructuredGrid
     examples.load_airplane(),  # PolyData
     examples.load_structured(),  # StructuredGrid
-]
+    ]
+
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
 COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
@@ -29,6 +30,17 @@ skip_py2_nobind = pytest.mark.skipif(int(sys.version[0]) < 3,
 
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
+
+
+@pytest.fixture()
+def datasets():
+    return [
+    examples.load_uniform(),  # UniformGrid
+    examples.load_rectilinear(),  # RectilinearGrid
+    examples.load_hexbeam(),  # UnstructuredGrid
+    examples.load_airplane(),  # PolyData
+    examples.load_structured(),  # StructuredGrid
+    ]
 
 
 @pytest.fixture()
@@ -51,9 +63,9 @@ def test_datasetfilters_init():
 
 
 @skip_windows
-def test_clip_filter():
+def test_clip_filter(datasets):
     """This tests the clip filter on all datatypes available filters"""
-    for i, dataset in enumerate(DATASETS):
+    for i, dataset in enumerate(datasets):
         clp = dataset.clip(normal=normals[i], invert=True)
         assert clp is not None
         if isinstance(dataset, pyvista.PolyData):
@@ -62,7 +74,7 @@ def test_clip_filter():
             assert isinstance(clp, pyvista.UnstructuredGrid)
 
     # clip with get_clipped=True
-    for i, dataset in enumerate(DATASETS):
+    for i, dataset in enumerate(datasets):
         clp1, clp2 = dataset.clip(normal=normals[i], invert=True, return_clipped=True)
         for clp in (clp1, clp2):
             if isinstance(dataset, pyvista.PolyData):
@@ -72,9 +84,9 @@ def test_clip_filter():
 
 @skip_windows
 @skip_mac
-def test_clip_by_scalars_filter():
+def test_clip_by_scalars_filter(datasets):
     """This tests the clip filter on all datatypes available filters"""
-    for i, dataset_in in enumerate(DATASETS):
+    for i, dataset_in in enumerate(datasets):
         dataset = dataset_in.copy()  # don't modify in-place
         if dataset.active_scalars_info.name is None:
             dataset['scalars'] = np.arange(dataset.n_points)
@@ -97,8 +109,8 @@ def test_clip_filter_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
-def test_clip_box():
-    for i, dataset in enumerate(DATASETS):
+def test_clip_box(datasets):
+    for i, dataset in enumerate(datasets):
         clp = dataset.clip_box(invert=True)
         assert clp is not None
         assert isinstance(clp, pyvista.UnstructuredGrid)
@@ -169,9 +181,9 @@ def test_implicit_distance():
     assert "implicit_distance" in dataset.point_arrays
 
 
-def test_slice_filter():
+def test_slice_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
-    for i, dataset in enumerate(DATASETS):
+    for i, dataset in enumerate(datasets):
         slc = dataset.slice(normal=normals[i])
         assert slc is not None
         assert isinstance(slc, pyvista.PolyData)
@@ -190,10 +202,10 @@ def test_slice_filter_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
-def test_slice_orthogonal_filter():
+def test_slice_orthogonal_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
 
-    for i, dataset in enumerate(DATASETS):
+    for i, dataset in enumerate(datasets):
         slices = dataset.slice_orthogonal()
         assert slices is not None
         assert isinstance(slices, pyvista.MultiBlock)
@@ -209,11 +221,11 @@ def test_slice_orthogonal_filter_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
-def test_slice_along_axis():
+def test_slice_along_axis(datasets):
     """Test the many slices along axis filter """
     axii = ['x', 'y', 'z', 'y', 0]
     ns = [2, 3, 4, 10, 20, 13]
-    for i, dataset in enumerate(DATASETS):
+    for i, dataset in enumerate(datasets):
         slices = dataset.slice_along_axis(n=ns[i], axis=axii[i])
         assert slices is not None
         assert isinstance(slices, pyvista.MultiBlock)
@@ -232,8 +244,8 @@ def test_slice_along_axis_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
-def test_threshold():
-    for i, dataset in enumerate(DATASETS[0:3]):
+def test_threshold(datasets):
+    for i, dataset in enumerate(datasets[0:3]):
         thresh = dataset.threshold()
         assert thresh is not None
         assert isinstance(thresh, pyvista.UnstructuredGrid)
@@ -253,7 +265,7 @@ def test_threshold():
         dataset.threshold({100, 500})
     # Now test DATASETS without arrays
     with pytest.raises(ValueError):
-        for i, dataset in enumerate(DATASETS[3:-1]):
+        for i, dataset in enumerate(datasets[3:-1]):
             thresh = dataset.threshold()
             assert thresh is not None
             assert isinstance(thresh, pyvista.UnstructuredGrid)
@@ -261,14 +273,14 @@ def test_threshold():
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300])
     with pytest.raises(ValueError):
-        DATASETS[0].threshold([10, 500], scalars='Spatial Point Data',
+        datasets[0].threshold([10, 500], scalars='Spatial Point Data',
                               all_scalars=True)
 
-def test_threshold_percent():
+def test_threshold_percent(datasets):
     percents = [25, 50, [18.0, 85.0], [19.0, 80.0], 0.70]
     inverts = [False, True, False, True, False]
     # Only test data sets that have arrays
-    for i, dataset in enumerate(DATASETS[0:3]):
+    for i, dataset in enumerate(datasets[0:3]):
         thresh = dataset.threshold_percent(percent=percents[i], invert=inverts[i])
         assert thresh is not None
         assert isinstance(thresh, pyvista.UnstructuredGrid)
@@ -283,8 +295,8 @@ def test_threshold_percent():
         dataset.threshold_percent({18.0, 85.0})
 
 
-def test_outline():
-    for i, dataset in enumerate(DATASETS):
+def test_outline(datasets):
+    for i, dataset in enumerate(datasets):
         outline = dataset.outline()
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
@@ -303,8 +315,8 @@ def test_outline_composite():
         assert output.n_blocks == COMPOSITE.n_blocks
 
 
-def test_outline_corners():
-    for i, dataset in enumerate(DATASETS):
+def test_outline_corners(datasets):
+    for i, dataset in enumerate(datasets):
         outline = dataset.outline_corners()
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
@@ -319,8 +331,8 @@ def test_outline_corners_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
-def test_extract_geometry():
-    for i, dataset in enumerate(DATASETS):
+def test_extract_geometry(datasets):
+    for i, dataset in enumerate(datasets):
         outline = dataset.extract_geometry()
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
@@ -329,8 +341,8 @@ def test_extract_geometry():
     assert isinstance(output, pyvista.PolyData)
 
 
-def test_wireframe():
-    for i, dataset in enumerate(DATASETS):
+def test_wireframe(datasets):
+    for i, dataset in enumerate(datasets):
         wire = dataset.extract_all_edges()
         assert wire is not None
         assert isinstance(wire, pyvista.PolyData)
@@ -343,8 +355,8 @@ def test_wireframe_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
-def test_delaunay_2d():
-    mesh = DATASETS[2].delaunay_2d()  # UnstructuredGrid
+def test_delaunay_2d(datasets):
+    mesh = datasets[2].delaunay_2d()  # UnstructuredGrid
     assert isinstance(mesh, pyvista.PolyData)
     assert mesh.n_points
 
@@ -449,8 +461,8 @@ def test_texture_map_to_sphere():
     assert 'Texture Coordinates' in dataset.array_names
 
 
-def test_compute_cell_sizes():
-    for i, dataset in enumerate(DATASETS):
+def test_compute_cell_sizes(datasets):
+    for i, dataset in enumerate(datasets):
         result = dataset.compute_cell_sizes()
         assert result is not None
         assert isinstance(result, type(dataset))
@@ -469,8 +481,8 @@ def test_compute_cell_sizes_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
-def test_cell_centers():
-    for i, dataset in enumerate(DATASETS):
+def test_cell_centers(datasets):
+    for i, dataset in enumerate(datasets):
         result = dataset.cell_centers()
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
@@ -483,8 +495,8 @@ def test_cell_centers_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
-def test_glyph():
-    for i, dataset in enumerate(DATASETS):
+def test_glyph(datasets):
+    for i, dataset in enumerate(datasets):
         dataset.vectors = np.ones_like(dataset.points)
         result = dataset.glyph()
         assert result is not None
