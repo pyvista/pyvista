@@ -1144,8 +1144,7 @@ class DataSetFilters:
               indices=None, tolerance=None, absolute=False, clamping=False,
               rng=None, progress_bar=False):
         """
-        Copy a geometric representation (called a glyph) to every point or cell center
-        in the input dataset.
+        Copy a geometric representation (called a glyph) to the input dataset.
 
         The glyph may be oriented along the input vectors, and it may
         be scaled according to scalar data or vector
