@@ -1143,22 +1143,27 @@ class DataSetFilters:
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
               indices=None, tolerance=None, absolute=False, clamping=False,
               rng=None, progress_bar=False):
-        """Copy a geometric representation (called a glyph) to every point in the input dataset.
+        """
+        Copy a geometric representation (called a glyph) to every point or cell center
+        in the input dataset.
 
         The glyph may be oriented along the input vectors, and it may
         be scaled according to scalar data or vector
         magnitude. Passing a table of glyphs to choose from based on
-        scalars or vector magnitudes is also supported.
+        scalars or vector magnitudes is also supported.  Orient and scale must 
+        be either both point data or both cell data.
 
         Parameters
         ----------
-        orient : bool
-            Use the active vectors array to orient the glyphs
+        orient : bool or str, optional
+            If ``True``, use the active vectors array to orient the glyphs.
+            If string, the vector array to use to orient the glyphs.
 
-        scale : bool
-            Use the active scalars to scale the glyphs
+        scale : bool or str, optional
+            If ``True``, use the active scalars to scale the glyphs.
+            If string, the  scalar array to use to scale the glyphs.
 
-        factor : float
+        factor : float, optional
             Scale factor applied to scaling array
 
         geom : vtk.vtkDataSet or tuple(vtk.vtkDataSet), optional
@@ -1195,6 +1200,10 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        glyphs : pyvista.PolyData
+            Glyphs at either the cell centers or points.
         """
         # Clean the points before glyphing
         if tolerance is not None:
@@ -1253,10 +1262,23 @@ class DataSetFilters:
         if isinstance(orient, str):
             dataset.active_vectors_name = orient
             orient = True
+        if scale and orient:
+            if (dataset.active_vectors_info.association == FieldAssociation.CELL
+                and dataset.active_scalars_info.association == FieldAssociation.CELL
+            ):
+                source_data = dataset.cell_centers()
+            elif(dataset.active_vectors_info.association == FieldAssociation.POINT
+                and dataset.active_scalars_info.association == FieldAssociation.POINT
+            ):
+                source_data = dataset
+            else:
+                raise ValueError("Both scale and orient must use point data or cell data")
+        else:
+            source_data = dataset
         if rng is not None:
             alg.SetRange(rng)
         alg.SetOrient(orient)
-        alg.SetInputData(dataset)
+        alg.SetInputData(source_data)
         alg.SetVectorModeToUseVector()
         alg.SetScaleFactor(factor)
         alg.SetClamping(clamping)

@@ -485,6 +485,7 @@ def test_cell_centers_composite():
 
 def test_glyph():
     for i, dataset in enumerate(DATASETS):
+        dataset.vectors = np.ones_like(dataset.points)
         result = dataset.glyph()
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
@@ -497,25 +498,25 @@ def test_glyph():
                         np.cos(sphere.points[:, 2]))).T
     # add and scale
     sphere.vectors = vectors*0.3
-    sphere.point_arrays['foo'] = np.random.rand(sphere.n_points)
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
-    result = sphere.glyph(scale=False)
-    result = sphere.glyph(scale='arr')
-    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
-    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
-    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
+
+    assert sphere.glyph(scale=False)
+    assert sphere.glyph(scale='arr')
+    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1)
+    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
+    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
                           clamping=False, rng=[1, 1])
     # passing one or more custom glyphs; many cases for full coverage
     geoms = [pyvista.Sphere(theta_resolution=5, phi_resolution=5),
              pyvista.Arrow(tip_resolution=5, shaft_resolution=5),
              pyvista.ParametricSuperToroid(u_res=10, v_res=10, w_res=10)]
     indices = range(len(geoms))
-    result = sphere.glyph(geom=geoms[0])
-    result = sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)))
-    result = sphere.glyph(geom=geoms)
-    result = sphere.glyph(geom=geoms, scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
-    result = sphere.glyph(geom=geoms[:1], indices=[None])
-    result = sphere_sans_arrays.glyph(geom=geoms)
+    assert sphere.glyph(geom=geoms[0])
+    assert sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)))
+    assert sphere.glyph(geom=geoms)
+    assert sphere.glyph(geom=geoms, scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
+    assert sphere.glyph(geom=geoms[:1], indices=[None])
+    assert sphere_sans_arrays.glyph(geom=geoms)
     with pytest.raises(TypeError):
         # wrong type for the glyph
         sphere.glyph(geom=pyvista.StructuredGrid())
@@ -526,6 +527,33 @@ def test_glyph():
         # wrong length for the indices
         sphere.glyph(geom=geoms, indices=indices[:-1])
 
+
+def test_glyph_cell_point_data():
+
+    sphere = pyvista.Sphere(radius=3.14, theta_resolution=5, phi_resolution=5)
+    # make cool swirly pattern
+    vectors = np.vstack((np.sin(sphere.points[:, 0]),
+                        np.cos(sphere.points[:, 1]),
+                        np.cos(sphere.points[:, 2]))).T
+
+    sphere_center_points = sphere.cell_centers()
+    vectors_centers = np.vstack((np.sin(sphere_center_points.points[:, 0]),
+                        np.cos(sphere_center_points.points[:, 1]),
+                        np.cos(sphere_center_points.points[:, 2]))).T
+
+    sphere_center = sphere.copy()
+    sphere_center["vectors_cell"] = vectors_centers*0.3
+    sphere_center["vectors_points"] = vectors*0.3
+    sphere_center['arr_cell'] = np.ones(sphere.n_cells)
+    sphere_center['arr_points'] = np.ones(sphere.n_points)
+
+    
+    assert sphere_center.glyph(orient="vectors_cell", scale = "arr_cell")
+    assert sphere_center.glyph(orient="vectors_points", scale = "arr_points")
+    with pytest.raises(ValueError):
+        sphere_center.glyph(orient="vectors_cell",scale = 'arr_cell')
+        sphere_center.glyph(orient="vectors_cell",scale = "arr_points")
+        sphere_center.glyph(orient="vectors_points", scale="arr_cell")
 
 def test_split_and_connectivity():
     # Load a simple example mesh
