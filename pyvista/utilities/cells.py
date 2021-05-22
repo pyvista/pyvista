@@ -1,11 +1,41 @@
 """pyvista wrapping of vtkCellArray."""
-import numpy as np
-from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
-from vtk import vtkCellArray
-import vtk
 
+import sys
+from collections import deque
+from itertools import islice, count
+
+import numpy as np
+
+from pyvista import _vtk
 import pyvista
-VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
+
+
+def ncells_from_cells_py36(cells):  # pragma: no cover
+    """Get the number of cells from a VTK cell connectivity array.
+
+    Works on all Python>=3.5
+    """
+    c = 0
+    n_cells = 0
+    while c < cells.size:
+        c += cells[c] + 1
+        n_cells += 1
+    return n_cells
+
+
+def ncells_from_cells(cells):
+    """Get the number of cells from a VTK cell connectivity array.
+
+    Works on Python>=3.7
+    """
+    consumer = deque(maxlen=0)
+    it = cells.flat
+    for n_cells in count():
+        skip = next(it, None)
+        if skip is None:
+            break
+        consumer.extend(islice(it, skip))
+    return n_cells
 
 
 def numpy_to_idarr(ind, deep=False, return_ind=False):
@@ -24,13 +54,13 @@ def numpy_to_idarr(ind, deep=False, return_ind=False):
         ind = np.ascontiguousarray(ind, dtype=pyvista.ID_TYPE)
 
     # must ravel or segfault when saving MultiBlock
-    vtk_idarr = numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
+    vtk_idarr = _vtk.numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
     if return_ind:
         return vtk_idarr, ind
     return vtk_idarr
 
 
-class CellArray(vtkCellArray):
+class CellArray(_vtk.vtkCellArray):
     """pyvista wrapping of vtkCellArray.
 
     Provides convenience functions to simplify creating a CellArray from
@@ -57,14 +87,17 @@ class CellArray(vtkCellArray):
 
     def _set_cells(self, cells, n_cells, deep):
         vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
-        # get number of cells if none
+
+        # Get number of cells if None.  This is quite a performance
+        # bottleneck and we can consider adding a warning.  Good
+        # candidate for Cython or JIT compilation
         if n_cells is None:
             if cells.ndim == 1:
-                c = 0
-                n_cells = 0
-                while c < cells.size:
-                    c += cells[c] + 1
-                    n_cells += 1
+                if sys.version_info.minor > 6:
+                    n_cells = ncells_from_cells(cells)
+                else:  # pragma: no cover
+                    # About 20% slower
+                    n_cells = ncells_from_cells_py36(cells)
             else:
                 n_cells = cells.shape[0]
 
@@ -73,7 +106,7 @@ class CellArray(vtkCellArray):
     @property
     def cells(self):
         """Return a numpy array of the cells."""
-        return vtk_to_numpy(self.GetData()).ravel()
+        return _vtk.vtk_to_numpy(self.GetData()).ravel()
 
     @property
     def n_cells(self):
@@ -97,8 +130,8 @@ def generate_cell_offsets_loop(cells, cell_types):
     cell_types : np.ndarray (int)
         The types of the cell arrays given to the function
 
-    Return
-    ------
+    Returns
+    -------
     offset : np.ndarray (int)
         Array of VTK offsets
 
@@ -141,8 +174,8 @@ def generate_cell_offsets(cells, cell_types):
     cell_types : np.ndarray (int)
         The types of the cell arrays given to the function
 
-    Return
-    ------
+    Returns
+    -------
     offset : np.ndarray (int)
         Array of VTK offsets
 
@@ -218,8 +251,11 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     --------
     Create the cell arrays containing two triangles.
 
+    This will generate cell arrays to generate a mesh with two
+    disconnected triangles from 6 points.
+
+    >>> import vtk
     >>> from pyvista.utilities.cells import create_mixed_cells
-    >>> #Will generate cell arrays two generate a mesh with two disconnected triangles from 6 points
     >>> cell_arrays = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
     >>> #VTK versions < 9.0: cell_types, cell_arr, cell_offsets = cell_arrays
     >>> #VTK versions >= 9.0: cell_types, cell_arr = cell_arrays
@@ -257,17 +293,17 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(np.concatenate([np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1).reshape([-1]))
 
-        if not VTK9:
+        if not _vtk.VTK9:
             final_cell_offsets.append(current_cell_offset + (nr_points_per_elem+1) * (np.arange(nr_elems)+1))
             current_cell_offset += final_cell_offsets[-1][-1]
 
     final_cell_types = np.concatenate(final_cell_types)
     final_cell_arr = np.concatenate(final_cell_arr)
 
-    if not VTK9:
+    if not _vtk.VTK9:
         final_cell_offsets = np.concatenate(final_cell_offsets)[:-1]
 
-    if not VTK9:
+    if not _vtk.VTK9:
         return final_cell_types, final_cell_arr, final_cell_offsets
     else:
         return final_cell_types, final_cell_arr

@@ -2,7 +2,12 @@
 Create a MP4 Movie
 ~~~~~~~~~~~~~~~~~~
 
-Create an animated MP4 movie of a rendering scene
+Create an animated MP4 movie of a rendering scene.
+
+.. Note::
+    This movie will appear static since MP4 movies will not be
+    rendered on a sphinx gallery example.
+
 """
 
 
@@ -23,10 +28,7 @@ plotter.add_mesh(mesh, scalars="data", clim=[0, 1])
 # Add outline for shrinking reference
 plotter.add_mesh(mesh.outline_corners())
 
-print('Orient the view, then press "q" to close window and produce movie')
-
-# Render and do NOT close
-plotter.show(auto_close=False)
+plotter.show(auto_close=False)  # only necessary for an off-screen movie
 
 # Run through each frame
 plotter.write_frame()  # write initial data
@@ -37,11 +39,8 @@ for i in range(100):
     mesh.points = random_points * 0.01 + mesh.points * 0.99
     mesh.points -= mesh.points.mean(0)
     mesh.cell_arrays["data"] = np.random.random(mesh.n_cells)
-    plotter.add_text("Iteration: {:d}".format(i), name='time-label')
+    plotter.add_text(f"Iteration: {i}", name='time-label')
     plotter.write_frame()  # Write this frame
 
 # Be sure to close the plotter when finished
 plotter.close()
-
-###############################################################################
-# .. figure:: ../../images/auto-generated/sphere-shrinking.mp4

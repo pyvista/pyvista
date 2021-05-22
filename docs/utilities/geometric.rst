@@ -18,3 +18,7 @@ functions create, check out the example: :ref:`ref_geometric_example`.
 .. autofunction:: pyvista.Disc
 .. autofunction:: pyvista.Text3D
 .. autofunction:: pyvista.Spline
+.. autofunction:: pyvista.Wavelet
+.. autofunction:: pyvista.CircularArc
+.. autofunction:: pyvista.CircularArcFromNormal
+.. autofunction:: pyvista.Pyramid

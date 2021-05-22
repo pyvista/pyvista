@@ -2,7 +2,8 @@
 Render a depth image
 ~~~~~~~~~~~~~~~~~~~~
 
-Plot a depth image as viewed from a camera overlooking the "hills" example mesh.
+Plot a depth image as viewed from a camera overlooking the "hills"
+example mesh.
 """
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
@@ -15,6 +16,7 @@ mesh = examples.load_random_hills()
 # Establish geometry within a pv.Plotter()
 p = pv.Plotter()
 p.add_mesh(mesh, color=True)
+p.store_image = True  # permit image caching after plotter is closed
 p.show()
 
 ###############################################################################

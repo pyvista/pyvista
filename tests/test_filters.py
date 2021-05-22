@@ -1,12 +1,17 @@
 import os
 import sys
 import platform
+import itertools
 
 import numpy as np
 import pytest
+from vtk import VTK_QUADRATIC_HEXAHEDRON
 
+from pyvista._vtk import VTK9
 import pyvista
 from pyvista import examples
+from pyvista.core.errors import VTKVersionError
+
 
 DATASETS = [
     examples.load_uniform(),  # UniformGrid
@@ -24,6 +29,11 @@ skip_py2_nobind = pytest.mark.skipif(int(sys.version[0]) < 3,
 
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
+
+
+@pytest.fixture()
+def grid():
+    return pyvista.UnstructuredGrid(examples.hexbeamfile)
 
 
 @pytest.fixture(scope='module')
@@ -479,7 +489,7 @@ def test_glyph():
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
-    sphere = pyvista.Sphere(radius=3.14)
+    sphere = pyvista.Sphere(radius=3.14, theta_resolution=5, phi_resolution=5)
     sphere_sans_arrays = sphere.copy()
     # make cool swirly pattern
     vectors = np.vstack((np.sin(sphere.points[:, 0]),
@@ -496,7 +506,9 @@ def test_glyph():
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
                           clamping=False, rng=[1, 1])
     # passing one or more custom glyphs; many cases for full coverage
-    geoms = [pyvista.Sphere(), pyvista.Arrow(), pyvista.ParametricSuperToroid()]
+    geoms = [pyvista.Sphere(theta_resolution=5, phi_resolution=5),
+             pyvista.Arrow(tip_resolution=5, shaft_resolution=5),
+             pyvista.ParametricSuperToroid(u_res=10, v_res=10, w_res=10)]
     indices = range(len(geoms))
     result = sphere.glyph(geom=geoms[0])
     result = sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)))
@@ -688,18 +700,26 @@ def test_streamlines_type(uniform_vec, integrator_type):
 
 
 @pytest.mark.parametrize('interpolator_type', ['point', 'cell'])
-def test_streamlines(uniform_vec, interpolator_type):
+def test_streamlines_cell_point(uniform_vec, interpolator_type):
     stream = uniform_vec.streamlines('vectors',
                                      interpolator_type=interpolator_type)
     assert all([stream.n_points, stream.n_cells])
 
 
-def test_streamlines(uniform_vec):
+def test_streamlines_return_source(uniform_vec):
     stream, src = uniform_vec.streamlines('vectors', return_source=True,
                                           pointa=(0.0, 0.0, 0.0),
                                           pointb=(1.1, 1.1, 0.1))
+    assert isinstance(src, pyvista.DataSet)
     assert all([stream.n_points, stream.n_cells, src.n_points])
 
+
+def test_streamlines_start_position(uniform_vec):
+    stream = uniform_vec.streamlines('vectors', start_position=(0.5, 0.0, 0.0))
+
+    assert all([stream.n_points, stream.n_cells])
+
+def test_streamlines_errors(uniform_vec):
     with pytest.raises(ValueError):
         uniform_vec.streamlines('vectors', integration_direction='not valid')
 
@@ -711,6 +731,22 @@ def test_streamlines(uniform_vec):
 
     with pytest.raises(ValueError):
         uniform_vec.streamlines('vectors', step_unit='not valid')
+
+    with pytest.raises(ValueError):
+        uniform_vec.streamlines('vectors', pointa=(0, 0, 0))
+    with pytest.raises(ValueError):
+        uniform_vec.streamlines('vectors', pointb=(0, 0, 0))
+
+
+def test_streamlines_from_source(uniform_vec):
+    vertices = np.array([[0, 0, 0], [0.5, 0, 0], [0.5, 0.5, 0], [0, 0.5, 0]])
+    source = pyvista.PolyData(vertices)
+    stream = uniform_vec.streamlines_from_source(source, 'vectors')
+    assert all([stream.n_points, stream.n_cells])
+
+    source = pyvista.UniformGrid([5, 5, 5], [0.1, 0.1, 0.1], [0, 0, 0])
+    stream = uniform_vec.streamlines_from_source(source, 'vectors')
+    assert all([stream.n_points, stream.n_cells])
 
 
 def test_sample_over_line():
@@ -724,7 +760,7 @@ def test_sample_over_line():
 
     expected_result = np.array([0.5, 1, 1.5])
     assert np.allclose(sampled_line[name], expected_result)
-    assert name in line.array_names # is name in sampled result
+    assert name in sampled_line.array_names # is name in sampled result
 
     # test no resolution
     sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
@@ -734,9 +770,11 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-def test_plot_over_line():
+def test_plot_over_line(tmpdir):
     """this requires matplotlib"""
     pytest.importorskip('matplotlib')
+    tmp_dir = tmpdir.mkdir("tmpdir")
+    filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
     # Make two points to construct the line between
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
@@ -745,14 +783,144 @@ def test_plot_over_line():
     # Test multicomponent
     mesh['foo'] = np.random.rand(mesh.n_cells, 3)
     mesh.plot_over_line(a, b, resolution=None, scalars='foo',
-                        title='My Stuff', ylabel='3 Values', show=False)
+                        title='My Stuff', ylabel='3 Values', show=False, fname=filename)
+    assert os.path.isfile(filename)
+    # Should fail if scalar name does not exist
+    with pytest.raises(KeyError):
+        mesh.plot_over_line(a, b, resolution=None, scalars='invalid_array_name',
+                            title='My Stuff', ylabel='3 Values', show=False)
+
+
+def test_sample_over_circular_arc():
+    """Test that we get a circular arc."""
+
+    name = 'values'
+
+    uniform = examples.load_uniform()
+    uniform[name] = uniform.points[:, 2]
+
+    xmin = uniform.bounds[0]
+    xmax = uniform.bounds[1]
+    ymin = uniform.bounds[2]
+    zmin = uniform.bounds[4]
+    zmax = uniform.bounds[5]
+    pointa = [xmin, ymin, zmax]
+    pointb = [xmax, ymin, zmin]
+    center = [xmin, ymin, zmin]
+    sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center, 2)
+
+    expected_result = zmin+(zmax-zmin)*np.sin([np.pi/2.0, np.pi/4.0, 0.0])
+    assert np.allclose(sampled_arc[name], expected_result)
+    assert name in sampled_arc.array_names # is name in sampled result
+
+    # test no resolution
+    sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+    sampled_from_sphere = sphere.sample_over_circular_arc([3, 1, 1], [-3, -1, -1], [0, 0, 0])
+    assert sampled_from_sphere.n_points == sphere.n_cells + 1
+
+    # is sampled result a polydata object
+    assert isinstance(sampled_from_sphere, pyvista.PolyData)
+
+
+def test_sample_over_circular_arc_normal():
+    """Test that we get a circular arc_normal."""
+
+    name = 'values'
+
+    uniform = examples.load_uniform()
+    uniform[name] = uniform.points[:, 2]
+
+    xmin = uniform.bounds[0]
+    ymin = uniform.bounds[2]
+    ymax = uniform.bounds[3]
+    zmin = uniform.bounds[4]
+    zmax = uniform.bounds[5]
+    normal = [xmin, ymax, zmin]
+    polar = [xmin, ymin, zmax]
+    angle = 90.0*np.random.rand()
+    resolution = np.random.randint(10000)
+    center = [xmin, ymin, zmin]
+    sampled_arc_normal = uniform.sample_over_circular_arc_normal(center, resolution=resolution, normal=normal, polar=polar, angle=angle)
+    angles = np.linspace(np.pi/2.0, np.pi/2.0-np.deg2rad(angle), resolution+1)
+
+    expected_result = zmin+(zmax-zmin)*np.sin(angles)
+    assert np.allclose(sampled_arc_normal[name], expected_result)
+    assert name in sampled_arc_normal.array_names # is name in sampled result
+
+    # test no resolution
+    sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+    sampled_from_sphere = sphere.sample_over_circular_arc_normal([0, 0, 0], polar=[3, 1, 1], angle=180)
+    assert sampled_from_sphere.n_points == sphere.n_cells + 1
+
+    # is sampled result a polydata object
+    assert isinstance(sampled_from_sphere, pyvista.PolyData)
+
+
+def test_plot_over_circular_arc(tmpdir):
+    """this requires matplotlib"""
+
+    pytest.importorskip('matplotlib')
+    mesh = examples.load_uniform()
+    tmp_dir = tmpdir.mkdir("tmpdir")
+    filename = str(tmp_dir.join('tmp.png'))
+
+    # Make two points and center to construct the circular arc between
+    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
+    b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
+    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False, fname=filename)
+    assert os.path.isfile(filename)
+
+    # Test multicomponent
+    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh.plot_over_circular_arc(a, b, center, resolution=None, scalars='foo',
+                                title='My Stuff', ylabel='3 Values', show=False)
+
+    # Should fail if scalar name does not exist
+    with pytest.raises(KeyError):
+        mesh.plot_over_circular_arc(a, b, center, resolution=None,
+                                    scalars='invalid_array_name',
+                                    title='My Stuff', ylabel='3 Values',
+                                    show=False)
+
+
+def test_plot_over_circular_arc_normal(tmpdir):
+    """this requires matplotlib"""
+
+    pytest.importorskip('matplotlib')
+    mesh = examples.load_uniform()
+    tmp_dir = tmpdir.mkdir("tmpdir")
+    filename = str(tmp_dir.join('tmp.png'))
+
+    # Make center and normal/polar vector to construct the circular arc between
+    normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
+    polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
+    angle = 90
+    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle, show=False, fname=filename)
+    assert os.path.isfile(filename)
+
+    # Test multicomponent
+    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh.plot_over_circular_arc_normal(center, polar=polar,
+                                       angle=angle, resolution=None,
+                                       scalars='foo', title='My Stuff',
+                                       ylabel='3 Values', show=False)
+
+    # Should fail if scalar name does not exist
+    with pytest.raises(KeyError):
+        mesh.plot_over_circular_arc_normal(center, polar=polar,
+                                           angle=angle, resolution=None,
+                                           scalars='invalid_array_name',
+                                           title='My Stuff', ylabel='3 Values',
+                                           show=False)
 
 
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
     x = y = z = np.linspace(model.bounds[0], model.bounds[1], num=n)
-    points = np.c_[x,y,z]
+    points = np.c_[x, y, z]
     spline = pyvista.Spline(points, n)
     slc = model.slice_along_line(spline)
     assert slc.n_points > 0
@@ -863,10 +1031,59 @@ def test_decimate_boundary():
     assert boundary.n_points
 
 
+def test_extract_surface():
+    # create a single quadratic hexahedral cell
+    lin_pts = np.array([[-1, -1, -1], # node 0
+                        [ 1, -1, -1], # node 1
+                        [ 1,  1, -1], # node 2
+                        [-1,  1, -1], # node 3
+                        [-1, -1,  1], # node 4
+                        [ 1, -1,  1], # node 5
+                        [ 1,  1,  1], # node 6
+                        [-1,  1,  1]], np.double) # node 7
+
+    quad_pts = np.array([
+        (lin_pts[1] + lin_pts[0])/2,  # between point 0 and 1
+        (lin_pts[1] + lin_pts[2])/2,  # between point 1 and 2
+        (lin_pts[2] + lin_pts[3])/2,  # and so on...
+        (lin_pts[3] + lin_pts[0])/2,
+        (lin_pts[4] + lin_pts[5])/2,
+        (lin_pts[5] + lin_pts[6])/2,
+        (lin_pts[6] + lin_pts[7])/2,
+        (lin_pts[7] + lin_pts[4])/2,
+        (lin_pts[0] + lin_pts[4])/2,
+        (lin_pts[1] + lin_pts[5])/2,
+        (lin_pts[2] + lin_pts[6])/2,
+        (lin_pts[3] + lin_pts[7])/2])
+
+    # introduce a minor variation to the location of the mid-side points
+    quad_pts += np.random.random(quad_pts.shape)*0.25
+    pts = np.vstack((lin_pts, quad_pts))
+
+    cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
+    celltypes = np.array([VTK_QUADRATIC_HEXAHEDRON])
+    if pyvista._vtk.VTK9:
+        grid = pyvista.UnstructuredGrid(cells, celltypes, pts)
+    else:
+        grid = pyvista.UnstructuredGrid(np.array([0]), cells, celltypes, pts)
+
+    # expect each face to be divided 6 times since it has a midside node
+    surf = grid.extract_surface()
+    assert surf.n_faces == 36
+
+    # expect each face to be divided several more times than the linear extraction
+    surf_subdivided = grid.extract_surface(nonlinear_subdivision=5)
+    assert surf_subdivided.n_faces > surf.n_faces
+
+    # No subdivision, expect one face per cell
+    surf_no_subdivide = grid.extract_surface(nonlinear_subdivision=0)
+    assert surf_no_subdivide.n_faces == 6
+
+
 def test_merge_general():
     mesh = examples.load_uniform()
-    thresh = mesh.threshold_percent([0.2, 0.5]) # unstructured grid
-    con = mesh.contour() # poly data
+    thresh = mesh.threshold_percent([0.2, 0.5])  # unstructured grid
+    con = mesh.contour()  # poly data
     merged = thresh + con
     assert isinstance(merged, pyvista.UnstructuredGrid)
     merged = con + thresh
@@ -952,18 +1169,113 @@ def test_compute_derivatives():
     with pytest.raises(TypeError):
         derv = mesh.compute_derivative()
 
+
 def test_extract_subset():
     volume = examples.load_uniform()
-    voi = volume.extract_subset([0,3,1,4,5,7])
+    voi = volume.extract_subset([0, 3, 1, 4, 5, 7])
     assert isinstance(voi, pyvista.UniformGrid)
     # Test that we fix the confusing issue from extents in
     #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
     assert voi.origin == voi.bounds[::2]
 
 
+def test_extract_subset_structured():
+    structured = examples.load_structured()
+    voi = structured.extract_subset([0, 3, 1, 4, 0, 1])
+    assert isinstance(voi, pyvista.StructuredGrid)
+    assert voi.dimensions == [4, 4, 1]
+
+
+@pytest.fixture
+def structured_grids_split_coincident():
+    """Two structured grids which are coincident along second axis (axis=1), and
+    the grid from which they were extracted."""
+    structured = examples.load_structured()
+    point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
+    cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
+    structured.point_arrays['point_data'] = point_data
+    structured.cell_arrays['cell_data'] = cell_data
+    voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1])
+    voi_2 = structured.extract_subset([0, 80, 40, 80, 0, 1])
+    return voi_1, voi_2, structured
+
+
+@pytest.fixture
+def structured_grids_split_disconnected():
+    """Two structured grids which are disconnected."""
+    structured = examples.load_structured()
+    point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
+    cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
+    structured.point_arrays['point_data'] = point_data
+    structured.cell_arrays['cell_data'] = cell_data
+    voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1])
+    voi_2 = structured.extract_subset([0, 80, 45, 80, 0, 1])
+    return voi_1, voi_2
+
+
+def test_concatenate_structured(structured_grids_split_coincident,
+                                structured_grids_split_disconnected):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    joined = voi_1.concatenate(voi_2, axis=1)
+    assert structured.points == pytest.approx(joined.points)
+    assert structured.volume == pytest.approx(joined.volume)
+    assert structured.point_arrays['point_data'] ==\
+           pytest.approx(joined.point_arrays['point_data'])
+    assert structured.cell_arrays['cell_data'] ==\
+           pytest.approx(joined.cell_arrays['cell_data'])
+
+
+def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+
+    # test invalid dimensions
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=0)
+
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=2)
+
+
+def test_concatenate_structured_bad_inputs(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=3)
+
+
+def test_concatenate_structured_bad_point_arrays(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1['point_data'] = voi_1['point_data'] * 2.0
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
+
+
+def test_concatenate_structured_disconnected(structured_grids_split_disconnected):
+    voi_1, voi_2 = structured_grids_split_disconnected
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
+
+
+def test_concatenate_structured_different_arrays(structured_grids_split_coincident):
+    voi_1, voi_2, structured = structured_grids_split_coincident
+    point_data = voi_1.point_arrays.pop('point_data')
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
+
+    voi_1.point_arrays['point_data'] = point_data
+    voi_1.cell_arrays.remove('cell_data')
+    with pytest.raises(RuntimeError):
+        joined = voi_1.concatenate(voi_2, axis=1)
+
+
+def test_structured_add_non_grid():
+    grid = examples.load_structured()
+    merged = grid + examples.load_hexbeam()
+    assert isinstance(merged, pyvista.UnstructuredGrid)
+
+
 def test_poly_data_strip():
     mesh = examples.load_airplane()
-    slc = mesh.slice(normal='z', origin=(0,0,-10))
+    slc = mesh.slice(normal='z', origin=(0, 0, -10))
     stripped = slc.strip()
     assert stripped.n_cells == 1
 
@@ -973,3 +1285,185 @@ def test_shrink():
     shrunk = mesh.shrink(shrink_factor=0.8)
     assert shrunk.n_cells == mesh.n_cells
     assert shrunk.area < mesh.area
+
+
+@pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
+                         itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
+def test_transform_mesh(dataset, num_cell_arrays, num_point_arrays):
+    # rotate about x-axis by 90 degrees
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+
+    for i in range(num_cell_arrays):
+        dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+
+    for i in range(num_point_arrays):
+        dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
+
+    # deactivate any active vectors!
+    # even if transform_all_input_vectors is False, vtkTransformfilter will
+    # transform active vectors
+    dataset.set_active_vectors(None)
+
+    transformed = dataset.transform(tf, transform_all_input_vectors=False, inplace=False)
+
+    assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
+    assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
+    assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
+
+    # ensure that none of the vector data is changed
+    for name, array in dataset.point_arrays.items():
+        assert transformed.point_arrays[name] == pytest.approx(array)
+
+    for name, array in dataset.cell_arrays.items():
+        assert transformed.cell_arrays[name] == pytest.approx(array)
+
+
+@pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
+                         itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
+def test_transform_mesh_and_vectors(dataset, num_cell_arrays, num_point_arrays):
+      # rotate about x-axis by 90 degrees
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+
+    for i in range(num_cell_arrays):
+        dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+
+    for i in range(num_point_arrays):
+        dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
+
+    # handle
+    f = pyvista._vtk.vtkTransformFilter()
+    if not hasattr(f, 'SetTransformAllInputVectors'):
+        with pytest.raises(VTKVersionError):
+            transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
+        return
+
+    transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
+
+    assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
+    assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
+    assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
+
+    for i in range(num_cell_arrays):
+        assert dataset.cell_arrays['C%d' % i][:, 0] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 0])
+        assert dataset.cell_arrays['C%d' % i][:, 2] == pytest.approx(-transformed.cell_arrays['C%d' % i][:, 1])
+        assert dataset.cell_arrays['C%d' % i][:, 1] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 2])
+
+    for i in range(num_point_arrays):
+        assert dataset.point_arrays['P%d' % i][:, 0] == pytest.approx( transformed.point_arrays['P%d' % i][:, 0])
+        assert dataset.point_arrays['P%d' % i][:, 2] == pytest.approx(-transformed.point_arrays['P%d' % i][:, 1])
+        assert dataset.point_arrays['P%d' % i][:, 1] == pytest.approx( transformed.point_arrays['P%d' % i][:, 2])
+
+
+@pytest.mark.parametrize('dataset', [
+    examples.load_uniform(),  # UniformGrid
+    examples.load_rectilinear(),  # RectilinearGrid
+])
+def test_transform_inplace_bad_types(dataset):
+    # assert that transformations of these types throw the correct error
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
+    with pytest.raises(ValueError):
+        dataset.transform(tf, inplace=True)
+
+
+@pytest.mark.parametrize('dataset', DATASETS)
+def test_reflect_mesh_about_point(dataset):
+    x_plane = 500
+    reflected = dataset.reflect((1, 0, 0), point=(x_plane, 0, 0))
+    assert reflected.n_cells == dataset.n_cells
+    assert reflected.n_points == dataset.n_points
+    assert np.allclose(x_plane - dataset.points[:, 0], reflected.points[:, 0] - x_plane)
+    assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
+
+
+@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
+@pytest.mark.parametrize('dataset', DATASETS)
+def test_reflect_mesh_with_vectors(dataset):
+    if hasattr(dataset, 'compute_normals'):
+        dataset.compute_normals(inplace=True)
+
+    # add vector data to cell and point arrays
+    dataset.cell_arrays['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
+                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
+    dataset.point_arrays['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
+                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
+
+    reflected = dataset.reflect((1, 0, 0), transform_all_input_vectors=True, inplace=False)
+
+    # assert isinstance(reflected, type(dataset))
+    assert reflected.n_cells == dataset.n_cells
+    assert reflected.n_points == dataset.n_points
+    assert np.allclose(dataset.points[:, 0], -reflected.points[:, 0])
+    assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
+
+    # assert normals are reflected
+    if hasattr(dataset, 'compute_normals'):
+        assert np.allclose(dataset.cell_arrays['Normals'][:, 0], -reflected.cell_arrays['Normals'][:, 0])
+        assert np.allclose(dataset.cell_arrays['Normals'][:, 1:], reflected.cell_arrays['Normals'][:, 1:])
+        assert np.allclose(dataset.point_arrays['Normals'][:, 0], -reflected.point_arrays['Normals'][:, 0])
+        assert np.allclose(dataset.point_arrays['Normals'][:, 1:], reflected.point_arrays['Normals'][:, 1:])
+
+    # assert other vector fields are reflected
+    assert np.allclose(dataset.cell_arrays['C'][:, 0], -reflected.cell_arrays['C'][:, 0])
+    assert np.allclose(dataset.cell_arrays['C'][:, 1:], reflected.cell_arrays['C'][:, 1:])
+    assert np.allclose(dataset.point_arrays['P'][:, 0], -reflected.point_arrays['P'][:, 0])
+    assert np.allclose(dataset.point_arrays['P'][:, 1:], reflected.point_arrays['P'][:, 1:])
+
+
+@pytest.mark.parametrize('dataset', [
+    examples.load_hexbeam(),  # UnstructuredGrid
+    examples.load_airplane(),  # PolyData
+    examples.load_structured(),  # StructuredGrid
+])
+def test_reflect_inplace(dataset):
+    orig = dataset.copy()
+    dataset.reflect((1, 0, 0), inplace=True)
+    assert dataset.n_cells == orig.n_cells
+    assert dataset.n_points == orig.n_points
+    assert np.allclose(dataset.points[:, 0], -orig.points[:, 0])
+    assert np.allclose(dataset.points[:, 1:], orig.points[:, 1:])
+
+
+@pytest.mark.parametrize('dataset', [
+    examples.load_uniform(),  # UniformGrid
+    examples.load_rectilinear(),  # RectilinearGrid
+])
+def test_transform_inplace_bad_types(dataset):
+    # assert that transformations of these types throw the correct error
+    with pytest.raises(ValueError):
+        dataset.reflect((1, 0, 0), inplace=True)
+
+
+def test_extrude_rotate():
+    resolution = 4
+    line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
+    
+    with pytest.raises(ValueError):
+        line.extrude_rotate(resolution=0)
+
+    poly = line.extrude_rotate(resolution=resolution)
+    assert poly.n_cells == line.n_points - 1
+    assert poly.n_points == (resolution + 1)*line.n_points
+
+    translation = 10.0
+    dradius = 1.0
+    poly = line.extrude_rotate(translation=translation, dradius=dradius)
+    zmax = poly.bounds[5]
+    assert zmax == translation
+    xmax = poly.bounds[1]
+    assert xmax == line.bounds[1] + dradius
+
+    poly = line.extrude_rotate(angle=90.0)
+    xmin = poly.bounds[0]
+    xmax = poly.bounds[1]
+    ymin = poly.bounds[2]
+    ymax = poly.bounds[3]
+    assert (xmin == line.bounds[0]) and (xmax == line.bounds[1]) and (ymin == line.bounds[0]) and (ymax == line.bounds[1])
+
+
+def test_extrude_rotate_inplace():
+    resolution = 4
+    poly = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
+    old_line = poly.copy()
+    poly.extrude_rotate(resolution=resolution, inplace=True)
+    assert poly.n_cells == old_line.n_points - 1
+    assert poly.n_points == (resolution + 1)*old_line.n_points

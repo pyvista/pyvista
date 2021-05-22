@@ -32,17 +32,18 @@ import pyvista as pv
 # So lets take a look at the difference:
 
 # Load a cylinder which has cells with a wide spread
-cyl = pv.Cylinder(direction=(0,0,1), height=2).elevation()
+cyl = pv.Cylinder(direction=(0, 0, 1), height=2).elevation()
 
 # Common display argument to make sure all else is constant
 dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
 
-p = pv.Plotter(shape=(1,2))
+p = pv.Plotter(shape=(1, 2))
 p.add_mesh(cyl, interpolate_before_map=False,
-           stitle='Elevation - not interpolated', **dargs)
-p.subplot(0,1)
+           scalar_bar_args={'title': 'Elevation - not interpolated'},
+           **dargs)
+p.subplot(0, 1)
 p.add_mesh(cyl, interpolate_before_map=True,
-           stitle='Elevation - interpolated', **dargs)
+           scalar_bar_args={'title': 'Elevation - interpolated'}, **dargs)
 p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06),
                      (0.0, 0.0, 0.0),
@@ -61,12 +62,13 @@ p.show()
 dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True,
              style='wireframe')
 
-p = pv.Plotter(shape=(1,2))
+p = pv.Plotter(shape=(1, 2))
 p.add_mesh(cyl, interpolate_before_map=False,
-           stitle='Elevation - not interpolated', **dargs)
-p.subplot(0,1)
+           scalar_bar_args={'title': 'Elevation - not interpolated'},
+           **dargs)
+p.subplot(0, 1)
 p.add_mesh(cyl, interpolate_before_map=True,
-           stitle='Elevation - interpolated', **dargs)
+           scalar_bar_args={'title': 'Elevation - interpolated'}, **dargs)
 p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06),
                      (0.0, 0.0, 0.0),
@@ -87,12 +89,12 @@ wavelet = pv.Wavelet().clip('x')
 # Common display argument to make sure all else is constant
 dargs = dict(scalars='RTData', cmap='rainbow', show_edges=True)
 
-p = pv.Plotter(shape=(1,2))
+p = pv.Plotter(shape=(1, 2))
 p.add_mesh(wavelet, interpolate_before_map=False,
-           stitle='RTData - not interpolated', **dargs)
-p.subplot(0,1)
+           scalar_bar_args={'title': 'RTData - not interpolated'}, **dargs)
+p.subplot(0, 1)
 p.add_mesh(wavelet, interpolate_before_map=True,
-           stitle='RTData - interpolated', **dargs)
+           scalar_bar_args={'title': 'RTData - interpolated'}, **dargs)
 p.link_views()
 p.camera_position = [(55., 16, 31),
                      (-5.0, 0.0, 0.0),
@@ -108,12 +110,12 @@ p.show()
 
 dargs = dict(scalars='RTData', cmap='rainbow', show_edges=True, n_colors=8)
 
-p = pv.Plotter(shape=(1,2))
+p = pv.Plotter(shape=(1, 2))
 p.add_mesh(wavelet, interpolate_before_map=False,
-           stitle='RTData - not interpolated', **dargs)
-p.subplot(0,1)
+           scalar_bar_args={'title': 'RTData - not interpolated'}, **dargs)
+p.subplot(0, 1)
 p.add_mesh(wavelet, interpolate_before_map=True,
-           stitle='RTData - interpolated', **dargs)
+           scalar_bar_args={'title': 'RTData - interpolated'}, **dargs)
 p.link_views()
 p.camera_position = [(55., 16, 31),
                      (-5.0, 0.0, 0.0),

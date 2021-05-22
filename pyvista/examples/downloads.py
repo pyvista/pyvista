@@ -6,16 +6,15 @@ import sys
 import zipfile
 
 import numpy as np
-import vtk
 
 import pyvista
-from pyvista.core.errors import DeprecationError
+from pyvista import _vtk
 
 # Helpers:
 
 def _check_examples_path():
     """Check if the examples path exists."""
-    if pyvista.EXAMPLES_PATH is None:
+    if not pyvista.EXAMPLES_PATH:
         raise FileNotFoundError('EXAMPLES_PATH does not exist.  Try setting the '
                                 'environment variable `PYVISTA_USERDATA_PATH` '
                                 'to a writable path and restarting python')
@@ -197,7 +196,7 @@ def download_exodus():
 
 def download_nefertiti():
     """Download mesh of Queen Nefertiti."""
-    return _download_and_read('Nefertiti.obj.zip')
+    return _download_and_read('nefertiti.ply.zip')
 
 
 def download_blood_vessels():
@@ -207,15 +206,6 @@ def download_blood_vessels():
     mesh = pyvista.read(filename)
     mesh.set_active_vectors('velocity')
     return mesh
-
-
-def download_iron_pot():  # pragma: no cover
-    """Download iron protein dataset.
-
-    DEPRECATED: Please use ``download_iron_protein``.
-
-    """
-    raise DeprecationError('DEPRECATED: Please use ``download_iron_protein``')
 
 
 def download_iron_protein():
@@ -240,12 +230,12 @@ def download_sparse_points():
 
     """
     saved_file, _ = _download_file('sparsePoints.txt')
-    points_reader = vtk.vtkDelimitedTextReader()
+    points_reader = _vtk.vtkDelimitedTextReader()
     points_reader.SetFileName(saved_file)
     points_reader.DetectNumericColumnsOn()
     points_reader.SetFieldDelimiterCharacters('\t')
     points_reader.SetHaveHeaders(True)
-    table_points = vtk.vtkTableToPolyData()
+    table_points = _vtk.vtkTableToPolyData()
     table_points.SetInputConnection(points_reader.GetOutputPort())
     table_points.SetXColumn('x')
     table_points.SetYColumn('y')
@@ -535,7 +525,7 @@ def download_kitchen(split=False):
     }
     kitchen = pyvista.MultiBlock()
     for key, extent in extents.items():
-        alg = vtk.vtkStructuredGridGeometryFilter()
+        alg = _vtk.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
         alg.Update()
@@ -558,7 +548,7 @@ def download_tetra_dc_mesh():
     filename = os.path.join(local_path, 'mesh-inverse.vtu')
     inv = pyvista.read(filename)
     inv.set_active_scalars('Resistivity(log10)')
-    return pyvista.MultiBlock({'forward':fwd, 'inverse':inv})
+    return pyvista.MultiBlock({'forward': fwd, 'inverse': inv})
 
 
 def download_model_with_variance():
@@ -572,102 +562,13 @@ def download_thermal_probes():
 
 
 def download_carburator():
-    """Download scan of a carburator.
-
-    https://www.laserdesign.com/sample-files/carburetor/
-
-    """
-    url = "http://3dgallery.gks.com/2012/carburator/carburator2.php"
-    filename, _ = _retrieve_file(url, 'carburator.ply')
-    return pyvista.read(filename)
-
-
-def download_woman():
-    """Download scan of a woman.
-
-    https://www.laserdesign.com/sample-files/full-body-scan-with-texture/
-
-    """
-    url = "http://3dgallery.gks.com/2012/bodyscan/bodyscan3.php"
-    filename, _ = _retrieve_file(url, 'woman.stl')
-    return pyvista.read(filename)
-
-
-def download_lobster():
-    """Download scan of a lobster.
-
-    https://www.laserdesign.com/lobster-scan-data
-
-    """
-    url = "http://3dgallery.gks.com/2016/lobster/index2.php"
-    filename, _ = _retrieve_file(url, 'lobster.ply')
-    return pyvista.read(filename)
-
-
-def download_face2():
-    """Download scan of a man's face.
-
-    https://www.laserdesign.com/sample-files/mans-face/
-
-    """
-    url = "http://3dgallery.gks.com/2012/face/"
-    filename, _ = _retrieve_file(url, 'man_face.stl')
-    return pyvista.read(filename)
-
-
-def download_urn():
-    """Download scan of a burial urn.
-
-    https://www.laserdesign.com/sample-files/burial-urn/
-
-    """
-    url = "http://3dgallery.gks.com/2012/urn/urn3.php"
-    filename, _ = _retrieve_file(url, 'urn.stl')
-    return pyvista.read(filename)
-
-
-def download_pepper():
-    """Download scan of a pepper (capsicum).
-
-    https://www.laserdesign.com/sample-files/hot-red-pepper/
-
-    """
-    url = "http://3dgallery.gks.com/2012/redpepper/redpepper2.php"
-    filename, _ = _retrieve_file(url, 'pepper.ply')
-    return pyvista.read(filename)
-
-
-def download_drill():
-    """Download scan of a power drill.
-
-    https://www.laserdesign.com/drill-scan-data
-
-    """
-    url = "http://3dgallery.gks.com/2015/ryobi/index1.php"
-    filename, _ = _retrieve_file(url, 'pepper.obj')
-    return pyvista.read(filename)
-
-
-def download_action_figure():
-    """Download scan of an action figure.
-
-    https://www.laserdesign.com/sample-files/action-figure/
-
-    """
-    url = "http://3dgallery.gks.com/2013/tigerfighter"
-    filename, _ = _retrieve_file(url, 'tigerfighter.obj')
-    return pyvista.read(filename)
+    """Download scan of a carburator."""
+    return _download_and_read("carburetor.ply")
 
 
 def download_turbine_blade():
-    """Download scan of a turbine blade.
-
-    https://www.laserdesign.com/sample-files/blade/
-
-    """
-    url = "http://3dgallery.gks.com/2012/blade/blade.php"
-    filename, _ = _retrieve_file(url, 'turbine_blade.stl')
-    return pyvista.read(filename)
+    """Download scan of a turbine blade."""
+    return _download_and_read('turbineblade.ply')
 
 
 def download_pine_roots():
@@ -738,6 +639,17 @@ def download_vtk_logo():
     return _download_and_read("vtk.png", texture=True)
 
 
+def download_sky_box_cube_map():
+    """Download a skybox cube map texture."""
+    prefix = 'skybox2-'
+    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+    images = [prefix + suffix + '.jpg' for suffix in sets]
+    for image in images:
+        _download_file(image)
+
+    return pyvista.cubemap(pyvista.EXAMPLES_PATH, prefix)
+
+
 def download_backward_facing_step():
     """Download an ensight gold case of a fluid simulation."""
     folder, _ = _download_file('EnSight.zip')
@@ -756,3 +668,106 @@ def download_gpr_path():
     saved_file, _ = _download_file("gpr-example/path.txt")
     path = np.loadtxt(saved_file, skiprows=1)
     return pyvista.PolyData(path)
+
+
+def download_woman():
+    """Download scan of a woman.
+
+    https://www.laserdesign.com/sample-files/full-body-scan-with-texture/
+
+    """
+    return _download_and_read('woman.stl')
+
+
+def download_lobster():
+    """Download scan of a lobster.
+
+    https://www.laserdesign.com/lobster-scan-data
+
+    """
+    return _download_and_read('lobster.ply')
+
+
+def download_face2():
+    """Download scan of a man's face.
+
+    https://www.laserdesign.com/sample-files/mans-face/
+
+    """
+    return _download_and_read('man_face.stl')
+
+
+def download_urn():
+    """Download scan of a burial urn.
+
+    https://www.laserdesign.com/sample-files/burial-urn/
+
+    """
+    return _download_and_read('urn.stl')
+
+
+def download_pepper():
+    """Download scan of a pepper (capsicum).
+
+    https://www.laserdesign.com/sample-files/hot-red-pepper/
+
+    """
+    return _download_and_read('pepper.ply')
+
+
+def download_drill():
+    """Download scan of a power drill.
+
+    https://www.laserdesign.com/drill-scan-data
+
+    """
+    return _download_and_read('drill.obj')
+
+
+def download_action_figure():
+    """Download scan of an action figure.
+
+    https://www.laserdesign.com/sample-files/action-figure/
+
+    """
+    return _download_and_read('tigerfighter.obj')
+
+
+def download_mars_jpg():
+    """Download and return the path of ``'mars.jpg'``."""
+    return _download_file('mars.jpg')[0]
+
+
+def download_stars_jpg():
+    """Download and return the path of ``'stars.jpg'``."""
+    return _download_file('stars.jpg')[0]
+
+
+def download_notch_stress():
+    """Download the FEA stress result from a notched beam.
+
+    Notes
+    -----
+    This file may have issues being read in on VTK 8.1.2
+
+    """
+    return _download_and_read('notch_stress.vtk')
+
+
+def download_notch_displacement():
+    """Download the FEA displacement result from a notched beam."""
+    return _download_and_read('notch_disp.vtu')
+
+
+def download_louis_louvre():
+    """Download the Louis XIV de France statue at the Louvre, Paris.
+
+    Statue found in the Napoléon Courtyard of Louvre Palace. It is a
+    copy in plomb of the original statue in Versailles, made by
+    Bernini and Girardon.
+
+    Credit goes to
+    https://sketchfab.com/3d-models/louis-xiv-de-france-louvre-paris-a0cc0e7eee384c99838dff2857b8158c
+
+    """
+    return _download_and_read('louis.ply')

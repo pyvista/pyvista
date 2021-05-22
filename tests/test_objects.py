@@ -216,3 +216,15 @@ def test_texture():
     texture.flip(1)
     texture = pyvista.Texture(examples.load_globe_texture())
     assert texture is not None
+
+
+def test_skybox():
+    texture = examples.load_globe_texture()
+    texture.cube_map = False
+    assert texture.cube_map is False
+
+    texture.cube_map = True
+    assert texture.cube_map is True
+
+    skybox = texture.to_skybox()
+    assert isinstance(skybox, vtk.vtkOpenGLSkybox)

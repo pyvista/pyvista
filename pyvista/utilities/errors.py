@@ -7,17 +7,16 @@ import sys
 
 import numpy as np
 import scooby
-import vtk
 
 import pyvista
-
+from pyvista import _vtk
 
 def set_error_output_file(filename):
     """Set a file to write out the VTK errors."""
     filename = os.path.abspath(os.path.expanduser(filename))
-    fileOutputWindow = vtk.vtkFileOutputWindow()
+    fileOutputWindow = _vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)
-    outputWindow = vtk.vtkOutputWindow()
+    outputWindow = _vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow
 
@@ -68,7 +67,7 @@ class Observer:
             self.log_message(kind, alert)
 
     def has_event_occurred(self):
-        """Ask self if an error has occurred since last querried.
+        """Ask self if an error has occurred since last queried.
 
         This resets the observer's status.
 
@@ -80,8 +79,8 @@ class Observer:
     def get_message(self, etc=False):
         """Get the last set error message.
 
-        Return
-        ------
+        Returns
+        -------
             str: the last set error message
 
         """
@@ -102,8 +101,8 @@ class Observer:
 
 def send_errors_to_logging():
     """Send all VTK error/warning messages to Python's logging module."""
-    error_output = vtk.vtkStringOutputWindow()
-    error_win = vtk.vtkOutputWindow()
+    error_output = _vtk.vtkStringOutputWindow()
+    error_win = _vtk.vtkOutputWindow()
     error_win.SetInstance(error_output)
     obs = Observer()
     return obs.observe(error_output)
@@ -218,7 +217,7 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = ['matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'ipyvtk_simple', 'scipy', 'itkwidgets', 'tqdm']
+                    'cmocean', 'ipyvtklink', 'scipy', 'itkwidgets', 'tqdm']
 
         # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.

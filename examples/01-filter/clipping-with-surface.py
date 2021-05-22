@@ -3,7 +3,7 @@ Clipping with a Surface
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Clip any PyVista dataset by a :class:`pyvista.PolyData` surface mesh using
-the :func:`pyvista.DataSet.Filters.clip_surface` filter.
+the :func:`pyvista.DataSetFilters.clip_surface` filter.
 
 Note that we first demonstrate how the clipping is performed by computing an
 implicit distance and thresholding the mesh. This thresholding is one approach
@@ -67,7 +67,7 @@ p.show()
 
 ###############################################################################
 # Clip the rectilinear grid dataset using the :class:`pyvista.PolyData`
-# surface mesh via the :func:`pyvista.DataSet.Filters.clip_surface` filter.
+# surface mesh via the :func:`pyvista.DataSetFilters.clip_surface` filter.
 # This will triangulate/tessellate the mesh geometries along the clip.
 clipped = dataset.clip_surface(surface, invert=False)
 

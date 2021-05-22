@@ -39,148 +39,51 @@ shortcuts are available:
 +-------------------------------------+-----------------+-----------------------------------------------------+
 
 
-
-
-Convenience Functions
-~~~~~~~~~~~~~~~~~~~~~
-
-
-.. autofunction:: pyvista.plot
-
-
-.. autofunction:: pyvista.plot_arrows
-
-
-.. autofunction:: pyvista.set_plot_theme
-
-
-.. autofunction:: pyvista.create_axes_orientation_box
-
-
-Base Plotter
-~~~~~~~~~~~~
-
-The base plotter class that all PyVista plotters inherit. Please note that the former
-``BackgroundPlotter`` class has been moved to the `pyvistaqt`_ package.
-
-.. _pyvistaqt: http://qtdocs.pyvista.org/
-
-
-.. rubric:: Attributes
-
-.. autoautosummary:: pyvista.BasePlotter
-   :attributes:
-
-.. rubric:: Methods
-
-.. autoautosummary:: pyvista.BasePlotter
-   :methods:
-
-
-.. autoclass:: pyvista.BasePlotter
-   :show-inheritance:
-   :members:
-   :inherited-members:
-   :undoc-members:
-
-
-Plotter
-~~~~~~~
-
-.. rubric:: Attributes
-
-.. autoautosummary:: pyvista.Plotter
-   :attributes:
-
-.. rubric:: Methods
-
-.. autoautosummary:: pyvista.Plotter
-   :methods:
-
-
-
-.. autoclass:: pyvista.Plotter
-   :show-inheritance:
-   :members:
-   :undoc-members:
-
-
-Renderer
-~~~~~~~~
-
-.. rubric:: Attributes
-
-.. autoautosummary:: pyvista.Renderer
-   :attributes:
-
-.. rubric:: Methods
-
-.. autoautosummary:: pyvista.Renderer
-   :methods:
-
-
-
-.. autoclass:: pyvista.Renderer
-   :show-inheritance:
-   :members:
-   :undoc-members:
-
-
 Plotting in a Jupyter Notebook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Static and interactive inline plots are possible using a Jupyter
+notebook.  The code snippet below will create a static screenshot of
+the rendering and display it in the Jupyter notebook:
 
-Inline plots are possible using a Jupyter notebook.  The code snippet below
-will create a static screenshot of the rendering and display it in the Jupyter
-notebook:
 
-
-.. code:: python
+.. jupyter-execute::
 
     import pyvista as pv
     sphere = pv.Sphere()
+    sphere.plot(jupyter_backend='static')
 
-    # short example
-    cpos, image = sphere.plot(notebook=True)
 
-    # long example
+It is possible to use the ``Plotter`` class as well.
+
+.. jupyter-execute::
+
     plotter = pv.Plotter(notebook=True)
     plotter.add_mesh(sphere)
-    plotter.show()
+    plotter.show(jupyter_backend='static')
 
+Additionally, you can generate interactive plots by leveraging a
+jupyter plotting backend like ``panel`` or ``ipygany``.  You can even
+use it to create interactive documentations online.
 
-.. figure:: ../images/user-generated/notebook_sphere.png
-    :width: 600pt
+.. jupyter-execute::
 
-    Jupyter Inline Plotting
+    plotter = pv.Plotter(notebook=True)
+    plotter.add_mesh(sphere)
+    plotter.show(jupyter_backend='ipygany')
 
-To display interactive plots in Jupyter notebooks, use the
-:class:`pyvistaqt.BackgroundPlotter` to open a rendering window in the background
-that you can manipulate in real time from the Jupyter notebook:
-
-.. code-block:: python
-
-    import pyvista as pv
-    import pyvistaqt as pvqt
-    from pyvista import examples
-
-    dataset = examples.load_uniform()
-
-    plotter = pvqt.BackgroundPlotter()
-    plotter.add_mesh(dataset)
-
-    # Then in another cell, you can add more to the plotter
-    plotter.show_bounds()
+For more details, see the section on :ref:`jupyter_plotting`.
 
 
 Background Plotting
 ~~~~~~~~~~~~~~~~~~~
 
-PyVista provides a plotter that enables users to create a rendering window in
-the background that remains interactive while the user performs their
-processing. This creates the ability to make a rendering scene and interactively
-add or remove datasets from the scene as well as has some useful menu functions
-for common scene manipulation or export tasks. To get started, try instantiating
-the :class:`pyvistaqt.BackgroundPlotter`:
+PyVista provides a plotter that enables users to create a rendering
+window in the background that remains interactive while the user
+performs their processing. This creates the ability to make a
+rendering scene and interactively add or remove datasets from the
+scene as well as has some useful menu functions for common scene
+manipulation or export tasks. To get started, try instantiating the
+:class:`pyvistaqt.BackgroundPlotter`:
 
 .. code:: python
 
@@ -237,3 +140,80 @@ values change through time:
 
 
 .. figure:: ../images/gifs/shrink-globe.gif
+
+
+Convenience Functions
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: pyvista.plot
+
+.. autofunction:: pyvista.plot_arrows
+
+.. autofunction:: pyvista.set_plot_theme
+
+.. autofunction:: pyvista.create_axes_orientation_box
+
+
+Base Plotter
+~~~~~~~~~~~~
+
+The base plotter class that all PyVista plotters inherit. Please note that the former
+``BackgroundPlotter`` class has been moved to the `pyvistaqt`_ package.
+
+.. _pyvistaqt: http://qtdocs.pyvista.org/
+
+
+.. rubric:: Attributes
+
+.. autoautosummary:: pyvista.BasePlotter
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.BasePlotter
+   :methods:
+
+
+.. autoclass:: pyvista.BasePlotter
+   :show-inheritance:
+   :members:
+   :inherited-members:
+   :undoc-members:
+
+
+Plotter
+~~~~~~~
+
+.. rubric:: Attributes
+
+.. autoautosummary:: pyvista.Plotter
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.Plotter
+   :methods:
+
+.. autoclass:: pyvista.Plotter
+   :show-inheritance:
+   :members:
+   :undoc-members:
+
+
+Renderer
+~~~~~~~~
+
+.. rubric:: Attributes
+
+.. autoautosummary:: pyvista.Renderer
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.Renderer
+   :methods:
+
+.. autoclass:: pyvista.Renderer
+   :show-inheritance:
+   :members:
+   :undoc-members:

@@ -1,6 +1,8 @@
 """ test pyvista.utilities """
+import warnings
 import pathlib
 import os
+import shutil
 
 import numpy as np
 import pytest
@@ -17,7 +19,8 @@ from pyvista.utilities import (
     GPUInfo,
     helpers,
     Observer,
-    cells
+    cells,
+    transformations
 )
 
 # Only set this here just the once.
@@ -86,6 +89,43 @@ def test_read(tmpdir, use_pathlib):
     assert multi[1].n_blocks == 2
 
 
+def test_read_force_ext(tmpdir):
+    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile,
+              ex.uniformfile, ex.rectfile)
+    types = (pyvista.PolyData, pyvista.PolyData, pyvista.UnstructuredGrid,
+             pyvista.PolyData, pyvista.UniformGrid, pyvista.RectilinearGrid)
+
+    dummy_extension = '.dummy'
+    for fname, type in zip(fnames, types):
+        root, original_ext = os.path.splitext(fname)
+        _, name = os.path.split(root)
+        new_fname = tmpdir / name + '.' + dummy_extension
+        shutil.copy(fname, new_fname)
+        data = fileio.read(new_fname, force_ext=original_ext)
+        assert isinstance(data, type)
+
+
+def test_read_force_ext_wrong_extension(tmpdir):
+    # try to read a .vtu file as .vts
+    # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
+    # the returned dataset is empty
+    fname = tmpdir / 'airplane.vtu'
+    ex.load_airplane().cast_to_unstructured_grid().save(fname)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        data = fileio.read(fname, force_ext='.vts')
+    assert data.n_points == 0
+
+    # try to read a .ply file as .vtm
+    # vtkXMLMultiBlockDataReader throws a VTK error about the validity of the XML file
+    # the returned dataset is empty
+    fname = ex.planefile
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        data = fileio.read(fname, force_ext='.vtm')
+    assert len(data) == 0
+
+
 @mock.patch('pyvista.utilities.fileio.standard_reader_routine')
 def test_read_legacy(srr_mock):
     srr_mock.return_value = pyvista.read(ex.planefile)
@@ -102,6 +142,26 @@ def test_read_legacy(srr_mock):
         pyvista.read_legacy('legacy.vtk')
 
 
+@mock.patch('pyvista.utilities.fileio.read_legacy')
+def test_pyvista_read_legacy(read_legacy_mock):
+    # check that reading a file with extension .vtk calls `read_legacy`
+    # use the globefile as a dummy because pv.read() checks for the existence of the file
+    pyvista.read(ex.globefile)
+    args, kwargs = read_legacy_mock.call_args
+    filename = args[0]
+    assert filename == ex.globefile
+
+
+@mock.patch('pyvista.utilities.fileio.read_exodus')
+def test_pyvista_read_exodus(read_exodus_mock):
+    # check that reading a file with extension .e calls `read_exodus`
+    # use the globefile as a dummy because pv.read() checks for the existence of the file
+    pyvista.read(ex.globefile, force_ext='.e')
+    args, kwargs = read_exodus_mock.call_args
+    filename = args[0]
+    assert filename == ex.globefile
+
+
 @pytest.mark.parametrize('auto_detect', (True, False))
 @mock.patch('pyvista.utilities.fileio.standard_reader_routine')
 def test_read_plot3d(srr_mock, auto_detect):
@@ -112,7 +172,7 @@ def test_read_plot3d(srr_mock, auto_detect):
     reader = args[0]
     assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
     assert reader.GetFileName().endswith('grid.in')
-    assert kwargs['filename'] == None
+    assert kwargs['filename'] is None
     assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
 
     # with grid and q
@@ -124,7 +184,7 @@ def test_read_plot3d(srr_mock, auto_detect):
     assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
     assert reader.GetFileName().endswith('grid.in')
     assert args[0].GetQFileName().endswith('q1.save')
-    assert kwargs['filename'] == None
+    assert kwargs['filename'] is None
     assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
 
 
@@ -169,6 +229,16 @@ def test_voxelize():
     vox = pyvista.voxelize(mesh, 0.5)
     assert vox.n_cells
 
+def test_voxelize_non_uniform_desnity():
+    mesh = pyvista.PolyData(ex.load_uniform().points)
+    vox = pyvista.voxelize(mesh, [0.5, 0.3, 0.2])
+    assert vox.n_cells
+
+def test_voxelize_throws_when_density_is_not_length_3():
+    with pytest.raises(ValueError) as e:
+        mesh = pyvista.PolyData(ex.load_uniform().points)
+        vox = pyvista.voxelize(mesh, [0.5, 0.3])
+    assert "not enough values to unpack" in str(e.value)
 
 def test_report():
     report = pyvista.Report(gpu=True)
@@ -234,6 +304,44 @@ def test_transform_vectors_sph_to_cart():
         [uu[-1, -1], vv[-1, -1], ww[-1, -1]],
         [67.80403533828323, 360.8359915416445, -70000.0],
     )
+
+
+def test_vtkmatrix_to_from_array():
+    rng = np.random.default_rng()
+    array3x3 = rng.integers(0, 10, size=(3, 3))
+    matrix = pyvista.vtkmatrix_from_array(array3x3)
+    assert isinstance(matrix, vtk.vtkMatrix3x3)
+    for i in range(3):
+        for j in range(3):
+            assert matrix.GetElement(i, j) == array3x3[i, j]
+
+    array = pyvista.array_from_vtkmatrix(matrix)
+    assert isinstance(array, np.ndarray)
+    assert array.shape == (3, 3)
+    for i in range(3):
+        for j in range(3):
+            assert array[i, j] == matrix.GetElement(i, j)
+
+    array4x4 = rng.integers(0, 10, size=(4, 4))
+    matrix = pyvista.vtkmatrix_from_array(array4x4)
+    assert isinstance(matrix, vtk.vtkMatrix4x4)
+    for i in range(4):
+        for j in range(4):
+            assert matrix.GetElement(i, j) == array4x4[i, j]
+
+    array = pyvista.array_from_vtkmatrix(matrix)
+    assert isinstance(array, np.ndarray)
+    assert array.shape == (4, 4)
+    for i in range(4):
+        for j in range(4):
+            assert array[i, j] == matrix.GetElement(i, j)
+
+    # invalid cases
+    with pytest.raises(ValueError):
+        matrix = pyvista.vtkmatrix_from_array(np.arange(3 * 4).reshape(3, 4))
+    with pytest.raises(TypeError):
+        invalid = vtk.vtkTransform()
+        array = pyvista.array_from_vtkmatrix(invalid)
 
 
 def test_assert_empty_kwargs():
@@ -343,3 +451,25 @@ def test_cells_dict_utils():
     np.all(cells.generate_cell_offsets(cells_arr, cells_types) ==
            cells.generate_cell_offsets(cells_arr, np.array([255, 255])))
 
+
+def test_apply_transformation_to_points():
+    mesh = ex.load_airplane()
+    points = mesh.points
+    points_orig = points.copy()
+
+    # identity 3 x 3
+    tf = np.eye(3)
+    points_new = transformations.apply_transformation_to_points(tf, points, inplace=False)
+    assert points_new == pytest.approx(points)
+
+    # identity 4 x 4
+    tf = np.eye(4)
+    points_new = transformations.apply_transformation_to_points(tf, points, inplace=False)
+    assert points_new == pytest.approx(points)
+
+    # scale in-place
+    tf = np.eye(4) * 2
+    tf[3, 3] = 1
+    r = transformations.apply_transformation_to_points(tf, points, inplace=True)
+    assert r is None
+    assert mesh.points == pytest.approx(2 * points_orig)

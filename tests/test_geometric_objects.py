@@ -79,6 +79,17 @@ def test_box():
     geom = pyvista.Box()
     assert np.any(geom.points)
 
+    bounds = [-10.0, 10.0, 10.0, 20.0, -5.0, 5.0]
+    level = 3
+    quads = True
+    mesh1 = pyvista.Box(bounds, level, quads)
+    assert mesh1.n_cells == (level + 1) * (level + 1) * 6
+    assert np.allclose(mesh1.bounds, bounds)
+
+    quads = False
+    mesh2 = pyvista.Box(bounds, level, quads)
+    assert mesh2.n_cells == mesh1.n_cells*2
+
 
 def test_polygon():
     geom = pyvista.Polygon()
@@ -133,10 +144,39 @@ def test_circular_arc():
     resolution = 100
 
     mesh = pyvista.CircularArc(pointa, pointb, center, resolution)
-    assert mesh.n_points
-    assert mesh.n_cells
+    assert mesh.n_points == resolution + 1
+    assert mesh.n_cells == 1
+    distance = np.arange(0.0, 1.0 + 0.01, 0.01)*np.pi/2.0
+    assert np.allclose(mesh['Distance'], distance)
 
-    mesh = pyvista.CircularArc([-1, 0, 0], [0, 0, 1], [0, 0, 0], normal=[0, 0, 1],
-                               polar=[1, 0, 1], negative=True, angle=180)
+    # pointa and pointb are not equidistant from center
+    with pytest.raises(ValueError):
+        mesh = pyvista.CircularArc([-1, 0, 0], [-0.99, 0.001, 0], [0, 0, 0], 100)
+
+
+def test_circular_arc_from_normal():
+    center = [0, 0, 0]
+    normal = [0, 0, 1]
+    polar = [-2.0, 0, 0]
+    angle = 90
+    resolution = 100
+
+    mesh = pyvista.CircularArcFromNormal(center, resolution, normal, polar, angle)
+    assert mesh.n_points == resolution + 1
+    assert mesh.n_cells == 1
+    distance = np.arange(0.0, 1.0 + 0.01, 0.01)*np.pi
+    assert np.allclose(mesh['Distance'], distance)
+
+
+def test_pyramid():
+    pointa = [1.0, 1.0, 1.0]
+    pointb = [-1.0, 1.0, 1.0]
+    pointc = [-1.0, -1.0, 1.0]
+    pointd = [1.0, -1.0, 1.0]
+    pointe = [0.0, 0.0, 0.0]
+    points = np.array([pointa, pointb, pointc, pointd, pointe])
+
+    mesh = pyvista.Pyramid(points)
     assert mesh.n_points
     assert mesh.n_cells
+    assert np.allclose(mesh.points, points)
