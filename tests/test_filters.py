@@ -13,17 +13,7 @@ from pyvista import examples
 from pyvista.core.errors import VTKVersionError
 
 
-DATASETS = [
-    examples.load_uniform(),  # UniformGrid
-    examples.load_rectilinear(),  # RectilinearGrid
-    examples.load_hexbeam(),  # UnstructuredGrid
-    examples.load_airplane(),  # PolyData
-    examples.load_structured(),  # StructuredGrid
-    ]
-
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
-
-COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
 skip_py2_nobind = pytest.mark.skipif(int(sys.version[0]) < 3,
                                      reason="Python 2 doesn't support binding methods")
@@ -42,6 +32,9 @@ def datasets():
     examples.load_structured(),  # StructuredGrid
     ]
 
+@pytest.fixture
+def composite(datasets):
+    return pyvista.MultiBlock(datasets)
 
 @pytest.fixture()
 def grid():
@@ -103,10 +96,10 @@ def test_clip_by_scalars_filter(datasets):
 
 
 @skip_py2_nobind
-def test_clip_filter_composite():
+def test_clip_filter_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.clip(normal=normals[0], invert=False)
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.clip(normal=normals[0], invert=False)
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_clip_box(datasets):
@@ -140,10 +133,10 @@ def test_clip_box(datasets):
 
 
 @skip_py2_nobind
-def test_clip_box_composite():
+def test_clip_box_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.clip_box(invert=False)
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.clip_box(invert=False)
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_clip_surface():
@@ -196,10 +189,10 @@ def test_slice_filter(datasets):
 
 
 @skip_py2_nobind
-def test_slice_filter_composite():
+def test_slice_filter_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.slice(normal=normals[0])
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.slice(normal=normals[0])
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_slice_orthogonal_filter(datasets):
@@ -215,10 +208,10 @@ def test_slice_orthogonal_filter(datasets):
 
 
 @skip_py2_nobind
-def test_slice_orthogonal_filter_composite():
+def test_slice_orthogonal_filter_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.slice_orthogonal()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.slice_orthogonal()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_slice_along_axis(datasets):
@@ -238,10 +231,10 @@ def test_slice_along_axis(datasets):
 
 
 @skip_py2_nobind
-def test_slice_along_axis_composite():
+def test_slice_along_axis_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.slice_along_axis()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.slice_along_axis()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_threshold(datasets):
@@ -303,16 +296,16 @@ def test_outline(datasets):
 
 
 @skip_py2_nobind
-def test_outline_composite():
+def test_outline_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.outline()
+    output = composite.outline()
     assert isinstance(output, pyvista.PolyData)
-    output = COMPOSITE.outline(nested=True)
+    output = composite.outline(nested=True)
 
     # vtk 9.0.0 returns polydata
     assert isinstance(output, (pyvista.MultiBlock, pyvista.PolyData))
     if isinstance(output, pyvista.MultiBlock):
-        assert output.n_blocks == COMPOSITE.n_blocks
+        assert output.n_blocks == composite.n_blocks
 
 
 def test_outline_corners(datasets):
@@ -323,21 +316,21 @@ def test_outline_corners(datasets):
 
 
 @skip_py2_nobind
-def test_outline_corners_composite():
+def test_outline_corners_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.outline_corners()
+    output = composite.outline_corners()
     assert isinstance(output, pyvista.PolyData)
-    output = COMPOSITE.outline_corners(nested=True)
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.outline_corners(nested=True)
+    assert output.n_blocks == composite.n_blocks
 
 
-def test_extract_geometry(datasets):
+def test_extract_geometry(datasets, composite):
     for i, dataset in enumerate(datasets):
         outline = dataset.extract_geometry()
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
     # Now test composite data structures
-    output = COMPOSITE.extract_geometry()
+    output = composite.extract_geometry()
     assert isinstance(output, pyvista.PolyData)
 
 
@@ -349,10 +342,10 @@ def test_wireframe(datasets):
 
 
 @skip_py2_nobind
-def test_wireframe_composite():
+def test_wireframe_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.extract_all_edges()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.extract_all_edges()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_delaunay_2d(datasets):
@@ -423,10 +416,10 @@ def test_elevation():
 
 
 @skip_py2_nobind
-def test_elevation_composite():
+def test_elevation_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.elevation()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.elevation()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_texture_map_to_plane():
@@ -475,10 +468,10 @@ def test_compute_cell_sizes(datasets):
 
 
 @skip_py2_nobind
-def test_compute_cell_sizes_composite():
+def test_compute_cell_sizes_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.compute_cell_sizes()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.compute_cell_sizes()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_cell_centers(datasets):
@@ -489,10 +482,10 @@ def test_cell_centers(datasets):
 
 
 @skip_py2_nobind
-def test_cell_centers_composite():
+def test_cell_centers_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.cell_centers()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.cell_centers()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_glyph(datasets):
@@ -645,10 +638,10 @@ def test_cell_data_to_point_data():
 
 
 @skip_py2_nobind
-def test_cell_data_to_point_data_composite():
+def test_cell_data_to_point_data_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.cell_data_to_point_data()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.cell_data_to_point_data()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_point_data_to_cell_data():
@@ -660,10 +653,10 @@ def test_point_data_to_cell_data():
 
 
 @skip_py2_nobind
-def test_point_data_to_cell_data_composite():
+def test_point_data_to_cell_data_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.point_data_to_cell_data()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.point_data_to_cell_data()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_triangulate():
@@ -674,10 +667,10 @@ def test_triangulate():
 
 
 @skip_py2_nobind
-def test_triangulate_composite():
+def test_triangulate_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.triangulate()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.triangulate()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_delaunay_3d():
@@ -1024,13 +1017,13 @@ def test_extract_points():
     assert sub_surf_nocells.cells[0] == 1
 
 @skip_py2_nobind
-def test_slice_along_line_composite():
+def test_slice_along_line_composite(composite):
     # Now test composite data structures
-    a = [COMPOSITE.bounds[0], COMPOSITE.bounds[2], COMPOSITE.bounds[4]]
-    b = [COMPOSITE.bounds[1], COMPOSITE.bounds[3], COMPOSITE.bounds[5]]
+    a = [composite.bounds[0], composite.bounds[2], composite.bounds[4]]
+    b = [composite.bounds[1], composite.bounds[3], composite.bounds[5]]
     line = pyvista.Line(a, b, resolution=10)
-    output = COMPOSITE.slice_along_line(line)
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.slice_along_line(line)
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_interpolate():
