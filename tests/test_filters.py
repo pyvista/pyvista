@@ -547,8 +547,8 @@ def test_glyph_cell_point_data():
     assert sphere_center.glyph(orient="vectors_cell", scale = "arr_cell")
     assert sphere_center.glyph(orient="vectors_points", scale = "arr_points")
     with pytest.raises(ValueError):
-        sphere_center.glyph(orient="vectors_cell",scale = 'arr_cell')
         sphere_center.glyph(orient="vectors_cell",scale = "arr_points")
+    with pytest.raises(ValueError):
         sphere_center.glyph(orient="vectors_points", scale="arr_cell")
 
 def test_split_and_connectivity():
