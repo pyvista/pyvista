@@ -22,19 +22,10 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
 
-@pytest.fixture()
-def datasets():
-    return [
-    examples.load_uniform(),  # UniformGrid
-    examples.load_rectilinear(),  # RectilinearGrid
-    examples.load_hexbeam(),  # UnstructuredGrid
-    examples.load_airplane(),  # PolyData
-    examples.load_structured(),  # StructuredGrid
-    ]
-
 @pytest.fixture
 def composite(datasets):
     return pyvista.MultiBlock(datasets)
+
 
 @pytest.fixture()
 def grid():

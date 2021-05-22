@@ -76,3 +76,13 @@ def spline():
 def tri_cylinder():
     """Triangulated cylinder"""
     return pyvista.Cylinder().triangulate()
+
+@fixture()
+def datasets():
+    return [
+        examples.load_uniform(),  # UniformGrid
+        examples.load_rectilinear(),  # RectilinearGrid
+        examples.load_hexbeam(),  # UnstructuredGrid
+        examples.load_airplane(),  # PolyData
+        examples.load_structured(),  # StructuredGrid
+    ]
