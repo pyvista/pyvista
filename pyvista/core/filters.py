@@ -4639,7 +4639,7 @@ class PolyDataFilters(DataSetFilters):
 
             # find indices that trimesh failed on
             all_ray_indices = np.arange(len(origins))
-            retry_ray_indices = np.setdiff1d(all_ray_indices, index_ray,assume_unique=True)
+            retry_ray_indices = np.setdiff1d(all_ray_indices, index_ray, assume_unique=True)
 
             # compute ray points for all failed rays at once
             origins_retry = origins[retry_ray_indices, :]  # shape (n_retry, 3)
@@ -4665,7 +4665,6 @@ class PolyDataFilters(DataSetFilters):
             locations = np.array(loc_lst)[sorting_inds]
 
         return locations, index_ray, index_tri
-
 
     def plot_boundaries(poly_data, edge_color="red", **kwargs):
         """Plot boundaries of a mesh.
