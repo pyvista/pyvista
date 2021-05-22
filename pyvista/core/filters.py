@@ -4626,29 +4626,44 @@ class PolyDataFilters(DataSetFilters):
                 "\tconda install trimesh rtree pyembree"
             )
 
+        origins = np.asarray(origins)
+        directions = np.asarray(directions)
         faces_as_array = poly_data.faces.reshape((poly_data.n_faces, 4))[:, 1:]
         tmesh = trimesh.Trimesh(poly_data.points, faces_as_array)
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins, directions, multiple_hits=not first_point
         )
         if retry:
-            ray_tuples = [(id_r, l, id_t) for id_r, l, id_t in zip(index_ray, locations, index_tri)]
-            for id_r in range(len(origins)):
-                if id_r not in index_ray:
-                    origin = np.array(origins[id_r])
-                    vector = np.array(directions[id_r])
-                    unit_vector = vector / np.sqrt(np.sum(np.power(vector, 2)))
-                    second_point = origin + (unit_vector * poly_data.length)
-                    locs, indexes = poly_data.ray_trace(origin, second_point, first_point=first_point)
-                    if locs.any():
-                        if first_point:
-                            locs = locs.reshape([1, 3])
-                        for loc, id_t in zip(locs, indexes):
-                            ray_tuples.append((id_r, loc, id_t))
-            sorted_results = sorted(ray_tuples, key=lambda x: x[0])
-            locations = np.array([loc for id_r, loc, id_t in sorted_results])
-            index_ray = np.array([id_r for id_r, loc, id_t in sorted_results])
-            index_tri = np.array([id_t for id_r, loc, id_t in sorted_results])
+            # gather intersecting rays in lists
+            loc_lst, ray_lst, tri_lst = [arr.tolist() for arr in [locations, index_ray, index_tri]]
+
+            # find indices that trimesh failed on
+            all_ray_indices = np.arange(len(origins))
+            retry_ray_indices = np.setdiff1d(all_ray_indices, index_ray, assume_unique=True)
+
+            # compute ray points for all failed rays at once
+            origins_retry = origins[retry_ray_indices, :]  # shape (n_retry, 3)
+            directions_retry = directions[retry_ray_indices, :]
+            unit_directions = directions_retry / np.linalg.norm(directions_retry,
+                                                                axis=1, keepdims=True)
+            second_points = origins_retry + unit_directions * poly_data.length  # shape (n_retry, 3)
+
+            for id_r, origin, second_point in zip(retry_ray_indices, origins_retry, second_points):
+                locs, indices = poly_data.ray_trace(origin, second_point, first_point=first_point)
+                if locs.any():
+                    if first_point:
+                        locs = locs.reshape([1, 3])
+                    ray_lst.extend([id_r] * indices.size)
+                    tri_lst.extend(indices)
+                    loc_lst.extend(locs)
+
+            # sort result arrays by ray index
+            index_ray = np.array(ray_lst)
+            sorting_inds = index_ray.argsort()
+            index_ray = index_ray[sorting_inds]
+            index_tri = np.array(tri_lst)[sorting_inds]
+            locations = np.array(loc_lst)[sorting_inds]
+
         return locations, index_ray, index_tri
 
     def plot_boundaries(poly_data, edge_color="red", **kwargs):
