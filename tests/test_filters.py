@@ -538,18 +538,18 @@ def test_glyph_cell_point_data():
                         np.cos(sphere_center_points.points[:, 2]))).T
 
     sphere_center = sphere.copy()
-    sphere_center["vectors_cell"] = vectors_centers*0.3
-    sphere_center["vectors_points"] = vectors*0.3
+    sphere_center['vectors_cell'] = vectors_centers * 0.3
+    sphere_center['vectors_points'] = vectors * 0.3
     sphere_center['arr_cell'] = np.ones(sphere.n_cells)
     sphere_center['arr_points'] = np.ones(sphere.n_points)
 
     
-    assert sphere_center.glyph(orient="vectors_cell", scale = "arr_cell")
-    assert sphere_center.glyph(orient="vectors_points", scale = "arr_points")
+    assert sphere_center.glyph(orient='vectors_cell', scale='arr_cell')
+    assert sphere_center.glyph(orient='vectors_points', scale='arr_points')
     with pytest.raises(ValueError):
-        sphere_center.glyph(orient="vectors_cell",scale = "arr_points")
+        sphere_center.glyph(orient='vectors_cell', scale='arr_points')
     with pytest.raises(ValueError):
-        sphere_center.glyph(orient="vectors_points", scale="arr_cell")
+        sphere_center.glyph(orient='vectors_points', scale='arr_cell')
 
 def test_split_and_connectivity():
     # Load a simple example mesh
