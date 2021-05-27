@@ -1072,6 +1072,7 @@ class DataSetFilters:
         >>> sphere = sphere.texture_map_to_sphere()
         >>> tex = examples.download_puppy_texture()  # doctest:+SKIP
         >>> cpos = sphere.plot(texture=tex)  # doctest:+SKIP
+
         """
         alg = _vtk.vtkTextureMapToSphere()
         if center is None:
@@ -1143,8 +1144,7 @@ class DataSetFilters:
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
               indices=None, tolerance=None, absolute=False, clamping=False,
               rng=None, progress_bar=False):
-        """
-        Copy a geometric representation (called a glyph) to the input dataset.
+        """Copy a geometric representation (called a glyph) to the input dataset.
 
         The glyph may be oriented along the input vectors, and it may
         be scaled according to scalar data or vector
@@ -1160,7 +1160,7 @@ class DataSetFilters:
 
         scale : bool or str, optional
             If ``True``, use the active scalars to scale the glyphs.
-            If string, the  scalar array to use to scale the glyphs.
+            If string, the scalar array to use to scale the glyphs.
 
         factor : float, optional
             Scale factor applied to scaling array
@@ -1184,7 +1184,7 @@ class DataSetFilters:
             Specify tolerance in terms of fraction of bounding box length.
             Float value is between 0 and 1. Default is None. If ``absolute``
             is ``True`` then the tolerance can be an absolute distance.
-            If None, points merging as a preprocessing step is disabled.
+            If ``None``, points merging as a preprocessing step is disabled.
 
         absolute : bool, optional
             Control if ``tolerance`` is an absolute distance or a fraction.
@@ -1213,6 +1213,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.download_carotid().threshold(145, scalars="scalars")
         >>> glyph = mesh.glyph(orient="vectors", scale="scalars", factor=0.01)
+
         """
         # Clean the points before glyphing
         if tolerance is not None:
