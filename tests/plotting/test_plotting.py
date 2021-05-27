@@ -360,7 +360,6 @@ def test_lighting_init_invalid():
     with pytest.raises(ValueError):
         pyvista.Plotter(lighting='invalid')
 
-
 @skip_no_plotting
 def test_plotter_shape_invalid():
     # wrong size
@@ -525,9 +524,9 @@ def test_plot_silhouette(tri_cylinder):
     assert len(actors) == 2  # cylinder + silhouette
     actor = actors[0]  # get silhouette actor
     props = actor.GetProperty()
-    assert props.GetColor() == pyvista.parse_color(pyvista.rcParams["silhouette"]["color"])
-    assert props.GetOpacity() == pyvista.rcParams["silhouette"]["opacity"]
-    assert props.GetLineWidth() == pyvista.rcParams["silhouette"]["line_width"]
+    assert props.GetColor() == pyvista.parse_color(pyvista.global_theme.silhouette.color)
+    assert props.GetOpacity() == pyvista.global_theme.silhouette.opacity
+    assert props.GetLineWidth() == pyvista.global_theme.silhouette.line_width
     plotter.show(before_close_callback=verify_cache_image)
 
 
@@ -535,7 +534,7 @@ def test_plot_silhouette(tri_cylinder):
 def test_plot_silhouette_options(tri_cylinder):
     # cover other properties
     plotter = pyvista.Plotter()
-    plotter.add_mesh(tri_cylinder, silhouette=dict(decimate=None, feature_angle=True))
+    plotter.add_mesh(tri_cylinder, silhouette=dict(decimate=None, feature_angle=20))
     plotter.show(before_close_callback=verify_cache_image)
 
 
@@ -920,23 +919,6 @@ def test_scalars_by_name():
     data = examples.load_uniform()
     plotter.add_mesh(data, scalars='Spatial Cell Data')
     plotter.show(before_close_callback=verify_cache_image)
-
-
-@pytest.mark.parametrize('theme', ['paraview', 'document', 'night', 'default'])
-def test_themes(theme):
-    pyvista.set_plot_theme(theme)
-    if theme != 'default':
-        assert pyvista.rcParams != pyvista.DEFAULT_THEME
-        pyvista.set_plot_theme('default')
-    assert pyvista.rcParams == pyvista.DEFAULT_THEME
-
-    # always return to testing theme
-    pyvista.set_plot_theme('testing')
-
-
-def test_invalid_theme():
-    with pytest.raises(ValueError, match='Invalid theme'):
-        pyvista.set_plot_theme('this is not a valid theme')
 
 
 @skip_no_plotting

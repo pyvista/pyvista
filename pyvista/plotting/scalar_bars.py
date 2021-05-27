@@ -1,8 +1,9 @@
 """PyVista Scalar bar module."""
 
+import pyvista
 import numpy as np
 from pyvista import _vtk
-from .theme import parse_font_family, parse_color, rcParams
+from .tools import parse_font_family, parse_color
 
 
 class ScalarBars():
@@ -211,32 +212,32 @@ class ScalarBars():
             raise ValueError('Mapper cannot be ``None`` when creating a scalar bar')
 
         if interactive is None:
-            interactive = rcParams['interactive']
+            interactive = pyvista.global_theme.interactive
         if font_family is None:
-            font_family = rcParams['font']['family']
+            font_family = pyvista.global_theme.font.family
         if label_font_size is None:
-            label_font_size = rcParams['font']['label_size']
+            label_font_size = pyvista.global_theme.font.label_size
         if title_font_size is None:
-            title_font_size = rcParams['font']['title_size']
+            title_font_size = pyvista.global_theme.font.title_size
         if color is None:
-            color = rcParams['font']['color']
+            color = pyvista.global_theme.font.color
         if fmt is None:
-            fmt = rcParams['font']['fmt']
+            fmt = pyvista.global_theme.font.fmt
         if vertical is None:
-            if rcParams['colorbar_orientation'].lower() == 'vertical':
+            if pyvista.global_theme.colorbar_orientation.lower() == 'vertical':
                 vertical = True
 
         # Automatically choose size if not specified
         if width is None:
             if vertical:
-                width = rcParams['colorbar_vertical']['width']
+                width = pyvista.global_theme.colorbar_vertical.width
             else:
-                width = rcParams['colorbar_horizontal']['width']
+                width = pyvista.global_theme.colorbar_horizontal.width
         if height is None:
             if vertical:
-                height = rcParams['colorbar_vertical']['height']
+                height = pyvista.global_theme.colorbar_vertical.height
             else:
-                height = rcParams['colorbar_horizontal']['height']
+                height = pyvista.global_theme.colorbar_horizontal.height
 
         # Check that this data hasn't already been plotted
         if title in list(self._scalar_bar_ranges.keys()):
@@ -267,16 +268,16 @@ class ScalarBars():
                 raise RuntimeError('Maximum number of color bars reached.')
             if position_x is None:
                 if vertical:
-                    position_x = rcParams['colorbar_vertical']['position_x']
+                    position_x = pyvista.global_theme.colorbar_vertical.position_x
                     position_x -= slot * (width + 0.2 * width)
                 else:
-                    position_x = rcParams['colorbar_horizontal']['position_x']
+                    position_x = pyvista.global_theme.colorbar_horizontal.position_x
 
             if position_y is None:
                 if vertical:
-                    position_y = rcParams['colorbar_vertical']['position_y']
+                    position_y = pyvista.global_theme.colorbar_vertical.position_y
                 else:
-                    position_y = rcParams['colorbar_horizontal']['position_y']
+                    position_y = pyvista.global_theme.colorbar_horizontal.position_y
                     position_y += slot * height
 
         # parse color

@@ -1,5 +1,6 @@
 """Module containing useful plotting tools."""
 
+from enum import Enum
 import platform
 import os
 from subprocess import PIPE, Popen
@@ -8,12 +9,21 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from .theme import parse_color, rcParams
+from .colors import string_to_rgb
+
+
+class FONTS(Enum):
+    """Font families available to PyVista."""
+
+    arial = _vtk.VTK_ARIAL
+    courier = _vtk.VTK_COURIER
+    times = _vtk.VTK_TIMES
 
 
 # Track render window support and plotting
 SUPPORTS_OPENGL = None
 SUPPORTS_PLOTTING = None
+
 
 def supports_open_gl():
     """Return if the system supports OpenGL."""
@@ -81,7 +91,7 @@ def system_supports_plotting():
 def update_axes_label_color(axes_actor, color=None):
     """Set the axes label color (internale helper)."""
     if color is None:
-        color = rcParams['font']['color']
+        color = pyvista.global_theme.font.color
     color = parse_color(color)
     if isinstance(axes_actor, _vtk.vtkAxesActor):
         prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
@@ -101,11 +111,11 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
                        labels_off=False, line_width=2):
     """Return an axis actor to add in the scene."""
     if x_color is None:
-        x_color = rcParams['axes']['x_color']
+        x_color = pyvista.global_theme.axes.x_color
     if y_color is None:
-        y_color = rcParams['axes']['y_color']
+        y_color = pyvista.global_theme.axes.y_color
     if z_color is None:
-        z_color = rcParams['axes']['z_color']
+        z_color = pyvista.global_theme.axes.z_color
     axes_actor = _vtk.vtkAxesActor()
     axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
     axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
@@ -140,13 +150,13 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
                                 labels_off=False, opacity=0.5,):
     """Create a Box axes orientation widget with labels."""
     if x_color is None:
-        x_color = rcParams['axes']['x_color']
+        x_color = pyvista.global_theme.axes.x_color
     if y_color is None:
-        y_color = rcParams['axes']['y_color']
+        y_color = pyvista.global_theme.axes.y_color
     if z_color is None:
-        z_color = rcParams['axes']['z_color']
+        z_color = pyvista.global_theme.axes.z_color
     if edge_color is None:
-        edge_color = rcParams['edge_color']
+        edge_color = pyvista.global_theme.edge_color
     axes_actor = _vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     if xlabel is not None:
@@ -333,3 +343,42 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
             raise RuntimeError(f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements')
         return mapping
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
+
+
+def parse_color(color, opacity=None, default_color=None):
+    """Parse color into a vtk friendly rgb list.
+
+    Values returned will be between 0 and 1.
+
+    """
+    if color is None:
+        if default_color is None:
+            color = pyvista.global_theme.color
+        else:
+            color = default_color
+    if isinstance(color, str):
+        color = string_to_rgb(color)
+    elif len(color) == 3:
+        pass
+    elif len(color) == 4:
+        color = color[:3]
+    else:
+        raise ValueError(f"""
+    Invalid color input: ({color})
+    Must be string, rgb list, or hex color string.  For example:
+        color='white'
+        color='w'
+        color=[1, 1, 1]
+        color='#FFFFFF'""")
+    if opacity is not None and isinstance(opacity, (float, int)):
+        color = [color[0], color[1], color[2], opacity]
+    return color
+
+
+def parse_font_family(font_family):
+    """Check font name."""
+    font_family = font_family.lower()
+    fonts = [font.name for font in FONTS]
+    if font_family not in fonts:
+        raise ValueError('Font must one of the following:\n{", ".join(fonts)}')
+    return FONTS[font_family].value

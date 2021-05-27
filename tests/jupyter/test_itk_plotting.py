@@ -4,10 +4,6 @@ import pytest
 import pyvista
 from pyvista.plotting import system_supports_plotting
 
-# for azure testing and itkwidgets
-# import matplotlib
-# matplotlib.use("agg")
-
 NO_PLOTTING = not system_supports_plotting()
 
 HAS_ITK = False

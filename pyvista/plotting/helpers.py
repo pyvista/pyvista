@@ -6,15 +6,14 @@ import scooby
 import pyvista
 from pyvista.utilities import is_pyvista_dataset
 from .plotting import Plotter
-from .theme import rcParams
 
 
 def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
-         show_bounds=False, show_axes=True, notebook=None, background=None,
+         show_bounds=False, show_axes=None, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
-         return_viewer=False, jupyter_kwargs={}, **kwargs):
+         return_viewer=False, jupyter_kwargs={}, theme=None, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -27,14 +26,15 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         without a window popping up.
 
     full_screen : bool, optional
-        Opens window in full screen.  When enabled, ignores ``window_size``.
-        Default ``False``.
+        Opens window in full screen.  When enabled, ignores
+        ``window_size``.  Default ``False``.
 
     screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
         ``help(pyvista.Plotter.screenshot)``.  Default ``False``.
 
-        When ``True``, takes screenshot and returns ``numpy`` array of image.
+        When ``True``, takes screenshot and returns ``numpy`` array of
+        image.
 
     window_size : list, optional
         Window size in pixels.  Defaults to ``[1024, 768]``
@@ -48,7 +48,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         notebook.  Assumes a jupyter console is active.
 
     show_axes : bool, optional
-        Shows a vtk axes widget.  Enabled by default.
+        Shows a vtk axes widget.  If ``None``, enabled according to
+        ``pyvista.global_theme.axes.show``.
 
     text : str, optional
         Adds text at the bottom of the plot.
@@ -76,34 +77,56 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
 
+    theme : pyvista.themes.DefaultTheme, optional
+        Plot-specific theme.
+
     **kwargs : optional keyword arguments
-        See help(Plotter.add_mesh) for additional options.
+        See ``help(pyvista.Plotter.add_mesh)`` for additional options.
 
     Returns
     -------
     cpos : list
         List of camera position, focal point, and view up.
 
-    img :  numpy.ndarray
-        Array containing pixel RGB and alpha.  Sized:
-        [Window height x Window width x 3] for transparent_background=False
-        [Window height x Window width x 4] for transparent_background=True
-        Returned only when screenshot enabled
+    img : numpy.ndarray
+        Array containing pixel RGB and optionally alpha values.
+        Sized:
+
+        * [Window height x Window width x 3] if the theme sets
+          ``transparent_background=False``.
+        * [Window height x Window width x 4] if the theme sets
+          ``transparent_background=True``.
+
+        Returned only when ``screenshot=True``.
+
+    Examples
+    --------
+    Plot a simple sphere while showing its edges.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Sphere()
+    >>> mesh.plot(show_edges=True)  # doctest:+SKIP
 
     """
     if notebook is None:
         notebook = scooby.in_ipykernel()
+
+    if theme is None:
+        theme = pyvista.global_theme
 
     # undocumented kwarg used within pytest to run a function before closing
     before_close_callback = kwargs.pop('before_close_callback', None)
 
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
-    auto_close = kwargs.get('auto_close', rcParams['auto_close'])
+    auto_close = kwargs.get('auto_close', theme.auto_close)
 
     if notebook:
         off_screen = notebook
-    plotter = Plotter(off_screen=off_screen, notebook=notebook)
+    plotter = Plotter(off_screen=off_screen, notebook=notebook, theme=theme)
+
+    if show_axes is None:
+        show_axes = theme.axes.show
     if show_axes:
         plotter.add_axes()
 
@@ -188,7 +211,7 @@ def plot_arrows(cent, direction, **kwargs):
 
     Returns
     -------
-    Same as ``pyvista.plot``.  See ``help(pyvista.plot)``
+    Same as ``pyvista.plot``.  See ``help(pyvista.plot)``.
 
     Examples
     --------
@@ -290,7 +313,7 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
     smooth_shading : bool, optional
         Smooth mesh surface mesh by taking into account surface
         normals.  Surface will appear smoother while sharp edges will
-        still look sharp.  Default False.
+        still look sharp.  Default ``False``.
 
     Returns
     --------

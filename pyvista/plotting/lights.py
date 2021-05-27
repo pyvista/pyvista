@@ -11,7 +11,7 @@ try:
 except ImportError:  # pragma: no cover
     from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
 
-from .theme import parse_color
+from .tools import parse_color
 from ..utilities.helpers import vtkmatrix_from_array
 
 

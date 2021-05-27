@@ -12,9 +12,9 @@ skip_no_panel = pytest.mark.skipif(not has_panel, reason='Requires panel')
 
 
 @skip_no_panel
-def test_set_jupyter_backend_ipygany():
+def test_set_jupyter_backend_panel():
     pv.set_jupyter_backend('panel')
-    assert pv.rcParams['jupyter_backend'] == 'panel'
+    assert pv.global_theme.jupyter_backend == 'panel'
     pv.set_jupyter_backend(None)
 
 

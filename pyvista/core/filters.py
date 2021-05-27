@@ -1842,118 +1842,188 @@ class DataSetFilters:
 
     def streamlines(dataset, vectors=None, source_center=None,
                     source_radius=None, n_points=100,
+                    start_position=None,
+                    return_source=False, pointa=None, pointb=None,
+                    **kwargs):
+        """Integrate a vector field to generate streamlines.
+
+        The default behavior uses a Sphere as the source - set it's location and 
+        radius via the ``source_center`` and ``source_radius`` keyword arguments.
+        ``n_points`` defines the number of starting points on the sphere surface.
+        Alternatively, a Line source can be used by specifying ``pointa`` and ``pointb``.
+        ``n_points`` again defines the number of points on the line.
+        
+        You can retrieve the source by specifying ``return_source=True``.
+        
+        Optional keyword parameters from :func:`pyvista.DataSetFilters.streamlines_from_source`
+        can be used here to control the generation of streamlines.
+
+        Parameters
+        ----------
+        vectors : str, optional
+            The string name of the active vector field to integrate across.
+
+        source_center : tuple(float), optional
+            Length 3 tuple of floats defining the center of the source
+            particles. Defaults to the center of the dataset.
+
+        source_radius : float, optional
+            Float radius of the source particle cloud. Defaults to one-tenth of
+            the diagonal of the dataset's spatial extent.
+
+        n_points : int, optional
+            Number of particles present in source sphere or line.
+
+        start_position : tuple(float), optional
+            A single point.  This will override the sphere point source.
+
+        return_source : bool, optional
+            Return the source particles as :class:`pyvista.PolyData` as well as the
+            streamlines. This will be the second value returned if ``True``.
+
+        pointa, pointb : tuple(float), optional
+            The coordinates of a start and end point for a line source. This
+            will override the sphere and start_position point source.
+
+        Returns
+        -------
+        streamlines : pyvista.PolyData
+            This produces polylines as the output, with each cell
+            (i.e., polyline) representing a streamline. The attribute values
+            associated with each streamline are stored in the cell data, whereas
+            those associated with streamline-points are stored in the point data.
+
+        source : pyvista.PolyData
+            The points of the source are the seed points for the streamlines.
+            Only returned if ``return_source=True``.
+        """
+        if source_center is None:
+            source_center = dataset.center
+        if source_radius is None:
+            source_radius = dataset.length / 10.0
+
+        # A single point at start_position
+        if start_position is not None:
+            source_center = start_position
+            source_radius = 0.
+            n_points = 1
+
+        if (
+            (pointa is not None and pointb is None) or 
+            (pointa is None and pointb is not None)
+        ):
+            raise ValueError("Both pointa and pointb must be provided") 
+        elif pointa is not None and pointb is not None:
+            source = _vtk.vtkLineSource()
+            source.SetPoint1(pointa)
+            source.SetPoint2(pointb)
+            source.SetResolution(n_points)
+        else:
+            source = _vtk.vtkPointSource()
+            source.SetCenter(source_center)
+            source.SetRadius(source_radius)
+            source.SetNumberOfPoints(n_points)
+        source.Update()
+        input_source = pyvista.wrap(source.GetOutput())
+        output = dataset.streamlines_from_source(input_source, vectors, **kwargs)
+        if return_source:
+            return output, input_source
+        return output
+
+
+    def streamlines_from_source(dataset, source, vectors=None, 
                     integrator_type=45, integration_direction='both',
                     surface_streamlines=False, initial_step_length=0.5,
                     step_unit='cl', min_step_length=0.01, max_step_length=1.0,
                     max_steps=2000, terminal_speed=1e-12, max_error=1e-6,
                     max_time=None, compute_vorticity=True, rotation_scale=1.0,
-                    interpolator_type='point', start_position=(0.0, 0.0, 0.0),
-                    return_source=False, pointa=None, pointb=None):
-        """Integrate a vector field to generate streamlines.
-
+                    interpolator_type='point'):
+        """
+        Generate streamlines of vectors from the points of a source mesh.
+        
         The integration is performed using a specified integrator, by default
         Runge-Kutta2. This supports integration through any type of dataset.
-        Thus if the dataset contains 2D cells like polygons or triangles, the
-        integration is constrained to lie on the surface defined by 2D cells.
+        If the dataset contains 2D cells like polygons or triangles and the
+        ``surface_streamlines`` parameter is used, the integration is constrained
+        to lie on the surface defined by 2D cells.
 
-        This produces polylines as the output, with each cell
-        (i.e., polyline) representing a streamline. The attribute values
-        associated with each streamline are stored in the cell data, whereas
-        those associated with streamline-points are stored in the point data.
+        Parameters:
+        -----------
+        source : pyvista.DataSet
+            The points of the source provide the starting points of the
+            streamlines.  This will override both sphere and line sources.
 
-        This uses a Sphere as the source - set it's location and radius via
-        the ``source_center`` and ``source_radius`` keyword arguments.
-        You can retrieve the source as :class:`pyvista.PolyData` by specifying
-        ``return_source=True``.
-
-        Parameters
-        ----------
-        vectors : str
-            The string name of the active vector field to integrate across
-
-        source_center : tuple(float)
-            Length 3 tuple of floats defining the center of the source
-            particles. Defaults to the center of the dataset
-
-        source_radius : float
-            Float radius of the source particle cloud. Defaults to one-tenth of
-            the diagonal of the dataset's spatial extent
-
-        n_points : int
-            Number of particles present in source sphere
-
-        integrator_type : int
+        vectors : str, optional
+            The string name of the active vector field to integrate across.
+        
+        integrator_type : int, optional
             The integrator type to be used for streamline generation.
             The default is Runge-Kutta45. The recognized solvers are:
             RUNGE_KUTTA2 (``2``),  RUNGE_KUTTA4 (``4``), and RUNGE_KUTTA45
             (``45``). Options are ``2``, ``4``, or ``45``. Default is ``45``.
 
-        integration_direction : str
+        integration_direction : str, optional
             Specify whether the streamline is integrated in the upstream or
             downstream directions (or both). Options are ``'both'``,
             ``'backward'``, or ``'forward'``.
 
-        surface_streamlines : bool
-            Compute streamlines on a surface. Default ``False``
+        surface_streamlines : bool, optional
+            Compute streamlines on a surface. Default ``False``.
 
-        initial_step_length : float
+        initial_step_length : float, optional
             Initial step size used for line integration, expressed ib length
             unitsL or cell length units (see ``step_unit`` parameter).
             either the starting size for an adaptive integrator, e.g., RK45, or
-            the constant / fixed size for non-adaptive ones, i.e., RK2 and RK4)
+            the constant / fixed size for non-adaptive ones, i.e., RK2 and RK4).
 
-        step_unit : str
+        step_unit : str, optional
             Uniform integration step unit. The valid unit is now limited to
             only LENGTH_UNIT (``'l'``) and CELL_LENGTH_UNIT (``'cl'``).
             Default is CELL_LENGTH_UNIT: ``'cl'``.
 
-        min_step_length : float
+        min_step_length : float, optional
             Minimum step size used for line integration, expressed in length or
-            cell length units. Only valid for an adaptive integrator, e.g., RK45
+            cell length units. Only valid for an adaptive integrator, e.g., RK45.
 
-        max_step_length : float
+        max_step_length : float, optional
             Maximum step size used for line integration, expressed in length or
-            cell length units. Only valid for an adaptive integrator, e.g., RK45
+            cell length units. Only valid for an adaptive integrator, e.g., RK45.
 
-        max_steps : int
+        max_steps : int, optional
             Maximum number of steps for integrating a streamline.
             Defaults to ``2000``
 
-        terminal_speed : float
+        terminal_speed : float, optional
             Terminal speed value, below which integration is terminated.
 
-        max_error : float
+        max_error : float, optional
             Maximum error tolerated throughout streamline integration.
 
-        max_time : float
+        max_time : float, optional
             Specify the maximum length of a streamline expressed in LENGTH_UNIT.
 
-        compute_vorticity : bool
+        compute_vorticity : bool, optional
             Vorticity computation at streamline points (necessary for generating
             proper stream-ribbons using the ``vtkRibbonFilter``.
 
-        interpolator_type : str
+        interpolator_type : str, optional
             Set the type of the velocity field interpolator to locate cells
             during streamline integration either by points or cells.
             The cell locator is more robust then the point locator. Options
             are ``'point'`` or ``'cell'`` (abbreviations of ``'p'`` and ``'c'``
             are also supported).
 
-        rotation_scale : float
+        rotation_scale : float, optional
             This can be used to scale the rate with which the streamribbons
             twist. The default is 1.
 
-        start_position : tuple(float)
-            Set the start position. Default is ``(0.0, 0.0, 0.0)``
-
-        return_source : bool
-            Return the source particles as :class:`pyvista.PolyData` as well as the
-            streamlines. This will be the second value returned if ``True``.
-
-        pointa, pointb : tuple(float)
-            The coordinates of a start and end point for a line source. This
-            will override the sphere point source.
-
+        Returns
+        -------
+        streamlines : pyvista.PolyData
+            This produces polylines as the output, with each cell
+            (i.e., polyline) representing a streamline. The attribute values
+            associated with each streamline are stored in the cell data, whereas
+            those associated with streamline-points are stored in the point data.
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
@@ -1973,28 +2043,15 @@ class DataSetFilters:
         if max_time is None:
             max_velocity = dataset.get_data_range()[-1]
             max_time = 4.0 * dataset.GetLength() / max_velocity
-        # Generate the source
-        if source_center is None:
-            source_center = dataset.center
-        if source_radius is None:
-            source_radius = dataset.length / 10.0
-        if pointa is not None and pointb is not None:
-            source = _vtk.vtkLineSource()
-            source.SetPoint1(pointa)
-            source.SetPoint2(pointb)
-            source.SetResolution(n_points)
-        else:
-            source = _vtk.vtkPointSource()
-            source.SetCenter(source_center)
-            source.SetRadius(source_radius)
-            source.SetNumberOfPoints(n_points)
+        if not isinstance(source, pyvista.DataSet):
+            raise TypeError("source must be a pyvista.DataSet")
+
         # Build the algorithm
         alg = _vtk.vtkStreamTracer()
         # Inputs
         alg.SetInputDataObject(dataset)
-        # NOTE: not sure why we can't pass a PolyData object
-        #       setting the connection is the only I could get it to work
-        alg.SetSourceConnection(source.GetOutputPort())
+        alg.SetSourceData(source)
+
         # general parameters
         alg.SetComputeVorticity(compute_vorticity)
         alg.SetInitialIntegrationStep(initial_step_length)
@@ -2005,7 +2062,6 @@ class DataSetFilters:
         alg.SetMaximumPropagation(max_time)
         alg.SetMinimumIntegrationStep(min_step_length)
         alg.SetRotationScale(rotation_scale)
-        alg.SetStartPosition(start_position)
         alg.SetSurfaceStreamlines(surface_streamlines)
         alg.SetTerminalSpeed(terminal_speed)
         # Model parameters
@@ -2029,12 +2085,7 @@ class DataSetFilters:
             alg.SetInterpolatorTypeToDataSetPointLocator()
         # run the algorithm
         alg.Update()
-        output = _get_output(alg)
-        if return_source:
-            source.Update()
-            src = pyvista.wrap(source.GetOutput())
-            return output, src
-        return output
+        return _get_output(alg)
 
     def decimate_boundary(dataset, target_reduction=0.5):
         """Return a decimated version of a triangulation of the boundary.
@@ -3140,7 +3191,7 @@ class CompositeFilters:
     """An internal class to manage filters/algorithms for composite datasets."""
 
     def extract_geometry(composite):
-        """Combine the geomertry of all blocks into a single ``PolyData`` object.
+        """Combine the geometry of all blocks into a single ``PolyData`` object.
 
         Place this filter at the end of a pipeline before a polydata
         consumer such as a polydata mapper to extract geometry from all blocks
@@ -4575,29 +4626,44 @@ class PolyDataFilters(DataSetFilters):
                 "\tconda install trimesh rtree pyembree"
             )
 
+        origins = np.asarray(origins)
+        directions = np.asarray(directions)
         faces_as_array = poly_data.faces.reshape((poly_data.n_faces, 4))[:, 1:]
         tmesh = trimesh.Trimesh(poly_data.points, faces_as_array)
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins, directions, multiple_hits=not first_point
         )
         if retry:
-            ray_tuples = [(id_r, l, id_t) for id_r, l, id_t in zip(index_ray, locations, index_tri)]
-            for id_r in range(len(origins)):
-                if id_r not in index_ray:
-                    origin = np.array(origins[id_r])
-                    vector = np.array(directions[id_r])
-                    unit_vector = vector / np.sqrt(np.sum(np.power(vector, 2)))
-                    second_point = origin + (unit_vector * poly_data.length)
-                    locs, indexes = poly_data.ray_trace(origin, second_point, first_point=first_point)
-                    if locs.any():
-                        if first_point:
-                            locs = locs.reshape([1, 3])
-                        for loc, id_t in zip(locs, indexes):
-                            ray_tuples.append((id_r, loc, id_t))
-            sorted_results = sorted(ray_tuples, key=lambda x: x[0])
-            locations = np.array([loc for id_r, loc, id_t in sorted_results])
-            index_ray = np.array([id_r for id_r, loc, id_t in sorted_results])
-            index_tri = np.array([id_t for id_r, loc, id_t in sorted_results])
+            # gather intersecting rays in lists
+            loc_lst, ray_lst, tri_lst = [arr.tolist() for arr in [locations, index_ray, index_tri]]
+
+            # find indices that trimesh failed on
+            all_ray_indices = np.arange(len(origins))
+            retry_ray_indices = np.setdiff1d(all_ray_indices, index_ray, assume_unique=True)
+
+            # compute ray points for all failed rays at once
+            origins_retry = origins[retry_ray_indices, :]  # shape (n_retry, 3)
+            directions_retry = directions[retry_ray_indices, :]
+            unit_directions = directions_retry / np.linalg.norm(directions_retry,
+                                                                axis=1, keepdims=True)
+            second_points = origins_retry + unit_directions * poly_data.length  # shape (n_retry, 3)
+
+            for id_r, origin, second_point in zip(retry_ray_indices, origins_retry, second_points):
+                locs, indices = poly_data.ray_trace(origin, second_point, first_point=first_point)
+                if locs.any():
+                    if first_point:
+                        locs = locs.reshape([1, 3])
+                    ray_lst.extend([id_r] * indices.size)
+                    tri_lst.extend(indices)
+                    loc_lst.extend(locs)
+
+            # sort result arrays by ray index
+            index_ray = np.array(ray_lst)
+            sorting_inds = index_ray.argsort()
+            index_ray = index_ray[sorting_inds]
+            index_tri = np.array(tri_lst)[sorting_inds]
+            locations = np.array(loc_lst)[sorting_inds]
+
         return locations, index_ray, index_tri
 
     def plot_boundaries(poly_data, edge_color="red", **kwargs):
