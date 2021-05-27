@@ -1006,17 +1006,21 @@ def test_serialize_deserialize(datasets):
 
         for attr in ('cells', 'points'):
             if hasattr(dataset, attr):
-                assert getattr(dataset_2, attr) == \
-                    pytest.approx(getattr(dataset, attr))
+                arr_have = getattr(dataset_2, attr)
+                arr_expected = getattr(dataset, attr)
+                assert arr_have == pytest.approx(arr_expected)
 
         for name in dataset.point_arrays:
-            assert dataset_2.point_arrays[name] == \
-                pytest.approx(dataset.point_arrays[name])
+            arr_have = dataset_2.point_arrays[name]
+            arr_expected = dataset.point_arrays[name]
+            assert arr_have == pytest.approx(arr_expected)
 
         for name in dataset.cell_arrays:
-            assert dataset_2.cell_arrays[name] == \
-                pytest.approx(dataset.cell_arrays[name])
+            arr_have = dataset_2.cell_arrays[name]
+            arr_expected = dataset.cell_arrays[name]
+            assert arr_have == pytest.approx(arr_expected)
 
         for name in dataset.field_arrays:
-            assert dataset_2.field_arrays[name] == \
-                pytest.approx(dataset.field_arrays[name])
+            arr_have = dataset_2.field_arrays[name]
+            arr_expected = dataset.field_arrays[name]
+            assert arr_have == pytest.approx(arr_expected)
