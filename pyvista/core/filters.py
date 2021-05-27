@@ -1149,8 +1149,9 @@ class DataSetFilters:
         The glyph may be oriented along the input vectors, and it may
         be scaled according to scalar data or vector
         magnitude. Passing a table of glyphs to choose from based on
-        scalars or vector magnitudes is also supported.  Orient and scale must 
-        be either both point data or both cell data.
+        scalars or vector magnitudes is also supported.  The arrays
+        used for ``orient` and ``scale`` must be either both point data
+        or both cell data.
 
         Parameters
         ----------
@@ -1163,7 +1164,7 @@ class DataSetFilters:
             If string, the scalar array to use to scale the glyphs.
 
         factor : float, optional
-            Scale factor applied to scaling array
+            Scale factor applied to scaling array.
 
         geom : vtk.vtkDataSet or tuple(vtk.vtkDataSet), optional
             The geometry to use for the glyph. If missing, an arrow glyph
@@ -1189,8 +1190,8 @@ class DataSetFilters:
         absolute : bool, optional
             Control if ``tolerance`` is an absolute distance or a fraction.
 
-        clamping: bool
-            Turn on/off clamping of "scalar" values to range.
+        clamping: bool, optional
+            Turn on/off clamping of "scalar" values to range. Default ``False``.
 
         rng: tuple(float), optional
             Set the range of values to be considered by the filter when scalars
@@ -1282,7 +1283,8 @@ class DataSetFilters:
             ):
                 source_data = dataset
             else:
-                raise ValueError("Both scale and orient must use point data or cell data")
+                raise ValueError("Both ``scale`` and ``orient`` must use "
+                                 "point data or cell data.")
         else:
             source_data = dataset
         if rng is not None:
