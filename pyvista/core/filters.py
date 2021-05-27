@@ -1152,7 +1152,7 @@ class DataSetFilters:
         be scaled according to scalar data or vector
         magnitude. Passing a table of glyphs to choose from based on
         scalars or vector magnitudes is also supported.  The arrays
-        used for ``orient` and ``scale`` must be either both point data
+        used for ``orient`` and ``scale`` must be either both point data
         or both cell data.
 
         Parameters
