@@ -479,15 +479,15 @@ def test_cell_centers_composite(composite):
     assert output.n_blocks == composite.n_blocks
 
 
-def test_glyph(datasets):
+def test_glyph(datasets, sphere):
     for i, dataset in enumerate(datasets):
         dataset.vectors = np.ones_like(dataset.points)
         result = dataset.glyph()
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
-    sphere = pyvista.Sphere()
     sphere_sans_arrays = sphere.copy()
+    sphere.compute_normals(inplace=True)
     sphere.vectors = np.ones([sphere.n_points,3])
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
 
@@ -519,9 +519,7 @@ def test_glyph(datasets):
         sphere.glyph(geom=geoms, indices=indices[:-1])
 
 
-def test_glyph_cell_point_data():
-    sphere = pyvista.Sphere()
-
+def test_glyph_cell_point_data(sphere):
     sphere['vectors_cell'] = np.ones([sphere.n_cells,3])
     sphere['vectors_points'] = np.ones([sphere.n_points,3])
     sphere['arr_cell'] = np.ones(sphere.n_cells)
