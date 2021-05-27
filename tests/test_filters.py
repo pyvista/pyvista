@@ -525,24 +525,22 @@ def test_glyph(datasets):
 
 
 def test_glyph_cell_point_data():
-
     sphere = pyvista.Sphere(radius=3.14, theta_resolution=5, phi_resolution=5)
     # make cool swirly pattern
     vectors = np.vstack((np.sin(sphere.points[:, 0]),
-                        np.cos(sphere.points[:, 1]),
-                        np.cos(sphere.points[:, 2]))).T
+                         np.cos(sphere.points[:, 1]),
+                         np.cos(sphere.points[:, 2]))).T
 
     sphere_center_points = sphere.cell_centers()
     vectors_centers = np.vstack((np.sin(sphere_center_points.points[:, 0]),
-                        np.cos(sphere_center_points.points[:, 1]),
-                        np.cos(sphere_center_points.points[:, 2]))).T
+                                 np.cos(sphere_center_points.points[:, 1]),
+                                 np.cos(sphere_center_points.points[:, 2]))).T
 
     sphere_center = sphere.copy()
     sphere_center['vectors_cell'] = vectors_centers * 0.3
     sphere_center['vectors_points'] = vectors * 0.3
     sphere_center['arr_cell'] = np.ones(sphere.n_cells)
     sphere_center['arr_points'] = np.ones(sphere.n_points)
-
     
     assert sphere_center.glyph(orient='vectors_cell', scale='arr_cell')
     assert sphere_center.glyph(orient='vectors_points', scale='arr_points')
@@ -550,6 +548,7 @@ def test_glyph_cell_point_data():
         sphere_center.glyph(orient='vectors_cell', scale='arr_points')
     with pytest.raises(ValueError):
         sphere_center.glyph(orient='vectors_points', scale='arr_cell')
+
 
 def test_split_and_connectivity():
     # Load a simple example mesh
@@ -742,6 +741,7 @@ def test_streamlines_start_position(uniform_vec):
     stream = uniform_vec.streamlines('vectors', start_position=(0.5, 0.0, 0.0))
 
     assert all([stream.n_points, stream.n_cells])
+
 
 def test_streamlines_errors(uniform_vec):
     with pytest.raises(ValueError):
@@ -1006,6 +1006,7 @@ def test_extract_points():
     assert sub_surf_adj.n_points == 9
     assert sub_surf_adj.n_cells == 4
     assert sub_surf_nocells.cells[0] == 1
+
 
 @skip_py2_nobind
 def test_slice_along_line_composite(composite):
