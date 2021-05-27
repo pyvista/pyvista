@@ -1203,6 +1203,15 @@ class DataSetFilters:
         -------
         glyphs : pyvista.PolyData
             Glyphs at either the cell centers or points.
+
+        Examples
+        --------
+        Create arrow glyphs oriented by vectors and scaled by scalars.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_carotid().threshold(145, scalars="scalars")
+        >>> glyph = mesh.glyph(orient="vectors", scale="scalars")
         """
         # Clean the points before glyphing
         if tolerance is not None:
