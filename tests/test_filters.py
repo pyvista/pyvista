@@ -486,14 +486,9 @@ def test_glyph(datasets):
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
-    sphere = pyvista.Sphere(radius=3.14, theta_resolution=5, phi_resolution=5)
+    sphere = pyvista.Sphere()
     sphere_sans_arrays = sphere.copy()
-    # make cool swirly pattern
-    vectors = np.vstack((np.sin(sphere.points[:, 0]),
-                        np.cos(sphere.points[:, 1]),
-                        np.cos(sphere.points[:, 2]))).T
-    # add and scale
-    sphere.vectors = vectors*0.3
+    sphere.vectors = np.ones([sphere.n_points,3])
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
 
     assert sphere.glyph(scale=False)
@@ -525,29 +520,19 @@ def test_glyph(datasets):
 
 
 def test_glyph_cell_point_data():
-    sphere = pyvista.Sphere(radius=3.14, theta_resolution=5, phi_resolution=5)
-    # make cool swirly pattern
-    vectors = np.vstack((np.sin(sphere.points[:, 0]),
-                         np.cos(sphere.points[:, 1]),
-                         np.cos(sphere.points[:, 2]))).T
+    sphere = pyvista.Sphere()
 
-    sphere_center_points = sphere.cell_centers()
-    vectors_centers = np.vstack((np.sin(sphere_center_points.points[:, 0]),
-                                 np.cos(sphere_center_points.points[:, 1]),
-                                 np.cos(sphere_center_points.points[:, 2]))).T
-
-    sphere_center = sphere.copy()
-    sphere_center['vectors_cell'] = vectors_centers * 0.3
-    sphere_center['vectors_points'] = vectors * 0.3
-    sphere_center['arr_cell'] = np.ones(sphere.n_cells)
-    sphere_center['arr_points'] = np.ones(sphere.n_points)
+    sphere['vectors_cell'] = np.ones([sphere.n_cells,3])
+    sphere['vectors_points'] = np.ones([sphere.n_points,3])
+    sphere['arr_cell'] = np.ones(sphere.n_cells)
+    sphere['arr_points'] = np.ones(sphere.n_points)
     
-    assert sphere_center.glyph(orient='vectors_cell', scale='arr_cell')
-    assert sphere_center.glyph(orient='vectors_points', scale='arr_points')
+    assert sphere.glyph(orient='vectors_cell', scale='arr_cell')
+    assert sphere.glyph(orient='vectors_points', scale='arr_points')
     with pytest.raises(ValueError):
-        sphere_center.glyph(orient='vectors_cell', scale='arr_points')
+        sphere.glyph(orient='vectors_cell', scale='arr_points')
     with pytest.raises(ValueError):
-        sphere_center.glyph(orient='vectors_points', scale='arr_cell')
+        sphere.glyph(orient='vectors_points', scale='arr_cell')
 
 
 def test_split_and_connectivity():
