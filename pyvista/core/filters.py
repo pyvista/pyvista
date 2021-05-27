@@ -1207,11 +1207,12 @@ class DataSetFilters:
         Examples
         --------
         Create arrow glyphs oriented by vectors and scaled by scalars.
+        Factor parameter is used to reduce the size of the arrows.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.download_carotid().threshold(145, scalars="scalars")
-        >>> glyph = mesh.glyph(orient="vectors", scale="scalars")
+        >>> glyph = mesh.glyph(orient="vectors", scale="scalars", factor=0.01)
         """
         # Clean the points before glyphing
         if tolerance is not None:
