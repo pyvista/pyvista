@@ -1215,7 +1215,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.download_carotid().threshold(145, scalars="scalars")  # doctest:+SKIP
-        >>> glyph = mesh.glyph(orient="vectors", scale="scalars", factor=0.01)
+        >>> glyph = mesh.glyph(orient="vectors", scale="scalars", factor=0.01)  # doctest:+SKIP
 
         """
         # Clean the points before glyphing
