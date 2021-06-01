@@ -331,6 +331,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
         >>> clipped = dataset.clip_scalar(value=100, invert=False)
+
         """
         if isinstance(dataset, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
@@ -633,6 +634,7 @@ class DataSetFilters:
         >>> volume[:3] = 1
         >>> v = pyvista.wrap(volume)
         >>> threshed = v.threshold(0.1)
+
         """
         # set the scalaras to threshold on
         if scalars is None:
@@ -1073,6 +1075,7 @@ class DataSetFilters:
         >>> sphere = sphere.texture_map_to_sphere()
         >>> tex = examples.download_puppy_texture()  # doctest:+SKIP
         >>> cpos = sphere.plot(texture=tex)  # doctest:+SKIP
+
         """
         alg = _vtk.vtkTextureMapToSphere()
         if center is None:
@@ -1144,23 +1147,27 @@ class DataSetFilters:
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
               indices=None, tolerance=None, absolute=False, clamping=False,
               rng=None, progress_bar=False):
-        """Copy a geometric representation (called a glyph) to every point in the input dataset.
+        """Copy a geometric representation (called a glyph) to the input dataset.
 
         The glyph may be oriented along the input vectors, and it may
         be scaled according to scalar data or vector
         magnitude. Passing a table of glyphs to choose from based on
-        scalars or vector magnitudes is also supported.
+        scalars or vector magnitudes is also supported.  The arrays
+        used for ``orient`` and ``scale`` must be either both point data
+        or both cell data.
 
         Parameters
         ----------
-        orient : bool
-            Use the active vectors array to orient the glyphs
+        orient : bool or str, optional
+            If ``True``, use the active vectors array to orient the glyphs.
+            If string, the vector array to use to orient the glyphs.
 
-        scale : bool
-            Use the active scalars to scale the glyphs
+        scale : bool or str, optional
+            If ``True``, use the active scalars to scale the glyphs.
+            If string, the scalar array to use to scale the glyphs.
 
-        factor : float
-            Scale factor applied to scaling array
+        factor : float, optional
+            Scale factor applied to scaling array.
 
         geom : vtk.vtkDataSet or tuple(vtk.vtkDataSet), optional
             The geometry to use for the glyph. If missing, an arrow glyph
@@ -1181,13 +1188,13 @@ class DataSetFilters:
             Specify tolerance in terms of fraction of bounding box length.
             Float value is between 0 and 1. Default is None. If ``absolute``
             is ``True`` then the tolerance can be an absolute distance.
-            If None, points merging as a preprocessing step is disabled.
+            If ``None``, points merging as a preprocessing step is disabled.
 
         absolute : bool, optional
             Control if ``tolerance`` is an absolute distance or a fraction.
 
-        clamping: bool
-            Turn on/off clamping of "scalar" values to range.
+        clamping: bool, optional
+            Turn on/off clamping of "scalar" values to range. Default ``False``.
 
         rng: tuple(float), optional
             Set the range of values to be considered by the filter when scalars
@@ -1195,6 +1202,21 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        glyphs : pyvista.PolyData
+            Glyphs at either the cell centers or points.
+
+        Examples
+        --------
+        Create arrow glyphs oriented by vectors and scaled by scalars.
+        Factor parameter is used to reduce the size of the arrows.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_carotid().threshold(145, scalars="scalars")  # doctest:+SKIP
+        >>> glyph = mesh.glyph(orient="vectors", scale="scalars", factor=0.01)  # doctest:+SKIP
 
         """
         # Clean the points before glyphing
@@ -1254,10 +1276,24 @@ class DataSetFilters:
         if isinstance(orient, str):
             dataset.active_vectors_name = orient
             orient = True
+        if scale and orient:
+            if (dataset.active_vectors_info.association == FieldAssociation.CELL
+                and dataset.active_scalars_info.association == FieldAssociation.CELL
+            ):
+                source_data = dataset.cell_centers()
+            elif(dataset.active_vectors_info.association == FieldAssociation.POINT
+                and dataset.active_scalars_info.association == FieldAssociation.POINT
+            ):
+                source_data = dataset
+            else:
+                raise ValueError("Both ``scale`` and ``orient`` must use "
+                                 "point data or cell data.")
+        else:
+            source_data = dataset
         if rng is not None:
             alg.SetRange(rng)
         alg.SetOrient(orient)
-        alg.SetInputData(dataset)
+        alg.SetInputData(source_data)
         alg.SetVectorModeToUseVector()
         alg.SetScaleFactor(factor)
         alg.SetClamping(clamping)
@@ -1567,6 +1603,7 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
         """
         alg = _vtk.vtkDelaunay3D()
         alg.SetInputData(dataset)
@@ -1897,6 +1934,7 @@ class DataSetFilters:
         source : pyvista.PolyData
             The points of the source are the seed points for the streamlines.
             Only returned if ``return_source=True``.
+
         """
         if source_center is None:
             source_center = dataset.center
@@ -2127,6 +2165,7 @@ class DataSetFilters:
         -------
         sampled_line : pv.PolyData
             Line object with sampled data from dataset.
+
         """
         if resolution is None:
             resolution = int(dataset.n_cells)
@@ -2259,6 +2298,7 @@ class DataSetFilters:
         >>> pointb = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[4]]
         >>> center = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[4]]
         >>> sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
+
         """
         if resolution is None:
             resolution = int(dataset.n_cells)
@@ -2313,6 +2353,7 @@ class DataSetFilters:
         >>> polar = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[5]]
         >>> center = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[4]]
         >>> sampled_arc = uniform.sample_over_circular_arc_normal(center, normal=normal, polar=polar)
+
         """
         if resolution is None:
             resolution = int(dataset.n_cells)
@@ -2389,6 +2430,7 @@ class DataSetFilters:
         >>> b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
         >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)
+
         """
         # Ensure matplotlib is available
         try:
@@ -3046,6 +3088,7 @@ class DataSetFilters:
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> shrunk_mesh = mesh.shrink(shrink_factor=0.8)
+
         """
         if not (0.0 <= shrink_factor <= 1.0):
             raise ValueError('`shrink_factor` should be between 0.0 and 1.0')
@@ -3093,6 +3136,7 @@ class DataSetFilters:
         ...                              [0, 0, 0, 1]])
         >>> transformed = mesh.transform(transform_matrix)
         >>> cpos = transformed.plot(show_edges=True)
+
         """
         if isinstance(trans, _vtk.vtkMatrix4x4):
             m = trans
@@ -3593,6 +3637,7 @@ class PolyDataFilters(DataSetFilters):
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
         >>> cpos = hills.plot_curvature(smooth_shading=True)
+
         """
         kwargs.setdefault('scalar_bar_args',
                           {'title': f'{curv_type.capitalize()} Curvature'})
@@ -3683,6 +3728,7 @@ class PolyDataFilters(DataSetFilters):
         Sharp Edges on Cube:        384
         >>> print(f'Sharp Edges on Smooth Cube: {n_smooth_cells}')
         Sharp Edges on Smooth Cube: 12
+
         """
         alg = _vtk.vtkSmoothPolyDataFilter()
         alg.SetInputData(poly_data)
@@ -4615,6 +4661,7 @@ class PolyDataFilters(DataSetFilters):
         ... string = ", ".join([f"({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})" for point in points])
         ... print(f'Rays intersected at {string}')
         Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)
+
         """
         if not poly_data.is_all_triangles():
             raise NotAllTrianglesError
@@ -5134,6 +5181,7 @@ class PolyDataFilters(DataSetFilters):
         >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1])
         >>> cpos = mesh.plot()
+
         """
         alg = _vtk.vtkLinearExtrusionFilter()
         alg.SetExtrusionTypeToVectorExtrusion()
@@ -5207,6 +5255,7 @@ class PolyDataFilters(DataSetFilters):
         >>> line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
         >>> mesh = line.extrude_rotate(resolution = 4)
         >>> cpos = mesh.plot()
+
         """
         if resolution <= 0:
             raise ValueError('`resolution` should be positive')
@@ -5281,6 +5330,7 @@ class PolyDataFilters(DataSetFilters):
         >>> stripped = slc.strip()
         >>> stripped.n_cells
         1
+
         """
         alg = _vtk.vtkStripper()
         alg.SetInputDataObject(poly_data)
@@ -5308,6 +5358,7 @@ class UnstructuredGridFilters(DataSetFilters):
         ----------
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
         """
         return pyvista.PolyData(ugrid.points).delaunay_2d(tol=tol, alpha=alpha,
                                                           offset=offset,
@@ -5368,6 +5419,7 @@ class StructuredGridFilters(DataSetFilters):
 
         >>> joined = voi_1.concatenate(voi_2, axis=1)
         >>> assert np.allclose(grid.points, joined.points)
+
         """
         alg = _vtk.vtkExtractGrid()
         alg.SetVOI(voi)
@@ -5414,6 +5466,7 @@ class StructuredGridFilters(DataSetFilters):
         >>> joined = voi_1.concatenate(voi_2, axis=1)
         >>> print(grid.dimensions, 'same as', joined.dimensions)
         [80, 80, 1] same as [80, 80, 1]
+
         """
         if axis > 2:
             raise RuntimeError('Concatenation axis must be <= 2.')
@@ -5511,6 +5564,7 @@ class UniformGridFilters(DataSetFilters):
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
         """
         alg = _vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(dataset)
@@ -5560,6 +5614,7 @@ class UniformGridFilters(DataSetFilters):
             this is on, the subsampling will always include the boundary of
             the grid even though the sample rate is not an even multiple of
             the grid dimensions. (By default this is off.)
+
         """
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)
