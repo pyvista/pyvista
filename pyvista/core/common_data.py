@@ -1,13 +1,11 @@
-"""
-Contains PyVista mappings from vtkmodules.vtkCommonDataModel.
-"""
+"""Contains PyVista mappings from vtkmodules.vtkCommonDataModel."""
 from typing import Sequence
 
 from pyvista import _vtk
 
 
 def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
-    """An implicit function that implements Perlin noise.
+    """Return the implicit function that implements Perlin noise.
 
     Uses ``vtk.vtkPerlinNoise`` and computes a Perlin noise field as
     an implicit function. ``vtk.vtkPerlinNoise`` is a concrete
