@@ -173,13 +173,13 @@ This script can be called with:
    dependencies.
 
 
-Python VTK Wheel on Raspberry Pi (64-bit)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-While it's possible to build on 32-bit Raspberry Pi (ARMv7), there's
+Building Python VTK Wheel on Raspberry Pi (64-bit)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+While it's possible to build on 32-bit Raspberry Pi (ARMv7), there are
 several issues that crop up when building wheels for the 32-bit
 version (see `manylinux issue 84
 <https://github.com/pypa/manylinux/issues/84>`_).  Should you attempt
-to build on 32-bit, attempt to build the wheel using `dockcross
+to build on 32-bit, try building the wheel using `dockcross
 <https://github.com/dockcross/dockcross>`_ as you may run into memory
 limitations otherwise (especially with only 1 GB RAM).
 
@@ -229,7 +229,8 @@ Where ``build_wheels.sh`` is:
 
     /bin/bash
     yum install epel-release
-    yum install ninja-build mesa-libEGL-devel
+    yum install ninja-build
+    yum install mesa-libEGL-devel  # only needed when building EGL
 
     mkdir /io/build -p
     cd /io/build
@@ -255,7 +256,7 @@ Where ``build_wheels.sh`` is:
     # cleanup wheel
     rm -rf wheelhouse
     auditwheel repair dist/*.whl
-    cp wheelhouse/vtk*.whl /io/wheels_egl
+    cp wheelhouse/vtk*.whl /io/wheels
 
 Be sure to either enable or disable ``DVTK_OPENGL_HAS_EGL`` depending
 on if you want ``EGL`` enabled for your wheel.
