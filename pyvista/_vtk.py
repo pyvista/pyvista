@@ -20,6 +20,7 @@ except ImportError:  # pragma: no cover
 
 if VTK9:
 
+    from vtkmodules.vtkImagingHybrid import vtkSampleFunction
     from vtkmodules.vtkInteractionWidgets import (vtkScalarBarWidget,
                                                   vtkSplineWidget,
                                                   vtkSphereWidget,
@@ -106,7 +107,8 @@ if VTK9:
                                         vtkDataSetWriter,
                                         vtkPolyDataReader,
                                         vtkDataSetReader)
-    from vtkmodules.vtkCommonDataModel import (vtkDataObject,
+    from vtkmodules.vtkCommonDataModel import (vtkImplicitFunction,
+                                               vtkDataObject,
                                                vtkExplicitStructuredGrid,
                                                vtkPyramid,
                                                vtkPlane,
@@ -132,6 +134,7 @@ if VTK9:
                                                vtkStaticPointLocator,
                                                vtkSelectionNode,
                                                vtkSelection,
+                                               vtkPerlinNoise,
                                                VTK_HEXAHEDRON,
                                                VTK_PYRAMID,
                                                VTK_QUAD,
