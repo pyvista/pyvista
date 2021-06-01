@@ -1771,9 +1771,9 @@ class DataSetFilters:
 
         n_points : int, optional
             If given, specifies the number of the closest points used to form
-            the interpolation basis. This will invalidate the radius and
-            sharpness arguments in favor of an N closest points approach. This
-            typically has poorer results.
+            the interpolation basis. This will invalidate the radius argument
+            in favor of an N closest points approach. This typically has poorer
+            results.
 
         strategy : str, optional
             Specify a strategy to use when encountering a "null" point during
