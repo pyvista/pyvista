@@ -1939,8 +1939,7 @@ class DataSetFilters:
                     max_steps=2000, terminal_speed=1e-12, max_error=1e-6,
                     max_time=None, compute_vorticity=True, rotation_scale=1.0,
                     interpolator_type='point'):
-        """
-        Generate streamlines of vectors from the points of a source mesh.
+        """Generate streamlines of vectors from the points of a source mesh.
         
         The integration is performed using a specified integrator, by default
         Runge-Kutta2. This supports integration through any type of dataset.
@@ -1948,8 +1947,8 @@ class DataSetFilters:
         ``surface_streamlines`` parameter is used, the integration is constrained
         to lie on the surface defined by 2D cells.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         source : pyvista.DataSet
             The points of the source provide the starting points of the
             streamlines.  This will override both sphere and line sources.
@@ -2025,6 +2024,7 @@ class DataSetFilters:
             (i.e., polyline) representing a streamline. The attribute values
             associated with each streamline are stored in the cell data, whereas
             those associated with streamline-points are stored in the point data.
+
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
