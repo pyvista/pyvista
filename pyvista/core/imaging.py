@@ -1,6 +1,6 @@
 """Contains PyVista mappings from vtkmodules.vtkImagingHybrid."""
 from typing import Sequence
-import sys
+import sys, os
 
 import numpy as np
 
@@ -51,7 +51,19 @@ def sample_function(function: _vtk.vtkImplicitFunction,
         Enable or disable the computation of normals.  Default ``False``.
 
     output_type : np.dtype, optional
-        Set the output scalar type.  Defaults to ``np.double``.
+        Set the output scalar type.  Defaults to ``np.double``.  One
+        of the following:
+
+        - ``np.float64``
+        - ``np.float32``
+        - ``np.int64``
+        - ``np.uint64``
+        - ``np.int32``
+        - ``np.uint32``
+        - ``np.int16``
+        - ``np.uint16``
+        - ``np.int8``
+        - ``np.uint8``
 
     capping : bool, optional
         Enable or disable capping.  Default ``False``.  If capping is
@@ -107,8 +119,12 @@ def sample_function(function: _vtk.vtkImplicitFunction,
     elif output_type == np.float32:
         samp.SetOutputScalarTypeToFloat()
     elif output_type == np.int64:
+        if os.name == 'nt':
+            raise ValueError('This function on Windows only supports int32 or smaller')
         samp.SetOutputScalarTypeToLong()
     elif output_type == np.uint64:
+        if os.name == 'nt':
+            raise ValueError('This function on Windows only supports int32 or smaller')
         samp.SetOutputScalarTypeToUnsignedLong()
     elif output_type == np.int32:
         samp.SetOutputScalarTypeToInt()

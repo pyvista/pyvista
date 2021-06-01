@@ -1,3 +1,5 @@
+import os
+
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose
@@ -34,13 +36,18 @@ def test_sample_function(dtype):
     bounds = (0, 2, 0, 1, -4, 4)
     dim = (5, 10, 20)
     scalar_arr_name = 'my_scalars'
-    mesh = pv.sample_function(perlin,
-                              bounds,
-                              dim,
-                              compute_normals=False,
-                              output_type=dtype,
-                              scalar_arr_name=scalar_arr_name)
+
+    if os.name == 'nt' and dtype in [np.int64, np.uint64]:
+        with pytest.raises(ValueError):
+            pv.sample_function(perlin, output_type=dtype)
+    else:
+        mesh = pv.sample_function(perlin,
+                                  bounds,
+                                  dim,
+                                  compute_normals=False,
+                                  output_type=dtype,
+                                  scalar_arr_name=scalar_arr_name)
     
-    assert_allclose(mesh.dimensions, dim)
-    assert_allclose(mesh.bounds, bounds)
-    assert mesh[scalar_arr_name].dtype == dtype
+        assert_allclose(mesh.dimensions, dim)
+        assert_allclose(mesh.bounds, bounds)
+        assert mesh[scalar_arr_name].dtype == dtype
