@@ -78,21 +78,26 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         Keyword arguments for the Jupyter notebook plotting backend.
 
     theme : pyvista.themes.DefaultTheme, optional
-        Plot specific theme.
+        Plot-specific theme.
 
     **kwargs : optional keyword arguments
-        See help(Plotter.add_mesh) for additional options.
+        See ``help(pyvista.Plotter.add_mesh)`` for additional options.
 
     Returns
     -------
     cpos : list
         List of camera position, focal point, and view up.
 
-    img :  numpy.ndarray
-        Array containing pixel RGB and alpha.  Sized:
-        [Window height x Window width x 3] for transparent_background=False
-        [Window height x Window width x 4] for transparent_background=True
-        Returned only when screenshot enabled
+    img : numpy.ndarray
+        Array containing pixel RGB and optionally alpha values.
+        Sized:
+
+        * [Window height x Window width x 3] if the theme sets
+          ``transparent_background=False``.
+        * [Window height x Window width x 4] if the theme sets
+          ``transparent_background=True``.
+
+        Returned only when ``screenshot=True``.
 
     Examples
     --------
@@ -206,7 +211,7 @@ def plot_arrows(cent, direction, **kwargs):
 
     Returns
     -------
-    Same as ``pyvista.plot``.  See ``help(pyvista.plot)``
+    Same as ``pyvista.plot``.  See ``help(pyvista.plot)``.
 
     Examples
     --------

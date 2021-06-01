@@ -3896,10 +3896,16 @@ class Plotter(BasePlotter):
 
         image : np.ndarray
             Numpy array of the last image when either ``return_img=True``
-            or ``screenshot`` is set.
+            or ``screenshot=True`` is set. Optionally contains alpha
+            values. Sized:
+
+            * [Window height x Window width x 3] if the theme sets
+              ``transparent_background=False``.
+            * [Window height x Window width x 4] if the theme sets
+              ``transparent_background=True``.
 
         widget
-            IPython widget when ``return_viewer==True``.
+            IPython widget when ``return_viewer=True``.
 
         Examples
         --------
