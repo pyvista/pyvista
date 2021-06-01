@@ -160,7 +160,7 @@ built on.  You can work around this by building your wheels using a
 
 This script can be called with:
 
-.. code::
+.. code-block:: bash
 
     PYTHON_VERSION=3.8
     docker run -e \
@@ -185,8 +185,8 @@ limitations otherwise (especially with only 1 GB RAM).
 
 Building the ``aarch64`` manylinux wheel can be done via docker with
 the ``quay.io/pypa/manylinux2014_aarch64`` image.  Run the following:
-o
-.. code::
+
+.. code-block:: bash
 
     PYTHON_VERSION=3.6
     rm -rf build
@@ -196,8 +196,7 @@ o
 
 Where ``build_wheels.sh`` is:
 
-.. code::
-
+.. code-block:: bash
 
     #!/bin/bash
     # builds python wheels on docker container and tests installation
