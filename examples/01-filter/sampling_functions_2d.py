@@ -32,7 +32,7 @@ sampled = pv.sample_function(noise,
 
 ###############################################################################
 # Warp by scalar
-# ~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~
 # Here we warp by scalar to give the terrain some height based on the
 # value of the perlin noise.  This is necessary to the terrain its shape.
 
