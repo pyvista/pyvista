@@ -3075,15 +3075,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.add_mesh(arrows, **kwargs)
 
     @staticmethod
-    def _save_image(image, filename, return_img=None):
-        """Save a NumPy image array.
+    def _save_image(image, filename, return_img):
+        """Save to file and/or return a NumPy image array.
 
         This is an internal helper.
 
         """
         if not image.size:
             raise ValueError('Empty image. Have you run plot() first?')
-        # write screenshot to file
+        # write screenshot to file if requested
         if isinstance(filename, (str, pathlib.Path)):
             from PIL import Image
             filename = pathlib.Path(filename)
@@ -3096,9 +3096,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                  f'Must be one of the following: {SUPPORTED_FORMATS}')
             image_path = os.path.abspath(os.path.expanduser(str(filename)))
             Image.fromarray(image).save(image_path)
-            if not return_img:
-                return image
-        return image
+        # return image array if requested
+        if return_img:
+            return image
 
     def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True):
         """Save a screenshot of the rendering window as a graphic file.
@@ -3135,7 +3135,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return
 
     def screenshot(self, filename=None, transparent_background=None,
-                   return_img=None, window_size=None):
+                   return_img=True, window_size=None):
         """Take screenshot at current camera position.
 
         Parameters
@@ -3183,7 +3183,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.image_transparent_background = transparent_background
 
         # This if statement allows you to save screenshots of closed plotters
-        # This is needed for the sphinx-gallery work
+        # This is needed for the sphinx-gallery to work
         if not hasattr(self, 'ren_win'):
             # If plotter has been closed...
             # check if last_image exists
@@ -3191,7 +3191,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Save last image
                 return self._save_image(self.last_image, filename, return_img)
             # Plotter hasn't been rendered or was improperly closed
-            raise AttributeError('This plotter is closed and unable to save a screenshot.')
+            raise RuntimeError('This plotter is closed and unable to save a screenshot.')
 
         if self._first_time and not self.off_screen:
             raise RuntimeError("Nothing to screenshot - call .show first or "
