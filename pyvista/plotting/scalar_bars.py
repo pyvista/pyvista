@@ -142,7 +142,7 @@ class ScalarBars():
             Font family.  Default is set by ``pyvista.global_theme``.
 
         shadow : bool, optional
-            Adds a black shadow to the text.  Defaults to False.
+            Adds a black shadow to the text.  Defaults to ``False``.
 
         width : float, optional
             The percentage (0 to 1) width of the window for the colorbar.
