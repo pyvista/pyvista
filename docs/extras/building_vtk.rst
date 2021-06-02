@@ -38,7 +38,8 @@ resulting wheel size.
     sudo yum install ninja-build cmake mesa-libGL-devel mesa-libGLU-devel
 
     git clone https://github.com/Kitware/VTK
-    cd VTK
+    mkdir VTK/build
+    cd VTK/build
 
     PYBIN=/usr/bin/python3
     cmake -GNinja \
