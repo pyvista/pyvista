@@ -892,6 +892,15 @@ def test_screenshot(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('export-graphic.svg'))
     plotter.save_graphic(filename)
 
+    # test window and array size
+    w, h = 20, 10
+    img = plotter.screenshot(transparent_background=False,
+                             window_size=(w, h))
+    assert img.shape == (h, w, 3)
+    img = plotter.screenshot(transparent_background=True,
+                             window_size=(w, h))
+    assert img.shape == (h, w, 4)
+
     # checking if plotter closes
     ref = proxy(plotter)
     plotter.close()
@@ -900,6 +909,12 @@ def test_screenshot(tmpdir):
         ref
     except:
         raise RuntimeError('Plotter did not close')
+
+    # check error before first render
+    plotter = pyvista.Plotter(off_screen=False)
+    plotter.add_mesh(pyvista.Sphere())
+    with pytest.raises(RuntimeError):
+        plotter.screenshot()
 
 
 @skip_no_plotting
