@@ -1,2 +1,2 @@
-codespell==1.17.1
+codespell==2.0.0
 pydocstyle==5.1.1
