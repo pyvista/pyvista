@@ -3141,21 +3141,29 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         filename : str, optional
-            Location to write image to.  If None, no image is written.
+            Location to write image to.  If ``None``, no image is written.
 
         transparent_background : bool, optional
-            Makes the background transparent.  Default False.
+            Whether to make the background transparent.  The default is
+            looked up on the plotter's theme.
 
         return_img : bool, optional
-            If a string filename is given and this is true, a NumPy array of
-            the image will be returned.
+            If ``True`` (the default), a NumPy array of the image will
+            be returned.
+
+        window_size : 2-length tuple, optional
+            Set the plotter's size to this ``(width, height)`` before
+            taking the screenshot.
 
         Returns
         -------
-        img :  numpy.ndarray
+        img : numpy.ndarray
             Array containing pixel RGB and alpha.  Sized:
-            [Window height x Window width x 3] for transparent_background=False
-            [Window height x Window width x 4] for transparent_background=True
+
+            * [Window height x Window width x 3] if
+              ``transparent_background`` is set to ``False``.
+            * [Window height x Window width x 4] if
+              ``transparent_background`` is set to ``True``.
 
         Examples
         --------
@@ -3864,6 +3872,16 @@ class Plotter(BasePlotter):
             The camera position.  You can also set this with
             ``Plotter.camera_position``.
 
+        screenshot : str or bool, optional
+            Take a screenshot of the initial state of the plot.
+            If a string, it specifies the path to which the screenshot
+            is saved. If ``True``, the screenshot is returned as an
+            array. Defaults to ``False``. For interactive screenshots
+            it's recommended to first call ``show()`` with
+            ``auto_close=False`` to set the scene, then save the
+            screenshot in a separate call to ``show()`` or
+            ``screenshot()`.
+
         return_img : bool
             Returns a numpy array representing the last image along
             with the camera position.
@@ -3909,13 +3927,21 @@ class Plotter(BasePlotter):
 
         Examples
         --------
-        Simply show the plot.
+        Simply show the plot of a mesh.
 
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.show()  # doctest:+SKIP
 
         Take a screenshot interactively.  Screenshot will be of the
-        last image shown.
+        first image shown, so use the first call with
+        ``auto_close=False`` to set the scene before taking the
+        screenshot.
 
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.show(auto_close=False)  # doctest:+SKIP
         >>> pl.show(screenshot='my_image.png')  # doctest:+SKIP
 
         Display an ``ipygany`` scene within a jupyter notebook
