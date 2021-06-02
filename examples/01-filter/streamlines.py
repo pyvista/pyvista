@@ -63,8 +63,9 @@ streamlines, src = mesh.streamlines(
 ###############################################################################
 boundary = mesh.decimate_boundary().extract_all_edges()
 
+sargs=dict(vertical=True, title_font_size=16)
 p = pv.Plotter()
-p.add_mesh(streamlines.tube(radius=0.2), lighting=False)
+p.add_mesh(streamlines.tube(radius=0.2), lighting=False, scalar_bar_args=sargs)
 p.add_mesh(src)
 p.add_mesh(boundary, color="grey", opacity=0.25)
 p.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
@@ -89,9 +90,11 @@ print([array_name for array_name in streamlines.array_names if array_name not in
 ###############################################################################
 # Plot streamlines colored by the time along the streamlines.
 
+sargs=dict(vertical=True, title_font_size=16)
 p = pv.Plotter()
 p.add_mesh(streamlines.tube(radius=0.2),
-           scalars="IntegrationTime", clim=[0, 1000], lighting=False)
+           scalars="IntegrationTime", clim=[0, 1000], lighting=False,
+           scalar_bar_args=sargs)
 p.add_mesh(boundary, color="grey", opacity=0.25)
 p.add_mesh(source_mesh, color="red")
 p.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
