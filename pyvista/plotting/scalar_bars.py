@@ -104,13 +104,13 @@ class ScalarBars():
 
         Parameters
         ----------
-        mapper : vtkMapper, optional
-            Mapper used for the scalar bar.  Defaults to the last
-            mapper created by the plotter.
-
         title : string, optional
             Title of the scalar bar.  Default ``''`` which is
             rendered as an empty title.
+
+        mapper : vtkMapper, optional
+            Mapper used for the scalar bar.  Defaults to the last
+            mapper created by the plotter.
 
         n_labels : int, optional
             Number of labels to use for the scalar bar.
@@ -123,58 +123,72 @@ class ScalarBars():
 
         title_font_size : float, optional
             Sets the size of the title font.  Defaults to None and is sized
-            automatically.
+            according to ``pyvista.global_theme``.
 
         label_font_size : float, optional
             Sets the size of the title font.  Defaults to None and is sized
-            automatically.
+            according to ``pyvista.global_theme``.
 
-        color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.  For example:
+        color : string or 3 item list, optional
+            Either a string, rgb list, or hex color string.  Defaults to white.
+            For example:
 
             * ``color='white'``
             * ``color='w'``
             * ``color=[1, 1, 1]``
             * ``color='#FFFFFF'``
 
-        font_family : string, optional
-            Font family.  Must be either courier, times, or arial.
+        font_family : {'courier', 'times', 'arial'}
+            Font family.  Default is set by ``pyvista.global_theme``.
 
         shadow : bool, optional
-            Adds a black shadow to the text.  Defaults to False
+            Adds a black shadow to the text.  Defaults to False.
 
         width : float, optional
-            The percentage (0 to 1) width of the window for the colorbar
+            The percentage (0 to 1) width of the window for the colorbar.
+            Default set by ``pyvista.global_theme``.
 
         height : float, optional
-            The percentage (0 to 1) height of the window for the colorbar
+            The percentage (0 to 1) height of the window for the colorbar.
+            Default set by ``pyvista.global_theme``.
 
         position_x : float, optional
             The percentage (0 to 1) along the windows's horizontal
-            direction to place the bottom left corner of the colorbar
+            direction to place the bottom left corner of the colorbar.
+            Default is automatic placement.
 
         position_y : float, optional
             The percentage (0 to 1) along the windows's vertical
-            direction to place the bottom left corner of the colorbar
+            direction to place the bottom left corner of the colorbar.
+            Default is automatic placement.
+
+        vertical : bool, optional
+            Use vertical or horizontal scalar bar.
+            Default set by ``pyvista.global_theme``.
 
         interactive : bool, optional
             Use a widget to control the size and location of the scalar bar.
+            Default set by ``pyvista.global_theme``.
+
+        fmt : str, optional
+            ``printf`` format for labels.
+            Default set by ``pyvista.global_theme``.
 
         use_opacity : bool, optional
-            Optionally display the opacity mapping on the scalar bar
+            Optionally display the opacity mapping on the scalar bar.
 
         outline : bool, optional
             Optionally outline the scalar bar to make opacity mappings more
             obvious.
 
         nan_annotation : bool, optional
-            Annotate the NaN color
+            Annotate the NaN color.
 
         below_label : str, optional
-            String annotation for values below the scalars range
+            String annotation for values below the scalars range.
 
         above_label : str, optional
-            String annotation for values above the scalars range
+            String annotation for values above the scalars range.
 
         background_color : array, optional
             The color used for the background in RGB format.
@@ -182,9 +196,9 @@ class ScalarBars():
         n_colors : int, optional
             The maximum number of color displayed in the scalar bar.
 
-        fill : bool
+        fill : bool, optional
             Draw a filled box behind the scalar bar with the
-            ``background_color``
+            ``background_color``.
 
         render : bool, optional
             Force a render when True.  Default ``True``.
