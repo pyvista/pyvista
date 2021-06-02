@@ -122,7 +122,7 @@ class ScalarBars():
             Bolds title and bar labels.  Default True
 
         title_font_size : float, optional
-            Sets the size of the title font.  Defaults to None and is sized
+            Sets the size of the title font.  Defaults to ``None`` and is sized
             according to ``pyvista.global_theme``.
 
         label_font_size : float, optional
