@@ -40,12 +40,12 @@ class ScalarBars():
             mapper = actor.GetMapper()
         except AttributeError:
             return
-        for name in list(self._scalar_bar_mappers.keys()):
+        for name in self._scalar_bar_mappers:
             try:
                 self._scalar_bar_mappers[name].remove(mapper)
             except ValueError:
                 pass
-            if len(self._scalar_bar_mappers[name]) < 1:
+            if not self._scalar_bar_mappers[name]:
                 slot = self._plotter._scalar_bar_slot_lookup.pop(name, None)
                 if slot is not None:
                     self._scalar_bar_mappers.pop(name)

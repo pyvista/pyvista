@@ -64,5 +64,6 @@ def test_actor_removal(sphere):
 
     pl = pv.Plotter()
     actor = pl.add_mesh(sphere, show_scalar_bar=True)
+    assert len(pl.scalar_bars) == 1
     pl.remove_actor(actor)
     assert len(pl.scalar_bars) == 0
