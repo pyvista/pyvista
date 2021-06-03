@@ -40,7 +40,7 @@ class ScalarBars():
             mapper = actor.GetMapper()
         except AttributeError:
             return
-        for name in self._scalar_bar_mappers:
+        for name in list(self._scalar_bar_mappers):
             try:
                 self._scalar_bar_mappers[name].remove(mapper)
             except ValueError:
