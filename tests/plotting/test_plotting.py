@@ -901,15 +901,6 @@ def test_screenshot(tmpdir):
                              window_size=(w, h))
     assert img.shape == (h, w, 4)
 
-    # checking if plotter closes
-    ref = proxy(plotter)
-    plotter.close()
-
-    try:
-        ref
-    except:
-        raise RuntimeError('Plotter did not close')
-
     # check error before first render
     plotter = pyvista.Plotter(off_screen=False)
     plotter.add_mesh(pyvista.Sphere())
