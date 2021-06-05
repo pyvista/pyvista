@@ -3880,7 +3880,7 @@ class Plotter(BasePlotter):
             it's recommended to first call ``show()`` with
             ``auto_close=False`` to set the scene, then save the
             screenshot in a separate call to ``show()`` or
-            ``screenshot()`.
+            ``screenshot()``.
 
         return_img : bool
             Returns a numpy array representing the last image along
