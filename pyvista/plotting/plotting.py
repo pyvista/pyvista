@@ -1300,7 +1300,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ##### Parse arguments to be used for all meshes #####
 
         if scalar_bar_args is None:
-            scalar_bar_args = {'n_colors': n_colors}
+            scalar_bar_args_copy = {'n_colors': n_colors}
+        else:
+            scalar_bar_args_copy = scalar_bar_args.copy()
 
         if show_edges is None:
             show_edges = self._theme.show_edges
@@ -1349,7 +1351,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
             warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
-            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
+            scalar_bar_args_copy.setdefault('title', kwargs.pop('stitle'))
 
         if "scalar" in kwargs:
             raise TypeError("`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?")
@@ -1373,6 +1375,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     raise TypeError('scalars array must be given as a string name for multiblock datasets.')
 
             the_arguments = locals()
+            the_arguments['scalar_bar_args'] = the_arguments.pop('scalar_bar_args_copy')
             the_arguments.pop('self')
             the_arguments.pop('mesh')
             the_arguments.pop('kwargs')
@@ -1487,7 +1490,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalars = mesh.active_scalars_name
                 # Don't allow plotting of string arrays by default
                 if scalars is not None:# and np.issubdtype(mesh.active_scalars.dtype, np.number):
-                    scalar_bar_args.setdefault('title', scalars)
+                    scalar_bar_args_copy.setdefault('title', scalars)
                 else:
                     scalars = None
 
@@ -1511,7 +1514,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             original_scalar_name = scalars
             scalars = get_array(mesh, scalars,
                                 preference=preference, err=True)
-            scalar_bar_args.setdefault('title', original_scalar_name)
+            scalar_bar_args_copy.setdefault('title', original_scalar_name)
 
         if texture is True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -1575,7 +1578,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if _custom_opac:
             title = '__custom_rgba'
         else:
-            title = scalar_bar_args.get('title', 'Data')
+            title = scalar_bar_args_copy.get('title', 'Data')
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
 
@@ -1591,7 +1594,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 clim = [np.min(values) - 0.5, np.max(values) + 0.5]
                 title = f'{title}-digitized'
                 n_colors = len(cats)
-                scalar_bar_args.setdefault('n_labels', 0)
+                scalar_bar_args_copy.setdefault('n_labels', 0)
                 _using_labels = True
 
             if rgb:
@@ -1674,11 +1677,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if above_color:
                 table.SetUseAboveRangeColor(True)
                 table.SetAboveRangeColor(*parse_color(above_color, opacity=1))
-                scalar_bar_args.setdefault('above_label', 'Above')
+                scalar_bar_args_copy.setdefault('above_label', 'Above')
             if below_color:
                 table.SetUseBelowRangeColor(True)
                 table.SetBelowRangeColor(*parse_color(below_color, opacity=1))
-                scalar_bar_args.setdefault('below_label', 'Below')
+                scalar_bar_args_copy.setdefault('below_label', 'Below')
 
             if cmap is not None:
                 # have to add the attribute to pass it onward to some classes
@@ -1800,12 +1803,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                        pickable=pickable, render=render)
 
         # hide scalar bar if using special scalars
-        if scalar_bar_args.get('title') == '__custom_rgba':
+        if scalar_bar_args_copy.get('title') == '__custom_rgba':
             show_scalar_bar = False
 
         # Only show scalar bar if there are scalars
         if show_scalar_bar and scalars is not None:
-            self.add_scalar_bar(**scalar_bar_args)
+            self.add_scalar_bar(**scalar_bar_args_copy)
 
         self.renderer.Modified()
 
@@ -1959,17 +1962,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap = kwargs.pop('colormap', cmap)
         culling = kwargs.pop("backface_culling", culling)
 
-        # account for legacy behavior
-        if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
-            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
-
         if "scalar" in kwargs:
             raise TypeError("`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?")
         assert_empty_kwargs(**kwargs)
 
         if scalar_bar_args is None:
-            scalar_bar_args = {}
+            scalar_bar_args_copy = {}
+        else:
+            scalar_bar_args_copy = scalar_bar_args.copy()
+        # account for legacy behavior
+        if 'stitle' in kwargs:  # pragma: no cover
+            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
+            scalar_bar_args_copy.setdefault('title', kwargs.pop('stitle'))
 
         if show_scalar_bar is None:
             show_scalar_bar = self._theme.show_scalar_bar
@@ -2054,7 +2058,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalars = volume.active_scalars
             # Don't allow plotting of string arrays by default
             if scalars is not None and np.issubdtype(scalars.dtype, np.number):
-                scalar_bar_args.setdefault('title', volume.active_scalars_info[1])
+                scalar_bar_args_copy.setdefault('title', volume.active_scalars_info[1])
             else:
                 raise ValueError('No scalars to use for volume rendering.')
         elif isinstance(scalars, str):
@@ -2067,7 +2071,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             title = scalars
             scalars = get_array(volume, scalars,
                                 preference=preference, err=True)
-            scalar_bar_args.setdefault('title', title)
+            scalar_bar_args_copy.setdefault('title', title)
 
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
@@ -2213,7 +2217,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Add scalar bar if scalars are available
         if show_scalar_bar and scalars is not None:
-            self.add_scalar_bar(**scalar_bar_args)
+            self.add_scalar_bar(**scalar_bar_args_copy)
 
         self.renderer.Modified()
 
