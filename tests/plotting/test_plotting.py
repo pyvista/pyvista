@@ -1588,12 +1588,12 @@ def test_scalar_bar_args_unmodifies_add_mesh(sphere):
 
 
 @skip_no_plotting
-def test_scalar_bar_args_unmodifies_add_volume(sphere):
+def test_scalar_bar_args_unmodifies_add_volume(uniform):
     sargs = {"vertical": True}
     sargs_copy = sargs.copy()
 
     p = pyvista.Plotter()
-    p.add_volume(sphere, scalar_bar_args=sargs)
+    p.add_volume(uniform, scalar_bar_args=sargs)
     p.show()
 
     assert sargs == sargs_copy
