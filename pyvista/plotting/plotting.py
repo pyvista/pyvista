@@ -1299,8 +1299,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(f'Object type ({type(mesh)}) not supported for plotting in PyVista.')
         ##### Parse arguments to be used for all meshes #####
 
+        # Avoid mutating input
         if scalar_bar_args is None:
             scalar_bar_args = {'n_colors': n_colors}
+        else:
+            scalar_bar_args = scalar_bar_args.copy()
 
         if show_edges is None:
             show_edges = self._theme.show_edges
@@ -1959,17 +1962,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap = kwargs.pop('colormap', cmap)
         culling = kwargs.pop("backface_culling", culling)
 
-        # account for legacy behavior
-        if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
-            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
-
         if "scalar" in kwargs:
             raise TypeError("`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?")
         assert_empty_kwargs(**kwargs)
 
+        # Avoid mutating input
         if scalar_bar_args is None:
             scalar_bar_args = {}
+        else:
+            scalar_bar_args = scalar_bar_args.copy()
+        # account for legacy behavior
+        if 'stitle' in kwargs:  # pragma: no cover
+            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
+            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if show_scalar_bar is None:
             show_scalar_bar = self._theme.show_scalar_bar

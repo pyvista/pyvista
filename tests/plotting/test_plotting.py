@@ -1576,6 +1576,28 @@ def test_user_annotations_scalar_bar_volume(uniform):
 
 
 @skip_no_plotting
+def test_scalar_bar_args_unmodified_add_mesh(sphere):
+    sargs = {"vertical": True}
+    sargs_copy = sargs.copy()
+
+    p = pyvista.Plotter()
+    p.add_mesh(sphere, scalar_bar_args=sargs)
+
+    assert sargs == sargs_copy
+
+
+@skip_no_plotting
+def test_scalar_bar_args_unmodified_add_volume(uniform):
+    sargs = {"vertical": True}
+    sargs_copy = sargs.copy()
+
+    p = pyvista.Plotter()
+    p.add_volume(uniform, scalar_bar_args=sargs)
+
+    assert sargs == sargs_copy
+
+
+@skip_no_plotting
 def test_plot_string_array():
     mesh = examples.load_uniform()
     labels = np.empty(mesh.n_cells, dtype='<U10')
