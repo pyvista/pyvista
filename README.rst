@@ -41,10 +41,10 @@ PyVista
    :target: https://gitter.im/pyvista/community
 
 .. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
-.. _PyPI: https://pypi.org/project/pyvista/
+   :target: https://pypi.org/project/pyvista/
 
 .. |condaact| image:: https://img.shields.io/conda/dn/conda-forge/pyvista.svg?label=Conda%20downloads
-.. _conda-forge: https://anaconda.org/conda-forge/pyvista
+   :target: https://anaconda.org/conda-forge/pyvista
 
 +----------------------+-----------+------------+
 | Deployment           | |pypi|    |   |conda|  |
