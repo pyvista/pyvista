@@ -197,6 +197,9 @@ Status
 .. |azure| image:: https://dev.azure.com/pyvista/PyVista/_apis/build/status/pyvista.pyvista?branchName=master
    :target: https://dev.azure.com/pyvista/PyVista/_build/latest?definitionId=3&branchName=master
 
+.. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
+   :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
+
 .. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/pyvista/pyvista
 
@@ -225,22 +228,30 @@ Status
 .. |gitter| image:: https://img.shields.io/gitter/room/pyvista/community?color=darkviolet
    :target: https://gitter.im/pyvista/community
 
+.. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
+   :target: https://pypi.org/project/pyvista/
 
-+----------------------+------------------------+
-| Deployment           | |pypi| |conda|         |
-+----------------------+------------------------+
-| Build Status         | |azure|                |
-+----------------------+------------------------+
-| Metrics              | |codacy| |codecov|     |
-+----------------------+------------------------+
-| GitHub               | |contributors| |stars| |
-+----------------------+------------------------+
-| Citation             | |joss| |zenodo|        |
-+----------------------+------------------------+
-| License              | |MIT|                  |
-+----------------------+------------------------+
-| Community            | |slack| |gitter|       |
-+----------------------+------------------------+
+.. |condaact| image:: https://img.shields.io/conda/dn/conda-forge/pyvista.svg?label=Conda%20downloads
+   :target: https://anaconda.org/conda-forge/pyvista
+
+
++----------------------+----------------+-------------+
+| Deployment           | |pypi|         | |conda|     |
++----------------------+----------------+-------------+
+| Build Status         | |azure|        | |GH-CI|     |
++----------------------+----------------+-------------+
+| Metrics              | |codacy|       | |codecov|   |
++----------------------+----------------+-------------+
+| Activity             | |PyPIact|      | |condaact|  |
++----------------------+----------------+-------------+
+| GitHub               | |contributors| | |stars|     |
++----------------------+----------------+-------------+
+| Citation             | |joss|         | |zenodo|    |
++----------------------+----------------+-------------+
+| License              | |MIT|          |             |
++----------------------+----------------+-------------+
+| Community            | |slack|        | |gitter|    |
++----------------------+----------------+-------------+
 
 
 Project Index

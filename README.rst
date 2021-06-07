@@ -22,6 +22,9 @@ PyVista
 .. |azure| image:: https://dev.azure.com/pyvista/PyVista/_apis/build/status/pyvista.pyvista?branchName=master
    :target: https://dev.azure.com/pyvista/PyVista/_build/latest?definitionId=3&branchName=master
 
+.. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
+   :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
+
 .. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/pyvista/pyvista
 
@@ -37,21 +40,27 @@ PyVista
 .. |gitter| image:: https://img.shields.io/gitter/room/pyvista/community?color=darkviolet
    :target: https://gitter.im/pyvista/community
 
+.. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
+   :target: https://pypi.org/project/pyvista/
 
+.. |condaact| image:: https://img.shields.io/conda/dn/conda-forge/pyvista.svg?label=Conda%20downloads
+   :target: https://anaconda.org/conda-forge/pyvista
 
-+----------------------+------------------------+
-| Deployment           | |pypi| |conda|         |
-+----------------------+------------------------+
-| Build Status         | |azure|                |
-+----------------------+------------------------+
-| Metrics              | |codacy| |codecov|     |
-+----------------------+------------------------+
-| Citation             | |joss| |zenodo|        |
-+----------------------+------------------------+
-| License              | |MIT|                  |
-+----------------------+------------------------+
-| Community            | |slack| |gitter|       |
-+----------------------+------------------------+
++----------------------+-----------+------------+
+| Deployment           | |pypi|    |   |conda|  |
++----------------------+-----------+------------+
+| Build Status         | |azure|   |   |GH-CI|  |
++----------------------+-----------+------------+
+| Metrics              | |codacy|  |  |codecov| |
++----------------------+-----------+------------+
+| Activity             | |PyPIact| | |condaact| |
++----------------------+-----------+------------+
+| Citation             | |joss|    |  |zenodo|  |
++----------------------+-----------+------------+
+| License              | |MIT|     |            |
++----------------------+-----------+------------+
+| Community            | |slack|   |  |gitter|  |
++----------------------+-----------+------------+
 
 
     3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
