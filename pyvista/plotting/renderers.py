@@ -100,9 +100,9 @@ class Renderers():
                 raise ValueError(f'"col_weights" must have {shape[1]} items '
                                  f'for {shape[1]} columns of subplots, not '
                                  f'{col_weights.size}.')
-            row_off = np.cumsum(row_weights)/np.sum(row_weights)
+            row_off = np.cumsum(row_weights) / np.sum(row_weights)
             row_off = 1 - np.concatenate(([0], row_off))
-            col_off = np.cumsum(col_weights)/np.sum(col_weights)
+            col_off = np.cumsum(col_weights) / np.sum(col_weights)
             col_off = np.concatenate(([0], col_off))
 
             # Check and convert groups to internal format (Nx4 matrix
