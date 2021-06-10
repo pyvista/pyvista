@@ -2,7 +2,7 @@
 Installation file for python pyvista module
 """
 import os
-# import sys
+import sys
 from io import open as io_open
 from setuptools import setup
 
@@ -14,25 +14,6 @@ version_file = os.path.join(filepath, package_name, '_version.py')
 with io_open(version_file, mode='r') as fd:
     exec(fd.read())
 
-# leaving this out for conda compatibility...
-# python3_9_linux_wheel = 'https://github.com/pyvista/pyvista/releases/download/0.27.0/vtk-9.0.1-cp39-cp39-manylinux2010_x86_64.whl'
-
-# # Python 3.9 isn't supported at the moment
-# if sys.version_info.minor == 9:
-#     # but, the user might have installed vtk from a non-pypi wheel.
-#     try:
-#         import vtk
-#     except ImportError:
-#         note = ''
-#         if os.name == 'linux':
-#             note = '\n\nHowever there is an unofficial Linux wheel build by the ``pyvista`` team at ' + python3_9_linux_wheel
-
-#         raise RuntimeError('There are no official Python 3.9 wheels for VTK on yet.  '
-#                            'Please use Python 3.6 through 3.8, or build and install '
-#                            'VTK from source with a wheel.  Please see:\n'
-#                            'https://docs.pyvista.org/building_vtk.html' + note)
-
-
 # pre-compiled vtk available for python3
 install_requires = ['numpy',
                     'imageio',
@@ -42,7 +23,18 @@ install_requires = ['numpy',
                     'meshio>=4.0.3, <5.0',
                     'vtk',
                     'transforms3d==0.3.1'
-                    ]
+]
+
+# Python 3.9 doesn't have a VTK wheel as of 10 June 2020
+if sys.version_info.minor == 9 and os.name == 'posix':
+    install_requires.remove('vtk')
+
+    # use unofficial wheel if vtk isn't installed (might be egl, etc.)
+    try:
+        import vtk
+    except ImportError:
+        install_requires.append('pyvista-vtk')
+
 
 readme_file = os.path.join(filepath, 'README.rst')
 
