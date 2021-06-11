@@ -227,22 +227,22 @@ def test_plot_invalid_style(sphere):
 
 
 @skip_no_plotting
-def test_interactor_style(sphere):
+@pytest.mark.parametrize('interaction, kwargs', [
+    ('trackball', {}),
+    ('trackball_actor', {}),
+    ('image', {}),
+    ('joystick', {}),
+    ('zoom', {}),
+    ('terrain', {}),
+    ('terrain', {'mouse_wheel_zoom': True}),
+    ('rubber_band', {}),
+    ('rubber_band_2d', {}),
+])
+def test_interactor_style(sphere, interaction, kwargs):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    interactions = (
-        'trackball',
-        'trackball_actor',
-        'image',
-        'joystick',
-        'zoom',
-        'terrain',
-        'rubber_band',
-        'rubber_band_2d',
-    )
-    for interaction in interactions:
-        getattr(plotter, f'enable_{interaction}_style')()
-        assert plotter.iren._style_class is not None
+    getattr(plotter, f'enable_{interaction}_style')(**kwargs)
+    assert plotter.iren._style_class is not None
     plotter.close()
 
 
