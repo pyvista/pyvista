@@ -43,7 +43,7 @@ deploy:
 	cd _build/html && git init
 	cd _build/html && git add .
 	cd _build/html && git checkout -b gh-pages
-	export TAG=$(git describe --tags) && cd _build/html && git commit -am "Manual build from $TAG"
+	cd _build/html && git commit -am "manual build"
 	cd _build/html && git remote add origin https://github.com/pyvista/pyvista-docs
 	cd _build/html && git push -u origin gh-pages --force
 	rm -rf _build/html/.git
