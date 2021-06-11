@@ -233,7 +233,7 @@ class RenderWindowInteractor():
         self._style_class = None
         return self.update_style()
 
-    def enable_terrain_style(self, mouse_wheel_zoom=False):
+    def enable_terrain_style(self, mouse_wheel_zooms=False, shift_pans=False):
         """Set the interactive style to terrain.
 
         Used to manipulate a camera which is viewing a scene with a natural
@@ -243,32 +243,49 @@ class RenderWindowInteractor():
 
         Parameters
         ----------
-        mouse_wheel_zoom : bool, optional
+        mouse_wheel_zooms : bool, optional
             Whether to use the mouse wheel for zooming. By default zooming
             can be performed with right click and drag.
+
+        shift_pans : bool, optional
+            Whether shift + left mouse button pans the scene.
 
         """
         self._style = 'Terrain'
         self._style_class = None
         return_value = self.update_style()
 
-        if mouse_wheel_zoom:
-            style = self._style_class
-
-            def wheel_zoom_event(obj, event):  # pragma: no cover
+        if mouse_wheel_zooms:
+            def wheel_zoom_callback(obj, event):  # pragma: no cover
                 """Zoom in or out on mouse wheel roll."""
                 if event == 'MouseWheelForwardEvent':
                     # zoom in
                     zoom_factor = 1.1
-                else:
+                elif event == 'MouseWheelBackwardEvent':
                     # zoom out
                     zoom_factor = 1/1.1
                 self._plotter.camera.zoom(zoom_factor)
                 self._plotter.render()
-            callback = partial(try_callback, wheel_zoom_event)
+            callback = partial(try_callback, wheel_zoom_callback)
 
             for event in 'MouseWheelForwardEvent', 'MouseWheelBackwardEvent':
-                style.AddObserver(event, callback)
+                self._style_class.AddObserver(event, callback)
+
+        if shift_pans:
+            def pan_on_shift_callback(obj, event):  # pragma: no cover
+                """Trigger left mouse panning if shift is pressed."""
+                if event == 'LeftButtonPressEvent':
+                    if self.interactor.GetShiftKey():
+                        self._style_class.StartPan()
+                    self._style_class.OnLeftButtonDown()
+                elif event == 'LeftButtonReleaseEvent':
+                    # always stop panning on release
+                    self._style_class.EndPan()
+                    self._style_class.OnLeftButtonUp()
+            callback = partial(try_callback, pan_on_shift_callback)
+
+            for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
+                self._style_class.AddObserver(event, callback)
 
         return return_value
 
