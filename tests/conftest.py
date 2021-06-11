@@ -94,5 +94,5 @@ def check_vtk_error(caplog):
     """Ensure that no VTK error is thrown."""
     yield
     for record in caplog.get_records("call"):
-        if record.levelno == logging.ERROR:
+        if record.levelno == logging.ERROR and "vtk" in record.message:
             fail("VTK error recorded")
