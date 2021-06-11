@@ -4033,6 +4033,7 @@ class PolyDataFilters(DataSetFilters):
 
         if inplace:
             poly_data.overwrite(submesh)
+            return poly_data
         else:
             return submesh
 
