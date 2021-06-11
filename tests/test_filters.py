@@ -756,6 +756,20 @@ def test_streamlines_from_source(uniform_vec):
     assert all([stream.n_points, stream.n_cells])
 
 
+def test_streamlines_from_source_structured_grids(check_vtk_error):
+    x, y, z = np.meshgrid(
+        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
+    )
+    mesh = pyvista.StructuredGrid(x, y, z)
+    x2, y2, z2 = np.meshgrid(
+        np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5)
+    )
+    mesh2 = pyvista.StructuredGrid(x2, y2, z2)
+    mesh.vectors = np.ones([mesh.n_points, 3])
+    stream = mesh.streamlines_from_source(mesh2)
+    assert all([stream.n_points, stream.n_cells])
+
+
 def test_sample_over_line():
     """Test that we get a sampled line."""
     name = 'values'

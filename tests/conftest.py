@@ -1,6 +1,7 @@
+import logging
 import os
 import numpy as np
-from pytest import fixture
+from pytest import fail, fixture
 
 import pyvista
 from pyvista import examples
@@ -86,3 +87,12 @@ def datasets():
         examples.load_airplane(),  # PolyData
         examples.load_structured(),  # StructuredGrid
     ]
+
+
+@fixture()
+def check_vtk_error(caplog):
+    """Ensure that no VTK error is thrown."""
+    yield
+    for record in caplog.get_records("call"):
+        if record.levelno == logging.ERROR:
+            fail("VTK error recorded")
