@@ -2088,6 +2088,8 @@ class DataSetFilters:
         # Build the algorithm
         alg = _vtk.vtkStreamTracer()
         # Inputs
+        if isinstance(dataset, pyvista.StructuredGrid) and isinstance(source, pyvista.StructuredGrid):
+            source = source.cast_to_unstructured_grid()
         alg.SetInputDataObject(dataset)
         alg.SetSourceData(source)
 
