@@ -951,9 +951,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.iren.enable_zoom_style()
 
     @wraps(RenderWindowInteractor.enable_terrain_style)
-    def enable_terrain_style(self):
+    def enable_terrain_style(self, *args, **kwargs):
         """Wrap RenderWindowInteractor.enable_terrain_style."""
-        self.iren.enable_terrain_style()
+        self.iren.enable_terrain_style(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.enable_rubber_band_style)
     def enable_rubber_band_style(self):
