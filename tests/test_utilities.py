@@ -23,9 +23,6 @@ from pyvista.utilities import (
     transformations
 )
 
-# Only set this here just the once.
-pyvista.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
-
 
 def test_createvectorpolydata_error():
     orig = np.random.random((3, 1))
