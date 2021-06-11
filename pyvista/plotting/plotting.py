@@ -90,7 +90,8 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # Check if VTK has EGL support
-        if 'EGL' in str(type(_vtk.vtkRenderWindow())):
+        ren_win_str = str(type(_vtk.vtkRenderWindow()))
+        if 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str:
             return
 
         warnings.warn('\n'
