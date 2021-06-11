@@ -234,7 +234,7 @@ def test_plot_invalid_style(sphere):
     ('joystick', {}),
     ('zoom', {}),
     ('terrain', {}),
-    ('terrain', {'mouse_wheel_zoom': True}),
+    ('terrain', {'mouse_wheel_zooms': True, 'shift_pans': True}),
     ('rubber_band', {}),
     ('rubber_band_2d', {}),
 ])
