@@ -4016,7 +4016,6 @@ class PolyDataFilters(DataSetFilters):
         >>> submesh = mesh.subdivide_adaptive(max_edge_len=1, inplace=True)
 
         """
-
         sfilter = _vtk.vtkAdaptiveSubdivisionFilter()
         if max_edge_len:
             sfilter.SetMaximumEdgeLength(max_edge_len)
