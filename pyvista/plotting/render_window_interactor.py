@@ -248,7 +248,10 @@ class RenderWindowInteractor():
             can be performed with right click and drag.
 
         shift_pans : bool, optional
-            Whether shift + left mouse button pans the scene.
+            Whether shift + left mouse button pans the scene. By default
+            shift + left mouse button rotates the view restricted to only
+            horizontal or vertical movements, and panning is done holding
+            down the middle mouse button.
 
         """
         self._style = 'Terrain'
