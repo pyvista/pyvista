@@ -4013,7 +4013,7 @@ class PolyDataFilters(DataSetFilters):
 
         Alternatively, update the mesh in-place
 
-        >>> mesh.subdivide_adaptive(max_edge_len=1, inplace=True)
+        >>> submesh = mesh.subdivide_adaptive(max_edge_len=1, inplace=True)
 
         """
 
