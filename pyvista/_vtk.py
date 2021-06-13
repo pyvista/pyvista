@@ -255,8 +255,7 @@ if VTK9:
                                            vtkCellCenters,
                                            vtkConnectivityFilter,
                                            vtkCellDataToPointData,
-                                           vtkDelaunay3D,
-                                           vtkCutter)
+                                           vtkDelaunay3D)
     from vtkmodules.vtkFiltersGeneral import (vtkTableBasedClipDataSet,
                                               vtkTableToPolyData,
                                               vtkOBBTree,
