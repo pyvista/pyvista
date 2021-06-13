@@ -22,7 +22,7 @@ class Axes(_vtk.vtkAxes):
 
     Examples
     --------
-    Create a axes at the pyvista module level
+    Create an instance of axes at the pyvista module level.
 
     >>> import pyvista
     >>> axes = pyvista.Axes()
@@ -57,17 +57,17 @@ class Axes(_vtk.vtkAxes):
         >>> pl.axes.origin
         (0.0, 0.0, 0.0)
 
+        Set the origin of the camera.
+
+        >>> pl.axes.origin = (2.0, 1.0, 1.0)
+        >>> pl.axes.origin
+        (2.0, 1.0, 1.0)
+
         """
         return self.GetOrigin()
 
     @origin.setter
     def origin(self, value):
-        """Set the origin of the camera.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.axes.origin = (2.0, 1.0, 1.0)
+    """Set the origin of the camera.
         """
         self.SetOrigin(value)

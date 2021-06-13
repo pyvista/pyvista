@@ -474,8 +474,8 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        point : float, optional
-            Point to ratate about.
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
@@ -520,8 +520,8 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
-        point : float, optional
-            Point to ratate about.
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
@@ -546,8 +546,8 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the vector.
 
-        point : float, optional
-            Point to ratate about.
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are

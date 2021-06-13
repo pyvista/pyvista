@@ -2,7 +2,7 @@
 Rotations
 ~~~~~~~~~
 
-Rotations of a cow about her axes. In this model, the x axis is from the left
+Rotations of a mesh about its axes. In this model, the x axis is from the left
 to right; the y axis is from bottom to top; and the z axis emerges from the
 image. The camera location is the same in all four images.
 
@@ -15,7 +15,7 @@ from pyvista import examples
 # Define camera and axes
 # ++++++++++++++++++++++
 #
-# Define camera and axes. Setting axes origin to (1.0, 1.0, 1.0).
+# Define camera and axes. Setting axes origin to ``(1.0, 1.0, 1.0)``.
 
 mesh = examples.download_cow()
 mesh.points /= 1.5  # scale the mesh
