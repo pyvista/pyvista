@@ -205,20 +205,29 @@ def test_polydata_repr_str():
 
 
 def test_geodesic(sphere):
-    geodesic = sphere.geodesic(0, sphere.n_points - 1)
+    start, end = 0, sphere.n_points - 1
+    geodesic = sphere.geodesic(start, end)
     assert isinstance(geodesic, pyvista.PolyData)
     assert "vtkOriginalPointIds" in geodesic.array_names
     ids = geodesic.point_arrays["vtkOriginalPointIds"]
     assert np.allclose(geodesic.points, sphere.points[ids])
 
+    # check keep_order
+    assert geodesic["vtkOriginalPointIds"][0] == end
+    geodesic_ordered = sphere.geodesic(start, end, keep_order=True)
+    assert geodesic_ordered["vtkOriginalPointIds"][0] == start
+
     # finally, inplace
-    sphere.geodesic(0, sphere.n_points - 1, inplace=True)
+    geodesic_inplace = sphere.geodesic(start, end, inplace=True)
+    assert geodesic_inplace is sphere
     assert np.allclose(geodesic.points, sphere.points)
 
 
 def test_geodesic_fail(sphere, plane):
     with pytest.raises(IndexError):
         sphere.geodesic(-1, -1)
+    with pytest.raises(IndexError):
+        sphere.geodesic(sphere.n_points, 0)
 
     with pytest.raises(NotAllTrianglesError):
         plane.geodesic(0, 10)
