@@ -65,11 +65,8 @@ if VTK9:
     from vtkmodules.vtkIOImage import (vtkBMPReader,
                                        vtkDEMReader,
                                        vtkDICOMImageReader,
-                                       vtkDICOMImageReader,
-                                       vtkJPEGReader,
                                        vtkJPEGReader,
                                        vtkMetaImageReader,
-                                       vtkNrrdReader,
                                        vtkNrrdReader,
                                        vtkPNGReader,
                                        vtkPNMReader,
@@ -291,7 +288,6 @@ if VTK9:
                                                vtkSelectEnclosedPoints)
     from vtkmodules.vtkFiltersSources import (vtkOutlineCornerFilter,
                                               vtkParametricFunctionSource,
-                                              vtkParametricFunctionSource,
                                               vtkPlaneSource,
                                               vtkArcSource,
                                               vtkTessellatedBoxSource,
@@ -308,7 +304,6 @@ if VTK9:
                                               vtkRegularPolygonSource,
                                               vtkLineSource,
                                               vtkPointSource,
-                                              vtkArrowSource,
                                               vtkFrustumSource)
     from vtkmodules.vtkFiltersGeometry import (vtkGeometryFilter,
                                                vtkStructuredGridGeometryFilter,
