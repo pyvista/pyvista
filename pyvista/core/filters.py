@@ -4440,11 +4440,15 @@ class PolyDataFilters(DataSetFilters):
         else:
             return output
 
-    def geodesic(poly_data, start_vertex, end_vertex, inplace=False):
+    def geodesic(poly_data, start_vertex, end_vertex, inplace=False,
+                 keep_order=False):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
-        This will add an array titled `vtkOriginalPointIds` of the input
-        mesh's point ids to the output mesh.
+        This will add an array titled ``'vtkOriginalPointIds'`` of the input
+        mesh's point ids to the output mesh. The default behavior of the
+        underlying ``vtkDijkstraGraphGeodesicPath`` filter is that the
+        geodesic path is reversed in the resulting mesh. This can optionally
+        be overridden.
 
         Parameters
         ----------
@@ -4454,11 +4458,20 @@ class PolyDataFilters(DataSetFilters):
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
 
+        inplace : bool, optional
+            Whether the input mesh should be replaced with the path. The
+            geodesic path is always returned.
+
+        keep_order : bool, optional
+            If ``True``, the points of the returned path are guaranteed
+            to start with the start vertex (as opposed to the end vertex).
+
         Returns
         -------
         output : pyvista.PolyData
-            PolyData object consisting of the line segment between the
-            two given vertices.
+            ``PolyData`` object consisting of the line segment between the
+            two given vertices. If ``inplace`` is ``True`` this is the
+            same object as the input mesh.
 
         Examples
         --------
@@ -4491,6 +4504,11 @@ class PolyDataFilters(DataSetFilters):
 
         # Do not copy textures from input
         output.clear_textures()
+
+        # ensure proper order if requested
+        if keep_order and original_ids[0] == end_vertex:
+            output.points[...] = output.points[::-1, :]
+            output["vtkOriginalPointIds"] = output["vtkOriginalPointIds"][::-1]
 
         if inplace:
             poly_data.overwrite(output)
