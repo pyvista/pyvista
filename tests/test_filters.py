@@ -1483,6 +1483,6 @@ def test_extrude_rotate_inplace():
 def test_subdivide_adaptive(sphere, inplace):
     orig_n_faces = sphere.n_faces
     sub = sphere.subdivide_adaptive(0.01, 0.001, 100000, 2, inplace=inplace)
-    assert sub.n_faces  > orig_n_faces
+    assert sub.n_faces > orig_n_faces
     if inplace:
         assert sphere.n_faces == sub.n_faces
