@@ -32,6 +32,7 @@ class VtkErrorCatcher:
         self.log = ''
 
     def __enter__(self):
+        """Redirect VTK errors to a temporary log file."""
         log_file = tempfile.NamedTemporaryFile()
 
         # touch file so it exists even if no VTK errors are thrown
@@ -49,6 +50,7 @@ class VtkErrorCatcher:
         return
 
     def __exit__(self, type, val, traceback):
+        """Stop redirecting VTK errors and clean up log files."""
         # set the output back to whatever it was before
         self._output_window.SetInstance(self._orig_output_window)
 
