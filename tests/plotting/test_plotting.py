@@ -1290,13 +1290,13 @@ def test_subplot_groups():
 
 def test_subplot_groups_fail():
     # Test group overlap
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         # Partial overlap
         pyvista.Plotter(shape=(3, 3), groups=[([1, 2], [0, 1]), ([0, 1], [1, 2])])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         # Full overlap (inner)
         pyvista.Plotter(shape=(4, 4), groups=[(np.s_[:], np.s_[:]), ([1, 2], [1, 2])])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         # Full overlap (outer)
         pyvista.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
