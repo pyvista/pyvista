@@ -397,7 +397,7 @@ class PickingHelper:
     def enable_geodesic_picking(self, callback=None, show_message=True,
                                 font_size=18, color='pink', point_size=10,
                                 line_width=5, tolerance=0.025, show_path=True,
-                                **kwargs):
+                                keep_order=False, **kwargs):
         """Enable picking at geodesic paths.
 
         This is a convenience method for ``enable_point_picking`` to
@@ -405,7 +405,7 @@ class PickingHelper:
         using those points.
 
         The geodesic path is saved to the ``.picked_geodesic``
-        attribute of this plotter
+        attribute of this plotter.
 
         Parameters
         ----------
@@ -440,9 +440,16 @@ class PickingHelper:
             is specified as fraction of rendering window
             size.  Rendering window size is measured across diagonal.
 
+        keep_order : bool, optional
+            If ``True``, the created geodesic path is a single ordered
+            and cleaned line from the first point to the last. This is
+            ``False`` by default due to backwards compatibility, and
+            the resulting path may have apparent discontinuities due
+            to the surprising order of the path segments.
+
         kwargs : optional
             All remaining keyword arguments are used to control how
-            the picked path is interactively displayed
+            the picked path is interactively displayed.
 
         """
         kwargs.setdefault('pickable', False)
@@ -456,6 +463,7 @@ class PickingHelper:
             point = mesh.points[idx]
             if self._last_picked_idx is None:
                 self.picked_geodesic = pyvista.PolyData(point)
+                self.picked_geodesic['vtkOriginalPointIds'] = [idx]
             else:
                 surface = mesh.extract_surface().triangulate()
                 locator = _vtk.vtkPointLocator()
@@ -463,7 +471,13 @@ class PickingHelper:
                 locator.BuildLocator()
                 start_idx = locator.FindClosestPoint(mesh.points[self._last_picked_idx])
                 end_idx = locator.FindClosestPoint(point)
-                self.picked_geodesic = self.picked_geodesic + surface.geodesic(start_idx, end_idx)
+                self.picked_geodesic += surface.geodesic(start_idx, end_idx,
+                                                         keep_order=keep_order)
+                if keep_order:
+                    # it makes sense to remove adjacent duplicate points
+                    self.picked_geodesic.clean(inplace=True, lines_to_points=False,
+                                               polys_to_lines=False,
+                                               strips_to_polys=False)
             self._last_picked_idx = idx
 
             if show_path:
