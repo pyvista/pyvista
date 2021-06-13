@@ -57,7 +57,7 @@ class RenderWindowInteractor():
             A callable that takes no arguments
 
         """
-        if not hasattr(callback, '__call__'):
+        if not callable(callback):
             raise TypeError('callback must be callable.')
         self._key_press_event_callbacks[key].append(callback)
 
@@ -126,7 +126,7 @@ class RenderWindowInteractor():
 
         def _click_callback(obj, event):
             self._plotter.store_click_position()
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if viewport:
                     callback(self._plotter.click_position)
                 else:

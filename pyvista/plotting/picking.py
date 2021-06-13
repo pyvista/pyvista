@@ -278,7 +278,7 @@ class PickingHelper:
                 self.add_mesh(self.picked_point, color=color,
                               point_size=point_size, name='_picked_point',
                               pickable=False, reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if use_mesh:
                     try_callback(callback, self.picked_mesh, self.picked_point_id)
                 else:
@@ -376,7 +376,7 @@ class PickingHelper:
                 self.add_mesh(self.picked_path, color=color, name='_picked_path',
                               line_width=line_width, point_size=point_size,
                               reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, self.picked_path)
             return
 
@@ -484,7 +484,7 @@ class PickingHelper:
                 self.add_mesh(self.picked_geodesic, color=color, name='_picked_path',
                               line_width=line_width, point_size=point_size,
                               reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, self.picked_geodesic)
             return
 
@@ -580,7 +580,7 @@ class PickingHelper:
                               opacity=opacity, pickable=False,
                               reset_camera=False)
 
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, path)
 
         self.enable_path_picking(callback=_the_callback,
@@ -626,7 +626,7 @@ class PickingHelper:
         def _the_callback(*args):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, click_point)
 
         self.track_click_position(callback=_the_callback, side="right")
