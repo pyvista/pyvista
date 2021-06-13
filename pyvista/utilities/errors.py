@@ -11,6 +11,10 @@ import scooby
 import pyvista
 from pyvista import _vtk
 
+import contextlib
+import tempfile
+
+
 def set_error_output_file(filename):
     """Set a file to write out the VTK errors."""
     filename = os.path.abspath(os.path.expanduser(filename))
@@ -19,6 +23,51 @@ def set_error_output_file(filename):
     outputWindow = _vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow
+
+
+class VtkErrorCatcher:
+    """Catch VTK errors, using a context manager to temporarily redirect errors to a tempfile."""
+    def __init__(self, raise_errors=False):
+        self.raise_errors = raise_errors
+        self.log = ''
+
+    def __enter__(self):
+        log_file = tempfile.NamedTemporaryFile()
+
+        # touch file so it exists even if no VTK errors are thrown
+        log_file.write(b'')
+
+        file_output_window = _vtk.vtkFileOutputWindow()
+        file_output_window.SetFileName(log_file.name)
+
+        self._log_file = log_file
+        self._orig_output_window = file_output_window.GetInstance()
+
+        output_window = _vtk.vtkOutputWindow()
+        output_window.SetInstance(file_output_window)
+        self._output_window = output_window
+        return
+
+    def __exit__(self, type, val, traceback):
+        # set the output back to whatever it was before
+        self._output_window.SetInstance(self._orig_output_window)
+
+        with open(self._log_file.name, 'r') as f:
+            log = f.read()
+        self._log_file.close()  # closing the tempfile deletes it
+        self.log = log
+        if self.raise_errors and len(log) > 0:
+            raise RuntimeError(f'\n{log}')
+        return
+
+
+@contextlib.contextmanager
+def raise_vtk_errors():
+    """Raise RuntimeError if any VTK error is generated within this context."""
+    v = VtkErrorCatcher(raise_errors=True)
+    with v:
+        yield
+        return False
 
 
 class Observer:

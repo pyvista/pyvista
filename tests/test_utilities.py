@@ -473,3 +473,64 @@ def test_apply_transformation_to_points():
     r = transformations.apply_transformation_to_points(tf, points, inplace=True)
     assert r is None
     assert mesh.points == pytest.approx(2 * points_orig)
+
+
+def _generate_vtk_err():
+    """Simple operation which generates a VTK error."""
+    x, y, z = np.meshgrid(
+        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
+    )
+    mesh = pyvista.StructuredGrid(x, y, z)
+    x2, y2, z2 = np.meshgrid(
+        np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5)
+    )
+    mesh2 = pyvista.StructuredGrid(x2, y2, z2)
+
+    alg = vtk.vtkStreamTracer()
+    obs = pyvista.Observer()
+    obs.observe(alg)
+    alg.SetInputDataObject(mesh)
+    alg.SetSourceData(mesh2)
+    alg.Update()
+
+
+def test_vtk_error_catcher():
+    # raise_errors: False
+    error_catcher = pyvista.utilities.errors.VtkErrorCatcher()
+    with error_catcher:
+        _generate_vtk_err()
+    assert len(error_catcher.log) > 0
+    assert not os.path.isfile(error_catcher._log_file.name)  # make sure the tempfile was cleaned up
+
+    # raise_errors: False, no error
+    error_catcher = pyvista.utilities.errors.VtkErrorCatcher()
+    with error_catcher:
+        pass
+    assert len(error_catcher.log) == 0
+    assert not os.path.isfile(error_catcher._log_file.name)  # make sure the tempfile was cleaned up
+
+    # raise_errors: True
+    error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
+    with pytest.raises(RuntimeError):
+        with error_catcher:
+            _generate_vtk_err()
+    assert len(error_catcher.log) > 0
+    assert not os.path.isfile(error_catcher._log_file.name)  # make sure the tempfile was cleaned up
+
+    # raise_errors: True, no error
+    error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
+    with error_catcher:
+        pass
+    assert len(error_catcher.log) == 0
+    assert not os.path.isfile(error_catcher._log_file.name)  # make sure the tempfile was cleaned up
+
+
+def test_raise_vtk_errors():
+    # no error raised
+    with pyvista.utilities.errors.raise_vtk_errors():
+        pass
+
+    # error raised
+    with pytest.raises(RuntimeError):
+        with pyvista.utilities.errors.raise_vtk_errors():
+            _generate_vtk_err()
