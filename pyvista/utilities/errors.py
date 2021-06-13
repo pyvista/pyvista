@@ -28,6 +28,7 @@ def set_error_output_file(filename):
 class VtkErrorCatcher:
     """Catch VTK errors, using a context manager to temporarily redirect errors to a tempfile."""
     def __init__(self, raise_errors=False):
+        """Initialize context manager."""
         self.raise_errors = raise_errors
         self.log = ''
 
