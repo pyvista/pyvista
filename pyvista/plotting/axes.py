@@ -9,6 +9,17 @@ from pyvista import _vtk
 class Axes(_vtk.vtkAxes):
     """PyVista wrapper for the VTK Axes class.
 
+    Parameters
+    ----------
+    show_actor : bool, optional
+        Hide or show the actor of these axes.  Default ``False``.
+
+    actor_scale : float, optional
+        Scale the size of the axes actor.  Default ``1``.
+
+    line_width : float, optional
+        Width of the axes lines.  Default ``1``.
+
     Examples
     --------
     Create a axes at the pyvista module level
@@ -18,7 +29,7 @@ class Axes(_vtk.vtkAxes):
 
     """
 
-    def __init__(self, show_actor=False):
+    def __init__(self, show_actor=False, actor_scale=1, line_width=1.0):
         """Initialize a new axes descriptor."""
         super().__init__()
         self.mapper = None
@@ -31,6 +42,9 @@ class Axes(_vtk.vtkAxes):
         self.actor = _vtk.vtkActor()
         self.actor.SetMapper(self.mapper)
         self.actor.SetVisibility(show_actor)
+        self.actor.SetScale(actor_scale)
+        prop = self.actor.GetProperty()
+        prop.SetLineWidth(line_width)
 
     @property
     def origin(self):

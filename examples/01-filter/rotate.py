@@ -18,12 +18,13 @@ from pyvista import examples
 # Define camera and axes. Setting axes origin to (1.0, 1.0, 1.0).
 
 mesh = examples.download_cow()
+mesh.points /= 1.5  # scale the mesh
 
 camera = pv.Camera()
 camera.position = (30.0, 30.0, 30.0)
 camera.focal_point = (5.0, 5.0, 5.0)
 
-axes = pv.Axes(show_actor=True)
+axes = pv.Axes(show_actor=True, actor_scale=2.0, line_width=5)
 axes.origin = (3.0, 3.0, 3.0)
 
 ###############################################################################
