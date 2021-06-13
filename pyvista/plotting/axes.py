@@ -68,6 +68,5 @@ class Axes(_vtk.vtkAxes):
 
     @origin.setter
     def origin(self, value):
-    """Set the origin of the camera.
-        """
+    """Set the origin of the camera."""
         self.SetOrigin(value)
