@@ -4473,8 +4473,9 @@ class PolyDataFilters(DataSetFilters):
         >>> cpos = pl.show()
 
         """
-        if start_vertex < 0 or end_vertex > poly_data.n_points - 1:
-            raise IndexError('Invalid indices.')
+        if not (0 <= start_vertex < poly_data.n_points and
+                0 <= end_vertex < poly_data.n_points):
+            raise IndexError('Invalid point indices.')
         if not poly_data.is_all_triangles():
             raise NotAllTrianglesError("Input mesh for geodesic path must be all triangles.")
 
