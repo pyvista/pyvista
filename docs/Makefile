@@ -32,3 +32,18 @@ clean:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+# deploy to https://github.com/pyvista/pyvista-docs
+# WARNING: Use with care as this overwrites history of gh-pages
+deploy:
+	cp README.md _build/html
+	cp ads.txt _build/html
+	touch _build/html/.nojekyll
+	echo "docs.pyvista.org" >> _build/html/CNAME
+	cd _build/html && git init
+	cd _build/html && git add .
+	cd _build/html && git checkout -b gh-pages
+	cd _build/html && git commit -am "manual build"
+	cd _build/html && git remote add origin https://github.com/pyvista/pyvista-docs
+	cd _build/html && git push -u origin gh-pages --force
+	rm -rf _build/html/.git
