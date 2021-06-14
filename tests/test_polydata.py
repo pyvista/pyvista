@@ -213,7 +213,8 @@ def test_geodesic(sphere):
     assert np.allclose(geodesic.points, sphere.points[ids])
 
     # check keep_order
-    assert geodesic["vtkOriginalPointIds"][0] == end
+    geodesic_legacy = sphere.geodesic(start, end, keep_order=False)
+    assert geodesic_legacy["vtkOriginalPointIds"][0] == end
     geodesic_ordered = sphere.geodesic(start, end, keep_order=True)
     assert geodesic_ordered["vtkOriginalPointIds"][0] == start
 
