@@ -4,7 +4,7 @@ from typing import Union
 import numpy as np
 
 import pyvista
-from pyvista import _vtk
+from pyvista import _vtk, FieldAssociation
 from pyvista.utilities import (
     NORMALS, assert_empty_kwargs, generate_plane, get_array, wrap, abstract_class
 )
