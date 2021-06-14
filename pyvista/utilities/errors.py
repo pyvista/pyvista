@@ -26,7 +26,25 @@ def set_error_output_file(filename):
 
 
 class VtkErrorCatcher:
-    """Context manager to temporarily catch VTK errors."""
+    """Context manager to temporarily catch VTK errors.
+
+    Parameters
+    ----------
+    raise_errors : bool, optional
+        Raise a ``RuntimeError`` when a VTK error is encountered.  Defaults to ``False``.
+
+    send_to_logging : bool, optional
+        Determine whether VTK errors raised within the context should also be sent to logging.  Defaults to ``True``.
+
+    Examples
+    --------
+    Catch VTK errors using the context manager.
+
+    >>> import pyvista
+    >>> error_catcher = pyvista.errors.VtkErrorCatcher()
+    >>> with error_catcher:
+    ...     sphere = pyvista.Sphere()
+    """
 
     def __init__(self, raise_errors=False, send_to_logging=True):
         """Initialize context manager."""
@@ -55,7 +73,16 @@ class VtkErrorCatcher:
 
 @contextlib.contextmanager
 def raise_vtk_errors():
-    """Raise RuntimeError if any VTK error is generated within this context."""
+    """Context manager to temporarily raise VTK errors.
+
+    Examples
+    --------
+    Raise ``RuntimeError`` for any VTK errors using the context manager.
+
+    >>> import pyvista
+    >>> with pyvista.utilities.raise_vtk_errors():
+    ...     sphere = pyvista.Sphere()
+    """
     v = VtkErrorCatcher(raise_errors=True)
     with v:
         yield
