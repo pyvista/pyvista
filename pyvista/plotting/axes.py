@@ -53,14 +53,14 @@ class Axes(_vtk.vtkAxes):
         Examples
         --------
         >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.axes.origin
+        >>> axes = pyvista.Axes()
+        >>> axes.origin
         (0.0, 0.0, 0.0)
 
         Set the origin of the camera.
 
-        >>> pl.axes.origin = (2.0, 1.0, 1.0)
-        >>> pl.axes.origin
+        >>> axes.origin = (2.0, 1.0, 1.0)
+        >>> axes.origin
         (2.0, 1.0, 1.0)
 
         """
