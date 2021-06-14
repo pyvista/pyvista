@@ -515,14 +515,3 @@ def test_vtk_error_catcher():
     error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
     with error_catcher:
         pass
-
-
-def test_raise_vtk_errors():
-    # no error raised
-    with pyvista.utilities.errors.raise_vtk_errors():
-        pass
-
-    # error raised
-    with pytest.raises(RuntimeError):
-        with pyvista.utilities.errors.raise_vtk_errors():
-            _generate_vtk_err()

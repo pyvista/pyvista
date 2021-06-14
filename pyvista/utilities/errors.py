@@ -70,24 +70,6 @@ class VtkErrorCatcher:
             raise RuntimeError(errors)
 
 
-@contextlib.contextmanager
-def raise_vtk_errors():
-    """Context manager to temporarily raise VTK errors.
-
-    Examples
-    --------
-    Raise ``RuntimeError`` for any VTK errors using the context manager.
-
-    >>> import pyvista
-    >>> with pyvista.raise_vtk_errors():
-    ...     sphere = pyvista.Sphere()
-    """
-    v = VtkErrorCatcher(raise_errors=True)
-    with v:
-        yield
-        return False
-
-
 class Observer:
     """A standard class for observing VTK objects."""
 
