@@ -497,14 +497,14 @@ def test_vtk_error_catcher():
     with error_catcher:
         _generate_vtk_err()
     assert len(error_catcher.log) > 0
-    assert not os.path.isfile(error_catcher._log_file.name)  # make sure the tempfile was cleaned up
+    assert not os.path.isfile(error_catcher._log_file)  # make sure the tempfile was cleaned up
 
     # raise_errors: False, no error
     error_catcher = pyvista.utilities.errors.VtkErrorCatcher()
     with error_catcher:
         pass
     assert len(error_catcher.log) == 0
-    assert not os.path.isfile(error_catcher._log_file.name)  # make sure the tempfile was cleaned up
+    assert not os.path.isfile(error_catcher._log_file)  # make sure the tempfile was cleaned up
 
     # raise_errors: True
     error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
@@ -512,14 +512,14 @@ def test_vtk_error_catcher():
         with error_catcher:
             _generate_vtk_err()
     assert len(error_catcher.log) > 0
-    assert not os.path.isfile(error_catcher._log_file.name)  # make sure the tempfile was cleaned up
+    assert not os.path.isfile(error_catcher._log_file)  # make sure the tempfile was cleaned up
 
     # raise_errors: True, no error
     error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
     with error_catcher:
         pass
     assert len(error_catcher.log) == 0
-    assert not os.path.isfile(error_catcher._log_file.name)  # make sure the tempfile was cleaned up
+    assert not os.path.isfile(error_catcher._log_file)  # make sure the tempfile was cleaned up
 
 
 def test_raise_vtk_errors():

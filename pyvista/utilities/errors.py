@@ -13,6 +13,7 @@ from pyvista import _vtk
 
 import contextlib
 import tempfile
+import shutil
 
 
 def set_error_output_file(filename):
@@ -35,17 +36,16 @@ class VtkErrorCatcher:
 
     def __enter__(self):
         """Redirect VTK errors to a temporary log file."""
-        log_file = tempfile.NamedTemporaryFile()
-
-        # touch file so it exists even if no VTK errors are thrown
-        log_file.write(b'')
-
+        tmp_dir = tempfile.mkdtemp()
+        log_file = os.path.join(tmp_dir, 'vtk_log.txt')
+        with open(log_file, 'w') as f:
+            f.write('')
         file_output_window = _vtk.vtkFileOutputWindow()
-        file_output_window.SetFileName(log_file.name)
+        file_output_window.SetFileName(log_file)
 
+        self._tmp_dir = tmp_dir
         self._log_file = log_file
         self._orig_output_window = file_output_window.GetInstance()
-
         output_window = _vtk.vtkOutputWindow()
         output_window.SetInstance(file_output_window)
         self._output_window = output_window
@@ -56,9 +56,9 @@ class VtkErrorCatcher:
         # set the output back to whatever it was before
         self._output_window.SetInstance(self._orig_output_window)
 
-        with open(self._log_file.name, 'r') as f:
+        with open(self._log_file, 'r') as f:
             log = f.read()
-        self._log_file.close()  # closing the tempfile deletes it
+        shutil.rmtree(self._tmp_dir)
         self.log = log
         if self.raise_errors and len(log) > 0:
             raise RuntimeError(f'\n{log}')
