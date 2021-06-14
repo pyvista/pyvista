@@ -4022,11 +4022,11 @@ class PolyDataFilters(DataSetFilters):
         >>> from pyvista import examples
         >>> import pyvista
         >>> mesh = pyvista.PolyData(examples.planefile)
-        >>> submesh = mesh.subdivide_adaptive(max_edge_len=1)
+        >>> submesh = mesh.subdivide_adaptive(max_n_passes=2)
 
         Alternatively, update the mesh in-place.
 
-        >>> submesh = mesh.subdivide_adaptive(max_edge_len=1, inplace=True)
+        >>> submesh = mesh.subdivide_adaptive(max_n_passes=2, inplace=True)
 
         """
         sfilter = _vtk.vtkAdaptiveSubdivisionFilter()
