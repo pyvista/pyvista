@@ -12,8 +12,7 @@ import pyvista
 from pyvista import _vtk
 
 import contextlib
-import tempfile
-import shutil
+import collections
 
 
 def set_error_output_file(filename):
@@ -27,42 +26,31 @@ def set_error_output_file(filename):
 
 
 class VtkErrorCatcher:
-    """Catch VTK errors, using a context manager to temporarily redirect errors to a tempfile."""
-    
-    def __init__(self, raise_errors=False):
+    """Context manager to temporarily catch VTK errors."""
+
+    def __init__(self, raise_errors=False, send_to_logging=True):
         """Initialize context manager."""
         self.raise_errors = raise_errors
-        self.log = ''
+        self.send_to_logging = send_to_logging
 
     def __enter__(self):
-        """Redirect VTK errors to a temporary log file."""
-        tmp_dir = tempfile.mkdtemp()
-        log_file = os.path.join(tmp_dir, 'vtk_log.txt')
-        with open(log_file, 'w') as f:
-            f.write('')
-        file_output_window = _vtk.vtkFileOutputWindow()
-        file_output_window.SetFileName(log_file)
-
-        self._tmp_dir = tmp_dir
-        self._log_file = log_file
-        self._orig_output_window = file_output_window.GetInstance()
-        output_window = _vtk.vtkOutputWindow()
-        output_window.SetInstance(file_output_window)
-        self._output_window = output_window
-        return
+        """Observe VTK string output window for errors."""
+        error_output = _vtk.vtkStringOutputWindow()
+        error_win = _vtk.vtkOutputWindow()
+        self._error_output_orig = error_win.GetInstance()
+        error_win.SetInstance(error_output)
+        obs = Observer(log=self.send_to_logging, store_history=True)
+        obs.observe(error_output)
+        self._observer = obs
 
     def __exit__(self, type, val, traceback):
-        """Stop redirecting VTK errors and clean up log files."""
-        # set the output back to whatever it was before
-        self._output_window.SetInstance(self._orig_output_window)
-
-        with open(self._log_file, 'r') as f:
-            log = f.read()
-        shutil.rmtree(self._tmp_dir)
-        self.log = log
-        if self.raise_errors and len(log) > 0:
-            raise RuntimeError(f'\n{log}')
-        return
+        """Stop observing VTK string output window."""
+        error_win = _vtk.vtkOutputWindow()
+        error_win.SetInstance(self._error_output_orig)
+        self.events = self._observer.event_history
+        if self.raise_errors and self.events:
+            errors = [RuntimeError(f'{e.kind}: {e.alert}', e.path, e.address) for e in self.events]
+            raise RuntimeError(errors)
 
 
 @contextlib.contextmanager
@@ -77,7 +65,7 @@ def raise_vtk_errors():
 class Observer:
     """A standard class for observing VTK objects."""
 
-    def __init__(self, event_type='ErrorEvent', log=True):
+    def __init__(self, event_type='ErrorEvent', log=True, store_history=False):
         """Initialize observer."""
         self.__event_occurred = False
         self.__message = None
@@ -86,6 +74,9 @@ class Observer:
         self.__observing = False
         self.event_type = event_type
         self.__log = log
+
+        self.store_history = store_history
+        self.event_history = []
 
     @staticmethod
     def parse_message(message):
@@ -118,6 +109,9 @@ class Observer:
         self.__message = alert
         if self.__log:
             self.log_message(kind, alert)
+        if self.store_history:
+            VtkEvent = collections.namedtuple('VtkEvent', ['kind', 'path', 'address', 'alert'])
+            self.event_history.append(VtkEvent(kind, path, address, alert))
 
     def has_event_occurred(self):
         """Ask self if an error has occurred since last queried.
