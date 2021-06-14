@@ -3961,6 +3961,94 @@ class PolyDataFilters(DataSetFilters):
         else:
             return submesh
 
+    def subdivide_adaptive(poly_data, max_edge_len=None, max_tri_area=None,
+                           max_n_tris=None, max_n_passes=None, inplace=False):
+        """Increase the number of triangles in a triangular mesh based on edge and/or area metrics.
+
+        This filter uses a simple case-based, multi-pass approach to
+        repeatedly subdivide the input triangle mesh to meet the area
+        and/or edge length criteria. New points may be inserted only
+        on edges; depending on the number of edges to be subdivided a
+        different number of triangles are inserted ranging from two
+        (i.e., two triangles replace the original one) to four.
+
+        Point and cell data is treated as follows: The cell data from
+        a parent triangle is assigned to its subdivided
+        children. Point data is interpolated along edges as the edges
+        are subdivided.
+
+        This filter retains mesh watertightness if the mesh was
+        originally watertight; and the area and max triangles criteria
+        are not used.
+
+        Parameters
+        ----------
+        max_edge_len : float, optional
+            The maximum edge length that a triangle may have. Edges
+            longer than this value are split in half and the
+            associated triangles are modified accordingly.
+
+        max_tri_area : float, optional
+            The maximum area that a triangle may have. Triangles
+            larger than this value are subdivided to meet this
+            threshold. Note that if this criterion is used it may
+            produce non-watertight meshes as a result.
+
+        max_n_tris : int, optional
+            The maximum number of triangles that can be created. If
+            the limit is hit, it may result in premature termination
+            of the algorithm and the results may be less than
+            satisfactory (for example non-watertight meshes may be
+            created). By default, the limit is set to a very large
+            number (i.e., no effective limit).
+
+        max_n_passes : int, optional
+            The maximum number of passes (i.e., levels of
+            subdivision). If the limit is hit, then the subdivision
+            process stops and additional passes (needed to meet other
+            criteria) are aborted. The default limit is set to a very
+            large number (i.e., no effective limit).
+
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        :class:`pyvista.PolyData`
+            Subdivided mesh
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> import pyvista
+        >>> mesh = pyvista.PolyData(examples.planefile)
+        >>> submesh = mesh.subdivide_adaptive(max_edge_len=1)
+
+        Alternatively, update the mesh in-place.
+
+        >>> submesh = mesh.subdivide_adaptive(max_edge_len=1, inplace=True)
+
+        """
+        sfilter = _vtk.vtkAdaptiveSubdivisionFilter()
+        if max_edge_len:
+            sfilter.SetMaximumEdgeLength(max_edge_len)
+        if max_tri_area:
+            sfilter.SetMaximumTriangleArea(max_tri_area)
+        if max_n_tris:
+            sfilter.SetMaximumNumberOfTriangles(max_n_tris)
+        if max_n_passes:
+            sfilter.SetMaximumNumberOfPasses(max_n_passes)
+
+        sfilter.SetInputData(poly_data)
+        sfilter.Update()
+        submesh = _get_output(sfilter)
+
+        if inplace:
+            poly_data.overwrite(submesh)
+            return poly_data
+        else:
+            return submesh
+
     def decimate(poly_data, target_reduction, volume_preservation=False,
                  attribute_error=False, scalars=True, vectors=True,
                  normals=False, tcoords=True, tensors=True, scalars_weight=0.1,
