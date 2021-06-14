@@ -4441,7 +4441,7 @@ class PolyDataFilters(DataSetFilters):
             return output
 
     def geodesic(poly_data, start_vertex, end_vertex, inplace=False,
-                 keep_order=False):
+                 keep_order=True):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
         This will add an array titled ``'vtkOriginalPointIds'`` of the input
