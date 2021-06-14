@@ -41,8 +41,7 @@ class VtkErrorCatcher:
     Catch VTK errors using the context manager.
 
     >>> import pyvista
-    >>> error_catcher = pyvista.utilities.VtkErrorCatcher()
-    >>> with error_catcher:
+    >>> with pyvista.VtkErrorCatcher() as error_catcher:
     ...     sphere = pyvista.Sphere()
     """
 
@@ -80,7 +79,7 @@ def raise_vtk_errors():
     Raise ``RuntimeError`` for any VTK errors using the context manager.
 
     >>> import pyvista
-    >>> with pyvista.utilities.raise_vtk_errors():
+    >>> with pyvista.raise_vtk_errors():
     ...     sphere = pyvista.Sphere()
     """
     v = VtkErrorCatcher(raise_errors=True)
