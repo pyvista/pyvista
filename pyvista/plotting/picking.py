@@ -397,7 +397,7 @@ class PickingHelper:
     def enable_geodesic_picking(self, callback=None, show_message=True,
                                 font_size=18, color='pink', point_size=10,
                                 line_width=5, tolerance=0.025, show_path=True,
-                                keep_order=False, **kwargs):
+                                keep_order=True, **kwargs):
         """Enable picking at geodesic paths.
 
         This is a convenience method for ``enable_point_picking`` to
@@ -442,10 +442,13 @@ class PickingHelper:
 
         keep_order : bool, optional
             If ``True``, the created geodesic path is a single ordered
-            and cleaned line from the first point to the last. This is
-            ``False`` by default due to backwards compatibility, and
-            the resulting path may have apparent discontinuities due
-            to the surprising order of the path segments.
+            and cleaned line from the first point to the last.
+
+            .. note::
+                In older versions there were apparent discontinuities
+                in the resulting path due to the behavior of the
+                underlying VTK filter which corresponds to
+                ``keep_order=False``.
 
         kwargs : optional
             All remaining keyword arguments are used to control how

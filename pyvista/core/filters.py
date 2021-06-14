@@ -4447,8 +4447,8 @@ class PolyDataFilters(DataSetFilters):
         This will add an array titled ``'vtkOriginalPointIds'`` of the input
         mesh's point ids to the output mesh. The default behavior of the
         underlying ``vtkDijkstraGraphGeodesicPath`` filter is that the
-        geodesic path is reversed in the resulting mesh. This can optionally
-        be overridden.
+        geodesic path is reversed in the resulting mesh. This is overridden
+        in PyVista by default.
 
         Parameters
         ----------
