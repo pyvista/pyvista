@@ -888,8 +888,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
 
         """
-        # `GlobalWarningDisplayOff` is used below to hide errors during the cell blanking.
-        # <https://discourse.vtk.org/t/error-during-the-cell-blanking-of-explicit-structured-grid/4863>
         if not _vtk.VTK9:
             raise AttributeError('VTK 9 or higher is required')
         s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
@@ -897,7 +895,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         if not s1.issubset(s2):
             raise TypeError("'BLOCK_I', 'BLOCK_J' and 'BLOCK_K' cell arrays are required")
         alg = _vtk.vtkUnstructuredGridToExplicitStructuredGrid()
-        alg.GlobalWarningDisplayOff()
         alg.SetInputData(self)
         alg.SetInputArrayToProcess(0, 0, 0, 1, 'BLOCK_I')
         alg.SetInputArrayToProcess(1, 0, 0, 1, 'BLOCK_J')
@@ -1359,11 +1356,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
 
         """
-        # `GlobalWarningDisplayOff` is used below to hide errors
-        # during the cell blanking.
-        # <https://discourse.vtk.org/t/error-during-the-cell-blanking-of-explicit-structured-grid/4863>
         if inplace:
-            self.GlobalWarningDisplayOff()
             ind = np.asarray(ind)
             array = np.zeros(self.n_cells, dtype=np.uint8)
             array[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
