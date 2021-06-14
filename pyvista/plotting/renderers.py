@@ -81,66 +81,87 @@ class Renderers():
             self._shape = tuple(shape)
             self._render_idxs = np.empty(self._shape, dtype=int)
             # Check if row and col weights correspond to given shape,
-            # or initialize them to defaults (equally weighted)
+            # or initialize them to defaults (equally weighted).
 
             # and convert to normalized offsets
             if row_weights is None:
                 row_weights = np.ones(shape[0])
             if col_weights is None:
                 col_weights = np.ones(shape[1])
-            assert(np.array(row_weights).size == shape[0])
-            assert(np.array(col_weights).size == shape[1])
-            row_off = np.cumsum(np.abs(row_weights))/np.sum(np.abs(row_weights))
-            row_off = 1-np.concatenate(([0], row_off))
-            col_off = np.cumsum(np.abs(col_weights))/np.sum(np.abs(col_weights))
+
+            # also make flattening and abs explicit
+            row_weights = np.abs(np.asanyarray(row_weights).ravel())
+            col_weights = np.abs(np.asanyarray(col_weights).ravel())
+            if row_weights.size != shape[0]:
+                raise ValueError(f'"row_weights" must have {shape[0]} items '
+                                 f'for {shape[0]} rows of subplots, not '
+                                 f'{row_weights.size}.')
+            if col_weights.size != shape[1]:
+                raise ValueError(f'"col_weights" must have {shape[1]} items '
+                                 f'for {shape[1]} columns of subplots, not '
+                                 f'{col_weights.size}.')
+            row_off = np.cumsum(row_weights) / np.sum(row_weights)
+            row_off = 1 - np.concatenate(([0], row_off))
+            col_off = np.cumsum(col_weights) / np.sum(col_weights)
             col_off = np.concatenate(([0], col_off))
 
             # Check and convert groups to internal format (Nx4 matrix
             # where every row contains the row and col index of the
-            # top left cell
+            # top left cell)
 
             if groups is not None:
-                assert isinstance(groups, collections.abc.Sequence), '"groups" should be a list or tuple'
+                if not isinstance(groups, collections.abc.Sequence):
+                    raise TypeError('"groups" should be a list or tuple, not '
+                                    f'{type(groups).__name__}.')
                 for group in groups:
-                    assert isinstance(group, collections.abc.Sequence) and len(group)==2, 'each group entry should be a list or tuple of 2 elements'
+                    if not isinstance(group, collections.abc.Sequence):
+                        raise TypeError('Each group entry should be a list or '
+                                        f'tuple, not {type(group).__name__}.')
+                    if len(group) != 2:
+                        raise ValueError('Each group entry must have length 2.')
+
                     rows = group[0]
-                    if isinstance(rows,slice):
-                        rows = np.arange(self.shape[0],dtype=int)[rows]
+                    if isinstance(rows, slice):
+                        rows = np.arange(self.shape[0], dtype=int)[rows]
                     cols = group[1]
-                    if isinstance(cols,slice):
-                        cols = np.arange(self.shape[1],dtype=int)[cols]
-                    # Get the normalized group, i.e. extract top left corner and bottom right corner from the given rows and cols
-                    norm_group = [np.min(rows),np.min(cols),np.max(rows),np.max(cols)]
+                    if isinstance(cols, slice):
+                        cols = np.arange(self.shape[1], dtype=int)[cols]
+                    # Get the normalized group, i.e. extract top left corner
+                    # and bottom right corner from the given rows and cols
+                    norm_group = [np.min(rows), np.min(cols),
+                                  np.max(rows), np.max(cols)]
                     # Check for overlap with already defined groups:
-                    for i in range(norm_group[0],norm_group[2]+1):
-                        for j in range(norm_group[1],norm_group[3]+1):
-                            assert self.loc_to_group((i,j)) is None, 'groups cannot overlap'
-                    self.groups = np.concatenate((self.groups,np.array([norm_group],dtype=int)),axis=0)
+                    for i in range(norm_group[0], norm_group[2] + 1):
+                        for j in range(norm_group[1], norm_group[3] + 1):
+                            if self.loc_to_group((i, j)) is not None:
+                                raise ValueError('Groups cannot overlap. Overlap '
+                                                 f'found at position {(i, j)}.')
+                    self.groups = np.concatenate((self.groups, np.array([norm_group], dtype=int)), axis=0)
             # Create subplot renderers
             for row in range(shape[0]):
                 for col in range(shape[1]):
-                    group = self.loc_to_group((row,col))
+                    group = self.loc_to_group((row, col))
                     nb_rows = None
                     nb_cols = None
                     if group is not None:
-                        if row==self.groups[group,0] and col==self.groups[group,1]:
+                        if row == self.groups[group, 0] and col == self.groups[group, 1]:
                             # Only add renderer for first location of the group
-                            nb_rows = 1+self.groups[group,2]-self.groups[group,0]
-                            nb_cols = 1+self.groups[group,3]-self.groups[group,1]
+                            nb_rows = 1 + self.groups[group, 2] - self.groups[group, 0]
+                            nb_cols = 1 + self.groups[group, 3] - self.groups[group, 1]
                     else:
                         nb_rows = 1
                         nb_cols = 1
                     if nb_rows is not None:
                         renderer = Renderer(self._plotter, border, border_color, border_width)
                         x0 = col_off[col]
-                        y0 = row_off[row+nb_rows]
-                        x1 = col_off[col+nb_cols]
+                        y0 = row_off[row + nb_rows]
+                        x1 = col_off[col + nb_cols]
                         y1 = row_off[row]
                         renderer.SetViewport(x0, y0, x1, y1)
                         self._render_idxs[row,col] = len(self)
                         self._renderers.append(renderer)
                     else:
-                        self._render_idxs[row,col] = self._render_idxs[self.groups[group,0],self.groups[group,1]]
+                        self._render_idxs[row, col] = self._render_idxs[self.groups[group,0], self.groups[group,1]]
 
         # each render will also have an associated background renderer
         self._background_renderers = [None for _ in range(len(self))]
