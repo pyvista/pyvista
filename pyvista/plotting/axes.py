@@ -20,6 +20,9 @@ class Axes(_vtk.vtkAxes):
     line_width : float, optional
         Width of the axes lines.  Default ``1``.
 
+    symmetric : bool, optional
+        If true, the axis continue to negative values.
+
     Examples
     --------
     Create an instance of axes at the pyvista module level.
@@ -29,11 +32,12 @@ class Axes(_vtk.vtkAxes):
 
     """
 
-    def __init__(self, show_actor=False, actor_scale=1, line_width=1.0):
+    def __init__(self, show_actor=False, actor_scale=1, line_width=1.0, symmetric=False):
         """Initialize a new axes descriptor."""
         super().__init__()
         self.mapper = None
         self.actor = None
+        self.SetSymmetric(symmetric)
 
         # Add the axes mapper
         self.mapper = _vtk.vtkPolyDataMapper()
@@ -70,3 +74,47 @@ class Axes(_vtk.vtkAxes):
     def origin(self, value):
         """Set the origin of the camera."""
         self.SetOrigin(value)
+
+    def show_actor(self):
+        """Show an actor of axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.Axes()
+        >>> axes.show_actor()
+        """
+        self.actor.VisibilityOn()
+
+    def hide_actor(self):
+        """Hide an actor of axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.Axes()
+        >>> axes.hide_actor()
+        """
+        self.actor.VisibilityOff()
+
+    def show_symmetric(self):
+        """Show symmetric of axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.Axes()
+        >>> axes.show_symmetric()
+        """
+        self.SymmetricOn()
+
+    def hide_symmetric(self):
+        """Show symmetric of axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.Axes()
+        >>> axes.hide_symmetric()
+        """
+        self.SymmetricOff()
