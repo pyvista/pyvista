@@ -1,24 +1,28 @@
 Geometric Objects
 -----------------
-
 PyVista includes a few functions to generate simple geometric objects.
 The code documentation for these functions are on this page; to see what these
 functions create, check out the example: :ref:`ref_geometric_example`.
 
-.. autofunction:: pyvista.Sphere
-.. autofunction:: pyvista.Cylinder
-.. autofunction:: pyvista.CylinderStructured
-.. autofunction:: pyvista.Arrow
-.. autofunction:: pyvista.Plane
-.. autofunction:: pyvista.Line
-.. autofunction:: pyvista.Cube
-.. autofunction:: pyvista.Box
-.. autofunction:: pyvista.Cone
-.. autofunction:: pyvista.Polygon
-.. autofunction:: pyvista.Disc
-.. autofunction:: pyvista.Text3D
-.. autofunction:: pyvista.Spline
-.. autofunction:: pyvista.Wavelet
-.. autofunction:: pyvista.CircularArc
-.. autofunction:: pyvista.CircularArcFromNormal
-.. autofunction:: pyvista.Pyramid
+.. currentmodule:: pyvista
+
+.. autosummary::
+   :toctree: _autosummary
+
+   Sphere
+   Cylinder
+   CylinderStructured
+   Arrow
+   Plane
+   Line
+   Cube
+   Box
+   Cone
+   Polygon
+   Disc
+   Text3D
+   Spline
+   Wavelet
+   CircularArc
+   CircularArcFromNormal
+   Pyramid
