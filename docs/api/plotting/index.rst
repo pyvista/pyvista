@@ -39,7 +39,7 @@ are available from any PyVista plotter.
    :toctree: _autosummary
    :template: custom-class-template.rst
 
-   pyvista.WidgetHelper
+   WidgetHelper
 
 
 Convenience Functions
@@ -50,7 +50,7 @@ routines in PyVista.
 .. autosummary::
    :toctree: _autosummary
 
-   pyvista.plot
-   pyvista.plot_arrows
-   pyvista.set_plot_theme
-   pyvista.create_axes_orientation_box
+   plot
+   plot_arrows
+   set_plot_theme
+   create_axes_orientation_box

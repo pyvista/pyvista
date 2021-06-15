@@ -11,10 +11,9 @@
    .. rubric:: {{ _('Methods') }}
 
    .. autosummary::
-       :toctree: _autosummary
-
+      :toctree: _autosummary
    {% for item in methods %}
-      ~{{ name }}.{{ item }}
+      {{ name }}.{{ item }}
    {%- endfor %}
    {% endif %}
    {% endblock %}
@@ -26,8 +25,8 @@
    .. autosummary::
       :toctree: _autosummary
    {% for item in attributes %}
-      {% if item.0 != item.upper().0 %}  <!-- Do not permit VTK capitalized methods -->
-         ~{{ name }}.{{ item }}
+      {% if item.0 != item.upper().0 %}
+      {{ name }}.{{ item }}
       {% endif %}
    {%- endfor %}
    {% endif %}
