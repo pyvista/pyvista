@@ -15,15 +15,16 @@ def _cell_bounds(points, bound_position=0.5):
 
     Parameters
     ----------
-    points: numpy.array
-        One-dimensional array of uniformly spaced values of shape (M,)
+    points: numpy.ndarray
+        One-dimensional array of uniformly spaced values of shape (M,).
+
     bound_position: bool, optional
         The desired position of the bounds relative to the position
         of the points.
 
     Returns
     -------
-    bounds: numpy.array
+    bounds: numpy.ndarray
         Array of shape (M+1,)
 
     Examples
@@ -34,7 +35,8 @@ def _cell_bounds(points, bound_position=0.5):
     >>> cell_bounds(a)
     array([-1.25, -0.75, -0.25,  0.25,  0.75,  1.25,  1.75,  2.25])
     """
-    assert points.ndim == 1, "Only 1D points are allowed"
+    if points.ndim != 1:
+        raise ValueError("Only 1D points are allowed.")
     diffs = np.diff(points)
     delta = diffs[0] * bound_position
     bounds = np.concatenate([[points[0] - delta], points + delta])

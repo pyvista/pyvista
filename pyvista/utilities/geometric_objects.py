@@ -726,7 +726,6 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
     arc.SetNormal(*normal)
     check_valid_vector(polar, 'polar')
     arc.SetPolarVector(*polar)
-    assert np.allclose(np.array(arc.GetPolarVector()), np.array(polar))
     arc.SetAngle(angle)
     arc.Update()
     angle = np.deg2rad(arc.GetAngle())

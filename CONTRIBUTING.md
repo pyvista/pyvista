@@ -144,7 +144,19 @@ following the steps in the
 
 We adhere to [PEP 8](https://www.python.org/dev/peps/pep-0008/)
 wherever possible, except that line widths are permitted to go beyond
-79 characters to a max of 90 to 100 characters.
+79 characters to a max of 99 characters for code.  This should
+tend to be the exception rather than the norm.
+
+As for docstrings, follow the guidelines specified in [PEP 8 Maximum
+Line Length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length)
+of limiting docstrings to 72 characters per line.  This follows the
+directive:
+
+> Some teams strongly prefer a longer line length. For code maintained
+> exclusively or primarily by a team that can reach agreement on this
+> issue, it is okay to increase the line length limit up to 99
+> characters, provided that comments and docstrings are still wrapped
+> at 72 characters.
 
 Outside of PEP 8, when coding please consider [PEP 20 -- The Zen of Python](https://www.python.org/dev/peps/pep-0020/).  When in doubt:
 
