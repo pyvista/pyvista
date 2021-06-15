@@ -58,7 +58,8 @@ docs/examples/
 docs/errors.txt
 docs/images/auto-generated
 **/myscreenshot.png
-
+api-autogen/
+_autosummary
 
 docs/external_examples.rst
 
