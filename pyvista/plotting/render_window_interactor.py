@@ -163,9 +163,29 @@ class RenderWindowInteractor():
         return self.interactor.SetInteractorStyle(self._style_class)
 
     def enable_trackball_style(self):
-        """Set the interactive style to trackball camera.
+        """Set the interactive style to Trackball Camera.
 
-        The trackball camera is the default interactor style.
+        The trackball camera is the default interactor style. Moving
+        the mouse moves the camera around, leaving the scene intact.
+
+        For a 3-button mouse, the left button is for rotation, the
+        right button for zooming, the middle button for panning, and
+        ctrl + left button for spinning the view around the vewing
+        axis of the camera.  Alternatively, ctrl + shift + left button
+        or mouse wheel zooms, and shift + left button pans.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the Trackball
+        Camera interactive style (which is also the default):
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_trackball_style()
+        >>> plotter.show()  # doctest:+SKIP
 
         """
         self._style = 'TrackballCamera'
@@ -173,9 +193,30 @@ class RenderWindowInteractor():
         return self.update_style()
 
     def enable_trackball_actor_style(self):
-        """Set the interactive style to trackball actor.
+        """Set the interactive style to Trackball Actor.
 
-        This allows to rotate actors around the scene.
+        This allows to rotate actors around the scene. The controls
+        are similar to the default Trackball Camera style, but
+        movements transform specific objects under the mouse cursor.
+
+        For a 3-button mouse, the left button is for rotation, the
+        right button for zooming, the middle button for panning, and
+        ctrl + left button for spinning objects around the axis
+        connecting the camera with the their center.  Alternatively,
+        shift + left button pans.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the Trackball
+        Actor interactive style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_trackball_actor_style()
+        >>> plotter.show()  # doctest:+SKIP
 
         """
         self._style = 'TrackballActor'
@@ -183,16 +224,29 @@ class RenderWindowInteractor():
         return self.update_style()
 
     def enable_image_style(self):
-        """Set the interactive style to image.
+        """Set the interactive style to Image.
 
         Controls:
          - Left Mouse button triggers window level events
          - CTRL Left Mouse spins the camera around its view plane normal
          - SHIFT Left Mouse pans the camera
-         - CTRL SHIFT Left Mouse dollys (a positional zoom) the camera
+         - CTRL SHIFT Left Mouse dollies (a positional zoom) the camera
          - Middle mouse button pans the camera
-         - Right mouse button dollys the camera.
+         - Right mouse button dollies the camera
          - SHIFT Right Mouse triggers pick events
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the Image
+        interactive style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_image_style()
+        >>> plotter.show()  # doctest:+SKIP
 
         """
         self._style = 'Image'
@@ -200,20 +254,32 @@ class RenderWindowInteractor():
         return self.update_style()
 
     def enable_joystick_style(self):
-        """Set the interactive style to joystick.
+        """Set the interactive style to Joystick Camera.
 
         It allows the user to move (rotate, pan, etc.) the camera, the
         point of view for the scene.  The position of the mouse
         relative to the center of the scene determines the speed at
-        which the camera moves, and the speed of the mouse movement
-        determines the acceleration of the camera, so the camera
-        continues to move even if the mouse if not moving.
+        which the camera moves, so the camera continues to move even
+        if the mouse if not moving.
 
         For a 3-button mouse, the left button is for rotation, the
         right button for zooming, the middle button for panning, and
         ctrl + left button for spinning.  (With fewer mouse buttons,
         ctrl + shift + left button is for zooming, and shift + left
         button is for panning.)
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the Joystick
+        Camera interactive style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_joystick_style()
+        >>> plotter.show()  # doctest:+SKIP
 
         """
         self._style = 'JoystickCamera'
@@ -227,10 +293,8 @@ class RenderWindowInteractor():
         in case of the Joystick Actor style the objects in the scene
         rather than the camera can be moved (rotated, panned, etc.).
         The position of the mouse relative to the center of the object
-        determines the speed at which the object moves, and the speed
-        of the mouse movement determines the acceleration of the
-        object, so the object continues to move even if the mouse is
-        not moving.
+        determines the speed at which the object moves, so the object
+        continues to move even if the mouse is not moving.
 
         For a 3-button mouse, the left button is for rotation, the
         right button for zooming, the middle button for panning, and
@@ -245,8 +309,8 @@ class RenderWindowInteractor():
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter()
-        >>> plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
         >>> plotter.enable_joystick_actor_style()
         >>> plotter.show()  # doctest:+SKIP
@@ -257,12 +321,25 @@ class RenderWindowInteractor():
         return self.update_style()
 
     def enable_zoom_style(self):
-        """Set the interactive style to rubber band zoom.
+        """Set the interactive style to Rubber Band Zoom.
 
         This interactor style allows the user to draw a rectangle in
         the render window using the left mouse button.  When the mouse
         button is released, the current camera zooms by an amount
         determined from the shorter side of the drawn rectangle.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the Rubber Band
+        Zoom interactive style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_zoom_style()
+        >>> plotter.show()  # doctest:+SKIP
 
         """
         self._style = 'RubberBandZoom'
@@ -270,24 +347,74 @@ class RenderWindowInteractor():
         return self.update_style()
 
     def enable_terrain_style(self, mouse_wheel_zooms=False, shift_pans=False):
-        """Set the interactive style to terrain.
+        """Set the interactive style to Terrain.
 
-        Used to manipulate a camera which is viewing a scene with a natural
-        view up, e.g., terrain. The camera in such a scene is manipulated by
-        specifying azimuth (angle around the view up vector) and elevation
-        (the angle from the horizon).
+        Used to manipulate a camera which is viewing a scene with a
+        natural view up, e.g., terrain. The camera in such a scene is
+        manipulated by specifying azimuth (angle around the view up
+        vector) and elevation (the angle from the horizon). Similar to
+        the default Trackball Camera style and in contrast to the
+        Joystick Camera style, movements of the mouse translate to
+        movements of the camera.
+
+        Left mouse click rotates the camera around the focal point
+        using both elevation and azimuth invocations on the camera.
+        Left mouse motion in the horizontal direction results in
+        azimuth motion; left mouse motion in the vertical direction
+        results in elevation motion. Therefore, diagonal motion results
+        in a combination of azimuth and elevation. (If the shift key is
+        held during motion, then only one of elevation or azimuth is
+        invoked, depending on the whether the mouse motion is primarily
+        horizontal or vertical.) Middle mouse button pans the camera
+        across the scene (again the shift key has a similar effect on
+        limiting the motion to the vertical or horizontal direction.
+        The right mouse is used to dolly towards or away from the focal
+        point (zoom in or out). Panning and zooming behavior can be
+        overridden to match the Trackball Camera style.
+
+        The class also supports some keypress events. The ``r`` key
+        resets the camera. The ``e`` key invokes the exit callback
+        and closes the plotter. The ``f`` key sets a new
+        camera focal point and flies towards that point. The ``u``
+        key invokes the user event. The ``3`` key toggles between
+        stereo and non-stero mode. The ``l`` key toggles on/off
+        latitude/longitude markers that can be used to estimate/control
+        position.
 
         Parameters
         ----------
         mouse_wheel_zooms : bool, optional
-            Whether to use the mouse wheel for zooming. By default zooming
-            can be performed with right click and drag.
+            Whether to use the mouse wheel for zooming. By default
+            zooming can be performed with right click and drag.
 
         shift_pans : bool, optional
             Whether shift + left mouse button pans the scene. By default
-            shift + left mouse button rotates the view restricted to only
-            horizontal or vertical movements, and panning is done holding
-            down the middle mouse button.
+            shift + left mouse button rotates the view restricted to
+            only horizontal or vertical movements, and panning is done
+            holding down the middle mouse button.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the Terrain
+        interactive style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_terrain_style()
+        >>> plotter.show()  # doctest:+SKIP
+
+        Use controls that are closer to the default style:
+
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_terrain_style(mouse_wheel_zooms=True,
+        ...                              shift_pans=True)
+        >>> plotter.show()  # doctest:+SKIP
 
         """
         self._style = 'Terrain'
@@ -329,15 +456,30 @@ class RenderWindowInteractor():
         return return_value
 
     def enable_rubber_band_style(self):
-        """Set the interactive style to rubber band picking.
+        """Set the interactive style to Rubber Band Picking.
 
-        This interactor style allows the user to draw a rectangle in the render
-        window by hitting 'r' and then using the left mouse button.
-        When the mouse button is released, the attached picker operates on the
-        pixel in the center of the selection rectangle. If the picker happens to
-        be a vtkAreaPicker it will operate on the entire selection rectangle.
-        When the 'p' key is hit the above pick operation occurs on a 1x1
-        rectangle. In other respects it behaves the same as its parent class.
+        This interactor style allows the user to draw a rectangle in
+        the render window by hitting ``r`` and then using the left
+        mouse button. When the mouse button is released, the attached
+        picker operates on the pixel in the center of the selection
+        rectangle. If the picker happens to be a ``vtkAreaPicker``
+        it will operate on the entire selection rectangle. When the
+        ``p`` key is hit the above pick operation occurs on a 1x1
+        rectangle. In other respects it behaves the same as the
+        Trackball Camera style.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the Rubber Band
+        Pick interactive style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_rubber_band_style()
+        >>> plotter.show()  # doctest:+SKIP
 
         """
         self._style = 'RubberBandPick'
@@ -345,18 +487,34 @@ class RenderWindowInteractor():
         return self.update_style()
 
     def enable_rubber_band_2d_style(self):
-        """Set the interactive style to rubber band 2d.
+        """Set the interactive style to Rubber Band 2D.
 
-        Camera rotation is not allowed with this interactor
+        Camera rotation is not enabled with this interactor
         style. Zooming affects the camera's parallel scale only, and
         assumes that the camera is in parallel projection mode. The
-        style also allows draws a rubber band using the left
-        button. All camera changes invoke StartInteractionEvent when
-        the button is pressed, InteractionEvent when the mouse (or
-        wheel) is moved, and EndInteractionEvent when the button is
-        released. The bindings are as follows: Left mouse - Select
-        (invokes a SelectionChangedEvent). Right mouse - Zoom.  Middle
-        mouse - Pan. Scroll wheel - Zoom.
+        style also allows to draw a rubber band using the left mouse
+        button. All camera changes invoke ``StartInteractionEvent`` when
+        the button is pressed, ``InteractionEvent`` when the mouse (or
+        wheel) is moved, and ``EndInteractionEvent`` when the button is
+        released. The bindings are as follows:
+
+          * Left mouse: Select (invokes a ``SelectionChangedEvent``).
+          * Right mouse: Zoom.
+          * Middle mouse: Pan.
+          * Scroll wheel: Zoom.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the Rubber Band
+        2D interactive style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_rubber_band_2d_style()
+        >>> plotter.show()  # doctest:+SKIP
 
         """
         self._style = 'RubberBand2D'
