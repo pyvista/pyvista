@@ -52,7 +52,7 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
    getting-started/index
    user-guide/index
    examples/index
-   api
+   api/index
    extras/index
 
 

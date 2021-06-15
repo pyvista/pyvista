@@ -140,4 +140,4 @@ values change through time:
     thread = Thread(target=shrink)
     thread.start()
 
-.. figure:: ../images/gifs/shrink-globe.gif
+.. figure:: ../../images/gifs/shrink-globe.gif
