@@ -756,7 +756,7 @@ def test_streamlines_from_source(uniform_vec):
     assert all([stream.n_points, stream.n_cells])
 
 
-def test_streamlines_from_source_structured_grids(check_vtk_error):
+def test_streamlines_from_source_structured_grids():
     x, y, z = np.meshgrid(
         np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
     )
@@ -766,7 +766,9 @@ def test_streamlines_from_source_structured_grids(check_vtk_error):
     )
     mesh2 = pyvista.StructuredGrid(x2, y2, z2)
     mesh.vectors = np.ones([mesh.n_points, 3])
-    stream = mesh.streamlines_from_source(mesh2)
+    
+    with pyvista.VtkErrorCatcher(raise_errors=True):
+        stream = mesh.streamlines_from_source(mesh2)
     assert all([stream.n_points, stream.n_cells])
 
 

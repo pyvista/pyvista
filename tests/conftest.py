@@ -87,17 +87,3 @@ def datasets():
         examples.load_airplane(),  # PolyData
         examples.load_structured(),  # StructuredGrid
     ]
-
-
-@fixture()
-def check_vtk_error(caplog):
-    """Ensure that no VTK error is thrown."""
-    yield
-
-    errors = [
-        rec.message for rec in caplog.get_records("call") 
-        if rec.levelno == logging.ERROR and "vtk" in rec.message
-    ]
-
-    if len(errors) > 0:
-        fail(f"VTK error recorded\n\t{errors}")
