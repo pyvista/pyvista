@@ -121,5 +121,10 @@ exponent values of the light.
 API reference
 ~~~~~~~~~~~~~
 
-.. autoclass:: pyvista.Light
-   :members:
+.. currentmodule:: pyvista
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-class-template.rst
+
+   Light
