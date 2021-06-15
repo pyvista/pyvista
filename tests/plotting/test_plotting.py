@@ -232,6 +232,7 @@ def test_plot_invalid_style(sphere):
     ('trackball_actor', {}),
     ('image', {}),
     ('joystick', {}),
+    ('joystick_actor', {}),
     ('zoom', {}),
     ('terrain', {}),
     ('terrain', {'mouse_wheel_zooms': True, 'shift_pans': True}),

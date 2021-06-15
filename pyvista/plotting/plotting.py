@@ -945,6 +945,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_joystick_style."""
         self.iren.enable_joystick_style()
 
+    @wraps(RenderWindowInteractor.enable_joystick_actor_style)
+    def enable_joystick_actor_style(self):
+        """Wrap RenderWindowInteractor.enable_joystick_actor_style."""
+        self.iren.enable_joystick_actor_style()
+
     @wraps(RenderWindowInteractor.enable_zoom_style)
     def enable_zoom_style(self):
         """Wrap RenderWindowInteractor.enable_zoom_style."""

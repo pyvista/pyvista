@@ -220,6 +220,42 @@ class RenderWindowInteractor():
         self._style_class = None
         return self.update_style()
 
+    def enable_joystick_actor_style(self):
+        """Set the interactive style to Joystick Actor.
+
+        Similar to the Joystick Camera interaction style, however
+        in case of the Joystick Actor style the objects in the scene
+        rather than the camera can be moved (rotated, panned, etc.).
+        The position of the mouse relative to the center of the object
+        determines the speed at which the object moves, and the speed
+        of the mouse movement determines the acceleration of the
+        object, so the object continues to move even if the mouse is
+        not moving.
+
+        For a 3-button mouse, the left button is for rotation, the
+        right button for zooming, the middle button for panning, and
+        ctrl + left button for spinning.  (With fewer mouse buttons,
+        ctrl + shift + left button is for zooming, and shift + left
+        button is for panning.)
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the Joystick
+        Actor interactive style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_joystick_actor_style()
+        >>> plotter.show()  # doctest:+SKIP
+
+        """
+        self._style = 'JoystickActor'
+        self._style_class = None
+        return self.update_style()
+
     def enable_zoom_style(self):
         """Set the interactive style to rubber band zoom.
 
