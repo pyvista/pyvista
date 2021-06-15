@@ -61,6 +61,7 @@ extensions = [
     "sphinx.ext.coverage",
     "jupyter_sphinx",
     "sphinx_panels",
+    "autodocsumm",
 ]
 
 

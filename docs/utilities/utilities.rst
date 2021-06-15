@@ -1,77 +1,70 @@
 General Utilities
 -----------------
+.. currentmodule:: pyvista
 
-.. automodule:: pyvista.utilities
+.. autosummary::
+   :toctree: api-autogen/
 
-.. autofunction:: pyvista.set_error_output_file
-
-.. autofunction:: pyvista.is_inside_bounds
+   utilities.VtkErrorCatcher
+   utilities.set_error_output_file
+   utilities.is_inside_bounds
 
 
 Object Conversions
 ~~~~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: api-autogen/
 
-.. autofunction:: pyvista.wrap
-
-.. autofunction:: pyvista.is_pyvista_dataset
-
-.. autofunction:: pyvista.image_to_texture
-
-.. autofunction:: pyvista.numpy_to_texture
-
-.. autofunction:: pyvista.array_from_vtkmatrix
-
-.. autofunction:: pyvista.vtkmatrix_from_array
-
-.. autofunction:: pyvista.cubemap
+   wrap
+   is_pyvista_dataset
+   image_to_texture
+   numpy_to_texture
+   array_from_vtkmatrix
+   vtkmatrix_from_array
+   cubemap
 
 
 File IO
 ~~~~~~~
+.. autosummary::
+   :toctree: api-autogen/
 
-.. autofunction:: pyvista.read
-
-.. autofunction:: pyvista.read_exodus
-
-.. autofunction:: pyvista.read_texture
-
-.. autofunction:: pyvista.read_legacy
-
-.. autofunction:: pyvista.save_meshio
+   read
+   read_exodus
+   read_texture
+   read_legacy
+   save_meshio
 
 
 Mesh Creation
 ~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: api-autogen/
 
-.. autofunction:: pyvista.lines_from_points
-
-.. autofunction:: pyvista.vtk_points
-
-.. autofunction:: pyvista.vector_poly_data
-
-.. autofunction:: pyvista.fit_plane_to_points
+   lines_from_points
+   vtk_points
+   vector_poly_data
+   fit_plane_to_points
 
 
 Array Access
 ~~~~~~~~~~~~
+.. autosummary::
+   :toctree: api-autogen/
 
-.. autofunction:: pyvista.get_array
-
-.. autofunction:: pyvista.convert_array
-
-.. autofunction:: pyvista.point_array
-
-.. autofunction:: pyvista.cell_array
-
-.. autofunction:: pyvista.field_array
-
-.. autofunction:: pyvista.get_vtk_type
-
-.. autofunction:: pyvista.vtk_bit_array_to_char
-
-.. autofunction:: pyvista.convert_string_array
+   get_array
+   convert_array
+   point_array
+   cell_array
+   field_array
+   get_vtk_type
+   vtk_bit_array_to_char
+   convert_string_array
 
 
 Image Comparison and Regression
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: pyvista.compare_images
+.. autosummary::
+   :toctree: api-autogen/
+
+   compare_images
