@@ -109,7 +109,7 @@ class Axes(_vtk.vtkAxes):
         self.SymmetricOn()
 
     def hide_symmetric(self):
-        """Show symmetric of axes.
+        """Hide symmetric of axes.
 
         Examples
         --------
