@@ -946,15 +946,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_joystick_style."""
         self.iren.enable_joystick_style()
 
+    @wraps(RenderWindowInteractor.enable_joystick_actor_style)
+    def enable_joystick_actor_style(self):
+        """Wrap RenderWindowInteractor.enable_joystick_actor_style."""
+        self.iren.enable_joystick_actor_style()
+
     @wraps(RenderWindowInteractor.enable_zoom_style)
     def enable_zoom_style(self):
         """Wrap RenderWindowInteractor.enable_zoom_style."""
         self.iren.enable_zoom_style()
 
     @wraps(RenderWindowInteractor.enable_terrain_style)
-    def enable_terrain_style(self):
+    def enable_terrain_style(self, *args, **kwargs):
         """Wrap RenderWindowInteractor.enable_terrain_style."""
-        self.iren.enable_terrain_style()
+        self.iren.enable_terrain_style(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.enable_rubber_band_style)
     def enable_rubber_band_style(self):
