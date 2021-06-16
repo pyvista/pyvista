@@ -43,8 +43,8 @@ p.add_mesh(mesh)
 p.show()
 
 ###############################################################################
-# Rotate about x axis
-# +++++++++++++++++++
+# Rotation about the x axis
+# +++++++++++++++++++++++++
 #
 # Plot the mesh rotated about the x axis every 60 degrees.
 # Add the axes actor to the Plotter and set the axes origin to the point of rotation.
