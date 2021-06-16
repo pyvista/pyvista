@@ -15,7 +15,7 @@ from pyvista import examples
 # Define camera and axes
 # ++++++++++++++++++++++
 #
-# Define camera and axes. Setting axes origin to ``(1.0, 1.0, 1.0)``.
+# Define camera and axes. Setting axes origin to ``(3.0, 3.0, 3.0)``.
 
 mesh = examples.download_cow()
 mesh.points /= 1.5  # scale the mesh
