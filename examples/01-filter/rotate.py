@@ -106,8 +106,8 @@ p.show()
 # Rotation about a custom vector
 # ++++++++++++++++++++++++++++++
 #
-# Plot meshs rotated about custom vector. It is plotted every 60 degrees.
-# Set axes actor to Plotter and set axes origin to the point to rotate.
+# Plot the mesh rotated about a custom vector every 60 degrees.
+# Add the axes actor to the Plotter and set axes origin to the point of rotation.
 
 p = pv.Plotter()
 
