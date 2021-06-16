@@ -83,8 +83,8 @@ for i in range(6):
 p.show()
 
 ###############################################################################
-# Rotate about z axis
-# +++++++++++++++++++
+# Rotation about the z axis
+# +++++++++++++++++++++++++
 #
 # Plot the mesh rotated about the z axis every 60 degrees.
 # Add axes actor to the Plotter and set the axes origin to the point of rotation.
