@@ -103,8 +103,8 @@ for i in range(6):
 p.show()
 
 ###############################################################################
-# Rotate about custom vector
-# ++++++++++++++++++++++++++
+# Rotation about a custom vector
+# ++++++++++++++++++++++++++++++
 #
 # Plot meshs rotated about custom vector. It is plotted every 60 degrees.
 # Set axes actor to Plotter and set axes origin to the point to rotate.
