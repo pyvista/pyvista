@@ -91,7 +91,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("Z axis rotate", font_size=24)
+p.add_text("Z-Axis Rotation", font_size=24)
 p.camera = camera
 p.add_actor(axes.actor)
 
