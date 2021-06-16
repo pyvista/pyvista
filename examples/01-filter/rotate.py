@@ -31,7 +31,7 @@ axes.origin = (3.0, 3.0, 3.0)
 # Original Mesh
 # +++++++++++++
 #
-# Plot original mesh. Set axes actor to Plotter.
+# Plot original mesh. Add axes actor to Plotter.
 
 p = pv.Plotter()
 
