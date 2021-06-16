@@ -243,12 +243,12 @@ And finally, test the documentation examples:
 
 .. code:: bash
 
-    cd docs
+    cd doc
     make clean
     make doctest
     make html -b linkcheck
 
-The finished documentation can be found in the ``docs/_build/html``
+The finished documentation can be found in the ``doc/_build/html``
 directory.
 
 Notes Regarding Image Regression Testing
@@ -385,7 +385,7 @@ created the following will occur:
 3.  Locally test and build the documentation with link checking to make
     sure no links are outdated. Be sure to run ``make clean`` to ensure
     no results are cached.
-    ``bash     cd docs     make clean  # deletes the sphinx-gallery cache     make doctest     make html -b linkcheck``
+    ``bash     cd doc     make clean  # deletes the sphinx-gallery cache     make doctest     make html -b linkcheck``
 
 4.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.

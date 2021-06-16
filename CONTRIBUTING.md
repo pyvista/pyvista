@@ -237,13 +237,13 @@ codespell pyvista/ examples/ tests/ -S "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vt
 And finally, test the documentation examples:
 
 ```bash
-cd docs
+cd doc
 make clean
 make doctest
 make html -b linkcheck
 ```
 
-The finished documentation can be found in the `docs/_build/html` directory.
+The finished documentation can be found in the `doc/_build/html` directory.
 
 #### Creating a New Pull Request
 
@@ -314,7 +314,7 @@ and ensure all are passing.
 no links are outdated. Be sure to run `make clean` to ensure no results are
 cached.
     ```bash
-    cd docs
+    cd doc
     make clean  # deletes the sphinx-gallery cache
     make doctest
     make html -b linkcheck
