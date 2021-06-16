@@ -111,7 +111,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("Custom vector rotate", font_size=24)
+p.add_text("Custom Vector Rotation", font_size=24)
 p.camera = camera
 p.add_actor(axes.actor)
 for i in range(6):
