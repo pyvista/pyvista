@@ -2,8 +2,8 @@
 PyVista
 #######
 
-.. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_banner_small.png
-   :target: https://docs.pyvista.org/examples/index.html
+.. image:: https://github.com/pyvista/pyvista/raw/master/doc/_static/pyvista_banner_small.png
+   :target: https://doc.pyvista.org/examples/index.html
    :alt: pyvista
 
 
