@@ -86,8 +86,8 @@ p.show()
 # Rotate about z axis
 # +++++++++++++++++++
 #
-# Plot meshs rotated about z axis. It is plotted every 60 degrees.
-# Set axes actor to Plotter and set axes origin to the point to rotate.
+# Plot the mesh rotated about the z axis every 60 degrees.
+# Add axes actor to the Plotter and set the axes origin to the point of rotation.
 
 p = pv.Plotter()
 
