@@ -47,10 +47,9 @@ Convenience Functions
 These functions provide a simplified interface to the various plotting
 routines in PyVista.
 
-.. autosummary::
-   :toctree: _autosummary
+.. toctree::
+   :maxdepth: 2
 
-   plot
-   plot_arrows
-   set_plot_theme
-   create_axes_orientation_box
+   conv_func
+
+

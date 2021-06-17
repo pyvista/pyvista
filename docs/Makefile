@@ -26,8 +26,7 @@ clean:
 	rm -f errors.txt
 	rm -rf images/auto-generated
 	rm -f getting-started/external_examples.rst
-	find . -type f -name "_autosummary" -delete
-	find . -type f -name "api-autogen" -delete
+	find . -type d -name "_autosummary" -exec rm -rf {} +
 
 
 # Catch-all target: route all unknown targets to Sphinx using the new
