@@ -1,3 +1,4 @@
+"""Filters module with a class to manage filters/algorithms for unstructured grid datasets."""
 import pyvista
 from pyvista import abstract_class
 from pyvista.core.filters.data_set import DataSetFilters

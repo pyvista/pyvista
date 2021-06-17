@@ -1,3 +1,4 @@
+"""Filters module with a class to manage filters/algorithms for polydata datasets."""
 import collections.abc
 import logging
 

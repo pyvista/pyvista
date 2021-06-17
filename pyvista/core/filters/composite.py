@@ -1,3 +1,4 @@
+"""Filters module with a class to manage filters/algorithms for composite datasets."""
 import pyvista
 from pyvista import abstract_class, _vtk, wrap
 from pyvista.core.filters.data_set import DataSetFilters
