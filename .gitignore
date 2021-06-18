@@ -60,7 +60,7 @@ docs/images/auto-generated
 **/myscreenshot.png
 _autosummary
 
-docs/external_examples.rst
+docs/getting-started/external_examples.rst
 
 # hypothesis
 .hypothesis
