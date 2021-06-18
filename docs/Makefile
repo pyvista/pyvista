@@ -28,7 +28,8 @@ clean:
 	rm -f getting-started/external_examples.rst
 	find . -type d -name "_autosummary" -exec rm -rf {} +
 
-# runs sphinx in parallel using as many CPUs as available
+# build html docs in parallel using all available CPUs
+# WARNING: this is a resource hog
 phtml:
 	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O) -j auto
 
