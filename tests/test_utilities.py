@@ -515,3 +515,34 @@ def test_vtk_error_catcher():
     error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
     with error_catcher:
         pass
+
+# TO BE DELETED FOR PROD
+from hypothesis import assume, given, settings, HealthCheck
+from hypothesis.extra.numpy import arrays, array_shapes
+from hypothesis.strategies import composite, integers, floats, one_of, none
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], max_examples=5000)
+@given(axis=arrays(dtype=np.float64, shape=(3,), elements=floats(-100, 100, allow_infinity=False, allow_nan=False)),
+       angle=floats(allow_infinity=False, allow_nan=False),
+       point=one_of(
+           none(),
+           arrays(dtype=np.float64, shape=(3,), elements=floats(-100, 100, allow_infinity=False, allow_nan=False))
+       ))
+@pytest.mark.parametrize('deg', [True, False])
+def test_tmp_transforms3d_correct_rotation(axis, angle, point, deg):
+    assume(not np.allclose(axis, 0))
+    old = transformations.axis_angle_rotation_tf3d(axis, angle, point=point, deg=deg)
+    new = transformations.axis_angle_rotation(axis, angle, point=point, deg=deg)
+    assert np.allclose(old, new)
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], max_examples=5000)
+@given(normal=arrays(dtype=np.float64, shape=(3,), elements=floats(-100, 100, allow_infinity=False, allow_nan=False)),
+       point=one_of(
+           none(),
+           arrays(dtype=np.float64, shape=(3,), elements=floats(-100, 100, allow_infinity=False, allow_nan=False))
+       ))
+def test_tmp_transforms3d_correct_reflection(normal, point):
+    assume(not np.allclose(normal, 0))
+    old = transformations.reflection_tf3d(normal, point=point)
+    new = transformations.reflection(normal, point=point)
+    assert np.allclose(old, new)
