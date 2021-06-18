@@ -4,7 +4,7 @@
 export PYVISTA_OFF_SCREEN := True
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -j 2
+SPHINXOPTS    =
 SPHINXBUILD   = python -msphinx
 SPHINXPROJ    = pyvista
 SOURCEDIR     = .
@@ -28,6 +28,9 @@ clean:
 	rm -f getting-started/external_examples.rst
 	find . -type d -name "_autosummary" -exec rm -rf {} +
 
+# runs sphinx in parallel using as many CPUs as available
+phtml:
+	python -msphinx -j auto "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
