@@ -466,7 +466,7 @@ class DataSet(DataSetFilters, DataObject):
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
 
-    def rotate_x(self, angle: float, transform_all_input_vectors=False):
+    def rotate_x(self, angle: float, point=None, transform_all_input_vectors=False):
         """Rotate mesh about the x-axis.
 
         Parameters
@@ -474,11 +474,22 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
         """
-        t = transformations.axis_angle_rotation((1, 0, 0), angle, deg=True)
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_y(self, angle: float, transform_all_input_vectors=False):
+    def rotate_y(self, angle: float, point=None, transform_all_input_vectors=False):
         """Rotate mesh about the y-axis.
 
         Parameters
@@ -486,11 +497,22 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
+        point : float, optional
+            Point to ratate about.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
         """
-        t = transformations.axis_angle_rotation((0, 1, 0), angle, deg=True)
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_z(self, angle: float, transform_all_input_vectors=False):
+    def rotate_z(self, angle: float, point=None, transform_all_input_vectors=False):
         """Rotate mesh about the z-axis.
 
         Parameters
@@ -498,8 +520,47 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
         """
-        t = transformations.axis_angle_rotation((0, 0, 1), angle, deg=True)
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+
+    def rotate_vector(self, vector: List[float], angle, point=None, transform_all_input_vectors=False):
+        """Rotate mesh about the vector.
+
+        Parameters
+        ----------
+        vector : tuple
+            Axes to rotate about.
+
+        angle : float
+            Angle in degrees to rotate about the vector.
+
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+        """
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(vector) != 3:
+            raise ValueError('Vector must be a vector of 3 values.')
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
     def translate(self, xyz: Union[list, tuple, np.ndarray]):
