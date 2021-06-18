@@ -2085,11 +2085,14 @@ class DataSetFilters:
         if not isinstance(source, pyvista.DataSet):
             raise TypeError("source must be a pyvista.DataSet")
 
+        # vtk throws error with two Structured Grids
+        # See: https://github.com/pyvista/pyvista/issues/1373
+        if isinstance(dataset, pyvista.StructuredGrid) and isinstance(source, pyvista.StructuredGrid):
+            source = source.cast_to_unstructured_grid()
+
         # Build the algorithm
         alg = _vtk.vtkStreamTracer()
         # Inputs
-        if isinstance(dataset, pyvista.StructuredGrid) and isinstance(source, pyvista.StructuredGrid):
-            source = source.cast_to_unstructured_grid()
         alg.SetInputDataObject(dataset)
         alg.SetSourceData(source)
 
