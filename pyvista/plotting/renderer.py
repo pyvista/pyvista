@@ -123,7 +123,7 @@ class Renderer(_vtk.vtkRenderer):
         self._lights = []
         self._camera = Camera()
         self.SetActiveCamera(self._camera)
-
+        self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
 
         # This is a private variable to keep track of how many colorbars exist
@@ -783,39 +783,34 @@ class Renderer(_vtk.vtkRenderer):
         cube_axes_actor.GetYAxesLinesProperty().SetColor(color)
         cube_axes_actor.GetZAxesLinesProperty().SetColor(color)
 
-        # empty arr
-        # TODO: vtk 9.0.20210612.dev0 reports a leak here
-        empty_str = _vtk.vtkStringArray()
-        empty_str.InsertNextValue('')
+        # empty string used for clearing axis labels
+        self._empty_str = _vtk.vtkStringArray()
+        self._empty_str.InsertNextValue('')
 
         # show lines
         if show_xaxis:
             cube_axes_actor.SetXTitle(xlabel)
+            if not show_xlabels:
+                cube_axes_actor.SetAxisLabels(0, self._empty_str)
         else:
             cube_axes_actor.SetXTitle('')
-            cube_axes_actor.SetAxisLabels(0, empty_str)
+            cube_axes_actor.SetAxisLabels(0, self._empty_str)
 
         if show_yaxis:
             cube_axes_actor.SetYTitle(ylabel)
+            if not show_ylabels:
+                cube_axes_actor.SetAxisLabels(1, self._empty_str)
         else:
             cube_axes_actor.SetYTitle('')
-            cube_axes_actor.SetAxisLabels(1, empty_str)
+            cube_axes_actor.SetAxisLabels(1, self._empty_str)
 
         if show_zaxis:
             cube_axes_actor.SetZTitle(zlabel)
+            if not show_zlabels:
+                cube_axes_actor.SetAxisLabels(2, self._empty_str)
         else:
             cube_axes_actor.SetZTitle('')
-            cube_axes_actor.SetAxisLabels(2, empty_str)
-
-        # show labels
-        if not show_xlabels:
-            cube_axes_actor.SetAxisLabels(0, empty_str)
-
-        if not show_ylabels:
-            cube_axes_actor.SetAxisLabels(1, empty_str)
-
-        if not show_zlabels:
-            cube_axes_actor.SetAxisLabels(2, empty_str)
+            cube_axes_actor.SetAxisLabels(2, self._empty_str)
 
         # set font
         font_family = parse_font_family(font_family)
@@ -1597,6 +1592,10 @@ class Renderer(_vtk.vtkRenderer):
             self.axes_actor = None
             del self.axes_widget
 
+        if self._empty_str is not None:
+            self._empty_str.SetReferenceCount(0)
+            self._empty_str = None
+
     def deep_clean(self, render=False):
         """Clean the renderer of the memory."""
         if hasattr(self, 'cube_axes_actor'):
@@ -1614,7 +1613,6 @@ class Renderer(_vtk.vtkRenderer):
         self._camera = None
         # remove reference to parent last
         self.parent = None
-        return
 
     def __del__(self):
         """Delete the renderer."""
