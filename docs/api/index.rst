@@ -32,7 +32,6 @@ Highlights of the API include:
         :text: Core API
         :classes: btn-outline-primary btn-block stretched-link
 
-
     ---
 
     Plotting API

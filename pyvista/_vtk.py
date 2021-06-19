@@ -270,7 +270,8 @@ if VTK9:
                                               vtkGradientFilter,
                                               vtkShrinkFilter,
                                               vtkBooleanOperationPolyDataFilter,
-                                              vtkTransformFilter)
+                                              vtkTransformFilter,
+                                              vtkAxes)
     from vtkmodules.vtkFiltersModeling import (vtkOutlineFilter,
                                                vtkRibbonFilter,
                                                vtkLinearExtrusionFilter,
@@ -280,6 +281,7 @@ if VTK9:
                                                vtkLinearSubdivisionFilter,
                                                vtkButterflySubdivisionFilter,
                                                vtkLoopSubdivisionFilter,
+                                               vtkAdaptiveSubdivisionFilter,
                                                vtkSelectEnclosedPoints)
     from vtkmodules.vtkFiltersSources import (vtkOutlineCornerFilter,
                                               vtkParametricFunctionSource,

@@ -227,22 +227,23 @@ def test_plot_invalid_style(sphere):
 
 
 @skip_no_plotting
-def test_interactor_style(sphere):
+@pytest.mark.parametrize('interaction, kwargs', [
+    ('trackball', {}),
+    ('trackball_actor', {}),
+    ('image', {}),
+    ('joystick', {}),
+    ('joystick_actor', {}),
+    ('zoom', {}),
+    ('terrain', {}),
+    ('terrain', {'mouse_wheel_zooms': True, 'shift_pans': True}),
+    ('rubber_band', {}),
+    ('rubber_band_2d', {}),
+])
+def test_interactor_style(sphere, interaction, kwargs):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    interactions = (
-        'trackball',
-        'trackball_actor',
-        'image',
-        'joystick',
-        'zoom',
-        'terrain',
-        'rubber_band',
-        'rubber_band_2d',
-    )
-    for interaction in interactions:
-        getattr(plotter, f'enable_{interaction}_style')()
-        assert plotter.iren._style_class is not None
+    getattr(plotter, f'enable_{interaction}_style')(**kwargs)
+    assert plotter.iren._style_class is not None
     plotter.close()
 
 
@@ -1058,19 +1059,23 @@ def test_vector_array():
     """Test using vector valued data for image regression."""
     data = setup_multicomponent_data()
 
+    kwargs = {
+        "clim": [0, 5],
+        "show_scalar_bar": False
+    }
+
     p = pyvista.Plotter(shape=(2, 2))
     p.subplot(0, 0)
-    p.add_mesh(data, scalars="vector_values_points", show_scalar_bar=False)
+    p.add_mesh(data, scalars="vector_values_points", **kwargs)
     p.subplot(0, 1)
-    p.add_mesh(data.copy(), scalars="vector_values_points", component=0)
+    p.add_mesh(data, scalars="vector_values_points", component=0, **kwargs)
     p.subplot(1, 0)
-    p.add_mesh(data.copy(), scalars="vector_values_points", component=1)
+    p.add_mesh(data, scalars="vector_values_points", component=1, **kwargs)
     p.subplot(1, 1)
-    p.add_mesh(data.copy(), scalars="vector_values_points", component=2)
+    p.add_mesh(data, scalars="vector_values_points", component=2, **kwargs)
     p.link_views()
-    p.show()
 
-    # p.show(before_close_callback=verify_cache_image)
+    p.show(before_close_callback=verify_cache_image)
 
 
 @skip_no_plotting

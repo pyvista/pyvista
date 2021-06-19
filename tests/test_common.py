@@ -1024,3 +1024,39 @@ def test_serialize_deserialize(datasets):
             arr_have = dataset_2.field_arrays[name]
             arr_expected = dataset.field_arrays[name]
             assert arr_have == pytest.approx(arr_expected)
+
+
+def test_rotations_should_match_by_a_360_degree_difference():
+    mesh = examples.load_airplane()
+
+    point = np.random.random(3) - 0.5
+    angle = (np.random.random() - 0.5) * 360.0
+    vector = np.random.random(3) - 0.5
+
+    # Rotate about x axis.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_x(angle=angle, point=point)
+    rot2.rotate_x(angle=angle - 360.0, point=point)
+    assert np.allclose(rot1.points, rot2.points)
+
+    # Rotate about y axis.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_y(angle=angle, point=point)
+    rot2.rotate_y(angle=angle - 360.0, point=point)
+    assert np.allclose(rot1.points, rot2.points)
+
+    # Rotate about z axis.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_z(angle=angle, point=point)
+    rot2.rotate_z(angle=angle - 360.0, point=point)
+    assert np.allclose(rot1.points, rot2.points)
+
+    # Rotate about custom vector.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_vector(vector=vector, angle=angle, point=point)
+    rot2.rotate_vector(vector=vector, angle=angle - 360.0, point=point)
+    assert np.allclose(rot1.points, rot2.points)

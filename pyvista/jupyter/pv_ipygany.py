@@ -77,9 +77,14 @@ def pyvista_polydata_to_polymesh(obj):
 
     # only copy active scalars
     data = []
-    if trimesh.active_scalars is not None:
-        arr = array('f', trimesh.active_scalars)
-        components = [ipygany.Component('X1', arr)]
+    scalars = trimesh.active_scalars
+    if scalars is not None:
+        if scalars.ndim == 1:
+            arr = array('f', scalars)
+            components = [ipygany.Component('X1', arr)]
+        elif scalars.ndim == 2:
+            arrays = [array('f', scalars[:, col]) for col in range(scalars.shape[1])]
+            components = [ipygany.Component(f'X{i}', arr) for i, arr in enumerate(arrays)]
         data = [ipygany.Data(trimesh.active_scalars_name, components)]
 
     # for speed, only convert the active scalars later
@@ -149,10 +154,26 @@ def ipygany_block_from_actor(actor):
     valid_mode = mapper.GetScalarModeAsString() in ['UsePointData', 'UseCellData']
     if valid_mode:
         # verify dataset is in pmesh
-        names = [dataset.name for dataset in pmesh.data]
-        if dataset.active_scalars_name in names:
+        def get_data_by_name(mesh, name):
+            for data in mesh.data:
+                if name == data.name:
+                    return data
+
+        data = get_data_by_name(pmesh, dataset.active_scalars_name)
+
+        if data:
             mn, mx = mapper.GetScalarRange()
-            cmesh = IsoColor(pmesh, input=dataset.active_scalars_name, min=mn, max=mx)
+            if len(data.components) == 1:
+                cmesh = IsoColor(pmesh, input=dataset.active_scalars_name, min=mn, max=mx)
+            else:
+                table = mapper.GetLookupTable()
+                vector_mode = table.GetVectorMode()
+                if vector_mode == 1:
+                    component = table.GetVectorComponent()
+                    cmesh = IsoColor(pmesh, input=(dataset.active_scalars_name, f'X{component}'), 
+                                     min=mn, max=mx)
+                else:
+                    raise RuntimeError('Plotting magnitude of vector data not supported in ipygany')
             if hasattr(mapper, 'cmap'):
                 cmap = check_colormap(mapper.cmap)
                 cmesh.colormap = colormaps[cmap]

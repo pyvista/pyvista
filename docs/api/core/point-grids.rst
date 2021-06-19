@@ -194,7 +194,7 @@ for the user to exit the window.
     shutil.move('beam.gif', 
                 os.path.join(os.getcwd(), './images/auto-generated/beam.gif'))
 
-.. image:: ../images/auto-generated/beam.gif
+.. image:: ../../images/auto-generated/beam.gif
 
 
 You can also render the beam as as a wire-frame object:
@@ -231,7 +231,7 @@ You can also render the beam as as a wire-frame object:
     shutil.move('beam_wireframe.gif', 
                  os.path.join(os.getcwd(), './images/auto-generated/beam_wireframe.gif'))
 
-.. image:: ../images/auto-generated/beam_wireframe.gif
+.. image:: ../../images/auto-generated/beam_wireframe.gif
 
 
 Adding Labels to a Plot
