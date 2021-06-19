@@ -636,7 +636,7 @@ class Renderer(_vtk.vtkRenderer):
 
             .. warning::
                A bug with vtk 6.3 in Windows seems to cause this
-               function to crash
+               function to crash.
 
         grid : bool or str, optional
             Add grid lines to the backface (``True``, ``'back'``, or
@@ -649,11 +649,11 @@ class Renderer(_vtk.vtkRenderer):
             static closest to the origin (``'origin'``), or outer
             edges (``'outer'``) in relation to the camera
             position. Options include: ``'all', 'front', 'back',
-            'origin', 'outer'``
+            'origin', 'outer'``.
 
         ticks : str, optional
             Set how the ticks are drawn on the axes grid. Options include:
-            ``'inside', 'outside', 'both'``
+            ``'inside', 'outside', 'both'``.
 
         all_edges : bool, optional
             Adds an unlabeled and unticked box at the boundaries of
