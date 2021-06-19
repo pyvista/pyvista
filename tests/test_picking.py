@@ -148,6 +148,7 @@ def test_geodesic_picking():
         show_message=True,
         callback=lambda: None,
         show_path=True,
+        keep_order=True,
     )
     # simulate the pick
     renderer = plotter.renderer
