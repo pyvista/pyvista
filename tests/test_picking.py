@@ -11,7 +11,7 @@ skip_no_vtk9 = pytest.mark.skipif(not vtk.vtkVersion().GetVTKMajorVersion() >= 9
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_cell_picking():
     with pytest.raises(AttributeError, match="mesh"):
-        plotter = pyvista.Plotter(off_screen=False)
+        plotter = pyvista.Plotter()
         plotter.enable_cell_picking(mesh=None)
 
     sphere = pyvista.Sphere()
@@ -19,14 +19,19 @@ def test_cell_picking():
         plotter = pyvista.Plotter(
             window_size=(100, 100),
         )
+
+        def callback(*args, **kwargs):
+            pass
+
         plotter.enable_cell_picking(
             mesh=sphere,
             start=True,
             show=True,
-            callback=lambda: None,
+            callback=callback,
             through=through,
         )
         plotter.add_mesh(sphere)
+        plotter.show(auto_close=False)  # must start renderer first
 
         # simulate the pick
         renderer = plotter.renderer
