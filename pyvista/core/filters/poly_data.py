@@ -1239,6 +1239,8 @@ class PolyDataFilters(DataSetFilters):
             If ``True``, the points of the returned path are guaranteed
             to start with the start vertex (as opposed to the end vertex).
 
+            .. versionadded:: 0.32.0
+
         Returns
         -------
         output : pyvista.PolyData

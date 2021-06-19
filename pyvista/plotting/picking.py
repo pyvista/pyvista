@@ -444,7 +444,8 @@ class PickingHelper:
             If ``True``, the created geodesic path is a single ordered
             and cleaned line from the first point to the last.
 
-            .. note::
+            .. versionchanged:: 0.32.0
+
                 In older versions there were apparent discontinuities
                 in the resulting path due to the behavior of the
                 underlying VTK filter which corresponds to
