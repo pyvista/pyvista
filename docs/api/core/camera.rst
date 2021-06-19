@@ -90,7 +90,7 @@ directly control the :py:attr:`pyvista.Camera.roll`,
 :py:attr:`pyvista.Camera.elevation`, and
 :py:attr:`pyvista.Camera.azimuth` of the camera.
 
-.. image:: ../images/user-generated/TestCameraModel1.png
+.. image:: ../../images/user-generated/TestCameraModel1.png
 
 For example, you can modify the roll.  First, generate a plot of an
 orientation cube while initially setting the camera position to look

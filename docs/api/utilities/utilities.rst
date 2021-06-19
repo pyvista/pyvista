@@ -3,7 +3,7 @@ General Utilities
 .. currentmodule:: pyvista
 
 .. autosummary::
-   :toctree: api-autogen/
+   :toctree: _autosummary
 
    utilities.VtkErrorCatcher
    utilities.set_error_output_file
@@ -13,7 +13,7 @@ General Utilities
 Object Conversions
 ~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api-autogen/
+   :toctree: _autosummary
 
    wrap
    is_pyvista_dataset
@@ -27,7 +27,7 @@ Object Conversions
 File IO
 ~~~~~~~
 .. autosummary::
-   :toctree: api-autogen/
+   :toctree: _autosummary
 
    read
    read_exodus
@@ -39,7 +39,7 @@ File IO
 Mesh Creation
 ~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api-autogen/
+   :toctree: _autosummary
 
    lines_from_points
    vtk_points
@@ -50,7 +50,7 @@ Mesh Creation
 Array Access
 ~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api-autogen/
+   :toctree: _autosummary
 
    get_array
    convert_array
@@ -65,6 +65,6 @@ Array Access
 Image Comparison and Regression
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api-autogen/
+   :toctree: _autosummary
 
    compare_images
