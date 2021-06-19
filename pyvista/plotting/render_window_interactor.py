@@ -583,7 +583,7 @@ class RenderWindowInteractor():
         """Create a repeating timer."""
         timer_id = self.interactor.CreateRepeatingTimer(stime)
         if hasattr(self.interactor, 'ProcessEvents'):
-            self.interactor.ProcessEvents()
+            self.process_events()
         else:
             self.interactor.Start()
         self.interactor.DestroyTimer(timer_id)

@@ -172,10 +172,12 @@ def test_plot_increment_point_size():
 def test_plot_update(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
+    pl.show(auto_close=False)
     pl.update()
     time.sleep(0.1)
     pl.update()
     pl.update(force_redraw=True)
+    pl.close()
 
 
 @skip_no_plotting
