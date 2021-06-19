@@ -363,6 +363,7 @@ def test_lighting_init_invalid():
     with pytest.raises(ValueError):
         pyvista.Plotter(lighting='invalid')
 
+
 @skip_no_plotting
 def test_plotter_shape_invalid():
     # wrong size

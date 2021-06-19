@@ -632,9 +632,11 @@ class Renderer(_vtk.vtkRenderer):
             Title of the z axis.  Default ``"Z Axis"``.
 
         use_2d : bool, optional
-            A bug with vtk 6.3 in Windows seems to cause this function
-            to crash this can be enabled for smoother plotting for
-            other environments.
+            This can be enabled for smoother plotting.
+
+            .. warning::
+               A bug with vtk 6.3 in Windows seems to cause this
+               function to crash
 
         grid : bool or str, optional
             Add grid lines to the backface (``True``, ``'back'``, or
@@ -782,6 +784,7 @@ class Renderer(_vtk.vtkRenderer):
         cube_axes_actor.GetZAxesLinesProperty().SetColor(color)
 
         # empty arr
+        # TODO: vtk 9.0.20210612.dev0 reports a leak here
         empty_str = _vtk.vtkStringArray()
         empty_str.InsertNextValue('')
 

@@ -628,7 +628,8 @@ class RenderWindowInteractor():
 
     def terminate_app(self):
         """Terminate the app."""
-        self.interactor.TerminateApp()
+        if self.initialized:
+            self.interactor.TerminateApp()
 
 
 def _style_factory(klass):

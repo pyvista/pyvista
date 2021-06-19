@@ -1,5 +1,6 @@
 """Module containing useful plotting tools."""
 
+import sys
 from enum import Enum
 import platform
 import os
@@ -330,12 +331,17 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
                     raise ValueError('No interpolation.')
                 # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
+
                 # quadratic has best/smoothest results
                 f = interp1d(xo, mapping, kind=kind)
                 vals = f(xx)
                 vals[vals < 0] = 0.0
                 vals[vals > 1.0] = 1.0
                 mapping = (vals * 255.).astype(np.uint8)
+                # nasty issue on Python 3.9 with 9.0.20210612.dev0
+                if sys.version_info.minor == 9:
+                    import gc; gc.collect()
+
             except (ImportError, ValueError):
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
