@@ -169,6 +169,7 @@ class PickingHelper:
                 selector.SetRenderer(renderer_())
                 selector.SetArea(x0, y0, x1, y1)
                 selection = selector.Select()
+
                 for node in range(selection.GetNumberOfNodes()):
                     selection_node = selection.GetNode(node)
                     if selection_node is None:
@@ -184,6 +185,9 @@ class PickingHelper:
                     tri_smesh = smesh.extract_surface().triangulate()
                     cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
                     picked.append(smesh.extract_cells(cids_to_get))
+
+                # memory leak issues on vtk==9.0.20210612.dev0
+                selection.UnRegister(selection)
 
             if len(picked) == 1:
                 self_().picked_cells = picked[0]
