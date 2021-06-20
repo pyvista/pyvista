@@ -338,9 +338,6 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
                 vals[vals < 0] = 0.0
                 vals[vals > 1.0] = 1.0
                 mapping = (vals * 255.).astype(np.uint8)
-                # nasty issue on Python 3.9 with 9.0.20210612.dev0
-                if sys.version_info.minor == 9:
-                    import gc; gc.collect()
 
             except (ImportError, ValueError):
                 # Otherwise use simple linear interp
