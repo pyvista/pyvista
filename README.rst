@@ -132,7 +132,7 @@ Refer to the `documentation <http://docs.pyvista.org/>`_ for detailed
 installation and usage details.
 
 For general questions about the project, its applications, or about software
-usage, please create a discussion in the `pyvista/discussions`_
+usage, please create a discussion in `pyvista/discussions`_
 where the community can collectively address your questions. You are also
 welcome to join us on Slack_ or send one of the developers an email.
 The project support team can be reached at `info@pyvista.org`_.
