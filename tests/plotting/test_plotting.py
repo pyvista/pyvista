@@ -172,10 +172,12 @@ def test_plot_increment_point_size():
 def test_plot_update(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
+    pl.show(auto_close=False)
     pl.update()
     time.sleep(0.1)
     pl.update()
     pl.update(force_redraw=True)
+    pl.close()
 
 
 @skip_no_plotting
@@ -359,6 +361,7 @@ def test_lighting_init_none(sphere):
 def test_lighting_init_invalid():
     with pytest.raises(ValueError):
         pyvista.Plotter(lighting='invalid')
+
 
 @skip_no_plotting
 def test_plotter_shape_invalid():
