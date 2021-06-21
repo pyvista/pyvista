@@ -51,6 +51,7 @@ setup(
     packages=['pyvista',
               'pyvista.examples',
               'pyvista.core',
+              'pyvista.core.filters',
               'pyvista.demos',
               'pyvista.jupyter',
               'pyvista.plotting',
