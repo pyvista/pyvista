@@ -43,7 +43,7 @@ PyVista
 .. |condaact| image:: https://img.shields.io/conda/dn/conda-forge/pyvista.svg?label=Conda%20downloads
    :target: https://anaconda.org/conda-forge/pyvista
 
-.. |discuss| image:: https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white
+.. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
    :target: https://github.com/pyvista/pyvista/discussions
 
 +----------------------+-----------+------------+
