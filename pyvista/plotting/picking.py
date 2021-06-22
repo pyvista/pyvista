@@ -187,6 +187,7 @@ class PickingHelper:
                     picked.append(smesh.extract_cells(cids_to_get))
 
                 # memory leak issues on vtk==9.0.20210612.dev0
+                # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
                 selection.UnRegister(selection)
 
             if len(picked) == 1:
