@@ -188,7 +188,7 @@ for the user to exit the window.
     :hide-code:
 
     # move to the right location
-    # note that this will be executed relative to pyvista/docs
+    # note that this will be executed relative to pyvista/doc
     import shutil
     import os
     shutil.move('beam.gif', 
@@ -225,7 +225,7 @@ You can also render the beam as as a wire-frame object:
     :hide-code:
 
     # move to the right location
-    # note that this will be executed relative to pyvista/docs
+    # note that this will be executed relative to pyvista/doc
     import shutil
     import os
     shutil.move('beam_wireframe.gif', 
