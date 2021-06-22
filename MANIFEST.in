@@ -1,4 +1,4 @@
-# Include docs
+# Include doc
 include LICENSE
-recursive-exclude docs *.rst
-recursive-exclude docs *.py
+recursive-exclude doc *.rst
+recursive-exclude doc *.py

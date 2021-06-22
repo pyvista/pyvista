@@ -1,5 +1,5 @@
 """
-See the image regression notes in docs/extras/developer_notes.rst
+See the image regression notes in doc/extras/developer_notes.rst
 """
 import time
 import platform

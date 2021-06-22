@@ -152,7 +152,7 @@ html_context = {
     "github_user": "pyvista",
     "github_repo": "pyvista",
     "github_version": "master",
-    "doc_path": "docs",
+    "doc_path": "doc",
 }
 
 # Theme options are theme-specific and customize the look and feel of a theme
