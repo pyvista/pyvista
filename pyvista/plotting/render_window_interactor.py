@@ -631,7 +631,7 @@ class RenderWindowInteractor():
         if self.initialized:
 
             # #################################################################
-            # 9.0.2+ compatiblity:
+            # 9.0.2+ compatibility:
             # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18242
             if hasattr(self.interactor, 'GetDone'):
                 self.interactor.SetDone(True)
