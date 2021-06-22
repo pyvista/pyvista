@@ -1134,30 +1134,24 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     >>> import numpy as np
     >>> import pyvista as pv
     >>>
+    >>> # grid size: ni*nj*nk cells; si, sj, sk steps
     >>> ni, nj, nk = 4, 5, 6
     >>> si, sj, sk = 20, 10, 1
     >>>
-    >>> xcorn = np.arange(0, (ni+1)*si, si)
-    >>> xcorn = np.repeat(xcorn, 2)
-    >>> xcorn = xcorn[1:-1]
-    >>> xcorn = np.tile(xcorn, 4*nj*nk)
+    >>> # create raw coordinate grid
+    >>> grid_ijk = np.mgrid[:(ni+1)*si:si, :(nj+1)*sj:sj, :(nk+1)*sk:sk]
     >>>
-    >>> ycorn = np.arange(0, (nj+1)*sj, sj)
-    >>> ycorn = np.repeat(ycorn, 2)
-    >>> ycorn = ycorn[1:-1]
-    >>> ycorn = np.tile(ycorn, (2*ni, 2*nk))
-    >>> ycorn = np.transpose(ycorn)
-    >>> ycorn = ycorn.flatten()
+    >>> # repeat array along each Cartesian axis for connectivity
+    >>> for axis in range(1, 4):
+    ...     grid_ijk = grid_ijk.repeat(2, axis=axis)
     >>>
-    >>> zcorn = np.arange(0, (nk+1)*sk, sk)
-    >>> zcorn = np.repeat(zcorn, 2)
-    >>> zcorn = zcorn[1:-1]
-    >>> zcorn = np.repeat(zcorn, (4*ni*nj))
+    >>> # slice off unnecessarily doubled edge coordinates
+    >>> grid_ijk = grid_ijk[:, 1:-1, 1:-1, 1:-1]
     >>>
-    >>> corners = np.stack((xcorn, ycorn, zcorn))
-    >>> corners = corners.transpose()
+    >>> # reorder and reshape to VTK order
+    >>> corners = grid_ijk.transpose().reshape(-1, 3)
     >>>
-    >>> dims = np.asarray((ni, nj, nk))+1
+    >>> dims = np.array([ni, nj, nk]) + 1
     >>> grid = pv.ExplicitStructuredGrid(dims, corners)  # doctest: +SKIP
     >>> grid.compute_connectivity()  # doctest: +SKIP
     >>> grid.plot(show_edges=True)  # doctest: +SKIP
