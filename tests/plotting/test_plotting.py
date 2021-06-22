@@ -49,9 +49,14 @@ skip_no_plotting = pytest.mark.skipif(not system_supports_plotting(),
 
 skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 
-# IMAGE warning/error thresholds (assumes using use_vtk)
+# Normal image warning/error thresholds (assumes using use_vtk)
 IMAGE_REGRESSION_ERROR = 500  # major differences
 IMAGE_REGRESSION_WARNING = 200  # minor differences
+
+# Image regression warning/error thresholds for releases after 9.0.1
+HIGH_VARIANCE_TESTS = ['test_pbr', 'test_set_viewup', 'test_add_title']
+VER_IMAGE_REGRESSION_ERROR = 1000
+VER_IMAGE_REGRESSION_WARNING = 1000
 
 
 # this must be a session fixture to ensure this runs before any other test
@@ -95,6 +100,12 @@ def verify_cache_image(plotter):
         if item.function[:5] == 'test_':
             test_name = item.function
             break
+    if item.function in HIGH_VARIANCE_TESTS:
+        allowed_error = VER_IMAGE_REGRESSION_ERROR
+        allowed_warning = VER_IMAGE_REGRESSION_WARNING
+    else:
+        allowed_error = IMAGE_REGRESSION_ERROR
+        allowed_warning = IMAGE_REGRESSION_WARNING
 
     if test_name is None:
         raise RuntimeError('Unable to identify calling test function.  This function '
@@ -113,11 +124,11 @@ def verify_cache_image(plotter):
 
     # otherwise, compare with the existing cached image
     error = pyvista.compare_images(image_filename, plotter)
-    if error > IMAGE_REGRESSION_ERROR:
+    if error > allowed_error:
         raise RuntimeError('Exceeded image regression error of '
                            f'{IMAGE_REGRESSION_ERROR} with an image error of '
                            f'{error}')
-    if error > IMAGE_REGRESSION_WARNING:
+    if error > allowed_warning:
         warnings.warn('Exceeded image regression warning of '
                       f'{IMAGE_REGRESSION_WARNING} with an image error of '
                       f'{error}')
@@ -1850,8 +1861,10 @@ def test_set_focus():
 @skip_no_plotting
 def test_set_viewup():
     plane = pyvista.Plane()
+    plane_higher = pyvista.Plane(center=(0, 0, 1), i_size=0.5, j_size=0.5)
     p = pyvista.Plotter()
-    p.add_mesh(plane, color="tan", show_edges=True)
+    p.add_mesh(plane, color="tan", show_edges=False)
+    p.add_mesh(plane_higher, color="red", show_edges=False)
     p.set_viewup((1.0, 1.0, 1.0))
     p.show(before_close_callback=verify_cache_image)
 
