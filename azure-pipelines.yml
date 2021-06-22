@@ -44,9 +44,6 @@ jobs:
     inputs:
       versionSpec: '3.8'
   - script: |
-      pip install .
-    displayName: 'Install pyvista'
-  - script: |
       pip install -r requirements_static.txt
       make mypy
     displayName: 'Run static code check'
