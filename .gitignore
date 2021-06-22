@@ -58,16 +58,9 @@ doc/examples/
 doc/errors.txt
 doc/images/auto-generated
 **/myscreenshot.png
-<<<<<<< HEAD
 api-autogen/
 _autosummary/
-doc/external_examples.rst
-
-=======
-_autosummary
-
-docs/getting-started/external_examples.rst
->>>>>>> main
+doc/getting-started/external_examples.rst
 
 # hypothesis
 .hypothesis
