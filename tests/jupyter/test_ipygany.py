@@ -68,14 +68,3 @@ def test_ipygany_scalar_bar(sphere):
     viewer = sphere.plot(notebook=True, jupyter_backend='ipygany',
                          return_viewer=False, show_scalar_bar=True)
     assert viewer is None
-
-
-@skip_no_ipygany
-def test_ipygany_vector(sphere):
-    sphere['my_values'] = sphere.points
-    sphere.plot(notebook=True, jupyter_backend='ipygany',
-                return_viewer=False, component=0)
-
-    with pytest.raises(RuntimeError):
-        sphere.plot(notebook=True, jupyter_backend='ipygany',
-                    return_viewer=False)
