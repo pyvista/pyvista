@@ -31,9 +31,9 @@ Questions
 ---------
 
 For general questions about the project, its applications, or about
-software usage, please create an issue in the
-`pyvista/pyvista-support <https://github.com/pyvista/pyvista-support>`__
-repository where the community can collectively address your questions.
+software usage, please create a discussion in
+`pyvista/discussions <https://github.com/pyvista/pyvista/discussions>`__
+where the community can collectively address your questions.
 You are also welcome to join us on `Slack <http://slack.pyvista.org>`__
 or send one of the developers an email. The project support team can be
 reached at info@pyvista.org
@@ -454,5 +454,4 @@ should not wait until a minor release. The steps for a patch release
 4. If deemed necessary, create a release notes page. Also, open the PR
    from conda and follow the directions in step 10 in the minor release
    section.
-
 
