@@ -100,12 +100,12 @@ Support
 =======
 
 For general questions about the project, its applications, or about software
-usage, please create an issue in the `pyvista/pyvista-support`_ repository
+usage, please create a discussion in `pyvista/discussions`_
 where the community can collectively address your questions. You are also
 welcome to join us on Slack_ or send one of the developers an email.
 The project support team can be reached at `info@pyvista.org`_.
 
-.. _pyvista/pyvista-support: https://github.com/pyvista/pyvista-support
+.. _pyvista/discussions: https://github.com/pyvista/pyvista/discussions
 .. _Slack: http://slack.pyvista.org
 .. _info@pyvista.org: mailto:info@pyvista.org
 

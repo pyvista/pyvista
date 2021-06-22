@@ -225,15 +225,14 @@ Status
 .. |slack| image:: https://img.shields.io/badge/Slack-PyVista-green.svg?logo=slack
    :target: http://slack.pyvista.org
 
-.. |gitter| image:: https://img.shields.io/gitter/room/pyvista/community?color=darkviolet
-   :target: https://gitter.im/pyvista/community
-
 .. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
    :target: https://pypi.org/project/pyvista/
 
 .. |condaact| image:: https://img.shields.io/conda/dn/conda-forge/pyvista.svg?label=Conda%20downloads
    :target: https://anaconda.org/conda-forge/pyvista
 
+.. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
+   :target: https://github.com/pyvista/pyvista/discussions
 
 +----------------------+----------------+-------------+
 | Deployment           | |pypi|         | |conda|     |
@@ -250,7 +249,7 @@ Status
 +----------------------+----------------+-------------+
 | License              | |MIT|          |             |
 +----------------------+----------------+-------------+
-| Community            | |slack|        | |gitter|    |
+| Community            | |slack|        | |discuss|   |
 +----------------------+----------------+-------------+
 
 
