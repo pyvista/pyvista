@@ -3081,6 +3081,7 @@ class DataSetFilters:
         --------
         Translate a mesh by ``(50, 100, 200)``.
 
+        >>> import numpy as np
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
