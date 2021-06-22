@@ -248,8 +248,8 @@ jobs:
 
   # run this twice since VTK9 fails to close render windows
   - script: |
-      make -C doc html || true  # will fail on VTK9
-      make -C doc html -b coverage SPHINXOPTS="-W"
+      make -C doc phtml || true  # will fail on VTK9
+      make -C doc phtml -b coverage SPHINXOPTS="-W"
       cat doc/_build/coverage/python.txt
     displayName: 'Build documentation'
 
