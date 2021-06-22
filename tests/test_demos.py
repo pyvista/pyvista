@@ -19,7 +19,7 @@ except:
 
 # These tests fail with mesa opengl on windows
 skip_windows_dev_whl = pytest.mark.skipif(os.name == 'nt' and vtk_dev,
-                                          reason='Test fails on Windows with dev wheels')
+                                          reason='Test fails on Windows with VTK dev wheels')
 
 @skip_no_plotting
 def test_plot_glyphs():

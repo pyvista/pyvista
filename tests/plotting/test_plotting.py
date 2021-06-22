@@ -42,7 +42,7 @@ except:
 
 # These tests fail with mesa opengl on windows
 skip_windows_dev_whl = pytest.mark.skipif(os.name == 'nt' and vtk_dev,
-                                          reason='Test fails on Windows with dev wheels with ')
+                                          reason='Test fails on Windows with VTK dev wheels')
 
 
 # Reset image cache with new images
@@ -64,7 +64,7 @@ IMAGE_REGRESSION_ERROR = 500  # major differences
 IMAGE_REGRESSION_WARNING = 200  # minor differences
 
 # Image regression warning/error thresholds for releases after 9.0.1
-HIGH_VARIANCE_TESTS = ['test_pbr', 'test_set_viewup', 'test_add_title']
+HIGH_VARIANCE_TESTS = {'test_pbr', 'test_set_viewup', 'test_add_title'}
 VER_IMAGE_REGRESSION_ERROR = 1000
 VER_IMAGE_REGRESSION_WARNING = 1000
 
