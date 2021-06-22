@@ -1,11 +1,11 @@
 Point-Based Grids
 =================
 
-Structured and unstructured grids are designed to manage cells whereas a
-polydata object manage surfaces.  The ``vtk.UnstructuredGrid`` is a derived class
+Structured and unstructured grids are designed to manage cells whereas polydata
+objects manage surfaces.  The ``pyvista.UnstructuredGrid`` is a derived class
 from ``vtk.vtkUnstructuredGrid`` designed to make creation, array access, and
-plotting more straightforward than using the vtk object.  The same applies to a
-``vtk.StructuredGrid``.
+plotting more straightforward than using the VTK object.  The same applies to a
+``pyvista.StructuredGrid``.
 
 
 Unstructured Grid Creation
