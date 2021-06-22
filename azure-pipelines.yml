@@ -47,7 +47,7 @@ jobs:
       pip install .
     displayName: 'Install pyvista'
   - script: |
-      pip install mypy
+      pip install -r requirements_static.txt
       make mypy
     displayName: 'Run static code check'
 
