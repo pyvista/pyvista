@@ -303,7 +303,7 @@ scalar bar to show the exact value of certain points.
     plotter.show()
 
 
-pv.Unstructured Grid Class Methods
+pv.UnstructuredGrid Class Methods
 ----------------------------------
 The following is a description of the methods available to a
 ``pv.UnstructuredGrid`` object.  It inherits all methods from the original
@@ -343,7 +343,7 @@ Explicit Structured Grid
    :undoc-members:
 
 
-pv.Structured Grid Class Methods
+pv.StructuredGrid Class Methods
 --------------------------------
 The following is a description of the methods available to a
 ``pv.StructuredGrid`` object.  It inherits all methods from the original
