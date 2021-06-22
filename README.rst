@@ -192,7 +192,7 @@ Please take a look at the `contributors page`_ and the active `list of authors`_
 to learn more about the developers of PyVista.
 
 .. _contributors page: https://github.com/pyvista/pyvista/graphs/contributors/
-.. _list of authors: http://docs.pyvista.org/authors
+.. _list of authors: https://docs.pyvista.org/getting-started/authors.html#authors
 
 
 Contributing
