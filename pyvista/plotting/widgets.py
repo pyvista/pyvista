@@ -72,7 +72,7 @@ class WidgetHelper:
             box_widget.GetPolyData(the_box)
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if use_planes:
                     args = [planes]
                 else:
@@ -264,7 +264,7 @@ class WidgetHelper:
             widget.GetPlane(the_plane)
             normal = the_plane.GetNormal()
             origin = the_plane.GetOrigin()
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if pass_widget:
                     try_callback(callback, normal, origin, widget)
                 else:
@@ -630,7 +630,7 @@ class WidgetHelper:
         def _the_callback(widget, event_id):
             pointa = widget.GetPoint1()
             pointb = widget.GetPoint2()
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if use_vertices:
                     args = [pointa, pointb]
                 else:
@@ -728,7 +728,7 @@ class WidgetHelper:
                 # handle limit index
                 if idx == n_states:
                     idx = n_states - 1
-                if hasattr(callback, '__call__'):
+                if callable(callback):
                     try_callback(callback, data[idx])
             return
 
@@ -902,7 +902,7 @@ class WidgetHelper:
 
         def _the_callback(widget, event):
             value = widget.GetRepresentation().GetValue()
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if pass_widget:
                     try_callback(callback, value, widget)
                 else:
@@ -1164,7 +1164,7 @@ class WidgetHelper:
             para_source.Update()
             polyline = pyvista.wrap(para_source.GetOutput())
             ribbon.shallow_copy(polyline.ribbon(normal=(0,0,1), angle=90.0))
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if pass_widget:
                     try_callback(callback, polyline, widget)
                 else:
@@ -1348,7 +1348,7 @@ class WidgetHelper:
         def _the_callback(widget, event_id):
             point = widget.GetCenter()
             index = widget.WIDGET_INDEX
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if num > 1:
                     args = [point, index]
                 else:
@@ -1488,7 +1488,7 @@ class WidgetHelper:
 
         def _the_callback(widget, event):
             state = widget.GetRepresentation().GetState()
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, bool(state))
 
         button_widget.AddObserver(_vtk.vtkCommand.StateChangedEvent, _the_callback)

@@ -171,7 +171,7 @@ html_theme_options = {
         },
         {
             "name": "Support",
-            "url": "https://github.com/pyvista/pyvista-support",
+            "url": "https://github.com/pyvista/pyvista/discussions",
             "icon": "fa fa-comment fa-fw",
         },
         {

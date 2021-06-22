@@ -248,9 +248,15 @@ jobs:
 
   # run this twice since VTK9 fails to close render windows
   - script: |
+<<<<<<< HEAD
       make -C doc html || true  # will fail on VTK9
       make -C doc html -b coverage SPHINXOPTS="-W"
       cat doc/_build/coverage/python.txt
+=======
+      make -C docs phtml || true  # will fail on VTK9
+      make -C docs phtml -b coverage SPHINXOPTS="-W"
+      cat docs/_build/coverage/python.txt
+>>>>>>> main
     displayName: 'Build documentation'
 
   # Push example notebooks to pyvista-examples

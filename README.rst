@@ -37,14 +37,14 @@ PyVista
 .. |slack| image:: https://img.shields.io/badge/Slack-pyvista-green.svg?logo=slack
    :target: http://slack.pyvista.org
 
-.. |gitter| image:: https://img.shields.io/gitter/room/pyvista/community?color=darkviolet
-   :target: https://gitter.im/pyvista/community
-
 .. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
    :target: https://pypi.org/project/pyvista/
 
 .. |condaact| image:: https://img.shields.io/conda/dn/conda-forge/pyvista.svg?label=Conda%20downloads
    :target: https://anaconda.org/conda-forge/pyvista
+
+.. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
+   :target: https://github.com/pyvista/pyvista/discussions
 
 +----------------------+-----------+------------+
 | Deployment           | |pypi|    |   |conda|  |
@@ -59,7 +59,7 @@ PyVista
 +----------------------+-----------+------------+
 | License              | |MIT|     |            |
 +----------------------+-----------+------------+
-| Community            | |slack|   |  |gitter|  |
+| Community            | |slack|   |  |discuss| |
 +----------------------+-----------+------------+
 
 
@@ -132,12 +132,12 @@ Refer to the `documentation <http://docs.pyvista.org/>`_ for detailed
 installation and usage details.
 
 For general questions about the project, its applications, or about software
-usage, please create an issue in the `pyvista/pyvista-support`_ repository
+usage, please create a discussion in `pyvista/discussions`_
 where the community can collectively address your questions. You are also
 welcome to join us on Slack_ or send one of the developers an email.
 The project support team can be reached at `info@pyvista.org`_.
 
-.. _pyvista/pyvista-support: https://github.com/pyvista/pyvista-support
+.. _pyvista/discussions: https://github.com/pyvista/pyvista/discussions
 .. _Slack: http://slack.pyvista.org
 .. _info@pyvista.org: mailto:info@pyvista.org
 
@@ -192,7 +192,7 @@ Please take a look at the `contributors page`_ and the active `list of authors`_
 to learn more about the developers of PyVista.
 
 .. _contributors page: https://github.com/pyvista/pyvista/graphs/contributors/
-.. _list of authors: http://docs.pyvista.org/authors
+.. _list of authors: https://docs.pyvista.org/getting-started/authors.html#authors
 
 
 Contributing

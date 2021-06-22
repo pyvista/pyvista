@@ -172,10 +172,12 @@ def test_plot_increment_point_size():
 def test_plot_update(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
+    pl.show(auto_close=False)
     pl.update()
     time.sleep(0.1)
     pl.update()
     pl.update(force_redraw=True)
+    pl.close()
 
 
 @skip_no_plotting
@@ -360,6 +362,7 @@ def test_lighting_init_none(sphere):
 def test_lighting_init_invalid():
     with pytest.raises(ValueError):
         pyvista.Plotter(lighting='invalid')
+
 
 @skip_no_plotting
 def test_plotter_shape_invalid():
@@ -1059,19 +1062,23 @@ def test_vector_array():
     """Test using vector valued data for image regression."""
     data = setup_multicomponent_data()
 
+    kwargs = {
+        "clim": [0, 5],
+        "show_scalar_bar": False
+    }
+
     p = pyvista.Plotter(shape=(2, 2))
     p.subplot(0, 0)
-    p.add_mesh(data, scalars="vector_values_points", show_scalar_bar=False)
+    p.add_mesh(data, scalars="vector_values_points", **kwargs)
     p.subplot(0, 1)
-    p.add_mesh(data.copy(), scalars="vector_values_points", component=0)
+    p.add_mesh(data, scalars="vector_values_points", component=0, **kwargs)
     p.subplot(1, 0)
-    p.add_mesh(data.copy(), scalars="vector_values_points", component=1)
+    p.add_mesh(data, scalars="vector_values_points", component=1, **kwargs)
     p.subplot(1, 1)
-    p.add_mesh(data.copy(), scalars="vector_values_points", component=2)
+    p.add_mesh(data, scalars="vector_values_points", component=2, **kwargs)
     p.link_views()
-    p.show()
 
-    # p.show(before_close_callback=verify_cache_image)
+    p.show(before_close_callback=verify_cache_image)
 
 
 @skip_no_plotting

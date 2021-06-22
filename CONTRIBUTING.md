@@ -23,7 +23,7 @@ python -m pip install -e .
 ## Questions
 
 For general questions about the project, its applications, or about software
-usage, please create an issue in the [pyvista/pyvista-support](https://github.com/pyvista/pyvista-support)
+usage, please create a discussion in the [Discussions](https://github.com/pyvista/pyvista/discussions)
 repository where the community can collectively address your questions.
 You are also welcome to join us on [Slack](http://slack.pyvista.org)
 or send one of the developers an email.
