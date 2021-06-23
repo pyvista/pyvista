@@ -304,7 +304,7 @@ scalar bar to show the exact value of certain points.
 
 
 pv.UnstructuredGrid Class Methods
-----------------------------------
+---------------------------------
 The following is a description of the methods available to a
 ``pv.UnstructuredGrid`` object.  It inherits all methods from the original
 ``vtk`` object, `vtk.vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_.
@@ -344,7 +344,7 @@ Explicit Structured Grid
 
 
 pv.StructuredGrid Class Methods
---------------------------------
+-------------------------------
 The following is a description of the methods available to a
 ``pv.StructuredGrid`` object.  It inherits all methods from the original
 ``vtk`` object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html>`_.
