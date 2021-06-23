@@ -31,9 +31,9 @@ Questions
 ---------
 
 For general questions about the project, its applications, or about
-software usage, please create an issue in the
-`pyvista/pyvista-support <https://github.com/pyvista/pyvista-support>`__
-repository where the community can collectively address your questions.
+software usage, please create a discussion in
+`pyvista/discussions <https://github.com/pyvista/pyvista/discussions>`__
+where the community can collectively address your questions.
 You are also welcome to join us on `Slack <http://slack.pyvista.org>`__
 or send one of the developers an email. The project support team can be
 reached at info@pyvista.org
@@ -243,12 +243,12 @@ And finally, test the documentation examples:
 
 .. code:: bash
 
-    cd docs
+    cd doc
     make clean
     make doctest
     make html -b linkcheck
 
-The finished documentation can be found in the ``docs/_build/html``
+The finished documentation can be found in the ``doc/_build/html``
 directory.
 
 Notes Regarding Image Regression Testing
@@ -385,7 +385,7 @@ created the following will occur:
 3.  Locally test and build the documentation with link checking to make
     sure no links are outdated. Be sure to run ``make clean`` to ensure
     no results are cached.
-    ``bash     cd docs     make clean  # deletes the sphinx-gallery cache     make doctest     make html -b linkcheck``
+    ``bash     cd doc     make clean  # deletes the sphinx-gallery cache     make doctest     make html -b linkcheck``
 
 4.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
@@ -454,5 +454,4 @@ should not wait until a minor release. The steps for a patch release
 4. If deemed necessary, create a release notes page. Also, open the PR
    from conda and follow the directions in step 10 in the minor release
    section.
-
 

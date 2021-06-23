@@ -16,7 +16,7 @@ pydata-sphinx-theme
 pypandoc
 pytest-sphinx
 scipy
-Sphinx
+Sphinx>=4.0.0
 sphinx-autobuild
 sphinx-copybutton
 sphinx-gallery>=0.8.1

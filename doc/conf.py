@@ -152,7 +152,7 @@ html_context = {
     "github_user": "pyvista",
     "github_repo": "pyvista",
     "github_version": "master",
-    "doc_path": "docs",
+    "doc_path": "doc",
 }
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -171,7 +171,7 @@ html_theme_options = {
         },
         {
             "name": "Support",
-            "url": "https://github.com/pyvista/pyvista-support",
+            "url": "https://github.com/pyvista/pyvista/discussions",
             "icon": "fa fa-comment fa-fw",
         },
         {
@@ -264,7 +264,8 @@ notfound_no_urls_prefix = True
 
 # Copy button customization ---------------------------------------------------
 # exclude traditional Python prompts from the copied code
-copybutton_prompt_text = ">>> "
+copybutton_prompt_text = r'>>> |\.\.\. '
+copybutton_prompt_is_regexp = True
 
 
 # -- Autosummary options

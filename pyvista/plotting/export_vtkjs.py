@@ -426,6 +426,8 @@ def mkdir_p(path):
 
 def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
     """Export a plotter's rendering window to the VTKjs format."""
+    arrays = []  # assist in cleaning up references
+
     # import here to avoid circular imports
     from pyvista import _vtk
     sceneName = os.path.split(filename)[1]
@@ -509,6 +511,9 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                         colorArrayName = '__CustomRGBColorArray__'
                         colorArray.SetName(colorArrayName)
                         colorMode = 0
+
+                        # track arrays for cleanup
+                        arrays.append(colorArray)
                     else:
                         colorArrayName = ''
 
@@ -634,7 +639,10 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
 
     shutil.rmtree(output_dir)
 
-    print('Finished exporting dataset to: ', sceneFileName)
+    # this must occur to avoid leaks
+    scDirs.clear()
+    for array in arrays:
+        array.SetReferenceCount(0)
 
 
 def convert_dropbox_url(url):

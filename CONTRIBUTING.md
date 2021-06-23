@@ -23,7 +23,7 @@ python -m pip install -e .
 ## Questions
 
 For general questions about the project, its applications, or about software
-usage, please create an issue in the [pyvista/pyvista-support](https://github.com/pyvista/pyvista-support)
+usage, please create a discussion in the [Discussions](https://github.com/pyvista/pyvista/discussions)
 repository where the community can collectively address your questions.
 You are also welcome to join us on [Slack](http://slack.pyvista.org)
 or send one of the developers an email.
@@ -237,13 +237,13 @@ codespell pyvista/ examples/ tests/ -S "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vt
 And finally, test the documentation examples:
 
 ```bash
-cd docs
+cd doc
 make clean
 make doctest
 make html -b linkcheck
 ```
 
-The finished documentation can be found in the `docs/_build/html` directory.
+The finished documentation can be found in the `doc/_build/html` directory.
 
 #### Creating a New Pull Request
 
@@ -314,7 +314,7 @@ and ensure all are passing.
 no links are outdated. Be sure to run `make clean` to ensure no results are
 cached.
     ```bash
-    cd docs
+    cd doc
     make clean  # deletes the sphinx-gallery cache
     make doctest
     make html -b linkcheck

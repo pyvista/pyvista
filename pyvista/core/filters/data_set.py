@@ -1667,7 +1667,7 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+        >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
         >>> grid = examples.load_uniform()
         >>> result = grid.probe(mesh)
         >>> 'Spatial Point Data' in result.point_arrays
@@ -2037,6 +2037,11 @@ class DataSetFilters:
             max_time = 4.0 * dataset.GetLength() / max_velocity
         if not isinstance(source, pyvista.DataSet):
             raise TypeError("source must be a pyvista.DataSet")
+
+        # vtk throws error with two Structured Grids
+        # See: https://github.com/pyvista/pyvista/issues/1373
+        if isinstance(dataset, pyvista.StructuredGrid) and isinstance(source, pyvista.StructuredGrid):
+            source = source.cast_to_unstructured_grid()
 
         # Build the algorithm
         alg = _vtk.vtkStreamTracer()
@@ -3076,6 +3081,7 @@ class DataSetFilters:
         --------
         Translate a mesh by ``(50, 100, 200)``.
 
+        >>> import numpy as np
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 

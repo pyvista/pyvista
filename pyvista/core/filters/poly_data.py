@@ -1177,6 +1177,7 @@ class PolyDataFilters(DataSetFilters):
         removing the degenerate face
 
         >>> import pyvista as pv
+        >>> import numpy as np
         >>> points = np.array([[0, 0, 0], [0, 1, 0], [1, 0, 0]])
         >>> faces = np.array([3, 0, 1, 2, 3, 0, 3, 3])
         >>> mesh = pv.PolyData(points, faces)
@@ -1213,11 +1214,15 @@ class PolyDataFilters(DataSetFilters):
         else:
             return output
 
-    def geodesic(poly_data, start_vertex, end_vertex, inplace=False):
+    def geodesic(poly_data, start_vertex, end_vertex, inplace=False,
+                 keep_order=True):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
-        This will add an array titled `vtkOriginalPointIds` of the input
-        mesh's point ids to the output mesh.
+        This will add an array titled ``'vtkOriginalPointIds'`` of the input
+        mesh's point ids to the output mesh. The default behavior of the
+        underlying ``vtkDijkstraGraphGeodesicPath`` filter is that the
+        geodesic path is reversed in the resulting mesh. This is overridden
+        in PyVista by default.
 
         Parameters
         ----------
@@ -1227,11 +1232,22 @@ class PolyDataFilters(DataSetFilters):
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
 
+        inplace : bool, optional
+            Whether the input mesh should be replaced with the path. The
+            geodesic path is always returned.
+
+        keep_order : bool, optional
+            If ``True``, the points of the returned path are guaranteed
+            to start with the start vertex (as opposed to the end vertex).
+
+            .. versionadded:: 0.32.0
+
         Returns
         -------
         output : pyvista.PolyData
-            PolyData object consisting of the line segment between the
-            two given vertices.
+            ``PolyData`` object consisting of the line segment between the
+            two given vertices. If ``inplace`` is ``True`` this is the
+            same object as the input mesh.
 
         Examples
         --------
@@ -1246,8 +1262,9 @@ class PolyDataFilters(DataSetFilters):
         >>> cpos = pl.show()
 
         """
-        if start_vertex < 0 or end_vertex > poly_data.n_points - 1:
-            raise IndexError('Invalid indices.')
+        if not (0 <= start_vertex < poly_data.n_points and
+                0 <= end_vertex < poly_data.n_points):
+            raise IndexError('Invalid point indices.')
         if not poly_data.is_all_triangles():
             raise NotAllTrianglesError("Input mesh for geodesic path must be all triangles.")
 
@@ -1263,6 +1280,11 @@ class PolyDataFilters(DataSetFilters):
 
         # Do not copy textures from input
         output.clear_textures()
+
+        # ensure proper order if requested
+        if keep_order and original_ids[0] == end_vertex:
+            output.points[...] = output.points[::-1, :]
+            output["vtkOriginalPointIds"] = output["vtkOriginalPointIds"][::-1]
 
         if inplace:
             poly_data.overwrite(output)

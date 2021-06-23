@@ -44,10 +44,7 @@ jobs:
     inputs:
       versionSpec: '3.8'
   - script: |
-      pip install .
-    displayName: 'Install pyvista'
-  - script: |
-      pip install mypy
+      pip install -r requirements_static.txt
       make mypy
     displayName: 'Run static code check'
 
@@ -68,6 +65,8 @@ jobs:
         python.version: '3.7'
       Python38:
         python.version: '3.8'
+      Python39:
+        python.version: '3.9'
 
   steps:
   - task: UsePythonVersion@0
@@ -150,6 +149,8 @@ jobs:
         python.version: '3.7'
       Python38-64bit:
         python.version: '3.8'
+      Python39-64bit:
+        python.version: '3.9'
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -243,22 +244,22 @@ jobs:
   - task: Cache@2
     inputs:
       key: 'PYVISTA_DOC_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
-      path: '$(Build.SourcesDirectory)/docs/examples'
+      path: '$(Build.SourcesDirectory)/doc/examples'
     displayName: Build pyvista doc examples cache
 
   # run this twice since VTK9 fails to close render windows
   - script: |
-      make -C docs html || true  # will fail on VTK9
-      make -C docs html -b coverage SPHINXOPTS="-W"
-      cat docs/_build/coverage/python.txt
+      make -C doc phtml || true  # will fail on VTK9
+      make -C doc phtml -b coverage SPHINXOPTS="-W"
+      cat doc/_build/coverage/python.txt
     displayName: 'Build documentation'
 
   # Push example notebooks to pyvista-examples
   - script: |
       pip install cookiecutter
-      cookiecutter -f --no-input --config-file ./docs/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+      cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
       rm -rf ../pyvista-examples/notebooks/
-      cd docs
+      cd doc
       find examples -type f -name '*.ipynb' | cpio -p -d -v ../../pyvista-examples/
       cd ../../pyvista-examples/
       git init
@@ -276,9 +277,9 @@ jobs:
   # Push example notebooks to pyvista-examples develop branch
   - script: |
       pip install cookiecutter
-      cookiecutter -f --no-input --config-file ./docs/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+      cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
       rm -rf ../pyvista-examples/notebooks/
-      cd docs
+      cd doc
       find examples -type f -name '*.ipynb' | cpio -p -d -v ../../pyvista-examples/
       cd ../../pyvista-examples/
       git init
@@ -301,9 +302,9 @@ jobs:
       git gc --prune=now
       git remote prune origin
       rm -rf *
-      cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
-      cp $BUILD_SOURCESDIRECTORY/docs/README.md .
-      cp $BUILD_SOURCESDIRECTORY/docs/ads.txt .
+      cp -r $BUILD_SOURCESDIRECTORY/doc/_build/html/* .
+      cp $BUILD_SOURCESDIRECTORY/doc/README.md .
+      cp $BUILD_SOURCESDIRECTORY/doc/ads.txt .
       touch .nojekyll
       echo "docs.pyvista.org" >> CNAME
       git add .
@@ -320,9 +321,9 @@ jobs:
       cd pyvista-docs-dev
       git init
       git checkout -b gh-pages
-      cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
-      cp $BUILD_SOURCESDIRECTORY/docs/README.md .
-      cp $BUILD_SOURCESDIRECTORY/docs/ads.txt .
+      cp -r $BUILD_SOURCESDIRECTORY/doc/_build/html/* .
+      cp $BUILD_SOURCESDIRECTORY/doc/README.md .
+      cp $BUILD_SOURCESDIRECTORY/doc/ads.txt .
       touch .nojekyll
       echo "dev.pyvista.org" >> CNAME
       git add .

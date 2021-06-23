@@ -1608,11 +1608,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
                     raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
 
-            if scalars.ndim != 1 and not rgb:
-                if scalars.ndim == 2:
+            if scalars.ndim != 1:
+                if rgb:
+                    pass
+                elif scalars.ndim == 2 and (scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells):
                     if not isinstance(component, (int, type(None))):
                         raise TypeError('component must be either None or an integer')
-                    if component is not None and (component >= scalars.shape[1] or component < 0):
+                    if component is None:
+                        scalars = np.linalg.norm(scalars.copy(), axis=1)
+                        title = '{}-normed'.format(title)
+                    elif component < scalars.shape[1] and component >= 0:
+                        scalars = scalars[:, component].copy()
+                        title = '{}-{}'.format(title, component)
+                    else:
                         raise ValueError(
                             ('component must be nonnegative and less than the '
                              'dimensionality of the scalars array: {}').format(
@@ -1649,12 +1657,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             prepare_mapper(scalars)
             table = self.mapper.GetLookupTable()
-            if scalars.ndim > 1 and not rgb:
-                if component is not None:
-                    table.SetVectorModeToComponent()
-                    table.SetVectorComponent(component)
-                else:
-                    table.SetVectorModeToMagnitude()
 
             if _using_labels:
                 table.SetAnnotations(convert_array(values), convert_string_array(cats))
@@ -1664,14 +1666,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     table.SetAnnotation(float(val), str(anno))
 
             # Set scalars range
-            if clim is None and not rgb:
-                if scalars.ndim > 1:
-                    if component is None:
-                        clim = [np.nanmin(np.linalg.norm(scalars, axis=-1)), np.nanmax(np.linalg.norm(scalars,axis=-1))]
-                    else:
-                        clim = [np.nanmin(scalars[:, component]), np.nanmax(scalars[:, component])]
-                else:
-                    clim = [np.nanmin(scalars), np.nanmax(scalars)]
+            if clim is None:
+                clim = [np.nanmin(scalars), np.nanmax(scalars)]
             elif isinstance(clim, (int, float)):
                 clim = [-clim, clim]
 

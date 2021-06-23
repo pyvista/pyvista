@@ -71,7 +71,7 @@ class StructuredGridFilters(DataSetFilters):
         return _get_output(alg)
 
     def concatenate(dataset, other, axis, tolerance=0.0):
-        """Concatenate a structured grids to this grid.
+        """Concatenate a structured grid to this grid.
 
         Joins structured grids into a single structured grid.  Grids
         must be of compatible dimension, and must be coincident along

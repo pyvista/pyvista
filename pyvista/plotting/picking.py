@@ -169,6 +169,7 @@ class PickingHelper:
                 selector.SetRenderer(renderer_())
                 selector.SetArea(x0, y0, x1, y1)
                 selection = selector.Select()
+
                 for node in range(selection.GetNumberOfNodes()):
                     selection_node = selection.GetNode(node)
                     if selection_node is None:
@@ -184,6 +185,10 @@ class PickingHelper:
                     tri_smesh = smesh.extract_surface().triangulate()
                     cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
                     picked.append(smesh.extract_cells(cids_to_get))
+
+                # memory leak issues on vtk==9.0.20210612.dev0
+                # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
+                selection.UnRegister(selection)
 
             if len(picked) == 1:
                 self_().picked_cells = picked[0]
@@ -278,7 +283,7 @@ class PickingHelper:
                 self.add_mesh(self.picked_point, color=color,
                               point_size=point_size, name='_picked_point',
                               pickable=False, reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if use_mesh:
                     try_callback(callback, self.picked_mesh, self.picked_point_id)
                 else:
@@ -376,7 +381,7 @@ class PickingHelper:
                 self.add_mesh(self.picked_path, color=color, name='_picked_path',
                               line_width=line_width, point_size=point_size,
                               reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, self.picked_path)
             return
 
@@ -397,7 +402,7 @@ class PickingHelper:
     def enable_geodesic_picking(self, callback=None, show_message=True,
                                 font_size=18, color='pink', point_size=10,
                                 line_width=5, tolerance=0.025, show_path=True,
-                                **kwargs):
+                                keep_order=True, **kwargs):
         """Enable picking at geodesic paths.
 
         This is a convenience method for ``enable_point_picking`` to
@@ -405,7 +410,7 @@ class PickingHelper:
         using those points.
 
         The geodesic path is saved to the ``.picked_geodesic``
-        attribute of this plotter
+        attribute of this plotter.
 
         Parameters
         ----------
@@ -440,9 +445,22 @@ class PickingHelper:
             is specified as fraction of rendering window
             size.  Rendering window size is measured across diagonal.
 
+        keep_order : bool, optional
+            If ``True``, the created geodesic path is a single ordered
+            and cleaned line from the first point to the last.
+
+            .. note::
+
+                In older versions there were apparent discontinuities
+                in the resulting path due to the behavior of the
+                underlying VTK filter which corresponds to
+                ``keep_order=False``.
+
+            .. versionadded:: 0.32.0
+
         kwargs : optional
             All remaining keyword arguments are used to control how
-            the picked path is interactively displayed
+            the picked path is interactively displayed.
 
         """
         kwargs.setdefault('pickable', False)
@@ -456,6 +474,7 @@ class PickingHelper:
             point = mesh.points[idx]
             if self._last_picked_idx is None:
                 self.picked_geodesic = pyvista.PolyData(point)
+                self.picked_geodesic['vtkOriginalPointIds'] = [idx]
             else:
                 surface = mesh.extract_surface().triangulate()
                 locator = _vtk.vtkPointLocator()
@@ -463,14 +482,20 @@ class PickingHelper:
                 locator.BuildLocator()
                 start_idx = locator.FindClosestPoint(mesh.points[self._last_picked_idx])
                 end_idx = locator.FindClosestPoint(point)
-                self.picked_geodesic = self.picked_geodesic + surface.geodesic(start_idx, end_idx)
+                self.picked_geodesic += surface.geodesic(start_idx, end_idx,
+                                                         keep_order=keep_order)
+                if keep_order:
+                    # it makes sense to remove adjacent duplicate points
+                    self.picked_geodesic.clean(inplace=True, lines_to_points=False,
+                                               polys_to_lines=False,
+                                               strips_to_polys=False)
             self._last_picked_idx = idx
 
             if show_path:
                 self.add_mesh(self.picked_geodesic, color=color, name='_picked_path',
                               line_width=line_width, point_size=point_size,
                               reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, self.picked_geodesic)
             return
 
@@ -566,7 +591,7 @@ class PickingHelper:
                               opacity=opacity, pickable=False,
                               reset_camera=False)
 
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, path)
 
         self.enable_path_picking(callback=_the_callback,
@@ -612,7 +637,7 @@ class PickingHelper:
         def _the_callback(*args):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, click_point)
 
         self.track_click_position(callback=_the_callback, side="right")

@@ -1,11 +1,11 @@
 Point-Based Grids
 =================
 
-Structured and unstructured grids are designed to manage cells whereas a
-polydata object manage surfaces.  The ``vtk.UnstructuredGrid`` is a derived class
+Structured and unstructured grids are designed to manage cells whereas polydata
+objects manage surfaces.  The ``pyvista.UnstructuredGrid`` is a derived class
 from ``vtk.vtkUnstructuredGrid`` designed to make creation, array access, and
-plotting more straightforward than using the vtk object.  The same applies to a
-``vtk.StructuredGrid``.
+plotting more straightforward than using the VTK object.  The same applies to a
+``pyvista.StructuredGrid``.
 
 
 Unstructured Grid Creation
@@ -188,13 +188,13 @@ for the user to exit the window.
     :hide-code:
 
     # move to the right location
-    # note that this will be executed relative to pyvista/docs
+    # note that this will be executed relative to pyvista/doc
     import shutil
     import os
     shutil.move('beam.gif', 
                 os.path.join(os.getcwd(), './images/auto-generated/beam.gif'))
 
-.. image:: ../images/auto-generated/beam.gif
+.. image:: ../../images/auto-generated/beam.gif
 
 
 You can also render the beam as as a wire-frame object:
@@ -225,13 +225,13 @@ You can also render the beam as as a wire-frame object:
     :hide-code:
 
     # move to the right location
-    # note that this will be executed relative to pyvista/docs
+    # note that this will be executed relative to pyvista/doc
     import shutil
     import os
     shutil.move('beam_wireframe.gif', 
                  os.path.join(os.getcwd(), './images/auto-generated/beam_wireframe.gif'))
 
-.. image:: ../images/auto-generated/beam_wireframe.gif
+.. image:: ../../images/auto-generated/beam_wireframe.gif
 
 
 Adding Labels to a Plot
@@ -303,8 +303,8 @@ scalar bar to show the exact value of certain points.
     plotter.show()
 
 
-pv.Unstructured Grid Class Methods
-----------------------------------
+pv.UnstructuredGrid Class Methods
+---------------------------------
 The following is a description of the methods available to a
 ``pv.UnstructuredGrid`` object.  It inherits all methods from the original
 ``vtk`` object, `vtk.vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_.
@@ -343,8 +343,8 @@ Explicit Structured Grid
    :undoc-members:
 
 
-pv.Structured Grid Class Methods
---------------------------------
+pv.StructuredGrid Class Methods
+-------------------------------
 The following is a description of the methods available to a
 ``pv.StructuredGrid`` object.  It inherits all methods from the original
 ``vtk`` object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html>`_.
