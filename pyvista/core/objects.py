@@ -127,6 +127,7 @@ class Table(_vtk.vtkTable, DataObject):
     def update(self, data):
         """Set the table data."""
         self.row_arrays.update(data)
+        self.Modified()
 
     def pop(self, name):
         """Pops off an array by the specified name."""

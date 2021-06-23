@@ -1,16 +1,18 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
+from functools import partial
 from weakref import proxy
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk, MAX_N_COLOR_BARS
-from pyvista.utilities import wrap, check_depth_peeling
+from pyvista.utilities import wrap, check_depth_peeling, try_callback
 from .tools import (create_axes_orientation_box, create_axes_marker,
                     parse_color, parse_font_family)
 from .camera import Camera
+from .charts import Charts
 
 
 def scale_point(camera, point, invert=False):
@@ -123,6 +125,8 @@ class Renderer(_vtk.vtkRenderer):
         self._lights = []
         self._camera = Camera()
         self.SetActiveCamera(self._camera)
+        self._charts = Charts(self)
+        self.AddObserver("StartEvent", partial(try_callback, self.render_event))
 
         self._shadow_pass = None
 
@@ -252,6 +256,13 @@ class Renderer(_vtk.vtkRenderer):
         self.set_background(color)
         self.Modified()
 
+    #### Events ####
+
+    def render_event(self, *args, **kwargs):
+        # Notify all charts about render event
+        for chart in self.charts:
+            chart.render_event(*args, **kwargs)
+
     #### Everything else ####
 
     def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=None):
@@ -333,6 +344,13 @@ class Renderer(_vtk.vtkRenderer):
         self.AddViewProp(actor)
         self.Modified()
         return actor
+
+    @property
+    def charts(self):
+        return self._charts
+
+    def add_chart(self, chart):
+        self._charts.add_chart(chart)
 
     @property
     def actors(self):

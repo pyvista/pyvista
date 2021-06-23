@@ -474,6 +474,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.update_bounds_axes``."""
         return self.renderer.update_bounds_axes(*args, **kwargs)
 
+    @wraps(Renderer.add_chart)
+    def add_chart(self, *args, **kwargs):
+        """Wrap ``Renderer.add_chart``."""
+        return self.renderer.add_chart(*args, **kwargs)
+
     @wraps(Renderer.add_actor)
     def add_actor(self, *args, **kwargs):
         """Wrap ``Renderer.add_actor``."""
