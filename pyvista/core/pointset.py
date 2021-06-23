@@ -1152,8 +1152,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     >>> corners = grid_ijk.transpose().reshape(-1, 3)
     >>>
     >>> dims = np.array([ni, nj, nk]) + 1
-    >>> grid = pv.ExplicitStructuredGrid(dims, corners)  # doctest: +SKIP
-    >>> grid.compute_connectivity()  # doctest: +SKIP
+    >>> grid = pv.ExplicitStructuredGrid(dims, corners)
+    >>> grid.compute_connectivity()
     >>> grid.plot(show_edges=True)  # doctest: +SKIP
 
     """
