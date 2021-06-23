@@ -1,4 +1,4 @@
-"""Transformations leveraging transforms3d library."""
+"""Module implementing point transformations and their matrices."""
 import numpy as np
 
 

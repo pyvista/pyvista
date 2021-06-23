@@ -41,7 +41,6 @@ install_requires = ['numpy',
                     'scooby>=0.5.1',
                     'meshio>=4.0.3, <5.0',
                     'vtk',
-                    'transforms3d==0.3.1'
                     ]
 
 readme_file = os.path.join(filepath, 'README.rst')
