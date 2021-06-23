@@ -13,22 +13,18 @@ from pyvista import examples
 from pyvista.core.errors import VTKVersionError
 
 
-DATASETS = [
-    examples.load_uniform(),  # UniformGrid
-    examples.load_rectilinear(),  # RectilinearGrid
-    examples.load_hexbeam(),  # UnstructuredGrid
-    examples.load_airplane(),  # PolyData
-    examples.load_structured(),  # StructuredGrid
-]
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
-
-COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
 skip_py2_nobind = pytest.mark.skipif(int(sys.version[0]) < 3,
                                      reason="Python 2 doesn't support binding methods")
 
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
+
+
+@pytest.fixture
+def composite(datasets):
+    return pyvista.MultiBlock(datasets)
 
 
 @pytest.fixture()
@@ -51,9 +47,9 @@ def test_datasetfilters_init():
 
 
 @skip_windows
-def test_clip_filter():
+def test_clip_filter(datasets):
     """This tests the clip filter on all datatypes available filters"""
-    for i, dataset in enumerate(DATASETS):
+    for i, dataset in enumerate(datasets):
         clp = dataset.clip(normal=normals[i], invert=True)
         assert clp is not None
         if isinstance(dataset, pyvista.PolyData):
@@ -62,7 +58,7 @@ def test_clip_filter():
             assert isinstance(clp, pyvista.UnstructuredGrid)
 
     # clip with get_clipped=True
-    for i, dataset in enumerate(DATASETS):
+    for i, dataset in enumerate(datasets):
         clp1, clp2 = dataset.clip(normal=normals[i], invert=True, return_clipped=True)
         for clp in (clp1, clp2):
             if isinstance(dataset, pyvista.PolyData):
@@ -72,9 +68,9 @@ def test_clip_filter():
 
 @skip_windows
 @skip_mac
-def test_clip_by_scalars_filter():
+def test_clip_by_scalars_filter(datasets):
     """This tests the clip filter on all datatypes available filters"""
-    for i, dataset_in in enumerate(DATASETS):
+    for i, dataset_in in enumerate(datasets):
         dataset = dataset_in.copy()  # don't modify in-place
         if dataset.active_scalars_info.name is None:
             dataset['scalars'] = np.arange(dataset.n_points)
@@ -91,14 +87,14 @@ def test_clip_by_scalars_filter():
 
 
 @skip_py2_nobind
-def test_clip_filter_composite():
+def test_clip_filter_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.clip(normal=normals[0], invert=False)
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.clip(normal=normals[0], invert=False)
+    assert output.n_blocks == composite.n_blocks
 
 
-def test_clip_box():
-    for i, dataset in enumerate(DATASETS):
+def test_clip_box(datasets):
+    for i, dataset in enumerate(datasets):
         clp = dataset.clip_box(invert=True)
         assert clp is not None
         assert isinstance(clp, pyvista.UnstructuredGrid)
@@ -128,10 +124,10 @@ def test_clip_box():
 
 
 @skip_py2_nobind
-def test_clip_box_composite():
+def test_clip_box_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.clip_box(invert=False)
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.clip_box(invert=False)
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_clip_surface():
@@ -169,9 +165,9 @@ def test_implicit_distance():
     assert "implicit_distance" in dataset.point_arrays
 
 
-def test_slice_filter():
+def test_slice_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
-    for i, dataset in enumerate(DATASETS):
+    for i, dataset in enumerate(datasets):
         slc = dataset.slice(normal=normals[i])
         assert slc is not None
         assert isinstance(slc, pyvista.PolyData)
@@ -184,16 +180,16 @@ def test_slice_filter():
 
 
 @skip_py2_nobind
-def test_slice_filter_composite():
+def test_slice_filter_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.slice(normal=normals[0])
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.slice(normal=normals[0])
+    assert output.n_blocks == composite.n_blocks
 
 
-def test_slice_orthogonal_filter():
+def test_slice_orthogonal_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
 
-    for i, dataset in enumerate(DATASETS):
+    for i, dataset in enumerate(datasets):
         slices = dataset.slice_orthogonal()
         assert slices is not None
         assert isinstance(slices, pyvista.MultiBlock)
@@ -203,17 +199,17 @@ def test_slice_orthogonal_filter():
 
 
 @skip_py2_nobind
-def test_slice_orthogonal_filter_composite():
+def test_slice_orthogonal_filter_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.slice_orthogonal()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.slice_orthogonal()
+    assert output.n_blocks == composite.n_blocks
 
 
-def test_slice_along_axis():
+def test_slice_along_axis(datasets):
     """Test the many slices along axis filter """
     axii = ['x', 'y', 'z', 'y', 0]
     ns = [2, 3, 4, 10, 20, 13]
-    for i, dataset in enumerate(DATASETS):
+    for i, dataset in enumerate(datasets):
         slices = dataset.slice_along_axis(n=ns[i], axis=axii[i])
         assert slices is not None
         assert isinstance(slices, pyvista.MultiBlock)
@@ -226,14 +222,14 @@ def test_slice_along_axis():
 
 
 @skip_py2_nobind
-def test_slice_along_axis_composite():
+def test_slice_along_axis_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.slice_along_axis()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.slice_along_axis()
+    assert output.n_blocks == composite.n_blocks
 
 
-def test_threshold():
-    for i, dataset in enumerate(DATASETS[0:3]):
+def test_threshold(datasets):
+    for i, dataset in enumerate(datasets[0:3]):
         thresh = dataset.threshold()
         assert thresh is not None
         assert isinstance(thresh, pyvista.UnstructuredGrid)
@@ -253,7 +249,7 @@ def test_threshold():
         dataset.threshold({100, 500})
     # Now test DATASETS without arrays
     with pytest.raises(ValueError):
-        for i, dataset in enumerate(DATASETS[3:-1]):
+        for i, dataset in enumerate(datasets[3:-1]):
             thresh = dataset.threshold()
             assert thresh is not None
             assert isinstance(thresh, pyvista.UnstructuredGrid)
@@ -261,14 +257,14 @@ def test_threshold():
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300])
     with pytest.raises(ValueError):
-        DATASETS[0].threshold([10, 500], scalars='Spatial Point Data',
+        datasets[0].threshold([10, 500], scalars='Spatial Point Data',
                               all_scalars=True)
 
-def test_threshold_percent():
+def test_threshold_percent(datasets):
     percents = [25, 50, [18.0, 85.0], [19.0, 80.0], 0.70]
     inverts = [False, True, False, True, False]
     # Only test data sets that have arrays
-    for i, dataset in enumerate(DATASETS[0:3]):
+    for i, dataset in enumerate(datasets[0:3]):
         thresh = dataset.threshold_percent(percent=percents[i], invert=inverts[i])
         assert thresh is not None
         assert isinstance(thresh, pyvista.UnstructuredGrid)
@@ -283,68 +279,68 @@ def test_threshold_percent():
         dataset.threshold_percent({18.0, 85.0})
 
 
-def test_outline():
-    for i, dataset in enumerate(DATASETS):
+def test_outline(datasets):
+    for i, dataset in enumerate(datasets):
         outline = dataset.outline()
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
 
 
 @skip_py2_nobind
-def test_outline_composite():
+def test_outline_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.outline()
+    output = composite.outline()
     assert isinstance(output, pyvista.PolyData)
-    output = COMPOSITE.outline(nested=True)
+    output = composite.outline(nested=True)
 
     # vtk 9.0.0 returns polydata
     assert isinstance(output, (pyvista.MultiBlock, pyvista.PolyData))
     if isinstance(output, pyvista.MultiBlock):
-        assert output.n_blocks == COMPOSITE.n_blocks
+        assert output.n_blocks == composite.n_blocks
 
 
-def test_outline_corners():
-    for i, dataset in enumerate(DATASETS):
+def test_outline_corners(datasets):
+    for i, dataset in enumerate(datasets):
         outline = dataset.outline_corners()
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
 
 
 @skip_py2_nobind
-def test_outline_corners_composite():
+def test_outline_corners_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.outline_corners()
+    output = composite.outline_corners()
     assert isinstance(output, pyvista.PolyData)
-    output = COMPOSITE.outline_corners(nested=True)
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.outline_corners(nested=True)
+    assert output.n_blocks == composite.n_blocks
 
 
-def test_extract_geometry():
-    for i, dataset in enumerate(DATASETS):
+def test_extract_geometry(datasets, composite):
+    for i, dataset in enumerate(datasets):
         outline = dataset.extract_geometry()
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
     # Now test composite data structures
-    output = COMPOSITE.extract_geometry()
+    output = composite.extract_geometry()
     assert isinstance(output, pyvista.PolyData)
 
 
-def test_wireframe():
-    for i, dataset in enumerate(DATASETS):
+def test_wireframe(datasets):
+    for i, dataset in enumerate(datasets):
         wire = dataset.extract_all_edges()
         assert wire is not None
         assert isinstance(wire, pyvista.PolyData)
 
 
 @skip_py2_nobind
-def test_wireframe_composite():
+def test_wireframe_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.extract_all_edges()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.extract_all_edges()
+    assert output.n_blocks == composite.n_blocks
 
 
-def test_delaunay_2d():
-    mesh = DATASETS[2].delaunay_2d()  # UnstructuredGrid
+def test_delaunay_2d(datasets):
+    mesh = datasets[2].delaunay_2d()  # UnstructuredGrid
     assert isinstance(mesh, pyvista.PolyData)
     assert mesh.n_points
 
@@ -411,10 +407,10 @@ def test_elevation():
 
 
 @skip_py2_nobind
-def test_elevation_composite():
+def test_elevation_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.elevation()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.elevation()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_texture_map_to_plane():
@@ -449,8 +445,8 @@ def test_texture_map_to_sphere():
     assert 'Texture Coordinates' in dataset.array_names
 
 
-def test_compute_cell_sizes():
-    for i, dataset in enumerate(DATASETS):
+def test_compute_cell_sizes(datasets):
+    for i, dataset in enumerate(datasets):
         result = dataset.compute_cell_sizes()
         assert result is not None
         assert isinstance(result, type(dataset))
@@ -463,59 +459,55 @@ def test_compute_cell_sizes():
 
 
 @skip_py2_nobind
-def test_compute_cell_sizes_composite():
+def test_compute_cell_sizes_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.compute_cell_sizes()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.compute_cell_sizes()
+    assert output.n_blocks == composite.n_blocks
 
 
-def test_cell_centers():
-    for i, dataset in enumerate(DATASETS):
+def test_cell_centers(datasets):
+    for i, dataset in enumerate(datasets):
         result = dataset.cell_centers()
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
 
 
 @skip_py2_nobind
-def test_cell_centers_composite():
+def test_cell_centers_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.cell_centers()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.cell_centers()
+    assert output.n_blocks == composite.n_blocks
 
 
-def test_glyph():
-    for i, dataset in enumerate(DATASETS):
+def test_glyph(datasets, sphere):
+    for i, dataset in enumerate(datasets):
+        dataset.vectors = np.ones_like(dataset.points)
         result = dataset.glyph()
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
-    sphere = pyvista.Sphere(radius=3.14, theta_resolution=5, phi_resolution=5)
     sphere_sans_arrays = sphere.copy()
-    # make cool swirly pattern
-    vectors = np.vstack((np.sin(sphere.points[:, 0]),
-                        np.cos(sphere.points[:, 1]),
-                        np.cos(sphere.points[:, 2]))).T
-    # add and scale
-    sphere.vectors = vectors*0.3
-    sphere.point_arrays['foo'] = np.random.rand(sphere.n_points)
+    sphere.compute_normals(inplace=True)
+    sphere.vectors = np.ones([sphere.n_points,3])
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
-    result = sphere.glyph(scale=False)
-    result = sphere.glyph(scale='arr')
-    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
-    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
-    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
+
+    assert sphere.glyph(scale=False)
+    assert sphere.glyph(scale='arr')
+    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1)
+    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
+    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
                           clamping=False, rng=[1, 1])
     # passing one or more custom glyphs; many cases for full coverage
     geoms = [pyvista.Sphere(theta_resolution=5, phi_resolution=5),
              pyvista.Arrow(tip_resolution=5, shaft_resolution=5),
              pyvista.ParametricSuperToroid(u_res=10, v_res=10, w_res=10)]
     indices = range(len(geoms))
-    result = sphere.glyph(geom=geoms[0])
-    result = sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)))
-    result = sphere.glyph(geom=geoms)
-    result = sphere.glyph(geom=geoms, scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
-    result = sphere.glyph(geom=geoms[:1], indices=[None])
-    result = sphere_sans_arrays.glyph(geom=geoms)
+    assert sphere.glyph(geom=geoms[0])
+    assert sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)))
+    assert sphere.glyph(geom=geoms)
+    assert sphere.glyph(geom=geoms, scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
+    assert sphere.glyph(geom=geoms[:1], indices=[None])
+    assert sphere_sans_arrays.glyph(geom=geoms)
     with pytest.raises(TypeError):
         # wrong type for the glyph
         sphere.glyph(geom=pyvista.StructuredGrid())
@@ -525,6 +517,20 @@ def test_glyph():
     with pytest.raises(ValueError):
         # wrong length for the indices
         sphere.glyph(geom=geoms, indices=indices[:-1])
+
+
+def test_glyph_cell_point_data(sphere):
+    sphere['vectors_cell'] = np.ones([sphere.n_cells,3])
+    sphere['vectors_points'] = np.ones([sphere.n_points,3])
+    sphere['arr_cell'] = np.ones(sphere.n_cells)
+    sphere['arr_points'] = np.ones(sphere.n_points)
+    
+    assert sphere.glyph(orient='vectors_cell', scale='arr_cell')
+    assert sphere.glyph(orient='vectors_points', scale='arr_points')
+    with pytest.raises(ValueError):
+        sphere.glyph(orient='vectors_cell', scale='arr_points')
+    with pytest.raises(ValueError):
+        sphere.glyph(orient='vectors_points', scale='arr_cell')
 
 
 def test_split_and_connectivity():
@@ -605,10 +611,10 @@ def test_cell_data_to_point_data():
 
 
 @skip_py2_nobind
-def test_cell_data_to_point_data_composite():
+def test_cell_data_to_point_data_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.cell_data_to_point_data()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.cell_data_to_point_data()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_point_data_to_cell_data():
@@ -620,10 +626,10 @@ def test_point_data_to_cell_data():
 
 
 @skip_py2_nobind
-def test_point_data_to_cell_data_composite():
+def test_point_data_to_cell_data_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.point_data_to_cell_data()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.point_data_to_cell_data()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_triangulate():
@@ -634,10 +640,10 @@ def test_triangulate():
 
 
 @skip_py2_nobind
-def test_triangulate_composite():
+def test_triangulate_composite(composite):
     # Now test composite data structures
-    output = COMPOSITE.triangulate()
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.triangulate()
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_delaunay_3d():
@@ -719,6 +725,7 @@ def test_streamlines_start_position(uniform_vec):
 
     assert all([stream.n_points, stream.n_cells])
 
+
 def test_streamlines_errors(uniform_vec):
     with pytest.raises(ValueError):
         uniform_vec.streamlines('vectors', integration_direction='not valid')
@@ -746,6 +753,22 @@ def test_streamlines_from_source(uniform_vec):
 
     source = pyvista.UniformGrid([5, 5, 5], [0.1, 0.1, 0.1], [0, 0, 0])
     stream = uniform_vec.streamlines_from_source(source, 'vectors')
+    assert all([stream.n_points, stream.n_cells])
+
+
+def test_streamlines_from_source_structured_grids():
+    x, y, z = np.meshgrid(
+        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
+    )
+    mesh = pyvista.StructuredGrid(x, y, z)
+    x2, y2, z2 = np.meshgrid(
+        np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5)
+    )
+    mesh2 = pyvista.StructuredGrid(x2, y2, z2)
+    mesh.vectors = np.ones([mesh.n_points, 3])
+    
+    with pyvista.VtkErrorCatcher(raise_errors=True):
+        stream = mesh.streamlines_from_source(mesh2)
     assert all([stream.n_points, stream.n_cells])
 
 
@@ -983,14 +1006,15 @@ def test_extract_points():
     assert sub_surf_adj.n_cells == 4
     assert sub_surf_nocells.cells[0] == 1
 
+
 @skip_py2_nobind
-def test_slice_along_line_composite():
+def test_slice_along_line_composite(composite):
     # Now test composite data structures
-    a = [COMPOSITE.bounds[0], COMPOSITE.bounds[2], COMPOSITE.bounds[4]]
-    b = [COMPOSITE.bounds[1], COMPOSITE.bounds[3], COMPOSITE.bounds[5]]
+    a = [composite.bounds[0], composite.bounds[2], composite.bounds[4]]
+    b = [composite.bounds[1], composite.bounds[3], composite.bounds[5]]
     line = pyvista.Line(a, b, resolution=10)
-    output = COMPOSITE.slice_along_line(line)
-    assert output.n_blocks == COMPOSITE.n_blocks
+    output = composite.slice_along_line(line)
+    assert output.n_blocks == composite.n_blocks
 
 
 def test_interpolate():
@@ -1287,71 +1311,73 @@ def test_shrink():
     assert shrunk.area < mesh.area
 
 
-@pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
-                         itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
-def test_transform_mesh(dataset, num_cell_arrays, num_point_arrays):
+@pytest.mark.parametrize('num_cell_arrays,num_point_arrays',
+                         itertools.product([0, 1, 2], [0, 1, 2]))
+def test_transform_mesh(datasets, num_cell_arrays, num_point_arrays):
     # rotate about x-axis by 90 degrees
-    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+    for dataset in datasets:
+        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
-    for i in range(num_cell_arrays):
-        dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+        for i in range(num_cell_arrays):
+            dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
 
-    for i in range(num_point_arrays):
-        dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
+        for i in range(num_point_arrays):
+            dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
 
-    # deactivate any active vectors!
-    # even if transform_all_input_vectors is False, vtkTransformfilter will
-    # transform active vectors
-    dataset.set_active_vectors(None)
+        # deactivate any active vectors!
+        # even if transform_all_input_vectors is False, vtkTransformfilter will
+        # transform active vectors
+        dataset.set_active_vectors(None)
 
-    transformed = dataset.transform(tf, transform_all_input_vectors=False, inplace=False)
+        transformed = dataset.transform(tf, transform_all_input_vectors=False, inplace=False)
 
-    assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
-    assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
-    assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
+        assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
+        assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
+        assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
 
-    # ensure that none of the vector data is changed
-    for name, array in dataset.point_arrays.items():
-        assert transformed.point_arrays[name] == pytest.approx(array)
+        # ensure that none of the vector data is changed
+        for name, array in dataset.point_arrays.items():
+            assert transformed.point_arrays[name] == pytest.approx(array)
 
-    for name, array in dataset.cell_arrays.items():
-        assert transformed.cell_arrays[name] == pytest.approx(array)
+        for name, array in dataset.cell_arrays.items():
+            assert transformed.cell_arrays[name] == pytest.approx(array)
 
 
-@pytest.mark.parametrize('dataset,num_cell_arrays,num_point_arrays',
-                         itertools.product(DATASETS, [0, 1, 2], [0, 1, 2]))
-def test_transform_mesh_and_vectors(dataset, num_cell_arrays, num_point_arrays):
-      # rotate about x-axis by 90 degrees
-    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
+@pytest.mark.parametrize('num_cell_arrays,num_point_arrays',
+                         itertools.product([0, 1, 2], [0, 1, 2]))
+def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_arrays):
+    for dataset in datasets:
+        # rotate about x-axis by 90 degrees
+        tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
-    for i in range(num_cell_arrays):
-        dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+        for i in range(num_cell_arrays):
+            dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
 
-    for i in range(num_point_arrays):
-        dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
+        for i in range(num_point_arrays):
+            dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
 
-    # handle
-    f = pyvista._vtk.vtkTransformFilter()
-    if not hasattr(f, 'SetTransformAllInputVectors'):
-        with pytest.raises(VTKVersionError):
-            transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
-        return
+        # handle
+        f = pyvista._vtk.vtkTransformFilter()
+        if not hasattr(f, 'SetTransformAllInputVectors'):
+            with pytest.raises(VTKVersionError):
+                transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
+            return
 
-    transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
+        transformed = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
-    assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
-    assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
-    assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
+        assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
+        assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
+        assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
 
-    for i in range(num_cell_arrays):
-        assert dataset.cell_arrays['C%d' % i][:, 0] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 0])
-        assert dataset.cell_arrays['C%d' % i][:, 2] == pytest.approx(-transformed.cell_arrays['C%d' % i][:, 1])
-        assert dataset.cell_arrays['C%d' % i][:, 1] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 2])
+        for i in range(num_cell_arrays):
+            assert dataset.cell_arrays['C%d' % i][:, 0] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 0])
+            assert dataset.cell_arrays['C%d' % i][:, 2] == pytest.approx(-transformed.cell_arrays['C%d' % i][:, 1])
+            assert dataset.cell_arrays['C%d' % i][:, 1] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 2])
 
-    for i in range(num_point_arrays):
-        assert dataset.point_arrays['P%d' % i][:, 0] == pytest.approx( transformed.point_arrays['P%d' % i][:, 0])
-        assert dataset.point_arrays['P%d' % i][:, 2] == pytest.approx(-transformed.point_arrays['P%d' % i][:, 1])
-        assert dataset.point_arrays['P%d' % i][:, 1] == pytest.approx( transformed.point_arrays['P%d' % i][:, 2])
+        for i in range(num_point_arrays):
+            assert dataset.point_arrays['P%d' % i][:, 0] == pytest.approx( transformed.point_arrays['P%d' % i][:, 0])
+            assert dataset.point_arrays['P%d' % i][:, 2] == pytest.approx(-transformed.point_arrays['P%d' % i][:, 1])
+            assert dataset.point_arrays['P%d' % i][:, 1] == pytest.approx( transformed.point_arrays['P%d' % i][:, 2])
 
 
 @pytest.mark.parametrize('dataset', [
@@ -1365,48 +1391,48 @@ def test_transform_inplace_bad_types(dataset):
         dataset.transform(tf, inplace=True)
 
 
-@pytest.mark.parametrize('dataset', DATASETS)
-def test_reflect_mesh_about_point(dataset):
-    x_plane = 500
-    reflected = dataset.reflect((1, 0, 0), point=(x_plane, 0, 0))
-    assert reflected.n_cells == dataset.n_cells
-    assert reflected.n_points == dataset.n_points
-    assert np.allclose(x_plane - dataset.points[:, 0], reflected.points[:, 0] - x_plane)
-    assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
+def test_reflect_mesh_about_point(datasets):
+    for dataset in datasets:
+        x_plane = 500
+        reflected = dataset.reflect((1, 0, 0), point=(x_plane, 0, 0))
+        assert reflected.n_cells == dataset.n_cells
+        assert reflected.n_points == dataset.n_points
+        assert np.allclose(x_plane - dataset.points[:, 0], reflected.points[:, 0] - x_plane)
+        assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
 
 
 @pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
-@pytest.mark.parametrize('dataset', DATASETS)
-def test_reflect_mesh_with_vectors(dataset):
-    if hasattr(dataset, 'compute_normals'):
-        dataset.compute_normals(inplace=True)
+def test_reflect_mesh_with_vectors(datasets):
+    for dataset in datasets:
+        if hasattr(dataset, 'compute_normals'):
+            dataset.compute_normals(inplace=True)
 
-    # add vector data to cell and point arrays
-    dataset.cell_arrays['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
-                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
-    dataset.point_arrays['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
-                                np.array([1, 2, 3], dtype=float).reshape((1, 3))
+        # add vector data to cell and point arrays
+        dataset.cell_arrays['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
+            np.array([1, 2, 3], dtype=float).reshape((1, 3))
+        dataset.point_arrays['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
+            np.array([1, 2, 3], dtype=float).reshape((1, 3))
 
-    reflected = dataset.reflect((1, 0, 0), transform_all_input_vectors=True, inplace=False)
+        reflected = dataset.reflect((1, 0, 0), transform_all_input_vectors=True, inplace=False)
 
-    # assert isinstance(reflected, type(dataset))
-    assert reflected.n_cells == dataset.n_cells
-    assert reflected.n_points == dataset.n_points
-    assert np.allclose(dataset.points[:, 0], -reflected.points[:, 0])
-    assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
+        # assert isinstance(reflected, type(dataset))
+        assert reflected.n_cells == dataset.n_cells
+        assert reflected.n_points == dataset.n_points
+        assert np.allclose(dataset.points[:, 0], -reflected.points[:, 0])
+        assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
 
-    # assert normals are reflected
-    if hasattr(dataset, 'compute_normals'):
-        assert np.allclose(dataset.cell_arrays['Normals'][:, 0], -reflected.cell_arrays['Normals'][:, 0])
-        assert np.allclose(dataset.cell_arrays['Normals'][:, 1:], reflected.cell_arrays['Normals'][:, 1:])
-        assert np.allclose(dataset.point_arrays['Normals'][:, 0], -reflected.point_arrays['Normals'][:, 0])
-        assert np.allclose(dataset.point_arrays['Normals'][:, 1:], reflected.point_arrays['Normals'][:, 1:])
+        # assert normals are reflected
+        if hasattr(dataset, 'compute_normals'):
+            assert np.allclose(dataset.cell_arrays['Normals'][:, 0], -reflected.cell_arrays['Normals'][:, 0])
+            assert np.allclose(dataset.cell_arrays['Normals'][:, 1:], reflected.cell_arrays['Normals'][:, 1:])
+            assert np.allclose(dataset.point_arrays['Normals'][:, 0], -reflected.point_arrays['Normals'][:, 0])
+            assert np.allclose(dataset.point_arrays['Normals'][:, 1:], reflected.point_arrays['Normals'][:, 1:])
 
-    # assert other vector fields are reflected
-    assert np.allclose(dataset.cell_arrays['C'][:, 0], -reflected.cell_arrays['C'][:, 0])
-    assert np.allclose(dataset.cell_arrays['C'][:, 1:], reflected.cell_arrays['C'][:, 1:])
-    assert np.allclose(dataset.point_arrays['P'][:, 0], -reflected.point_arrays['P'][:, 0])
-    assert np.allclose(dataset.point_arrays['P'][:, 1:], reflected.point_arrays['P'][:, 1:])
+        # assert other vector fields are reflected
+        assert np.allclose(dataset.cell_arrays['C'][:, 0], -reflected.cell_arrays['C'][:, 0])
+        assert np.allclose(dataset.cell_arrays['C'][:, 1:], reflected.cell_arrays['C'][:, 1:])
+        assert np.allclose(dataset.point_arrays['P'][:, 0], -reflected.point_arrays['P'][:, 0])
+        assert np.allclose(dataset.point_arrays['P'][:, 1:], reflected.point_arrays['P'][:, 1:])
 
 
 @pytest.mark.parametrize('dataset', [
@@ -1467,3 +1493,12 @@ def test_extrude_rotate_inplace():
     poly.extrude_rotate(resolution=resolution, inplace=True)
     assert poly.n_cells == old_line.n_points - 1
     assert poly.n_points == (resolution + 1)*old_line.n_points
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_subdivide_adaptive(sphere, inplace):
+    orig_n_faces = sphere.n_faces
+    sub = sphere.subdivide_adaptive(0.01, 0.001, 100000, 2, inplace=inplace)
+    assert sub.n_faces > orig_n_faces
+    if inplace:
+        assert sphere.n_faces == sub.n_faces

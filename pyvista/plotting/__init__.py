@@ -15,6 +15,7 @@ from .tools import (create_axes_marker, create_axes_orientation_box,
 from .widgets import WidgetHelper
 from .lights import Light
 from .camera import Camera
+from .axes import Axes
 
 
 class QtDeprecationError(Exception):

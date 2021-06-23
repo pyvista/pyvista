@@ -23,7 +23,7 @@ python -m pip install -e .
 ## Questions
 
 For general questions about the project, its applications, or about software
-usage, please create an issue in the [pyvista/pyvista-support](https://github.com/pyvista/pyvista-support)
+usage, please create a discussion in the [Discussions](https://github.com/pyvista/pyvista/discussions)
 repository where the community can collectively address your questions.
 You are also welcome to join us on [Slack](http://slack.pyvista.org)
 or send one of the developers an email.
@@ -144,7 +144,19 @@ following the steps in the
 
 We adhere to [PEP 8](https://www.python.org/dev/peps/pep-0008/)
 wherever possible, except that line widths are permitted to go beyond
-79 characters to a max of 90 to 100 characters.
+79 characters to a max of 99 characters for code.  This should
+tend to be the exception rather than the norm.
+
+As for docstrings, follow the guidelines specified in [PEP 8 Maximum
+Line Length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length)
+of limiting docstrings to 72 characters per line.  This follows the
+directive:
+
+> Some teams strongly prefer a longer line length. For code maintained
+> exclusively or primarily by a team that can reach agreement on this
+> issue, it is okay to increase the line length limit up to 99
+> characters, provided that comments and docstrings are still wrapped
+> at 72 characters.
 
 Outside of PEP 8, when coding please consider [PEP 20 -- The Zen of Python](https://www.python.org/dev/peps/pep-0020/).  When in doubt:
 
@@ -225,13 +237,13 @@ codespell pyvista/ examples/ tests/ -S "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vt
 And finally, test the documentation examples:
 
 ```bash
-cd docs
+cd doc
 make clean
 make doctest
 make html -b linkcheck
 ```
 
-The finished documentation can be found in the `docs/_build/html` directory.
+The finished documentation can be found in the `doc/_build/html` directory.
 
 #### Creating a New Pull Request
 
@@ -302,7 +314,7 @@ and ensure all are passing.
 no links are outdated. Be sure to run `make clean` to ensure no results are
 cached.
     ```bash
-    cd docs
+    cd doc
     make clean  # deletes the sphinx-gallery cache
     make doctest
     make html -b linkcheck

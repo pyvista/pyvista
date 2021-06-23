@@ -90,7 +90,8 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # Check if VTK has EGL support
-        if 'EGL' in str(type(_vtk.vtkRenderWindow())):
+        ren_win_str = str(type(_vtk.vtkRenderWindow()))
+        if 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str:
             return
 
         warnings.warn('\n'
@@ -950,15 +951,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_joystick_style."""
         self.iren.enable_joystick_style()
 
+    @wraps(RenderWindowInteractor.enable_joystick_actor_style)
+    def enable_joystick_actor_style(self):
+        """Wrap RenderWindowInteractor.enable_joystick_actor_style."""
+        self.iren.enable_joystick_actor_style()
+
     @wraps(RenderWindowInteractor.enable_zoom_style)
     def enable_zoom_style(self):
         """Wrap RenderWindowInteractor.enable_zoom_style."""
         self.iren.enable_zoom_style()
 
     @wraps(RenderWindowInteractor.enable_terrain_style)
-    def enable_terrain_style(self):
+    def enable_terrain_style(self, *args, **kwargs):
         """Wrap RenderWindowInteractor.enable_terrain_style."""
-        self.iren.enable_terrain_style()
+        self.iren.enable_terrain_style(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.enable_rubber_band_style)
     def enable_rubber_band_style(self):
@@ -1304,8 +1310,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(f'Object type ({type(mesh)}) not supported for plotting in PyVista.')
         ##### Parse arguments to be used for all meshes #####
 
+        # Avoid mutating input
         if scalar_bar_args is None:
             scalar_bar_args = {'n_colors': n_colors}
+        else:
+            scalar_bar_args = scalar_bar_args.copy()
 
         if show_edges is None:
             show_edges = self._theme.show_edges
@@ -1964,17 +1973,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap = kwargs.pop('colormap', cmap)
         culling = kwargs.pop("backface_culling", culling)
 
-        # account for legacy behavior
-        if 'stitle' in kwargs:  # pragma: no cover
-            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
-            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
-
         if "scalar" in kwargs:
             raise TypeError("`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?")
         assert_empty_kwargs(**kwargs)
 
+        # Avoid mutating input
         if scalar_bar_args is None:
             scalar_bar_args = {}
+        else:
+            scalar_bar_args = scalar_bar_args.copy()
+        # account for legacy behavior
+        if 'stitle' in kwargs:  # pragma: no cover
+            warnings.warn(USE_SCALAR_BAR_ARGS, PyvistaDeprecationWarning)
+            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if show_scalar_bar is None:
             show_scalar_bar = self._theme.show_scalar_bar
@@ -3080,15 +3091,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.add_mesh(arrows, **kwargs)
 
     @staticmethod
-    def _save_image(image, filename, return_img=None):
-        """Save a NumPy image array.
+    def _save_image(image, filename, return_img):
+        """Save to file and/or return a NumPy image array.
 
         This is an internal helper.
 
         """
         if not image.size:
             raise ValueError('Empty image. Have you run plot() first?')
-        # write screenshot to file
+        # write screenshot to file if requested
         if isinstance(filename, (str, pathlib.Path)):
             from PIL import Image
             filename = pathlib.Path(filename)
@@ -3101,9 +3112,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                  f'Must be one of the following: {SUPPORTED_FORMATS}')
             image_path = os.path.abspath(os.path.expanduser(str(filename)))
             Image.fromarray(image).save(image_path)
-            if not return_img:
-                return image
-        return image
+        # return image array if requested
+        if return_img:
+            return image
 
     def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True):
         """Save a screenshot of the rendering window as a graphic file.
@@ -3140,27 +3151,35 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return
 
     def screenshot(self, filename=None, transparent_background=None,
-                   return_img=None, window_size=None):
+                   return_img=True, window_size=None):
         """Take screenshot at current camera position.
 
         Parameters
         ----------
         filename : str, optional
-            Location to write image to.  If None, no image is written.
+            Location to write image to.  If ``None``, no image is written.
 
         transparent_background : bool, optional
-            Makes the background transparent.  Default False.
+            Whether to make the background transparent.  The default is
+            looked up on the plotter's theme.
 
         return_img : bool, optional
-            If a string filename is given and this is true, a NumPy array of
-            the image will be returned.
+            If ``True`` (the default), a NumPy array of the image will
+            be returned.
+
+        window_size : 2-length tuple, optional
+            Set the plotter's size to this ``(width, height)`` before
+            taking the screenshot.
 
         Returns
         -------
-        img :  numpy.ndarray
+        img : numpy.ndarray
             Array containing pixel RGB and alpha.  Sized:
-            [Window height x Window width x 3] for transparent_background=False
-            [Window height x Window width x 4] for transparent_background=True
+
+            * [Window height x Window width x 3] if
+              ``transparent_background`` is set to ``False``.
+            * [Window height x Window width x 4] if
+              ``transparent_background`` is set to ``True``.
 
         Examples
         --------
@@ -3180,7 +3199,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.image_transparent_background = transparent_background
 
         # This if statement allows you to save screenshots of closed plotters
-        # This is needed for the sphinx-gallery work
+        # This is needed for the sphinx-gallery to work
         if not hasattr(self, 'ren_win'):
             # If plotter has been closed...
             # check if last_image exists
@@ -3188,7 +3207,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Save last image
                 return self._save_image(self.last_image, filename, return_img)
             # Plotter hasn't been rendered or was improperly closed
-            raise AttributeError('This plotter is closed and unable to save a screenshot.')
+            raise RuntimeError('This plotter is closed and unable to save a screenshot.')
 
         if self._first_time and not self.off_screen:
             raise RuntimeError("Nothing to screenshot - call .show first or "
@@ -3869,6 +3888,16 @@ class Plotter(BasePlotter):
             The camera position.  You can also set this with
             ``Plotter.camera_position``.
 
+        screenshot : str or bool, optional
+            Take a screenshot of the initial state of the plot.
+            If a string, it specifies the path to which the screenshot
+            is saved. If ``True``, the screenshot is returned as an
+            array. Defaults to ``False``. For interactive screenshots
+            it's recommended to first call ``show()`` with
+            ``auto_close=False`` to set the scene, then save the
+            screenshot in a separate call to ``show()`` or
+            ``screenshot()``.
+
         return_img : bool
             Returns a numpy array representing the last image along
             with the camera position.
@@ -3914,13 +3943,21 @@ class Plotter(BasePlotter):
 
         Examples
         --------
-        Simply show the plot.
+        Simply show the plot of a mesh.
 
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.show()  # doctest:+SKIP
 
         Take a screenshot interactively.  Screenshot will be of the
-        last image shown.
+        first image shown, so use the first call with
+        ``auto_close=False`` to set the scene before taking the
+        screenshot.
 
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.show(auto_close=False)  # doctest:+SKIP
         >>> pl.show(screenshot='my_image.png')  # doctest:+SKIP
 
         Display an ``ipygany`` scene within a jupyter notebook
