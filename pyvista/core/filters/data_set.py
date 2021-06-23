@@ -1667,7 +1667,7 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+        >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
         >>> grid = examples.load_uniform()
         >>> result = grid.probe(mesh)
         >>> 'Spatial Point Data' in result.point_arrays
