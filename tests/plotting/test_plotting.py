@@ -1537,7 +1537,7 @@ def test_opacity_by_array_user_transform(uniform):
     p.show()  # note: =verify_cache_image does not work between Xvfb
 
 
-def test_opactity_mismatched_fail(uniform):
+def test_opacity_mismatched_fail(uniform):
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
     uniform['unc'] = opac
 
