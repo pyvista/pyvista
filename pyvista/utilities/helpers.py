@@ -384,7 +384,7 @@ def make_tri_mesh(points, faces):
     nine vertices and eight faces.
 
     >>> import numpy as np
-    >>> import pyvista as pv
+    >>> import pyvista
     >>> points = np.array([[0, 0, 0], [0.5, 0, 0], [1, 0, 0], [0, 0.5, 0],
     ...                    [0.5, 0.5, 0], [1, 0.5, 0], [0, 1, 0], [0.5, 1, 0],
     ...                    [1, 1, 0]])
