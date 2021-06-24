@@ -164,6 +164,9 @@ def check_doctests(modules=None, respect_skips=True, verbose=True,
     fails = len(failures)
     passes = total - fails
     print(f'\n{passes} passes and {fails} failures out of {total} total doctests.\n')
+    if not fails:
+        return
+
     print('List of failures:')
     for name, (exc, erroring_code) in failures.items():
         print('-' * 60)
