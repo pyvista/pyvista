@@ -73,7 +73,7 @@ templates_path = ["_templates"]
 # The suffix(es) of source filenames.
 source_suffix = ".rst"
 
-# The master toctree document.
+# The main toctree document.
 master_doc = "index"
 
 # General information about the project.
@@ -151,7 +151,7 @@ html_theme = "pydata_sphinx_theme"
 html_context = {
     "github_user": "pyvista",
     "github_repo": "pyvista",
-    "github_version": "master",
+    "github_version": "main",
     "doc_path": "doc",
 }
 
@@ -176,7 +176,7 @@ html_theme_options = {
         },
         {
             "name": "Contributing",
-            "url": "https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md",
+            "url": "https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md",
             "icon": "fa fa-gavel fa-fw",
         },
         {

@@ -90,7 +90,7 @@ Alternatively, you can install the latest version from GitHub by visiting
     python -m pip install -e .
 
 
-The latest documentation for the ``master`` branch of PyVista can be found at
+The latest documentation for the ``main`` branch of PyVista can be found at
 `dev.pyvista.org <https://dev.pyvista.org>`_.
 
 
@@ -123,8 +123,8 @@ See other examples and demos:
     repository. For details on how to clone and test the PyVista source, please
     see our `Contributing Guide`_ and specifically, the `Testing`_ section.
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md
-.. _Testing: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md#testing
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md
+.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md#testing
 
 
 Running on CI Services

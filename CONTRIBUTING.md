@@ -119,7 +119,7 @@ There are two important copyright guidelines:
    stackoverflow) or commercial use is prohibited. Those can undermine
    the license of the whole projects.
 
-Please also take a look at our [Code of Conduct](https://github.com/pyvista/pyvista/blob/master/CODE_OF_CONDUCT.md)
+Please also take a look at our [Code of Conduct](https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md)
 
 
 ### Contributing to pyvista through GitHub
@@ -249,7 +249,7 @@ The finished documentation can be found in the `doc/_build/html` directory.
 
 Once you have tested your branch locally, create a pull request on
 [pyvista GitHub](https://github.com/pyvista/pyvista) while merging to
-master.  This will automatically run continuous integration (CI)
+main.  This will automatically run continuous integration (CI)
 testing and verify your changes will work across several platforms.
 
 To ensure someone else reviews your code, at least one other member of
@@ -272,7 +272,7 @@ features without sacrificing stability, and closely follows the
 
 The main features of our branching model are:
 
-- The `master` branch is the main development branch.  All features,
+- The `main` branch is the main development branch.  All features,
   patches, and other branches should be merged here.  While all PRs
   should pass all applicable CI checks, this branch may be
   functionally unstable as changes might have introduced unintended
@@ -280,7 +280,7 @@ The main features of our branching model are:
 - There will be one or many `release/` branches based on minor
   releases (for example `release/0.24`) which contain a stable version
   of the code base that is also reflected on PyPI/.  Hotfixes from
-  `fix/` branches should be merged both to master and to these
+  `fix/` branches should be merged both to main and to these
   branches.  When necessary to create a new patch release these
   release branches will have their `__version__.py` updated and be
   tagged with a patched semantic version (e.g. `0.24.1`).  This
@@ -288,11 +288,11 @@ The main features of our branching model are:
   for past versions of `pyvista` without having to worry about
   untested features.
 - When a minor release candidate is ready, a new `release` branch will
-  be created from `master` with the next incremented minor version
+  be created from `main` with the next incremented minor version
   (e.g. `release/0.25`), which will be thoroughly tested.  When deemed
   stable, the release branch will be tagged with the version (`0.25.0`
-  in this case), and if necessary merged with master if any changes
-  were pushed to it.  Feature development then continues on `master`
+  in this case), and if necessary merged with main if any changes
+  were pushed to it.  Feature development then continues on `main`
   and any hotfixes will now be merged with this release.  Older
   release branches should not be deleted so they can be patched as
   needed.
@@ -304,7 +304,7 @@ Minor releases are feature and bug releases that improve the
 functionality and stability of `pyvista`.  Before a minor release is
 created the following will occur:
 
-1.  Create a new branch from the `master` branch with name
+1.  Create a new branch from the `main` branch with name
     `release/MAJOR.MINOR` (e.g. `release/0.25`).
 
 2. Locally run all tests as outlined in the [Testing Section](#testing) 
@@ -325,7 +325,7 @@ examples gallery for any obvious issues.
 
 5. Update the version numbers in `pyvista/_version.py` and commit it.
    Push the branch to GitHub and create a new PR for this release that
-   merges it to master.  Development to master should be limited at
+   merges it to main.  Development to main should be limited at
    this point while effort is focused on the release.
 
 6. It is now the responsibility of the `pyvista` community to
@@ -334,7 +334,7 @@ examples gallery for any obvious issues.
    have their hotfixes pushed to this release branch.
 
 7. When the branch is deemed as stable for public release, the PR will
-   be merged to master and the `master` branch will be tagged with a
+   be merged to main and the `main` branch will be tagged with a
    `MAJOR.MINOR.0` release.  The release branch will not be deleted.
    Tag the release with:
 
@@ -345,7 +345,7 @@ examples gallery for any obvious issues.
 
 8. Create a list of all changes for the release. It is often helpful to
 leverage [GitHub's *compare* feature](https://github.com/pyvista/pyvista/compare)
-to see the differences from the last tag and the `master` branch.
+to see the differences from the last tag and the `main` branch.
 Be sure to acknowledge new contributors by their GitHub username and place
 mentions where appropriate if a specific contributor is to thank for a new
 feature.
@@ -370,6 +370,6 @@ Patch releases are for critical and important bugfixes that can not or should no
 
 2. Update `__version__.py` with the next patch increment (e.g. `0.25.1`), commit it, and open a PR that merge with the release branch.  This gives the `pyvista` community a chance to validate and approve the bugfix release.  Any additional hotfixes should be outside of this PR.
 
-3. When approved, merge with the release branch, but not `master` as there is no reason to increment the version of the `master` branch.  Then create a tag from the release branch with the applicable version number (see above for the correct steps).
+3. When approved, merge with the release branch, but not `main` as there is no reason to increment the version of the `main` branch.  Then create a tag from the release branch with the applicable version number (see above for the correct steps).
 
 4. If deemed necessary, create a release notes page.  Also, open the PR from conda and follow the directions in step 10 in the minor release section.
