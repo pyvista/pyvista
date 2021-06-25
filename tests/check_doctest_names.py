@@ -14,9 +14,9 @@ like this:
     >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
 
 there will be a ``NameError`` when the code block is copied into Python
-because the ``np`` name is undefined. However, pytest and sphinx test runs
-will not catch this, as the np name is typically also available in the
-global namespace of the module where the doctest resides.
+because the ``np`` name is undefined. However, pytest and sphinx test
+runs will not catch this, as the np name is typically also available in
+the global namespace of the module where the doctest resides.
 
 In order to fix this, we build a tree of pyvista's public and private
 API, using the standard-library doctest module as a doctest parser. We
@@ -30,11 +30,11 @@ as the examples run without error, this module will be happy.
 The implementation is not very robust or smart, it just gets the job
 done to find the rare name mistake in our examples.
 
+This module is executable. If you need off-screen plotting, set the
+``PYVISTA_OFF_SCREEN`` environmental variable to ``True``.
 """
 
 import re
-import sys
-import traceback
 from doctest import DocTestFinder
 from types import ModuleType
 from textwrap import indent
@@ -92,8 +92,7 @@ def discover_modules(entry=pyvista, recurse=True):
     return found_modules
 
 
-def check_doctests(modules=None, respect_skips=True, verbose=True,
-                   off_screen=True):
+def check_doctests(modules=None, respect_skips=True, verbose=True):
     """Check whether doctests can be run as-is without errors.
 
     Parameters
@@ -111,18 +110,11 @@ def check_doctests(modules=None, respect_skips=True, verbose=True,
         Whether to print passes/failures as the testing progresses.
         Failures are printed at the end in every case.
 
-    off_screen : bool, optional
-        Whether to enable off-screen rendering for the tests.
-
     """
     skip_pattern = re.compile('doctest: *\+SKIP')
 
     if modules is None:
         modules = discover_modules()
-
-    if off_screen:
-        orig_off_screen = pyvista.OFF_SCREEN
-        pyvista.OFF_SCREEN = True
 
     # find and parse all docstrings; this will also remove any duplicates
     doctests = {
@@ -174,9 +166,6 @@ def check_doctests(modules=None, respect_skips=True, verbose=True,
         print(indent(erroring_code, '    '))
         print(repr(exc))
     print('-' * 60)
-
-    if off_screen:
-        pyvista.OFF_SCREEN = orig_off_screen
 
 
 if __name__ == "__main__":
