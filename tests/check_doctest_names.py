@@ -35,6 +35,7 @@ This module is executable. If you need off-screen plotting, set the
 """
 
 import re
+import sys
 from doctest import DocTestFinder
 from types import ModuleType
 from textwrap import indent
@@ -60,6 +61,11 @@ def discover_modules(entry=pyvista, recurse=True):
 
     recurse : bool, optional
         Whether to recurse into submodules.
+
+    Returns
+    -------
+    modules : dict of modules
+        A (module name -> module) mapping of submodules under ``entry``.
 
     """
     entry_name = entry.__name__
@@ -110,6 +116,12 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         Whether to print passes/failures as the testing progresses.
         Failures are printed at the end in every case.
 
+    Returns
+    -------
+    failures : dict of (Exception, str)  tuples
+        An (object name -> (exception raised, failing code)) mapping
+        of failed doctests under the specified modules.
+
     """
     skip_pattern = re.compile('doctest: *\+SKIP')
 
@@ -157,7 +169,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     passes = total - fails
     print(f'\n{passes} passes and {fails} failures out of {total} total doctests.\n')
     if not fails:
-        return
+        return failures
 
     print('List of failures:')
     for name, (exc, erroring_code) in failures.items():
@@ -167,6 +179,12 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         print(repr(exc))
     print('-' * 60)
 
+    return failures
+
 
 if __name__ == "__main__":
-    check_doctests()
+    failures = check_doctests()
+
+    if failures:
+        # raise a red flag for CI
+        sys.exit(1)
