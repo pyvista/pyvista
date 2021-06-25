@@ -39,6 +39,7 @@ import sys
 from doctest import DocTestFinder
 from types import ModuleType
 from textwrap import indent
+from argparse import ArgumentParser
 
 import pyvista
 
@@ -167,7 +168,8 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     total = len(doctests)
     fails = len(failures)
     passes = total - fails
-    print(f'\n{passes} passes and {fails} failures out of {total} total doctests.\n')
+    print(f'\n{passes} passes and {fails} failures '
+          f'out of {total} total doctests.\n')
     if not fails:
         return failures
 
@@ -183,7 +185,15 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
 
 
 if __name__ == "__main__":
-    failures = check_doctests()
+    parser = ArgumentParser(description='Look for name errors in doctests.')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='print passes and failures as tests progress')
+    parser.add_argument('--no-respect-skips', action='store_false',
+                        dest='respect_skips')
+    args = parser.parse_args()
+
+    failures = check_doctests(verbose=args.verbose,
+                              respect_skips=args.respect_skips)
 
     if failures:
         # raise a red flag for CI
