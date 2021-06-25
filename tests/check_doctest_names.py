@@ -189,7 +189,8 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='print passes and failures as tests progress')
     parser.add_argument('--no-respect-skips', action='store_false',
-                        dest='respect_skips')
+                        dest='respect_skips',
+                        help='ignore doctest SKIP directives')
     args = parser.parse_args()
 
     failures = check_doctests(verbose=args.verbose,
