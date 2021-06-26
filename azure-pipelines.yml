@@ -115,6 +115,10 @@ jobs:
     displayName: 'Test Package Docstrings'
 
   - script: |
+      make doctest-modules-local-namespace
+    displayName: 'Test Package Docstrings with Local Namespace'
+
+  - script: |
       bash <(curl -s https://codecov.io/bash)
     displayName: 'Upload coverage to codecov.io'
     condition: eq(variables['python.version'], '3.7')

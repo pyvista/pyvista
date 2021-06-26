@@ -608,14 +608,16 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        mesh : Polydata object
-            ``pyvista`` polydata object.
+        pyvista.PolyData
+            Subdivided mesh.
 
         Examples
         --------
+        Subdivide the sphere mesh.
+
         >>> from pyvista import examples
         >>> import pyvista
-        >>> mesh = pyvista.PolyData(examples.planefile)
+        >>> mesh = pyvista.Sphere()
         >>> submesh = mesh.subdivide(1, 'loop')
 
         Alternatively, update the mesh in-place.
