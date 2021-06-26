@@ -1,4 +1,5 @@
 """Module containing pyvista implementation of vtkCamera."""
+from weakref import proxy
 
 import numpy as np
 
@@ -25,11 +26,19 @@ class Camera(_vtk.vtkCamera):
 
     """
 
-    def __init__(self):
+    def __init__(self, renderer=None):
         """Initialize a new camera descriptor."""
         self._is_parallel_projection = False
         self._elevation = 0.0
         self._azimuth = 0.0
+
+        if renderer:
+            if not isinstance(renderer, pyvista.Renderer):
+                raise TypeError('Camera only accepts a pyvista.Renderer or None as '
+                                'the ``renderer`` argument')
+            self._renderer = proxy(renderer)
+        else:
+            self._renderer = None
 
     @property
     def position(self):
@@ -58,6 +67,26 @@ class Camera(_vtk.vtkCamera):
         self.SetPosition(value)
         self._elevation = 0.0
         self._azimuth = 0.0
+        if self._renderer:
+            self.reset_clipping_range()
+
+    def reset_clipping_range(self):
+        """Reset the camera clipping range based on the bounds of the visible actors.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Sphere())
+        >>> pl.camera.clipping_range = (1, 2)
+        >>> pl.camera.reset_clipping_range()  # doctest:+SKIP
+        (0.0039213485598532955, 3.9213485598532953)
+
+        """
+        if self._renderer is None:
+            raise AttributeError('Camera is must be associated with a renderer to '
+                                 'reset its clipping range.')
+        self._renderer.reset_camera_clipping_range()
 
     @property
     def focal_point(self):

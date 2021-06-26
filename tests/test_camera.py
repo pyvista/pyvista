@@ -9,6 +9,11 @@ def camera():
     return pyvista.Camera()
 
 
+def test_invalid_init():
+    with pytest.raises(TypeError):
+        pyvista.Camera(1)
+
+
 def test_camera_position(camera):
     position = np.random.random(3)
     camera.position = position
@@ -89,6 +94,20 @@ def test_clipping_range(camera):
         far_point = near_point - np.random.random(1)
         points = (near_point, far_point)
         camera.clipping_range = points
+
+
+def test_reset_clipping_range(camera):
+    with pytest.raises(AttributeError):
+        camera.reset_clipping_range()
+
+    # requires renderer for this method
+    crng = (1, 2)
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere())
+    pl.camera.clipping_range = crng
+    assert pl.camera.clipping_range == crng
+    pl.camera.reset_clipping_range()
+    assert pl.camera.clipping_range != crng
 
 
 def test_view_angle(camera):

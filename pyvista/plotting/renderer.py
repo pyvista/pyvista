@@ -121,7 +121,7 @@ class Renderer(_vtk.vtkRenderer):
         self._floor_kwargs = []
         # this keeps track of lights added manually to prevent garbage collection
         self._lights = []
-        self._camera = Camera()
+        self._camera = Camera(self)
         self.SetActiveCamera(self._camera)
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
@@ -177,9 +177,16 @@ class Renderer(_vtk.vtkRenderer):
             self.camera.up = camera_location[2]
 
         # reset clipping range
-        self.ResetCameraClippingRange()
+        self.reset_camera_clipping_range()
         self.camera_set = True
         self.Modified()
+
+    def reset_camera_clipping_range(self):
+        """Reset the camera clipping range based on the bounds of the visible actors.
+
+        This ensures that no props are cut off
+        """
+        self.ResetCameraClippingRange()
 
     @property
     def camera(self):
