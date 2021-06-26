@@ -15,7 +15,7 @@ like this:
 
 there will be a ``NameError`` when the code block is copied into Python
 because the ``np`` name is undefined. However, pytest and sphinx test
-runs will not catch this, as the np name is typically also available in
+runs will not catch this, as the ``np`` name is typically also available in
 the global namespace of the module where the doctest resides.
 
 In order to fix this, we build a tree of pyvista's public and private
