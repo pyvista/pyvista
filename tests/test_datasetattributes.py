@@ -279,3 +279,10 @@ def test_preserve_field_arrays_after_extract_cells(hexbeam, arr):
     hexbeam.field_arrays["foo"] = arr
     extracted = hexbeam.extract_cells([0, 1, 2, 3])
     assert "foo" in extracted.field_arrays
+
+
+def test_assign_labels_to_points(hexbeam):
+    hexbeam.point_arrays.clear()
+    labels = [f"Label {i}" for i in range(hexbeam.n_points)]
+    hexbeam['labels'] = labels
+    assert np.all(hexbeam.active_scalars == labels)
