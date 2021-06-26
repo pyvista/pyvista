@@ -1,7 +1,11 @@
 """A helper script to check names in doctests.
 
-The problem is that pytest doctests (following the stdlib doctest
-module) see the module-global namespace. So when a doctest looks
+This module is intended to be called from pyvista's root directory with
+
+    python tests/check_doctest_names.py
+
+The problem is that pytest doctests (following the standard-library
+doctest module) see the module-global namespace. So when a doctest looks
 like this:
 
     Examples
@@ -15,8 +19,8 @@ like this:
 
 there will be a ``NameError`` when the code block is copied into Python
 because the ``np`` name is undefined. However, pytest and sphinx test
-runs will not catch this, as the ``np`` name is typically also available in
-the global namespace of the module where the doctest resides.
+runs will not catch this, as the ``np`` name is typically also available
+in the global namespace of the module where the doctest resides.
 
 In order to fix this, we build a tree of pyvista's public and private
 API, using the standard-library doctest module as a doctest parser. We
@@ -30,8 +34,8 @@ as the examples run without error, this module will be happy.
 The implementation is not very robust or smart, it just gets the job
 done to find the rare name mistake in our examples.
 
-This module is executable. If you need off-screen plotting, set the
-``PYVISTA_OFF_SCREEN`` environmental variable to ``True``.
+If you need off-screen plotting, set the ``PYVISTA_OFF_SCREEN``
+environmental variable to ``True`` before running the script.
 """
 
 import re
