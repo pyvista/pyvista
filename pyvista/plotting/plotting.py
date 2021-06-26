@@ -1031,7 +1031,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
                  log_scale=False, pbr=False, metallic=0.0, roughness=0.5,
-                 render=True, component=None, **kwargs):
+                 render=True, component=None, scalars_priority_cells=False, **kwargs):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
@@ -1207,7 +1207,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         rgb : bool, optional
             If an 2 dimensional array is passed as the scalars, plot
-            those values as RGB(A) colors! ``rgba`` is also an accepted
+            those values as RGB(A) colors. ``rgba`` is also an accepted
             alias for this.  Opacity (the A) is optional.
 
         categories : bool, optional
@@ -1279,9 +1279,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
+        scalar_priority_cells : bool, optional
+            When ``mesh.n_points == mesh.n_cells`` and setting
+            scalars, this parameter sets how the scalars will be
+            mapped to the mesh.  Default ``False``, causing the
+            scalars will be associated with the mesh points points.
+
         Returns
         -------
-        actor: vtk.vtkActor
+        actor : vtk.vtkActor
             VTK actor of the mesh.
 
         Examples
@@ -1635,7 +1641,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             def prepare_mapper(scalars):
                 # Scalars interpolation approach
-                if scalars.shape[0] == mesh.n_points:
+                if scalars.shape[0] == mesh.n_points and not scalars_priority_cells:
                     self.mesh.point_arrays.append(scalars, title, True)
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUsePointData()
