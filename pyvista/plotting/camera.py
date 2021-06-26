@@ -37,6 +37,8 @@ class Camera(_vtk.vtkCamera):
                 raise TypeError('Camera only accepts a pyvista.Renderer or None as '
                                 'the ``renderer`` argument')
             self._renderer = proxy(renderer)
+        else:
+            self._renderer = None
 
     @property
     def position(self):
