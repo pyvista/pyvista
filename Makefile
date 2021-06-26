@@ -6,6 +6,7 @@ CODESPELL_IGNORE ?= "ignore_words.txt"
 
 # doctest modules must be off screen to avoid plotting everything
 doctest-modules: export PYVISTA_OFF_SCREEN = True
+doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
 
 
 all: doctest
@@ -23,6 +24,10 @@ pydocstyle:
 doctest-modules:
 	@echo "Runnnig module doctesting"
 	pytest -v --doctest-modules pyvista
+
+doctest-modules-local-namespace:
+	@echo "Running module doctesting using docstring local namespace"
+	python tests/check_doctest_names.py
 
 coverage:
 	@echo "Running coverage"
