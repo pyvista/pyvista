@@ -1283,7 +1283,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
             mapped to the mesh.  Default ``False``, causing the
-            scalars will be associated with the mesh points points.
+            scalars will be associated with the mesh points.
 
         Returns
         -------
