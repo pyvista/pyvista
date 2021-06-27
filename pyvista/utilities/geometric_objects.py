@@ -82,7 +82,7 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
 
     Returns
     -------
-    cylinder : pyvista.PolyData
+    pyvista.PolyData
         Cylinder surface.
 
     Examples
@@ -359,8 +359,8 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     Returns
     -------
-    plane : pyvista.PolyData
-        Plane mesh
+    pyvista.PolyData
+        Plane mesh.
 
     Examples
     --------
@@ -491,16 +491,29 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
 
     Parameters
     ----------
-    bounds : np.ndarray or list
+    bounds : iterable, optional
         Specify the bounding box of the cube.
         ``(xMin, xMax, yMin, yMax, zMin, zMax)``
 
-    level : int
+    level : int, optional
         Level of subdivision of the faces.
 
     quads : bool, optional
         Flag to tell the source to generate either a quad or two
         triangle for a set of four points.  Default ``True``.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh of the box.
+
+    Examples
+    --------
+    Create a box with subdivision ``level=2``.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Box(level=2)
+    >>> mesh.plot(show_edges=True)
 
     """
     if np.array(bounds).size != 6:
@@ -516,40 +529,55 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
     return pyvista.wrap(src.GetOutput())
 
 
-def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
+def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=None,
          capping=True, angle=None, resolution=6):
     """Create a cone.
 
     Parameters
     ----------
-    center : np.ndarray or list
-        Center in [x, y, z]. Middle of the axis of the cone.
+    center : iterable, optional
+        Center in ``[x, y, z]``. Axis of the cone passes through this
+        point.
 
-    direction : np.ndarray or list
-        Direction vector in [x, y, z]. Orientation vector of the cone.
+    direction : iterable, optional
+        Direction vector in ``[x, y, z]``. Orientation vector of the
+        cone.
 
-    height : float
+    height : float, optional
         Height along the cone in its specified direction.
 
-    radius : float
+    radius : float, optional
         Base radius of the cone.
 
-    capping : bool
-        Turn on/off whether to cap the base of the cone with a polygon.
+    capping : bool, optional
+        Enable or disable the capping the base of the cone with a
+        polygon.
 
-    angle : float
-        The angle in degrees between the axis of the cone and a generatrix.
+    angle : float, optional
+        The angle in degrees between the axis of the cone and a
+        generatrix.
 
-    resolution : int
+    resolution : int, optional
         Number of facets used to represent the cone.
 
+    Returns
+    -------
+    pyvista.PolyData
+        Cone mesh.
+
+    Examples
+    --------
+    Create a default Cone.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Cone()
+    >>> mesh.plot(show_edges=True, line_width=5)
     """
     src = _vtk.vtkConeSource()
     src.SetCapping(capping)
     src.SetDirection(direction)
     src.SetCenter(center)
     src.SetHeight(height)
-    # Contributed by @kjelljorner in #249:
     if angle and radius:
         raise ValueError("Both radius and angle specified. They are mutually exclusive.")
     elif angle and not radius:
@@ -563,22 +591,36 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
     return pyvista.wrap(src.GetOutput())
 
 
-def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
+def Polygon(center=(0., 0., 0.), radius=1, normal=(0, 0, 1), n_sides=6):
     """Create a polygon.
 
     Parameters
     ----------
-    center : np.ndarray or list
-        Center in [x, y, z]. Middle of the axis of the polygon.
+    center : iterable, optional
+        Center in ``[x, y, z]``. Central axis of the polygon passes
+        through this point.
 
-    radius : float
+    radius : float, optional
         The radius of the polygon.
 
-    normal : np.ndarray or list
-        Direction vector in [x, y, z]. Orientation vector of the polygon.
+    normal : iterable, optional
+        Direction vector in ``[x, y, z]``. Orientation vector of the polygon.
 
-    n_sides : int
+    n_sides : int, optional
         Number of sides of the polygon.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh of the polygon.
+
+    Examples
+    --------
+    Create a 8 sided polygon.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Polygon(n_sides=8)
+    >>> mesh.plot(show_edges=True, line_width=5)
 
     """
     src = _vtk.vtkRegularPolygonSource()
@@ -594,29 +636,37 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
          c_res=6):
     """Create a polygonal disk with a hole in the center.
 
-    The disk has zero height. The user can specify the inner and outer radius
-    of the disk, and the radial and circumferential resolution of the polygonal
-    representation.
+    The disk has zero height. The user can specify the inner and outer
+    radius of the disk, and the radial and circumferential resolution
+    of the polygonal representation.
 
     Parameters
     ----------
-    center : np.ndarray or list
-        Center in [x, y, z]. Middle of the axis of the disc.
+    center : iterable
+        Center in ``[x, y, z]``. Middle of the axis of the disc.
 
-    inner : float
+    inner : float, optional
         The inner radius.
 
-    outer : float
+    outer : float, optional
         The outer radius.
 
-    normal : np.ndarray or list
-        Direction vector in [x, y, z]. Orientation vector of the disc.
+    normal : iterable
+        Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
-    r_res: int
-        Number of points in radius direction.
+    r_res: int, optional
+        Number of points in radial direction.
 
-    c_res: int
+    c_res: int, optional
         Number of points in circumferential direction.
+
+    Examples
+    --------
+    Create a disc with 50 points in the circumferential direction.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Disc(c_res=50)
+    >>> mesh.plot(show_edges=True, line_width=5)
 
     """
     src = _vtk.vtkDiskSource()
@@ -903,7 +953,7 @@ def Pyramid(points):
     Returns
     -------
     pyvista.UnstructuredGrid
-        Unstructured grid containing a single Pyramid cell.
+        Unstructured grid containing a single pyramid cell.
 
     Examples
     --------

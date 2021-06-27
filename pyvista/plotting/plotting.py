@@ -4096,8 +4096,9 @@ class Plotter(BasePlotter):
         if return_img or screenshot is True:
             return cpos, self.last_image
 
-        # default to returning last used camera position
-        return cpos
+        # Return last used camera position unless within a doctest
+        if '_pytest.doctest' not in sys.modules:
+            return cpos
 
     def add_title(self, title, font_size=18, color=None, font=None,
                   shadow=False):
