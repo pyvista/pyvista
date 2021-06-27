@@ -3943,8 +3943,8 @@ class Plotter(BasePlotter):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
-        >>> pl.show()  # doctest:+SKIP
-
+        >>> pl.show()
+ 
         Take a screenshot interactively.  Screenshot will be of the
         first image shown, so use the first call with
         ``auto_close=False`` to set the scene before taking the

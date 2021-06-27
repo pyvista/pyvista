@@ -32,9 +32,11 @@ The source code for the plot may be included in one of two ways:
 
      .. plot:: path/to/plot.py plot_function1
 
+.. note::
+   Code blocks containing ``doctest:+SKIP`` will be skipped.
+
 Options
 -------
-
 The ``pyvista-plot`` directive supports the following options:
 
     include-source : bool
@@ -68,9 +70,9 @@ Additionally, this directive supports all of the options of the `image`
 directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align* and *class*.
 
+
 Configuration options
 ---------------------
-
 The plot directive has the following configuration options:
 
     plot_include_source
@@ -84,16 +86,9 @@ The plot directive has the following configuration options:
     plot_html_show_formats
         Whether to show links to the files in HTML.
 
-    plot_working_directory
-        By default, the working directory will be changed to the directory of
-        the example, so the code can get at its data files, if any.  Also its
-        path will be added to `sys.path` so it can import any helper modules
-        sitting beside it.  This configuration option can be used to specify
-        a central directory (also added to `sys.path`) where data files and
-        helper modules for all code are located.
-
     plot_template
         Provide a customized template for preparing restructured text.
+
 """
 
 import contextlib
@@ -113,24 +108,15 @@ from docutils.parsers.rst import directives, Directive
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
 
-
+# must enable BUILDING_GALLERY to to keep windows active
+# enable offscreen to hide figures when generating them
 import pyvista
 pyvista.BUILDING_GALLERY = True
-
-from matplotlib import _api, _pylab_helpers, cbook
-
-align = _api.deprecated(
-    "3.4", alternative="docutils.parsers.rst.directives.images.Image.align")(
-        Image.align)
-
-__version__ = 2
-
+pyvista.OFF_SCREEN = True
 
 # -----------------------------------------------------------------------------
 # Registration hook
 # -----------------------------------------------------------------------------
-
-
 def _option_boolean(arg):
     if not arg or not arg.strip():
         # no argument given, assume used as a flag
@@ -184,7 +170,7 @@ def mark_plot_labels(app, document):
 
 
 class PlotDirective(Directive):
-    """The ``.. plot::`` directive, as documented in the module's docstring."""
+    """The ``.. pyvista-plot::`` directive, as documented in the module's docstring."""
 
     has_content = True
     required_arguments = 0
@@ -214,13 +200,6 @@ class PlotDirective(Directive):
             raise self.error(str(e))
 
 
-# def _copy_css_file(app, exc):
-#     if exc is None and app.builder.format == 'html':
-#         src = cbook._get_data_path('plot_directive/plot_directive.css')
-#         dst = app.outdir / Path('_static')
-#         shutil.copy(src, dst)
-
-
 def setup(app):
     setup.app = app
     setup.config = app.config
@@ -229,12 +208,10 @@ def setup(app):
     app.add_config_value('plot_include_source', True, False)
     app.add_config_value('plot_basedir', None, True)
     app.add_config_value('plot_html_show_formats', True, True)
-    app.add_config_value('plot_working_directory', None, True)
     app.add_config_value('plot_template', None, True)
     app.connect('doctree-read', mark_plot_labels)
-    # app.add_css_file('plot_directive.css')
-    # app.connect('build-finished', _copy_css_file)
-    return {'parallel_read_safe': True, 'parallel_write_safe': True,
+    return {'parallel_read_safe': True,
+            'parallel_write_safe': True,
             'version': pyvista.__version__}
 
 
@@ -251,32 +228,6 @@ def contains_doctest(text):
     r = re.compile(r'^\s*>>>', re.M)
     m = r.search(text)
     return bool(m)
-
-
-@_api.deprecated("3.5", alternative="doctest.script_from_examples")
-def unescape_doctest(text):
-    """
-    Extract code from a piece of text, which contains either Python code
-    or doctests.
-    """
-    if not contains_doctest(text):
-        return text
-    code = ""
-    for line in text.split("\n"):
-        m = re.match(r'^\s*(>>>|\.\.\.) (.*)$', line)
-        if m:
-            code += m.group(2) + "\n"
-        elif line.strip():
-            code += "# " + line.strip() + "\n"
-        else:
-            code += "\n"
-    return code
-
-
-@_api.deprecated("3.5")
-def split_code_at_show(text):
-    """Split code at plt.show()."""
-    return _split_code_at_show(text)[1]
 
 
 def _split_code_at_show(text):
@@ -327,7 +278,7 @@ Exception occurred rendering plot.
 
 # the context of the plot for all directives specified with the
 # :context: option
-# plot_context = dict()
+plot_context = dict()
 
 
 class ImageFile:
@@ -354,46 +305,19 @@ class PlotError(RuntimeError):
     pass
 
 
-@_api.deprecated("3.5")
-def run_code(code, code_path, ns=None, function_name=None):
-    """
-    Import a Python module from a path, and run the function given by
-    name, if function_name is not None.
-    """
-    _run_code(unescape_doctest(code), code_path, ns, function_name)
-
-
 def _run_code(code, code_path, ns=None, function_name=None):
     """
     Import a Python module from a path, and run the function given by
     name, if function_name is not None.
     """
-
-    # Change the working directory to the directory of the example, so
-    # it can get at its data files, if any.  Add its path to sys.path
-    # so it can import any helper modules sitting beside it.
-    pwd = os.getcwd()
-    if setup.config.plot_working_directory is not None:
-        try:
-            os.chdir(setup.config.plot_working_directory)
-        except OSError as err:
-            raise OSError(str(err) + '\n`plot_working_directory` option in'
-                          'Sphinx configuration file must be a valid '
-                          'directory path') from err
-        except TypeError as err:
-            raise TypeError(str(err) + '\n`plot_working_directory` option in '
-                            'Sphinx configuration file must be a string or '
-                            'None') from err
-    elif code_path is not None:
-        dirname = os.path.abspath(os.path.dirname(code_path))
-        os.chdir(dirname)
+    # do not execute code containing any SKIP directives
+    if 'doctest:+SKIP' in code:
+        return ns
 
     try:
         exec(code, ns)
     except (Exception, SystemExit) as err:
         raise PlotError(traceback.format_exc()) from err
-    finally:
-        os.chdir(pwd)
 
     return ns
 
@@ -421,7 +345,11 @@ def render_figures(code, code_path, output_dir, output_base, context,
 
     # Otherwise, we didn't find the files, so build them
     results = []
-    ns = {}
+    ns = plot_context if context else {}
+
+    if context_reset:
+        clear_state(config.plot_rcparams)
+        plot_context.clear()
 
     close_figs = not context or close_figs
 
@@ -437,10 +365,10 @@ def render_figures(code, code_path, output_dir, output_base, context,
         for j, (address, plotter) in enumerate(figures.items()):            
             if hasattr(plotter, '_gif_filename'):
                 # move gif to fname
-                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{i:02d}.gif")
+                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
                 shutil.move(plotter._gif_filename, image_file.filename)
             else:
-                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{i:02d}.png")
+                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
                 plotter.screenshot(image_file.filename)
             images.append(image_file)
 

@@ -10,6 +10,7 @@ cmocean
 itkwidgets>=0.25.2
 tqdm
 hypothesis>=6.0.3
+sphinx
 sphinx_gallery
 trimesh
 ipyvtklink>=0.2.1
