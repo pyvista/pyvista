@@ -1,4 +1,5 @@
-"""
+"""Plot directive module.
+
 A directive for including a PyVista plot in a Sphinx document
 =============================================================
 
@@ -139,8 +140,9 @@ def _option_format(arg):
     return directives.choice(arg, ('python', 'doctest'))
 
 
-def mark_plot_labels(app, document):
-    """
+def _mark_plot_labels(app, document):
+    """Make plots referencable.
+
     To make plots referenceable, we need to move the reference from the
     "htmlonly" (or "latexonly") node to the actual figure node itself.
     """
@@ -201,6 +203,7 @@ class PlotDirective(Directive):
 
 
 def setup(app):
+    """Set up the plot directive."""
     setup.app = app
     setup.config = app.config
     setup.confdir = app.confdir
@@ -209,7 +212,7 @@ def setup(app):
     app.add_config_value('plot_basedir', None, True)
     app.add_config_value('plot_html_show_formats', True, True)
     app.add_config_value('plot_template', None, True)
-    app.connect('doctree-read', mark_plot_labels)
+    app.connect('doctree-read', _mark_plot_labels)
     return {'parallel_read_safe': True,
             'parallel_write_safe': True,
             'version': pyvista.__version__}
@@ -218,7 +221,7 @@ def setup(app):
 # -----------------------------------------------------------------------------
 # Doctest handling
 # -----------------------------------------------------------------------------
-def contains_doctest(text):
+def _contains_doctest(text):
     try:
         # check if it's valid Python as-is
         compile(text, '<string>', 'exec')
@@ -233,7 +236,7 @@ def contains_doctest(text):
 def _split_code_at_show(text):
     """Split code at plt.show()."""
     parts = []
-    is_doctest = contains_doctest(text)
+    is_doctest = _contains_doctest(text)
     part = []
     for line in text.split("\n"):
         if '.show(' in line or '.plot(' in line:
@@ -282,31 +285,28 @@ plot_context = dict()
 
 
 class ImageFile:
+    """Simple representation of an image file path."""
+
     def __init__(self, dirname, basename):
+        """Construct ImageFile."""
         self.basename = basename
         self.dirname = dirname
 
     @property
     def filename(self):
+        """Return the filename of this image."""
         return os.path.join(self.dirname, self.basename)
 
 
-def out_of_date(original, derived):
-    """
-    Return whether *derived* is out-of-date relative to *original*, both of
-    which are full file paths.
-    """
-    return (not os.path.exists(derived) or
-            (os.path.exists(original) and
-             os.stat(derived).st_mtime < os.stat(original).st_mtime))
-
-
 class PlotError(RuntimeError):
+    """More descriptive plot error."""
+
     pass
 
 
 def _run_code(code, code_path, ns=None, function_name=None):
-    """
+    """Run a docstring example if it does not contain ``'doctest:+SKIP'``.
+
     Import a Python module from a path, and run the function given by
     name, if function_name is not None.
     """
@@ -380,6 +380,7 @@ def render_figures(code, code_path, output_dir, output_base, context,
 
 
 def run(arguments, content, options, state_machine, state, lineno):
+    """Run the plot directive."""
     document = state_machine.document
     config = document.settings.env.config
     nofigs = 'nofigs' in options
@@ -449,7 +450,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     output_base = output_base.replace('.', '-')
 
     # is it in doctest format?
-    is_doctest = contains_doctest(code)
+    is_doctest = _contains_doctest(code)
     if 'format' in options:
         if options['format'] == 'python':
             is_doctest = False
