@@ -332,6 +332,21 @@ if VTK9:
     from vtkmodules.vtkCommonCore import (buffer_shared,
                                           vtkAbstractArray,
                                           vtkWeakReference)
+    from vtkmodules.vtkCommonDataModel import vtkRectf
+    from vtkmodules.vtkRenderingContext2D import (vtkContextScene,
+                                                  vtkContextActor,
+                                                  vtkImageItem,
+                                                  vtkBlockItem,
+                                                  vtkPen,
+                                                  vtkBrush)
+    from vtkmodules.vtkChartsCore import (vtkChart,
+                                          vtkChartXY,
+                                          vtkChartXYZ,
+                                          vtkAxis,
+                                          vtkPlotLine,
+                                          vtkPlotLine3D,
+                                          vtkPlotPoints,
+                                          vtkPlotPoints3D)
 
     # lazy import for some of the less used readers
     def lazy_vtkGL2PSExporter():
