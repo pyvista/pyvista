@@ -2,7 +2,8 @@
 A directive for including a PyVista plot in a Sphinx document
 =============================================================
 
-By default, in HTML output, `pyvista-plot` will include a .png.
+By default, in HTML output, `pyvista-plot` will include an inline
+``.png`` image.
 
 The source code for the plot may be included in one of two ways:
 
@@ -35,9 +36,6 @@ Options
 -------
 
 The ``pyvista-plot`` directive supports the following options:
-
-    format : {'python', 'doctest'}
-        The format of the input.
 
     include-source : bool
         Whether to display the source code. The default can be changed
@@ -76,44 +74,15 @@ Configuration options
 The plot directive has the following configuration options:
 
     plot_include_source
-        Default value for the include-source option
-
-    plot_html_show_source_link
-        Whether to show a link to the source in HTML.
-
-    plot_pre_code
-        Code that should be executed before each plot. If not specified or None
-        it will default to a string containing::
-
-            import numpy as np
-            from matplotlib import pyplot as plt
+        Default value for the include-source option.
 
     plot_basedir
         Base directory, to which ``plot::`` file names are relative
         to.  (If None or empty, file names are relative to the
         directory where the file containing the directive is.)
 
-    plot_formats
-        File formats to generate. List of tuples or strings::
-
-            [(suffix, dpi), suffix, ...]
-
-        that determine the file format and the DPI. For entries whose
-        DPI was omitted, sensible defaults are chosen. When passing from
-        the command line through sphinx_build the list should be passed as
-        suffix:dpi,suffix:dpi, ...
-
     plot_html_show_formats
         Whether to show links to the files in HTML.
-
-    plot_rcparams
-        A dictionary containing any non-standard rcParams that should
-        be applied before each plot.
-
-    plot_apply_rcparams
-        By default, rcParams are applied when ``:context:`` option is not used
-        in a plot directive.  This configuration option overrides this behavior
-        and applies rcParams before each plot.
 
     plot_working_directory
         By default, the working directory will be changed to the directory of
@@ -257,29 +226,21 @@ def setup(app):
     setup.config = app.config
     setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
-    app.add_config_value('plot_pre_code', None, True)
     app.add_config_value('plot_include_source', True, False)
-    app.add_config_value('plot_html_show_source_link', True, True)
-    app.add_config_value('plot_formats', ['png', 'hires.png', 'pdf'], True)
     app.add_config_value('plot_basedir', None, True)
     app.add_config_value('plot_html_show_formats', True, True)
-    app.add_config_value('plot_rcparams', {}, True)
-    app.add_config_value('plot_apply_rcparams', False, True)
     app.add_config_value('plot_working_directory', None, True)
     app.add_config_value('plot_template', None, True)
     app.connect('doctree-read', mark_plot_labels)
     # app.add_css_file('plot_directive.css')
     # app.connect('build-finished', _copy_css_file)
-    metadata = {'parallel_read_safe': True, 'parallel_write_safe': True,
-                'version': pyvista.__version__}
-    return metadata
+    return {'parallel_read_safe': True, 'parallel_write_safe': True,
+            'version': pyvista.__version__}
 
 
 # -----------------------------------------------------------------------------
 # Doctest handling
 # -----------------------------------------------------------------------------
-
-
 def contains_doctest(text):
     try:
         # check if it's valid Python as-is
@@ -495,7 +456,6 @@ def run(arguments, content, options, state_machine, state, lineno):
     config = document.settings.env.config
     nofigs = 'nofigs' in options
 
-    # formats = get_plot_formats(config)
     default_fmt = 'png'
 
     options.setdefault('include-source', config.plot_include_source)
@@ -643,18 +603,11 @@ def run(arguments, content, options, state_machine, state, lineno):
             ':%s: %s' % (key, val) for key, val in options.items()
             if key in ('alt', 'height', 'width', 'scale', 'align', 'class')]
 
-        # Not-None src_link signals the need for a source link in the generated
-        # html
-        if j == 0 and config.plot_html_show_source_link:
-            src_link = source_link
-        else:
-            src_link = None
-
         result = jinja2.Template(config.plot_template or TEMPLATE).render(
             default_fmt=default_fmt,
             dest_dir=dest_dir_link,
             build_dir=build_dir_link,
-            source_link=src_link,
+            source_link=None,
             multi_image=len(images) > 1,
             options=opts,
             images=images,

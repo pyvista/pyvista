@@ -285,10 +285,10 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     >>> sphere = pyvista.Sphere()
     >>> cpos = sphere.plot(show_edges=True)
 
-    Create a half sphere by controling `end_theta`
+    Create a half sphere by setting ``end_theta``.
 
     >>> sphere = pyvista.Sphere(end_theta=90)
-    >>> out = sphere.plot()
+    >>> out = sphere.plot(show_edges=True)
 
     """
     sphere = _vtk.vtkSphereSource()

@@ -10,7 +10,7 @@ if sys.version_info >= (3, 0):
 sys.path.insert(0, os.path.abspath("."))
 import make_external_gallery
 
-# make_external_gallery.make_example_gallery()
+make_external_gallery.make_example_gallery()
 
 
 # -- pyvista configuration ---------------------------------------------------
@@ -58,10 +58,10 @@ extensions = [
     "sphinx.ext.autosummary",
     "notfound.extension",
     "sphinx_copybutton",
-    # "sphinx_gallery.gen_gallery",
+    "sphinx_gallery.gen_gallery",
     "sphinx.ext.extlinks",
     "sphinx.ext.coverage",
-    # "jupyter_sphinx",
+    "jupyter_sphinx",
     "sphinx_panels",
     "pyvista.ext.plot_directive",
 ]

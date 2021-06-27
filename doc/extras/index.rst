@@ -18,3 +18,4 @@ and how you can help develop PyVista.
    pyinstaller
    flask
    developer_notes
+   plot_directive
