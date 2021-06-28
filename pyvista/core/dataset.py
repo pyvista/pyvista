@@ -255,10 +255,11 @@ class DataSet(DataSetFilters, DataObject):
         """Set the active vector."""
         warnings.warn(
             "Use of `DataSet.vectors` to add vector data is deprecated. "
-            "Use `DataSet['my_vector_data'] = data` or "
-            "`DataSet.point_arrays['my_vector_data']=data` or "
-            "`DataSet.cell_arrays['my_vector_data']=data`. "
-            "Use `DataSet.set_active_vectors` to make active."
+            "Use `DataSet['vector_name'] = data` or "
+            "`DataSet.point_arrays['vector_name'] = data` or "
+            "`DataSet.cell_arrays['vector_name'] = data`. "
+            "Use `DataSet.set_active_vectors('vector_name')` or "
+            "`DataSet.active_vectors_name = 'vector_name' to make active."
             ,
             PyvistaDeprecationWarning
         )
