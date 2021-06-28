@@ -236,12 +236,15 @@ class ScalarBars():
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
         >>> _ = plotter.add_scalar_bar('Data', interactive=True, vertical=False,
+        ...                            title_font_size=35,
+        ...                            label_font_size=30,
         ...                            outline=True, fmt='%10.5f')
+        >>> plotter.show()
 
         Notes
         -----
-        Setting title_font_size, or label_font_size disables automatic font
-        sizing for both the title and label.
+        Setting ``title_font_size``, or ``label_font_size`` disables
+        automatic font sizing for both the title and label.
 
         """
         if mapper is None:

@@ -81,7 +81,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         Plot-specific theme.
 
     **kwargs : optional keyword arguments
-        See ``help(pyvista.Plotter.add_mesh)`` for additional options.
+        See :func:`pyvista.BasePlotter.add_mesh` for additional options.
 
     Returns
     -------
