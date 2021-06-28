@@ -268,7 +268,8 @@ def test_multi_ray_trace(sphere):
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plot_curvature(sphere):
     cpos = sphere.plot_curvature(off_screen=True)
-    assert isinstance(cpos, pyvista.CameraPosition)
+    # cpos is None within unit testing
+    assert cpos is None
 
 
 def test_edge_mask(sphere):
