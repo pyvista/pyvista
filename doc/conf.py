@@ -160,9 +160,9 @@ def _custom_parse_generic_section(self, section, use_admonition):
     else:
         header = '.. rubric:: %s' % section
 
-    # check if section contains a plotting command
+    # check if section contains any mention of pyvista
     has_plotting = False
-    has_pyvista = any(['import pyvista' in line for line in lines])
+    has_pyvista = any(['pyvista' in line for line in lines])
     if has_pyvista:
         for line in lines:
             if '.plot(' in line or '.show(' in line:

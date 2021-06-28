@@ -297,17 +297,6 @@ def render_figures(code, code_path, output_dir, output_base, context,
     # Try to determine if all images already exist
     is_doctest, code_pieces = _split_code_at_show(code)
 
-    # Look for single-figure output files first
-    exists = True
-    for i, code_piece in enumerate(code_pieces):
-        img = ImageFile(output_dir, f"{output_base}_{i:02d}_00.png")
-        if not os.path.isfile(img.filename):
-            exists = False
-            break
-
-    if exists:
-        return [(code, [img])]
-
     # Otherwise, we didn't find the files, so build them
     results = []
     ns = plot_context if context else {}

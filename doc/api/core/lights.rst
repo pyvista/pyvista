@@ -9,20 +9,10 @@ access to lighting is necessary.
 Brief Example
 -------------
 
-.. jupyter-execute::
-   :hide-code:
-
-   # must have this here as our global backend may not be static.  We
-   # have to use static examples here since lighting is not fully ported
-   # to vtk.js
-   import pyvista
-   pyvista.set_jupyter_backend('static')
-
-
 Create a red spotlight that shines on the origin, then create a scene
 without lighting and add our light to it manually.
 
-.. jupyter-execute::
+.. pyvista-plot::
 
     import pyvista as pv
     from pyvista import examples
@@ -86,7 +76,7 @@ The following example uses a positional light to create an
 eclipse-like shadow below a sphere by controlling the cone angle and
 exponent values of the light.
 
-.. jupyter-execute::
+.. pyvista-plot::
 
     import pyvista as pv
 

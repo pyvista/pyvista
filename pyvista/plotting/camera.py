@@ -152,7 +152,7 @@ class Camera(_vtk.vtkCamera):
 
     @property
     def is_parallel_projection(self):
-        """Return True if parallel projection is set."""
+        """Return ```True`` if parallel projection is enabled."""
         return self._is_parallel_projection
 
     @property
@@ -263,19 +263,40 @@ class Camera(_vtk.vtkCamera):
         """
         self.SetViewUp(vector)
 
-    def enable_parallel_projection(self, flag=True):
+    def enable_parallel_projection(self):
         """Enable parallel projection.
 
         The camera will have a parallel projection. Parallel
-        projection is often useful when viewing images or 2D datasets.
+        projection is often useful when viewing images or 2D datasets,
+        but will look odd when viewing 3D datasets.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> pl = pyvista.demos.orientation_plotter()
+        >>> pl.enable_parallel_projection()
+        >>> pl.show()
 
         """
-        self._is_parallel_projection = flag
-        self.SetParallelProjection(flag)
+        self._is_parallel_projection = True
+        self.SetParallelProjection(True)
 
     def disable_parallel_projection(self):
-        """Disable the use of perspective projection."""
-        self.enable_parallel_projection(False)
+        """Disable the use of perspective projection.
+
+        This is default behavior.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> pl = pyvista.demos.orientation_plotter()
+        >>> pl.disable_parallel_projection()
+        >>> pl.show()
+        """
+        self._is_parallel_projection = False
+        self.SetParallelProjection(False)
 
     @property
     def clipping_range(self):
