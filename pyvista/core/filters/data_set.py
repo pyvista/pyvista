@@ -2100,7 +2100,6 @@ class DataSetFilters:
 
         Parameters
         ----------
-
         vectors : str, optional
             The string name of the active vector field to integrate across.
 
