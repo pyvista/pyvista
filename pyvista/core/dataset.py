@@ -244,8 +244,8 @@ class DataSet(DataSetFilters, DataObject):
     @property
     def vectors(self) -> Optional[pyvista_ndarray]:
         """Return active vectors."""
-        warnings.warn(
-            "Use of `DataSet.vectors` is deprecated.  Use `DataSet.active_vectors` instead.",
+        warnings.warn( "Use of `DataSet.vectors` is deprecated. "
+            "Use `DataSet.active_vectors` instead.",
             PyvistaDeprecationWarning
         )
         return self.active_vectors
