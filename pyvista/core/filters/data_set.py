@@ -2653,6 +2653,19 @@ class DataSetFilters:
         subgrid : pyvista.UnstructuredGrid
             Subselected grid
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> grid = pyvista.read(examples.hexbeamfile)
+        >>> subset = grid.extract_cells(range(20))
+        >>> subset.n_cells
+        20
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(grid, style='wireframe', line_width=5, color='black')
+        >>> actor = pl.add_mesh(subset, color='grey')
+        >>> pl.show()
+
         """
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
