@@ -2149,7 +2149,7 @@ class DataSetFilters:
             closed loop.
 
         loop_angle : float, optional
-            The maximum angle between points to determine a closed loop.
+            The maximum angle in degrees between points to determine a closed loop.
 
         minimum_number_of_loop_points : int, optional
             The minimum number of points before which a closed loop will
