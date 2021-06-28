@@ -28,7 +28,7 @@ class Camera(_vtk.vtkCamera):
 
     def __init__(self, renderer=None):
         """Initialize a new camera descriptor."""
-        self._is_parallel_projection = False
+        self._parallel_projection = False
         self._elevation = 0.0
         self._azimuth = 0.0
 
@@ -149,11 +149,6 @@ class Camera(_vtk.vtkCamera):
         vtk_matrix = _vtk.vtkMatrix4x4()
         vtk_matrix.DeepCopy(matrix.ravel())
         self.SetModelTransformMatrix(vtk_matrix)
-
-    @property
-    def is_parallel_projection(self):
-        """Return ```True`` if parallel projection is enabled."""
-        return self._is_parallel_projection
 
     @property
     def distance(self):
@@ -279,7 +274,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl.show()
 
         """
-        self._is_parallel_projection = True
+        self._parallel_projection = True
         self.SetParallelProjection(True)
 
     def disable_parallel_projection(self):
@@ -295,8 +290,41 @@ class Camera(_vtk.vtkCamera):
         >>> pl.disable_parallel_projection()
         >>> pl.show()
         """
-        self._is_parallel_projection = False
+        self._parallel_projection = False
         self.SetParallelProjection(False)
+
+    @property
+    def parallel_projection(self):
+        """Return the state of the parallel projection.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> pl = pyvista.Plotter()
+        >>> pl.disable_parallel_projection()
+        >>> pl.parallel_projection
+        False
+        """
+        return self._parallel_projection
+
+    @parallel_projection.setter
+    def parallel_projection(self, state):
+        """Return the state of the parallel projection.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> pl = pyvista.Plotter()
+        >>> pl.disable_parallel_projection()
+        >>> pl.parallel_projection
+        False
+        """
+        if state:
+            self.enable_parallel_projection()
+        else:
+            self.disable_parallel_projection()
 
     @property
     def clipping_range(self):

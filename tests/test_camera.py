@@ -73,13 +73,13 @@ def test_up(camera):
 def test_enable_parallel_projection(camera):
     camera.enable_parallel_projection()
     assert camera.GetParallelProjection()
-    assert camera.is_parallel_projection
+    assert camera.parallel_projection
 
 
 def test_disable_parallel_projection(camera):
     camera.disable_parallel_projection()
     assert not camera.GetParallelProjection()
-    assert not camera.is_parallel_projection
+    assert not camera.parallel_projection
 
 
 def test_clipping_range(camera):

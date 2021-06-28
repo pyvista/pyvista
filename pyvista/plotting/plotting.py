@@ -2738,7 +2738,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore')
             near, far = self.camera.clipping_range
-            if self.camera.is_parallel_projection:
+            if self.camera.parallel_projection:
                 zval = (zbuff - near) / (far - near)
             else:
                 zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
