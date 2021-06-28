@@ -58,7 +58,7 @@ Plot 6 shows that a non-context block still doesn't have ``a``:
 Plot 7 uses ``include-source``:
 
 .. pyvista-plot::
-    :include-source:
+    :include-source: True
 
     # Only a comment
 
@@ -90,6 +90,7 @@ using the :caption: option:
 .. pyvista-plot:: plot_cone.py
    :caption: This is the caption for plot 11.
 
+
 Plot 12 shows that the default template correctly prints the multi-image
 scenario:
 
@@ -100,3 +101,25 @@ scenario:
    pyvista.Text3D('hello').plot()
 
    pyvista.Text3D('world').plot()
+
+
+Plot 13 uses the skip directive and should not generate a plot.
+
+.. pyvista-plot::
+
+   import pyvista
+   pyvista.Sphere().plot()  # doctest:+SKIP
+
+Plot 14 uses ``include-source`` False:
+
+.. pyvista-plot::
+    :include-source: False
+
+    # you should not be reading this right now
+
+Plot 14 uses ``include-source`` with no args:
+
+.. pyvista-plot::
+    :include-source:
+
+    # should be printed: include-source with no args

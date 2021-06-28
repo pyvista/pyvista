@@ -11,7 +11,7 @@ import pytest
 
 pytest.importorskip('sphinx')
 
-@pytest.mark.skipif(os.name == 'nt', 'path issues on Azure Windows CI')
+@pytest.mark.skipif(os.name == 'nt', reason='path issues on Azure Windows CI')
 def test_tinypages(tmpdir):
     tmp_path = Path(tmpdir)
     html_dir = tmp_path / 'html'
@@ -42,6 +42,9 @@ def test_tinypages(tmpdir):
     assert plot_file(9, 0, 0).exists()
     assert plot_file(9, 1, 0).exists()
 
+    # test skip directive
+    assert not plot_file(13, 0, 0).exists()
+
     # verify external file generated figure
     cone_file = html_dir / f'plot_cone_00_00.png'
     assert cone_file.exists()
@@ -57,3 +60,6 @@ def test_tinypages(tmpdir):
 
     # check that the multi-image caption is applied twice
     assert html_contents.count(b'This caption applies to both plots.') == 2
+
+    assert b'you should not be reading this right now' not in html_contents
+    assert b'should be printed: include-source with no args' in html_contents

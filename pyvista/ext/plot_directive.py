@@ -3,7 +3,7 @@
 A directive for including a PyVista plot in a Sphinx document
 =============================================================
 
-By default, in HTML output, `pyvista-plot` will include an inline
+The `.. pyvista-plot::` sphinx directive will include an inline
 ``.png`` image.
 
 The source code for the plot may be included in one of two ways:
@@ -15,7 +15,6 @@ The source code for the plot may be included in one of two ways:
        >>> import pyvista
        >>> sphere = pyvista.Sphere()
        >>> out = sphere.plot()
-
 
 2. **A path to a source file** as the argument to the directive::
 
@@ -36,6 +35,10 @@ The source code for the plot may be included in one of two ways:
 .. note::
    Code blocks containing ``doctest:+SKIP`` will be skipped.
 
+.. note::
+   Animations will not be saved, only the last frame will be shown.
+
+
 Options
 -------
 The ``pyvista-plot`` directive supports the following options:
@@ -49,14 +52,10 @@ The ``pyvista-plot`` directive supports the following options:
         encoding must be specified using the ``:encoding:`` option.  The
         encoding will not be inferred using the ``-*- coding -*-`` metacomment.
 
-    context : bool or str
+    context : None
         If provided, the code will be run in the context of all previous plot
         directives for which the ``:context:`` option was specified.  This only
-        applies to inline code plot directives, not those run from files. If
-        the ``:context: reset`` option is specified, the context is reset
-        for this and future plots, and previous figures are closed prior to
-        running the code. ``:context: close-figs`` keeps the context but closes
-        previous figures before running the code.
+        applies to inline code plot directives, not those run from files.
 
     nofigs : bool
         If specified, the code block will be run, but no figures will be
@@ -69,7 +68,7 @@ The ``pyvista-plot`` directive supports the following options:
 
 Additionally, this directive supports all of the options of the `image`
 directive, except for *target* (since plot will add its own target).  These
-include *alt*, *height*, *width*, *scale*, *align* and *class*.
+include *alt*, *height*, *width*, *scale*, *align*.
 
 
 Configuration options
@@ -81,7 +80,7 @@ The plot directive has the following configuration options:
 
     plot_basedir
         Base directory, to which ``plot::`` file names are relative
-        to.  (If None or empty, file names are relative to the
+        to.  (If ``None`` or empty, file names are relative to the
         directory where the file containing the directive is.)
 
     plot_html_show_formats
@@ -126,49 +125,17 @@ def _option_boolean(arg):
         return False
     elif arg.strip().lower() in ('yes', '1', 'true'):
         return True
-    else:
+    else:  # pragma: no cover
         raise ValueError('"%s" unknown boolean' % arg)
 
 
 def _option_context(arg):
-    if arg in [None, 'reset', 'close-figs']:
-        return arg
-    raise ValueError("Argument should be None or 'reset' or 'close-figs'")
+    if arg is not None:  # pragma: no cover
+        raise ValueError("No arguments allowed for ``:context:``")
 
 
 def _option_format(arg):
     return directives.choice(arg, ('python', 'doctest'))
-
-
-def _mark_plot_labels(app, document):
-    """Make plots referencable.
-
-    To make plots referenceable, we need to move the reference from the
-    "htmlonly" (or "latexonly") node to the actual figure node itself.
-    """
-    for name, explicit in document.nametypes.items():
-        if not explicit:
-            continue
-        labelid = document.nameids[name]
-        if labelid is None:
-            continue
-        node = document.ids[labelid]
-        if node.tagname in ('html_only', 'latex_only'):
-            for n in node:
-                if n.tagname == 'figure':
-                    sectname = name
-                    for c in n:
-                        if c.tagname == 'caption':
-                            sectname = c.astext()
-                            break
-
-                    node['ids'].remove(labelid)
-                    node['names'].remove(name)
-                    n['ids'].append(labelid)
-                    n['names'].append(name)
-                    document.settings.env.labels[name] = \
-                        document.settings.env.docname, labelid, sectname
-                    break
 
 
 class PlotDirective(Directive):
@@ -184,7 +151,6 @@ class PlotDirective(Directive):
         'width': directives.length_or_percentage_or_unitless,
         'scale': directives.nonnegative_int,
         'align': Image.align,
-        'class': directives.class_option,
         'include-source': _option_boolean,
         'format': _option_format,
         'context': _option_context,
@@ -198,7 +164,7 @@ class PlotDirective(Directive):
         try:
             return run(self.arguments, self.content, self.options,
                        self.state_machine, self.state, self.lineno)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             raise self.error(str(e))
 
 
@@ -212,7 +178,6 @@ def setup(app):
     app.add_config_value('plot_basedir', None, True)
     app.add_config_value('plot_html_show_formats', True, True)
     app.add_config_value('plot_template', None, True)
-    app.connect('doctree-read', _mark_plot_labels)
     return {'parallel_read_safe': True,
             'parallel_write_safe': True,
             'version': pyvista.__version__}
@@ -316,15 +281,14 @@ def _run_code(code, code_path, ns=None, function_name=None):
 
     try:
         exec(code, ns)
-    except (Exception, SystemExit) as err:
+    except (Exception, SystemExit) as err:  # pragma: no cover
         raise PlotError(traceback.format_exc()) from err
 
     return ns
 
 
 def render_figures(code, code_path, output_dir, output_base, context,
-                   function_name, config, context_reset=False,
-                   close_figs=False):
+                   function_name, config,):
     """Run a pyplot script and save the images in *output_dir*.
 
     Save the images under *output_dir* with file names derived from
@@ -334,8 +298,9 @@ def render_figures(code, code_path, output_dir, output_base, context,
     is_doctest, code_pieces = _split_code_at_show(code)
 
     # Look for single-figure output files first
+    exists = True
     for i, code_piece in enumerate(code_pieces):
-        img = ImageFile(output_dir, "%s_%02d.png" % (output_base, i))
+        img = ImageFile(output_dir, f"{output_base}_{i:02d}_00.png")
         if not os.path.isfile(img.filename):
             exists = False
             break
@@ -347,12 +312,6 @@ def render_figures(code, code_path, output_dir, output_base, context,
     results = []
     ns = plot_context if context else {}
 
-    if context_reset:
-        clear_state(config.plot_rcparams)
-        plot_context.clear()
-
-    close_figs = not context or close_figs
-
     for i, code_piece in enumerate(code_pieces):
 
         # generate the plot
@@ -363,13 +322,8 @@ def render_figures(code, code_path, output_dir, output_base, context,
         images = []
         figures = pyvista.plotting._ALL_PLOTTERS
         for j, (address, plotter) in enumerate(figures.items()):            
-            if hasattr(plotter, '_gif_filename'):
-                # move gif to fname
-                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
-                shutil.move(plotter._gif_filename, image_file.filename)
-            else:
-                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
-                plotter.screenshot(image_file.filename)
+            image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
+            plotter.screenshot(image_file.filename)
             images.append(image_file)
 
         pyvista.close_all() # close and clear all plotters
@@ -388,13 +342,6 @@ def run(arguments, content, options, state_machine, state, lineno):
     default_fmt = 'png'
 
     options.setdefault('include-source', config.plot_include_source)
-    if 'class' in options:
-        # classes are parsed into a list of string, and output by simply
-        # printing the list, abusing the fact that RST guarantees to strip
-        # non-conforming characters
-        options['class'] = ['plot-directive'] + options['class']
-    else:
-        options.setdefault('class', ['plot-directive'])
     keep_context = 'context' in options
     context_opt = None if not keep_context else options['context']
 
@@ -414,7 +361,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
         # Enforce unambiguous use of captions.
         if "caption" in options:
-            if caption:
+            if caption:  # pragma: no cover
                 raise ValueError(
                     'Caption specified in both content and options.'
                     ' Please remove ambiguity.'
@@ -481,7 +428,7 @@ def run(arguments, content, options, state_machine, state, lineno):
                                  source_rel_dir).replace(os.path.sep, '/')
     try:
         build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
-    except ValueError:
+    except ValueError:  # pragma: no cover
         # on Windows, relpath raises ValueError when path and start are on
         # different mounts/drives
         build_dir_link = build_dir
@@ -495,11 +442,9 @@ def run(arguments, content, options, state_machine, state, lineno):
                                  output_base,
                                  keep_context,
                                  function_name,
-                                 config,
-                                 context_reset=context_opt == 'reset',
-                                 close_figs=context_opt == 'close-figs')
+                                 config)
         errors = []
-    except PlotError as err:
+    except PlotError as err:  # pragma: no cover
         reporter = state.memo.reporter
         sm = reporter.system_message(
             2, "Exception occurred in plotting {}\n from {}:\n{}".format(
@@ -530,7 +475,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
         opts = [
             ':%s: %s' % (key, val) for key, val in options.items()
-            if key in ('alt', 'height', 'width', 'scale', 'align', 'class')]
+            if key in ('alt', 'height', 'width', 'scale', 'align')]
 
         result = jinja2.Template(config.plot_template or TEMPLATE).render(
             default_fmt=default_fmt,
