@@ -13,8 +13,8 @@ You can generate static images of pyvista plots using the
        "pyvista.ext.plot_directive",
    ]
 
-You can then issue plotting directive within your sphinx
-documentation files::
+You can then issue the plotting directive within your sphinx
+documentation files:
 
    .. pyvista-plot::
       :caption: A sphere
