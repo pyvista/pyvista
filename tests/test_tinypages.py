@@ -11,7 +11,7 @@ import pytest
 
 pytest.importorskip('sphinx')
 
-
+@pytest.mark.skipif(os.name == 'nt', 'path issues on Azure Windows CI')
 def test_tinypages(tmpdir):
     tmp_path = Path(tmpdir)
     html_dir = tmp_path / 'html'
