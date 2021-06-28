@@ -47,6 +47,26 @@ To install this package with ``conda`` run::
 
     conda install -c conda-forge pyvista
 
+Installing the Current Development Branch from GitHub 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There may be features or bug-fixes that have been implemented in PyVista but
+have not made their way into a release.  To install ``pyvista`` from the latest
+up-to-date development branch from github, use one of the following
+
+.. code::
+
+   pip install -U git+https://github.com/pyvista/pyvista.git@main
+
+Alternatively, you can clone the repository with git and install it with pip.
+
+.. code::
+
+   git clone https://github.com/pyvista/pyvista.git
+   cd pyvista
+   pip install . -e
+
+Note the development flag ``-e``.  This allows you to change pyvista in-place without
+having to reinstall it for each change.
 
 Optional Dependencies
 ~~~~~~~~~~~~~~~~~~~~~
