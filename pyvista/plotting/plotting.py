@@ -242,7 +242,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import themes
         >>> pl = pyvista.Plotter()
         >>> pl.theme = themes.DarkTheme()
-        >>> pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.add_mesh(pyvista.Sphere())
         >>> pl.show()
 
         """
@@ -254,7 +254,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('Expected a pyvista theme like '
                             '``pyvista.themes.DefaultTheme``, '
                             f'not {type(theme).__name__}.')
-        self._theme = theme
+        self._theme.load_theme(pyvista.global_theme)
 
     @property
     def scalar_bar(self):
@@ -2273,7 +2273,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista
         >>> plotter = pyvista.Plotter()
-        >>> plotter.add_mesh(pyvista.Sphere())
+        >>> actor = plotter.add_mesh(pyvista.Sphere())
         >>> plotter.clear()
         >>> plotter.renderer.actors
         {}
@@ -3065,7 +3065,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista
         >>> points = np.random.random((10, 3))
         >>> pl = pyvista.Plotter()
-        >>> pl.add_points(points, render_points_as_spheres=True, point_size=100.0)
+        >>> actor = pl.add_points(points, render_points_as_spheres=True, 
+        ...                       point_size=100.0)
         >>> pl.show()
 
         """
