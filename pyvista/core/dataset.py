@@ -498,7 +498,7 @@ class DataSet(DataSetFilters, DataObject):
             Angle in degrees to rotate about the y-axis.
 
         point : float, optional
-            Point to ratate about.
+            Point to rotate about.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
