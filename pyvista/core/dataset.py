@@ -254,11 +254,11 @@ class DataSet(DataSetFilters, DataObject):
     def vectors(self, array: np.ndarray):
         """Set the active vector."""
         warnings.warn(
-            "Use of `DataSet.vectors` to add vector data is deprecated."
-            "Use `DataSet['my_vector_data'] = data or "
-            "DataSet.point_arrays['my_vector_data']=data or"
-            "DataSet.cell_arrays['my_vector_data']=data."
-            "Use DataSet.set_active_vectors_name to make active."
+            "Use of `DataSet.vectors` to add vector data is deprecated. "
+            "Use `DataSet['my_vector_data'] = data` or "
+            "`DataSet.point_arrays['my_vector_data']=data` or "
+            "`DataSet.cell_arrays['my_vector_data']=data`. "
+            "Use `DataSet.set_active_vectors` to make active."
             ,
             PyvistaDeprecationWarning
         )
