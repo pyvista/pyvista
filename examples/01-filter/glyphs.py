@@ -50,7 +50,7 @@ vectors = np.vstack(
 ).T
 
 # add and scale
-sphere.vectors = vectors * 0.3
+sphere["vector"] = vectors * 0.3
 
 # plot just the arrows
 sphere.arrows.plot(scalars='GlyphScale')
