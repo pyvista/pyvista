@@ -1096,9 +1096,9 @@ class DataSetFilters:
         >>> mesh.point_arrays.clear()
         >>> centers = mesh.cell_centers()
         >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(mesh, show_edges=True)
-        >>> pl.add_points(centers, render_points_as_spheres=True, color='red',
-        ...               point_size=20)
+        >>> actor = pl.add_mesh(mesh, show_edges=True)
+        >>> actor = pl.add_points(centers, render_points_as_spheres=True,
+        ...                       color='red', point_size=20)
         >>> pl.show()
 
         """
@@ -1182,9 +1182,9 @@ class DataSetFilters:
         >>> mesh = examples.load_random_hills()
         >>> arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
         >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(arrows, color="black")
-        >>> pl.add_mesh(mesh, scalars="Elevation", cmap="terrain",
-        ...             show_scalar_bar=False)
+        >>> actor = pl.add_mesh(arrows, color="black")
+        >>> actor = pl.add_mesh(mesh, scalars="Elevation", cmap="terrain",
+        ...                     show_scalar_bar=False)
         >>> pl.show()
 
         """
@@ -1477,11 +1477,11 @@ class DataSetFilters:
         >>> warped = sphere.warp_by_vector()
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
-        >>> pl.add_text("Before warp")
-        >>> pl.add_mesh(sphere, color='white')
+        >>> actor = pl.add_text("Before warp")
+        >>> actor = pl.add_mesh(sphere, color='white')
         >>> pl.subplot(0, 1)
-        >>> pl.add_text("After warp")
-        >>> pl.add_mesh(warped, color='white')
+        >>> actor = pl.add_text("After warp")
+        >>> actor = pl.add_mesh(warped, color='white')
         >>> pl.show()
 
         """
@@ -2476,7 +2476,7 @@ class DataSetFilters:
         >>> a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
         >>> b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-        >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)
+        >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)  # doctest:+SKIP
 
         """
         # Ensure matplotlib is available
@@ -2592,7 +2592,7 @@ class DataSetFilters:
         >>> polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
         >>> angle = 90
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-        >>> mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle)
+        >>> mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle)  # doctest:+SKIP
 
         """
         # Ensure matplotlib is available
