@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 import pyvista
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 @pytest.fixture()
@@ -73,13 +74,13 @@ def test_up(camera):
 def test_enable_parallel_projection(camera):
     camera.enable_parallel_projection()
     assert camera.GetParallelProjection()
-    assert camera.is_parallel_projection
+    assert camera.parallel_projection
 
 
 def test_disable_parallel_projection(camera):
     camera.disable_parallel_projection()
     assert not camera.GetParallelProjection()
-    assert not camera.is_parallel_projection
+    assert not camera.parallel_projection
 
 
 def test_clipping_range(camera):
@@ -165,3 +166,7 @@ def test_azimuth(camera):
 
     camera.azimuth = 180.0
     assert np.allclose(camera.GetPosition(), (-2.0, 0.0, 0.0))
+
+def test_deprecation_warning_of_is_parallel_projection(camera):
+    with pytest.warns(PyvistaDeprecationWarning):
+        _ = camera.is_parallel_projection

@@ -1216,12 +1216,12 @@ class Renderer(_vtk.vtkRenderer):
     @property
     def parallel_projection(self):
         """Return parallel projection state of active render window."""
-        return self.camera.is_parallel_projection
+        return self.camera.parallel_projection
 
     @parallel_projection.setter
     def parallel_projection(self, state):
         """Set parallel projection state of all active render windows."""
-        self.camera.enable_parallel_projection(state)
+        self.camera.parallel_projection = state
         self.Modified()
 
     @property

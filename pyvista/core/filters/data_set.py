@@ -1026,8 +1026,8 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> sphere = pyvista.Sphere()
         >>> sphere = sphere.texture_map_to_sphere()
-        >>> tex = examples.download_puppy_texture()  # doctest:+SKIP
-        >>> cpos = sphere.plot(texture=tex)  # doctest:+SKIP
+        >>> tex = examples.download_puppy_texture()
+        >>> sphere.plot(texture=tex)
 
         """
         alg = _vtk.vtkTextureMapToSphere()
@@ -1082,20 +1082,31 @@ class DataSetFilters:
     def cell_centers(dataset, vertex=True):
         """Generate points at the center of the cells in this dataset.
 
-        These points can be used for placing glyphs / vectors.
+        These points can be used for placing glyphs or vectors.
 
         Parameters
         ----------
         vertex : bool
-            Enable/disable the generation of vertex cells.
+            Enable or disable the generation of vertex cells.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Plane()
+        >>> mesh.point_arrays.clear()
+        >>> centers = mesh.cell_centers()
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(mesh, show_edges=True)
+        >>> actor = pl.add_points(centers, render_points_as_spheres=True,
+        ...                       color='red', point_size=20)
+        >>> pl.show()
 
         """
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(dataset)
         alg.SetVertexCells(vertex)
         alg.Update()
-        output = _get_output(alg)
-        return output
+        return _get_output(alg)
 
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
               indices=None, tolerance=None, absolute=False, clamping=False,
@@ -1166,10 +1177,15 @@ class DataSetFilters:
         Create arrow glyphs oriented by vectors and scaled by scalars.
         Factor parameter is used to reduce the size of the arrows.
 
-        >>> import pyvista as pv
+        >>> import pyvista
         >>> from pyvista import examples
-        >>> mesh = examples.download_carotid().threshold(145, scalars="scalars")  # doctest:+SKIP
-        >>> glyph = mesh.glyph(orient="vectors", scale="scalars", factor=0.01)  # doctest:+SKIP
+        >>> mesh = examples.load_random_hills()
+        >>> arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(arrows, color="black")
+        >>> actor = pl.add_mesh(mesh, scalars="Elevation", cmap="terrain",
+        ...                     show_scalar_bar=False)
+        >>> pl.show()
 
         """
         # Clean the points before glyphing
@@ -1256,17 +1272,27 @@ class DataSetFilters:
     def connectivity(dataset, largest=False):
         """Find and label connected bodies/volumes.
 
-        This adds an ID array to the point and cell data to distinguish separate
-        connected bodies. This applies a ``vtkConnectivityFilter`` filter which
-        extracts cells that share common points and/or meet other connectivity
-        criterion.
-        (Cells that share vertices and meet other connectivity criterion such
-        as scalar range are known as a region.)
+        This adds an ID array to the point and cell data to
+        distinguish separate connected bodies. This applies a
+        ``vtkConnectivityFilter`` filter which extracts cells that
+        share common points and/or meet other connectivity criterion.
+
+        Cells that share vertices and meet other connectivity
+        criterion such as scalar range are known as a region.
 
         Parameters
         ----------
         largest : bool
             Extract the largest connected part of the mesh.
+
+        Examples
+        --------
+        Join two meshes together and plot their connectivity.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere() + pyvista.Sphere(center=(2, 0, 0))
+        >>> conn = mesh.connectivity(largest=False)
+        >>> conn.plot(cmap=['red', 'blue'])
 
         """
         alg = _vtk.vtkConnectivityFilter()
@@ -1280,12 +1306,11 @@ class DataSetFilters:
         return _get_output(alg)
 
     def extract_largest(dataset, inplace=False):
-        """
-        Extract largest connected set in mesh.
+        """Extract largest connected set in mesh.
 
-        Can be used to reduce residues obtained when generating an isosurface.
-        Works only if residues are not connected (share at least one point with)
-        the main component of the image.
+        Can be used to reduce residues obtained when generating an
+        isosurface.  Works only if residues are not connected (share
+        at least one point with) the main component of the image.
 
         Parameters
         ----------
@@ -1296,6 +1321,17 @@ class DataSetFilters:
         -------
         mesh : pyvista.PolyData
             Largest connected set in mesh
+
+        Examples
+        --------
+        Join two meshes together, extract the largest, and plot it.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere() + pyvista.Cube()
+        >>> largest = mesh.extract_largest()
+        >>> largest.point_arrays.clear()
+        >>> largest.cell_arrays.clear()
+        >>> largest.plot()
 
         """
         mesh = DataSetFilters.connectivity(dataset, largest=True)
@@ -1315,6 +1351,16 @@ class DataSetFilters:
         label : bool
             A flag on whether to keep the ID arrays given by the
             ``connectivity`` filter.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> dataset = examples.load_uniform()
+        >>> dataset.set_active_scalars('Spatial Cell Data')
+        >>> threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
+        >>> bodies = threshed.split_bodies()
+        >>> len(bodies)
+        2
 
         """
         # Get the connectivity and label different bodies
@@ -1338,8 +1384,8 @@ class DataSetFilters:
                        inplace=False, **kwargs):
         """Warp the dataset's points by a point data scalars array's values.
 
-        This modifies point coordinates by moving points along point normals by
-        the scalar amount times the scale factor.
+        This modifies point coordinates by moving points along point
+        normals by the scalar amount times the scale factor.
 
         Parameters
         ----------
@@ -1350,12 +1396,26 @@ class DataSetFilters:
             A scaling factor to increase the scaling effect. Alias
             ``scale_factor`` also accepted - if present, overrides ``factor``.
 
-        normal : np.array, list, tuple of length 3
-            User specified normal. If given, data normals will be ignored and
-            the given normal will be used to project the warp.
+        normal : sequence, optional
+            User specified normal. If given, data normals will be
+            ignored and the given normal will be used to project the
+            warp.
 
-        inplace : bool
-            If True, the points of the given dataset will be updated.
+        inplace : bool, optional
+            If ``True``, the points of the given dataset will be updated.
+
+        Examples
+        --------
+        First, plot the unwarped mesh.
+
+        >>> from pyvista import examples
+        >>> mesh = examples.download_st_helens()
+        >>> mesh.plot(cmap='gist_earth', show_scalar_bar=False)
+
+        Now, warp the mesh by the ``'Elevation'`` scalars.
+
+        >>> warped = mesh.warp_by_scalar('Elevation')
+        >>> warped.plot(cmap='gist_earth', show_scalar_bar=False)
 
         """
         factor = kwargs.pop('scale_factor', factor)
@@ -1386,11 +1446,11 @@ class DataSetFilters:
     def warp_by_vector(dataset, vectors=None, factor=1.0, inplace=False):
         """Warp the dataset's points by a point data vectors array's values.
 
-        This modifies point coordinates by moving points along point vectors by
-        the local vector times the scale factor.
+        This modifies point coordinates by moving points along point
+        vectors by the local vector times the scale factor.
 
-        A classical application of this transform is to visualize eigenmodes in
-        mechanics.
+        A classical application of this transform is to visualize
+        eigenmodes in mechanics.
 
         Parameters
         ----------
@@ -1402,12 +1462,27 @@ class DataSetFilters:
             be used to enhance the warping effect.
 
         inplace : bool, optional
-            If True, the function will update the mesh in-place.
+            If ``True``, the function will update the mesh in-place.
 
         Returns
         -------
         warped_mesh : mesh
             The warped mesh resulting from the operation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> sphere = examples.load_sphere_vectors()
+        >>> warped = sphere.warp_by_vector()
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> actor = pl.add_text("Before warp")
+        >>> actor = pl.add_mesh(sphere, color='white')
+        >>> pl.subplot(0, 1)
+        >>> actor = pl.add_text("After warp")
+        >>> actor = pl.add_mesh(warped, color='white')
+        >>> pl.show()
 
         """
         if vectors is None:
@@ -1517,8 +1592,22 @@ class DataSetFilters:
 
         Returns
         -------
-        mesh : pyvista.UnstructuredGrid
+        pyvista.PolyData
             Mesh containing only triangles.
+
+        Examples
+        --------
+        Generate a mesh with quadrilateral faces.
+
+        >>> import pyvista
+        >>> plane = pyvista.Plane()
+        >>> plane.point_arrays.clear()
+        >>> plane.plot(show_edges=True, line_width=5)
+
+        Convert it to an all triangle mesh.
+
+        >>> mesh = plane.triangulate()
+        >>> mesh.plot(show_edges=True, line_width=5)
 
         """
         alg = _vtk.vtkDataSetTriangleFilter()
@@ -2387,7 +2476,7 @@ class DataSetFilters:
         >>> a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
         >>> b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-        >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)
+        >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)  # doctest:+SKIP
 
         """
         # Ensure matplotlib is available
@@ -2563,6 +2652,19 @@ class DataSetFilters:
         -------
         subgrid : pyvista.UnstructuredGrid
             Subselected grid
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> grid = pyvista.read(examples.hexbeamfile)
+        >>> subset = grid.extract_cells(range(20))
+        >>> subset.n_cells
+        20
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(grid, style='wireframe', line_width=5, color='black')
+        >>> actor = pl.add_mesh(subset, color='grey')
+        >>> pl.show()
 
         """
         # Create selection objects
