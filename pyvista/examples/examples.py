@@ -270,7 +270,8 @@ def load_sphere_vectors():
     ).T
 
     # add and scale
-    sphere.vectors = vectors * 0.3
+    sphere["vectors"] = vectors * 0.3
+    sphere.set_active_vectors("vectors")
     return sphere
 
 
