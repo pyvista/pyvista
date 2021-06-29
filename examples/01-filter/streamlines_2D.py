@@ -15,7 +15,7 @@ from pyvista import examples
 # The data is multiblock with the fluid_data as the first block.
 # The data lies in the xy plane, i.e. z=0, with no z velocity.
 
-mesh = pv.read("~/cylindertest/35Re/cylinder_Re35.encas", force_ext=".case")
+mesh = examples.download_cylinder_crossflow()
 fluid_mesh = mesh[0]
 print(fluid_mesh)
 print(fluid_mesh.array_names)
