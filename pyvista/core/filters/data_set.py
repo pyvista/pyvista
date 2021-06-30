@@ -2092,6 +2092,7 @@ class DataSetFilters:
                                     minimum_number_of_loop_points=4, compute_vorticity=True):
         """Generate evenly spaced streamlines on a 2D dataset.
 
+        This filter only supports datasets that lie on the xy plane, i.e. z=0.
         Particular care must be used to choose a `separating_distance`
         that do not result in too much memory being utilized.  The
         default unit is cell length.
