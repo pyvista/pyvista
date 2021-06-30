@@ -2084,14 +2084,12 @@ class DataSetFilters:
         alg.Update()
         return _get_output(alg)
 
-    def streamlines_evenly_spaced_2D(
-        dataset, vectors=None, start_position=None, integrator_type=2,
-        step_length=0.5, step_unit='cl', max_steps=2000,
-        terminal_speed=1e-12, interpolator_type='point',
-        separating_distance=10, separating_distance_ratio=None,
-        closed_loop_maximum_distance=0.5, loop_angle=20,  
-        minimum_number_of_loop_points=4, compute_vorticity=True
-    ):
+    def streamlines_evenly_spaced_2D(dataset, vectors=None, start_position=None,
+                                    integrator_type=2, step_length=0.5, step_unit='cl',
+                                    max_steps=2000, terminal_speed=1e-12, interpolator_type='point',
+                                    separating_distance=10, separating_distance_ratio=None,
+                                    closed_loop_maximum_distance=0.5, loop_angle=20,  
+                                    minimum_number_of_loop_points=4, compute_vorticity=True):
         """Generate evenly spaced streamlines on a 2D dataset.
 
         Particular care must be used to choose a `separating_distance`
