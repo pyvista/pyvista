@@ -2164,6 +2164,23 @@ class DataSetFilters:
             associated with each streamline are stored in the cell data, whereas
             those associated with streamline-points are stored in the point data.
 
+        Example
+        -------
+        Plot evenly spaced streamlines for cylinder in a crossflow.
+        This dataset is a multiblock dataset, and the fluid velocity is in the
+        first block.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> mesh = examples.download_cylinder_crossflow()
+        >>> streams = mesh[0].streamlines_evenly_spaced_2D(start_position=(4, 0.1, 0.),
+        ...                                                separating_distance=3,
+        ...                                                separating_distance_ratio=0.2)
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.add_mesh(streams.tube(radius=0.02), scalars="vorticity_mag")
+        >>> plotter.view_xy()
+        >>> plotter.show()
+
         """
         if integrator_type not in [2, 4]:
             raise ValueError('Integrator type must be one of `2` or `4`.')
