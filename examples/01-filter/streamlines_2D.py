@@ -18,7 +18,6 @@ from pyvista import examples
 mesh = examples.download_cylinder_crossflow()
 fluid_mesh = mesh[0]
 print(fluid_mesh)
-print(fluid_mesh.array_names)
 
 ###############################################################################
 # The default behavior of the :func:`DataSet.streamlines` filter is to use
