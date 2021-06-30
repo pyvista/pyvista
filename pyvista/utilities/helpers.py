@@ -333,15 +333,23 @@ def lines_from_points(points, close=False):
         Points representing the vertices of the connected segments. For
         example, two line segments would be represented as:
 
-        np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+        ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``
 
     close : bool, optional
-        If True, close the line segments into a loop
+        If ``True``, close the line segments into a loop.
 
     Returns
     -------
-    lines : pyvista.PolyData
+    pyvista.PolyData
         PolyData with lines and cells.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pyvista
+    >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+    >>> poly = pyvista.lines_from_points(points)
+    >>> poly.plot(line_width=5)
 
     """
     poly = pyvista.PolyData()
@@ -366,7 +374,7 @@ def make_tri_mesh(points, faces):
     Parameters
     ----------
     points : np.ndarray
-        Array of points with shape (N, 3) storing the vertices of the
+        Array of points with shape ``(N, 3)`` storing the vertices of the
         triangle mesh.
 
     faces : np.ndarray
@@ -384,14 +392,14 @@ def make_tri_mesh(points, faces):
     nine vertices and eight faces.
 
     >>> import numpy as np
-    >>> import pyvista as pv
+    >>> import pyvista
     >>> points = np.array([[0, 0, 0], [0.5, 0, 0], [1, 0, 0], [0, 0.5, 0],
     ...                    [0.5, 0.5, 0], [1, 0.5, 0], [0, 1, 0], [0.5, 1, 0],
     ...                    [1, 1, 0]])
     >>> faces = np.array([[0, 1, 4], [4, 7, 6], [2, 5, 4], [4, 5, 8],
     ...                   [0, 4, 3], [3, 4, 6], [1, 2, 4], [4, 8, 7]])
     >>> tri_mesh = pyvista.make_tri_mesh(points, faces)
-    >>> cpos = tri_mesh.plot(show_edges=True)
+    >>> cpos = tri_mesh.plot(show_edges=True, line_width=5)
 
     """
     if points.shape[1] != 3:

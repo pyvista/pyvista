@@ -206,6 +206,7 @@ def generate_cell_offsets(cells, cell_types):
 
     return offsets
 
+
 def create_mixed_cells(mixed_cell_dict, nr_points=None):
     """Generate the required cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
 
@@ -235,10 +236,10 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         Types of each cell
 
     cell_arr : np.ndarray (int)
-        VTK-cell array. Format depends if the VTK version is < 9.0 or not
+        VTK-cell array. Format depends if the VTK version is < 9.0 or not.
 
-    cell_offsets : np.ndarray (int) (for VTK versions < 9.0 only!)
-        Array of VTK offsets
+    cell_offsets : np.ndarray (int)
+        Array of VTK offsets.  Only for VTK versions < 9.0
 
     Raises
     ------
@@ -254,6 +255,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     This will generate cell arrays to generate a mesh with two
     disconnected triangles from 6 points.
 
+    >>> import numpy as np
     >>> import vtk
     >>> from pyvista.utilities.cells import create_mixed_cells
     >>> cell_arrays = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})

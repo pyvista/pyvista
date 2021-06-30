@@ -12,15 +12,8 @@ Brief Example
 
 Create a frustum of camera, then create a scene of inside frustum.
 
-.. jupyter-execute::
-   :hide-code:
 
-   # must have this here as our global backend may not be static and
-   # panel, ipyvtk-simple, and ipygany do not display this example well.
-   import pyvista
-   pyvista.set_jupyter_backend('static')
-
-.. jupyter-execute::
+.. pyvista-plot::
 
     import pyvista as pv
     import numpy as np
@@ -96,7 +89,7 @@ For example, you can modify the roll.  First, generate a plot of an
 orientation cube while initially setting the camera position to look
 at the ``'yz'``.
 
-.. jupyter-execute::
+.. pyvista-plot::
 
    import pyvista
    from pyvista import demos
@@ -104,9 +97,10 @@ at the ``'yz'``.
    pl.camera_position = 'yz'
    pl.show()
 
+
 Here we modify the roll in-place.
 
-.. jupyter-execute::
+.. pyvista-plot::
 
    import pyvista
    from pyvista import demos
@@ -118,7 +112,7 @@ Here we modify the roll in-place.
 And here we offset the azimuth of the camera by 45 degrees to look at
 the ``X+`` and ``Y+`` faces.
 
-.. jupyter-execute::
+.. pyvista-plot::
 
    import pyvista
    from pyvista import demos
@@ -130,7 +124,7 @@ the ``X+`` and ``Y+`` faces.
 Here, we move upward by setting the elevation of the camera to 45
 degrees to see the ``X+`` and ``Z+`` faces.
 
-.. jupyter-execute::
+.. pyvista-plot::
 
    import pyvista
    from pyvista import demos
@@ -142,6 +136,8 @@ degrees to see the ``X+`` and ``Z+`` faces.
 
 API reference
 ~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-class-template.rst
 
-.. autoclass:: pyvista.Camera
-   :members:
+   pyvista.Camera

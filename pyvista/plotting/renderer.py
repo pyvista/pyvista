@@ -121,7 +121,7 @@ class Renderer(_vtk.vtkRenderer):
         self._floor_kwargs = []
         # this keeps track of lights added manually to prevent garbage collection
         self._lights = []
-        self._camera = Camera()
+        self._camera = Camera(self)
         self.SetActiveCamera(self._camera)
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
@@ -177,9 +177,16 @@ class Renderer(_vtk.vtkRenderer):
             self.camera.up = camera_location[2]
 
         # reset clipping range
-        self.ResetCameraClippingRange()
+        self.reset_camera_clipping_range()
         self.camera_set = True
         self.Modified()
+
+    def reset_camera_clipping_range(self):
+        """Reset the camera clipping range based on the bounds of the visible actors.
+
+        This ensures that no props are cut off
+        """
+        self.ResetCameraClippingRange()
 
     @property
     def camera(self):
@@ -596,14 +603,8 @@ class Renderer(_vtk.vtkRenderer):
         show_zlabels : bool, optional
             Shows z labels.  Default ``True``.
 
-        italic : bool, optional
-            Italicises axis labels and numbers.  Default ``False``.
-
         bold : bool, optional
             Bolds axis labels and numbers.  Default ``True``.
-
-        shadow : bool, optional
-            Adds a black shadow to the text.  Default ``False``.
 
         font_size : float, optional
             Sets the size of the label font.  Defaults to 16.
@@ -664,6 +665,13 @@ class Renderer(_vtk.vtkRenderer):
             If ``all_edges````, this is the factor along each axis to
             draw the default box. Default is 0.5 to show the full box.
 
+        fmt : str, optional
+            A format string defining how tick labels are generated from
+            tick positions. A default is looked up on the active theme.
+
+        minor_ticks : bool, optional
+            If ``True``, also plot minor ticks on all axes.
+
         padding : float, optional
             An optional percent padding along each axial direction to
             cushion the datasets in the scene from the axes
@@ -677,7 +685,6 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         >>> import pyvista
-        >>> from pyvista import examples
         >>> mesh = pyvista.Sphere()
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(mesh)
@@ -1209,12 +1216,12 @@ class Renderer(_vtk.vtkRenderer):
     @property
     def parallel_projection(self):
         """Return parallel projection state of active render window."""
-        return self.camera.is_parallel_projection
+        return self.camera.parallel_projection
 
     @parallel_projection.setter
     def parallel_projection(self, state):
         """Set parallel projection state of all active render windows."""
-        self.camera.enable_parallel_projection(state)
+        self.camera.parallel_projection = state
         self.Modified()
 
     @property

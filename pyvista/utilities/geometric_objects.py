@@ -63,10 +63,10 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
     Parameters
     ----------
     center : list or tuple or np.ndarray
-        Location of the centroid in [x, y, z]
+        Location of the centroid in ``[x, y, z]``.
 
     direction : list or tuple or np.ndarray
-        Direction cylinder points to  in [x, y, z]
+        Direction cylinder points to  in ``[x, y, z]``.
 
     radius : float
         Radius of the cylinder.
@@ -78,19 +78,20 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
         Number of points on the circular face of the cylinder.
 
     capping : bool, optional
-        Cap cylinder ends with polygons.  Default True
+        Cap cylinder ends with polygons.  Default ``True``.
 
     Returns
     -------
-    cylinder : pyvista.PolyData
+    pyvista.PolyData
         Cylinder surface.
 
     Examples
     --------
     >>> import pyvista
     >>> import numpy as np
-    >>> cylinder = pyvista.Cylinder(np.array([1, 2, 3]), np.array([1, 1, 1]), 1, 1)
-    >>> cpos = cylinder.plot()
+    >>> cylinder = pyvista.Cylinder(center=[1, 2, 3], direction=[1, 1, 1], 
+    ...                             radius=1, height=2)
+    >>> cpos = cylinder.plot(show_edges=True, line_width=5, cpos='xy')
     """
     capping = kwargs.pop('cap_ends', capping)
     assert_empty_kwargs(**kwargs)
@@ -117,30 +118,48 @@ def CylinderStructured(radius=0.5, height=1.0,
 
     Parameters
     ----------
-    radius : float
-        Radius of the cylinder. If an iterable
+    radius : float, iterable, optional
+        Radius of the cylinder. If an iterable, then describes the
+        radial coordinates of the cells as a range of values as
+        specified by the ``radius``.
 
-    height : float
-        Height (length) of the cylinder along its Z-axis
+    height : float, optional
+        Height of the cylinder along its Z-axis.
 
     center : list or tuple or np.ndarray
-        Location of the centroid in [x, y, z]
+        Location of the centroid in ``[x, y, z]``
 
     direction : list or tuple or np.ndarray
-        Direction cylinder Z-axis in [x, y, z]
+        Direction cylinder Z-axis in ``[x, y, z]``.
 
     theta_resolution : int
         Number of points on the circular face of the cylinder.
+        Ignored if ``radius`` is an iterable.
 
     z_resolution : int
         Number of points along the height (Z-axis) of the cylinder
+
+    Examples
+    --------
+    Default structured cylinder
+
+    >>> import pyvista
+    >>> mesh = pyvista.CylinderStructured()
+    >>> mesh.plot(show_edges=True)
+
+    Structured cylinder with an inner radius of 1, outer of 2, with 5
+    segments.
+
+    >>> import numpy as np
+    >>> mesh = pyvista.CylinderStructured(radius=np.linspace(1, 2, 5))
+    >>> mesh.plot(show_edges=True)
 
     """
     # Define grid in polar coordinates
     r = np.array([radius]).ravel()
     nr = len(r)
     theta = np.linspace(0, 2*np.pi, num=theta_resolution)
-    radius_matrix, theta_matrix = np.meshgrid(r,theta)
+    radius_matrix, theta_matrix = np.meshgrid(r, theta)
 
     # Transform to cartesian space
     X = radius_matrix * np.cos(theta_matrix)
@@ -177,18 +196,18 @@ def CylinderStructured(radius=0.5, height=1.0,
     return grid
 
 
-def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
+def Arrow(start=(0., 0., 0.), direction=(1., 0., 0.), tip_length=0.25,
           tip_radius=0.1, tip_resolution=20, shaft_radius=0.05,
           shaft_resolution=20, scale=None):
-    """Create a vtk Arrow.
+    """Create an arrow.
 
     Parameters
     ----------
-    start : np.ndarray
-        Start location in [x, y, z]
+    start : iterable, optional
+        Start location in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray
-        Direction the arrow points to in [x, y, z]
+    direction : iterable, optional
+        Direction the arrow points to in ``[x, y, z]``.
 
     tip_length : float, optional
         Length of the tip.
@@ -206,13 +225,22 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
         Number of faces around the shaft.
 
     scale : float or str, optional
-        Scale factor of the entire object, default is None (i.e. scale of 1).
-        'auto' scales to length of direction array.
+        Scale factor of the entire object, default is ``None``
+        (i.e. scale of 1).  ``'auto'`` scales to length of direction
+        array.
 
     Returns
     -------
-    arrow : pyvista.PolyData
-        Arrow surface.
+    pyvista.PolyData
+        Arrow mesh.
+
+    Examples
+    --------
+    Plot a default arrow.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Arrow()
+    >>> mesh.plot(show_edges=True)
 
     """
     # Create arrow object
@@ -243,21 +271,21 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     Parameters
     ----------
     radius : float, optional
-        Sphere radius
+        Sphere radius.
 
     center : np.ndarray or list, optional
-        Center in [x, y, z]
+        Center in ``[x, y, z]``.
 
     direction : list or tuple or np.ndarray
-        Direction the top of the sphere points to in [x, y, z]
+        Direction the top of the sphere points to in ``[x, y, z]``.
 
     theta_resolution: int , optional
-        Set the number of points in the longitude direction (ranging from
-        start_theta to end theta).
+        Set the number of points in the longitude direction (ranging
+        from ``start_theta`` to ``end_theta``).
 
     phi_resolution : int, optional
         Set the number of points in the latitude direction (ranging from
-        start_phi to end_phi).
+        ``start_phi`` to ``end_phi``).
 
     start_theta : float, optional
         Starting longitude angle.
@@ -273,8 +301,21 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
 
     Returns
     -------
-    sphere : pyvista.PolyData
+    pyvista.PolyData
         Sphere mesh.
+
+    Examples
+    --------
+    Create a sphere using default parameters.
+
+    >>> import pyvista
+    >>> sphere = pyvista.Sphere()
+    >>> cpos = sphere.plot(show_edges=True)
+
+    Create a quarter sphere by setting ``end_theta``.
+
+    >>> sphere = pyvista.Sphere(end_theta=90)
+    >>> out = sphere.plot(show_edges=True)
 
     """
     sphere = _vtk.vtkSphereSource()
@@ -299,10 +340,10 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
     Parameters
     ----------
     center : list or tuple or np.ndarray
-        Location of the centroid in [x, y, z]
+        Location of the centroid in ``[x, y, z]``.
 
     direction : list or tuple or np.ndarray
-        Direction of the plane's normal in [x, y, z]
+        Direction of the plane's normal in ``[x, y, z]``.
 
     i_size : float
         Size of the plane in the i direction.
@@ -318,9 +359,17 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     Returns
     -------
-    plane : pyvista.PolyData
-        Plane mesh
+    pyvista.PolyData
+        Plane mesh.
 
+    Examples
+    --------
+    Create a default plane.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Plane()
+    >>> mesh.point_arrays.clear()
+    >>> mesh.plot(show_edges=True)
     """
     planeSource = _vtk.vtkPlaneSource()
     planeSource.SetXResolution(i_resolution)
@@ -341,14 +390,27 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
 
     Parameters
     ----------
-    pointa : np.ndarray or list
-        Location in [x, y, z].
+    pointa : np.ndarray or list, optional
+        Location in ``[x, y, z]``.
 
-    pointb : np.ndarray or list
-        Location in [x, y, z].
+    pointb : np.ndarray or list, optional
+        Location in ``[x, y, z]``.
 
-    resolution : int
-        number of pieces to divide line into
+    resolution : int, optional
+        Number of pieces to divide line into.
+
+    Returns
+    --------
+    pyvista.PolyData
+        Line mesh.
+
+    Examples
+    --------
+    Create a line between ``(0, 0, 0)`` and ``(0, 0, 1)``.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Line((0, 0, 0), (0, 0, 1))
+    >>> mesh.plot(color='k', line_width=10)
 
     """
     if resolution <= 0:
@@ -370,36 +432,50 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
     return line
 
 
-def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None):
+def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
+         z_length=1.0, bounds=None):
     """Create a cube.
 
-    It's possible to specify either the center and side lengths or just
-    the bounds of the cube. If ``bounds`` are given, all other arguments are
-    ignored.
+    It's possible to specify either the center and side lengths or
+    just the bounds of the cube. If ``bounds`` are given, all other
+    arguments are ignored.
 
     Parameters
     ----------
-    center : np.ndarray or list
-        Center in [x, y, z].
+    center : iterable, optional
+        Center in ``[x, y, z]``.
 
-    x_length : float
+    x_length : float, optional
         length of the cube in the x-direction.
 
-    y_length : float
+    y_length : float, optional
         length of the cube in the y-direction.
 
-    z_length : float
+    z_length : float, optional
         length of the cube in the z-direction.
 
-    bounds : np.ndarray or list
+    bounds : iterable, optional
         Specify the bounding box of the cube. If given, all other arguments are
-        ignored. ``(xMin,xMax, yMin,yMax, zMin,zMax)``
+        ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh of the cube.
+
+    Examples
+    --------
+    Create a default cube.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Cube()
+    >>> mesh.plot(show_edges=True, line_width=5)
 
     """
     src = _vtk.vtkCubeSource()
     if bounds is not None:
         if np.array(bounds).size != 6:
-            raise TypeError('Bounds must be given as length 6 tuple: (xMin,xMax, yMin,yMax, zMin,zMax)')
+            raise TypeError('Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)')
         src.SetBounds(bounds)
     else:
         src.SetCenter(center)
@@ -415,16 +491,29 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
 
     Parameters
     ----------
-    bounds : np.ndarray or list
+    bounds : iterable, optional
         Specify the bounding box of the cube.
         ``(xMin, xMax, yMin, yMax, zMin, zMax)``
 
-    level : int
+    level : int, optional
         Level of subdivision of the faces.
 
     quads : bool, optional
         Flag to tell the source to generate either a quad or two
         triangle for a set of four points.  Default ``True``.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh of the box.
+
+    Examples
+    --------
+    Create a box with subdivision ``level=2``.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Box(level=2)
+    >>> mesh.plot(show_edges=True)
 
     """
     if np.array(bounds).size != 6:
@@ -440,40 +529,55 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
     return pyvista.wrap(src.GetOutput())
 
 
-def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
+def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=None,
          capping=True, angle=None, resolution=6):
     """Create a cone.
 
     Parameters
     ----------
-    center : np.ndarray or list
-        Center in [x, y, z]. Middle of the axis of the cone.
+    center : iterable, optional
+        Center in ``[x, y, z]``. Axis of the cone passes through this
+        point.
 
-    direction : np.ndarray or list
-        Direction vector in [x, y, z]. Orientation vector of the cone.
+    direction : iterable, optional
+        Direction vector in ``[x, y, z]``. Orientation vector of the
+        cone.
 
-    height : float
+    height : float, optional
         Height along the cone in its specified direction.
 
-    radius : float
+    radius : float, optional
         Base radius of the cone.
 
-    capping : bool
-        Turn on/off whether to cap the base of the cone with a polygon.
+    capping : bool, optional
+        Enable or disable the capping the base of the cone with a
+        polygon.
 
-    angle : float
-        The angle in degrees between the axis of the cone and a generatrix.
+    angle : float, optional
+        The angle in degrees between the axis of the cone and a
+        generatrix.
 
-    resolution : int
+    resolution : int, optional
         Number of facets used to represent the cone.
 
+    Returns
+    -------
+    pyvista.PolyData
+        Cone mesh.
+
+    Examples
+    --------
+    Create a default Cone.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Cone()
+    >>> mesh.plot(show_edges=True, line_width=5)
     """
     src = _vtk.vtkConeSource()
     src.SetCapping(capping)
     src.SetDirection(direction)
     src.SetCenter(center)
     src.SetHeight(height)
-    # Contributed by @kjelljorner in #249:
     if angle and radius:
         raise ValueError("Both radius and angle specified. They are mutually exclusive.")
     elif angle and not radius:
@@ -487,22 +591,36 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
     return pyvista.wrap(src.GetOutput())
 
 
-def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
+def Polygon(center=(0., 0., 0.), radius=1, normal=(0, 0, 1), n_sides=6):
     """Create a polygon.
 
     Parameters
     ----------
-    center : np.ndarray or list
-        Center in [x, y, z]. Middle of the axis of the polygon.
+    center : iterable, optional
+        Center in ``[x, y, z]``. Central axis of the polygon passes
+        through this point.
 
-    radius : float
+    radius : float, optional
         The radius of the polygon.
 
-    normal : np.ndarray or list
-        Direction vector in [x, y, z]. Orientation vector of the polygon.
+    normal : iterable, optional
+        Direction vector in ``[x, y, z]``. Orientation vector of the polygon.
 
-    n_sides : int
+    n_sides : int, optional
         Number of sides of the polygon.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh of the polygon.
+
+    Examples
+    --------
+    Create a 8 sided polygon.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Polygon(n_sides=8)
+    >>> mesh.plot(show_edges=True, line_width=5)
 
     """
     src = _vtk.vtkRegularPolygonSource()
@@ -518,29 +636,37 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
          c_res=6):
     """Create a polygonal disk with a hole in the center.
 
-    The disk has zero height. The user can specify the inner and outer radius
-    of the disk, and the radial and circumferential resolution of the polygonal
-    representation.
+    The disk has zero height. The user can specify the inner and outer
+    radius of the disk, and the radial and circumferential resolution
+    of the polygonal representation.
 
     Parameters
     ----------
-    center : np.ndarray or list
-        Center in [x, y, z]. Middle of the axis of the disc.
+    center : iterable
+        Center in ``[x, y, z]``. Middle of the axis of the disc.
 
-    inner : float
+    inner : float, optional
         The inner radius.
 
-    outer : float
+    outer : float, optional
         The outer radius.
 
-    normal : np.ndarray or list
-        Direction vector in [x, y, z]. Orientation vector of the disc.
+    normal : iterable
+        Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
-    r_res: int
-        Number of points in radius direction.
+    r_res: int, optional
+        Number of points in radial direction.
 
-    c_res: int
+    c_res: int, optional
         Number of points in circumferential direction.
+
+    Examples
+    --------
+    Create a disc with 50 points in the circumferential direction.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Disc(c_res=50)
+    >>> mesh.plot(show_edges=True, line_width=5)
 
     """
     src = _vtk.vtkDiskSource()
@@ -558,7 +684,22 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
 
 
 def Text3D(string, depth=0.5):
-    """Create 3D text from a string."""
+    """Create 3D text from a string.
+
+    Parameters
+    ----------
+    string : str
+        String to generate 3D text from.
+
+    depth : float, optional
+        Depth of the text.  Defaults to ``0.5``.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> text_mesh = pyvista.Text3D('PyVista')
+    >>> text_mesh.plot(cpos='xy')
+    """
     vec_text = _vtk.vtkVectorText()
     vec_text.SetText(string)
 
@@ -574,10 +715,71 @@ def Text3D(string, depth=0.5):
     return pyvista.wrap(tri_filter.GetOutput())
 
 
-def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,
+def Wavelet(extent=(-10, 10, -10, 10, -10, 10), center=(0, 0, 0), maximum=255,
             x_freq=60, y_freq=30, z_freq=40, x_mag=10, y_mag=18, z_mag=5,
             std=0.5, subsample_rate=1):
-    """Create a wavelet."""
+    """Create a wavelet.
+
+    Produces images with pixel values determined by
+    ``Maximum*Gaussian*x_mag*sin(x_freq*x)*sin(y_freq*y)*cos(z_freq*z)``
+
+    Values are float scalars on point data with name ``"RTData"``.
+
+    Parameters
+    ----------
+    extent : list or tuple, optional
+        Set/Get the extent of the whole output image.  Default
+        ``(-10, 10, -10, 10, -10, 10)``
+
+    center : list, optional
+        Center of the wavelet.
+
+    maximum : float, optional
+        Maximum of the wavelet function.
+
+    x_freq : float, optional
+        Natural frequency in the x direction.
+
+    y_freq : float, optional
+        Natural frequency in the y direction.
+
+    z_freq : float, optional
+        Natural frequency in the z direction.
+
+    x_mag : float, optional
+        Magnitude in the x direction.
+
+    y_mag : float, optional
+        Magnitude in the y direction.
+
+    z_mag : float, optional
+        Magnitude in the z direction.
+
+    std : float, optional
+        Standard deviation.
+
+    subsample_rate : int, optional
+        The sub-sample rate.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> wavelet = pyvista.Wavelet(extent=(0, 50, 0, 50, 0, 10), x_freq=20,
+    ...                           y_freq=10, z_freq=1, x_mag=100, y_mag=100, 
+    ...                           z_mag=1000)
+    >>> wavelet.plot(show_scalar_bar=False)
+
+    Extract lower valued cells of the wavelet and create a surface from it.
+
+    >>> thresh = wavelet.threshold(800).extract_surface()
+    >>> thresh.plot(show_scalar_bar=False)
+
+    Smooth it to create "waves"
+
+    >>> waves = thresh.smooth(n_iter=100, relaxation_factor=0.1)
+    >>> waves.plot(color='white', smooth_shading=True, show_edges=True)
+
+    """
     wavelet_source = _vtk.vtkRTAnalyticSource()
     wavelet_source.SetWholeExtent(*extent)
     wavelet_source.SetCenter(center)
@@ -630,8 +832,8 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     >>> import pyvista
     >>> arc = pyvista.CircularArc([-1, 0, 0], [0, 1, 0], [0, 0, 0])
     >>> pl = pyvista.Plotter()
-    >>> _ = pl.add_mesh(arc, color='k', line_width=4)
-    >>> _ = pl.show_bounds(location='all')
+    >>> _ = pl.add_mesh(arc, color='k', line_width=10)
+    >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
     >>> cpos = pl.show()
     """
@@ -705,8 +907,8 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
     >>> polar = [-1, 0, 0]
     >>> arc = pyvista.CircularArcFromNormal([0, 0, 0], normal=normal, polar=polar)
     >>> pl = pyvista.Plotter()
-    >>> _ = pl.add_mesh(arc, color='k', line_width=4)
-    >>> _ = pl.show_bounds(location='all')
+    >>> _ = pl.add_mesh(arc, color='k', line_width=10)
+    >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
     >>> cpos = pl.show()
     """
@@ -750,18 +952,19 @@ def Pyramid(points):
 
     Returns
     -------
-    pyramid : pyvista.UnstructuredGrid
+    pyvista.UnstructuredGrid
+        Unstructured grid containing a single pyramid cell.
 
     Examples
     --------
     >>> import pyvista
-    >>> pointa = [1.0, 1.0, 1.0]
-    >>> pointb = [-1.0, 1.0, 1.0]
-    >>> pointc = [-1.0, -1.0, 1.0]
-    >>> pointd = [1.0, -1.0, 1.0]
-    >>> pointe = [0.0, 0.0, 0.0]
+    >>> pointa = [1.0, 1.0, 0.0]
+    >>> pointb = [-1.0, 1.0, 0.0]
+    >>> pointc = [-1.0, -1.0, 0.0]
+    >>> pointd = [1.0, -1.0, 0.0]
+    >>> pointe = [0.0, 0.0, 1.67]
     >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
-    >>> cpos = pyramid.plot()
+    >>> cpos = pyramid.plot(show_edges=True, line_width=5)
     """
     if len(points) != 5:
         raise TypeError('Points must be given as length 5 np.ndarray or list')

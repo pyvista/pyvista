@@ -1,9 +1,12 @@
 """Module containing pyvista implementation of vtkCamera."""
+from weakref import proxy
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 class Camera(_vtk.vtkCamera):
@@ -25,11 +28,19 @@ class Camera(_vtk.vtkCamera):
 
     """
 
-    def __init__(self):
+    def __init__(self, renderer=None):
         """Initialize a new camera descriptor."""
-        self._is_parallel_projection = False
+        self._parallel_projection = False
         self._elevation = 0.0
         self._azimuth = 0.0
+
+        if renderer:
+            if not isinstance(renderer, pyvista.Renderer):
+                raise TypeError('Camera only accepts a pyvista.Renderer or None as '
+                                'the ``renderer`` argument')
+            self._renderer = proxy(renderer)
+        else:
+            self._renderer = None
 
     @property
     def position(self):
@@ -58,6 +69,26 @@ class Camera(_vtk.vtkCamera):
         self.SetPosition(value)
         self._elevation = 0.0
         self._azimuth = 0.0
+        if self._renderer:
+            self.reset_clipping_range()
+
+    def reset_clipping_range(self):
+        """Reset the camera clipping range based on the bounds of the visible actors.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Sphere())
+        >>> pl.camera.clipping_range = (1, 2)
+        >>> pl.camera.reset_clipping_range()  # doctest:+SKIP
+        (0.0039213485598532955, 3.9213485598532953)
+
+        """
+        if self._renderer is None:
+            raise AttributeError('Camera is must be associated with a renderer to '
+                                 'reset its clipping range.')
+        self._renderer.reset_camera_clipping_range()
 
     @property
     def focal_point(self):
@@ -124,7 +155,11 @@ class Camera(_vtk.vtkCamera):
     @property
     def is_parallel_projection(self):
         """Return True if parallel projection is set."""
-        return self._is_parallel_projection
+        warnings.warn( "Use of `Camera.is_parallel_projection` is deprecated. "
+            "Use `Camera.parallel_projection` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self._parallel_projection
 
     @property
     def distance(self):
@@ -234,19 +269,73 @@ class Camera(_vtk.vtkCamera):
         """
         self.SetViewUp(vector)
 
-    def enable_parallel_projection(self, flag=True):
+    def enable_parallel_projection(self):
         """Enable parallel projection.
 
         The camera will have a parallel projection. Parallel
-        projection is often useful when viewing images or 2D datasets.
+        projection is often useful when viewing images or 2D datasets,
+        but will look odd when viewing 3D datasets.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> pl = pyvista.demos.orientation_plotter()
+        >>> pl.enable_parallel_projection()
+        >>> pl.show()
 
         """
-        self._is_parallel_projection = flag
-        self.SetParallelProjection(flag)
+        self._parallel_projection = True
+        self.SetParallelProjection(True)
 
     def disable_parallel_projection(self):
-        """Disable the use of perspective projection."""
-        self.enable_parallel_projection(False)
+        """Disable the use of perspective projection.
+
+        This is default behavior.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> pl = pyvista.demos.orientation_plotter()
+        >>> pl.disable_parallel_projection()
+        >>> pl.show()
+        """
+        self._parallel_projection = False
+        self.SetParallelProjection(False)
+
+    @property
+    def parallel_projection(self):
+        """Return the state of the parallel projection.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> pl = pyvista.Plotter()
+        >>> pl.disable_parallel_projection()
+        >>> pl.parallel_projection
+        False
+        """
+        return self._parallel_projection
+
+    @parallel_projection.setter
+    def parallel_projection(self, state):
+        """Return the state of the parallel projection.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> pl = pyvista.Plotter()
+        >>> pl.disable_parallel_projection()
+        >>> pl.parallel_projection
+        False
+        """
+        if state:
+            self.enable_parallel_projection()
+        else:
+            self.disable_parallel_projection()
 
     @property
     def clipping_range(self):

@@ -481,14 +481,15 @@ def test_cell_centers_composite(composite):
 
 def test_glyph(datasets, sphere):
     for i, dataset in enumerate(datasets):
-        dataset.vectors = np.ones_like(dataset.points)
+        dataset["vectors"] = np.ones_like(dataset.points)
         result = dataset.glyph()
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
     sphere_sans_arrays = sphere.copy()
     sphere.compute_normals(inplace=True)
-    sphere.vectors = np.ones([sphere.n_points,3])
+    sphere["vectors"] = np.ones([sphere.n_points,3])
+    sphere.set_active_vectors("vectors")
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
 
     assert sphere.glyph(scale=False)
@@ -765,8 +766,9 @@ def test_streamlines_from_source_structured_grids():
         np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5)
     )
     mesh2 = pyvista.StructuredGrid(x2, y2, z2)
-    mesh.vectors = np.ones([mesh.n_points, 3])
-    
+    mesh["vectors"]= np.ones([mesh.n_points, 3])
+    mesh.set_active_vectors("vectors")
+
     with pyvista.VtkErrorCatcher(raise_errors=True):
         stream = mesh.streamlines_from_source(mesh2)
     assert all([stream.n_points, stream.n_cells])

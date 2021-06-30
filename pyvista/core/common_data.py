@@ -47,7 +47,7 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     for all axes of 1, and a phase of 0 for all axes.
 
     >>> import pyvista
-    >>> noise = perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+    >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
 
     Apply the perlin noise function to 
 
