@@ -1947,7 +1947,7 @@ class DataSetFilters:
         vectors : str, optional
             The string name of the active vector field to integrate across.
 
-        integrator_type : int, optional
+        integrator_type : {45, 2, 4}, optional
             The integrator type to be used for streamline generation.
             The default is Runge-Kutta45. The recognized solvers are:
             RUNGE_KUTTA2 (``2``),  RUNGE_KUTTA4 (``4``), and RUNGE_KUTTA45
@@ -1967,7 +1967,7 @@ class DataSetFilters:
             either the starting size for an adaptive integrator, e.g., RK45, or
             the constant / fixed size for non-adaptive ones, i.e., RK2 and RK4).
 
-        step_unit : str, optional
+        step_unit : {'cl', 'l'}, optional
             Uniform integration step unit. The valid unit is now limited to
             only LENGTH_UNIT (``'l'``) and CELL_LENGTH_UNIT (``'cl'``).
             Default is CELL_LENGTH_UNIT: ``'cl'``.
@@ -1994,7 +1994,7 @@ class DataSetFilters:
             Specify the maximum length of a streamline expressed in LENGTH_UNIT.
 
         compute_vorticity : bool, optional
-            Vorticity computation at streamline points (necessary for generating
+            Vorticity computation at streamline points. Necessary for generating
             proper stream-ribbons using the ``vtkRibbonFilter``.
 
         interpolator_type : str, optional
@@ -2107,7 +2107,7 @@ class DataSetFilters:
             The seed point for generating evenly spaced streamlines.
             If not supplied, a random position in the dataset is chosen.
 
-        integrator_type : {2, 4}
+        integrator_type : {2, 4}, optional
             The integrator type to be used for streamline generation.
             The default is Runge-Kutta2. The recognized solvers are:
             RUNGE_KUTTA2 (``2``) and RUNGE_KUTTA4 (``4``).
@@ -2116,7 +2116,7 @@ class DataSetFilters:
             Constant Step size used for line integration, expressed in length
             units or cell length units (see ``step_unit`` parameter).
             
-        step_unit : str, {'cl', 'l'}
+        step_unit : {'cl', 'l'}, optional
             Uniform integration step unit. The valid unit is now limited to
             only LENGTH_UNIT (``'l'``) and CELL_LENGTH_UNIT (``'cl'``).
             Default is CELL_LENGTH_UNIT: ``'cl'``.
@@ -2155,7 +2155,7 @@ class DataSetFilters:
             be determined.
 
         compute_vorticity : bool, optional
-            Vorticity computation at streamline points (necessary for generating
+            Vorticity computation at streamline points. Necessary for generating
             proper stream-ribbons using the ``vtkRibbonFilter``.
 
         Returns
