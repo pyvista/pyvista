@@ -300,12 +300,34 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
 
     def enable_anti_aliasing(self):
-        """Enable anti-aliasing FXAA."""
+        """Enable anti-aliasing using FXAA.
+
+        This tends to make edges appear software and less pixelated.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.enable_anti_aliasing()
+        >>> pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
         self.SetUseFXAA(True)
         self.Modified()
 
     def disable_anti_aliasing(self):
-        """Disable anti-aliasing FXAA."""
+        """Disable anti-aliasing.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.disable_anti_aliasing()
+        >>> pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
         self.SetUseFXAA(False)
         self.Modified()
 
@@ -1009,7 +1031,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(pyvista.Sphere())
         >>> actor = pl.add_floor()
-        >>> cpos = pl.show()
+        >>> pl.show()
 
         """
         if store_floor_kwargs:
@@ -1094,7 +1116,28 @@ class Renderer(_vtk.vtkRenderer):
         return actor
 
     def remove_floors(self, clear_kwargs=True, render=True):
-        """Remove all floor actors."""
+        """Remove all floor actors.
+
+        Parameters
+        ----------
+        clear_kwargs : bool, optional
+            Clear default floor arguments.  Default ``True``.
+
+        render : bool, optional
+            Render upon removing the floor.  Default ``True``.
+
+        Examples
+        --------
+        Add a floor below a sphere, remove it, and then plot it.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.add_floor()
+        >>> pl.remove_floors()
+        >>> pl.show()
+
+        """
         if getattr(self, '_floor', None) is not None:
             self._floor.ReleaseData()
             self._floor = None
@@ -1153,7 +1196,17 @@ class Renderer(_vtk.vtkRenderer):
         self._scalar_bar_slot_lookup = {}
 
     def set_focus(self, point):
-        """Set focus to a point."""
+        """Set focus to a point.
+
+        Parameters
+        ----------
+        point : sequence
+            Cartesian point to focus on in the form of ``[x, y, z]``.
+
+        Examples
+        --------
+
+        """
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
