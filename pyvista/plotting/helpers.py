@@ -199,7 +199,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           jupyter_backend=jupyter_backend,
                           before_close_callback=before_close_callback,
                           jupyter_kwargs=jupyter_kwargs,
-                          return_viewer=return_viewer)
+                          return_viewer=return_viewer,
+                          return_cpos=return_cpos)
 
     # Result will be handled by plotter.show(): cpos or [cpos, img] or
     # the jupyterlab scene when return_viewer is True

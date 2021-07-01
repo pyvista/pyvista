@@ -220,13 +220,14 @@ def test_plot(sphere, tmpdir):
                              interpolate_before_map=True,
                              screenshot=filename,
                              return_img=True,
-                             before_close_callback=verify_cache_image)
+                             before_close_callback=verify_cache_image,
+                             return_cpos=True)
     assert isinstance(cpos, pyvista.CameraPosition)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
 
     filename = pathlib.Path(str(tmp_dir.join('tmp2.png')))
-    cpos = pyvista.plot(sphere, screenshot=filename)
+    pyvista.plot(sphere, screenshot=filename)
 
     # Ensure it added a PNG extension by default
     assert filename.with_suffix(".png").is_file()
@@ -235,6 +236,11 @@ def test_plot(sphere, tmpdir):
     with pytest.raises(ValueError):
         filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
         pyvista.plot(sphere, screenshot=filename)
+
+
+def test_plot_return_cpos(sphere):
+    cpos = sphere.plot(return_cpos=True)
+    assert isinstance(cpos, pyvista.CameraPosition)
 
 
 @skip_no_plotting
@@ -1983,3 +1989,6 @@ def test_plotter_image():
     plotter.store_image = True
     plotter.show()
     assert plotter.image.shape[:2] == wsz
+
+
+    
