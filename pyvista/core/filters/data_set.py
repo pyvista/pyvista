@@ -2267,9 +2267,9 @@ class DataSetFilters:
         ...                                                separating_distance=3,
         ...                                                separating_distance_ratio=0.2)
         >>> plotter = pyvista.Plotter()
-        >>> plotter.add_mesh(streams.tube(radius=0.02), scalars="vorticity_mag")
+        >>> _ = plotter.add_mesh(streams.tube(radius=0.02), scalars="vorticity_mag")
         >>> plotter.view_xy()
-        >>> plotter.show()
+        >>> _ = plotter.show()
 
         """
         if integrator_type not in [2, 4]:
