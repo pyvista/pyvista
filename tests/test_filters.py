@@ -99,20 +99,6 @@ def test_clip_filter_scalar_multiple():
     mesh_clip_z = mesh.clip_scalar(scalars='z', value=0.0)
     assert np.isclose(mesh_clip_z['z'].max(), 0.0)
 
-# TODO: remove this test, it should not be needed
-def test_clip_filter_scalar_multiple_inverted():
-    mesh = pyvista.Plane()
-    mesh['x'] = mesh.points[:, 0].copy()
-    mesh['y'] = mesh.points[:, 1].copy()
-    mesh['z'] = mesh.points[:, 2].copy()
-
-    mesh_clip_x = mesh.clip_scalar(scalars='x', value=0.0, invert=False)
-    assert np.isclose(mesh_clip_x['x'].max(), 0.0)
-    mesh_clip_y = mesh.clip_scalar(scalars='y', value=0.0, invert=False)
-    assert np.isclose(mesh_clip_y['y'].max(), 0.0)
-    mesh_clip_z = mesh.clip_scalar(scalars='z', value=0.0, invert=False)
-    assert np.isclose(mesh_clip_z['z'].max(), 0.0)
-
 
 @skip_py2_nobind
 def test_clip_filter_composite(composite):
