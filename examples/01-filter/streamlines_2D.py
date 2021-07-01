@@ -20,7 +20,7 @@ fluid_mesh = mesh[0]
 print(fluid_mesh)
 
 ###############################################################################
-# The default behavior of the :func:`DataSet.streamlines` filter is to use
+# The default behavior of the :func:`pyvista.DataSetFilters.streamlines` filter is to use
 # a 3D sphere source as the seed points.  This often will not generate any
 # seed points on the 2D plane of interest.  Instead, a single streamlines
 # can be generated using the `start_position` argument.  
@@ -70,7 +70,7 @@ p.show(cpos=camera_position)
 # The behavior immediately downstream of the cylinder is still not apparent
 # using streamlines at the inlet.
 #
-# Another method is the use :func:`DataSet.streamlines_evenly_spaced_2D`.
+# Another method is the use :func:`pyvista.DataSetFilters.streamlines_evenly_spaced_2D`.
 # This filter only works with 2D data. This method can quickly run of memory,
 # so particular attention must be paid to the input parameters.  The defaults 
 # are in cell_length units.
