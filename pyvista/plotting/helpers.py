@@ -13,26 +13,25 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          show_bounds=False, show_axes=None, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
-         return_viewer=False, return_cpos=False, jupyter_kwargs={},
-         theme=None, **kwargs):
+         return_viewer=False, jupyter_kwargs={}, theme=None, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
     ----------
-    item : pyvista.DataSet, pyvista.MultiBlock, or numpy.ndarray
-        PyVista, VTK object, or ``numpy`` array to be plotted.
+    item : vtk or numpy object
+        VTK object or ``numpy`` array to be plotted.
 
-    off_screen : bool, optional
-        Plots off screen when ``True``.  Helpful for saving
-        screenshots without a window popping up.
+    off_screen : bool
+        Plots off screen when ``True``.  Helpful for saving screenshots
+        without a window popping up.
 
     full_screen : bool, optional
         Opens window in full screen.  When enabled, ignores
         ``window_size``.  Default ``False``.
 
     screenshot : str or bool, optional
-        Saves screenshot to file when enabled. See
-        :func:`pyvista.Plotter.screenshot`.  Default ``False``.
+        Saves screenshot to file when enabled.  See:
+        ``help(pyvista.Plotter.screenshot)``.  Default ``False``.
 
         When ``True``, takes screenshot and returns ``numpy`` array of
         image.
@@ -73,14 +72,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         * ``'panel'`` : Show a ``panel`` widget.
 
         This can also be set globally with
-        :func:`pyvista.set_jupyter_backend`.
-
-    return_viewer : bool, optional
-        Return the jupyterlab viewer, scene, or display object
-        when plotting with jupyter notebook.
-
-    return_cpos : bool, optional
-        Return the camera position when enabled.  Default ``False``.
+        ``pyvista.set_jupyter_backend``
 
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
@@ -93,23 +85,19 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     Returns
     -------
-    list
-        List of camera position, focal point, and view up.  Only
-        returned when ``return_cpos=True``.
+    cpos : list
+        List of camera position, focal point, and view up.
 
-    numpy.ndarray
+    img : numpy.ndarray
         Array containing pixel RGB and optionally alpha values.
         Sized:
 
-        * ``[Window height x Window width x 3]`` if the theme sets
+        * [Window height x Window width x 3] if the theme sets
           ``transparent_background=False``.
-        * ``[Window height x Window width x 4]`` if the theme sets
+        * [Window height x Window width x 4] if the theme sets
           ``transparent_background=True``.
 
         Returned only when ``screenshot=True``.
-
-    widget
-        IPython widget when ``return_viewer=True``.
 
     Examples
     --------
@@ -117,7 +105,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     >>> import pyvista
     >>> mesh = pyvista.Sphere()
-    >>> mesh.plot(show_edges=True)
+    >>> mesh.plot(show_edges=True)  # doctest:+SKIP
 
     """
     if notebook is None:
@@ -217,14 +205,14 @@ def plot_arrows(cent, direction, **kwargs):
 
     directions : np.ndarray
         Accepts a single 3d point or array of 3d vectors.
-        Must contain the same number of items as ``cent``.
+        Must contain the same number of items as cent.
 
     **kwargs : additional arguments, optional
-        See :func:`pyvista.plot`.
+        See ``help(pyvista.plot)``.
 
     Returns
     -------
-    Same as ``pyvista.plot``.  See :func:`pyvista.plot`.
+    Same as ``pyvista.plot``.  See ``help(pyvista.plot)``.
 
     Examples
     --------
