@@ -3895,7 +3895,7 @@ class Plotter(BasePlotter):
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=None,
              screenshot=False, return_img=False, cpos=None, use_ipyvtk=None,
-             jupyter_backend=None, return_viewer=False, **kwargs):
+             jupyter_backend=None, return_viewer=False, return_cpos=False, **kwargs):
         """Display the plotting window.
 
         Notes
@@ -3966,19 +3966,24 @@ class Plotter(BasePlotter):
             Return the jupyterlab viewer, scene, or display object
             when plotting with jupyter notebook.
 
+        return_cpos : bool, optional
+            Return the camera position when enabled.  Default
+            ``False``.
+
         Returns
         -------
-        cpos : list
-            List of camera position, focal point, and view up.
+        list
+            List of camera position, focal point, and view up.  Only
+            returned when ``return_cpos=True``.
 
-        image : np.ndarray
+        numpy.ndarray
             Numpy array of the last image when either ``return_img=True``
             or ``screenshot=True`` is set. Optionally contains alpha
             values. Sized:
 
-            * [Window height x Window width x 3] if the theme sets
+            * ``[Window height x Window width x 3]`` if the theme sets
               ``transparent_background=False``.
-            * [Window height x Window width x 4] if the theme sets
+            * ``[Window height x Window width x 4]`` if the theme sets
               ``transparent_background=True``.
 
         widget
@@ -4139,13 +4144,15 @@ class Plotter(BasePlotter):
         if auto_close:
             self.close()
 
-        # If user asked for screenshot, return as numpy array after camera
-        # position
+        # If user requested screenshot return the last image
         if return_img or screenshot is True:
-            return cpos, self.last_image
+            if return_cpos:
+                return cpos, self.last_image
+            else:
+                self.last_image
 
         # Return last used camera position unless within a doctest
-        if '_pytest.doctest' not in sys.modules:
+        if return_cpos:
             return cpos
 
     def add_title(self, title, font_size=18, color=None, font=None,
