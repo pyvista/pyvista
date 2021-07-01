@@ -3630,8 +3630,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         only_active : bool, optional
             If ``True``, only add the light to the active
             renderer. The default is that every renderer adds the
-            light. To add the light to an arbitrary renderer, see the
-            ``add_light`` method of the Renderer class.
+            light. To add the light to an arbitrary renderer, see
+            :func:`pyvista.plotting.renderer.Renderer.add_light`.
 
         Examples
         --------
