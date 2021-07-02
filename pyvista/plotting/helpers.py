@@ -84,7 +84,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     return_cpos : bool, optional
         Return the last camera position from the render window
-        when enabled.  Default ``False``.
+        when enabled.  Defaults to value in theme settings.
 
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
@@ -187,27 +187,18 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if parallel_projection:
         plotter.enable_parallel_projection()
 
-    result = plotter.show(window_size=window_size,
-                          auto_close=auto_close,
-                          interactive=interactive,
-                          full_screen=full_screen,
-                          screenshot=screenshot,
-                          return_img=return_img,
-                          use_ipyvtk=use_ipyvtk,
-                          jupyter_backend=jupyter_backend,
-                          before_close_callback=before_close_callback,
-                          jupyter_kwargs=jupyter_kwargs,
-                          return_viewer=return_viewer)
-
-    # show will not return camera position, get this from the plotter
-    if return_cpos:
-        cpos_out = plotter.camera_position
-        if result is not None:
-            return cpos_out, result
-        return cpos_out
-
-    return result
-
+    return plotter.show(window_size=window_size,
+                        auto_close=auto_close,
+                        interactive=interactive,
+                        full_screen=full_screen,
+                        screenshot=screenshot,
+                        return_img=return_img,
+                        use_ipyvtk=use_ipyvtk,
+                        jupyter_backend=jupyter_backend,
+                        before_close_callback=before_close_callback,
+                        jupyter_kwargs=jupyter_kwargs,
+                        return_viewer=return_viewer,
+                        return_cpos=return_cpos)
 
 def plot_arrows(cent, direction, **kwargs):
     """Plot arrows as vectors.
