@@ -13,7 +13,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          show_bounds=False, show_axes=None, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
-         return_viewer=False, jupyter_kwargs={}, theme=None, **kwargs):
+         return_viewer=False, return_cpos=False, jupyter_kwargs={},
+         theme=None, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -77,6 +78,14 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
 
+    return_viewer : bool, optional
+        Return the jupyterlab viewer, scene, or display object
+        when plotting with jupyter notebook.
+
+    return_cpos : bool, optional
+        Return the last camera position from the render window
+        when enabled.  Default ``False``.
+
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
@@ -86,7 +95,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     Returns
     -------
     cpos : list
-        List of camera position, focal point, and view up.
+        List of camera position, focal point, and view up.  Returned
+        only when ``return_cpos=True``.
 
     img : numpy.ndarray
         Array containing pixel RGB and optionally alpha values.
@@ -187,11 +197,15 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           jupyter_backend=jupyter_backend,
                           before_close_callback=before_close_callback,
                           jupyter_kwargs=jupyter_kwargs,
-                          return_viewer=return_viewer,
-                          return_cpos=return_cpos)
+                          return_viewer=return_viewer)
 
-    # Result will be handled by plotter.show(): cpos or [cpos, img] or
-    # the jupyterlab scene when return_viewer is True
+    # show will not return camera position, get this from the plotter
+    if return_cpos:
+        cpos_out = plotter.camera_position
+        if result is not None:
+            return cpos_out, result
+        return cpos_out
+
     return result
 
 

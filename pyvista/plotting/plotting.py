@@ -4011,6 +4011,17 @@ class Plotter(BasePlotter):
 
         >>> pl.show(jupyter_backend='ipygany', return_viewer=True)  # doctest:+SKIP
 
+        Obtain the camera position after closing the plotter
+
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Sphere())
+        >>> pl.show()   # doctest:+SKIP
+        >>> pl.camera_position  # doctest:+SKIP
+        [(2.223005211686484, -0.3126909484828709, 2.4686209867735065),
+        (0.0, 0.0, 0.0),
+        (-0.6839951597283509, -0.47207319712073137, 0.5561452310578585)]
+
+
         """
         # developer keyword argument: runs a function immediately prior to ``close``
         self._before_close_callback = kwargs.pop('before_close_callback', None)
@@ -4132,7 +4143,7 @@ class Plotter(BasePlotter):
         #       See issues #135 and #186 for insight before editing the
         #       remainder of this function.
 
-        # Get camera position before closing
+        # Get camera position before closing.  This caches the camera position
         cpos = self.camera_position
 
         # Cleanup
@@ -4142,11 +4153,7 @@ class Plotter(BasePlotter):
         # If user asked for screenshot, return as numpy array after camera
         # position
         if return_img or screenshot is True:
-            return cpos, self.last_image
-
-        # Return last used camera position unless within a doctest
-        if '_pytest.doctest' not in sys.modules:
-            return cpos
+            return self.last_image
 
     def add_title(self, title, font_size=18, color=None, font=None,
                   shadow=False):

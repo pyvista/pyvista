@@ -241,6 +241,7 @@ def test_plot(sphere, tmpdir):
 def test_plot_return_cpos(sphere):
     cpos = sphere.plot(return_cpos=True)
     assert isinstance(cpos, pyvista.CameraPosition)
+    assert sphere.plot(return_cpos=False) is None
 
 
 @skip_no_plotting
@@ -1989,6 +1990,3 @@ def test_plotter_image():
     plotter.store_image = True
     plotter.show()
     assert plotter.image.shape[:2] == wsz
-
-
-    
