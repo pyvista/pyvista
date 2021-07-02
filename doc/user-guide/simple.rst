@@ -150,7 +150,7 @@ execution of the code after calling ``show``.
 
     plotter = pv.Plotter()    # instantiate the plotter
     plotter.add_mesh(mesh)    # add a mesh to the scene
-    cpos = plotter.show()     # show the rendering window
+    plotter.show()            # show the rendering window
 
 
 Note that the ``show`` method will return the last used camera position of the

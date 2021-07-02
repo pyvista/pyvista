@@ -494,8 +494,8 @@ class PointGrid(PointSet):
         Returns
         -------
         cpos : list
-            Camera position, focal point, and view up.  Used for storing and
-            setting camera view.
+            Camera position, focal point, and view up.  Returned when
+            ``return_cpos`` is ``True``.
 
         """
         trisurf = self.extract_surface().triangulate()
