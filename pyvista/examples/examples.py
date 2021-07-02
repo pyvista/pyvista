@@ -141,7 +141,7 @@ def beam_example(off_screen=None, notebook=None):
                      rng=[-d.max(), d.max()], cmap=cmap)
     plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
-    cpos = plotter.show()  # store camera position
+    plotter.show()
 
 
 def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,

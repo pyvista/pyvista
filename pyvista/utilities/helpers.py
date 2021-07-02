@@ -307,7 +307,7 @@ def line_segments_from_points(points):
     >>> import numpy as np
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
     >>> lines = pyvista.lines_from_points(points)
-    >>> cpos = lines.plot()
+    >>> lines.plot()
 
     """
     if len(points) % 2 != 0:
@@ -399,7 +399,7 @@ def make_tri_mesh(points, faces):
     >>> faces = np.array([[0, 1, 4], [4, 7, 6], [2, 5, 4], [4, 5, 8],
     ...                   [0, 4, 3], [3, 4, 6], [1, 2, 4], [4, 8, 7]])
     >>> tri_mesh = pyvista.make_tri_mesh(points, faces)
-    >>> cpos = tri_mesh.plot(show_edges=True, line_width=5)
+    >>> tri_mesh.plot(show_edges=True, line_width=5)
 
     """
     if points.shape[1] != 3:

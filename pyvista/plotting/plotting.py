@@ -315,12 +315,39 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def renderer(self):
-        """Return the active renderer."""
+        """Return the active renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.renderer  # doctest:+SKIP
+        (Renderer)0x7f916129bfa0
+
+        """
         return self.renderers.active_renderer
 
     @property
     def store_image(self):
-        """Return if an image will be saved on close."""
+        """Store last rendered frame on close.
+
+        This is normally disabled to avoid caching the image, and is
+        enabled by default by setting:
+
+        ``pyvista.BUILDING_GALLERY = True``
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(off_screen=True)
+        >>> pl.store_image = True
+        >>> _ = pl.add_mesh(pyvista.Cube())
+        >>> pl.show()
+        >>> image = pl.last_image
+        >>> type(image)  # doctest:+SKIP
+        <class 'numpy.ndarray'>
+
+        """
         return self._store_image
 
     @store_image.setter
@@ -338,6 +365,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         index_column : int
             Index of the subplot to activate along the columns.
+
+        Examples
+        --------
+        Create a 2 wide plot and set the background of right-hand plot
+        to orange.  Add a cube to the left plot and a sphere to the
+        right.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> actor = pl.add_mesh(pyvista.Cube())
+        >>> pl.subplot(0, 1)
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> pl.set_background('orange', all_renderers=False)
+        >>> pl.show()
 
         """
         self.renderers.set_active_renderer(index_row, index_column)
@@ -362,6 +403,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         only_active : bool
             If ``True``, only change the active renderer. The default
             is that every renderer is affected.
+
+        Examples
+        --------
+        >>> from pyvista import demos
+        >>> pl = demos.orientation_plotter()
+        >>> pl.enable_3_lights()
+        >>> pl.show()
+
+        Note how this varies from the default plotting.
+
+        >>> pl = demos.orientation_plotter()
+        >>> pl.show()
 
         """
         def _to_pos(elevation, azimuth):
@@ -404,6 +457,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         only_active : bool
             If ``True``, only change the active renderer. The default is that
             every renderer is affected.
+
+        Examples
+        --------
+        Create a plotter without any lights and then enable the
+        default light kit.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(lighting=None)
+        >>> pl.enable_lightkit()
+        >>> actor = pl.add_mesh(pyvista.Cube(), show_edges=True)
+        >>> pl.show()
 
         """
         renderers = [self.renderer] if only_active else self.renderers
@@ -3338,7 +3402,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(mesh)
         >>> _ = plotter.add_mesh(othermesh, 'k')
         >>> _ = plotter.add_legend(legend_entries)
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         self.legend = _vtk.vtkLegendBoxActor()
@@ -3578,7 +3642,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(pyvista.Sphere())
         >>> plotter.add_background_image(examples.mapfile)
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         if self.renderers.has_active_background_renderer:
@@ -3643,7 +3707,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(pv.Cube())
         >>> light = pv.Light(color='cyan', light_type='headlight')
         >>> plotter.add_light(light)
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         renderers = [self.renderer] if only_active else self.renderers
@@ -3656,19 +3720,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         only_active : bool
-            If ``True``, only remove lights from the active renderer. The default
-            is that lights are stripped from every renderer.
+            If ``True``, only remove lights from the active
+            renderer. The default is that lights are stripped from
+            every renderer.
 
         Examples
         --------
-        Create a plotter, forget to initialize it without default lighting,
-        correct the mistake after instantiation.
+        Create a plotter and remove all lights after initialization.
+        Note how the mesh rendered is completely flat
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter()
         >>> plotter.remove_all_lights()
         >>> plotter.renderer.lights
         []
+        >>> _ = plotter.add_mesh(pv.Sphere(), show_edges=True)
+        >>> plotter.show()
+
+        Note how this differs from a plot with default lighting
+
+        >>> pv.Sphere().plot(show_edges=True, lighting=True)
 
         """
         renderers = [self.renderer] if only_active else self.renderers
@@ -3714,17 +3785,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
-
-    Example
-    -------
-    >>> import pyvista
-    >>> from pyvista import examples
-    >>> mesh = examples.load_hexbeam()
-    >>> another_mesh = examples.load_uniform()
-    >>> plotter = pyvista.Plotter()
-    >>> actor = plotter.add_mesh(mesh, color='red')
-    >>> actor = plotter.add_mesh(another_mesh, color='blue')
-    >>> cpos = plotter.show()
 
     Parameters
     ----------
@@ -3789,6 +3849,17 @@ class Plotter(BasePlotter):
 
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> mesh = examples.load_hexbeam()
+    >>> another_mesh = examples.load_uniform()
+    >>> plotter = pyvista.Plotter()
+    >>> actor = plotter.add_mesh(mesh, color='red')
+    >>> actor = plotter.add_mesh(another_mesh, color='blue')
+    >>> plotter.show()
 
     """
 
