@@ -1,4 +1,4 @@
-"""PyVista plotting module."""
+r"""PyVista plotting module."""
 
 import sys
 import pathlib
@@ -637,10 +637,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.reset_camera(*args, **kwargs)
         self.render()
 
-    @wraps(Renderer.isometric_view)
-    def isometric_view(self, *args, **kwargs):
-        """Wrap ``Renderer.isometric_view``."""
-        return self.renderer.isometric_view(*args, **kwargs)
+    def isometric_view(self):
+        """DEPRECATED: Please use ``view_isometric``."""
+        from pyvista.core.errors import DeprecationError
+        raise DeprecationError('Please use ``view_isometric``.')
 
     @wraps(Renderer.view_isometric)
     def view_isometric(self, *args, **kwarg):
