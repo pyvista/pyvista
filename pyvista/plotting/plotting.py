@@ -3402,7 +3402,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(mesh)
         >>> _ = plotter.add_mesh(othermesh, 'k')
         >>> _ = plotter.add_legend(legend_entries)
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         self.legend = _vtk.vtkLegendBoxActor()
@@ -3642,7 +3642,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(pyvista.Sphere())
         >>> plotter.add_background_image(examples.mapfile)
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         if self.renderers.has_active_background_renderer:
@@ -3707,7 +3707,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(pv.Cube())
         >>> light = pv.Light(color='cyan', light_type='headlight')
         >>> plotter.add_light(light)
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         renderers = [self.renderer] if only_active else self.renderers
@@ -3859,7 +3859,7 @@ class Plotter(BasePlotter):
     >>> plotter = pyvista.Plotter()
     >>> actor = plotter.add_mesh(mesh, color='red')
     >>> actor = plotter.add_mesh(another_mesh, color='blue')
-    >>> cpos = plotter.show()
+    >>> plotter.show()
 
     """
 

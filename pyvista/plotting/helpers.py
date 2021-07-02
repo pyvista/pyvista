@@ -221,7 +221,7 @@ def plot_arrows(cent, direction, **kwargs):
     >>> import pyvista
     >>> cent = np.random.random(3)
     >>> direction = np.random.random(3)
-    >>> cpos = pyvista.plot_arrows(cent, direction)
+    >>> pyvista.plot_arrows(cent, direction)
 
     Plot 100 random arrows.
 
@@ -229,7 +229,7 @@ def plot_arrows(cent, direction, **kwargs):
     >>> import pyvista
     >>> cent = np.random.random((100, 3))
     >>> direction = np.random.random((100, 3))
-    >>> cpos = pyvista.plot_arrows(cent, direction)
+    >>> pyvista.plot_arrows(cent, direction)
 
     """
     return plot([cent, direction], **kwargs)

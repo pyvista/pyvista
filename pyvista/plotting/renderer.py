@@ -829,7 +829,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> actor = plotter.add_mesh(mesh)
         >>> actor = plotter.show_bounds(grid='front', location='outer', 
         ...                             all_edges=True)
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         self.remove_bounds_axes()

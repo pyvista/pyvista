@@ -844,7 +844,7 @@ class WidgetHelper:
         ...     fmt="%0.9f",
         ...     title_height=0.08,
         ... )
-        >>> cpos = pl.show()
+        >>> pl.show()
         """
         if not hasattr(self, "slider_widgets"):
             self.slider_widgets = []

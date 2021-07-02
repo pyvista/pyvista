@@ -228,7 +228,7 @@ class DataSetFilters:
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(sphere, scalars='implicit_distance', cmap='bwr')
         >>> _ = pl.add_mesh(plane, color='w', style='wireframe')
-        >>> cpos = pl.show()
+        >>> pl.show()
 
         """
         function = _vtk.vtkImplicitPolyDataDistance()
@@ -3196,7 +3196,7 @@ class DataSetFilters:
         ...                              [0, 0, 1, 200],
         ...                              [0, 0, 0, 1]])
         >>> transformed = mesh.transform(transform_matrix)
-        >>> cpos = transformed.plot(show_edges=True)
+        >>> transformed.plot(show_edges=True)
 
         """
         if isinstance(trans, _vtk.vtkMatrix4x4):
@@ -3284,7 +3284,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
         >>> mesh = mesh.reflect((0, 0, 1), point=(0, 0, -100))
-        >>> cpos = mesh.plot(show_edges=True)
+        >>> mesh.plot(show_edges=True)
 
         """
         t = transformations.reflection(normal, point=point)
