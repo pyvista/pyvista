@@ -4013,14 +4013,13 @@ class Plotter(BasePlotter):
 
         Obtain the camera position after closing the plotter
 
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pyvista.Sphere())
         >>> pl.show()   # doctest:+SKIP
         >>> pl.camera_position  # doctest:+SKIP
         [(2.223005211686484, -0.3126909484828709, 2.4686209867735065),
         (0.0, 0.0, 0.0),
         (-0.6839951597283509, -0.47207319712073137, 0.5561452310578585)]
-
 
         """
         # developer keyword argument: runs a function immediately prior to ``close``
