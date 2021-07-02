@@ -309,7 +309,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> pl.enable_anti_aliasing()
-        >>> pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
         >>> pl.show()
 
         """
@@ -324,7 +324,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> pl.disable_anti_aliasing()
-        >>> pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
         >>> pl.show()
 
         """
@@ -617,14 +617,14 @@ class Renderer(_vtk.vtkRenderer):
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(pyvista.Box(), show_edges=True)
-        >>> pl.add_axes(line_width=5, labels_off=True)
+        >>> _ = pl.add_axes(line_width=5, labels_off=True)
         >>> pl.show()
 
         Use the axes orientation widget instead of the default arrows.
 
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(pyvista.Sphere())
-        >>> pl.add_axes(box=True)
+        >>> _ = pl.add_axes(box=True)
         >>> pl.show()
 
         """
@@ -659,8 +659,8 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.Plotter()
-        >>> pv.hide_axes()
+        >>> pl = pv.Plotter()
+        >>> pl.hide_axes()
 
         """
         if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
@@ -1069,7 +1069,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pyvista.Sphere())
-        >>> pl.add_bounding_box(line_width=5, color='black')
+        >>> _ = pl.add_bounding_box(line_width=5, color='black')
         >>> pl.show()
 
         """
@@ -1374,7 +1374,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(mesh, show_edges=True)
         >>> _ = pl.add_point_labels([mesh.points[1]], ["Focus"])
-        >>> _ = pl.camera  # this initialzes the camera
+        >>> _ = pl.camera  # this initializes the camera
         >>> pl.set_focus(mesh.points[1])
         >>> pl.show()
 
@@ -1562,7 +1562,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl = pyvista.Plotter()
         >>> cube_actor = pl.add_mesh(pyvista.Cube(), show_edges=True)
         >>> sphere_actor = pl.add_mesh(pyvista.Sphere(), show_edges=True)
-        >>> pl.remove_actor(cube_actor)
+        >>> _ = pl.remove_actor(cube_actor)
         >>> pl.show()
 
         """
@@ -1902,8 +1902,8 @@ class Renderer(_vtk.vtkRenderer):
         >>> light = pyvista.Light()
         >>> light.set_direction_angle(20, -20)
         >>> pl.add_light(light)
-        >>> pl.add_mesh(mesh, color='white', smooth_shading=True)
-        >>> pl.add_mesh(pyvista.Box((-1.2, -1, -1, 1, -1, 1)))
+        >>> _ = pl.add_mesh(mesh, color='white', smooth_shading=True)
+        >>> _ = pl.add_mesh(pyvista.Box((-1.2, -1, -1, 1, -1, 1)))
         >>> pl.enable_shadows()
         >>> pl.show()
 

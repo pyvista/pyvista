@@ -1,4 +1,4 @@
-r"""PyVista plotting module."""
+"""PyVista plotting module."""
 
 import sys
 import pathlib
@@ -344,8 +344,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(pyvista.Cube())
         >>> pl.show()
         >>> image = pl.last_image
-        >>> type(image)
-        numpy.ndarray
+        >>> type(image)  # doctest:+SKIP
+        <class 'numpy.ndarray'>
 
         """
         return self._store_image
@@ -638,7 +638,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.render()
 
     def isometric_view(self):
-        """DEPRECATED: Please use ``view_isometric``."""
+        """Please use ``view_isometric``, this method has been deprecated."""
         from pyvista.core.errors import DeprecationError
         raise DeprecationError('Please use ``view_isometric``.')
 
@@ -3734,7 +3734,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.remove_all_lights()
         >>> plotter.renderer.lights
         []
-        >>> plotter.add_mesh(pv.Sphere(), show_edges=True)
+        >>> _ = plotter.add_mesh(pv.Sphere(), show_edges=True)
         >>> plotter.show()
 
         Note how this differs from a plot with default lighting
