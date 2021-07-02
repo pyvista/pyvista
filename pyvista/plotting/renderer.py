@@ -302,7 +302,7 @@ class Renderer(_vtk.vtkRenderer):
     def enable_anti_aliasing(self):
         """Enable anti-aliasing using FXAA.
 
-        This tends to make edges appear software and less pixelated.
+        This tends to make edges appear softer and less pixelated.
 
         Examples
         --------
@@ -387,7 +387,7 @@ class Renderer(_vtk.vtkRenderer):
             ``'front'`` or ``'back'``. This can be helpful for dense
             surface meshes, especially when edges are visible, but can
             cause flat meshes to be partially displayed.  Default
-            False.
+            ``False``.
 
         Returns
         -------
@@ -458,22 +458,22 @@ class Renderer(_vtk.vtkRenderer):
         Parameters
         ----------
         x_color : string or 3 item sequence, optional
-            The color of the x axes arror.
+            The color of the x axes arrow.
 
         y_color : string or 3 item sequence, optional
-            The color of the y axes arror.
+            The color of the y axes arrow.
 
         z_color : string or 3 item sequence, optional
-            The color of the z axes arror.
+            The color of the z axes arrow.
 
         xlabel : str, optional
-            The label of the x axes arror.
+            The label of the x axes arrow.
 
         ylabel : str, optional
-            The label of the y axes arror.
+            The label of the y axes arrow.
 
         zlabel : str, optional
-            The label of the z axes arror.
+            The label of the z axes arrow.
 
         line_width : int, optional
             Width of the arrows.
@@ -674,7 +674,7 @@ class Renderer(_vtk.vtkRenderer):
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.hide_axes()
+        >>> pl.show_axes()
 
         """
         if hasattr(self, 'axes_widget'):
@@ -1620,13 +1620,13 @@ class Renderer(_vtk.vtkRenderer):
         Parameters
         ----------
         xscale : float, optional
-            Scaling in the x direction.
+            Scaling in the x direction.  Default is ``None``, which does not change existing scaling.
 
         yscale : float, optional
-            Scaling in the y direction.
+            Scaling in the y direction.  Default is ``None``, which does not change existing scaling.
 
         zscale : float, optional
-            Scaling in the z direction.
+            Scaling in the z direction.  Default is ``None``, which does not change existing scaling.
 
         reset_camera : bool, optional
             Resets camera so all actors can be seen.  Default ``True``.
@@ -1991,6 +1991,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> actor = pl.add_mesh(pyvista.Cone())
         >>> pl.set_background('black', top='white')
         >>> pl.show()
+
         """
         if color is None:
             color = self._theme.background

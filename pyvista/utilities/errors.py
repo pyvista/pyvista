@@ -1,4 +1,3 @@
-
 """Module managing errors."""
 
 import logging
