@@ -1732,6 +1732,14 @@ class Renderer(_vtk.vtkRenderer):
             self.parent.render()
         self.Modified()
 
+    def isometric_view(self):
+        """Reset the camera to a default isometric view.
+
+        DEPRECATED: Please use ``view_isometric``.
+
+        """
+        return self.view_isometric()
+
     def view_isometric(self, negative=False):
         """Reset the camera to a default isometric view.
 

@@ -637,10 +637,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.reset_camera(*args, **kwargs)
         self.render()
 
-    def isometric_view(self):
-        """Please use ``view_isometric``, this method has been deprecated."""
-        from pyvista.core.errors import DeprecationError
-        raise DeprecationError('Please use ``view_isometric``.')
+    @wraps(Renderer.isometric_view)
+    def isometric_view(self, *args, **kwargs):
+        """Wrap ``Renderer.isometric_view``."""
+        return self.renderer.isometric_view(*args, **kwargs)
 
     @wraps(Renderer.view_isometric)
     def view_isometric(self, *args, **kwarg):
