@@ -321,7 +321,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> cpos = hills.plot_curvature(smooth_shading=True)
+        >>> hills.plot_curvature(smooth_shading=True)
 
         """
         kwargs.setdefault('scalar_bar_args',
@@ -1261,7 +1261,7 @@ class PolyDataFilters(DataSetFilters):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(sphere)
         >>> actor = pl.add_mesh(path, line_width=5, color='k')
-        >>> cpos = pl.show()
+        >>> pl.show()
 
         """
         if not (0 <= start_vertex < poly_data.n_points and
@@ -1560,7 +1560,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> cpos = sphere.plot_normals(mag=0.1)
+        >>> sphere.plot_normals(mag=0.1)
 
         """
         plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', None),
@@ -1679,9 +1679,9 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> cpos = sphere.plot_normals(mag=0.1)
+        >>> sphere.plot_normals(mag=0.1)
         >>> sphere.flip_normals()
-        >>> cpos = sphere.plot_normals(mag=0.1)
+        >>> sphere.plot_normals(mag=0.1)
 
         """
         if not poly_data.is_all_triangles:
@@ -1800,7 +1800,7 @@ class PolyDataFilters(DataSetFilters):
         You can also plot the arc_length
 
         >>> arc = path.compute_arc_length()
-        >>> cpos = arc.plot(scalars="arc_length")
+        >>> arc.plot(scalars="arc_length")
 
         """
         alg = _vtk.vtkAppendArcLength()
@@ -1889,7 +1889,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere = pv.Sphere()
         >>> path = sphere.geodesic(0, 100)
         >>> ribbon = path.ribbon()
-        >>> cpos = pv.plot([sphere, ribbon])
+        >>> pv.plot([sphere, ribbon])
 
         Notes
         -----
@@ -1977,7 +1977,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1])
-        >>> cpos = mesh.plot()
+        >>> mesh.plot()
 
         """
         alg = _vtk.vtkLinearExtrusionFilter()
@@ -2051,7 +2051,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
         >>> mesh = line.extrude_rotate(resolution = 4)
-        >>> cpos = mesh.plot()
+        >>> mesh.plot()
 
         """
         if resolution <= 0:

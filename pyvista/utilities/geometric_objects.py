@@ -91,7 +91,7 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
     >>> import numpy as np
     >>> cylinder = pyvista.Cylinder(center=[1, 2, 3], direction=[1, 1, 1], 
     ...                             radius=1, height=2)
-    >>> cpos = cylinder.plot(show_edges=True, line_width=5, cpos='xy')
+    >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
     """
     capping = kwargs.pop('cap_ends', capping)
     assert_empty_kwargs(**kwargs)
@@ -310,7 +310,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
 
     >>> import pyvista
     >>> sphere = pyvista.Sphere()
-    >>> cpos = sphere.plot(show_edges=True)
+    >>> sphere.plot(show_edges=True)
 
     Create a quarter sphere by setting ``end_theta``.
 
@@ -835,7 +835,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
-    >>> cpos = pl.show()
+    >>> pl.show()
     """
     check_valid_vector(pointa, 'pointa')
     check_valid_vector(pointb, 'pointb')
@@ -910,7 +910,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
-    >>> cpos = pl.show()
+    >>> pl.show()
     """
     check_valid_vector(center, 'center')
     if normal is None:
@@ -964,7 +964,7 @@ def Pyramid(points):
     >>> pointd = [1.0, -1.0, 0.0]
     >>> pointe = [0.0, 0.0, 1.67]
     >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
-    >>> cpos = pyramid.plot(show_edges=True, line_width=5)
+    >>> pyramid.plot(show_edges=True, line_width=5)
     """
     if len(points) != 5:
         raise TypeError('Points must be given as length 5 np.ndarray or list')

@@ -300,12 +300,34 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
 
     def enable_anti_aliasing(self):
-        """Enable anti-aliasing FXAA."""
+        """Enable anti-aliasing using FXAA.
+
+        This tends to make edges appear softer and less pixelated.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.enable_anti_aliasing()
+        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
         self.SetUseFXAA(True)
         self.Modified()
 
     def disable_anti_aliasing(self):
-        """Disable anti-aliasing FXAA."""
+        """Disable anti-aliasing.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.disable_anti_aliasing()
+        >>> _ = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.show()
+
+        """
         self.SetUseFXAA(False)
         self.Modified()
 
@@ -361,10 +383,11 @@ class Renderer(_vtk.vtkRenderer):
             Resets the camera when true.
 
         culling : str, optional
-            Does not render faces that are culled. Options are ``'front'`` or
-            ``'back'``. This can be helpful for dense surface meshes,
-            especially when edges are visible, but can cause flat
-            meshes to be partially displayed.  Default False.
+            Does not render faces that are culled. Options are
+            ``'front'`` or ``'back'``. This can be helpful for dense
+            surface meshes, especially when edges are visible, but can
+            cause flat meshes to be partially displayed.  Default
+            ``False``.
 
         Returns
         -------
@@ -373,7 +396,6 @@ class Renderer(_vtk.vtkRenderer):
 
         actor_properties : vtk.Properties
             Actor properties.
-
         """
         # Remove actor by that name if present
         rv = self.remove_actor(name, reset_camera=False, render=False)
@@ -433,10 +455,46 @@ class Renderer(_vtk.vtkRenderer):
                            labels_off=False):
         """Add axes actor at origin.
 
+        Parameters
+        ----------
+        x_color : string or 3 item sequence, optional
+            The color of the x axes arrow.
+
+        y_color : string or 3 item sequence, optional
+            The color of the y axes arrow.
+
+        z_color : string or 3 item sequence, optional
+            The color of the z axes arrow.
+
+        xlabel : str, optional
+            The label of the x axes arrow.
+
+        ylabel : str, optional
+            The label of the y axes arrow.
+
+        zlabel : str, optional
+            The label of the z axes arrow.
+
+        line_width : int, optional
+            Width of the arrows.
+
+        labels_off : bool, optional
+            Disables the label text when ``True``.
+
         Returns
         -------
-        marker_actor : vtk.vtkAxesActor
-            vtkAxesActor actor
+        vtk.vtkAxesActor
+            Actor of the axes.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Sphere(center=(2, 0, 0)), color='r')
+        >>> _ = pl.add_mesh(pyvista.Sphere(center=(0, 2, 0)), color='g')
+        >>> _ = pl.add_mesh(pyvista.Sphere(center=(0, 0, 2)), color='b')
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
 
         """
         self.marker_actor = create_axes_marker(line_width=line_width,
@@ -459,11 +517,26 @@ class Renderer(_vtk.vtkRenderer):
         actor : vtk.vtkActor or pyvista.DataSet
             The mesh or actor to use as the marker.
 
+        interactive : bool
+            Control if the orientation widget is interactive.  By
+            default uses the value from ``theme.interactive``.
+
         color : string, optional
-            The color of the actor.
+            The color of the actor.  This only applies if ``actor`` is
+            a ``pyvista.DataSet``
 
         opacity : int or float, optional
             Opacity of the marker.
+
+        Examples
+        --------
+        Use an Arrow as the orientation widget.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(pyvista.Cube(), show_edges=True)
+        >>> actor = pl.add_orientation_widget(pyvista.Arrow(), color='r')
+        >>> pl.show()
 
         """
         if isinstance(actor, pyvista.DataSet):
@@ -505,15 +578,60 @@ class Renderer(_vtk.vtkRenderer):
         interacitve : bool
             Enable this orientation widget to be moved by the user.
 
-        line_width : int
+        line_width : int, optional
             The width of the marker lines
 
-        box : bool
+        box : bool, optional
             Show a box orientation marker. Use ``box_args`` to adjust.
             See :any:`pyvista.create_axes_orientation_box` for details.
 
-        opacity : int or float, optional
-            The opacity of the marker.
+        x_color : str, optional
+            Color used for the x axis arrow.  Defaults to theme axes parameters.
+
+        y_color : str, optional
+            Color used for the y axis arrow.  Defaults to theme axes parameters.
+
+        z_color : str, optional
+            Color used for the z axis arrow.  Defaults to theme axes parameters.
+
+        xlabel : str, optional
+            Text used for the x axis.
+
+        ylabel : str, optional
+            Text used for the y axis.
+
+        zlabel : str, optional
+            Text used for the z axis.
+
+        labels_off : bool, optional
+            Enable or disable the text labels for the axes.
+
+        box : bool, optional
+            When ``True`` use the axes orientation widget instead of
+            the default arrows. Defaults to theme axes parameters.
+
+        box_args : dict, optional
+            Parameters for the orientation box widget when
+            ``box=True``. See the parameters of
+            :func:`pyvista.create_axes_orientation_box`.
+
+        Examples
+        --------
+        Show axes without labels and with thick lines.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(pyvista.Box(), show_edges=True)
+        >>> _ = pl.add_axes(line_width=5, labels_off=True)
+        >>> pl.show()
+
+        Use the axes orientation widget instead of the default arrows.
+
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> _ = pl.add_axes(box=True)
+        >>> pl.show()
+
         """
         if interactive is None:
             interactive = self._theme.interactive
@@ -541,13 +659,29 @@ class Renderer(_vtk.vtkRenderer):
         return self.axes_actor
 
     def hide_axes(self):
-        """Hide the axes orientation widget."""
+        """Hide the axes orientation widget.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.hide_axes()
+
+        """
         if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
             self.axes_widget.EnabledOff()
             self.Modified()
 
     def show_axes(self):
-        """Show the axes orientation widget."""
+        """Show the axes orientation widget.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.show_axes()
+
+        """
         if hasattr(self, 'axes_widget'):
             self.axes_widget.EnabledOn()
             self.axes_widget.SetCurrentRenderer(self)
@@ -557,7 +691,17 @@ class Renderer(_vtk.vtkRenderer):
 
     @property
     def axes_enabled(self):
-        """Return ``True`` when axes are enabled."""
+        """Return ``True`` when axes are enabled.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.hide_axes()
+        >>> pl.renderer.axes_enabled
+        False
+
+        """
         if hasattr(self, 'axes_widget'):
             return bool(self.axes_widget.GetEnabled())
         return False
@@ -688,8 +832,9 @@ class Renderer(_vtk.vtkRenderer):
         >>> mesh = pyvista.Sphere()
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(mesh)
-        >>> actor = plotter.show_bounds(grid='front', location='outer', all_edges=True)
-        >>> cpos = plotter.show()
+        >>> actor = plotter.show_bounds(grid='front', location='outer', 
+        ...                             all_edges=True)
+        >>> plotter.show()
 
         """
         self.remove_bounds_axes()
@@ -862,7 +1007,21 @@ class Renderer(_vtk.vtkRenderer):
         return self.show_bounds(**kwargs)
 
     def remove_bounding_box(self, render=True):
-        """Remove bounding box."""
+        """Remove bounding box.
+
+        Parameters
+        ----------
+        render : bool, optional
+            Trigger a render once the bounding box is removed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_bounding_box()
+        >>> pl.remove_bounding_box()
+
+        """
         if hasattr(self, '_box_object'):
             actor = self.bounding_box_actor
             self.bounding_box_actor = None
@@ -876,19 +1035,14 @@ class Renderer(_vtk.vtkRenderer):
                          culling='front'):
         """Add an unlabeled and unticked box at the boundaries of plot.
 
-        Useful for when wanting to plot outer grids while still retaining all
-        edges of the boundary.
+        Useful for when wanting to plot outer grids while still
+        retaining all edges of the boundary.
 
         Parameters
         ----------
         corner_factor : float, optional
-            If ``all_edges``, this is the factor along each axis to
-            draw the default box. Dafuault is 0.5 to show the full
-            box.
-
-        corner_factor : float, optional
             This is the factor along each axis to draw the default
-            box. Dafuault is 0.5 to show the full box.
+            box. Default is 0.5 to show the full box.
 
         line_width : float, optional
             Thickness of lines.
@@ -896,13 +1050,32 @@ class Renderer(_vtk.vtkRenderer):
         opacity : float, optional
             Opacity of mesh.  Should be between 0 and 1.  Default 1.0
 
+        render_lines_as_tubes : bool, optional
+            Show lines as thick tubes rather than flat lines.  Control
+            the width with ``line_width``.
+
+        lighting : bool, optional
+            Enable or disable directional lighting for this actor.
+
+        reset_camera : bool, optional
+            Reset camera position when ``True`` to include all actors.
+
         outline : bool
-            Default is ``True``. when False, a box with faces is shown with
-            the specified culling
+            Default is ``True``. when ``False``, a box with faces is shown
+            with the specified culling
 
         culling : str, optional
-            Does not render faces that are culled. Options are ``'front'`` or
-            ``'back'``. Default is ``'front'`` for bounding box.
+            Does not render faces that are culled. Options are
+            ``'front'`` or ``'back'``. Default is ``'front'`` for
+            bounding box.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pyvista.Sphere())
+        >>> _ = pl.add_bounding_box(line_width=5, color='black')
+        >>> pl.show()
 
         """
         if lighting is None:
@@ -1009,7 +1182,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(pyvista.Sphere())
         >>> actor = pl.add_floor()
-        >>> cpos = pl.show()
+        >>> pl.show()
 
         """
         if store_floor_kwargs:
@@ -1094,7 +1267,28 @@ class Renderer(_vtk.vtkRenderer):
         return actor
 
     def remove_floors(self, clear_kwargs=True, render=True):
-        """Remove all floor actors."""
+        """Remove all floor actors.
+
+        Parameters
+        ----------
+        clear_kwargs : bool, optional
+            Clear default floor arguments.  Default ``True``.
+
+        render : bool, optional
+            Render upon removing the floor.  Default ``True``.
+
+        Examples
+        --------
+        Add a floor below a sphere, remove it, and then plot it.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.add_floor()
+        >>> pl.remove_floors()
+        >>> pl.show()
+
+        """
         if getattr(self, '_floor', None) is not None:
             self._floor.ReleaseData()
             self._floor = None
@@ -1128,7 +1322,25 @@ class Renderer(_vtk.vtkRenderer):
 
     @property
     def lights(self):
-        """Return a list of all lights in the renderer."""
+        """Return a list of all lights in the renderer.
+
+        Returns
+        -------
+        list
+            Lights in the renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.renderer.lights   # doctest:+SKIP
+        [<Light (Headlight) at 0x7f1dd8155820>,
+         <Light (Camera Light) at 0x7f1dd8155760>,
+         <Light (Camera Light) at 0x7f1dd8155340>,
+         <Light (Camera Light) at 0x7f1dd8155460>,
+         <Light (Camera Light) at 0x7f1dd8155f40>]
+
+        """
         return list(self.GetLights())
 
     def remove_all_lights(self):
@@ -1153,7 +1365,25 @@ class Renderer(_vtk.vtkRenderer):
         self._scalar_bar_slot_lookup = {}
 
     def set_focus(self, point):
-        """Set focus to a point."""
+        """Set focus to a point.
+
+        Parameters
+        ----------
+        point : sequence
+            Cartesian point to focus on in the form of ``[x, y, z]``.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> _ = pl.add_point_labels([mesh.points[1]], ["Focus"])
+        >>> _ = pl.camera  # this initializes the camera
+        >>> pl.set_focus(mesh.points[1])
+        >>> pl.show()
+
+        """
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
@@ -1162,7 +1392,25 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
 
     def set_position(self, point, reset=False):
-        """Set camera position to a point."""
+        """Set camera position to a point.
+
+        Parameters
+        ----------
+        point : sequence
+            Cartesian point to focus on in the form of ``[x, y, z]``.
+
+        Examples
+        --------
+        Move the camera far away to ``[7, 7, 7]``.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.set_position([7, 7, 7])
+        >>> pl.show()
+
+        """
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
@@ -1173,7 +1421,24 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
 
     def set_viewup(self, vector):
-        """Set camera viewup vector."""
+        """Set camera viewup vector.
+
+        Parameters
+        ----------
+        vector : sequence
+            New 3 value camera viewup vector.
+
+        Examples
+        --------
+        Look from the top down by setting view up to ``[0, 1, 0]``.
+        Notice how the Y axis appears vertical.
+
+        >>> from pyvista import demos
+        >>> pl = demos.orientation_plotter()
+        >>> pl.set_viewup([0, 1, 0])
+        >>> pl.show()
+
+        """
         if isinstance(vector, np.ndarray):
             if vector.ndim != 1:
                 vector = vector.ravel()
@@ -1187,6 +1452,14 @@ class Renderer(_vtk.vtkRenderer):
         The camera will have a parallel projection. Parallel projection is
         often useful when viewing images or 2D datasets.
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> pl = pyvista.demos.orientation_plotter()
+        >>> pl.enable_parallel_projection()
+        >>> pl.show()
+
         """
         # Fix the 'reset camera' effect produced by the VTK when parallel
         # projection is enabled.
@@ -1197,7 +1470,17 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
 
     def disable_parallel_projection(self):
-        """Reset the camera to use perspective projection."""
+        """Reset the camera to use perspective projection.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import demos
+        >>> pl = pyvista.demos.orientation_plotter()
+        >>> pl.disable_parallel_projection()
+        >>> pl.show()
+
+        """
         # Fix the 'reset camera' effect produced by the VTK when parallel
         # projection is disabled.
         focus = self.camera.focal_point
@@ -1212,10 +1495,18 @@ class Renderer(_vtk.vtkRenderer):
 
         self.camera.disable_parallel_projection()
         self.Modified()
-
     @property
     def parallel_projection(self):
-        """Return parallel projection state of active render window."""
+        """Return parallel projection state of active render window.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.parallel_projection = False
+        >>> pl.parallel_projection
+        False
+        """
         return self.camera.parallel_projection
 
     @parallel_projection.setter
@@ -1226,7 +1517,14 @@ class Renderer(_vtk.vtkRenderer):
 
     @property
     def parallel_scale(self):
-        """Return parallel scale of active render window."""
+        """Return parallel scale of active render window.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.parallel_scale = 2
+        """
         return self.camera.parallel_scale
 
     @parallel_scale.setter
@@ -1241,10 +1539,11 @@ class Renderer(_vtk.vtkRenderer):
         Parameters
         ----------
         actor : str, vtk.vtkActor, list or tuple
-            If the type is ``str``, removes the previously added actor with
-            the given name. If the type is ``vtk.vtkActor``, removes the actor
-            if it's previously added to the Renderer. If ``list`` or ``tuple``,
-            removes iteratively each actor.
+            If the type is ``str``, removes the previously added actor
+            with the given name. If the type is ``vtk.vtkActor``,
+            removes the actor if it's previously added to the
+            Renderer. If ``list`` or ``tuple``, removes iteratively
+            each actor.
 
         reset_camera : bool, optional
             Resets camera so all actors can be seen.
@@ -1258,6 +1557,18 @@ class Renderer(_vtk.vtkRenderer):
         success : bool
             True when actor removed.  False when actor has not been
             removed.
+
+        Examples
+        --------
+        Add two meshes to a plotter and then remove the sphere actor.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> pl = pyvista.Plotter()
+        >>> cube_actor = pl.add_mesh(pyvista.Cube(), show_edges=True)
+        >>> sphere_actor = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> _ = pl.remove_actor(cube_actor)
+        >>> pl.show()
 
         """
         name = None
@@ -1310,6 +1621,31 @@ class Renderer(_vtk.vtkRenderer):
 
         Scaling in performed independently on the X, Y and Z axis.
         A scale of zero is illegal and will be replaced with one.
+
+        Parameters
+        ----------
+        xscale : float, optional
+            Scaling in the x direction.  Default is ``None``, which does not change existing scaling.
+
+        yscale : float, optional
+            Scaling in the y direction.  Default is ``None``, which does not change existing scaling.
+
+        zscale : float, optional
+            Scaling in the z direction.  Default is ``None``, which does not change existing scaling.
+
+        reset_camera : bool, optional
+            Resets camera so all actors can be seen.  Default ``True``.
+
+        Examples
+        --------
+        Set the scale in the z direction to be 5 times that of
+        nominal.  Leave the other axes unscaled.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.set_scale(zscale=5)
+        >>> _ = pl.add_mesh(pyvista.Sphere())  # perfect sphere
+        >>> pl.show()
 
         """
         if xscale is None:
@@ -1380,6 +1716,18 @@ class Renderer(_vtk.vtkRenderer):
             Automatically set up the camera based on a specified bounding box
             ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
+        Examples
+        --------
+        Add a mesh and place the camera position too close to the
+        mesh.  Then reset the camera and show the mesh.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(pyvista.Sphere(), show_edges=True)
+        >>> pl.set_position((0, 0.1, 0.1))
+        >>> pl.reset_camera()
+        >>> pl.show()
+
         """
         if bounds is not None:
             self.ResetCamera(*bounds)
@@ -1402,9 +1750,31 @@ class Renderer(_vtk.vtkRenderer):
 
         The view will show all the actors in the scene.
 
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the other isometric direction.
+
+        Examples
+        --------
+        Isometric view.
+
+        >>> from pyvista import demos
+        >>> pl = demos.orientation_plotter()
+        >>> pl.view_isometric()
+        >>> pl.show()
+
+        Negative isometric view.
+
+        >>> from pyvista import demos
+        >>> pl = demos.orientation_plotter()
+        >>> pl.view_isometric(negative=True)
+        >>> pl.show()
+
         """
-        self.camera_position = CameraPosition(*self.get_default_cam_pos(negative=negative))
-        self.camera_set = False
+        position = self.get_default_cam_pos(negative=negative)
+        self.camera_position = CameraPosition(*position)
+        self.camera_set = negative
         return self.reset_camera()
 
     def view_vector(self, vector, viewup=None):
@@ -1474,7 +1844,20 @@ class Renderer(_vtk.vtkRenderer):
         return self.SetInteractive(1)
 
     def enable_eye_dome_lighting(self):
-        """Enable eye dome lighting (EDL)."""
+        """Enable eye dome lighting (EDL).
+
+        Returns
+        -------
+        vtk.vtkOpenGLRenderer
+            VTK renderer with eye dome lighting pass.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.enable_eye_dome_lighting()
+
+        """
         if hasattr(self, 'edl_pass'):
             return self
         # create the basic VTK render steps
@@ -1491,7 +1874,15 @@ class Renderer(_vtk.vtkRenderer):
         return self.glrenderer
 
     def disable_eye_dome_lighting(self):
-        """Disable eye dome lighting (EDL)."""
+        """Disable eye dome lighting (EDL).
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.disable_eye_dome_lighting()
+
+        """
         if not hasattr(self, 'edl_pass'):
             return
         self.SetPass(None)
@@ -1500,7 +1891,36 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
 
     def enable_shadows(self):
-        """Enable shadows."""
+        """Enable shadows.
+
+        Examples
+        --------
+        First, plot without shadows enabled (default)
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> pl = pyvista.Plotter(lighting='none', window_size=(1000, 1000))
+        >>> light = pyvista.Light()
+        >>> light.set_direction_angle(20, -20)
+        >>> pl.add_light(light)
+        >>> _ = pl.add_mesh(mesh, color='white', smooth_shading=True)
+        >>> _ = pl.add_mesh(pyvista.Box((-1.2, -1, -1, 1, -1, 1)))
+        >>> pl.show()
+
+        Now, enable shadows.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> pl = pyvista.Plotter(lighting='none', window_size=(1000, 1000))
+        >>> light = pyvista.Light()
+        >>> light.set_direction_angle(20, -20)
+        >>> pl.add_light(light)
+        >>> _ = pl.add_mesh(mesh, color='white', smooth_shading=True)
+        >>> _ = pl.add_mesh(pyvista.Box((-1.2, -1, -1, 1, -1, 1)))
+        >>> pl.enable_shadows()
+        >>> pl.show()
+
+        """
         if self._shadow_pass is not None:
             # shadows are already enabled for this renderer
             return
@@ -1521,7 +1941,15 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
 
     def disable_shadows(self):
-        """Disable shadows."""
+        """Disable shadows.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.disable_shadows()
+
+        """
         if self._shadow_pass is None:
             # shadows are already disabled
             return
@@ -1533,7 +1961,14 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
 
     def get_pick_position(self):
-        """Get the pick position/area as x0, y0, x1, y1."""
+        """Get the pick position/area as ``x0, y0, x1, y1``.
+
+        Returns
+        -------
+        tuple
+            Pick position as ``x0, y0, x1, y1``.
+
+        """
         x0 = int(self.GetPickX1())
         x1 = int(self.GetPickX2())
         y0 = int(self.GetPickY1())
@@ -1541,22 +1976,34 @@ class Renderer(_vtk.vtkRenderer):
         return x0, y0, x1, y1
 
     def set_background(self, color, top=None):
-        """Set the background color.
+        """Set the background color of this renderer.
 
         Parameters
         ----------
-        color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.  For example:
+        color : string or 3 item list, optional
+            Either a string, rgb list, or hex color string.  Defaults
+            to theme default.  For example:
 
             * ``color='white'``
             * ``color='w'``
             * ``color=[1, 1, 1]``
             * ``color='#FFFFFF'``
 
-        top : string or 3 item list, optional, defaults to None
+        top : string or 3 item list, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in
             ``top`` will be the color at the top of the renderer.
+
+        Examples
+        --------
+        Set the background color to black with a gradient to white at
+        the top of the plot.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(pyvista.Cone())
+        >>> pl.set_background('black', top='white')
+        >>> pl.show()
 
         """
         if color is None:

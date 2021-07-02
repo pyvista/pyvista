@@ -226,7 +226,7 @@ class DataObject:
         >>> source = pv.UniformGrid((10, 10, 5))
         >>> target = pv.UniformGrid()
         >>> target.copy_structure(source)
-        >>> cpos = target.plot(show_edges=True)
+        >>> target.plot(show_edges=True)
 
         """
         self.CopyStructure(dataset)
@@ -241,7 +241,7 @@ class DataObject:
         >>> source = source.compute_cell_sizes()
         >>> target = pv.UniformGrid((10, 10, 5))
         >>> target.copy_attributes(source)
-        >>> cpos = target.plot(scalars='Volume', show_edges=True)
+        >>> target.plot(scalars='Volume', show_edges=True)
 
         """
         self.CopyAttributes(dataset)
