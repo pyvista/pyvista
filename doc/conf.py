@@ -25,6 +25,7 @@ pyvista.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 pyvista.set_plot_theme("document")
 pyvista.global_theme.window_size = np.array([1024, 768]) * 2
 pyvista.global_theme.return_cpos = False
+pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
 pyvista.FIGURE_PATH = os.path.join(os.path.abspath("./images/"), "auto-generated/")
 if not os.path.exists(pyvista.FIGURE_PATH):
