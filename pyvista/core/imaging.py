@@ -1,6 +1,7 @@
 """Contains PyVista mappings from vtkmodules.vtkImagingHybrid."""
 from typing import Sequence
-import sys, os
+import sys
+import os
 
 import numpy as np
 
