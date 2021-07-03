@@ -138,22 +138,23 @@ class ScalarBars():
             Number of labels to use for the scalar bar.
 
         italic : bool, optional
-            Italicises title and bar labels.  Default False.
+            Italicises title and bar labels.  Default ``False``.
 
         bold  : bool, optional
-            Bolds title and bar labels.  Default True
+            Bolds title and bar labels.  Default ``True``.
 
         title_font_size : float, optional
             Sets the size of the title font.  Defaults to ``None`` and is sized
-            according to ``pyvista.global_theme``.
+            according to :attr:`pyvista.themes.DefaultTheme.font`.
 
         label_font_size : float, optional
             Sets the size of the title font.  Defaults to ``None`` and is sized
-            according to ``pyvista.global_theme``.
+            according to :attr:`pyvista.themes.DefaultTheme.font`.
 
         color : string or 3 item list, optional
-            Either a string, rgb list, or hex color string.  Defaults to white.
-            For example:
+            Either a string, rgb list, or hex color string.  Default
+            set by :attr:`pyvista.themes.DefaultTheme.font`.  Can be
+            one of the following:
 
             * ``color='white'``
             * ``color='w'``
@@ -161,40 +162,53 @@ class ScalarBars():
             * ``color='#FFFFFF'``
 
         font_family : {'courier', 'times', 'arial'}
-            Font family.  Default is set by ``pyvista.global_theme``.
+            Font family.  Default is set by
+            :attr:`pyvista.themes.DefaultTheme.font`.
 
         shadow : bool, optional
             Adds a black shadow to the text.  Defaults to ``False``.
 
         width : float, optional
             The percentage (0 to 1) width of the window for the colorbar.
-            Default set by ``pyvista.global_theme``.
+            Default set by
+            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
+            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            depending on the value of ``vertical``.
 
         height : float, optional
-            The percentage (0 to 1) height of the window for the colorbar.
-            Default set by ``pyvista.global_theme``.
+            The percentage (0 to 1) height of the window for the
+            colorbar.  Default set by
+            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
+            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            depending on the value of ``vertical``.
 
         position_x : float, optional
             The percentage (0 to 1) along the windows's horizontal
             direction to place the bottom left corner of the colorbar.
-            Default is automatic placement.
+            Default set by
+            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
+            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            depending on the value of ``vertical``.
 
         position_y : float, optional
             The percentage (0 to 1) along the windows's vertical
             direction to place the bottom left corner of the colorbar.
-            Default is automatic placement.
+            Default set by
+            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
+            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            depending on the value of ``vertical``.
 
         vertical : bool, optional
-            Use vertical or horizontal scalar bar.
-            Default set by ``pyvista.global_theme``.
+            Use vertical or horizontal scalar bar.  Default set by
+            :attr:`pyvista.themes.DefaultTheme.colorbar_orientation`.
 
         interactive : bool, optional
             Use a widget to control the size and location of the scalar bar.
-            Default set by ``pyvista.global_theme``.
+            Default set by :attr:`pyvista.themes.DefaultTheme.interactive`.
 
         fmt : str, optional
             ``printf`` format for labels.
-            Default set by ``pyvista.global_theme``.
+            Default set by :attr:`pyvista.themes.DefaultTheme.font`.
 
         use_opacity : bool, optional
             Optionally display the opacity mapping on the scalar bar.

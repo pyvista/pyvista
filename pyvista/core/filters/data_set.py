@@ -99,6 +99,8 @@ class DataSetFilters:
         >>> clipped_cube = cube.clip('z')
         >>> clipped_cube.plot()
 
+        See :ref:`clip_with_surface_example` for more examples using this filter.
+
         """
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
@@ -155,6 +157,8 @@ class DataSetFilters:
         >>> cube = pv.Cube().triangulate().subdivide(3)
         >>> clipped_cube = cube.clip_box([0, 1, 0, 1, 0, 1])
         >>> clipped_cube.plot()
+
+        See :ref:`clip_with_plane_box_example` for more examples using this filter.
 
         """
         if bounds is None:
@@ -233,6 +237,10 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(sphere, scalars='implicit_distance', cmap='bwr')
         >>> _ = pl.add_mesh(plane, color='w', style='wireframe')
         >>> pl.show()
+
+        See :ref:`clip_with_surface_example` and
+        :ref:`voxelize_surface_mesh_example` for more examples using
+        this filter.
 
         """
         function = _vtk.vtkImplicitPolyDataDistance()
@@ -352,6 +360,9 @@ class DataSetFilters:
         >>> clipped = cube.clip_surface(sphere)
         >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
 
+        See :ref:`clip_with_surface_example` for more examples using
+        this filter.
+
         """
         if not isinstance(surface, _vtk.vtkPolyData):
             surface = DataSetFilters.extract_geometry(surface)
@@ -404,7 +415,7 @@ class DataSetFilters:
         >>> slices = slice_x + slice_y + slice_z
         >>> slices.plot(line_width=5)
 
-        See :ref:`slice_example` for more examples.
+        See :ref:`slice_example` for more examples using this filter.
 
         """
         if isinstance(normal, str):
@@ -457,7 +468,7 @@ class DataSetFilters:
         >>> slices = hills.slice_orthogonal(contour=False)
         >>> slices.plot(line_width=5)
 
-        See :ref:`slice_example` for more examples.
+        See :ref:`slice_example` for more examples using this filter.
 
         """
         # Create the three slices
@@ -520,7 +531,7 @@ class DataSetFilters:
         >>> slices = hills.slice_along_axis(n=10, axis='z')
         >>> slices.plot(line_width=5)
 
-        See :ref:`slice_example` for more examples.
+        See :ref:`slice_example` for more examples using this filter.
 
         """
         axes = {'x': 0, 'y': 1, 'z': 2}
@@ -598,7 +609,7 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(arc, line_width=10, color='grey')
         >>> pl.show()
 
-        See :ref:`slice_example` for more examples.
+        See :ref:`slice_example` for more examples using this filter.
 
         """
         # check that we have a PolyLine cell in the input line
@@ -699,7 +710,7 @@ class DataSetFilters:
         >>> threshed = grid.threshold(value=0.02)
         >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
-        See :ref:`common_filter_example` for more examples.
+        See :ref:`common_filter_example` for more examples using this filter.
 
         """
         # set the scalaras to threshold on
@@ -800,7 +811,7 @@ class DataSetFilters:
         >>> threshed = grid.threshold_percent(0.8)
         >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
-        See :ref:`common_filter_example` for more examples.
+        See :ref:`common_filter_example` for more examples using this filter.
 
         """
         if scalars is None:
@@ -917,6 +928,8 @@ class DataSetFilters:
           Z Bounds:	0.000e+00, 5.000e+00
           N Arrays:	3
 
+        See :ref:`surface_smoothing_example` for more examples using this filter.
+
         """
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(dataset)
@@ -1027,7 +1040,7 @@ class DataSetFilters:
         ...
                           0.48831028,  0.49706897], dtype=float32)
 
-        See :ref:`common_filter_example` for more examples.
+        See :ref:`common_filter_example` for more examples using this filter.
 
         """
         # Fix the projection line:
@@ -1115,7 +1128,7 @@ class DataSetFilters:
         >>> contours = hills.contour()
         >>> contours.plot(line_width=5)
 
-        See :ref:`common_filter_example` for more examples.
+        See :ref:`common_filter_example` for more examples using this filter.
 
         """
         if method is None or method == 'contour':
@@ -1347,6 +1360,8 @@ class DataSetFilters:
         ...                       color='red', point_size=20)
         >>> pl.show()
 
+        See :ref:`cell_centers_example` for more examples using this filter.
+
         """
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(dataset)
@@ -1433,7 +1448,7 @@ class DataSetFilters:
         ...                     show_scalar_bar=False)
         >>> pl.show()
 
-        See :ref:`glyph_example` for additional examples.
+        See :ref:`glyph_example` for more examples using this filter.
 
         """
         # Clean the points before glyphing
@@ -1542,7 +1557,7 @@ class DataSetFilters:
         >>> conn = mesh.connectivity(largest=False)
         >>> conn.plot(cmap=['red', 'blue'])
 
-        See :ref:`volumetric_example` for additional examples.
+        See :ref:`volumetric_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkConnectivityFilter()
@@ -1583,7 +1598,7 @@ class DataSetFilters:
         >>> largest.cell_arrays.clear()
         >>> largest.plot()
 
-        See :ref:`volumetric_example` for additional examples.
+        See :ref:`volumetric_example` for more examples using this filter.
 
         """
         mesh = DataSetFilters.connectivity(dataset, largest=True)
@@ -1615,7 +1630,7 @@ class DataSetFilters:
         >>> len(bodies)
         2
 
-        See :ref:`split_vol_ref` for additional examples.
+        See :ref:`split_vol_ref` for more examples using this filter.
 
         """
         # Get the connectivity and label different bodies
@@ -1672,7 +1687,7 @@ class DataSetFilters:
         >>> warped = mesh.warp_by_scalar('Elevation')
         >>> warped.plot(cmap='gist_earth', show_scalar_bar=False)
 
-        See :ref:`surface_normal_example` for additional examples.
+        See :ref:`surface_normal_example` for more examples using this filter.
 
         """
         factor = kwargs.pop('scale_factor', factor)
@@ -1743,7 +1758,7 @@ class DataSetFilters:
         >>> actor = pl.add_mesh(warped, color='white')
         >>> pl.show()
 
-        See :ref:`warp_by_vectors_example` for additional examples.
+        See :ref:`warp_by_vectors_example` for more examples using this filter.
 
         """
         if vectors is None:
@@ -2052,8 +2067,8 @@ class DataSetFilters:
         >>> pts = plane.extract_points(selected['SelectedPoints'].view(bool),
         ...                            adjacent_cells=False)
         >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(sphere, style='wireframe')
-        >>> pl.add_points(pts, color='r')
+        >>> _ = pl.add_mesh(sphere, style='wireframe')
+        >>> _ = pl.add_points(pts, color='r')
         >>> pl.show()
 
         """
@@ -2182,12 +2197,12 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> from pyvista import examples
-        >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+        >>> mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
         >>> data_to_probe = examples.load_uniform()
         >>> result = mesh.sample(data_to_probe)
         >>> result.plot(scalars="Spatial Point Data")
 
-        See :ref:`resampling_example` for additional examples.
+        See :ref:`resampling_example` for more examples using this filter.
 
         """
         if not pyvista.is_pyvista_dataset(target):
@@ -2278,11 +2293,11 @@ class DataSetFilters:
         >>> plane.clear_arrays()
         >>> plane = plane.interpolate(pdata, sharpness=3)
         >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
-        >>> pl.add_mesh(plane, clim=pdata['values'], style='wireframe', line_width=5)
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
         >>> pl.show()
 
-        See :ref:`interpolate_example` for additional examples.
+        See :ref:`interpolate_example` for more examples using this filter.
 
         """
         if not pyvista.is_pyvista_dataset(target):
@@ -2655,9 +2670,9 @@ class DataSetFilters:
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
         >>> sample = plane.sample_over_line((-0.5, -0.5, 0), (0.5, 0.5, 0))
         >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
-        >>> pl.add_mesh(sample, scalars='values', line_width=10)
-        >>> pl.add_mesh(plane, scalars='values', style='wireframe')
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
+        >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
         >>> pl.show()
 
         """
@@ -2665,8 +2680,6 @@ class DataSetFilters:
             resolution = int(dataset.n_cells)
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-        line.clear_arrays()
-
         sampled_line = line.sample(dataset, tolerance=tolerance)
         return sampled_line
 
@@ -2795,6 +2808,7 @@ class DataSetFilters:
         --------
         Sample a dataset over a circular arc and plot it.
 
+        >>> import pyvista
         >>> from pyvista import examples
         >>> uniform = examples.load_uniform()
         >>> uniform["height"] = uniform.points[:, 2]
@@ -2803,8 +2817,8 @@ class DataSetFilters:
         >>> center = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[4]]
         >>> sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
         >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(uniform, style='wireframe')
-        >>> pl.add_mesh(sampled_arc, line_width=10)
+        >>> _ = pl.add_mesh(uniform, style='wireframe')
+        >>> _ = pl.add_mesh(sampled_arc, line_width=10)
         >>> pl.show_axes()
         >>> pl.show()
 
@@ -2866,8 +2880,8 @@ class DataSetFilters:
         >>> arc = uniform.sample_over_circular_arc_normal(center, normal=normal,
         ...                                               polar=polar)
         >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(uniform, style='wireframe')
-        >>> pl.add_mesh(arc, line_width=10)
+        >>> _ = pl.add_mesh(uniform, style='wireframe')
+        >>> _ = pl.add_mesh(arc, line_width=10)
         >>> pl.show_axes()
         >>> pl.show()
 
@@ -3264,7 +3278,7 @@ class DataSetFilters:
         >>> type(surf)
         <class 'pyvista.core.pointset.PolyData'>
 
-        See the :ref:`extract_surface_example` for more examples.
+        See the :ref:`extract_surface_example` for more examples using this filter.
 
         """
         surf_filter = _vtk.vtkDataSetSurfaceFilter()
@@ -3361,7 +3375,7 @@ class DataSetFilters:
         >>> feat_edges.clear_arrays()  # clear array data for plotting
         >>> feat_edges.plot(line_width=10)
 
-        See the :ref:`extract_edges_example` for more examples.
+        See the :ref:`extract_edges_example` for more examples using this filter.
 
         """
         if not isinstance(dataset, _vtk.vtkPolyData):
@@ -3412,7 +3426,7 @@ class DataSetFilters:
 
         Returns
         -------
-        merged_grid : vtk.UnstructuredGrid
+        vtk.UnstructuredGrid
             Merged grid.
 
         Notes
@@ -3420,6 +3434,17 @@ class DataSetFilters:
         When two or more grids are joined, the type and name of each
         array must match or the arrays will be ignored and not
         included in the final merged mesh.
+
+        Examples
+        --------
+        Merge three separate spheres into a single mesh.
+
+        >>> import pyvista
+        >>> sphere_a = pyvista.Sphere(center=(1, 0, 0))
+        >>> sphere_b = pyvista.Sphere(center=(0, 1, 0))
+        >>> sphere_c = pyvista.Sphere(center=(0, 0, 1))
+        >>> merged = sphere_a.merge([sphere_b, sphere_c])
+        >>> merged.plot()
 
         """
         append_filter = _vtk.vtkAppendFilter()
@@ -3497,7 +3522,7 @@ class DataSetFilters:
         Parameters
         ----------
         quality_measure : str
-            The cell quality measure to use
+            The cell quality measure to use.
 
         null_value : float
             Float value for undefined quality. Undefined quality are qualities
@@ -3505,6 +3530,23 @@ class DataSetFilters:
             the particular geometry of cell in question, e.g. a volume query
             for a triangle. Undefined quality will always be undefined.
             The default value is -1.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the computed mesh quality in the
+            ``cell_arrays`` as the ``"CellQuality"`` array.
+
+        Examples
+        --------
+        Compute and plot the minimum angle of a sample sphere mesh.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(theta_resolution=20, phi_resolution=20)
+        >>> cqual = sphere.compute_cell_quality('min_angle')
+        >>> cqual.plot(show_edges=True)
+
+        See the :ref:`mesh_quality_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkCellQuality()
@@ -3563,37 +3605,62 @@ class DataSetFilters:
         ----------
         scalars : str, optional
             String name of the scalars array to use when computing the
-            derivative quantities.
+            derivative quantities.  Defaults to the active scalars in
+            the dataset.
 
         gradient: bool, str, optional
             Calculate gradient. If a string is passed, the string will be used
             for the resulting array name. Otherwise, array name will be
-            'gradient'. Default: True
+            'gradient'. Default ``True``.
 
         divergence: bool, str, optional
             Calculate divergence. If a string is passed, the string will be
             used for the resulting array name. Otherwise, array name will be
-            'divergence'. Default: None
+            'divergence'. Default ``None``.
 
         vorticity: bool, str, optional
             Calculate vorticity. If a string is passed, the string will be used
             for the resulting array name. Otherwise, array name will be
-            'vorticity'. Default: None
+            'vorticity'. Default ``None``.
 
         qcriterion: bool, str, optional
             Calculate qcriterion. If a string is passed, the string will be
             used for the resulting array name. Otherwise, array name will be
-            'qcriterion'. Default: None
+            'qcriterion'. Default ``None``.
 
         faster: bool, optional
             Use faster algorithm for computing derivative quantities. Result is
             less accurate and performs fewer derivative calculations,
             increasing computation speed. The error will feature smoothing of
             the output and possibly errors at boundaries. Option has no effect
-            if DataSet is not UnstructuredGrid. Default: False
+            if DataSet is not UnstructuredGrid. Default ``False``.
 
         preference: str, optional
             Data type preference. Either 'point' or 'cell'.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with calculated derivative.
+
+        Examples
+        --------
+        First, plot the hills example with the active elevation
+        scalars.  These scalars will be used to compute for
+        derivative calculations.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> hills.plot(smooth_shading=True)
+
+        Compute and plot the gradient of the active scalars.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> deriv = hills.compute_derivative()
+        >>> deriv.plot(scalars='gradient')
+
+        See the :ref:`gradients_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkGradientFilter()
@@ -3639,24 +3706,31 @@ class DataSetFilters:
     def shrink(dataset, shrink_factor=1.0, progress_bar=False):
         """Shrink the individual faces of a mesh.
 
-        This filter shrinks the individual faces of a mesh rather than scaling
-        the entire mesh.
+        This filter shrinks the individual faces of a mesh rather than
+        scaling the entire mesh.
 
         Parameters
         ----------
         shrink_factor : float, optional
-            fraction of shrink for each cell.
+            Fraction of shrink for each cell.  Defaults to 1.0, which
+            does not modify the faces.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
         Examples
         --------
-        Extrude shrink mesh
+        First, plot the original cube.
 
         >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> shrunk_mesh = mesh.shrink(shrink_factor=0.8)
+        >>> mesh = pyvista.Cube()
+        >>> mesh.plot(show_edges=True, line_width=5)
+
+        Now, plot the mesh with shrunk faces.
+
+        >>> shrunk = mesh.shrink(0.5)
+        >>> shrunk.clear_arrays()  # cleans up plot
+        >>> shrunk.plot(show_edges=True, line_width=5)
 
         """
         if not (0.0 <= shrink_factor <= 1.0):
@@ -3794,6 +3868,8 @@ class DataSetFilters:
         >>> mesh = examples.load_airplane()
         >>> mesh = mesh.reflect((0, 0, 1), point=(0, 0, -100))
         >>> mesh.plot(show_edges=True)
+
+        See the :ref:`ref_reflect_example` for more examples using this filter.
 
         """
         t = transformations.reflection(normal, point=point)

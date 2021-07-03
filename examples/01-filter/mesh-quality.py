@@ -1,8 +1,10 @@
 """
+.. _mesh_quality_example:
+
 Computing Mesh Quality
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Leverage a powerful VTK algorithm for computing mesh quality.
+Leverage powerful VTK algorithms for computing mesh quality.
 
 Here we will use the :func:`pyvista.DataSetFilters.compute_cell_quality` filter
 to compute the cell qualities. For a full list of the various quality metrics
