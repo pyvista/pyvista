@@ -153,15 +153,18 @@ execution of the code after calling ``show``.
     plotter.show()            # show the rendering window
 
 
-Note that the ``show`` method will return the last used camera position of the
-rendering window in case you want to chose a camera position and use it again
-later.
+Note that by default the ``show`` method will return the last used camera position
+of the rendering window in case you want to choose a camera position and use it
+again later. The camera position is also available as the ``camera_position``
+attribute of the plotter (even after it's closed).
 
 You can then use this cached camera for additional plotting without having to
 manually interact with the plotting window:
 
 .. code-block:: python
 
+    # reuse the camera position from the previous plotter
+    cpos = plotter.camera_position
     plotter = pv.Plotter(off_screen=True)
     plotter.add_mesh(mesh, color='tan')
     plotter.camera_position = cpos
