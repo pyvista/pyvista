@@ -404,6 +404,8 @@ class DataSetFilters:
         >>> slices = slice_x + slice_y + slice_z
         >>> slices.plot(line_width=5)
 
+        See :ref:`slice_example` for more examples.
+
         """
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
@@ -453,7 +455,9 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
         >>> slices = hills.slice_orthogonal(contour=False)
-        >>> slices.plot()
+        >>> slices.plot(line_width=5)
+
+        See :ref:`slice_example` for more examples.
 
         """
         # Create the three slices
@@ -516,6 +520,8 @@ class DataSetFilters:
         >>> slices = hills.slice_along_axis(n=10, axis='z')
         >>> slices.plot(line_width=5)
 
+        See :ref:`slice_example` for more examples.
+
         """
         axes = {'x': 0, 'y': 1, 'z': 2}
         if isinstance(axis, int):
@@ -568,6 +574,31 @@ class DataSetFilters:
 
         contour : bool, optional
             If True, apply a ``contour`` filter after slicing
+
+        Examples
+        --------
+        Slice along a circular arc.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> center = np.array(hills.center)
+        >>> point_a = center + np.array([5, 0, 0])
+        >>> point_b = center + np.array([-5, 0, 0])
+        >>> arc = pyvista.CircularArc(point_a, point_b, center, resolution=100)
+        >>> line_slice = hills.slice_along_line(arc)
+
+        Plot the circular arc and the hills mesh.
+
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(hills, smooth_shading=True, style='wireframe')
+        >>> _ = pl.add_mesh(line_slice, line_width=10, render_lines_as_tubes=True,
+        ...                 color='k')
+        >>> _ = pl.add_mesh(arc, line_width=10, color='grey')
+        >>> pl.show()
+
+        See :ref:`slice_example` for more examples.
 
         """
         # check that we have a PolyLine cell in the input line
@@ -661,8 +692,14 @@ class DataSetFilters:
 
         Next, apply the threshold.
 
+        >>> import pyvista
+        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0],
+        ...                                dim=(20, 20, 20))
         >>> threshed = grid.threshold(value=0.02)
         >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
+
+        See :ref:`common_filter_example` for more examples.
 
         """
         # set the scalaras to threshold on
@@ -763,6 +800,8 @@ class DataSetFilters:
         >>> threshed = grid.threshold_percent(0.8)
         >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
+        See :ref:`common_filter_example` for more examples.
+
         """
         if scalars is None:
             _, tscalars = dataset.active_scalars_info
@@ -851,10 +890,32 @@ class DataSetFilters:
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(dataset):
-        """Extract the outer surface of a volume or structured grid dataset as PolyData.
+        """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
         boundary faces of the dataset.
+
+        .. note::
+            This is tends to be less efficient than :func:`extract_surface`.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Surface of the dataset.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> hex_beam.extract_geometry()  # doctest:+SKIP
+        PolyData (0x7f2f8c132040)
+          N Cells:	88
+          N Points:	90
+          X Bounds:	0.000e+00, 1.000e+00
+          Y Bounds:	0.000e+00, 1.000e+00
+          Z Bounds:	0.000e+00, 5.000e+00
+          N Arrays:	3
 
         """
         alg = _vtk.vtkGeometryFilter()
@@ -872,6 +933,32 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.PolyData
+            Edges extracted from the dataset.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> edges = hex_beam.extract_all_edges()
+        >>> edges  # doctest:+SKIP
+        PolyData (0x7f2f8c13bee0)
+          N Cells:	222
+          N Points:	99
+          X Bounds:	0.000e+00, 1.000e+00
+          Y Bounds:	0.000e+00, 1.000e+00
+          Z Bounds:	0.000e+00, 5.000e+00
+          N Arrays:	3
+
+        Plot the edges.  Note how it plots interior edges.
+
+        >>> edges.point_arrays.clear()  # remove arrays to clean up plot
+        >>> edges.cell_arrays.clear()  # remove arrays to clean up plot
+        >>> edges.plot(line_width=5)
+
         """
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(dataset)
@@ -887,6 +974,11 @@ class DataSetFilters:
         a line.  The line can be oriented arbitrarily.  A typical
         example is to generate scalars based on elevation or height
         above a plane.
+
+        .. warning::
+           This will create a scalars array named `Elevation` on the
+           point data of the input dataset and overwrite the array
+           named `Elevation` if present.
 
         Parameters
         ----------
@@ -918,10 +1010,24 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        Warning
-        -------
-        This will create a scalars array named `Elevation` on the point data of
-        the input dataset and overasdf write an array named `Elevation` if present.
+        Examples
+        --------
+        Generate the "elevation" scalars for a sphere mesh.  This is
+        simply the height in Z from the XY plane.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> sphere_elv = sphere.elevation()
+        >>> sphere_elv.plot(smooth_shading=True)
+
+        Access the elevation scalars
+
+        >>> sphere.point_arrays['Elevation']  # doctest:+SKIP
+        pyvista_ndarray([-0.5       ,  0.5       , -0.49706897, -0.48831028,
+        ...
+                          0.48831028,  0.49706897], dtype=float32)
+
+        See :ref:`common_filter_example` for more examples.
 
         """
         # Fix the projection line:
@@ -960,25 +1066,28 @@ class DataSetFilters:
                 preference='point', method='contour', progress_bar=False):
         """Contour an input dataset by an array.
 
-        ``isosurfaces`` can be an integer specifying the number of isosurfaces in
-        the data range or a sequence of values for explicitly setting the isosurfaces.
+        ``isosurfaces`` can be an integer specifying the number of
+        isosurfaces in the data range or a sequence of values for
+        explicitly setting the isosurfaces.
 
         Parameters
         ----------
-        isosurfaces : int or sequence
+        isosurfaces : int or sequence, optional
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
         scalars : str, optional
-            Name of scalars to threshold on. Defaults to currently active scalars.
+            Name of scalars to threshold on. Defaults to currently
+            active scalars.
 
         compute_normals : bool, optional
+            Compute normals for the dataset.
 
         compute_gradients : bool, optional
-            Desc
+            Compute gradients for the dataset.
 
         compute_scalars : bool, optional
-            Preserves the scalar values that are being contoured
+            Preserves the scalar values that are being contoured.
 
         rng : tuple(float), optional
             If an integer number of isosurfaces is specified, this is the range
@@ -996,6 +1105,17 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Examples
+        --------
+        Generate contours for the hills plot.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> contours = hills.contour()
+        >>> contours.plot(line_width=5)
+
+        See :ref:`common_filter_example` for more examples.
 
         """
         if method is None or method == 'contour':
@@ -1042,22 +1162,23 @@ class DataSetFilters:
                              use_bounds=False):
         """Texture map this dataset to a user defined plane.
 
-        This is often used to define a plane to texture map an image to this dataset.
-        The plane defines the spatial reference and extent of that image.
+        This is often used to define a plane to texture map an image
+        to this dataset.  The plane defines the spatial reference and
+        extent of that image.
 
         Parameters
         ----------
-        origin : tuple(float)
+        origin : tuple(float), optional
             Length 3 iterable of floats defining the XYZ coordinates of the
-            BOTTOM LEFT CORNER of the plane
+            bottom left corner of the plane
 
-        point_u : tuple(float)
+        point_u : tuple(float), optional
             Length 3 iterable of floats defining the XYZ coordinates of the
-            BOTTOM RIGHT CORNER of the plane
+            bottom right corner of the plane
 
-        point_v : tuple(float)
+        point_v : tuple(float), optional
             Length 3 iterable of floats defining the XYZ coordinates of the
-            TOP LEFT CORNER of the plane
+            top left corner of the plane
 
         inplace : bool, optional
             If True, the new texture coordinates will be added to this
@@ -1071,6 +1192,15 @@ class DataSetFilters:
         use_bounds : bool, optional
             Use the bounds to set the mapping plane by default (bottom plane
             of the bounding box).
+
+        Returns
+        -------
+        pyvista.DataSet
+            Original dataset with texture coordinates.
+
+        Examples
+        --------
+        See :ref:`ref_topo_map_example`
 
         """
         if use_bounds:
@@ -1104,8 +1234,9 @@ class DataSetFilters:
                               inplace=False, name='Texture Coordinates'):
         """Texture map this dataset to a user defined sphere.
 
-        This is often used to define a sphere to texture map an image to this
-        dataset. The sphere defines the spatial reference and extent of that image.
+        This is often used to define a sphere to texture map an image
+        to this dataset. The sphere defines the spatial reference and
+        extent of that image.
 
         Parameters
         ----------
@@ -1114,12 +1245,13 @@ class DataSetFilters:
             center of the sphere. If ``None``, this will be automatically
             calculated.
 
-        prevent_seam : bool
-            Default true. Control how the texture coordinates are generated.
-            If set, the s-coordinate ranges from 0->1 and 1->0 corresponding
-            to the theta angle variation between 0->180 and 180->0 degrees.
-            Otherwise, the s-coordinate ranges from 0->1 between 0->360
-            degrees.
+        prevent_seam : bool, optional
+            Control how the texture coordinates are generated.  If
+            set, the s-coordinate ranges from 0 to 1 and 1 to 0
+            corresponding to the theta angle variation between 0 to
+            180 and 180 to 0 degrees.  Otherwise, the s-coordinate
+            ranges from 0 to 1 between 0 to 360 degrees.  Default
+            ``True``.
 
         inplace : bool, optional
             If True, the new texture coordinates will be added to the dataset
@@ -1132,14 +1264,7 @@ class DataSetFilters:
 
         Examples
         --------
-        Map a puppy texture to a sphere
-
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> sphere = pyvista.Sphere()
-        >>> sphere = sphere.texture_map_to_sphere()
-        >>> tex = examples.download_puppy_texture()
-        >>> sphere.plot(texture=tex)
+        See :ref:`ref_texture_example`.
 
         """
         alg = _vtk.vtkTextureMapToSphere()
@@ -1169,17 +1294,26 @@ class DataSetFilters:
 
         Parameters
         ----------
-        length : bool
+        length : bool, optional
             Specify whether or not to compute the length of 1D cells.
 
-        area : bool
+        area : bool, optional
             Specify whether or not to compute the area of 2D cells.
 
-        volume : bool
+        volume : bool, optional
             Specify whether or not to compute the volume of 3D cells.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Examples
+        --------
+        Compute the face area of the example airplane mesh.
+
+        >>> from pyvista import examples
+        >>> surf = examples.load_airplane()
+        >>> surf = surf.compute_cell_sizes(length=False, volume=False)
+        >>> surf.plot(show_edges=True)
 
         """
         alg = _vtk.vtkCellSizeFilter()
@@ -1273,8 +1407,8 @@ class DataSetFilters:
             Turn on/off clamping of "scalar" values to range. Default ``False``.
 
         rng: tuple(float), optional
-            Set the range of values to be considered by the filter when scalars
-            values are provided.
+            Set the range of values to be considered by the filter
+            when scalars values are provided.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1298,6 +1432,8 @@ class DataSetFilters:
         >>> actor = pl.add_mesh(mesh, scalars="Elevation", cmap="terrain",
         ...                     show_scalar_bar=False)
         >>> pl.show()
+
+        See :ref:`glyph_example` for additional examples.
 
         """
         # Clean the points before glyphing
@@ -1406,6 +1542,8 @@ class DataSetFilters:
         >>> conn = mesh.connectivity(largest=False)
         >>> conn.plot(cmap=['red', 'blue'])
 
+        See :ref:`volumetric_example` for additional examples.
+
         """
         alg = _vtk.vtkConnectivityFilter()
         alg.SetInputData(dataset)
@@ -1445,6 +1583,8 @@ class DataSetFilters:
         >>> largest.cell_arrays.clear()
         >>> largest.plot()
 
+        See :ref:`volumetric_example` for additional examples.
+
         """
         mesh = DataSetFilters.connectivity(dataset, largest=True)
         if inplace:
@@ -1456,11 +1596,12 @@ class DataSetFilters:
     def split_bodies(dataset, label=False):
         """Find, label, and split connected bodies/volumes.
 
-        This splits different connected bodies into blocks in a MultiBlock dataset.
+        This splits different connected bodies into blocks in a
+        MultiBlock dataset.
 
         Parameters
         ----------
-        label : bool
+        label : bool, optional
             A flag on whether to keep the ID arrays given by the
             ``connectivity`` filter.
 
@@ -1473,6 +1614,8 @@ class DataSetFilters:
         >>> bodies = threshed.split_bodies()
         >>> len(bodies)
         2
+
+        See :ref:`split_vol_ref` for additional examples.
 
         """
         # Get the connectivity and label different bodies
@@ -1529,6 +1672,8 @@ class DataSetFilters:
         >>> warped = mesh.warp_by_scalar('Elevation')
         >>> warped.plot(cmap='gist_earth', show_scalar_bar=False)
 
+        See :ref:`surface_normal_example` for additional examples.
+
         """
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
@@ -1578,11 +1723,13 @@ class DataSetFilters:
 
         Returns
         -------
-        warped_mesh : mesh
+        pyvista.PolyData
             The warped mesh resulting from the operation.
 
         Examples
         --------
+        Warp a sphere by vectors.
+
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> sphere = examples.load_sphere_vectors()
@@ -1595,6 +1742,8 @@ class DataSetFilters:
         >>> actor = pl.add_text("After warp")
         >>> actor = pl.add_mesh(warped, color='white')
         >>> pl.show()
+
+        See :ref:`warp_by_vectors_example` for additional examples.
 
         """
         if vectors is None:
@@ -1623,19 +1772,39 @@ class DataSetFilters:
     def cell_data_to_point_data(dataset, pass_cell_data=False):
         """Transform cell data into point data.
 
-        Point data are specified per node and cell data specified within cells.
-        Optionally, the input point data can be passed through to the output.
+        Point data are specified per node and cell data specified
+        within cells.  Optionally, the input point data can be passed
+        through to the output.
 
-        The method of transformation is based on averaging the data values of
-        all cells using a particular point. Optionally, the input cell data can
-        be passed through to the output as well.
+        The method of transformation is based on averaging the data
+        values of all cells using a particular point. Optionally, the
+        input cell data can be passed through to the output as well.
 
-        See also: :func:`pyvista.DataSetFilters.point_data_to_cell_data`
+        See also :func:`pyvista.DataSetFilters.point_data_to_cell_data`
 
         Parameters
         ----------
         pass_cell_data : bool
             If enabled, pass the input cell data through to the output
+
+        Examples
+        --------
+        First compute the face area of the example airplane mesh and
+        show the cell values.  This is to show discrete cell data.
+
+        >>> from pyvista import examples
+        >>> surf = examples.load_airplane()
+        >>> surf = surf.compute_cell_sizes(length=False, volume=False)
+        >>> surf.plot(smooth_shading=True)
+
+        These cell scalars can be applied to individual points to
+        effectively smooth out the cell data onto the points.
+
+        >>> from pyvista import examples
+        >>> surf = examples.load_airplane()
+        >>> surf = surf.compute_cell_sizes(length=False, volume=False)
+        >>> surf = surf.cell_data_to_point_data()
+        >>> surf.plot(smooth_shading=True)
 
         """
         alg = _vtk.vtkCellDataToPointData()
@@ -1650,10 +1819,12 @@ class DataSetFilters:
     def ctp(dataset, pass_cell_data=False):
         """Transform cell data into point data.
 
-        Point data are specified per node and cell data specified within cells.
-        Optionally, the input point data can be passed through to the output.
+        Point data are specified per node and cell data specified
+        within cells.  Optionally, the input point data can be passed
+        through to the output.
 
-        An alias/shortcut for ``cell_data_to_point_data``.
+        This method is an alias for
+        :func:`pyvista.DataSetFilters.cell_data_to_point_data`.
 
         """
         return DataSetFilters.cell_data_to_point_data(dataset, pass_cell_data=pass_cell_data)
@@ -1671,6 +1842,29 @@ class DataSetFilters:
         pass_point_data : bool
             If enabled, pass the input point data through to the output
 
+        Examples
+        --------
+        Color cells by their z coordinates.  First, create point
+        scalars based on z-coordinates of a sample sphere mesh.  Then
+        convert this point data to cell data.  Use a low resolution
+        sphere for emphasis of cell valued data.
+
+        First, plot these values as point values to show the
+        difference between point and cell data.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(theta_resolution=10, phi_resolution=10)
+        >>> sphere['Z Coordinates'] = sphere.points[:, 2]
+        >>> sphere.plot()
+
+        Now, convert these values to cell data and then plot it.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(theta_resolution=10, phi_resolution=10)
+        >>> sphere['Z Coordinates'] = sphere.points[:, 2]
+        >>> sphere = sphere.point_data_to_cell_data()
+        >>> sphere.plot()
+
         """
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(dataset)
@@ -1684,10 +1878,12 @@ class DataSetFilters:
     def ptc(dataset, pass_point_data=False):
         """Transform point data into cell data.
 
-        Point data are specified per node and cell data specified within cells.
-        Optionally, the input point data can be passed through to the output.
+        Point data are specified per node and cell data specified
+        within cells.  Optionally, the input point data can be passed
+        through to the output.
 
-        An alias/shortcut for ``point_data_to_cell_data``.
+        This method is an alias for
+        :func:`pyvista.DataSetFilters.point_data_to_cell_data`.
 
         """
         return DataSetFilters.point_data_to_cell_data(dataset, pass_point_data=pass_point_data)

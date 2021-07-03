@@ -1,4 +1,6 @@
 """
+.. _surface_normal_example:
+
 Computing Surface Normals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

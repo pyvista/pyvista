@@ -43,7 +43,6 @@ warnings.filterwarnings(
 
 # -- General configuration ------------------------------------------------
 numfig = False
-html_show_sourcelink = False
 html_logo = "./_static/pyvista_logo_sm.png"
 
 sys.path.append(os.path.abspath("./_ext"))
