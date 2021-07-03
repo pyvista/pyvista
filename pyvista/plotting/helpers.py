@@ -102,16 +102,14 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     image : np.ndarray
         Numpy array of the last image when either ``return_img=True``
-        or ``screenshot=True`` is set. Optionally contains alpha
-        values. Sized:
+        or ``screenshot=True`` is set. Not returned when in a
+        jupyter notebook with ``return_viewer=True``. Optionally
+        contains alpha values. Sized:
 
         * [Window height x Window width x 3] if the theme sets
           ``transparent_background=False``.
         * [Window height x Window width x 4] if the theme sets
           ``transparent_background=True``.
-
-        Returned only when ``screenshot=True`` and not in a
-        jupyter notebook with ``return_viewer=True``.
 
     widget
         IPython widget when ``return_viewer=True``.
