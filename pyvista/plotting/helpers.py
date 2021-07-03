@@ -109,6 +109,9 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
         Returned only when ``screenshot=True``.
 
+    widget
+        IPython widget when ``return_viewer=True``.
+
     Examples
     --------
     Plot a simple sphere while showing its edges.
