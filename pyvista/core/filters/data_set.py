@@ -2827,8 +2827,6 @@ class DataSetFilters:
             resolution = int(dataset.n_cells)
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
-        circular_arc.clear_arrays()
-
         sampled_circular_arc = circular_arc.sample(dataset, tolerance=tolerance)
         return sampled_circular_arc
 
@@ -2894,7 +2892,6 @@ class DataSetFilters:
                                                      normal=normal,
                                                      polar=polar,
                                                      angle=angle)
-        circular_arc.clear_arrays()
         return circular_arc.sample(dataset, tolerance=tolerance)
 
     def plot_over_circular_arc(dataset, pointa, pointb, center,
