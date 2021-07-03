@@ -4017,7 +4017,7 @@ class Plotter(BasePlotter):
             it's recommended to first call ``show()`` with
             ``auto_close=False`` to set the scene, then save the
             screenshot in a separate call to ``show()`` or
-            :func:`Plotter.screenshot()`.
+            :func:`Plotter.screenshot`.
 
         return_img : bool
             Returns a numpy array representing the last image along
@@ -4038,7 +4038,7 @@ class Plotter(BasePlotter):
             * ``'panel'`` : Show a ``panel`` widget.
 
             This can also be set globally with
-            :func:`pyvista.set_jupyter_backend`
+            :func:`pyvista.set_jupyter_backend`.
 
         return_viewer : bool, optional
             Return the jupyterlab viewer, scene, or display object
