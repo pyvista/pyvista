@@ -95,19 +95,23 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     Returns
     -------
     cpos : list
-        List of camera position, focal point, and view up.  Returned
-        only when ``return_cpos=True``.
+        List of camera position, focal point, and view up.
+        Returned only when ``return_cpos=True`` or set in the
+        default global or plot theme.  Not returned when in a
+        jupyter notebook and ``return_viewer=True``.
 
-    img : numpy.ndarray
-        Array containing pixel RGB and optionally alpha values.
-        Sized:
+    image : np.ndarray
+        Numpy array of the last image when either ``return_img=True``
+        or ``screenshot=True`` is set. Optionally contains alpha
+        values. Sized:
 
         * [Window height x Window width x 3] if the theme sets
           ``transparent_background=False``.
         * [Window height x Window width x 4] if the theme sets
           ``transparent_background=True``.
 
-        Returned only when ``screenshot=True``.
+        Returned only when ``screenshot=True`` and not in a
+        jupyter notebook with ``return_viewer=True``.
 
     widget
         IPython widget when ``return_viewer=True``.
