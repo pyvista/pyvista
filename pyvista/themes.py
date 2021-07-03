@@ -1210,7 +1210,7 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Disable returning camera position.
+        Disable returning camera position by ``show`` and `plot`` methods.
 
         >>> import pyvista
         >>> pyvista.global_theme.return_cpos = False
