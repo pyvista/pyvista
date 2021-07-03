@@ -47,14 +47,15 @@ class DataSetFilters:
              return_clipped=False):
         """Clip a dataset by a plane by specifying the origin and normal.
 
-        If no parameters are given the clip will occur in the center of that dataset.
+        If no parameters are given the clip will occur in the center
+        of that dataset.
 
         Parameters
         ----------
         normal : tuple(float) or str
-            Length 3 tuple for the normal vector direction. Can also be
-            specified as a string conventional direction such as ``'x'`` for
-            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
+            Length 3 tuple for the normal vector direction. Can also
+            be specified as a string conventional direction such as
+            ``'x'`` for ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
 
         origin : tuple(float), optional
             The center ``(x,y,z)`` coordinate of the plane on which the clip
@@ -88,6 +89,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> cube = pv.Cube().triangulate().subdivide(3)
         >>> clipped_cube = cube.clip()
+        >>> clipped_cube.plot()
 
         Clip a cube in the +Z direction.  This leaves half a cube
         below the XY plane.
@@ -95,6 +97,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> cube = pv.Cube().triangulate().subdivide(3)
         >>> clipped_cube = cube.clip('z')
+        >>> clipped_cube.plot()
 
         """
         if isinstance(normal, str):
@@ -136,7 +139,7 @@ class DataSetFilters:
             be extracted from the box to define the clipping region.
 
         invert : bool
-            Flag on whether to flip/invert the clip
+            Flag on whether to flip/invert the clip.
 
         factor : float, optional
             If bounds are not given this is the factor along each axis to
@@ -151,6 +154,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> cube = pv.Cube().triangulate().subdivide(3)
         >>> clipped_cube = cube.clip_box([0, 1, 0, 1, 0, 1])
+        >>> clipped_cube.plot()
 
         """
         if bounds is None:
@@ -196,19 +200,19 @@ class DataSetFilters:
     def compute_implicit_distance(dataset, surface, inplace=False):
         """Compute the implicit distance from the points to a surface.
 
-        This filter will compute the implicit distance from all of the nodes of
-        this mesh to a given surface. This distance will be added as a point
-        array called ``'implicit_distance'``.
+        This filter will compute the implicit distance from all of the
+        nodes of this mesh to a given surface. This distance will be
+        added as a point array called ``'implicit_distance'``.
 
         Parameters
         ----------
         surface : pyvista.DataSet
-            The surface used to compute the distance
+            The surface used to compute the distance.
 
         inplace : bool
-            If True, a new scalar array will be added to the ``point_arrays``
-            of this mesh. Otherwise a copy of this mesh is returned with that
-            scalar field.
+            If ``True``, a new scalar array will be added to the
+            ``point_arrays`` of this mesh. Otherwise a copy of this
+            mesh is returned with that scalar field.
 
         Examples
         --------
@@ -275,6 +279,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
         >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100)
+        >>> clipped.plot()
 
         Remove the part of the mesh with "sample_point_scalars" below
         100.  Since these scalars are already active, there's no need
@@ -284,6 +289,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
         >>> clipped = dataset.clip_scalar(value=100, invert=False)
+        >>> clipped.plot()
 
         """
         if isinstance(dataset, _vtk.vtkPolyData):
@@ -314,8 +320,8 @@ class DataSetFilters:
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
         This will return a :class:`pyvista.UnstructuredGrid` of the clipped
-        mesh. Geometry of the input dataset will be preserved where possible -
-        geometries near the clip intersection will be triangulated/tessellated.
+        mesh. Geometry of the input dataset will be preserved where possible.
+        Geometries near the clip intersection will be triangulated/tessellated.
 
         Parameters
         ----------
@@ -323,18 +329,28 @@ class DataSetFilters:
             The PolyData surface mesh to use as a clipping function. If this
             mesh is not PolyData, the external surface will be extracted.
 
-        invert : bool
+        invert : bool, optional
             Flag on whether to flip/invert the clip
 
-        value : float:
-            Set the clipping value of the implicit function (if clipping with
-            implicit function) or scalar value (if clipping with scalars).
-            The default value is 0.0.
+        value : float, optional
+            Set the clipping value of the implicit function (if
+            clipping with implicit function) or scalar value (if
+            clipping with scalars).  The default value is 0.0.
 
         compute_distance : bool, optional
-            Compute the implicit distance from the mesh onto the input dataset.
-            A new array called ``'implicit_distance'`` will be added to the
-            output clipped mesh.
+            Compute the implicit distance from the mesh onto the input
+            dataset.  A new array called ``'implicit_distance'`` will
+            be added to the output clipped mesh.
+
+        Examples
+        --------
+        Clip a cube with a sphere.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(center=(-0.4, -0.4, -0.4))
+        >>> cube = pyvista.Cube().triangulate().subdivide(3)
+        >>> clipped = cube.clip_surface(sphere)
+        >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
 
         """
         if not isinstance(surface, _vtk.vtkPolyData):
@@ -362,17 +378,31 @@ class DataSetFilters:
         normal : tuple(float) or str
             Length 3 tuple for the normal vector direction. Can also be
             specified as a string conventional direction such as ``'x'`` for
-            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)```, etc.
+            ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)```, etc.
 
         origin : tuple(float)
-            The center (x,y,z) coordinate of the plane on which the slice occurs
+            The center ``(x, y, z)`` coordinate of the plane on which
+            the slice occurs
 
         generate_triangles: bool, optional
-            If this is enabled (``False`` by default), the output will be
-            triangles otherwise, the output will be the intersection polygons.
+            If this is enabled (``False`` by default), the output will
+            be triangles otherwise, the output will be the
+            intersection polygons.
 
         contour : bool, optional
-            If True, apply a ``contour`` filter after slicing
+            If ``True``, apply a ``contour`` filter after slicing.
+
+        Examples
+        --------
+        Slice a the surface of a sphere.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> slice_x = sphere.slice(normal='x')
+        >>> slice_y = sphere.slice(normal='y')
+        >>> slice_z = sphere.slice(normal='z')
+        >>> slices = slice_x + slice_y + slice_z
+        >>> slices.plot(line_width=5)
 
         """
         if isinstance(normal, str):
@@ -402,21 +432,28 @@ class DataSetFilters:
 
         Parameters
         ----------
-        x : float
-            The X location of the YZ slice
+        x : float, optional
+            The X location of the YZ slice.
 
-        y : float
-            The Y location of the XZ slice
+        y : float, optional
+            The Y location of the XZ slice.
 
-        z : float
-            The Z location of the XY slice
+        z : float, optional
+            The Z location of the XY slice.
 
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
         contour : bool, optional
-            If True, apply a ``contour`` filter after slicing
+            If True, apply a ``contour`` filter after slicing.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> slices = hills.slice_orthogonal(contour=False)
+        >>> slices.plot()
 
         """
         # Create the three slices
@@ -445,8 +482,8 @@ class DataSetFilters:
 
         Parameters
         ----------
-        n : int
-            The number of slices to create
+        n : int, optional
+            The number of slices to create.
 
         axis : str or int
             The axis to generate the slices along. Perpendicular to the slices.
@@ -463,8 +500,24 @@ class DataSetFilters:
         contour : bool, optional
             If True, apply a ``contour`` filter after slicing
 
+        Examples
+        --------
+        Slice the random hills dataset in the X direction.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> slices = hills.slice_along_axis(n=10)
+        >>> slices.plot(line_width=5)
+
+        Slice the random hills dataset in the Z direction.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> slices = hills.slice_along_axis(n=10, axis='z')
+        >>> slices.plot(line_width=5)
+
         """
-        axes = {'x':0, 'y':1, 'z':2}
+        axes = {'x': 0, 'y': 1, 'z': 2}
         if isinstance(axis, int):
             ax = axis
             axis = list(axes.keys())[list(axes.values()).index(ax)]
@@ -558,10 +611,11 @@ class DataSetFilters:
             Name of scalars to threshold on. Defaults to currently active scalars.
 
         invert : bool, optional
-            If value is a single value, when invert is True cells are kept when
-            their values are below parameter "value".  When invert is False
-            cells are kept when their value is above the threshold "value".
-            Default is False: yielding above the threshold "value".
+            If value is a single value, when invert is True cells are
+            kept when their values are below parameter ``"value"``.
+            When invert is False cells are kept when their value is
+            above the threshold ``"value"``.  Default is False:
+            yielding above the threshold ``"value"``.
 
         continuous : bool, optional
             When True, the continuous interval [minimum cell scalar,
@@ -569,8 +623,9 @@ class DataSetFilters:
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the preferred array type to
-            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+            When scalars is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``
 
         all_scalars : bool, optional
             If using scalars from point data, all scalars for all
@@ -585,8 +640,29 @@ class DataSetFilters:
         >>> import numpy as np
         >>> volume = np.zeros([10, 10, 10])
         >>> volume[:3] = 1
-        >>> v = pyvista.wrap(volume)
-        >>> threshed = v.threshold(0.1)
+        >>> vol = pyvista.wrap(volume)
+        >>> threshed = vol.threshold(0.1)  # doctest:+SKIP
+        UnstructuredGrid (0x7f00f9983fa0)
+          N Cells:	243
+          N Points:	400
+          X Bounds:	0.000e+00, 3.000e+00
+          Y Bounds:	0.000e+00, 9.000e+00
+          Z Bounds:	0.000e+00, 9.000e+00
+          N Arrays:	1
+
+        Apply the threshold filter to perlin noise.  First generate
+        the structured grid.
+
+        >>> import pyvista
+        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0],
+        ...                                dim=(20, 20, 20))
+        >>> grid.plot(cmap='gist_earth_r', show_scalar_bar=True, show_edges=False)
+
+        Next, apply the threshold.
+
+        >>> threshed = grid.threshold(value=0.02)
+        >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
         """
         # set the scalaras to threshold on
@@ -645,7 +721,7 @@ class DataSetFilters:
 
     def threshold_percent(dataset, percent=0.50, scalars=None, invert=False,
                           continuous=False, preference='cell'):
-        """Threshold the dataset by a percentage of its range on the active scalars array or as specified.
+        """Threshold the dataset by a percentage of its range on the active scalars array.
 
         Parameters
         ----------
@@ -660,7 +736,7 @@ class DataSetFilters:
             When invert is True cells are kept when their values are below the
             percentage of the range.  When invert is False, cells are kept when
             their value is above the percentage of the range.
-            Default is False: yielding above the threshold "value".
+            Default is False: yielding above the threshold ``"value"``.
 
         continuous : bool, optional
             When True, the continuous interval [minimum cell scalar,
@@ -670,6 +746,22 @@ class DataSetFilters:
         preference : str, optional
             When scalars is specified, this is the preferred array type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+
+        Examples
+        --------
+        Apply a 50% threshold filter.
+
+        >>> import pyvista
+        >>> noise = pyvista.perlin_noise(0.1, (2, 2, 2), (0, 0, 0))
+        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0],
+        ...                                dim=(30, 30, 30))
+        >>> threshed = grid.threshold_percent(0.5)
+        >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
+
+        Apply a 80% threshold filter.
+
+        >>> threshed = grid.threshold_percent(0.8)
+        >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
         """
         if scalars is None:
@@ -715,6 +807,16 @@ class DataSetFilters:
         generate_faces : bool, optional
             Generate solid faces for the box. This is off by default
 
+        Examples
+        --------
+        Generate and plot the outline of a sphere.  This is
+        effectively the ``(x, y, z)`` bounds of the mesh.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> outline = sphere.outline()
+        >>> pyvista.plot([sphere, outline], line_width=5)
+
         """
         alg = _vtk.vtkOutlineFilter()
         alg.SetInputDataObject(dataset)
@@ -728,8 +830,18 @@ class DataSetFilters:
         Parameters
         ----------
         factor : float, optional
-            controls the relative size of the corners to the length of the
-            corresponding bounds
+            Controls the relative size of the corners to the length of
+            the corresponding bounds
+
+        Examples
+        --------
+        Generate and plot the corners of a sphere.  This is
+        effectively the ``(x, y, z)`` bounds of the mesh.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> corners = sphere.outline_corners(factor=0.1)
+        >>> pyvista.plot([sphere, corners], line_width=5)
 
         """
         alg = _vtk.vtkOutlineCornerFilter()
