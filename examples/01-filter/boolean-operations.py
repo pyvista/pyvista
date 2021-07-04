@@ -26,14 +26,15 @@ meshes in PyVista to cut the first mesh by the second.
 .. note::
    For merging, the ``+`` operator can be used between any two meshes
    in PyVista which simply calls the ``.merge()`` filter to combine
-   any two meshes.  This is difference than ``boolean_union`` as it
-   simply adds the two meshes together without operating on them.
+   any two meshes.  This is different from ``boolean_union`` as it
+   simply superimposes the two meshes without performing additional
+   calculations on the result.
 
 .. warning::
    If your boolean operations don't react the way you think they
    should (i.e. the wrong parts disappear), one of your meshes
    probably has its normals pointing inward. Use
-   :func:`PolyDataFilters.plot_normals` visualize the normals.
+   :func:`pyvista.PolyDataFilters.plot_normals` to visualize the normals.
 
 
 """
@@ -50,13 +51,14 @@ sphere_b = pv.Sphere(center=(0.5, 0, 0))
 # Boolean Union
 # +++++++++++++
 #
-# Perform a boolean union of ``A`` and ``B``.
+# Perform a boolean union of ``A`` and ``B`` using the
 # :func:`pyvista.PolyDataFilters.boolean_union` filter.
 #
 # The union of two manifold meshes ``A`` and ``B`` is the mesh
 # which is in ``A``, in ``B``, or in both ``A`` and ``B``.
 #
-# Order of operations does not matter for boolean union.
+# Order of operands does not matter for boolean union (the operation is
+# commutative).
 
 result = sphere_a.boolean_union(sphere_b)
 pl = pv.Plotter()
@@ -72,14 +74,14 @@ pl.show()
 # Boolean Difference
 # ++++++++++++++++++
 #
-# Perform a boolean difference of ``A`` and ``B``.
+# Perform a boolean difference of ``A`` and ``B`` using the
 # :func:`pyvista.PolyDataFilters.boolean_difference` filter or the
 # ``-`` operator since both meshes are :class:`pyvista.PolyData`.
 #
 # The difference of two manifold meshes ``A`` and ``B`` is the volume
 # of the mesh in ``A`` not belonging to ``B``.
 #
-# Order of operations matters for boolean cut.
+# Order of operands matters for boolean difference.
 
 result = sphere_a.boolean_difference(sphere_b)
 pl = pv.Plotter()
@@ -94,13 +96,14 @@ pl.show()
 # Boolean Intersection
 # ++++++++++++++++++++
 #
-# Perform a boolean intersection of ``A`` and ``B``.
+# Perform a boolean intersection of ``A`` and ``B`` using the
 # :func:`pyvista.PolyDataFilters.boolean_intersection` filter.
 #
 # The intersection of two manifold meshes ``A`` and ``B`` is the mesh
 # which is the volume of ``A`` that is also in ``B``.
 #
-# Order of operations does not matter for intersection.
+# Order of operands does not matter for boolean intersection (the
+# operation is commutative).
 
 result = sphere_a.boolean_intersection(sphere_b)
 pl = pv.Plotter()
