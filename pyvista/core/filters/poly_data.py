@@ -652,8 +652,9 @@ class PolyDataFilters(DataSetFilters):
         dividing, and may introduce artifacts into the mesh when
         dividing.
 
-        Subdivision filter appears to fail for multiple part meshes.
-        Should be one single mesh.
+        .. note::
+           Subdivision filter sometimes fails for multiple part
+           meshes.  Should be one single mesh.
 
         Parameters
         ----------
@@ -680,16 +681,27 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Subdivide the sphere mesh.
+        First, create an example coarse sphere mesh and plot it.
 
         >>> from pyvista import examples
         >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pyvista.Sphere(phi_resolution=10, theta_resolution=10)
+        >>> mesh.plot(show_edges=True, line_width=3)
+
+        Subdivide the sphere mesh using linear subdivistion.
+
+        >>> submesh = mesh.subdivide(1, 'linear')
+        >>> submesh.plot(show_edges=True, line_width=3)
+
+        Subdivide the sphere mesh using loop subdivistion.
+
         >>> submesh = mesh.subdivide(1, 'loop')
+        >>> submesh.plot(show_edges=True, line_width=3)
 
-        Alternatively, update the mesh in-place.
+        Subdivide the sphere mesh using butterfly subdivistion.
 
-        >>> submesh = mesh.subdivide(1, 'loop', inplace=True)
+        >>> submesh = mesh.subdivide(1, 'butterfly')
+        >>> submesh.plot(show_edges=True, line_width=3)
 
         """
         subfilter = subfilter.lower()
@@ -712,8 +724,8 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(submesh)
             return poly_data
-        else:
-            return submesh
+
+        return submesh
 
     def subdivide_adaptive(poly_data, max_edge_len=None, max_tri_area=None,
                            max_n_tris=None, max_n_passes=None, inplace=False):
@@ -773,14 +785,17 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        >>> from pyvista import examples
+        First, load the example airplane mesh and plot it.
+
         >>> import pyvista
+        >>> from pyvista import examples
         >>> mesh = pyvista.PolyData(examples.planefile)
+        >>> mesh.plot(show_edges=True, line_width=3)
+
+        Subdivide the mesh
+
         >>> submesh = mesh.subdivide_adaptive(max_n_passes=2)
-
-        Alternatively, update the mesh in-place.
-
-        >>> submesh = mesh.subdivide_adaptive(max_n_passes=2, inplace=True)
+        >>> submesh.plot(show_edges=True)
 
         """
         sfilter = _vtk.vtkAdaptiveSubdivisionFilter()
@@ -800,8 +815,8 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(submesh)
             return poly_data
-        else:
-            return submesh
+
+        return submesh
 
     def decimate(poly_data, target_reduction, volume_preservation=False,
                  attribute_error=False, scalars=True, vectors=True,
@@ -810,10 +825,16 @@ class PolyDataFilters(DataSetFilters):
                  tensors_weight=0.1, inplace=False, progress_bar=False):
         """Reduce the number of triangles in a triangular mesh using vtkQuadricDecimation.
 
+        .. note::
+           If you encounter a segmentation fault or other error,
+           consider using :func:`pyvista.clean` to remove any invalid
+           cells before using this filter.
+
+
         Parameters
         ----------
         mesh : vtk.PolyData
-            Mesh to decimate
+            Mesh to decimate.
 
         target_reduction : float
             Fraction of the original mesh to remove.
@@ -825,30 +846,30 @@ class PolyDataFilters(DataSetFilters):
             Decide whether to activate volume preservation which greatly reduces
             errors in triangle normal direction. If off, volume preservation is
             disabled and if AttributeErrorMetric is active, these errors can be
-            large. Defaults to False.
+            large. Defaults to ``False``.
 
         attribute_error : bool, optional
             Decide whether to include data attributes in the error metric. If
             off, then only geometric error is used to control the decimation.
-            Defaults to False.
+            Defaults to ``False``.
 
         scalars : bool, optional
             If attribute errors are to be included in the metric (i.e.,
             AttributeErrorMetric is on), then the following flags control which
             attributes are to be included in the error calculation. Defaults to
-            True.
+            ``True``.
 
         vectors : bool, optional
-            See scalars parameter. Defaults to True.
+            See scalars parameter. Defaults to ``True``.
 
         normals : bool, optional
-            See scalars parameter. Defaults to False.
+            See scalars parameter. Defaults to ``False``.
 
         tcoords : bool, optional
-            See scalars parameter. Defaults to True.
+            See scalars parameter. Defaults to ``True``.
 
         tensors : bool, optional
-            See scalars parameter. Defaults to True.
+            See scalars parameter. Defaults to ``True``.
 
         scalars_weight : float, optional
             The scaling weight contribution of the scalar attribute. These
@@ -875,30 +896,27 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        outmesh : pyvista.PolyData
+        pyvista.PolyData
             Decimated mesh.
 
         Examples
         --------
-        Decimate a sphere while preserving its volume
+        Decimate a sphere.  First plot the sphere.
 
-        >>> import pyvista as pv
-        >>> sphere = pv.Sphere(theta_resolution=90, phi_resolution=90)
-        >>> print(sphere.n_cells)
-        15840
-        >>> dec_sphere = sphere.decimate(0.9, volume_preservation=True)
-        >>> print(dec_sphere.n_cells)
-        1584
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(phi_resolution=60, theta_resolution=60)
+        >>> sphere.plot(show_edges=True, line_width=2)
 
-        Notes
-        -----
-        If you encounter a segmentation fault or other error, consider
-        using ``clean`` to remove any invalid cells before using this
-        filter.
+        Now decimate by 75% it and plot it.
+
+        >>> decimated = sphere.decimate(0.75)
+        >>> decimated.plot(show_edges=True, line_width=2)
+
+        See :ref:`decimate_example` for more examples using this filter.
 
         """
         # create decimation filter
-        alg = _vtk.vtkQuadricDecimation()  # vtkDecimatePro as well
+        alg = _vtk.vtkQuadricDecimation()
 
         alg.SetVolumePreservation(volume_preservation)
         alg.SetAttributeErrorMetric(attribute_error)
@@ -921,8 +939,8 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(mesh)
             return poly_data
-        else:
-            return mesh
+
+        return mesh
 
     def compute_normals(poly_data, cell_normals=True,
                         point_normals=True, split_vertices=False,
@@ -1017,9 +1035,11 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_with_norm.cell_arrays['Normals'].shape
         (1680, 3)
 
+        See :ref:`surface_normal_example` for more examples using this filter.
+
         Notes
         -----
-        Previous arrays named "Normals" will be overwritten.
+        Previous arrays named ``"Normals"`` will be overwritten.
 
         Normals are computed only for polygons and triangle
         strips. Normals are not computed for lines or vertices.
@@ -1027,7 +1047,10 @@ class PolyDataFilters(DataSetFilters):
         Triangle strips are broken up into triangle polygons. You may
         want to restrip the triangles.
 
-        May be easier to run ``mesh.point_normals`` or ``mesh.cell_normals``.
+        May be easier to run
+        :func:pyvista.core.PointSet.point_normals` or
+        :func:pyvista.core.PointSet.cell_normals` if you would just
+        like the array of point or cell normals.
 
         """
         normal = _vtk.vtkPolyDataNormals()
@@ -1051,8 +1074,8 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(mesh)
             return poly_data
-        else:
-            return mesh
+
+        return mesh
 
     def clip_closed_surface(poly_data, normal='x', origin=None,
                             tolerance=1e-06, inplace=False):
@@ -1094,7 +1117,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        clipped_mesh : pyvista.PolyData
+        pyvista.PolyData
             The clipped mesh.
 
         Examples
@@ -1104,13 +1127,15 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> clipped_mesh = sphere.clip_closed_surface()
+        >>> clipped_mesh = sphere.clip_closed_surface('-z')
+        >>> clipped_mesh.plot(show_edges=True, line_width=3)
 
         Clip the sphere at the xy plane and leave behind half the
         sphere in the positive Z direction.  Shift the clip upwards to
         leave a smaller mesh behind.
 
         >>> clipped_mesh = sphere.clip_closed_surface('z', origin=[0, 0, 0.3])
+        >>> clipped_mesh.plot(show_edges=True, line_width=3)
 
         """
         # verify it is manifold
@@ -1206,7 +1231,7 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         point_merging : bool, optional
-            Enables point merging.  On by default.
+            Enables point merging.  ``True`` by default.
 
         tolerance : float, optional
             Set merging tolerance.  When enabled merging is set to
@@ -1215,15 +1240,15 @@ class PolyDataFilters(DataSetFilters):
             length. The alias ``merge_tol`` is also excepted.
 
         lines_to_points : bool, optional
-            Turn on/off conversion of degenerate lines to points.
-            Enabled by default.
+            Enable or disable the conversion of degenerate lines to
+            points.  Enabled by default.
 
         polys_to_lines : bool, optional
-            Turn on/off conversion of degenerate polys to lines.
-            Enabled by default.
+            Enable or disable the conversion of degenerate polys to
+            lines.  Enabled by default.
 
         strips_to_polys : bool, optional
-            Turn on/off conversion of degenerate strips to polys.
+            Enable or disable the conversion of degenerate strips to polys.
 
         inplace : bool, optional
             Updates mesh in-place. Default ``False``.
@@ -1237,7 +1262,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        mesh : pyvista.PolyData
+        pyvista.PolyData
             Cleaned mesh.
 
         Examples
@@ -1313,21 +1338,22 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        output : pyvista.PolyData
+        pyvista.PolyData
             ``PolyData`` object consisting of the line segment between the
             two given vertices. If ``inplace`` is ``True`` this is the
             same object as the input mesh.
 
         Examples
         --------
-        Plot the path between two points on a sphere.
+        Plot the path between two points on the random hills mesh.
 
         >>> import pyvista as pv
-        >>> sphere = pv.Sphere()
-        >>> path = sphere.geodesic(0, 100)
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> path = hills.geodesic(560, 5820)
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(sphere)
-        >>> actor = pl.add_mesh(path, line_width=5, color='k')
+        >>> _ = pl.add_mesh(hills)
+        >>> _ = pl.add_mesh(path, line_width=5, color='k')
         >>> pl.show()
 
         """
