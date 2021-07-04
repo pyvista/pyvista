@@ -337,7 +337,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         return False
 
     def __sub__(self, cutting_mesh):
-        """Subtract difference of two meshes."""
+        """Compute boolean difference of two meshes."""
         return self.boolean_difference(cutting_mesh)
 
     @property
