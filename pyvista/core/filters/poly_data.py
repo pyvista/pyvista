@@ -71,20 +71,22 @@ class PolyDataFilters(DataSetFilters):
     def boolean_cut(poly_data, *args, **kwargs):  # pragma: no cover
         """Cut two meshes.
 
-        .. deprecated:: 0.31.0
+        .. deprecated:: 0.32.0
            Use :func:`PolyDataFilters.boolean_difference` instead.
 
         """
-        DeprecationError('``boolean_cut`` has ben deprecated.  Please use ``boolean_difference``.')
+        raise DeprecationError('``boolean_cut`` has been deprecated.  '
+                               'Please use ``boolean_difference``.')
 
     def boolean_add(poly_data, *args, **kwargs):  # pragma: no cover
         """Merge two meshes together.
 
-        .. deprecated:: 0.31.0
+        .. deprecated:: 0.32.0
            Use :func:`PolyDataFilters.merge` instead.
 
         """
-        DeprecationError('``boolean_add`` has been deprecated.  Please use ``merge``.')
+        raise DeprecationError('``boolean_add`` has been deprecated.  '
+                               'Please use ``merge``.')
 
     def boolean_union(poly_data, other_mesh, tolerance=1E-5):
         """Perform a boolean union operation on two meshes.
@@ -100,7 +102,8 @@ class PolyDataFilters(DataSetFilters):
            If your boolean operations don't react the way you think they
            should (i.e. the wrong parts disappear), one of your meshes
            probably has its normals pointing inward. Use
-           :func:`PolyDataFilters.plot_normals` visualize the normals.
+           :func:`PolyDataFilters.plot_normals` to visualize the
+           normals.
 
         .. note::
            The behavior of this filter varies from the
@@ -108,7 +111,7 @@ class PolyDataFilters(DataSetFilters):
            to create a manifold mesh and will not include internal
            surfaces when two meshes overlap.
 
-        .. versionchanged:: 0.31.0
+        .. versionchanged:: 0.32.0
            Behavior changed to match default VTK behavior.
 
         Parameters
@@ -160,9 +163,10 @@ class PolyDataFilters(DataSetFilters):
            If your boolean operations don't react the way you think they
            should (i.e. the wrong parts disappear), one of your meshes
            probably has its normals pointing inward. Use
-           :func:`PolyDataFilters.plot_normals` visualize the normals.
+           :func:`PolyDataFilters.plot_normals` to visualize the
+           normals.
 
-        .. versionadded:: 0.31.0
+        .. versionadded:: 0.32.0
 
         Parameters
         ----------
@@ -209,7 +213,14 @@ class PolyDataFilters(DataSetFilters):
         The difference of two manifold meshes ``A`` and ``B`` is the
         volume of the mesh in ``A`` not belonging to ``B``.
 
-        .. versionchanged:: 0.31.0
+        .. note::
+           If your boolean operations don't react the way you think they
+           should (i.e. the wrong parts disappear), one of your meshes
+           probably has its normals pointing inward. Use
+           :func:`PolyDataFilters.plot_normals` to visualize the
+           normals.
+
+        .. versionchanged:: 0.32.0
            Behavior changed to match default VTK behavior.
 
         Parameters
@@ -264,15 +275,16 @@ class PolyDataFilters(DataSetFilters):
         Returns
         --------
         pyvista.PolyData or pyvista.UnstructuredGrid
-            pyvista.PolyData if ``dataset`` is a pyvista.PolyData,
-            otherwise a pyvista.UnstructuredGrid.
+            :class:`pyvista.PolyData` if ``dataset`` is a
+            :class:`pyvista.PolyData`, otherwise a
+            :class:`pyvista.UnstructuredGrid`.
 
         inplace : bool, optional
-            Updates grid inplace when True if the input type is an
+            Updates grid inplace when ``True`` if the input type is a
             :class:`pyvista.UnstructuredGrid`.
 
         main_has_priority : bool, optional
-            When this parameter is true and merge_points is true,
+            When this parameter is ``True`` and ``merge_points=True``,
             the arrays of the merging grids will be overwritten
             by the original main mesh.
 
