@@ -2191,7 +2191,7 @@ class DataSetFilters:
         vectors : str, optional
             The string name of the active vector field to integrate across.
 
-        start_position : 3 element array
+        start_position : sequence(float), optional
             The seed point for generating evenly spaced streamlines.
             If not supplied, a random position in the dataset is chosen.
 
