@@ -309,7 +309,7 @@ def test_boolean_add_inplace(sphere, sphere_shifted):
     assert sub_mesh.n_cells
 
 
-def test_boolean_union_inplace(sphere, sphere_shifted):
+def test_boolean_union(sphere, sphere_shifted):
     sub_mesh = sphere.boolean_union(sphere_shifted)
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
@@ -320,13 +320,13 @@ def test_boolean_union_inplace(sphere, sphere_shifted):
     assert sub_mesh.n_cells
 
 
-def test_boolean_union(sphere, sphere_shifted):
-    sub_mesh = sphere.copy()
-    sub_mesh.boolean_union(sphere_shifted, inplace=True)
+def test_boolean_intersection(sphere, sphere_shifted):
+    sub_mesh = sphere.boolean_intersection(sphere_shifted)
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
 
-    sub_mesh = sphere.boolean_union(sphere_shifted)
+    sub_mesh = sphere
+    sub_mesh.boolean_intersection(sphere_shifted, inplace=True)
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
 

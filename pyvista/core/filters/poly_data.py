@@ -153,7 +153,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             return mesh
 
-    def boolean_union(poly_data, mesh, inplace=False):
+    def boolean_intersection(poly_data, mesh, inplace=False):
         """Combine two meshes and retains only the volume in common between the meshes.
 
         Parameters
