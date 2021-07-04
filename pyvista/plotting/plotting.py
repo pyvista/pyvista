@@ -3694,8 +3694,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         only_active : bool, optional
             If ``True``, only add the light to the active
             renderer. The default is that every renderer adds the
-            light. To add the light to an arbitrary renderer, see the
-            ``add_light`` method of the Renderer class.
+            light. To add the light to an arbitrary renderer, see
+            :func:`pyvista.plotting.renderer.Renderer.add_light`.
 
         Examples
         --------
@@ -3966,7 +3966,8 @@ class Plotter(BasePlotter):
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=None,
              screenshot=False, return_img=False, cpos=None, use_ipyvtk=None,
-             jupyter_backend=None, return_viewer=False, **kwargs):
+             jupyter_backend=None, return_viewer=False, return_cpos=None,
+             **kwargs):
         """Display the plotting window.
 
         Notes
@@ -3978,29 +3979,35 @@ class Plotter(BasePlotter):
         Parameters
         ----------
         title : string, optional
-            Title of plotting window.
+            Title of plotting window.  Defaults to
+            :attr:`pyvista.themes.DefaultTheme.title`.
 
         window_size : list, optional
-            Window size in pixels.  Defaults to ``[1024, 768]``
+            Window size in pixels.  Defaults to
+            :attr:`pyvista.themes.DefaultTheme.window_size`.
 
         interactive : bool, optional
             Enabled by default.  Allows user to pan and move figure.
+            Defaults to
+            :attr:`pyvista.themes.DefaultTheme.interacitve`.
 
         auto_close : bool, optional
-            Enabled by default.  Exits plotting session when user
-            closes the window when interactive is ``True``.
+            Exits plotting session when user closes the window when
+            interactive is ``True``.  Defaults to
+            :attr:`pyvista.themes.DefaultTheme.auto_close`.
 
         interactive_update: bool, optional
             Disabled by default.  Allows user to non-blocking draw,
-            user should call ``Update()`` in each iteration.
+            user should call :func:`BasePlotter.update` in each iteration.
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
-            ``window_size``.  Default ``False``.
+            ``window_size``.  Defaults to
+            :attr:`pyvista.themes.DefaultTheme.full_screen`.
 
         cpos : list(tuple(floats))
             The camera position.  You can also set this with
-            ``Plotter.camera_position``.
+            :attr:`Plotter.camera_position`.
 
         screenshot : str or bool, optional
             Take a screenshot of the initial state of the plot.
@@ -4010,7 +4017,7 @@ class Plotter(BasePlotter):
             it's recommended to first call ``show()`` with
             ``auto_close=False`` to set the scene, then save the
             screenshot in a separate call to ``show()`` or
-            ``screenshot()``.
+            :func:`Plotter.screenshot`.
 
         return_img : bool
             Returns a numpy array representing the last image along
@@ -4031,21 +4038,30 @@ class Plotter(BasePlotter):
             * ``'panel'`` : Show a ``panel`` widget.
 
             This can also be set globally with
-            ``pyvista.set_jupyter_backend``
+            :func:`pyvista.set_jupyter_backend`.
 
         return_viewer : bool, optional
             Return the jupyterlab viewer, scene, or display object
             when plotting with jupyter notebook.
 
+        return_cpos : bool, optional
+            Return the last camera position from the render window
+            when enabled.  Default based on theme setting.  See
+            :attr:`pyvista.themes.DefaultTheme.return_cpos`.
+
         Returns
         -------
         cpos : list
             List of camera position, focal point, and view up.
+            Returned only when ``return_cpos=True`` or set in the
+            default global or plot theme.  Not returned when in a
+            jupyter notebook and ``return_viewer=True``.
 
         image : np.ndarray
             Numpy array of the last image when either ``return_img=True``
-            or ``screenshot=True`` is set. Optionally contains alpha
-            values. Sized:
+            or ``screenshot=True`` is set. Not returned when in a
+            jupyter notebook with ``return_viewer=True``. Optionally
+            contains alpha values. Sized:
 
             * [Window height x Window width x 3] if the theme sets
               ``transparent_background=False``.
@@ -4081,6 +4097,15 @@ class Plotter(BasePlotter):
         Return an ``ipygany`` scene.
 
         >>> pl.show(jupyter_backend='ipygany', return_viewer=True)  # doctest:+SKIP
+
+        Obtain the camera position when using ``show``.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.show(return_cpos=True)   # doctest:+SKIP
+        [(2.223005211686484, -0.3126909484828709, 2.4686209867735065),
+        (0.0, 0.0, 0.0),
+        (-0.6839951597283509, -0.47207319712073137, 0.5561452310578585)]
 
         """
         # developer keyword argument: runs a function immediately prior to ``close``
@@ -4203,21 +4228,18 @@ class Plotter(BasePlotter):
         #       See issues #135 and #186 for insight before editing the
         #       remainder of this function.
 
-        # Get camera position before closing
-        cpos = self.camera_position
-
-        # Cleanup
+        # Close the render window if requested
         if auto_close:
             self.close()
 
         # If user asked for screenshot, return as numpy array after camera
         # position
         if return_img or screenshot is True:
-            return cpos, self.last_image
+            if return_cpos:
+                return self.camera_position, self.last_image
 
-        # Return last used camera position unless within a doctest
-        if '_pytest.doctest' not in sys.modules:
-            return cpos
+        if return_cpos:
+            return self.camera_position
 
     def add_title(self, title, font_size=18, color=None, font=None,
                   shadow=False):
