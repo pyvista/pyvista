@@ -320,7 +320,7 @@ if VTK9:
                                            vtkImageDifference,
                                            vtkImageFlip,
                                            vtkRTAnalyticSource)
-    from vtkmodules.vtkFiltersFlowPaths import vtkStreamTracer
+    from vtkmodules.vtkFiltersFlowPaths import vtkEvenlySpacedStreamlines2D, vtkStreamTracer
     from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
     from vtkmodules.numpy_interface.dataset_adapter import (VTKObjectWrapper,
                                                             numpyTovtkDataArray,
