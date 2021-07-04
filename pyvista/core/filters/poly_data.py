@@ -1356,6 +1356,8 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(path, line_width=5, color='k')
         >>> pl.show()
 
+        See :ref:`geodesic_example` for more examples using this filter.
+
         """
         if not (0 <= start_vertex < poly_data.n_points and
                 0 <= end_vertex < poly_data.n_points):
@@ -1384,8 +1386,8 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(output)
             return poly_data
-        else:
-            return output
+
+        return output
 
     def geodesic_distance(poly_data, start_vertex, end_vertex):
         """Calculate the geodesic distance between two vertices using Dijkstra's algorithm.
@@ -1410,6 +1412,8 @@ class PolyDataFilters(DataSetFilters):
         >>> length = sphere.geodesic_distance(0, 100)
         >>> print(f'Length is {length:.3f}')
         Length is 0.812
+
+        See :ref:`geodesic_example` for more examples using this filter.
 
         """
         path = poly_data.geodesic(start_vertex, end_vertex)
@@ -1438,7 +1442,7 @@ class PolyDataFilters(DataSetFilters):
             Returns intersection of first point only.
 
         plot : bool, optional
-            Plots ray trace results
+            Plots ray trace results.
 
         off_screen : bool, optional
             Plots off screen when ``plot=True``.  Used for unit testing.
@@ -1456,13 +1460,17 @@ class PolyDataFilters(DataSetFilters):
         Examples
         --------
         Compute the intersection between a ray from the origin and
-        [1, 0, 0] and a sphere with radius 0.5 centered at the origin
+        [1, 0, 0] and a sphere with radius 0.5 centered at the origin.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], first_point=True)
         >>> print(f'Intersected at {point[0]:.3f} {point[1]:.3f} {point[2]:.3f}')
         Intersected at 0.499 0.000 0.000
+
+        >>> sphere.ray_trace([0, 0, 0], [1, 0, 0], plot=True)
+
+        See :ref:`ray_trace_example` for more examples using this filter.
 
         """
         points = _vtk.vtkPoints()
