@@ -13,7 +13,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          show_bounds=False, show_axes=None, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
-         return_viewer=False, jupyter_kwargs={}, theme=None, **kwargs):
+         return_viewer=False, return_cpos=False, jupyter_kwargs={},
+         theme=None, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -77,6 +78,14 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
 
+    return_viewer : bool, optional
+        Return the jupyterlab viewer, scene, or display object
+        when plotting with jupyter notebook.
+
+    return_cpos : bool, optional
+        Return the last camera position from the render window
+        when enabled.  Defaults to value in theme settings.
+
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
@@ -87,17 +96,23 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     -------
     cpos : list
         List of camera position, focal point, and view up.
+        Returned only when ``return_cpos=True`` or set in the
+        default global or plot theme.  Not returned when in a
+        jupyter notebook and ``return_viewer=True``.
 
-    img : numpy.ndarray
-        Array containing pixel RGB and optionally alpha values.
-        Sized:
+    image : np.ndarray
+        Numpy array of the last image when either ``return_img=True``
+        or ``screenshot=True`` is set. Not returned when in a
+        jupyter notebook with ``return_viewer=True``. Optionally
+        contains alpha values. Sized:
 
         * [Window height x Window width x 3] if the theme sets
           ``transparent_background=False``.
         * [Window height x Window width x 4] if the theme sets
           ``transparent_background=True``.
 
-        Returned only when ``screenshot=True``.
+    widget
+        IPython widget when ``return_viewer=True``.
 
     Examples
     --------
@@ -177,22 +192,18 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if parallel_projection:
         plotter.enable_parallel_projection()
 
-    result = plotter.show(window_size=window_size,
-                          auto_close=auto_close,
-                          interactive=interactive,
-                          full_screen=full_screen,
-                          screenshot=screenshot,
-                          return_img=return_img,
-                          use_ipyvtk=use_ipyvtk,
-                          jupyter_backend=jupyter_backend,
-                          before_close_callback=before_close_callback,
-                          jupyter_kwargs=jupyter_kwargs,
-                          return_viewer=return_viewer)
-
-    # Result will be handled by plotter.show(): cpos or [cpos, img] or
-    # the jupyterlab scene when return_viewer is True
-    return result
-
+    return plotter.show(window_size=window_size,
+                        auto_close=auto_close,
+                        interactive=interactive,
+                        full_screen=full_screen,
+                        screenshot=screenshot,
+                        return_img=return_img,
+                        use_ipyvtk=use_ipyvtk,
+                        jupyter_backend=jupyter_backend,
+                        before_close_callback=before_close_callback,
+                        jupyter_kwargs=jupyter_kwargs,
+                        return_viewer=return_viewer,
+                        return_cpos=return_cpos)
 
 def plot_arrows(cent, direction, **kwargs):
     """Plot arrows as vectors.
