@@ -2001,7 +2001,8 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> projected = sphere.project_points_to_plane([0, 0, 0])
+        >>> projected = sphere.project_points_to_plane()
+        >>> projected.plot(show_edges=True, line_width=3)
 
         """
         if not isinstance(normal, (np.ndarray, collections.abc.Sequence)) or len(normal) != 3:
@@ -2023,6 +2024,10 @@ class PolyDataFilters(DataSetFilters):
     def ribbon(poly_data, width=None, scalars=None, angle=0.0, factor=2.0,
                normal=None, tcoords=False, preference='points'):
         """Create a ribbon of the lines in this dataset.
+
+        .. note::
+           If there are no lines in the input dataset, then the output
+           will be an empty ``pyvista.PolyData`` mesh.
 
         Parameters
         ----------
@@ -2055,16 +2060,20 @@ class PolyDataFilters(DataSetFilters):
         --------
         Convert a line to a ribbon and plot it.
 
-        >>> import pyvista as pv
-        >>> sphere = pv.Sphere()
-        >>> path = sphere.geodesic(0, 100)
-        >>> ribbon = path.ribbon()
-        >>> pv.plot([sphere, ribbon])
-
-        Notes
-        -----
-        If there are no lines in the input dataset, then the output
-        will be an empty ``pyvista.PolyData`` mesh.
+        >>> import numpy as np
+        >>> import pyvista
+        >>> n = 1000
+        >>> theta = np.linspace(-10 * np.pi, 10 * np.pi, n)
+        >>> z = np.linspace(-2, 2, n)
+        >>> r = z**2 + 1
+        >>> x = r * np.sin(theta)
+        >>> y = r * np.cos(theta)
+        >>> points = np.column_stack((x, y, z))
+        >>> pdata = pyvista.PolyData(points)
+        >>> pdata.lines = np.hstack((n, range(n)))
+        >>> pdata['distance'] = range(n)
+        >>> ribbon = pdata.ribbon(width=0.2)
+        >>> ribbon.plot(show_scalar_bar=False)
 
         """
         if scalars is not None:
@@ -2147,7 +2156,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1])
-        >>> mesh.plot()
+        >>> mesh.plot(color='tan')
 
         """
         alg = _vtk.vtkLinearExtrusionFilter()
@@ -2161,7 +2170,6 @@ class PolyDataFilters(DataSetFilters):
             return poly_data
         else:
             return output
-
 
     def extrude_rotate(poly_data, resolution=30, inplace=False,
                        translation=0.0, dradius=0.0, angle=360.0, progress_bar=False):
@@ -2218,10 +2226,14 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
+        Create a "spring" using the rotational extrusion filter.
+
         >>> import pyvista
-        >>> line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
-        >>> mesh = line.extrude_rotate(resolution = 4)
-        >>> mesh.plot()
+        >>> profile = pyvista.Polygon(center=[1.25, 0.0, 0.0], radius=0.2,
+        ...                           normal=(0, 1, 0), n_sides=30)
+        >>> extruded = profile.extrude_rotate(resolution=360, translation=4.0,
+        ...                                   dradius=.5, angle=1500.0)
+        >>> extruded.plot(smooth_shading=True)
 
         """
         if resolution <= 0:
@@ -2237,8 +2249,7 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(output)
             return poly_data
-        else:
-            return output
+        return output
 
     def strip(poly_data, join=False, max_length=1000, pass_cell_data=False,
               pass_cell_ids=False, pass_point_ids=False):
@@ -2293,10 +2304,11 @@ class PolyDataFilters(DataSetFilters):
         --------
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
-        >>> slc = mesh.slice(normal='z', origin=(0,0,-10))
+        >>> slc = mesh.slice(normal='z', origin=(0, 0, -10))
         >>> stripped = slc.strip()
         >>> stripped.n_cells
         1
+        >>> stripped.plot(show_edges=True, line_width=3)
 
         """
         alg = _vtk.vtkStripper()
