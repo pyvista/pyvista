@@ -6,9 +6,10 @@ import numpy as np
 
 import pyvista
 from pyvista import (
-    abstract_class, _vtk, NORMALS, generate_plane, assert_empty_kwargs, vtk_id_list_to_array, get_array
+    abstract_class, _vtk, NORMALS, generate_plane, assert_empty_kwargs,
+    vtk_id_list_to_array, get_array
 )
-from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import NotAllTrianglesError, DeprecationError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 
@@ -67,6 +68,24 @@ class PolyDataFilters(DataSetFilters):
 
         return _get_output(bfilter)
 
+    def boolean_cut(poly_data, *args, **kwargs):  # pragma: no cover
+        """Cut two meshes.
+
+        .. deprecated:: 0.31.0
+           Use :func:`PolyDataFilters.boolean_difference` instead.
+
+        """
+        DeprecationError('``boolean_cut`` has ben deprecated.  Please use ``boolean_difference``.')
+
+    def boolean_add(poly_data, *args, **kwargs):  # pragma: no cover
+        """Merge two meshes together.
+
+        .. deprecated:: 0.31.0
+           Use :func:`PolyDataFilters.merge` instead.
+
+        """
+        DeprecationError('``boolean_add`` has been deprecated.  Please use ``merge``.')
+
     def boolean_union(poly_data, other_mesh, tolerance=1E-5):
         """Perform a boolean union operation on two meshes.
 
@@ -88,6 +107,9 @@ class PolyDataFilters(DataSetFilters):
            :func:`PolyDataFilters.merge` filter.  This filter attempts
            to create a manifold mesh and will not include internal
            surfaces when two meshes overlap.
+
+        .. versionchanged:: 0.31.0
+           Behavior changed to match default VTK behavior.
 
         Parameters
         ----------
@@ -140,6 +162,8 @@ class PolyDataFilters(DataSetFilters):
            probably has its normals pointing inward. Use
            :func:`PolyDataFilters.plot_normals` visualize the normals.
 
+        .. versionadded:: 0.31.0
+
         Parameters
         ----------
         other_mesh : pyvista.PolyData
@@ -184,6 +208,9 @@ class PolyDataFilters(DataSetFilters):
 
         The difference of two manifold meshes ``A`` and ``B`` is the
         volume of the mesh in ``A`` not belonging to ``B``.
+
+        .. versionchanged:: 0.31.0
+           Behavior changed to match default VTK behavior.
 
         Parameters
         ----------

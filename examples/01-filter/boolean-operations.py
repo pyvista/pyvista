@@ -42,19 +42,8 @@ meshes in PyVista to cut the first mesh by the second.
 import pyvista as pv
 import numpy as np
 
-def make_cube():
-    x = np.linspace(-0.5, 0.5, 25)
-    grid = pv.StructuredGrid(*np.meshgrid(x, x, x))
-    return grid.extract_surface().triangulate()
-
-# Create to example PolyData meshes for boolean operations
-sphere = pv.Sphere(radius=0.65, center=(0, 0, 0))
-cube = make_cube()
-
-p = pv.Plotter()
-p.add_mesh(sphere, color="yellow", opacity=0.5, show_edges=True)
-p.add_mesh(cube, color="royalblue", opacity=0.5, show_edges=True)
-p.show()
+sphere_a = pv.Sphere()
+sphere_b = pv.Sphere(center=(0.5, 0, 0))
 
 
 ###############################################################################
@@ -69,8 +58,14 @@ p.show()
 #
 # Order of operations does not matter for boolean union.
 
-add = sphere.boolean_union(cube)
-add.plot(opacity=0.5, color=True, show_edges=True)
+result = sphere_a.boolean_union(sphere_b)
+pl = pv.Plotter()
+_ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+_ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+_ = pl.add_mesh(result, color='tan')
+pl.camera_position = 'xz'
+pl.show()
+
 
 
 ###############################################################################
@@ -86,11 +81,13 @@ add.plot(opacity=0.5, color=True, show_edges=True)
 #
 # Order of operations matters for boolean cut.
 
-cut = cube - sphere
-
-p = pv.Plotter()
-p.add_mesh(cut, opacity=0.5, show_edges=True, color=True)
-p.show()
+result = sphere_a.boolean_difference(sphere_b)
+pl = pv.Plotter()
+_ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+_ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+_ = pl.add_mesh(result, color='tan')
+pl.camera_position = 'xz'
+pl.show()
 
 
 ###############################################################################
@@ -105,11 +102,15 @@ p.show()
 #
 # Order of operations does not matter for intersection.
 
-intersect = sphere.boolean_intersection(cube)
+result = sphere_a.boolean_intersection(sphere_b)
+pl = pv.Plotter()
+_ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+_ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+_ = pl.add_mesh(result, color='tan')
+pl.camera_position = 'xz'
+pl.show()
 
-p = pv.Plotter()
-p.add_mesh(intersect, opacity=0.5, show_edges=True, color=True)
-p.show()
+
 
 ###############################################################################
 # Behavior due to flipped normals
@@ -120,18 +121,21 @@ p.show()
 # Boolean difference with both cube and sphere normals pointed
 # outward.  This is the "normal" behavior.
 
-cube = pv.Cube().triangulate().subdivide(3).clean()
+cube = pv.Cube().clean().triangulate().subdivide(3).clean()
 sphere = pv.Sphere(radius=0.6)
 result = cube.boolean_difference(sphere)
 result.plot(color='tan')
 
+
 ###############################################################################
 # Boolean difference with cube normals outward, sphere inward.
+
 cube = pv.Cube().triangulate().subdivide(3).clean()
 sphere = pv.Sphere(radius=0.6)
 sphere.flip_normals()
 result = cube.boolean_difference(sphere)
 result.plot(color='tan')
+
 
 ###############################################################################
 # Boolean difference with cube normals inward, sphere outward.
@@ -141,6 +145,7 @@ cube.flip_normals()
 sphere = pv.Sphere(radius=0.6)
 result = cube.boolean_difference(sphere)
 result.plot(color='tan')
+
 
 ###############################################################################
 # Both cube and sphere normals inward.
