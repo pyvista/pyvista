@@ -29,6 +29,13 @@ meshes in PyVista to cut the first mesh by the second.
    any two meshes.  This is difference than ``boolean_union`` as it
    simply adds the two meshes together without operating on them.
 
+.. warning::
+   If your boolean operations don't react the way you think they
+   should (i.e. the wrong parts disappear), one of your meshes
+   probably has its normals pointing inward. Use
+   :func:`PolyDataFilters.plot_normals` visualize the normals.
+
+
 """
 
 # sphinx_gallery_thumbnail_number = 6
@@ -103,4 +110,45 @@ intersect = sphere.boolean_intersection(cube)
 p = pv.Plotter()
 p.add_mesh(intersect, opacity=0.5, show_edges=True, color=True)
 p.show()
+
+###############################################################################
+# Behavior due to flipped normals
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Note that these boolean filters behave differently depending on the
+# orientation of the normals.
+#
+# Boolean difference with both cube and sphere normals pointed
+# outward.  This is the "normal" behavior.
+
+cube = pv.Cube().triangulate().subdivide(3).clean()
+sphere = pv.Sphere(radius=0.6)
+result = cube.boolean_difference(sphere)
+result.plot(color='tan')
+
+###############################################################################
+# Boolean difference with cube normals outward, sphere inward.
+cube = pv.Cube().triangulate().subdivide(3).clean()
+sphere = pv.Sphere(radius=0.6)
+sphere.flip_normals()
+result = cube.boolean_difference(sphere)
+result.plot(color='tan')
+
+###############################################################################
+# Boolean difference with cube normals inward, sphere outward.
+
+cube = pv.Cube().triangulate().subdivide(3).clean()
+cube.flip_normals()
+sphere = pv.Sphere(radius=0.6)
+result = cube.boolean_difference(sphere)
+result.plot(color='tan')
+
+###############################################################################
+# Both cube and sphere normals inward.
+
+cube = pv.Cube().triangulate().subdivide(3).clean()
+cube.flip_normals()
+sphere = pv.Sphere(radius=0.6)
+sphere.flip_normals()
+result = cube.boolean_difference(sphere)
+result.plot(color='tan')
 

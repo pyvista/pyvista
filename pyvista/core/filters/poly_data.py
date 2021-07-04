@@ -83,6 +83,12 @@ class PolyDataFilters(DataSetFilters):
            probably has its normals pointing inward. Use
            :func:`PolyDataFilters.plot_normals` visualize the normals.
 
+        .. note::
+           The behavior of this filter varies from the
+           :func:`PolyDataFilters.merge` filter.  This filter attempts
+           to create a manifold mesh and will not include internal
+           surfaces when two meshes overlap.
+
         Parameters
         ----------
         other_mesh : pyvista.PolyData
@@ -99,18 +105,18 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Boolean union with both cube and sphere normals pointed
-        outward.  This is the "normal" behavior.
+        Demonstrate a boolean union with two spheres.  Note how the
+        final mesh includes both spheres.
 
         >>> import pyvista
         >>> sphere_a = pyvista.Sphere()
         >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a.boolean_union(sphere_b)
         >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(sphere_a, color='r', style='wireframe')
-        >>> pl.add_mesh(sphere_b, color='b', style='wireframe')
+        >>> pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
         >>> pl.add_mesh(result, color='tan')
-        >>> pl.camera_position = 'yz'
+        >>> pl.camera_position = 'xz'
         >>> pl.show()
 
         See :ref:`boolean_example` for more examples using this filter.
@@ -150,39 +156,19 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Boolean intersection with both cube and sphere normals pointed
-        outward.  This is the "normal" behavior.
+        Demonstrate a boolean intersection with two spheres.  Note how
+        the final mesh only includes the intersection of the two.
 
         >>> import pyvista
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> result = cube.boolean_intersection(sphere)
-        >>> result.plot(color='tan')
-
-        Boolean intersection with cube normals outward, sphere inward.
-
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> sphere.flip_normals()
-        >>> result = cube.boolean_intersection(sphere)
-        >>> result.plot(color='tan')
-
-        Boolean intersection with cube normals inward, sphere outward.
-
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> cube.flip_normals()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> result = cube.boolean_intersection(sphere)
-        >>> result.plot(color='tan')
-
-        Both cube and sphere normals inward.
-
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> cube.flip_normals()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> sphere.flip_normals()
-        >>> result = cube.boolean_intersection(sphere)
-        >>> result.plot(color='tan')
+        >>> sphere_a = pyvista.Sphere()
+        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> result = sphere_a.boolean_intersection(sphere_b)
+        >>> pl = pyvista.Plotter()
+        >>> pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+        >>> pl.add_mesh(result, color='tan')
+        >>> pl.camera_position = 'xz'
+        >>> pl.show()
 
         See :ref:`boolean_example` for more examples using this filter.
 
@@ -215,48 +201,96 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Boolean difference with both cube and sphere normals pointed
-        outward.  This is the "normal" behavior.
+        Demonstrate a boolean difference with two spheres.  Note how
+        the final mesh only includes ``sphere_a``.
 
         >>> import pyvista
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> result = cube.boolean_difference(sphere)
-        >>> result.plot(color='tan')
-
-        Boolean difference with cube normals outward, sphere inward.
-
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> sphere.flip_normals()
-        >>> result = cube.boolean_difference(sphere)
-        >>> result.plot(color='tan')
-
-        Boolean difference with cube normals inward, sphere outward.
-
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> cube.flip_normals()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> result = cube.boolean_difference(sphere)
-        >>> result.plot(color='tan')
-
-        Both cube and sphere normals inward.
-
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> cube.flip_normals()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> sphere.flip_normals()
-        >>> result = cube.boolean_difference(sphere)
-        >>> result.plot(color='tan')
+        >>> sphere_a = pyvista.Sphere()
+        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> result = sphere_a.boolean_difference(sphere_b)
+        >>> pl = pyvista.Plotter()
+        >>> pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+        >>> pl.add_mesh(result, color='tan')
+        >>> pl.camera_position = 'xz'
+        >>> pl.show()
 
         See :ref:`boolean_example` for more examples using this filter.
 
         """
         return poly_data._boolean('difference', other_mesh, tolerance)
 
-    def __add__(poly_data, mesh):
+    def __add__(poly_data, dataset):
         """Merge these two meshes."""
-        return DataSetFilters.__add__(poly_data, mesh).extract_surface()
+        return poly_data.merge(dataset)
+
+    def merge(poly_data, dataset, merge_points=True, inplace=False,
+              main_has_priority=True):
+        """Merge this mesh with one or more datasets.
+
+        .. note::
+           The behavior of this filter varies from the
+           :func:`PolyDataFilters.boolean_union` filter.  This filter
+           does not attempt to create a manifold mesh and will include
+           internal surfaces when two meshes overlap.
+
+        Returns
+        --------
+        pyvista.PolyData or pyvista.UnstructuredGrid
+            pyvista.PolyData if ``dataset`` is a pyvista.PolyData,
+            otherwise a pyvista.UnstructuredGrid.
+
+        inplace : bool, optional
+            Updates grid inplace when True if the input type is an
+            :class:`pyvista.UnstructuredGrid`.
+
+        main_has_priority : bool, optional
+            When this parameter is true and merge_points is true,
+            the arrays of the merging grids will be overwritten
+            by the original main mesh.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> sphere_a = pyvista.Sphere()
+        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> merged = sphere_a.merge(sphere_b)
+        >>> merged.plot(style='wireframe', color='tan')
+
+        """
+        # use dataset merge if not polydata
+        if not isinstance(dataset, pyvista.PolyData):
+            if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
+                for data in dataset:
+                    if not isinstance(data, pyvista.PolyData):
+                        return DataSetFilters.merge(poly_data, dataset,
+                                                    merge_points=merge_points,
+                                                    inplace=inplace)
+            else:
+                return DataSetFilters.merge(poly_data, dataset,
+                                            merge_points=merge_points,
+                                            inplace=inplace)
+
+        append_filter = pyvista._vtk.vtkAppendPolyData()
+        append_filter.AddInputData(poly_data)
+
+        if isinstance(dataset, pyvista.DataSet):
+            append_filter.AddInputData(dataset)
+        else:
+            for data in dataset:
+                append_filter.AddInputData(data)
+
+        append_filter.Update()
+        merged = _get_output(append_filter)
+        if merge_points:
+            merged = merged.clean(lines_to_points=False, polys_to_lines=False,
+                                  strips_to_polys=False)
+
+        if inplace:
+            dataset.deep_copy(merged)
+            return dataset
+
+        return merged
 
     def intersection(poly_data, mesh, split_first=True, split_second=True):
         """Compute the intersection between two meshes.

@@ -309,14 +309,37 @@ def test_subtract(sphere, sphere_shifted):
     assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
 
 
+def test_merge(sphere, sphere_shifted, hexbeam):
+    merged = sphere.merge(hexbeam)
+    assert merged.n_points == (sphere.n_points + hexbeam.n_points)
+    assert isinstance(merged, pyvista.UnstructuredGrid)
+
+    # list with unstructuredgrid case
+    merged = sphere.merge([hexbeam, hexbeam], merge_points=False)
+    assert merged.n_points == (sphere.n_points + hexbeam.n_points*2)
+    assert isinstance(merged, pyvista.UnstructuredGrid)
+
+    # with polydata
+    merged = sphere.merge(sphere_shifted)
+    assert isinstance(merged, pyvista.PolyData)
+    assert merged.n_points == sphere.n_points + sphere_shifted.n_points
+
+    # with polydata list (no merge)
+    merged = sphere.merge([sphere_shifted, sphere_shifted], merge_points=False)
+    assert isinstance(merged, pyvista.PolyData)
+    assert merged.n_points == sphere.n_points + sphere_shifted.n_points*2
+
+    # with polydata list (merge)
+    merged = sphere.merge([sphere_shifted, sphere_shifted])
+    assert isinstance(merged, pyvista.PolyData)
+    assert merged.n_points == sphere.n_points + sphere_shifted.n_points
+
+
 def test_add(sphere, sphere_shifted):
-    add_mesh = sphere + sphere_shifted
-
-    npoints = sphere.n_points + sphere_shifted.n_points
-    assert add_mesh.n_points == npoints
-
-    nfaces = sphere.n_cells + sphere_shifted.n_cells
-    assert add_mesh.n_faces == nfaces
+    merged = sphere + sphere_shifted
+    assert isinstance(merged, pyvista.PolyData)
+    assert merged.n_points == sphere.n_points + sphere_shifted.n_points
+    assert merged.n_faces == sphere.n_cells + sphere_shifted.n_cells
 
 
 def test_intersection(sphere, sphere_shifted):
