@@ -287,7 +287,7 @@ def test_boolean_intersection(sphere, sphere_shifted):
     intersection = sphere.boolean_intersection(sphere_shifted)
     union = sphere.boolean_union(sphere_shifted)
 
-    expected_volume = union.volume - (sphere.volume + sphere_shifted.volume)
+    expected_volume = sphere.volume + sphere_shifted.volume - union.volume
     assert np.isclose(intersection.volume, expected_volume, atol=1E-3)
 
 
