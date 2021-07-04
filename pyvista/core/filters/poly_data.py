@@ -102,7 +102,6 @@ class PolyDataFilters(DataSetFilters):
 
         bfilter = _vtk.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToDifference()
-
         bfilter.SetInputData(1, cut)
         bfilter.SetInputData(0, poly_data)
         bfilter.ReorientDifferenceCellsOff()
