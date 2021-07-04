@@ -25,6 +25,22 @@ class PolyDataFilters(DataSetFilters):
         angle : float
             Angle to consider an edge.
 
+        Returns
+        -------
+        numpy.ndarray
+            Mask of points with an angle greater than ``angle``.
+
+        Examples
+        --------
+        Plot the mask of points that exceed 45 degrees.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube().triangulate().subdivide(4).clean()
+        >>> mask = mesh.edge_mask(45)
+        >>> mask  # doctest:+SKIP
+        array([ True,  True,  True, ..., False, False, False])
+        >>> mesh.plot(scalars=mask)
+
         """
         if not isinstance(poly_data, pyvista.PolyData):  # pragma: no cover
             poly_data = pyvista.PolyData(poly_data)
@@ -56,8 +72,27 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        mesh : pyvista.PolyData
+        pyvista.PolyData
             The cut mesh.
+
+        Examples
+        --------
+        Create a cube and a sphere and plot them
+
+        >>> import pyvista
+        >>> cube = pyvista.Cube().triangulate().subdivide(2).clean()
+        >>> sphere = pyvista.Sphere(center=(0.5, 0.5, 0.5))
+        >>> pyvista.plot([cube, sphere], style='wireframe', cpos='xz')
+
+        Cut the sphere with the cube.
+
+        >>> cube_cutting_sphere = sphere.boolean_cut(cube)
+        >>> cube_cutting_sphere.plot(cpos='xz', show_edges=True)
+
+        Reverse the order and cut the cube with the sphere.
+
+        >>> sphere_cutting_cube = cube.boolean_cut(sphere)
+        >>> sphere_cutting_cube.plot(show_edges=True)
 
         """
         if not isinstance(cut, pyvista.PolyData):
@@ -66,8 +101,7 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
 
         bfilter = _vtk.vtkBooleanOperationPolyDataFilter()
-        bfilter.SetOperationToIntersection()
-        # bfilter.SetOperationToDifference()
+        bfilter.SetOperationToDifference()
 
         bfilter.SetInputData(1, cut)
         bfilter.SetInputData(0, poly_data)
@@ -79,8 +113,7 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(mesh)
             return poly_data
-        else:
-            return mesh
+        return mesh
 
     def boolean_add(poly_data, mesh, inplace=False):
         """Add a mesh to the current mesh.
