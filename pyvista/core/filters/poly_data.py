@@ -44,7 +44,7 @@ class PolyDataFilters(DataSetFilters):
                        assume_unique=True)
 
     def _boolean(poly_data, btype, other_mesh, tolerance):
-        """Perform boolean operation"""
+        """Perform boolean operation."""
         if not isinstance(other_mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
         if not poly_data.is_all_triangles() or not other_mesh.is_all_triangles():
@@ -103,35 +103,15 @@ class PolyDataFilters(DataSetFilters):
         outward.  This is the "normal" behavior.
 
         >>> import pyvista
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> result = cube.boolean_union(sphere)
-        >>> result.plot(color='tan')
-
-        Boolean union with cube normals outward, sphere inward.
-
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> sphere.flip_normals()
-        >>> result = cube.boolean_union(sphere)
-        >>> result.plot(color='tan')
-
-        Boolean union with cube normals inward, sphere outward.
-
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> cube.flip_normals()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> result = cube.boolean_union(sphere)
-        >>> result.plot(color='tan')
-
-        Both cube and sphere normals inward.
-
-        >>> cube = pyvista.Cube().triangulate().subdivide(3).clean()
-        >>> cube.flip_normals()
-        >>> sphere = pyvista.Sphere(radius=0.6)
-        >>> sphere.flip_normals()
-        >>> result = cube.boolean_union(sphere)
-        >>> result.plot(color='tan')
+        >>> sphere_a = pyvista.Sphere()
+        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> result = sphere_a.boolean_union(sphere_b)
+        >>> pl = pyvista.Plotter()
+        >>> pl.add_mesh(sphere_a, color='r', style='wireframe')
+        >>> pl.add_mesh(sphere_b, color='b', style='wireframe')
+        >>> pl.add_mesh(result, color='tan')
+        >>> pl.camera_position = 'yz'
+        >>> pl.show()
 
         See :ref:`boolean_example` for more examples using this filter.
 
