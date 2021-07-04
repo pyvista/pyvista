@@ -59,7 +59,7 @@ class PolyDataFilters(DataSetFilters):
         elif btype == 'difference':
             bfilter.SetOperationToDifference()
         else:  # pragma: no cover
-            ValueError(f'Invalid btype {btype}')
+            raise ValueError(f'Invalid btype {btype}')
         bfilter.SetInputData(0, poly_data)
         bfilter.SetInputData(1, other_mesh)
         bfilter.ReorientDifferenceCellsOn()  # this is already default
