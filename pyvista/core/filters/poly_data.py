@@ -389,6 +389,51 @@ class PolyDataFilters(DataSetFilters):
         return poly_data.plot(scalars=poly_data.curvature(curv_type),
                               **kwargs)
 
+    def triangulate(poly_data, inplace=False):
+        """Return an all triangle mesh.
+
+        More complex polygons will be broken down into triangles.
+
+        Parameters
+        ----------
+        poly_data : pyvista.PolyData
+            Input mesh to compute convert to an all triangle mesh.
+
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh containing only triangles.
+
+        Examples
+        --------
+        Generate a mesh with quadrilateral faces.
+
+        >>> import pyvista
+        >>> plane = pyvista.Plane()
+        >>> plane.point_arrays.clear()
+        >>> plane.plot(show_edges=True, line_width=5)
+
+        Convert it to an all triangle mesh.
+
+        >>> mesh = plane.triangulate()
+        >>> mesh.plot(show_edges=True, line_width=5)
+
+        """
+        trifilter = _vtk.vtkTriangleFilter()
+        trifilter.SetInputData(poly_data)
+        trifilter.PassVertsOff()
+        trifilter.PassLinesOff()
+        trifilter.Update()
+
+        mesh = _get_output(trifilter)
+        if inplace:
+            poly_data.overwrite(mesh)
+            return poly_data
+        return mesh
+
     def smooth(poly_data, n_iter=20, relaxation_factor=0.01, convergence=0.0,
                edge_angle=15, feature_angle=45,
                boundary_smoothing=True, feature_smoothing=False, inplace=False):
@@ -440,10 +485,10 @@ class PolyDataFilters(DataSetFilters):
         >>> smooth_cube = cube.smooth(1000, feature_smoothing=False)
         >>> n_edge_cells = cube.extract_feature_edges().n_cells
         >>> n_smooth_cells = smooth_cube.extract_feature_edges().n_cells
-        >>> print(f'Sharp Edges on Cube:        {n_edge_cells}')
-        Sharp Edges on Cube:        384
-        >>> print(f'Sharp Edges on Smooth Cube: {n_smooth_cells}')
-        Sharp Edges on Smooth Cube: 12
+        >>> f'Sharp Edges on Cube:        {n_edge_cells}'
+        'Sharp Edges on Cube:        384'
+        >>> f'Sharp Edges on Smooth Cube: {n_smooth_cells}'
+        'Sharp Edges on Smooth Cube: 12'
         >>> smooth_cube.plot()
 
         See :ref:`surface_smoothing_example` for more examples using this filter.
@@ -596,10 +641,10 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> line = pv.Line()
         >>> tube = line.tube(radius=0.02)
-        >>> print('Line Cells:', line.n_cells)
-        Line Cells: 1
-        >>> print('Tube Cells:', tube.n_cells)
-        Tube Cells: 22
+        >>> f'Line Cells: {line.n_cells}'
+        'Line Cells: 1'
+        >>> f'Tube Cells: {tube.n_cells}'
+        'Tube Cells: 22'
         >>> tube.plot(color='tan')
 
         See :ref:`ref_create_spline` for more examples using this filter.
@@ -1276,7 +1321,7 @@ class PolyDataFilters(DataSetFilters):
         >>> faces = np.array([3, 0, 1, 2, 3, 0, 3, 3])
         >>> mesh = pv.PolyData(points, faces)
         >>> mout = mesh.clean()
-        >>> print(mout.faces)  # doctest:+SKIP
+        >>> mout.faces  # doctest:+SKIP
         [3 0 1 2]
 
         """
@@ -1410,8 +1455,8 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> length = sphere.geodesic_distance(0, 100)
-        >>> print(f'Length is {length:.3f}')
-        Length is 0.812
+        >>> f'Length is {length:.3f}'
+        'Length is 0.812'
 
         See :ref:`geodesic_example` for more examples using this filter.
 
@@ -1424,7 +1469,7 @@ class PolyDataFilters(DataSetFilters):
         return distance
 
     def ray_trace(poly_data, origin, end_point, first_point=False, plot=False,
-                  off_screen=False):
+                  off_screen=None):
         """Perform a single ray trace calculation.
 
         This requires a mesh and a line segment defined by an origin
@@ -1465,10 +1510,12 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], first_point=True)
-        >>> print(f'Intersected at {point[0]:.3f} {point[1]:.3f} {point[2]:.3f}')
-        Intersected at 0.499 0.000 0.000
+        >>> f'Intersected at {point[0]:.3f} {point[1]:.3f} {point[2]:.3f}'
+        'Intersected at 0.499 0.000 0.000'
 
-        >>> sphere.ray_trace([0, 0, 0], [1, 0, 0], plot=True)
+        Show a plot of the ray trace.
+
+        >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], plot=True)
 
         See :ref:`ray_trace_example` for more examples using this filter.
 
@@ -1509,15 +1556,16 @@ class PolyDataFilters(DataSetFilters):
     def multi_ray_trace(poly_data, origins, directions, first_point=False, retry=False):
         """Perform multiple ray trace calculations.
 
-        This requires a mesh with only triangular faces,
-        an array of origin points and an equal sized array of
-        direction vectors to trace along.
+        This requires a mesh with only triangular faces, an array of
+        origin points and an equal sized array of direction vectors to
+        trace along.
 
-        The embree library used for vectorisation of the ray traces is known to occasionally
-        return no intersections where the VTK implementation would return an intersection.
-        If the result appears to be missing some intersection points, set retry=True to run a second pass over rays
-        that returned no intersections, using the VTK ray_trace implementation.
-
+        The embree library used for vectorisation of the ray traces is
+        known to occasionally return no intersections where the VTK
+        implementation would return an intersection.  If the result
+        appears to be missing some intersection points, set retry=True
+        to run a second pass over rays that returned no intersections,
+        using the VTK ray_trace implementation.
 
         Parameters
         ----------
@@ -1554,10 +1602,10 @@ class PolyDataFilters(DataSetFilters):
         a sphere with radius 0.5 centered at the origin
 
         >>> import pyvista as pv # doctest: +SKIP
-        ... sphere = pv.Sphere()
-        ... points, rays, cells = sphere.multi_ray_trace([[0, 0, 0]]*3, [[1, 0, 0], [0, 1, 0], [0, 0, 1]], first_point=True)
-        ... string = ", ".join([f"({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})" for point in points])
-        ... print(f'Rays intersected at {string}')
+        >>> sphere = pv.Sphere() # doctest: +SKIP
+        >>> points, rays, cells = sphere.multi_ray_trace([[0, 0, 0]]*3, [[1, 0, 0], [0, 1, 0], [0, 0, 1]], first_point=True) # doctest: +SKIP
+        >>> string = ", ".join([f"({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})" for point in points]) # doctest: +SKIP
+        >>> f'Rays intersected at {string}' # doctest: +SKIP
         Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)
 
         """
@@ -1612,7 +1660,7 @@ class PolyDataFilters(DataSetFilters):
 
         return locations, index_ray, index_tri
 
-    def plot_boundaries(poly_data, edge_color="red", **kwargs):
+    def plot_boundaries(poly_data, edge_color="red", line_width=None, **kwargs):
         """Plot boundaries of a mesh.
 
         Parameters
@@ -1620,22 +1668,32 @@ class PolyDataFilters(DataSetFilters):
         edge_color : str, optional
             The color of the edges when they are added to the plotter.
 
+        line_width : int, optional
+            Width of the boundaries line.
+
         kwargs : optional
             All additional keyword arguments will be passed to
             :func:`pyvista.BasePlotter.add_mesh`
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> hills.plot_boundaries(line_width=10)
 
         """
         edges = DataSetFilters.extract_feature_edges(poly_data)
 
         plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', None),
                                   notebook=kwargs.pop('notebook', None))
-        plotter.add_mesh(edges, color=edge_color, style='wireframe', label='Edges')
+        plotter.add_mesh(edges, color=edge_color, style='wireframe', label='Edges',
+                         line_width=line_width)
         plotter.add_mesh(poly_data, label='Mesh', **kwargs)
         plotter.add_legend()
         return plotter.show()
 
     def plot_normals(poly_data, show_mesh=True, mag=1.0, flip=False,
-                     use_every=1, **kwargs):
+                     use_every=1, color=None, **kwargs):
         """Plot the point normals of a mesh.
 
         Parameters
@@ -1655,6 +1713,10 @@ class PolyDataFilters(DataSetFilters):
             displayed.  Display every 10th normal by setting this
             parameter to 10.
 
+        color : str, optional
+            Color of the arrows.  Defaults to
+            :attr:`pyvista.themes.DefaultTheme.edge_color`.
+
         Examples
         --------
         Plot the normals of a sphere.
@@ -1669,11 +1731,14 @@ class PolyDataFilters(DataSetFilters):
         if show_mesh:
             plotter.add_mesh(poly_data, **kwargs)
 
+        if color is None:
+            color = pyvista.global_theme.edge_color
+
         normals = poly_data.point_normals
         if flip:
             normals *= -1
-        plotter.add_arrows(poly_data.points[::use_every],
-                           normals[::use_every], mag=mag, show_scalar_bar=False)
+        plotter.add_arrows(poly_data.points[::use_every], normals[::use_every],
+                           mag=mag, color=color, show_scalar_bar=False)
         return plotter.show()
 
     def remove_points(poly_data, remove, mode='any', keep_scalars=True, inplace=False):
@@ -1701,10 +1766,10 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        mesh : pyvista.PolyData
+        pyvista.PolyData
             Mesh without the points flagged for removal.
 
-        ridx : np.ndarray
+        np.ndarray
             Indices of new points relative to the original mesh.
 
         Examples
@@ -1713,7 +1778,8 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> reduced_sphere, ridx = sphere.remove_points(range(100))
+        >>> reduced_sphere, ridx = sphere.remove_points(range(100, 250))
+        >>> reduced_sphere.plot(show_edges=True, line_width=3)
 
         """
         remove = np.asarray(remove)
@@ -1782,7 +1848,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere = pv.Sphere()
         >>> sphere.plot_normals(mag=0.1)
         >>> sphere.flip_normals()
-        >>> sphere.plot_normals(mag=0.1)
+        >>> sphere.plot_normals(mag=0.1, opacity=0.5)
 
         """
         if not poly_data.is_all_triangles:
@@ -1840,15 +1906,19 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Extract the points of a sphere and then convert the point
-        cloud to a surface mesh.  Note that only the bottom half is
-        converted to a mesh.
+        First, generate 30 points on circle and plot it.
 
-        >>> import pyvista as pv
-        >>> points = pv.PolyData(pv.Sphere().points)
-        >>> mesh = points.delaunay_2d()
-        >>> mesh.is_all_triangles()
-        True
+        >>> import pyvista
+        >>> points = pyvista.Polygon(n_sides=30).points
+        >>> circle = pyvista.PolyData(points)
+        >>> circle.plot(show_edges=True, point_size=15)
+
+        Use ``delaunay_2d`` to fill the interior of the circle
+
+        >>> filled_circle = circle.delaunay_2d()
+        >>> filled_circle.plot(show_edges=True, line_width=5)
+
+        See :ref:`triangulated_surface` for more examples using this filter.
 
         """
         alg = _vtk.vtkDelaunay2D()
@@ -1868,8 +1938,7 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(mesh)
             return poly_data
-        else:
-            return mesh
+        return mesh
 
     def compute_arc_length(poly_data):
         """Compute the arc length over the length of the probed line.
@@ -1889,14 +1958,14 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere = pv.Sphere()
         >>> path = sphere.geodesic(0, 100)
         >>> length = path.compute_arc_length()['arc_length'][-1]
-        >>> print(f'Length is {length:.3f}')
-        Length is 0.812
+        >>> f'Length is {length:.3f}'
+        'Length is 0.812'
 
         This is identical to the geodesic_distance.
 
         >>> length = sphere.geodesic_distance(0, 100)
-        >>> print(f'Length is {length:.3f}')
-        Length is 0.812
+        >>> f'Length is {length:.3f}'
+        'Length is 0.812'
 
         You can also plot the arc_length
 
