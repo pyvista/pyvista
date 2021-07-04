@@ -274,22 +274,39 @@ def test_edge_mask(sphere):
     mask = sphere.edge_mask(10)
 
 
-def test_boolean_cut_inplace(sphere, sphere_shifted):
-    sub_mesh = sphere
-    sub_mesh.boolean_cut(sphere_shifted, inplace=True)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
+def test_boolean_union(sphere, sphere_shifted):
+    union = sphere.boolean_union(sphere_shifted)
+    intersection = sphere.boolean_intersection(sphere_shifted)
+
+    # union is volume of sphere + sphere_shifted minus the part intersecting
+    expected_volume = sphere.volume + sphere_shifted.volume - intersection.volume
+    np.allclose(union.volume, expected_volume, atol=1E-3)
 
 
-def test_boolean_cut_fail(plane):
+def test_boolean_intersection(sphere, sphere_shifted):
+    intersection = sphere.boolean_intersection(sphere_shifted)
+    union = sphere.boolean_union(sphere_shifted)
+
+    expected_volume = union.volume - (sphere.volume + sphere_shifted.volume)
+    np.allclose(intersection.volume, expected_volume, atol=1E-3)
+
+
+def test_boolean_difference(sphere, sphere_shifted):
+    difference = sphere.boolean_difference(sphere_shifted)
+    intersection = sphere.boolean_intersection(sphere_shifted)
+
+    expected_volume = sphere.volume - intersection.volume
+    np.allclose(difference.volume, expected_volume, atol=1E-3)
+
+
+def test_boolean_difference_fail(plane):
     with pytest.raises(NotAllTrianglesError):
         plane - plane
 
 
 def test_subtract(sphere, sphere_shifted):
     sub_mesh = sphere - sphere_shifted
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
+    assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
 
 
 def test_add(sphere, sphere_shifted):
@@ -300,35 +317,6 @@ def test_add(sphere, sphere_shifted):
 
     nfaces = sphere.n_cells + sphere_shifted.n_cells
     assert add_mesh.n_faces == nfaces
-
-
-def test_boolean_add_inplace(sphere, sphere_shifted):
-    sub_mesh = sphere
-    sub_mesh.boolean_add(sphere_shifted, inplace=True)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
-
-
-def test_boolean_union(sphere, sphere_shifted):
-    sub_mesh = sphere.boolean_union(sphere_shifted)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
-
-    sub_mesh = sphere
-    sub_mesh.boolean_union(sphere_shifted, inplace=True)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
-
-
-def test_boolean_intersection(sphere, sphere_shifted):
-    sub_mesh = sphere.boolean_intersection(sphere_shifted)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
-
-    sub_mesh = sphere
-    sub_mesh.boolean_intersection(sphere_shifted, inplace=True)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
 
 
 def test_intersection(sphere, sphere_shifted):
@@ -499,7 +487,7 @@ def test_extract_largest(sphere):
 
 
 def test_clean(sphere):
-    mesh = sphere + sphere
+    mesh = sphere.merge(sphere, merge_points=False).extract_surface()
     assert mesh.n_points > sphere.n_points
     cleaned = mesh.clean(merge_tol=1E-5)
     assert cleaned.n_points == sphere.n_points

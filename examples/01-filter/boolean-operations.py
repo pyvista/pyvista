@@ -1,23 +1,34 @@
 """
+.. _boolean_example:
+
 Boolean Operations
 ~~~~~~~~~~~~~~~~~~
 
-Perform boolean operations with closed surfaces (intersect, cut, etc.).
+Perform boolean operations with closed (manifold) surfaces.
 
-Boolean/topological operations (intersect, cut, etc.) methods are implemented
-for :class:`pyvista.PolyData` mesh types only and are accessible directly from
-any :class:`pyvista.PolyData` mesh. Check out :class:`pyvista.PolyDataFilters`
-and take a look at the following filters:
+Boolean/topological operations (intersect, union, difference) methods
+are implemented for :class:`pyvista.PolyData` mesh types only and are
+accessible directly from any :class:`pyvista.PolyData` mesh. Check out
+:class:`pyvista.PolyDataFilters` and take a look at the following
+filters:
 
-* :func:`pyvista.PolyDataFilters.boolean_add`
-* :func:`pyvista.PolyDataFilters.boolean_cut`
 * :func:`pyvista.PolyDataFilters.boolean_difference`
 * :func:`pyvista.PolyDataFilters.boolean_union`
+* :func:`pyvista.PolyDataFilters.boolean_intersection`
 
-For merging, the ``+`` operator can be used between any two meshes in PyVista
-which simply calls the ``.merge()`` filter to combine any two meshes.
-Similarly, the ``-`` operator can be used between any two :class:`pyvista.PolyData`
+Essentially, boolean union, difference, and intersection are all the
+same operation. Just different parts of the objects are kept at the
+end.
+
+The ``-`` operator can be used between any two :class:`pyvista.PolyData`
 meshes in PyVista to cut the first mesh by the second.
+
+.. note::
+   For merging, the ``+`` operator can be used between any two meshes
+   in PyVista which simply calls the ``.merge()`` filter to combine
+   any two meshes.  This is difference than ``boolean_union`` as it
+   simply adds the two meshes together without operating on them.
+
 """
 
 # sphinx_gallery_thumbnail_number = 6
@@ -38,29 +49,35 @@ p.add_mesh(sphere, color="yellow", opacity=0.5, show_edges=True)
 p.add_mesh(cube, color="royalblue", opacity=0.5, show_edges=True)
 p.show()
 
-###############################################################################
-# Boolean Add
-# +++++++++++
-#
-# Add all of the two meshes together using the
-# :func:`pyvista.PolyDataFilters.boolean_add` filter or the ``+`` operator.
-#
-# Order of operations does not matter for boolean add as the entirety of both
-# meshes are appended together.
 
-add = sphere + cube
+###############################################################################
+# Boolean Union
+# +++++++++++++
+#
+# Perform a boolean union of ``A`` and ``B``.
+# :func:`pyvista.PolyDataFilters.boolean_union` filter.
+#
+# The union of two manifold meshes ``A`` and ``B`` is the mesh
+# which is in ``A``, in ``B``, or in both ``A`` and ``B``.
+#
+# Order of operations does not matter for boolean union.
+
+add = sphere.boolean_union(cube)
 add.plot(opacity=0.5, color=True, show_edges=True)
 
 
 ###############################################################################
-# Boolean Cut
-# +++++++++++
+# Boolean Difference
+# ++++++++++++++++++
 #
-# Perform a boolean cut of ``a`` using ``b`` with the
-# :func:`pyvista.PolyDataFilters.boolean_cut` filter or the ``-`` operator
-# since both meshes are :class:`pyvista.PolyData`.
+# Perform a boolean difference of ``A`` and ``B``.
+# :func:`pyvista.PolyDataFilters.boolean_difference` filter or the
+# ``-`` operator since both meshes are :class:`pyvista.PolyData`.
 #
-# Order of operations does not matter for boolean cut.
+# The difference of two manifold meshes ``A`` and ``B`` is the volume
+# of the mesh in ``A`` not belonging to ``B``.
+#
+# Order of operations matters for boolean cut.
 
 cut = cube - sphere
 
@@ -70,41 +87,20 @@ p.show()
 
 
 ###############################################################################
-# Boolean Difference
-# ++++++++++++++++++
+# Boolean Intersection
+# ++++++++++++++++++++
 #
-# Combine two meshes and retains only the volume in common between the meshes
-# using the :func:`pyvista.PolyDataFilters.boolean_difference` method.
+# Perform a boolean intersection of ``A`` and ``B``.
+# :func:`pyvista.PolyDataFilters.boolean_intersection` filter.
 #
-# Note that the order of operations for a boolean difference will affect the
-# results.
+# The intersection of two manifold meshes ``A`` and ``B`` is the mesh
+# which is the volume of ``A`` that is also in ``B``.
+#
+# Order of operations does not matter for intersection.
 
-diff = sphere.boolean_difference(cube)
+intersect = sphere.boolean_intersection(cube)
 
 p = pv.Plotter()
-p.add_mesh(diff, opacity=0.5, show_edges=True, color=True)
+p.add_mesh(intersect, opacity=0.5, show_edges=True, color=True)
 p.show()
 
-
-###############################################################################
-
-diff = cube.boolean_difference(sphere)
-
-p = pv.Plotter()
-p.add_mesh(diff, opacity=0.5, show_edges=True, color=True)
-p.show()
-
-###############################################################################
-# Boolean Union
-# +++++++++++++
-#
-# Combine two meshes and attempts to create a manifold mesh using the
-# :func:`pyvista.PolyDataFilters.boolean_union` method.
-#
-# Order of operations does not matter for boolean union.
-
-union = sphere.boolean_union(cube)
-
-p = pv.Plotter()
-p.add_mesh(union,  opacity=0.5, show_edges=True, color=True)
-p.show()
