@@ -346,6 +346,7 @@ class PolyDataFilters(DataSetFilters):
         -------
         cpos : list
             List of camera position, focal point, and view up.
+            Returned when ``return_cpos`` is ``True``.
 
         Examples
         --------

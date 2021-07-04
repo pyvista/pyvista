@@ -58,15 +58,15 @@ connectivity between nodes such as this gridded mesh:
     from pyvista import examples
 
     mesh = examples.load_hexbeam()
-    bcpos = [(6.20, 3.00, 7.50),
-             (0.16, 0.13, 2.65),
-             (-0.28, 0.94, -0.21)]
+    cpos = [(6.20, 3.00, 7.50),
+            (0.16, 0.13, 2.65),
+            (-0.28, 0.94, -0.21)]
 
     pl = pv.Plotter()
     pl.add_mesh(mesh, show_edges=True, color='white')
     pl.add_mesh(pv.PolyData(mesh.points), color='red',
            point_size=10, render_points_as_spheres=True)
-    pl.camera_position = bcpos
+    pl.camera_position = cpos
     pl.show()
 
 Or this triangulated surface:
@@ -140,7 +140,7 @@ plotting the values between nodes are interpolated across the cells.
 
     mesh.point_arrays['my point values'] = np.arange(mesh.n_points)
 
-    mesh.plot(scalars='my point values', cpos=bcpos,
+    mesh.plot(scalars='my point values', cpos=cpos,
               show_edges=True)
 
 
@@ -152,7 +152,7 @@ that attribute.
 .. jupyter-execute::
 
     mesh.cell_arrays['my cell values'] = np.arange(mesh.n_cells)
-    mesh.plot(scalars='my cell values', cpos=bcpos,
+    mesh.plot(scalars='my cell values', cpos=cpos,
               show_edges=True)
 
 

@@ -24,6 +24,8 @@ pyvista.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
 pyvista.set_plot_theme("document")
 pyvista.global_theme.window_size = np.array([1024, 768]) * 2
+pyvista.global_theme.return_cpos = False
+pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
 pyvista.FIGURE_PATH = os.path.join(os.path.abspath("./images/"), "auto-generated/")
 if not os.path.exists(pyvista.FIGURE_PATH):
@@ -43,7 +45,6 @@ warnings.filterwarnings(
 
 # -- General configuration ------------------------------------------------
 numfig = False
-html_show_sourcelink = False
 html_logo = "./_static/pyvista_logo_sm.png"
 
 sys.path.append(os.path.abspath("./_ext"))
@@ -234,7 +235,9 @@ html_theme_options = {
     ],
 }
 
-html_sidebars = {"**": ["search-field.html", "sidebar-nav-bs.html"]}
+# sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
+# already loads it
+panels_add_bootstrap_css = False
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

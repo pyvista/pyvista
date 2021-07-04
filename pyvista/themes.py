@@ -1140,7 +1140,8 @@ class DefaultTheme(_ThemeConfig):
                  '_smooth_shading',
                  '_depth_peeling',
                  '_silhouette',
-                 '_slider_styles']
+                 '_slider_styles',
+                 '_return_cpos']
 
     def __init__(self):
         """Initialize the theme."""
@@ -1201,6 +1202,23 @@ class DefaultTheme(_ThemeConfig):
         self._depth_peeling = _DepthPeelingConfig()
         self._silhouette = _SilhouetteConfig()
         self._slider_styles = _SliderConfig()
+        self._return_cpos = True
+
+    @property
+    def return_cpos(self) -> bool:
+        """Return or set the default behavior of returning the camera position.
+
+        Examples
+        --------
+        Disable returning camera position by ``show`` and `plot`` methods.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.return_cpos = False
+        """
+
+    @return_cpos.setter
+    def return_cpos(self, value: bool):
+        self._return_cpos = value
 
     @property
     def background(self):
@@ -1259,19 +1277,19 @@ class DefaultTheme(_ThemeConfig):
         Enable the ipygany backend.
 
         >>> import pyvista as pv
-        >>> pv.set_jupyter_backend('ipygany')
+        >>> pv.set_jupyter_backend('ipygany')  # doctest:+SKIP
 
         Enable the panel backend.
 
-        >>> pv.set_jupyter_backend('panel')
+        >>> pv.set_jupyter_backend('panel')  # doctest:+SKIP
 
         Enable the ipyvtklink backend.
 
-        >>> pv.set_jupyter_backend('ipyvtklink')
+        >>> pv.set_jupyter_backend('ipyvtklink')  # doctest:+SKIP
 
         Just show static images.
 
-        >>> pv.set_jupyter_backend('static')
+        >>> pv.set_jupyter_backend('static')  # doctest:+SKIP
 
         Disable all plotting within JupyterLab and display using a
         standard desktop VTK render window.
@@ -1985,6 +2003,7 @@ class DefaultTheme(_ThemeConfig):
             'Depth peeling': 'depth_peeling',
             'Silhouette': 'silhouette',
             'Slider Styles': 'slider_styles',
+            'Return Camera Position': 'return_cpos',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
@@ -2195,6 +2214,10 @@ class _TestingTheme(DefaultTheme):
     Necessary for image regression.  Xvfb doesn't support
     multi-sampling, it's disabled for consistency between desktops and
     remote testing.
+
+    Also disables ``return_cpos`` to make it easier for us to write
+    examples without returning camera positions.
+
     """
 
     def __init__(self):
@@ -2203,6 +2226,7 @@ class _TestingTheme(DefaultTheme):
         self.multi_samples = 1
         self.window_size = [400, 400]
         self.axes.show = False
+        self.return_cpos = False
 
 
 class _ALLOWED_THEMES(Enum):

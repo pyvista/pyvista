@@ -28,7 +28,7 @@ within JupyterLab:
     sphere = pv.Sphere()
 
     # short example
-    cpos, image = sphere.plot(use_ipyvtk=True)
+    image = sphere.plot(use_ipyvtk=True, return_cpos=False)
 
     # long example
     plotter = pv.Plotter(notebook=True)
