@@ -2271,6 +2271,7 @@ class DataSetFilters:
         >>> plotter.view_xy()
         >>> _ = plotter.show()
 
+        See :ref:`2d_streamlines_example` for more examples using this filter.
         """
         if integrator_type not in [2, 4]:
             raise ValueError('Integrator type must be one of `2` or `4`.')
