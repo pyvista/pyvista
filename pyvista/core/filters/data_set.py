@@ -2269,7 +2269,7 @@ class DataSetFilters:
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(streams.tube(radius=0.02), scalars="vorticity_mag")
         >>> plotter.view_xy()
-        >>> _ = plotter.show()
+        >>> plotter.show()
 
         See :ref:`2d_streamlines_example` for more examples using this filter.
         """
