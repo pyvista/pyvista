@@ -153,7 +153,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             return mesh
 
-    def boolean_difference(poly_data, mesh, inplace=False):
+    def boolean_union(poly_data, mesh, inplace=False):
         """Combine two meshes and retains only the volume in common between the meshes.
 
         Parameters
@@ -174,7 +174,7 @@ class PolyDataFilters(DataSetFilters):
             raise TypeError("Input mesh must be PolyData.")
 
         bfilter = _vtk.vtkBooleanOperationPolyDataFilter()
-        bfilter.SetOperationToDifference()
+        bfilter.SetOperationToIntersection()
         bfilter.SetInputData(1, mesh)
         bfilter.SetInputData(0, poly_data)
         bfilter.ReorientDifferenceCellsOff()
