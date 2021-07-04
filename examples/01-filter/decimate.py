@@ -1,4 +1,6 @@
 """
+.. _decimate_example:
+
 Decimation
 ~~~~~~~~~~
 

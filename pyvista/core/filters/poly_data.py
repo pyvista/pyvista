@@ -234,12 +234,12 @@ class PolyDataFilters(DataSetFilters):
             The mesh to intersect with.
 
         split_first : bool, optional
-            If `True`, return the first input mesh split by the intersection with the
-            second input mesh.
+            If ``True``, return the first input mesh split by the
+            intersection with the second input mesh.
 
         split_second : bool, optional
-            If `True`, return the second input mesh split by the intersection with the
-            first input mesh.
+            If ``True``, return the second input mesh split by the
+            intersection with the first input mesh.
 
         Returns
         -------
@@ -247,12 +247,12 @@ class PolyDataFilters(DataSetFilters):
             The intersection line.
 
         first_split: pyvista.PolyData
-            The first mesh split along the intersection. Returns the original first mesh
-            if `split_first` is False.
+            The first mesh split along the intersection. Returns the
+            original first mesh if `split_first` is ``False``.
 
         second_split: pyvista.PolyData
-            The second mesh split along the intersection. Returns the original second mesh
-            if `split_second` is False.
+            The second mesh split along the intersection. Returns the
+            original second mesh if `split_second` is ``False``.
 
         Examples
         --------
@@ -260,16 +260,22 @@ class PolyDataFilters(DataSetFilters):
         which have new points/cells along the intersection line.
 
         >>> import pyvista as pv
-        >>> s1 = pv.Sphere()
-        >>> s2 = pv.Sphere(center=(0.25, 0, 0))
+        >>> import numpy as np
+        >>> s1 = pv.Sphere(phi_resolution=15, theta_resolution=15)
+        >>> s2 = s1.copy()
+        >>> s2.points += np.array([0.25, 0, 0])
         >>> intersection, s1_split, s2_split = s1.intersection(s2)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(s1, style='wireframe')
+        >>> _ = pl.add_mesh(s2, style='wireframe')
+        >>> _ = pl.add_mesh(intersection, color='r', line_width=10)
+        >>> pl.show()
 
         The mesh splitting takes additional time and can be turned
         off for either mesh individually.
 
-        >>> intersection, _, s2_split = s1.intersection(s2, \
-                                                        split_first=False, \
-                                                        split_second=True)
+        >>> intersection, _, s2_split = s1.intersection(s2, split_first=False,
+        ...                                             split_second=True)
 
         """
         intfilter = _vtk.vtkIntersectionPolyDataFilter()
@@ -291,20 +297,35 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        mesh : vtk.polydata
-            vtk polydata mesh
+        poly_data : pyvista.PolyData
+            Input mesh to compute curvature on.
 
-        curvature string, optional
-            One of the following strings
-            Mean
-            Gaussian
-            Maximum
-            Minimum
+        curv_type : str, optional
+            Curvature type.  One of the following:
+
+            * ``"Mean"``
+            * ``"Gaussian"``
+            * ``"Maximum"``
+            * ``"Minimum"``
 
         Returns
         -------
-        curvature : np.ndarray
-            Curvature values
+        numpy.ndarray
+            Array of curvature values.
+
+        Examples
+        --------
+        Calculate the mean curvature of the hills example mesh.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> curv = hills.plot_curvature()
+        >>> curv   # doctest:+SKIP
+        array([0.20587616, 0.06747695, ..., 0.09814127, 0.11781171])
+
+        Plot it.
+
+        >>> hills.plot(scalars=curv)
 
         """
         curv_type = curv_type.lower()
@@ -334,7 +355,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        curvtype : str, optional
+        curv_type : str, optional
             One of the following strings indicating curvature type:
 
             * ``'Mean'``
@@ -353,46 +374,20 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Plot the mean curvature of an example mesh.
+        Plot the gaussian curvature of an example mesh.  Override the
+        default scalarbar range as the mesh edges report high
+        curvature.
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> hills.plot_curvature(smooth_shading=True)
+        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True, 
+        ...                      clim=[0, 1])
 
         """
         kwargs.setdefault('scalar_bar_args',
                           {'title': f'{curv_type.capitalize()} Curvature'})
         return poly_data.plot(scalars=poly_data.curvature(curv_type),
                               **kwargs)
-
-    def triangulate(poly_data, inplace=False):
-        """Return an all triangle mesh.
-
-        More complex polygons will be broken down into tetrahedrals.
-
-        Parameters
-        ----------
-        inplace : bool, optional
-            Updates mesh in-place.
-
-        Returns
-        -------
-        mesh : pyvista.PolyData
-            Mesh containing only triangles.
-
-        """
-        trifilter = _vtk.vtkTriangleFilter()
-        trifilter.SetInputData(poly_data)
-        trifilter.PassVertsOff()
-        trifilter.PassLinesOff()
-        trifilter.Update()
-
-        mesh = _get_output(trifilter)
-        if inplace:
-            poly_data.overwrite(mesh)
-            return poly_data
-        else:
-            return mesh
 
     def smooth(poly_data, n_iter=20, relaxation_factor=0.01, convergence=0.0,
                edge_angle=15, feature_angle=45,
@@ -449,6 +444,9 @@ class PolyDataFilters(DataSetFilters):
         Sharp Edges on Cube:        384
         >>> print(f'Sharp Edges on Smooth Cube: {n_smooth_cells}')
         Sharp Edges on Smooth Cube: 12
+        >>> smooth_cube.plot()
+
+        See :ref:`surface_smoothing_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkSmoothPolyDataFilter()
@@ -466,53 +464,77 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(mesh)
             return poly_data
-        else:
-            return mesh
 
-    def decimate_pro(poly_data, reduction, feature_angle=45.0, split_angle=75.0, splitting=True,
-                     pre_split_mesh=False, preserve_topology=False, inplace=False):
+        return mesh
+
+    def decimate_pro(poly_data, reduction, feature_angle=45.0,
+                     split_angle=75.0, splitting=True,
+                     pre_split_mesh=False, preserve_topology=False,
+                     inplace=False):
         """Reduce the number of triangles in a triangular mesh.
 
-        It forms a good approximation to the original geometry. Based on the algorithm
-        originally described in "Decimation of Triangle Meshes", Proc Siggraph 92.
+        It forms a good approximation to the original geometry. Based
+        on the algorithm originally described in "Decimation of
+        Triangle Meshes", Proc Siggraph 92.
 
         Parameters
         ----------
         reduction : float
-            Reduction factor. A value of 0.9 will leave 10 % of the original number
-            of vertices.
+            Reduction factor. A value of 0.9 will leave 10% of the
+            original number of vertices.
 
         feature_angle : float, optional
-            Angle used to define what an edge is (i.e., if the surface normal between
-            two adjacent triangles is >= feature_angle, an edge exists).
+            Angle used to define what an edge is (i.e., if the surface
+            normal between two adjacent triangles is >= ``feature_angle``,
+            an edge exists).
 
         split_angle : float, optional
-            Angle used to control the splitting of the mesh. A split line exists
-            when the surface normals between two edge connected triangles are >= split_angle.
+            Angle used to control the splitting of the mesh. A split
+            line exists when the surface normals between two edge
+            connected triangles are >= ``split_angle``.
 
         splitting : bool, optional
-            Controls the splitting of the mesh at corners, along edges, at non-manifold
-            points, or anywhere else a split is required. Turning splitting off
-            will better preserve the original topology of the mesh, but may not
-            necessarily give the exact requested decimation.
+            Controls the splitting of the mesh at corners, along
+            edges, at non-manifold points, or anywhere else a split is
+            required. Turning splitting off will better preserve the
+            original topology of the mesh, but may not necessarily
+            give the exact requested decimation.
 
         pre_split_mesh : bool, optional
-            Separates the mesh into semi-planar patches, which are disconnected
-            from each other. This can give superior results in some cases. If pre_split_mesh
-            is set to True, the mesh is split with the specified split_angle. Otherwise
-            mesh splitting is deferred as long as possible.
+            Separates the mesh into semi-planar patches, which are
+            disconnected from each other. This can give superior
+            results in some cases. If pre_split_mesh is set to True,
+            the mesh is split with the specified
+            split_angle. Otherwise mesh splitting is deferred as long
+            as possible.
 
         preserve_topology : bool, optional
-            Controls topology preservation. If on, mesh splitting and hole elimination
-            will not occur. This may limit the maximum reduction that may be achieved.
+            Controls topology preservation. If on, mesh splitting and
+            hole elimination will not occur. This may limit the
+            maximum reduction that may be achieved.
 
         inplace : bool, optional
             Updates mesh in-place.
 
         Returns
         -------
-        mesh : pyvista.PolyData
+        pyvista.PolyData
             Decimated mesh.
+
+        Examples
+        --------
+        Decimate a sphere.  First plot the sphere.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(phi_resolution=60, theta_resolution=60)
+        >>> sphere.plot(show_edges=True, line_width=2)
+
+        Now decimate it and plot it.
+
+        >>> decimated = sphere.decimate_pro(0.75)
+        >>> decimated.plot(show_edges=True, line_width=2)
+
+        See :ref:`decimate_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkDecimatePro()
@@ -529,14 +551,15 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(mesh)
             return poly_data
-        else:
-            return mesh
+
+        return mesh
 
     def tube(poly_data, radius=None, scalars=None, capping=True, n_sides=20,
              radius_factor=10, preference='point', inplace=False):
         """Generate a tube around each input line.
 
-        The radius of the tube can be set to linearly vary with a scalar value.
+        The radius of the tube can be set to linearly vary with a
+        scalar value.
 
         Parameters
         ----------
@@ -577,6 +600,9 @@ class PolyDataFilters(DataSetFilters):
         Line Cells: 1
         >>> print('Tube Cells:', tube.n_cells)
         Tube Cells: 22
+        >>> tube.plot(color='tan')
+
+        See :ref:`ref_create_spline` for more examples using this filter.
 
         """
         if not isinstance(poly_data, pyvista.PolyData):
@@ -613,9 +639,10 @@ class PolyDataFilters(DataSetFilters):
         """Increase the number of triangles in a single, connected triangular mesh.
 
         Uses one of the following vtk subdivision filters to subdivide a mesh.
-        vtkButterflySubdivisionFilter
-        vtkLoopSubdivisionFilter
-        vtkLinearSubdivisionFilter
+
+        * ``vtkButterflySubdivisionFilter``
+        * ``vtkLoopSubdivisionFilter``
+        * ``vtkLinearSubdivisionFilter``
 
         Linear subdivision results in the fastest mesh subdivision,
         but it does not smooth mesh edges, but rather splits each
@@ -637,7 +664,11 @@ class PolyDataFilters(DataSetFilters):
             faces.
 
         subfilter : string, optional
-            Can be one of the following: 'butterfly', 'loop', 'linear'.
+            Can be one of the following:
+
+            * ``'butterfly'``
+            * ``'loop'``
+            * ``'linear'``
 
         inplace : bool, optional
             Updates mesh in-place. Default ``False``.
