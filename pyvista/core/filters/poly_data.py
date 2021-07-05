@@ -297,18 +297,17 @@ class PolyDataFilters(DataSetFilters):
         >>> merged.plot(style='wireframe', color='tan')
 
         """
+        # check if dataset or datasets are not polydata
+        if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
+            not_pd = any(not isinstance(data, pyvista.PolyData) for data in dataset)
+        else:
+            not_pd = not isinstance(dataset, pyvista.PolyData)
+
         # use dataset merge if not polydata
-        if not isinstance(dataset, pyvista.PolyData):
-            if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
-                for data in dataset:
-                    if not isinstance(data, pyvista.PolyData):
-                        return DataSetFilters.merge(poly_data, dataset,
-                                                    merge_points=merge_points,
-                                                    inplace=inplace)
-            else:
-                return DataSetFilters.merge(poly_data, dataset,
-                                            merge_points=merge_points,
-                                            inplace=inplace)
+        if not_pd:
+            return DataSetFilters.merge(poly_data, dataset,
+                                        merge_points=merge_points,
+                                        inplace=inplace)
 
         append_filter = pyvista._vtk.vtkAppendPolyData()
         append_filter.AddInputData(poly_data)
