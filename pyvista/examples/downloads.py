@@ -771,3 +771,13 @@ def download_louis_louvre():
 
     """
     return _download_and_read('louis.ply')
+
+
+def download_cylinder_crossflow():
+    """Download CFD result for cylinder in cross flow at Re=35."""
+    filename, _ = _download_file('EnSight/CylinderCrossflow/cylinder_Re35.case')
+    _download_file('EnSight/CylinderCrossflow/cylinder_Re35.geo')
+    _download_file('EnSight/CylinderCrossflow/cylinder_Re35.scl1')
+    _download_file('EnSight/CylinderCrossflow/cylinder_Re35.scl2')
+    _download_file('EnSight/CylinderCrossflow/cylinder_Re35.vel')
+    return pyvista.read(filename)
