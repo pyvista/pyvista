@@ -61,6 +61,7 @@ if VTK9:
                                           vtkOpenFOAMReader,
                                           vtkSTLWriter,
                                           vtkBYUReader,
+                                          vtkGLTFReader,
                                           vtkOBJReader)
     from vtkmodules.vtkIOImage import (vtkBMPReader,
                                        vtkDEMReader,

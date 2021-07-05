@@ -11,6 +11,7 @@ import pyvista
 from pyvista import _vtk
 
 # Helpers:
+GLTF_SAMPLES_ROOT_URL = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/'
 
 def _check_examples_path():
     """Check if the examples path exists."""
@@ -781,3 +782,11 @@ def download_cylinder_crossflow():
     _download_file('EnSight/CylinderCrossflow/cylinder_Re35.scl2')
     _download_file('EnSight/CylinderCrossflow/cylinder_Re35.vel')
     return pyvista.read(filename)
+
+
+def download_damaged_helmet():
+    """GLTF damaged helmet"""
+    url = GLTF_SAMPLES_ROOT_URL + 'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf'
+    basename = 'DamagedHelmet.gltf'
+    filename, _ = _retrieve_file(url, basename)
+    return filename

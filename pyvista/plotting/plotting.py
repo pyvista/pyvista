@@ -256,6 +256,49 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             f'not {type(theme).__name__}.')
         self._theme.load_theme(pyvista.global_theme)
 
+    def import_gltf(self, filename, set_camera=True):
+        """Import a glTF file into this plotter
+
+        See https://www.khronos.org/gltf/ for more information.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the glTF file.
+
+        set_camera : bool, optional
+            Set the camera viewing angle to one compatible with the
+            default three.js perspective (``'xy'``).
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples    # doctest:+SKIP
+        >>> helmet_file = examples.download_damaged_helmet()  # doctest:+SKIP
+        >>> cubemap = examples.download_sky_box_cube_map()  # doctest:+SKIP
+        >>> pl = pyvista.Plotter()  # doctest:+SKIP
+        >>> pl.import_gltf(helmet_file)  # doctest:+SKIP
+        >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
+
+        See :ref:`load_gltf` for a full example using this method.
+
+        """
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOImport import vtkGLTFImporter
+        importer = vtkGLTFImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.ren_win)
+        importer.Update()
+
+        # set camera position to a three.js viewing perspective
+        if set_camera:
+            self.camera_position = 'xy'
+
     @property
     def scalar_bar(self):
         """First scalar bar.  Kept for backwards compatibility."""

@@ -42,6 +42,7 @@ READERS = {
     '.slc': _vtk.vtkSLCReader,
     '.tiff': _vtk.vtkTIFFReader,
     '.tif': _vtk.vtkTIFFReader,
+    '.gltf': _vtk.vtkGLTFReader,
     # Other formats:
     '.byu': _vtk.vtkBYUReader, # TODO: not tested with this extension
     '.g': _vtk.vtkBYUReader,
