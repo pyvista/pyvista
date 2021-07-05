@@ -274,7 +274,7 @@ def test_edge_mask(sphere):
     mask = sphere.edge_mask(10)
 
 
-def test_boolean_union(sphere, sphere_shifted):
+def test_boolean_union_intersection(sphere, sphere_shifted):
     union = sphere.boolean_union(sphere_shifted)
     intersection = sphere.boolean_intersection(sphere_shifted)
 
@@ -282,11 +282,7 @@ def test_boolean_union(sphere, sphere_shifted):
     expected_volume = sphere.volume + sphere_shifted.volume - intersection.volume
     assert np.isclose(union.volume, expected_volume, atol=1E-3)
 
-
-def test_boolean_intersection(sphere, sphere_shifted):
-    intersection = sphere.boolean_intersection(sphere_shifted)
-    union = sphere.boolean_union(sphere_shifted)
-
+    # intersection volume is the volume of both isolated meshes minus the union
     expected_volume = sphere.volume + sphere_shifted.volume - union.volume
     assert np.isclose(intersection.volume, expected_volume, atol=1E-3)
 
