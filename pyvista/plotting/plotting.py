@@ -356,6 +356,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not _vtk.VTK9:  # pragma: no cover
             raise RuntimeError('Support for glTF requires VTK v9 or newer')
 
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError('This plotter has been closed and is unable to export '
+                               'the scene.')
+
         from vtkmodules.vtkIOExport import vtkGLTFExporter
 
         # rotate scene to gltf compatible view

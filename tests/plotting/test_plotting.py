@@ -178,6 +178,9 @@ def test_export_gltf(tmpdir, sphere, airplane):
     pl_import.import_gltf(filename)
     pl_import.show(before_close_callback=verify_cache_image)
 
+    with pytest.raises(RuntimeError, match='This plotter has been closed'):
+        pl_import.export_gltf(filename)
+
 
 @skip_not_vtk9
 @skip_windows_dev_whl
