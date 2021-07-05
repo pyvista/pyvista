@@ -51,7 +51,7 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
 
     Sample Perlin noise over a structured grid and plot it.
 
-    >>> grid = pyvista.sample_function(noise, [0, 5.0, 0, 5.0, 0, 5.0])
+    >>> grid = pyvista.sample_function(noise, [0, 5, 0, 5, 0, 5])
     >>> grid.plot()
 
     """
