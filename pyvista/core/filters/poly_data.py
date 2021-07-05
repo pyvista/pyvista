@@ -172,6 +172,13 @@ class PolyDataFilters(DataSetFilters):
            normals.
 
         .. note::
+           This method returns the "volume" intersection between two
+           meshes whereas the :func:`PolyDataFilters.intersection`
+           filter returns the surface intersection between two meshes
+           (which often resolves as a line).
+           
+
+        .. note::
            Both meshes must be composed of all triangles.  Check with
            :func:`PolyData.is_all_triangles` and convert with
            :func:`PolyDataFilters.triangulate`.
@@ -347,6 +354,12 @@ class PolyDataFilters(DataSetFilters):
 
     def intersection(poly_data, mesh, split_first=True, split_second=True):
         """Compute the intersection between two meshes.
+
+        .. note::
+           This method returns the surface interection from two meshes
+           (which often resolves as a line), whereas the
+           :func:`PolyDataFilters.boolean_intersection` filter returns
+           the "volume" intersection between two meshes.
 
         Parameters
         ----------
