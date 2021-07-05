@@ -111,6 +111,11 @@ class PolyDataFilters(DataSetFilters):
            to create a manifold mesh and will not include internal
            surfaces when two meshes overlap.
 
+        .. note::
+           Both meshes must be composed of all triangles.  Check with
+           :func:`PolyData.is_all_triangles` and convert with
+           :func:`PolyDataFilters.triangulate`.
+
         .. versionchanged:: 0.32.0
            Behavior changed to match default VTK behavior.
 
@@ -166,6 +171,11 @@ class PolyDataFilters(DataSetFilters):
            :func:`PolyDataFilters.plot_normals` to visualize the
            normals.
 
+        .. note::
+           Both meshes must be composed of all triangles.  Check with
+           :func:`PolyData.is_all_triangles` and convert with
+           :func:`PolyDataFilters.triangulate`.
+
         .. versionadded:: 0.32.0
 
         Parameters
@@ -219,6 +229,11 @@ class PolyDataFilters(DataSetFilters):
            probably has its normals pointing inward. Use
            :func:`PolyDataFilters.plot_normals` to visualize the
            normals.
+
+        .. note::
+           Both meshes must be composed of all triangles.  Check with
+           :func:`PolyData.is_all_triangles` and convert with
+           :func:`PolyDataFilters.triangulate`.
 
         .. versionchanged:: 0.32.0
            Behavior changed to match default VTK behavior.
