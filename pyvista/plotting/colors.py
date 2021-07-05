@@ -166,7 +166,7 @@ tab:cyan
 """
 
 IPYGANY_MAP = {'reds': 'Reds',
-               'Spectral': 'special',
+               'Spectral': 'spectral',
 }
 
 # shamelessly copied from matplotlib.colors

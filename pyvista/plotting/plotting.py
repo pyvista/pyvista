@@ -304,9 +304,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def export_gltf(self, filename, inline_data=True, rotate_scene=True,
                     save_normals=True):
-        """Export the current rendering scene as a VTKjs scene.
+        """Export the current rendering scene as a glTF file.
 
-        Visit https://gltf-viewer.donmccurdy.com/ for a sample viewer.
+        Visit https://gltf-viewer.donmccurdy.com/ for an online viewer.
+
+        See https://vtk.org/doc/nightly/html/classvtkGLTFExporter.html
+        for limitations regarding the exporter.
 
         Parameters
         ----------
@@ -318,10 +321,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             base64 string.  When ``True``, only one file is exported.
 
         rotate_scene : bool, optional
-            Rotate scene to be compatible with the three.js coordinate frame.
+            Rotate scene to be compatible with the three.js coordinate
+            frame.
 
         save_normals : bool, optional
-            Saves the point array ``'Normals'`` as ``'NORMALS'``
+            Saves the point array ``'Normals'`` as ``'NORMALS'`` in
+            the ouputted scene.
 
         Examples
         --------
@@ -335,7 +340,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> sphere = pyvista.Sphere(radius=0.02)
         >>> pc = pdata.glyph(scale=False, geom=sphere)
         >>> pl = pyvista.Plotter()
-        >>> pl.add_mesh(pc, cmap='reds', smooth_shading=True, show_scalar_bar=False)
+        >>> _ = pl.add_mesh(pc, cmap='reds', smooth_shading=True,
+        ...                 show_scalar_bar=False)
         >>> pl.export_gltf('balls.gltf')  # doctest:+SKIP
         >>> pl.show()
 
@@ -360,20 +366,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         actor.RotateX(-90)
                         actor.RotateZ(-90)
 
-                    # if save_normals:
-                    #     try:
-                    #         mapper = actor.GetMapper()
-                    #         if mapper is None:
-                    #             continue
-                    #         dataset = mapper.GetInputAsDataSet()
-                    #         if 'Normals' in dataset.point_arrays:
-                    #             normals = dataset.point_arrays['Normals']
-                    #             dataset.point_array.append(normals, 'NORMAL',
-                    #                                        active_scalars=False,
-                    #                                        deep_copy=False)
+                    if save_normals:
+                        try:
+                            mapper = actor.GetMapper()
+                            if mapper is None:
+                                continue
+                            dataset = mapper.GetInputAsDataSet()
+                            if 'Normals' in dataset.point_arrays:
+                                normals = dataset.point_arrays['Normals']
+                                dataset.point_array.append(normals, 'NORMAL',
+                                                           active_scalars=False,
+                                                           deep_copy=False)
                                 
-                    #     except:
-                    #         pass
+                        except:
+                            pass
 
         exporter = vtkGLTFExporter()
         exporter.SetRenderWindow(self.ren_win)
