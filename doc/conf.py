@@ -24,6 +24,8 @@ pyvista.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
 pyvista.set_plot_theme("document")
 pyvista.global_theme.window_size = np.array([1024, 768]) * 2
+pyvista.global_theme.return_cpos = False
+pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
 pyvista.FIGURE_PATH = os.path.join(os.path.abspath("./images/"), "auto-generated/")
 if not os.path.exists(pyvista.FIGURE_PATH):
@@ -43,8 +45,9 @@ warnings.filterwarnings(
 
 # -- General configuration ------------------------------------------------
 numfig = False
-html_show_sourcelink = False
 html_logo = "./_static/pyvista_logo_sm.png"
+
+sys.path.append(os.path.abspath("./_ext"))
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -61,6 +64,7 @@ extensions = [
     "sphinx.ext.coverage",
     "jupyter_sphinx",
     "sphinx_panels",
+    "pyvista.ext.plot_directive",
 ]
 
 
@@ -110,6 +114,8 @@ pygments_style = "friendly"
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+# Generate plots for example sections
+numpydoc_use_plots = True
 
 # -- Sphinx Gallery Options
 from sphinx_gallery.sorting import FileNameSortKey
@@ -138,6 +144,48 @@ sphinx_gallery_conf = {
         "set_plot_theme('document')\n"
     ),
 }
+
+
+# -- Options for HTML output ----------------------------------------------
+from sphinx.ext.napoleon import GoogleDocstring
+from sphinx.locale import _, __
+# rebind examples section to automate placement with our custom
+# .. pyvista-plot:: directive by mangling docstrings
+
+def _custom_parse_generic_section(self, section, use_admonition):
+    lines = self._strip_empty(self._consume_to_next_section())
+    lines = self._dedent(lines)
+    if use_admonition:
+        header = '.. admonition:: %s' % section
+        lines = self._indent(lines, 3)
+    else:
+        header = '.. rubric:: %s' % section
+
+    # check if section contains any mention of pyvista
+    has_plotting = False
+    has_pyvista = any(['pyvista' in line for line in lines])
+    if has_pyvista:
+        for line in lines:
+            if '.plot(' in line or '.show(' in line:
+                has_plotting = True
+    
+    # add directive and indent to entire section
+    if has_plotting:
+        old_lines = lines
+        lines = ['.. pyvista-plot::', '']
+        for line in old_lines:
+            if line:
+                lines.append(f'   {line}')
+            else:
+                lines.append(line)
+
+    if lines:
+        return [header, ''] + lines + ['']
+    else:
+        return [header, '']
+
+# override method
+GoogleDocstring._parse_generic_section = _custom_parse_generic_section
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -187,7 +235,9 @@ html_theme_options = {
     ],
 }
 
-html_sidebars = {"**": ["search-field.html", "sidebar-nav-bs.html"]}
+# sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
+# already loads it
+panels_add_bootstrap_css = False
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

@@ -267,69 +267,75 @@ def test_multi_ray_trace(sphere):
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plot_curvature(sphere):
-    cpos = sphere.plot_curvature(off_screen=True)
-    assert isinstance(cpos, pyvista.CameraPosition)
+    sphere.plot_curvature(off_screen=True)
 
 
 def test_edge_mask(sphere):
     mask = sphere.edge_mask(10)
 
 
-def test_boolean_cut_inplace(sphere, sphere_shifted):
-    sub_mesh = sphere
-    sub_mesh.boolean_cut(sphere_shifted, inplace=True)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
+def test_boolean_union_intersection(sphere, sphere_shifted):
+    union = sphere.boolean_union(sphere_shifted)
+    intersection = sphere.boolean_intersection(sphere_shifted)
+
+    # union is volume of sphere + sphere_shifted minus the part intersecting
+    expected_volume = sphere.volume + sphere_shifted.volume - intersection.volume
+    assert np.isclose(union.volume, expected_volume, atol=1E-3)
+
+    # intersection volume is the volume of both isolated meshes minus the union
+    expected_volume = sphere.volume + sphere_shifted.volume - union.volume
+    assert np.isclose(intersection.volume, expected_volume, atol=1E-3)
 
 
-def test_boolean_cut_fail(plane):
+def test_boolean_difference(sphere, sphere_shifted):
+    difference = sphere.boolean_difference(sphere_shifted)
+    intersection = sphere.boolean_intersection(sphere_shifted)
+
+    expected_volume = sphere.volume - intersection.volume
+    assert np.isclose(difference.volume, expected_volume, atol=1E-3)
+
+
+def test_boolean_difference_fail(plane):
     with pytest.raises(NotAllTrianglesError):
         plane - plane
 
 
 def test_subtract(sphere, sphere_shifted):
     sub_mesh = sphere - sphere_shifted
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
+    assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
+
+
+def test_merge(sphere, sphere_shifted, hexbeam):
+    merged = sphere.merge(hexbeam)
+    assert merged.n_points == (sphere.n_points + hexbeam.n_points)
+    assert isinstance(merged, pyvista.UnstructuredGrid)
+
+    # list with unstructuredgrid case
+    merged = sphere.merge([hexbeam, hexbeam], merge_points=False)
+    assert merged.n_points == (sphere.n_points + hexbeam.n_points*2)
+    assert isinstance(merged, pyvista.UnstructuredGrid)
+
+    # with polydata
+    merged = sphere.merge(sphere_shifted)
+    assert isinstance(merged, pyvista.PolyData)
+    assert merged.n_points == sphere.n_points + sphere_shifted.n_points
+
+    # with polydata list (no merge)
+    merged = sphere.merge([sphere_shifted, sphere_shifted], merge_points=False)
+    assert isinstance(merged, pyvista.PolyData)
+    assert merged.n_points == sphere.n_points + sphere_shifted.n_points*2
+
+    # with polydata list (merge)
+    merged = sphere.merge([sphere_shifted, sphere_shifted])
+    assert isinstance(merged, pyvista.PolyData)
+    assert merged.n_points == sphere.n_points + sphere_shifted.n_points
 
 
 def test_add(sphere, sphere_shifted):
-    add_mesh = sphere + sphere_shifted
-
-    npoints = sphere.n_points + sphere_shifted.n_points
-    assert add_mesh.n_points == npoints
-
-    nfaces = sphere.n_cells + sphere_shifted.n_cells
-    assert add_mesh.n_faces == nfaces
-
-
-def test_boolean_add_inplace(sphere, sphere_shifted):
-    sub_mesh = sphere
-    sub_mesh.boolean_add(sphere_shifted, inplace=True)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
-
-
-def test_boolean_union_inplace(sphere, sphere_shifted):
-    sub_mesh = sphere.boolean_union(sphere_shifted)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
-
-    sub_mesh = sphere
-    sub_mesh.boolean_union(sphere_shifted, inplace=True)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
-
-
-def test_boolean_difference(sphere, sphere_shifted):
-    sub_mesh = sphere.copy()
-    sub_mesh.boolean_difference(sphere_shifted, inplace=True)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
-
-    sub_mesh = sphere.boolean_difference(sphere_shifted)
-    assert sub_mesh.n_points
-    assert sub_mesh.n_cells
+    merged = sphere + sphere_shifted
+    assert isinstance(merged, pyvista.PolyData)
+    assert merged.n_points == sphere.n_points + sphere_shifted.n_points
+    assert merged.n_faces == sphere.n_cells + sphere_shifted.n_cells
 
 
 def test_intersection(sphere, sphere_shifted):
@@ -500,7 +506,7 @@ def test_extract_largest(sphere):
 
 
 def test_clean(sphere):
-    mesh = sphere + sphere
+    mesh = sphere.merge(sphere, merge_points=False).extract_surface()
     assert mesh.n_points > sphere.n_points
     cleaned = mesh.clean(merge_tol=1E-5)
     assert cleaned.n_points == sphere.n_points

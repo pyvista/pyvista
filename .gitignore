@@ -24,6 +24,7 @@ dist/
 # *.sh
 
 # doc generated
+tests/tinypages/_build
 doc/_build
 wiki/
 **/beam.gif
@@ -61,6 +62,7 @@ doc/images/auto-generated
 api-autogen/
 _autosummary/
 doc/getting-started/external_examples.rst
+**/grid.vtu
 
 # hypothesis
 .hypothesis

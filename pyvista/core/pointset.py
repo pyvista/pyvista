@@ -337,8 +337,8 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         return False
 
     def __sub__(self, cutting_mesh):
-        """Subtract two meshes."""
-        return self.boolean_cut(cutting_mesh)
+        """Compute boolean difference of two meshes."""
+        return self.boolean_difference(cutting_mesh)
 
     @property
     def n_faces(self):
@@ -494,8 +494,8 @@ class PointGrid(PointSet):
         Returns
         -------
         cpos : list
-            Camera position, focal point, and view up.  Used for storing and
-            setting camera view.
+            Camera position, focal point, and view up.  Returned when
+            ``return_cpos`` is ``True``.
 
         """
         trisurf = self.extract_surface().triangulate()

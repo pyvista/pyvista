@@ -228,7 +228,7 @@ class DataSetFilters:
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(sphere, scalars='implicit_distance', cmap='bwr')
         >>> _ = pl.add_mesh(plane, color='w', style='wireframe')
-        >>> cpos = pl.show()
+        >>> pl.show()
 
         """
         function = _vtk.vtkImplicitPolyDataDistance()
@@ -1026,8 +1026,8 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> sphere = pyvista.Sphere()
         >>> sphere = sphere.texture_map_to_sphere()
-        >>> tex = examples.download_puppy_texture()  # doctest:+SKIP
-        >>> cpos = sphere.plot(texture=tex)  # doctest:+SKIP
+        >>> tex = examples.download_puppy_texture()
+        >>> sphere.plot(texture=tex)
 
         """
         alg = _vtk.vtkTextureMapToSphere()
@@ -1082,20 +1082,31 @@ class DataSetFilters:
     def cell_centers(dataset, vertex=True):
         """Generate points at the center of the cells in this dataset.
 
-        These points can be used for placing glyphs / vectors.
+        These points can be used for placing glyphs or vectors.
 
         Parameters
         ----------
         vertex : bool
-            Enable/disable the generation of vertex cells.
+            Enable or disable the generation of vertex cells.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Plane()
+        >>> mesh.point_arrays.clear()
+        >>> centers = mesh.cell_centers()
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(mesh, show_edges=True)
+        >>> actor = pl.add_points(centers, render_points_as_spheres=True,
+        ...                       color='red', point_size=20)
+        >>> pl.show()
 
         """
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(dataset)
         alg.SetVertexCells(vertex)
         alg.Update()
-        output = _get_output(alg)
-        return output
+        return _get_output(alg)
 
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
               indices=None, tolerance=None, absolute=False, clamping=False,
@@ -1166,10 +1177,15 @@ class DataSetFilters:
         Create arrow glyphs oriented by vectors and scaled by scalars.
         Factor parameter is used to reduce the size of the arrows.
 
-        >>> import pyvista as pv
+        >>> import pyvista
         >>> from pyvista import examples
-        >>> mesh = examples.download_carotid().threshold(145, scalars="scalars")  # doctest:+SKIP
-        >>> glyph = mesh.glyph(orient="vectors", scale="scalars", factor=0.01)  # doctest:+SKIP
+        >>> mesh = examples.load_random_hills()
+        >>> arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(arrows, color="black")
+        >>> actor = pl.add_mesh(mesh, scalars="Elevation", cmap="terrain",
+        ...                     show_scalar_bar=False)
+        >>> pl.show()
 
         """
         # Clean the points before glyphing
@@ -1256,17 +1272,27 @@ class DataSetFilters:
     def connectivity(dataset, largest=False):
         """Find and label connected bodies/volumes.
 
-        This adds an ID array to the point and cell data to distinguish separate
-        connected bodies. This applies a ``vtkConnectivityFilter`` filter which
-        extracts cells that share common points and/or meet other connectivity
-        criterion.
-        (Cells that share vertices and meet other connectivity criterion such
-        as scalar range are known as a region.)
+        This adds an ID array to the point and cell data to
+        distinguish separate connected bodies. This applies a
+        ``vtkConnectivityFilter`` filter which extracts cells that
+        share common points and/or meet other connectivity criterion.
+
+        Cells that share vertices and meet other connectivity
+        criterion such as scalar range are known as a region.
 
         Parameters
         ----------
         largest : bool
             Extract the largest connected part of the mesh.
+
+        Examples
+        --------
+        Join two meshes together and plot their connectivity.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere() + pyvista.Sphere(center=(2, 0, 0))
+        >>> conn = mesh.connectivity(largest=False)
+        >>> conn.plot(cmap=['red', 'blue'])
 
         """
         alg = _vtk.vtkConnectivityFilter()
@@ -1280,12 +1306,11 @@ class DataSetFilters:
         return _get_output(alg)
 
     def extract_largest(dataset, inplace=False):
-        """
-        Extract largest connected set in mesh.
+        """Extract largest connected set in mesh.
 
-        Can be used to reduce residues obtained when generating an isosurface.
-        Works only if residues are not connected (share at least one point with)
-        the main component of the image.
+        Can be used to reduce residues obtained when generating an
+        isosurface.  Works only if residues are not connected (share
+        at least one point with) the main component of the image.
 
         Parameters
         ----------
@@ -1296,6 +1321,17 @@ class DataSetFilters:
         -------
         mesh : pyvista.PolyData
             Largest connected set in mesh
+
+        Examples
+        --------
+        Join two meshes together, extract the largest, and plot it.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere() + pyvista.Cube()
+        >>> largest = mesh.extract_largest()
+        >>> largest.point_arrays.clear()
+        >>> largest.cell_arrays.clear()
+        >>> largest.plot()
 
         """
         mesh = DataSetFilters.connectivity(dataset, largest=True)
@@ -1315,6 +1351,16 @@ class DataSetFilters:
         label : bool
             A flag on whether to keep the ID arrays given by the
             ``connectivity`` filter.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> dataset = examples.load_uniform()
+        >>> dataset.set_active_scalars('Spatial Cell Data')
+        >>> threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
+        >>> bodies = threshed.split_bodies()
+        >>> len(bodies)
+        2
 
         """
         # Get the connectivity and label different bodies
@@ -1338,8 +1384,8 @@ class DataSetFilters:
                        inplace=False, **kwargs):
         """Warp the dataset's points by a point data scalars array's values.
 
-        This modifies point coordinates by moving points along point normals by
-        the scalar amount times the scale factor.
+        This modifies point coordinates by moving points along point
+        normals by the scalar amount times the scale factor.
 
         Parameters
         ----------
@@ -1350,12 +1396,26 @@ class DataSetFilters:
             A scaling factor to increase the scaling effect. Alias
             ``scale_factor`` also accepted - if present, overrides ``factor``.
 
-        normal : np.array, list, tuple of length 3
-            User specified normal. If given, data normals will be ignored and
-            the given normal will be used to project the warp.
+        normal : sequence, optional
+            User specified normal. If given, data normals will be
+            ignored and the given normal will be used to project the
+            warp.
 
-        inplace : bool
-            If True, the points of the given dataset will be updated.
+        inplace : bool, optional
+            If ``True``, the points of the given dataset will be updated.
+
+        Examples
+        --------
+        First, plot the unwarped mesh.
+
+        >>> from pyvista import examples
+        >>> mesh = examples.download_st_helens()
+        >>> mesh.plot(cmap='gist_earth', show_scalar_bar=False)
+
+        Now, warp the mesh by the ``'Elevation'`` scalars.
+
+        >>> warped = mesh.warp_by_scalar('Elevation')
+        >>> warped.plot(cmap='gist_earth', show_scalar_bar=False)
 
         """
         factor = kwargs.pop('scale_factor', factor)
@@ -1386,11 +1446,11 @@ class DataSetFilters:
     def warp_by_vector(dataset, vectors=None, factor=1.0, inplace=False):
         """Warp the dataset's points by a point data vectors array's values.
 
-        This modifies point coordinates by moving points along point vectors by
-        the local vector times the scale factor.
+        This modifies point coordinates by moving points along point
+        vectors by the local vector times the scale factor.
 
-        A classical application of this transform is to visualize eigenmodes in
-        mechanics.
+        A classical application of this transform is to visualize
+        eigenmodes in mechanics.
 
         Parameters
         ----------
@@ -1402,12 +1462,27 @@ class DataSetFilters:
             be used to enhance the warping effect.
 
         inplace : bool, optional
-            If True, the function will update the mesh in-place.
+            If ``True``, the function will update the mesh in-place.
 
         Returns
         -------
         warped_mesh : mesh
             The warped mesh resulting from the operation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> sphere = examples.load_sphere_vectors()
+        >>> warped = sphere.warp_by_vector()
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> actor = pl.add_text("Before warp")
+        >>> actor = pl.add_mesh(sphere, color='white')
+        >>> pl.subplot(0, 1)
+        >>> actor = pl.add_text("After warp")
+        >>> actor = pl.add_mesh(warped, color='white')
+        >>> pl.show()
 
         """
         if vectors is None:
@@ -1517,8 +1592,22 @@ class DataSetFilters:
 
         Returns
         -------
-        mesh : pyvista.UnstructuredGrid
+        pyvista.PolyData
             Mesh containing only triangles.
+
+        Examples
+        --------
+        Generate a mesh with quadrilateral faces.
+
+        >>> import pyvista
+        >>> plane = pyvista.Plane()
+        >>> plane.point_arrays.clear()
+        >>> plane.plot(show_edges=True, line_width=5)
+
+        Convert it to an all triangle mesh.
+
+        >>> mesh = plane.triangulate()
+        >>> mesh.plot(show_edges=True, line_width=5)
 
         """
         alg = _vtk.vtkDataSetTriangleFilter()
@@ -1947,7 +2036,7 @@ class DataSetFilters:
         vectors : str, optional
             The string name of the active vector field to integrate across.
 
-        integrator_type : int, optional
+        integrator_type : {45, 2, 4}, optional
             The integrator type to be used for streamline generation.
             The default is Runge-Kutta45. The recognized solvers are:
             RUNGE_KUTTA2 (``2``),  RUNGE_KUTTA4 (``4``), and RUNGE_KUTTA45
@@ -1967,7 +2056,7 @@ class DataSetFilters:
             either the starting size for an adaptive integrator, e.g., RK45, or
             the constant / fixed size for non-adaptive ones, i.e., RK2 and RK4).
 
-        step_unit : str, optional
+        step_unit : {'cl', 'l'}, optional
             Uniform integration step unit. The valid unit is now limited to
             only LENGTH_UNIT (``'l'``) and CELL_LENGTH_UNIT (``'cl'``).
             Default is CELL_LENGTH_UNIT: ``'cl'``.
@@ -1994,7 +2083,7 @@ class DataSetFilters:
             Specify the maximum length of a streamline expressed in LENGTH_UNIT.
 
         compute_vorticity : bool, optional
-            Vorticity computation at streamline points (necessary for generating
+            Vorticity computation at streamline points. Necessary for generating
             proper stream-ribbons using the ``vtkRibbonFilter``.
 
         interpolator_type : str, optional
@@ -2081,6 +2170,161 @@ class DataSetFilters:
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
         # run the algorithm
+        alg.Update()
+        return _get_output(alg)
+
+    def streamlines_evenly_spaced_2D(dataset, vectors=None, start_position=None,
+                                    integrator_type=2, step_length=0.5, step_unit='cl',
+                                    max_steps=2000, terminal_speed=1e-12, interpolator_type='point',
+                                    separating_distance=10, separating_distance_ratio=None,
+                                    closed_loop_maximum_distance=0.5, loop_angle=20,  
+                                    minimum_number_of_loop_points=4, compute_vorticity=True):
+        """Generate evenly spaced streamlines on a 2D dataset.
+
+        This filter only supports datasets that lie on the xy plane, i.e. ``z=0``.
+        Particular care must be used to choose a `separating_distance`
+        that do not result in too much memory being utilized.  The
+        default unit is cell length.
+
+        Parameters
+        ----------
+        vectors : str, optional
+            The string name of the active vector field to integrate across.
+
+        start_position : sequence(float), optional
+            The seed point for generating evenly spaced streamlines.
+            If not supplied, a random position in the dataset is chosen.
+
+        integrator_type : {2, 4}, optional
+            The integrator type to be used for streamline generation.
+            The default is Runge-Kutta2. The recognized solvers are:
+            RUNGE_KUTTA2 (``2``) and RUNGE_KUTTA4 (``4``).
+
+        step_length : float, optional
+            Constant Step size used for line integration, expressed in length
+            units or cell length units (see ``step_unit`` parameter).
+            
+        step_unit : {'cl', 'l'}, optional
+            Uniform integration step unit. The valid unit is now limited to
+            only LENGTH_UNIT (``'l'``) and CELL_LENGTH_UNIT (``'cl'``).
+            Default is CELL_LENGTH_UNIT: ``'cl'``.
+
+        max_steps : int, optional
+            Maximum number of steps for integrating a streamline.
+            Defaults to ``2000``
+
+        terminal_speed : float, optional
+            Terminal speed value, below which integration is terminated.
+
+        interpolator_type : str, optional
+            Set the type of the velocity field interpolator to locate cells
+            during streamline integration either by points or cells.
+            The cell locator is more robust then the point locator. Options
+            are ``'point'`` or ``'cell'`` (abbreviations of ``'p'`` and ``'c'``
+            are also supported).
+
+        separating_distance : float, optional
+            The distance between streamlines expressed in ``step_unit``.
+
+        separating_distance_ratio : float, optional
+            Streamline integration is stopped if streamlines are closer than
+            ``SeparatingDistance*SeparatingDistanceRatio`` to other streamlines.
+            The default behavior is set by vtk.
+
+        closed_loop_maximum_distance : float, optional
+            The distance between points on a streamline to determine a 
+            closed loop.
+
+        loop_angle : float, optional
+            The maximum angle in degrees between points to determine a closed loop.
+
+        minimum_number_of_loop_points : int, optional
+            The minimum number of points before which a closed loop will
+            be determined.
+
+        compute_vorticity : bool, optional
+            Vorticity computation at streamline points. Necessary for generating
+            proper stream-ribbons using the ``vtkRibbonFilter``.
+
+        Returns
+        -------
+        streamlines : pyvista.PolyData
+            This produces polylines as the output, with each cell
+            (i.e., polyline) representing a streamline. The attribute values
+            associated with each streamline are stored in the cell data, whereas
+            those associated with streamline-points are stored in the point data.
+
+        Example
+        -------
+        Plot evenly spaced streamlines for cylinder in a crossflow.
+        This dataset is a multiblock dataset, and the fluid velocity is in the
+        first block.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> mesh = examples.download_cylinder_crossflow()
+        >>> streams = mesh[0].streamlines_evenly_spaced_2D(start_position=(4, 0.1, 0.),
+        ...                                                separating_distance=3,
+        ...                                                separating_distance_ratio=0.2)
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(streams.tube(radius=0.02), scalars="vorticity_mag")
+        >>> plotter.view_xy()
+        >>> plotter.show()
+
+        See :ref:`2d_streamlines_example` for more examples using this filter.
+        """
+        if integrator_type not in [2, 4]:
+            raise ValueError('Integrator type must be one of `2` or `4`.')
+        if interpolator_type not in ['c', 'cell', 'p', 'point']:
+            raise ValueError("Interpolator type must be either 'cell' or 'point'")
+        if step_unit not in ['l', 'cl']:
+            raise ValueError("Step unit must be either 'l' or 'cl'")
+        step_unit = {'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
+                     'l': _vtk.vtkStreamTracer.LENGTH_UNIT}[step_unit]
+        if isinstance(vectors, str):
+            dataset.set_active_scalars(vectors)
+            dataset.set_active_vectors(vectors)
+
+        loop_angle = loop_angle * np.pi / 180
+
+        # Build the algorithm
+        alg = _vtk.vtkEvenlySpacedStreamlines2D()
+        # Inputs
+        alg.SetInputDataObject(dataset)
+
+        # Seed for starting position
+        if start_position is not None:
+            alg.SetStartPosition(start_position)
+
+        # Integrator controls
+        if integrator_type == 2:
+            alg.SetIntegratorTypeToRungeKutta2()
+        else:
+            alg.SetIntegratorTypeToRungeKutta4()
+        alg.SetInitialIntegrationStep(step_length)
+        alg.SetIntegrationStepUnit(step_unit)
+        alg.SetMaximumNumberOfSteps(max_steps)
+
+        # Stopping criteria
+        alg.SetTerminalSpeed(terminal_speed)
+        alg.SetClosedLoopMaximumDistance(closed_loop_maximum_distance)
+        alg.SetLoopAngle(loop_angle)
+        alg.SetMinimumNumberOfLoopPoints(minimum_number_of_loop_points)
+
+        # Separation criteria
+        alg.SetSeparatingDistance(separating_distance)
+        if separating_distance_ratio is not None:
+            alg.SetSeparatingDistanceRatio(separating_distance_ratio)
+
+        alg.SetComputeVorticity(compute_vorticity)
+
+        # Set interpolator type
+        if interpolator_type in ['c', 'cell']:
+            alg.SetInterpolatorTypeToCellLocator()
+        else:
+            alg.SetInterpolatorTypeToDataSetPointLocator()
+
+        # Run the algorithm
         alg.Update()
         return _get_output(alg)
 
@@ -2387,7 +2631,7 @@ class DataSetFilters:
         >>> a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
         >>> b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-        >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)
+        >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)  # doctest:+SKIP
 
         """
         # Ensure matplotlib is available
@@ -2563,6 +2807,19 @@ class DataSetFilters:
         -------
         subgrid : pyvista.UnstructuredGrid
             Subselected grid
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> grid = pyvista.read(examples.hexbeamfile)
+        >>> subset = grid.extract_cells(range(20))
+        >>> subset.n_cells
+        20
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(grid, style='wireframe', line_width=5, color='black')
+        >>> actor = pl.add_mesh(subset, color='grey')
+        >>> pl.show()
 
         """
         # Create selection objects
@@ -3094,7 +3351,7 @@ class DataSetFilters:
         ...                              [0, 0, 1, 200],
         ...                              [0, 0, 0, 1]])
         >>> transformed = mesh.transform(transform_matrix)
-        >>> cpos = transformed.plot(show_edges=True)
+        >>> transformed.plot(show_edges=True)
 
         """
         if isinstance(trans, _vtk.vtkMatrix4x4):
@@ -3182,7 +3439,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
         >>> mesh = mesh.reflect((0, 0, 1), point=(0, 0, -100))
-        >>> cpos = mesh.plot(show_edges=True)
+        >>> mesh.plot(show_edges=True)
 
         """
         t = transformations.reflection(normal, point=point)

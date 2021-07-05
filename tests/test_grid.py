@@ -27,12 +27,8 @@ def test_volume(hexbeam):
 def test_struct_example():
     # create and plot structured grid
     grid = examples.load_structured()
-    cpos = grid.plot(off_screen=True)  # basic plot
-    assert isinstance(cpos, pyvista.CameraPosition)
-
-    # Plot mean curvature
-    cpos_curv = grid.plot_curvature(off_screen=True)
-    assert isinstance(cpos_curv, pyvista.CameraPosition)
+    grid.plot(off_screen=True)  # basic plot
+    grid.plot_curvature(off_screen=True)
 
 
 def test_init_from_structured(struct_grid):

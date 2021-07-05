@@ -6,9 +6,10 @@ import numpy as np
 
 import pyvista
 from pyvista import (
-    abstract_class, _vtk, NORMALS, generate_plane, assert_empty_kwargs, vtk_id_list_to_array, get_array
+    abstract_class, _vtk, NORMALS, generate_plane, assert_empty_kwargs,
+    vtk_id_list_to_array, get_array
 )
-from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import NotAllTrianglesError, DeprecationError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 
@@ -43,155 +44,323 @@ class PolyDataFilters(DataSetFilters):
         return np.in1d(poly_data.point_arrays['point_ind'], orig_id,
                        assume_unique=True)
 
-    def boolean_cut(poly_data, cut, tolerance=1E-5, inplace=False):
-        """Perform a Boolean cut using another mesh.
-
-        Parameters
-        ----------
-        cut : pyvista.PolyData
-            Mesh making the cut
-
-        inplace : bool, optional
-            Updates mesh in-place.
-
-        Returns
-        -------
-        mesh : pyvista.PolyData
-            The cut mesh.
-
-        """
-        if not isinstance(cut, pyvista.PolyData):
+    def _boolean(poly_data, btype, other_mesh, tolerance):
+        """Perform boolean operation."""
+        if not isinstance(other_mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
-        if not poly_data.is_all_triangles() or not cut.is_all_triangles():
+        if not poly_data.is_all_triangles() or not other_mesh.is_all_triangles():
             raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
 
         bfilter = _vtk.vtkBooleanOperationPolyDataFilter()
-        bfilter.SetOperationToIntersection()
-        # bfilter.SetOperationToDifference()
-
-        bfilter.SetInputData(1, cut)
+        if btype == 'union':
+            bfilter.SetOperationToUnion()
+        elif btype == 'intersection':
+            bfilter.SetOperationToIntersection()
+        elif btype == 'difference':
+            bfilter.SetOperationToDifference()
+        else:  # pragma: no cover
+            raise ValueError(f'Invalid btype {btype}')
         bfilter.SetInputData(0, poly_data)
-        bfilter.ReorientDifferenceCellsOff()
+        bfilter.SetInputData(1, other_mesh)
+        bfilter.ReorientDifferenceCellsOn()  # this is already default
         bfilter.SetTolerance(tolerance)
         bfilter.Update()
 
-        mesh = _get_output(bfilter)
-        if inplace:
-            poly_data.overwrite(mesh)
-            return poly_data
-        else:
-            return mesh
+        return _get_output(bfilter)
 
-    def boolean_add(poly_data, mesh, inplace=False):
-        """Add a mesh to the current mesh.
+    def boolean_cut(poly_data, *args, **kwargs):  # pragma: no cover
+        """Cut two meshes.
 
-        Does not attempt to "join" the meshes.
+        .. deprecated:: 0.32.0
+           Use :func:`PolyDataFilters.boolean_difference` instead.
+
+        """
+        raise DeprecationError('``boolean_cut`` has been deprecated.  '
+                               'Please use ``boolean_difference``.')
+
+    def boolean_add(poly_data, *args, **kwargs):  # pragma: no cover
+        """Merge two meshes together.
+
+        .. deprecated:: 0.32.0
+           Use :func:`PolyDataFilters.merge` instead.
+
+        """
+        raise DeprecationError('``boolean_add`` has been deprecated.  '
+                               'Please use ``merge``.')
+
+    def boolean_union(poly_data, other_mesh, tolerance=1E-5):
+        """Perform a boolean union operation on two meshes.
+
+        Essentially, boolean union, difference, and intersection are
+        all the same operation. Just different parts of the objects
+        are kept at the end.
+
+        The union of two manifold meshes ``A`` and ``B`` is the mesh
+        which is in ``A``, in ``B``, or in both ``A`` and ``B``.
+
+        .. note::
+           If your boolean operations don't react the way you think they
+           should (i.e. the wrong parts disappear), one of your meshes
+           probably has its normals pointing inward. Use
+           :func:`PolyDataFilters.plot_normals` to visualize the
+           normals.
+
+        .. note::
+           The behavior of this filter varies from the
+           :func:`PolyDataFilters.merge` filter.  This filter attempts
+           to create a manifold mesh and will not include internal
+           surfaces when two meshes overlap.
+
+        .. note::
+           Both meshes must be composed of all triangles.  Check with
+           :func:`PolyData.is_all_triangles` and convert with
+           :func:`PolyDataFilters.triangulate`.
+
+        .. versionchanged:: 0.32.0
+           Behavior changed to match default VTK behavior.
 
         Parameters
         ----------
-        mesh : pyvista.PolyData
-            The mesh to add.
+        other_mesh : pyvista.PolyData
+            Mesh operating on the source mesh.
 
-        inplace : bool, optional
-            Updates mesh in-place.
+        tolerance : float, optional
+            Tolerance used to determine when a point's absolute
+            distance is considered to be zero.
 
         Returns
         -------
-        joinedmesh : pyvista.PolyData
-            The joined mesh.
+        mesh : pyvista.PolyData
+            The result of the boolean operation.
+
+        Examples
+        --------
+        Demonstrate a boolean union with two spheres.  Note how the
+        final mesh includes both spheres.
+
+        >>> import pyvista
+        >>> sphere_a = pyvista.Sphere()
+        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> result = sphere_a.boolean_union(sphere_b)
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(result, color='tan')
+        >>> pl.camera_position = 'xz'
+        >>> pl.show()
+
+        See :ref:`boolean_example` for more examples using this filter.
 
         """
-        if not isinstance(mesh, pyvista.PolyData):
-            raise TypeError("Input mesh must be PolyData.")
+        return poly_data._boolean('union', other_mesh, tolerance)
 
-        vtkappend = _vtk.vtkAppendPolyData()
-        vtkappend.AddInputData(poly_data)
-        vtkappend.AddInputData(mesh)
-        vtkappend.Update()
+    def boolean_intersection(poly_data, other_mesh, tolerance=1E-5):
+        """Perform a boolean intersection operation on two meshes.
 
-        mesh = _get_output(vtkappend)
-        if inplace:
-            poly_data.overwrite(mesh)
-            return poly_data
-        else:
-            return mesh
+        Essentially, boolean union, difference, and intersection are
+        all the same operation. Just different parts of the objects
+        are kept at the end.
 
-    def __add__(poly_data, mesh):
+        The intersection of two manifold meshes ``A`` and ``B`` is the mesh
+        which is the volume of ``A`` that is also in ``B``.
+
+        .. note::
+           If your boolean operations don't react the way you think they
+           should (i.e. the wrong parts disappear), one of your meshes
+           probably has its normals pointing inward. Use
+           :func:`PolyDataFilters.plot_normals` to visualize the
+           normals.
+
+        .. note::
+           This method returns the "volume" intersection between two
+           meshes whereas the :func:`PolyDataFilters.intersection`
+           filter returns the surface intersection between two meshes
+           (which often resolves as a line).
+           
+
+        .. note::
+           Both meshes must be composed of all triangles.  Check with
+           :func:`PolyData.is_all_triangles` and convert with
+           :func:`PolyDataFilters.triangulate`.
+
+        .. versionadded:: 0.32.0
+
+        Parameters
+        ----------
+        other_mesh : pyvista.PolyData
+            Mesh operating on the source mesh.
+
+        tolerance : float, optional
+            Tolerance used to determine when a point's absolute
+            distance is considered to be zero.
+
+        Returns
+        -------
+        mesh : pyvista.PolyData
+            The result of the boolean operation.
+
+        Examples
+        --------
+        Demonstrate a boolean intersection with two spheres.  Note how
+        the final mesh only includes the intersection of the two.
+
+        >>> import pyvista
+        >>> sphere_a = pyvista.Sphere()
+        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> result = sphere_a.boolean_intersection(sphere_b)
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(result, color='tan')
+        >>> pl.camera_position = 'xz'
+        >>> pl.show()
+
+        See :ref:`boolean_example` for more examples using this filter.
+
+        """
+        return poly_data._boolean('intersection', other_mesh, tolerance)
+
+    def boolean_difference(poly_data, other_mesh, tolerance=1E-5):
+        """Perform a boolean difference operation between two meshes.
+
+        Essentially, boolean union, difference, and intersection are
+        all the same operation. Just different parts of the objects
+        are kept at the end.
+
+        The difference of two manifold meshes ``A`` and ``B`` is the
+        volume of the mesh in ``A`` not belonging to ``B``.
+
+        .. note::
+           If your boolean operations don't react the way you think they
+           should (i.e. the wrong parts disappear), one of your meshes
+           probably has its normals pointing inward. Use
+           :func:`PolyDataFilters.plot_normals` to visualize the
+           normals.
+
+        .. note::
+           Both meshes must be composed of all triangles.  Check with
+           :func:`PolyData.is_all_triangles` and convert with
+           :func:`PolyDataFilters.triangulate`.
+
+        .. versionchanged:: 0.32.0
+           Behavior changed to match default VTK behavior.
+
+        Parameters
+        ----------
+        other_mesh : pyvista.PolyData
+            Mesh operating on the source mesh.
+
+        tolerance : float, optional
+            Tolerance used to determine when a point's absolute
+            distance is considered to be zero.
+
+        Returns
+        -------
+        mesh : pyvista.PolyData
+            The result of the boolean operation.
+
+        Examples
+        --------
+        Demonstrate a boolean difference with two spheres.  Note how
+        the final mesh only includes ``sphere_a``.
+
+        >>> import pyvista
+        >>> sphere_a = pyvista.Sphere()
+        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> result = sphere_a.boolean_difference(sphere_b)
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(result, color='tan')
+        >>> pl.camera_position = 'xz'
+        >>> pl.show()
+
+        See :ref:`boolean_example` for more examples using this filter.
+
+        """
+        return poly_data._boolean('difference', other_mesh, tolerance)
+
+    def __add__(poly_data, dataset):
         """Merge these two meshes."""
-        if not isinstance(mesh, _vtk.vtkPolyData):
-            return DataSetFilters.__add__(poly_data, mesh)
-        return PolyDataFilters.boolean_add(poly_data, mesh)
+        return poly_data.merge(dataset)
 
-    def boolean_union(poly_data, mesh, inplace=False):
-        """Combine two meshes and attempts to create a manifold mesh.
+    def merge(poly_data, dataset, merge_points=True, inplace=False,
+              main_has_priority=True):
+        """Merge this mesh with one or more datasets.
 
-        Parameters
-        ----------
-        mesh : pyvista.PolyData
-            The mesh to perform a union against.
-
-        inplace : bool, optional
-            Updates mesh in-place.
+        .. note::
+           The behavior of this filter varies from the
+           :func:`PolyDataFilters.boolean_union` filter.  This filter
+           does not attempt to create a manifold mesh and will include
+           internal surfaces when two meshes overlap.
 
         Returns
-        -------
-        union : pyvista.PolyData
-            The union mesh.
-
-        """
-        if not isinstance(mesh, pyvista.PolyData):
-            raise TypeError("Input mesh must be PolyData.")
-
-        bfilter = _vtk.vtkBooleanOperationPolyDataFilter()
-        bfilter.SetOperationToUnion()
-        bfilter.SetInputData(1, mesh)
-        bfilter.SetInputData(0, poly_data)
-        bfilter.ReorientDifferenceCellsOff()
-        bfilter.Update()
-
-        mesh = _get_output(bfilter)
-        if inplace:
-            poly_data.overwrite(mesh)
-            return poly_data
-        else:
-            return mesh
-
-    def boolean_difference(poly_data, mesh, inplace=False):
-        """Combine two meshes and retains only the volume in common between the meshes.
-
-        Parameters
-        ----------
-        mesh : pyvista.PolyData
-            The mesh to perform a union against.
+        --------
+        pyvista.PolyData or pyvista.UnstructuredGrid
+            :class:`pyvista.PolyData` if ``dataset`` is a
+            :class:`pyvista.PolyData`, otherwise a
+            :class:`pyvista.UnstructuredGrid`.
 
         inplace : bool, optional
-            Updates mesh in-place.
+            Updates grid inplace when ``True`` if the input type is a
+            :class:`pyvista.UnstructuredGrid`.
 
-        Returns
-        -------
-        union : pyvista.PolyData
-            The union mesh.
+        main_has_priority : bool, optional
+            When this parameter is ``True`` and ``merge_points=True``,
+            the arrays of the merging grids will be overwritten
+            by the original main mesh.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> sphere_a = pyvista.Sphere()
+        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> merged = sphere_a.merge(sphere_b)
+        >>> merged.plot(style='wireframe', color='tan')
 
         """
-        if not isinstance(mesh, pyvista.PolyData):
-            raise TypeError("Input mesh must be PolyData.")
-
-        bfilter = _vtk.vtkBooleanOperationPolyDataFilter()
-        bfilter.SetOperationToDifference()
-        bfilter.SetInputData(1, mesh)
-        bfilter.SetInputData(0, poly_data)
-        bfilter.ReorientDifferenceCellsOff()
-        bfilter.Update()
-
-        mesh = _get_output(bfilter)
-        if inplace:
-            poly_data.overwrite(mesh)
-            return poly_data
+        # check if dataset or datasets are not polydata
+        if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
+            not_pd = any(not isinstance(data, pyvista.PolyData) for data in dataset)
         else:
-            return mesh
+            not_pd = not isinstance(dataset, pyvista.PolyData)
+
+        # use dataset merge if not polydata
+        if not_pd:
+            return DataSetFilters.merge(poly_data, dataset,
+                                        merge_points=merge_points,
+                                        inplace=inplace)
+
+        append_filter = pyvista._vtk.vtkAppendPolyData()
+        append_filter.AddInputData(poly_data)
+
+        if isinstance(dataset, pyvista.DataSet):
+            append_filter.AddInputData(dataset)
+        else:
+            for data in dataset:
+                append_filter.AddInputData(data)
+
+        append_filter.Update()
+        merged = _get_output(append_filter)
+        if merge_points:
+            merged = merged.clean(lines_to_points=False, polys_to_lines=False,
+                                  strips_to_polys=False)
+
+        if inplace:
+            dataset.deep_copy(merged)
+            return dataset
+
+        return merged
 
     def intersection(poly_data, mesh, split_first=True, split_second=True):
         """Compute the intersection between two meshes.
+
+        .. note::
+           This method returns the surface interection from two meshes
+           (which often resolves as a line), whereas the
+           :func:`PolyDataFilters.boolean_intersection` filter returns
+           the "volume" intersection between two closed (manifold)
+           meshes.
 
         Parameters
         ----------
@@ -232,9 +401,9 @@ class PolyDataFilters(DataSetFilters):
         The mesh splitting takes additional time and can be turned
         off for either mesh individually.
 
-        >>> intersection, _, s2_split = s1.intersection(s2, \
-                                                        split_first=False, \
-                                                        split_second=True)
+        >>> intersection, _, s2_split = s1.intersection(s2,
+        ...                                             split_first=False,
+        ...                                             split_second=True)
 
         """
         intfilter = _vtk.vtkIntersectionPolyDataFilter()
@@ -314,6 +483,7 @@ class PolyDataFilters(DataSetFilters):
         -------
         cpos : list
             List of camera position, focal point, and view up.
+            Returned when ``return_cpos`` is ``True``.
 
         Examples
         --------
@@ -321,7 +491,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> cpos = hills.plot_curvature(smooth_shading=True)
+        >>> hills.plot_curvature(smooth_shading=True)
 
         """
         kwargs.setdefault('scalar_bar_args',
@@ -1261,7 +1431,7 @@ class PolyDataFilters(DataSetFilters):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(sphere)
         >>> actor = pl.add_mesh(path, line_width=5, color='k')
-        >>> cpos = pl.show()
+        >>> pl.show()
 
         """
         if not (0 <= start_vertex < poly_data.n_points and
@@ -1560,7 +1730,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> cpos = sphere.plot_normals(mag=0.1)
+        >>> sphere.plot_normals(mag=0.1)
 
         """
         plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', None),
@@ -1679,9 +1849,9 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> cpos = sphere.plot_normals(mag=0.1)
+        >>> sphere.plot_normals(mag=0.1)
         >>> sphere.flip_normals()
-        >>> cpos = sphere.plot_normals(mag=0.1)
+        >>> sphere.plot_normals(mag=0.1)
 
         """
         if not poly_data.is_all_triangles:
@@ -1800,7 +1970,7 @@ class PolyDataFilters(DataSetFilters):
         You can also plot the arc_length
 
         >>> arc = path.compute_arc_length()
-        >>> cpos = arc.plot(scalars="arc_length")
+        >>> arc.plot(scalars="arc_length")
 
         """
         alg = _vtk.vtkAppendArcLength()
@@ -1889,7 +2059,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere = pv.Sphere()
         >>> path = sphere.geodesic(0, 100)
         >>> ribbon = path.ribbon()
-        >>> cpos = pv.plot([sphere, ribbon])
+        >>> pv.plot([sphere, ribbon])
 
         Notes
         -----
@@ -1977,7 +2147,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1])
-        >>> cpos = mesh.plot()
+        >>> mesh.plot()
 
         """
         alg = _vtk.vtkLinearExtrusionFilter()
@@ -2051,7 +2221,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista
         >>> line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
         >>> mesh = line.extrude_rotate(resolution = 4)
-        >>> cpos = mesh.plot()
+        >>> mesh.plot()
 
         """
         if resolution <= 0:
