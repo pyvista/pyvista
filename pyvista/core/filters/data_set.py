@@ -1043,13 +1043,11 @@ class DataSetFilters:
         >>> sphere_elv = sphere.elevation()
         >>> sphere_elv.plot(smooth_shading=True)
 
-        Access the elevation scalars.  This is a point-wise array containing the
-        "elevation" of each point.
+        Access the first 4 elevation scalars.  This is a point-wise
+        array containing the "elevation" of each point.
 
-        >>> sphere_elv.point_arrays['Elevation']  # doctest:+SKIP
-        pyvista_ndarray([-0.5       ,  0.5       , -0.49706897, -0.48831028,
-        ...
-                          0.48831028,  0.49706897], dtype=float32)
+        >>> sphere_elv['Elevation'][:4]  # doctest:+SKIP
+        array([-0.5       ,  0.5       , -0.49706897, -0.48831028], dtype=float32)
 
         See :ref:`common_filter_example` for more examples using this filter.
 
@@ -3305,15 +3303,13 @@ class DataSetFilters:
 
         Examples
         --------
-        Return the surface indices of an UnstructuredGrid.
+        Return the first 10 surface indices of an UnstructuredGrid.
 
         >>> from pyvista import examples
         >>> grid = examples.load_hexbeam()
         >>> ind = grid.surface_indices()
-        >>> ind  # doctest:+SKIP
-        pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4, 54,
-        ...
-                         65, 66, 67, 68, 69, 70])
+        >>> ind[:10]  # doctest:+SKIP
+        pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4])
 
         """
         surf = DataSetFilters.extract_surface(dataset, pass_cellid=True)
@@ -3321,7 +3317,7 @@ class DataSetFilters:
 
     def extract_feature_edges(dataset, feature_angle=30, boundary_edges=True,
                               non_manifold_edges=True, feature_edges=True,
-                              manifold_edges=True, inplace=False):
+                              manifold_edges=True):
         """Extract edges from the surface of the mesh.
 
         If the given mesh is not PolyData, the external surface of the given
@@ -3355,9 +3351,6 @@ class DataSetFilters:
         manifold_edges : bool, optional
             Extract manifold edges. Defaults to ``True``.
 
-        inplace : bool, optional
-            Updates existing dataset with the extracted features.
-
         Returns
         -------
         edges : pyvista.PolyData
@@ -3388,13 +3381,7 @@ class DataSetFilters:
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
         featureEdges.Update()
-
-        mesh = _get_output(featureEdges)
-        if inplace:
-            dataset.overwrite(mesh)
-            return dataset
-        else:
-            return mesh
+        return _get_output(featureEdges)
 
     def merge(dataset, grid=None, merge_points=True, inplace=False,
               main_has_priority=True):
@@ -3404,6 +3391,10 @@ class DataSetFilters:
 
         Can be used to merge points of adjacent cells when no grids
         are input.
+
+        .. note::
+           The ``+`` operator between two meshes uses this filter with
+           the default parameters.
 
         Parameters
         ----------
