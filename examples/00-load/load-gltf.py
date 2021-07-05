@@ -9,14 +9,16 @@ https://www.khronos.org/gltf/
 
 Note this feature is only available for ``vtk>=9``.
 
-First, download the examples.
+First, download the examples.  Note that here we're using a high
+dynamic range texture since glTF files generally contain physically
+based rendering and VTK v9 supports high dynamic range textures.
 
 """
 
 import pyvista
 from pyvista import examples
 helmet_file = examples.gltf.download_damaged_helmet()
-cubemap = examples.download_sky_box_cube_map()
+texture = examples.hdr.download_dikhololo_night()
 
 
 ###############################################################################
@@ -26,7 +28,8 @@ cubemap = examples.download_sky_box_cube_map()
 
 pl = pyvista.Plotter()
 pl.import_gltf(helmet_file)
-pl.set_environment_texture(cubemap)
+pl.set_environment_texture(texture)
+pl.camera.zoom(1.7)
 pl.show()
 
 

@@ -1009,6 +1009,8 @@ def cubemap(path='', prefix='', ext='.jpg'):
                                     f'{file_str}')
 
     texture = pyvista.Texture()
+    texture.SetMipmap(True)
+    texture.SetInterpolate(True)
     texture.cube_map = True  # Must be set prior to setting images
 
     # add each image to the cubemap

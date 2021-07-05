@@ -273,12 +273,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Examples
         --------
         >>> import pyvista
-        >>> from pyvista import examples    # doctest:+SKIP
+        >>> from pyvista import examples
         >>> helmet_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
-        >>> cubemap = examples.download_sky_box_cube_map()  # doctest:+SKIP
+        >>> texture = examples.textures.download_dikhololo_night()
         >>> pl = pyvista.Plotter()  # doctest:+SKIP
         >>> pl.import_gltf(helmet_file)  # doctest:+SKIP
         >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
+        >>> pl.camera.zoom(1.8)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
 
         See :ref:`load_gltf` for a full example using this method.
@@ -321,12 +322,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             base64 string.  When ``True``, only one file is exported.
 
         rotate_scene : bool, optional
-            Rotate scene to be compatible with the three.js coordinate
-            frame.
+            Rotate scene to be compatible with the glTF specifications.
 
         save_normals : bool, optional
             Saves the point array ``'Normals'`` as ``'NORMALS'`` in
-            the ouputted scene.
+            the outputted scene.
 
         Examples
         --------

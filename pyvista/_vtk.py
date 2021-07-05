@@ -72,6 +72,7 @@ if VTK9:
                                        vtkPNGReader,
                                        vtkPNMReader,
                                        vtkSLCReader,
+                                       vtkHDRReader,
                                        vtkTIFFReader)
     from vtkmodules.vtkIOXML import (vtkXMLReader,
                                      vtkXMLWriter,
