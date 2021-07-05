@@ -21,7 +21,9 @@ same operation. Just different parts of the objects are kept at the
 end.
 
 The ``-`` operator can be used between any two :class:`pyvista.PolyData`
-meshes in PyVista to cut the first mesh by the second.
+meshes in PyVista to cut the first mesh by the second.  These meshes
+must be all triangule meshes, which you can check with
+:func:`PolyData.is_all_triangles`.
 
 .. note::
    For merging, the ``+`` operator can be used between any two meshes
