@@ -50,7 +50,7 @@ jobs:
 
 
 # DESCRIPTION: Doc string testing
-- job: Linux
+- job: DocstringTesting
   pool:
     vmImage: 'ubuntu-20.04'
   variables:
@@ -101,9 +101,11 @@ jobs:
       pip list
     displayName: 'Install dependencies'
 
+  # don't run job on no-ci builds
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
 
-# DESCRIPTION: Core API and doc string testing for Linux
+# DESCRIPTION: Core API testing for Linux
 - job: Linux
   pool:
     vmImage: 'ubuntu-20.04'
