@@ -147,6 +147,7 @@ def verify_cache_image(plotter):
                       f'{error}')
 
 
+@skip_not_vtk9
 def test_import_gltf():
     filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.glb')
     pl = pyvista.Plotter()
@@ -158,6 +159,7 @@ def test_import_gltf():
     pl.show(before_close_callback=verify_cache_image)
 
 
+@skip_not_vtk9
 def test_export_gltf(tmpdir, sphere, airplane):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.gltf'))
 
