@@ -2001,5 +2001,5 @@ def test_scalar_cell_priorities():
     plotter.add_mesh(mesh,
                      scalars='colors',
                      rgb=True,
-                     scalars_priority_cells=True)
+                     preference='cell')
     plotter.show(before_close_callback=verify_cache_image)

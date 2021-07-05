@@ -1031,7 +1031,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
                  log_scale=False, pbr=False, metallic=0.0, roughness=0.5,
-                 render=True, component=None, scalars_priority_cells=False, **kwargs):
+                 render=True, component=None, **kwargs):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
@@ -1250,6 +1250,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pickable : bool, optional
             Set whether this mesh is pickable.
 
+        preference : str, optional
+            When ``mesh.n_points == mesh.n_cells`` and setting
+            scalars, this parameter sets how the scalars will be
+            mapped to the mesh.  Default ``'points'``, causes the
+            scalars will be associated with the mesh points.  Can be
+            either ``'points'`` or ``'cells'``.
+
         log_scale : bool, optional
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
@@ -1279,12 +1286,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
-        scalar_priority_cells : bool, optional
-            When ``mesh.n_points == mesh.n_cells`` and setting
-            scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``False``, causing the
-            scalars will be associated with the mesh points.
-
         Returns
         -------
         actor : vtk.vtkActor
@@ -1302,6 +1303,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(sphere,
         ...                      scalar_bar_args={'title': 'Z Position'})
         >>> cpos = plotter.show()
+
+        Plot using RGB on a single cell, note that since the number of
+        points and the number of cells are identical, we have to pass
+        ``preference='cell'``.
+
+        >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1.5, 1, 0], [0, 0, 1]])
+        >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]])
+        >>> mesh = pyvista.PolyData(vertices, faces)
+        >>> mesh.cell_arrays['colors'] = [[255, 0, 0],
+        ...                               [0, 255, 0],
+        ...                               [0, 0, 255],
+        ...                               [255,255,255]]
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(mesh,
+        ...                      scalars='colors',
+        ...                      rgb=True,
+        ...                      preference='cell')
+        >>> plotter.show()
 
         """
         # Convert the VTK data object to a pyvista wrapped object if necessary
@@ -1640,12 +1659,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalars = scalars.astype(np.float_)
 
             def prepare_mapper(scalars):
+                if (scalars.shape[0] == mesh.n_points and
+                    scalars.shape[0] == mesh.n_cells):
+                    use_points = preference == 'point'
+                    use_cells = not use_points
+                else:
+                    use_points = scalars.shape[0] == mesh.n_points
+                    use_cells = scalars.shape[0] == mesh.n_cells
+
                 # Scalars interpolation approach
-                if scalars.shape[0] == mesh.n_points and not scalars_priority_cells:
+                if use_points:
                     self.mesh.point_arrays.append(scalars, title, True)
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUsePointData()
-                elif scalars.shape[0] == mesh.n_cells:
+                elif use_cells:
                     self.mesh.cell_arrays.append(scalars, title, True)
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUseCellData()
