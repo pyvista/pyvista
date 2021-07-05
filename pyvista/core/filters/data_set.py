@@ -1990,8 +1990,8 @@ class DataSetFilters:
 
         Examples
         --------
-        Generate a 3D Delaunay of a surface mesh of a sphere and
-        plot the interior edges generated.
+        Generate a 3D Delaunay triangulation of a surface mesh of a
+        sphere and plot the interior edges generated.
 
         >>> import pyvista
         >>> sphere = pyvista.Sphere(theta_resolution=5, phi_resolution=5)
