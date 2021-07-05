@@ -417,4 +417,23 @@ else:  # pragma: no cover
     class vtkExplicitStructuredGrid():  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
-        pass
+        def __init__(self):  # pragma: no cover
+            """Raise version error on init."""
+            from pyvista.core.errors import VTKVersionError
+            raise VTKVersionError('vtkHDRReader requires VTK v9 or newer')
+
+    class vtkHDRReader():   # type: ignore
+        """Empty placeholder for VTK9 compatibility."""
+
+        def __init__(self):  # pragma: no cover
+            """Raise version error on init."""
+            from pyvista.core.errors import VTKVersionError
+            raise VTKVersionError('vtkHDRReader requires VTK v9 or newer')
+
+    class vtkGLTFReader():   # type: ignore
+        """Empty placeholder for VTK9 compatibility."""
+
+        def __init__(self):  # pragma: no cover
+            """Raise version error on init."""
+            from pyvista.core.errors import VTKVersionError
+            raise VTKVersionError('vtkGLTFReader requires VTK v9 or newer')
