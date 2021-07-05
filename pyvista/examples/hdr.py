@@ -18,7 +18,7 @@ def download_dikhololo_night():  # pragma: no cover
     >>> import pyvista
     >>> from pyvista import examples    # doctest:+SKIP
     >>> gltf_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
-    >>> texture = examples.textures.download_dikhololo_night()
+    >>> texture = examples.hdr.download_dikhololo_night()  # doctest:+SKIP
     >>> pl = pyvista.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
     >>> pl.set_environment_texture(texture)  # doctest:+SKIP
@@ -47,7 +47,7 @@ def download_parched_canal():  # pragma: no cover
     >>> import pyvista
     >>> from pyvista import examples    # doctest:+SKIP
     >>> gltf_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
-    >>> texture = examples.textures.download_parched_canal()
+    >>> texture = examples.hdr.download_parched_canal()  # doctest:+SKIP
     >>> pl = pyvista.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
     >>> pl.set_environment_texture(texture)  # doctest:+SKIP
