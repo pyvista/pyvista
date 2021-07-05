@@ -494,6 +494,7 @@ class Camera(_vtk.vtkCamera):
     @property
     def elevation(self):
         """Vertical rotation of the scene.
+
         Rotate the camera about the cross product of the negative of
         the direction of projection and the view up vector, using the
         focal point as the center of rotation.
