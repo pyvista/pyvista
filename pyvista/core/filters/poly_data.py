@@ -167,25 +167,6 @@ class PolyDataFilters(DataSetFilters):
 
         See :ref:`boolean_example` for more examples using this filter.
 
-        Examples
-        --------
-        Create a cube and a sphere and plot them
-
-        >>> import pyvista
-        >>> cube = pyvista.Cube().triangulate().subdivide(2).clean()
-        >>> sphere = pyvista.Sphere(center=(0.5, 0.5, 0.5))
-        >>> pyvista.plot([cube, sphere], style='wireframe', cpos='xz')
-
-        Cut the sphere with the cube.
-
-        >>> cube_cutting_sphere = sphere.boolean_cut(cube)
-        >>> cube_cutting_sphere.plot(cpos='xz', show_edges=True, line_width=3)
-
-        Reverse the order and cut the cube with the sphere.
-
-        >>> sphere_cutting_cube = cube.boolean_cut(sphere)
-        >>> sphere_cutting_cube.plot(show_edges=True, line_width=3)
-
         """
         return poly_data._boolean('union', other_mesh, tolerance)
 
