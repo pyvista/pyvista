@@ -1,7 +1,8 @@
 """
 .. _2d_streamlines_example:
+
 2D Streamlines
-~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 Integrate a vector field to generate streamlines on a 2D surface.
 """
