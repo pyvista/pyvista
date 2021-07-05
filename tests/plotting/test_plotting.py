@@ -1903,3 +1903,23 @@ def test_plotter_image():
     plotter.store_image = True
     plotter.show()
     assert plotter.image.shape[:2] == wsz
+
+
+def test_scalar_cell_priorities():
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [1.5, 1, 0], [0, 0, 1]])
+    faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]])
+    mesh = pyvista.PolyData(vertices, faces)
+    colors = [
+        [255, 0, 0],
+        [0, 255, 0],
+        [0, 0, 255],
+        [255,255,255]
+    ]
+
+    mesh.cell_arrays['colors'] = colors
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(mesh,
+                     scalars='colors',
+                     rgb=True,
+                     preference='cell')
+    plotter.show(before_close_callback=verify_cache_image)

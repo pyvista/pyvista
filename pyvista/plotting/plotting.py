@@ -1417,7 +1417,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         rgb : bool, optional
             If an 2 dimensional array is passed as the scalars, plot
-            those values as RGB(A) colors! ``rgba`` is also an accepted
+            those values as RGB(A) colors. ``rgba`` is also an accepted
             alias for this.  Opacity (the A) is optional.
 
         categories : bool, optional
@@ -1460,6 +1460,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pickable : bool, optional
             Set whether this mesh is pickable.
 
+        preference : str, optional
+            When ``mesh.n_points == mesh.n_cells`` and setting
+            scalars, this parameter sets how the scalars will be
+            mapped to the mesh.  Default ``'points'``, causes the
+            scalars will be associated with the mesh points.  Can be
+            either ``'points'`` or ``'cells'``.
+
         log_scale : bool, optional
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
@@ -1491,7 +1498,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        actor: vtk.vtkActor
+        actor : vtk.vtkActor
             VTK actor of the mesh.
 
         Examples
@@ -1505,6 +1512,36 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(sphere,
         ...                      scalar_bar_args={'title': 'Z Position'})
+        >>> plotter.show()
+
+        Plot using RGB on a single cell.  Note that since the number of
+        points and the number of cells are identical, we have to pass
+        ``preference='cell'``.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [.5, .667, 0], [0.5, .33, 0.667]])
+        >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]])
+        >>> mesh = pyvista.PolyData(vertices, faces)
+        >>> mesh.cell_arrays['colors'] = [[255, 255, 255],
+        ...                               [0, 255, 0],
+        ...                               [0, 0, 255],
+        ...                               [255, 0, 0]]
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(mesh, scalars='colors', lighting=False,
+        ...                      rgb=True, preference='cell')
+        >>> plotter.camera_position='xy'
+        >>> plotter.show()
+
+        Note how this varies from ``preference=='point'``.  This is
+        because each point is now being individually colored, versus
+        in ``preference=='point'``, each cell face is individually
+        colored.
+
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(mesh, scalars='colors', lighting=False,
+        ...                      rgb=True, preference='point')
+        >>> plotter.camera_position='xy'
         >>> plotter.show()
 
         """
@@ -1844,12 +1881,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalars = scalars.astype(np.float_)
 
             def prepare_mapper(scalars):
+                if (scalars.shape[0] == mesh.n_points and
+                    scalars.shape[0] == mesh.n_cells):
+                    use_points = preference == 'point'
+                    use_cells = not use_points
+                else:
+                    use_points = scalars.shape[0] == mesh.n_points
+                    use_cells = scalars.shape[0] == mesh.n_cells
+
                 # Scalars interpolation approach
-                if scalars.shape[0] == mesh.n_points:
+                if use_points:
                     self.mesh.point_arrays.append(scalars, title, True)
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUsePointData()
-                elif scalars.shape[0] == mesh.n_cells:
+                elif use_cells:
                     self.mesh.cell_arrays.append(scalars, title, True)
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUseCellData()
