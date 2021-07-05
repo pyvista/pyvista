@@ -43,13 +43,13 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
 
     Examples
     --------
-    Create a perlin noise function with an amplitude of 0.1, frequency
+    Create a Perlin noise function with an amplitude of 0.1, frequency
     for all axes of 1, and a phase of 0 for all axes.
 
     >>> import pyvista
     >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
 
-    Sample perlin noise over a structured grid and plot it.
+    Sample Perlin noise over a structured grid and plot it.
 
     >>> grid = pyvista.sample_function(noise, [0, 5.0, 0, 5.0, 0, 5.0])
     >>> grid.plot()
