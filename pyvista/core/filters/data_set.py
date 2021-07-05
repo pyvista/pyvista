@@ -215,8 +215,9 @@ class DataSetFilters:
 
         inplace : bool
             If ``True``, a new scalar array will be added to the
-            ``point_arrays`` of this mesh. Otherwise a copy of this
-            mesh is returned with that scalar field.
+            ``point_arrays`` of this mesh and the modified mesh will
+            be returned. Otherwise a copy of this mesh is returned
+            with that scalar field added.
 
         Examples
         --------
@@ -334,11 +335,12 @@ class DataSetFilters:
         Parameters
         ----------
         surface : pyvista.PolyData
-            The PolyData surface mesh to use as a clipping function. If this
-            mesh is not PolyData, the external surface will be extracted.
+            The ``PolyData`` surface mesh to use as a clipping function.
+            If this mesh is not ``PolyData``, the external surface will
+            be extracted.
 
         invert : bool, optional
-            Flag on whether to flip/invert the clip
+            Flag on whether to flip/invert the clip.
 
         value : float, optional
             Set the clipping value of the implicit function (if
@@ -389,23 +391,23 @@ class DataSetFilters:
         normal : tuple(float) or str
             Length 3 tuple for the normal vector direction. Can also be
             specified as a string conventional direction such as ``'x'`` for
-            ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)```, etc.
+            ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
 
         origin : tuple(float)
             The center ``(x, y, z)`` coordinate of the plane on which
-            the slice occurs
+            the slice occurs.
 
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will
-            be triangles otherwise, the output will be the
-            intersection polygons.
+            be triangles. Otherwise the output will be the intersection
+            polygons.
 
         contour : bool, optional
             If ``True``, apply a ``contour`` filter after slicing.
 
         Examples
         --------
-        Slice a the surface of a sphere.
+        Slice the surface of a sphere.
 
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
@@ -455,14 +457,17 @@ class DataSetFilters:
             The Z location of the XY slice.
 
         generate_triangles: bool, optional
-            If this is enabled (``False`` by default), the output will be
-            triangles otherwise, the output will be the intersection polygons.
+            If this is enabled (``False`` by default), the output will
+            be triangles. Otherwise the output will be the intersection
+            polygons.
 
         contour : bool, optional
-            If True, apply a ``contour`` filter after slicing.
+            If ``True``, apply a ``contour`` filter after slicing.
 
         Examples
         --------
+        Slice the random hills dataset with three orthogonal planes.
+
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
         >>> slices = hills.slice_orthogonal(contour=False)
@@ -501,19 +506,21 @@ class DataSetFilters:
             The number of slices to create.
 
         axis : str or int
-            The axis to generate the slices along. Perpendicular to the slices.
-            Can be string name (``'x'``, ``'y'``, or ``'z'``) or axis index
-            (``0``, ``1``, or ``2``).
+            The axis to generate the slices along. Perpendicular to the
+            slices. Can be string name (``'x'``, ``'y'``, or ``'z'``) or
+            axis index (``0``, ``1``, or ``2``).
 
         tolerance : float, optional
-            The tolerance to the edge of the dataset bounds to create the slices
+            The tolerance to the edge of the dataset bounds to create the
+            slices.
 
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
-            triangles otherwise, the output will be the intersection polygons.
+            triangles. Otherwise the output will be the intersection
+            polygons.
 
         contour : bool, optional
-            If True, apply a ``contour`` filter after slicing
+            If ``True``, apply a ``contour`` filter after slicing.
 
         Examples
         --------
@@ -572,7 +579,7 @@ class DataSetFilters:
                          contour=False):
         """Slice a dataset using a polyline/spline as the path.
 
-        This also works for lines generated with :func:`pyvista.Line`
+        This also works for lines generated with :func:`pyvista.Line`.
 
         Parameters
         ----------
@@ -580,15 +587,16 @@ class DataSetFilters:
             A PolyData object containing one single PolyLine cell.
 
         generate_triangles: bool, optional
-            If this is enabled (``False`` by default), the output will be
-            triangles otherwise, the output will be the intersection polygons.
+            If this is enabled (``False`` by default), the output will
+            be triangles. Otherwise the output will be the intersection
+            polygons.
 
         contour : bool, optional
-            If True, apply a ``contour`` filter after slicing
+            If ``True``, apply a ``contour`` filter after slicing.
 
         Examples
         --------
-        Slice along a circular arc.
+        Slice the random hills dataset along a circular arc.
 
         >>> import numpy as np
         >>> import pyvista
@@ -637,10 +645,11 @@ class DataSetFilters:
                   preference='cell', all_scalars=False):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
-        This filter will apply a ``vtkThreshold`` filter to the input dataset
-        and return the resulting object. This extracts cells where the scalar
-        value in each cell satisfies threshold criterion.  If scalars is None,
-        the inputs active scalars is used.
+        This filter will apply a ``vtkThreshold`` filter to the input
+        dataset and return the resulting object. This extracts cells
+        where the scalar value in each cell satisfies the threshold
+        criterion.  If ``scalars`` is ``None``, the input's active
+        scalars array is used.
 
         Parameters
         ----------
@@ -653,10 +662,10 @@ class DataSetFilters:
             Name of scalars to threshold on. Defaults to currently active scalars.
 
         invert : bool, optional
-            If value is a single value, when invert is True cells are
-            kept when their values are below parameter ``"value"``.
-            When invert is False cells are kept when their value is
-            above the threshold ``"value"``.  Default is False:
+            If value is a single value, when invert is ``True`` cells
+            are kept when their values are below parameter ``"value"``.
+            When invert is ``False`` cells are kept when their value is
+            above the threshold ``"value"``.  Default is ``False``:
             yielding above the threshold ``"value"``.
 
         continuous : bool, optional
@@ -667,7 +676,7 @@ class DataSetFilters:
         preference : str, optional
             When scalars is specified, this is the preferred array
             type to search for in the dataset.  Must be either
-            ``'point'`` or ``'cell'``
+            ``'point'`` or ``'cell'``.
 
         all_scalars : bool, optional
             If using scalars from point data, all scalars for all
@@ -692,7 +701,7 @@ class DataSetFilters:
           Z Bounds:	0.000e+00, 9.000e+00
           N Arrays:	1
 
-        Apply the threshold filter to perlin noise.  First generate
+        Apply the threshold filter to Perlin noise.  First generate
         the structured grid.
 
         >>> import pyvista
@@ -781,19 +790,22 @@ class DataSetFilters:
             Name of scalars to threshold on. Defaults to currently active scalars.
 
         invert : bool, optional
-            When invert is True cells are kept when their values are below the
-            percentage of the range.  When invert is False, cells are kept when
-            their value is above the percentage of the range.
-            Default is False: yielding above the threshold ``"value"``.
+            When invert is ``True`` cells are kept when their values are
+            below the percentage of the range.  When invert is
+            ``False``, cells are kept when their value is above the
+            percentage of the range. Default is ``False``: yielding
+            above the threshold ``"value"``.
 
         continuous : bool, optional
-            When True, the continuous interval [minimum cell scalar,
-            maximum cell scalar] will be used to intersect the threshold bound,
-            rather than the set of discrete scalar values from the vertices.
+            When ``True``, the continuous interval [minimum cell scalar,
+            maximum cell scalar] will be used to intersect the threshold
+            bound, rather than the set of discrete scalar values from
+            the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the preferred array type to
-            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
 
         Examples
         --------
@@ -867,6 +879,8 @@ class DataSetFilters:
         >>> outline = sphere.outline()
         >>> pyvista.plot([sphere, outline], line_width=5)
 
+        See :ref:`common_filter_example` for more examples using this filter.
+
         """
         alg = _vtk.vtkOutlineFilter()
         alg.SetInputDataObject(dataset)
@@ -907,7 +921,7 @@ class DataSetFilters:
         boundary faces of the dataset.
 
         .. note::
-            This is tends to be less efficient than :func:`extract_surface`.
+            This tends to be less efficient than :func:`extract_surface`.
 
         Returns
         -------
@@ -916,6 +930,8 @@ class DataSetFilters:
 
         Examples
         --------
+        Extract the surface of a sample unstructured grid.
+
         >>> import pyvista
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
@@ -953,6 +969,8 @@ class DataSetFilters:
 
         Examples
         --------
+        Extract the edges of a sample unstructured grid.
+
         >>> import pyvista
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
@@ -972,6 +990,8 @@ class DataSetFilters:
         >>> edges.cell_arrays.clear()  # remove arrays to clean up plot
         >>> edges.plot(line_width=5)
 
+        See :ref:`cell_centers_example` for more examples using this filter.
+
         """
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(dataset)
@@ -989,9 +1009,9 @@ class DataSetFilters:
         above a plane.
 
         .. warning::
-           This will create a scalars array named `Elevation` on the
+           This will create a scalars array named ``'Elevation'`` on the
            point data of the input dataset and overwrite the array
-           named `Elevation` if present.
+           named ``'Elevation'`` if present.
 
         Parameters
         ----------
@@ -1014,11 +1034,12 @@ class DataSetFilters:
         preference : str, optional
             When an array name is specified for ``scalar_range``, this is the
             preferred array type to search for in the dataset.
-            Must be either 'point' or 'cell'.
+            Must be either ``'point'`` or ``'cell'``.
 
         set_active : bool, optional
-            A boolean flag on whether or not to set the new `Elevation` scalar
-            as the active scalars array on the output dataset.
+            A boolean flag on whether or not to set the new
+            ``'Elevation'`` scalar as the active scalars array on the
+            output dataset.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1035,7 +1056,7 @@ class DataSetFilters:
 
         Access the elevation scalars
 
-        >>> sphere.point_arrays['Elevation']  # doctest:+SKIP
+        >>> sphere_elv.point_arrays['Elevation']  # doctest:+SKIP
         pyvista_ndarray([-0.5       ,  0.5       , -0.49706897, -0.48831028,
         ...
                           0.48831028,  0.49706897], dtype=float32)
@@ -1103,13 +1124,14 @@ class DataSetFilters:
             Preserves the scalar values that are being contoured.
 
         rng : tuple(float), optional
-            If an integer number of isosurfaces is specified, this is the range
-            over which to generate contours. Default is the scalars arrays' full
-            data range.
+            If an integer number of isosurfaces is specified, this is
+            the range over which to generate contours. Default is the
+            scalars array's full data range.
 
         preference : str, optional
-            When scalars is specified, this is the preferred array type to
-            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
 
         method : str, optional
             Specify to choose which vtk filter is used to create the contour.
@@ -1121,7 +1143,7 @@ class DataSetFilters:
 
         Examples
         --------
-        Generate contours for the hills plot.
+        Generate contours for the random hills dataset.
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
@@ -1183,20 +1205,20 @@ class DataSetFilters:
         ----------
         origin : tuple(float), optional
             Length 3 iterable of floats defining the XYZ coordinates of the
-            bottom left corner of the plane
+            bottom left corner of the plane.
 
         point_u : tuple(float), optional
             Length 3 iterable of floats defining the XYZ coordinates of the
-            bottom right corner of the plane
+            bottom right corner of the plane.
 
         point_v : tuple(float), optional
             Length 3 iterable of floats defining the XYZ coordinates of the
-            top left corner of the plane
+            top left corner of the plane.
 
         inplace : bool, optional
-            If True, the new texture coordinates will be added to this
-            dataset. If False (default), a new dataset is returned
-            with the textures coordinates
+            If ``True``, the new texture coordinates will be added to this
+            dataset. If ``False`` (default), a new dataset is returned
+            with the texture coordinates.
 
         name : str, optional
             The string name to give the new texture coordinates if applying
@@ -1209,7 +1231,8 @@ class DataSetFilters:
         Returns
         -------
         pyvista.DataSet
-            Original dataset with texture coordinates.
+            Original dataset with texture coordinates if
+            ``inplace=True``, otherwise a copied dataset.
 
         Examples
         --------
@@ -1267,9 +1290,9 @@ class DataSetFilters:
             ``True``.
 
         inplace : bool, optional
-            If True, the new texture coordinates will be added to the dataset
-            inplace. If False (default), a new dataset is returned with the
-            textures coordinates
+            If ``True``, the new texture coordinates will be added to
+            the dataset inplace. If ``False`` (default), a new dataset
+            is returned with the texture coordinates.
 
         name : str, optional
             The string name to give the new texture coordinates if applying
@@ -1448,7 +1471,8 @@ class DataSetFilters:
         ...                     show_scalar_bar=False)
         >>> pl.show()
 
-        See :ref:`glyph_example` for more examples using this filter.
+        See :ref:`glyph_example` and :ref:`glyph_table_example` for more
+        examples using this filter.
 
         """
         # Clean the points before glyphing
@@ -1612,7 +1636,7 @@ class DataSetFilters:
         """Find, label, and split connected bodies/volumes.
 
         This splits different connected bodies into blocks in a
-        MultiBlock dataset.
+        ``MultiBlock`` dataset.
 
         Parameters
         ----------
@@ -1622,6 +1646,8 @@ class DataSetFilters:
 
         Examples
         --------
+        Split a uniform grid thresholded to be non-connected.
+
         >>> from pyvista import examples
         >>> dataset = examples.load_uniform()
         >>> dataset.set_active_scalars('Spatial Cell Data')
@@ -1795,7 +1821,7 @@ class DataSetFilters:
         values of all cells using a particular point. Optionally, the
         input cell data can be passed through to the output as well.
 
-        See also :func:`pyvista.DataSetFilters.point_data_to_cell_data`
+        See also :func:`pyvista.DataSetFilters.point_data_to_cell_data`.
 
         Parameters
         ----------
@@ -2227,7 +2253,7 @@ class DataSetFilters:
 
         The input dataset is typically a point cloud.
 
-        This uses a gaussian interpolation kernel. Use the ``sharpness`` and
+        This uses a Gaussian interpolation kernel. Use the ``sharpness`` and
         ``radius`` parameters to adjust this kernel. You can also switch this
         kernel to use an N closest points approach.
 
@@ -2346,11 +2372,11 @@ class DataSetFilters:
                     **kwargs):
         """Integrate a vector field to generate streamlines.
 
-        The default behavior uses a Sphere as the source - set it's
+        The default behavior uses a sphere as the source - set its
         location and radius via the ``source_center`` and
         ``source_radius`` keyword arguments.  ``n_points`` defines the
         number of starting points on the sphere surface.
-        Alternatively, a Line source can be used by specifying
+        Alternatively, a line source can be used by specifying
         ``pointa`` and ``pointb``.  ``n_points`` again defines the
         number of points on the line.
 
@@ -2688,9 +2714,9 @@ class DataSetFilters:
                        show=True, tolerance=None, fname=None):
         """Sample a dataset along a high resolution line and plot.
 
-        Plot the variables of interest in 2D where the X-axis is distance from
-        Point A and the Y-axis is the variable of interest. Note that this filter
-        returns None.
+        Plot the variables of interest in 2D using matplotlib where the
+        X-axis is distance from Point A and the Y-axis is the variable
+        of interest. Note that this filter returns ``None``.
 
         Parameters
         ----------
@@ -2709,19 +2735,19 @@ class DataSetFilters:
             active scalar is used by default.
 
         title : str, optional
-            The string title of the `matplotlib` figure
+            The string title of the matplotlib figure.
 
         ylabel : str, optional
-            The string label of the Y-axis. Defaults to variable name
+            The string label of the Y-axis. Defaults to variable name.
 
         figsize : tuple(int), optional
-            the size of the new figure
+            The size of the new figure.
 
         figure : bool, optional
-            flag on whether or not to create a new figure
+            Flag on whether or not to create a new figure.
 
         show : bool, optional
-            Shows the matplotlib figure
+            Shows the matplotlib figure.
 
         tolerance: float, optional
             Tolerance used to compute whether a point in the source is in a
@@ -3179,13 +3205,13 @@ class DataSetFilters:
         ind : np.ndarray, list, or sequence
             Numpy array of point indices to be extracted.
         adjacent_cells : bool, optional
-            If True, extract the cells that contain at least one of the
-            extracted points. If False, extract the cells that contain
-            exclusively points from the extracted points list. The default is
-            ``True``.
+            If ``True``, extract the cells that contain at least one of
+            the extracted points. If ``False``, extract the cells that
+            contain exclusively points from the extracted points list.
+            The default is ``True``.
         include_cells : bool, optional
-            Specifies if the cells shall be returned or not. The default is
-            ``True``.
+            Specifies if the cells shall be returned or not. The default
+            is ``True``.
 
         Returns
         -------
@@ -3328,27 +3354,28 @@ class DataSetFilters:
 
         From vtk documentation, the edges are one of the following:
 
-            1) Boundary (used by one polygon) or a line cell
-            2) Non-manifold (used by three or more polygons)
+            1) Boundary (used by one polygon) or a line cell.
+            2) Non-manifold (used by three or more polygons).
             3) Feature edges (edges used by two triangles and whose
-               dihedral angle > feature_angle)
+               dihedral angle > feature_angle).
             4) Manifold edges (edges used by exactly two polygons).
 
         Parameters
         ----------
         feature_angle : float, optional
-            Feature angle used to detect sharp edges on the mesh.
-            Valid only when ``feature_edges=True``.  Defaults to 30
-            degrees.
+            Feature angle (in degrees) used to detect sharp edges on
+            the mesh. Used only when ``feature_edges=True``.  Defaults
+            to 30 degrees.
 
         boundary_edges : bool, optional
             Extract the boundary edges. Defaults to ``True``.
 
         non_manifold_edges : bool, optional
-            Extract non-manifold edges. Defaults to ``True``
+            Extract non-manifold edges. Defaults to ``True``.
 
         feature_edges : bool, optional
-            Extract edgs exceeding ``feature_angle``.  Defaults to ``True``
+            Extract edges exceeding ``feature_angle``.  Defaults to
+            ``True``.
 
         manifold_edges : bool, optional
             Extract manifold edges. Defaults to ``True``.
@@ -3358,7 +3385,7 @@ class DataSetFilters:
 
         Returns
         -------
-        edges : pyvista.vtkPolyData
+        edges : pyvista.PolyData
             Extracted edges.
 
         Examples
@@ -3423,7 +3450,7 @@ class DataSetFilters:
 
         Returns
         -------
-        vtk.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Merged grid.
 
         Notes
@@ -3478,11 +3505,12 @@ class DataSetFilters:
     def compute_cell_quality(dataset, quality_measure='scaled_jacobian', null_value=-1.0):
         """Compute a function of (geometric) quality for each cell of a mesh.
 
-        The per-cell quality is added to the mesh's cell data, in an array
-        named "CellQuality". Cell types not supported by this filter or
-        undefined quality of supported cell types will have an entry of -1.
+        The per-cell quality is added to the mesh's cell data, in an
+        array named ``"CellQuality"``. Cell types not supported by this
+        filter or undefined quality of supported cell types will have an
+        entry of -1.
 
-        Defaults to computing the scaled jacobian.
+        Defaults to computing the scaled Jacobian.
 
         Options for cell quality measure:
 
@@ -3608,22 +3636,22 @@ class DataSetFilters:
         gradient: bool, str, optional
             Calculate gradient. If a string is passed, the string will be used
             for the resulting array name. Otherwise, array name will be
-            'gradient'. Default ``True``.
+            ``'gradient'``. Default ``True``.
 
         divergence: bool, str, optional
             Calculate divergence. If a string is passed, the string will be
             used for the resulting array name. Otherwise, array name will be
-            'divergence'. Default ``None``.
+            ``'divergence'``. Default ``None``.
 
         vorticity: bool, str, optional
             Calculate vorticity. If a string is passed, the string will be used
             for the resulting array name. Otherwise, array name will be
-            'vorticity'. Default ``None``.
+            ``'vorticity'``. Default ``None``.
 
         qcriterion: bool, str, optional
             Calculate qcriterion. If a string is passed, the string will be
             used for the resulting array name. Otherwise, array name will be
-            'qcriterion'. Default ``None``.
+            ``'qcriterion'``. Default ``None``.
 
         faster: bool, optional
             Use faster algorithm for computing derivative quantities. Result is
@@ -3633,7 +3661,7 @@ class DataSetFilters:
             if DataSet is not UnstructuredGrid. Default ``False``.
 
         preference: str, optional
-            Data type preference. Either 'point' or 'cell'.
+            Data type preference. Either ``'point'`` or ``'cell'``.
 
         Returns
         -------
@@ -3642,9 +3670,9 @@ class DataSetFilters:
 
         Examples
         --------
-        First, plot the hills example with the active elevation
-        scalars.  These scalars will be used to compute for
-        derivative calculations.
+        First, plot the random hills dataset with the active elevation
+        scalars.  These scalars will be used for the derivative
+        calculations.
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
@@ -3849,15 +3877,15 @@ class DataSetFilters:
             Normal direction for reflection.
 
         point : tuple(float), optional
-            Point which, along with `normal`, defines the reflection plane. If not
-            specified, this is the origin.
+            Point which, along with ``normal``, defines the reflection 
+            plane. If not specified, this is the origin.
 
         inplace : bool, optional
             When ``True``, modifies the dataset inplace.
 
         transform_all_input_vectors: bool, optional
-            When ``True``, all input vectors are transformed. Otherwise, only the
-            points, normals and active vectors are transformed.
+            When ``True``, all input vectors are transformed. Otherwise,
+            only the points, normals and active vectors are transformed.
 
         Examples
         --------
