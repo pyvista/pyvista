@@ -564,7 +564,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         Parameters
         ----------
         deep : bool, optional
-            When True makes a full copy of the object.
+            When ``True``, make a full copy of the object.
 
         Returns
         -------
