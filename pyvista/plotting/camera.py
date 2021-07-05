@@ -154,6 +154,7 @@ class Camera(_vtk.vtkCamera):
         Examples
         --------
         >>> import pyvista
+        >>> import numpy as np
         >>> pl = pyvista.Plotter()
         >>> pl.camera.model_transform_matrix
         array([[1., 0., 0., 0.],
