@@ -11,3 +11,9 @@ def _get_vtk_id_type():
     elif VTK_ID_TYPE_SIZE == 8:
         return np.int64
     return np.int32
+
+
+class PyvistaDeprecationWarning(Warning):
+    """Non-supressed Depreciation Warning."""
+
+    pass

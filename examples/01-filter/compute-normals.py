@@ -37,7 +37,7 @@ warp.plot(cmap="gist_earth", show_scalar_bar=False)
 
 
 ###############################################################################
-# We could also use face/cell normals to extract a all the faces of a mesh
+# We could also use face/cell normals to extract all the faces of a mesh
 # facing a general direction. In the following snippet, we take a mesh, compute
 # the normals along its cell faces, and extract the faces that face upward.
 

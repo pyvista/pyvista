@@ -23,7 +23,7 @@ python -m pip install -e .
 ## Questions
 
 For general questions about the project, its applications, or about software
-usage, please create an issue in the [pyvista/pyvista-support](https://github.com/pyvista/pyvista-support)
+usage, please create a discussion in the [Discussions](https://github.com/pyvista/pyvista/discussions)
 repository where the community can collectively address your questions.
 You are also welcome to join us on [Slack](http://slack.pyvista.org)
 or send one of the developers an email.
@@ -119,7 +119,7 @@ There are two important copyright guidelines:
    stackoverflow) or commercial use is prohibited. Those can undermine
    the license of the whole projects.
 
-Please also take a look at our [Code of Conduct](https://github.com/pyvista/pyvista/blob/master/CODE_OF_CONDUCT.md)
+Please also take a look at our [Code of Conduct](https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md)
 
 
 ### Contributing to pyvista through GitHub
@@ -144,7 +144,19 @@ following the steps in the
 
 We adhere to [PEP 8](https://www.python.org/dev/peps/pep-0008/)
 wherever possible, except that line widths are permitted to go beyond
-79 characters to a max of 90 to 100 characters.
+79 characters to a max of 99 characters for code.  This should
+tend to be the exception rather than the norm.
+
+As for docstrings, follow the guidelines specified in [PEP 8 Maximum
+Line Length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length)
+of limiting docstrings to 72 characters per line.  This follows the
+directive:
+
+> Some teams strongly prefer a longer line length. For code maintained
+> exclusively or primarily by a team that can reach agreement on this
+> issue, it is okay to increase the line length limit up to 99
+> characters, provided that comments and docstrings are still wrapped
+> at 72 characters.
 
 Outside of PEP 8, when coding please consider [PEP 20 -- The Zen of Python](https://www.python.org/dev/peps/pep-0020/).  When in doubt:
 
@@ -225,19 +237,19 @@ codespell pyvista/ examples/ tests/ -S "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vt
 And finally, test the documentation examples:
 
 ```bash
-cd docs
+cd doc
 make clean
 make doctest
 make html -b linkcheck
 ```
 
-The finished documentation can be found in the `docs/_build/html` directory.
+The finished documentation can be found in the `doc/_build/html` directory.
 
 #### Creating a New Pull Request
 
 Once you have tested your branch locally, create a pull request on
 [pyvista GitHub](https://github.com/pyvista/pyvista) while merging to
-master.  This will automatically run continuous integration (CI)
+main.  This will automatically run continuous integration (CI)
 testing and verify your changes will work across several platforms.
 
 To ensure someone else reviews your code, at least one other member of
@@ -260,7 +272,7 @@ features without sacrificing stability, and closely follows the
 
 The main features of our branching model are:
 
-- The `master` branch is the main development branch.  All features,
+- The `main` branch is the main development branch.  All features,
   patches, and other branches should be merged here.  While all PRs
   should pass all applicable CI checks, this branch may be
   functionally unstable as changes might have introduced unintended
@@ -268,7 +280,7 @@ The main features of our branching model are:
 - There will be one or many `release/` branches based on minor
   releases (for example `release/0.24`) which contain a stable version
   of the code base that is also reflected on PyPI/.  Hotfixes from
-  `fix/` branches should be merged both to master and to these
+  `fix/` branches should be merged both to main and to these
   branches.  When necessary to create a new patch release these
   release branches will have their `__version__.py` updated and be
   tagged with a patched semantic version (e.g. `0.24.1`).  This
@@ -276,11 +288,11 @@ The main features of our branching model are:
   for past versions of `pyvista` without having to worry about
   untested features.
 - When a minor release candidate is ready, a new `release` branch will
-  be created from `master` with the next incremented minor version
+  be created from `main` with the next incremented minor version
   (e.g. `release/0.25`), which will be thoroughly tested.  When deemed
   stable, the release branch will be tagged with the version (`0.25.0`
-  in this case), and if necessary merged with master if any changes
-  were pushed to it.  Feature development then continues on `master`
+  in this case), and if necessary merged with main if any changes
+  were pushed to it.  Feature development then continues on `main`
   and any hotfixes will now be merged with this release.  Older
   release branches should not be deleted so they can be patched as
   needed.
@@ -292,7 +304,7 @@ Minor releases are feature and bug releases that improve the
 functionality and stability of `pyvista`.  Before a minor release is
 created the following will occur:
 
-1.  Create a new branch from the `master` branch with name
+1.  Create a new branch from the `main` branch with name
     `release/MAJOR.MINOR` (e.g. `release/0.25`).
 
 2. Locally run all tests as outlined in the [Testing Section](#testing) 
@@ -302,7 +314,7 @@ and ensure all are passing.
 no links are outdated. Be sure to run `make clean` to ensure no results are
 cached.
     ```bash
-    cd docs
+    cd doc
     make clean  # deletes the sphinx-gallery cache
     make doctest
     make html -b linkcheck
@@ -313,7 +325,7 @@ examples gallery for any obvious issues.
 
 5. Update the version numbers in `pyvista/_version.py` and commit it.
    Push the branch to GitHub and create a new PR for this release that
-   merges it to master.  Development to master should be limited at
+   merges it to main.  Development to main should be limited at
    this point while effort is focused on the release.
 
 6. It is now the responsibility of the `pyvista` community to
@@ -322,7 +334,7 @@ examples gallery for any obvious issues.
    have their hotfixes pushed to this release branch.
 
 7. When the branch is deemed as stable for public release, the PR will
-   be merged to master and the `master` branch will be tagged with a
+   be merged to main and the `main` branch will be tagged with a
    `MAJOR.MINOR.0` release.  The release branch will not be deleted.
    Tag the release with:
 
@@ -333,7 +345,7 @@ examples gallery for any obvious issues.
 
 8. Create a list of all changes for the release. It is often helpful to
 leverage [GitHub's *compare* feature](https://github.com/pyvista/pyvista/compare)
-to see the differences from the last tag and the `master` branch.
+to see the differences from the last tag and the `main` branch.
 Be sure to acknowledge new contributors by their GitHub username and place
 mentions where appropriate if a specific contributor is to thank for a new
 feature.
@@ -358,6 +370,6 @@ Patch releases are for critical and important bugfixes that can not or should no
 
 2. Update `__version__.py` with the next patch increment (e.g. `0.25.1`), commit it, and open a PR that merge with the release branch.  This gives the `pyvista` community a chance to validate and approve the bugfix release.  Any additional hotfixes should be outside of this PR.
 
-3. When approved, merge with the release branch, but not `master` as there is no reason to increment the version of the `master` branch.  Then create a tag from the release branch with the applicable version number (see above for the correct steps).
+3. When approved, merge with the release branch, but not `main` as there is no reason to increment the version of the `main` branch.  Then create a tag from the release branch with the applicable version number (see above for the correct steps).
 
 4. If deemed necessary, create a release notes page.  Also, open the PR from conda and follow the directions in step 10 in the minor release section.

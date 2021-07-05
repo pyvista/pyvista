@@ -2,13 +2,9 @@ import os
 import numpy as np
 from pytest import fixture
 
-# env var testing, but be here before any pyvista imports
-os.environ['PYVISTA_JUPYTER_BACKEND'] = 'none'
-
 import pyvista
 from pyvista import examples
 
-pyvista.set_plot_theme('testing')
 pyvista.OFF_SCREEN = True
 
 
@@ -80,3 +76,13 @@ def spline():
 def tri_cylinder():
     """Triangulated cylinder"""
     return pyvista.Cylinder().triangulate()
+
+@fixture()
+def datasets():
+    return [
+        examples.load_uniform(),  # UniformGrid
+        examples.load_rectilinear(),  # RectilinearGrid
+        examples.load_hexbeam(),  # UnstructuredGrid
+        examples.load_airplane(),  # PolyData
+        examples.load_structured(),  # StructuredGrid
+    ]

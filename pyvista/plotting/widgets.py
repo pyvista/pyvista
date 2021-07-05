@@ -5,7 +5,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import NORMALS, generate_plane, get_array, try_callback
-from .theme import rcParams, parse_color
+from .tools import parse_color
 
 
 class WidgetHelper:
@@ -65,14 +65,14 @@ class WidgetHelper:
             bounds = self.bounds
 
         if color is None:
-            color = rcParams['font']['color']
+            color = pyvista.global_theme.font.color
 
         def _the_callback(box_widget, event_id):
             the_box = pyvista.PolyData()
             box_widget.GetPolyData(the_box)
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if use_planes:
                     args = [planes]
                 else:
@@ -254,7 +254,7 @@ class WidgetHelper:
             normal = NORMALS[normal.lower()]
 
         if color is None:
-            color = rcParams['font']['color']
+            color = pyvista.global_theme.font.color
 
         if assign_to_axis:
             normal_rotation = False
@@ -264,7 +264,7 @@ class WidgetHelper:
             widget.GetPlane(the_plane)
             normal = the_plane.GetNormal()
             origin = the_plane.GetOrigin()
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if pass_widget:
                     try_callback(callback, normal, origin, widget)
                 else:
@@ -625,12 +625,12 @@ class WidgetHelper:
             bounds = self.bounds
 
         if color is None:
-            color = rcParams['font']['color']
+            color = pyvista.global_theme.font.color
 
         def _the_callback(widget, event_id):
             pointa = widget.GetPoint1()
             pointb = widget.GetPoint2()
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if use_vertices:
                     args = [pointa, pointb]
                 else:
@@ -702,8 +702,9 @@ class WidgetHelper:
             slider interacts with the callback.
 
         style : str, optional
-            The name of the slider style. The list of available styles are in
-            ``rcParams['slider_style']``. Defaults to None.
+            The name of the slider style. The list of available styles
+            are in ``pyvista.global_theme.slider_styles``. Defaults to
+            ``None``.
 
         Returns
         -------
@@ -727,7 +728,7 @@ class WidgetHelper:
                 # handle limit index
                 if idx == n_states:
                     idx = n_states - 1
-                if hasattr(callback, '__call__'):
+                if callable(callback):
                     try_callback(callback, data[idx])
             return
 
@@ -766,60 +767,65 @@ class WidgetHelper:
                           title_height=0.03, title_opacity=1.0, title_color=None, fmt=None):
         """Add a slider bar widget.
 
-        This is useless without a callback function. You can pass a callable
-        function that takes a single argument, the value of this slider widget,
-        and performs a task with that value.
+        This is useless without a callback function. You can pass a
+        callable function that takes a single argument, the value of
+        this slider widget, and performs a task with that value.
 
         Parameters
         ----------
         callback : callable
-            The method called every time the slider is updated. This should take
-            a single parameter: the float value of the slider
+            The method called every time the slider is updated. This
+            should take a single parameter: the float value of the
+            slider.
 
         rng : tuple(float)
-            Length two tuple of the minimum and maximum ranges of the slider
+            Length two tuple of the minimum and maximum ranges of the
+            slider.
 
         value : float, optional
-            The starting value of the slider
+            The starting value of the slider.
 
-        title : str
-            The string label of the slider widget
+        title : str, optional
+            The string label of the slider widget.
 
-        pointa : tuple(float)
-            The relative coordinates of the left point of the slider on the
-            display port
+        pointa : tuple(float), optional
+            The relative coordinates of the left point of the slider
+            on the display port.
 
         pointb : tuple(float)
-            The relative coordinates of the right point of the slider on the
-            display port
+            The relative coordinates of the right point of the slider
+            on the display port
 
-        color : string or 3 item list, optional, defaults to white
+        color : string or 3 item list, optional
             Either a string, rgb list, or hex color string.
 
-        pass_widget : bool
-            If true, the widget will be passed as the last argument of the
-            callback
+        pass_widget : bool, optional
+            If ``True``, the widget will be passed as the last
+            argument of the callback.
 
-        event_type : str
-            Either 'start', 'end' or 'always', this defines how often the
-            slider interacts with the callback.
+        event_type : str, optional
+            Either ``'start'``, ``'end'`` or ``'always'``, this
+            defines how often the slider interacts with the callback.
 
         style : str, optional
-            The name of the slider style. The list of available styles are in
-            ``rcParams['slider_style']``. Defaults to None.
+            The name of the slider style. The list of available styles
+            are in ``pyvista.global_theme.slider_styles``. Defaults to
+            ``None``.
 
         title_height: float, optional
-            Relative height of the title as compared to the length of the slider.
+            Relative height of the title as compared to the length of
+            the slider.
 
         title_opacity: str, optional
             Opacity of title. Defaults to 1.0.
 
         title_color : string or 3 item list, optional
-            Either a string, rgb list, or hex color string.  Defaults to the value 
-            given in ``color``.
+            Either a string, rgb list, or hex color string.  Defaults
+            to the value given in ``color``.
 
         fmt : str, optional
-            String formatter used to format numerical data. Defaults to ``None``.
+            String formatter used to format numerical data. Defaults
+            to ``None``.
 
         Examples
         --------
@@ -838,7 +844,7 @@ class WidgetHelper:
         ...     fmt="%0.9f",
         ...     title_height=0.08,
         ... )
-        >>> cpos = pl.show()
+        >>> pl.show()
         """
         if not hasattr(self, "slider_widgets"):
             self.slider_widgets = []
@@ -847,16 +853,16 @@ class WidgetHelper:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
 
         if color is None:
-            color = rcParams['font']['color']
+            color = pyvista.global_theme.font.color
 
         if title_color is None:
             title_color = color
 
         if fmt is None:
-            fmt = rcParams['font']['fmt']
+            fmt = pyvista.global_theme.font.fmt
 
         def normalize(point, viewport):
-            return (point[0]*(viewport[2]-viewport[0]),point[1]*(viewport[3]-viewport[1]))
+            return (point[0]*(viewport[2]-viewport[0]), point[1]*(viewport[3]-viewport[1]))
 
         pointa = normalize(pointa, self.renderer.GetViewport())
         pointb = normalize(pointb, self.renderer.GetViewport())
@@ -884,22 +890,19 @@ class WidgetHelper:
             if not isinstance(style, str):
                 raise TypeError("Expected type for ``style`` is str but"
                                 f" {type(style)} was given.")
-            style_params = rcParams['slider_style'].get(style, None)
-            if style_params is None:
-                raise KeyError("The requested style does not exist: "
-                               f"{style}. The styles available are {list(rcParams['slider_style'].keys())}.")
-            slider_rep.SetSliderLength(style_params['slider_length'])
-            slider_rep.SetSliderWidth(style_params['slider_width'])
-            slider_rep.GetSliderProperty().SetColor(style_params['slider_color'])
-            slider_rep.SetTubeWidth(style_params['tube_width'])
-            slider_rep.GetTubeProperty().SetColor(style_params['tube_color'])
-            slider_rep.GetCapProperty().SetOpacity(style_params['cap_opacity'])
-            slider_rep.SetEndCapLength(style_params['cap_length'])
-            slider_rep.SetEndCapWidth(style_params['cap_width'])
+            slider_style = getattr(pyvista.global_theme.slider_styles, style)
+            slider_rep.SetSliderLength(slider_style.slider_length)
+            slider_rep.SetSliderWidth(slider_style.slider_width)
+            slider_rep.GetSliderProperty().SetColor(slider_style.slider_color)
+            slider_rep.SetTubeWidth(slider_style.tube_width)
+            slider_rep.GetTubeProperty().SetColor(slider_style.tube_color)
+            slider_rep.GetCapProperty().SetOpacity(slider_style.cap_opacity)
+            slider_rep.SetEndCapLength(slider_style.cap_length)
+            slider_rep.SetEndCapWidth(slider_style.cap_width)
 
         def _the_callback(widget, event):
             value = widget.GetRepresentation().GetValue()
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if pass_widget:
                     try_callback(callback, value, widget)
                 else:
@@ -1148,7 +1151,7 @@ class WidgetHelper:
             self.spline_widgets = []
 
         if color is None:
-            color = rcParams['color']
+            color = pyvista.global_theme.color
 
         if bounds is None:
             bounds = self.bounds
@@ -1161,7 +1164,7 @@ class WidgetHelper:
             para_source.Update()
             polyline = pyvista.wrap(para_source.GetOutput())
             ribbon.shallow_copy(polyline.ribbon(normal=(0,0,1), angle=90.0))
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if pass_widget:
                     try_callback(callback, polyline, widget)
                 else:
@@ -1248,8 +1251,8 @@ class WidgetHelper:
             # create the plane for clipping
             polyplane = _vtk.vtkPolyPlane()
             polyplane.SetPolyLine(polyline)
-            alg.SetCutFunction(polyplane) # the cutter to use the poly planes
-            alg.Update() # Perform the Cut
+            alg.SetCutFunction(polyplane)  # the cutter to use the poly planes
+            alg.Update()  # Perform the Cut
             spline_sliced_mesh.shallow_copy(alg.GetOutput())
 
         self.add_spline_widget(callback=callback, bounds=mesh.bounds,
@@ -1261,9 +1264,7 @@ class WidgetHelper:
                                initial_points=initial_points,
                                closed=closed)
 
-        actor = self.add_mesh(spline_sliced_mesh, **kwargs)
-
-        return actor
+        return self.add_mesh(spline_sliced_mesh, **kwargs)
 
     def add_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,
                           theta_resolution=30, phi_resolution=30,
@@ -1277,48 +1278,59 @@ class WidgetHelper:
         Parameters
         ----------
         callback : callable
-            The function to call back when the widget is modified. It takes a
-            single argument: the center of the sphere as a XYZ coordinate.
+            The function to call back when the widget is modified. It
+            takes a single argument: the center of the sphere as an
+            XYZ coordinate (a 3-length sequence).  If multiple centers
+            are passed in the ``center`` parameter, the callback must
+            also accept an index of that widget.
 
-        center : tuple(float)
-            Length 3 array for the XYZ coordinate of the sphere's center
-            when placing it in the scene. If more than one location is passed,
-            then that many widgets will be added and the callback will also
-            be passed the integer index of that widget.
+        center : tuple(float), optional
+            Length 3 array for the XYZ coordinate of the sphere's
+            center when placing it in the scene. If more than one
+            location is passed, then that many widgets will be added
+            and the callback will also be passed the integer index of
+            that widget.
 
-        radius : float
-            The radius of the sphere
+        radius : float, optional
+            The radius of the sphere.
 
-        theta_resolution: int , optional
-            Set the number of points in the longitude direction (ranging from
-            start_theta to end_theta).
+        theta_resolution: int, optional
+            Set the number of points in the longitude direction.
 
         phi_resolution : int, optional
-            Set the number of points in the latitude direction (ranging from
-            start_phi to end_phi).
+            Set the number of points in the latitude direction.
 
-        color : str
-            The color of the sphere's surface
+        color : string or 3 item iterable, optional
+            The color of the sphere's surface.  If multiple centers
+            are passed, then this must be a list of colors.  Each
+            color is either a string, rgb list, or hex color string.
+            For example:
 
-        style : str
-            Representation style: surface or wireframe
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
-        selected_color : str
-            Color of the widget when selected during interaction
+        style : str, optional
+            Representation style: ``'surface'`` or ``'wireframe'``.
 
-        pass_widget : bool
-            If true, the widget will be passed as the last argument of the
-            callback
+        selected_color : str, optional
+            Color of the widget when selected during interaction.
 
-        test_callback: bool
-            if true, run the callback function after the widget is created.
+        pass_widget : bool, optional
+            If ``True``, the widget will be passed as the last
+            argument of the callback.
+
+        test_callback: bool, optional
+            if ``True``, run the callback function after the widget is
+            created.
 
         """
         if not hasattr(self, "sphere_widgets"):
             self.sphere_widgets = []
 
         if color is None:
-            color = rcParams['color']
+            color = pyvista.global_theme.color
 
         center = np.array(center)
         num = 1
@@ -1326,14 +1338,17 @@ class WidgetHelper:
             num = len(center)
 
         if isinstance(color, (list, tuple, np.ndarray)):
-            colors = color
+            if len(color) == num and not isinstance(color[0], float):
+                colors = color
+            else:
+                colors = [color] * num
         else:
             colors = [color] * num
 
         def _the_callback(widget, event_id):
             point = widget.GetCenter()
             index = widget.WIDGET_INDEX
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if num > 1:
                     args = [point, index]
                 else:
@@ -1473,7 +1488,7 @@ class WidgetHelper:
 
         def _the_callback(widget, event):
             state = widget.GetRepresentation().GetState()
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, bool(state))
 
         button_widget.AddObserver(_vtk.vtkCommand.StateChangedEvent, _the_callback)

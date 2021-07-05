@@ -22,7 +22,8 @@ from pyvista import examples
 mesh = examples.download_carotid()
 
 ###############################################################################
-# Run the stream line filtering algorithm.
+# Run the stream line filtering algorithm using random seed points inside a 
+# sphere with radius of 2.0.
 
 streamlines, src = mesh.streamlines(
     return_source=True,
@@ -62,10 +63,40 @@ streamlines, src = mesh.streamlines(
 ###############################################################################
 boundary = mesh.decimate_boundary().extract_all_edges()
 
+sargs=dict(vertical=True, title_font_size=16)
 p = pv.Plotter()
-p.add_mesh(streamlines.tube(radius=0.2), lighting=False)
+p.add_mesh(streamlines.tube(radius=0.2), lighting=False, scalar_bar_args=sargs)
 p.add_mesh(src)
 p.add_mesh(boundary, color="grey", opacity=0.25)
+p.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
+p.show()
+
+
+###############################################################################
+# A source mesh can also be provided using the 
+# :func:`pyvista.DataSetFilters.streamlines_from_source` 
+# filter, for example if an inlet surface is available.  In this example, the
+# inlet surface is extracted just inside the domain for use as the seed for
+# the streamlines.
+
+source_mesh = mesh.slice('z', origin=(0, 0, 182))  # inlet surface
+# thin out ~40% points to get a nice density of streamlines
+seed_mesh = source_mesh.decimate_boundary(0.4)
+streamlines = mesh.streamlines_from_source(seed_mesh, integration_direction="forward")
+# print *only* added arrays from streamlines filter
+print("Added arrays from streamlines filter:")
+print([array_name for array_name in streamlines.array_names if array_name not in mesh.array_names])
+
+###############################################################################
+# Plot streamlines colored by the time along the streamlines.
+
+sargs=dict(vertical=True, title_font_size=16)
+p = pv.Plotter()
+p.add_mesh(streamlines.tube(radius=0.2),
+           scalars="IntegrationTime", clim=[0, 1000], lighting=False,
+           scalar_bar_args=sargs)
+p.add_mesh(boundary, color="grey", opacity=0.25)
+p.add_mesh(source_mesh, color="red")
 p.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
 p.show()
 

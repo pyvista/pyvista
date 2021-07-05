@@ -1,4 +1,5 @@
 """ test pyvista.utilities """
+import warnings
 import pathlib
 import os
 import shutil
@@ -21,9 +22,6 @@ from pyvista.utilities import (
     cells,
     transformations
 )
-
-# Only set this here just the once.
-pyvista.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
 
 
 def test_createvectorpolydata_error():
@@ -110,14 +108,18 @@ def test_read_force_ext_wrong_extension(tmpdir):
     # the returned dataset is empty
     fname = tmpdir / 'airplane.vtu'
     ex.load_airplane().cast_to_unstructured_grid().save(fname)
-    data = fileio.read(fname, force_ext='.vts')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        data = fileio.read(fname, force_ext='.vts')
     assert data.n_points == 0
 
     # try to read a .ply file as .vtm
     # vtkXMLMultiBlockDataReader throws a VTK error about the validity of the XML file
     # the returned dataset is empty
     fname = ex.planefile
-    data = fileio.read(fname, force_ext='.vtm')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        data = fileio.read(fname, force_ext='.vtm')
     assert len(data) == 0
 
 
@@ -468,3 +470,48 @@ def test_apply_transformation_to_points():
     r = transformations.apply_transformation_to_points(tf, points, inplace=True)
     assert r is None
     assert mesh.points == pytest.approx(2 * points_orig)
+
+
+def _generate_vtk_err():
+    """Simple operation which generates a VTK error."""
+    x, y, z = np.meshgrid(
+        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
+    )
+    mesh = pyvista.StructuredGrid(x, y, z)
+    x2, y2, z2 = np.meshgrid(
+        np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5)
+    )
+    mesh2 = pyvista.StructuredGrid(x2, y2, z2)
+
+    alg = vtk.vtkStreamTracer()
+    obs = pyvista.Observer()
+    obs.observe(alg)
+    alg.SetInputDataObject(mesh)
+    alg.SetSourceData(mesh2)
+    alg.Update()
+
+
+def test_vtk_error_catcher():
+    # raise_errors: False
+    error_catcher = pyvista.utilities.errors.VtkErrorCatcher()
+    with error_catcher:
+        _generate_vtk_err()
+        _generate_vtk_err()
+    assert len(error_catcher.events) == 2
+
+    # raise_errors: False, no error
+    error_catcher = pyvista.utilities.errors.VtkErrorCatcher()
+    with error_catcher:
+        pass
+
+    # raise_errors: True
+    error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
+    with pytest.raises(RuntimeError):
+        with error_catcher:
+            _generate_vtk_err()
+    assert len(error_catcher.events) == 1
+
+    # raise_errors: True, no error
+    error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
+    with error_catcher:
+        pass

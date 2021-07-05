@@ -1,8 +1,10 @@
+import numpy as np
 import pytest
+import vtk as _vtk
 
 from pyvista import pyvista_ndarray
 from pyvista import examples
-
+from unittest import mock
 
 def test_slices_are_associated():
     dataset = examples.load_structured()
@@ -12,6 +14,43 @@ def test_slices_are_associated():
     assert points[1, :].VTKObject == points.VTKObject
     assert points[1, :].dataset.Get() == points.dataset.Get()
     assert points[1, :].association == points.association
+
+
+def test_copies_are_not_associated():
+    dataset = examples.load_structured()
+    points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
+    points_2 = points.copy()
+
+    # check that copies of pyvista_ndarray are dissociated from the original dataset
+    assert points_2.VTKObject is None
+    assert points_2.dataset is None
+    assert points_2.association.name == 'NONE'
+    assert not np.shares_memory(points, points_2)
+
+
+def test_modifying_modifies_dataset():
+    dataset = examples.load_structured()
+    points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
+
+    dataset_modified = mock.Mock()
+    array_modified = mock.Mock()
+    dataset.AddObserver(_vtk.vtkCommand.ModifiedEvent, dataset_modified)
+    points.AddObserver(_vtk.vtkCommand.ModifiedEvent, array_modified)
+
+    # __setitem__ calls dataset.Modified() and points.Modified()
+    points[:] *= 0.5
+    assert dataset_modified.call_count == 1
+    assert array_modified.call_count == 1
+
+    # __setitem__ with single-indices works does same
+    points[0, 0] = 0.5
+    assert dataset_modified.call_count == 2
+    assert array_modified.call_count == 2
+
+    # setting all new points calls dataset.Modified()
+    dataset.points = points.copy()
+    assert dataset_modified.call_count == 3
+    assert array_modified.call_count == 2
 
 
 # TODO: This currently doesn't work for single element indexing operations!

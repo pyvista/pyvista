@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 import pyvista
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 # pyvista attr -- value -- vtk name triples:
 configuration = [
@@ -19,6 +20,11 @@ configuration = [
 @pytest.fixture()
 def camera():
     return pyvista.Camera()
+
+
+def test_invalid_init():
+    with pytest.raises(TypeError):
+        pyvista.Camera(1)
 
 
 def test_camera_position(camera):
@@ -83,13 +89,13 @@ def test_up(camera):
 def test_enable_parallel_projection(camera):
     camera.enable_parallel_projection()
     assert camera.GetParallelProjection()
-    assert camera.is_parallel_projection
+    assert camera.parallel_projection
 
 
 def test_disable_parallel_projection(camera):
     camera.disable_parallel_projection()
     assert not camera.GetParallelProjection()
-    assert not camera.is_parallel_projection
+    assert not camera.parallel_projection
 
 
 def test_clipping_range(camera):
@@ -104,6 +110,20 @@ def test_clipping_range(camera):
         far_point = near_point - np.random.random(1)
         points = (near_point, far_point)
         camera.clipping_range = points
+
+
+def test_reset_clipping_range(camera):
+    with pytest.raises(AttributeError):
+        camera.reset_clipping_range()
+
+    # requires renderer for this method
+    crng = (1, 2)
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Sphere())
+    pl.camera.clipping_range = crng
+    assert pl.camera.clipping_range == crng
+    pl.camera.reset_clipping_range()
+    assert pl.camera.clipping_range != crng
 
 
 def test_view_angle(camera):
@@ -201,3 +221,8 @@ def test_copy():
 
    deep = camera.copy()
    assert deep == camera
+
+
+def test_deprecation_warning_of_is_parallel_projection(camera):
+    with pytest.warns(PyvistaDeprecationWarning):
+        _ = camera.is_parallel_projection

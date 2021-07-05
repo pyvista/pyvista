@@ -1,6 +1,11 @@
 name: Unit Testing
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *"
 
 jobs:
   macOS:
@@ -8,7 +13,7 @@ jobs:
     name: Mac OS Unit Testing
     strategy:
       matrix:
-        python-version: ['3.6', '3.7', '3.8']
+        python-version: ['3.6', '3.7', '3.8', '3.9']
 
     env:
       ALLOW_PLOTTING: true

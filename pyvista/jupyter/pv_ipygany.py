@@ -5,7 +5,6 @@ import warnings
 
 import numpy as np
 from IPython import display
-from traitlets import Enum
 
 
 # not to be imported at the init level
@@ -116,7 +115,7 @@ def check_colormap(cmap):
 
     if cmap not in colormaps:
         allowed = ', '.join([f"'{clmp}'" for clmp in colormaps.keys()])
-        raise ValueError(f'``cmap`` "{cmap} is not supported by ``ipygany``\n'
+        raise ValueError(f'``cmap`` "{cmap}" is not supported by ``ipygany``\n'
                          'Pick from one of the following:\n'
                          + allowed)
     return cmap

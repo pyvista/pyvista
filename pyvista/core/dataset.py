@@ -3,6 +3,7 @@
 import collections.abc
 import logging
 from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
+import warnings
 
 import numpy as np
 
@@ -11,6 +12,7 @@ from pyvista import _vtk
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                raise_not_matching, vtk_id_list_to_array,
                                abstract_class, axis_rotation, transformations)
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -242,11 +244,21 @@ class DataSet(DataSetFilters, DataObject):
     @property
     def vectors(self) -> Optional[pyvista_ndarray]:
         """Return active vectors."""
+        warnings.warn( "Use of `DataSet.vectors` is deprecated. "
+            "Use `DataSet.active_vectors` instead.",
+            PyvistaDeprecationWarning
+        )
         return self.active_vectors
 
     @vectors.setter
     def vectors(self, array: np.ndarray):
         """Set the active vector."""
+        warnings.warn("Use of `DataSet.vectors` to add vector data is deprecated. "
+            "Use `DataSet['vector_name'] = data`. "
+            "Use `DataSet.active_vectors_name = 'vector_name' to make active."
+            ,
+            PyvistaDeprecationWarning
+        )
         if array.ndim != 2:
             raise ValueError('vector array must be a 2-dimensional array')
         elif array.shape[1] != 3:
@@ -466,7 +478,7 @@ class DataSet(DataSetFilters, DataObject):
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
 
-    def rotate_x(self, angle: float, transform_all_input_vectors=False):
+    def rotate_x(self, angle: float, point=None, transform_all_input_vectors=False):
         """Rotate mesh about the x-axis.
 
         Parameters
@@ -474,11 +486,22 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
         """
-        t = transformations.axis_angle_rotation((1, 0, 0), angle, deg=True)
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_y(self, angle: float, transform_all_input_vectors=False):
+    def rotate_y(self, angle: float, point=None, transform_all_input_vectors=False):
         """Rotate mesh about the y-axis.
 
         Parameters
@@ -486,11 +509,22 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
+        point : float, optional
+            Point to rotate about.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
         """
-        t = transformations.axis_angle_rotation((0, 1, 0), angle, deg=True)
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_z(self, angle: float, transform_all_input_vectors=False):
+    def rotate_z(self, angle: float, point=None, transform_all_input_vectors=False):
         """Rotate mesh about the z-axis.
 
         Parameters
@@ -498,8 +532,47 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
         """
-        t = transformations.axis_angle_rotation((0, 0, 1), angle, deg=True)
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+
+    def rotate_vector(self, vector: List[float], angle, point=None, transform_all_input_vectors=False):
+        """Rotate mesh about the vector.
+
+        Parameters
+        ----------
+        vector : tuple
+            Axes to rotate about.
+
+        angle : float
+            Angle in degrees to rotate about the vector.
+
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+        """
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(vector) != 3:
+            raise ValueError('Vector must be a vector of 3 values.')
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
     def translate(self, xyz: Union[list, tuple, np.ndarray]):

@@ -7,8 +7,6 @@ from hypothesis.extra.numpy import arrays, array_shapes
 from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
 
-from .test_filters import DATASETS
-
 import pyvista
 from pyvista import examples, Texture
 
@@ -453,13 +451,13 @@ def test_texture_airplane():
 
 def test_invalid_vector(grid):
     with pytest.raises(ValueError):
-        grid.vectors = np.empty(10)
+        grid["vectors"] = np.empty(10)
 
     with pytest.raises(ValueError):
-        grid.vectors = np.empty((3, 2))
+        grid["vectors"] = np.empty((3, 2))
 
     with pytest.raises(ValueError):
-        grid.vectors = np.empty((3, 3))
+        grid["vectors"] = np.empty((3, 3))
 
 
 def test_no_t_coords(grid):
@@ -470,7 +468,7 @@ def test_no_arrows(grid):
     assert grid.arrows is None
 
 
-def test_arrows(grid):
+def test_arrows():
     sphere = pyvista.Sphere(radius=3.14)
 
     # make cool swirly pattern
@@ -479,16 +477,16 @@ def test_arrows(grid):
                          np.cos(sphere.points[:, 2]))).T
 
     # add and scales
-    sphere.vectors = vectors*0.3
+    sphere["vectors"] = vectors*0.3
+    sphere.set_active_vectors("vectors")
     assert np.allclose(sphere.active_vectors, vectors*0.3)
-    assert np.allclose(sphere.vectors, vectors*0.3)
+    assert np.allclose(sphere["vectors"], vectors*0.3)
 
-    assert sphere.active_vectors_info[1] == '_vectors'
+    assert sphere.active_vectors_info[1] == 'vectors'
     arrows = sphere.arrows
     assert isinstance(arrows, pyvista.PolyData)
     assert np.any(arrows.points)
-    sphere.set_active_vectors('_vectors')
-    assert sphere.active_vectors_name == '_vectors'
+    assert arrows.active_vectors_name == 'vectors'
 
 
 def active_component_consistency_check(grid, component_type, field_association="point"):
@@ -992,32 +990,73 @@ def test_cell_type(grid):
     assert isinstance(ctype, int)
 
 
-@pytest.mark.parametrize('dataset', DATASETS)
-def test_serialize_deserialize(dataset):
-    dataset_2 = pickle.loads(pickle.dumps(dataset))
 
-    # check python attributes are the same
-    for attr in dataset.__dict__:
-        assert getattr(dataset_2, attr) == getattr(dataset, attr)
+def test_serialize_deserialize(datasets):
+    for dataset in datasets:
+        dataset_2 = pickle.loads(pickle.dumps(dataset))
 
-    # check data is the same
-    for attr in ('n_cells', 'n_points', 'n_arrays'):
-        if hasattr(dataset, attr):
+        # check python attributes are the same
+        for attr in dataset.__dict__:
             assert getattr(dataset_2, attr) == getattr(dataset, attr)
 
-    for attr in ('cells', 'points'):
-        if hasattr(dataset, attr):
-            assert getattr(dataset_2, attr) == \
-                   pytest.approx(getattr(dataset, attr))
+        # check data is the same
+        for attr in ('n_cells', 'n_points', 'n_arrays'):
+            if hasattr(dataset, attr):
+                assert getattr(dataset_2, attr) == getattr(dataset, attr)
 
-    for name in dataset.point_arrays:
-        assert dataset_2.point_arrays[name] == \
-               pytest.approx(dataset.point_arrays[name])
+        for attr in ('cells', 'points'):
+            if hasattr(dataset, attr):
+                arr_have = getattr(dataset_2, attr)
+                arr_expected = getattr(dataset, attr)
+                assert arr_have == pytest.approx(arr_expected)
 
-    for name in dataset.cell_arrays:
-        assert dataset_2.cell_arrays[name] == \
-               pytest.approx(dataset.cell_arrays[name])
+        for name in dataset.point_arrays:
+            arr_have = dataset_2.point_arrays[name]
+            arr_expected = dataset.point_arrays[name]
+            assert arr_have == pytest.approx(arr_expected)
 
-    for name in dataset.field_arrays:
-        assert dataset_2.field_arrays[name] == \
-               pytest.approx(dataset.field_arrays[name])
+        for name in dataset.cell_arrays:
+            arr_have = dataset_2.cell_arrays[name]
+            arr_expected = dataset.cell_arrays[name]
+            assert arr_have == pytest.approx(arr_expected)
+
+        for name in dataset.field_arrays:
+            arr_have = dataset_2.field_arrays[name]
+            arr_expected = dataset.field_arrays[name]
+            assert arr_have == pytest.approx(arr_expected)
+
+
+def test_rotations_should_match_by_a_360_degree_difference():
+    mesh = examples.load_airplane()
+
+    point = np.random.random(3) - 0.5
+    angle = (np.random.random() - 0.5) * 360.0
+    vector = np.random.random(3) - 0.5
+
+    # Rotate about x axis.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_x(angle=angle, point=point)
+    rot2.rotate_x(angle=angle - 360.0, point=point)
+    assert np.allclose(rot1.points, rot2.points)
+
+    # Rotate about y axis.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_y(angle=angle, point=point)
+    rot2.rotate_y(angle=angle - 360.0, point=point)
+    assert np.allclose(rot1.points, rot2.points)
+
+    # Rotate about z axis.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_z(angle=angle, point=point)
+    rot2.rotate_z(angle=angle - 360.0, point=point)
+    assert np.allclose(rot1.points, rot2.points)
+
+    # Rotate about custom vector.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_vector(vector=vector, angle=angle, point=point)
+    rot2.rotate_vector(vector=vector, angle=angle - 360.0, point=point)
+    assert np.allclose(rot1.points, rot2.points)

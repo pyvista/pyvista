@@ -2,7 +2,7 @@
 PyVista
 #######
 
-.. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_banner_small.png
+.. image:: https://github.com/pyvista/pyvista/raw/main/doc/_static/pyvista_banner_small.png
    :target: https://docs.pyvista.org/examples/index.html
    :alt: pyvista
 
@@ -19,10 +19,13 @@ PyVista
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
-.. |azure| image:: https://dev.azure.com/pyvista/PyVista/_apis/build/status/pyvista.pyvista?branchName=master
-   :target: https://dev.azure.com/pyvista/PyVista/_build/latest?definitionId=3&branchName=master
+.. |azure| image:: https://dev.azure.com/pyvista/PyVista/_apis/build/status/pyvista.pyvista?branchName=main
+   :target: https://dev.azure.com/pyvista/PyVista/_build/latest?definitionId=3&branchName=main
 
-.. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/master/graph/badge.svg
+.. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
+   :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
+
+.. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/pyvista/pyvista
 
 .. |codacy| image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
@@ -34,24 +37,30 @@ PyVista
 .. |slack| image:: https://img.shields.io/badge/Slack-pyvista-green.svg?logo=slack
    :target: http://slack.pyvista.org
 
-.. |gitter| image:: https://img.shields.io/gitter/room/pyvista/community?color=darkviolet
-   :target: https://gitter.im/pyvista/community
+.. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
+   :target: https://pypi.org/project/pyvista/
 
+.. |condaact| image:: https://img.shields.io/conda/dn/conda-forge/pyvista.svg?label=Conda%20downloads
+   :target: https://anaconda.org/conda-forge/pyvista
 
+.. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
+   :target: https://github.com/pyvista/pyvista/discussions
 
-+----------------------+------------------------+
-| Deployment           | |pypi| |conda|         |
-+----------------------+------------------------+
-| Build Status         | |azure|                |
-+----------------------+------------------------+
-| Metrics              | |codacy| |codecov|     |
-+----------------------+------------------------+
-| Citation             | |joss| |zenodo|        |
-+----------------------+------------------------+
-| License              | |MIT|                  |
-+----------------------+------------------------+
-| Community            | |slack| |gitter|       |
-+----------------------+------------------------+
++----------------------+-----------+------------+
+| Deployment           | |pypi|    |   |conda|  |
++----------------------+-----------+------------+
+| Build Status         | |azure|   |   |GH-CI|  |
++----------------------+-----------+------------+
+| Metrics              | |codacy|  |  |codecov| |
++----------------------+-----------+------------+
+| Activity             | |PyPIact| | |condaact| |
++----------------------+-----------+------------+
+| Citation             | |joss|    |  |zenodo|  |
++----------------------+-----------+------------+
+| License              | |MIT|     |            |
++----------------------+-----------+------------+
+| Community            | |slack|   |  |discuss| |
++----------------------+-----------+------------+
 
 
     3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
@@ -86,7 +95,7 @@ Highlights
 ==========
 
 .. |binder| image:: https://static.mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
+   :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/main
    :alt: Launch on Binder
 
 Head over to the `Quick Examples`_ page in the docs to explore our gallery of
@@ -123,12 +132,12 @@ Refer to the `documentation <http://docs.pyvista.org/>`_ for detailed
 installation and usage details.
 
 For general questions about the project, its applications, or about software
-usage, please create an issue in the `pyvista/pyvista-support`_ repository
+usage, please create a discussion in `pyvista/discussions`_
 where the community can collectively address your questions. You are also
 welcome to join us on Slack_ or send one of the developers an email.
 The project support team can be reached at `info@pyvista.org`_.
 
-.. _pyvista/pyvista-support: https://github.com/pyvista/pyvista-support
+.. _pyvista/discussions: https://github.com/pyvista/pyvista/discussions
 .. _Slack: http://slack.pyvista.org
 .. _info@pyvista.org: mailto:info@pyvista.org
 
@@ -183,7 +192,7 @@ Please take a look at the `contributors page`_ and the active `list of authors`_
 to learn more about the developers of PyVista.
 
 .. _contributors page: https://github.com/pyvista/pyvista/graphs/contributors/
-.. _list of authors: http://docs.pyvista.org/authors
+.. _list of authors: https://docs.pyvista.org/getting-started/authors.html#authors
 
 
 Contributing
@@ -197,8 +206,8 @@ tool for all users while encouraging every member of the commutinity to share
 their ideas. To learn more about contributing to PyVista, please see the
 `Contributing Guide`_ and our `Code of Conduct`_.
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md
-.. _Code of Conduct: https://github.com/pyvista/pyvista/blob/master/CODE_OF_CONDUCT.md
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md
+.. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
 
 
 Citing PyVista
@@ -210,7 +219,7 @@ If you are using PyVista in your scientific research, please help our scientific
 visibility by citing our work!
 
 
-    Sullivan et al., (2019). PyVista: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK). Journal of Open Source Software, 4(37), 1450, https://doi.org/10.21105/joss.01450
+    Sullivan and Kaszynski, (2019). PyVista: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK). Journal of Open Source Software, 4(37), 1450, https://doi.org/10.21105/joss.01450
 
 
 BibTex:
@@ -221,12 +230,12 @@ BibTex:
       doi = {10.21105/joss.01450},
       url = {https://doi.org/10.21105/joss.01450},
       year = {2019},
-      month = {may},
+      month = {May},
       publisher = {The Open Journal},
       volume = {4},
       number = {37},
       pages = {1450},
       author = {C. Bane Sullivan and Alexander Kaszynski},
-      title = {{PyVista}: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit ({VTK})},
+      title = {{PyVista}: {3D} plotting and mesh analysis through a streamlined interface for the {Visualization Toolkit} ({VTK})},
       journal = {Journal of Open Source Software}
     }

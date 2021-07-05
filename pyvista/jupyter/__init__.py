@@ -1,16 +1,62 @@
 """Jupyter notebook plotting module."""
 
-import os
-from .. import rcParams
+import pyvista
 from .itkplotter import PlotterITK
 
 ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'none']
 
 
-def check_backend_env_var():
-    """Set ipyvtk_vtk rcParam flag for interactive notebook rendering."""
-    if 'PYVISTA_JUPYTER_BACKEND' in os.environ:
-        set_jupyter_backend(os.environ['PYVISTA_JUPYTER_BACKEND'])
+def _validate_jupyter_backend(backend):
+    """Validate that a jupyter backend is valid.
+
+    Returns the normalized name of the backend. Raises if the backend is invalid.
+
+    """
+    # Must be a string
+    if backend is None:
+        backend = 'none'
+    backend = backend.lower()
+
+    try:
+        import IPython
+    except ImportError:  # pragma: no cover
+        raise ImportError('Install IPython to display with pyvista in a notebook.')
+
+    if backend == 'ipyvtk_simple':
+        try:
+            import ipyvtklink
+        except ImportError:
+            raise ImportError('Please install `ipyvtklink`. `ipyvtk_simple` '
+                              'is deprecated.')
+        else:
+            backend = 'ipyvtklink'
+
+    if backend not in ALLOWED_BACKENDS:
+        backend_list_str = ', '.join([f'"{item}"' for item in ALLOWED_BACKENDS])
+        raise ValueError(f'Invalid Jupyter notebook plotting backend "{backend}".\n'
+                         f'Use one of the following:\n{backend_list_str}')
+
+    # verify required packages are installed
+    if backend == 'ipyvtklink':
+        try:
+            import ipyvtklink
+        except ImportError:    # pragma: no cover
+            raise ImportError('Please install `ipyvtklink` to use this feature.')
+
+    if backend == 'panel':
+        try:
+            import panel
+        except ImportError:  # pragma: no cover
+            raise ImportError('Please install `panel` to use this feature.')
+        panel.extension('vtk')
+
+    if backend == 'ipygany':
+        # raises an import error when fail
+        from pyvista.jupyter import pv_ipygany
+
+    if backend == 'none':
+        backend = None
+    return backend
 
 
 def set_jupyter_backend(backend):
@@ -54,19 +100,19 @@ def set_jupyter_backend(backend):
     Enable the ipygany backend.
 
     >>> import pyvista as pv
-    >>> pv.set_jupyter_backend('ipygany')
+    >>> pv.set_jupyter_backend('ipygany')  # doctest:+SKIP
 
     Enable the panel backend.
 
-    >>> pv.set_jupyter_backend('panel')
+    >>> pv.set_jupyter_backend('panel')  # doctest:+SKIP
 
     Enable the ipyvtklink backend.
 
-    >>> pv.set_jupyter_backend('ipyvtklink')
+    >>> pv.set_jupyter_backend('ipyvtklink')  # doctest:+SKIP
 
     Just show static images.
 
-    >>> pv.set_jupyter_backend('static')
+    >>> pv.set_jupyter_backend('static')  # doctest:+SKIP
 
     Disable all plotting within JupyterLab and display using a
     standard desktop VTK render window.
@@ -74,53 +120,4 @@ def set_jupyter_backend(backend):
     >>> pv.set_jupyter_backend(None)  # or 'none'
 
     """
-    # Must be a string
-    if backend is None:
-        backend = 'none'
-    backend = backend.lower()
-
-    try:
-        import IPython
-    except ImportError:  # pragma: no cover
-        raise ImportError('Install IPython to display with pyvista in a notebook.')
-
-    if backend == 'ipyvtk_simple':
-        try:
-            import ipyvtklink
-        except ImportError:
-            raise ImportError('Please install `ipyvtklink`. `ipyvtk_simple` '
-                              'is deprecated.')
-        else:
-            backend = 'ipyvtklink'
-
-    if backend not in ALLOWED_BACKENDS:
-        backend_list_str = ', '.join([f'"{item}"' for item in ALLOWED_BACKENDS])
-        raise ValueError(f'Invalid Jupyter notebook plotting backend "{backend}".\n'
-                         f'Use one of the following:\n{backend_list_str}')
-
-    # verify required packages are installed
-    if backend == 'ipyvtklink':
-        try:
-            import ipyvtklink
-        except ImportError:    # pragma: no cover
-            raise ImportError('Please install `ipyvtklink` to use this feature')
-
-    if backend == 'panel':
-        try:
-            import panel
-        except ImportError:  # pragma: no cover
-            raise ImportError('Please install `panel` to use this feature')
-        panel.extension('vtk')
-
-    if backend == 'ipygany':
-        # raises an import error when fail
-        import pyvista.jupyter.pv_ipygany
-
-    if backend == 'none':
-        backend = None
-
-    rcParams['jupyter_backend'] = backend
-
-
-# this will run on __init__ to set the backend
-check_backend_env_var()
+    pyvista.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
