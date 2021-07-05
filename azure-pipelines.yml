@@ -76,14 +76,6 @@ jobs:
     displayName: Cache pip
 
   - script: |
-      pytest -v --doctest-modules pyvista
-    displayName: 'Test Package Docstrings'
-
-  - script: |
-      make doctest-modules-local-namespace
-    displayName: 'Test Package Docstrings with Local Namespace'
-
-  - script: |
       pip install wheel
       python setup.py bdist_wheel
       pip install dist/pyvista*.whl
@@ -99,7 +91,15 @@ jobs:
       python -c "import pyvista; print(pyvista.Report())"
       which python
       pip list
-    displayName: 'Install dependencies'
+    displayName: 'Install test dependencies'
+
+  - script: |
+      pytest -v --doctest-modules pyvista
+    displayName: 'Test Package Docstrings'
+
+  - script: |
+      make doctest-modules-local-namespace
+    displayName: 'Test Package Docstrings with Local Namespace'
 
   # don't run job on no-ci builds
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
