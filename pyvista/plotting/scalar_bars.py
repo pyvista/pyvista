@@ -154,7 +154,7 @@ class ScalarBars():
         color : string or 3 item list, optional
             Either a string, rgb list, or hex color string.  Default
             set by :attr:`pyvista.themes.DefaultTheme.font`.  Can be
-            one of the following:
+            in one of the following formats:
 
             * ``color='white'``
             * ``color='w'``
