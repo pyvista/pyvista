@@ -150,8 +150,25 @@ def verify_cache_image(plotter):
 def test_import_gltf():
     filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.glb')
     pl = pyvista.Plotter()
+
+    with pytest.raises(FileNotFoundError):
+        pl.import_gltf('not a file')
+
     pl.import_gltf(filename)
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_export_gltf(tmpdir, sphere, airplane):
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.gltf'))
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, smooth_shading=True)
+    pl.add_mesh(airplane)
+    pl.export_gltf(filename)
+
+    pl_import = pyvista.Plotter()
+    pl_import.import_gltf(filename)
+    pl_import.show(before_close_callback=verify_cache_image)
 
 
 @skip_not_vtk9
