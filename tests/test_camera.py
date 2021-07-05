@@ -4,6 +4,18 @@ import pytest
 import pyvista
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
+# pyvista attr -- value -- vtk name triples:
+configuration = [
+    ('position', (1, 1, 1), 'SetPosition'),
+    ('focal_point', (2, 2, 2), 'SetFocalPoint'),
+    ('model_transform_matrix', np.arange(4 * 4).reshape(4, 4), 'SetModelTransformMatrix'),
+    ('thickness', 1, 'SetThickness'),
+    ('parallel_scale', 2, 'SetParallelScale'),
+    ('up', (0, 0, 1), 'SetViewUp'),
+    ('clipping_range', (4, 5), 'SetClippingRange'),
+    ('view_angle', 90.0, 'SetViewAngle'),
+    ('roll', 180.0, 'SetRoll'),
+]
 
 @pytest.fixture()
 def camera():
@@ -42,6 +54,9 @@ def test_distance(camera):
     camera.focal_point = focal_point
     assert np.isclose(camera.distance, np.linalg.norm(focal_point - position, ord=2),
                       rtol=1E-8)
+    distance = np.random.random()
+    camera.distance = distance
+    assert np.isclose(camera.distance, distance)
 
 
 def test_thickness(camera):
@@ -113,6 +128,9 @@ def test_reset_clipping_range(camera):
 
 def test_view_angle(camera):
     assert camera.GetViewAngle() == camera.view_angle
+    view_angle = 60.0
+    camera.view_angle = view_angle
+    assert camera.GetViewAngle() == view_angle
 
 
 def test_direction(camera):
@@ -166,6 +184,44 @@ def test_azimuth(camera):
 
     camera.azimuth = 180.0
     assert np.allclose(camera.GetPosition(), (-2.0, 0.0, 0.0))
+
+
+def test_eq():
+    camera = pyvista.Camera()
+    other = pyvista.Camera()
+    for camera_now in camera, other:
+        for name, value, _ in configuration:
+            setattr(camera_now, name, value)
+
+    assert camera == other
+
+    # check that changing anything will break equality
+    for name, value, _ in configuration:
+        original_value = getattr(other, name)
+        if isinstance(value, bool):
+            changed_value = not value
+        elif isinstance(value, (int, float)):
+            changed_value = 0
+        elif isinstance(value, tuple):
+            changed_value = (0.5, 0.5, 0.5)
+        else:
+            changed_value = -value
+        setattr(other, name, changed_value)
+        assert camera != other
+        setattr(other, name, original_value)
+
+    # sanity check that we managed to restore the original state
+    assert camera == other
+
+
+def test_copy():
+   camera = pyvista.Camera()
+   for name, value, _ in configuration:
+       setattr(camera, name, value)
+
+   deep = camera.copy()
+   assert deep == camera
+
 
 def test_deprecation_warning_of_is_parallel_projection(camera):
     with pytest.warns(PyvistaDeprecationWarning):
