@@ -342,13 +342,17 @@ if VTK9:
     from vtkmodules.vtkChartsCore import (vtkChart,
                                           vtkChartXY,
                                           vtkChartXYZ,
+                                          vtkChartBox,
+                                          vtkChartPie,
                                           vtkAxis,
                                           vtkPlotLine,
                                           vtkPlotLine3D,
                                           vtkPlotPoints,
                                           vtkPlotPoints3D,
                                           vtkPlotArea,
-                                          vtkPlotBox)
+                                          vtkPlotBar,
+                                          vtkPlotBox,
+                                          vtkPlotPie)
     from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
     from vtkmodules.vtkCommonColor import vtkColorSeries
 
