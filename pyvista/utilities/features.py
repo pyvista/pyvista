@@ -107,6 +107,27 @@ def single_triangle():
     return pyvista.PolyData(points, cells)
 
 
+def single_circle():
+    """Create a single PolyData circle."""
+    resolution = 100
+    radius = 0.5
+    points = np.zeros((resolution, 3))
+    theta = np.linspace(0.0, 2.0*np.pi, resolution)
+    points[:, 0] = radius * np.cos(theta)
+    points[:, 1] = radius * np.sin(theta)
+    cells = np.array([np.append(np.array([resolution]), np.arange(100))], ctypes.c_long)
+    return pyvista.PolyData(points, cells)
+
+
+def single_rectangle():
+    """Create a single PolyData rectangle."""
+    points = np.zeros((4, 3))
+    points[:, 0] = [1, 1, 0, 0]
+    points[:, 1] = [0, 1, 1, 0]
+    cells = np.array([[4, 0, 1, 2, 3]], ctypes.c_long)
+    return pyvista.PolyData(points, cells)
+
+
 def grid_from_sph_coords(theta, phi, r):
     """Create a structured grid from arrays of spherical coordinates.
 

@@ -3373,7 +3373,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._save_image(self.image, filename, return_img)
 
     def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
-                   size=None, name=None, origin=None):
+                   size=None, name=None, origin=None, face=None):
         """Add a legend to render window.
 
         Entries must be a list containing one string and color entry for each
@@ -3416,6 +3416,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         origin : list, optional
             If used, specifies the x and y position of the lower left corner
             of the legend.
+
+        face : str, optional
+            Face shape of legend face.
+            Accepted options:
+
+            * ``'triangle'``
+            * ``'circle'``
+            * ``'rectangle'``
+
+            Default is ``'triangle'``.
 
         Returns
         -------
@@ -3466,7 +3476,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         else:
             self.legend.SetNumberOfEntries(len(labels))
-            legendface = pyvista.single_triangle()
+
+            if (face is None) or (face == "triangle"):
+                legendface = pyvista.single_triangle()
+            elif (face == "circle"):
+                legendface = pyvista.single_circle()
+            elif (face == "rectangle"):
+                legendface = pyvista.single_rectangle()
+            else:
+                raise ValueError('Invalid face.  Must be one of the following:\n'
+                                 '\t"triangle"\n'
+                                 '\t"circle"\n'
+                                 '\t"rectangle"\n')
+
             for i, (text, color) in enumerate(labels):
                 self.legend.SetEntry(i, legendface, text, parse_color(color))
 
