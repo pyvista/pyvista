@@ -364,7 +364,7 @@ def parse_color(color, opacity=None, default_color=None):
     elif len(color) == 3:
         pass
     elif len(color) == 4:
-        opacity = color[3]
+        opacity = color[3]  # TODO: verify/ask whether this addition doesn't break anything
         color = color[:3]
     else:
         raise ValueError(f"""

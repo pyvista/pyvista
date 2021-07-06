@@ -12,8 +12,41 @@ try:
 except ModuleNotFoundError:
     _HAS_MPL = False
 
+#region Some metaclass wrapping magic until a wrapped vtkPlotPie object can be added to a vtkChartPie
+class _vtkWrapperMeta(type):
 
-class ChartInterface(object):
+    def __call__(cls, *args, _wrap=None, **kwargs):
+        # if _wrap is None:
+        #     obj = cls.__new__(cls, *args, **kwargs)
+        # else:
+        #     obj = cls.__new__(_wrap.__class__, _wrap.__this__, *args, **kwargs)
+        obj = cls.__new__(cls, *args, **kwargs)
+        obj._wrapped = _wrap
+        obj.__init__(*args, **kwargs)
+        return obj
+
+
+class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
+
+    def __getattribute__(self, item):
+        unwrapped_attrs = ["_wrapped", "__class__", "__init__"]
+        wrapped = super().__getattribute__("_wrapped")
+        if item in unwrapped_attrs or wrapped is None:
+            return super().__getattribute__(item)
+        else:
+            try:
+                return wrapped.__getattribute__(item)
+            except AttributeError:
+                return super().__getattribute__(item)
+
+    def __str__(self):
+        if self._wrapped is None:
+            return super().__str__()
+        else:
+            return "Wrapped: " + self._wrapped.__str__()
+#endregion
+
+class _ChartInterface(object):
     """ Pythonic interface for vtkChart instances """
 
     @property
@@ -28,7 +61,7 @@ class ChartInterface(object):
         self._resize()
 
     def _resize(self):
-        r_w, r_h = self.renderer.GetSize()
+        r_w, r_h = self.renderer.GetSize()  # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
         _, _, c_w, c_h = self.GetSize()
         # Target size is calculated from specified normalized width and height and the renderer's current size
         t_w = self._size[0] * r_w
@@ -76,8 +109,24 @@ class ChartInterface(object):
     def toggle(self):
         self.visible = not self.visible
 
+    @property
+    def title(self):
+        return self.GetTitle()
 
-class PlotInterface(object):
+    @title.setter
+    def title(self, val):
+        self.SetTitle(val)
+
+    @property
+    def legend(self):
+        return self.GetShowLegend()
+
+    @legend.setter
+    def legend(self, val):
+        self.SetShowLegend(val)
+
+
+class _PlotInterface(object):
     """ Pythonic interface for vtkPlot instances """
 
     LINE_STYLES = {
@@ -100,7 +149,7 @@ class PlotInterface(object):
 
     @classmethod
     def parse_format(cls, fmt):
-        # TODO: first draft, untested
+        # TODO: add tests for different combinations/positions of marker, line and color
         marker_style = ""
         line_style = ""
         color = None
@@ -113,16 +162,16 @@ class PlotInterface(object):
                     if style != "" and fmt.startswith(style):
                         # Loop over all styles such that - and -- can both be checked
                         marker_style = style
-                fmt = fmt.removeprefix(marker_style)
+                fmt = fmt[len(marker_style):]  # Remove marker_style from format string
             if line_style == "":
                 # Line style is not yet set, so look for it at the start of the format string
                 for style in cls.LINE_STYLES.keys():
                     if style != "" and fmt.startswith(style):
                         line_style = style
-                fmt = fmt.removeprefix(line_style)
+                fmt = fmt[len(line_style):]  # Remove line_style from format string
             if color is None:
                 # Color is not yet set, so look for it in the remaining format string
-                for i in range(len(fmt), 1, -1):
+                for i in range(len(fmt), 0, -1):
                     try:
                         parse_color(fmt[:i])
                         color = fmt[:i]
@@ -136,11 +185,13 @@ class PlotInterface(object):
 
     @property
     def color(self):
-        return self.GetColor()
+        return self._color
 
     @color.setter
     def color(self, val):
-        self.SetColor(*parse_color(val))
+        self._color = parse_color(val)
+        self.pen.SetColorF(*self._color)  # Deals with both color and opacity (if it is set)
+        self.brush.SetColorF(*self._color)
 
     @property
     def width(self):
@@ -151,6 +202,20 @@ class PlotInterface(object):
         self.SetWidth(val)
 
     @property
+    def pen(self):
+        """
+        :return: Retrieve vtkPen object controlling how lines in this plot are drawn.
+        """
+        return self.GetPen()
+
+    @property
+    def brush(self):
+        """
+        :return: Retrieve vtkBrush object controlling how shapes in this plot are filled.
+        """
+        return self.GetBrush()
+
+    @property
     def line_style(self):
         return self._line_style
 
@@ -158,7 +223,7 @@ class PlotInterface(object):
     def line_style(self, val):
         if val in self.LINE_STYLES:
             self._line_style = val
-            self.GetPen().SetLineType(self.LINE_STYLES[val])
+            self.pen.SetLineType(self.LINE_STYLES[val])
         else:
             formatted_styles = "\", \"".join(self.LINE_STYLES.keys())
             raise ValueError(f"Invalid line style. Allowed line styles: \"{formatted_styles}\"")
@@ -175,25 +240,277 @@ class PlotInterface(object):
         self.visible = not self.visible
 
 
-class Chart2D(_vtk.vtkChartXY, ChartInterface):
+class _MultiCompPlotInterface(object):
+    """ Pythonic interface for vtkPlot instances with multiple components (e.g. BoxPlot, PiePlot, StackedBarPlot) """
 
-    def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y"):
+    COLOR_SCHEMES = {
+        "spectrum": _vtk.vtkColorSeries.SPECTRUM,
+        "warm": _vtk.vtkColorSeries.WARM,
+        "cool": _vtk.vtkColorSeries.COOL,
+        "blues": _vtk.vtkColorSeries.BLUES,
+        "wild_flower": _vtk.vtkColorSeries.WILD_FLOWER,
+        "citrus": _vtk.vtkColorSeries.CITRUS,
+        "div_purple_orange11": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11,
+        "div_purple_orange10": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_10,
+        "div_purple_orange9": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_9,
+        "div_purple_orange8": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_8,
+        "div_purple_orange7": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_7,
+        "div_purple_orange6": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_6,
+        "div_purple_orange5": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_5,
+        "div_purple_orange4": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_4,
+        "div_purple_orange3": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_3,
+        "div_spectral11": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_11,
+        "div_spectral10": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_10,
+        "div_spectral9": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_9,
+        "div_spectral8": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_8,
+        "div_spectral7": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_7,
+        "div_spectral6": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_6,
+        "div_spectral5": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_5,
+        "div_spectral4": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_4,
+        "div_spectral3": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_3,
+        "div_brown_blue_green11": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_11,
+        "div_brown_blue_green10": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_10,
+        "div_brown_blue_green9": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_9,
+        "div_brown_blue_green8": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_8,
+        "div_brown_blue_green7": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_7,
+        "div_brown_blue_green6": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_6,
+        "div_brown_blue_green5": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_5,
+        "div_brown_blue_green4": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_4,
+        "div_brown_blue_green3": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_3,
+        "seq_blue_green9": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_9,
+        "seq_blue_green8": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_8,
+        "seq_blue_green7": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_7,
+        "seq_blue_green6": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_6,
+        "seq_blue_green5": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_5,
+        "seq_blue_green4": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_4,
+        "seq_blue_green3": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_3,
+        "seq_yellow_orange_brown9": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_9,
+        "seq_yellow_orange_brown8": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_8,
+        "seq_yellow_orange_brown7": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_7,
+        "seq_yellow_orange_brown6": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_6,
+        "seq_yellow_orange_brown5": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_5,
+        "seq_yellow_orange_brown4": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_4,
+        "seq_yellow_orange_brown3": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_3,
+        "seq_blue_purple9": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_9,
+        "seq_blue_purple8": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_8,
+        "seq_blue_purple7": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_7,
+        "seq_blue_purple6": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_6,
+        "seq_blue_purple5": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_5,
+        "seq_blue_purple4": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_4,
+        "seq_blue_purple3": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_3,
+        "qual_accent": _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT,
+        "qual_dark2": _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2,
+        "qual_set3": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3,
+        "qual_set2": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2,
+        "qual_set1": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET1,
+        "qual_pastel2": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL2,
+        "qual_pastel1": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL1,
+        "qual_paired": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED,
+        "custom": _vtk.vtkColorSeries.CUSTOM
+    }
+    _SCHEME_NAMES = {scheme_id: scheme_name for scheme_name, scheme_id in COLOR_SCHEMES.items()}
+    DEFAULT_SCHEME = "qual_accent"
+
+    def __init__(self):
         super().__init__()
-        self._lines = []
-        self._scatters = []
+        self._color_series = _vtk.vtkColorSeries()
+        self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
+        self._labels = _vtk.vtkStringArray()
+        self.SetLabels(self._labels)
+        self.scheme = self.DEFAULT_SCHEME
+
+    @property
+    def scheme(self):
+        return self._SCHEME_NAMES.get(self._color_series.GetColorScheme(), "custom")
+
+    @scheme.setter
+    def scheme(self, val):
+        self._color_series.SetColorScheme(self.COLOR_SCHEMES.get(val, _vtk.vtkColorSeries.CUSTOM))
+        self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
+
+    @property
+    def colors(self):
+        return [self._color_series.GetColor(i) for i in range(self._color_series.GetNumberOfColors())]
+
+    @colors.setter
+    def colors(self, val):
+        if val is None:
+            self.scheme = self.DEFAULT_SCHEME
+        else:
+            self._color_series.SetNumberOfColors(len(val))
+            for i, color in enumerate(val):
+                self._color_series.SetColor(i, parse_color(color)[:3])
+            self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
+
+    @property
+    def labels(self):
+        return [self._labels.GetValue(i) for i in range(self._labels.GetNumberOfValues())]
+
+    @labels.setter
+    def labels(self, val):
+        self._labels.Reset()
+        if val is not None:
+            for label in val:
+                self._labels.InsertNextValue(label)
+
+
+class LinePlot2D(_vtk.vtkPlotLine, _PlotInterface):
+
+    def __init__(self, x, y, color="b", width=1.0, style="-"):
+        super().__init__()
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
+        self.SetInputData(self._table, "x", "y")
+        self.update(x, y)
+        self.color = color
+        self.width = width
+        self.line_style = style
+
+    def update(self, x, y):
+        if len(x) > 1:
+            self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
+            self.visible &= True
+        else:
+            # Turn off visibility for fewer than 2 points as otherwise an error message is shown
+            self.visible = False
+
+
+class ScatterPlot2D(_vtk.vtkPlotPoints, _PlotInterface):
+
+    def __init__(self, x, y, color="b", size=10, style="o"):
+        super().__init__()
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
+        self.SetInputData(self._table, "x", "y")
+        self.update(x, y)
+        self.color = color
+        self.marker_size = size
+        self.marker_style = style
+
+    def update(self, x, y):
+        if len(x) > 0:
+            self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
+            self.visible &= True
+        else:
+            self.visible = False
+
+    @property
+    def marker_size(self):
+        return self.GetMarkerSize()
+
+    @marker_size.setter
+    def marker_size(self, val):
+        self.SetMarkerSize(val)
+
+    @property
+    def marker_style(self):
+        return self._marker_style
+
+    @marker_style.setter
+    def marker_style(self, val):
+        if val in self.MARKER_STYLES:
+            self._marker_style = val
+            self.SetMarkerStyle(self.MARKER_STYLES[val])
+        else:
+            formatted_styles = "\", \"".join(self.MARKER_STYLES.keys())
+            raise ValueError(f"Invalid marker style. Allowed marker styles: \"{formatted_styles}\"")
+
+
+class AreaPlot(_vtk.vtkPlotArea, _PlotInterface):
+
+    def __init__(self, x, y1, y2, color="b"):
+        super().__init__()
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y1": np.empty(0, np.float32), "y2": np.empty(0, np.float32)})
+        self.SetInputData(self._table)
+        self.SetInputArray(0, "x")
+        self.SetInputArray(1, "y1")
+        self.SetInputArray(2, "y2")
+        self.update(x, y1, y2)
+        self.color = color
+
+    def update(self, x, y1, y2):
+        if len(x) > 0:
+            self._table.update({"x": np.array(x, copy=False), "y1": np.array(y1, copy=False), "y2": np.array(y2, copy=False)})
+            self.visible &= True
+        else:
+            self.visible = False
+
+
+class BarPlot(_vtk.vtkPlotBar, _PlotInterface):
+
+    ORIENTATIONS = {
+        "H": _vtk.vtkPlotBar.HORIZONTAL,
+        "V": _vtk.vtkPlotBar.VERTICAL
+    }
+
+    def __init__(self, x, y, color="b", offset=5, orientation="V"):
+        super().__init__()
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
+        self.SetInputData(self._table, "x", "y")
+        self.update(x, y)
+        self.color = color
+        self.offset = offset
+        self.orientation = orientation
+
+    def update(self, x, y):
+        if len(x) > 0:
+            self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
+            self.visible &= True
+        else:
+            self.visible = False
+
+    @property
+    def offset(self):
+        return self.GetOffset()
+
+    @offset.setter
+    def offset(self, val):
+        self.SetOffset(val)
+
+    @property
+    def orientation(self):
+        return self._orientation
+
+    @orientation.setter
+    def orientation(self, val):
+        if val in self.ORIENTATIONS:
+            self._orientation = val
+            self.SetOrientation(self.ORIENTATIONS[val])
+        else:
+            formatted_orientations = "\", \"".join(self.ORIENTATIONS.keys())
+            raise ValueError(f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"")
+
+
+class Chart2D(_vtk.vtkChartXY, _ChartInterface):
+    PLOT_TYPES = {
+        "scatter": ScatterPlot2D,
+        "line": LinePlot2D,
+        "area": AreaPlot,
+        "bar": BarPlot
+    }
+
+    def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):
+        super().__init__()
+        self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
         self.SetAutoSize(False)  # We manually set the appropriate size
         self.size = size
         self.loc = loc
         self.x_label = x_label
         self.y_label = y_label
+        self.grid = grid
 
     def render_event(self, *args, **kwargs):
         self.RecalculateBounds()
         super().render_event(*args, **kwargs)
 
+    def _add_plot(self, plot_type, *args, **kwargs):
+        plot = self.PLOT_TYPES[plot_type](*args, **kwargs)
+        self.AddPlot(plot)
+        self._plots[plot_type].append(plot)
+        return plot
+
     def plot(self, x, y, fmt):
         """ Matplotlib like plot method """
-        marker_style, line_style, color = PlotInterface.parse_format(fmt)
+        # TODO: make x and fmt optional, allow multiple ([x], y, [fmt]) entries
+        marker_style, line_style, color = _PlotInterface.parse_format(fmt)
         scatter_plot, line_plot = None, None
         if marker_style != "":
             scatter_plot = self.scatter(x, y, color, style=marker_style)
@@ -201,25 +518,34 @@ class Chart2D(_vtk.vtkChartXY, ChartInterface):
             line_plot = self.line(x, y, color, style=line_style)
         return scatter_plot, line_plot
 
-    def scatter(self, x, y, color="b", size=1.0, style="o"):
-        plot = ScatterPlot2D(x, y, color, size, style)
-        self.AddPlot(plot)
-        self._scatters.append(plot)
-        return plot
+    def scatter(self, x, y, color="b", size=10, style="o"):
+        return self._add_plot("scatter", x, y, color=color, size=size, style=style)
 
     def line(self, x, y, color="b", width=1.0, style="-"):
-        plot = LinePlot2D(x, y, color, width, style)
-        self.AddPlot(plot)
-        self._lines.append(plot)
-        return plot
+        return self._add_plot("line", x, y, color=color, width=width, style=style)
+
+    def area(self, x, y1, y2, color="b"):
+        return self._add_plot("area", x, y1, y2, color=color)
+
+    def bar(self, x, y, color="b", offset=5, orientation="V"):
+        return self._add_plot("bar", x, y, color=color, offset=offset, orientation=orientation)
+
+    def plots(self, plot_type=None):
+        if plot_type is None:
+            for plots in self._plots.values():
+                for plot in plots:
+                    yield plot
+        else:
+            for plot in self._plots[plot_type]:
+                yield plot
 
     @property
     def x_axis(self):
-        return self.GetAxis(1)
+        return self.GetAxis(_vtk.vtkAxis.BOTTOM)
 
     @property
     def y_axis(self):
-        return self.GetAxis(0)
+        return self.GetAxis(_vtk.vtkAxis.LEFT)
 
     @property
     def x_label(self):
@@ -261,70 +587,132 @@ class Chart2D(_vtk.vtkChartXY, ChartInterface):
             self.y_axis.SetBehavior(_vtk.vtkAxis.FIXED)
             self.y_axis.SetRange(val)
 
-
-class LinePlot2D(_vtk.vtkPlotLine, PlotInterface):
-
-    def __init__(self, x, y, color="b", width=1.0, style="-"):
-        super().__init__()
-        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
-        self.SetInputData(self._table, "x", "y")
-        self.update(x, y)
-        self.color = color
-        self.width = width
-        self.line_style = style
-
-    def update(self, x, y):
-        if len(x) > 1:
-            self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
-            self.visible = True
-        else:
-            # Turn off visibility for fewer than 2 points as otherwise an error message is shown
-            self.visible = False
-
-
-class ScatterPlot2D(_vtk.vtkPlotPoints, PlotInterface):
-
-    def __init__(self, x, y, color="b", size=1.0, style="o"):
-        super().__init__()
-        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
-        self.SetInputData(self._table, "x", "y")
-        self.update(x, y)
-        self.color = color
-        self.marker_size = size
-        self.marker_style = style
-
-    def update(self, x, y):
-        self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
+    # TODO: ticks/labels. Maybe create vtkAxis wrapper?
 
     @property
-    def marker_size(self):
-        return self.GetMarkerSize()
+    def grid(self):
+        return self._grid
 
-    @marker_size.setter
-    def marker_size(self, val):
-        self.SetMarkerSize(val)
+    @grid.setter
+    def grid(self, val):
+        self._grid = bool(val)
+        self.x_axis.SetGridVisible(self._grid)
+        self.y_axis.SetGridVisible(self._grid)
+
+
+class BoxPlot(_vtk.vtkPlotBox, _PlotInterface, _MultiCompPlotInterface):
+
+    def __init__(self, data, colors=None):
+        super().__init__()
+        self._table = pyvista.Table(data)
+        self._quartiles = _vtk.vtkComputeQuartiles()
+        self._quartiles.SetInputData(self._table)
+        self.SetInputData(self._quartiles.GetOutput())
+        self.update(data)
+        self.SetLookupTable(self._lookup_table)
+        if isinstance(colors, str):
+            self.scheme = colors
+        else:
+            self.colors = colors
+
+    def update(self, data):
+        self._table.update(data)
+        self._quartiles.Update()
+
+
+class ChartBox(_vtk.vtkChartBox, _ChartInterface):
+
+    def __init__(self, data):
+        super().__init__()
+        self._plot = BoxPlot(data)
+        self.SetPlot(self._plot)
+        self.SetColumnVisibilityAll(True)
+        self.legend = True
+
+    def render_event(self, *args, **kwargs):
+        pass  # ChartBox fills entire scene by default, so no resizing is needed (nor possible at this moment)
 
     @property
-    def marker_style(self):
-        return self._marker_style
+    def plot(self):
+        return self._plot
 
-    @marker_style.setter
-    def marker_style(self, val):
-        if val in self.MARKER_STYLES:
-            self._marker_style = val
-            self.SetMarkerStyle(self.MARKER_STYLES[val])
+    @property
+    def size(self):
+        return (1, 1)
+
+    @size.setter
+    def size(self, val):
+        raise ValueError("Cannot set ChartBox geometry, it fills up the entire viewport by default.")
+
+    @property
+    def loc(self):
+        return (0, 0)
+
+    @loc.setter
+    def loc(self, val):
+        raise ValueError("Cannot set ChartBox geometry, it fills up the entire viewport by default.")
+
+
+class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _PlotInterface, _MultiCompPlotInterface):
+
+    def __init__(self, data, labels=None, colors=None):
+        super().__init__()
+        self._table = pyvista.Table(data)
+        self.SetInputData(self._table)
+        self.SetInputArray(0, self._table.keys()[0])
+        self.update(data)
+
+        self.labels = labels
+
+        self.SetColorSeries(self._color_series)
+        if isinstance(colors, str):
+            self.scheme = colors
         else:
-            formatted_styles = "\", \"".join(self.MARKER_STYLES.keys())
-            raise ValueError(f"Invalid marker style. Allowed marker styles: \"{formatted_styles}\"")
+            self.colors = colors
+
+    def update(self, data):
+        self._table.update(data)
 
 
-class Chart3D(_vtk.vtkChartXYZ, ChartInterface):
+class ChartPie(_vtk.vtkChartPie, _ChartInterface):
+
+    def __init__(self, data, labels=None):
+        super().__init__()
+        self.AddPlot(0)  # We can't manually set a wrapped vtkPlotPie instance...
+        self._plot = PiePlot(data, labels, _wrap=self.GetPlot(0))  # So we have to wrap the existing one
+        self.legend = True
+
+    def render_event(self, *args, **kwargs):
+        pass  # ChartPie fills entire scene by default, so no resizing is needed (nor possible at this moment)
+
+    @property
+    def plot(self):
+        return self._plot
+
+    @property
+    def size(self):
+        return (1, 1)
+
+    @size.setter
+    def size(self, val):
+        raise ValueError("Cannot set ChartPie geometry, it fills up the entire viewport by default.")
+
+    @property
+    def loc(self):
+        return (0, 0)
+
+    @loc.setter
+    def loc(self, val):
+        raise ValueError("Cannot set ChartPie geometry, it fills up the entire viewport by default.")
+
+
+class Chart3D(_vtk.vtkChartXYZ, _ChartInterface):
 
     def __init__(self):
         super().__init__()
 
 
-class ChartMPL(_vtk.vtkImageItem, ChartInterface):
+class ChartMPL(_vtk.vtkImageItem, _ChartInterface):
 
     if _HAS_MPL:
         def __init__(self, figure: matplotlib.figure.Figure, size: Tuple[int, int] = (1, 1), loc: Tuple[int, int] = (0, 0)):

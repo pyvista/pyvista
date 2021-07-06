@@ -346,7 +346,11 @@ if VTK9:
                                           vtkPlotLine,
                                           vtkPlotLine3D,
                                           vtkPlotPoints,
-                                          vtkPlotPoints3D)
+                                          vtkPlotPoints3D,
+                                          vtkPlotArea,
+                                          vtkPlotBox)
+    from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
+    from vtkmodules.vtkCommonColor import vtkColorSeries
 
     # lazy import for some of the less used readers
     def lazy_vtkGL2PSExporter():
