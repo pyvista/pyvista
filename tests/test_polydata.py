@@ -440,9 +440,6 @@ def test_extract_feature_edges(sphere):
     more_edges = mesh.extract_feature_edges(10)
     assert more_edges.n_points
 
-    mesh.extract_feature_edges(10, inplace=True)
-    assert mesh.n_points == more_edges.n_points
-
 
 def test_decimate(sphere):
     mesh = sphere.decimate(0.5)

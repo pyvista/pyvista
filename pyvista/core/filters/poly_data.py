@@ -375,7 +375,8 @@ class PolyDataFilters(DataSetFilters):
            This method returns the surface interection from two meshes
            (which often resolves as a line), whereas the
            :func:`PolyDataFilters.boolean_intersection` filter returns
-           the "volume" intersection between two meshes.
+           the "volume" intersection between two closed (manifold)
+           meshes.
 
         Parameters
         ----------
@@ -423,7 +424,8 @@ class PolyDataFilters(DataSetFilters):
         The mesh splitting takes additional time and can be turned
         off for either mesh individually.
 
-        >>> intersection, _, s2_split = s1.intersection(s2, split_first=False,
+        >>> intersection, _, s2_split = s1.intersection(s2,
+        ...                                             split_first=False,
         ...                                             split_second=True)
 
         """

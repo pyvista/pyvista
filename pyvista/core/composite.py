@@ -168,7 +168,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         array([1., 1., 0.])
 
         """
-        return np.array(self.bounds).reshape(3, 2).mean(axis=1)
+        return np.reshape(self.bounds, (3, 2)).mean(axis=1)
 
     @property
     def length(self) -> float:
@@ -564,7 +564,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         Parameters
         ----------
         deep : bool, optional
-            When True makes a full copy of the object.
+            When ``True``, make a full copy of the object.
 
         Returns
         -------

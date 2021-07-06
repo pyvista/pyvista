@@ -2,7 +2,7 @@
 .. _clip_with_plane_box_example:
 
 Clipping with Planes & Boxes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Clip/cut any dataset using using planes or boxes.
 """
