@@ -203,8 +203,16 @@ class _PlotInterface(object):
 
     @property
     def pen(self):
-        """
-        :return: Retrieve vtkPen object controlling how lines in this plot are drawn.
+        """vtkPen object controlling how lines in this plot are drawn.
+
+        Returns
+        --------
+        vtk.vtkPen
+            `vtkPen` object controlling how lines in this plot are drawn.
+
+        Examples
+        ---------
+        >>> import pyvista
         """
         return self.GetPen()
 

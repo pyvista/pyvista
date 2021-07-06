@@ -61,7 +61,6 @@ class Table(_vtk.vtkTable, DataObject):
         np_table = self._prepare_arrays(arrays)
         for i, array in enumerate(np_table):
             self.row_arrays[f'Array {i}'] = array
-        return
 
     def _from_dict(self, array_dict):
         for array in array_dict.values():

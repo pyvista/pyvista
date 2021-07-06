@@ -1,10 +1,11 @@
 """
+.. _chart_overlays_example:
 Chart Overlays
 ~~~~~~~~~~~~~~
 
 
 This example shows how you can combine multiple charts as overlays in the same renderer. For an overview of the
-different chart types you can use, please refer to `chart_basics`.
+different chart types you can use, please refer to :ref:`chart_basics_example`.
 """
 
 import pyvista as pv
