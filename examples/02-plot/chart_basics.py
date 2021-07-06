@@ -9,14 +9,14 @@ combine multiple charts as overlays in the same renderer, is given in `chart_ove
 
 import pyvista as pv
 import numpy as np
-RNG = np.random.default_rng(1)
+rng = np.random.default_rng(1)
 
 ###############################################################################
 # This example shows how to create a 2D scatter plot from 100 randomly sampled
 # datapoints.
 
-x = RNG.standard_normal(100)
-y = RNG.standard_normal(100)
+x = rng.standard_normal(100)
+y = rng.standard_normal(100)
 p = pv.Plotter()
 p.background_color = (1, 1, 1)
 chart = pv.Chart2D()
@@ -43,7 +43,7 @@ p.show()
 # style at once.
 
 x = np.arange(11)
-y = RNG.integers(-5, 6, 11)
+y = rng.integers(-5, 6, 11)
 p = pv.Plotter()
 p.background_color = (1, 1, 1)
 chart = pv.Chart2D()
@@ -70,7 +70,7 @@ p.show()
 # Bar charts are also supported.
 
 x = np.arange(1, 11)
-y = RNG.integers(1, 11, 10)
+y = rng.integers(1, 11, 10)
 p = pv.Plotter()
 p.background_color = (1, 1, 1)
 chart = pv.Chart2D()
@@ -95,7 +95,7 @@ p.show()
 ###############################################################################
 # To summarize statistics of datasets, you can easily create a boxplot.
 
-data = {f"Experiment {i}": RNG.poisson(lam, 20) for i, lam in enumerate(range(2, 12, 2))}
+data = {f"Experiment {i}": rng.poisson(lam, 20) for i, lam in enumerate(range(2, 12, 2))}
 p = pv.Plotter()
 p.background_color = (1, 1, 1)
 chart = pv.ChartBox(data)
@@ -115,7 +115,7 @@ f, ax = plt.subplots(tight_layout=True)  # Tight layout to keep axis labels visi
 alphas = [0.5+i for i in range(5)]
 betas = [*reversed(alphas)]
 N = int(1e4)
-data = [RNG.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas)]
+data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas)]
 labels = [f"$\\alpha={alpha:.1f}\\,;\\,\\beta={beta:.1f}$" for alpha, beta in zip(alphas, betas)]
 ax.violinplot(data)
 ax.set_xticks(np.arange(1, 1 + len(labels)))
