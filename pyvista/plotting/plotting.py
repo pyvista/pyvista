@@ -1901,7 +1901,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if label:
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
-            geom = pyvista.single_triangle()
+            geom = pyvista.Triangle()
             if scalars is not None:
                 geom = pyvista.Box()
                 rgb_color = parse_color('black')
@@ -3478,11 +3478,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.legend.SetNumberOfEntries(len(labels))
 
             if (face is None) or (face == "triangle"):
-                legendface = pyvista.single_triangle()
+                legendface = pyvista.Triangle()
             elif (face == "circle"):
-                legendface = pyvista.single_circle()
+                legendface = pyvista.Circle()
             elif (face == "rectangle"):
-                legendface = pyvista.single_rectangle()
+                legendface = pyvista.Rectangle()
             else:
                 raise ValueError('Invalid face.  Must be one of the following:\n'
                                  '\t"triangle"\n'

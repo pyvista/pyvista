@@ -14,6 +14,8 @@ vtkRegularPolygonSource
 vtkPyramid
 
 """
+import ctypes
+
 import numpy as np
 
 import pyvista
@@ -987,3 +989,106 @@ def Pyramid(points):
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
     return pyvista.wrap(ug)
+
+
+def Triangle(points = [[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
+    """Create a triangle defined by 3 points.
+
+    Parameters
+    ----------
+    points : np.ndarray or list
+        Points of the triangle.
+
+    Returns
+    -------
+    pyvista.PolyData
+        triangle mesh.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pointa = [0, 0, 0]
+    >>> pointb = [1, 0, 0]
+    >>> pointc = [0.5, 0.707, 0]
+    >>> triangle = pyvista.Triangle([pointa, pointb, pointc])
+    >>> triangle.plot(show_edges=True, line_width=5)
+    """
+    if len(points) != 3:
+        raise TypeError('Points must be given as length 3 np.ndarray or list')
+
+    check_valid_vector(points[0], 'points[0]')
+    check_valid_vector(points[1], 'points[1]')
+    check_valid_vector(points[2], 'points[2]')
+
+    cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
+    triangle = pyvista.PolyData(points, cells)
+
+    return triangle
+
+
+def Rectangle(points = [[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
+    """Create a rectangle defined by 4 points.
+
+    Parameters
+    ----------
+    points : np.ndarray or list
+        Points of the rectangle.
+
+    Returns
+    -------
+    pyvista.PolyData
+        rectangle mesh.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pointa = [1, 0, 0]
+    >>> pointb = [1, 1, 0]
+    >>> pointc = [0, 1, 0]
+    >>> pointd = [0, 0, 0]
+    >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc, pointd])
+    >>> rectangle.plot(show_edges=True, line_width=5)
+    """
+    if len(points) != 4:
+        raise TypeError('Points must be given as length 4 np.ndarray or list')
+
+    check_valid_vector(points[0], 'points[0]')
+    check_valid_vector(points[1], 'points[1]')
+    check_valid_vector(points[2], 'points[2]')
+    check_valid_vector(points[3], 'points[3]')
+
+    cells = np.array([[4, 0, 1, 2, 3]], ctypes.c_long)
+    rectangle = pyvista.PolyData(points, cells)
+
+    return rectangle
+
+
+def Circle(radius = 0.5):
+    """Create a single PolyData circle defined by radius.
+
+    Parameters
+    ----------
+    radius : float, optional
+        Radius of circle.
+
+    Returns
+    -------
+    pyvista.PolyData
+        circle mesh.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> radius = 0.5
+    >>> circle = pyvista.Circle(radius)
+    >>> circle.plot(show_edges=True, line_width=5)
+    """
+    resolution = 100
+    points = np.zeros((resolution, 3))
+    theta = np.linspace(0.0, 2.0*np.pi, resolution)
+    points[:, 0] = radius * np.cos(theta)
+    points[:, 1] = radius * np.sin(theta)
+    cells = np.array([np.append(np.array([resolution]), np.arange(100))], ctypes.c_long)
+    circle = pyvista.PolyData(points, cells)
+
+    return circle
