@@ -47,14 +47,15 @@ class DataSetFilters:
              return_clipped=False):
         """Clip a dataset by a plane by specifying the origin and normal.
 
-        If no parameters are given the clip will occur in the center of that dataset.
+        If no parameters are given the clip will occur in the center
+        of that dataset.
 
         Parameters
         ----------
         normal : tuple(float) or str
-            Length 3 tuple for the normal vector direction. Can also be
-            specified as a string conventional direction such as ``'x'`` for
-            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
+            Length 3 tuple for the normal vector direction. Can also
+            be specified as a string conventional direction such as
+            ``'x'`` for ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
 
         origin : tuple(float), optional
             The center ``(x,y,z)`` coordinate of the plane on which the clip
@@ -88,6 +89,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> cube = pv.Cube().triangulate().subdivide(3)
         >>> clipped_cube = cube.clip()
+        >>> clipped_cube.plot()
 
         Clip a cube in the +Z direction.  This leaves half a cube
         below the XY plane.
@@ -95,6 +97,9 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> cube = pv.Cube().triangulate().subdivide(3)
         >>> clipped_cube = cube.clip('z')
+        >>> clipped_cube.plot()
+
+        See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
         if isinstance(normal, str):
@@ -136,7 +141,7 @@ class DataSetFilters:
             be extracted from the box to define the clipping region.
 
         invert : bool
-            Flag on whether to flip/invert the clip
+            Flag on whether to flip/invert the clip.
 
         factor : float, optional
             If bounds are not given this is the factor along each axis to
@@ -151,6 +156,9 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> cube = pv.Cube().triangulate().subdivide(3)
         >>> clipped_cube = cube.clip_box([0, 1, 0, 1, 0, 1])
+        >>> clipped_cube.plot()
+
+        See :ref:`clip_with_plane_box_example` for more examples using this filter.
 
         """
         if bounds is None:
@@ -196,19 +204,20 @@ class DataSetFilters:
     def compute_implicit_distance(dataset, surface, inplace=False):
         """Compute the implicit distance from the points to a surface.
 
-        This filter will compute the implicit distance from all of the nodes of
-        this mesh to a given surface. This distance will be added as a point
-        array called ``'implicit_distance'``.
+        This filter will compute the implicit distance from all of the
+        nodes of this mesh to a given surface. This distance will be
+        added as a point array called ``'implicit_distance'``.
 
         Parameters
         ----------
         surface : pyvista.DataSet
-            The surface used to compute the distance
+            The surface used to compute the distance.
 
         inplace : bool
-            If True, a new scalar array will be added to the ``point_arrays``
-            of this mesh. Otherwise a copy of this mesh is returned with that
-            scalar field.
+            If ``True``, a new scalar array will be added to the
+            ``point_arrays`` of this mesh and the modified mesh will
+            be returned. Otherwise a copy of this mesh is returned
+            with that scalar field added.
 
         Examples
         --------
@@ -229,6 +238,10 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(sphere, scalars='implicit_distance', cmap='bwr')
         >>> _ = pl.add_mesh(plane, color='w', style='wireframe')
         >>> pl.show()
+
+        See :ref:`clip_with_surface_example` and
+        :ref:`voxelize_surface_mesh_example` for more examples using
+        this filter.
 
         """
         function = _vtk.vtkImplicitPolyDataDistance()
@@ -275,6 +288,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
         >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100)
+        >>> clipped.plot()
 
         Remove the part of the mesh with "sample_point_scalars" below
         100.  Since these scalars are already active, there's no need
@@ -284,6 +298,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
         >>> clipped = dataset.clip_scalar(value=100, invert=False)
+        >>> clipped.plot()
 
         """
         if isinstance(dataset, _vtk.vtkPolyData):
@@ -314,27 +329,41 @@ class DataSetFilters:
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
         This will return a :class:`pyvista.UnstructuredGrid` of the clipped
-        mesh. Geometry of the input dataset will be preserved where possible -
-        geometries near the clip intersection will be triangulated/tessellated.
+        mesh. Geometry of the input dataset will be preserved where possible.
+        Geometries near the clip intersection will be triangulated/tessellated.
 
         Parameters
         ----------
         surface : pyvista.PolyData
-            The PolyData surface mesh to use as a clipping function. If this
-            mesh is not PolyData, the external surface will be extracted.
+            The ``PolyData`` surface mesh to use as a clipping function.
+            If this mesh is not ``PolyData``, the external surface will
+            be extracted.
 
-        invert : bool
-            Flag on whether to flip/invert the clip
+        invert : bool, optional
+            Flag on whether to flip/invert the clip.
 
-        value : float:
-            Set the clipping value of the implicit function (if clipping with
-            implicit function) or scalar value (if clipping with scalars).
-            The default value is 0.0.
+        value : float, optional
+            Set the clipping value of the implicit function (if
+            clipping with implicit function) or scalar value (if
+            clipping with scalars).  The default value is 0.0.
 
         compute_distance : bool, optional
-            Compute the implicit distance from the mesh onto the input dataset.
-            A new array called ``'implicit_distance'`` will be added to the
-            output clipped mesh.
+            Compute the implicit distance from the mesh onto the input
+            dataset.  A new array called ``'implicit_distance'`` will
+            be added to the output clipped mesh.
+
+        Examples
+        --------
+        Clip a cube with a sphere.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(center=(-0.4, -0.4, -0.4))
+        >>> cube = pyvista.Cube().triangulate().subdivide(3)
+        >>> clipped = cube.clip_surface(sphere)
+        >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
+
+        See :ref:`clip_with_surface_example` for more examples using
+        this filter.
 
         """
         if not isinstance(surface, _vtk.vtkPolyData):
@@ -362,17 +391,33 @@ class DataSetFilters:
         normal : tuple(float) or str
             Length 3 tuple for the normal vector direction. Can also be
             specified as a string conventional direction such as ``'x'`` for
-            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)```, etc.
+            ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
 
         origin : tuple(float)
-            The center (x,y,z) coordinate of the plane on which the slice occurs
+            The center ``(x, y, z)`` coordinate of the plane on which
+            the slice occurs.
 
         generate_triangles: bool, optional
-            If this is enabled (``False`` by default), the output will be
-            triangles otherwise, the output will be the intersection polygons.
+            If this is enabled (``False`` by default), the output will
+            be triangles. Otherwise the output will be the intersection
+            polygons.
 
         contour : bool, optional
-            If True, apply a ``contour`` filter after slicing
+            If ``True``, apply a ``contour`` filter after slicing.
+
+        Examples
+        --------
+        Slice the surface of a sphere.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> slice_x = sphere.slice(normal='x')
+        >>> slice_y = sphere.slice(normal='y')
+        >>> slice_z = sphere.slice(normal='z')
+        >>> slices = slice_x + slice_y + slice_z
+        >>> slices.plot(line_width=5)
+
+        See :ref:`slice_example` for more examples using this filter.
 
         """
         if isinstance(normal, str):
@@ -402,21 +447,33 @@ class DataSetFilters:
 
         Parameters
         ----------
-        x : float
-            The X location of the YZ slice
+        x : float, optional
+            The X location of the YZ slice.
 
-        y : float
-            The Y location of the XZ slice
+        y : float, optional
+            The Y location of the XZ slice.
 
-        z : float
-            The Z location of the XY slice
+        z : float, optional
+            The Z location of the XY slice.
 
         generate_triangles: bool, optional
-            If this is enabled (``False`` by default), the output will be
-            triangles otherwise, the output will be the intersection polygons.
+            If this is enabled (``False`` by default), the output will
+            be triangles. Otherwise the output will be the intersection
+            polygons.
 
         contour : bool, optional
-            If True, apply a ``contour`` filter after slicing
+            If ``True``, apply a ``contour`` filter after slicing.
+
+        Examples
+        --------
+        Slice the random hills dataset with three orthogonal planes.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> slices = hills.slice_orthogonal(contour=False)
+        >>> slices.plot(line_width=5)
+
+        See :ref:`slice_example` for more examples using this filter.
 
         """
         # Create the three slices
@@ -445,26 +502,46 @@ class DataSetFilters:
 
         Parameters
         ----------
-        n : int
-            The number of slices to create
+        n : int, optional
+            The number of slices to create.
 
         axis : str or int
-            The axis to generate the slices along. Perpendicular to the slices.
-            Can be string name (``'x'``, ``'y'``, or ``'z'``) or axis index
-            (``0``, ``1``, or ``2``).
+            The axis to generate the slices along. Perpendicular to the
+            slices. Can be string name (``'x'``, ``'y'``, or ``'z'``) or
+            axis index (``0``, ``1``, or ``2``).
 
         tolerance : float, optional
-            The tolerance to the edge of the dataset bounds to create the slices
+            The tolerance to the edge of the dataset bounds to create the
+            slices.
 
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
-            triangles otherwise, the output will be the intersection polygons.
+            triangles. Otherwise the output will be the intersection
+            polygons.
 
         contour : bool, optional
-            If True, apply a ``contour`` filter after slicing
+            If ``True``, apply a ``contour`` filter after slicing.
+
+        Examples
+        --------
+        Slice the random hills dataset in the X direction.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> slices = hills.slice_along_axis(n=10)
+        >>> slices.plot(line_width=5)
+
+        Slice the random hills dataset in the Z direction.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> slices = hills.slice_along_axis(n=10, axis='z')
+        >>> slices.plot(line_width=5)
+
+        See :ref:`slice_example` for more examples using this filter.
 
         """
-        axes = {'x':0, 'y':1, 'z':2}
+        axes = {'x': 0, 'y': 1, 'z': 2}
         if isinstance(axis, int):
             ax = axis
             axis = list(axes.keys())[list(axes.values()).index(ax)]
@@ -502,7 +579,7 @@ class DataSetFilters:
                          contour=False):
         """Slice a dataset using a polyline/spline as the path.
 
-        This also works for lines generated with :func:`pyvista.Line`
+        This also works for lines generated with :func:`pyvista.Line`.
 
         Parameters
         ----------
@@ -510,11 +587,37 @@ class DataSetFilters:
             A PolyData object containing one single PolyLine cell.
 
         generate_triangles: bool, optional
-            If this is enabled (``False`` by default), the output will be
-            triangles otherwise, the output will be the intersection polygons.
+            If this is enabled (``False`` by default), the output will
+            be triangles. Otherwise the output will be the intersection
+            polygons.
 
         contour : bool, optional
-            If True, apply a ``contour`` filter after slicing
+            If ``True``, apply a ``contour`` filter after slicing.
+
+        Examples
+        --------
+        Slice the random hills dataset along a circular arc.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> center = np.array(hills.center)
+        >>> point_a = center + np.array([5, 0, 0])
+        >>> point_b = center + np.array([-5, 0, 0])
+        >>> arc = pyvista.CircularArc(point_a, point_b, center, resolution=100)
+        >>> line_slice = hills.slice_along_line(arc)
+
+        Plot the circular arc and the hills mesh.
+
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(hills, smooth_shading=True, style='wireframe')
+        >>> _ = pl.add_mesh(line_slice, line_width=10, render_lines_as_tubes=True,
+        ...                 color='k')
+        >>> _ = pl.add_mesh(arc, line_width=10, color='grey')
+        >>> pl.show()
+
+        See :ref:`slice_example` for more examples using this filter.
 
         """
         # check that we have a PolyLine cell in the input line
@@ -542,10 +645,11 @@ class DataSetFilters:
                   preference='cell', all_scalars=False):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
-        This filter will apply a ``vtkThreshold`` filter to the input dataset
-        and return the resulting object. This extracts cells where the scalar
-        value in each cell satisfies threshold criterion.  If scalars is None,
-        the inputs active scalars is used.
+        This filter will apply a ``vtkThreshold`` filter to the input
+        dataset and return the resulting object. This extracts cells
+        where the scalar value in each cell satisfies the threshold
+        criterion.  If ``scalars`` is ``None``, the input's active
+        scalars array is used.
 
         Parameters
         ----------
@@ -558,10 +662,11 @@ class DataSetFilters:
             Name of scalars to threshold on. Defaults to currently active scalars.
 
         invert : bool, optional
-            If value is a single value, when invert is True cells are kept when
-            their values are below parameter "value".  When invert is False
-            cells are kept when their value is above the threshold "value".
-            Default is False: yielding above the threshold "value".
+            If value is a single value, when invert is ``True`` cells
+            are kept when their values are below parameter ``"value"``.
+            When invert is ``False`` cells are kept when their value is
+            above the threshold ``"value"``.  Default is ``False``:
+            yielding above the threshold ``"value"``.
 
         continuous : bool, optional
             When True, the continuous interval [minimum cell scalar,
@@ -569,8 +674,9 @@ class DataSetFilters:
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the preferred array type to
-            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+            When scalars is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
 
         all_scalars : bool, optional
             If using scalars from point data, all scalars for all
@@ -585,8 +691,36 @@ class DataSetFilters:
         >>> import numpy as np
         >>> volume = np.zeros([10, 10, 10])
         >>> volume[:3] = 1
-        >>> v = pyvista.wrap(volume)
-        >>> threshed = v.threshold(0.1)
+        >>> vol = pyvista.wrap(volume)
+        >>> threshed = vol.threshold(0.1) 
+        >>> threshed  # doctest:+SKIP
+        UnstructuredGrid (0x7f00f9983fa0)
+          N Cells:	243
+          N Points:	400
+          X Bounds:	0.000e+00, 3.000e+00
+          Y Bounds:	0.000e+00, 9.000e+00
+          Z Bounds:	0.000e+00, 9.000e+00
+          N Arrays:	1
+
+        Apply the threshold filter to Perlin noise.  First generate
+        the structured grid.
+
+        >>> import pyvista
+        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0],
+        ...                                dim=(20, 20, 20))
+        >>> grid.plot(cmap='gist_earth_r', show_scalar_bar=True, show_edges=False)
+
+        Next, apply the threshold.
+
+        >>> import pyvista
+        >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0],
+        ...                                dim=(20, 20, 20))
+        >>> threshed = grid.threshold(value=0.02)
+        >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
+
+        See :ref:`common_filter_example` for more examples using this filter.
 
         """
         # set the scalaras to threshold on
@@ -645,7 +779,7 @@ class DataSetFilters:
 
     def threshold_percent(dataset, percent=0.50, scalars=None, invert=False,
                           continuous=False, preference='cell'):
-        """Threshold the dataset by a percentage of its range on the active scalars array or as specified.
+        """Threshold the dataset by a percentage of its range on the active scalars array.
 
         Parameters
         ----------
@@ -657,19 +791,40 @@ class DataSetFilters:
             Name of scalars to threshold on. Defaults to currently active scalars.
 
         invert : bool, optional
-            When invert is True cells are kept when their values are below the
-            percentage of the range.  When invert is False, cells are kept when
-            their value is above the percentage of the range.
-            Default is False: yielding above the threshold "value".
+            When invert is ``True`` cells are kept when their values are
+            below the percentage of the range.  When invert is
+            ``False``, cells are kept when their value is above the
+            percentage of the range. Default is ``False``: yielding
+            above the threshold ``"value"``.
 
         continuous : bool, optional
-            When True, the continuous interval [minimum cell scalar,
-            maximum cell scalar] will be used to intersect the threshold bound,
-            rather than the set of discrete scalar values from the vertices.
+            When ``True``, the continuous interval [minimum cell scalar,
+            maximum cell scalar] will be used to intersect the threshold
+            bound, rather than the set of discrete scalar values from
+            the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the preferred array type to
-            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        Examples
+        --------
+        Apply a 50% threshold filter.
+
+        >>> import pyvista
+        >>> noise = pyvista.perlin_noise(0.1, (2, 2, 2), (0, 0, 0))
+        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0],
+        ...                                dim=(30, 30, 30))
+        >>> threshed = grid.threshold_percent(0.5)
+        >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
+
+        Apply a 80% threshold filter.
+
+        >>> threshed = grid.threshold_percent(0.8)
+        >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
+
+        See :ref:`common_filter_example` for more examples using a similar filter.
 
         """
         if scalars is None:
@@ -715,6 +870,18 @@ class DataSetFilters:
         generate_faces : bool, optional
             Generate solid faces for the box. This is off by default
 
+        Examples
+        --------
+        Generate and plot the outline of a sphere.  This is
+        effectively the ``(x, y, z)`` bounds of the mesh.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> outline = sphere.outline()
+        >>> pyvista.plot([sphere, outline], line_width=5)
+
+        See :ref:`common_filter_example` for more examples using this filter.
+
         """
         alg = _vtk.vtkOutlineFilter()
         alg.SetInputDataObject(dataset)
@@ -728,8 +895,18 @@ class DataSetFilters:
         Parameters
         ----------
         factor : float, optional
-            controls the relative size of the corners to the length of the
-            corresponding bounds
+            Controls the relative size of the corners to the length of
+            the corresponding bounds
+
+        Examples
+        --------
+        Generate and plot the corners of a sphere.  This is
+        effectively the ``(x, y, z)`` bounds of the mesh.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> corners = sphere.outline_corners(factor=0.1)
+        >>> pyvista.plot([sphere, corners], line_width=5)
 
         """
         alg = _vtk.vtkOutlineCornerFilter()
@@ -739,10 +916,36 @@ class DataSetFilters:
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(dataset):
-        """Extract the outer surface of a volume or structured grid dataset as PolyData.
+        """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
         boundary faces of the dataset.
+
+        .. note::
+            This tends to be less efficient than :func:`extract_surface`.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Surface of the dataset.
+
+        Examples
+        --------
+        Extract the surface of a sample unstructured grid.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> hex_beam.extract_geometry()  # doctest:+SKIP
+        PolyData (0x7f2f8c132040)
+          N Cells:	88
+          N Points:	90
+          X Bounds:	0.000e+00, 1.000e+00
+          Y Bounds:	0.000e+00, 1.000e+00
+          Z Bounds:	0.000e+00, 5.000e+00
+          N Arrays:	3
+
+        See :ref:`surface_smoothing_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkGeometryFilter()
@@ -760,6 +963,24 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.PolyData
+            Edges extracted from the dataset.
+
+        Examples
+        --------
+        Extract the edges of a sample unstructured grid and plot the edges.
+        Note how it plots interior edges.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> edges = hex_beam.extract_all_edges()
+        >>> edges.plot(line_width=5, color='k')
+
+        See :ref:`cell_centers_example` for more examples using this filter.
+
         """
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(dataset)
@@ -775,6 +996,11 @@ class DataSetFilters:
         a line.  The line can be oriented arbitrarily.  A typical
         example is to generate scalars based on elevation or height
         above a plane.
+
+        .. warning::
+           This will create a scalars array named ``'Elevation'`` on the
+           point data of the input dataset and overwrite the array
+           named ``'Elevation'`` if present.
 
         Parameters
         ----------
@@ -797,19 +1023,33 @@ class DataSetFilters:
         preference : str, optional
             When an array name is specified for ``scalar_range``, this is the
             preferred array type to search for in the dataset.
-            Must be either 'point' or 'cell'.
+            Must be either ``'point'`` or ``'cell'``.
 
         set_active : bool, optional
-            A boolean flag on whether or not to set the new `Elevation` scalar
-            as the active scalars array on the output dataset.
+            A boolean flag on whether or not to set the new
+            ``'Elevation'`` scalar as the active scalars array on the
+            output dataset.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        Warning
-        -------
-        This will create a scalars array named `Elevation` on the point data of
-        the input dataset and overasdf write an array named `Elevation` if present.
+        Examples
+        --------
+        Generate the "elevation" scalars for a sphere mesh.  This is
+        simply the height in Z from the XY plane.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> sphere_elv = sphere.elevation()
+        >>> sphere_elv.plot(smooth_shading=True)
+
+        Access the first 4 elevation scalars.  This is a point-wise
+        array containing the "elevation" of each point.
+
+        >>> sphere_elv['Elevation'][:4]  # doctest:+SKIP
+        array([-0.5       ,  0.5       , -0.49706897, -0.48831028], dtype=float32)
+
+        See :ref:`common_filter_example` for more examples using this filter.
 
         """
         # Fix the projection line:
@@ -848,34 +1088,38 @@ class DataSetFilters:
                 preference='point', method='contour', progress_bar=False):
         """Contour an input dataset by an array.
 
-        ``isosurfaces`` can be an integer specifying the number of isosurfaces in
-        the data range or a sequence of values for explicitly setting the isosurfaces.
+        ``isosurfaces`` can be an integer specifying the number of
+        isosurfaces in the data range or a sequence of values for
+        explicitly setting the isosurfaces.
 
         Parameters
         ----------
-        isosurfaces : int or sequence
+        isosurfaces : int or sequence, optional
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
         scalars : str, optional
-            Name of scalars to threshold on. Defaults to currently active scalars.
+            Name of scalars to threshold on. Defaults to currently
+            active scalars.
 
         compute_normals : bool, optional
+            Compute normals for the dataset.
 
         compute_gradients : bool, optional
-            Desc
+            Compute gradients for the dataset.
 
         compute_scalars : bool, optional
-            Preserves the scalar values that are being contoured
+            Preserves the scalar values that are being contoured.
 
         rng : tuple(float), optional
-            If an integer number of isosurfaces is specified, this is the range
-            over which to generate contours. Default is the scalars arrays' full
-            data range.
+            If an integer number of isosurfaces is specified, this is
+            the range over which to generate contours. Default is the
+            scalars array's full data range.
 
         preference : str, optional
-            When scalars is specified, this is the preferred array type to
-            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
 
         method : str, optional
             Specify to choose which vtk filter is used to create the contour.
@@ -884,6 +1128,17 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Examples
+        --------
+        Generate contours for the random hills dataset.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> contours = hills.contour()
+        >>> contours.plot(line_width=5)
+
+        See :ref:`common_filter_example` for more examples using this filter.
 
         """
         if method is None or method == 'contour':
@@ -930,27 +1185,28 @@ class DataSetFilters:
                              use_bounds=False):
         """Texture map this dataset to a user defined plane.
 
-        This is often used to define a plane to texture map an image to this dataset.
-        The plane defines the spatial reference and extent of that image.
+        This is often used to define a plane to texture map an image
+        to this dataset.  The plane defines the spatial reference and
+        extent of that image.
 
         Parameters
         ----------
-        origin : tuple(float)
+        origin : tuple(float), optional
             Length 3 iterable of floats defining the XYZ coordinates of the
-            BOTTOM LEFT CORNER of the plane
+            bottom left corner of the plane.
 
-        point_u : tuple(float)
+        point_u : tuple(float), optional
             Length 3 iterable of floats defining the XYZ coordinates of the
-            BOTTOM RIGHT CORNER of the plane
+            bottom right corner of the plane.
 
-        point_v : tuple(float)
+        point_v : tuple(float), optional
             Length 3 iterable of floats defining the XYZ coordinates of the
-            TOP LEFT CORNER of the plane
+            top left corner of the plane.
 
         inplace : bool, optional
-            If True, the new texture coordinates will be added to this
-            dataset. If False (default), a new dataset is returned
-            with the textures coordinates
+            If ``True``, the new texture coordinates will be added to this
+            dataset. If ``False`` (default), a new dataset is returned
+            with the texture coordinates.
 
         name : str, optional
             The string name to give the new texture coordinates if applying
@@ -959,6 +1215,16 @@ class DataSetFilters:
         use_bounds : bool, optional
             Use the bounds to set the mapping plane by default (bottom plane
             of the bounding box).
+
+        Returns
+        -------
+        pyvista.DataSet
+            Original dataset with texture coordinates if
+            ``inplace=True``, otherwise a copied dataset.
+
+        Examples
+        --------
+        See :ref:`ref_topo_map_example`
 
         """
         if use_bounds:
@@ -992,8 +1258,9 @@ class DataSetFilters:
                               inplace=False, name='Texture Coordinates'):
         """Texture map this dataset to a user defined sphere.
 
-        This is often used to define a sphere to texture map an image to this
-        dataset. The sphere defines the spatial reference and extent of that image.
+        This is often used to define a sphere to texture map an image
+        to this dataset. The sphere defines the spatial reference and
+        extent of that image.
 
         Parameters
         ----------
@@ -1002,17 +1269,18 @@ class DataSetFilters:
             center of the sphere. If ``None``, this will be automatically
             calculated.
 
-        prevent_seam : bool
-            Default true. Control how the texture coordinates are generated.
-            If set, the s-coordinate ranges from 0->1 and 1->0 corresponding
-            to the theta angle variation between 0->180 and 180->0 degrees.
-            Otherwise, the s-coordinate ranges from 0->1 between 0->360
-            degrees.
+        prevent_seam : bool, optional
+            Control how the texture coordinates are generated.  If
+            set, the s-coordinate ranges from 0 to 1 and 1 to 0
+            corresponding to the theta angle variation between 0 to
+            180 and 180 to 0 degrees.  Otherwise, the s-coordinate
+            ranges from 0 to 1 between 0 to 360 degrees.  Default
+            ``True``.
 
         inplace : bool, optional
-            If True, the new texture coordinates will be added to the dataset
-            inplace. If False (default), a new dataset is returned with the
-            textures coordinates
+            If ``True``, the new texture coordinates will be added to
+            the dataset inplace. If ``False`` (default), a new dataset
+            is returned with the texture coordinates.
 
         name : str, optional
             The string name to give the new texture coordinates if applying
@@ -1020,14 +1288,7 @@ class DataSetFilters:
 
         Examples
         --------
-        Map a puppy texture to a sphere
-
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> sphere = pyvista.Sphere()
-        >>> sphere = sphere.texture_map_to_sphere()
-        >>> tex = examples.download_puppy_texture()
-        >>> sphere.plot(texture=tex)
+        See :ref:`ref_texture_example`.
 
         """
         alg = _vtk.vtkTextureMapToSphere()
@@ -1057,17 +1318,26 @@ class DataSetFilters:
 
         Parameters
         ----------
-        length : bool
+        length : bool, optional
             Specify whether or not to compute the length of 1D cells.
 
-        area : bool
+        area : bool, optional
             Specify whether or not to compute the area of 2D cells.
 
-        volume : bool
+        volume : bool, optional
             Specify whether or not to compute the volume of 3D cells.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Examples
+        --------
+        Compute the face area of the example airplane mesh.
+
+        >>> from pyvista import examples
+        >>> surf = examples.load_airplane()
+        >>> surf = surf.compute_cell_sizes(length=False, volume=False)
+        >>> surf.plot(show_edges=True)
 
         """
         alg = _vtk.vtkCellSizeFilter()
@@ -1100,6 +1370,8 @@ class DataSetFilters:
         >>> actor = pl.add_points(centers, render_points_as_spheres=True,
         ...                       color='red', point_size=20)
         >>> pl.show()
+
+        See :ref:`cell_centers_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkCellCenters()
@@ -1161,8 +1433,8 @@ class DataSetFilters:
             Turn on/off clamping of "scalar" values to range. Default ``False``.
 
         rng: tuple(float), optional
-            Set the range of values to be considered by the filter when scalars
-            values are provided.
+            Set the range of values to be considered by the filter
+            when scalars values are provided.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1186,6 +1458,9 @@ class DataSetFilters:
         >>> actor = pl.add_mesh(mesh, scalars="Elevation", cmap="terrain",
         ...                     show_scalar_bar=False)
         >>> pl.show()
+
+        See :ref:`glyph_example` and :ref:`glyph_table_example` for more
+        examples using this filter.
 
         """
         # Clean the points before glyphing
@@ -1294,6 +1569,8 @@ class DataSetFilters:
         >>> conn = mesh.connectivity(largest=False)
         >>> conn.plot(cmap=['red', 'blue'])
 
+        See :ref:`volumetric_example` for more examples using this filter.
+
         """
         alg = _vtk.vtkConnectivityFilter()
         alg.SetInputData(dataset)
@@ -1333,6 +1610,8 @@ class DataSetFilters:
         >>> largest.cell_arrays.clear()
         >>> largest.plot()
 
+        See :ref:`volumetric_example` for more examples using this filter.
+
         """
         mesh = DataSetFilters.connectivity(dataset, largest=True)
         if inplace:
@@ -1344,16 +1623,19 @@ class DataSetFilters:
     def split_bodies(dataset, label=False):
         """Find, label, and split connected bodies/volumes.
 
-        This splits different connected bodies into blocks in a MultiBlock dataset.
+        This splits different connected bodies into blocks in a
+        ``MultiBlock`` dataset.
 
         Parameters
         ----------
-        label : bool
+        label : bool, optional
             A flag on whether to keep the ID arrays given by the
             ``connectivity`` filter.
 
         Examples
         --------
+        Split a uniform grid thresholded to be non-connected.
+
         >>> from pyvista import examples
         >>> dataset = examples.load_uniform()
         >>> dataset.set_active_scalars('Spatial Cell Data')
@@ -1361,6 +1643,8 @@ class DataSetFilters:
         >>> bodies = threshed.split_bodies()
         >>> len(bodies)
         2
+
+        See :ref:`split_vol_ref` for more examples using this filter.
 
         """
         # Get the connectivity and label different bodies
@@ -1417,6 +1701,8 @@ class DataSetFilters:
         >>> warped = mesh.warp_by_scalar('Elevation')
         >>> warped.plot(cmap='gist_earth', show_scalar_bar=False)
 
+        See :ref:`surface_normal_example` for more examples using this filter.
+
         """
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
@@ -1466,11 +1752,13 @@ class DataSetFilters:
 
         Returns
         -------
-        warped_mesh : mesh
+        pyvista.PolyData
             The warped mesh resulting from the operation.
 
         Examples
         --------
+        Warp a sphere by vectors.
+
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> sphere = examples.load_sphere_vectors()
@@ -1483,6 +1771,8 @@ class DataSetFilters:
         >>> actor = pl.add_text("After warp")
         >>> actor = pl.add_mesh(warped, color='white')
         >>> pl.show()
+
+        See :ref:`warp_by_vectors_example` for more examples using this filter.
 
         """
         if vectors is None:
@@ -1511,19 +1801,39 @@ class DataSetFilters:
     def cell_data_to_point_data(dataset, pass_cell_data=False):
         """Transform cell data into point data.
 
-        Point data are specified per node and cell data specified within cells.
-        Optionally, the input point data can be passed through to the output.
+        Point data are specified per node and cell data specified
+        within cells.  Optionally, the input point data can be passed
+        through to the output.
 
-        The method of transformation is based on averaging the data values of
-        all cells using a particular point. Optionally, the input cell data can
-        be passed through to the output as well.
+        The method of transformation is based on averaging the data
+        values of all cells using a particular point. Optionally, the
+        input cell data can be passed through to the output as well.
 
-        See also: :func:`pyvista.DataSetFilters.point_data_to_cell_data`
+        See also :func:`pyvista.DataSetFilters.point_data_to_cell_data`.
 
         Parameters
         ----------
         pass_cell_data : bool
             If enabled, pass the input cell data through to the output
+
+        Examples
+        --------
+        First compute the face area of the example airplane mesh and
+        show the cell values.  This is to show discrete cell data.
+
+        >>> from pyvista import examples
+        >>> surf = examples.load_airplane()
+        >>> surf = surf.compute_cell_sizes(length=False, volume=False)
+        >>> surf.plot(smooth_shading=True)
+
+        These cell scalars can be applied to individual points to
+        effectively smooth out the cell data onto the points.
+
+        >>> from pyvista import examples
+        >>> surf = examples.load_airplane()
+        >>> surf = surf.compute_cell_sizes(length=False, volume=False)
+        >>> surf = surf.cell_data_to_point_data()
+        >>> surf.plot(smooth_shading=True)
 
         """
         alg = _vtk.vtkCellDataToPointData()
@@ -1538,10 +1848,12 @@ class DataSetFilters:
     def ctp(dataset, pass_cell_data=False):
         """Transform cell data into point data.
 
-        Point data are specified per node and cell data specified within cells.
-        Optionally, the input point data can be passed through to the output.
+        Point data are specified per node and cell data specified
+        within cells.  Optionally, the input point data can be passed
+        through to the output.
 
-        An alias/shortcut for ``cell_data_to_point_data``.
+        This method is an alias for
+        :func:`pyvista.DataSetFilters.cell_data_to_point_data`.
 
         """
         return DataSetFilters.cell_data_to_point_data(dataset, pass_cell_data=pass_cell_data)
@@ -1559,6 +1871,29 @@ class DataSetFilters:
         pass_point_data : bool
             If enabled, pass the input point data through to the output
 
+        Examples
+        --------
+        Color cells by their z coordinates.  First, create point
+        scalars based on z-coordinates of a sample sphere mesh.  Then
+        convert this point data to cell data.  Use a low resolution
+        sphere for emphasis of cell valued data.
+
+        First, plot these values as point values to show the
+        difference between point and cell data.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(theta_resolution=10, phi_resolution=10)
+        >>> sphere['Z Coordinates'] = sphere.points[:, 2]
+        >>> sphere.plot()
+
+        Now, convert these values to cell data and then plot it.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(theta_resolution=10, phi_resolution=10)
+        >>> sphere['Z Coordinates'] = sphere.points[:, 2]
+        >>> sphere = sphere.point_data_to_cell_data()
+        >>> sphere.plot()
+
         """
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(dataset)
@@ -1572,10 +1907,12 @@ class DataSetFilters:
     def ptc(dataset, pass_point_data=False):
         """Transform point data into cell data.
 
-        Point data are specified per node and cell data specified within cells.
-        Optionally, the input point data can be passed through to the output.
+        Point data are specified per node and cell data specified
+        within cells.  Optionally, the input point data can be passed
+        through to the output.
 
-        An alias/shortcut for ``point_data_to_cell_data``.
+        This method is an alias for
+        :func:`pyvista.DataSetFilters.point_data_to_cell_data`.
 
         """
         return DataSetFilters.point_data_to_cell_data(dataset, pass_point_data=pass_point_data)
@@ -1618,8 +1955,7 @@ class DataSetFilters:
         if inplace:
             dataset.overwrite(mesh)
             return dataset
-        else:
-            return mesh
+        return mesh
 
     def delaunay_3d(dataset, alpha=0, tol=0.001, offset=2.5, progress_bar=False):
         """Construct a 3D Delaunay triangulation of the mesh.
@@ -1629,22 +1965,38 @@ class DataSetFilters:
         Parameters
         ----------
         alpha : float, optional
-            Distance value to control output of this filter. For a non-zero
-            alpha value, only verts, edges, faces, or tetra contained within
-            the circumsphere (of radius alpha) will be output. Otherwise, only
-            tetrahedra will be output.
+            Distance value to control output of this filter. For a
+            non-zero alpha value, only vertices, edges, faces, or
+            tetrahedra contained within the circumsphere (of radius
+            alpha) will be output. Otherwise, only tetrahedra will be
+            output.
 
         tol : float, optional
-            tolerance to control discarding of closely spaced points.
-            This tolerance is specified as a fraction of the diagonal length
-            of the bounding box of the points.
+            Tolerance to control discarding of closely spaced points.
+            This tolerance is specified as a fraction of the diagonal
+            length of the bounding box of the points.
 
         offset : float, optional
-            multiplier to control the size of the initial, bounding Delaunay
-            triangulation.
+            Multiplier to control the size of the initial, bounding
+            Delaunay triangulation.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            UnstructuredGrid containing the Delaunay triangulation.
+
+        Examples
+        --------
+        Generate a 3D Delaunay triangulation of a surface mesh of a
+        sphere and plot the interior edges generated.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(theta_resolution=5, phi_resolution=5)
+        >>> grid = sphere.delaunay_3d()
+        >>> grid.extract_all_edges().plot(line_width=5, color='k')
 
         """
         alg = _vtk.vtkDelaunay3D()
@@ -1663,19 +2015,17 @@ class DataSetFilters:
         enclosed surface. The filter produces a (0,1) mask
         (in the form of a vtkDataArray) that indicates whether points are
         outside (mask value=0) or inside (mask value=1) a provided surface.
-        (The name of the output vtkDataArray is "SelectedPoints".)
+        (The name of the output vtkDataArray is ``"SelectedPoints"``.)
 
         This filter produces and output data array, but does not modify the
         input dataset. If you wish to extract cells or poinrs, various
         threshold filters are available (i.e., threshold the output array).
 
-        Warning
-        -------
-        The filter assumes that the surface is closed and manifold. A boolean
-        flag can be set to force the filter to first check whether this is
-        true. If false, all points will be marked outside. Note that if this
-        check is not performed and the surface is not closed, the results are
-        undefined.
+        .. warning::
+           The filter assumes that the surface is closed and
+           manifold. A boolean flag can be set to force the filter to
+           first check whether this is true. If ``False`` and not manifold,
+           an error will be raised.
 
         Parameters
         ----------
@@ -1683,20 +2033,42 @@ class DataSetFilters:
             Set the surface to be used to test for containment. This must be a
             :class:`pyvista.PolyData` object.
 
-        tolerance : float
+        tolerance : float, optional
             The tolerance on the intersection. The tolerance is expressed as a
             fraction of the bounding box of the enclosing surface.
 
-        inside_out : bool
+        inside_out : bool, optional
             By default, points inside the surface are marked inside or sent
             to the output. If ``inside_out`` is ``True``, then the points
             outside the surface are marked inside.
 
-        check_surface : bool
+        check_surface : bool, optional
             Specify whether to check the surface for closure. If on, then the
             algorithm first checks to see if the surface is closed and
             manifold. If the surface is not closed and manifold, a runtime
             error is raised.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh containing the ``point_arrays['SelectedPoints']`` array.
+
+        Examples
+        --------
+        Determine which points on a plane are inside a manifold sphere
+        surface mesh.  Extract these points using the
+        :func:`DataSetFilters.extract_points` filter and then plot them.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> plane = pyvista.Plane()
+        >>> selected = plane.select_enclosed_points(sphere)
+        >>> pts = plane.extract_points(selected['SelectedPoints'].view(bool),
+        ...                            adjacent_cells=False)
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(sphere, style='wireframe')
+        >>> _ = pl.add_points(pts, color='r')
+        >>> pl.show()
 
         """
         if not isinstance(surface, pyvista.PolyData):
@@ -1740,15 +2112,20 @@ class DataSetFilters:
             cell of the input.  If not given, tolerance is automatically generated.
 
         pass_cell_arrays: bool, optional
-            Preserve source mesh's original cell data arrays
+            Preserve source mesh's original cell data arrays.
 
         pass_point_arrays: bool, optional
-            Preserve source mesh's original point data arrays
+            Preserve source mesh's original point data arrays.
 
         categorical : bool, optional
             Control whether the source point data is to be treated as
             categorical. If the data is categorical, then the resultant data
             will be determined by a nearest neighbor interpolation scheme.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset containing the probed data.
 
         Examples
         --------
@@ -1793,8 +2170,9 @@ class DataSetFilters:
             this object are sampled onto the nodes of the ``dataset`` mesh
 
         tolerance: float, optional
-            Tolerance used to compute whether a point in the source is in a
-            cell of the input.  If not given, tolerance is automatically generated.
+            Tolerance used to compute whether a point in the source is
+            in a cell of the input.  If not given, tolerance is
+            automatically generated.
 
         pass_cell_arrays: bool, optional
             Preserve source mesh's original cell data arrays
@@ -1806,6 +2184,24 @@ class DataSetFilters:
             Control whether the source point data is to be treated as
             categorical. If the data is categorical, then the resultant data
             will be determined by a nearest neighbor interpolation scheme.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset containing resampled data.
+
+        Examples
+        --------
+        Resample data from another dataset onto a sphere.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+        >>> data_to_probe = examples.load_uniform()
+        >>> result = mesh.sample(data_to_probe)
+        >>> result.plot(scalars="Spatial Point Data")
+
+        See :ref:`resampling_example` for more examples using this filter.
 
         """
         if not pyvista.is_pyvista_dataset(target):
@@ -1830,7 +2226,7 @@ class DataSetFilters:
 
         The input dataset is typically a point cloud.
 
-        This uses a gaussian interpolation kernel. Use the ``sharpness`` and
+        This uses a Gaussian interpolation kernel. Use the ``sharpness`` and
         ``radius`` parameters to adjust this kernel. You can also switch this
         kernel to use an N closest points approach.
 
@@ -1840,12 +2236,12 @@ class DataSetFilters:
             The vtk data object to sample from - point and cell arrays from
             this object are interpolated onto this mesh.
 
-        sharpness : float
-            Set / Get the sharpness (i.e., falloff) of the Gaussian. By
-            default Sharpness=2. As the sharpness increases the effects of
-            distant points are reduced.
+        sharpness : float, optional
+            Set the sharpness (i.e., falloff) of the Gaussian
+            kernel. By default ``sharpness=2``. As the sharpness
+            increases the effects of distant points are reduced.
 
-        radius : float
+        radius : float, optional
             Specify the radius within which the basis points must lie.
 
         n_points : int, optional
@@ -1872,13 +2268,35 @@ class DataSetFilters:
             default the null value is set to zero.
 
         pass_cell_arrays: bool, optional
-            Preserve input mesh's original cell data arrays
+            Preserve input mesh's original cell data arrays.
 
         pass_point_arrays: bool, optional
-            Preserve input mesh's original point data arrays
+            Preserve input mesh's original point data arrays.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Examples
+        --------
+        Interpolate the values of 5 points onto a sample plane.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> np.random.seed(7)
+        >>> point_cloud = np.random.random((5, 3))
+        >>> point_cloud[:, 2] = 0
+        >>> point_cloud -= point_cloud.mean(0)
+        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata['values'] = np.random.random(5)
+        >>> plane = pyvista.Plane()
+        >>> plane.clear_arrays()
+        >>> plane = plane.interpolate(pdata, sharpness=3)
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
+        >>> pl.show()
+
+        See :ref:`interpolate_example` for more examples using this filter.
 
         """
         if not pyvista.is_pyvista_dataset(target):
@@ -1927,16 +2345,20 @@ class DataSetFilters:
                     **kwargs):
         """Integrate a vector field to generate streamlines.
 
-        The default behavior uses a Sphere as the source - set it's location and
-        radius via the ``source_center`` and ``source_radius`` keyword arguments.
-        ``n_points`` defines the number of starting points on the sphere surface.
-        Alternatively, a Line source can be used by specifying ``pointa`` and ``pointb``.
-        ``n_points`` again defines the number of points on the line.
+        The default behavior uses a sphere as the source - set its
+        location and radius via the ``source_center`` and
+        ``source_radius`` keyword arguments.  ``n_points`` defines the
+        number of starting points on the sphere surface.
+        Alternatively, a line source can be used by specifying
+        ``pointa`` and ``pointb``.  ``n_points`` again defines the
+        number of points on the line.
 
-        You can retrieve the source by specifying ``return_source=True``.
+        You can retrieve the source by specifying
+        ``return_source=True``.
 
-        Optional keyword parameters from :func:`pyvista.DataSetFilters.streamlines_from_source`
-        can be used here to control the generation of streamlines.
+        Optional keyword parameters from
+        :func:`pyvista.DataSetFilters.streamlines_from_source` can be
+        used here to control the generation of streamlines.
 
         Parameters
         ----------
@@ -1977,6 +2399,10 @@ class DataSetFilters:
             The points of the source are the seed points for the streamlines.
             Only returned if ``return_source=True``.
 
+        Examples
+        --------
+        See the :ref:`streamlines_example` example.
+
         """
         if source_center is None:
             source_center = dataset.center
@@ -2010,7 +2436,6 @@ class DataSetFilters:
         if return_source:
             return output, input_source
         return output
-
 
     def streamlines_from_source(dataset, source, vectors=None,
                     integrator_type=45, integration_direction='both',
@@ -2099,11 +2524,16 @@ class DataSetFilters:
 
         Returns
         -------
-        streamlines : pyvista.PolyData
-            This produces polylines as the output, with each cell
-            (i.e., polyline) representing a streamline. The attribute values
-            associated with each streamline are stored in the cell data, whereas
-            those associated with streamline-points are stored in the point data.
+        pyvista.PolyData
+            Streamlines. This produces polylines as the output, with
+            each cell (i.e., polyline) representing a streamline. The
+            attribute values associated with each streamline are
+            stored in the cell data, whereas those associated with
+            streamline-points are stored in the point data.
+
+        Examples
+        --------
+        See the :ref:`streamlines_example` example.
 
         """
         integration_direction = str(integration_direction).strip().lower()
@@ -2341,6 +2771,15 @@ class DataSetFilters:
             the data set to 10% of its original size and will remove 90%
             of the input triangles.
 
+        Returns
+        -------
+        pyvista.PolyData
+            Decimated boundary.
+
+        Examples
+        --------
+        See the :ref:`linked_views_example` example.
+
         """
         return dataset.extract_geometry().triangulate().decimate(target_reduction)
 
@@ -2349,13 +2788,13 @@ class DataSetFilters:
 
         Parameters
         ----------
-        pointa : np.ndarray or list
-            Location in [x, y, z].
+        pointa : sequence
+            Location in ``[x, y, z]``.
 
-        pointb : np.ndarray or list
-            Location in [x, y, z].
+        pointb : sequence
+            Location in ``[x, y, z]``.
 
-        resolution : int
+        resolution : int, optional
             Number of pieces to divide line into. Defaults to number of cells
             in the input mesh. Must be a positive integer.
 
@@ -2365,15 +2804,36 @@ class DataSetFilters:
 
         Returns
         -------
-        sampled_line : pv.PolyData
+        pyvista.PolyData
             Line object with sampled data from dataset.
+
+        Examples
+        --------
+        Sample over a plane that is interpolating a point cloud.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> np.random.seed(12)
+        >>> point_cloud = np.random.random((5, 3))
+        >>> point_cloud[:, 2] = 0
+        >>> point_cloud -= point_cloud.mean(0)
+        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata['values'] = np.random.random(5)
+        >>> plane = pyvista.Plane()
+        >>> plane.clear_arrays()
+        >>> plane = plane.interpolate(pdata, sharpness=3.5)
+        >>> sample = plane.sample_over_line((-0.5, -0.5, 0), (0.5, 0.5, 0))
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
+        >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
+        >>> pl.show()
 
         """
         if resolution is None:
             resolution = int(dataset.n_cells)
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-
         sampled_line = line.sample(dataset, tolerance=tolerance)
         return sampled_line
 
@@ -2382,40 +2842,40 @@ class DataSetFilters:
                        show=True, tolerance=None, fname=None):
         """Sample a dataset along a high resolution line and plot.
 
-        Plot the variables of interest in 2D where the X-axis is distance from
-        Point A and the Y-axis is the variable of interest. Note that this filter
-        returns None.
+        Plot the variables of interest in 2D using matplotlib where the
+        X-axis is distance from Point A and the Y-axis is the variable
+        of interest. Note that this filter returns ``None``.
 
         Parameters
         ----------
-        pointa : np.ndarray or list
-            Location in [x, y, z].
+        pointa : sequence
+            Location in ``[x, y, z]``.
 
-        pointb : np.ndarray or list
-            Location in [x, y, z].
+        pointb : sequence
+            Location in ``[x, y, z]``.
 
-        resolution : int
+        resolution : int, optional
             number of pieces to divide line into. Defaults to number of cells
             in the input mesh. Must be a positive integer.
 
-        scalars : str
+        scalars : str, optional
             The string name of the variable in the input dataset to probe. The
             active scalar is used by default.
 
-        title : str
-            The string title of the `matplotlib` figure
+        title : str, optional
+            The string title of the matplotlib figure.
 
-        ylabel : str
-            The string label of the Y-axis. Defaults to variable name
+        ylabel : str, optional
+            The string label of the Y-axis. Defaults to variable name.
 
-        figsize : tuple(int)
-            the size of the new figure
+        figsize : tuple(int), optional
+            The size of the new figure.
 
-        figure : bool
-            flag on whether or not to create a new figure
+        figure : bool, optional
+            Flag on whether or not to create a new figure.
 
-        show : bool
-            Shows the matplotlib figure
+        show : bool, optional
+            Shows the matplotlib figure.
 
         tolerance: float, optional
             Tolerance used to compute whether a point in the source is in a
@@ -2423,6 +2883,10 @@ class DataSetFilters:
 
         fname : str, optional
             Save the figure this file name when set.
+
+        Examples
+        --------
+        See the :ref:`plot_over_line_example` example.
 
         """
         # Ensure matplotlib is available
@@ -2489,24 +2953,34 @@ class DataSetFilters:
             in a cell of the input.  If not given, tolerance is
             automatically generated.
 
+        Returns
+        -------
+        pyvista.PolyData
+            Arc containing the sampled data
+
         Examples
         --------
-        Sample a dataset over a circular arc.
+        Sample a dataset over a circular arc and plot it.
 
+        >>> import pyvista
         >>> from pyvista import examples
         >>> uniform = examples.load_uniform()
         >>> uniform["height"] = uniform.points[:, 2]
-        >>> pointa = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[5]]
-        >>> pointb = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[4]]
-        >>> center = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[4]]
+        >>> pointa = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[5]]
+        >>> pointb = [uniform.bounds[1], uniform.bounds[3], uniform.bounds[4]]
+        >>> center = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[4]]
         >>> sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(uniform, style='wireframe')
+        >>> _ = pl.add_mesh(sampled_arc, line_width=10)
+        >>> pl.show_axes()
+        >>> pl.show()
 
         """
         if resolution is None:
             resolution = int(dataset.n_cells)
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
-
         sampled_circular_arc = circular_arc.sample(dataset, tolerance=tolerance)
         return sampled_circular_arc
 
@@ -2548,13 +3022,20 @@ class DataSetFilters:
         --------
         Sample a dataset over a circular arc.
 
+        >>> import pyvista
         >>> from pyvista import examples
         >>> uniform = examples.load_uniform()
         >>> uniform["height"] = uniform.points[:, 2]
         >>> normal = [0, 0, 1]
-        >>> polar = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[5]]
-        >>> center = [uniform.bounds[0], uniform.bounds[2], uniform.bounds[4]]
-        >>> sampled_arc = uniform.sample_over_circular_arc_normal(center, normal=normal, polar=polar)
+        >>> polar = [0, 9, 0]
+        >>> center = [uniform.bounds[1], uniform.bounds[2], uniform.bounds[5]]
+        >>> arc = uniform.sample_over_circular_arc_normal(center, normal=normal,
+        ...                                               polar=polar)
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(uniform, style='wireframe')
+        >>> _ = pl.add_mesh(arc, line_width=10)
+        >>> pl.show_axes()
+        >>> pl.show()
 
         """
         if resolution is None:
@@ -2565,9 +3046,7 @@ class DataSetFilters:
                                                      normal=normal,
                                                      polar=polar,
                                                      angle=angle)
-
-        sampled_circular_arc = circular_arc.sample(dataset, tolerance=tolerance)
-        return sampled_circular_arc
+        return circular_arc.sample(dataset, tolerance=tolerance)
 
     def plot_over_circular_arc(dataset, pointa, pointb, center,
                                resolution=None, scalars=None,
@@ -2743,8 +3222,8 @@ class DataSetFilters:
 
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
-        >>> normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-        >>> polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
+        >>> normal = normal = [0, 0, 1]
+        >>> polar = [0, 9, 0]
         >>> angle = 90
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
         >>> mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle)  # doctest:+SKIP
@@ -2854,18 +3333,28 @@ class DataSetFilters:
         ind : np.ndarray, list, or sequence
             Numpy array of point indices to be extracted.
         adjacent_cells : bool, optional
-            If True, extract the cells that contain at least one of the
-            extracted points. If False, extract the cells that contain
-            exclusively points from the extracted points list. The default is
-            True.
+            If ``True``, extract the cells that contain at least one of
+            the extracted points. If ``False``, extract the cells that
+            contain exclusively points from the extracted points list.
+            The default is ``True``.
         include_cells : bool, optional
-            Specifies if the cells shall be returned or not. The default is
-            True.
+            Specifies if the cells shall be returned or not. The default
+            is ``True``.
 
         Returns
         -------
-        subgrid : pyvista.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Subselected grid.
+
+        Examples
+        --------
+        Extract all the points of a sphere with a Z coordinate greater than 0
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> extracted = sphere.extract_points(sphere.points[:, 2] > 0)
+        >>> extracted.clear_arrays()  # clear for plotting
+        >>> extracted.plot()
 
         """
         # Create selection objects
@@ -2940,6 +3429,8 @@ class DataSetFilters:
         >>> type(surf)
         <class 'pyvista.core.pointset.PolyData'>
 
+        See the :ref:`extract_surface_example` for more examples using this filter.
+
         """
         surf_filter = _vtk.vtkDataSetSurfaceFilter()
         surf_filter.SetInputData(dataset)
@@ -2962,8 +3453,18 @@ class DataSetFilters:
 
         Returns
         -------
-        surf_ind : np.ndarray
+        np.ndarray
             Indices of the surface points.
+
+        Examples
+        --------
+        Return the first 10 surface indices of an UnstructuredGrid.
+
+        >>> from pyvista import examples
+        >>> grid = examples.load_hexbeam()
+        >>> ind = grid.surface_indices()
+        >>> ind[:10]  # doctest:+SKIP
+        pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4])
 
         """
         surf = DataSetFilters.extract_surface(dataset, pass_cellid=True)
@@ -2971,43 +3472,57 @@ class DataSetFilters:
 
     def extract_feature_edges(dataset, feature_angle=30, boundary_edges=True,
                               non_manifold_edges=True, feature_edges=True,
-                              manifold_edges=True, inplace=False):
+                              manifold_edges=True):
         """Extract edges from the surface of the mesh.
 
         If the given mesh is not PolyData, the external surface of the given
         mesh is extracted and used.
-        From vtk documentation, the edges are one of the following
 
-            1) boundary (used by one polygon) or a line cell
-            2) non-manifold (used by three or more polygons)
-            3) feature edges (edges used by two triangles and whose
-               dihedral angle > feature_angle)
-            4) manifold edges (edges used by exactly two polygons).
+        From vtk documentation, the edges are one of the following:
+
+            1) Boundary (used by one polygon) or a line cell.
+            2) Non-manifold (used by three or more polygons).
+            3) Feature edges (edges used by two triangles and whose
+               dihedral angle > feature_angle).
+            4) Manifold edges (edges used by exactly two polygons).
 
         Parameters
         ----------
         feature_angle : float, optional
-            Defaults to 30 degrees.
+            Feature angle (in degrees) used to detect sharp edges on
+            the mesh. Used only when ``feature_edges=True``.  Defaults
+            to 30 degrees.
 
         boundary_edges : bool, optional
-            Defaults to True
+            Extract the boundary edges. Defaults to ``True``.
 
         non_manifold_edges : bool, optional
-            Defaults to True
+            Extract non-manifold edges. Defaults to ``True``.
 
         feature_edges : bool, optional
-            Defaults to True
+            Extract edges exceeding ``feature_angle``.  Defaults to
+            ``True``.
 
         manifold_edges : bool, optional
-            Defaults to True
-
-        inplace : bool, optional
-            Updates existing dataset with the extracted features.
+            Extract manifold edges. Defaults to ``True``.
 
         Returns
         -------
-        edges : pyvista.vtkPolyData
+        edges : pyvista.PolyData
             Extracted edges.
+
+        Examples
+        --------
+        Extract the edges from an unstructured grid.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> feat_edges = hex_beam.extract_feature_edges()
+        >>> feat_edges.clear_arrays()  # clear array data for plotting
+        >>> feat_edges.plot(line_width=10)
+
+        See the :ref:`extract_edges_example` for more examples using this filter.
 
         """
         if not isinstance(dataset, _vtk.vtkPolyData):
@@ -3021,13 +3536,7 @@ class DataSetFilters:
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
         featureEdges.Update()
-
-        mesh = _get_output(featureEdges)
-        if inplace:
-            dataset.overwrite(mesh)
-            return dataset
-        else:
-            return mesh
+        return _get_output(featureEdges)
 
     def merge(dataset, grid=None, merge_points=True, inplace=False,
               main_has_priority=True):
@@ -3037,6 +3546,10 @@ class DataSetFilters:
 
         Can be used to merge points of adjacent cells when no grids
         are input.
+
+        .. note::
+           The ``+`` operator between two meshes uses this filter with
+           the default parameters.
 
         Parameters
         ----------
@@ -3058,7 +3571,7 @@ class DataSetFilters:
 
         Returns
         -------
-        merged_grid : vtk.UnstructuredGrid
+        pyvista.UnstructuredGrid
             Merged grid.
 
         Notes
@@ -3066,6 +3579,17 @@ class DataSetFilters:
         When two or more grids are joined, the type and name of each
         array must match or the arrays will be ignored and not
         included in the final merged mesh.
+
+        Examples
+        --------
+        Merge three separate spheres into a single mesh.
+
+        >>> import pyvista
+        >>> sphere_a = pyvista.Sphere(center=(1, 0, 0))
+        >>> sphere_b = pyvista.Sphere(center=(0, 1, 0))
+        >>> sphere_c = pyvista.Sphere(center=(0, 0, 1))
+        >>> merged = sphere_a.merge([sphere_b, sphere_c])
+        >>> merged.plot()
 
         """
         append_filter = _vtk.vtkAppendFilter()
@@ -3102,11 +3626,12 @@ class DataSetFilters:
     def compute_cell_quality(dataset, quality_measure='scaled_jacobian', null_value=-1.0):
         """Compute a function of (geometric) quality for each cell of a mesh.
 
-        The per-cell quality is added to the mesh's cell data, in an array
-        named "CellQuality". Cell types not supported by this filter or
-        undefined quality of supported cell types will have an entry of -1.
+        The per-cell quality is added to the mesh's cell data, in an
+        array named ``"CellQuality"``. Cell types not supported by this
+        filter or undefined quality of supported cell types will have an
+        entry of -1.
 
-        Defaults to computing the scaled jacobian.
+        Defaults to computing the scaled Jacobian.
 
         Options for cell quality measure:
 
@@ -3143,7 +3668,7 @@ class DataSetFilters:
         Parameters
         ----------
         quality_measure : str
-            The cell quality measure to use
+            The cell quality measure to use.
 
         null_value : float
             Float value for undefined quality. Undefined quality are qualities
@@ -3151,6 +3676,23 @@ class DataSetFilters:
             the particular geometry of cell in question, e.g. a volume query
             for a triangle. Undefined quality will always be undefined.
             The default value is -1.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the computed mesh quality in the
+            ``cell_arrays`` as the ``"CellQuality"`` array.
+
+        Examples
+        --------
+        Compute and plot the minimum angle of a sample sphere mesh.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(theta_resolution=20, phi_resolution=20)
+        >>> cqual = sphere.compute_cell_quality('min_angle')
+        >>> cqual.plot(show_edges=True)
+
+        See the :ref:`mesh_quality_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkCellQuality()
@@ -3209,37 +3751,62 @@ class DataSetFilters:
         ----------
         scalars : str, optional
             String name of the scalars array to use when computing the
-            derivative quantities.
+            derivative quantities.  Defaults to the active scalars in
+            the dataset.
 
         gradient: bool, str, optional
             Calculate gradient. If a string is passed, the string will be used
             for the resulting array name. Otherwise, array name will be
-            'gradient'. Default: True
+            ``'gradient'``. Default ``True``.
 
         divergence: bool, str, optional
             Calculate divergence. If a string is passed, the string will be
             used for the resulting array name. Otherwise, array name will be
-            'divergence'. Default: None
+            ``'divergence'``. Default ``None``.
 
         vorticity: bool, str, optional
             Calculate vorticity. If a string is passed, the string will be used
             for the resulting array name. Otherwise, array name will be
-            'vorticity'. Default: None
+            ``'vorticity'``. Default ``None``.
 
         qcriterion: bool, str, optional
             Calculate qcriterion. If a string is passed, the string will be
             used for the resulting array name. Otherwise, array name will be
-            'qcriterion'. Default: None
+            ``'qcriterion'``. Default ``None``.
 
         faster: bool, optional
             Use faster algorithm for computing derivative quantities. Result is
             less accurate and performs fewer derivative calculations,
             increasing computation speed. The error will feature smoothing of
             the output and possibly errors at boundaries. Option has no effect
-            if DataSet is not UnstructuredGrid. Default: False
+            if DataSet is not UnstructuredGrid. Default ``False``.
 
         preference: str, optional
-            Data type preference. Either 'point' or 'cell'.
+            Data type preference. Either ``'point'`` or ``'cell'``.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with calculated derivative.
+
+        Examples
+        --------
+        First, plot the random hills dataset with the active elevation
+        scalars.  These scalars will be used for the derivative
+        calculations.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> hills.plot(smooth_shading=True)
+
+        Compute and plot the gradient of the active scalars.
+
+        >>> from pyvista import examples
+        >>> hills = examples.load_random_hills()
+        >>> deriv = hills.compute_derivative()
+        >>> deriv.plot(scalars='gradient')
+
+        See the :ref:`gradients_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkGradientFilter()
@@ -3285,24 +3852,31 @@ class DataSetFilters:
     def shrink(dataset, shrink_factor=1.0, progress_bar=False):
         """Shrink the individual faces of a mesh.
 
-        This filter shrinks the individual faces of a mesh rather than scaling
-        the entire mesh.
+        This filter shrinks the individual faces of a mesh rather than
+        scaling the entire mesh.
 
         Parameters
         ----------
         shrink_factor : float, optional
-            fraction of shrink for each cell.
+            Fraction of shrink for each cell.  Defaults to 1.0, which
+            does not modify the faces.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
         Examples
         --------
-        Extrude shrink mesh
+        First, plot the original cube.
 
         >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> shrunk_mesh = mesh.shrink(shrink_factor=0.8)
+        >>> mesh = pyvista.Cube()
+        >>> mesh.plot(show_edges=True, line_width=5)
+
+        Now, plot the mesh with shrunk faces.
+
+        >>> shrunk = mesh.shrink(0.5)
+        >>> shrunk.clear_arrays()  # cleans up plot
+        >>> shrunk.plot(show_edges=True, line_width=5)
 
         """
         if not (0.0 <= shrink_factor <= 1.0):
@@ -3424,15 +3998,15 @@ class DataSetFilters:
             Normal direction for reflection.
 
         point : tuple(float), optional
-            Point which, along with `normal`, defines the reflection plane. If not
-            specified, this is the origin.
+            Point which, along with ``normal``, defines the reflection 
+            plane. If not specified, this is the origin.
 
         inplace : bool, optional
             When ``True``, modifies the dataset inplace.
 
         transform_all_input_vectors: bool, optional
-            When ``True``, all input vectors are transformed. Otherwise, only the
-            points, normals and active vectors are transformed.
+            When ``True``, all input vectors are transformed. Otherwise,
+            only the points, normals and active vectors are transformed.
 
         Examples
         --------
@@ -3440,6 +4014,8 @@ class DataSetFilters:
         >>> mesh = examples.load_airplane()
         >>> mesh = mesh.reflect((0, 0, 1), point=(0, 0, -100))
         >>> mesh.plot(show_edges=True)
+
+        See the :ref:`ref_reflect_example` for more examples using this filter.
 
         """
         t = transformations.reflection(normal, point=point)

@@ -24,6 +24,9 @@ pyvista.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
 pyvista.set_plot_theme("document")
 pyvista.global_theme.window_size = np.array([1024, 768]) * 2
+pyvista.global_theme.font.size = 40
+pyvista.global_theme.font.label_size = 40
+pyvista.global_theme.font.title_size = 40
 pyvista.global_theme.return_cpos = False
 pyvista.set_jupyter_backend(None)
 # Save figures in specified directory

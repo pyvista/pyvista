@@ -694,6 +694,36 @@ def test_bad_legend_origin_and_size(sphere):
         plotter.add_legend(labels=legend_labels, size=type)
 
 
+def test_legend_circle_face(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    face = "circle"
+    legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
+                                size=[0.1, 0.1], face=face)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_legend_rectangle_face(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    face = "rectangle"
+    legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
+                                size=[0.1, 0.1], face=face)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_legend_invalid_face(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    face = "invalid_face"
+    with pytest.raises(ValueError):
+        legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
+                                    size=[0.1, 0.1], face=face)
+
+
 def test_add_axes_twice():
     plotter = pyvista.Plotter()
     plotter.add_axes()
