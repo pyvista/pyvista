@@ -991,7 +991,7 @@ def Pyramid(points):
     return pyvista.wrap(ug)
 
 
-def Triangle(points = [[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
+def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
     """Create a triangle defined by 3 points.
 
     Parameters
@@ -1002,7 +1002,7 @@ def Triangle(points = [[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
     Returns
     -------
     pyvista.PolyData
-        triangle mesh.
+        Triangle mesh.
 
     Examples
     --------
@@ -1026,7 +1026,7 @@ def Triangle(points = [[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
     return triangle
 
 
-def Rectangle(points = [[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
+def Rectangle(points=[[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
     """Create a rectangle defined by 4 points.
 
     Parameters
@@ -1037,7 +1037,7 @@ def Rectangle(points = [[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
     Returns
     -------
     pyvista.PolyData
-        rectangle mesh.
+        Rectangle mesh.
 
     Examples
     --------
@@ -1063,18 +1063,21 @@ def Rectangle(points = [[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
     return rectangle
 
 
-def Circle(radius = 0.5):
-    """Create a single PolyData circle defined by radius.
+def Circle(radius=0.5, resolution=100):
+    """Create a single PolyData circle defined by radius in the XY plane.
 
     Parameters
     ----------
     radius : float, optional
         Radius of circle.
 
+    resolution : int, optional
+        Number of points on the circle.
+
     Returns
     -------
     pyvista.PolyData
-        circle mesh.
+        Circle mesh.
 
     Examples
     --------
@@ -1083,12 +1086,11 @@ def Circle(radius = 0.5):
     >>> circle = pyvista.Circle(radius)
     >>> circle.plot(show_edges=True, line_width=5)
     """
-    resolution = 100
     points = np.zeros((resolution, 3))
     theta = np.linspace(0.0, 2.0*np.pi, resolution)
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
-    cells = np.array([np.append(np.array([resolution]), np.arange(100))], ctypes.c_long)
+    cells = np.array([np.append(np.array([resolution]), np.arange(resolution))], ctypes.c_long)
     circle = pyvista.PolyData(points, cells)
 
     return circle

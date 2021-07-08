@@ -3477,14 +3477,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.legend.SetNumberOfEntries(len(labels))
 
-            if (face is None) or (face == "triangle"):
+            if face is None or face == "triangle":
                 legendface = pyvista.Triangle()
-            elif (face == "circle"):
+            elif face == "circle":
                 legendface = pyvista.Circle()
-            elif (face == "rectangle"):
+            elif face == "rectangle":
                 legendface = pyvista.Rectangle()
             else:
-                raise ValueError('Invalid face.  Must be one of the following:\n'
+                raise ValueError(f'Invalid face "{face}".  Must be one of the following:\n'
                                  '\t"triangle"\n'
                                  '\t"circle"\n'
                                  '\t"rectangle"\n')
