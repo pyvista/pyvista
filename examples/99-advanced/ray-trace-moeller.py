@@ -8,8 +8,9 @@ This example demonstrates the Moeller–Trumbore intersection algorithm
 using pyvista.
 
 For additional details, please reference the following:
-https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
-https://cadxfem.org/inf/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf
+
+- `Möller–Trumbore intersection algorithm <https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm>`_
+- `Fast Minimum Storage Ray Triangle Intersectio <https://cadxfem.org/inf/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf>`_
 
 First, define the ray triangle intersection method.
 """
@@ -45,10 +46,10 @@ def ray_triangle_intersection(ray_start, ray_vec, triangle):
         ``[np.nan, np.nan, np.nan]``
 
     """
-    # define a null intersection 
+    # define a null intersection
     null_inter = np.array([np.nan, np.nan, np.nan])
 
-    # break down triangle into the individual points 
+    # break down triangle into the individual points
     v1, v2, v3 = triangle
     eps = 0.000001
 
@@ -58,20 +59,18 @@ def ray_triangle_intersection(ray_start, ray_vec, triangle):
     pvec = np.cross(ray_vec, edge2)
     det = edge1.dot(pvec)
 
-    # no intersection
-    if abs(det) < eps:
+    if abs(det) < eps:  # no intersection
         return False, null_inter
     inv_det = 1. / det
     tvec = ray_start - v1
     u = tvec.dot(pvec) * inv_det
 
-    # no intersection
-    if u < 0. or u > 1.:
+    if u < 0. or u > 1.:  # if not intersection
         return False, null_inter
+
     qvec = np.cross(tvec, edge1)
     v = ray_vec.dot(qvec) * inv_det
-    
-    if v < 0. or u + v > 1.:
+    if v < 0. or u + v > 1.:  # if not intersection
         return False, null_inter
 
     t = edge2.dot(qvec) * inv_det
@@ -79,6 +78,7 @@ def ray_triangle_intersection(ray_start, ray_vec, triangle):
         return False, null_inter
 
     return True, np.array([t, u, v])
+
 
 ###############################################################################
 
