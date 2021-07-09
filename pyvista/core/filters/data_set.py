@@ -514,7 +514,7 @@ class DataSetFilters:
             The tolerance to the edge of the dataset bounds to create
             the slices. The ``n`` slices are placed equidistantly with
             an absolute padding of ``tolerance`` inside each side of the
-            ``bounds``- along the specified axis. Defaults to 1% of the
+            ``bounds`` along the specified axis. Defaults to 1% of the
             ``bounds`` along the specified axis.
 
         generate_triangles: bool, optional
