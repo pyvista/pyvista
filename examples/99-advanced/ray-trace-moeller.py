@@ -25,7 +25,7 @@ def ray_triangle_intersection(ray_start, ray_vec, triangle):
     Parameters
     ----------
     ray_start : np.ndarray
-       Length three numpy array representing start of point.
+        Length three numpy array representing start of point.
 
     ray_vec : np.ndarray
         Direction of the ray.
