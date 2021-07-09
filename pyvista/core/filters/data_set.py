@@ -511,16 +511,29 @@ class DataSetFilters:
             axis index (``0``, ``1``, or ``2``).
 
         tolerance : float, optional
-            The tolerance to the edge of the dataset bounds to create the
-            slices.
+            The tolerance to the edge of the dataset bounds to create
+            the slices. The ``n`` slices are placed equidistantly with
+            an absolute padding of ``tolerance`` inside each side of the
+            ``bounds``- along the specified axis. Defaults to 1% of the
+            ``bounds`` along the specified axis.
 
         generate_triangles: bool, optional
-            If this is enabled (``False`` by default), the output will be
-            triangles. Otherwise the output will be the intersection
+            If this is enabled (``False`` by default), the output will
+            be triangles. Otherwise the output will be the intersection
             polygons.
 
         contour : bool, optional
             If ``True``, apply a ``contour`` filter after slicing.
+
+        bounds : sequence, optional
+            A 6-length sequence overriding the bounds of the mesh.
+            The bounds along the specified axis define the extent
+            where slices are taken.
+
+        center : sequence, optional
+            A 3-length sequence specifying the position of the line
+            along which slices are taken. Defaults to the center of
+            the mesh.
 
         Examples
         --------
@@ -541,35 +554,41 @@ class DataSetFilters:
         See :ref:`slice_example` for more examples using this filter.
 
         """
-        axes = {'x': 0, 'y': 1, 'z': 2}
+        # parse axis input
+        labels = ['x', 'y', 'z']
+        label_to_index = {label: index for index, label in enumerate(labels)}
         if isinstance(axis, int):
-            ax = axis
-            axis = list(axes.keys())[list(axes.values()).index(ax)]
+            ax_index = axis
+            ax_label = labels[ax_index]
         elif isinstance(axis, str):
             try:
-                ax = axes[axis]
+                ax_index = label_to_index[axis.lower()]
             except KeyError:
-                raise ValueError(f'Axis ({axis}) not understood')
+                raise ValueError(f'Axis ({axis!r}) not understood. '
+                                 f'Choose one of {labels}.') from None
+            ax_label = axis
         # get the locations along that axis
         if bounds is None:
             bounds = dataset.bounds
         if center is None:
             center = dataset.center
         if tolerance is None:
-            tolerance = (bounds[ax*2+1] - bounds[ax*2]) * 0.01
-        rng = np.linspace(bounds[ax*2]+tolerance, bounds[ax*2+1]-tolerance, n)
+            tolerance = (bounds[ax_index*2 + 1] - bounds[ax_index*2]) * 0.01
+        rng = np.linspace(bounds[ax_index*2] + tolerance,
+                          bounds[ax_index*2 + 1] - tolerance,
+                          n)
         center = list(center)
         # Make each of the slices
         output = pyvista.MultiBlock()
         if isinstance(dataset, pyvista.MultiBlock):
             for i in range(dataset.n_blocks):
-                output[i] = dataset[i].slice_along_axis(n=n, axis=axis,
+                output[i] = dataset[i].slice_along_axis(n=n, axis=ax_label,
                     tolerance=tolerance, generate_triangles=generate_triangles,
                     contour=contour, bounds=bounds, center=center)
             return output
         for i in range(n):
-            center[ax] = rng[i]
-            slc = DataSetFilters.slice(dataset, normal=axis, origin=center,
+            center[ax_index] = rng[i]
+            slc = DataSetFilters.slice(dataset, normal=ax_label, origin=center,
                                        generate_triangles=generate_triangles,
                                        contour=contour)
             output[i, f'slice{i}'] = slc
