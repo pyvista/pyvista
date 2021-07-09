@@ -224,12 +224,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         1.7348
 
         """
-        volume = 0.0
-        for block in self:
-            if block is None:
-                continue
-            volume += block.volume
-        return volume
+        return sum(block.volume for block in self if block)
 
     def get_data_range(self, name: str) -> Tuple[float, float]:  # type: ignore
         """Get the min/max of an array given its name across all blocks."""
