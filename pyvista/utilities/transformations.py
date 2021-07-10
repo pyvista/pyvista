@@ -33,6 +33,48 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
     ``b = p0 - R @ p0``. These can be encoded in a 4-by-4 transformation
     matrix by filling the 3-by-3 leading principal submatrix with ``R``,
     and filling the top 3 values in the last column with ``b``.
+
+    Parameters
+    ----------
+    axis : 3-length sequence
+        The direction vector of the rotation axis. It need not be a
+        unit vector, but it must not be a zero vector.
+
+    angle : float
+        Angle of rotation around the axis. The angle is defined as a
+        counterclockwise rotation when facing the normal vector of the
+        rotation axis. Passed either in degrees or radians depending on
+        the value of ``deg``.
+
+    point : 3-length sequence, optional
+        The origin of the rotation (a reference point through which the
+        rotation axis passes). By default the rotation axis contains the
+        origin.
+
+    deg : bool, optional
+        Whether the angle is specified in degrees. ``False`` implies
+        radians.
+
+    Examples
+    --------
+    Generate a transformation matrix for rotation around a cube's body
+    diagonal by 120 degrees.
+
+    >>> import numpy as np
+    >>> from pyvista import transformations
+    >>> trans = transformations.axis_angle_rotation([1, 1, 1], 120)
+
+    Check that the transformation cycles the cube's three corners.
+
+    >>> corners = np.array([
+    ...     [1, 0, 0],
+    ...     [0, 1, 0],
+    ...     [0, 0, 1],
+    ... ])
+    >>> rotated = transformations.apply_transformation_to_points(trans, corners)
+    >>> np.allclose(rotated, corners[[1, 2, 0], :])
+    True
+
     """
     if deg:
         # convert to radians
@@ -102,6 +144,42 @@ def reflection(normal, point=None):
     matrix by filling the 3-by-3 leading principal submatrix with ``R``,
     and filling the top 3 values in the last column with ``b``.
 
+    Parameters
+    ----------
+    normal : 3-length sequence
+        The normal vector of the reflection plane. It need not be a unit
+        vector, but it must not be a zero vector.
+
+    point : 3-length sequence, optional
+        The origin of the reflection (a reference point through which
+        the reflection plane passes). By default the reflection plane
+        contains the origin.
+
+    Examples
+    --------
+    Generate a transformation matrix for reflection over the XZ plane.
+
+    >>> import numpy as np
+    >>> from pyvista import transformations
+    >>> trans = transformations.reflection([0, 1, 0])
+
+    Check that the reflection transforms corners of a cube among one
+    another.
+
+    >>> verts = np.array([
+    ...     [ 1, -1,  1],
+    ...     [-1, -1,  1],
+    ...     [-1, -1, -1],
+    ...     [-1, -1,  1],
+    ...     [ 1,  1,  1],
+    ...     [-1,  1,  1],
+    ...     [-1,  1, -1],
+    ...     [-1,  1,  1],
+    ... ])
+    >>> mirrored = transformations.apply_transformation_to_points(trans, verts)
+    >>> np.allclose(mirrored, verts[[np.r_[4:8, 0:4]], :])
+    True
+
     """
     normal = np.asarray(normal, dtype='float64')
     if normal.shape != (3,):
@@ -166,6 +244,7 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     >>> tf[3, 3,] = 1
     >>> pyvista.transformations.apply_transformation_to_points(tf, points, inplace=True)
     >>> assert np.all(np.isclose(points, scale_factor * points_orig))
+
     """
     transformation_shape = transformation.shape
     if transformation_shape not in ((3, 3), (4, 4)):
