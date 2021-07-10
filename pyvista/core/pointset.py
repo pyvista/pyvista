@@ -406,6 +406,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         Save a mesh as a PLY with a texture array.  Here we also
         create a simple RGB array representing the texture.
 
+        >>> import numpy as np
         >>> sphere = pyvista.Sphere()
         >>> texture = np.zeros((sphere.n_points, 3), np.uint8)
         >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]  # just blue channel
