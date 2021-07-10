@@ -493,8 +493,8 @@ class PolyDataFilters(DataSetFilters):
         elif curv_type == 'minimum':
             curvefilter.SetCurvatureTypeToMinimum()
         else:
-            raise ValueError('Curv_Type must be either "Mean", '
-                             '"Gaussian", "Maximum", or "Minimum"')
+            raise ValueError('``curv_type`` must be either "Mean", '
+                             '"Gaussian", "Maximum", or "Minimum".')
         curvefilter.Update()
 
         # Compute and return curvature
@@ -515,7 +515,7 @@ class PolyDataFilters(DataSetFilters):
             * ``'Minimum'``
 
         **kwargs : optional
-            See :func:`pyvista.plot`
+            See :func:`pyvista.plot`.
 
         Returns
         -------
@@ -525,8 +525,8 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Plot the gaussian curvature of an example mesh.  Override the
-        default scalarbar range as the mesh edges report high
+        Plot the Gaussian curvature of an example mesh.  Override the
+        default scalar bar range as the mesh edges report high
         curvature.
 
         >>> from pyvista import examples
@@ -548,10 +548,10 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         poly_data : pyvista.PolyData
-            Input mesh to compute convert to an all triangle mesh.
+            Input mesh to convert to an all triangle mesh.
 
         inplace : bool, optional
-            Updates mesh in-place.
+            Whether to update the mesh in-place.
 
         Returns
         -------
@@ -699,10 +699,10 @@ class PolyDataFilters(DataSetFilters):
         pre_split_mesh : bool, optional
             Separates the mesh into semi-planar patches, which are
             disconnected from each other. This can give superior
-            results in some cases. If pre_split_mesh is set to True,
-            the mesh is split with the specified
-            split_angle. Otherwise mesh splitting is deferred as long
-            as possible.
+            results in some cases. If ``pre_split_mesh`` is set to
+            ``True``, the mesh is split with the specified
+            ``split_angle.`` Otherwise mesh splitting is deferred as
+            long as possible.
 
         preserve_topology : bool, optional
             Controls topology preservation. If on, mesh splitting and
@@ -710,7 +710,7 @@ class PolyDataFilters(DataSetFilters):
             maximum reduction that may be achieved.
 
         inplace : bool, optional
-            Updates mesh in-place.
+            Whether to update the mesh in-place.
 
         Returns
         -------
@@ -760,25 +760,29 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         radius : float
-            Minimum tube radius (minimum because the tube radius may vary).
+            Minimum tube radius (minimum because the tube radius may
+            vary).
 
         scalars : str, optional
-            scalars array by which the radius varies
+            Scalars array by which the radius varies.
 
         capping : bool, optional
-            Turn on/off whether to cap the ends with polygons. Default ``True``.
+            Turn on/off whether to cap the ends with polygons. Default
+            ``True``.
 
         n_sides : int, optional
             Set the number of sides for the tube. Minimum of 3.
 
         radius_factor : float, optional
-            Maximum tube radius in terms of a multiple of the minimum radius.
+            Maximum tube radius in terms of a multiple of the minimum
+            radius.
 
         preference : str, optional
-            The field preference when searching for the scalars array by name.
+            The field preference when searching for the scalars array by
+            name.
 
         inplace : bool, optional
-            Updates mesh in-place.
+            Whether to update the mesh in-place.
 
         Returns
         -------
@@ -787,7 +791,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Convert a single line to a tube
+        Convert a single line to a tube.
 
         >>> import pyvista as pv
         >>> line = pv.Line()
@@ -834,7 +838,7 @@ class PolyDataFilters(DataSetFilters):
     def subdivide(poly_data, nsub, subfilter='linear', inplace=False):
         """Increase the number of triangles in a single, connected triangular mesh.
 
-        Uses one of the following vtk subdivision filters to subdivide a mesh.
+        Uses one of the following vtk subdivision filters to subdivide a mesh:
 
         * ``vtkButterflySubdivisionFilter``
         * ``vtkLoopSubdivisionFilter``
@@ -850,7 +854,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
            Subdivision filter sometimes fails for multiple part
-           meshes.  Should be one single mesh.
+           meshes.  The input should be one connected mesh.
 
         Parameters
         ----------
@@ -884,17 +888,17 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh = pyvista.Sphere(phi_resolution=10, theta_resolution=10)
         >>> mesh.plot(show_edges=True, line_width=3)
 
-        Subdivide the sphere mesh using linear subdivistion.
+        Subdivide the sphere mesh using linear subdivision.
 
         >>> submesh = mesh.subdivide(1, 'linear')
         >>> submesh.plot(show_edges=True, line_width=3)
 
-        Subdivide the sphere mesh using loop subdivistion.
+        Subdivide the sphere mesh using loop subdivision.
 
         >>> submesh = mesh.subdivide(1, 'loop')
         >>> submesh.plot(show_edges=True, line_width=3)
 
-        Subdivide the sphere mesh using butterfly subdivistion.
+        Subdivide the sphere mesh using butterfly subdivision.
 
         >>> submesh = mesh.subdivide(1, 'butterfly')
         >>> submesh.plot(show_edges=True, line_width=3)
@@ -1019,13 +1023,12 @@ class PolyDataFilters(DataSetFilters):
                  normals=False, tcoords=True, tensors=True, scalars_weight=0.1,
                  vectors_weight=0.1, normals_weight=0.1, tcoords_weight=0.1,
                  tensors_weight=0.1, inplace=False, progress_bar=False):
-        """Reduce the number of triangles in a triangular mesh using vtkQuadricDecimation.
+        """Reduce the number of triangles in a triangular mesh using ``vtkQuadricDecimation``.
 
         .. note::
            If you encounter a segmentation fault or other error,
            consider using :func:`pyvista.clean` to remove any invalid
            cells before using this filter.
-
 
         Parameters
         ----------
@@ -1034,58 +1037,60 @@ class PolyDataFilters(DataSetFilters):
 
         target_reduction : float
             Fraction of the original mesh to remove.
-            TargetReduction is set to 0.9, this filter will try to reduce
-            the data set to 10% of its original size and will remove 90%
-            of the input triangles.
+            If ``target_reduction`` is set to 0.9, this filter will try
+            to reduce the data set to 10% of its original size and will
+            remove 90% of the input triangles.
 
         volume_preservation : bool, optional
-            Decide whether to activate volume preservation which greatly reduces
-            errors in triangle normal direction. If off, volume preservation is
-            disabled and if AttributeErrorMetric is active, these errors can be
-            large. Defaults to ``False``.
+            Decide whether to activate volume preservation which greatly
+            reduces errors in triangle normal direction. If ``False``,
+            volume preservation is disabled and if ``attribute_error``
+            is active, these errors can be large. Defaults to ``False``.
 
         attribute_error : bool, optional
-            Decide whether to include data attributes in the error metric. If
-            off, then only geometric error is used to control the decimation.
-            Defaults to ``False``.
+            Decide whether to include data attributes in the error
+            metric. If ``False``, then only geometric error is used to
+            control the decimation. Defaults to ``False``. If ``True``,
+            the following flags are used to specify which attributes
+            are to be included in the error calculation.
 
         scalars : bool, optional
             If attribute errors are to be included in the metric (i.e.,
-            AttributeErrorMetric is on), then the following flags control which
-            attributes are to be included in the error calculation. Defaults to
-            ``True``.
+            ``attribute_error`` is ``True``), then these flags control
+            which attributes are to be included in the error
+            calculation. Defaults to ``True``.
 
         vectors : bool, optional
-            See scalars parameter. Defaults to ``True``.
+            See ``scalars`` parameter. Defaults to ``True``.
 
         normals : bool, optional
-            See scalars parameter. Defaults to ``False``.
+            See ``scalars`` parameter. Defaults to ``False``.
 
         tcoords : bool, optional
-            See scalars parameter. Defaults to ``True``.
+            See ``scalars`` parameter. Defaults to ``True``.
 
         tensors : bool, optional
-            See scalars parameter. Defaults to ``True``.
+            See ``scalars`` parameter. Defaults to ``True``.
 
         scalars_weight : float, optional
-            The scaling weight contribution of the scalar attribute. These
-            values are used to weight the contribution of the attributes towards
-            the error metric. Defaults to 0.1.
+            The scaling weight contribution of the scalar attribute.
+            These values are used to weight the contribution of the
+            attributes towards the error metric. Defaults to 0.1.
 
         vectors_weight : float, optional
-            See scalars weight parameter. Defaults to 0.1.
+            See ``scalars_weight`` parameter. Defaults to 0.1.
 
         normals_weight : float, optional
-            See scalars weight parameter. Defaults to 0.1.
+            See ``scalars_weight`` parameter. Defaults to 0.1.
 
         tcoords_weight : float, optional
-            See scalars weight parameter. Defaults to 0.1.
+            See ``scalars_weight`` parameter. Defaults to 0.1.
 
         tensors_weight : float, optional
-            See scalars weight parameter. Defaults to 0.1.
+            See ``scalars_weight`` parameter. Defaults to 0.1.
 
         inplace : bool, optional
-            Updates mesh in-place.
+            Whether to update the mesh in-place.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1103,7 +1108,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere = pyvista.Sphere(phi_resolution=60, theta_resolution=60)
         >>> sphere.plot(show_edges=True, line_width=2)
 
-        Now decimate by 75% it and plot it.
+        Now decimate it by 75% and plot it.
 
         >>> decimated = sphere.decimate(0.75)
         >>> decimated.plot(show_edges=True, line_width=2)
@@ -1243,9 +1248,9 @@ class PolyDataFilters(DataSetFilters):
         Triangle strips are broken up into triangle polygons. You may
         want to restrip the triangles.
 
-        May be easier to run
-        :func:pyvista.core.PointSet.point_normals` or
-        :func:pyvista.core.PointSet.cell_normals` if you would just
+        It may be easier to run
+        :func:`pyvista.PolyData.point_normals` or
+        :func:`pyvista.PolyData.cell_normals` if you would just
         like the array of point or cell normals.
 
         """
@@ -1326,7 +1331,7 @@ class PolyDataFilters(DataSetFilters):
         >>> clipped_mesh = sphere.clip_closed_surface('-z')
         >>> clipped_mesh.plot(show_edges=True, line_width=3)
 
-        Clip the sphere at the xy plane and leave behind half the
+        Clip the sphere at the XY plane and leave behind half the
         sphere in the positive Z direction.  Shift the clip upwards to
         leave a smaller mesh behind.
 
@@ -1444,7 +1449,8 @@ class PolyDataFilters(DataSetFilters):
             lines.  Enabled by default.
 
         strips_to_polys : bool, optional
-            Enable or disable the conversion of degenerate strips to polys.
+            Enable or disable the conversion of degenerate strips to
+            polys.
 
         inplace : bool, optional
             Updates mesh in-place. Default ``False``.
@@ -1473,7 +1479,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh = pv.PolyData(points, faces)
         >>> mout = mesh.clean()
         >>> mout.faces  # doctest:+SKIP
-        [3 0 1 2]
+        array([3, 0, 1, 2])
 
         """
         if tolerance is None:
@@ -1638,7 +1644,7 @@ class PolyDataFilters(DataSetFilters):
             Returns intersection of first point only.
 
         plot : bool, optional
-            Plots ray trace results.
+            Whether to plot the ray trace results.
 
         off_screen : bool, optional
             Plots off screen when ``plot=True``.  Used for unit testing.
@@ -1655,8 +1661,9 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Compute the intersection between a ray from the origin and
-        [1, 0, 0] and a sphere with radius 0.5 centered at the origin.
+        Compute the intersection between a ray from the origin to
+        ``[1, 0, 0]`` and a sphere with radius 0.5 centered at the
+        origin.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
@@ -1711,12 +1718,12 @@ class PolyDataFilters(DataSetFilters):
         origin points and an equal sized array of direction vectors to
         trace along.
 
-        The embree library used for vectorisation of the ray traces is
+        The embree library used for vectorization of the ray traces is
         known to occasionally return no intersections where the VTK
         implementation would return an intersection.  If the result
-        appears to be missing some intersection points, set retry=True
-        to run a second pass over rays that returned no intersections,
-        using the VTK ray_trace implementation.
+        appears to be missing some intersection points, set
+        ``retry=True`` to run a second pass over rays that returned no
+        intersections, using the VTK ``ray_trace`` implementation.
 
         Parameters
         ----------
@@ -1757,7 +1764,7 @@ class PolyDataFilters(DataSetFilters):
         >>> points, rays, cells = sphere.multi_ray_trace([[0, 0, 0]]*3, [[1, 0, 0], [0, 1, 0], [0, 0, 1]], first_point=True) # doctest: +SKIP
         >>> string = ", ".join([f"({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})" for point in points]) # doctest: +SKIP
         >>> f'Rays intersected at {string}' # doctest: +SKIP
-        Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)
+        'Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)'
 
         """
         if not poly_data.is_all_triangles():
@@ -1820,7 +1827,7 @@ class PolyDataFilters(DataSetFilters):
             The color of the edges when they are added to the plotter.
 
         line_width : int, optional
-            Width of the boundaries line.
+            Width of the boundary lines.
 
         kwargs : optional
             All additional keyword arguments will be passed to
@@ -2011,7 +2018,7 @@ class PolyDataFilters(DataSetFilters):
 
     def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     inplace=False, edge_source=None, progress_bar=False):
-        """Apply a delaunay 2D filter along the best fitting plane.
+        """Apply a 2D Delaunay filter along the best fitting plane.
 
         Parameters
         ----------
@@ -2057,14 +2064,14 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        First, generate 30 points on circle and plot it.
+        First, generate 30 points on circle and plot them.
 
         >>> import pyvista
         >>> points = pyvista.Polygon(n_sides=30).points
         >>> circle = pyvista.PolyData(points)
         >>> circle.plot(show_edges=True, point_size=15)
 
-        Use ``delaunay_2d`` to fill the interior of the circle
+        Use :func:`delaunay_2d` to fill the interior of the circle.
 
         >>> filled_circle = circle.delaunay_2d()
         >>> filled_circle.plot(show_edges=True, line_width=5)
@@ -2118,7 +2125,7 @@ class PolyDataFilters(DataSetFilters):
         >>> f'Length is {length:.3f}'
         'Length is 0.812'
 
-        You can also plot the arc_length
+        You can also plot the arc_length.
 
         >>> arc = path.compute_arc_length()
         >>> arc.plot(scalars="arc_length")
@@ -2136,19 +2143,20 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         origin : np.ndarray or collections.abc.Sequence, optional
-            Plane origin.  Defaults the approximate center of the
+            Plane origin.  Defaults to the approximate center of the
             input mesh minus half the length of the input mesh in the
             direction of the normal.
 
         normal : np.ndarray or collections.abc.Sequence, optional
-            Plane normal.  Defaults to +Z ``[0, 0, 1]``
+            Plane normal.  Defaults to +Z, i.e. ``[0, 0, 1]``.
 
         inplace : bool, optional
-            Overwrite the original mesh with the projected points
+            Whether to overwrite the original mesh with the projected
+            points.
 
         Examples
         --------
-        Flatten a sphere to the XY plane
+        Flatten a sphere to the XY plane.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
@@ -2178,7 +2186,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
            If there are no lines in the input dataset, then the output
-           will be an empty ``pyvista.PolyData`` mesh.
+           will be an empty :class:`pyvista.PolyData` mesh.
 
         Parameters
         ----------
@@ -2302,7 +2310,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Extrude a half arc circle
+        Extrude a half circle arc.
 
         >>> import pyvista
         >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
@@ -2319,8 +2327,7 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(output)
             return poly_data
-        else:
-            return output
+        return output
 
     def extrude_rotate(poly_data, resolution=30, inplace=False,
                        translation=0.0, dradius=0.0, angle=360.0, progress_bar=False):
