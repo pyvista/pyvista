@@ -723,14 +723,14 @@ class DataSetFilters:
         See :ref:`common_filter_example` for more examples using this filter.
 
         """
-        # set the scalaras to threshold on
+        if all_scalars and scalars is not None:
+            raise ValueError('Setting `all_scalars=True` and designating `scalars` '
+                             'is incompatible.  Set one or the other but not both.')
+
+        # set the scalars to threshold on
         if scalars is None:
             field, scalars = dataset.active_scalars_info
         arr, field = get_array(dataset, scalars, preference=preference, info=True)
-
-        if all_scalars and scalars is not None:
-            raise ValueError('Setting `all_scalars=True` and designating `scalars` '
-                             'is incompatible.  Set one or the other but not both')
 
         if arr is None:
             raise ValueError('No arrays present to threshold.')
