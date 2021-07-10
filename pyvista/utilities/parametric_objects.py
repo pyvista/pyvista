@@ -22,7 +22,7 @@ def Spline(points, n_points=None):
 
     Returns
     -------
-    spline : pyvista.PolyData
+    pyvista.PolyData
         Line mesh of spline.
 
     Examples
@@ -38,6 +38,7 @@ def Spline(points, n_points=None):
     >>> y = r * np.cos(theta)
     >>> points = np.column_stack((x, y, z))
     >>> spline = pv.Spline(points, 1000)
+    >>> spline.plot(render_lines_as_tubes=True, line_width=10, show_scalar_bar=False)
 
     """
     spline_function = _vtk.vtkParametricSpline()
@@ -63,7 +64,7 @@ def ParametricBohemianDome(a=None, **kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricBohemianDome surface.
 
     Examples
