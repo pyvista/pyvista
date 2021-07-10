@@ -115,7 +115,7 @@ class DataObject:
                 writer.SetArrayName(array_name)
 
             # enable alpha channel if applicable
-            if self[array_name].shape[-1] == 4:
+            if self[array_name].shape[-1] == 4:  # type: ignore
                 writer.SetEnableAlpha(True)
         writer.Write()
 
