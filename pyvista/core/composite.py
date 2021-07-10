@@ -135,25 +135,12 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         [-0.5, 2.5, -0.5, 2.5, -0.5, 0.5]
 
         """
-        bounds = [np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf]
-
-        def update_bounds(ax, nb, bounds):
-            """Update bounds while keeping track (internal helper)."""
-            if nb[2*ax] < bounds[2*ax]:
-                bounds[2*ax] = nb[2*ax]
-            if nb[2*ax+1] > bounds[2*ax+1]:
-                bounds[2*ax+1] = nb[2*ax+1]
-            return bounds
-
-        # get bounds for each block and update
-        for i in range(self.n_blocks):
-            if self[i] is None:
-                continue
-            bnds = self[i].bounds  # type: ignore
-            for a in range(3):
-                bounds = update_bounds(a, bnds, bounds)
-
-        return bounds
+        # apply reduction of min and max over each block
+        all_bounds = [block.bounds for block in self if block]
+        minima = np.minimum.reduce(all_bounds)[::2]
+        maxima = np.maximum.reduce(all_bounds)[1::2]
+        # interleave minima and maxima for bounds
+        return np.stack([minima, maxima]).ravel('F').tolist()
 
     @property
     def center(self) -> Any:
@@ -224,12 +211,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         1.7348
 
         """
-        volume = 0.0
-        for block in self:
-            if block is None:
-                continue
-            volume += block.volume
-        return volume
+        return sum(block.volume for block in self if block)
 
     def get_data_range(self, name: str) -> Tuple[float, float]:  # type: ignore
         """Get the min/max of an array given its name across all blocks."""
