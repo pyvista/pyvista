@@ -515,3 +515,74 @@ def test_vtk_error_catcher():
     error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
     with error_catcher:
         pass
+
+
+def test_axis_angle_rotation():
+    # rotate cube corners around body diagonal
+    points = np.array([
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+    ])
+    axis = [1, 1, 1]
+
+    # no-op case
+    angle = 360
+    trans = transformations.axis_angle_rotation(axis, angle)
+    actual = transformations.apply_transformation_to_points(trans, points)
+    assert np.array_equal(actual, points)
+
+    # default origin
+    angle = np.radians(120)
+    expected = points[[1, 2, 0], :]
+    trans = transformations.axis_angle_rotation(axis, angle, deg=False)
+    actual = transformations.apply_transformation_to_points(trans, points)
+    assert np.allclose(actual, expected)
+
+    # non-default origin
+    p0 = [-2, -3, 4]
+    points += p0
+    expected += p0
+    trans = transformations.axis_angle_rotation(axis, angle, point=p0, deg=False)
+    actual = transformations.apply_transformation_to_points(trans, points)
+    assert np.allclose(actual, expected)
+
+    # invalid cases
+    with pytest.raises(ValueError):
+        transformations.axis_angle_rotation([1, 0, 0, 0], angle)
+    with pytest.raises(ValueError):
+        transformations.axis_angle_rotation(axis, angle, point=[1, 0, 0, 0])
+    with pytest.raises(ValueError):
+        transformations.axis_angle_rotation([0, 0, 0], angle)
+
+
+def test_reflection():
+    # reflect points of a square across a diagonal
+    points = np.array([
+        [ 1,  1, 0],
+        [-1,  1, 0],
+        [-1, -1, 0],
+        [ 1, -1, 0],
+    ])
+    normal = [1, 1, 0]
+
+    # default origin
+    expected = points[[2, 1, 0, 3], :]
+    trans = transformations.reflection(normal)
+    actual = transformations.apply_transformation_to_points(trans, points)
+    assert np.allclose(actual, expected)
+
+    # non-default origin
+    p0 = [1, 1, 0]
+    expected += 2 * np.array(p0)
+    trans = transformations.reflection(normal, point=p0)
+    actual = transformations.apply_transformation_to_points(trans, points)
+    assert np.allclose(actual, expected)
+
+    # invalid cases
+    with pytest.raises(ValueError):
+        transformations.reflection([1, 0, 0, 0])
+    with pytest.raises(ValueError):
+        transformations.reflection(normal, point=[1, 0, 0, 0])
+    with pytest.raises(ValueError):
+        transformations.reflection([0, 0, 0])
