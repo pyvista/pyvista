@@ -67,7 +67,8 @@ class DataObject:
             the extension of the filename.
 
         binary : bool, optional
-            If True, write as binary, else ASCII.
+            If ``True``, write as binary.  Otherwise, write as ASCII.
+            
 
         texture : str, np.ndarray, optional
             Write a single texture array to file when using a PLY

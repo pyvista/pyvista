@@ -372,7 +372,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             types (``'.ply'``, ``'.stl'``, ``'.vtk``)
 
         binary : bool, optional
-            Writes the file as binary when True and ASCII when False.
+            Writes the file as binary when ``True`` and ASCII when ``False``.
 
         texture : str, np.ndarray, optional
             Write a single texture array to file when using a PLY
