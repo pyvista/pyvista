@@ -3,7 +3,37 @@ import numpy as np
 
 
 def axis_angle_rotation(axis, angle, point=None, deg=True):
-    """Return a 4x4 matrix for rotation about an axis by given angle, optionally about a given point."""
+    r"""Return a 4x4 matrix for rotation about any axis by given angle.
+
+    Rotations around an axis that contains the origin can easily be
+    computed using Rodrigues' rotation formula. The key quantity is
+    the ``K`` cross product matrix for the unit vector ``n`` defining
+    the axis of the rotation:
+
+             /   0  -nz   ny \
+        K =  |  nz    0  -nx |
+             \ -ny   nx    0 /
+
+    For a rotation angle ``phi`` around the vector ``n`` the rotation
+    matrix is given by
+
+        R = I + sin(phi) K  + (1 - cos(phi)) K^2
+
+    where ``I`` is the 3-by-3 unit matrix and ``K^2`` denotes the matrix
+    square of ``K``.
+
+    If the rotation axis doesn't contain the origin, we have to first
+    shift real space to transform the axis' ``p0`` reference point into
+    the origin, then shift the points back after rotation:
+
+        p' = R @ (p - p0) + p0 = R @ p + (p0 - R @ p0)
+
+    This means that the rotation in general consists of a 3-by-3
+    rotation matrix ``R``, and a translation given by
+    ``b = p0 - R @ p0``. These can be encoded in a 4-by-4 transformation
+    matrix by filling the 3-by-3 leading principal submatrix with ``R``,
+    and filling the top 3 values in the last column with ``b``.
+    """
     if deg:
         # convert to radians
         angle *= np.pi / 180
@@ -44,7 +74,35 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
 
 
 def reflection(normal, point=None):
-    """Return a 4x4 matrix for reflection across a normal about a point."""
+    """Return a 4x4 matrix for reflection across a normal about a point.
+
+    Projection to a unit vector ``n`` can be computed using the dyadic
+    product (or outer product) ``P`` of ``n`` with itself, which is a
+    3-by-3 symmetric matrix.
+
+    Reflection across a plane that contains the origin amounts to
+    reversing the components of real space points that are perpendicular
+    to the reflection plane. This gives us the transformation ``R``
+    acting on a point ``p`` as
+
+        p' = R @ p = p - 2 P @ p = (I - 2 P) @ p
+
+    so the reflection's transformation matrix is the unit matrix minus
+    twice the dyadic product ``P``.
+
+    If additionally we want to compute a reflection to a plane that does
+    not contain the origin, we can we can first shift every point in
+    real space by ``-p0`` (if ``p0`` is a point that lies on the plane)
+
+        p' = R @ (p - p0) + p0 = R @ p + (p0 - R @ p0)
+
+    This means that the reflection in general consists of a 3-by-3
+    reflection matrix ``R``, and a translation given by
+    ``b = p0 - R @ p0``. These can be encoded in a 4-by-4 transformation
+    matrix by filling the 3-by-3 leading principal submatrix with ``R``,
+    and filling the top 3 values in the last column with ``b``.
+
+    """
     normal = np.asarray(normal, dtype='float64')
     if normal.shape != (3,):
         raise ValueError('Normal must be a 3-length array-like.')
@@ -63,14 +121,14 @@ def reflection(normal, point=None):
 
     # build reflection matrix
     projection = np.outer(normal, normal)
-    T = np.eye(3) - 2 * projection
+    R = np.eye(3) - 2 * projection
     augmented = np.eye(4)
-    augmented[:-1, :-1] = T
+    augmented[:-1, :-1] = R
 
     if point is not None:
-        # reflection of point p would be T @ (p - point) + point
-        # which is T @ p + (point - T @ point)
-        augmented[:-1, -1] = point - T @ point
+        # reflection of point p would be R @ (p - point) + point
+        # which is R @ p + (point - R @ point)
+        augmented[:-1, -1] = point - R @ point
 
     return augmented
 
