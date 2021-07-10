@@ -481,14 +481,15 @@ def test_cell_centers_composite(composite):
 
 def test_glyph(datasets, sphere):
     for i, dataset in enumerate(datasets):
-        dataset.vectors = np.ones_like(dataset.points)
+        dataset["vectors"] = np.ones_like(dataset.points)
         result = dataset.glyph()
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
     sphere_sans_arrays = sphere.copy()
     sphere.compute_normals(inplace=True)
-    sphere.vectors = np.ones([sphere.n_points,3])
+    sphere["vectors"] = np.ones([sphere.n_points,3])
+    sphere.set_active_vectors("vectors")
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
 
     assert sphere.glyph(scale=False)
@@ -765,11 +766,80 @@ def test_streamlines_from_source_structured_grids():
         np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5)
     )
     mesh2 = pyvista.StructuredGrid(x2, y2, z2)
-    mesh.vectors = np.ones([mesh.n_points, 3])
-    
+    mesh["vectors"]= np.ones([mesh.n_points, 3])
+    mesh.set_active_vectors("vectors")
+
     with pyvista.VtkErrorCatcher(raise_errors=True):
         stream = mesh.streamlines_from_source(mesh2)
     assert all([stream.n_points, stream.n_cells])
+
+
+def mesh_2D_velocity():
+    mesh = pyvista.Plane(i_resolution=100, j_resolution=100)
+    velocity = np.zeros([mesh.n_points, 3])
+    velocity[:, 0] = 1
+    mesh["velocity"] = velocity
+    mesh.set_active_vectors("velocity")
+    return mesh
+
+def test_streamlines_evenly_spaced_2D():
+    mesh = mesh_2D_velocity()
+    streams = mesh.streamlines_evenly_spaced_2D()
+    assert all([streams.n_points, streams.n_cells])
+
+
+def test_streamlines_evenly_spaced_2D_sep_dist_ratio():
+    mesh = mesh_2D_velocity()
+    streams = mesh.streamlines_evenly_spaced_2D(separating_distance_ratio=0.1)
+    assert all([streams.n_points, streams.n_cells])
+
+
+def test_streamlines_evenly_spaced_2D_start_position():
+    mesh = mesh_2D_velocity()
+    streams = mesh.streamlines_evenly_spaced_2D(start_position=(-0.1, 0.1, 0.0))
+    assert all([streams.n_points, streams.n_cells])
+
+
+def test_streamlines_evenly_spaced_2D_vectors():
+    mesh = mesh_2D_velocity()
+    mesh.set_active_vectors(None)
+    streams = mesh.streamlines_evenly_spaced_2D(vectors="velocity")
+    assert all([streams.n_points, streams.n_cells])
+
+
+def test_streamlines_evenly_spaced_2D_integrator_type():
+    mesh = mesh_2D_velocity()
+    streams = mesh.streamlines_evenly_spaced_2D(integrator_type=4)
+    assert all([streams.n_points, streams.n_cells])
+
+
+def test_streamlines_evenly_spaced_2D_interpolator_type():
+    mesh = mesh_2D_velocity()
+    streams = mesh.streamlines_evenly_spaced_2D(interpolator_type='cell')
+    assert all([streams.n_points, streams.n_cells])
+
+
+def test_streamlines_evenly_spaced_2D_errors():
+    mesh = mesh_2D_velocity()
+
+    with pytest.raises(ValueError):
+        streams = mesh.streamlines_evenly_spaced_2D(integrator_type=45)
+
+    with pytest.raises(ValueError):
+        streams = mesh.streamlines_evenly_spaced_2D(interpolator_type="not valid")        
+    
+    with pytest.raises(ValueError):
+        streams = mesh.streamlines_evenly_spaced_2D(step_unit="not valid")
+
+
+@pytest.mark.xfail
+def test_streamlines_nonxy_plane():
+    # streamlines_evenly_spaced_2D only works for xy plane datasets
+    # test here so that fixes in vtk can be caught
+    mesh = mesh_2D_velocity()
+    mesh.translate((0, 0, 1)) # move to z=1, xy plane
+    streams = mesh.streamlines_evenly_spaced_2D()
+    assert all([streams.n_points, streams.n_cells])
 
 
 def test_sample_over_line():

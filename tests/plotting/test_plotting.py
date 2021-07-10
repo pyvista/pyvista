@@ -220,13 +220,14 @@ def test_plot(sphere, tmpdir):
                              interpolate_before_map=True,
                              screenshot=filename,
                              return_img=True,
-                             before_close_callback=verify_cache_image)
+                             before_close_callback=verify_cache_image,
+                             return_cpos=True)
     assert isinstance(cpos, pyvista.CameraPosition)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
 
     filename = pathlib.Path(str(tmp_dir.join('tmp2.png')))
-    cpos = pyvista.plot(sphere, screenshot=filename)
+    pyvista.plot(sphere, screenshot=filename)
 
     # Ensure it added a PNG extension by default
     assert filename.with_suffix(".png").is_file()
@@ -235,6 +236,12 @@ def test_plot(sphere, tmpdir):
     with pytest.raises(ValueError):
         filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
         pyvista.plot(sphere, screenshot=filename)
+
+
+def test_plot_return_cpos(sphere):
+    cpos = sphere.plot(return_cpos=True)
+    assert isinstance(cpos, pyvista.CameraPosition)
+    assert sphere.plot(return_cpos=False) is None
 
 
 @skip_no_plotting
@@ -690,6 +697,39 @@ def test_bad_legend_origin_and_size(sphere):
         plotter.add_legend(labels=legend_labels, origin=len)
     with pytest.raises(ValueError, match='size'):
         plotter.add_legend(labels=legend_labels, size=type)
+
+
+@skip_no_plotting
+def test_legend_circle_face(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    face = "circle"
+    legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
+                                size=[0.1, 0.1], face=face)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_legend_rectangle_face(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    face = "rectangle"
+    legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
+                                size=[0.1, 0.1], face=face)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_legend_invalid_face(sphere):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    face = "invalid_face"
+    with pytest.raises(ValueError):
+        legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
+                                    size=[0.1, 0.1], face=face)
 
 
 @skip_no_plotting
@@ -1983,3 +2023,23 @@ def test_plotter_image():
     plotter.store_image = True
     plotter.show()
     assert plotter.image.shape[:2] == wsz
+
+
+def test_scalar_cell_priorities():
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [1.5, 1, 0], [0, 0, 1]])
+    faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]])
+    mesh = pyvista.PolyData(vertices, faces)
+    colors = [
+        [255, 0, 0],
+        [0, 255, 0],
+        [0, 0, 255],
+        [255,255,255]
+    ]
+
+    mesh.cell_arrays['colors'] = colors
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(mesh,
+                     scalars='colors',
+                     rgb=True,
+                     preference='cell')
+    plotter.show(before_close_callback=verify_cache_image)

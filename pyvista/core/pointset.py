@@ -337,8 +337,8 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         return False
 
     def __sub__(self, cutting_mesh):
-        """Subtract two meshes."""
-        return self.boolean_cut(cutting_mesh)
+        """Compute boolean difference of two meshes."""
+        return self.boolean_difference(cutting_mesh)
 
     @property
     def n_faces(self):
@@ -494,8 +494,8 @@ class PointGrid(PointSet):
         Returns
         -------
         cpos : list
-            Camera position, focal point, and view up.  Used for storing and
-            setting camera view.
+            Camera position, focal point, and view up.  Returned when
+            ``return_cpos`` is ``True``.
 
         """
         trisurf = self.extract_surface().triangulate()
@@ -657,7 +657,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Examples
         --------
-        >>> import numpy
+        >>> import numpy as np
         >>> import vtk
         >>> import pyvista
         >>> offset = np.array([0, 9])
@@ -1133,24 +1133,24 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     --------
     >>> import numpy as np
     >>> import pyvista as pv
-    >>>
+    >>> 
     >>> # grid size: ni*nj*nk cells; si, sj, sk steps
     >>> ni, nj, nk = 4, 5, 6
     >>> si, sj, sk = 20, 10, 1
-    >>>
+    >>> 
     >>> # create raw coordinate grid
     >>> grid_ijk = np.mgrid[:(ni+1)*si:si, :(nj+1)*sj:sj, :(nk+1)*sk:sk]
-    >>>
+    >>> 
     >>> # repeat array along each Cartesian axis for connectivity
     >>> for axis in range(1, 4):
     ...     grid_ijk = grid_ijk.repeat(2, axis=axis)
-    >>>
+    >>> 
     >>> # slice off unnecessarily doubled edge coordinates
     >>> grid_ijk = grid_ijk[:, 1:-1, 1:-1, 1:-1]
-    >>>
+    >>> 
     >>> # reorder and reshape to VTK order
     >>> corners = grid_ijk.transpose().reshape(-1, 3)
-    >>>
+    >>> 
     >>> dims = np.array([ni, nj, nk]) + 1
     >>> grid = pv.ExplicitStructuredGrid(dims, corners)
     >>> _ = grid.compute_connectivity()
@@ -1593,7 +1593,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> cell = grid.extract_cells(31)  # doctest: +SKIP
         >>> ind = grid.neighbors(31)  # doctest: +SKIP
         >>> neighbors = grid.extract_cells(ind)  # doctest: +SKIP
-        >>>
+        >>> 
         >>> plotter = pv.Plotter()
         >>> plotter.add_axes()  # doctest: +SKIP
         >>> plotter.add_mesh(cell, color='r', show_edges=True)  # doctest: +SKIP
@@ -1718,7 +1718,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>>
+        >>> 
         >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
         >>> grid.compute_connectivity()  # doctest: +SKIP
         >>> grid.plot(show_edges=True)  # doctest: +SKIP

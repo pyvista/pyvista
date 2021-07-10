@@ -64,7 +64,7 @@ def orientation_cube():
     >>> _ = pl.add_mesh(ocube['z_p'], color='red')
     >>> _ = pl.add_mesh(ocube['z_n'], color='red')
     >>> pl.show_axes()
-    >>> pl.show()  # doctest:+SKIP
+    >>> pl.show()
 
     """
     cube = pv.Cube()
