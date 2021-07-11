@@ -259,14 +259,21 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
 
     * ``'.byu'``
     * ``'.g'``
-    * ``'.facet'``
-    * ``'.cas'``
-    * ``'.res'``
-    * ``'.foam'``
     * ``'.p3d'``
     * ``'.pts'``
     * ``'.tri'``
     * ``'.inp'``
+
+    .. note::
+       There is limited support for OpenFoam format files.
+       ``pyvista.read`` will automatically return only the first
+       dataset in a single-element :class:`pyvista.MultiBlock`.  These
+       files include:
+
+       * ``'.facet'``
+       * ``'.cas'``
+       * ``'.res'``
+       * ``'.foam'``
 
     .. note::
        See https://github.com/nschloe/meshio for formats supported by ``meshio``
