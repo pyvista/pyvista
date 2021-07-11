@@ -540,24 +540,6 @@ class DataSetFilters:
 
         See :ref:`slice_example` for more examples using this filter.
 
-        Examples
-        --------
-        Slice the random hills dataset in the X direction.
-
-        >>> from pyvista import examples
-        >>> hills = examples.load_random_hills()
-        >>> slices = hills.slice_along_axis(n=10)
-        >>> slices.plot(line_width=5)
-
-        Slice the random hills dataset in the Z direction.
-
-        >>> from pyvista import examples
-        >>> hills = examples.load_random_hills()
-        >>> slices = hills.slice_along_axis(n=10, axis='z')
-        >>> slices.plot(line_width=5)
-
-        See :ref:`slice_example` for more examples using this filter.
-
         """
         axes = {'x': 0, 'y': 1, 'z': 2}
         if isinstance(axis, int):
@@ -611,31 +593,6 @@ class DataSetFilters:
 
         contour : bool, optional
             If ``True``, apply a ``contour`` filter after slicing.
-
-        Examples
-        --------
-        Slice the random hills dataset along a circular arc.
-
-        >>> import numpy as np
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> hills = examples.load_random_hills()
-        >>> center = np.array(hills.center)
-        >>> point_a = center + np.array([5, 0, 0])
-        >>> point_b = center + np.array([-5, 0, 0])
-        >>> arc = pyvista.CircularArc(point_a, point_b, center, resolution=100)
-        >>> line_slice = hills.slice_along_line(arc)
-
-        Plot the circular arc and the hills mesh.
-
-        >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(hills, smooth_shading=True, style='wireframe')
-        >>> _ = pl.add_mesh(line_slice, line_width=10, render_lines_as_tubes=True,
-        ...                 color='k')
-        >>> _ = pl.add_mesh(arc, line_width=10, color='grey')
-        >>> pl.show()
-
-        See :ref:`slice_example` for more examples using this filter.
 
         Examples
         --------
@@ -850,24 +807,6 @@ class DataSetFilters:
             When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
-
-        Examples
-        --------
-        Apply a 50% threshold filter.
-
-        >>> import pyvista
-        >>> noise = pyvista.perlin_noise(0.1, (2, 2, 2), (0, 0, 0))
-        >>> grid = pyvista.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0],
-        ...                                dim=(30, 30, 30))
-        >>> threshed = grid.threshold_percent(0.5)
-        >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
-
-        Apply a 80% threshold filter.
-
-        >>> threshed = grid.threshold_percent(0.8)
-        >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
-
-        See :ref:`common_filter_example` for more examples using a similar filter.
 
         Examples
         --------
@@ -3845,30 +3784,6 @@ class DataSetFilters:
 
         preference: str, optional
             Data type preference. Either ``'point'`` or ``'cell'``.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Dataset with calculated derivative.
-
-        Examples
-        --------
-        First, plot the random hills dataset with the active elevation
-        scalars.  These scalars will be used for the derivative
-        calculations.
-
-        >>> from pyvista import examples
-        >>> hills = examples.load_random_hills()
-        >>> hills.plot(smooth_shading=True)
-
-        Compute and plot the gradient of the active scalars.
-
-        >>> from pyvista import examples
-        >>> hills = examples.load_random_hills()
-        >>> deriv = hills.compute_derivative()
-        >>> deriv.plot(scalars='gradient')
-
-        See the :ref:`gradients_example` for more examples using this filter.
 
         Returns
         -------
