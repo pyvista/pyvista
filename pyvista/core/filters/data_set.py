@@ -720,7 +720,7 @@ class DataSetFilters:
         >>> threshed = grid.threshold(value=0.02)
         >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
-        See :ref:`common_filter_example` for more examples using a similar filter.
+        See :ref:`common_filter_example` for more examples using this filter.
 
         """
         # set the scalaras to threshold on
@@ -824,7 +824,7 @@ class DataSetFilters:
         >>> threshed = grid.threshold_percent(0.8)
         >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
-        See :ref:`common_filter_example` for more examples using this filter.
+        See :ref:`common_filter_example` for more examples using a similar filter.
 
         """
         if scalars is None:
