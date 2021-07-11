@@ -470,9 +470,9 @@ class PolyDataFilters(DataSetFilters):
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> curv = hills.plot_curvature()
+        >>> curv = hills.curvature()
         >>> curv   # doctest:+SKIP
-        array([0.20587616, 0.06747695, ..., 0.09814127, 0.11781171])
+        array([0.20587616, 0.06747695, ..., 0.11781171, 0.15988467])
 
         Plot it.
 
@@ -671,7 +671,8 @@ class PolyDataFilters(DataSetFilters):
 
         It forms a good approximation to the original geometry. Based
         on the algorithm originally described in "Decimation of
-        Triangle Meshes", Proc Siggraph 92.
+        Triangle Meshes", Proc Siggraph 92
+        (https://doi.org/10.1145/133994.134010).
 
         Parameters
         ----------
