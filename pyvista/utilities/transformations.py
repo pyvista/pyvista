@@ -80,8 +80,8 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
         # convert to radians
         angle *= np.pi / 180
 
-    # return early for no rotation
-    if np.isclose(angle % (2 * np.pi), [0, 2 * np.pi], rtol=0, atol=1e-10).any():
+    # return early for no rotation; play it safe and check only exact equality
+    if angle % (2 * np.pi) == 0:
         return np.eye(4)
 
     axis = np.asarray(axis, dtype='float64')
