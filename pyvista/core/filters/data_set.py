@@ -596,7 +596,7 @@ class DataSetFilters:
 
         Examples
         --------
-        Slice along a circular arc.
+        Slice the random hills dataset along a circular arc.
 
         >>> import numpy as np
         >>> import pyvista
@@ -720,7 +720,7 @@ class DataSetFilters:
         >>> threshed = grid.threshold(value=0.02)
         >>> threshed.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
-        See :ref:`common_filter_example` for more examples using this filter.
+        See :ref:`common_filter_example` for more examples using a similar filter.
 
         """
         # set the scalaras to threshold on
@@ -3792,9 +3792,9 @@ class DataSetFilters:
 
         Examples
         --------
-        First, plot the hills example with the active elevation
-        scalars.  These scalars will be used to compute for
-        derivative calculations.
+        First, plot the random hills dataset with the active elevation
+        scalars.  These scalars will be used for the derivative
+        calculations.
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
