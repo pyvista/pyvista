@@ -2316,7 +2316,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh = arc.extrude([0, 0, 1])
         >>> mesh.plot(color='tan')
 
-        Extrude and cap a 8 sided polygon.
+        Extrude and cap an 8 sided polygon.
 
         >>> poly = pyvista.Polygon(n_sides=8)
         >>> mesh = poly.extrude((0, 0, 1.5), capping=True)
@@ -2380,7 +2380,7 @@ class PolyDataFilters(DataSetFilters):
             Change in radius during sweep process.
 
         angle : float, optional
-            The angle of rotation.
+            The angle of rotation in degrees.
 
         capping : bool, optional
             Control if the sweep of a 2D object is capped.
@@ -2391,7 +2391,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.PolyData
-            Rotation extrusion mesh.
+            Rotationally extruded mesh.
 
         Examples
         --------
@@ -2419,6 +2419,7 @@ class PolyDataFilters(DataSetFilters):
         >>> spline = pyvista.Spline(points, 30)
         >>> extruded = spline.extrude_rotate(resolution=20)
         >>> extruded.plot(color='tan')
+
         """
         if resolution <= 0:
             raise ValueError('`resolution` should be positive')

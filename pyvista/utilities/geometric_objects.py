@@ -616,7 +616,7 @@ def Polygon(center=(0., 0., 0.), radius=1, normal=(0, 0, 1), n_sides=6):
 
     Examples
     --------
-    Create a 8 sided polygon.
+    Create an 8 sided polygon.
 
     >>> import pyvista
     >>> mesh = pyvista.Polygon(n_sides=8)
