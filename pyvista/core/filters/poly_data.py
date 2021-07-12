@@ -1369,21 +1369,24 @@ class PolyDataFilters(DataSetFilters):
             return result
 
     def fill_holes(poly_data, hole_size, inplace=False, progress_bar=False):  # pragma: no cover
-        """
-        Fill holes in a pyvista.PolyData or vtk.vtkPolyData object.
+        """Fill holes in a pyvista.PolyData or vtk.vtkPolyData object.
 
-        Holes are identified by locating boundary edges, linking them together
-        into loops, and then triangulating the resulting loops. Note that you
-        can specify an approximate limit to the size of the hole that can be
-        filled.
+        Holes are identified by locating boundary edges, linking them
+        together into loops, and then triangulating the resulting
+        loops. Note that you can specify an approximate limit to the
+        size of the hole that can be filled.
+
+        .. warning::
+           This method is known to segfault.  Use at your own risk.
 
         Parameters
         ----------
         hole_size : float
-            Specifies the maximum hole size to fill. This is represented as a
-            radius to the bounding circumsphere containing the hole. Note that
-            this is an approximate area; the actual area cannot be computed
-            without first triangulating the hole.
+            Specifies the maximum hole size to fill. This is
+            represented as a radius to the bounding circumsphere
+            containing the hole. Note that this is an approximate
+            area; the actual area cannot be computed without first
+            triangulating the hole.
 
         inplace : bool, optional
             Return new mesh or overwrite input.
@@ -1393,19 +1396,19 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        mesh : pyvista.PolyData
-            Mesh with holes filled.
+        pyvista.PolyData
+            Mesh with holes filled if ``inplace=False``.
 
         Examples
         --------
-        Create a partial sphere with a hole and then fill it
+        Create a partial sphere with a hole and then fill it.
 
         >>> import pyvista as pv
         >>> sphere_with_hole = pv.Sphere(end_theta=330)
-        >>> sphere = sphere_with_hole.fill_holes(1000)
+        >>> sphere = sphere_with_hole.fill_holes(1000)  # doctest:+SKIP
         >>> edges = sphere.extract_feature_edges(feature_edges=False,
-        ...                                      manifold_edges=False)
-        >>> assert edges.n_cells == 0
+        ...                                      manifold_edges=False)  # doctest:+SKIP
+        >>> assert edges.n_cells == 0  # doctest:+SKIP
 
         """
         logging.warning('pyvista.PolyData.fill_holes is known to segfault. '
@@ -1419,8 +1422,7 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(mesh)
             return poly_data
-        else:
-            return mesh
+        return mesh
 
     def clean(poly_data, point_merging=True, tolerance=None, lines_to_points=True,
               polys_to_lines=True, strips_to_polys=True, inplace=False,
