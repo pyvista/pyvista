@@ -229,8 +229,8 @@ class DataSetFilters:
         >>> plane = pv.Plane()
         >>> _ = sphere.compute_implicit_distance(plane, inplace=True)
         >>> dist = sphere['implicit_distance']
-        >>> print(type(dist))
-        <class 'numpy.ndarray'>
+        >>> type(dist)
+        numpy.ndarray
 
         Plot these distances as a heatmap
 
