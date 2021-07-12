@@ -449,7 +449,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             else:
                 raise TypeError(f'Invalid type {type(texture)} for texture.  '
                                 'Should be either a string representing a point or '
-                                'cell array, or an array.')
+                                'cell array, or a numpy array.')
 
         super().save(filename, binary, texture=texture)
 
