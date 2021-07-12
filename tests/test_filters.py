@@ -1277,7 +1277,7 @@ def test_extract_subset_structured():
     structured = examples.load_structured()
     voi = structured.extract_subset([0, 3, 1, 4, 0, 1])
     assert isinstance(voi, pyvista.StructuredGrid)
-    assert voi.dimensions == [4, 4, 1]
+    assert voi.dimensions == (4, 4, 1)
 
 
 @pytest.fixture
