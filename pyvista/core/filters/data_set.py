@@ -2015,7 +2015,8 @@ class DataSetFilters:
         >>> import pyvista
         >>> sphere = pyvista.Sphere(theta_resolution=5, phi_resolution=5)
         >>> grid = sphere.delaunay_3d()
-        >>> grid.extract_all_edges().plot(line_width=5, color='k')
+        >>> edges = grid.extract_all_edges()
+        >>> edges.plot(line_width=5, color='k')
 
         """
         alg = _vtk.vtkDelaunay3D()
