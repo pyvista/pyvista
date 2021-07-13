@@ -71,6 +71,10 @@ extensions = [
     "pyvista.ext.plot_directive",
 ]
 
+# return type inline with the description.
+napoleon_use_rtype = False
+
+
 # Intersphinx mapping
 intersphinx_mapping = {
     'python': ('https://docs.python.org/dev', None),
@@ -127,9 +131,6 @@ pygments_style = "friendly"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
-
-# Generate plots for example sections
-numpydoc_use_plots = True
 
 # -- Sphinx Gallery Options
 from sphinx_gallery.sorting import FileNameSortKey
