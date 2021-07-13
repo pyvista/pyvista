@@ -181,7 +181,7 @@ def _custom_parse_generic_section(self, section, use_admonition):
     has_pyvista = any(['pyvista' in line for line in lines])
     if has_pyvista:
         for line in lines:
-            if '.plot(' in line or '.show(' in line:
+            if 'plot' in line or 'show' in line:
                 has_plotting = True
     
     # add directive and indent to entire section

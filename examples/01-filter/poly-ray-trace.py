@@ -1,4 +1,6 @@
 """
+.. _ray_trace_example:
+
 Ray Tracing
 ~~~~~~~~~~~
 

@@ -229,7 +229,7 @@ class DataSetFilters:
         >>> plane = pv.Plane()
         >>> _ = sphere.compute_implicit_distance(plane, inplace=True)
         >>> dist = sphere['implicit_distance']
-        >>> print(type(dist))
+        >>> type(dist)
         <class 'numpy.ndarray'>
 
         Plot these distances as a heatmap
@@ -2015,7 +2015,8 @@ class DataSetFilters:
         >>> import pyvista
         >>> sphere = pyvista.Sphere(theta_resolution=5, phi_resolution=5)
         >>> grid = sphere.delaunay_3d()
-        >>> grid.extract_all_edges().plot(line_width=5, color='k')
+        >>> edges = grid.extract_all_edges()
+        >>> edges.plot(line_width=5, color='k')
 
         """
         alg = _vtk.vtkDelaunay3D()

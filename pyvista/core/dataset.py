@@ -919,7 +919,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import numpy as np
         >>> points = np.random.random((1000, 3))
         >>> indices = mesh.find_closest_cell(points)
-        >>> print(indices.shape)
+        >>> indices.shape
         (1000,)
         """
         if isinstance(point, collections.abc.Sequence):
