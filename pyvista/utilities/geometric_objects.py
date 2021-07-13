@@ -84,7 +84,7 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Cylinder surface.
 
     Examples
@@ -233,7 +233,7 @@ def Arrow(start=(0., 0., 0.), direction=(1., 0., 0.), tip_length=0.25,
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Arrow mesh.
 
     Examples
@@ -303,7 +303,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Sphere mesh.
 
     Examples
@@ -361,7 +361,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Plane mesh.
 
     Examples
@@ -403,7 +403,7 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
 
     Returns
     --------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Line mesh.
 
     Examples
@@ -462,7 +462,7 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Mesh of the cube.
 
     Examples
@@ -506,7 +506,7 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Mesh of the box.
 
     Examples
@@ -564,7 +564,7 @@ def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=None,
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Cone mesh.
 
     Examples
@@ -613,7 +613,7 @@ def Polygon(center=(0., 0., 0.), radius=1, normal=(0, 0, 1), n_sides=6):
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Mesh of the polygon.
 
     Examples
@@ -954,7 +954,7 @@ def Pyramid(points):
 
     Returns
     -------
-    pyvista.UnstructuredGrid
+    :class:`pyvista.UnstructuredGrid`
         Unstructured grid containing a single pyramid cell.
 
     Examples
@@ -1001,7 +1001,7 @@ def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Triangle mesh.
 
     Examples
@@ -1031,12 +1031,12 @@ def Rectangle(points=[[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
 
     Parameters
     ----------
-    points : np.ndarray or list
+    points : length 3 sequence
         Points of the rectangle.
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Rectangle mesh.
 
     Examples
@@ -1076,7 +1076,7 @@ def Circle(radius=0.5, resolution=100):
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Circle mesh.
 
     Examples

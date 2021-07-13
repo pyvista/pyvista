@@ -176,7 +176,7 @@ def read_legacy(filename):
 
     Returns
     -------
-    pyvista.DataSet
+    :class:`pyvista.DataSet`
         Wrapped pyvista mesh
 
     Examples
@@ -299,6 +299,11 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
     file_format : str, optional
         Format of file to read with meshio.
 
+    Returns
+    -------
+    :class:`pyvista.DataSet`
+        Wrapped pyvista mesh
+
     Examples
     --------
     Load an example mesh.
@@ -389,7 +394,7 @@ def read_texture(filename, attrs=None):
 
     Returns
     -------
-    pyvista.Texture
+    :class:`pyvista.Texture`
         PyVista texture object.
 
     Examples
@@ -460,6 +465,11 @@ def read_exodus(filename,
         The name of the array that store the mapping from side set
         cells back to the global id of the elements they bound.
 
+    Returns
+    -------
+    :class:`pyvista.DataSet`
+        Wrapped pyvista mesh
+
     Examples
     --------
     >>> import pyvista as pv
@@ -528,7 +538,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
 
     Returns
     -------
-    pyvista.MultiBlock
+    :class:`pyvista.MultiBlock`
         Data read from the file.
 
     """
