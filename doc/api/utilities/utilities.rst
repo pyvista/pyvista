@@ -57,9 +57,6 @@ Array Access
    point_array
    cell_array
    field_array
-   get_vtk_type
-   vtk_bit_array_to_char
-   convert_string_array
 
 
 Image Comparison and Regression

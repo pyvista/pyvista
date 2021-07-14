@@ -168,7 +168,36 @@ def standard_reader_routine(reader, filename, attrs=None):
 
 
 def read_legacy(filename):
-    """Use VTK's legacy reader to read a file."""
+    """Use VTK's legacy reader to read a file.
+
+    This uses ``vtk.vtkDataSetReader`` to read the data.
+
+    Parameters
+    ----------
+    filename : str
+        The string path to the file to read.
+
+    Returns
+    -------
+    :class:`pyvista.DataSet`
+        Wrapped pyvista mesh
+
+    Examples
+    --------
+    Load an example mesh using the legacy reader
+
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> mesh = pyvista.read_legacy(examples.uniformfile)
+
+    Notes
+    -----
+    Normally, you should use :func:`pyvista.read` to read in meshes
+    from file, and this reader will automatically used for ``'.vtk'`` and
+    ``'.pvtk'`` files.
+
+    """
+    filename = os.path.abspath(os.path.expanduser(str(filename)))
     reader = _vtk.vtkDataSetReader()
     reader.SetFileName(filename)
     # Ensure all data is fetched with poorly formatted legacy files
@@ -185,10 +214,72 @@ def read_legacy(filename):
 
 
 def read(filename, attrs=None, force_ext=None, file_format=None):
-    """Read any VTK file.
+    """Read any file type supported by ``vtk`` or ``meshio``.
 
-    It will figure out what reader to use then wrap the VTK object for
-    use in PyVista.
+    Automatically determines the correct reader to use then wraps the
+    corresponding mesh as a pyvista object.  Attempts native ``vtk``
+    readers first then tries to use ``meshio``.
+
+    Supports the following formats:
+
+    Standard dataset readers:
+
+    * ``'.vtk'``
+    * ``'.pvtk'``
+    * ``'.vti'``
+    * ``'.pvti'``
+    * ``'.vtr'``
+    * ``'.pvtr'``
+    * ``'.vtu'``
+    * ``'.pvtu'``
+    * ``'.ply'``
+    * ``'.obj'``
+    * ``'.stl'``
+    * ``'.vtp'``
+    * ``'.vts'``
+    * ``'.vtm'``
+    * ``'.vtmb'``
+    * ``'.case'``
+
+    Image formats:
+
+    * ``'.bmp'``
+    * ``'.dem'``
+    * ``'.dcm'``
+    * ``'.img'``
+    * ``'.jpeg'``
+    * ``'.jpg'``
+    * ``'.mhd'``
+    * ``'.nrrd'``
+    * ``'.nhdr'``
+    * ``'.png'``
+    * ``'.pnm'``
+    * ``'.slc'``
+    * ``'.tiff'``
+    * ``'.tif'``
+
+    Other formats:
+
+    * ``'.byu'``
+    * ``'.g'``
+    * ``'.p3d'``
+    * ``'.pts'``
+    * ``'.tri'``
+    * ``'.inp'``
+
+    .. note::
+       There is limited support for OpenFoam format files.
+       ``pyvista.read`` will automatically return only the first
+       dataset in a single-element :class:`pyvista.MultiBlock`.  These
+       files include:
+
+       * ``'.facet'``
+       * ``'.cas'``
+       * ``'.res'``
+       * ``'.foam'``
+
+    .. note::
+       See https://github.com/nschloe/meshio for formats supported by ``meshio``
 
     Parameters
     ----------
@@ -210,6 +301,11 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
 
     file_format : str, optional
         Format of file to read with meshio.
+
+    Returns
+    -------
+    :class:`pyvista.DataSet`
+        Wrapped pyvista mesh
 
     Examples
     --------
@@ -286,7 +382,38 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
 
 
 def read_texture(filename, attrs=None):
-    """Load a ``vtkTexture`` from an image file."""
+    """Load a texture from an image file.
+
+    Parameters
+    ----------
+    filename : str
+        The path of the texture file to read.
+
+    attrs : dict, optional
+        A dictionary of attributes to call on the reader. Keys of
+        dictionary are the attribute/method names and values are the
+        arguments passed to those calls. If you do not have any
+        attributes to call, pass ``None`` as the value.
+
+    Returns
+    -------
+    :class:`pyvista.Texture`
+        PyVista texture object.
+
+    Examples
+    --------
+    Read in an example jpg map file as a texture.
+
+    >>> import os
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> os.path.basename(examples.mapfile)
+    '2k_earth_daymap.jpg'
+    >>> texture = pyvista.read_texture(examples.mapfile)
+    >>> type(texture)
+    <class 'pyvista.core.objects.Texture'>
+
+    """
     filename = os.path.abspath(os.path.expanduser(filename))
     try:
         # initialize the reader using the extension to find it
@@ -340,6 +467,11 @@ def read_exodus(filename,
     enabled_sidesets : str or int, optional
         The name of the array that store the mapping from side set
         cells back to the global id of the elements they bound.
+
+    Returns
+    -------
+    :class:`pyvista.DataSet`
+        Wrapped pyvista mesh
 
     Examples
     --------
@@ -409,7 +541,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
 
     Returns
     -------
-    mesh : pyvista.MultiBlock
+    :class:`pyvista.MultiBlock`
         Data read from the file.
 
     """
@@ -516,11 +648,28 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
     Parameters
     ----------
+    filename : str
+        Filename to save the mesh to.
+
     mesh : pyvista.DataSet
         Any PyVista mesh/spatial data type.
 
-    file_format : str
-        File type for meshio to save.
+    file_format : str, optional
+        File type for meshio to save.  For example ``'.bdf'``.  This
+        is normally inferred from the extension but this can be
+        overridden.
+
+    kwargs : additional keyword arguments
+        Additional keyword arguments.  See
+        ``meshio.write_points_cells`` for more details.
+
+    Examples
+    --------
+    Save a pyvista sphere to a Abaqus data file.
+
+    >>> import pyvista
+    >>> sphere = pyvista.Sphere()
+    >>> pyvista.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
 
     """
     import meshio

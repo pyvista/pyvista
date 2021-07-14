@@ -28,7 +28,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        numpy.ndarray
+        :class:`numpy.ndarray`
             Mask of points with an angle greater than ``angle``.
 
         Examples
@@ -146,7 +146,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             The result of the boolean operation.
 
         Examples
@@ -212,7 +212,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        mesh : pyvista.PolyData
+        :class:`pyvista.PolyData`
             The result of the boolean operation.
 
         Examples
@@ -272,7 +272,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        mesh : pyvista.PolyData
+        :class:`pyvista.PolyData`
             The result of the boolean operation.
 
         Examples
@@ -310,12 +310,13 @@ class PolyDataFilters(DataSetFilters):
            does not attempt to create a manifold mesh and will include
            internal surfaces when two meshes overlap.
 
-        Returns
-        --------
-        pyvista.PolyData or pyvista.UnstructuredGrid
-            :class:`pyvista.PolyData` if ``dataset`` is a
-            :class:`pyvista.PolyData`, otherwise a
-            :class:`pyvista.UnstructuredGrid`.
+        Parameters
+        ----------
+        dataset : pyvista.DataSet
+            PyVista dataset to merge this mesh with.
+
+        merge_points : bool, optional
+            Merge equivalent points when ``True``.
 
         inplace : bool, optional
             Updates grid inplace when ``True`` if the input type is a
@@ -325,6 +326,13 @@ class PolyDataFilters(DataSetFilters):
             When this parameter is ``True`` and ``merge_points=True``,
             the arrays of the merging grids will be overwritten
             by the original main mesh.
+
+        Returns
+        --------
+        :class:`pyvista.PolyData` or :class:`pyvista.UnstructuredGrid`
+            :class:`pyvista.PolyData` if ``dataset`` is a
+            :class:`pyvista.PolyData`, otherwise a
+            :class:`pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -393,14 +401,14 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             The intersection line.
 
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             The first mesh split along the intersection. Returns the
             original first mesh if ``split_first=False``.
 
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             The second mesh split along the intersection. Returns the
             original second mesh if ``split_second=False``.
 
@@ -461,7 +469,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        numpy.ndarray
+        :class:`numpy.ndarray`
             Array of curvature values.
 
         Examples
@@ -519,7 +527,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        cpos : list
+        :class:`pyvista.CameraPosition`
             List of camera position, focal point, and view up.
             Returned when ``return_cpos`` is ``True``.
 
@@ -555,7 +563,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             Mesh containing only triangles.
 
         Examples
@@ -624,7 +632,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        mesh : pyvista.PolyData
+        :class:`pyvista.PolyData`
             Smoothed mesh.
 
         Examples
@@ -715,7 +723,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             Decimated mesh.
 
         Examples
@@ -787,7 +795,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        mesh : pyvista.PolyData
+        :class:`pyvista.PolyData`
             Tube-filtered mesh.
 
         Examples
@@ -833,8 +841,7 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             poly_data.overwrite(mesh)
             return poly_data
-        else:
-            return mesh
+        return mesh
 
     def subdivide(poly_data, nsub, subfilter='linear', inplace=False):
         """Increase the number of triangles in a single, connected triangular mesh.
@@ -877,7 +884,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             Subdivided mesh.
 
         Examples
@@ -1098,7 +1105,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             Decimated mesh.
 
         Examples
@@ -1212,7 +1219,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        mesh : pyvista.PolyData
+        :class:`pyvista.PolyData`
             Updated mesh with cell and point normals.
 
         Examples
@@ -1319,7 +1326,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             The clipped mesh.
 
         Examples
@@ -1396,7 +1403,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             Mesh with holes filled if ``inplace=False``.
 
         Examples
@@ -1467,7 +1474,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             Cleaned mesh.
 
         Examples
@@ -1543,7 +1550,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             ``PolyData`` object consisting of the line segment between the
             two given vertices. If ``inplace`` is ``True`` this is the
             same object as the input mesh.
@@ -1607,7 +1614,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        length : float
+        :class:`float`
             Length of the geodesic segment.
 
         Examples
@@ -1654,11 +1661,11 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        intersection_points : np.ndarray
+        intersection_points : :class:`np.ndarray`
             Location of the intersection points.  Empty array if no
             intersections.
 
-        intersection_cells : np.ndarray
+        intersection_cells : :class:`np.ndarray`
             Indices of the intersection cells.  Empty array if no
             intersections.
 
@@ -1744,15 +1751,15 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        intersection_points : np.ndarray
+        intersection_points : :class:`np.ndarray`
             Location of the intersection points.  Empty array if no
             intersections.
 
-        intersection_rays : np.ndarray
+        intersection_rays : :class:`np.ndarray`
             Indices of the ray for each intersection point. Empty array if no
             intersections.
 
-        intersection_cells : np.ndarray
+        intersection_cells : :class:`np.ndarray`
             Indices of the intersection cells.  Empty array if no
             intersections.
 
@@ -1836,6 +1843,12 @@ class PolyDataFilters(DataSetFilters):
             All additional keyword arguments will be passed to
             :func:`pyvista.BasePlotter.add_mesh`
 
+        Returns
+        -------
+        :class:`pyvista.CameraPosition`
+            List of camera position, focal point, and view up.
+            Returned when ``return_cpos`` is ``True``.
+
         Examples
         --------
         >>> from pyvista import examples
@@ -1877,6 +1890,12 @@ class PolyDataFilters(DataSetFilters):
         color : str, optional
             Color of the arrows.  Defaults to
             :attr:`pyvista.themes.DefaultTheme.edge_color`.
+
+        Returns
+        -------
+        :class:`pyvista.CameraPosition`
+            List of camera position, focal point, and view up.
+            Returned when ``return_cpos`` is ``True``.
 
         Examples
         --------
@@ -1927,10 +1946,10 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             Mesh without the points flagged for removal.
 
-        np.ndarray
+        :class:`np.ndarray`
             Indices of new points relative to the original mesh.
 
         Examples
@@ -2110,7 +2129,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        arc_length : float
+        :class:`float`
             Arc length of the length of the probed line.
 
         Examples
@@ -2306,7 +2325,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             Extruded mesh.
 
         Examples
@@ -2392,7 +2411,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             Rotationally extruded mesh.
 
         Examples
@@ -2487,6 +2506,11 @@ class PolyDataFilters(DataSetFilters):
             pointdata array that holds the point index of the original
             vertex that produced each output vertex. This is useful
             for picking. The default is ``False`` to conserve memory.
+
+        Returns
+        -------
+        :class:`pyvista.PolyData`
+            Stripped mesh.
 
         Examples
         --------

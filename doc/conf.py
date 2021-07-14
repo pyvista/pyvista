@@ -56,6 +56,7 @@ sys.path.append(os.path.abspath("./_ext"))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.intersphinx",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.doctest",
@@ -70,6 +71,20 @@ extensions = [
     "pyvista.ext.plot_directive",
 ]
 
+# return type inline with the description.
+napoleon_use_rtype = False
+
+
+# Intersphinx mapping
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/dev', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'numpy': ('https://numpy.org/devdocs', None),
+    'matplotlib': ('https://matplotlib.org/stable', None),
+    'imageio': ('https://imageio.readthedocs.io/en/stable', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
+    'pytest': ('https://docs.pytest.org/en/stable', None),
+}
 
 linkcheck_retries = 3
 linkcheck_timeout = 500
@@ -116,9 +131,6 @@ pygments_style = "friendly"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
-
-# Generate plots for example sections
-numpydoc_use_plots = True
 
 # -- Sphinx Gallery Options
 from sphinx_gallery.sorting import FileNameSortKey
