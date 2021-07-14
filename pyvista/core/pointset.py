@@ -80,7 +80,7 @@ class PointSet(DataSet):
 
         Examples
         --------
-        Remove first 1000 cells from an unstructured grid.
+        Remove 20 cells from an unstructured grid.
 
         >>> from pyvista import examples
         >>> import pyvista
