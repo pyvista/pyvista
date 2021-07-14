@@ -2697,7 +2697,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             This produces polylines as the output, with each cell
             (i.e., polyline) representing a streamline. The attribute values
             associated with each streamline are stored in the cell data, whereas
@@ -2705,11 +2705,11 @@ class DataSetFilters:
 
         Warnings
         --------
-        This filter is unstable for vtk versions<9.0.
-        See https://github.com/pyvista/pyvista/issues/1508
+        This filter is unstable for ``vtk<9.0``.
+        See `pyvista issue 1508 <https://github.com/pyvista/pyvista/issues/1508>`_,
 
-        Example
-        -------
+        Examples
+        --------
         Plot evenly spaced streamlines for cylinder in a crossflow.
         This dataset is a multiblock dataset, and the fluid velocity is in the
         first block.
