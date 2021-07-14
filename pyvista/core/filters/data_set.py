@@ -2626,7 +2626,7 @@ class DataSetFilters:
     def streamlines_evenly_spaced_2D(dataset, vectors=None, start_position=None,
                                     integrator_type=2, step_length=0.5, step_unit='cl',
                                     max_steps=2000, terminal_speed=1e-12, interpolator_type='point',
-                                    separating_distance=10, separating_distance_ratio=None,
+                                    separating_distance=10, separating_distance_ratio=0.5,
                                     closed_loop_maximum_distance=0.5, loop_angle=20,  
                                     minimum_number_of_loop_points=4, compute_vorticity=True):
         """Generate evenly spaced streamlines on a 2D dataset.
@@ -2679,7 +2679,6 @@ class DataSetFilters:
         separating_distance_ratio : float, optional
             Streamline integration is stopped if streamlines are closer than
             ``SeparatingDistance*SeparatingDistanceRatio`` to other streamlines.
-            The default behavior is set by vtk.
 
         closed_loop_maximum_distance : float, optional
             The distance between points on a streamline to determine a 
@@ -2698,11 +2697,16 @@ class DataSetFilters:
 
         Returns
         -------
-        streamlines : pyvista.PolyData
+        pyvista.PolyData
             This produces polylines as the output, with each cell
             (i.e., polyline) representing a streamline. The attribute values
             associated with each streamline are stored in the cell data, whereas
             those associated with streamline-points are stored in the point data.
+
+        Warnings
+        --------
+        This filter is unstable for vtk versions<9.0.
+        See https://github.com/pyvista/pyvista/issues/1508
 
         Example
         -------
