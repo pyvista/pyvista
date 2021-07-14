@@ -1,4 +1,5 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
+from pathlib import Path
 from textwrap import dedent
 import pathlib
 import logging
@@ -355,7 +356,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         raise DeprecationError('``number_of_faces`` has been depreciated.  '
                                'Please use ``n_faces``')
 
-    def save(self, filename, binary=True):
+    def save(self, filename, binary=True, texture=None):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
@@ -367,11 +368,61 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         filename : str
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
-            ftype.  Can be one of the following types (.ply, .stl,
-            .vtk)
+            ftype.  Can be one of many of the supported  the following
+            types (``'.ply'``, ``'.stl'``, ``'.vtk``)
 
         binary : bool, optional
-            Writes the file as binary when True and ASCII when False.
+            Writes the file as binary when ``True`` and ASCII when ``False``.
+
+        texture : str, np.ndarray, optional
+            Write a single texture array to file when using a PLY
+            file.  Texture array must be a 3 or 4 component array with
+            the datatype ``np.uint8``.  Array may be a cell array or a
+            point array, and may also be a string if the array already
+            exists in the PolyData.
+
+            If a string is provided, the texture array will be saved
+            to disk as that name.  If an array is provided, the
+            texture array will be saved as ``'RGBA'`` if the array
+            contains an alpha channel (i.e. 4 component array), or
+            as ``'RGB'`` if the array is just a 3 component array.
+
+            .. note::
+               This feature is only available when saving PLY files. 
+
+        Examples
+        --------
+        Save a mesh as a STL.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> sphere.save('my_mesh.stl')  # doctest: +SKIP
+
+        Save a mesh as a PLY.
+
+        >>> sphere = pyvista.Sphere()
+        >>> sphere.save('my_mesh.ply')  # doctest: +SKIP
+
+        Save a mesh as a PLY with a texture array.  Here we also
+        create a simple RGB array representing the texture.
+
+        >>> import numpy as np
+        >>> sphere = pyvista.Sphere()
+        >>> texture = np.zeros((sphere.n_points, 3), np.uint8)
+        >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]  # just blue channel
+        >>> sphere.point_arrays['my_texture'] = texture
+        >>> sphere.save('my_mesh.ply', texture='my_texture')  # doctest: +SKIP
+
+        Alternatively, provide just the texture array.  This will be
+        written to the file as ``'RGB'`` since it does not contain an
+        alpha channel.
+
+        >>> sphere.save('my_mesh.ply', texture=texture)  # doctest: +SKIP
+
+        Save a mesh as a VTK file.
+
+        >>> sphere = pyvista.Sphere()
+        >>> sphere.save('my_mesh.vtk')  # doctest: +SKIP
 
         Notes
         -----
@@ -383,9 +434,24 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
-        if ftype in ['stl', 'ply']:
+        if ftype in ['.stl', '.ply']:
             self.compute_normals(inplace=True)
-        super().save(filename, binary)
+
+        # validate texture
+        if ftype == '.ply' and texture is not None:
+            if isinstance(texture, str):
+                if self[texture].dtype != np.uint8:
+                    raise ValueError(f'Invalid datatype {self[texture].dtype} of '
+                                     f'texture array "{texture}"')
+            elif isinstance(texture, np.ndarray):
+                if texture.dtype != np.uint8:
+                    raise ValueError(f'Invalid datatype {texture.dtype} of texture array')
+            else:
+                raise TypeError(f'Invalid type {type(texture)} for texture.  '
+                                'Should be either a string representing a point or '
+                                'cell array, or a numpy array.')
+
+        super().save(filename, binary, texture=texture)
 
     @property
     def area(self):
