@@ -24,6 +24,11 @@ from pyvista.plotting.plotting import SUPPORTED_FORMATS
 from pyvista.core.errors import DeprecationError
 
 
+# skip all tests if unable to render
+if not system_supports_plotting():
+    pytestmark = pytest.mark.skip
+
+
 ffmpeg_failed = False
 try:
     try:
@@ -47,15 +52,13 @@ skip_windows_dev_whl = pytest.mark.skipif(os.name == 'nt' and vtk_dev,
 
 # Reset image cache with new images
 glb_reset_image_cache = False
-IMAGE_CACHE_DIR = os.path.join(Path(__file__).parent.absolute(), 'image_cache')
+THIS_PATH = Path(__file__).parent.absolute()
+IMAGE_CACHE_DIR = os.path.join(THIS_PATH, 'image_cache')
 if not os.path.isdir(IMAGE_CACHE_DIR):
     os.mkdir(IMAGE_CACHE_DIR)
 
 # always set on azure CI
 AZURE_CI_WINDOWS = os.environ.get('AZURE_CI_WINDOWS', 'false').lower() == 'true'
-
-skip_no_plotting = pytest.mark.skipif(not system_supports_plotting(),
-                                      reason="Test requires system to support plotting")
 
 skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 
@@ -64,7 +67,13 @@ IMAGE_REGRESSION_ERROR = 500  # major differences
 IMAGE_REGRESSION_WARNING = 200  # minor differences
 
 # Image regression warning/error thresholds for releases after 9.0.1
-HIGH_VARIANCE_TESTS = {'test_pbr', 'test_set_viewup', 'test_add_title'}
+# TODO: once we have a stable release for VTK, remove these.
+HIGH_VARIANCE_TESTS = {
+    'test_pbr',
+    'test_set_viewup',
+    'test_add_title',
+    'test_import_gltf',  # image cache created with 9.0.20210612.dev0
+    'test_export_gltf'}  # image cache created with 9.0.20210612.dev0
 VER_IMAGE_REGRESSION_ERROR = 1000
 VER_IMAGE_REGRESSION_WARNING = 1000
 
@@ -145,7 +154,35 @@ def verify_cache_image(plotter):
 
 
 @skip_not_vtk9
-@skip_no_plotting
+def test_import_gltf():
+    filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.glb')
+    pl = pyvista.Plotter()
+
+    with pytest.raises(FileNotFoundError):
+        pl.import_gltf('not a file')
+
+    pl.import_gltf(filename)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_not_vtk9
+def test_export_gltf(tmpdir, sphere, airplane):
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.gltf'))
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, smooth_shading=True)
+    pl.add_mesh(airplane)
+    pl.export_gltf(filename)
+
+    pl_import = pyvista.Plotter()
+    pl_import.import_gltf(filename)
+    pl_import.show(before_close_callback=verify_cache_image)
+
+    with pytest.raises(RuntimeError, match='This plotter has been closed'):
+        pl_import.export_gltf(filename)
+
+
+@skip_not_vtk9
 @skip_windows_dev_whl
 @pytest.mark.skipif(AZURE_CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere):
@@ -168,7 +205,6 @@ def test_pbr(sphere):
     pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_pyvista_ndarray(sphere):
     # verify we can plot pyvista_ndarray
     pyvista.plot(sphere.points)
@@ -179,7 +215,6 @@ def test_plot_pyvista_ndarray(sphere):
     plotter.show()
 
 
-@skip_no_plotting
 def test_plot_increment_point_size():
     points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
     pl = pyvista.Plotter()
@@ -190,7 +225,6 @@ def test_plot_increment_point_size():
 
 
 @skip_not_vtk9
-@skip_no_plotting
 def test_plot_update(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
@@ -202,7 +236,6 @@ def test_plot_update(sphere):
     pl.close()
 
 
-@skip_no_plotting
 def test_plot(sphere, tmpdir):
     tmp_dir = tmpdir.mkdir("tmpdir2")
     filename = str(tmp_dir.join('tmp.png'))
@@ -244,20 +277,17 @@ def test_plot_return_cpos(sphere):
     assert sphere.plot(return_cpos=False) is None
 
 
-@skip_no_plotting
 def test_add_title():
     plotter = pyvista.Plotter()
     plotter.add_title('Plot Title')
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_invalid_style(sphere):
     with pytest.raises(ValueError):
         pyvista.plot(sphere, style='not a style')
 
 
-@skip_no_plotting
 @pytest.mark.parametrize('interaction, kwargs', [
     ('trackball', {}),
     ('trackball_actor', {}),
@@ -283,7 +313,6 @@ def test_lighting_disable_3_lights():
         pyvista.Plotter().disable_3_lights()
 
 
-@skip_no_plotting
 def test_lighting_enable_three_lights(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -301,7 +330,6 @@ def test_lighting_enable_three_lights(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_lighting_add_manual_light(sphere):
     plotter = pyvista.Plotter(lighting=None)
     plotter.add_mesh(sphere)
@@ -318,7 +346,6 @@ def test_lighting_add_manual_light(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_lighting_remove_manual_light(sphere):
     plotter = pyvista.Plotter(lighting=None)
     plotter.add_mesh(sphere)
@@ -331,7 +358,6 @@ def test_lighting_remove_manual_light(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_lighting_subplots(sphere):
     plotter = pyvista.Plotter(shape='1|1')
     plotter.add_mesh(sphere)
@@ -355,7 +381,6 @@ def test_lighting_subplots(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_lighting_init_light_kit(sphere):
     plotter = pyvista.Plotter(lighting='light kit')
     plotter.add_mesh(sphere)
@@ -367,7 +392,6 @@ def test_lighting_init_light_kit(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_lighting_init_three_lights(sphere):
     plotter = pyvista.Plotter(lighting='three lights')
     plotter.add_mesh(sphere)
@@ -378,7 +402,6 @@ def test_lighting_init_three_lights(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_lighting_init_none(sphere):
     # ``None`` already tested above
     plotter = pyvista.Plotter(lighting='none')
@@ -393,7 +416,6 @@ def test_lighting_init_invalid():
         pyvista.Plotter(lighting='invalid')
 
 
-@skip_no_plotting
 def test_plotter_shape_invalid():
     # wrong size
     with pytest.raises(ValueError):
@@ -408,14 +430,12 @@ def test_plotter_shape_invalid():
         pyvista.Plotter(shape={1, 2})
 
 
-@skip_no_plotting
 def test_plot_bounds_axes_with_no_data():
     plotter = pyvista.Plotter()
     plotter.show_bounds()
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_show_grid(sphere):
     plotter = pyvista.Plotter()
     plotter.show_grid()
@@ -430,7 +450,6 @@ cpos_param = [[(2.0, 5.0, 13.0),
              [1.0, 2.0, 3.0],
 ]
 cpos_param.extend(pyvista.plotting.Renderer.CAMERA_STR_ATTR_MAP)
-@skip_no_plotting
 @pytest.mark.parametrize('cpos', cpos_param)
 def test_set_camera_position(cpos, sphere):
     plotter = pyvista.Plotter()
@@ -439,7 +458,6 @@ def test_set_camera_position(cpos, sphere):
     plotter.show()
 
 
-@skip_no_plotting
 @pytest.mark.parametrize('cpos', [[(2.0, 5.0),
                                    (0.0, 0.0, 0.0),
                                    (-0.7, -0.5, 0.3)],
@@ -453,13 +471,11 @@ def test_set_camera_position_invalid(cpos, sphere):
         plotter.camera_position = cpos
 
 
-@skip_no_plotting
 def test_parallel_projection():
     plotter = pyvista.Plotter()
     assert isinstance(plotter.parallel_projection, bool)
 
 
-@skip_no_plotting
 @pytest.mark.parametrize("state", [True, False])
 def test_set_parallel_projection(state):
     plotter = pyvista.Plotter()
@@ -467,13 +483,11 @@ def test_set_parallel_projection(state):
     assert plotter.parallel_projection == state
 
 
-@skip_no_plotting
 def test_parallel_scale():
     plotter = pyvista.Plotter()
     assert isinstance(plotter.parallel_scale, float)
 
 
-@skip_no_plotting
 @pytest.mark.parametrize("value", [1, 1.5, 0.3, 10])
 def test_set_parallel_scale(value):
     plotter = pyvista.Plotter()
@@ -481,14 +495,12 @@ def test_set_parallel_scale(value):
     assert plotter.parallel_scale == value
 
 
-@skip_no_plotting
 def test_set_parallel_scale_invalid():
     plotter = pyvista.Plotter()
     with pytest.raises(TypeError):
         plotter.parallel_scale = "invalid"
 
 
-@skip_no_plotting
 def test_plot_no_active_scalars(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -498,7 +510,6 @@ def test_plot_no_active_scalars(sphere):
         plotter.update_scalars(np.arange(sphere.n_faces))
 
 
-@skip_no_plotting
 def test_plot_show_bounds(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -512,7 +523,6 @@ def test_plot_show_bounds(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_label_fmt(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -520,7 +530,6 @@ def test_plot_label_fmt(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 @pytest.mark.parametrize('grid', [True, 'both', 'front', 'back'])
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
 def test_plot_show_bounds_params(grid, location):
@@ -532,14 +541,12 @@ def test_plot_show_bounds_params(grid, location):
     plotter.show()
 
 
-@skip_no_plotting
 def test_plot_silhouette_fail(hexbeam):
     plotter = pyvista.Plotter()
     with pytest.raises(TypeError, match="Expected type is `PolyData`"):
         plotter.add_mesh(hexbeam, silhouette=True)
 
 
-@skip_no_plotting
 def test_plot_no_silhouette(tri_cylinder):
     # silhouette=False
     plotter = pyvista.Plotter()
@@ -548,7 +555,6 @@ def test_plot_no_silhouette(tri_cylinder):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_silhouette(tri_cylinder):
     # silhouette=True and default properties
     plotter = pyvista.Plotter()
@@ -563,7 +569,6 @@ def test_plot_silhouette(tri_cylinder):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_silhouette_options(tri_cylinder):
     # cover other properties
     plotter = pyvista.Plotter()
@@ -571,7 +576,6 @@ def test_plot_silhouette_options(tri_cylinder):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plotter_scale(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -586,7 +590,6 @@ def test_plotter_scale(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_add_scalar_bar(sphere):
     sphere['test_scalars'] = sphere.points[:, 2]
     plotter = pyvista.Plotter()
@@ -598,14 +601,12 @@ def test_plot_add_scalar_bar(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_invalid_add_scalar_bar():
     with pytest.raises(AttributeError):
         plotter = pyvista.Plotter()
         plotter.add_scalar_bar()
 
 
-@skip_no_plotting
 def test_plot_list():
     sphere_a = pyvista.Sphere(0.5)
     sphere_b = pyvista.Sphere(1.0)
@@ -615,14 +616,12 @@ def test_plot_list():
                  before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_add_lines_invalid():
     plotter = pyvista.Plotter()
     with pytest.raises(TypeError):
         plotter.add_lines(range(10))
 
 
-@skip_no_plotting
 def test_open_gif_invalid():
     plotter = pyvista.Plotter()
     with pytest.raises(ValueError):
@@ -630,7 +629,6 @@ def test_open_gif_invalid():
 
 
 @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
-@skip_no_plotting
 def test_make_movie(sphere):
     # Make temporary file
     filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.mp4')
@@ -657,7 +655,6 @@ def test_make_movie(sphere):
     os.remove(filename)  # verifies that the plotter has closed
 
 
-@skip_no_plotting
 def test_add_legend(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -669,7 +666,6 @@ def test_add_legend(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_legend_origin(sphere):
     """Ensure the origin parameter of `add_legend` affects origin position."""
     plotter = pyvista.Plotter()
@@ -681,7 +677,6 @@ def test_legend_origin(sphere):
     assert list(origin) == list(legend.GetPosition())
 
 
-@skip_no_plotting
 def test_bad_legend_origin_and_size(sphere):
     """Ensure bad parameters to origin/size raise ValueErrors."""
     plotter = pyvista.Plotter()
@@ -699,7 +694,6 @@ def test_bad_legend_origin_and_size(sphere):
         plotter.add_legend(labels=legend_labels, size=type)
 
 
-@skip_no_plotting
 def test_legend_circle_face(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -710,7 +704,6 @@ def test_legend_circle_face(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_legend_rectangle_face(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -721,7 +714,6 @@ def test_legend_rectangle_face(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_legend_invalid_face(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -732,7 +724,6 @@ def test_legend_invalid_face(sphere):
                                     size=[0.1, 0.1], face=face)
 
 
-@skip_no_plotting
 def test_add_axes_twice():
     plotter = pyvista.Plotter()
     plotter.add_axes()
@@ -740,7 +731,6 @@ def test_add_axes_twice():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_hide_axes():
     plotter = pyvista.Plotter()
     plotter.add_axes()
@@ -748,21 +738,18 @@ def test_hide_axes():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_show_axes_all():
     plotter = pyvista.Plotter()
     plotter.show_axes_all()
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_hide_axes_all():
     plotter = pyvista.Plotter()
     plotter.hide_axes_all()
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_isometric_view_interactive(sphere):
     plotter_iso = pyvista.Plotter()
     plotter_iso.add_mesh(sphere)
@@ -772,7 +759,6 @@ def test_isometric_view_interactive(sphere):
     assert not plotter_iso.camera_position == cpos_old
 
 
-@skip_no_plotting
 def test_add_point_labels():
     plotter = pyvista.Plotter()
 
@@ -795,7 +781,6 @@ def test_add_point_labels():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 @pytest.mark.parametrize('always_visible', [False, True])
 def test_add_point_labels_always_visible(always_visible):
     # just make sure it runs without exception
@@ -805,7 +790,6 @@ def test_add_point_labels_always_visible(always_visible):
     plotter.show()
 
 
-@skip_no_plotting
 def test_set_background():
     plotter = pyvista.Plotter()
     plotter.set_background('k')
@@ -828,7 +812,6 @@ def test_set_background():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_add_points():
     plotter = pyvista.Plotter()
 
@@ -845,14 +828,12 @@ def test_add_points():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_key_press_event():
     plotter = pyvista.Plotter()
     plotter.key_press_event(None, None)
     plotter.close()
 
 
-@skip_no_plotting
 def test_enable_picking_gc():
     plotter = pyvista.Plotter()
     sphere = pyvista.Sphere()
@@ -861,7 +842,6 @@ def test_enable_picking_gc():
     plotter.close()
 
 
-@skip_no_plotting
 def test_left_button_down():
     plotter = pyvista.Plotter()
     if VTK9:
@@ -872,14 +852,12 @@ def test_left_button_down():
     plotter.close()
 
 
-@skip_no_plotting
 def test_show_axes():
     plotter = pyvista.Plotter()
     plotter.show_axes()
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_cell_arrays(sphere):
     plotter = pyvista.Plotter()
     scalars = np.arange(sphere.n_faces)
@@ -888,7 +866,6 @@ def test_plot_cell_arrays(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_clim(sphere):
     plotter = pyvista.Plotter()
     scalars = np.arange(sphere.n_faces)
@@ -898,7 +875,6 @@ def test_plot_clim(sphere):
     assert plotter.mapper.GetScalarRange() == (-10, 10)
 
 
-@skip_no_plotting
 def test_invalid_n_arrays(sphere):
     with pytest.raises(ValueError):
         plotter = pyvista.Plotter()
@@ -906,14 +882,12 @@ def test_invalid_n_arrays(sphere):
         plotter.show()
 
 
-@skip_no_plotting
 def test_plot_arrow():
     cent = np.array([0, 0, 0])
     direction = np.array([1, 0, 0])
     pyvista.plot_arrows(cent, direction, before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_arrows():
     cent = np.array([[0, 0, 0],
                      [1, 0, 0]])
@@ -922,7 +896,6 @@ def test_plot_arrows():
     pyvista.plot_arrows(cent, direction, before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_add_arrows():
     vector = np.array([1, 0, 0])
     center = np.array([0, 0, 0])
@@ -931,7 +904,6 @@ def test_add_arrows():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_axes():
     plotter = pyvista.Plotter()
     plotter.add_orientation_widget(pyvista.Cube())
@@ -939,7 +911,6 @@ def test_axes():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_box_axes():
     plotter = pyvista.Plotter()
     plotter.add_axes(box=True, box_args={'color_box': True})
@@ -947,7 +918,6 @@ def test_box_axes():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_screenshot(tmpdir):
     plotter = pyvista.Plotter()
     plotter.add_mesh(pyvista.Sphere())
@@ -974,7 +944,6 @@ def test_screenshot(tmpdir):
         plotter.screenshot()
 
 
-@skip_no_plotting
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
 def test_save_screenshot(tmpdir, sphere, ext):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp' + ext))
@@ -985,7 +954,6 @@ def test_save_screenshot(tmpdir, sphere, ext):
     assert Path(filename).stat().st_size
 
 
-@skip_no_plotting
 def test_scalars_by_name():
     plotter = pyvista.Plotter()
     data = examples.load_uniform()
@@ -993,7 +961,6 @@ def test_scalars_by_name():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_multi_block_plot():
     multi = pyvista.MultiBlock()
     multi.append(examples.load_rectilinear())
@@ -1009,7 +976,6 @@ def test_multi_block_plot():
     multi.plot(multi_colors=True, before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_clear(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -1017,7 +983,6 @@ def test_clear(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_texture():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -1027,7 +992,6 @@ def test_plot_texture():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_texture_alone(tmpdir):
     """"Test adding a texture to a plot"""
     path = str(tmpdir.mkdir("tmpdir"))
@@ -1039,7 +1003,6 @@ def test_plot_texture_alone(tmpdir):
     texture.plot(rgba=True, before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_texture_associated():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -1048,7 +1011,6 @@ def test_plot_texture_associated():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_read_texture_from_numpy():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -1058,7 +1020,6 @@ def test_read_texture_from_numpy():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_rgb():
     """"Test adding a texture to a plot"""
     cube = pyvista.Cube()
@@ -1095,7 +1056,6 @@ def setup_multicomponent_data():
     return data
 
 
-@skip_no_plotting
 def test_vector_array_with_cells_and_points():
     """Test using vector valued data with and without component arg."""
     data = setup_multicomponent_data()
@@ -1119,7 +1079,6 @@ def test_vector_array_with_cells_and_points():
     p.show()
 
 
-@skip_no_plotting
 def test_vector_array():
     """Test using vector valued data for image regression."""
     data = setup_multicomponent_data()
@@ -1139,7 +1098,6 @@ def test_vector_array():
     # p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_vector_plotting_doesnt_modify_data():
     """Test that the operations in plotting do not modify the data in the mesh."""
     data = setup_multicomponent_data()
@@ -1172,7 +1130,6 @@ def test_vector_plotting_doesnt_modify_data():
     assert np.array_equal(data['vector_values_cells'], copy_vector_values_cells)
 
 
-@skip_no_plotting
 def test_vector_array_fail_with_incorrect_component():
     """Test failure modes of component argument."""
     data = setup_multicomponent_data()
@@ -1197,7 +1154,6 @@ def test_vector_array_fail_with_incorrect_component():
         p.show()
 
 
-@skip_no_plotting
 def test_camera(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -1220,7 +1176,6 @@ def test_camera(sphere):
     plotter.show()
 
 
-@skip_no_plotting
 def test_multi_renderers():
     plotter = pyvista.Plotter(shape=(2, 2))
 
@@ -1250,7 +1205,6 @@ def test_multi_renderers():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_multi_renderers_subplot_ind_2x1():
 
     # Test subplot indices (2 rows by 1 column)
@@ -1264,7 +1218,6 @@ def test_multi_renderers_subplot_ind_2x1():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_multi_renderers_subplot_ind_1x2():
     # Test subplot indices (1 row by 2 columns)
     plotter = pyvista.Plotter(shape=(1, 2))
@@ -1276,7 +1229,6 @@ def test_multi_renderers_subplot_ind_1x2():
     plotter.add_mesh(pyvista.Cube())
     plotter.show(before_close_callback=verify_cache_image)
 
-@skip_no_plotting
 def test_multi_renderers_bad_indices():
     with pytest.raises(IndexError):
         # Test bad indices
@@ -1288,7 +1240,6 @@ def test_multi_renderers_bad_indices():
         plotter.show()
 
 
-@skip_no_plotting
 def test_multi_renderers_subplot_ind_3x1():
     # Test subplot 3 on left, 1 on right
     plotter = pyvista.Plotter(shape='3|1')
@@ -1304,7 +1255,6 @@ def test_multi_renderers_subplot_ind_3x1():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_multi_renderers_subplot_ind_3x1_splitting_pos():
     # Test subplot 3 on top, 1 on bottom
     plotter = pyvista.Plotter(shape='3/1', splitting_position=0.5)
@@ -1320,7 +1270,6 @@ def test_multi_renderers_subplot_ind_3x1_splitting_pos():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_multi_renderers_subplot_ind_1x3():
     # Test subplot 3 on bottom, 1 on top
     plotter = pyvista.Plotter(shape='1|3')
@@ -1336,7 +1285,6 @@ def test_multi_renderers_subplot_ind_1x3():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_subplot_groups():
     plotter = pyvista.Plotter(shape=(3, 3), groups=[(1, [1, 2]), (np.s_[:], 0)])
     plotter.subplot(0, 0)
@@ -1367,7 +1315,6 @@ def test_subplot_groups_fail():
         pyvista.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
 
-@skip_no_plotting
 @skip_windows_dev_whl
 def test_link_views(sphere):
     plotter = pyvista.Plotter(shape=(1, 4))
@@ -1391,7 +1338,6 @@ def test_link_views(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_orthographic_slicer(uniform):
     uniform.set_active_scalars('Spatial Cell Data')
     slices = uniform.slice_orthogonal()
@@ -1422,7 +1368,6 @@ def test_orthographic_slicer(uniform):
     p.show()
 
 
-@skip_no_plotting
 def test_remove_actor(uniform):
     plotter = pyvista.Plotter()
     plotter.add_mesh(uniform.copy(), name='data')
@@ -1431,7 +1376,6 @@ def test_remove_actor(uniform):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_image_properties():
     mesh = examples.load_uniform()
     p = pyvista.Plotter()
@@ -1471,7 +1415,6 @@ def test_image_properties():
     p.close()
 
 
-@skip_no_plotting
 def test_volume_rendering():
     # Really just making sure no errors are thrown
     vol = examples.load_uniform()
@@ -1497,7 +1440,6 @@ def test_volume_rendering():
     pyvista.plot(arr, volume=True, opacity='linear')
 
 
-@skip_no_plotting
 def test_plot_compare_four():
     # Really just making sure no errors are thrown
     mesh = examples.load_uniform()
@@ -1510,7 +1452,6 @@ def test_plot_compare_four():
                               show_kwargs={'before_close_callback': verify_cache_image})
 
 
-@skip_no_plotting
 def test_plot_depth_peeling():
     mesh = examples.load_airplane()
     p = pyvista.Plotter()
@@ -1520,13 +1461,11 @@ def test_plot_depth_peeling():
     p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 @pytest.mark.skipif(os.name == 'nt', reason="No testing on windows for EDL")
 def test_plot_eye_dome_lighting_plot(airplane):
     airplane.plot(eye_dome_lighting=True, before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 @pytest.mark.skipif(os.name == 'nt', reason="No testing on windows for EDL")
 def test_plot_eye_dome_lighting_plotter(airplane):
     p = pyvista.Plotter()
@@ -1535,7 +1474,6 @@ def test_plot_eye_dome_lighting_plotter(airplane):
     p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 @pytest.mark.skipif(os.name == 'nt', reason="No testing on windows for EDL")
 def test_plot_eye_dome_lighting_enable_disable(airplane):
     p = pyvista.Plotter()
@@ -1545,7 +1483,6 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_opacity_by_array(uniform):
     # Test with opacity array
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -1555,7 +1492,6 @@ def test_opacity_by_array(uniform):
     p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_opacity_by_array_uncertainty(uniform):
     # Test with uncertainty array (transparency)
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -1566,7 +1502,6 @@ def test_opacity_by_array_uncertainty(uniform):
     p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_opacity_by_array_user_transform(uniform):
     uniform['Spatial Point Data'] /= uniform['Spatial Point Data'].max()
 
@@ -1608,7 +1543,6 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
 
 
-@skip_no_plotting
 def test_closing_and_mem_cleanup():
     n = 5
     for _ in range(n):
@@ -1620,7 +1554,6 @@ def test_closing_and_mem_cleanup():
         pyvista.close_all()
 
 
-@skip_no_plotting
 def test_above_below_scalar_range_annotations():
     p = pyvista.Plotter()
     p.add_mesh(examples.load_uniform(), clim=[100, 500], cmap='viridis',
@@ -1628,21 +1561,18 @@ def test_above_below_scalar_range_annotations():
     p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_user_annotations_scalar_bar_mesh(uniform):
     p = pyvista.Plotter()
     p.add_mesh(uniform, annotations={100.: 'yum'})
     p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_user_annotations_scalar_bar_volume(uniform):
     p = pyvista.Plotter()
     p.add_volume(uniform, annotations={100.: 'yum'})
     p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_scalar_bar_args_unmodified_add_mesh(sphere):
     sargs = {"vertical": True}
     sargs_copy = sargs.copy()
@@ -1653,7 +1583,6 @@ def test_scalar_bar_args_unmodified_add_mesh(sphere):
     assert sargs == sargs_copy
 
 
-@skip_no_plotting
 def test_scalar_bar_args_unmodified_add_volume(uniform):
     sargs = {"vertical": True}
     sargs_copy = sargs.copy()
@@ -1664,7 +1593,6 @@ def test_scalar_bar_args_unmodified_add_volume(uniform):
     assert sargs == sargs_copy
 
 
-@skip_no_plotting
 def test_plot_string_array():
     mesh = examples.load_uniform()
     labels = np.empty(mesh.n_cells, dtype='<U10')
@@ -1677,7 +1605,6 @@ def test_plot_string_array():
     p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_fail_plot_table():
     """Make sure tables cannot be plotted"""
     table = pyvista.Table(np.random.rand(50, 3))
@@ -1688,7 +1615,6 @@ def test_fail_plot_table():
         plotter.add_mesh(table)
 
 
-@skip_no_plotting
 def test_bad_keyword_arguments():
     """Make sure bad keyword arguments raise an error"""
     mesh = examples.load_uniform()
@@ -1706,7 +1632,6 @@ def test_bad_keyword_arguments():
         plotter.show()
 
 
-@skip_no_plotting
 def test_cmap_list(sphere):
     n = sphere.n_points
     scalars = np.empty(n)
@@ -1721,7 +1646,6 @@ def test_cmap_list(sphere):
                 before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_default_name_tracking():
     N = 10
     color = "tan"
@@ -1741,7 +1665,6 @@ def test_default_name_tracking():
     del mesh
 
 
-@skip_no_plotting
 def test_add_background_image_global(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -1749,7 +1672,6 @@ def test_add_background_image_global(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_add_background_image_not_global(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -1757,7 +1679,6 @@ def test_add_background_image_not_global(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_add_background_image_subplots(airplane):
     pl = pyvista.Plotter(shape=(2, 2))
     pl.add_background_image(examples.mapfile, scale=1, as_global=False)
@@ -1775,7 +1696,6 @@ def test_add_background_image_subplots(airplane):
     pl.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_add_remove_floor(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
@@ -1860,7 +1780,6 @@ def test_index_vs_loc():
         assert pl.renderers.loc_to_index(np.int_(val)) == val
 
 
-@skip_no_plotting
 def test_interactive_update():
     # Regression test for #1053
     p = pyvista.Plotter()
@@ -1889,7 +1808,6 @@ def test_where_is():
         assert isinstance(loc, tuple)
 
 
-@skip_no_plotting
 def test_log_scale():
     mesh = examples.load_uniform()
     plotter = pyvista.Plotter()
@@ -1897,7 +1815,6 @@ def test_log_scale():
     plotter.show()
 
 
-@skip_no_plotting
 def test_set_focus():
     plane = pyvista.Plane()
     p = pyvista.Plotter()
@@ -1906,7 +1823,6 @@ def test_set_focus():
     p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_set_viewup():
     plane = pyvista.Plane()
     plane_higher = pyvista.Plane(center=(0, 0, 1), i_size=0.5, j_size=0.5)
@@ -1917,7 +1833,6 @@ def test_set_viewup():
     p.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_remove_scalar_bar(sphere):
     sphere['z'] = sphere.points[:, 2]
     plotter = pyvista.Plotter()
@@ -1929,7 +1844,6 @@ def test_plot_remove_scalar_bar(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_shadows():
     plotter = pyvista.Plotter(lighting=None)
 
@@ -1959,7 +1873,6 @@ def test_plot_shadows():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_shadows_enable_disable():
     """Test shadows are added and removed properly"""
     plotter = pyvista.Plotter(lighting=None)
@@ -1988,7 +1901,6 @@ def test_plot_shadows_enable_disable():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_lighting_change_positional_true_false(sphere):
     light = pyvista.Light(positional=True, show_actor=True)
 
@@ -1999,7 +1911,6 @@ def test_plot_lighting_change_positional_true_false(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plot_lighting_change_positional_false_true(sphere):
     light = pyvista.Light(positional=False, show_actor=True)
 
@@ -2011,7 +1922,6 @@ def test_plot_lighting_change_positional_false_true(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@skip_no_plotting
 def test_plotter_image():
     plotter = pyvista.Plotter()
     plotter.show()

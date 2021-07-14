@@ -10,7 +10,6 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-# Helpers:
 
 def _check_examples_path():
     """Check if the examples path exists."""

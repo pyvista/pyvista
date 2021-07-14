@@ -20,6 +20,7 @@ skip_py2_nobind = pytest.mark.skipif(int(sys.version[0]) < 3,
 
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
+skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 
 
 @pytest.fixture
@@ -774,6 +775,7 @@ def test_streamlines_from_source_structured_grids():
     assert all([stream.n_points, stream.n_cells])
 
 
+@skip_not_vtk9
 def mesh_2D_velocity():
     mesh = pyvista.Plane(i_resolution=100, j_resolution=100)
     velocity = np.zeros([mesh.n_points, 3])
@@ -782,24 +784,29 @@ def mesh_2D_velocity():
     mesh.set_active_vectors("velocity")
     return mesh
 
+
+@skip_not_vtk9
 def test_streamlines_evenly_spaced_2D():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D()
     assert all([streams.n_points, streams.n_cells])
 
 
+@skip_not_vtk9
 def test_streamlines_evenly_spaced_2D_sep_dist_ratio():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(separating_distance_ratio=0.1)
     assert all([streams.n_points, streams.n_cells])
 
 
+@skip_not_vtk9
 def test_streamlines_evenly_spaced_2D_start_position():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(start_position=(-0.1, 0.1, 0.0))
     assert all([streams.n_points, streams.n_cells])
 
 
+@skip_not_vtk9
 def test_streamlines_evenly_spaced_2D_vectors():
     mesh = mesh_2D_velocity()
     mesh.set_active_vectors(None)
@@ -807,12 +814,14 @@ def test_streamlines_evenly_spaced_2D_vectors():
     assert all([streams.n_points, streams.n_cells])
 
 
+@skip_not_vtk9
 def test_streamlines_evenly_spaced_2D_integrator_type():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(integrator_type=4)
     assert all([streams.n_points, streams.n_cells])
 
 
+@skip_not_vtk9
 def test_streamlines_evenly_spaced_2D_interpolator_type():
     mesh = mesh_2D_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(interpolator_type='cell')

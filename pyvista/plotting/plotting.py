@@ -256,6 +256,150 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             f'not {type(theme).__name__}.')
         self._theme.load_theme(pyvista.global_theme)
 
+    def import_gltf(self, filename, set_camera=True):
+        """Import a glTF file into the plotter.
+
+        See https://www.khronos.org/gltf/ for more information.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the glTF file.
+
+        set_camera : bool, optional
+            Set the camera viewing angle to one compatible with the
+            default three.js perspective (``'xy'``).
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> helmet_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
+        >>> texture = examples.hdr.download_dikhololo_night()  # doctest:+SKIP
+        >>> pl = pyvista.Plotter()  # doctest:+SKIP
+        >>> pl.import_gltf(helmet_file)  # doctest:+SKIP
+        >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
+        >>> pl.camera.zoom(1.8)  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
+
+        See :ref:`load_gltf` for a full example using this method.
+
+        """
+        if not _vtk.VTK9:  # pragma: no cover
+            raise RuntimeError('Support for glTF requires VTK v9 or newer')
+
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOImport import vtkGLTFImporter
+        importer = vtkGLTFImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.ren_win)
+        importer.Update()
+
+        # set camera position to a three.js viewing perspective
+        if set_camera:
+            self.camera_position = 'xy'
+
+    def export_gltf(self, filename, inline_data=True, rotate_scene=True,
+                    save_normals=True):
+        """Export the current rendering scene as a glTF file.
+
+        Visit https://gltf-viewer.donmccurdy.com/ for an online viewer.
+
+        See https://vtk.org/doc/nightly/html/classvtkGLTFExporter.html
+        for limitations regarding the exporter.
+
+        Parameters
+        ----------
+        filename : str
+            Path to export the gltf file to.
+
+        inline_data : bool, optional
+            Sets if the binary data be included in the json file as a
+            base64 string.  When ``True``, only one file is exported.
+
+        rotate_scene : bool, optional
+            Rotate scene to be compatible with the glTF specifications.
+
+        save_normals : bool, optional
+            Saves the point array ``'Normals'`` as ``'NORMALS'`` in
+            the outputted scene.
+
+        Examples
+        --------
+        Output a simple point cloud represented as balls.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> point_cloud = np.random.random((100, 3))
+        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata['orig_sphere'] = np.arange(100)
+        >>> sphere = pyvista.Sphere(radius=0.02)
+        >>> pc = pdata.glyph(scale=False, geom=sphere)
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pc, cmap='reds', smooth_shading=True,
+        ...                 show_scalar_bar=False)
+        >>> pl.export_gltf('balls.gltf')  # doctest:+SKIP
+        >>> pl.show()
+
+        Output the orientation plotter.
+
+        >>> from pyvista import demos
+        >>> pl = demos.orientation_plotter()
+        >>> pl.export_gltf('orientation_plotter.gltf')  # doctest:+SKIP
+        >>> pl.show()
+
+        """
+        if not _vtk.VTK9:  # pragma: no cover
+            raise RuntimeError('Support for glTF requires VTK v9 or newer')
+
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError('This plotter has been closed and is unable to export '
+                               'the scene.')
+
+        from vtkmodules.vtkIOExport import vtkGLTFExporter
+
+        # rotate scene to gltf compatible view
+        if rotate_scene:
+            for renderer in self.renderers:
+                for actor in renderer.actors.values():
+                    if hasattr(actor, 'RotateX'):
+                        actor.RotateX(-90)
+                        actor.RotateZ(-90)
+
+                    if save_normals:
+                        try:
+                            mapper = actor.GetMapper()
+                            if mapper is None:
+                                continue
+                            dataset = mapper.GetInputAsDataSet()
+                            if 'Normals' in dataset.point_arrays:
+                                normals = dataset.point_arrays['Normals']
+                                dataset.point_array.append(normals, 'NORMAL',
+                                                           active_scalars=False,
+                                                           deep_copy=False)
+                                
+                        except:
+                            pass
+
+        exporter = vtkGLTFExporter()
+        exporter.SetRenderWindow(self.ren_win)
+        exporter.SetFileName(filename)
+        exporter.SetInlineData(inline_data)
+        exporter.SetSaveNormal(save_normals)
+        exporter.Update()
+
+        # rotate back if applicable
+        if rotate_scene:
+            for renderer in self.renderers:
+                for actor in renderer.actors.values():
+                    if hasattr(actor, 'RotateX'):
+                        actor.RotateZ(90)
+                        actor.RotateX(90)
+
     @property
     def scalar_bar(self):
         """First scalar bar.  Kept for backwards compatibility."""
