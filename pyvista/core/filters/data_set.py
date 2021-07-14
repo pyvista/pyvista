@@ -2706,7 +2706,7 @@ class DataSetFilters:
         Warnings
         --------
         This filter is unstable for ``vtk<9.0``.
-        See `pyvista issue 1508 <https://github.com/pyvista/pyvista/issues/1508>`_,
+        See `pyvista issue 1508 <https://github.com/pyvista/pyvista/issues/1508>`_.
 
         Examples
         --------
