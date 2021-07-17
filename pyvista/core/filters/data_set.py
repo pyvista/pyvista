@@ -3604,7 +3604,7 @@ class DataSetFilters:
         # available in 9.0.2
         # surf_filter.SetDelegation(delegation)
 
-        _update_alg(surf_filter, progress_bar, 'Surfacing DataSet')
+        _update_alg(surf_filter, progress_bar, 'Extracting Surface')
         return _get_output(surf_filter)
 
     def surface_indices(dataset, progress_bar=False):
