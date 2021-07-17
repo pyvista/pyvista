@@ -97,6 +97,9 @@ class CompositeFilters:
         nested : bool, optional
             If True, these creates individual outlines for each nested dataset
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         """
         if nested:
             return DataSetFilters.outline_corners(composite, factor=factor, progress_bar=progress_bar)
