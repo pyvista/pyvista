@@ -19,7 +19,7 @@ Empty Object
 ~~~~~~~~~~~~
 An unstructured grid can be initialized with:
 
-.. jupyter-execute::
+.. code:: python
 
     import pyvista as pv
     grid = pv.UnstructuredGrid()
@@ -27,8 +27,9 @@ An unstructured grid can be initialized with:
 This creates an empty grid, and is not useful until points and cells are added
 to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``,
 but the inputs to these need to be ``vtk.vtkCellArray`` and ``vtk.vtkPoints``
-objects, which need to be populated with values.  Grid creation is simplified
-by initializing the grid directly from numpy arrays as in the following section.
+objects, which need to be populated with values.  With PyVista, grid
+creation is simplified by initializing the grid directly from numpy
+arrays, as demonstrated in the following section.
 
 
 Loading from File
@@ -51,7 +52,7 @@ Empty Object
 ~~~~~~~~~~~~
 A structured grid can be initialized with:
 
-.. jupyter-execute::
+.. code:: python
 
     import pyvista as pv
     grid = pv.StructuredGrid()
@@ -69,7 +70,8 @@ Also see :ref:`ref_create_structured` for an example on creating a structured
 grid from NumPy arrays.
 
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     import pyvista as pv
     import numpy as np
@@ -121,7 +123,7 @@ A simple plot can be created with:
 .. pyvista-plot::
     :context:
 
-    grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'})
+    grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'}, cpos='zy', show_edges=True)
 
 A more complex plot can be created with:
 
@@ -142,13 +144,11 @@ A more complex plot can be created with:
                      rng=[-d.max(), d.max()])
     plotter.add_axes()
     plotter.camera_position = cpos
-
     plotter.show()
 
 
 You can animate the motion of the beam by updating the positions and
-scalars of the grid copied to the plotting object.  First you have to
-set up the plotting object:
+scalars of the grid copied to the plotting object.
 
 
 .. pyvista-plot::
@@ -156,9 +156,8 @@ set up the plotting object:
 
     plotter = pv.Plotter(window_size=(800, 600))
     plotter.add_mesh(grid, scalars=d[:, 1],
-                     scalar_bar_args={'title': 'Y Displacement'},
-                     show_edges=True, rng=[-d.max(), d.max()],
-                     interpolate_before_map=True)
+                     show_scalar_bar=False,
+                     show_edges=True, rng=[-d.max(), d.max()])
     plotter.add_axes()
     plotter.camera_position = cpos
 
@@ -176,31 +175,16 @@ set up the plotting object:
     plotter.close()
 
 
-..
-   .. jupyter-execute::
-       :hide-code:
-
-       # move to the right location
-       # note that this will be executed relative to pyvista/doc
-       import shutil
-       import os
-       shutil.move('beam.gif', 
-                   os.path.join(os.getcwd(), './images/auto-generated/beam.gif'))
-
-   .. image:: ../../images/auto-generated/beam.gif
-
-
 You can also render the beam as as a wire-frame object:
 
-.. code::
+.. pyvista-plot::
+    :context:
 
     # Animate plot as a wire-frame
     plotter = pv.Plotter(window_size=(800, 600))
     plotter.add_mesh(grid, scalars=d[:, 1],
-                     scalar_bar_args={'title': 'Y Displacement'},
-                     show_edges=True,
-                     rng=[-d.max(), d.max()], interpolate_before_map=True,
-                     style='wireframe')
+                     show_scalar_bar=False,
+                     rng=[-d.max(), d.max()], style='wireframe')
     plotter.add_axes()
     plotter.camera_position = cpos
 
@@ -214,31 +198,21 @@ You can also render the beam as as a wire-frame object:
 
     plotter.close()
 
-.. code::
-    :hide-code:
-
-    # move to the right location
-    # note that this will be executed relative to pyvista/doc
-    import shutil
-    import os
-    shutil.move('beam_wireframe.gif', 
-                 os.path.join(os.getcwd(), './images/auto-generated/beam_wireframe.gif'))
-
-.. image:: ../../images/auto-generated/beam_wireframe.gif
-
 
 Adding Labels to a Plot
 -----------------------
-Labels can be added to a plot using the ``add_point_labels`` function
-within the ``Plotter`` object.  The following example loads the
-included example beam, generates a plotting class, and sub-selects
-points along the y-z plane and labels their coordinates.
-``add_point_labels`` requires that the number of labels matches the
-number of points, and that labels is a list containing one entry per
-point.  The code automatically converts each item in the list to a
-string.
+Labels can be added to a plot using :func:`add_point_labels()
+<pyvista.BasePlotter.add_point_labels>` within the :class:`Plotter <pyvista.BasePlotter>`.
+The following example loads the included example beam, generates a
+plotting class, and sub-selects points along the y-z plane and labels
+their coordinates.  :func:`add_point_labels()
+<pyvista.BasePlotter.add_point_labels>` requires that the number of
+labels matches the number of points, and that labels is a list
+containing one entry per point.  The code automatically converts each
+item in the list to a string.
 
 .. pyvista-plot::
+    :context:
 
     # Load module and example file
     import pyvista as pv
@@ -267,7 +241,8 @@ string.
 This example is similar and shows how labels can be combined with a
 scalar bar to show the exact value of certain points.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     # Label the Z position
     values = grid.points[:, 2]
