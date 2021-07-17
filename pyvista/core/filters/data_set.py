@@ -970,7 +970,7 @@ class DataSetFilters:
         alg = _vtk.vtkOutlineCornerFilter()
         alg.SetInputDataObject(dataset)
         alg.SetCornerFactor(factor)
-        _update_alg(alg, progress_bar, 'Outlining Corners')
+        _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(dataset, progress_bar=False):
