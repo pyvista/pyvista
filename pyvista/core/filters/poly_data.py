@@ -610,7 +610,7 @@ class PolyDataFilters(DataSetFilters):
         trifilter.SetInputData(poly_data)
         trifilter.PassVertsOff()
         trifilter.PassLinesOff()
-        _update_alg(trifilter, progress_bar, 'Computing Triangulation')
+        _update_alg(trifilter, progress_bar, 'Computing Triangle Mesh')
 
         mesh = _get_output(trifilter)
         if inplace:
