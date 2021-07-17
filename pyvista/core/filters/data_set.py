@@ -941,7 +941,7 @@ class DataSetFilters:
         alg = _vtk.vtkOutlineFilter()
         alg.SetInputDataObject(dataset)
         alg.SetGenerateFaces(generate_faces)
-        _update_alg(alg, progress_bar, 'Outlining')
+        _update_alg(alg, progress_bar, 'Producing an outline')
         return wrap(alg.GetOutputDataObject(0))
 
     def outline_corners(dataset, factor=0.2, progress_bar=False):
