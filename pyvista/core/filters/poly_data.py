@@ -691,7 +691,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetEdgeAngle(edge_angle)
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.SetRelaxationFactor(relaxation_factor)
-        _update_alg(alg, progress_bar, 'Smoothing PolyData')
+        _update_alg(alg, progress_bar, 'Smoothing Mesh')
 
         mesh = _get_output(alg)
         if inplace:
