@@ -4150,7 +4150,7 @@ class DataSetFilters:
                 raise VTKVersionError('The installed version of VTK does not support '
                                       'transformation of all input vectors.')
 
-        _update_alg(f, progress_bar, 'Transforming DataSet')
+        _update_alg(f, progress_bar, 'Transforming')
         res = pyvista.core.filters._get_output(f)
 
         # make the previously active scalars active again
