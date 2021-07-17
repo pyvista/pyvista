@@ -964,7 +964,7 @@ class PolyDataFilters(DataSetFilters):
         # Subdivide
         sfilter.SetNumberOfSubdivisions(nsub)
         sfilter.SetInputData(poly_data)
-        _update_alg(sfilter, progress_bar, 'Subdividing')
+        _update_alg(sfilter, progress_bar, 'Subdividing Mesh')
 
         submesh = _get_output(sfilter)
         if inplace:
