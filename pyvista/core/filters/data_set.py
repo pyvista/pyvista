@@ -2879,7 +2879,7 @@ class DataSetFilters:
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
         # Run the algorithm
-        _update_alg(alg, progress_bar, 'Calculating Evenly Spaced Streamlines2D')
+        _update_alg(alg, progress_bar, 'Generating Evenly Spaced Streamlines on a 2D Dataset')
         return _get_output(alg)
 
     def decimate_boundary(dataset, target_reduction=0.5, progress_bar=False):
