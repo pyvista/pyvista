@@ -3468,7 +3468,7 @@ class DataSetFilters:
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, dataset)
         extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar, 'Extracting Selection')
+        _update_alg(extract_sel, progress_bar, 'Extracting Cells')
         subgrid = _get_output(extract_sel)
 
         # extracts only in float32
