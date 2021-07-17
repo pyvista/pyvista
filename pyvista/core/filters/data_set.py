@@ -681,7 +681,7 @@ class DataSetFilters:
         alg.SetCutFunction(polyplane)  # the cutter to use the poly planes
         if not generate_triangles:
             alg.GenerateTrianglesOff()
-        _update_alg(alg, progress_bar, 'Subdividing')
+        _update_alg(alg, progress_bar, 'Slicing along Line')
         output = _get_output(alg)
         if contour:
             return output.contour()
