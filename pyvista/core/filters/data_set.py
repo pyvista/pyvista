@@ -3778,7 +3778,7 @@ class DataSetFilters:
         if main_has_priority:
             append_filter.AddInputData(dataset)
 
-        _update_alg(append_filter, progress_bar, 'Appending Meshs')
+        _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
         if inplace:
             if type(dataset) == type(merged):
