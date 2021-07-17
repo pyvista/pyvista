@@ -2716,7 +2716,7 @@ class DataSetFilters:
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
         # run the algorithm
-        _update_alg(alg, progress_bar, 'Stream Tracing')
+        _update_alg(alg, progress_bar, 'Generating Streamlines')
         return _get_output(alg)
 
     def streamlines_evenly_spaced_2D(dataset, vectors=None, start_position=None,
