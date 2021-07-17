@@ -1450,7 +1450,7 @@ class DataSetFilters:
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(dataset)
         alg.SetVertexCells(vertex)
-        _update_alg(alg, progress_bar, 'Cell Centering')
+        _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
         return _get_output(alg)
 
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
