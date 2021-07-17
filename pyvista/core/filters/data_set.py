@@ -2324,7 +2324,7 @@ class DataSetFilters:
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
-        _update_alg(alg, progress_bar, 'Resampling with Data Set')
+        _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
     def interpolate(dataset, target, sharpness=2, radius=1.0,
