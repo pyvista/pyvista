@@ -1655,7 +1655,7 @@ class DataSetFilters:
         else:
             alg.SetExtractionModeToAllRegions()
         alg.SetColorRegions(True)
-        _update_alg(alg, progress_bar, 'Connecting')
+        _update_alg(alg, progress_bar, 'Finding and Labeling Connected Bodies/Volumes.')
         return _get_output(alg)
 
     def extract_largest(dataset, inplace=False, progress_bar=False):
