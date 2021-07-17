@@ -2257,7 +2257,7 @@ class DataSetFilters:
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
-        _update_alg(alg, progress_bar, 'Probing')
+        _update_alg(alg, progress_bar, 'Sampling Data Values at Specified Point Locations')
         return _get_output(alg)
 
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
