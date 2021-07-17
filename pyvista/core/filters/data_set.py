@@ -3537,7 +3537,7 @@ class DataSetFilters:
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, dataset)
         extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar, 'Extracting Selection')
+        _update_alg(extract_sel, progress_bar, 'Extracting Points')
         return _get_output(extract_sel)
 
     def extract_surface(dataset, pass_pointid=True, pass_cellid=True,
