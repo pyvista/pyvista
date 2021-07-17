@@ -325,7 +325,7 @@ class DataSetFilters:
         # SetInputArrayToProcess(idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInsideOut(invert)  # invert the clip if needed
-        _update_alg(alg, progress_bar, 'Clipping Scalar')
+        _update_alg(alg, progress_bar, 'Clipping by a Scalar')
         result = _get_output(alg)
 
         if inplace:
