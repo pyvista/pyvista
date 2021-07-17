@@ -1059,7 +1059,7 @@ class PolyDataFilters(DataSetFilters):
             sfilter.SetMaximumNumberOfPasses(max_n_passes)
 
         sfilter.SetInputData(poly_data)
-        _update_alg(sfilter, progress_bar, 'Subdividing Adaptive')
+        _update_alg(sfilter, progress_bar, 'Subdividing Mesh Adaptive')
         submesh = _get_output(sfilter)
 
         if inplace:
