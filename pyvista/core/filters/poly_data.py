@@ -1184,7 +1184,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTargetReduction(target_reduction)
 
         alg.SetInputData(poly_data)
-        _update_alg(alg, progress_bar, 'Decimating Quadric')
+        _update_alg(alg, progress_bar, 'Decimating Mesh')
 
         mesh = _get_output(alg)
         if inplace:
