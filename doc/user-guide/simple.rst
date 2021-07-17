@@ -114,22 +114,16 @@ access an array on that dataset, then add some more data:
 Plotting
 ~~~~~~~~
 
-PyVista includes numerous plotting routines that are intended to be intuitive
-and highly controllable with ``matplotlib`` similar syntax and keyword
-arguments.
-To get started, try out the :func:`pyvista.plot` convenience method that is binded
-to each PyVista data object:
+PyVista includes numerous plotting routines that are intended to be
+intuitive and highly controllable with ``matplotlib`` similar syntax
+and keyword arguments.
+
+To get started, try out the :func:`pyvista.plot` convenience method
+that is bound to each PyVista data object:
 
 
-.. jupyter-execute::
-   :hide-code:
-
-   # must have this here as our global backend may not be static
-   import pyvista
-   pyvista.set_jupyter_backend('static')
-
-
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     import pyvista as pv
     from pyvista import examples
@@ -138,11 +132,10 @@ to each PyVista data object:
     mesh.plot()
 
 
-You can also create the plotter to highly control the scene. First, instantiate
-a plotter such as :class:`pyvista.Plotter` or :class:`pyvistaqt.BackgroundPlotter`:
-
-The :class:`pyvista.Plotter` will create a rendering window that will pause the
-execution of the code after calling ``show``.
+You can also create the plotter to highly control the scene. First,
+instantiate a plotter using :class:`pyvista.Plotter`.  The code block
+below creates rendering window that will pause the execution of the
+code after calling :func:`show() <pyvista.Plotter.show>`.
 
 .. testcode:: python
 
@@ -153,10 +146,12 @@ execution of the code after calling ``show``.
     plotter.show()            # show the rendering window
 
 
-Note that by default the ``show`` method will return the last used camera position
-of the rendering window in case you want to choose a camera position and use it
-again later. The camera position is also available as the ``camera_position``
-attribute of the plotter (even after it's closed).
+Note that by default :func:`show() <pyvista.Plotter.show>` will return
+the last used camera position of the rendering window in case you want
+to choose a camera position and use it again later. The camera
+position is also available as the :attr:`camera_position
+<pyvista.Plotter.camera_position>` attribute of the plotter (even
+after it's closed).
 
 You can then use this cached camera for additional plotting without having to
 manually interact with the plotting window:
@@ -183,18 +178,19 @@ Be sure to check out all the available plotters for your use case:
 Exporting
 ~~~~~~~~~
 
-Any PyVista mesh object can be saved to a VTK file format using the ``.save()``
-method bound directly on those objects. For example, the mesh used above could
-be saved like:
+Any PyVista mesh object can be saved to a VTK file format using
+:func:`save() <pyvista.DataObject.save>`. For example, the mesh in the
+code block above could be saved like:
 
 .. code-block:: python
 
     mesh.save("mesh.vtk")
 
-Or since that mesh is :class:`pyvista.PolyData`, we could use the ``.vtp``,
-``.stl``, or ``.ply`` formats as well.
-For more details on which formats are supported in the ``.save()`` method,
-please refer to the docs for that method on each mesh type.
+Or since that mesh is :class:`pyvista.PolyData`, we could use the
+``.vtp``, ``.stl``, or ``.ply`` formats as well.  For more details on
+which formats are supported in the :func:`save()
+<pyvista.DataObject.save>` method, please refer to the docs for that
+method on each mesh type.
 
 Also note that we can export any PyVista mesh to any file format supported by
 `meshio <https://github.com/nschloe/meshio>`_. Meshio supports many formats

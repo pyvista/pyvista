@@ -68,13 +68,6 @@ when creating a grid from scratch or copying it from another format.
 Also see :ref:`ref_create_structured` for an example on creating a structured
 grid from NumPy arrays.
 
-.. jupyter-execute::
-    :hide-code:
-
-    import pyvista
-    pv.OFF_SCREEN = True
-    pyvista.set_jupyter_backend('panel')
-    pyvista.set_plot_theme('document')
 
 .. jupyter-execute::
 
@@ -105,7 +98,8 @@ Plotting Grids
 This example shows how you can load an unstructured grid from a ``vtk`` file and
 create a plot and gif movie by updating the plotting object.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     # Load module and example file
     import pyvista as pv
@@ -122,15 +116,17 @@ create a plot and gif movie by updating the plotting object.
     # Displace original grid
     grid.points += d
 
-A simple plot can be created by using:
+A simple plot can be created with:
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'})
 
-A more complex plot can be created using:
+A more complex plot can be created with:
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     # Store Camera position.  This can be obtained manually by getting the
     # output of grid.plot()
@@ -154,7 +150,9 @@ You can animate the motion of the beam by updating the positions and
 scalars of the grid copied to the plotting object.  First you have to
 set up the plotting object:
 
-.. jupyter-execute::
+
+.. pyvista-plot::
+    :context:
 
     plotter = pv.Plotter(window_size=(800, 600))
     plotter.add_mesh(grid, scalars=d[:, 1],
@@ -164,14 +162,7 @@ set up the plotting object:
     plotter.add_axes()
     plotter.camera_position = cpos
 
-You then open the render window by plotting before opening the movie file.
-Set auto_close to False so the plotter does not close automatically.
-Disabling interactive means the plot will automatically continue without waiting
-for the user to exit the window.
-
-.. jupyter-execute::
-
-    # open movie file.  A mp4 file can be written instead.  Requires moviepy
+    # open movie file.  A mp4 file can be written instead.  Requires ``moviepy``
     plotter.open_gif('beam.gif')  # or beam.mp4
 
     # Modify position of the beam cyclically
@@ -184,22 +175,24 @@ for the user to exit the window.
     # Close the movie and plot
     plotter.close()
 
-.. jupyter-execute::
-    :hide-code:
 
-    # move to the right location
-    # note that this will be executed relative to pyvista/doc
-    import shutil
-    import os
-    shutil.move('beam.gif', 
-                os.path.join(os.getcwd(), './images/auto-generated/beam.gif'))
+..
+   .. jupyter-execute::
+       :hide-code:
 
-.. image:: ../../images/auto-generated/beam.gif
+       # move to the right location
+       # note that this will be executed relative to pyvista/doc
+       import shutil
+       import os
+       shutil.move('beam.gif', 
+                   os.path.join(os.getcwd(), './images/auto-generated/beam.gif'))
+
+   .. image:: ../../images/auto-generated/beam.gif
 
 
 You can also render the beam as as a wire-frame object:
 
-.. jupyter-execute::
+.. code::
 
     # Animate plot as a wire-frame
     plotter = pv.Plotter(window_size=(800, 600))
@@ -221,7 +214,7 @@ You can also render the beam as as a wire-frame object:
 
     plotter.close()
 
-.. jupyter-execute::
+.. code::
     :hide-code:
 
     # move to the right location
@@ -245,13 +238,7 @@ number of points, and that labels is a list containing one entry per
 point.  The code automatically converts each item in the list to a
 string.
 
-.. jupyter-execute::
-    :hide-code:
-
-    # labels to not show in panel
-    pyvista.set_jupyter_backend('static')
-
-.. jupyter-execute::
+.. pyvista-plot::
 
     # Load module and example file
     import pyvista as pv
