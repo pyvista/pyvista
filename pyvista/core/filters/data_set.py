@@ -205,7 +205,7 @@ class DataSetFilters:
             # invert the clip if needed
             port = 1
             alg.GenerateClippedOutputOn()
-        _update_alg(alg, progress_bar, 'Clipping_Box')
+        _update_alg(alg, progress_bar, 'Clipping a Dataset by a Bounding Box')
         return _get_output(alg, oport=port)
 
     def compute_implicit_distance(dataset, surface, inplace=False):
