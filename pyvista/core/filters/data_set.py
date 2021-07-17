@@ -3702,7 +3702,7 @@ class DataSetFilters:
         featureEdges.SetBoundaryEdges(boundary_edges)
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
-        _update_alg(featureEdges, progress_bar, 'Featuring Edges')
+        _update_alg(featureEdges, progress_bar, 'Extracting Feature Edges')
         return _get_output(featureEdges)
 
     def merge(dataset, grid=None, merge_points=True, inplace=False,
