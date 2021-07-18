@@ -525,7 +525,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             raise ValueError('``curv_type`` must be either "Mean", '
                              '"Gaussian", "Maximum", or "Minimum".')
-        _update_alg(curvefilter, progress_bar, 'Computing Curvatures')
+        _update_alg(curvefilter, progress_bar, 'Computing Curvature')
 
         # Compute and return curvature
         curv = _get_output(curvefilter)
