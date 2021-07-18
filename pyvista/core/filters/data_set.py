@@ -2544,7 +2544,7 @@ class DataSetFilters:
             source.SetNumberOfPoints(n_points)
         source.Update()
         input_source = pyvista.wrap(source.GetOutput())
-        output = dataset.streamlines_from_source(input_source, vectors, **kwargs)
+        output = dataset.streamlines_from_source(input_source, vectors, progress_bar=progress_bar, **kwargs)
         if return_source:
             return output, input_source
         return output
