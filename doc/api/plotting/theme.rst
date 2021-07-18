@@ -13,3 +13,13 @@ and styles through one global configuration.
    :template: custom-class-template.rst
 
    themes.DefaultTheme
+   themes._SliderConfig
+   themes._SliderStyleConfig
+   themes._Font
+   themes._AxesConfig
+   themes._ColorbarConfig
+   themes._SilhouetteConfig
+   themes._DepthPeelingConfig
+   themes.DarkTheme
+   themes.ParaViewTheme
+   themes.DocumentTheme

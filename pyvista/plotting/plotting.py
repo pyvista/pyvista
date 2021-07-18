@@ -4265,21 +4265,21 @@ class Plotter(BasePlotter):
         ----------
         title : string, optional
             Title of plotting window.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.title`.
+            :attr:`pyvista.global_theme.title <pyvista.themes.DefaultTheme.title>`.
 
         window_size : list, optional
             Window size in pixels.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.window_size`.
+            :attr:`pyvista.global_theme.window_size <pyvista.themes.DefaultTheme.window_size>`.
 
         interactive : bool, optional
             Enabled by default.  Allows user to pan and move figure.
             Defaults to
-            :attr:`pyvista.themes.DefaultTheme.interacitve`.
+            :attr:`pyvista.global_theme.interactive <pyvista.themes.DefaultTheme.interactive>`.
 
         auto_close : bool, optional
             Exits plotting session when user closes the window when
             interactive is ``True``.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.auto_close`.
+            :attr:`pyvista.global_theme.auto_close <pyvista.themes.DefaultTheme.auto_close>`.
 
         interactive_update: bool, optional
             Disabled by default.  Allows user to non-blocking draw,
@@ -4288,7 +4288,7 @@ class Plotter(BasePlotter):
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
             ``window_size``.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.full_screen`.
+            :attr:`pyvista.global_theme.full_screen <pyvista.themes.DefaultTheme.full_screen>`.
 
         cpos : list(tuple(floats))
             The camera position.  You can also set this with
