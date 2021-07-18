@@ -270,15 +270,13 @@ def test_plot_curvature(sphere):
     sphere.plot_curvature(off_screen=True)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_edge_mask(sphere, progress_bar):
-    mask = sphere.edge_mask(10, progress_bar=progress_bar)
+def test_edge_mask(sphere):
+    mask = sphere.edge_mask(10, progress_bar=True)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_boolean_union_intersection(sphere, sphere_shifted, progress_bar):
-    union = sphere.boolean_union(sphere_shifted, progress_bar=progress_bar)
-    intersection = sphere.boolean_intersection(sphere_shifted, progress_bar=progress_bar)
+def test_boolean_union_intersection(sphere, sphere_shifted):
+    union = sphere.boolean_union(sphere_shifted, progress_bar=True)
+    intersection = sphere.boolean_intersection(sphere_shifted, progress_bar=True)
 
     # union is volume of sphere + sphere_shifted minus the part intersecting
     expected_volume = sphere.volume + sphere_shifted.volume - intersection.volume
@@ -289,10 +287,9 @@ def test_boolean_union_intersection(sphere, sphere_shifted, progress_bar):
     assert np.isclose(intersection.volume, expected_volume, atol=1E-3)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_boolean_difference(sphere, sphere_shifted, progress_bar):
-    difference = sphere.boolean_difference(sphere_shifted, progress_bar=progress_bar)
-    intersection = sphere.boolean_intersection(sphere_shifted, progress_bar=progress_bar)
+def test_boolean_difference(sphere, sphere_shifted):
+    difference = sphere.boolean_difference(sphere_shifted, progress_bar=True)
+    intersection = sphere.boolean_intersection(sphere_shifted, progress_bar=True)
 
     expected_volume = sphere.volume - intersection.volume
     assert np.isclose(difference.volume, expected_volume, atol=1E-3)
@@ -308,29 +305,28 @@ def test_subtract(sphere, sphere_shifted):
     assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_merge(sphere, sphere_shifted, hexbeam, progress_bar):
-    merged = sphere.merge(hexbeam, progress_bar=progress_bar)
+def test_merge(sphere, sphere_shifted, hexbeam):
+    merged = sphere.merge(hexbeam, progress_bar=True)
     assert merged.n_points == (sphere.n_points + hexbeam.n_points)
     assert isinstance(merged, pyvista.UnstructuredGrid)
 
     # list with unstructuredgrid case
-    merged = sphere.merge([hexbeam, hexbeam], merge_points=False, progress_bar=progress_bar)
+    merged = sphere.merge([hexbeam, hexbeam], merge_points=False, progress_bar=True)
     assert merged.n_points == (sphere.n_points + hexbeam.n_points*2)
     assert isinstance(merged, pyvista.UnstructuredGrid)
 
     # with polydata
-    merged = sphere.merge(sphere_shifted, progress_bar=progress_bar)
+    merged = sphere.merge(sphere_shifted, progress_bar=True)
     assert isinstance(merged, pyvista.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
 
     # with polydata list (no merge)
-    merged = sphere.merge([sphere_shifted, sphere_shifted], merge_points=False, progress_bar=progress_bar)
+    merged = sphere.merge([sphere_shifted, sphere_shifted], merge_points=False, progress_bar=True)
     assert isinstance(merged, pyvista.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points*2
 
     # with polydata list (merge)
-    merged = sphere.merge([sphere_shifted, sphere_shifted], progress_bar=progress_bar)
+    merged = sphere.merge([sphere_shifted, sphere_shifted], progress_bar=True)
     assert isinstance(merged, pyvista.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
 
@@ -342,15 +338,14 @@ def test_add(sphere, sphere_shifted):
     assert merged.n_faces == sphere.n_cells + sphere_shifted.n_cells
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_intersection(sphere, sphere_shifted, progress_bar):
-    intersection, first, second = sphere.intersection(sphere_shifted, split_first=True, split_second=True, progress_bar=progress_bar)
+def test_intersection(sphere, sphere_shifted):
+    intersection, first, second = sphere.intersection(sphere_shifted, split_first=True, split_second=True, progress_bar=True)
 
     assert intersection.n_points
     assert first.n_points > sphere.n_points
     assert second.n_points > sphere_shifted.n_points
 
-    intersection, first, second = sphere.intersection(sphere_shifted, split_first=False, split_second=False, progress_bar=progress_bar)
+    intersection, first, second = sphere.intersection(sphere_shifted, split_first=False, split_second=False, progress_bar=True)
     assert intersection.n_points
     assert first.n_points == sphere.n_points
     assert second.n_points == sphere_shifted.n_points
@@ -454,9 +449,8 @@ def test_triangulate_filter(plane):
 
 
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_subdivision(sphere, subfilter, progress_bar):
-    mesh = sphere.subdivide(1, subfilter, progress_bar=progress_bar)
+def test_subdivision(sphere, subfilter):
+    mesh = sphere.subdivide(1, subfilter, progress_bar=True)
     assert mesh.n_points > sphere.n_points
     assert mesh.n_faces > sphere.n_faces
 
@@ -481,24 +475,22 @@ def test_extract_feature_edges(sphere):
     assert more_edges.n_points
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_decimate(sphere, progress_bar):
-    mesh = sphere.decimate(0.5, progress_bar=progress_bar)
+def test_decimate(sphere):
+    mesh = sphere.decimate(0.5, progress_bar=True)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
-    mesh.decimate(0.5, inplace=True, progress_bar=progress_bar)
+    mesh.decimate(0.5, inplace=True, progress_bar=True)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_decimate_pro(sphere, progress_bar):
-    mesh = sphere.decimate_pro(0.5, progress_bar=progress_bar)
+def test_decimate_pro(sphere):
+    mesh = sphere.decimate_pro(0.5, progress_bar=True)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
-    mesh.decimate_pro(0.5, inplace=True, progress_bar=progress_bar)
+    mesh.decimate_pro(0.5, inplace=True, progress_bar=True)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
@@ -525,13 +517,12 @@ def test_face_normals(sphere):
     assert sphere.face_normals.shape[0] == sphere.n_faces
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_clip_plane(sphere, progress_bar):
-    clipped_sphere = sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], invert=False, progress_bar=progress_bar)
+def test_clip_plane(sphere):
+    clipped_sphere = sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], invert=False, progress_bar=True)
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
-    sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], inplace=True, invert=False, progress_bar=progress_bar)
+    sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], inplace=True, invert=False, progress_bar=True)
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
@@ -634,8 +625,7 @@ def test_center_of_mass(sphere):
     assert len(center) == 3
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_project_points_to_plane(progress_bar):
+def test_project_points_to_plane():
     # Define a simple Gaussian surface
     n = 20
     x = np.linspace(-200,200, num=n) + np.random.uniform(-5, 5, size=n)
@@ -643,7 +633,7 @@ def test_project_points_to_plane(progress_bar):
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A*np.exp(-0.5*((xx/b)**2. + (yy/b)**2.))
-    poly = pyvista.StructuredGrid(xx, yy, zz).extract_geometry(progress_bar=progress_bar)
+    poly = pyvista.StructuredGrid(xx, yy, zz).extract_geometry(progress_bar=True)
     poly['elev'] = zz.ravel(order='f')
 
     # Wrong normal length
@@ -664,34 +654,31 @@ def test_project_points_to_plane(progress_bar):
     assert np.allclose(poly.points, projected.points)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_tube(spline, progress_bar):
+def test_tube(spline):
     # Simple
     line = pyvista.Line()
-    tube = line.tube(n_sides=2, progress_bar=progress_bar)
+    tube = line.tube(n_sides=2, progress_bar=True)
     assert tube.n_points, tube.n_cells
 
     # inplace
-    line.tube(n_sides=2, inplace=True, progress_bar=progress_bar)
+    line.tube(n_sides=2, inplace=True, progress_bar=True)
     assert np.allclose(line.points, tube.points)
 
     # Complicated
-    tube = spline.tube(radius=0.5, scalars='arc_length', progress_bar=progress_bar)
+    tube = spline.tube(radius=0.5, scalars='arc_length', progress_bar=True)
     assert tube.n_points, tube.n_cells
 
     with pytest.raises(TypeError):
         spline.tube(scalars=range(10))
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_smooth_inplace(sphere, progress_bar):
+def test_smooth_inplace(sphere):
     orig_pts = sphere.points.copy()
-    sphere.smooth(inplace=True, progress_bar=progress_bar)
+    sphere.smooth(inplace=True, progress_bar=True)
     assert not np.allclose(orig_pts, sphere.points)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_delaunay_2d(progress_bar):
+def test_delaunay_2d():
     n = 20
     x = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
     y = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
@@ -701,12 +688,12 @@ def test_delaunay_2d(progress_bar):
     # Get the points as a 2D NumPy array (N by 3)
     points = np.c_[xx.reshape(-1), yy.reshape(-1), zz.reshape(-1)]
     pdata = pyvista.PolyData(points)
-    surf = pdata.delaunay_2d(progress_bar=progress_bar)
+    surf = pdata.delaunay_2d(progress_bar=True)
     # Make sure we have an all triangle mesh now
     assert np.all(surf.faces.reshape((-1, 4))[:, 0] == 3)
 
     # test inplace
-    pdata.delaunay_2d(inplace=True, progress_bar=progress_bar)
+    pdata.delaunay_2d(inplace=True, progress_bar=True)
     assert np.allclose(pdata.points, surf.points)
 
 
@@ -736,9 +723,8 @@ def test_lines():
     assert poly.n_cells == 1
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_ribbon_filter(progress_bar):
-    line = examples.load_spline().compute_arc_length(progress_bar=progress_bar)
+def test_ribbon_filter():
+    line = examples.load_spline().compute_arc_length(progress_bar=True)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
     assert ribbon.n_points
 
@@ -766,10 +752,9 @@ def test_is_all_triangles():
     assert mesh.is_all_triangles()
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_extrude(progress_bar):
+def test_extrude():
     arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-    poly = arc.extrude([0, 0, 1], progress_bar=progress_bar)
+    poly = arc.extrude([0, 0, 1], progress_bar=True)
     assert poly.n_points
     assert poly.n_cells
 

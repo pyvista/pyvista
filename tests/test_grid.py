@@ -301,12 +301,11 @@ def test_surface_indices(hexbeam):
     assert np.allclose(surf_ind, hexbeam.surface_indices())
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_extract_feature_edges(hexbeam, progress_bar):
-    edges = hexbeam.extract_feature_edges(90, progress_bar=progress_bar)
+def test_extract_feature_edges(hexbeam):
+    edges = hexbeam.extract_feature_edges(90, progress_bar=True)
     assert edges.n_points
 
-    edges = hexbeam.extract_feature_edges(180, progress_bar=progress_bar)
+    edges = hexbeam.extract_feature_edges(180, progress_bar=True)
     assert not edges.n_points
 
 

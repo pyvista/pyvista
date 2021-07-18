@@ -94,67 +94,63 @@ def test_clip_filter_composite(composite):
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_clip_box(datasets, progress_bar):
+def test_clip_box(datasets):
     for i, dataset in enumerate(datasets):
-        clp = dataset.clip_box(invert=True, progress_bar=progress_bar)
+        clp = dataset.clip_box(invert=True, progress_bar=True)
         assert clp is not None
         assert isinstance(clp, pyvista.UnstructuredGrid)
     dataset = examples.load_airplane()
     # test length 3 bounds
-    result = dataset.clip_box(bounds=(900, 900, 200), invert=False, progress_bar=progress_bar)
+    result = dataset.clip_box(bounds=(900, 900, 200), invert=False, progress_bar=True)
     dataset = examples.load_uniform()
-    result = dataset.clip_box(bounds=0.5, progress_bar=progress_bar)
+    result = dataset.clip_box(bounds=0.5, progress_bar=True)
     assert result.n_cells
     with pytest.raises(ValueError):
-        dataset.clip_box(bounds=(5, 6,), progress_bar=progress_bar)
+        dataset.clip_box(bounds=(5, 6,), progress_bar=True)
     # allow Sequence but not Iterable bounds
     with pytest.raises(TypeError):
-        dataset.clip_box(bounds={5, 6, 7}, progress_bar=progress_bar)
+        dataset.clip_box(bounds={5, 6, 7}, progress_bar=True)
     # Test with a poly data box
     mesh = examples.load_airplane()
     box = pyvista.Cube(center=(0.9e3, 0.2e3, mesh.center[2]),
                        x_length=500, y_length=500, z_length=500)
     box.rotate_z(33)
-    result = mesh.clip_box(box, invert=False, progress_bar=progress_bar)
+    result = mesh.clip_box(box, invert=False, progress_bar=True)
     assert result.n_cells
-    result = mesh.clip_box(box, invert=True, progress_bar=progress_bar)
+    result = mesh.clip_box(box, invert=True, progress_bar=True)
     assert result.n_cells
 
     with pytest.raises(ValueError):
-        dataset.clip_box(bounds=pyvista.Sphere(), progress_bar=progress_bar)
+        dataset.clip_box(bounds=pyvista.Sphere(), progress_bar=True)
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_clip_box_composite(composite, progress_bar):
+def test_clip_box_composite(composite):
     # Now test composite data structures
-    output = composite.clip_box(invert=False, progress_bar=progress_bar)
+    output = composite.clip_box(invert=False, progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_clip_surface(progress_bar):
+def test_clip_surface():
     surface = pyvista.Cone(direction=(0,0,-1),
                            height=3.0, radius=1, resolution=50, )
     xx = yy = zz = 1 - np.linspace(0, 51, 11) * 2 / 50
     dataset = pyvista.RectilinearGrid(xx, yy, zz)
-    clipped = dataset.clip_surface(surface, invert=False, progress_bar=progress_bar)
+    clipped = dataset.clip_surface(surface, invert=False, progress_bar=True)
     assert isinstance(clipped, pyvista.UnstructuredGrid)
-    clipped = dataset.clip_surface(surface, invert=False, compute_distance=True, progress_bar=progress_bar)
+    clipped = dataset.clip_surface(surface, invert=False, compute_distance=True, progress_bar=True)
     assert isinstance(clipped, pyvista.UnstructuredGrid)
     assert 'implicit_distance' in clipped.array_names
-    clipped = dataset.clip_surface(surface.cast_to_unstructured_grid(), progress_bar=progress_bar)
+    clipped = dataset.clip_surface(surface.cast_to_unstructured_grid(), progress_bar=True)
     assert isinstance(clipped, pyvista.UnstructuredGrid)
     assert 'implicit_distance' in clipped.array_names
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_clip_closed_surface(progress_bar):
+def test_clip_closed_surface():
     closed_surface = pyvista.Sphere()
-    clipped = closed_surface.clip_closed_surface(progress_bar=progress_bar)
+    clipped = closed_surface.clip_closed_surface(progress_bar=True)
     assert closed_surface.n_open_edges == 0
-    open_surface = closed_surface.clip(progress_bar=progress_bar)
+    open_surface = closed_surface.clip(progress_bar=True)
     with pytest.raises(ValueError):
         _ = open_surface.clip_closed_surface()
 
@@ -170,35 +166,32 @@ def test_implicit_distance():
     assert "implicit_distance" in dataset.point_arrays
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_slice_filter(datasets, progress_bar):
+def test_slice_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
     for i, dataset in enumerate(datasets):
-        slc = dataset.slice(normal=normals[i], progress_bar=progress_bar)
+        slc = dataset.slice(normal=normals[i], progress_bar=True)
         assert slc is not None
         assert isinstance(slc, pyvista.PolyData)
     dataset = examples.load_uniform()
-    slc = dataset.slice(contour=True, progress_bar=progress_bar)
+    slc = dataset.slice(contour=True, progress_bar=True)
     assert slc is not None
     assert isinstance(slc, pyvista.PolyData)
-    result = dataset.slice(origin=(10, 15, 15), progress_bar=progress_bar)
+    result = dataset.slice(origin=(10, 15, 15), progress_bar=True)
     assert result.n_points < 1
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_slice_filter_composite(composite, progress_bar):
+def test_slice_filter_composite(composite):
     # Now test composite data structures
-    output = composite.slice(normal=normals[0], progress_bar=progress_bar)
+    output = composite.slice(normal=normals[0], progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_slice_orthogonal_filter(datasets, progress_bar):
+def test_slice_orthogonal_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
 
     for i, dataset in enumerate(datasets):
-        slices = dataset.slice_orthogonal(progress_bar=progress_bar)
+        slices = dataset.slice_orthogonal(progress_bar=True)
         assert slices is not None
         assert isinstance(slices, pyvista.MultiBlock)
         assert slices.n_blocks == 3
@@ -207,20 +200,18 @@ def test_slice_orthogonal_filter(datasets, progress_bar):
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_slice_orthogonal_filter_composite(composite, progress_bar):
+def test_slice_orthogonal_filter_composite(composite):
     # Now test composite data structures
-    output = composite.slice_orthogonal(progress_bar=progress_bar)
+    output = composite.slice_orthogonal(progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_slice_along_axis(datasets, progress_bar):
+def test_slice_along_axis(datasets):
     """Test the many slices along axis filter """
     axii = ['x', 'y', 'z', 'y', 0]
     ns = [2, 3, 4, 10, 20, 13]
     for i, dataset in enumerate(datasets):
-        slices = dataset.slice_along_axis(n=ns[i], axis=axii[i], progress_bar=progress_bar)
+        slices = dataset.slice_along_axis(n=ns[i], axis=axii[i], progress_bar=True)
         assert slices is not None
         assert isinstance(slices, pyvista.MultiBlock)
         assert slices.n_blocks == ns[i]
@@ -232,57 +223,54 @@ def test_slice_along_axis(datasets, progress_bar):
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_slice_along_axis_composite(composite, progress_bar):
+def test_slice_along_axis_composite(composite):
     # Now test composite data structures
-    output = composite.slice_along_axis(progress_bar=progress_bar)
+    output = composite.slice_along_axis(progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_threshold(datasets, progress_bar):
+def test_threshold(datasets):
     for i, dataset in enumerate(datasets[0:3]):
-        thresh = dataset.threshold(progress_bar=progress_bar)
+        thresh = dataset.threshold(progress_bar=True)
         assert thresh is not None
         assert isinstance(thresh, pyvista.UnstructuredGrid)
     # Test value ranges
     dataset = examples.load_uniform() # UniformGrid
-    thresh = dataset.threshold(100, invert=False, progress_bar=progress_bar)
+    thresh = dataset.threshold(100, invert=False, progress_bar=True)
     assert thresh is not None
     assert isinstance(thresh, pyvista.UnstructuredGrid)
-    thresh = dataset.threshold([100, 500], invert=False, progress_bar=progress_bar)
+    thresh = dataset.threshold([100, 500], invert=False, progress_bar=True)
     assert thresh is not None
     assert isinstance(thresh, pyvista.UnstructuredGrid)
-    thresh = dataset.threshold([100, 500], invert=True, progress_bar=progress_bar)
+    thresh = dataset.threshold([100, 500], invert=True, progress_bar=True)
     assert thresh is not None
     assert isinstance(thresh, pyvista.UnstructuredGrid)
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
-        dataset.threshold({100, 500}, progress_bar=progress_bar)
+        dataset.threshold({100, 500}, progress_bar=True)
     # Now test DATASETS without arrays
     with pytest.raises(ValueError):
         for i, dataset in enumerate(datasets[3:-1]):
-            thresh = dataset.threshold(progress_bar=progress_bar)
+            thresh = dataset.threshold(progress_bar=True)
             assert thresh is not None
             assert isinstance(thresh, pyvista.UnstructuredGrid)
     dataset = examples.load_uniform()
     with pytest.raises(ValueError):
-        dataset.threshold([10, 100, 300], progress_bar=progress_bar)
+        dataset.threshold([10, 100, 300], progress_bar=True)
     with pytest.raises(ValueError):
         datasets[0].threshold([10, 500], scalars='Spatial Point Data',
-                              all_scalars=True, progress_bar=progress_bar)
+                              all_scalars=True, progress_bar=True)
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_threshold_percent(datasets, progress_bar):
+def test_threshold_percent(datasets):
     percents = [25, 50, [18.0, 85.0], [19.0, 80.0], 0.70]
     inverts = [False, True, False, True, False]
     # Only test data sets that have arrays
     for i, dataset in enumerate(datasets[0:3]):
-        thresh = dataset.threshold_percent(percent=percents[i], invert=inverts[i], progress_bar=progress_bar)
+        thresh = dataset.threshold_percent(percent=percents[i], invert=inverts[i], progress_bar=True)
         assert thresh is not None
         assert isinstance(thresh, pyvista.UnstructuredGrid)
     dataset = examples.load_uniform()
-    result = dataset.threshold_percent(0.75, scalars='Spatial Cell Data', progress_bar=progress_bar)
+    result = dataset.threshold_percent(0.75, scalars='Spatial Cell Data', progress_bar=True)
     with pytest.raises(ValueError):
         result = dataset.threshold_percent(20000)
     with pytest.raises(ValueError):
@@ -292,21 +280,19 @@ def test_threshold_percent(datasets, progress_bar):
         dataset.threshold_percent({18.0, 85.0})
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_outline(datasets, progress_bar):
+def test_outline(datasets):
     for i, dataset in enumerate(datasets):
-        outline = dataset.outline(progress_bar=progress_bar)
+        outline = dataset.outline(progress_bar=True)
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_outline_composite(composite, progress_bar):
+def test_outline_composite(composite):
     # Now test composite data structures
-    output = composite.outline(progress_bar=progress_bar)
+    output = composite.outline(progress_bar=True)
     assert isinstance(output, pyvista.PolyData)
-    output = composite.outline(nested=True, progress_bar=progress_bar)
+    output = composite.outline(nested=True, progress_bar=True)
 
     # vtk 9.0.0 returns polydata
     assert isinstance(output, (pyvista.MultiBlock, pyvista.PolyData))
@@ -314,28 +300,25 @@ def test_outline_composite(composite, progress_bar):
         assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_outline_corners(datasets, progress_bar):
+def test_outline_corners(datasets):
     for i, dataset in enumerate(datasets):
-        outline = dataset.outline_corners(progress_bar=progress_bar)
+        outline = dataset.outline_corners(progress_bar=True)
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_outline_corners_composite(composite, progress_bar):
+def test_outline_corners_composite(composite):
     # Now test composite data structures
-    output = composite.outline_corners(progress_bar=progress_bar)
+    output = composite.outline_corners(progress_bar=True)
     assert isinstance(output, pyvista.PolyData)
     output = composite.outline_corners(nested=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_extract_geometry(datasets, composite, progress_bar):
+def test_extract_geometry(datasets, composite):
     for i, dataset in enumerate(datasets):
-        outline = dataset.extract_geometry(progress_bar=progress_bar)
+        outline = dataset.extract_geometry(progress_bar=True)
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
     # Now test composite data structures
@@ -343,36 +326,32 @@ def test_extract_geometry(datasets, composite, progress_bar):
     assert isinstance(output, pyvista.PolyData)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_wireframe(datasets, progress_bar):
+def test_wireframe(datasets):
     for i, dataset in enumerate(datasets):
-        wire = dataset.extract_all_edges(progress_bar=progress_bar)
+        wire = dataset.extract_all_edges(progress_bar=True)
         assert wire is not None
         assert isinstance(wire, pyvista.PolyData)
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_wireframe_composite(composite, progress_bar):
+def test_wireframe_composite(composite):
     # Now test composite data structures
-    output = composite.extract_all_edges(progress_bar=progress_bar)
+    output = composite.extract_all_edges(progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_delaunay_2d(datasets, progress_bar):
-    mesh = datasets[2].delaunay_2d(progress_bar=progress_bar)  # UnstructuredGrid
+def test_delaunay_2d(datasets):
+    mesh = datasets[2].delaunay_2d(progress_bar=True)  # UnstructuredGrid
     assert isinstance(mesh, pyvista.PolyData)
     assert mesh.n_points
 
 
 @pytest.mark.parametrize('method', ['contour', 'marching_cubes',
                                     'flying_edges'])
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_contour(uniform, method, progress_bar):
-    iso = uniform.contour(method=method, progress_bar=progress_bar)
+def test_contour(uniform, method):
+    iso = uniform.contour(method=method, progress_bar=True)
     assert iso is not None
-    iso = uniform.contour(isosurfaces=[100, 300, 500], method=method, progress_bar=progress_bar)
+    iso = uniform.contour(isosurfaces=[100, 300, 500], method=method, progress_bar=True)
     assert iso is not None
 
 
@@ -390,11 +369,10 @@ def test_contour_errors(uniform):
         uniform.contour(method='invalid method')
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_elevation(progress_bar):
+def test_elevation():
     dataset = examples.load_uniform()
     # Test default params
-    elev = dataset.elevation(progress_bar=progress_bar)
+    elev = dataset.elevation(progress_bar=True)
     assert 'Elevation' in elev.array_names
     assert 'Elevation' == elev.active_scalars_name
     assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
@@ -402,79 +380,75 @@ def test_elevation(progress_bar):
     c = list(dataset.center)
     t = list(c) # cast so it does not point to `c`
     t[2] = dataset.bounds[-1]
-    elev = dataset.elevation(low_point=c, high_point=t, progress_bar=progress_bar)
+    elev = dataset.elevation(low_point=c, high_point=t, progress_bar=True)
     assert 'Elevation' in elev.array_names
     assert 'Elevation' == elev.active_scalars_name
     assert elev.get_data_range() == (dataset.center[2], dataset.bounds[5])
     # Test not setting active
-    elev = dataset.elevation(set_active=False, progress_bar=progress_bar)
+    elev = dataset.elevation(set_active=False, progress_bar=True)
     assert 'Elevation' in elev.array_names
     assert 'Elevation' != elev.active_scalars_name
     # Set use a range by scalar name
-    elev = dataset.elevation(scalar_range='Spatial Point Data', progress_bar=progress_bar)
+    elev = dataset.elevation(scalar_range='Spatial Point Data', progress_bar=True)
     assert 'Elevation' in elev.array_names
     assert 'Elevation' == elev.active_scalars_name
     assert dataset.get_data_range('Spatial Point Data') == (elev.get_data_range('Elevation'))
     # Set use a user defined range
-    elev = dataset.elevation(scalar_range=[1.0, 100.0], progress_bar=progress_bar)
+    elev = dataset.elevation(scalar_range=[1.0, 100.0], progress_bar=True)
     assert 'Elevation' in elev.array_names
     assert 'Elevation' == elev.active_scalars_name
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
     # test errors
     with pytest.raises(TypeError):
-        elev = dataset.elevation(scalar_range=0.5, progress_bar=progress_bar)
+        elev = dataset.elevation(scalar_range=0.5, progress_bar=True)
     with pytest.raises(ValueError):
-        elev = dataset.elevation(scalar_range=[1, 2, 3], progress_bar=progress_bar)
+        elev = dataset.elevation(scalar_range=[1, 2, 3], progress_bar=True)
     with pytest.raises(TypeError):
-        elev = dataset.elevation(scalar_range={1, 2}, progress_bar=progress_bar)
+        elev = dataset.elevation(scalar_range={1, 2}, progress_bar=True)
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_elevation_composite(composite, progress_bar):
+def test_elevation_composite(composite):
     # Now test composite data structures
-    output = composite.elevation(progress_bar=progress_bar)
+    output = composite.elevation(progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_texture_map_to_plane(progress_bar):
+def test_texture_map_to_plane():
     dataset = examples.load_airplane()
     # Automatically decide plane
-    out = dataset.texture_map_to_plane(inplace=False, progress_bar=progress_bar)
+    out = dataset.texture_map_to_plane(inplace=False, progress_bar=True)
     assert isinstance(out, type(dataset))
     # Define the plane explicitly
     bnds = dataset.bounds
     origin = bnds[0::2]
     point_u = (bnds[1], bnds[2], bnds[4])
     point_v = (bnds[0], bnds[3], bnds[4])
-    out = dataset.texture_map_to_plane(origin=origin, point_u=point_u, point_v=point_v, progress_bar=progress_bar)
+    out = dataset.texture_map_to_plane(origin=origin, point_u=point_u, point_v=point_v, progress_bar=True)
     assert isinstance(out, type(dataset))
     assert 'Texture Coordinates' in out.array_names
     # FINAL: Test in place modifiacation
-    dataset.texture_map_to_plane(inplace=True, progress_bar=progress_bar)
+    dataset.texture_map_to_plane(inplace=True, progress_bar=True)
     assert 'Texture Coordinates' in dataset.array_names
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_texture_map_to_sphere(progress_bar):
+def test_texture_map_to_sphere():
     dataset = pyvista.Sphere(radius=1.0)
     # Automatically decide plane
-    out = dataset.texture_map_to_sphere(inplace=False, prevent_seam=False, progress_bar=progress_bar)
+    out = dataset.texture_map_to_sphere(inplace=False, prevent_seam=False, progress_bar=True)
     assert isinstance(out, type(dataset))
     # Define the center explicitly
-    out = dataset.texture_map_to_sphere(center=(0.1, 0.0, 0.0), prevent_seam=True, progress_bar=progress_bar)
+    out = dataset.texture_map_to_sphere(center=(0.1, 0.0, 0.0), prevent_seam=True, progress_bar=True)
     assert isinstance(out, type(dataset))
     assert 'Texture Coordinates' in out.array_names
     # FINAL: Test in place modifiacation
-    dataset.texture_map_to_sphere(inplace=True, progress_bar=progress_bar)
+    dataset.texture_map_to_sphere(inplace=True, progress_bar=True)
     assert 'Texture Coordinates' in dataset.array_names
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_compute_cell_sizes(datasets, progress_bar):
+def test_compute_cell_sizes(datasets):
     for i, dataset in enumerate(datasets):
-        result = dataset.compute_cell_sizes(progress_bar=progress_bar)
+        result = dataset.compute_cell_sizes(progress_bar=True)
         assert result is not None
         assert isinstance(result, type(dataset))
         assert 'Area' in result.array_names
@@ -486,34 +460,30 @@ def test_compute_cell_sizes(datasets, progress_bar):
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_compute_cell_sizes_composite(composite, progress_bar):
+def test_compute_cell_sizes_composite(composite):
     # Now test composite data structures
-    output = composite.compute_cell_sizes(progress_bar=progress_bar)
+    output = composite.compute_cell_sizes(progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_cell_centers(datasets, progress_bar):
+def test_cell_centers(datasets):
     for i, dataset in enumerate(datasets):
-        result = dataset.cell_centers(progress_bar=progress_bar)
+        result = dataset.cell_centers(progress_bar=True)
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_cell_centers_composite(composite, progress_bar):
+def test_cell_centers_composite(composite):
     # Now test composite data structures
-    output = composite.cell_centers(progress_bar=progress_bar)
+    output = composite.cell_centers(progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_glyph(datasets, sphere, progress_bar):
+def test_glyph(datasets, sphere):
     for i, dataset in enumerate(datasets):
         dataset["vectors"] = np.ones_like(dataset.points)
-        result = dataset.glyph(progress_bar=progress_bar)
+        result = dataset.glyph(progress_bar=True)
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
@@ -523,23 +493,23 @@ def test_glyph(datasets, sphere, progress_bar):
     sphere.set_active_vectors("vectors")
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
 
-    assert sphere.glyph(scale=False, progress_bar=progress_bar)
-    assert sphere.glyph(scale='arr', progress_bar=progress_bar)
-    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, progress_bar=progress_bar)
-    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1, progress_bar=progress_bar)
+    assert sphere.glyph(scale=False, progress_bar=True)
+    assert sphere.glyph(scale='arr', progress_bar=True)
+    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, progress_bar=True)
+    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1, progress_bar=True)
     assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
-                          clamping=False, rng=[1, 1], progress_bar=progress_bar)
+                          clamping=False, rng=[1, 1], progress_bar=True)
     # passing one or more custom glyphs; many cases for full coverage
     geoms = [pyvista.Sphere(theta_resolution=5, phi_resolution=5),
              pyvista.Arrow(tip_resolution=5, shaft_resolution=5),
              pyvista.ParametricSuperToroid(u_res=10, v_res=10, w_res=10)]
     indices = range(len(geoms))
-    assert sphere.glyph(geom=geoms[0], progress_bar=progress_bar)
-    assert sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)), progress_bar=progress_bar)
-    assert sphere.glyph(geom=geoms, progress_bar=progress_bar)
-    assert sphere.glyph(geom=geoms, scale='arr', orient='Normals', factor=0.1, tolerance=0.1, progress_bar=progress_bar)
-    assert sphere.glyph(geom=geoms[:1], indices=[None], progress_bar=progress_bar)
-    assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=progress_bar)
+    assert sphere.glyph(geom=geoms[0], progress_bar=True)
+    assert sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)), progress_bar=True)
+    assert sphere.glyph(geom=geoms, progress_bar=True)
+    assert sphere.glyph(geom=geoms, scale='arr', orient='Normals', factor=0.1, tolerance=0.1, progress_bar=True)
+    assert sphere.glyph(geom=geoms[:1], indices=[None], progress_bar=True)
+    assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
     with pytest.raises(TypeError):
         # wrong type for the glyph
         sphere.glyph(geom=pyvista.StructuredGrid())
@@ -551,29 +521,27 @@ def test_glyph(datasets, sphere, progress_bar):
         sphere.glyph(geom=geoms, indices=indices[:-1])
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_glyph_cell_point_data(sphere, progress_bar):
+def test_glyph_cell_point_data(sphere):
     sphere['vectors_cell'] = np.ones([sphere.n_cells,3])
     sphere['vectors_points'] = np.ones([sphere.n_points,3])
     sphere['arr_cell'] = np.ones(sphere.n_cells)
     sphere['arr_points'] = np.ones(sphere.n_points)
     
-    assert sphere.glyph(orient='vectors_cell', scale='arr_cell', progress_bar=progress_bar)
-    assert sphere.glyph(orient='vectors_points', scale='arr_points', progress_bar=progress_bar)
+    assert sphere.glyph(orient='vectors_cell', scale='arr_cell', progress_bar=True)
+    assert sphere.glyph(orient='vectors_points', scale='arr_points', progress_bar=True)
     with pytest.raises(ValueError):
-        sphere.glyph(orient='vectors_cell', scale='arr_points', progress_bar=progress_bar)
+        sphere.glyph(orient='vectors_cell', scale='arr_points', progress_bar=True)
     with pytest.raises(ValueError):
-        sphere.glyph(orient='vectors_points', scale='arr_cell', progress_bar=progress_bar)
+        sphere.glyph(orient='vectors_points', scale='arr_cell', progress_bar=True)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_split_and_connectivity(progress_bar):
+def test_split_and_connectivity():
     # Load a simple example mesh
     dataset = examples.load_uniform()
     dataset.set_active_scalars('Spatial Cell Data')
-    threshed = dataset.threshold_percent([0.15, 0.50], invert=True, progress_bar=progress_bar)
+    threshed = dataset.threshold_percent([0.15, 0.50], invert=True, progress_bar=True)
 
-    bodies = threshed.split_bodies(progress_bar=progress_bar)
+    bodies = threshed.split_bodies(progress_bar=True)
 
     volumes = [518.0, 35.0]
     assert len(volumes) == bodies.n_blocks
@@ -581,36 +549,34 @@ def test_split_and_connectivity(progress_bar):
         assert np.allclose(body.volume, volumes[i], rtol=0.1)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_warp_by_scalar(progress_bar):
+def test_warp_by_scalar():
     data = examples.load_uniform()
-    warped = data.warp_by_scalar(progress_bar=progress_bar)
+    warped = data.warp_by_scalar(progress_bar=True)
     assert data.n_points == warped.n_points
-    warped = data.warp_by_scalar(scale_factor=3, progress_bar=progress_bar)
+    warped = data.warp_by_scalar(scale_factor=3, progress_bar=True)
     assert data.n_points == warped.n_points
-    warped = data.warp_by_scalar(normal=[1,1,3], progress_bar=progress_bar)
+    warped = data.warp_by_scalar(normal=[1,1,3], progress_bar=True)
     assert data.n_points == warped.n_points
     # Test in place!
     foo = examples.load_hexbeam()
-    warped = foo.warp_by_scalar(progress_bar=progress_bar)
-    foo.warp_by_scalar(inplace=True, progress_bar=progress_bar)
+    warped = foo.warp_by_scalar(progress_bar=True)
+    foo.warp_by_scalar(inplace=True, progress_bar=True)
     assert np.allclose(foo.points, warped.points)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_warp_by_vector(progress_bar):
+def test_warp_by_vector():
     # Test when inplace=False (default)
     data = examples.load_sphere_vectors()
-    warped = data.warp_by_vector(progress_bar=progress_bar)
+    warped = data.warp_by_vector(progress_bar=True)
     assert data.n_points == warped.n_points
     assert not np.allclose(data.points, warped.points)
-    warped = data.warp_by_vector(factor=3, progress_bar=progress_bar)
+    warped = data.warp_by_vector(factor=3, progress_bar=True)
     assert data.n_points == warped.n_points
     assert not np.allclose(data.points, warped.points)
     # Test when inplace=True
     foo = examples.load_sphere_vectors()
-    warped = foo.warp_by_vector(progress_bar=progress_bar)
-    foo.warp_by_vector(inplace=True, progress_bar=progress_bar)
+    warped = foo.warp_by_vector(progress_bar=True)
+    foo.warp_by_vector(inplace=True, progress_bar=True)
     assert np.allclose(foo.points, warped.points)
 
 
@@ -621,10 +587,9 @@ def test_invalid_warp_scalar(sphere):
         sphere.warp_by_scalar()
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_invalid_warp_scalar_inplace(uniform, progress_bar):
+def test_invalid_warp_scalar_inplace(uniform):
     with pytest.raises(TypeError):
-        uniform.warp_by_scalar(inplace=True, progress_bar=progress_bar)
+        uniform.warp_by_scalar(inplace=True, progress_bar=True)
 
 
 def test_invalid_warp_vector(sphere):
@@ -639,81 +604,72 @@ def test_invalid_warp_vector(sphere):
         sphere.warp_by_vector()
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_cell_data_to_point_data(progress_bar):
+def test_cell_data_to_point_data():
     data = examples.load_uniform()
-    foo = data.cell_data_to_point_data(progress_bar=progress_bar)
+    foo = data.cell_data_to_point_data(progress_bar=True)
     assert foo.n_arrays == 2
     assert len(foo.cell_arrays.keys()) == 0
     _ = data.ctp()
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_cell_data_to_point_data_composite(composite, progress_bar):
+def test_cell_data_to_point_data_composite(composite):
     # Now test composite data structures
-    output = composite.cell_data_to_point_data(progress_bar=progress_bar)
+    output = composite.cell_data_to_point_data(progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_point_data_to_cell_data(progress_bar):
+def test_point_data_to_cell_data():
     data = examples.load_uniform()
-    foo = data.point_data_to_cell_data(progress_bar=progress_bar)
+    foo = data.point_data_to_cell_data(progress_bar=True)
     assert foo.n_arrays == 2
     assert len(foo.point_arrays.keys()) == 0
     _ = data.ptc()
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_point_data_to_cell_data_composite(composite, progress_bar):
+def test_point_data_to_cell_data_composite(composite):
     # Now test composite data structures
-    output = composite.point_data_to_cell_data(progress_bar=progress_bar)
+    output = composite.point_data_to_cell_data(progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_triangulate(progress_bar):
+def test_triangulate():
     data = examples.load_uniform()
-    tri = data.triangulate(progress_bar=progress_bar)
+    tri = data.triangulate(progress_bar=True)
     assert isinstance(tri, pyvista.UnstructuredGrid)
     assert np.any(tri.cells)
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_triangulate_composite(composite, progress_bar):
+def test_triangulate_composite(composite):
     # Now test composite data structures
-    output = composite.triangulate(progress_bar=progress_bar)
+    output = composite.triangulate(progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_delaunay_3d(progress_bar):
-    data = examples.load_uniform().threshold_percent(30, progress_bar=progress_bar)
+def test_delaunay_3d():
+    data = examples.load_uniform().threshold_percent(30, progress_bar=True)
     result = data.delaunay_3d()
     assert np.any(result.points)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_smooth(progress_bar):
+def test_smooth():
     data = examples.load_uniform()
     vol = data.threshold_percent(30)
-    surf = vol.extract_geometry(progress_bar=progress_bar)
+    surf = vol.extract_geometry(progress_bar=True)
     smooth = surf.smooth()
     assert np.any(smooth.points)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_resample(progress_bar):
+def test_resample():
     mesh = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
-    result = mesh.sample(data_to_probe, progress_bar=progress_bar)
+    result = mesh.sample(data_to_probe, progress_bar=True)
     name = 'Spatial Point Data'
     assert name in result.array_names
     assert isinstance(result, type(mesh))
-    result = mesh.sample(data_to_probe, tolerance=1.0, progress_bar=progress_bar)
+    result = mesh.sample(data_to_probe, tolerance=1.0, progress_bar=True)
     name = 'Spatial Point Data'
     assert name in result.array_names
     assert isinstance(result, type(mesh))
@@ -721,59 +677,53 @@ def test_resample(progress_bar):
 
 @pytest.mark.parametrize('use_points', [True, False])
 @pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_probe(categorical, use_points, progress_bar):
+def test_probe(categorical, use_points):
     mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
     if use_points:
         dataset = np.array(mesh.points)
     else:
         dataset = mesh
-    result = data_to_probe.probe(dataset, tolerance=1E-5, categorical=categorical, progress_bar=progress_bar)
+    result = data_to_probe.probe(dataset, tolerance=1E-5, categorical=categorical, progress_bar=True)
     name = 'Spatial Point Data'
     assert name in result.array_names
     assert isinstance(result, type(mesh))
-    result = mesh.sample(data_to_probe, tolerance=1.0, progress_bar=progress_bar)
+    result = mesh.sample(data_to_probe, tolerance=1.0, progress_bar=True)
     name = 'Spatial Point Data'
     assert name in result.array_names
     assert isinstance(result, type(mesh))
 
 
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_dir(uniform_vec, integration_direction, progress_bar):
+def test_streamlines_dir(uniform_vec, integration_direction):
     stream = uniform_vec.streamlines('vectors',
-                                     integration_direction=integration_direction, progress_bar=progress_bar)
+                                     integration_direction=integration_direction, progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
 
 @pytest.mark.parametrize('integrator_type', [2, 4, 45])
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_type(uniform_vec, integrator_type, progress_bar):
-    stream = uniform_vec.streamlines('vectors', integrator_type=integrator_type, progress_bar=progress_bar)
+def test_streamlines_type(uniform_vec, integrator_type):
+    stream = uniform_vec.streamlines('vectors', integrator_type=integrator_type, progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
 
 @pytest.mark.parametrize('interpolator_type', ['point', 'cell'])
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_cell_point(uniform_vec, interpolator_type, progress_bar):
+def test_streamlines_cell_point(uniform_vec, interpolator_type):
     stream = uniform_vec.streamlines('vectors',
-                                     interpolator_type=interpolator_type, progress_bar=progress_bar)
+                                     interpolator_type=interpolator_type, progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_return_source(uniform_vec, progress_bar):
+def test_streamlines_return_source(uniform_vec):
     stream, src = uniform_vec.streamlines('vectors', return_source=True,
                                           pointa=(0.0, 0.0, 0.0),
-                                          pointb=(1.1, 1.1, 0.1), progress_bar=progress_bar)
+                                          pointb=(1.1, 1.1, 0.1), progress_bar=True)
     assert isinstance(src, pyvista.DataSet)
     assert all([stream.n_points, stream.n_cells, src.n_points])
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_start_position(uniform_vec, progress_bar):
-    stream = uniform_vec.streamlines('vectors', start_position=(0.5, 0.0, 0.0), progress_bar=progress_bar)
+def test_streamlines_start_position(uniform_vec):
+    stream = uniform_vec.streamlines('vectors', start_position=(0.5, 0.0, 0.0), progress_bar=True)
 
     assert all([stream.n_points, stream.n_cells])
 
@@ -797,15 +747,14 @@ def test_streamlines_errors(uniform_vec):
         uniform_vec.streamlines('vectors', pointb=(0, 0, 0))
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_from_source(uniform_vec, progress_bar):
+def test_streamlines_from_source(uniform_vec):
     vertices = np.array([[0, 0, 0], [0.5, 0, 0], [0.5, 0.5, 0], [0, 0.5, 0]])
     source = pyvista.PolyData(vertices)
-    stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=progress_bar)
+    stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
     source = pyvista.UniformGrid([5, 5, 5], [0.1, 0.1, 0.1], [0, 0, 0])
-    stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=progress_bar)
+    stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
 
@@ -837,51 +786,45 @@ def mesh_2D_velocity():
 
 
 @skip_not_vtk9
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_evenly_spaced_2D(progress_bar):
+def test_streamlines_evenly_spaced_2D():
     mesh = mesh_2D_velocity()
-    streams = mesh.streamlines_evenly_spaced_2D(progress_bar=progress_bar)
+    streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
 @skip_not_vtk9
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_evenly_spaced_2D_sep_dist_ratio(progress_bar):
+def test_streamlines_evenly_spaced_2D_sep_dist_ratio():
     mesh = mesh_2D_velocity()
-    streams = mesh.streamlines_evenly_spaced_2D(separating_distance_ratio=0.1, progress_bar=progress_bar)
+    streams = mesh.streamlines_evenly_spaced_2D(separating_distance_ratio=0.1, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
 @skip_not_vtk9
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_evenly_spaced_2D_start_position(progress_bar):
+def test_streamlines_evenly_spaced_2D_start_position():
     mesh = mesh_2D_velocity()
-    streams = mesh.streamlines_evenly_spaced_2D(start_position=(-0.1, 0.1, 0.0), progress_bar=progress_bar)
+    streams = mesh.streamlines_evenly_spaced_2D(start_position=(-0.1, 0.1, 0.0), progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
 @skip_not_vtk9
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_evenly_spaced_2D_vectors(progress_bar):
+def test_streamlines_evenly_spaced_2D_vectors():
     mesh = mesh_2D_velocity()
     mesh.set_active_vectors(None)
-    streams = mesh.streamlines_evenly_spaced_2D(vectors="velocity", progress_bar=progress_bar)
+    streams = mesh.streamlines_evenly_spaced_2D(vectors="velocity", progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
 @skip_not_vtk9
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_evenly_spaced_2D_integrator_type(progress_bar):
+def test_streamlines_evenly_spaced_2D_integrator_type():
     mesh = mesh_2D_velocity()
-    streams = mesh.streamlines_evenly_spaced_2D(integrator_type=4, progress_bar=progress_bar)
+    streams = mesh.streamlines_evenly_spaced_2D(integrator_type=4, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
 @skip_not_vtk9
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_evenly_spaced_2D_interpolator_type(progress_bar):
+def test_streamlines_evenly_spaced_2D_interpolator_type():
     mesh = mesh_2D_velocity()
-    streams = mesh.streamlines_evenly_spaced_2D(interpolator_type='cell', progress_bar=progress_bar)
+    streams = mesh.streamlines_evenly_spaced_2D(interpolator_type='cell', progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
@@ -899,25 +842,23 @@ def test_streamlines_evenly_spaced_2D_errors():
 
 
 @pytest.mark.xfail
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_streamlines_nonxy_plane(progress_bar):
+def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
     # test here so that fixes in vtk can be caught
     mesh = mesh_2D_velocity()
     mesh.translate((0, 0, 1)) # move to z=1, xy plane
-    streams = mesh.streamlines_evenly_spaced_2D(progress_bar=progress_bar)
+    streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_sample_over_line(progress_bar):
+def test_sample_over_line():
     """Test that we get a sampled line."""
     name = 'values'
 
     line = pyvista.Line([0, 0, 0], [0, 0, 10], 9)
     line[name] = np.linspace(0, 10, 10)
 
-    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], 2, progress_bar=progress_bar)
+    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], 2, progress_bar=True)
 
     expected_result = np.array([0.5, 1, 1.5])
     assert np.allclose(sampled_line[name], expected_result)
@@ -925,14 +866,13 @@ def test_sample_over_line(progress_bar):
 
     # test no resolution
     sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
-    sampled_from_sphere = sphere.sample_over_line([3, 1, 1], [-3, -1, -1], progress_bar=progress_bar)
+    sampled_from_sphere = sphere.sample_over_line([3, 1, 1], [-3, -1, -1], progress_bar=True)
     assert sampled_from_sphere.n_points == sphere.n_cells + 1
     # is sampled result a polydata object
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_plot_over_line(tmpdir, progress_bar):
+def test_plot_over_line(tmpdir):
     """this requires matplotlib"""
     pytest.importorskip('matplotlib')
     tmp_dir = tmpdir.mkdir("tmpdir")
@@ -941,11 +881,11 @@ def test_plot_over_line(tmpdir, progress_bar):
     # Make two points to construct the line between
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
     b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
-    mesh.plot_over_line(a, b, resolution=1000, show=False, progress_bar=progress_bar)
+    mesh.plot_over_line(a, b, resolution=1000, show=False, progress_bar=True)
     # Test multicomponent
     mesh['foo'] = np.random.rand(mesh.n_cells, 3)
     mesh.plot_over_line(a, b, resolution=None, scalars='foo',
-                        title='My Stuff', ylabel='3 Values', show=False, fname=filename, progress_bar=progress_bar)
+                        title='My Stuff', ylabel='3 Values', show=False, fname=filename, progress_bar=True)
     assert os.path.isfile(filename)
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
@@ -953,8 +893,7 @@ def test_plot_over_line(tmpdir, progress_bar):
                             title='My Stuff', ylabel='3 Values', show=False)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_sample_over_circular_arc(progress_bar):
+def test_sample_over_circular_arc():
     """Test that we get a circular arc."""
 
     name = 'values'
@@ -970,7 +909,7 @@ def test_sample_over_circular_arc(progress_bar):
     pointa = [xmin, ymin, zmax]
     pointb = [xmax, ymin, zmin]
     center = [xmin, ymin, zmin]
-    sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center, 2, progress_bar=progress_bar)
+    sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center, 2, progress_bar=True)
 
     expected_result = zmin+(zmax-zmin)*np.sin([np.pi/2.0, np.pi/4.0, 0.0])
     assert np.allclose(sampled_arc[name], expected_result)
@@ -978,15 +917,14 @@ def test_sample_over_circular_arc(progress_bar):
 
     # test no resolution
     sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
-    sampled_from_sphere = sphere.sample_over_circular_arc([3, 1, 1], [-3, -1, -1], [0, 0, 0], progress_bar=progress_bar)
+    sampled_from_sphere = sphere.sample_over_circular_arc([3, 1, 1], [-3, -1, -1], [0, 0, 0], progress_bar=True)
     assert sampled_from_sphere.n_points == sphere.n_cells + 1
 
     # is sampled result a polydata object
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_sample_over_circular_arc_normal(progress_bar):
+def test_sample_over_circular_arc_normal():
     """Test that we get a circular arc_normal."""
 
     name = 'values'
@@ -1004,7 +942,7 @@ def test_sample_over_circular_arc_normal(progress_bar):
     angle = 90.0*np.random.rand()
     resolution = np.random.randint(10000)
     center = [xmin, ymin, zmin]
-    sampled_arc_normal = uniform.sample_over_circular_arc_normal(center, resolution=resolution, normal=normal, polar=polar, angle=angle, progress_bar=progress_bar)
+    sampled_arc_normal = uniform.sample_over_circular_arc_normal(center, resolution=resolution, normal=normal, polar=polar, angle=angle, progress_bar=True)
     angles = np.linspace(np.pi/2.0, np.pi/2.0-np.deg2rad(angle), resolution+1)
 
     expected_result = zmin+(zmax-zmin)*np.sin(angles)
@@ -1013,15 +951,14 @@ def test_sample_over_circular_arc_normal(progress_bar):
 
     # test no resolution
     sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
-    sampled_from_sphere = sphere.sample_over_circular_arc_normal([0, 0, 0], polar=[3, 1, 1], angle=180, progress_bar=progress_bar)
+    sampled_from_sphere = sphere.sample_over_circular_arc_normal([0, 0, 0], polar=[3, 1, 1], angle=180, progress_bar=True)
     assert sampled_from_sphere.n_points == sphere.n_cells + 1
 
     # is sampled result a polydata object
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_plot_over_circular_arc(tmpdir, progress_bar):
+def test_plot_over_circular_arc(tmpdir):
     """this requires matplotlib"""
 
     pytest.importorskip('matplotlib')
@@ -1033,13 +970,13 @@ def test_plot_over_circular_arc(tmpdir, progress_bar):
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
     b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
     center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-    mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False, fname=filename, progress_bar=progress_bar)
+    mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False, fname=filename, progress_bar=True)
     assert os.path.isfile(filename)
 
     # Test multicomponent
     mesh['foo'] = np.random.rand(mesh.n_cells, 3)
     mesh.plot_over_circular_arc(a, b, center, resolution=None, scalars='foo',
-                                title='My Stuff', ylabel='3 Values', show=False, progress_bar=progress_bar)
+                                title='My Stuff', ylabel='3 Values', show=False, progress_bar=True)
 
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
@@ -1049,8 +986,7 @@ def test_plot_over_circular_arc(tmpdir, progress_bar):
                                     show=False)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_plot_over_circular_arc_normal(tmpdir, progress_bar):
+def test_plot_over_circular_arc_normal(tmpdir):
     """this requires matplotlib"""
 
     pytest.importorskip('matplotlib')
@@ -1063,7 +999,7 @@ def test_plot_over_circular_arc_normal(tmpdir, progress_bar):
     polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
     angle = 90
     center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-    mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle, show=False, fname=filename, progress_bar=progress_bar)
+    mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle, show=False, fname=filename, progress_bar=True)
     assert os.path.isfile(filename)
 
     # Test multicomponent
@@ -1072,7 +1008,7 @@ def test_plot_over_circular_arc_normal(tmpdir, progress_bar):
                                        angle=angle, resolution=None,
                                        scalars='foo', title='My Stuff',
                                        ylabel='3 Values', show=False ,
-                                       progress_bar=progress_bar)
+                                       progress_bar=True)
 
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
@@ -1083,22 +1019,21 @@ def test_plot_over_circular_arc_normal(tmpdir, progress_bar):
                                            show=False)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_slice_along_line(progress_bar):
+def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
     x = y = z = np.linspace(model.bounds[0], model.bounds[1], num=n)
     points = np.c_[x, y, z]
     spline = pyvista.Spline(points, n)
-    slc = model.slice_along_line(spline, progress_bar=progress_bar)
+    slc = model.slice_along_line(spline, progress_bar=True)
     assert slc.n_points > 0
-    slc = model.slice_along_line(spline, contour=True, progress_bar=progress_bar)
+    slc = model.slice_along_line(spline, contour=True, progress_bar=True)
     assert slc.n_points > 0
     # Now check a simple line
     a = [model.bounds[0], model.bounds[2], model.bounds[4]]
     b = [model.bounds[1], model.bounds[3], model.bounds[5]]
     line = pyvista.Line(a, b, resolution=10)
-    slc = model.slice_along_line(line, progress_bar=progress_bar)
+    slc = model.slice_along_line(line, progress_bar=True)
     assert slc.n_points > 0
     # Now check a bad input
     a = [model.bounds[0], model.bounds[2], model.bounds[4]]
@@ -1106,11 +1041,11 @@ def test_slice_along_line(progress_bar):
     line2 = pyvista.Line(a, b, resolution=10)
     line = line2.cast_to_unstructured_grid().merge(line.cast_to_unstructured_grid())
     with pytest.raises(ValueError):
-        slc = model.slice_along_line(line, progress_bar=progress_bar)
+        slc = model.slice_along_line(line, progress_bar=True)
 
     with pytest.raises(TypeError):
-        one_cell = model.extract_cells(0, progress_bar=progress_bar)
-        model.slice_along_line(one_cell, progress_bar=progress_bar)
+        one_cell = model.extract_cells(0, progress_bar=True)
+        model.slice_along_line(one_cell, progress_bar=True)
 
 
 def extract_points_invalid(sphere):
@@ -1120,8 +1055,7 @@ def extract_points_invalid(sphere):
     with pytest.raises(TypeError):
         sphere.extract_points(object)
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_extract_points(progress_bar):
+def test_extract_points():
     # mesh points (4x4 regular grid)
     vertices = np.array([[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0],
                      [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0],
@@ -1140,11 +1074,11 @@ def test_extract_points(progress_bar):
     # create pyvista object
     surf = pyvista.PolyData(vertices, faces)
     # extract sub-surface with adjacent cells
-    sub_surf_adj = surf.extract_points(np.array([0, 1, 4, 5]), progress_bar=progress_bar)
+    sub_surf_adj = surf.extract_points(np.array([0, 1, 4, 5]), progress_bar=True)
     # extract sub-surface without adjacent cells
-    sub_surf = surf.extract_points(np.array([0, 1, 4, 5]), adjacent_cells=False, progress_bar=progress_bar)
+    sub_surf = surf.extract_points(np.array([0, 1, 4, 5]), adjacent_cells=False, progress_bar=True)
     # extract sub-surface without cells
-    sub_surf_nocells = surf.extract_points(np.array([0, 1, 4, 5]), include_cells=False, progress_bar=progress_bar)
+    sub_surf_nocells = surf.extract_points(np.array([0, 1, 4, 5]), include_cells=False, progress_bar=True)
     # check sub-surface size
     assert sub_surf.n_points == 4
     assert sub_surf.n_cells == 1
@@ -1154,31 +1088,28 @@ def test_extract_points(progress_bar):
 
 
 @skip_py2_nobind
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_slice_along_line_composite(composite, progress_bar):
+def test_slice_along_line_composite(composite):
     # Now test composite data structures
     a = [composite.bounds[0], composite.bounds[2], composite.bounds[4]]
     b = [composite.bounds[1], composite.bounds[3], composite.bounds[5]]
     line = pyvista.Line(a, b, resolution=10)
-    output = composite.slice_along_line(line, progress_bar=progress_bar)
+    output = composite.slice_along_line(line, progress_bar=True)
     assert output.n_blocks == composite.n_blocks
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_interpolate(progress_bar):
+def test_interpolate():
     pdata = pyvista.PolyData()
     pdata.points = np.random.random((10, 3))
     pdata['scalars'] = np.random.random(10)
     surf = pyvista.Sphere(theta_resolution=10, phi_resolution=10)
-    interp = surf.interpolate(pdata, radius=0.01, progress_bar=progress_bar)
+    interp = surf.interpolate(pdata, radius=0.01, progress_bar=True)
     assert interp.n_points
     assert interp.n_arrays
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_select_enclosed_points(uniform, hexbeam, progress_bar):
+def test_select_enclosed_points(uniform, hexbeam):
     surf = pyvista.Sphere(center=uniform.center, radius=uniform.length/2.)
-    result = uniform.select_enclosed_points(surf, progress_bar=progress_bar)
+    result = uniform.select_enclosed_points(surf, progress_bar=True)
     assert isinstance(result, type(uniform))
     assert 'SelectedPoints' in result.array_names
     assert result['SelectedPoints'].any()
@@ -1188,25 +1119,23 @@ def test_select_enclosed_points(uniform, hexbeam, progress_bar):
     mesh = pyvista.ParametricEllipsoid(0.2, 0.7, 0.7, )
     surf = mesh.copy()
     surf.rotate_x(90)
-    result = mesh.select_enclosed_points(surf, check_surface=False, progress_bar=progress_bar)
+    result = mesh.select_enclosed_points(surf, check_surface=False, progress_bar=True)
     assert isinstance(result, type(mesh))
     assert 'SelectedPoints' in result.array_names
     assert result.n_arrays == mesh.n_arrays + 1
     with pytest.raises(RuntimeError):
-        result = mesh.select_enclosed_points(surf, check_surface=True, progress_bar=progress_bar)
+        result = mesh.select_enclosed_points(surf, check_surface=True, progress_bar=True)
     with pytest.raises(TypeError):
-        result = mesh.select_enclosed_points(hexbeam, check_surface=True, progress_bar=progress_bar)
+        result = mesh.select_enclosed_points(hexbeam, check_surface=True, progress_bar=True)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_decimate_boundary(progress_bar):
+def test_decimate_boundary():
     mesh = examples.load_uniform()
-    boundary = mesh.decimate_boundary(progress_bar=progress_bar)
+    boundary = mesh.decimate_boundary(progress_bar=True)
     assert boundary.n_points
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_extract_surface(progress_bar):
+def test_extract_surface():
     # create a single quadratic hexahedral cell
     lin_pts = np.array([[-1, -1, -1], # node 0
                         [ 1, -1, -1], # node 1
@@ -1243,22 +1172,21 @@ def test_extract_surface(progress_bar):
         grid = pyvista.UnstructuredGrid(np.array([0]), cells, celltypes, pts)
 
     # expect each face to be divided 6 times since it has a midside node
-    surf = grid.extract_surface(progress_bar=progress_bar)
+    surf = grid.extract_surface(progress_bar=True)
     assert surf.n_faces == 36
 
     # expect each face to be divided several more times than the linear extraction
-    surf_subdivided = grid.extract_surface(nonlinear_subdivision=5, progress_bar=progress_bar)
+    surf_subdivided = grid.extract_surface(nonlinear_subdivision=5, progress_bar=True)
     assert surf_subdivided.n_faces > surf.n_faces
 
     # No subdivision, expect one face per cell
-    surf_no_subdivide = grid.extract_surface(nonlinear_subdivision=0, progress_bar=progress_bar)
+    surf_no_subdivide = grid.extract_surface(nonlinear_subdivision=0, progress_bar=True)
     assert surf_no_subdivide.n_faces == 6
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_merge_general(progress_bar):
+def test_merge_general():
     mesh = examples.load_uniform()
-    thresh = mesh.threshold_percent([0.2, 0.5], progress_bar=progress_bar)  # unstructured grid
+    thresh = mesh.threshold_percent([0.2, 0.5], progress_bar=True)  # unstructured grid
     con = mesh.contour()  # poly data
     merged = thresh + con
     assert isinstance(merged, pyvista.UnstructuredGrid)
@@ -1269,24 +1197,22 @@ def test_merge_general(progress_bar):
     assert isinstance(merged, pyvista.PolyData)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_compute_cell_quality(progress_bar):
+def test_compute_cell_quality():
     mesh = pyvista.ParametricEllipsoid().decimate(0.8)
-    qual = mesh.compute_cell_quality(progress_bar=progress_bar)
+    qual = mesh.compute_cell_quality(progress_bar=True)
     assert 'CellQuality' in qual.array_names
     with pytest.raises(KeyError):
-        qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=progress_bar)
+        qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_compute_derivatives(progress_bar):
+def test_compute_derivatives():
     mesh = examples.load_random_hills()
     vector = np.zeros((mesh.n_points, 3))
     vector[:,1] = np.ones(mesh.n_points)
     mesh['vector'] = vector
     derv = mesh.compute_derivative(scalars='vector', gradient=True,
                                    divergence=True, vorticity=True,
-                                   qcriterion=True, progress_bar=progress_bar)
+                                   qcriterion=True, progress_bar=True)
     assert 'gradient' in derv.array_names
     assert np.shape(derv['gradient'])[0] == mesh.n_points
     assert np.shape(derv['gradient'])[1] == 9
@@ -1305,7 +1231,7 @@ def test_compute_derivatives(progress_bar):
 
     derv = mesh.compute_derivative(scalars='vector', gradient='gradienttest',
                                    divergence='divergencetest', vorticity='vorticitytest',
-                                   qcriterion='qcriteriontest', progress_bar=progress_bar)
+                                   qcriterion='qcriteriontest', progress_bar=True)
     assert 'gradienttest' in derv.array_names
     assert np.shape(derv['gradienttest'])[0] == mesh.n_points
     assert np.shape(derv['gradienttest'])[1] == 9
@@ -1322,23 +1248,23 @@ def test_compute_derivatives(progress_bar):
     assert np.shape(derv['qcriteriontest'])[0] == mesh.n_points
     assert len(np.shape(derv['qcriteriontest'])) == 1
 
-    grad = mesh.compute_derivative(scalars='Elevation', gradient=True, progress_bar=progress_bar)
+    grad = mesh.compute_derivative(scalars='Elevation', gradient=True, progress_bar=True)
     assert 'gradient' in grad.array_names
     assert np.shape(grad['gradient'])[0] == mesh.n_points
     assert np.shape(grad['gradient'])[1] == 3
 
-    grad = mesh.compute_derivative(scalars='Elevation', gradient=True, faster=True, progress_bar=progress_bar)
+    grad = mesh.compute_derivative(scalars='Elevation', gradient=True, faster=True, progress_bar=True)
     assert 'gradient' in grad.array_names
     assert np.shape(grad['gradient'])[0] == mesh.n_points
     assert np.shape(grad['gradient'])[1] == 3
 
-    grad = mesh.compute_derivative(scalars='vector', gradient=True, faster=True, progress_bar=progress_bar)
+    grad = mesh.compute_derivative(scalars='vector', gradient=True, faster=True, progress_bar=True)
     assert 'gradient' in grad.array_names
     assert np.shape(grad['gradient'])[0] == mesh.n_points
     assert np.shape(grad['gradient'])[1] == 9
 
     with pytest.raises(ValueError):
-        grad = mesh.compute_derivative(scalars='Elevation', gradient=False, progress_bar=progress_bar)
+        grad = mesh.compute_derivative(scalars='Elevation', gradient=False, progress_bar=True)
 
     with pytest.raises(TypeError):
         derv = mesh.compute_derivative(object)
@@ -1348,10 +1274,9 @@ def test_compute_derivatives(progress_bar):
         derv = mesh.compute_derivative()
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_extract_subset(progress_bar):
+def test_extract_subset():
     volume = examples.load_uniform()
-    voi = volume.extract_subset([0, 3, 1, 4, 5, 7], progress_bar=progress_bar)
+    voi = volume.extract_subset([0, 3, 1, 4, 5, 7], progress_bar=True)
     assert isinstance(voi, pyvista.UniformGrid)
     # Test that we fix the confusing issue from extents in
     #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
@@ -1452,18 +1377,16 @@ def test_structured_add_non_grid():
     assert isinstance(merged, pyvista.UnstructuredGrid)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_poly_data_strip(progress_bar):
+def test_poly_data_strip():
     mesh = examples.load_airplane()
     slc = mesh.slice(normal='z', origin=(0, 0, -10))
-    stripped = slc.strip(progress_bar=progress_bar)
+    stripped = slc.strip(progress_bar=True)
     assert stripped.n_cells == 1
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_shrink(progress_bar):
+def test_shrink():
     mesh = pyvista.Sphere()
-    shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=progress_bar)
+    shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True)
     assert shrunk.n_cells == mesh.n_cells
     assert shrunk.area < mesh.area
 
@@ -1541,19 +1464,17 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_arrays)
     examples.load_uniform(),  # UniformGrid
     examples.load_rectilinear(),  # RectilinearGrid
 ])
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_transform_inplace_bad_types(dataset, progress_bar):
+def test_transform_inplace_bad_types(dataset):
     # assert that transformations of these types throw the correct error
-    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90, progress_bar=progress_bar)  # rotate about x-axis by 90 degrees
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90, progress_bar=True)  # rotate about x-axis by 90 degrees
     with pytest.raises(ValueError):
         dataset.transform(tf, inplace=True)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_reflect_mesh_about_point(datasets, progress_bar):
+def test_reflect_mesh_about_point(datasets):
     for dataset in datasets:
         x_plane = 500
-        reflected = dataset.reflect((1, 0, 0), point=(x_plane, 0, 0), progress_bar=progress_bar)
+        reflected = dataset.reflect((1, 0, 0), point=(x_plane, 0, 0), progress_bar=True)
         assert reflected.n_cells == dataset.n_cells
         assert reflected.n_points == dataset.n_points
         assert np.allclose(x_plane - dataset.points[:, 0], reflected.points[:, 0] - x_plane)
@@ -1561,11 +1482,10 @@ def test_reflect_mesh_about_point(datasets, progress_bar):
 
 
 @pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_reflect_mesh_with_vectors(datasets, progress_bar):
+def test_reflect_mesh_with_vectors(datasets):
     for dataset in datasets:
         if hasattr(dataset, 'compute_normals'):
-            dataset.compute_normals(inplace=True, progress_bar=progress_bar)
+            dataset.compute_normals(inplace=True, progress_bar=True)
 
         # add vector data to cell and point arrays
         dataset.cell_arrays['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
@@ -1573,7 +1493,7 @@ def test_reflect_mesh_with_vectors(datasets, progress_bar):
         dataset.point_arrays['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
             np.array([1, 2, 3], dtype=float).reshape((1, 3))
 
-        reflected = dataset.reflect((1, 0, 0), transform_all_input_vectors=True, inplace=False, progress_bar=progress_bar)
+        reflected = dataset.reflect((1, 0, 0), transform_all_input_vectors=True, inplace=False, progress_bar=True)
 
         # assert isinstance(reflected, type(dataset))
         assert reflected.n_cells == dataset.n_cells
@@ -1600,10 +1520,9 @@ def test_reflect_mesh_with_vectors(datasets, progress_bar):
     examples.load_airplane(),  # PolyData
     examples.load_structured(),  # StructuredGrid
 ])
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_reflect_inplace(dataset, progress_bar):
+def test_reflect_inplace(dataset):
     orig = dataset.copy()
-    dataset.reflect((1, 0, 0), inplace=True, progress_bar=progress_bar)
+    dataset.reflect((1, 0, 0), inplace=True, progress_bar=True)
     assert dataset.n_cells == orig.n_cells
     assert dataset.n_points == orig.n_points
     assert np.allclose(dataset.points[:, 0], -orig.points[:, 0])
@@ -1620,27 +1539,26 @@ def test_transform_inplace_bad_types(dataset):
         dataset.reflect((1, 0, 0), inplace=True)
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_extrude_rotate(progress_bar):
+def test_extrude_rotate():
     resolution = 4
     line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
     
     with pytest.raises(ValueError):
         line.extrude_rotate(resolution=0)
 
-    poly = line.extrude_rotate(resolution=resolution, progress_bar=progress_bar)
+    poly = line.extrude_rotate(resolution=resolution, progress_bar=True)
     assert poly.n_cells == line.n_points - 1
     assert poly.n_points == (resolution + 1)*line.n_points
 
     translation = 10.0
     dradius = 1.0
-    poly = line.extrude_rotate(translation=translation, dradius=dradius, progress_bar=progress_bar)
+    poly = line.extrude_rotate(translation=translation, dradius=dradius, progress_bar=True)
     zmax = poly.bounds[5]
     assert zmax == translation
     xmax = poly.bounds[1]
     assert xmax == line.bounds[1] + dradius
 
-    poly = line.extrude_rotate(angle=90.0, progress_bar=progress_bar)
+    poly = line.extrude_rotate(angle=90.0, progress_bar=True)
     xmin = poly.bounds[0]
     xmax = poly.bounds[1]
     ymin = poly.bounds[2]
@@ -1648,21 +1566,19 @@ def test_extrude_rotate(progress_bar):
     assert (xmin == line.bounds[0]) and (xmax == line.bounds[1]) and (ymin == line.bounds[0]) and (ymax == line.bounds[1])
 
 
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_extrude_rotate_inplace(progress_bar):
+def test_extrude_rotate_inplace():
     resolution = 4
     poly = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
     old_line = poly.copy()
-    poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=progress_bar)
+    poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True)
     assert poly.n_cells == old_line.n_points - 1
     assert poly.n_points == (resolution + 1)*old_line.n_points
 
 
 @pytest.mark.parametrize('inplace', [True, False])
-@pytest.mark.parametrize('progress_bar', [True, False])
-def test_subdivide_adaptive(sphere, inplace, progress_bar):
+def test_subdivide_adaptive(sphere, inplace):
     orig_n_faces = sphere.n_faces
-    sub = sphere.subdivide_adaptive(0.01, 0.001, 100000, 2, inplace=inplace, progress_bar=progress_bar)
+    sub = sphere.subdivide_adaptive(0.01, 0.001, 100000, 2, inplace=inplace, progress_bar=True)
     assert sub.n_faces > orig_n_faces
     if inplace:
         assert sphere.n_faces == sub.n_faces
