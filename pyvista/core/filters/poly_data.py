@@ -313,7 +313,7 @@ class PolyDataFilters(DataSetFilters):
         return poly_data.merge(dataset)
 
     def merge(poly_data, dataset, merge_points=True, inplace=False,
-              main_has_priority=True, progress_bar=True):
+              main_has_priority=True, progress_bar=False):
         """Merge this mesh with one or more datasets.
 
         .. note::
