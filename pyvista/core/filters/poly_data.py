@@ -56,7 +56,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.NonManifoldEdgesOff()
         featureEdges.ManifoldEdgesOff()
         featureEdges.SetFeatureAngle(angle)
-        _update_alg(featureEdges, progress_bar, 'Edging Mask')
+        _update_alg(featureEdges, progress_bar, 'Computing Edges')
         edges = _get_output(featureEdges)
         orig_id = pyvista.point_array(edges, 'point_ind')
 
@@ -83,7 +83,7 @@ class PolyDataFilters(DataSetFilters):
         bfilter.SetInputData(1, other_mesh)
         bfilter.ReorientDifferenceCellsOn()  # this is already default
         bfilter.SetTolerance(tolerance)
-        _update_alg(bfilter, progress_bar, 'Boolean Operating')
+        _update_alg(bfilter, progress_bar, 'Performing Boolean Operation')
 
         return _get_output(bfilter)
 
@@ -461,7 +461,7 @@ class PolyDataFilters(DataSetFilters):
         intfilter.SetComputeIntersectionPointArray(True)
         intfilter.SetSplitFirstOutput(split_first)
         intfilter.SetSplitSecondOutput(split_second)
-        _update_alg(intfilter, progress_bar, 'Intersecting PolyData')
+        _update_alg(intfilter, progress_bar, 'Computing the intersection between two meshes')
 
         intersection = _get_output(intfilter, oport=0)
         first = _get_output(intfilter, oport=1)
@@ -525,7 +525,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             raise ValueError('``curv_type`` must be either "Mean", '
                              '"Gaussian", "Maximum", or "Minimum".')
-        _update_alg(curvefilter, progress_bar, 'Computing Curvatures')
+        _update_alg(curvefilter, progress_bar, 'Computing Curvature')
 
         # Compute and return curvature
         curv = _get_output(curvefilter)
@@ -610,7 +610,7 @@ class PolyDataFilters(DataSetFilters):
         trifilter.SetInputData(poly_data)
         trifilter.PassVertsOff()
         trifilter.PassLinesOff()
-        _update_alg(trifilter, progress_bar, 'Computing Triangulation')
+        _update_alg(trifilter, progress_bar, 'Computing Triangle Mesh')
 
         mesh = _get_output(trifilter)
         if inplace:
@@ -691,7 +691,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetEdgeAngle(edge_angle)
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.SetRelaxationFactor(relaxation_factor)
-        _update_alg(alg, progress_bar, 'Smoothing PolyData')
+        _update_alg(alg, progress_bar, 'Smoothing Mesh')
 
         mesh = _get_output(alg)
         if inplace:
@@ -964,7 +964,7 @@ class PolyDataFilters(DataSetFilters):
         # Subdivide
         sfilter.SetNumberOfSubdivisions(nsub)
         sfilter.SetInputData(poly_data)
-        _update_alg(sfilter, progress_bar, 'Subdividing')
+        _update_alg(sfilter, progress_bar, 'Subdividing Mesh')
 
         submesh = _get_output(sfilter)
         if inplace:
@@ -1059,7 +1059,7 @@ class PolyDataFilters(DataSetFilters):
             sfilter.SetMaximumNumberOfPasses(max_n_passes)
 
         sfilter.SetInputData(poly_data)
-        _update_alg(sfilter, progress_bar, 'Subdividing Adaptive')
+        _update_alg(sfilter, progress_bar, 'Adaptively Subdividing Mesh')
         submesh = _get_output(sfilter)
 
         if inplace:
@@ -1184,7 +1184,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTargetReduction(target_reduction)
 
         alg.SetInputData(poly_data)
-        _update_alg(alg, progress_bar, 'Decimating Quadric')
+        _update_alg(alg, progress_bar, 'Decimating Mesh')
 
         mesh = _get_output(alg)
         if inplace:

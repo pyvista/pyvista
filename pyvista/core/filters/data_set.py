@@ -205,7 +205,7 @@ class DataSetFilters:
             # invert the clip if needed
             port = 1
             alg.GenerateClippedOutputOn()
-        _update_alg(alg, progress_bar, 'Clipping_Box')
+        _update_alg(alg, progress_bar, 'Clipping a Dataset by a Bounding Box')
         return _get_output(alg, oport=port)
 
     def compute_implicit_distance(dataset, surface, inplace=False):
@@ -325,7 +325,7 @@ class DataSetFilters:
         # SetInputArrayToProcess(idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInsideOut(invert)  # invert the clip if needed
-        _update_alg(alg, progress_bar, 'Clipping Scalar')
+        _update_alg(alg, progress_bar, 'Clipping by a Scalar')
         result = _get_output(alg)
 
         if inplace:
@@ -681,7 +681,7 @@ class DataSetFilters:
         alg.SetCutFunction(polyplane)  # the cutter to use the poly planes
         if not generate_triangles:
             alg.GenerateTrianglesOff()
-        _update_alg(alg, progress_bar, 'Subdividing')
+        _update_alg(alg, progress_bar, 'Slicing along Line')
         output = _get_output(alg)
         if contour:
             return output.contour()
@@ -941,7 +941,7 @@ class DataSetFilters:
         alg = _vtk.vtkOutlineFilter()
         alg.SetInputDataObject(dataset)
         alg.SetGenerateFaces(generate_faces)
-        _update_alg(alg, progress_bar, 'Outlining')
+        _update_alg(alg, progress_bar, 'Producing an outline')
         return wrap(alg.GetOutputDataObject(0))
 
     def outline_corners(dataset, factor=0.2, progress_bar=False):
@@ -970,7 +970,7 @@ class DataSetFilters:
         alg = _vtk.vtkOutlineCornerFilter()
         alg.SetInputDataObject(dataset)
         alg.SetCornerFactor(factor)
-        _update_alg(alg, progress_bar, 'Outlining Corners')
+        _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(dataset, progress_bar=False):
@@ -1450,7 +1450,7 @@ class DataSetFilters:
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(dataset)
         alg.SetVertexCells(vertex)
-        _update_alg(alg, progress_bar, 'Cell Centering')
+        _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
         return _get_output(alg)
 
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
@@ -1655,7 +1655,7 @@ class DataSetFilters:
         else:
             alg.SetExtractionModeToAllRegions()
         alg.SetColorRegions(True)
-        _update_alg(alg, progress_bar, 'Connecting')
+        _update_alg(alg, progress_bar, 'Finding and Labeling Connected Bodies/Volumes.')
         return _get_output(alg)
 
     def extract_largest(dataset, inplace=False, progress_bar=False):
@@ -2257,7 +2257,7 @@ class DataSetFilters:
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
-        _update_alg(alg, progress_bar, 'Probing')
+        _update_alg(alg, progress_bar, 'Sampling Data Values at Specified Point Locations')
         return _get_output(alg)
 
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
@@ -2324,7 +2324,7 @@ class DataSetFilters:
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
-        _update_alg(alg, progress_bar, 'Resampling with Data Set')
+        _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
     def interpolate(dataset, target, sharpness=2, radius=1.0,
@@ -2537,15 +2537,14 @@ class DataSetFilters:
             source.SetPoint1(pointa)
             source.SetPoint2(pointb)
             source.SetResolution(n_points)
-            _update_alg(source, progress_bar, 'Making Line')
         else:
             source = _vtk.vtkPointSource()
             source.SetCenter(source_center)
             source.SetRadius(source_radius)
             source.SetNumberOfPoints(n_points)
-            _update_alg(source, progress_bar, 'Making Point')
+        source.Update()
         input_source = pyvista.wrap(source.GetOutput())
-        output = dataset.streamlines_from_source(input_source, vectors, **kwargs)
+        output = dataset.streamlines_from_source(input_source, vectors, progress_bar=progress_bar, **kwargs)
         if return_source:
             return output, input_source
         return output
@@ -2716,7 +2715,7 @@ class DataSetFilters:
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
         # run the algorithm
-        _update_alg(alg, progress_bar, 'Stream Tracing')
+        _update_alg(alg, progress_bar, 'Generating Streamlines')
         return _get_output(alg)
 
     def streamlines_evenly_spaced_2D(dataset, vectors=None, start_position=None,
@@ -2879,7 +2878,7 @@ class DataSetFilters:
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
         # Run the algorithm
-        _update_alg(alg, progress_bar, 'Calculating Evenly Spaced Streamlines2D')
+        _update_alg(alg, progress_bar, 'Generating Evenly Spaced Streamlines on a 2D Dataset')
         return _get_output(alg)
 
     def decimate_boundary(dataset, target_reduction=0.5, progress_bar=False):
@@ -3468,7 +3467,7 @@ class DataSetFilters:
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, dataset)
         extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar, 'Extracting Selection')
+        _update_alg(extract_sel, progress_bar, 'Extracting Cells')
         subgrid = _get_output(extract_sel)
 
         # extracts only in float32
@@ -3537,7 +3536,7 @@ class DataSetFilters:
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, dataset)
         extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar, 'Extracting Selection')
+        _update_alg(extract_sel, progress_bar, 'Extracting Points')
         return _get_output(extract_sel)
 
     def extract_surface(dataset, pass_pointid=True, pass_cellid=True,
@@ -3604,7 +3603,7 @@ class DataSetFilters:
         # available in 9.0.2
         # surf_filter.SetDelegation(delegation)
 
-        _update_alg(surf_filter, progress_bar, 'Surfacing DataSet')
+        _update_alg(surf_filter, progress_bar, 'Extracting Surface')
         return _get_output(surf_filter)
 
     def surface_indices(dataset, progress_bar=False):
@@ -3702,7 +3701,7 @@ class DataSetFilters:
         featureEdges.SetBoundaryEdges(boundary_edges)
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
-        _update_alg(featureEdges, progress_bar, 'Featuring Edges')
+        _update_alg(featureEdges, progress_bar, 'Extracting Feature Edges')
         return _get_output(featureEdges)
 
     def merge(dataset, grid=None, merge_points=True, inplace=False,
@@ -3778,7 +3777,7 @@ class DataSetFilters:
         if main_has_priority:
             append_filter.AddInputData(dataset)
 
-        _update_alg(append_filter, progress_bar, 'Appending Meshs')
+        _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
         if inplace:
             if type(dataset) == type(merged):
@@ -4150,7 +4149,7 @@ class DataSetFilters:
                 raise VTKVersionError('The installed version of VTK does not support '
                                       'transformation of all input vectors.')
 
-        _update_alg(f, progress_bar, 'Transforming DataSet')
+        _update_alg(f, progress_bar, 'Transforming')
         res = pyvista.core.filters._get_output(f)
 
         # make the previously active scalars active again
