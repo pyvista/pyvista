@@ -2537,7 +2537,6 @@ class DataSetFilters:
             source.SetPoint1(pointa)
             source.SetPoint2(pointb)
             source.SetResolution(n_points)
-            _update_alg(source, progress_bar, 'Making Line')
         else:
             source = _vtk.vtkPointSource()
             source.SetCenter(source_center)
