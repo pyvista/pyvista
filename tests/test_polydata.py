@@ -690,7 +690,8 @@ def test_smooth_inplace(sphere, progress_bar):
     assert not np.allclose(orig_pts, sphere.points)
 
 
-def test_delaunay_2d():
+@pytest.mark.parametrize('progress_bar', [True, False])
+def test_delaunay_2d(progress_bar):
     n = 20
     x = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
     y = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
@@ -700,12 +701,12 @@ def test_delaunay_2d():
     # Get the points as a 2D NumPy array (N by 3)
     points = np.c_[xx.reshape(-1), yy.reshape(-1), zz.reshape(-1)]
     pdata = pyvista.PolyData(points)
-    surf = pdata.delaunay_2d()
+    surf = pdata.delaunay_2d(progress_bar=progress_bar)
     # Make sure we have an all triangle mesh now
     assert np.all(surf.faces.reshape((-1, 4))[:, 0] == 3)
 
     # test inplace
-    pdata.delaunay_2d(inplace=True)
+    pdata.delaunay_2d(inplace=True, progress_bar=progress_bar)
     assert np.allclose(pdata.points, surf.points)
 
 
@@ -765,9 +766,10 @@ def test_is_all_triangles():
     assert mesh.is_all_triangles()
 
 
-def test_extrude():
+@pytest.mark.parametrize('progress_bar', [True, False])
+def test_extrude(progress_bar):
     arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-    poly = arc.extrude([0, 0, 1])
+    poly = arc.extrude([0, 0, 1], progress_bar=progress_bar)
     assert poly.n_points
     assert poly.n_cells
 
