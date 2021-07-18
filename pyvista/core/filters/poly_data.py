@@ -18,13 +18,16 @@ from pyvista.core.filters.data_set import DataSetFilters
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for polydata datasets."""
 
-    def edge_mask(poly_data, angle):
+    def edge_mask(poly_data, angle, progress_bar=False):
         """Return a mask of the points of a surface mesh that has a surface angle greater than angle.
 
         Parameters
         ----------
         angle : float
             Angle to consider an edge.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -53,14 +56,14 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.NonManifoldEdgesOff()
         featureEdges.ManifoldEdgesOff()
         featureEdges.SetFeatureAngle(angle)
-        featureEdges.Update()
+        _update_alg(featureEdges, progress_bar, 'Computing Edges')
         edges = _get_output(featureEdges)
         orig_id = pyvista.point_array(edges, 'point_ind')
 
         return np.in1d(poly_data.point_arrays['point_ind'], orig_id,
                        assume_unique=True)
 
-    def _boolean(poly_data, btype, other_mesh, tolerance):
+    def _boolean(poly_data, btype, other_mesh, tolerance, progress_bar=False):
         """Perform boolean operation."""
         if not isinstance(other_mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
@@ -80,7 +83,7 @@ class PolyDataFilters(DataSetFilters):
         bfilter.SetInputData(1, other_mesh)
         bfilter.ReorientDifferenceCellsOn()  # this is already default
         bfilter.SetTolerance(tolerance)
-        bfilter.Update()
+        _update_alg(bfilter, progress_bar, 'Performing Boolean Operation')
 
         return _get_output(bfilter)
 
@@ -104,7 +107,7 @@ class PolyDataFilters(DataSetFilters):
         raise DeprecationError('``boolean_add`` has been deprecated.  '
                                'Please use ``merge``.')
 
-    def boolean_union(poly_data, other_mesh, tolerance=1E-5):
+    def boolean_union(poly_data, other_mesh, tolerance=1E-5, progress_bar=False):
         """Perform a boolean union operation on two meshes.
 
         Essentially, boolean union, difference, and intersection are
@@ -144,6 +147,9 @@ class PolyDataFilters(DataSetFilters):
             Tolerance used to determine when a point's absolute
             distance is considered to be zero.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         :class:`pyvista.PolyData`
@@ -168,9 +174,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`boolean_example` for more examples using this filter.
 
         """
-        return poly_data._boolean('union', other_mesh, tolerance)
+        return poly_data._boolean('union', other_mesh, tolerance, progress_bar=progress_bar)
 
-    def boolean_intersection(poly_data, other_mesh, tolerance=1E-5):
+    def boolean_intersection(poly_data, other_mesh, tolerance=1E-5, progress_bar=False):
         """Perform a boolean intersection operation on two meshes.
 
         Essentially, boolean union, difference, and intersection are
@@ -210,6 +216,9 @@ class PolyDataFilters(DataSetFilters):
             Tolerance used to determine when a point's absolute
             distance is considered to be zero.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         :class:`pyvista.PolyData`
@@ -234,9 +243,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`boolean_example` for more examples using this filter.
 
         """
-        return poly_data._boolean('intersection', other_mesh, tolerance)
+        return poly_data._boolean('intersection', other_mesh, tolerance, progress_bar=progress_bar)
 
-    def boolean_difference(poly_data, other_mesh, tolerance=1E-5):
+    def boolean_difference(poly_data, other_mesh, tolerance=1E-5, progress_bar=False):
         """Perform a boolean difference operation between two meshes.
 
         Essentially, boolean union, difference, and intersection are
@@ -270,6 +279,9 @@ class PolyDataFilters(DataSetFilters):
             Tolerance used to determine when a point's absolute
             distance is considered to be zero.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         :class:`pyvista.PolyData`
@@ -294,14 +306,14 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`boolean_example` for more examples using this filter.
 
         """
-        return poly_data._boolean('difference', other_mesh, tolerance)
+        return poly_data._boolean('difference', other_mesh, tolerance, progress_bar=progress_bar)
 
     def __add__(poly_data, dataset):
         """Merge these two meshes."""
         return poly_data.merge(dataset)
 
     def merge(poly_data, dataset, merge_points=True, inplace=False,
-              main_has_priority=True):
+              main_has_priority=True, progress_bar=True):
         """Merge this mesh with one or more datasets.
 
         .. note::
@@ -326,6 +338,9 @@ class PolyDataFilters(DataSetFilters):
             When this parameter is ``True`` and ``merge_points=True``,
             the arrays of the merging grids will be overwritten
             by the original main mesh.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         --------
@@ -364,7 +379,7 @@ class PolyDataFilters(DataSetFilters):
             for data in dataset:
                 append_filter.AddInputData(data)
 
-        append_filter.Update()
+        _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
         if merge_points:
             merged = merged.clean(lines_to_points=False, polys_to_lines=False,
@@ -376,7 +391,7 @@ class PolyDataFilters(DataSetFilters):
 
         return merged
 
-    def intersection(poly_data, mesh, split_first=True, split_second=True):
+    def intersection(poly_data, mesh, split_first=True, split_second=True, progress_bar=False):
         """Compute the intersection between two meshes.
 
         .. note::
@@ -398,6 +413,9 @@ class PolyDataFilters(DataSetFilters):
         split_second : bool, optional
             If ``True``, return the second input mesh split by the
             intersection with the first input mesh.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -443,7 +461,7 @@ class PolyDataFilters(DataSetFilters):
         intfilter.SetComputeIntersectionPointArray(True)
         intfilter.SetSplitFirstOutput(split_first)
         intfilter.SetSplitSecondOutput(split_second)
-        intfilter.Update()
+        _update_alg(intfilter, progress_bar, 'Computing the intersection between two meshes')
 
         intersection = _get_output(intfilter, oport=0)
         first = _get_output(intfilter, oport=1)
@@ -451,7 +469,7 @@ class PolyDataFilters(DataSetFilters):
 
         return intersection, first, second
 
-    def curvature(poly_data, curv_type='mean'):
+    def curvature(poly_data, curv_type='mean', progress_bar=False):
         """Return the pointwise curvature of a mesh.
 
         Parameters
@@ -466,6 +484,10 @@ class PolyDataFilters(DataSetFilters):
             * ``"Gaussian"``
             * ``"Maximum"``
             * ``"Minimum"``
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress. Default
+            ``False``.
 
         Returns
         -------
@@ -503,7 +525,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             raise ValueError('``curv_type`` must be either "Mean", '
                              '"Gaussian", "Maximum", or "Minimum".')
-        curvefilter.Update()
+        _update_alg(curvefilter, progress_bar, 'Computing Curvature')
 
         # Compute and return curvature
         curv = _get_output(curvefilter)
@@ -548,7 +570,7 @@ class PolyDataFilters(DataSetFilters):
         return poly_data.plot(scalars=poly_data.curvature(curv_type),
                               **kwargs)
 
-    def triangulate(poly_data, inplace=False):
+    def triangulate(poly_data, inplace=False, progress_bar=False):
         """Return an all triangle mesh.
 
         More complex polygons will be broken down into triangles.
@@ -560,6 +582,9 @@ class PolyDataFilters(DataSetFilters):
 
         inplace : bool, optional
             Whether to update the mesh in-place.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -585,7 +610,7 @@ class PolyDataFilters(DataSetFilters):
         trifilter.SetInputData(poly_data)
         trifilter.PassVertsOff()
         trifilter.PassLinesOff()
-        trifilter.Update()
+        _update_alg(trifilter, progress_bar, 'Computing Triangle Mesh')
 
         mesh = _get_output(trifilter)
         if inplace:
@@ -595,7 +620,8 @@ class PolyDataFilters(DataSetFilters):
 
     def smooth(poly_data, n_iter=20, relaxation_factor=0.01, convergence=0.0,
                edge_angle=15, feature_angle=45,
-               boundary_smoothing=True, feature_smoothing=False, inplace=False):
+               boundary_smoothing=True, feature_smoothing=False, inplace=False,
+               progress_bar=False):
         """Adjust point coordinates using Laplacian smoothing.
 
         The effect is to "relax" the mesh, making the cells better shaped and
@@ -630,6 +656,9 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         :class:`pyvista.PolyData`
@@ -662,7 +691,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetEdgeAngle(edge_angle)
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.SetRelaxationFactor(relaxation_factor)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Smoothing Mesh')
 
         mesh = _get_output(alg)
         if inplace:
@@ -674,7 +703,7 @@ class PolyDataFilters(DataSetFilters):
     def decimate_pro(poly_data, reduction, feature_angle=45.0,
                      split_angle=75.0, splitting=True,
                      pre_split_mesh=False, preserve_topology=False,
-                     inplace=False):
+                     inplace=False, progress_bar=False):
         """Reduce the number of triangles in a triangular mesh.
 
         It forms a good approximation to the original geometry. Based
@@ -721,6 +750,9 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Whether to update the mesh in-place.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         :class:`pyvista.PolyData`
@@ -750,7 +782,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetSplitting(splitting)
         alg.SetSplitAngle(split_angle)
         alg.SetPreSplitMesh(pre_split_mesh)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Decimating Mesh')
 
         mesh = _get_output(alg)
         if inplace:
@@ -760,7 +792,7 @@ class PolyDataFilters(DataSetFilters):
         return mesh
 
     def tube(poly_data, radius=None, scalars=None, capping=True, n_sides=20,
-             radius_factor=10, preference='point', inplace=False):
+             radius_factor=10, preference='point', inplace=False, progress_bar=False):
         """Generate a tube around each input line.
 
         The radius of the tube can be set to linearly vary with a
@@ -792,6 +824,9 @@ class PolyDataFilters(DataSetFilters):
 
         inplace : bool, optional
             Whether to update the mesh in-place.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -835,7 +870,7 @@ class PolyDataFilters(DataSetFilters):
             tube.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
             tube.SetVaryRadiusToVaryRadiusByScalar()
         # Apply the filter
-        tube.Update()
+        _update_alg(tube, progress_bar, 'Creating Tube')
 
         mesh = _get_output(tube)
         if inplace:
@@ -843,7 +878,7 @@ class PolyDataFilters(DataSetFilters):
             return poly_data
         return mesh
 
-    def subdivide(poly_data, nsub, subfilter='linear', inplace=False):
+    def subdivide(poly_data, nsub, subfilter='linear', inplace=False, progress_bar=False):
         """Increase the number of triangles in a single, connected triangular mesh.
 
         Uses one of the following vtk subdivision filters to subdivide a mesh:
@@ -881,6 +916,9 @@ class PolyDataFilters(DataSetFilters):
 
         inplace : bool, optional
             Updates mesh in-place. Default ``False``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -926,7 +964,7 @@ class PolyDataFilters(DataSetFilters):
         # Subdivide
         sfilter.SetNumberOfSubdivisions(nsub)
         sfilter.SetInputData(poly_data)
-        sfilter.Update()
+        _update_alg(sfilter, progress_bar, 'Subdividing Mesh')
 
         submesh = _get_output(sfilter)
         if inplace:
@@ -936,7 +974,8 @@ class PolyDataFilters(DataSetFilters):
         return submesh
 
     def subdivide_adaptive(poly_data, max_edge_len=None, max_tri_area=None,
-                           max_n_tris=None, max_n_passes=None, inplace=False):
+                           max_n_tris=None, max_n_passes=None, inplace=False,
+                           progress_bar=False):
         """Increase the number of triangles in a triangular mesh based on edge and/or area metrics.
 
         This filter uses a simple case-based, multi-pass approach to
@@ -986,6 +1025,9 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         :class:`pyvista.PolyData`
@@ -1017,7 +1059,7 @@ class PolyDataFilters(DataSetFilters):
             sfilter.SetMaximumNumberOfPasses(max_n_passes)
 
         sfilter.SetInputData(poly_data)
-        sfilter.Update()
+        _update_alg(sfilter, progress_bar, 'Adaptively Subdividing Mesh')
         submesh = _get_output(sfilter)
 
         if inplace:
@@ -1142,7 +1184,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTargetReduction(target_reduction)
 
         alg.SetInputData(poly_data)
-        _update_alg(alg, progress_bar, 'Decimating')
+        _update_alg(alg, progress_bar, 'Decimating Mesh')
 
         mesh = _get_output(alg)
         if inplace:
@@ -1156,7 +1198,7 @@ class PolyDataFilters(DataSetFilters):
                         flip_normals=False, consistent_normals=True,
                         auto_orient_normals=False,
                         non_manifold_traversal=True,
-                        feature_angle=30.0, inplace=False):
+                        feature_angle=30.0, inplace=False, progress_bar=False):
         """Compute point and/or cell normals for a mesh.
 
         The filter can reorder polygons to insure consistent
@@ -1217,6 +1259,9 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, optional
             Updates mesh in-place. Defaults to ``False``.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         :class:`pyvista.PolyData`
@@ -1272,7 +1317,7 @@ class PolyDataFilters(DataSetFilters):
         normal.SetNonManifoldTraversal(non_manifold_traversal)
         normal.SetFeatureAngle(feature_angle)
         normal.SetInputData(poly_data)
-        normal.Update()
+        _update_alg(normal, progress_bar, 'Computing Normals')
 
         mesh = _get_output(normal)
         if point_normals:
@@ -1287,7 +1332,7 @@ class PolyDataFilters(DataSetFilters):
         return mesh
 
     def clip_closed_surface(poly_data, normal='x', origin=None,
-                            tolerance=1e-06, inplace=False):
+                            tolerance=1e-06, inplace=False, progress_bar=False):
         """Clip a closed polydata surface with a plane.
 
         This currently only supports one plane but could be
@@ -1323,6 +1368,9 @@ class PolyDataFilters(DataSetFilters):
 
         inplace : bool, optional
             Updates mesh in-place. Defaults to ``False``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -1366,7 +1414,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputDataObject(poly_data)
         alg.SetTolerance(tolerance)
         alg.SetClippingPlanes(collection)
-        alg.Update()  # Perform the Cut
+        _update_alg(alg, progress_bar, 'Clipping Closed Surface')
         result = _get_output(alg)
 
         if inplace:
@@ -1521,7 +1569,7 @@ class PolyDataFilters(DataSetFilters):
             return output
 
     def geodesic(poly_data, start_vertex, end_vertex, inplace=False,
-                 keep_order=True):
+                 keep_order=True, progress_bar=False):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
         This will add an array titled ``'vtkOriginalPointIds'`` of the input
@@ -1547,6 +1595,9 @@ class PolyDataFilters(DataSetFilters):
             to start with the start vertex (as opposed to the end vertex).
 
             .. versionadded:: 0.32.0
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -1581,7 +1632,7 @@ class PolyDataFilters(DataSetFilters):
         dijkstra.SetInputData(poly_data)
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
-        dijkstra.Update()
+        _update_alg(dijkstra, progress_bar, 'Calculating the Geodesic Path')
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
         output = _get_output(dijkstra)
@@ -1601,7 +1652,7 @@ class PolyDataFilters(DataSetFilters):
 
         return output
 
-    def geodesic_distance(poly_data, start_vertex, end_vertex):
+    def geodesic_distance(poly_data, start_vertex, end_vertex, progress_bar=False):
         """Calculate the geodesic distance between two vertices using Dijkstra's algorithm.
 
         Parameters
@@ -1611,6 +1662,9 @@ class PolyDataFilters(DataSetFilters):
 
         end_vertex : int
             Vertex index indicating the end point of the geodesic segment.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -1629,7 +1683,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         path = poly_data.geodesic(start_vertex, end_vertex)
-        sizes = path.compute_cell_sizes(length=True, area=False, volume=False)
+        sizes = path.compute_cell_sizes(length=True, area=False, volume=False, progress_bar=progress_bar)
         distance = np.sum(sizes['Length'])
         del path
         del sizes
@@ -1828,7 +1882,7 @@ class PolyDataFilters(DataSetFilters):
 
         return locations, index_ray, index_tri
 
-    def plot_boundaries(poly_data, edge_color="red", line_width=None, **kwargs):
+    def plot_boundaries(poly_data, edge_color="red", line_width=None, progress_bar=False, **kwargs):
         """Plot boundaries of a mesh.
 
         Parameters
@@ -1843,6 +1897,9 @@ class PolyDataFilters(DataSetFilters):
             All additional keyword arguments will be passed to
             :func:`pyvista.BasePlotter.add_mesh`
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         :class:`pyvista.CameraPosition`
@@ -1856,7 +1913,7 @@ class PolyDataFilters(DataSetFilters):
         >>> hills.plot_boundaries(line_width=10)
 
         """
-        edges = DataSetFilters.extract_feature_edges(poly_data)
+        edges = DataSetFilters.extract_feature_edges(poly_data, progress_bar=progress_bar)
 
         plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', None),
                                   notebook=kwargs.pop('notebook', None))
@@ -2120,12 +2177,18 @@ class PolyDataFilters(DataSetFilters):
             return poly_data
         return mesh
 
-    def compute_arc_length(poly_data):
+    def compute_arc_length(poly_data, progress_bar=False):
         """Compute the arc length over the length of the probed line.
 
         It adds a new point-data array named ``"arc_length"`` with the
         computed arc length for each of the polylines in the
         input. For all other cell types, the arc length is set to 0.
+
+        Parameters
+        ----------
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress. Default
+            ``False``.
 
         Returns
         -------
@@ -2155,7 +2218,7 @@ class PolyDataFilters(DataSetFilters):
         """
         alg = _vtk.vtkAppendArcLength()
         alg.SetInputData(poly_data)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Computing the Arc Length')
         return _get_output(alg)
 
     def project_points_to_plane(poly_data, origin=None, normal=(0, 0, 1),
@@ -2203,7 +2266,7 @@ class PolyDataFilters(DataSetFilters):
         return mesh
 
     def ribbon(poly_data, width=None, scalars=None, angle=0.0, factor=2.0,
-               normal=None, tcoords=False, preference='points'):
+               normal=None, tcoords=False, preference='points', progress_bar=False):
         """Create a ribbon of the lines in this dataset.
 
         .. note::
@@ -2236,6 +2299,9 @@ class PolyDataFilters(DataSetFilters):
             If ``True``, generate texture coordinates along the
             ribbon. This can also be specified to generate the texture
             coordinates with either ``'length'`` or ``'normalized'``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -2285,7 +2351,7 @@ class PolyDataFilters(DataSetFilters):
                 alg.SetGenerateTCoordsToUseLength()
         else:
             alg.SetGenerateTCoordsToOff()
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Creating a Ribbon')
         return _get_output(alg)
 
     def extrude(poly_data, vector, capping=False, inplace=False, progress_bar=False):
@@ -2459,7 +2525,7 @@ class PolyDataFilters(DataSetFilters):
         return output
 
     def strip(poly_data, join=False, max_length=1000, pass_cell_data=False,
-              pass_cell_ids=False, pass_point_ids=False):
+              pass_cell_ids=False, pass_point_ids=False, progress_bar=False):
         """Strip poly data cells.
 
         Generates triangle strips and/or poly-lines from input
@@ -2507,6 +2573,9 @@ class PolyDataFilters(DataSetFilters):
             vertex that produced each output vertex. This is useful
             for picking. The default is ``False`` to conserve memory.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         :class:`pyvista.PolyData`
@@ -2530,5 +2599,5 @@ class PolyDataFilters(DataSetFilters):
         alg.SetPassCellDataAsFieldData(pass_cell_data)
         alg.SetPassThroughCellIds(pass_cell_ids)
         alg.SetPassThroughPointIds(pass_point_ids)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Stripping Mesh')
         return _get_output(alg)
