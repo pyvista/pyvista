@@ -14,7 +14,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
          return_viewer=False, return_cpos=False, jupyter_kwargs={},
-         theme=None, **kwargs):
+         theme=None, hidden_line_removal=None, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -50,7 +50,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     show_axes : bool, optional
         Shows a vtk axes widget.  If ``None``, enabled according to
-        ``pyvista.global_theme.axes.show``.
+        :attr:`pyvista.global_theme.axes.show <pyvista.themes._AxesConfig.show>`
 
     text : str, optional
         Adds text at the bottom of the plot.
@@ -73,7 +73,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         * ``'panel'`` : Show a ``panel`` widget.
 
         This can also be set globally with
-        ``pyvista.set_jupyter_backend``
+        :func:`pyvista.set_jupyter_backend`.
 
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
@@ -88,6 +88,13 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
+
+    hidden_line_removal : bool, optional
+        Wireframe geometry will be drawn using hidden line removal if
+        the rendering engine supports it.  See
+        :func:`Plotter.enable_hidden_line_removal
+        <BasePlotter.enable_hidden_line_removal>`.  Defaults to the
+        theme setting :attr:`pyvista.global_theme.hidden_line_removal <pyvista.DefaultTheme.hidden_line_removal>`.
 
     **kwargs : optional keyword arguments
         See :func:`pyvista.BasePlotter.add_mesh` for additional options.

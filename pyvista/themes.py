@@ -1141,7 +1141,9 @@ class DefaultTheme(_ThemeConfig):
                  '_depth_peeling',
                  '_silhouette',
                  '_slider_styles',
-                 '_return_cpos']
+                 '_return_cpos',
+                 '_hidden_line_removal',
+    ]
 
     def __init__(self):
         """Initialize the theme."""
@@ -1203,6 +1205,33 @@ class DefaultTheme(_ThemeConfig):
         self._silhouette = _SilhouetteConfig()
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
+        self._hidden_line_removal = False
+
+    @property
+    def hidden_line_removal(self) -> bool:
+        """Return or set hidden line removal.
+
+        Wireframe geometry will be drawn using hidden line removal if
+        the rendering engine supports it.
+
+        See Also
+        --------
+        :func:`Plotter.enable_hidden_line_removal <BasePlotter.enable_hidden_line_removal>`
+
+        Examples
+        --------
+        Enable hidden line removal.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.hidden_line_removal = True
+        >>> pyvista.global_theme.hidden_line_removal
+        True
+        """
+        return self._hidden_line_removal
+
+    @hidden_line_removal.setter
+    def hidden_line_removal(self, value: bool):
+        self._hidden_line_removal = value
 
     @property
     def return_cpos(self) -> bool:
@@ -2004,6 +2033,7 @@ class DefaultTheme(_ThemeConfig):
             'Silhouette': 'silhouette',
             'Slider Styles': 'slider_styles',
             'Return Camera Position': 'return_cpos',
+            'Hidden Line Removal': 'hidden_line_removal',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
@@ -2171,9 +2201,15 @@ class ParaViewTheme(DefaultTheme):
 class DocumentTheme(DefaultTheme):
     """A document theme well suited for papers and presentations.
 
-    This theme uses a white background, black fonts, the "viridis"
-    colormap, and it disables edges.  Best used for presentations,
-    papers, etc.
+    This theme uses:
+
+    * A white background
+    * Black fonts
+    * The "viridis" colormap
+    * disables edges for surface plots
+    * Hidden edge removal
+
+    Best used for presentations, papers, etc.
 
     Examples
     --------
@@ -2206,6 +2242,7 @@ class DocumentTheme(DefaultTheme):
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'seagreen'
         self.axes.z_color = 'blue'
+        self.hidden_line_removal = True
 
 
 class _TestingTheme(DefaultTheme):

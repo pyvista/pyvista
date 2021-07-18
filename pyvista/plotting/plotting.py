@@ -230,6 +230,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image_depth = None
         self.last_image = None
 
+        # set hidden line removal based on theme
+        if self.theme.hidden_line_removal:
+            self.enable_hidden_line_removal()
+
     @property
     def theme(self):
         """Return or set the theme used for this plotter.
@@ -425,12 +429,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista
         >>> sphere = pyvista.Sphere(theta_resolution=20, phi_resolution=20)
         >>> pl = pyvista.Plotter(shape=(1, 2))
-        >>> pl.add_mesh(sphere, line_width=3, style='wireframe')
-        >>> pl.add_text("With hidden line removal")
+        >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
+        >>> _ = pl.add_text("With hidden line removal")
         >>> pl.enable_hidden_line_removal(all_renderers=False)
         >>> pl.subplot(0, 1)
-        >>> pl.add_mesh(sphere, line_width=3, style='wireframe')
-        >>> pl.add_text("Without hidden line removal")
+        >>> pl.disable_hidden_line_removal(all_renderers=False)
+        >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
+        >>> _ = pl.add_text("Without hidden line removal")
         >>> pl.show()
 
         """
