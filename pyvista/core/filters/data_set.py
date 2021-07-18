@@ -2543,7 +2543,7 @@ class DataSetFilters:
             source.SetCenter(source_center)
             source.SetRadius(source_radius)
             source.SetNumberOfPoints(n_points)
-            _update_alg(source, progress_bar, 'Making Point')
+        source.Update()
         input_source = pyvista.wrap(source.GetOutput())
         output = dataset.streamlines_from_source(input_source, vectors, **kwargs)
         if return_source:
