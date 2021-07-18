@@ -92,12 +92,7 @@ projecting the random_hills example data to a triangular plane.
     tree = KDTree(data.points.astype(np.double))
     _, data_inds = tree.query(points)
 
-    elevations = np.hstack(
-        [
-            data.extract_points(ind, include_cells=False)["Elevation"]
-            for ind in tqdm(data_inds)
-        ]
-    )
+    elevations = data.point_arrays["Elevation"][data_inds]
 
     # Mask points on planes
     planes.cell_arrays["Elevation"] = np.zeros((planes.n_cells,))
