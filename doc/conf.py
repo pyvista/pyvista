@@ -74,6 +74,7 @@ extensions = [
 # return type inline with the description.
 napoleon_use_rtype = False
 
+add_module_names = False
 
 # Intersphinx mapping
 intersphinx_mapping = {

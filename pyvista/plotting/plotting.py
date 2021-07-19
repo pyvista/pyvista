@@ -230,6 +230,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image_depth = None
         self.last_image = None
 
+        # set hidden line removal based on theme
+        if self.theme.hidden_line_removal:
+            self.enable_hidden_line_removal()
+
     @property
     def theme(self):
         """Return or set the theme used for this plotter.
@@ -399,6 +403,76 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     if hasattr(actor, 'RotateX'):
                         actor.RotateZ(90)
                         actor.RotateX(90)
+
+    def enable_hidden_line_removal(self, all_renderers=True):
+        """Enable hidden line removal.
+
+        Wireframe geometry will be drawn using hidden line removal if
+        the rendering engine supports it.
+
+        Parameters
+        ----------
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If
+            ``False``, then only applies to the active renderer.
+
+        See Also
+        --------
+        :func:`disable_hidden_line_removal <BasePlotter.disable_hidden_line_removal>`
+
+        Examples
+        --------
+        Create a side-by-side plotter and render a sphere in wireframe
+        with hidden line removal enabled on the left and disabled on
+        the right.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(theta_resolution=20, phi_resolution=20)
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
+        >>> _ = pl.add_text("With hidden line removal")
+        >>> pl.enable_hidden_line_removal(all_renderers=False)
+        >>> pl.subplot(0, 1)
+        >>> pl.disable_hidden_line_removal(all_renderers=False)
+        >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
+        >>> _ = pl.add_text("Without hidden line removal")
+        >>> pl.show()
+
+        """
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.enable_hidden_line_removal()
+        else:
+            self.renderer.enable_hidden_line_removal()
+
+    def disable_hidden_line_removal(self, all_renderers=True):
+        """Disable hidden line removal.
+
+        Parameters
+        ----------
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If
+            ``False``, then only applies to the active renderer.
+
+        See Also
+        --------
+        :func:`enable_hidden_line_removal <BasePlotter.enable_hidden_line_removal>`
+
+        Examples
+        --------
+        Enable and then disable hidden line removal.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.enable_hidden_line_removal()
+        >>> pl.disable_hidden_line_removal()
+
+        """
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.disable_hidden_line_removal()
+        else:
+            self.renderer.disable_hidden_line_removal()
 
     @property
     def scalar_bar(self):
@@ -4191,21 +4265,21 @@ class Plotter(BasePlotter):
         ----------
         title : string, optional
             Title of plotting window.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.title`.
+            :attr:`pyvista.global_theme.title <pyvista.themes.DefaultTheme.title>`.
 
         window_size : list, optional
             Window size in pixels.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.window_size`.
+            :attr:`pyvista.global_theme.window_size <pyvista.themes.DefaultTheme.window_size>`.
 
         interactive : bool, optional
             Enabled by default.  Allows user to pan and move figure.
             Defaults to
-            :attr:`pyvista.themes.DefaultTheme.interacitve`.
+            :attr:`pyvista.global_theme.interactive <pyvista.themes.DefaultTheme.interactive>`.
 
         auto_close : bool, optional
             Exits plotting session when user closes the window when
             interactive is ``True``.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.auto_close`.
+            :attr:`pyvista.global_theme.auto_close <pyvista.themes.DefaultTheme.auto_close>`.
 
         interactive_update: bool, optional
             Disabled by default.  Allows user to non-blocking draw,
@@ -4214,7 +4288,7 @@ class Plotter(BasePlotter):
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
             ``window_size``.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.full_screen`.
+            :attr:`pyvista.global_theme.full_screen <pyvista.themes.DefaultTheme.full_screen>`.
 
         cpos : list(tuple(floats))
             The camera position.  You can also set this with
