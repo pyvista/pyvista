@@ -263,7 +263,7 @@ class DataSetFilters:
         result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
         return result
 
-    def clip_scalar(dataset, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False):
+    def clip_scalar(dataset, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False, both=False):
         """Clip a dataset by a scalar.
 
         Parameters
@@ -285,10 +285,13 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        both : bool, optional (default False)
+            If true, also returns the complementary clipped mesh.
+
         Returns
         -------
-        pdata : pyvista.PolyData
-            Clipped dataset.
+        pdata : pyvista.PolyData (if `both` is False), tuple(pyvista.PolyData, pyvista.PolyData) otherwise
+            Clipped dataset(s).
 
         Examples
         --------
@@ -299,6 +302,12 @@ class DataSetFilters:
         >>> dataset = examples.load_hexbeam()
         >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100)
         >>> clipped.plot()
+
+        Get clipped meshes corresponding to the portions of the mesh above and below 100
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.load_hexbeam()
+        >>> below, above = dataset.clip_scalar(scalars="sample_point_scalars", value=100, both=True)
 
         Remove the part of the mesh with "sample_point_scalars" below
         100.  Since these scalars are already active, there's no need
@@ -325,14 +334,20 @@ class DataSetFilters:
         # SetInputArrayToProcess(idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInsideOut(invert)  # invert the clip if needed
+        alg.SetGenerateClippedOutput(both)
+
         _update_alg(alg, progress_bar, 'Clipping by a Scalar')
-        result = _get_output(alg)
+        result0 = _get_output(alg)
 
         if inplace:
-            dataset.overwrite(result)
-            return dataset
+            dataset.overwrite(result0)
+            result0 = dataset
+
+        if both:
+            result1 = _get_output(alg, oport=1)
+            return result0, result1
         else:
-            return result
+            return result0
 
     def clip_surface(dataset, surface, invert=True, value=0.0,
                      compute_distance=False, progress_bar=False):
