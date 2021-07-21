@@ -1,6 +1,9 @@
+import os
+
 import numpy as np
 
 import pyvista
+from pyvista.examples.downloads import _download_file
 
 
 def test_xmlimagedatareader(tmpdir):
@@ -128,3 +131,43 @@ def test_reader_cell_point_data(tmpdir):
 
     reader.enable_point_array('Normals')
     assert reader.point_array_status('Normals') is True
+
+
+def test_ensightreader():
+    folder, _ = _download_file('EnSight.zip')
+    filename = os.path.join(folder, "foam_case_0_0_0_0.case")
+
+    reader = pyvista.Reader(filename)
+    assert reader.filename == filename
+    assert reader.number_cell_arrays == 9
+    assert reader.number_point_arrays == 0
+    
+    assert reader.cell_array_names == ['v2', 'nut', 'k', 'nuTilda', 'p', 
+                                       'omega', 'f', 'epsilon', 'U']
+    assert reader.point_array_names == []
+
+    reader.disable_all_cell_arrays()
+    reader.enable_cell_array('k')
+
+    assert reader.all_cell_arrays_status == {
+        'v2': False, 'nut': False, 'k': True, 'nuTilda': False, 'p': False, 
+        'omega':False, 'f':False, 'epsilon':False, 'U':False
+    }
+
+
+    mesh = reader.read()
+    assert isinstance(mesh, pyvista.MultiBlock)
+
+    for i in range(mesh.n_blocks):
+        assert all([mesh[i].n_points, mesh[i].n_cells])
+        assert mesh[i].array_names == ['k']
+
+    # reenable all cell arrays and read again
+    reader.enable_all_cell_arrays()
+    all_mesh = reader.read()
+    assert isinstance(all_mesh, pyvista.MultiBlock)
+
+    for i in range(all_mesh.n_blocks):
+        assert all([all_mesh[i].n_points, all_mesh[i].n_cells])
+        assert all_mesh[i].array_names == ['v2', 'nut', 'k', 'nuTilda', 'p', 
+                                           'omega', 'f', 'epsilon', 'U']
