@@ -57,3 +57,9 @@ print(f"Cell array status: {reader.all_cell_arrays_status}")
 reader_mesh = reader.read()
 print(f"Read arrays: {reader_mesh.array_names}")
 
+###############################################################################
+# We can reuse the reader object to choose different variables if needed.
+
+reader.enable_all_cell_arrays()
+reader_mesh_2 = reader.read()
+print(f"New read arrays: {reader_mesh_2.array_names}")
