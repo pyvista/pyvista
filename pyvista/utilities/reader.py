@@ -196,4 +196,6 @@ CLASS_READERS = {
     #'.vts': _vtk.vtkXMLStructuredGridReader,
     #'.vtm': _vtk.vtkXMLMultiBlockDataReader,
     #'.vtmb': _vtk.vtkXMLMultiBlockDataReader,
+    #'.case': _vtk.GenericEnSightReader,
+    #'.foam': _vtkOpenFOAMReader,
 }
