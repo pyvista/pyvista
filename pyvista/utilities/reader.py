@@ -303,6 +303,42 @@ class XMLMultiBlockDataReader(Reader):
         return self._reader
 
 
+class EnSightReader(Reader):
+    """EnSightReader class."""
+
+    def __init__(self, filename):
+        """Initialize EnSightReader."""
+        self._reader = _vtk.vtkGenericEnSightReader()
+        super().__init__(filename)
+
+    def _set_filename(self, filename):
+        """Set filename and update reader."""
+        # Private method since changing file type requires a
+        # different subclass.
+        self.filename = filename
+        self.reader.SetCaseFileName(filename)
+        self.update()
+
+    @property
+    def reader(self):
+        """Return vtkGenericEnSightReader object."""
+        return self._reader
+
+
+class OpenFOAMReader(Reader):
+    """OpenFOAMReader class."""
+
+    def __init__(self, filename):
+        """Initialize OpenFOAMReader."""
+        self._reader = _vtk.vtkOpenFOAMReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkOpenFOAMReader object."""
+        return self._reader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.vti': XMLImageDataReader,
@@ -315,6 +351,6 @@ CLASS_READERS = {
     '.vts': XMLStructuredGridReader,
     '.vtm': XMLMultiBlockDataReader,
     '.vtmb': XMLMultiBlockDataReader,
-    #'.case': _vtk.GenericEnSightReader,
-    #'.foam': _vtkOpenFOAMReader,
+    '.case': EnSightReader,
+    '.foam': OpenFOAMReader,
 }
