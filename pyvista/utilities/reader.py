@@ -1,3 +1,5 @@
+"""Reader class."""
+
 from abc import ABC, abstractmethod
 from pyvista.utilities import wrap, get_ext
 from pyvista import _vtk
@@ -12,6 +14,7 @@ class Reader(ABC):
         The string path to the file to read.
 
     """
+
     def __new__(cls, filename):
         """Create new Reader object from subclass matching filename."""
         ext = get_ext(filename)
@@ -24,23 +27,24 @@ class Reader(ABC):
         return super().__new__(reader)
 
     def __init__(self, filename):
+        """Initialize Reader by setting filename."""
         self.filename = filename
         self._set_filename(filename)
 
     @property
     @abstractmethod
     def reader(self):
-        """vtk Reader object."""
+        """Return the vtk Reader object."""
         pass
 
     @property
     def number_point_arrays(self):
-        """Number of point arrays."""
+        """Return the number of point arrays."""
         return self.reader.GetNumberOfPointArrays()
 
     @property
     def point_array_names(self):
-        """List of all point array names."""
+        """Return the list of all point array names."""
         return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
 
     def enable_point_array(self, name):
@@ -87,17 +91,17 @@ class Reader(ABC):
 
     @property
     def all_point_arrays_status(self):
-        """The status of all point arrays as a dict."""
+        """Return the status of all point arrays as a dict."""
         return {name: self.point_array_status(name) for name in self.point_array_names}
 
     @property
     def number_cell_arrays(self):
-        """Number of cell arrays."""
+        """Return the number of cell arrays."""
         return self.reader.GetNumberOfCellArrays()
 
     @property
     def cell_array_names(self):
-        """List of all cell array names."""
+        """Return the list of all cell array names."""
         return [self.reader.GetCellArrayName(i) for i in range(self.number_cell_arrays)]
 
     def enable_cell_array(self, name):
@@ -144,7 +148,7 @@ class Reader(ABC):
 
     @property
     def all_cell_arrays_status(self):
-        """The status of all cell arrays as a dict."""
+        """Return the status of all cell arrays as a dict."""
         return {name: self.cell_array_status(name) for name in self.cell_array_names}
 
     def _set_filename(self, filename):
@@ -175,13 +179,15 @@ class Reader(ABC):
 
 class XMLPolyReader(Reader):
     """XMLPolyReader class."""
+
     def __init__(self, filename):
+        """Initialize XMLPolyReader."""
         self._reader = _vtk.vtkXMLPolyDataReader()
         super().__init__(filename)
 
     @property
     def reader(self):
-        """vtkXMLPolyReader object."""
+        """Return vtkXMLPolyReader object."""
         return self._reader
 
 CLASS_READERS = {
