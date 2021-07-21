@@ -162,7 +162,7 @@ def test_ensightreader():
         assert all([mesh[i].n_points, mesh[i].n_cells])
         assert mesh[i].array_names == ['k']
 
-    # reenable all cell arrays and read again
+    # re-enable all cell arrays and read again
     reader.enable_all_cell_arrays()
     all_mesh = reader.read()
     assert isinstance(all_mesh, pyvista.MultiBlock)
