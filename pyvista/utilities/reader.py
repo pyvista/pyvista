@@ -177,31 +177,144 @@ class Reader(ABC):
         self.reader.Update()
 
 
-class XMLPolyReader(Reader):
-    """XMLPolyReader class."""
+
+class XMLImageDataReader(Reader):
+    """XMLImageDataReader class."""
 
     def __init__(self, filename):
-        """Initialize XMLPolyReader."""
+        """Initialize XMLImageDataReader."""
+        self._reader = _vtk.vtkXMLImageDataReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkXMLImageDataReader object."""
+        return self._reader
+
+
+class XMLPImageDataReader(Reader):
+    """XMLPImageDataReader class."""
+
+    def __init__(self, filename):
+        """Initialize XMLPImageDataReader."""
+        self._reader = _vtk.vtkXMLPImageDataReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkXMLPImageDataReader object."""
+        return self._reader
+
+
+class XMLRectilinearGridReader(Reader):
+    """XMLRectilinearGridReader class."""
+
+    def __init__(self, filename):
+        """Initialize XMLRectilinearGridReader."""
+        self._reader = _vtk.vtkXMLRectilinearGridReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkXMLRectilinearGridReader object."""
+        return self._reader
+
+
+class XMLPRectilinearGridReader(Reader):
+    """XMLPRectilinearGridReader class."""
+
+    def __init__(self, filename):
+        """Initialize XMLPRectilinearGridReader."""
+        self._reader = _vtk.vtkXMLPRectilinearGridReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkXMLPRectilinearGridReader object."""
+        return self._reader
+
+
+class XMLUnstructuredGridReader(Reader):
+    """XMLUnstructuredGridReader class."""
+
+    def __init__(self, filename):
+        """Initialize XMLUnstructuredGridReader."""
+        self._reader = _vtk.vtkXMLUnstructuredGridReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkXMLUnstructuredGridReader object."""
+        return self._reader
+
+class XMLPUnstructuredGridReader(Reader):
+    """XMLPUnstructuredGridReader class."""
+
+    def __init__(self, filename):
+        """Initialize XMLPUnstructuredGridReader."""
+        self._reader = _vtk.vtkXMLPUnstructuredGridReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkXMLPUnstructuredGridReader object."""
+        return self._reader
+
+
+class XMLPolyDataReader(Reader):
+    """XMLPolyDataReader class."""
+
+    def __init__(self, filename):
+        """Initialize XMLPolyDataReader."""
         self._reader = _vtk.vtkXMLPolyDataReader()
         super().__init__(filename)
 
     @property
     def reader(self):
-        """Return vtkXMLPolyReader object."""
+        """Return vtkXMLPolyDataReader object."""
         return self._reader
+
+
+class XMLStructuredGridReader(Reader):
+    """XMLStructuredGridReader class."""
+
+    def __init__(self, filename):
+        """Initialize XMLStructuredGridReader."""
+        self._reader = _vtk.vtkXMLStructuredGridReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkXMLStructuredGridReader object."""
+        return self._reader
+
+
+class XMLMultiBlockDataReader(Reader):
+    """XMLMultiBlockDataReader class."""
+
+    def __init__(self, filename):
+        """Initialize XMLMultiBlockDataReader."""
+        self._reader = _vtk.vtkXMLMultiBlockDataReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkXMLMultiBlockDataReader object."""
+        return self._reader
+
 
 CLASS_READERS = {
     # Standard dataset readers:
-    #'.vti': _vtk.vtkXMLImageDataReader,
-    #'.pvti': _vtk.vtkXMLPImageDataReader,
-    #'.vtr': _vtk.vtkXMLRectilinearGridReader,
-    #'.pvtr': _vtk.vtkXMLPRectilinearGridReader,
-    #'.vtu': _vtk.vtkXMLUnstructuredGridReader,
-    #'.pvtu': _vtk.vtkXMLPUnstructuredGridReader,
-    '.vtp': XMLPolyReader,
-    #'.vts': _vtk.vtkXMLStructuredGridReader,
-    #'.vtm': _vtk.vtkXMLMultiBlockDataReader,
-    #'.vtmb': _vtk.vtkXMLMultiBlockDataReader,
+    '.vti': XMLImageDataReader,
+    '.pvti': XMLPImageDataReader,
+    '.vtr': XMLRectilinearGridReader,
+    '.pvtr': XMLPRectilinearGridReader,
+    '.vtu': XMLUnstructuredGridReader,
+    '.pvtu': XMLPUnstructuredGridReader,
+    '.vtp': XMLPolyDataReader,
+    '.vts': XMLStructuredGridReader,
+    '.vtm': XMLMultiBlockDataReader,
+    '.vtmb': XMLMultiBlockDataReader,
     #'.case': _vtk.GenericEnSightReader,
     #'.foam': _vtkOpenFOAMReader,
 }
