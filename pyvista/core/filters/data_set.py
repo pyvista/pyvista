@@ -285,13 +285,13 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        both : bool, optional (default False)
-            If true, also returns the complementary clipped mesh.
+        both : bool, optional
+            If ``True``, also returns the complementary clipped mesh.
 
         Returns
         -------
-        pdata : pyvista.PolyData (if `both` is False), tuple(pyvista.PolyData, pyvista.PolyData) otherwise
-            Clipped dataset(s).
+        :class:`pyvista.PolyData` or tuple
+            Clipped dataset if ``both=False``.  If ``both=True`` then returns a tuple of both clipped datasets.
 
         Examples
         --------
@@ -303,7 +303,8 @@ class DataSetFilters:
         >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100)
         >>> clipped.plot()
 
-        Get clipped meshes corresponding to the portions of the mesh above and below 100
+        Get clipped meshes corresponding to the portions of the mesh above and below 100.
+
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
@@ -344,8 +345,7 @@ class DataSetFilters:
             result0 = dataset
 
         if both:
-            result1 = _get_output(alg, oport=1)
-            return result0, result1
+            return result0, _get_output(alg, oport=1)
         else:
             return result0
 
