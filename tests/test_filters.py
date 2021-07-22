@@ -9,7 +9,7 @@ from vtk import VTK_QUADRATIC_HEXAHEDRON
 
 from pyvista._vtk import VTK9
 import pyvista
-from pyvista import examples
+from pyvista import examples, Sphere
 from pyvista.core.errors import VTKVersionError
 
 
@@ -68,12 +68,13 @@ def test_clip_filter(datasets):
                 assert isinstance(clp, pyvista.UnstructuredGrid)
 
 
-@skip_windows
+# @skip_windows
 @skip_mac
 @pytest.mark.parametrize('both', [False, True])
 @pytest.mark.parametrize('invert', [False, True])
-def test_clip_by_scalars_filter(datasets, both, invert):
+def test_clip_by_scalars_filter(both, invert):
     """This tests the clip filter on all datatypes available filters"""
+    datasets = [Sphere()]
     for i, dataset_in in enumerate(datasets):
         dataset = dataset_in.copy()  # don't modify in-place
         if dataset.active_scalars_info.name is None:
@@ -97,9 +98,11 @@ def test_clip_by_scalars_filter(datasets, both, invert):
                 assert isinstance(clp, pyvista.UnstructuredGrid)
 
             if expect_le:
-                assert dataset.active_scalars.max() <= clip_value
+                assert clp.active_scalars.min() <= clip_value
             else:
-                assert dataset.active_scalars.min() >= clip_value
+                assert clp.active_scalars.max() >= clip_value
+
+
 
 
 @skip_py2_nobind
