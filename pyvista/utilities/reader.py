@@ -177,7 +177,6 @@ class Reader(ABC):
         self.reader.Update()
 
 
-
 class XMLImageDataReader(Reader):
     """XMLImageDataReader class."""
 
