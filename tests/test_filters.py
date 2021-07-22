@@ -67,24 +67,39 @@ def test_clip_filter(datasets):
             else:
                 assert isinstance(clp, pyvista.UnstructuredGrid)
 
+
 @skip_windows
 @skip_mac
-def test_clip_by_scalars_filter(datasets):
+@pytest.mark.parametrize('both', [False, True])
+@pytest.mark.parametrize('invert', [False, True])
+def test_clip_by_scalars_filter(datasets, both, invert):
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset_in in enumerate(datasets):
         dataset = dataset_in.copy()  # don't modify in-place
         if dataset.active_scalars_info.name is None:
             dataset['scalars'] = np.arange(dataset.n_points)
         clip_value = dataset.n_points/2
-        clp = dataset.clip_scalar(value=clip_value)
 
-        assert clp is not None
-        if isinstance(dataset, pyvista.PolyData):
-            assert isinstance(clp, pyvista.PolyData)
+        if both:
+            clps = dataset.clip_scalar(value=clip_value, both=True, invert=invert)
+            assert len(clps) == 2
+            expect_les = (invert, not invert)
         else:
-            assert isinstance(clp, pyvista.UnstructuredGrid)
+            clps = dataset.clip_scalar(value=clip_value, both=False, invert=invert),
+            assert len(clps) == 1
+            expect_les = invert,
 
-        assert dataset.active_scalars.min() <= clip_value
+        for clp, expect_le in zip(clps, expect_les):
+            assert clp is not None
+            if isinstance(dataset, pyvista.PolyData):
+                assert isinstance(clp, pyvista.PolyData)
+            else:
+                assert isinstance(clp, pyvista.UnstructuredGrid)
+
+            if expect_le:
+                assert dataset.active_scalars.max() <= clip_value
+            else:
+                assert dataset.active_scalars.min() >= clip_value
 
 
 @skip_py2_nobind
