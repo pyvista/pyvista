@@ -7,7 +7,21 @@ from pyvista import _vtk
 
 class Reader(ABC):
     """Fine-grained control of reading data files.
-    
+
+    Supported file types and Readers:
+    * .vti: XMLImageDataReader
+    * .pvti: XMLPImageDataReader
+    * .vtr: XMLRectilinearGridReader
+    * .pvtr: XMLPRectilinearGridReader
+    * .vtu: XMLUnstructuredGridReader,
+    * .pvtu: XMLPUnstructuredGridReader,
+    * .vtp: XMLPolyDataReader,
+    * .vts: XMLStructuredGridReader,
+    * .vtm: XMLMultiBlockDataReader,
+    * .vtmb: XMLMultiBlockDataReader,
+    * .case: EnSightReader,
+    * .foam: OpenFOAMReader,
+
     Parameters
     ----------
     filename : str
