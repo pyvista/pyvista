@@ -293,9 +293,12 @@ class DataSetFilters:
 
         alg.SetInputDataObject(dataset)
         alg.SetValue(value)
-        if scalars is not None:
-            dataset.set_active_scalars(scalars)
+        if scalars is None:
+            field, scalars = dataset.active_scalars_info
+        _, field = get_array(dataset, scalars, preference='point', info=True)
 
+        # SetInputArrayToProcess(idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.Update()  # Perform the Cut
         result = _get_output(alg)
