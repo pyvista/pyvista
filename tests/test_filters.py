@@ -98,9 +98,9 @@ def test_clip_by_scalars_filter(datasets, both, invert):
                 assert isinstance(clp, pyvista.UnstructuredGrid)
 
             if expect_le:
-                assert clp.active_scalars.min() <= clip_value
+                assert clp.point_arrays['to_clip'].min() <= clip_value
             else:
-                assert clp.active_scalars.max() >= clip_value
+                assert clp.point_arrays['to_clip'].max() >= clip_value
 
 
 @skip_py2_nobind
