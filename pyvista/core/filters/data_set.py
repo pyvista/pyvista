@@ -342,7 +342,11 @@ class DataSetFilters:
             result0 = dataset
 
         if both:
-            return result0, _get_output(alg, oport=1)
+            result1 = _get_output(alg, oport=1)
+            if isinstance(dataset, _vtk.vtkPolyData):
+                # For some reason vtkClipPolyData with SetGenerateClippedOutput on leaves unreferenced vertices
+                result0, result1 = (r.clean() for r in (result0, result1))
+            return result0, result1
         else:
             return result0
 
