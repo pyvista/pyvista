@@ -77,16 +77,16 @@ def test_clip_by_scalars_filter(datasets, both, invert):
 
     for i, dataset_in in enumerate(datasets):
         dataset = dataset_in.copy()  # don't modify in-place
-        if dataset.active_scalars_info.name is None:
-            dataset['scalars'] = np.arange(dataset.n_points)
+        dataset.point_arrays['to_clip'] = np.arange(dataset.n_points)
+
         clip_value = dataset.n_points/2
 
         if both:
-            clps = dataset.clip_scalar(value=clip_value, both=True, invert=invert)
+            clps = dataset.clip_scalar(scalars='to_clip', value=clip_value, both=True, invert=invert)
             assert len(clps) == 2
             expect_les = (invert, not invert)
         else:
-            clps = dataset.clip_scalar(value=clip_value, both=False, invert=invert),
+            clps = dataset.clip_scalar(scalars='to_clip', value=clip_value, both=False, invert=invert),
             assert len(clps) == 1
             expect_les = invert,
 
