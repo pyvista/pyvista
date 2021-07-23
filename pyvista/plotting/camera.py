@@ -14,7 +14,7 @@ class Camera(_vtk.vtkCamera):
 
     Examples
     --------
-    Create a camera at the pyvista module level
+    Create a camera at the pyvista module level.
 
     >>> import pyvista
     >>> camera = pyvista.Camera()
@@ -42,9 +42,49 @@ class Camera(_vtk.vtkCamera):
         else:
             self._renderer = None
 
+    def __repr__(self):
+       """Print a repr specifying the id of the camera and its camera type."""
+       return (f'<{self.__class__.__name__} at {hex(id(self))}>')
+
+    def __eq__(self, other):
+        """Compare whether the relevant attributes of two cameras are equal."""
+        # attributes which are native python types and thus implement __eq__
+
+        native_attrs = [
+            'position',
+            'focal_point',
+            'parallel_projection',
+            'distance',
+            'thickness',
+            'parallel_scale',
+            'clipping_range',
+            'view_angle',
+            'roll',
+        ]
+        for attr in native_attrs:
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+
+        this_trans = self.model_transform_matrix
+        that_trans = other.model_transform_matrix
+        trans_count = sum(1 for trans in [this_trans, that_trans] if trans is not None)
+        if trans_count == 1:
+            # either but not both are None
+            return False
+        if trans_count == 2:
+            if not np.array_equal(this_trans, that_trans):
+                return False
+
+        return True
+
+    def __del__(self):
+        """Delete the camera."""
+        self.RemoveAllObservers()
+        self.parent = None
+
     @property
     def position(self):
-        """Position of the camera in world coordinates.
+        """Return or set the position of the camera in world coordinates.
 
         Examples
         --------
@@ -52,20 +92,16 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.position
         (1.0, 1.0, 1.0)
+        >>> pl.camera.position = (2.0, 1.0, 1.0)
+        >>> pl.camera.position
+        (2.0, 1.0, 1.0)
 
         """
         return self.GetPosition()
 
     @position.setter
     def position(self, value):
-        """Set the position of the camera.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.camera.position = (2.0, 1.0, 1.0)
-        """
+        """Set the position of the camera."""
         self.SetPosition(value)
         self._elevation = 0.0
         self._azimuth = 0.0
@@ -100,34 +136,41 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.focal_point
         (0.0, 0.0, 0.0)
+        >>> pl.camera.focal_point = (2.0, 0.0, 0.0)
+        >>> pl.camera.focal_point
+        (2.0, 0.0, 0.0)
         """
         return self.GetFocalPoint()
 
     @focal_point.setter
     def focal_point(self, point):
-        """Set the location of the camera's focus in world coordinates.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.camera.focal_point = (2.0, 0.0, 0.0)
-        """
+        """Set the location of the camera's focus in world coordinates."""
         self.SetFocalPoint(point)
 
     @property
     def model_transform_matrix(self):
-        """Return the camera's model transformation matrix.
+        """Return or set the camera's model transformation matrix.
 
         Examples
         --------
         >>> import pyvista
+        >>> import numpy as np
         >>> pl = pyvista.Plotter()
         >>> pl.camera.model_transform_matrix
         array([[1., 0., 0., 0.],
                [0., 1., 0., 0.],
                [0., 0., 1., 0.],
                [0., 0., 0., 1.]])
+        >>> pl.camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
+        ...                                              [0., 1., 0., 0.],
+        ...                                              [0., 0., 1., 0.],
+        ...                                              [0., 0., 0., 0.5]])
+        >>> 
+        array([[1., 0., 0., 0.],
+               [0., 1., 0., 0.],
+               [0., 0., 1., 0.],
+               [0., 0., 0., 0.5]])
+
         """
         vtk_matrix = self.GetModelTransformMatrix()
         matrix = np.empty((4, 4))
@@ -136,18 +179,7 @@ class Camera(_vtk.vtkCamera):
 
     @model_transform_matrix.setter
     def model_transform_matrix(self, matrix):
-        """Set the camera's model transformation matrix.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> trans_mat = np.array([[1., 0., 0., 0.],
-                                  [0., 1., 0., 0.],
-                                  [0., 0., 1., 0.],
-                                  [0., 0., 0., 1.]])
-        >>> pl.camera.model_transform_matrix = trans_mat
-        """
+        """Set the camera's model transformation matrix."""
         vtk_matrix = _vtk.vtkMatrix4x4()
         vtk_matrix.DeepCopy(matrix.ravel())
         self.SetModelTransformMatrix(vtk_matrix)
@@ -163,20 +195,29 @@ class Camera(_vtk.vtkCamera):
 
     @property
     def distance(self):
-        """Distance from the camera position to the focal point.
+        """Return or set the distance from the camera position to the focal point.
 
         Examples
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.camera.distance  # doctest:+SKIP
-        1.732050807568
+        >>> pl.camera.distance
+        1.73205
+        >>> pl.camera.distance = 2.0
+        >>> pl.camera.distance
+        2.0
+
         """
         return self.GetDistance()
 
+    @distance.setter
+    def distance(self, distance):
+        """Set the distance from the camera position to the focal point."""
+        self.SetDistance(distance)
+
     @property
     def thickness(self):
-        """Return the distance between clipping planes.
+        """Return or set the distance between clipping planes.
 
         Examples
         --------
@@ -184,24 +225,21 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.thickness
         1000.0
+        >>> pl.camera.thickness = 100
+        >>> pl.camera.thickness
+        100.0
+
         """
         return self.GetThickness()
 
     @thickness.setter
     def thickness(self, length):
-        """Set the distance between clipping planes.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.camera.thickness = 100
-        """
+        """Set the distance between clipping planes."""
         self.SetThickness(length)
 
     @property
     def parallel_scale(self):
-        """Scaling used for a parallel projection.
+        """Return or set the scaling used for a parallel projection.
 
         Examples
         --------
@@ -209,19 +247,16 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.parallel_scale
         1.0
+        >>> pl.camera.parallel_scale = 2.0
+        >>> pl.camera.parallel_scale
+        2.0
+
         """
         return self.GetParallelScale()
 
     @parallel_scale.setter
     def parallel_scale(self, scale):
-        """Set the scaling used for parallel projection.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.camera.parallel_scale = 2.0
-        """
+        """Set the scaling used for parallel projection."""
         self.SetParallelScale(scale)
 
     def zoom(self, value):
@@ -245,7 +280,7 @@ class Camera(_vtk.vtkCamera):
 
     @property
     def up(self):
-        """Return the "up" of the camera.
+        """Return or set the "up" of the camera.
 
         Examples
         --------
@@ -253,20 +288,16 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.up
         (0.0, 0.0, 1.0)
+        >>> pl.camera.up = (0.410018, 0.217989, 0.885644)
+        >>> pl.camera.up
+        (0.410018, 0.217989, 0.885644)
 
         """
         return self.GetViewUp()
 
     @up.setter
     def up(self, vector):
-        """Set the "up" of the camera.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.camera.up = (0.410018, 0.217989, 0.885644)
-        """
+        """Set the "up" of the camera."""
         self.SetViewUp(vector)
 
     def enable_parallel_projection(self):
@@ -339,39 +370,34 @@ class Camera(_vtk.vtkCamera):
 
     @property
     def clipping_range(self):
-        """Return the location of the near and far clipping planes along the direction of projection.
+        """Return or set the location of the clipping planes.
 
+        Clipping planes are the the near and far clipping planes along
+        the direction of projection.
+        
         Examples
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> pl.camera.clipping_range
         (0.01, 1000.01)
+        >>> pl.camera.clipping_range = (1, 10)
+        >>> pl.camera.clipping_range
+        (1.0, 10.0)
+
         """
         return self.GetClippingRange()
 
     @clipping_range.setter
     def clipping_range(self, points):
-        """Set the location of the near and far clipping planes along the direction of projection.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.camera.clipping_range = (1, 10)
-        """
+        """Set the clipping planes."""
         if points[0] > points[1]:
             raise ValueError(f'Near point must be lower than the far point.')
         self.SetClippingRange(points[0], points[1])
 
-    def __del__(self):
-        """Delete the camera."""
-        self.RemoveAllObservers()
-        self.parent = None
-
     @property
     def view_angle(self):
-        """Return the camera view angle.
+        """Return or set the camera view angle.
 
         Examples
         --------
@@ -379,9 +405,17 @@ class Camera(_vtk.vtkCamera):
         >>> plotter = pyvista.Plotter()
         >>> plotter.camera.view_angle
         30.0
+        >>> plotter.camera.view_angle = 60.0
+        >>> plotter.camera.view_angle
+        60.0
 
         """
         return self.GetViewAngle()
+
+    @view_angle.setter
+    def view_angle(self, value):
+        """Set the camera view angle."""
+        self.SetViewAngle(value)
 
     @property
     def direction(self):
@@ -408,7 +442,7 @@ class Camera(_vtk.vtkCamera):
 
         Returns
         -------
-        frustum : pv.PolyData
+        pyvista.PolyData
             View frustum.
 
         Examples
@@ -447,21 +481,15 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.roll
         -120.00000000000001
+        >>> pl.camera.roll = 45.0
+        >>> pl.camera.roll
+        45.0
         """
         return self.GetRoll()
 
     @roll.setter
     def roll(self, angle):
-        """Set the rotate of the camera about the direction of projection.
-
-        This will spin the camera about its axis.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.camera.roll = 45.0
-        """
+        """Set the rotate of the camera about the direction of projection."""
         self.SetRoll(angle)
 
     @property
@@ -478,19 +506,16 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.elevation
         0.0
+        >>> pl.camera.elevation = 45.0
+        >>> pl.camera.elevation
+        45.0
+
         """
         return self._elevation
 
     @elevation.setter
     def elevation(self, angle):
-        """Set the vertical rotation of the scene.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.camera.elevation = 45.0
-        """
+        """Set the vertical rotation of the scene."""
         if self._elevation:
             self.Elevation(-self._elevation)
         self._elevation = angle
@@ -511,20 +536,68 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pyvista.Plotter()
         >>> pl.camera.azimuth
         0.0
+        >>> pl.camera.azimuth = 45.0
+        >>> pl.camera.azimuth
+        45.0
+
         """
         return self._azimuth
 
     @azimuth.setter
     def azimuth(self, angle):
-        """Set the azimuth rotation of the camera.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.camera.azimuth = 45.0
-        """
+        """Set the azimuth rotation of the camera."""
         if self._azimuth:
             self.Azimuth(-self._azimuth)
         self._azimuth = angle
         self.Azimuth(angle)
+
+    def copy(self):
+        """Return a deep copy of the camera.
+
+        Returns
+        -------
+        pyvista.Camera
+            Deep copy of the camera.
+
+        Examples
+        --------
+        Create a camera and check that it shares a transformation
+        matrix with its shallow copy.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> camera = pv.Camera()
+        >>> camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
+        ...                                           [0., 1., 0., 0.],
+        ...                                           [0., 0., 1., 0.],
+        ...                                           [0., 0., 0., 1.]])
+        >>> copied_camera = camera.copy()
+        >>> copied_camera == camera
+        True
+        >>> camera.model_transform_matrix = np.array([[1., 0., 0., 0.],
+        ...                                           [0., 1., 0., 0.],
+        ...                                           [0., 0., 1., 0.],
+        ...                                           [0., 0., 0., 0.5]])
+        >>> copied_camera == camera
+        False
+        """
+        immutable_attrs = [
+            'position',
+            'focal_point',
+            'model_transform_matrix',
+            'distance',
+            'thickness',
+            'parallel_scale',
+            'up',
+            'clipping_range',
+            'view_angle',
+            'roll',
+            'parallel_projection',
+        ]
+        new_camera = Camera()
+
+        for attr in immutable_attrs:
+            value = getattr(self, attr)
+            setattr(new_camera, attr, value)
+
+        return new_camera

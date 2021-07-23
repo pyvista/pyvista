@@ -33,46 +33,47 @@ Let's start with a point cloud - this is a mesh type that only has vertices.
 You can create one by defining a 2D array XYZ coordinates like so:
 
 
-.. jupyter-execute::
-    :hide-code:
-
-    # backend may not be panel, so we have to set this here.
-    import pyvista as pv
-    pv.set_jupyter_backend('panel')
-    pv.set_plot_theme('document')
-
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     import numpy as np
     import pyvista as pv
 
     nodes = np.random.rand(100, 3)
     mesh = pv.PolyData(nodes)
-    mesh.plot(point_size=10)
+    mesh.plot(point_size=30, render_points_as_spheres=True)
+
 
 But it's import to note that most meshes have some sort of
 connectivity between nodes such as this gridded mesh:
 
-.. jupyter-execute::
 
+.. pyvista-plot::
+    :context:
+
+    import pyvista as pv
+    import numpy as np
     from pyvista import examples
 
     mesh = examples.load_hexbeam()
-    bcpos = [(6.20, 3.00, 7.50),
-             (0.16, 0.13, 2.65),
-             (-0.28, 0.94, -0.21)]
+    cpos = [(6.20, 3.00, 7.50),
+            (0.16, 0.13, 2.65),
+            (-0.28, 0.94, -0.21)]
 
     pl = pv.Plotter()
     pl.add_mesh(mesh, show_edges=True, color='white')
     pl.add_mesh(pv.PolyData(mesh.points), color='red',
            point_size=10, render_points_as_spheres=True)
-    pl.camera_position = bcpos
+    pl.camera_position = cpos
     pl.show()
 
 Or this triangulated surface:
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
+    import pyvista as pv
+    from pyvista import examples
     mesh = examples.download_bunny_coarse()
 
     pl = pv.Plotter()
@@ -95,18 +96,18 @@ lines (edges colored in black) connecting nodes (colored in red).  For
 example, a cell in the beam example is a a voxel defined by region
 between eight nodes in that mesh:
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     mesh = examples.load_hexbeam()
 
     pl = pv.Plotter()
     pl.add_mesh(mesh, show_edges=True, color='white')
     pl.add_mesh(pv.PolyData(mesh.points), color='red',
-                point_size=10, render_points_as_spheres=True)
+                point_size=20, render_points_as_spheres=True)
 
-    pl.add_mesh(mesh.extract_cells(mesh.n_cells-1),
-                color='pink', edge_color='blue',
-                line_width=5, show_edges=True)
+    pl.add_mesh(mesh.extract_cells(mesh.n_cells - 1), style='wireframe',
+                color='blue', line_width=30, show_edges=True)
 
     pl.camera_position = [(6.20, 3.00, 7.50),
                           (0.16, 0.13, 2.65),
@@ -136,12 +137,11 @@ Each element in an attribute array must correspond to a node or cell
 in the mesh.  Let's create some point data for the beam mesh.  When
 plotting the values between nodes are interpolated across the cells.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     mesh.point_arrays['my point values'] = np.arange(mesh.n_points)
-
-    mesh.plot(scalars='my point values', cpos=bcpos,
-              show_edges=True)
+    mesh.plot(scalars='my point values', cpos=cpos, show_edges=True)
 
 
 Cell data refers to arrays of values (scalars, vectors, etc.) that
@@ -149,18 +149,19 @@ live throughout each cell of the mesh.
 That is the entire cell (2D face or 3D volume) is assigned the value of
 that attribute.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     mesh.cell_arrays['my cell values'] = np.arange(mesh.n_cells)
-    mesh.plot(scalars='my cell values', cpos=bcpos,
-              show_edges=True)
+    mesh.plot(scalars='my cell values', cpos=cpos, show_edges=True)
 
 
 Here's a comparison of point data vs. cell data and how point data is
 interpolated across cells when mapping colors. This is unlike cell
 data which has a single value across the cell's domain:
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     mesh = examples.load_uniform()
 
@@ -169,3 +170,32 @@ data which has a single value across the cell's domain:
     pl.subplot(0,1)
     pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
     pl.show()
+
+
+Assigning Scalars to a Mesh
+---------------------------
+
+Here's how we assign values to cell attributes and plot it.  Here, we
+generate cube containing 6 faces and assign each face an integer from
+``range(6)`` and then have it plotted.
+
+.. pyvista-plot::
+    :context:
+
+    cube = pv.Cube()
+    cube.cell_arrays['myscalars'] = range(6)
+    cube.plot(cmap='bwr')
+
+Note how this varies from assigning scalars to each point
+
+.. note::
+   We use :func:`pyvista.PolyDataFilters.clean` to merge the faces of
+   the cube since, by default the cube is created with unmerged faces
+   and duplicate points.
+
+.. pyvista-plot::
+    :context:
+
+    cube = pv.Cube().clean()
+    cube.point_arrays['myscalars'] = range(8)
+    cube.plot(cmap='bwr')

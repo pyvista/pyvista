@@ -137,19 +137,19 @@ def is_pyvista_dataset(obj):
 
 
 def point_array(mesh, name):
-    """Return point array of a vtk object."""
+    """Return point array of a pyvista or vtk object."""
     vtkarr = mesh.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 
 def field_array(mesh, name):
-    """Return field array of a vtk object."""
+    """Return field array of a pyvista or vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 
 def cell_array(mesh, name):
-    """Return cell array of a vtk object."""
+    """Return cell array of a pyvista or vtk object."""
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
@@ -251,7 +251,33 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
 
 
 def vtk_points(points, deep=True):
-    """Convert numpy array or array-like to a vtkPoints object."""
+    """Convert numpy array or array-like to a vtkPoints object.
+
+    Parameters
+    ----------
+    points : np.ndarray or sequence
+        Points to convert.  Should be 1 or 2 dimensional.  Accepts a
+        single point or several points.
+
+    deep : bool, optional
+        Perform a deep copy of the array.  Only applicable if
+        ``points`` is a ``np.ndarray``.
+
+    Returns
+    -------
+    vtk.vtkPoints
+        vtkPoints object.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> import numpy as np
+    >>> points = np.random.random((10, 3))
+    >>> vpoints = pyvista.vtk_points(points)
+    >>> vpoints  # doctest:+SKIP
+    (vtkmodules.vtkCommonCore.vtkPoints)0x7f0c2e26af40
+
+    """
     points = np.asanyarray(points)
 
     # verify is numeric
@@ -307,7 +333,7 @@ def line_segments_from_points(points):
     >>> import numpy as np
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
     >>> lines = pyvista.lines_from_points(points)
-    >>> cpos = lines.plot()
+    >>> lines.plot()
 
     """
     if len(points) % 2 != 0:
@@ -399,7 +425,7 @@ def make_tri_mesh(points, faces):
     >>> faces = np.array([[0, 1, 4], [4, 7, 6], [2, 5, 4], [4, 5, 8],
     ...                   [0, 4, 3], [3, 4, 6], [1, 2, 4], [4, 8, 7]])
     >>> tri_mesh = pyvista.make_tri_mesh(points, faces)
-    >>> cpos = tri_mesh.plot(show_edges=True, line_width=5)
+    >>> tri_mesh.plot(show_edges=True, line_width=5)
 
     """
     if points.shape[1] != 3:
@@ -413,7 +439,44 @@ def make_tri_mesh(points, faces):
 
 
 def vector_poly_data(orig, vec):
-    """Create a vtkPolyData object composed of vectors."""
+    """Create a pyvista.PolyData object composed of vectors.
+
+    Parameters
+    ----------
+    orig : np.ndarray
+        Array of vector origins.
+
+    vec : np.ndarray
+        Array of vectors.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh containing the ``orig`` points along with the
+        ``'vectors'`` and ``'mag'`` point arrays representing the
+        vectors and magnitude of the the vectors at each point.
+
+    Examples
+    --------
+    Create basic vector field.  This is a point cloud where each point
+    has a vector and magnitude attached to it.
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> x, y = np.meshgrid(np.linspace(-5,5,10),np.linspace(-5,5,10))
+    >>> points = np.vstack((x.ravel(), y.ravel(), np.zeros(x.size))).T
+    >>> u = x/np.sqrt(x**2 + y**2)
+    >>> v = y/np.sqrt(x**2 + y**2)
+    >>> vectors = np.vstack((u.ravel()**3, v.ravel()**3, np.zeros(u.size))).T
+    >>> pdata = pyvista.vector_poly_data(points, vectors)
+    >>> pdata.point_arrays.keys()
+    ['vectors', 'mag']
+
+    Convert these to arrows and plot it.
+
+    >>> pdata.glyph(orient='vectors', scale='mag').plot()
+
+    """
     # shape, dimension checking
     if not isinstance(orig, np.ndarray):
         orig = np.asarray(orig)
@@ -537,10 +600,11 @@ def wrap(dataset):
     """Wrap any given VTK data object to its appropriate pyvista data object.
 
     Other formats that are supported include:
+
     * 2D :class:`numpy.ndarray` of XYZ vertices
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
     * 3D :class:`trimesh.Trimesh` mesh.
-    * 3D :class:`meshio` mesh.
+    * 3D :class:`meshio.Mesh` mesh.
 
     Parameters
     ----------
@@ -705,15 +769,45 @@ def is_inside_bounds(point, bounds):
 
 
 def fit_plane_to_points(points, return_meta=False):
-    """Fit a plane to a set of points.
+    """Fit a plane to a set of points using the SVD algorithm.
 
     Parameters
     ----------
-    points : np.ndarray
-        Size n by 3 array of points to fit a plane through
+    points : sequence
+        Size ``[N x 3]`` sequence of points to fit a plane through.
 
     return_meta : bool
-        If true, also returns the center and normal used to generate the plane
+        If ``True``, also returns the center and normal used to
+        generate the plane.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Plane mesh.
+
+    np.ndarray
+        Plane center if ``return_meta=True``.
+
+    np.ndarray
+        Plane normal if ``return_meta=True``.
+
+    Examples
+    --------
+    Fit a plane to a random point cloud.
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> cloud = np.random.random((10, 3))
+    >>> cloud[:, 2] *= 0.1
+    >>> plane, center, normal = pyvista.fit_plane_to_points(cloud, return_meta=True)
+
+    Plot the fitted plane.
+
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(plane, color='tan', style='wireframe', line_width=4)
+    >>> _ = pl.add_points(cloud, render_points_as_spheres=True, 
+    ...                   color='r', point_size=30)
+    >>> pl.show()
 
     """
     data = np.array(points)
@@ -1009,6 +1103,8 @@ def cubemap(path='', prefix='', ext='.jpg'):
                                     f'{file_str}')
 
     texture = pyvista.Texture()
+    texture.SetMipmap(True)
+    texture.SetInterpolate(True)
     texture.cube_map = True  # Must be set prior to setting images
 
     # add each image to the cubemap

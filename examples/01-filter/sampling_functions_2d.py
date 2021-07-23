@@ -2,7 +2,7 @@
 Sample Function: Perlin Noise in 2D
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Here we use :func:`pyvista.core.imaging.sample_function` to sample
-perlin noise over a region to generate random terrain.
+Perlin noise over a region to generate random terrain.
 
 Perlin noise is atype of gradient noise often used by visual effects
 artists to increase the appearance of realism in computer graphics.
@@ -34,12 +34,12 @@ sampled = pv.sample_function(noise,
 # Warp by scalar
 # ~~~~~~~~~~~~~~
 # Here we warp by scalar to give the terrain some height based on the
-# value of the perlin noise.  This is necessary to the terrain its shape.
+# value of the Perlin noise.  This is necessary to the terrain its shape.
 
 mesh = sampled.warp_by_scalar('scalars')
 mesh = mesh.extract_surface()
 
-# clean and smooth a little to reduce perlin noise artifacts
+# clean and smooth a little to reduce Perlin noise artifacts
 mesh = mesh.smooth(n_iter=100, inplace=False, relaxation_factor=1)
 
 # This makes the "water" level look flat.

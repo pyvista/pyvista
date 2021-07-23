@@ -14,6 +14,8 @@ vtkRegularPolygonSource
 vtkPyramid
 
 """
+import ctypes
+
 import numpy as np
 
 import pyvista
@@ -82,7 +84,7 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Cylinder surface.
 
     Examples
@@ -91,7 +93,7 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
     >>> import numpy as np
     >>> cylinder = pyvista.Cylinder(center=[1, 2, 3], direction=[1, 1, 1], 
     ...                             radius=1, height=2)
-    >>> cpos = cylinder.plot(show_edges=True, line_width=5, cpos='xy')
+    >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
     """
     capping = kwargs.pop('cap_ends', capping)
     assert_empty_kwargs(**kwargs)
@@ -231,7 +233,7 @@ def Arrow(start=(0., 0., 0.), direction=(1., 0., 0.), tip_length=0.25,
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Arrow mesh.
 
     Examples
@@ -301,7 +303,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Sphere mesh.
 
     Examples
@@ -310,7 +312,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
 
     >>> import pyvista
     >>> sphere = pyvista.Sphere()
-    >>> cpos = sphere.plot(show_edges=True)
+    >>> sphere.plot(show_edges=True)
 
     Create a quarter sphere by setting ``end_theta``.
 
@@ -359,7 +361,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Plane mesh.
 
     Examples
@@ -401,7 +403,7 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
 
     Returns
     --------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Line mesh.
 
     Examples
@@ -460,7 +462,7 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Mesh of the cube.
 
     Examples
@@ -504,7 +506,7 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Mesh of the box.
 
     Examples
@@ -562,7 +564,7 @@ def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=None,
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Cone mesh.
 
     Examples
@@ -611,12 +613,12 @@ def Polygon(center=(0., 0., 0.), radius=1, normal=(0, 0, 1), n_sides=6):
 
     Returns
     -------
-    pyvista.PolyData
+    :class:`pyvista.PolyData`
         Mesh of the polygon.
 
     Examples
     --------
-    Create a 8 sided polygon.
+    Create an 8 sided polygon.
 
     >>> import pyvista
     >>> mesh = pyvista.Polygon(n_sides=8)
@@ -835,7 +837,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
-    >>> cpos = pl.show()
+    >>> pl.show()
     """
     check_valid_vector(pointa, 'pointa')
     check_valid_vector(pointb, 'pointb')
@@ -910,7 +912,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
-    >>> cpos = pl.show()
+    >>> pl.show()
     """
     check_valid_vector(center, 'center')
     if normal is None:
@@ -952,7 +954,7 @@ def Pyramid(points):
 
     Returns
     -------
-    pyvista.UnstructuredGrid
+    :class:`pyvista.UnstructuredGrid`
         Unstructured grid containing a single pyramid cell.
 
     Examples
@@ -964,7 +966,7 @@ def Pyramid(points):
     >>> pointd = [1.0, -1.0, 0.0]
     >>> pointe = [0.0, 0.0, 1.67]
     >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
-    >>> cpos = pyramid.plot(show_edges=True, line_width=5)
+    >>> pyramid.plot(show_edges=True, line_width=5)
     """
     if len(points) != 5:
         raise TypeError('Points must be given as length 5 np.ndarray or list')
@@ -987,3 +989,108 @@ def Pyramid(points):
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
     return pyvista.wrap(ug)
+
+
+def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
+    """Create a triangle defined by 3 points.
+
+    Parameters
+    ----------
+    points : np.ndarray or list
+        Points of the triangle.
+
+    Returns
+    -------
+    :class:`pyvista.PolyData`
+        Triangle mesh.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pointa = [0, 0, 0]
+    >>> pointb = [1, 0, 0]
+    >>> pointc = [0.5, 0.707, 0]
+    >>> triangle = pyvista.Triangle([pointa, pointb, pointc])
+    >>> triangle.plot(show_edges=True, line_width=5)
+    """
+    if len(points) != 3:
+        raise TypeError('Points must be given as length 3 np.ndarray or list')
+
+    check_valid_vector(points[0], 'points[0]')
+    check_valid_vector(points[1], 'points[1]')
+    check_valid_vector(points[2], 'points[2]')
+
+    cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
+    triangle = pyvista.PolyData(points, cells)
+
+    return triangle
+
+
+def Rectangle(points=[[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
+    """Create a rectangle defined by 4 points.
+
+    Parameters
+    ----------
+    points : length 3 sequence
+        Points of the rectangle.
+
+    Returns
+    -------
+    :class:`pyvista.PolyData`
+        Rectangle mesh.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pointa = [1, 0, 0]
+    >>> pointb = [1, 1, 0]
+    >>> pointc = [0, 1, 0]
+    >>> pointd = [0, 0, 0]
+    >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc, pointd])
+    >>> rectangle.plot(show_edges=True, line_width=5)
+    """
+    if len(points) != 4:
+        raise TypeError('Points must be given as length 4 np.ndarray or list')
+
+    check_valid_vector(points[0], 'points[0]')
+    check_valid_vector(points[1], 'points[1]')
+    check_valid_vector(points[2], 'points[2]')
+    check_valid_vector(points[3], 'points[3]')
+
+    cells = np.array([[4, 0, 1, 2, 3]], ctypes.c_long)
+    rectangle = pyvista.PolyData(points, cells)
+
+    return rectangle
+
+
+def Circle(radius=0.5, resolution=100):
+    """Create a single PolyData circle defined by radius in the XY plane.
+
+    Parameters
+    ----------
+    radius : float, optional
+        Radius of circle.
+
+    resolution : int, optional
+        Number of points on the circle.
+
+    Returns
+    -------
+    :class:`pyvista.PolyData`
+        Circle mesh.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> radius = 0.5
+    >>> circle = pyvista.Circle(radius)
+    >>> circle.plot(show_edges=True, line_width=5)
+    """
+    points = np.zeros((resolution, 3))
+    theta = np.linspace(0.0, 2.0*np.pi, resolution)
+    points[:, 0] = radius * np.cos(theta)
+    points[:, 1] = radius * np.sin(theta)
+    cells = np.array([np.append(np.array([resolution]), np.arange(resolution))], ctypes.c_long)
+    circle = pyvista.PolyData(points, cells)
+
+    return circle

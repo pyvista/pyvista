@@ -1,4 +1,6 @@
 """
+.. _surface_smoothing_example:
+
 Surface Smoothing
 ~~~~~~~~~~~~~~~~~
 

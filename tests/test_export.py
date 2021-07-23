@@ -22,7 +22,7 @@ def test_export_single(tmpdir):
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(data)
     plotter.export_vtkjs(filename)
-    cpos_out = plotter.show() # Export must be called before showing!
+    plotter.show() # Export must be called before showing!
     plotter.close()
     # Now make sure the file is there
     assert os.path.isfile(f'{filename}.vtkjs')
@@ -42,7 +42,7 @@ def test_export_multi(tmpdir):
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(multi)
     plotter.export_vtkjs(filename, compress_arrays=True)
-    cpos_out = plotter.show() # Export must be called before showing!
+    plotter.show() # Export must be called before showing!
     plotter.close()
     # Now make sure the file is there
     assert os.path.isfile(f'{filename}.vtkjs')
@@ -56,7 +56,7 @@ def test_export_texture(tmpdir):
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(data, texture=True)
     plotter.export_vtkjs(filename)
-    cpos_out = plotter.show() # Export must be called before showing!
+    plotter.show() # Export must be called before showing!
     plotter.close()
     # Now make sure the file is there
     assert os.path.isfile(f'{filename}.vtkjs')
@@ -70,7 +70,7 @@ def test_export_verts(tmpdir):
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(data)
     plotter.export_vtkjs(filename)
-    cpos_out = plotter.show() # Export must be called before showing!
+    plotter.show() # Export must be called before showing!
     plotter.close()
     # Now make sure the file is there
     assert os.path.isfile(f'{filename}.vtkjs')
@@ -84,7 +84,7 @@ def test_export_color(tmpdir):
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(data, color='yellow')
     plotter.export_vtkjs(filename)
-    cpos_out = plotter.show() # Export must be called before showing!
+    plotter.show() # Export must be called before showing!
     plotter.close()
     # Now make sure the file is there
     assert os.path.isfile(f'{filename}.vtkjs')
