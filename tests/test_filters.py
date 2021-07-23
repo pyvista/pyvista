@@ -103,6 +103,20 @@ def test_clip_by_scalars_filter(datasets, both, invert):
                 assert clp.point_arrays['to_clip'].max() >= clip_value
 
 
+def test_clip_filter_scalar_multiple():
+    mesh = pyvista.Plane()
+    mesh['x'] = mesh.points[:, 0].copy()
+    mesh['y'] = mesh.points[:, 1].copy()
+    mesh['z'] = mesh.points[:, 2].copy()
+
+    mesh_clip_x = mesh.clip_scalar(scalars='x', value=0.0)
+    assert np.isclose(mesh_clip_x['x'].max(), 0.0)
+    mesh_clip_y = mesh.clip_scalar(scalars='y', value=0.0)
+    assert np.isclose(mesh_clip_y['y'].max(), 0.0)
+    mesh_clip_z = mesh.clip_scalar(scalars='z', value=0.0)
+    assert np.isclose(mesh_clip_z['z'].max(), 0.0)
+
+
 @skip_py2_nobind
 def test_clip_filter_composite(composite):
     # Now test composite data structures

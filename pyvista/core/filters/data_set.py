@@ -328,12 +328,9 @@ class DataSetFilters:
 
         alg.SetInputDataObject(dataset)
         alg.SetValue(value)
-        if scalars is None:
-            field, scalars = dataset.active_scalars_info
-        _, field = get_array(dataset, scalars, preference='point', info=True)
+        if scalars is not None:
+            dataset.set_active_scalars(scalars)
 
-        # SetInputArrayToProcess(idx, port, connection, field, name)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(both)
 
