@@ -323,8 +323,6 @@ class DataSetFilters:
         alg.SetInsideOut(invert)  # invert the clip if needed
         _update_alg(alg, progress_bar, 'Clipping by a Scalar')
         result = _get_output(alg)
-
-        result.clean(inplace=True)
         
         if inplace:
             dataset.overwrite(result)
