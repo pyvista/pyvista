@@ -300,6 +300,8 @@ class DataSetFilters:
         alg.Update()  # Perform the Cut
         result = _get_output(alg)
 
+        result.clean(inplace=True)
+        
         if inplace:
             dataset.overwrite(result)
             return dataset
