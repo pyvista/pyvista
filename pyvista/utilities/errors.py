@@ -31,10 +31,12 @@ class VtkErrorCatcher:
     Parameters
     ----------
     raise_errors : bool, optional
-        Raise a ``RuntimeError`` when a VTK error is encountered.  Defaults to ``False``.
+        Raise a ``RuntimeError`` when a VTK error is encountered.
+        Defaults to ``False``.
 
     send_to_logging : bool, optional
-        Determine whether VTK errors raised within the context should also be sent to logging.  Defaults to ``True``.
+        Determine whether VTK errors raised within the context should
+        also be sent to logging.  Defaults to ``True``.
 
     Examples
     --------

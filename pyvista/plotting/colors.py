@@ -165,6 +165,10 @@ tab:cyan
 
 """
 
+IPYGANY_MAP = {'reds': 'Reds',
+               'spectral': 'Spectral',
+}
+
 # shamelessly copied from matplotlib.colors
 hexcolors = {
     'aliceblue':            '#F0F8FF',
@@ -397,6 +401,10 @@ def get_cmap_safe(cmap):
     except ImportError:
         raise ImportError('cmap requires matplotlib')
     if isinstance(cmap, str):
+        # check if this colormap has been mapped between ipygany
+        if cmap in IPYGANY_MAP:
+            cmap = IPYGANY_MAP[cmap]
+
         # Try colorcet first
         try:
             import colorcet

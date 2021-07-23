@@ -23,7 +23,7 @@ def pyvista_multi():
 
 def multi_from_datasets(*datasets):
     """Return pyvista multiblock composed of any number of datasets."""
-    return MultiBlock([*datasets])
+    return MultiBlock(datasets)
 
 
 def test_multi_block_init_vtk():
@@ -358,7 +358,8 @@ def test_multi_block_list_index(ant, sphere, uniform, airplane, globe):
 
 def test_multi_block_volume(ant, airplane, sphere, uniform):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
-    assert multi.volume
+    vols = ant.volume + sphere.volume + uniform.volume + airplane.volume
+    assert multi.volume == pytest.approx(vols)
 
 
 def test_multi_block_length(ant, sphere, uniform, airplane):

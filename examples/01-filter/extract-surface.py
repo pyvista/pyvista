@@ -1,4 +1,6 @@
 """
+.. _extract_surface_example:
+
 Extract Surface
 ~~~~~~~~~~~~~~~
 

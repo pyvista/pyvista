@@ -24,6 +24,11 @@ pyvista.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
 pyvista.set_plot_theme("document")
 pyvista.global_theme.window_size = np.array([1024, 768]) * 2
+pyvista.global_theme.font.size = 40
+pyvista.global_theme.font.label_size = 40
+pyvista.global_theme.font.title_size = 40
+pyvista.global_theme.return_cpos = False
+pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
 pyvista.FIGURE_PATH = os.path.join(os.path.abspath("./images/"), "auto-generated/")
 if not os.path.exists(pyvista.FIGURE_PATH):
@@ -43,7 +48,6 @@ warnings.filterwarnings(
 
 # -- General configuration ------------------------------------------------
 numfig = False
-html_show_sourcelink = False
 html_logo = "./_static/pyvista_logo_sm.png"
 
 sys.path.append(os.path.abspath("./_ext"))
@@ -52,6 +56,7 @@ sys.path.append(os.path.abspath("./_ext"))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.intersphinx",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.doctest",
@@ -66,6 +71,21 @@ extensions = [
     "pyvista.ext.plot_directive",
 ]
 
+# return type inline with the description.
+napoleon_use_rtype = False
+
+add_module_names = False
+
+# Intersphinx mapping
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/dev', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'numpy': ('https://numpy.org/devdocs', None),
+    'matplotlib': ('https://matplotlib.org/stable', None),
+    'imageio': ('https://imageio.readthedocs.io/en/stable', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
+    'pytest': ('https://docs.pytest.org/en/stable', None),
+}
 
 linkcheck_retries = 3
 linkcheck_timeout = 500
@@ -112,9 +132,6 @@ pygments_style = "friendly"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
-
-# Generate plots for example sections
-numpydoc_use_plots = True
 
 # -- Sphinx Gallery Options
 from sphinx_gallery.sorting import FileNameSortKey
@@ -165,7 +182,7 @@ def _custom_parse_generic_section(self, section, use_admonition):
     has_pyvista = any(['pyvista' in line for line in lines])
     if has_pyvista:
         for line in lines:
-            if '.plot(' in line or '.show(' in line:
+            if 'plot' in line or 'show' in line:
                 has_plotting = True
     
     # add directive and indent to entire section
@@ -234,7 +251,9 @@ html_theme_options = {
     ],
 }
 
-html_sidebars = {"**": ["search-field.html", "sidebar-nav-bs.html"]}
+# sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
+# already loads it
+panels_add_bootstrap_css = False
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

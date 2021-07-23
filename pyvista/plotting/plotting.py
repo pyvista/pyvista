@@ -230,6 +230,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.last_image_depth = None
         self.last_image = None
 
+        # set hidden line removal based on theme
+        if self.theme.hidden_line_removal:
+            self.enable_hidden_line_removal()
+
     @property
     def theme(self):
         """Return or set the theme used for this plotter.
@@ -255,6 +259,220 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             '``pyvista.themes.DefaultTheme``, '
                             f'not {type(theme).__name__}.')
         self._theme.load_theme(pyvista.global_theme)
+
+    def import_gltf(self, filename, set_camera=True):
+        """Import a glTF file into the plotter.
+
+        See https://www.khronos.org/gltf/ for more information.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the glTF file.
+
+        set_camera : bool, optional
+            Set the camera viewing angle to one compatible with the
+            default three.js perspective (``'xy'``).
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> helmet_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
+        >>> texture = examples.hdr.download_dikhololo_night()  # doctest:+SKIP
+        >>> pl = pyvista.Plotter()  # doctest:+SKIP
+        >>> pl.import_gltf(helmet_file)  # doctest:+SKIP
+        >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
+        >>> pl.camera.zoom(1.8)  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
+
+        See :ref:`load_gltf` for a full example using this method.
+
+        """
+        if not _vtk.VTK9:  # pragma: no cover
+            raise RuntimeError('Support for glTF requires VTK v9 or newer')
+
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOImport import vtkGLTFImporter
+        importer = vtkGLTFImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.ren_win)
+        importer.Update()
+
+        # set camera position to a three.js viewing perspective
+        if set_camera:
+            self.camera_position = 'xy'
+
+    def export_gltf(self, filename, inline_data=True, rotate_scene=True,
+                    save_normals=True):
+        """Export the current rendering scene as a glTF file.
+
+        Visit https://gltf-viewer.donmccurdy.com/ for an online viewer.
+
+        See https://vtk.org/doc/nightly/html/classvtkGLTFExporter.html
+        for limitations regarding the exporter.
+
+        Parameters
+        ----------
+        filename : str
+            Path to export the gltf file to.
+
+        inline_data : bool, optional
+            Sets if the binary data be included in the json file as a
+            base64 string.  When ``True``, only one file is exported.
+
+        rotate_scene : bool, optional
+            Rotate scene to be compatible with the glTF specifications.
+
+        save_normals : bool, optional
+            Saves the point array ``'Normals'`` as ``'NORMALS'`` in
+            the outputted scene.
+
+        Examples
+        --------
+        Output a simple point cloud represented as balls.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> point_cloud = np.random.random((100, 3))
+        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata['orig_sphere'] = np.arange(100)
+        >>> sphere = pyvista.Sphere(radius=0.02)
+        >>> pc = pdata.glyph(scale=False, geom=sphere)
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pc, cmap='reds', smooth_shading=True,
+        ...                 show_scalar_bar=False)
+        >>> pl.export_gltf('balls.gltf')  # doctest:+SKIP
+        >>> pl.show()
+
+        Output the orientation plotter.
+
+        >>> from pyvista import demos
+        >>> pl = demos.orientation_plotter()
+        >>> pl.export_gltf('orientation_plotter.gltf')  # doctest:+SKIP
+        >>> pl.show()
+
+        """
+        if not _vtk.VTK9:  # pragma: no cover
+            raise RuntimeError('Support for glTF requires VTK v9 or newer')
+
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError('This plotter has been closed and is unable to export '
+                               'the scene.')
+
+        from vtkmodules.vtkIOExport import vtkGLTFExporter
+
+        # rotate scene to gltf compatible view
+        if rotate_scene:
+            for renderer in self.renderers:
+                for actor in renderer.actors.values():
+                    if hasattr(actor, 'RotateX'):
+                        actor.RotateX(-90)
+                        actor.RotateZ(-90)
+
+                    if save_normals:
+                        try:
+                            mapper = actor.GetMapper()
+                            if mapper is None:
+                                continue
+                            dataset = mapper.GetInputAsDataSet()
+                            if 'Normals' in dataset.point_arrays:
+                                normals = dataset.point_arrays['Normals']
+                                dataset.point_array.append(normals, 'NORMAL',
+                                                           active_scalars=False,
+                                                           deep_copy=False)
+                                
+                        except:
+                            pass
+
+        exporter = vtkGLTFExporter()
+        exporter.SetRenderWindow(self.ren_win)
+        exporter.SetFileName(filename)
+        exporter.SetInlineData(inline_data)
+        exporter.SetSaveNormal(save_normals)
+        exporter.Update()
+
+        # rotate back if applicable
+        if rotate_scene:
+            for renderer in self.renderers:
+                for actor in renderer.actors.values():
+                    if hasattr(actor, 'RotateX'):
+                        actor.RotateZ(90)
+                        actor.RotateX(90)
+
+    def enable_hidden_line_removal(self, all_renderers=True):
+        """Enable hidden line removal.
+
+        Wireframe geometry will be drawn using hidden line removal if
+        the rendering engine supports it.
+
+        Parameters
+        ----------
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If
+            ``False``, then only applies to the active renderer.
+
+        See Also
+        --------
+        :func:`disable_hidden_line_removal <BasePlotter.disable_hidden_line_removal>`
+
+        Examples
+        --------
+        Create a side-by-side plotter and render a sphere in wireframe
+        with hidden line removal enabled on the left and disabled on
+        the right.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(theta_resolution=20, phi_resolution=20)
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
+        >>> _ = pl.add_text("With hidden line removal")
+        >>> pl.enable_hidden_line_removal(all_renderers=False)
+        >>> pl.subplot(0, 1)
+        >>> pl.disable_hidden_line_removal(all_renderers=False)
+        >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
+        >>> _ = pl.add_text("Without hidden line removal")
+        >>> pl.show()
+
+        """
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.enable_hidden_line_removal()
+        else:
+            self.renderer.enable_hidden_line_removal()
+
+    def disable_hidden_line_removal(self, all_renderers=True):
+        """Disable hidden line removal.
+
+        Parameters
+        ----------
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If
+            ``False``, then only applies to the active renderer.
+
+        See Also
+        --------
+        :func:`enable_hidden_line_removal <BasePlotter.enable_hidden_line_removal>`
+
+        Examples
+        --------
+        Enable and then disable hidden line removal.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.enable_hidden_line_removal()
+        >>> pl.disable_hidden_line_removal()
+
+        """
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.disable_hidden_line_removal()
+        else:
+            self.renderer.disable_hidden_line_removal()
 
     @property
     def scalar_bar(self):
@@ -315,12 +533,39 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def renderer(self):
-        """Return the active renderer."""
+        """Return the active renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.renderer  # doctest:+SKIP
+        (Renderer)0x7f916129bfa0
+
+        """
         return self.renderers.active_renderer
 
     @property
     def store_image(self):
-        """Return if an image will be saved on close."""
+        """Store last rendered frame on close.
+
+        This is normally disabled to avoid caching the image, and is
+        enabled by default by setting:
+
+        ``pyvista.BUILDING_GALLERY = True``
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(off_screen=True)
+        >>> pl.store_image = True
+        >>> _ = pl.add_mesh(pyvista.Cube())
+        >>> pl.show()
+        >>> image = pl.last_image
+        >>> type(image)  # doctest:+SKIP
+        <class 'numpy.ndarray'>
+
+        """
         return self._store_image
 
     @store_image.setter
@@ -338,6 +583,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         index_column : int
             Index of the subplot to activate along the columns.
+
+        Examples
+        --------
+        Create a 2 wide plot and set the background of right-hand plot
+        to orange.  Add a cube to the left plot and a sphere to the
+        right.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> actor = pl.add_mesh(pyvista.Cube())
+        >>> pl.subplot(0, 1)
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> pl.set_background('orange', all_renderers=False)
+        >>> pl.show()
 
         """
         self.renderers.set_active_renderer(index_row, index_column)
@@ -362,6 +621,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         only_active : bool
             If ``True``, only change the active renderer. The default
             is that every renderer is affected.
+
+        Examples
+        --------
+        >>> from pyvista import demos
+        >>> pl = demos.orientation_plotter()
+        >>> pl.enable_3_lights()
+        >>> pl.show()
+
+        Note how this varies from the default plotting.
+
+        >>> pl = demos.orientation_plotter()
+        >>> pl.show()
 
         """
         def _to_pos(elevation, azimuth):
@@ -404,6 +675,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         only_active : bool
             If ``True``, only change the active renderer. The default is that
             every renderer is affected.
+
+        Examples
+        --------
+        Create a plotter without any lights and then enable the
+        default light kit.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(lighting=None)
+        >>> pl.enable_lightkit()
+        >>> actor = pl.add_mesh(pyvista.Cube(), show_edges=True)
+        >>> pl.show()
 
         """
         renderers = [self.renderer] if only_active else self.renderers
@@ -1209,7 +1491,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         rgb : bool, optional
             If an 2 dimensional array is passed as the scalars, plot
-            those values as RGB(A) colors! ``rgba`` is also an accepted
+            those values as RGB(A) colors. ``rgba`` is also an accepted
             alias for this.  Opacity (the A) is optional.
 
         categories : bool, optional
@@ -1252,6 +1534,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pickable : bool, optional
             Set whether this mesh is pickable.
 
+        preference : str, optional
+            When ``mesh.n_points == mesh.n_cells`` and setting
+            scalars, this parameter sets how the scalars will be
+            mapped to the mesh.  Default ``'points'``, causes the
+            scalars will be associated with the mesh points.  Can be
+            either ``'points'`` or ``'cells'``.
+
         log_scale : bool, optional
             Use log scale when mapping data to colors. Scalars less
             than zero are mapped to the smallest representable
@@ -1283,7 +1572,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        actor: vtk.vtkActor
+        actor : vtk.vtkActor
             VTK actor of the mesh.
 
         Examples
@@ -1297,6 +1586,36 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(sphere,
         ...                      scalar_bar_args={'title': 'Z Position'})
+        >>> plotter.show()
+
+        Plot using RGB on a single cell.  Note that since the number of
+        points and the number of cells are identical, we have to pass
+        ``preference='cell'``.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [.5, .667, 0], [0.5, .33, 0.667]])
+        >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]])
+        >>> mesh = pyvista.PolyData(vertices, faces)
+        >>> mesh.cell_arrays['colors'] = [[255, 255, 255],
+        ...                               [0, 255, 0],
+        ...                               [0, 0, 255],
+        ...                               [255, 0, 0]]
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(mesh, scalars='colors', lighting=False,
+        ...                      rgb=True, preference='cell')
+        >>> plotter.camera_position='xy'
+        >>> plotter.show()
+
+        Note how this varies from ``preference=='point'``.  This is
+        because each point is now being individually colored, versus
+        in ``preference=='point'``, each cell face is individually
+        colored.
+
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(mesh, scalars='colors', lighting=False,
+        ...                      rgb=True, preference='point')
+        >>> plotter.camera_position='xy'
         >>> plotter.show()
 
         """
@@ -1636,12 +1955,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalars = scalars.astype(np.float_)
 
             def prepare_mapper(scalars):
+                if (scalars.shape[0] == mesh.n_points and
+                    scalars.shape[0] == mesh.n_cells):
+                    use_points = preference == 'point'
+                    use_cells = not use_points
+                else:
+                    use_points = scalars.shape[0] == mesh.n_points
+                    use_cells = scalars.shape[0] == mesh.n_cells
+
                 # Scalars interpolation approach
-                if scalars.shape[0] == mesh.n_points:
+                if use_points:
                     self.mesh.point_arrays.append(scalars, title, True)
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUsePointData()
-                elif scalars.shape[0] == mesh.n_cells:
+                elif use_cells:
                     self.mesh.cell_arrays.append(scalars, title, True)
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUseCellData()
@@ -1792,7 +2119,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if label:
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
-            geom = pyvista.single_triangle()
+            geom = pyvista.Triangle()
             if scalars is not None:
                 geom = pyvista.Box()
                 rgb_color = parse_color('black')
@@ -3264,7 +3591,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._save_image(self.image, filename, return_img)
 
     def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
-                   size=None, name=None, origin=None):
+                   size=None, name=None, origin=None, face=None):
         """Add a legend to render window.
 
         Entries must be a list containing one string and color entry for each
@@ -3308,6 +3635,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If used, specifies the x and y position of the lower left corner
             of the legend.
 
+        face : str, optional
+            Face shape of legend face.
+            Accepted options:
+
+            * ``'triangle'``
+            * ``'circle'``
+            * ``'rectangle'``
+
+            Default is ``'triangle'``.
+
         Returns
         -------
         legend : vtk.vtkLegendBoxActor
@@ -3338,7 +3675,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(mesh)
         >>> _ = plotter.add_mesh(othermesh, 'k')
         >>> _ = plotter.add_legend(legend_entries)
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         self.legend = _vtk.vtkLegendBoxActor()
@@ -3357,7 +3694,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         else:
             self.legend.SetNumberOfEntries(len(labels))
-            legendface = pyvista.single_triangle()
+
+            if face is None or face == "triangle":
+                legendface = pyvista.Triangle()
+            elif face == "circle":
+                legendface = pyvista.Circle()
+            elif face == "rectangle":
+                legendface = pyvista.Rectangle()
+            else:
+                raise ValueError(f'Invalid face "{face}".  Must be one of the following:\n'
+                                 '\t"triangle"\n'
+                                 '\t"circle"\n'
+                                 '\t"rectangle"\n')
+
             for i, (text, color) in enumerate(labels):
                 self.legend.SetEntry(i, legendface, text, parse_color(color))
 
@@ -3578,7 +3927,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(pyvista.Sphere())
         >>> plotter.add_background_image(examples.mapfile)
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         if self.renderers.has_active_background_renderer:
@@ -3630,8 +3979,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         only_active : bool, optional
             If ``True``, only add the light to the active
             renderer. The default is that every renderer adds the
-            light. To add the light to an arbitrary renderer, see the
-            ``add_light`` method of the Renderer class.
+            light. To add the light to an arbitrary renderer, see
+            :func:`pyvista.plotting.renderer.Renderer.add_light`.
 
         Examples
         --------
@@ -3643,7 +3992,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = plotter.add_mesh(pv.Cube())
         >>> light = pv.Light(color='cyan', light_type='headlight')
         >>> plotter.add_light(light)
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         renderers = [self.renderer] if only_active else self.renderers
@@ -3656,19 +4005,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         only_active : bool
-            If ``True``, only remove lights from the active renderer. The default
-            is that lights are stripped from every renderer.
+            If ``True``, only remove lights from the active
+            renderer. The default is that lights are stripped from
+            every renderer.
 
         Examples
         --------
-        Create a plotter, forget to initialize it without default lighting,
-        correct the mistake after instantiation.
+        Create a plotter and remove all lights after initialization.
+        Note how the mesh rendered is completely flat
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter()
         >>> plotter.remove_all_lights()
         >>> plotter.renderer.lights
         []
+        >>> _ = plotter.add_mesh(pv.Sphere(), show_edges=True)
+        >>> plotter.show()
+
+        Note how this differs from a plot with default lighting
+
+        >>> pv.Sphere().plot(show_edges=True, lighting=True)
 
         """
         renderers = [self.renderer] if only_active else self.renderers
@@ -3714,17 +4070,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
-
-    Example
-    -------
-    >>> import pyvista
-    >>> from pyvista import examples
-    >>> mesh = examples.load_hexbeam()
-    >>> another_mesh = examples.load_uniform()
-    >>> plotter = pyvista.Plotter()
-    >>> actor = plotter.add_mesh(mesh, color='red')
-    >>> actor = plotter.add_mesh(another_mesh, color='blue')
-    >>> cpos = plotter.show()
 
     Parameters
     ----------
@@ -3789,6 +4134,17 @@ class Plotter(BasePlotter):
 
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> mesh = examples.load_hexbeam()
+    >>> another_mesh = examples.load_uniform()
+    >>> plotter = pyvista.Plotter()
+    >>> actor = plotter.add_mesh(mesh, color='red')
+    >>> actor = plotter.add_mesh(another_mesh, color='blue')
+    >>> plotter.show()
 
     """
 
@@ -3895,7 +4251,8 @@ class Plotter(BasePlotter):
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=None,
              screenshot=False, return_img=False, cpos=None, use_ipyvtk=None,
-             jupyter_backend=None, return_viewer=False, **kwargs):
+             jupyter_backend=None, return_viewer=False, return_cpos=None,
+             **kwargs):
         """Display the plotting window.
 
         Notes
@@ -3907,29 +4264,35 @@ class Plotter(BasePlotter):
         Parameters
         ----------
         title : string, optional
-            Title of plotting window.
+            Title of plotting window.  Defaults to
+            :attr:`pyvista.global_theme.title <pyvista.themes.DefaultTheme.title>`.
 
         window_size : list, optional
-            Window size in pixels.  Defaults to ``[1024, 768]``
+            Window size in pixels.  Defaults to
+            :attr:`pyvista.global_theme.window_size <pyvista.themes.DefaultTheme.window_size>`.
 
         interactive : bool, optional
             Enabled by default.  Allows user to pan and move figure.
+            Defaults to
+            :attr:`pyvista.global_theme.interactive <pyvista.themes.DefaultTheme.interactive>`.
 
         auto_close : bool, optional
-            Enabled by default.  Exits plotting session when user
-            closes the window when interactive is ``True``.
+            Exits plotting session when user closes the window when
+            interactive is ``True``.  Defaults to
+            :attr:`pyvista.global_theme.auto_close <pyvista.themes.DefaultTheme.auto_close>`.
 
         interactive_update: bool, optional
             Disabled by default.  Allows user to non-blocking draw,
-            user should call ``Update()`` in each iteration.
+            user should call :func:`BasePlotter.update` in each iteration.
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
-            ``window_size``.  Default ``False``.
+            ``window_size``.  Defaults to
+            :attr:`pyvista.global_theme.full_screen <pyvista.themes.DefaultTheme.full_screen>`.
 
         cpos : list(tuple(floats))
             The camera position.  You can also set this with
-            ``Plotter.camera_position``.
+            :attr:`Plotter.camera_position`.
 
         screenshot : str or bool, optional
             Take a screenshot of the initial state of the plot.
@@ -3939,7 +4302,7 @@ class Plotter(BasePlotter):
             it's recommended to first call ``show()`` with
             ``auto_close=False`` to set the scene, then save the
             screenshot in a separate call to ``show()`` or
-            ``screenshot()``.
+            :func:`Plotter.screenshot`.
 
         return_img : bool
             Returns a numpy array representing the last image along
@@ -3960,21 +4323,30 @@ class Plotter(BasePlotter):
             * ``'panel'`` : Show a ``panel`` widget.
 
             This can also be set globally with
-            ``pyvista.set_jupyter_backend``
+            :func:`pyvista.set_jupyter_backend`.
 
         return_viewer : bool, optional
             Return the jupyterlab viewer, scene, or display object
             when plotting with jupyter notebook.
 
+        return_cpos : bool, optional
+            Return the last camera position from the render window
+            when enabled.  Default based on theme setting.  See
+            :attr:`pyvista.themes.DefaultTheme.return_cpos`.
+
         Returns
         -------
         cpos : list
             List of camera position, focal point, and view up.
+            Returned only when ``return_cpos=True`` or set in the
+            default global or plot theme.  Not returned when in a
+            jupyter notebook and ``return_viewer=True``.
 
         image : np.ndarray
             Numpy array of the last image when either ``return_img=True``
-            or ``screenshot=True`` is set. Optionally contains alpha
-            values. Sized:
+            or ``screenshot=True`` is set. Not returned when in a
+            jupyter notebook with ``return_viewer=True``. Optionally
+            contains alpha values. Sized:
 
             * [Window height x Window width x 3] if the theme sets
               ``transparent_background=False``.
@@ -4010,6 +4382,15 @@ class Plotter(BasePlotter):
         Return an ``ipygany`` scene.
 
         >>> pl.show(jupyter_backend='ipygany', return_viewer=True)  # doctest:+SKIP
+
+        Obtain the camera position when using ``show``.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.show(return_cpos=True)   # doctest:+SKIP
+        [(2.223005211686484, -0.3126909484828709, 2.4686209867735065),
+        (0.0, 0.0, 0.0),
+        (-0.6839951597283509, -0.47207319712073137, 0.5561452310578585)]
 
         """
         # developer keyword argument: runs a function immediately prior to ``close``
@@ -4132,21 +4513,18 @@ class Plotter(BasePlotter):
         #       See issues #135 and #186 for insight before editing the
         #       remainder of this function.
 
-        # Get camera position before closing
-        cpos = self.camera_position
-
-        # Cleanup
+        # Close the render window if requested
         if auto_close:
             self.close()
 
         # If user asked for screenshot, return as numpy array after camera
         # position
         if return_img or screenshot is True:
-            return cpos, self.last_image
+            if return_cpos:
+                return self.camera_position, self.last_image
 
-        # Return last used camera position unless within a doctest
-        if '_pytest.doctest' not in sys.modules:
-            return cpos
+        if return_cpos:
+            return self.camera_position
 
     def add_title(self, title, font_size=18, color=None, font=None,
                   shadow=False):
