@@ -74,7 +74,6 @@ def test_clip_filter(datasets):
 @pytest.mark.parametrize('invert', [False, True])
 def test_clip_by_scalars_filter(datasets, both, invert):
     """This tests the clip filter on all datatypes available filters"""
-
     for i, dataset_in in enumerate(datasets):
         dataset = dataset_in.copy()  # don't modify in-place
         dataset.point_arrays['to_clip'] = np.arange(dataset.n_points)
