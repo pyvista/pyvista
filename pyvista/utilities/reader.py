@@ -9,18 +9,18 @@ class Reader(ABC):
     """Fine-grained control of reading data files.
 
     Supported file types and Readers:
-    * .vti: XMLImageDataReader
-    * .pvti: XMLPImageDataReader
-    * .vtr: XMLRectilinearGridReader
-    * .pvtr: XMLPRectilinearGridReader
-    * .vtu: XMLUnstructuredGridReader,
-    * .pvtu: XMLPUnstructuredGridReader,
-    * .vtp: XMLPolyDataReader,
-    * .vts: XMLStructuredGridReader,
-    * .vtm: XMLMultiBlockDataReader,
-    * .vtmb: XMLMultiBlockDataReader,
-    * .case: EnSightReader,
-    * .foam: OpenFOAMReader,
+    * .vti: :class:`pyvista.XMLImageDataReader`
+    * .pvti: :class:`XMLPImageDataReader`
+    * .vtr: :class:`XMLRectilinearGridReader`
+    * .pvtr: :class:`XMLPRectilinearGridReader`
+    * .vtu: :class:`XMLUnstructuredGridReader`
+    * .pvtu: :class:`XMLPUnstructuredGridReader`
+    * .vtp: :class:`XMLPolyDataReader`
+    * .vts: :class:`XMLStructuredGridReader`
+    * .vtm: :class:`XMLMultiBlockDataReader`
+    * .vtmb: :class:`XMLMultiBlockDataReader`
+    * .case: :class:`EnSightReader`
+    * .foam: :class:`OpenFOAMReader`
 
     Parameters
     ----------
@@ -192,7 +192,7 @@ class Reader(ABC):
 
 
 class XMLImageDataReader(Reader):
-    """XMLImageDataReader class."""
+    """XML Image Data Reader."""
 
     def __init__(self, filename):
         """Initialize XMLImageDataReader."""
@@ -206,7 +206,7 @@ class XMLImageDataReader(Reader):
 
 
 class XMLPImageDataReader(Reader):
-    """XMLPImageDataReader class."""
+    """XML P Image Data Reader."""
 
     def __init__(self, filename):
         """Initialize XMLPImageDataReader."""
@@ -220,7 +220,7 @@ class XMLPImageDataReader(Reader):
 
 
 class XMLRectilinearGridReader(Reader):
-    """XMLRectilinearGridReader class."""
+    """XML RectilinearGrid Reader."""
 
     def __init__(self, filename):
         """Initialize XMLRectilinearGridReader."""
@@ -234,7 +234,7 @@ class XMLRectilinearGridReader(Reader):
 
 
 class XMLPRectilinearGridReader(Reader):
-    """XMLPRectilinearGridReader class."""
+    """XML P RectilinearGrid Reader."""
 
     def __init__(self, filename):
         """Initialize XMLPRectilinearGridReader."""
@@ -248,7 +248,7 @@ class XMLPRectilinearGridReader(Reader):
 
 
 class XMLUnstructuredGridReader(Reader):
-    """XMLUnstructuredGridReader class."""
+    """XML UnstructuredGrid Reader."""
 
     def __init__(self, filename):
         """Initialize XMLUnstructuredGridReader."""
@@ -261,7 +261,7 @@ class XMLUnstructuredGridReader(Reader):
         return self._reader
 
 class XMLPUnstructuredGridReader(Reader):
-    """XMLPUnstructuredGridReader class."""
+    """XML P UnstructuredGrid Reader."""
 
     def __init__(self, filename):
         """Initialize XMLPUnstructuredGridReader."""
@@ -275,7 +275,7 @@ class XMLPUnstructuredGridReader(Reader):
 
 
 class XMLPolyDataReader(Reader):
-    """XMLPolyDataReader class."""
+    """XML PolyData Reader."""
 
     def __init__(self, filename):
         """Initialize XMLPolyDataReader."""
@@ -289,7 +289,7 @@ class XMLPolyDataReader(Reader):
 
 
 class XMLStructuredGridReader(Reader):
-    """XMLStructuredGridReader class."""
+    """XML StructuredGrid Reader."""
 
     def __init__(self, filename):
         """Initialize XMLStructuredGridReader."""
@@ -303,7 +303,7 @@ class XMLStructuredGridReader(Reader):
 
 
 class XMLMultiBlockDataReader(Reader):
-    """XMLMultiBlockDataReader class."""
+    """XML MultiBlock Data Reader."""
 
     def __init__(self, filename):
         """Initialize XMLMultiBlockDataReader."""
@@ -317,7 +317,7 @@ class XMLMultiBlockDataReader(Reader):
 
 
 class EnSightReader(Reader):
-    """EnSightReader class."""
+    """EnSight Reader."""
 
     def __init__(self, filename):
         """Initialize EnSightReader."""
@@ -339,7 +339,7 @@ class EnSightReader(Reader):
 
 
 class OpenFOAMReader(Reader):
-    """OpenFOAMReader class."""
+    """OpenFOAM Reader."""
 
     def __init__(self, filename):
         """Initialize OpenFOAMReader."""
