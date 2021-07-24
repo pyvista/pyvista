@@ -1582,3 +1582,12 @@ def test_subdivide_adaptive(sphere, inplace):
     assert sub.n_faces > orig_n_faces
     if inplace:
         assert sphere.n_faces == sub.n_faces
+
+
+def test_collision(sphere):
+    moved_sphere = sphere.copy()
+    moved_sphere.translate((0.5, 0, 0))
+    output, n_collision = sphere.collision(moved_sphere)
+    assert isinstance(output, pyvista.PolyData)
+    assert n_collision > 40
+    assert 'ContactCells' in output.field_arrays
