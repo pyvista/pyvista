@@ -1293,12 +1293,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if Plotter.last_update_time > curr_time:
             Plotter.last_update_time = curr_time
 
-        update_rate = self.iren.get_desired_update_rate()
-        if (curr_time - Plotter.last_update_time) > (1.0/update_rate):
-            self.right_timer_id = self.iren.create_repeating_timer(stime)
-            self.render()
-            Plotter.last_update_time = curr_time
-        elif force_redraw:
+        if self.iren is not None:
+            update_rate = self.iren.get_desired_update_rate()
+            if (curr_time - Plotter.last_update_time) > (1.0/update_rate):
+                self.right_timer_id = self.iren.create_repeating_timer(stime)
+                self.render()
+                Plotter.last_update_time = curr_time
+                return
+
+        if force_redraw:
             self.render()
 
     def add_mesh(self, mesh, color=None, style=None, scalars=None,

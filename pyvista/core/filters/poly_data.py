@@ -2695,6 +2695,10 @@ class PolyDataFilters(DataSetFilters):
         ...                 show_edges=True)
         >>> pl.show()
 
+        See Also
+        --------
+        See :ref:`collision_example` for more examples using this filter.
+
         """
         alg = _vtk.vtkCollisionDetectionFilter()
         alg.SetInputData(0, poly_data)
