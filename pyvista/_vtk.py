@@ -351,10 +351,16 @@ if VTK9:
                                           vtkPlotPoints3D,
                                           vtkPlotArea,
                                           vtkPlotBar,
+                                          vtkPlotStacked,
                                           vtkPlotBox,
-                                          vtkPlotPie)
+                                          vtkPlotPie,
+                                          vtkPlotSurface)
     from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
     from vtkmodules.vtkCommonColor import vtkColorSeries
+    from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
+    from vtkmodules.vtkRenderingContext2D import vtkContext2D
+    from vtkmodules.vtkPythonContext2D import vtkPythonItem
+    import vtkmodules.vtkRenderingContextOpenGL2  # Necessary for displaying charts, otherwise crashes on rendering
 
     # lazy import for some of the less used readers
     def lazy_vtkGL2PSExporter():

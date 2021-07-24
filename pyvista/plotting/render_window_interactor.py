@@ -42,6 +42,11 @@ class RenderWindowInteractor():
         self._plotter = plotter
         self._click_observer = None
 
+        # Toggle interaction style when clicked on a visible chart (to enable interaction with visible charts)
+        # TODO: maybe make it a double click? https://kitware.github.io/vtk-examples/site/Cxx/Interaction/DoubleClick/
+        self._context_style = _vtk.vtkContextInteractorStyle()
+        self.add_observer("RightButtonPressEvent", self._toggle_context_style)
+
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.
 
@@ -161,6 +166,31 @@ class RenderWindowInteractor():
             # We need an actually custom style to handle button up events
             self._style_class = _style_factory(self._style)(self)
         return self.interactor.SetInteractorStyle(self._style_class)
+
+    def _toggle_context_style(self, obj, event):
+        mouse_pos = self.get_event_position()
+        scene = None
+        for renderer in self._plotter.renderers:
+            if scene is None and renderer.IsInViewport(*mouse_pos):
+                scene = renderer.charts.toggle_interaction(mouse_pos)
+            else:
+                # Not in viewport or already an active chart found (in case they overlap), so disable interaction
+                renderer.charts.toggle_interaction(False)
+
+        self._context_style.SetScene(scene)  # Set scene to interact with or reset it to stop interaction (otherwise crash)
+        if scene is None and self._style == "Context":
+            # Switch back to previous interactor style
+            self._style = self._prev_style
+            self._style_class = self._prev_style_class
+            self._prev_style = None
+            self._prev_style_class = None
+        elif scene is not None and self._style != "Context":
+            # Enable context interactor style
+            self._prev_style = self._style
+            self._prev_style_class = self._style_class
+            self._style = "Context"
+            self._style_class = self._context_style
+        self.update_style()
 
     def enable_trackball_style(self):
         """Set the interactive style to Trackball Camera.

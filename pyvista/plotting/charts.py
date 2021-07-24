@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Sequence, Union
 
 import pyvista
 from pyvista import _vtk
@@ -46,8 +46,325 @@ class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
             return "Wrapped: " + self._wrapped.__str__()
 #endregion
 
-class _ChartInterface(object):
-    """ Pythonic interface for vtkChart instances """
+class Pen(_vtkWrapper, _vtk.vtkPen):
+    """ Pythonic wrapper for a VTK Pen, used to draw lines. """
+
+    LINE_STYLES = {
+        "": _vtk.vtkPen.NO_PEN,
+        "-": _vtk.vtkPen.SOLID_LINE,
+        "--": _vtk.vtkPen.DASH_LINE,
+        ":": _vtk.vtkPen.DOT_LINE,
+        "-.": _vtk.vtkPen.DASH_DOT_LINE,
+        "-..": _vtk.vtkPen.DASH_DOT_DOT_LINE
+    }
+
+    def __init__(self, color="k", width=1, style="-"):
+        super().__init__()
+        self.color = color
+        self.width = width
+        self.style = style
+
+    @property
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, val):
+        self._color = (0, 0, 0, 0) if val is None else parse_color(val)
+        if len(self._color) == 3:
+            self._color = (*self._color, 1)
+        self.SetColorF(*self._color)
+
+    @property
+    def width(self):
+        return self.GetWidth()
+
+    @width.setter
+    def width(self, val):
+        self.SetWidth(float(val))
+
+    @property
+    def style(self):
+        return self._line_style
+
+    @style.setter
+    def style(self, val):
+        if val is None:
+            val = ""
+        if val in self.LINE_STYLES:
+            self._line_style = val
+            self.SetLineType(self.LINE_STYLES[val])
+        else:
+            formatted_styles = "\", \"".join(self.LINE_STYLES.keys())
+            raise ValueError(f"Invalid line style. Allowed line styles: \"{formatted_styles}\"")
+
+
+class Brush(_vtkWrapper, _vtk.vtkBrush):
+    """ Pythonic wrapper for a VTK Brush, used to fill shapes. """
+
+    def __init__(self, color="k", texture=None):
+        super().__init__()
+        self.color = color
+        self.texture = texture
+
+    @property
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, val):
+        self._color = (0, 0, 0, 0) if val is None else parse_color(val)
+        if len(self._color) == 3:
+            self._color = (*self._color, 1)
+        self.SetColorF(*self._color)
+
+    @property
+    def texture(self):
+        return self._texture
+
+    @texture.setter
+    def texture(self, val):
+        if val is None:
+            self._texture = None
+            self.SetTexture(None)
+        else:
+            self._texture = pyvista.Texture(val)
+            self.SetTexture(self._texture.to_image())
+
+
+class Axis(_vtkWrapper, _vtk.vtkAxis):
+    BEHAVIORS = {
+        "auto": _vtk.vtkAxis.AUTO,
+        "fixed": _vtk.vtkAxis.FIXED
+    }
+
+    def __init__(self):
+        super().__init__()
+        self._tick_locs = _vtk.vtkDoubleArray()
+        self._tick_labels = _vtk.vtkStringArray()
+        self.pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())
+        self.grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())
+
+    @property
+    def label(self):
+        return self.GetTitle()
+
+    @label.setter
+    def label(self, val):
+        self.SetTitle(val)
+
+    @property
+    def label_visibility(self):
+        return self.GetTitleVisible()
+
+    @label_visibility.setter
+    def label_visibility(self, val):
+        self.SetTitleVisible(bool(val))
+
+    @property
+    def range(self):
+        r = [0.0, 0.0]
+        self.GetRange(r)
+        return r
+
+    @range.setter
+    def range(self, val):
+        if val is None:
+            self.behavior = "auto"
+        else:
+            self.behavior = "fixed"
+            self.SetRange(*val)
+
+    @property
+    def behavior(self):
+        return self._behavior
+
+    @behavior.setter
+    def behavior(self, val):
+        if val in self.BEHAVIORS:
+            self._behavior = val
+            self.SetBehavior(self.BEHAVIORS[val])
+        else:
+            formatted_behaviors = "\", \"".join(self.BEHAVIORS.keys())
+            raise ValueError(f"Invalid behavior. Allowed behaviors: \"{formatted_behaviors}\"")
+
+    @property
+    def margins(self):
+        return self.GetMargins()
+
+    @margins.setter
+    def margins(self, val):
+        self.SetMargins(*val)
+
+    @property
+    def log_scale(self):
+        # Returns whether a log scale is used on this axis
+        return self.GetLogScaleActive()
+
+    @log_scale.setter
+    def log_scale(self, val):
+        # False: log_scale will be disabled, True: axis will attempt to activate log_scale if possible
+        self.SetLogScale(bool(val))
+
+    @property
+    def grid(self):
+        return self.GetGridVisible()
+
+    @grid.setter
+    def grid(self, val):
+        self.SetGridVisible(bool(val))
+
+    @property
+    def visible(self):
+        return self.GetAxisVisible()
+
+    @visible.setter
+    def visible(self, val):
+        self.SetAxisVisible(bool(val))
+
+    def toggle(self):
+        self.visible = not self.visible
+
+    # --- Ticks ---
+    @property
+    def tick_count(self):
+        return self.GetNumberOfTicks()
+
+    @tick_count.setter
+    def tick_count(self, val):
+        self.SetNumberOfTicks(int(val))
+
+    @property
+    def tick_locations(self):
+        positions = self.GetTickPositions()
+        return tuple(positions.GetValue(i) for i in range(positions.GetNumberOfValues()))
+
+    @tick_locations.setter
+    def tick_locations(self, val):
+        self._tick_locs.Reset()
+        if val is not None:
+            for loc in val:
+                self._tick_locs.InsertNextValue(loc)
+        self._update_ticks()
+
+    @property
+    def tick_labels(self):
+        labels = self.GetTickLabels()
+        return tuple(labels.GetValue(i) for i in range(labels.GetNumberOfValues()))
+
+    @tick_labels.setter
+    def tick_labels(self, val):
+        # val is either None to fallback to the default labelling, a sequence to manually specify each label or a string
+        # describing the label format to use for each label.
+        self._tick_labels.Reset()
+        self.SetNotation(_vtk.vtkAxis.STANDARD_NOTATION)
+        if isinstance(val, str):
+            precision = int(val[:-1])
+            notation = val[-1].lower()
+            if notation == "f":
+                self.SetNotation(_vtk.vtkAxis.FIXED_NOTATION)
+                self.SetPrecision(precision)
+            elif notation == "e":
+                self.SetNotation(_vtk.vtkAxis.SCIENTIFIC_NOTATION)
+                self.SetPrecision(precision)
+        elif isinstance(val, Sequence):
+            for label in val:
+                self._tick_labels.InsertNextValue(label)
+        self._update_ticks()
+
+    @property
+    def tick_size(self):
+        return self.GetTickLength()
+
+    @tick_size.setter
+    def tick_size(self, val):
+        self.SetTickLength(val)
+
+    @property
+    def tick_labels_offset(self):
+        return self.GetLabelOffset()
+
+    @tick_labels_offset.setter
+    def tick_labels_offset(self, val):
+        self.SetLabelOffset(float(val))
+
+    @property
+    def tick_labels_visibility(self):
+        return self.GetLabelsVisible()
+
+    @tick_labels_visibility.setter
+    def tick_labels_visibility(self, val):
+        self.SetLabelsVisible(bool(val))
+        self.SetRangeLabelsVisible(bool(val))
+
+    @property
+    def tick_visibility(self):
+        return self.GetTicksVisible()
+
+    @tick_visibility.setter
+    def tick_visibility(self, val):
+        self.SetTicksVisible(bool(val))
+
+    def _update_ticks(self):
+        locs = None if self._tick_locs.GetNumberOfValues() == 0 else self._tick_locs
+        labels = None if self._tick_labels.GetNumberOfValues() == 0 else self._tick_labels
+        self.SetCustomTickPositions(locs, labels)
+
+
+class _CustomContextItem(_vtk.vtkPythonItem):
+
+    class ItemWrapper(object):
+
+        def Initialize(self, item):
+            # item is the _CustomContextItem subclass instance
+            return item.initialize()
+
+        def Paint(self, item, painter):
+            # item is the _CustomContextItem subclass instance
+            return item.paint(painter)
+
+    def __init__(self):
+        super().__init__()
+        self.SetPythonObject(_CustomContextItem.ItemWrapper())  # This will call ItemWrapper.Initialize, which calls self.initialize
+
+    def initialize(self):
+        return True
+
+    def paint(self, painter: _vtk.vtkContext2D):
+        return True
+
+
+class _ChartBackground(_CustomContextItem):
+    """ Utility class for chart backgrounds (until native VTK support is available) """
+
+    def __init__(self, chart):
+        super().__init__()
+        self._chart = chart  # Chart to draw the background for
+
+    def initialize(self):
+        # Default background is translucent with black border line
+        self.BorderPen = Pen(color=(0, 0, 0))
+        self.BackgroundBrush = Brush(color=(0, 0, 0, 0))
+        return True
+
+    def paint(self, painter: _vtk.vtkContext2D):
+        if self._chart.visible:
+            painter.ApplyPen(self.BorderPen)
+            painter.ApplyBrush(self.BackgroundBrush)
+            l, b, w, h = self._chart._geometry
+            painter.DrawRect(l, b, w, h)
+        return True
+
+
+class _Chart(object):
+    """ Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances """
+
+    def __init__(self):
+        super().__init__()
+        self._background = _ChartBackground(self)
+        self._x_axis = Axis()  # Not actually used for now (see note in Chart2D), but still present for the
+        self._y_axis = Axis()  # Charts.toggle_interaction code
+        self._z_axis = Axis()
 
     @property
     def scene(self):
@@ -62,13 +379,26 @@ class _ChartInterface(object):
 
     def _resize(self):
         r_w, r_h = self.renderer.GetSize()  # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
-        _, _, c_w, c_h = self.GetSize()
+        _, _, c_w, c_h = self._geometry
         # Target size is calculated from specified normalized width and height and the renderer's current size
         t_w = self._size[0] * r_w
         t_h = self._size[1] * r_h
         if c_w != t_w or c_h != t_h:
             # Mismatch between current size and target size, so resize chart:
-            self.SetSize(_vtk.vtkRectf(self._loc[0] * r_w, self._loc[1] * r_h, t_w, t_h))
+            self._geometry = (self._loc[0] * r_w, self._loc[1] * r_h, t_w, t_h)
+
+    @property
+    def _geometry(self):
+        """ Chart geometry (x and y position of bottom left corner and width and height in pixels). """
+        return self.GetSize()
+
+    @_geometry.setter
+    def _geometry(self, val):
+        self.SetSize(_vtk.vtkRectf(*val))
+
+    def is_within(self, pos):
+        l, b, w, h = self._geometry
+        return l <= pos[0] <= l+w and b <= pos[1] <= b+h
 
     @property
     def size(self):
@@ -91,12 +421,46 @@ class _ChartInterface(object):
         self._loc = val
 
     @property
-    def bg_color(self):
-        return self.GetBackgroundBrush().GetColor()
+    def border_color(self):
+        return self._background.BorderPen.color
 
-    @bg_color.setter
-    def bg_color(self, val):
-        self.GetBackgroundBrush().SetColorF(*parse_color(val))
+    @border_color.setter
+    def border_color(self, val):
+        self._background.BorderPen.color = val
+
+    @property
+    def border_width(self):
+        return self._background.BorderPen.width
+
+    @border_width.setter
+    def border_width(self, val):
+        self._background.BorderPen.width = val
+
+    @property
+    def border_style(self):
+        return self._background.BorderPen.style
+
+    @border_style.setter
+    def border_style(self, val):
+        self._background.BorderPen.style = val
+
+    @property
+    def background_color(self):
+        # return self.GetBackgroundBrush().GetColor()
+        return self._background.BackgroundBrush.color
+
+    @background_color.setter
+    def background_color(self, val):
+        # self.GetBackgroundBrush().SetColorF(*parse_color(val))
+        self._background.BackgroundBrush.color = val
+
+    @property
+    def background_texture(self):
+        return self._background.BackgroundBrush.texture
+
+    @background_texture.setter
+    def background_texture(self, val):
+        self._background.BackgroundBrush.texture = val
 
     @property
     def visible(self):
@@ -126,17 +490,8 @@ class _ChartInterface(object):
         self.SetShowLegend(val)
 
 
-class _PlotInterface(object):
-    """ Pythonic interface for vtkPlot instances """
-
-    LINE_STYLES = {
-        "": _vtk.vtkPen.NO_PEN,
-        "-": _vtk.vtkPen.SOLID_LINE,
-        "--": _vtk.vtkPen.DASH_LINE,
-        ":": _vtk.vtkPen.DOT_LINE,
-        "-.": _vtk.vtkPen.DASH_DOT_LINE,
-        "-..": _vtk.vtkPen.DASH_DOT_DOT_LINE
-    }
+class _Plot(object):
+    """ Pythonic interface for vtkPlot and vtkPlot3D instances """
 
     MARKER_STYLES = {
         "": _vtk.vtkPlotPoints.NONE,
@@ -146,6 +501,15 @@ class _PlotInterface(object):
         "o": _vtk.vtkPlotPoints.CIRCLE,
         "d": _vtk.vtkPlotPoints.DIAMOND
     }
+
+    def __init__(self):
+        super().__init__()
+        self._pen = Pen()
+        self._brush = Brush()
+        if hasattr(self, "SetPen"):
+            self.SetPen(self._pen)
+        if hasattr(self, "SetBrush"):
+            self.SetBrush(self._brush)
 
     @classmethod
     def parse_format(cls, fmt):
@@ -165,7 +529,7 @@ class _PlotInterface(object):
                 fmt = fmt[len(marker_style):]  # Remove marker_style from format string
             if line_style == "":
                 # Line style is not yet set, so look for it at the start of the format string
-                for style in cls.LINE_STYLES.keys():
+                for style in Pen.LINE_STYLES.keys():
                     if style != "" and fmt.startswith(style):
                         line_style = style
                 fmt = fmt[len(line_style):]  # Remove line_style from format string
@@ -185,56 +549,59 @@ class _PlotInterface(object):
 
     @property
     def color(self):
-        return self._color
+        return self.pen.color
 
     @color.setter
     def color(self, val):
-        self._color = parse_color(val)
-        self.pen.SetColorF(*self._color)  # Deals with both color and opacity (if it is set)
-        self.brush.SetColorF(*self._color)
-
-    @property
-    def width(self):
-        return self.GetWidth()
-
-    @width.setter
-    def width(self, val):
-        self.SetWidth(val)
+        self.pen.color = val
+        self.brush.color = val
 
     @property
     def pen(self):
-        """vtkPen object controlling how lines in this plot are drawn.
+        """Pen object controlling how lines in this plot are drawn.
 
         Returns
         --------
-        vtk.vtkPen
-            `vtkPen` object controlling how lines in this plot are drawn.
+        pyvista.charts.Pen
+            `Pen` object controlling how lines in this plot are drawn.
 
         Examples
         ---------
         >>> import pyvista
         """
-        return self.GetPen()
+        return self._pen
 
     @property
     def brush(self):
         """
         :return: Retrieve vtkBrush object controlling how shapes in this plot are filled.
         """
-        return self.GetBrush()
+        return self._brush
+
+    @property
+    def line_width(self):
+        return self.pen.width
+
+    @line_width.setter
+    def line_width(self, val):
+        self.pen.width = val
 
     @property
     def line_style(self):
-        return self._line_style
+        return self.pen.style
 
     @line_style.setter
     def line_style(self, val):
-        if val in self.LINE_STYLES:
-            self._line_style = val
-            self.pen.SetLineType(self.LINE_STYLES[val])
-        else:
-            formatted_styles = "\", \"".join(self.LINE_STYLES.keys())
-            raise ValueError(f"Invalid line style. Allowed line styles: \"{formatted_styles}\"")
+        self.pen.style = val
+
+    @property
+    def label(self):
+        return self._label
+
+    @label.setter
+    def label(self, val):
+        self._label = val
+        self.SetLabel(self._label)
 
     @property
     def visible(self):
@@ -248,7 +615,7 @@ class _PlotInterface(object):
         self.visible = not self.visible
 
 
-class _MultiCompPlotInterface(object):
+class _MultiCompPlot(object):
     """ Pythonic interface for vtkPlot instances with multiple components (e.g. BoxPlot, PiePlot, StackedBarPlot) """
 
     COLOR_SCHEMES = {
@@ -317,7 +684,7 @@ class _MultiCompPlotInterface(object):
         "custom": _vtk.vtkColorSeries.CUSTOM
     }
     _SCHEME_NAMES = {scheme_id: scheme_name for scheme_name, scheme_id in COLOR_SCHEMES.items()}
-    DEFAULT_SCHEME = "qual_accent"
+    DEFAULT_COLOR_SCHEME = "qual_accent"
 
     def __init__(self):
         super().__init__()
@@ -325,14 +692,14 @@ class _MultiCompPlotInterface(object):
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
         self._labels = _vtk.vtkStringArray()
         self.SetLabels(self._labels)
-        self.scheme = self.DEFAULT_SCHEME
+        self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
     @property
-    def scheme(self):
+    def color_scheme(self):
         return self._SCHEME_NAMES.get(self._color_series.GetColorScheme(), "custom")
 
-    @scheme.setter
-    def scheme(self, val):
+    @color_scheme.setter
+    def color_scheme(self, val):
         self._color_series.SetColorScheme(self.COLOR_SCHEMES.get(val, _vtk.vtkColorSeries.CUSTOM))
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
 
@@ -343,7 +710,9 @@ class _MultiCompPlotInterface(object):
     @colors.setter
     def colors(self, val):
         if val is None:
-            self.scheme = self.DEFAULT_SCHEME
+            self.color_scheme = self.DEFAULT_COLOR_SCHEME
+        elif isinstance(val, str):
+            self.color_scheme = val
         else:
             self._color_series.SetNumberOfColors(len(val))
             for i, color in enumerate(val):
@@ -362,9 +731,9 @@ class _MultiCompPlotInterface(object):
                 self._labels.InsertNextValue(label)
 
 
-class LinePlot2D(_vtk.vtkPlotLine, _PlotInterface):
+class LinePlot2D(_vtk.vtkPlotLine, _Plot):
 
-    def __init__(self, x, y, color="b", width=1.0, style="-"):
+    def __init__(self, x, y, color="b", width=1.0, style="-", label=""):
         super().__init__()
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
         self.SetInputData(self._table, "x", "y")
@@ -372,19 +741,20 @@ class LinePlot2D(_vtk.vtkPlotLine, _PlotInterface):
         self.color = color
         self.width = width
         self.line_style = style
+        self.label = label
 
     def update(self, x, y):
         if len(x) > 1:
             self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
-            self.visible &= True
+            self.visible = True
         else:
             # Turn off visibility for fewer than 2 points as otherwise an error message is shown
             self.visible = False
 
 
-class ScatterPlot2D(_vtk.vtkPlotPoints, _PlotInterface):
+class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
-    def __init__(self, x, y, color="b", size=10, style="o"):
+    def __init__(self, x, y, color="b", size=10, style="o", label=""):
         super().__init__()
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
         self.SetInputData(self._table, "x", "y")
@@ -392,11 +762,12 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _PlotInterface):
         self.color = color
         self.marker_size = size
         self.marker_style = style
+        self.label = label
 
     def update(self, x, y):
         if len(x) > 0:
             self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
-            self.visible &= True
+            self.visible = True
         else:
             self.visible = False
 
@@ -422,9 +793,9 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _PlotInterface):
             raise ValueError(f"Invalid marker style. Allowed marker styles: \"{formatted_styles}\"")
 
 
-class AreaPlot(_vtk.vtkPlotArea, _PlotInterface):
+class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
-    def __init__(self, x, y1, y2, color="b"):
+    def __init__(self, x, y1, y2, color="b", label=""):
         super().__init__()
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y1": np.empty(0, np.float32), "y2": np.empty(0, np.float32)})
         self.SetInputData(self._table)
@@ -433,35 +804,51 @@ class AreaPlot(_vtk.vtkPlotArea, _PlotInterface):
         self.SetInputArray(2, "y2")
         self.update(x, y1, y2)
         self.color = color
+        self.label = label
 
     def update(self, x, y1, y2):
         if len(x) > 0:
             self._table.update({"x": np.array(x, copy=False), "y1": np.array(y1, copy=False), "y2": np.array(y2, copy=False)})
-            self.visible &= True
+            self.visible = True
         else:
             self.visible = False
 
 
-class BarPlot(_vtk.vtkPlotBar, _PlotInterface):
+class BarPlot(_vtk.vtkPlotBar, _Plot, _MultiCompPlot):
 
     ORIENTATIONS = {
         "H": _vtk.vtkPlotBar.HORIZONTAL,
         "V": _vtk.vtkPlotBar.VERTICAL
     }
 
-    def __init__(self, x, y, color="b", offset=5, orientation="V"):
+    def __init__(self, x, y, color=None, label=None, offset=5, orientation="V"):
         super().__init__()
-        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
-        self.SetInputData(self._table, "x", "y")
+        if not isinstance(y[0], (Sequence, np.ndarray)):
+            y = (y,)
+        y_data = {f"y{i}": np.empty(0, np.float32) for i in range(len(y))}
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
+        self.SetInputData(self._table, "x", "y0")
+        for i in range(1, len(y)):
+            self.SetInputArray(i, f"y{i}")
         self.update(x, y)
-        self.color = color
+
+        if len(y) > 1:
+            self.SetColorSeries(self._color_series)
+            self.colors = color  # None will use default scheme
+            self.labels = label
+        else:
+            self.brush.color = "b" if color is None else color
+            self.label = "" if label is None else label
         self.offset = offset
         self.orientation = orientation
 
     def update(self, x, y):
         if len(x) > 0:
-            self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
-            self.visible &= True
+            if not isinstance(y[0], (Sequence, np.ndarray)):
+                y = (y,)
+            y_data = {f"y{i}": np.array(y[i], copy=False) for i in range(len(y))}
+            self._table.update({"x": np.array(x, copy=False), **y_data})
+            self.visible = True
         else:
             self.visible = False
 
@@ -487,12 +874,42 @@ class BarPlot(_vtk.vtkPlotBar, _PlotInterface):
             raise ValueError(f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"")
 
 
-class Chart2D(_vtk.vtkChartXY, _ChartInterface):
+class StackPlot(_vtk.vtkPlotStacked, _Plot, _MultiCompPlot):
+
+    def __init__(self, x, ys, colors=None, labels=None):
+        super().__init__()
+        if not isinstance(ys[0], (Sequence, np.ndarray)):
+            ys = (ys,)
+        y_data = {f"y{i}": np.empty(0, np.float32) for i in range(len(ys))}
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
+        self.SetInputData(self._table, "x", "y0")
+        for i in range(1, len(ys)):
+            self.SetInputArray(i, f"y{i}")
+        self.update(x, ys)
+
+        self.SetColorSeries(self._color_series)
+        self.colors = colors  # None will use default scheme
+        self.pen.style = None  # Hide lines by default
+        self.labels = labels
+
+    def update(self, x, ys):
+        if len(x) > 0:
+            if not isinstance(ys[0], (Sequence, np.ndarray)):
+                ys = (ys,)
+            y_data = {f"y{i}": np.array(ys[i], copy=False) for i in range(len(ys))}
+            self._table.update({"x": np.array(x, copy=False), **y_data})
+            self.visible = True
+        else:
+            self.visible = False
+
+
+class Chart2D(_vtk.vtkChartXY, _Chart):
     PLOT_TYPES = {
         "scatter": ScatterPlot2D,
         "line": LinePlot2D,
         "area": AreaPlot,
-        "bar": BarPlot
+        "bar": BarPlot,
+        "stack": StackPlot
     }
 
     def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):
@@ -501,9 +918,14 @@ class Chart2D(_vtk.vtkChartXY, _ChartInterface):
         self.SetAutoSize(False)  # We manually set the appropriate size
         self.size = size
         self.loc = loc
+        # self.SetAxis(_vtk.vtkAxis.BOTTOM, self._x_axis)  # Disabled for now and replaced by a wrapper object, as for
+        # self.SetAxis(_vtk.vtkAxis.LEFT, self._y_axis)  # some reason vtkChartXY.SetAxis(...) causes a crash at the end
+        self._x_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.BOTTOM))  # of the script's execution (nonzero exit code)
+        self._y_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.LEFT))
         self.x_label = x_label
         self.y_label = y_label
         self.grid = grid
+        self.legend = True
 
     def render_event(self, *args, **kwargs):
         self.RecalculateBounds()
@@ -518,7 +940,7 @@ class Chart2D(_vtk.vtkChartXY, _ChartInterface):
     def plot(self, x, y, fmt):
         """ Matplotlib like plot method """
         # TODO: make x and fmt optional, allow multiple ([x], y, [fmt]) entries
-        marker_style, line_style, color = _PlotInterface.parse_format(fmt)
+        marker_style, line_style, color = _Plot.parse_format(fmt)
         scatter_plot, line_plot = None, None
         if marker_style != "":
             scatter_plot = self.scatter(x, y, color, style=marker_style)
@@ -526,17 +948,20 @@ class Chart2D(_vtk.vtkChartXY, _ChartInterface):
             line_plot = self.line(x, y, color, style=line_style)
         return scatter_plot, line_plot
 
-    def scatter(self, x, y, color="b", size=10, style="o"):
-        return self._add_plot("scatter", x, y, color=color, size=size, style=style)
+    def scatter(self, x, y, color="b", size=10, style="o", label=""):
+        return self._add_plot("scatter", x, y, color=color, size=size, style=style, label=label)
 
-    def line(self, x, y, color="b", width=1.0, style="-"):
-        return self._add_plot("line", x, y, color=color, width=width, style=style)
+    def line(self, x, y, color="b", width=1.0, style="-", label=""):
+        return self._add_plot("line", x, y, color=color, width=width, style=style, label=label)
 
-    def area(self, x, y1, y2, color="b"):
-        return self._add_plot("area", x, y1, y2, color=color)
+    def area(self, x, y1, y2, color="b", label=""):
+        return self._add_plot("area", x, y1, y2, color=color, label=label)
 
-    def bar(self, x, y, color="b", offset=5, orientation="V"):
-        return self._add_plot("bar", x, y, color=color, offset=offset, orientation=orientation)
+    def bar(self, x, y, color=None, label=None, offset=5, orientation="V"):
+        return self._add_plot("bar", x, y, color=color, label=label, offset=offset, orientation=orientation)
+
+    def stack(self, x, ys, colors=None, labels=None):
+        return self._add_plot("stack", x, ys, colors=colors, labels=labels)
 
     def plots(self, plot_type=None):
         if plot_type is None:
@@ -549,66 +974,55 @@ class Chart2D(_vtk.vtkChartXY, _ChartInterface):
 
     @property
     def x_axis(self):
-        return self.GetAxis(_vtk.vtkAxis.BOTTOM)
+        return self._x_axis
 
     @property
     def y_axis(self):
-        return self.GetAxis(_vtk.vtkAxis.LEFT)
+        return self._y_axis
 
     @property
     def x_label(self):
-        return self.x_axis.GetTitle()
+        return self.x_axis.label
 
     @x_label.setter
     def x_label(self, val):
-        self.x_axis.SetTitle(val)
+        self.x_axis.label = val
 
     @property
     def y_label(self):
-        return self.y_axis.GetTitle()
+        return self.y_axis.label
 
     @y_label.setter
     def y_label(self, val):
-        self.y_axis.SetTitle(val)
+        self.y_axis.label = val
 
     @property
     def x_range(self):
-        return self.x_axis.GetRange()
+        return self.x_axis.range
 
     @x_range.setter
     def x_range(self, val):
-        if val is None:
-            self.x_axis.SetBehavior(_vtk.vtkAxis.AUTO)
-        else:
-            self.x_axis.SetBehavior(_vtk.vtkAxis.FIXED)
-            self.x_axis.SetRange(val)
+        self.x_axis.range = val
 
     @property
     def y_range(self):
-        return self.y_axis.GetRange()
+        return self.y_axis.range
 
     @y_range.setter
     def y_range(self, val):
-        if val is None:
-            self.y_axis.SetBehavior(_vtk.vtkAxis.AUTO)
-        else:
-            self.y_axis.SetBehavior(_vtk.vtkAxis.FIXED)
-            self.y_axis.SetRange(val)
-
-    # TODO: ticks/labels. Maybe create vtkAxis wrapper?
+        self.y_axis.range = val
 
     @property
     def grid(self):
-        return self._grid
+        return self.x_axis.grid and self.y_axis.grid
 
     @grid.setter
     def grid(self, val):
-        self._grid = bool(val)
-        self.x_axis.SetGridVisible(self._grid)
-        self.y_axis.SetGridVisible(self._grid)
+        self.x_axis.grid = val
+        self.y_axis.grid = val
 
 
-class BoxPlot(_vtk.vtkPlotBox, _PlotInterface, _MultiCompPlotInterface):
+class BoxPlot(_vtk.vtkPlotBox, _Plot, _MultiCompPlot):
 
     def __init__(self, data, colors=None):
         super().__init__()
@@ -618,17 +1032,14 @@ class BoxPlot(_vtk.vtkPlotBox, _PlotInterface, _MultiCompPlotInterface):
         self.SetInputData(self._quartiles.GetOutput())
         self.update(data)
         self.SetLookupTable(self._lookup_table)
-        if isinstance(colors, str):
-            self.scheme = colors
-        else:
-            self.colors = colors
+        self.colors = colors
 
     def update(self, data):
         self._table.update(data)
         self._quartiles.Update()
 
 
-class ChartBox(_vtk.vtkChartBox, _ChartInterface):
+class ChartBox(_vtk.vtkChartBox, _Chart):
 
     def __init__(self, data):
         super().__init__()
@@ -641,6 +1052,11 @@ class ChartBox(_vtk.vtkChartBox, _ChartInterface):
         pass  # ChartBox fills entire scene by default, so no resizing is needed (nor possible at this moment)
 
     @property
+    def _geometry(self):
+        # Needed for background (remove once resizing is possible)
+        return (0, 0, *self.renderer.GetSize())
+
+    @property
     def plot(self):
         return self._plot
 
@@ -661,7 +1077,7 @@ class ChartBox(_vtk.vtkChartBox, _ChartInterface):
         raise ValueError("Cannot set ChartBox geometry, it fills up the entire viewport by default.")
 
 
-class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _PlotInterface, _MultiCompPlotInterface):
+class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _Plot, _MultiCompPlot):
 
     def __init__(self, data, labels=None, colors=None):
         super().__init__()
@@ -673,16 +1089,13 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _PlotInterface, _MultiCompPlotInterf
         self.labels = labels
 
         self.SetColorSeries(self._color_series)
-        if isinstance(colors, str):
-            self.scheme = colors
-        else:
-            self.colors = colors
+        self.colors = colors
 
     def update(self, data):
         self._table.update(data)
 
 
-class ChartPie(_vtk.vtkChartPie, _ChartInterface):
+class ChartPie(_vtk.vtkChartPie, _Chart):
 
     def __init__(self, data, labels=None):
         super().__init__()
@@ -692,6 +1105,11 @@ class ChartPie(_vtk.vtkChartPie, _ChartInterface):
 
     def render_event(self, *args, **kwargs):
         pass  # ChartPie fills entire scene by default, so no resizing is needed (nor possible at this moment)
+
+    @property
+    def _geometry(self):
+        # Needed for background (remove once resizing is possible)
+        return (0, 0, *self.renderer.GetSize())
 
     @property
     def plot(self):
@@ -714,13 +1132,209 @@ class ChartPie(_vtk.vtkChartPie, _ChartInterface):
         raise ValueError("Cannot set ChartPie geometry, it fills up the entire viewport by default.")
 
 
-class Chart3D(_vtk.vtkChartXYZ, _ChartInterface):
+class LinePlot3D(_vtk.vtkPlotLine3D, _Plot):
 
-    def __init__(self):
+    def __init__(self, x, y, z, color="b", width=1.0, style="-"):
         super().__init__()
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32), "z": np.empty(0, np.float32)})
+        # self.SetInputData(self._table, "x", "y", "z")
+        self.update(x, y, z)
+        self.color = color
+        self.width = width
+        self.line_style = style
+
+    def update(self, x, y, z):
+        if len(x) > 1:
+            self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False), "z": np.array(z, copy=False)})
+            self.SetInputData(self._table, "x", "y", "z")  # For 3D plots a copy is made to an internal table, so we have to call this every time...
+            self.visible = True
+        else:
+            # Turn off visibility for fewer than 2 points as otherwise an error message is shown
+            self.visible = False
 
 
-class ChartMPL(_vtk.vtkImageItem, _ChartInterface):
+class ScatterPlot3D(_vtk.vtkPlotPoints3D, _Plot):
+
+    def __init__(self, x, y, z, color="b"):
+        super().__init__()
+        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32), "z": np.empty(0, np.float32)})
+        # self.SetInputData(self._table, "x", "y", "z")
+        self.update(x, y, z)
+        self.color = color
+
+    def update(self, x, y, z):
+        if len(x) > 0:
+            self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False), "z": np.array(z, copy=False)})
+            self.SetInputData(self._table, "x", "y", "z")  # For 3D plots a copy is made to an internal table, so we have to call this every time...
+            self.visible = True
+        else:
+            self.visible = False
+
+
+class SurfacePlot(_vtk.vtkPlotSurface, _Plot):
+
+    def __init__(self, x, y, z):
+        super().__init__()
+        self._table = pyvista.Table(np.empty((0, 0), np.float32))
+        self.update(x, y, z)
+
+    def update(self, x, y, z):
+        x = np.array(x, copy=False).reshape((-1,))
+        y = np.array(y, copy=False).reshape((len(x),))
+        z = np.array(z, copy=False).reshape((len(x), len(x)))
+        if len(x) > 2:
+            self._table = pyvista.Table(z)  # We have to create a new table, as update will not remove columns if needed (i.e. less points given)
+            self.SetXRange(x[0], x[-1])
+            self.SetYRange(y[0], y[-1])
+            self.SetInputData(self._table)  # For 3D plots a copy is made to an internal table, so we have to call this every time...
+            self.visible = True
+        else:
+            self.visible = False
+
+
+class Chart3D(_vtk.vtkChartXYZ, _Chart):
+    PLOT_TYPES = {
+        "scatter": ScatterPlot3D,
+        "line": LinePlot3D,
+        "surface": SurfacePlot
+    }
+
+    def __init__(self, size=(0.8, 0.8), loc=(0.1, 0.1), x_label="x", y_label="y", z_label="z"):
+        super().__init__()
+        self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
+        self.background_color = None  # Transparent background and no border, as the 3D plots do not respect the
+        self.border_style = None  # geometry bounds
+        self.SetFitToScene(True)  # Some more room for axis labels
+        self.size = size
+        self.loc = loc
+        self._geom = (0, 0, 0, 0)  # Will be properly set on first render_event
+        self._x_axis = Axis(_wrap=self.GetAxis(0))
+        self._y_axis = Axis(_wrap=self.GetAxis(1))
+        self._z_axis = Axis(_wrap=self.GetAxis(2))
+        self.x_label = x_label
+        self.y_label = y_label
+        self.z_label = z_label
+
+    def render_event(self, *args, **kwargs):
+        self.RecalculateBounds()
+        super().render_event(*args, **kwargs)
+
+    @property
+    def _geometry(self):
+        # TODO: replace by self.GetGeometry() once properly supported by vtk
+        return self._geom
+
+    @_geometry.setter
+    def _geometry(self, val):
+        self.SetGeometry(_vtk.vtkRectf(*val))
+        self._geom = tuple(val)
+
+    def _resize(self):
+        r_w, r_h = self.renderer.GetSize()  # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
+        _, _, c_w, c_h = self._geometry
+        # Target size is calculated from specified normalized width and height and the renderer's current size
+        t_w = self._size[0] * r_w
+        t_h = self._size[1] * r_h
+        if c_w != t_w or c_h != t_h:
+            self._geometry = (self._loc[0] * r_w, self._loc[1] * r_h, t_w, t_h)
+
+    def _add_plot(self, plot_type, *args, **kwargs):
+        plot = self.PLOT_TYPES[plot_type](*args, **kwargs)
+        self.AddPlot(plot)
+        self._plots[plot_type].append(plot)
+        return plot
+
+    def plot(self, x, y, z, fmt):
+        """ Matplotlib like plot method """
+        # TODO: make x and fmt optional, allow multiple ([x], y, z, [fmt]) entries
+        marker_style, line_style, color = _Plot.parse_format(fmt)
+        scatter_plot, line_plot = None, None
+        if marker_style != "":
+            scatter_plot = self.scatter(x, y, z, color)
+        if line_style != "":
+            line_plot = self.line(x, y, z, color, style=line_style)
+        return scatter_plot, line_plot
+
+    def scatter(self, x, y, z, color="b"):
+        return self._add_plot("scatter", x, y, z, color=color)
+
+    def line(self, x, y, z, color="b", width=1.0, style="-"):
+        return self._add_plot("line", x, y, z, color=color, width=width, style=style)
+
+    def surface(self, x, y, z):
+        return self._add_plot("surface", x, y, z)
+
+    def plots(self, plot_type=None):
+        if plot_type is None:
+            for plots in self._plots.values():
+                for plot in plots:
+                    yield plot
+        else:
+            for plot in self._plots[plot_type]:
+                yield plot
+
+    @property
+    def x_axis(self):
+        return self._x_axis
+
+    @property
+    def y_axis(self):
+        return self._y_axis
+
+    @property
+    def z_axis(self):
+        return self._z_axis
+
+    @property
+    def x_label(self):
+        return self.x_axis.label
+
+    @x_label.setter
+    def x_label(self, val):
+        self.x_axis.label = val
+
+    @property
+    def y_label(self):
+        return self.y_axis.label
+
+    @y_label.setter
+    def y_label(self, val):
+        self.y_axis.label = val
+
+    @property
+    def z_label(self):
+        return self.z_axis.label
+
+    @z_label.setter
+    def z_label(self, val):
+        self.z_axis.label = val
+
+    @property
+    def x_range(self):
+        return self.x_axis.range
+
+    @x_range.setter
+    def x_range(self, val):
+        self.x_axis.range = val
+
+    @property
+    def y_range(self):
+        return self.y_axis.range
+
+    @y_range.setter
+    def y_range(self, val):
+        self.y_axis.range = val
+
+    @property
+    def z_range(self):
+        return self.z_axis.range
+
+    @z_range.setter
+    def z_range(self, val):
+        self.z_axis.range = val
+
+
+class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     if _HAS_MPL:
         def __init__(self, figure: matplotlib.figure.Figure, size: Tuple[int, int] = (1, 1), loc: Tuple[int, int] = (0, 0)):
@@ -775,11 +1389,18 @@ class ChartMPL(_vtk.vtkImageItem, _ChartInterface):
         self.redraw()  # Redraw figure
 
     @property
-    def bg_color(self):
+    def _geometry(self):
+        r_w, r_h = self.renderer.GetSize()
+        t_w = self._size[0]*r_w
+        t_h = self._size[1]*r_h
+        return (*self.position, t_w, t_h)
+
+    @property
+    def background_color(self):
         return self._bg_color
 
-    @bg_color.setter
-    def bg_color(self, val):
+    @background_color.setter
+    def background_color(self, val):
         color = parse_color(val) if val is not None else [1, 1, 1, 1]
         opacity = color[3] if len(color) == 4 else 1
         self._bg_color = color
@@ -798,6 +1419,9 @@ class ChartMPL(_vtk.vtkImageItem, _ChartInterface):
         assert len(val) == 2
         self.SetPosition(*val)
 
+#region Type definitions
+Chart = Union[Chart2D, ChartBox, ChartPie, Chart3D, ChartMPL]
+#endregion
 
 class Charts(object):
 
@@ -811,15 +1435,34 @@ class Charts(object):
         renderer.AddActor(self._actor)
         self._scene.SetRenderer(renderer)
 
-    def add_chart(self, chart):
+    def add_chart(self, chart: Chart):
         self._charts.append(chart)
+        self._scene.AddItem(chart._background)
         self._scene.AddItem(chart)
+        chart.SetInteractive(False)  # Charts are not interactive by default
 
     def remove_chart(self, chart_or_index):
         chart = self[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
         assert chart in self._charts
         self._charts.remove(chart)
         self._scene.RemoveItem(chart)
+
+    def toggle_interaction(self, mouse_pos):
+        # Mouse_pos is either False (to disable interaction with all charts) or a tuple containing the mouse position
+        # (to disable interaction with all charts, except the one indicated by the mouse, if any)
+        enable = False
+        for chart in self._charts:
+            if chart.visible and (mouse_pos is not False and chart.is_within(mouse_pos)):
+                chart.SetInteractive(True)
+                if chart._x_axis is not None:
+                    chart._x_axis.behavior = "fixed"  # Change the chart's axis behaviour to fixed, such that the user
+                if chart._y_axis is not None:
+                    chart._y_axis.behavior = "fixed"  # can properly interact with the chart
+                enable = True
+            else:
+                chart.SetInteractive(False)
+
+        return self._scene if enable else None
 
     def __getitem__(self, index):
         """Return a chart based on an index."""

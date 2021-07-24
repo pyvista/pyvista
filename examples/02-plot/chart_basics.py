@@ -10,7 +10,10 @@ combine multiple charts as overlays in the same renderer, is given in :ref:`char
 
 import pyvista as pv
 import numpy as np
-rng = np.random.default_rng(1)
+rng = np.random.default_rng(1)  # Seeded random number generator for consistent data generation
+
+# TODO: throughout the examples, show how to change certain chart properties (title, axis labels, axis ticks, legend, etc.)
+# TODO: [right click] to enable interaction with the chart (panning and zooming only seems to work for fixed axis behaviour)
 
 ###############################################################################
 # This example shows how to create a 2D scatter plot from 100 randomly sampled
@@ -19,8 +22,8 @@ rng = np.random.default_rng(1)
 x = rng.standard_normal(100)
 y = rng.standard_normal(100)
 p = pv.Plotter()
-p.background_color = (1, 1, 1)
 chart = pv.Chart2D()
+chart.background_color = (1, 1, 1)
 chart.scatter(x, y, size=10, style="+")
 p.add_chart(chart)
 p.show()
@@ -32,8 +35,8 @@ p.show()
 x = np.linspace(0, 10, 1000)
 y = np.sin(x**2)
 p = pv.Plotter()
-p.background_color = (1, 1, 1)
 chart = pv.Chart2D()
+chart.background_color = (1, 1, 1)
 chart.line(x, y)
 p.add_chart(chart)
 p.show()
@@ -46,8 +49,8 @@ p.show()
 x = np.arange(11)
 y = rng.integers(-5, 6, 11)
 p = pv.Plotter()
-p.background_color = (1, 1, 1)
 chart = pv.Chart2D()
+chart.background_color = (1, 1, 1)
 chart.plot(x, y, 'x--b')  # Marker style 'x', striped line style '--', blue color 'b'
 p.add_chart(chart)
 p.show()
@@ -59,8 +62,8 @@ x = np.linspace(0, 10, 1000)
 y1 = np.cos(x) + np.sin(3*x)
 y2 = 0.1*(x - 5)
 p = pv.Plotter()
-p.background_color = (1, 1, 1)
 chart = pv.Chart2D()
+chart.background_color = (1, 1, 1)
 chart.area(x, y1, y2, color=(0.1, 0.1, 0.9, 0.5))
 chart.line(x, y1, color=(0.9, 0.1, 0.1), width=4, style="--")
 chart.line(x, y2, color=(0.1, 0.9, 0.1), width=4, style="--")
@@ -68,18 +71,82 @@ p.add_chart(chart)
 p.show()
 
 ###############################################################################
-# Bar charts are also supported.
+# Bar charts are also supported. Multiple bar plots are placed next to each
+# other.
 
-x = np.arange(1, 11)
-y = rng.integers(1, 11, 10)
+x = np.arange(1, 13)
+y1 = rng.integers(1e2, 1e4, 12)
+y2 = rng.integers(1e2, 1e4, 12)
 p = pv.Plotter()
-p.background_color = (1, 1, 1)
 chart = pv.Chart2D()
-chart.bar(x, y)  # TODO: change chart X axis ticks/labels
+chart.background_color = (1, 1, 1)
+chart.bar(x, y1, color="b", label="2020")
+chart.bar(x, y2, color="r", label="2021")
+chart.x_axis.tick_locations = x
+chart.x_axis.tick_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+chart.x_label = "Month"
+chart.y_axis.tick_labels = "2e"
+chart.y_label = "# incidents"
 p.add_chart(chart)
 p.show()
 
-# TODO: include stacked bar charts here
+###############################################################################
+# In case you want to stack the bars, instead of drawing them next to each
+# other, pass a sequence of y values.
+
+x = np.arange(1, 11)
+ys = [rng.integers(1, 11, 10) for _ in range(5)]
+labels = [f"Machine {i}" for i in range(5)]
+p = pv.Plotter()
+chart = pv.Chart2D()
+chart.background_color = (1, 1, 1)
+chart.bar(x, ys, label=labels)
+chart.x_axis.tick_locations = x
+chart.x_label = "Configuration"
+chart.y_label = "Production"
+p.add_chart(chart)
+p.show()
+
+###############################################################################
+# In a similar way, you can stack multiple area plots on top of each other.
+
+x = np.arange(0, 11)
+ys = [rng.integers(1, 11, 11) for _ in range(5)]
+labels = [f"Segment {i}" for i in range(5)]
+p = pv.Plotter()
+chart = pv.Chart2D()
+chart.background_color = (1, 1, 1)
+chart.stack(x, ys, labels=labels)
+p.add_chart(chart)
+p.show()
+
+###############################################################################
+# Some limited functionality for 3D charts also exists. The interface is the
+# same as for the 2D counterparts.
+
+x = np.arange(11)
+y = rng.integers(-5, 6, 11)
+z = rng.integers(-5, 6, 11)
+p = pv.Plotter()
+p.background_color = (1, 1, 1)
+chart = pv.Chart3D()
+chart.plot(x, y, z, 'x-b')  # Show markers (marker style is ignored), solid line and blue color 'b'
+p.add_chart(chart)
+p.show()
+
+###############################################################################
+# 3D surfaces can be visualized on such a chart as well.
+
+x = np.linspace(-1, 1, 100)
+y = np.linspace(-1, 1, 100)
+xx, yy = np.meshgrid(x, y)
+z = np.cos(6*(xx**2+yy**2))
+p = pv.Plotter()
+p.background_color = (1, 1, 1)
+chart = pv.Chart3D()
+chart.surface(x, y, z)
+p.add_chart(chart)
+p.show()
 
 ###############################################################################
 # Beside the flexible Chart2D used in the previous examples, there are a couple
@@ -98,8 +165,8 @@ p.show()
 
 data = {f"Experiment {i}": rng.poisson(lam, 20) for i, lam in enumerate(range(2, 12, 2))}
 p = pv.Plotter()
-p.background_color = (1, 1, 1)
 chart = pv.ChartBox(data)
+chart.background_color = (1, 1, 1)
 p.add_chart(chart)
 p.show()
 

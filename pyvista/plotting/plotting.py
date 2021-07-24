@@ -3775,7 +3775,7 @@ class Plotter(BasePlotter):
 
         def on_timer(iren, event_id):
             """Exit application if interactive renderer stops."""
-            if event_id == 'TimerEvent':
+            if event_id == 'TimerEvent' and self.iren._style != "Context":
                 self.iren.terminate_app()
 
         if off_screen is None:
