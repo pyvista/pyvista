@@ -1628,6 +1628,7 @@ class Renderer(_vtk.vtkRenderer):
 
         self.remove_floors(render=render)
         self.RemoveAllViewProps()
+        self._charts.deep_clean()
         self._actors = {}
         self._camera = None
         # remove reference to parent last

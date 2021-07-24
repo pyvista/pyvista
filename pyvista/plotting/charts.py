@@ -1435,6 +1435,14 @@ class Charts(object):
         renderer.AddActor(self._actor)
         self._scene.SetRenderer(renderer)
 
+    def deep_clean(self):
+        for chart in self._charts:
+            self.remove_chart(chart)
+        if self._scene is not None:
+            self._scene.GetRenderer().RemoveActor(self._actor)
+            self._scene = None
+            self._actor = None
+
     def add_chart(self, chart: Chart):
         self._charts.append(chart)
         self._scene.AddItem(chart._background)
@@ -1442,10 +1450,11 @@ class Charts(object):
         chart.SetInteractive(False)  # Charts are not interactive by default
 
     def remove_chart(self, chart_or_index):
-        chart = self[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
+        chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
         assert chart in self._charts
         self._charts.remove(chart)
         self._scene.RemoveItem(chart)
+        self._scene.RemoveItem(chart._background)
 
     def toggle_interaction(self, mouse_pos):
         # Mouse_pos is either False (to disable interaction with all charts) or a tuple containing the mouse position
