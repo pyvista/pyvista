@@ -23,6 +23,18 @@ skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac t
 skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 
 
+def aprox_le(a, b, rtol=1E-5, atol=1E-8):
+    """Return if that ``a <= b`` within a tolerance.
+
+    See numpy.isclose for the description of ``rtol`` and ``atol``.
+
+    """
+    if a < b:
+        return True
+    else:
+        return np.isclose(a, b, rtol, atol)
+
+
 @pytest.fixture
 def composite(datasets):
     return pyvista.MultiBlock(datasets)
@@ -97,7 +109,10 @@ def test_clip_by_scalars_filter(datasets, both, invert):
                 assert isinstance(clp, pyvista.UnstructuredGrid)
 
             if expect_le:
-                assert clp.point_arrays['to_clip'].min() <= clip_value
+                # VTK clip filter appears to not clip exactly to the clip value.
+                # here we allow for a wider range of acceptable values
+                assert aprox_le(clp.point_arrays['to_clip'].max(), clip_value,
+                                rtol=1E-1)
             else:
                 assert clp.point_arrays['to_clip'].max() >= clip_value
 
