@@ -3,7 +3,7 @@
 
 Collision
 ~~~~~~~~~
-Perform a colision detection
+Perform a collision detection between two meshes.
 
 This example use the :class:`collision <pyvista.PolyDataFilters.collision>` 
 filter to detect the faces from one sphere coliding with another
