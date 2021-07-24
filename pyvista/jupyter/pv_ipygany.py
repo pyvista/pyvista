@@ -82,9 +82,14 @@ def pyvista_polydata_to_polymesh(obj):
         components = [ipygany.Component('X1', arr)]
         data = [ipygany.Data(trimesh.active_scalars_name, components)]
 
+    # convert to float32 for speed.  Also, ints are not supported for plotting
+    points = trimesh.points
+    if points.dtype != np.float32:
+        points = points.astype(np.float32)
+
     # for speed, only convert the active scalars later
     return PolyMesh(
-        vertices=trimesh.points,
+        vertices=points,
         triangle_indices=triangle_indices,
         data=data
     )
