@@ -1140,7 +1140,10 @@ class DefaultTheme(_ThemeConfig):
                  '_smooth_shading',
                  '_depth_peeling',
                  '_silhouette',
-                 '_slider_styles']
+                 '_slider_styles',
+                 '_return_cpos',
+                 '_hidden_line_removal',
+    ]
 
     def __init__(self):
         """Initialize the theme."""
@@ -1201,6 +1204,50 @@ class DefaultTheme(_ThemeConfig):
         self._depth_peeling = _DepthPeelingConfig()
         self._silhouette = _SilhouetteConfig()
         self._slider_styles = _SliderConfig()
+        self._return_cpos = True
+        self._hidden_line_removal = False
+
+    @property
+    def hidden_line_removal(self) -> bool:
+        """Return or set hidden line removal.
+
+        Wireframe geometry will be drawn using hidden line removal if
+        the rendering engine supports it.
+
+        See Also
+        --------
+        :func:`Plotter.enable_hidden_line_removal <BasePlotter.enable_hidden_line_removal>`
+
+        Examples
+        --------
+        Enable hidden line removal.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.hidden_line_removal = True
+        >>> pyvista.global_theme.hidden_line_removal
+        True
+        """
+        return self._hidden_line_removal
+
+    @hidden_line_removal.setter
+    def hidden_line_removal(self, value: bool):
+        self._hidden_line_removal = value
+
+    @property
+    def return_cpos(self) -> bool:
+        """Return or set the default behavior of returning the camera position.
+
+        Examples
+        --------
+        Disable returning camera position by ``show`` and `plot`` methods.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.return_cpos = False
+        """
+
+    @return_cpos.setter
+    def return_cpos(self, value: bool):
+        self._return_cpos = value
 
     @property
     def background(self):
@@ -1259,19 +1306,19 @@ class DefaultTheme(_ThemeConfig):
         Enable the ipygany backend.
 
         >>> import pyvista as pv
-        >>> pv.set_jupyter_backend('ipygany')
+        >>> pv.set_jupyter_backend('ipygany')  # doctest:+SKIP
 
         Enable the panel backend.
 
-        >>> pv.set_jupyter_backend('panel')
+        >>> pv.set_jupyter_backend('panel')  # doctest:+SKIP
 
         Enable the ipyvtklink backend.
 
-        >>> pv.set_jupyter_backend('ipyvtklink')
+        >>> pv.set_jupyter_backend('ipyvtklink')  # doctest:+SKIP
 
         Just show static images.
 
-        >>> pv.set_jupyter_backend('static')
+        >>> pv.set_jupyter_backend('static')  # doctest:+SKIP
 
         Disable all plotting within JupyterLab and display using a
         standard desktop VTK render window.
@@ -1985,6 +2032,8 @@ class DefaultTheme(_ThemeConfig):
             'Depth peeling': 'depth_peeling',
             'Silhouette': 'silhouette',
             'Slider Styles': 'slider_styles',
+            'Return Camera Position': 'return_cpos',
+            'Hidden Line Removal': 'hidden_line_removal',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
@@ -2152,9 +2201,15 @@ class ParaViewTheme(DefaultTheme):
 class DocumentTheme(DefaultTheme):
     """A document theme well suited for papers and presentations.
 
-    This theme uses a white background, black fonts, the "viridis"
-    colormap, and it disables edges.  Best used for presentations,
-    papers, etc.
+    This theme uses:
+
+    * A white background
+    * Black fonts
+    * The "viridis" colormap
+    * disables edges for surface plots
+    * Hidden edge removal
+
+    Best used for presentations, papers, etc.
 
     Examples
     --------
@@ -2187,6 +2242,7 @@ class DocumentTheme(DefaultTheme):
         self.axes.x_color = 'tomato'
         self.axes.y_color = 'seagreen'
         self.axes.z_color = 'blue'
+        self.hidden_line_removal = True
 
 
 class _TestingTheme(DefaultTheme):
@@ -2195,6 +2251,10 @@ class _TestingTheme(DefaultTheme):
     Necessary for image regression.  Xvfb doesn't support
     multi-sampling, it's disabled for consistency between desktops and
     remote testing.
+
+    Also disables ``return_cpos`` to make it easier for us to write
+    examples without returning camera positions.
+
     """
 
     def __init__(self):
@@ -2203,6 +2263,7 @@ class _TestingTheme(DefaultTheme):
         self.multi_samples = 1
         self.window_size = [400, 400]
         self.axes.show = False
+        self.return_cpos = False
 
 
 class _ALLOWED_THEMES(Enum):

@@ -39,6 +39,8 @@ class BackgroundRenderer(Renderer):
         """Resize a background renderer."""
         if self.parent is None:  # when deleted
             return
+        if not hasattr(self.parent, 'ren_win'):  # BasePlotter
+            return
 
         if self._prior_window_size != self.parent.window_size:
             self._prior_window_size = self.parent.window_size

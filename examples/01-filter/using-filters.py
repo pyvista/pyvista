@@ -1,8 +1,10 @@
 """
+.. _common_filter_example:
+
 Using Common Filters
 ~~~~~~~~~~~~~~~~~~~~
 
-Using common filters like thresholding and clipping
+Using common filters like thresholding and clipping.
 """
 
 # sphinx_gallery_thumbnail_number = 2

@@ -451,13 +451,13 @@ def test_texture_airplane():
 
 def test_invalid_vector(grid):
     with pytest.raises(ValueError):
-        grid.vectors = np.empty(10)
+        grid["vectors"] = np.empty(10)
 
     with pytest.raises(ValueError):
-        grid.vectors = np.empty((3, 2))
+        grid["vectors"] = np.empty((3, 2))
 
     with pytest.raises(ValueError):
-        grid.vectors = np.empty((3, 3))
+        grid["vectors"] = np.empty((3, 3))
 
 
 def test_no_t_coords(grid):
@@ -468,7 +468,7 @@ def test_no_arrows(grid):
     assert grid.arrows is None
 
 
-def test_arrows(grid):
+def test_arrows():
     sphere = pyvista.Sphere(radius=3.14)
 
     # make cool swirly pattern
@@ -477,16 +477,16 @@ def test_arrows(grid):
                          np.cos(sphere.points[:, 2]))).T
 
     # add and scales
-    sphere.vectors = vectors*0.3
+    sphere["vectors"] = vectors*0.3
+    sphere.set_active_vectors("vectors")
     assert np.allclose(sphere.active_vectors, vectors*0.3)
-    assert np.allclose(sphere.vectors, vectors*0.3)
+    assert np.allclose(sphere["vectors"], vectors*0.3)
 
-    assert sphere.active_vectors_info[1] == '_vectors'
+    assert sphere.active_vectors_info[1] == 'vectors'
     arrows = sphere.arrows
     assert isinstance(arrows, pyvista.PolyData)
     assert np.any(arrows.points)
-    sphere.set_active_vectors('_vectors')
-    assert sphere.active_vectors_name == '_vectors'
+    assert arrows.active_vectors_name == 'vectors'
 
 
 def active_component_consistency_check(grid, component_type, field_association="point"):

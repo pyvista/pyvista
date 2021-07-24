@@ -85,7 +85,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def active_scalars(self, name: str) -> None:
         """Set the active scalars by name."""
         self._raise_field_data_no_scalars_vectors()
-        self.SetActiveScalars(name)
+        dtype = self[name].dtype
+        if np.issubdtype(dtype, np.number) or dtype == bool:
+            self.SetActiveScalars(name)
 
     @property
     def active_vectors(self) -> Optional[np.ndarray]:
@@ -175,19 +177,20 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Parameters
         ----------
         narray : array_like, scalar value
-            A pyvista_ndarray, numpy.ndarray, list, tuple or scalar value.
+            A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
+            ``tuple`` or scalar value.
 
         name : str
             Name of the array to add.
 
         deep_copy : bool
-            When True makes a full copy of the array.
+            When ``True`` makes a full copy of the array.
 
         active_vectors : bool
-            If True, make this the active vector array.
+            If ``True``, make this the active vector array.
 
-        active_scalars : bool:
-            If True, make this the active scalar array.
+        active_scalars : bool
+            If ``True``, make this the active scalar array.
         """
         if narray is None:
             raise TypeError('narray cannot be None.')
@@ -206,7 +209,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             tmparray = np.empty(array_len)
             tmparray.fill(narray)
             narray = tmparray
-
         if narray.shape[0] != array_len:
             raise ValueError(f'narray length of ({narray.shape[0]}) != required length ({array_len})')
 
