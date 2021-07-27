@@ -19,7 +19,7 @@ Empty Object
 ~~~~~~~~~~~~
 An unstructured grid can be initialized with:
 
-.. code:: python
+.. jupyter-execute::
 
     import pyvista as pv
     grid = pv.UnstructuredGrid()
@@ -27,9 +27,8 @@ An unstructured grid can be initialized with:
 This creates an empty grid, and is not useful until points and cells are added
 to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``,
 but the inputs to these need to be ``vtk.vtkCellArray`` and ``vtk.vtkPoints``
-objects, which need to be populated with values.  With PyVista, grid
-creation is simplified by initializing the grid directly from numpy
-arrays, as demonstrated in the following section.
+objects, which need to be populated with values.  Grid creation is simplified
+by initializing the grid directly from numpy arrays as in the following section.
 
 
 Loading from File
@@ -52,7 +51,7 @@ Empty Object
 ~~~~~~~~~~~~
 A structured grid can be initialized with:
 
-.. code:: python
+.. jupyter-execute::
 
     import pyvista as pv
     grid = pv.StructuredGrid()
@@ -69,9 +68,15 @@ when creating a grid from scratch or copying it from another format.
 Also see :ref:`ref_create_structured` for an example on creating a structured
 grid from NumPy arrays.
 
+.. jupyter-execute::
+    :hide-code:
 
-.. pyvista-plot::
-    :context:
+    import pyvista
+    pv.OFF_SCREEN = True
+    pyvista.set_jupyter_backend('panel')
+    pyvista.set_plot_theme('document')
+
+.. jupyter-execute::
 
     import pyvista as pv
     import numpy as np
@@ -100,8 +105,7 @@ Plotting Grids
 This example shows how you can load an unstructured grid from a ``vtk`` file and
 create a plot and gif movie by updating the plotting object.
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
     # Load module and example file
     import pyvista as pv
@@ -118,17 +122,15 @@ create a plot and gif movie by updating the plotting object.
     # Displace original grid
     grid.points += d
 
-A simple plot can be created with:
+A simple plot can be created by using:
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
-    grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'}, cpos='zy', show_edges=True)
+    grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'})
 
-A more complex plot can be created with:
+A more complex plot can be created using:
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
     # Store Camera position.  This can be obtained manually by getting the
     # output of grid.plot()
@@ -144,24 +146,32 @@ A more complex plot can be created with:
                      rng=[-d.max(), d.max()])
     plotter.add_axes()
     plotter.camera_position = cpos
+
     plotter.show()
 
 
 You can animate the motion of the beam by updating the positions and
-scalars of the grid copied to the plotting object.
+scalars of the grid copied to the plotting object.  First you have to
+set up the plotting object:
 
-
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
     plotter = pv.Plotter(window_size=(800, 600))
     plotter.add_mesh(grid, scalars=d[:, 1],
-                     show_scalar_bar=False,
-                     show_edges=True, rng=[-d.max(), d.max()])
+                     scalar_bar_args={'title': 'Y Displacement'},
+                     show_edges=True, rng=[-d.max(), d.max()],
+                     interpolate_before_map=True)
     plotter.add_axes()
     plotter.camera_position = cpos
 
-    # open movie file.  A mp4 file can be written instead.  Requires ``moviepy``
+You then open the render window by plotting before opening the movie file.
+Set auto_close to False so the plotter does not close automatically.
+Disabling interactive means the plot will automatically continue without waiting
+for the user to exit the window.
+
+.. jupyter-execute::
+
+    # open movie file.  A mp4 file can be written instead.  Requires moviepy
     plotter.open_gif('beam.gif')  # or beam.mp4
 
     # Modify position of the beam cyclically
@@ -174,17 +184,30 @@ scalars of the grid copied to the plotting object.
     # Close the movie and plot
     plotter.close()
 
+.. jupyter-execute::
+    :hide-code:
+
+    # move to the right location
+    # note that this will be executed relative to pyvista/doc
+    import shutil
+    import os
+    shutil.move('beam.gif', 
+                os.path.join(os.getcwd(), './images/auto-generated/beam.gif'))
+
+.. image:: ../../images/auto-generated/beam.gif
+
 
 You can also render the beam as as a wire-frame object:
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
     # Animate plot as a wire-frame
     plotter = pv.Plotter(window_size=(800, 600))
     plotter.add_mesh(grid, scalars=d[:, 1],
-                     show_scalar_bar=False,
-                     rng=[-d.max(), d.max()], style='wireframe')
+                     scalar_bar_args={'title': 'Y Displacement'},
+                     show_edges=True,
+                     rng=[-d.max(), d.max()], interpolate_before_map=True,
+                     style='wireframe')
     plotter.add_axes()
     plotter.camera_position = cpos
 
@@ -198,21 +221,37 @@ You can also render the beam as as a wire-frame object:
 
     plotter.close()
 
+.. jupyter-execute::
+    :hide-code:
+
+    # move to the right location
+    # note that this will be executed relative to pyvista/doc
+    import shutil
+    import os
+    shutil.move('beam_wireframe.gif', 
+                 os.path.join(os.getcwd(), './images/auto-generated/beam_wireframe.gif'))
+
+.. image:: ../../images/auto-generated/beam_wireframe.gif
+
 
 Adding Labels to a Plot
 -----------------------
-Labels can be added to a plot using :func:`add_point_labels()
-<pyvista.BasePlotter.add_point_labels>` within the :class:`Plotter <pyvista.BasePlotter>`.
-The following example loads the included example beam, generates a
-plotting class, and sub-selects points along the y-z plane and labels
-their coordinates.  :func:`add_point_labels()
-<pyvista.BasePlotter.add_point_labels>` requires that the number of
-labels matches the number of points, and that labels is a list
-containing one entry per point.  The code automatically converts each
-item in the list to a string.
+Labels can be added to a plot using the ``add_point_labels`` function
+within the ``Plotter`` object.  The following example loads the
+included example beam, generates a plotting class, and sub-selects
+points along the y-z plane and labels their coordinates.
+``add_point_labels`` requires that the number of labels matches the
+number of points, and that labels is a list containing one entry per
+point.  The code automatically converts each item in the list to a
+string.
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
+    :hide-code:
+
+    # labels to not show in panel
+    pyvista.set_jupyter_backend('static')
+
+.. jupyter-execute::
 
     # Load module and example file
     import pyvista as pv
@@ -241,8 +280,7 @@ item in the list to a string.
 This example is similar and shows how labels can be combined with a
 scalar bar to show the exact value of certain points.
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
     # Label the Z position
     values = grid.points[:, 2]

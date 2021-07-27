@@ -45,6 +45,8 @@ def handle_plotter(plotter, backend=None, screenshot=None,
         screenshot = None
 
     try:
+        if backend == 'pyvistajs':
+            return show_pyvistajs(plotter, return_viewer, **kwargs)
         if backend == 'ipyvtklink':
             return show_ipyvtk(plotter, return_viewer)
         if backend == 'panel':

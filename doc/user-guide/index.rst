@@ -19,7 +19,7 @@ This basic example demonstrates three key features of PyVista:
 .. jupyter-execute::
    :hide-code:
 
-   # using ipyvtk as panel appears to be broken...
+   # using ipyvtk as it loads faster
    import pyvista
    pyvista.set_jupyter_backend('ipygany')
 
@@ -67,9 +67,4 @@ Here are some videos that you can watch to learn PyVista:
   - `Video <https://youtu.be/X3Z54Kw4I6Y>`_
   - `Material <https://docs.google.com/presentation/d/1M_cnS66ja81u_mHACjaUsDj1wSeeEtnEevk_IMZ8-dg/edit?usp=sharing>`_
 
-- Software Underground Tutorial
-
-  - `Tutorial: PyVista <https://www.youtube.com/watch?v=FmNmRBsEBHE>`_
-
-If there is any material that we can add, please open an `issue
-<https://github.com/pyvista/pyvista/issues>`_ .
+If there is any material that we can add, please `report <https://github.com/pyvista/pyvista/issues>`_ .

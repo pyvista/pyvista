@@ -310,13 +310,9 @@ def render_figures(code, code_path, output_dir, output_base, context,
 
         images = []
         figures = pyvista.plotting._ALL_PLOTTERS
-        for j, (address, plotter) in enumerate(figures.items()):
-            if hasattr(plotter, '_gif_filename'):
-                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
-                shutil.move(plotter._gif_filename, image_file.filename)
-            else:
-                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
-                plotter.screenshot(image_file.filename)
+        for j, (address, plotter) in enumerate(figures.items()):            
+            image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
+            plotter.screenshot(image_file.filename)
             images.append(image_file)
 
         pyvista.close_all() # close and clear all plotters

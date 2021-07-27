@@ -3,7 +3,7 @@
 import pyvista
 from .itkplotter import PlotterITK
 
-ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'none']
+ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'pyvistajs', 'none']
 
 
 def _validate_jupyter_backend(backend):
@@ -37,10 +37,16 @@ def _validate_jupyter_backend(backend):
                          f'Use one of the following:\n{backend_list_str}')
 
     # verify required packages are installed
+    if backend == 'pyvistajs':
+        try:
+            import pyvistajs
+        except ImportError:  # pragma: no cover
+            raise ImportError('Please install `pyvistajs` to use this feature.')
+
     if backend == 'ipyvtklink':
         try:
             import ipyvtklink
-        except ImportError:    # pragma: no cover
+        except ImportError:  # pragma: no cover
             raise ImportError('Please install `ipyvtklink` to use this feature.')
 
     if backend == 'panel':
@@ -85,6 +91,12 @@ def set_jupyter_backend(backend):
           this is the only method that does not require a virtual
           framebuffer.  Must have ``ipygany`` installed.
 
+        * ``'pyvistajs'`` : Convert all the meshes into ``pyvistajs``
+          meshes and streams those to be rendered on the client side.
+          Aside from ``ipygany``, this is the only method that does
+          not require a virtual framebuffer.  Must have ``pyvistajs``
+          installed.
+
         * ``'static'`` : Display a single static image within the
           Jupyterlab environment.  Still requires that a virtual
           framebuffer be setup when displaying on a headless server,
@@ -97,6 +109,11 @@ def set_jupyter_backend(backend):
 
     Examples
     --------
+    Enable the pyvistajs backend.
+
+    >>> import pyvista as pv
+    >>> pv.set_jupyter_backend('pyvistajs')  # doctest:+SKIP
+
     Enable the ipygany backend.
 
     >>> import pyvista as pv

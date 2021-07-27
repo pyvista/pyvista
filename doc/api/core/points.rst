@@ -20,19 +20,26 @@ A polydata object can be initialized with:
     import pyvista
     grid = pyvista.PolyData()
 
-This creates an empty grid, and is not useful until points and cells
-are added to it.  VTK points and cells can be added with ``SetPoints``
-and ``SetCells``, but the inputs to these need to be
-``vtk.vtkCellArray`` and ``vtk.vtkPoints`` objects, which need to be
-populated with values.  Grid creation is simplified by initializing
-the grid directly from NumPy arrays as in the following section.
+This creates an empty grid, and is not useful until points and cells are added
+to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``,
+but the inputs to these need to be ``vtk.vtkCellArray`` and ``vtk.vtkPoints``
+objects, which need to be populated with values.
+Grid creation is simplified by initializing the grid directly from NumPy
+arrays as in the following section.
 
 
 Initialize from a File
 ~~~~~~~~~~~~~~~~~~~~~~
-Both binary and ASCII .ply, .stl, and .vtk files can be read using
-PyVista.  For example, the PyVista package contains example meshes and
-these can be loaded with:
+Both binary and ASCII .ply, .stl, and .vtk files can be read using PyVista.
+For example, the PyVista package contains example meshes and these can be loaded with:
+
+.. jupyter-execute::
+    :hide-code:
+
+    import pyvista
+    pyvista.set_jupyter_backend('panel')
+    pyvista.set_plot_theme('document')
+
 
 .. jupyter-execute::
 
@@ -45,7 +52,7 @@ these can be loaded with:
 
 This mesh can then be written to a vtk file using:
 
-.. code:: python
+.. jupyter-execute::
 
     mesh.save('plane.vtk')
 
@@ -59,6 +66,16 @@ These meshes are identical.
     print(np.allclose(mesh_from_vtk.points, mesh.points))
 
 
+.. jupyter-execute::
+    :hide-code:
+
+    import os
+    try:
+        os.remove('plane.vtk')
+    except FileNotFoundError:
+        pass
+
+
 Mesh Manipulation and Plotting
 ------------------------------
 Meshes can be directly manipulated using NumPy or with the built-in
@@ -69,9 +86,15 @@ To plot more than one mesh a plotting class must be created to manage
 the plotting.  The following code creates the class and plots the
 meshes with various colors.
 
+.. jupyter-execute::
+   :hide-code:
 
-.. pyvista-plot::
-    :context:
+   # must have this here as our global backend may not be static
+   import pyvista
+   pyvista.set_jupyter_backend('static')
+
+
+.. jupyter-execute::
 
     import pyvista
     from pyvista import examples

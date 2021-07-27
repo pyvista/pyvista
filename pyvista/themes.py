@@ -1291,6 +1291,12 @@ class DefaultTheme(_ThemeConfig):
           this is the only method that does not require a virtual
           framebuffer.  Must have ``ipygany`` installed.
 
+        * ``'pyvistajs'`` : Convert all the meshes into ``pyvistajs``
+          meshes and streams those to be rendered on the client side.
+          Aside from ``ipygany``, this is the only method that does
+          not require a virtual framebuffer.  Must have ``pyvistajs``
+          installed.
+
         * ``'static'`` : Display a single static image within the
           JupyterLab environment.  Still requires that a virtual
           framebuffer be setup when displaying on a headless server,
@@ -1303,6 +1309,11 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
+        Enable the pyvistajs backend.
+
+        >>> import pyvista as pv
+        >>> pv.set_jupyter_backend('pyvistajs')  # doctest:+SKIP
+
         Enable the ipygany backend.
 
         >>> import pyvista as pv
