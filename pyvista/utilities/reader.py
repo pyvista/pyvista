@@ -33,7 +33,6 @@ def get_reader(filename):
         A subclass of `pyvista.BaseReader` is returned based on file type.
 
     """
-
     ext = get_ext(filename)
 
     try:
@@ -45,6 +44,7 @@ def get_reader(filename):
 
 class BaseReader(ABC):
     """The base reader class."""
+
     def __init__(self, filename):
         """Initialize Reader by setting filename."""
         self.filename = filename
@@ -84,6 +84,7 @@ class BaseReader(ABC):
 
 class DataArraySelection:
     """Mixin for readers that support data array selections."""
+
     @property
     def number_point_arrays(self):
         """Return the number of point arrays."""
