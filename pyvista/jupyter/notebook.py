@@ -167,3 +167,14 @@ def build_panel_bounds(actor):
     bounds['fontsize'] = actor.GetLabelTextProperty(0).GetFontSize()
 
     return bounds
+
+
+def show_pyvistajs(plotter, return_viewer, **kwargs):
+    """Show a pyvista plotting scene using """
+    import pyvistajs
+
+    renderer = pyvistajs.renderer_from_plotter(plotter)
+    if return_viewer:
+        return renderer
+    display.display_html(renderer)
+
