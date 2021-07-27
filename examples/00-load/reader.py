@@ -2,12 +2,11 @@
 Load data using a Reader
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Read a dataset using a flexible Reader class
 """
 ###############################################################################
-# To have more control over reading data files, use the :class:`pyvista.Reader`.
+# To have more control over reading data files, use a class based reader.
 # This class allows for more fine-grained control over reading datasets from
-# files.  See :class:`pyvista.Reader` for a list of file types supported.
+# files.  See :class:`pyvista.get_reader` for a list of file types supported.
 
 import pyvista
 from pyvista import examples
@@ -34,7 +33,7 @@ new_mesh = pyvista.read(temp_file.name)
 print(f"All arrays: {mesh.array_names}")
 
 ###############################################################################
-# :class:`pyvista.Reader` enables more fine-grained control of reading data
+# Using :class:`get_reader` enables more fine-grained control of reading data
 # files. Reading in a ".vtp" file uses the :class:`pyvista.XMLPolyDataReader`.
 
 reader = pyvista.get_reader(temp_file.name)
@@ -42,8 +41,9 @@ print(type(reader))
 # Alternative method: reader = pyvista.XMLPolyDataReader(temp_file.name)
 
 ###############################################################################
-# We can inspect the data file before loading all the data.
-# For example, to read the number of names of point and cell arrays.
+# Some reader classes, including this one, offer the ability to inspect the
+# data file before loading all the data. For example, we can access the number
+# and names of point and cell arrays.
 
 print(f"Number of point arrays: {reader.number_point_arrays}")
 print(f"Available point data:   {reader.point_array_names}")
