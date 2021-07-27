@@ -11,7 +11,7 @@ def test_xmlimagedatareader(tmpdir):
     mesh = pyvista.UniformGrid()
     mesh.save(tmpfile.strpath)
 
-    reader = pyvista.Reader(tmpfile.strpath)
+    reader = pyvista.get_reader(tmpfile.strpath)
     assert reader.filename == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.UniformGrid)
@@ -24,7 +24,7 @@ def test_xmlrectilineargridreader(tmpdir):
     mesh = pyvista.RectilinearGrid()
     mesh.save(tmpfile.strpath)
 
-    reader = pyvista.Reader(tmpfile.strpath)
+    reader = pyvista.get_reader(tmpfile.strpath)
     assert reader.filename == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.RectilinearGrid)
@@ -37,7 +37,7 @@ def test_xmlunstructuredgridreader(tmpdir):
     mesh = pyvista.UnstructuredGrid()
     mesh.save(tmpfile.strpath)
 
-    reader = pyvista.Reader(tmpfile.strpath)
+    reader = pyvista.get_reader(tmpfile.strpath)
     assert reader.filename == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.UnstructuredGrid)
@@ -50,7 +50,7 @@ def test_xmlpolydatareader(tmpdir):
     mesh = pyvista.Sphere()
     mesh.save(tmpfile.strpath)
       
-    reader = pyvista.Reader(tmpfile.strpath)
+    reader = pyvista.get_reader(tmpfile.strpath)
     assert reader.filename == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.PolyData)
@@ -63,7 +63,7 @@ def test_xmlstructuredgridreader(tmpdir):
     mesh = pyvista.StructuredGrid()
     mesh.save(tmpfile.strpath)
 
-    reader = pyvista.Reader(tmpfile.strpath)
+    reader = pyvista.get_reader(tmpfile.strpath)
     assert reader.filename == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.StructuredGrid)
@@ -76,7 +76,7 @@ def test_xmlmultiblockreader(tmpdir):
     mesh = pyvista.MultiBlock([pyvista.Sphere() for i in range(5)])
     mesh.save(tmpfile.strpath)
 
-    reader = pyvista.Reader(tmpfile.strpath)
+    reader = pyvista.get_reader(tmpfile.strpath)
     assert reader.filename == tmpfile.strpath
     new_mesh = reader.read()
     assert isinstance(new_mesh, pyvista.MultiBlock)
@@ -94,7 +94,7 @@ def test_reader_cell_point_data(tmpdir):
     mesh.save(tmpfile.strpath)
     # mesh has an additional 'Normals' point data array
 
-    reader = pyvista.Reader(tmpfile.strpath)
+    reader = pyvista.get_reader(tmpfile.strpath)
 
     assert reader.number_cell_arrays == 1
     assert reader.number_point_arrays == 2
@@ -137,7 +137,7 @@ def test_ensightreader():
     folder, _ = _download_file('EnSight.zip')
     filename = os.path.join(folder, "foam_case_0_0_0_0.case")
 
-    reader = pyvista.Reader(filename)
+    reader = pyvista.get_reader(filename)
     assert reader.filename == filename
     assert reader.number_cell_arrays == 9
     assert reader.number_point_arrays == 0

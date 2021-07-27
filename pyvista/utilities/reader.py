@@ -1,12 +1,12 @@
-"""Reader class."""
+"""Fine-grained control of reading data files."""
 
 from abc import ABC, abstractmethod
 from pyvista.utilities import wrap, get_ext
 from pyvista import _vtk
 
 
-class Reader(ABC):
-    """Fine-grained control of reading data files.
+def get_reader(filename):
+    """Get a reader for fine-grained control of reading data files.
 
     Supported file types and Readers:
     * .vti: :class:`pyvista.XMLImageDataReader`
@@ -27,19 +27,24 @@ class Reader(ABC):
     filename : str
         The string path to the file to read.
 
+    Returns
+    -------
+    :class:`pyvista.BaseReader`
+        A subclass of `pyvista.BaseReader` is returned based on file type.
+
     """
 
-    def __new__(cls, filename):
-        """Create new Reader object from subclass matching filename."""
-        ext = get_ext(filename)
+    ext = get_ext(filename)
 
-        try:
-            reader = CLASS_READERS[ext]
-        except KeyError:
-            raise ValueError(f"{ext} not supported")
+    try:
+        Reader = CLASS_READERS[ext]
+    except KeyError:
+        raise ValueError(f"{ext} not supported")
 
-        return super().__new__(reader)
+    return Reader(filename)
 
+class BaseReader(ABC):
+    """The base reader class."""
     def __init__(self, filename):
         """Initialize Reader by setting filename."""
         self.filename = filename
@@ -51,6 +56,34 @@ class Reader(ABC):
         """Return the vtk Reader object."""
         pass
 
+    def _set_filename(self, filename):
+        """Set filename and update reader."""
+        # Private method since changing file type requires a
+        # different subclass.
+        self.filename = filename
+        self.reader.SetFileName(filename)
+        self.update()
+
+    def read(self):
+        """Read data in file.
+
+        Returns
+        -------
+        :class:`pyvista.DataSet`
+
+        """
+        self.update()
+        data = wrap(self.reader.GetOutputDataObject(0))
+        data._post_file_load_processing()
+        return data
+
+    def update(self):
+        """Update reader."""
+        self.reader.Update()
+
+
+class DataArraySelection:
+    """Mixin for readers that support data array selections."""
     @property
     def number_point_arrays(self):
         """Return the number of point arrays."""
@@ -165,33 +198,8 @@ class Reader(ABC):
         """Return the status of all cell arrays as a dict."""
         return {name: self.cell_array_status(name) for name in self.cell_array_names}
 
-    def _set_filename(self, filename):
-        """Set filename and update reader."""
-        # Private method since changing file type requires a
-        # different subclass.
-        self.filename = filename
-        self.reader.SetFileName(filename)
-        self.update()
 
-    def read(self):
-        """Read data in file.
-
-        Returns
-        -------
-        :class:`pyvista.DataSet`
-
-        """
-        self.update()
-        data = wrap(self.reader.GetOutputDataObject(0))
-        data._post_file_load_processing()
-        return data
-
-    def update(self):
-        """Update reader."""
-        self.reader.Update()
-
-
-class XMLImageDataReader(Reader):
+class XMLImageDataReader(BaseReader, DataArraySelection):
     """XML Image Data Reader."""
 
     def __init__(self, filename):
@@ -205,7 +213,7 @@ class XMLImageDataReader(Reader):
         return self._reader
 
 
-class XMLPImageDataReader(Reader):
+class XMLPImageDataReader(BaseReader, DataArraySelection):
     """XML P Image Data Reader."""
 
     def __init__(self, filename):
@@ -219,7 +227,7 @@ class XMLPImageDataReader(Reader):
         return self._reader
 
 
-class XMLRectilinearGridReader(Reader):
+class XMLRectilinearGridReader(BaseReader, DataArraySelection):
     """XML RectilinearGrid Reader."""
 
     def __init__(self, filename):
@@ -233,7 +241,7 @@ class XMLRectilinearGridReader(Reader):
         return self._reader
 
 
-class XMLPRectilinearGridReader(Reader):
+class XMLPRectilinearGridReader(BaseReader, DataArraySelection):
     """XML P RectilinearGrid Reader."""
 
     def __init__(self, filename):
@@ -247,7 +255,7 @@ class XMLPRectilinearGridReader(Reader):
         return self._reader
 
 
-class XMLUnstructuredGridReader(Reader):
+class XMLUnstructuredGridReader(BaseReader, DataArraySelection):
     """XML UnstructuredGrid Reader."""
 
     def __init__(self, filename):
@@ -260,7 +268,7 @@ class XMLUnstructuredGridReader(Reader):
         """Return vtkXMLUnstructuredGridReader object."""
         return self._reader
 
-class XMLPUnstructuredGridReader(Reader):
+class XMLPUnstructuredGridReader(BaseReader, DataArraySelection):
     """XML P UnstructuredGrid Reader."""
 
     def __init__(self, filename):
@@ -274,7 +282,7 @@ class XMLPUnstructuredGridReader(Reader):
         return self._reader
 
 
-class XMLPolyDataReader(Reader):
+class XMLPolyDataReader(BaseReader, DataArraySelection):
     """XML PolyData Reader."""
 
     def __init__(self, filename):
@@ -288,7 +296,7 @@ class XMLPolyDataReader(Reader):
         return self._reader
 
 
-class XMLStructuredGridReader(Reader):
+class XMLStructuredGridReader(BaseReader, DataArraySelection):
     """XML StructuredGrid Reader."""
 
     def __init__(self, filename):
@@ -302,7 +310,7 @@ class XMLStructuredGridReader(Reader):
         return self._reader
 
 
-class XMLMultiBlockDataReader(Reader):
+class XMLMultiBlockDataReader(BaseReader, DataArraySelection):
     """XML MultiBlock Data Reader."""
 
     def __init__(self, filename):
@@ -316,7 +324,7 @@ class XMLMultiBlockDataReader(Reader):
         return self._reader
 
 
-class EnSightReader(Reader):
+class EnSightReader(BaseReader, DataArraySelection):
     """EnSight Reader."""
 
     def __init__(self, filename):
@@ -338,7 +346,7 @@ class EnSightReader(Reader):
         return self._reader
 
 
-class OpenFOAMReader(Reader):
+class OpenFOAMReader(BaseReader, DataArraySelection):
     """OpenFOAM Reader."""
 
     def __init__(self, filename):

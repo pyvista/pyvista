@@ -11,4 +11,9 @@ from .sphinx_gallery import Scraper, _get_sg_image_scraper
 from .regression import compare_images
 from . import transformations
 from .xvfb import start_xvfb
-from .reader import *
+from .reader import (get_reader, XMLImageDataReader, XMLPImageDataReader,
+                     XMLRectilinearGridReader, XMLPRectilinearGridReader,
+                     XMLUnstructuredGridReader, XMLPUnstructuredGridReader,
+                     XMLPolyDataReader, XMLStructuredGridReader,
+                     XMLMultiBlockDataReader, EnSightReader,
+                     OpenFOAMReader)

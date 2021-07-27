@@ -1,8 +1,8 @@
 """
-Load data using Reader
+Load data using a Reader
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Read a dataset using the flexible :class:`pyvista.Reader`.
+Read a dataset using a flexible Reader class
 """
 ###############################################################################
 # To have more control over reading data files, use the :class:`pyvista.Reader`.
@@ -35,14 +35,20 @@ print(f"All arrays: {mesh.array_names}")
 
 ###############################################################################
 # :class:`pyvista.Reader` enables more fine-grained control of reading data
-# files. We can inspect the data file before loading all the data.
+# files. Reading in a ".vtp" file uses the :class:`pyvista.XMLPolyDataReader`.
+
+reader = pyvista.get_reader(temp_file.name)
+print(type(reader))
+# Alternative method: reader = pyvista.XMLPolyDataReader(temp_file.name)
+
+###############################################################################
+# We can inspect the data file before loading all the data.
 # For example, to read the number of names of point and cell arrays.
 
-reader = pyvista.Reader(temp_file.name)
 print(f"Number of point arrays: {reader.number_point_arrays}")
-print(f"Available point data: {reader.point_array_names}")
-print(f"Number of cell arrays: {reader.number_cell_arrays}")
-print(f"Available cell data: {reader.cell_array_names}")
+print(f"Available point data:   {reader.point_array_names}")
+print(f"Number of cell arrays:  {reader.number_cell_arrays}")
+print(f"Available cell data:    {reader.cell_array_names}")
 
 ###############################################################################
 # We can select which data to read by selectively disabling or enabling
@@ -53,9 +59,9 @@ print(f"Available cell data: {reader.cell_array_names}")
 reader.disable_all_cell_arrays()
 reader.disable_point_array('Normals')
 print(f"Point array status: {reader.all_point_arrays_status}")
-print(f"Cell array status: {reader.all_cell_arrays_status}")
+print(f"Cell array status:  {reader.all_cell_arrays_status}")
 reader_mesh = reader.read()
-print(f"Read arrays: {reader_mesh.array_names}")
+print(f"Read arrays:        {reader_mesh.array_names}")
 
 ###############################################################################
 # We can reuse the reader object to choose different variables if needed.
