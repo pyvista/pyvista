@@ -15,5 +15,7 @@ from .reader import (get_reader, XMLImageDataReader, XMLPImageDataReader,
                      XMLRectilinearGridReader, XMLPRectilinearGridReader,
                      XMLUnstructuredGridReader, XMLPUnstructuredGridReader,
                      XMLPolyDataReader, XMLStructuredGridReader,
-                     XMLMultiBlockDataReader, EnSightReader,
-                     OpenFOAMReader)
+                     XMLMultiBlockDataReader, EnSightReader, OpenFOAMReader,
+                     PLYReader, OBJReader, STLReader, VTKDataSetReader,
+                     VTKPDataSetReader, BYUReader, FacetReader, Plot3DMetaReader,
+                     BinaryMarchingCubesReader)

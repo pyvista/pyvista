@@ -10,17 +10,26 @@ def get_reader(filename):
 
     Supported file types and Readers:
     * .vti: :class:`pyvista.XMLImageDataReader`
-    * .pvti: :class:`XMLPImageDataReader`
-    * .vtr: :class:`XMLRectilinearGridReader`
-    * .pvtr: :class:`XMLPRectilinearGridReader`
-    * .vtu: :class:`XMLUnstructuredGridReader`
-    * .pvtu: :class:`XMLPUnstructuredGridReader`
-    * .vtp: :class:`XMLPolyDataReader`
-    * .vts: :class:`XMLStructuredGridReader`
-    * .vtm: :class:`XMLMultiBlockDataReader`
-    * .vtmb: :class:`XMLMultiBlockDataReader`
-    * .case: :class:`EnSightReader`
-    * .foam: :class:`OpenFOAMReader`
+    * .pvti: :class:`pyvista.XMLPImageDataReader`
+    * .vtr: :class:`pyvista.XMLRectilinearGridReader`
+    * .pvtr: :class:`pyvista.XMLPRectilinearGridReader`
+    * .vtu: :class:`pyvista.XMLUnstructuredGridReader`
+    * .pvtu: :class:`pyvista.XMLPUnstructuredGridReader`
+    * .vtp: :class:`pyvista.XMLPolyDataReader`
+    * .vts: :class:`pyvista.XMLStructuredGridReader`
+    * .vtm: :class:`pyvista.XMLMultiBlockDataReader`
+    * .vtmb: :class:`pyvista.XMLMultiBlockDataReader`
+    * .case: :class:`pyvista.EnSightReader`
+    * .foam: :class:`pyvista.OpenFOAMReader`
+    * .ply: :class:`pyvista.PLYReader`
+    * .obj: :class:`pyvista.OBJReader`
+    * .stl: :class:`pyvista.STLReader`
+    * .vtk: :class:`pyvista.VTKDataSetReader`
+    * .pvtk: :class:`pyvista.VTKPDataSetReader`
+    * .g: :class:`pyvista.BYUReader`
+    * .facet: :class:`pyvista.FacetReader`
+    * .p3d: :class:`pyvista.Plot3DMetaReader`
+    * .tri: :class:`pyvista.BinaryMarchingCubesReader`
 
     Parameters
     ----------
@@ -361,6 +370,130 @@ class OpenFOAMReader(BaseReader, DataArraySelection):
         return self._reader
 
 
+class PLYReader(BaseReader):
+    """PLY Reader."""
+
+    def __init__(self, filename):
+        """Initialize PLYReader."""
+        self._reader = _vtk.vtkPLYReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkPLYReader object."""
+        return self._reader
+
+class OBJReader(BaseReader):
+    """OBJ Reader."""
+
+    def __init__(self, filename):
+        """Initialize OBJReader."""
+        self._reader = _vtk.vtkOBJReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkOBJReader object."""
+        return self._reader
+
+
+class STLReader(BaseReader):
+    """STL Reader."""
+
+    def __init__(self, filename):
+        """Initialize STLReader."""
+        self._reader = _vtk.vtkSTLReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkSTLReader object."""
+        return self._reader
+
+
+class VTKDataSetReader(BaseReader):
+    """VTK Data Set Reader."""
+
+    def __init__(self, filename):
+        """Initialize VTKDataSetReader."""
+        self._reader = _vtk.vtkDataSetReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkDataSetReader object."""
+        return self._reader
+
+
+class VTKPDataSetReader(BaseReader):
+    """VTK P Data Set Reader."""
+
+    def __init__(self, filename):
+        """Initialize VTKPDataSetReader."""
+        self._reader = _vtk.lazy_vtkPDataSetReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return lazy_vtkPDataSetReader object."""
+        return self._reader
+
+
+class BYUReader(BaseReader):
+    """BYU Reader."""
+
+    def __init__(self, filename):
+        """Initialize BYUReader."""
+        self._reader = _vtk.vtkBYUReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return BYUReader object."""
+        return self._reader
+
+
+class FacetReader(BaseReader):
+    """Facet Reader."""
+
+    def __init__(self, filename):
+        """Initialize FacetReader."""
+        self._reader = _vtk.lazy_vtkFacetReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return lazy_vtkFacetReader object."""
+        return self._reader
+
+class Plot3DMetaReader(BaseReader):
+    """Plot3DMeta Reader."""
+
+    def __init__(self, filename):
+        """Initialize Plot3DMetaReader."""
+        self._reader = _vtk.lazy_vtkPlot3DMetaReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return lazy_vtkPlot3DMetaReader object."""
+        return self._reader
+
+
+class BinaryMarchingCubesReader(BaseReader):
+    """BinaryMarchingCubes Reader."""
+
+    def __init__(self, filename):
+        """Initialize BinaryMarchingCubesReader."""
+        self._reader = _vtk.vtkMCubesReader()
+        super().__init__(filename)
+
+    @property
+    def reader(self):
+        """Return vtkMCubesReader object."""
+        return self._reader
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.vti': XMLImageDataReader,
@@ -375,4 +508,13 @@ CLASS_READERS = {
     '.vtmb': XMLMultiBlockDataReader,
     '.case': EnSightReader,
     '.foam': OpenFOAMReader,
+    '.ply': PLYReader,
+    '.obj': OBJReader,
+    '.stl': STLReader,
+    '.vtk': VTKDataSetReader,
+    '.pvtk': VTKPDataSetReader,
+    '.g': BYUReader,
+    '.facet': FacetReader,
+    '.p3d': Plot3DMetaReader,
+    '.tri': BinaryMarchingCubesReader,
 }

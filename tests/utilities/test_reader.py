@@ -1,10 +1,16 @@
 import os
 
 import numpy as np
+import pytest
 
 import pyvista
+from pyvista import examples
 from pyvista.examples.downloads import _download_file
 
+
+def test_get_reader_fail():
+    with pytest.raises(ValueError):
+        reader = pyvista.get_reader("not_a_supported_file.no_data")
 
 def test_xmlimagedatareader(tmpdir):
     tmpfile = tmpdir.join("temp.vti")
@@ -171,3 +177,87 @@ def test_ensightreader():
         assert all([all_mesh[i].n_points, all_mesh[i].n_cells])
         assert all_mesh[i].array_names == ['v2', 'nut', 'k', 'nuTilda', 'p', 
                                            'omega', 'f', 'epsilon', 'U']
+
+
+def test_plyreader():
+    filename = examples.spherefile
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.PLYReader)
+    assert reader.filename == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_objreader():
+    filename, _ = _download_file('doorman/doorman.obj')
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.OBJReader)
+    assert reader.filename == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_stlreader():
+    filename, _ = _download_file('gears.stl')
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.STLReader)
+    assert reader.filename == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_vtkreader():
+    filename = examples.hexbeamfile
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.VTKDataSetReader)
+    assert reader.filename == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_byureader():
+    filename, _ = _download_file('teapot.g')
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.BYUReader)
+    assert reader.filename == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_facetreader():
+    filename, _ = _download_file('clown.facet')
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.FacetReader)
+    assert reader.filename == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_plot3dmetareader():
+    filename, _ = _download_file('multi.p3d')
+    _download_file('multi-bin.xyz')
+    _download_file('multi-bin.q')
+    _download_file('multi-bin.f')
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.Plot3DMetaReader)
+    assert reader.filename == filename
+
+    mesh = reader.read()
+    for m in mesh:
+        assert all([m.n_points, m.n_cells])
+
+
+def test_binarymarchingcubesreader():
+    filename, _ = _download_file('pine_root.tri')
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.BinaryMarchingCubesReader)
+    assert reader.filename == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
