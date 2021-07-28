@@ -110,7 +110,7 @@ curvsurf.plot(texture=tex)
 ###############################################################################
 # Create a GIF Movie with updating textures
 # +++++++++++++++++++++++++++++++++++++++++
-# Generate a moving gif from an active plotter with updating textures
+# Generate a moving gif from an active plotter with updating textures.
 
 # Create a plotter object
 plotter = pv.Plotter(notebook=False, off_screen=True)
