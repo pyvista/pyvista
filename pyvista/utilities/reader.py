@@ -313,7 +313,7 @@ class VTKDataSetReader(BaseReader):
 class VTKPDataSetReader(BaseReader):
     """VTK P Data Set Reader."""
 
-    _class_reader = _vtk.lazy_vtkPDataSetReader
+    _class_reader = staticmethod(_vtk.lazy_vtkPDataSetReader)
 
 
 class BYUReader(BaseReader):
