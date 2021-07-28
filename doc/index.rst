@@ -4,7 +4,10 @@
    :hide-code:
 
    from pyvista.demos import logo
-   logo._for_landing_page(height='200px')
+   renderer = logo.plot_logo(jupyter_backend='pyvistajs', return_viewer=True)
+   renderer.layout.height = '200px'
+   renderer
+
 
 .. raw:: html
 
@@ -67,8 +70,12 @@ might want to use PyVista:
 
    # must have this here as our global backend may not be static
    import pyvista
-   pyvista.set_jupyter_backend('ipygany')  # using ipyvtk as it loads faster
+   pyvista.set_jupyter_backend('pyvistajs')
    pyvista.global_theme.background = 'white'
+   pyvista.global_theme.window_size = [400, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.smooth_shading = True
+   pyvista.global_theme.antialiasing = True
 
 
 Maps and Geoscience
@@ -80,7 +87,9 @@ Download the surface elevation map of Mount St. Helens and plot it.
     from pyvista import examples
     mesh = examples.download_st_helens()
     warped = mesh.warp_by_scalar('Elevation')
-    warped.plot(cmap='Spectral')
+    surf = warped.extract_surface().triangulate()
+    surf = surf.decimate_pro(0.75)  # reduce the size of the mesh by 75%
+    surf.plot(cmap='gist_earth')
 
 
 Finite Element Analysis
@@ -111,7 +120,7 @@ the points directly.
     pdata['orig_sphere'] = np.arange(100)
 
     # create many spheres from the point cloud
-    sphere = pyvista.Sphere(radius=0.02)
+    sphere = pyvista.Sphere(radius=0.02, phi_resolution=10, theta_resolution=10)
     pc = pdata.glyph(scale=False, geom=sphere)
     pc.plot(background='black', cmap='Reds', show_scalar_bar=False)
 
@@ -133,16 +142,16 @@ Generate a spline from an array of NumPy points.
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
 
-    spline = pyvista.Spline(points, 1000).tube(radius=0.1)
+    spline = pyvista.Spline(points, 500).tube(radius=0.1)
 
     # done here to get it to render online
     line = spline.cast_to_unstructured_grid().extract_surface()
-    line.plot(show_scalar_bar=False)
+    line.plot(show_scalar_bar=False, smooth_shading=True)
 
 
 Boolean Operations on Meshes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Combine two meshes to create a manifold mesh.
+Subtract a sphere from a cube mesh.
 
 .. jupyter-execute::
 
@@ -152,16 +161,17 @@ Combine two meshes to create a manifold mesh.
     def make_cube():
         x = np.linspace(-0.5, 0.5, 25)
         grid = pyvista.StructuredGrid(*np.meshgrid(x, x, x))
-        return grid.extract_surface().triangulate()
-
+        surf = grid.extract_surface().triangulate()
+        surf.flip_normals()
+        return surf
+        
     # Create example PolyData meshes for boolean operations
     sphere = pyvista.Sphere(radius=0.65, center=(0, 0, 0))
     cube = make_cube()
 
-    # Perform the union
-    union = sphere.boolean_union(cube)
-    union.plot(color='darkgrey')
-
+    # Perform a boolean difference
+    boolean = cube.boolean_difference(sphere)
+    boolean.plot(color='darkgrey', smooth_shading=False)
 
 
 Translating

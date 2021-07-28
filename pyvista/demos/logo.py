@@ -184,6 +184,7 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None,
     plotter.camera_position = 'xy'
 
     plotter.remove_scalar_bar()
+    plotter.enable_anti_aliasing()
 
     if just_return_plotter:
         return plotter

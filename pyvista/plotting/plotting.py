@@ -234,6 +234,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.theme.hidden_line_removal:
             self.enable_hidden_line_removal()
 
+        # set antialiasing based on theme
+        if self.theme.antialiasing:
+            self.enable_anti_aliasing()
+
     @property
     def theme(self):
         """Return or set the theme used for this plotter.
