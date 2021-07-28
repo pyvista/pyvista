@@ -53,10 +53,11 @@ def get_reader(filename):
 class BaseReader:
     """The base reader class."""
 
-    _reader = None
+    _class_reader = None
 
     def __init__(self, filename):
         """Initialize Reader by setting filename."""
+        self._reader = self._class_reader()
         self.filename = filename
         self._set_filename(filename)
 
@@ -214,61 +215,61 @@ class DataArraySelection:
 class XMLImageDataReader(BaseReader, DataArraySelection):
     """XML Image Data Reader."""
 
-    _reader =_vtk.vtkXMLImageDataReader()
+    _class_reader =_vtk.vtkXMLImageDataReader
 
 
 class XMLPImageDataReader(BaseReader, DataArraySelection):
     """XML P Image Data Reader."""
 
-    _reader = _vtk.vtkXMLPImageDataReader()
+    _class_reader = _vtk.vtkXMLPImageDataReader
 
     
 class XMLRectilinearGridReader(BaseReader, DataArraySelection):
     """XML RectilinearGrid Reader."""
 
-    _reader = _vtk.vtkXMLRectilinearGridReader()
+    _class_reader = _vtk.vtkXMLRectilinearGridReader
 
 
 class XMLPRectilinearGridReader(BaseReader, DataArraySelection):
     """XML P RectilinearGrid Reader."""
 
-    _reader = _vtk.vtkXMLPRectilinearGridReader()
+    _class_reader = _vtk.vtkXMLPRectilinearGridReader
 
 
 class XMLUnstructuredGridReader(BaseReader, DataArraySelection):
     """XML UnstructuredGrid Reader."""
 
-    _reader = _vtk.vtkXMLUnstructuredGridReader()
+    _class_reader = _vtk.vtkXMLUnstructuredGridReader
 
 
 class XMLPUnstructuredGridReader(BaseReader, DataArraySelection):
     """XML P UnstructuredGrid Reader."""
 
-    _reader = _vtk.vtkXMLPUnstructuredGridReader()
+    _class_reader = _vtk.vtkXMLPUnstructuredGridReader
 
 
 class XMLPolyDataReader(BaseReader, DataArraySelection):
     """XML PolyData Reader."""
 
-    _reader = _vtk.vtkXMLPolyDataReader()
+    _class_reader = _vtk.vtkXMLPolyDataReader
 
 
 class XMLStructuredGridReader(BaseReader, DataArraySelection):
     """XML StructuredGrid Reader."""
 
-    _reader = _vtk.vtkXMLStructuredGridReader()
+    _class_reader = _vtk.vtkXMLStructuredGridReader
 
 
 class XMLMultiBlockDataReader(BaseReader, DataArraySelection):
     """XML MultiBlock Data Reader."""
 
-    _reader = _vtk.vtkXMLMultiBlockDataReader()
+    _class_reader = _vtk.vtkXMLMultiBlockDataReader
 
 
 class EnSightReader(BaseReader, DataArraySelection):
     """EnSight Reader."""
 
-    _reader = _vtk.vtkGenericEnSightReader()
+    _class_reader = _vtk.vtkGenericEnSightReader
 
     def _set_filename(self, filename):
         """Set filename and update reader."""
@@ -282,61 +283,61 @@ class EnSightReader(BaseReader, DataArraySelection):
 class OpenFOAMReader(BaseReader, DataArraySelection):
     """OpenFOAM Reader."""
 
-    _reader = _vtk.vtkOpenFOAMReader()
+    _class_reader = _vtk.vtkOpenFOAMReader
 
 
 class PLYReader(BaseReader):
     """PLY Reader."""
 
-    _reader = _vtk.vtkPLYReader()
+    _class_reader = _vtk.vtkPLYReader
 
 
 class OBJReader(BaseReader):
     """OBJ Reader."""
 
-    _reader = _vtk.vtkOBJReader()
+    _class_reader = _vtk.vtkOBJReader
 
 
 class STLReader(BaseReader):
     """STL Reader."""
 
-    _reader = _vtk.vtkSTLReader()
+    _class_reader = _vtk.vtkSTLReader
 
 
 class VTKDataSetReader(BaseReader):
     """VTK Data Set Reader."""
 
-    _reader = _vtk.vtkDataSetReader()
+    _class_reader = _vtk.vtkDataSetReader
 
 
 class VTKPDataSetReader(BaseReader):
     """VTK P Data Set Reader."""
 
-    _reader = _vtk.lazy_vtkPDataSetReader()
+    _class_reader = _vtk.lazy_vtkPDataSetReader
 
 
 class BYUReader(BaseReader):
     """BYU Reader."""
 
-    _reader = _vtk.vtkBYUReader()
+    _class_reader = _vtk.vtkBYUReader
 
 
 class FacetReader(BaseReader):
     """Facet Reader."""
 
-    _reader = _vtk.lazy_vtkFacetReader()
+    _class_reader = staticmethod(_vtk.lazy_vtkFacetReader)
 
 
 class Plot3DMetaReader(BaseReader):
     """Plot3DMeta Reader."""
 
-    _reader = _vtk.lazy_vtkPlot3DMetaReader()
+    _class_reader = staticmethod(_vtk.lazy_vtkPlot3DMetaReader)
 
 
 class BinaryMarchingCubesReader(BaseReader):
     """BinaryMarchingCubes Reader."""
 
-    _reader = _vtk.vtkMCubesReader()
+    _class_reader = _vtk.vtkMCubesReader
 
 
 CLASS_READERS = {
