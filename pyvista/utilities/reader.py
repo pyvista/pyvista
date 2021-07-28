@@ -1,5 +1,7 @@
 """Fine-grained control of reading data files."""
 
+from typing import Any
+
 from pyvista.utilities import wrap, get_ext
 from pyvista import _vtk
 
@@ -53,7 +55,7 @@ def get_reader(filename):
 class BaseReader:
     """The base reader class."""
 
-    _class_reader = None
+    _class_reader: Any = None
 
     def __init__(self, filename):
         """Initialize Reader by setting filename."""
