@@ -1,6 +1,5 @@
 """Fine-grained control of reading data files."""
 
-from abc import ABC, abstractmethod
 from pyvista.utilities import wrap, get_ext
 from pyvista import _vtk
 
@@ -51,8 +50,10 @@ def get_reader(filename):
 
     return Reader(filename)
 
-class BaseReader(ABC):
+class BaseReader:
     """The base reader class."""
+
+    _reader = None
 
     def __init__(self, filename):
         """Initialize Reader by setting filename."""
@@ -60,10 +61,11 @@ class BaseReader(ABC):
         self._set_filename(filename)
 
     @property
-    @abstractmethod
     def reader(self):
         """Return the vtk Reader object."""
-        pass
+        if self._reader is None:
+            raise NotImplementedError
+        return self._reader
 
     def _set_filename(self, filename):
         """Set filename and update reader."""
@@ -212,135 +214,61 @@ class DataArraySelection:
 class XMLImageDataReader(BaseReader, DataArraySelection):
     """XML Image Data Reader."""
 
-    def __init__(self, filename):
-        """Initialize XMLImageDataReader."""
-        self._reader = _vtk.vtkXMLImageDataReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkXMLImageDataReader object."""
-        return self._reader
+    _reader =_vtk.vtkXMLImageDataReader()
 
 
 class XMLPImageDataReader(BaseReader, DataArraySelection):
     """XML P Image Data Reader."""
 
-    def __init__(self, filename):
-        """Initialize XMLPImageDataReader."""
-        self._reader = _vtk.vtkXMLPImageDataReader()
-        super().__init__(filename)
+    _reader = _vtk.vtkXMLPImageDataReader()
 
-    @property
-    def reader(self):
-        """Return vtkXMLPImageDataReader object."""
-        return self._reader
-
-
+    
 class XMLRectilinearGridReader(BaseReader, DataArraySelection):
     """XML RectilinearGrid Reader."""
 
-    def __init__(self, filename):
-        """Initialize XMLRectilinearGridReader."""
-        self._reader = _vtk.vtkXMLRectilinearGridReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkXMLRectilinearGridReader object."""
-        return self._reader
+    _reader = _vtk.vtkXMLRectilinearGridReader()
 
 
 class XMLPRectilinearGridReader(BaseReader, DataArraySelection):
     """XML P RectilinearGrid Reader."""
 
-    def __init__(self, filename):
-        """Initialize XMLPRectilinearGridReader."""
-        self._reader = _vtk.vtkXMLPRectilinearGridReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkXMLPRectilinearGridReader object."""
-        return self._reader
+    _reader = _vtk.vtkXMLPRectilinearGridReader()
 
 
 class XMLUnstructuredGridReader(BaseReader, DataArraySelection):
     """XML UnstructuredGrid Reader."""
 
-    def __init__(self, filename):
-        """Initialize XMLUnstructuredGridReader."""
-        self._reader = _vtk.vtkXMLUnstructuredGridReader()
-        super().__init__(filename)
+    _reader = _vtk.vtkXMLUnstructuredGridReader()
 
-    @property
-    def reader(self):
-        """Return vtkXMLUnstructuredGridReader object."""
-        return self._reader
 
 class XMLPUnstructuredGridReader(BaseReader, DataArraySelection):
     """XML P UnstructuredGrid Reader."""
 
-    def __init__(self, filename):
-        """Initialize XMLPUnstructuredGridReader."""
-        self._reader = _vtk.vtkXMLPUnstructuredGridReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkXMLPUnstructuredGridReader object."""
-        return self._reader
+    _reader = _vtk.vtkXMLPUnstructuredGridReader()
 
 
 class XMLPolyDataReader(BaseReader, DataArraySelection):
     """XML PolyData Reader."""
 
-    def __init__(self, filename):
-        """Initialize XMLPolyDataReader."""
-        self._reader = _vtk.vtkXMLPolyDataReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkXMLPolyDataReader object."""
-        return self._reader
+    _reader = _vtk.vtkXMLPolyDataReader()
 
 
 class XMLStructuredGridReader(BaseReader, DataArraySelection):
     """XML StructuredGrid Reader."""
 
-    def __init__(self, filename):
-        """Initialize XMLStructuredGridReader."""
-        self._reader = _vtk.vtkXMLStructuredGridReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkXMLStructuredGridReader object."""
-        return self._reader
+    _reader = _vtk.vtkXMLStructuredGridReader()
 
 
 class XMLMultiBlockDataReader(BaseReader, DataArraySelection):
     """XML MultiBlock Data Reader."""
 
-    def __init__(self, filename):
-        """Initialize XMLMultiBlockDataReader."""
-        self._reader = _vtk.vtkXMLMultiBlockDataReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkXMLMultiBlockDataReader object."""
-        return self._reader
+    _reader = _vtk.vtkXMLMultiBlockDataReader()
 
 
 class EnSightReader(BaseReader, DataArraySelection):
     """EnSight Reader."""
 
-    def __init__(self, filename):
-        """Initialize EnSightReader."""
-        self._reader = _vtk.vtkGenericEnSightReader()
-        super().__init__(filename)
+    _reader = _vtk.vtkGenericEnSightReader()
 
     def _set_filename(self, filename):
         """Set filename and update reader."""
@@ -350,148 +278,65 @@ class EnSightReader(BaseReader, DataArraySelection):
         self.reader.SetCaseFileName(filename)
         self.update()
 
-    @property
-    def reader(self):
-        """Return vtkGenericEnSightReader object."""
-        return self._reader
-
 
 class OpenFOAMReader(BaseReader, DataArraySelection):
     """OpenFOAM Reader."""
 
-    def __init__(self, filename):
-        """Initialize OpenFOAMReader."""
-        self._reader = _vtk.vtkOpenFOAMReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkOpenFOAMReader object."""
-        return self._reader
+    _reader = _vtk.vtkOpenFOAMReader()
 
 
 class PLYReader(BaseReader):
     """PLY Reader."""
 
-    def __init__(self, filename):
-        """Initialize PLYReader."""
-        self._reader = _vtk.vtkPLYReader()
-        super().__init__(filename)
+    _reader = _vtk.vtkPLYReader()
 
-    @property
-    def reader(self):
-        """Return vtkPLYReader object."""
-        return self._reader
 
 class OBJReader(BaseReader):
     """OBJ Reader."""
 
-    def __init__(self, filename):
-        """Initialize OBJReader."""
-        self._reader = _vtk.vtkOBJReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkOBJReader object."""
-        return self._reader
+    _reader = _vtk.vtkOBJReader()
 
 
 class STLReader(BaseReader):
     """STL Reader."""
 
-    def __init__(self, filename):
-        """Initialize STLReader."""
-        self._reader = _vtk.vtkSTLReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkSTLReader object."""
-        return self._reader
+    _reader = _vtk.vtkSTLReader()
 
 
 class VTKDataSetReader(BaseReader):
     """VTK Data Set Reader."""
 
-    def __init__(self, filename):
-        """Initialize VTKDataSetReader."""
-        self._reader = _vtk.vtkDataSetReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkDataSetReader object."""
-        return self._reader
+    _reader = _vtk.vtkDataSetReader()
 
 
 class VTKPDataSetReader(BaseReader):
     """VTK P Data Set Reader."""
 
-    def __init__(self, filename):
-        """Initialize VTKPDataSetReader."""
-        self._reader = _vtk.lazy_vtkPDataSetReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return lazy_vtkPDataSetReader object."""
-        return self._reader
+    _reader = _vtk.lazy_vtkPDataSetReader()
 
 
 class BYUReader(BaseReader):
     """BYU Reader."""
 
-    def __init__(self, filename):
-        """Initialize BYUReader."""
-        self._reader = _vtk.vtkBYUReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return BYUReader object."""
-        return self._reader
+    _reader = _vtk.vtkBYUReader()
 
 
 class FacetReader(BaseReader):
     """Facet Reader."""
 
-    def __init__(self, filename):
-        """Initialize FacetReader."""
-        self._reader = _vtk.lazy_vtkFacetReader()
-        super().__init__(filename)
+    _reader = _vtk.lazy_vtkFacetReader()
 
-    @property
-    def reader(self):
-        """Return lazy_vtkFacetReader object."""
-        return self._reader
 
 class Plot3DMetaReader(BaseReader):
     """Plot3DMeta Reader."""
 
-    def __init__(self, filename):
-        """Initialize Plot3DMetaReader."""
-        self._reader = _vtk.lazy_vtkPlot3DMetaReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return lazy_vtkPlot3DMetaReader object."""
-        return self._reader
+    _reader = _vtk.lazy_vtkPlot3DMetaReader()
 
 
 class BinaryMarchingCubesReader(BaseReader):
     """BinaryMarchingCubes Reader."""
 
-    def __init__(self, filename):
-        """Initialize BinaryMarchingCubesReader."""
-        self._reader = _vtk.vtkMCubesReader()
-        super().__init__(filename)
-
-    @property
-    def reader(self):
-        """Return vtkMCubesReader object."""
-        return self._reader
+    _reader = _vtk.vtkMCubesReader()
 
 
 CLASS_READERS = {
