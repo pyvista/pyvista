@@ -584,7 +584,7 @@ class DataSet(DataSetFilters, DataObject):
             Length 3 list, tuple or array.
 
         """
-        self.points += np.asarray(xyz)
+        self.points += np.asarray(xyz)  # type: ignore
 
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object."""
