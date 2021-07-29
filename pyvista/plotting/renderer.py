@@ -125,7 +125,6 @@ class Renderer(_vtk.vtkRenderer):
         self._lights = []
         self._camera = Camera(self)
         self.SetActiveCamera(self._camera)
-        self._charts = Charts(self)
         self.AddObserver("StartEvent", partial(try_callback, self.render_event))
 
         self._empty_str = None  # used to track reference to a vtkStringArray
@@ -135,11 +134,18 @@ class Renderer(_vtk.vtkRenderer):
         # This allows us to keep adding colorbars without overlapping
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
+        self.__charts = None
 
         if border:
             self.add_border(border_color, border_width)
 
-    #### Properties ####
+    @property
+    def _charts(self):
+        """Return charts collection"""
+        # lazy instantiation here to avoid creating the charts object unless needed.
+        if self.__charts is None:
+            self.__charts = Charts(self)
+        return self.__charts
 
     @property
     def camera_position(self):
@@ -516,14 +522,14 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        self.marker_actor = create_axes_marker(line_width=line_width,
+        self._marker_actor = create_axes_marker(line_width=line_width,
             x_color=x_color, y_color=y_color, z_color=z_color,
             xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
-        self.AddActor(self.marker_actor)
-        memory_address = self.marker_actor.GetAddressAsString("")
-        self._actors[memory_address] = self.marker_actor
+        self.AddActor(self._marker_actor)
+        memory_address = self._marker_actor.GetAddressAsString("")
+        self._actors[memory_address] = self._marker_actor
         self.Modified()
-        return self.marker_actor
+        return self._marker_actor
 
     def add_orientation_widget(self, actor, interactive=None, color=None,
                                opacity=1.0):
@@ -1081,7 +1087,7 @@ class Renderer(_vtk.vtkRenderer):
 
         outline : bool
             Default is ``True``. when ``False``, a box with faces is shown
-            with the specified culling
+            with the specified culling.
 
         culling : str, optional
             Does not render faces that are culled. Options are
@@ -2085,6 +2091,8 @@ class Renderer(_vtk.vtkRenderer):
         self._charts.deep_clean()
         self._actors = {}
         self._camera = None
+        self._bounding_box = None
+        self._marker_actor = None
         # remove reference to parent last
         self.parent = None
 

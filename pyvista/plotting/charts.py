@@ -1423,7 +1423,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 Chart = Union[Chart2D, ChartBox, ChartPie, Chart3D, ChartMPL]
 #endregion
 
-class Charts(object):
+class Charts:
 
     def __init__(self, renderer):
         self._charts = []

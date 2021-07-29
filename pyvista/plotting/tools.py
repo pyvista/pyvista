@@ -351,7 +351,52 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
 def parse_color(color, opacity=None, default_color=None):
     """Parse color into a vtk friendly rgb list.
 
+    If color is a sequence of RGBA floats, opacity will be extracted
+    from ``color`` and not the ``opacity`` parameter.
+
     Values returned will be between 0 and 1.
+
+    Parameters
+    ----------
+    color : str or sequence
+        Either a string, RGB sequence, RGBA sequence, or hex color string.
+        For example:
+
+            * ``'white'``
+            * ``'w'``
+            * ``[1, 1, 1]``
+            * ``[0.5, 1, 0.7, 1]``
+            * ``'#FFFFFF'``
+
+    opacity : float, optional
+        Opacity of the color.  Used when ``color`` is not a
+        length 4 RGBA sequence.
+
+    default_color : str or sequence, optional
+        Default color to use when ``color`` is None.  If this value is
+        ``None``, then defaults to the global theme color.  Format is
+        identical to ``color``.
+
+    Returns
+    -------
+    list
+        Either a length 3 RGB sequence if opacity is unset, or RGBA
+        sequence when ``opacity`` is set.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pyvista.parse_color('blue')
+    (0.0, 0.0, 1.0)
+
+    >>> pyvista.parse_color('k')
+    (0.0, 0.0, 0.0)
+
+    >>> pyvista.parse_color('#FFFFFF')
+    (1.0, 1.0, 1.0)
+
+    >>> pyvista.parse_color((0.4, 0.3, 0.4, 1))
+    [0.4, 0.3, 0.4, 1]
 
     """
     if color is None:
@@ -364,7 +409,7 @@ def parse_color(color, opacity=None, default_color=None):
     elif len(color) == 3:
         pass
     elif len(color) == 4:
-        opacity = color[3]  # TODO: verify/ask whether this addition doesn't break anything
+        opacity = color[3]
         color = color[:3]
     else:
         raise ValueError(f"""

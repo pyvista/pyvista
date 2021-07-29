@@ -1668,8 +1668,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if nan_color is None:
             nan_color = self._theme.nan_color
-        nan_color = list(parse_color(nan_color))
-        nan_color.append(nan_opacity)
+        nan_color = parse_color(nan_color, opacity=nan_opacity)
+
         if color is True:
             color = self._theme.color
 

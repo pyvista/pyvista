@@ -42,8 +42,10 @@ class RenderWindowInteractor():
         self._plotter = plotter
         self._click_observer = None
 
-        # Toggle interaction style when clicked on a visible chart (to enable interaction with visible charts)
-        # TODO: maybe make it a double click? https://kitware.github.io/vtk-examples/site/Cxx/Interaction/DoubleClick/
+        # Toggle interaction style when clicked on a visible chart (to
+        # enable interaction with visible charts)
+        # TODO: maybe make it a double click?
+        # https://kitware.github.io/vtk-examples/site/Cxx/Interaction/DoubleClick/
         self._context_style = _vtk.vtkContextInteractorStyle()
         self.add_observer("RightButtonPressEvent", self._toggle_context_style)
 
