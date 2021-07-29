@@ -1056,6 +1056,10 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         # Needed for background (remove once resizing is possible)
         return (0, 0, *self.renderer.GetSize())
 
+    @_geometry.setter
+    def _geometry(self, value):
+        raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
+
     @property
     def plot(self):
         return self._plot
@@ -1110,6 +1114,10 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     def _geometry(self):
         # Needed for background (remove once resizing is possible)
         return (0, 0, *self.renderer.GetSize())
+
+    @_geometry.setter
+    def _geometry(self, value):
+        raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
 
     @property
     def plot(self):
@@ -1336,41 +1344,39 @@ class Chart3D(_vtk.vtkChartXYZ, _Chart):
 
 class ChartMPL(_vtk.vtkImageItem, _Chart):
 
-    if _HAS_MPL:
-        def __init__(self, figure: matplotlib.figure.Figure, size: Tuple[int, int] = (1, 1), loc: Tuple[int, int] = (0, 0)):
-            """
-            Create new chart from an existing matplotlib figure.
-            :param figure: The matplotlib figure to draw
-            :param size: The normalized size of the chart (values between 0 and 1). None to completely fill the renderer
-                         and autoresize
-            :param loc: The normalized location of the chart (values between 0 and 1). None to manually set the position
-                        (in pixels)
-            """
-            super().__init__()
-            self._fig = figure
-            self._canvas = FigureCanvasAgg(self._fig)  # Switch backends and store reference to figure's canvas
-            self._canvas.mpl_connect('draw_event', self.redraw)  # Attach 'draw_event' callback
-
-            self.size = size
-            self.loc = loc
-            self.redraw()
-
-        def _resize(self):
-            r_w, r_h = self.renderer.GetSize()
-            c_w, c_h = self._canvas.get_width_height()
-            # Calculate target size from specified normalized width and height and the renderer's current size
-            t_w = self._size[0]*r_w
-            t_h = self._size[1]*r_h
-            if c_w != t_w or c_h != t_h:
-                # Mismatch between canvas size and target size, so resize figure:
-                f_w = t_w / self._fig.dpi
-                f_h = t_h / self._fig.dpi
-                self._fig.set_size_inches(f_w, f_h)
-                self.position = (self._loc[0]*r_w, self._loc[1]*r_h)
-
-    else:
-        def __init__(self, *args, **kwargs):
+    def __init__(self, figure: matplotlib.figure.Figure, size: Tuple[int, int] = (1, 1), loc: Tuple[int, int] = (0, 0)):
+        """
+        Create new chart from an existing matplotlib figure.
+        :param figure: The matplotlib figure to draw
+        :param size: The normalized size of the chart (values between 0 and 1). None to completely fill the renderer
+                     and autoresize
+        :param loc: The normalized location of the chart (values between 0 and 1). None to manually set the position
+                    (in pixels)
+        """
+        if not _HAS_MPL:
             raise ImportError("ChartMPL requires matplotlib")
+
+        super().__init__()
+        self._fig = figure
+        self._canvas = FigureCanvasAgg(self._fig)  # Switch backends and store reference to figure's canvas
+        self._canvas.mpl_connect('draw_event', self.redraw)  # Attach 'draw_event' callback
+
+        self.size = size
+        self.loc = loc
+        self.redraw()
+
+    def _resize(self):
+        r_w, r_h = self.renderer.GetSize()
+        c_w, c_h = self._canvas.get_width_height()
+        # Calculate target size from specified normalized width and height and the renderer's current size
+        t_w = self._size[0]*r_w
+        t_h = self._size[1]*r_h
+        if c_w != t_w or c_h != t_h:
+            # Mismatch between canvas size and target size, so resize figure:
+            f_w = t_w / self._fig.dpi
+            f_h = t_h / self._fig.dpi
+            self._fig.set_size_inches(f_w, f_h)
+            self.position = (self._loc[0]*r_w, self._loc[1]*r_h)
 
     def redraw(self, event=None):
         if event is None:
@@ -1394,6 +1400,10 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         t_w = self._size[0]*r_w
         t_h = self._size[1]*r_h
         return (*self.position, t_w, t_h)
+
+    @_geometry.setter
+    def _geometry(self, value):
+        raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
 
     @property
     def background_color(self):
