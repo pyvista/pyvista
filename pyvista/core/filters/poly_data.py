@@ -2613,8 +2613,10 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        other_mesh : pyvista.PolyData
-            Other mesh to test collision with.
+        other_mesh : pyvista.DataSet
+            Other mesh to test collision with.  If the other mesh is
+            not a surface, its external surface will be extracted and
+            triangulated.
 
         contact_mode : int, optional
             Contact mode.  One of the following:
@@ -2677,10 +2679,10 @@ class PolyDataFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista
         >>> mesh_a = pyvista.Sphere(radius=0.5)
-        >>> mesh_b = pyvista.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4]).extract_surface()
+        >>> mesh_b = pyvista.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
-        array([471, 468, 469, 466, 467, 464, 474, 475, 476, 477])
+        array([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
 
         Plot the collisions by creating a collision mask with the
         ``"ContactCells"`` field array.  Cells with a collision are
@@ -2694,16 +2696,29 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(mesh_b, color='tan', line_width=5, opacity=0.7, 
         ...                 show_edges=True)
         >>> pl.show()
+
         Warnings
         --------
-        Currently only triangles are processed. Use :func:`PolyDataFilters.triangulate`
-        to convert any strips or polygons to triangles.
+        Currently only triangles are processed. Use
+        :func:`PolyDataFilters.triangulate` to convert any strips or
+        polygons to triangles.  Otherwise, the mesh will be converted
+        for you within this method.
 
         See Also
         --------
         See :ref:`collision_example` for more examples using this filter.
 
         """
+        # other mesh must be a polydata
+        if not isinstance(other_mesh, pyvista.PolyData):
+            other_mesh = other_mesh.extract_surface()
+
+        # according to VTK limitations
+        if not poly_data.is_all_triangles():
+            poly_data = poly_data.triangulate()
+        if not other_mesh.is_all_triangles():
+            other_mesh = other_mesh.triangulate()
+
         alg = _vtk.vtkCollisionDetectionFilter()
         alg.SetInputData(0, poly_data)
         alg.SetTransform(0, _vtk.vtkTransform())
