@@ -30,7 +30,6 @@ p.link_views()  # link all the views
 p.camera_position = [(15, 5, 0), (0, 0, 0), (0, 1, 0)]
 
 p.open_gif("linked.gif")
- 
 # Update camera and write a frame for each updated position
 nframe = 15
 for i in range(nframe):

@@ -2621,12 +2621,12 @@ class PolyDataFilters(DataSetFilters):
 
             * 0 - All contacts. Find all the contacting cell pairs
               with two points per collision
-            * 1 - First contact. Find all the contacting cell pairs
+            * 1 - First contact. Quickly find the first contact point.
+            * 2 - Half contacts. Find all the contacting cell pairs
               with one point per collision.
-            * 2 - Half contacts. Quickly find the first contact point.
 
         box_tolerance : float, optional
-            OBB tolerance in world coordinates.
+             Oriented bounding box (OBB) tree tolerance in world coordinates.
 
         cell_tolerance : float, optional
             Cell tolerance (squared value).  
@@ -2649,7 +2649,7 @@ class PolyDataFilters(DataSetFilters):
             attribute named ``"ContactCells"``.  Array only exists
             when there are collisions.
 
-        :class:`int`
+        int
             Number of collisions.
 
         Notes
@@ -2694,6 +2694,10 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = pl.add_mesh(mesh_b, color='tan', line_width=5, opacity=0.7, 
         ...                 show_edges=True)
         >>> pl.show()
+        Warnings
+        --------
+        Currently only triangles are processed. Use :func:`PolyDataFilters.triangulate`
+        to convert any strips or polygons to triangles.
 
         See Also
         --------
@@ -2711,4 +2715,4 @@ class PolyDataFilters(DataSetFilters):
         alg.SetCollisionMode(contact_mode)
         alg.SetGenerateScalars(generate_scalars)
         _update_alg(alg, progress_bar, 'Computing collisions')
-        return pyvista.wrap(alg.GetOutput()), alg.GetNumberOfContacts()
+        return _get_output(alg), alg.GetNumberOfContacts()

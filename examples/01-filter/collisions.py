@@ -67,8 +67,8 @@ for i in range(int(2/delta_x)):
 
     colision_mask = np.zeros(sphere0.n_cells, dtype=bool)
     if n_contacts:
-        colision_mask[col['ContactCells']] = True
-    sphere0['collisions'] = colision_mask
+        collision_mask[col['ContactCells']] = True
+    sphere0['collisions'] = collision_mask
     pl.write_frame()
 
     # alternatively, disable movie plotting and simply render the image
