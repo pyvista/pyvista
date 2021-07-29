@@ -6,7 +6,7 @@ Collision
 Perform a collision detection between two meshes.
 
 This example use the :class:`collision <pyvista.PolyDataFilters.collision>` 
-filter to detect the faces from one sphere coliding with another
+filter to detect the faces from one sphere colliding with another
 sphere.
 
 .. note::
@@ -65,7 +65,7 @@ for i in range(int(2/delta_x)):
     sphere1.translate([delta_x, 0, 0])
     col, n_contacts = sphere0.collision(sphere1)
 
-    colision_mask = np.zeros(sphere0.n_cells, dtype=bool)
+    collision_mask = np.zeros(sphere0.n_cells, dtype=bool)
     if n_contacts:
         collision_mask[col['ContactCells']] = True
     sphere0['collisions'] = collision_mask

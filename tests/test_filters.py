@@ -1592,7 +1592,7 @@ def test_collision(sphere):
     assert n_collision > 40
     assert 'ContactCells' in output.field_arrays
 
-    # test no colision
+    # test no collision
     moved_sphere.translate((1000, 0, 0))
     _, n_collision = sphere.collision(moved_sphere)
     assert not n_collision
