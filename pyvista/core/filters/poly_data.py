@@ -2701,7 +2701,7 @@ class PolyDataFilters(DataSetFilters):
         ...                 show_edges=True)
         >>> pl.show()
 
-        Alternatively, simply plot the colisions using the default
+        Alternatively, simply plot the collisions using the default
         ``'collision_rgba'`` array after enabling ``generate_scalars``.
 
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1,
