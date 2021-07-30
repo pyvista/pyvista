@@ -1496,8 +1496,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If an 2 dimensional array is passed as the scalars, plot
             those values as RGB(A) colors. ``rgba`` is also an
             accepted alias for this.  Opacity (the A) is optional.  If
-            a scalars array ending with ``"_rgba"`` is passed, this is
-            automatically enabled.
+            a scalars array ending with ``"_rgba"`` is passed, the default
+            becomes ``True``.  This can be overridden by setting this
+            parameter to ``False``.
 
         categories : bool, optional
             If set to ``True``, then the number of unique values in
