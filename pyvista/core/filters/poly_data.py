@@ -2631,7 +2631,7 @@ class PolyDataFilters(DataSetFilters):
              Oriented bounding box (OBB) tree tolerance in world coordinates.
 
         cell_tolerance : float, optional
-            Cell tolerance (squared value).  
+            Cell tolerance (squared value).
 
         n_cells_per_node : int, optional
             Number of cells in each OBB.
@@ -2639,7 +2639,11 @@ class PolyDataFilters(DataSetFilters):
         generate_scalars : bool, optional
             Flag to visualize the contact cells.  If ``True``, the
             contacting cells will be colored from red through blue,
-            with collisions first determined colored red.
+            with collisions first determined colored red.  This array
+            is stored as ``"collision_rgba"``.
+
+            .. note::
+               This will remove any other cell arrays in the mesh.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -2691,11 +2695,20 @@ class PolyDataFilters(DataSetFilters):
         >>> scalars = np.zeros(collision.n_cells, dtype=bool)
         >>> scalars[collision.field_arrays['ContactCells']] = True
         >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_mesh(collision, scalars=scalars, show_scalar_bar=False, 
+        >>> _ = pl.add_mesh(collision, scalars=scalars, show_scalar_bar=False,
         ...                 cmap='bwr')
-        >>> _ = pl.add_mesh(mesh_b, color='tan', line_width=5, opacity=0.7, 
+        >>> _ = pl.add_mesh(mesh_b, color='tan', line_width=5, opacity=0.7,
         ...                 show_edges=True)
         >>> pl.show()
+
+        Alternatively, simply plot the colisions using the default
+        ``'collision_rgba'`` array after enabling ``generate_scalars``.
+
+        >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1,
+        ...                                    generate_scalars=True)
+        >>> collision.plot()
+
+        See :ref:`collision_example` for more examples using this filter.
 
         Warnings
         --------
@@ -2703,10 +2716,6 @@ class PolyDataFilters(DataSetFilters):
         :func:`PolyDataFilters.triangulate` to convert any strips or
         polygons to triangles.  Otherwise, the mesh will be converted
         for you within this method.
-
-        See Also
-        --------
-        See :ref:`collision_example` for more examples using this filter.
 
         """
         # other mesh must be a polydata
@@ -2730,4 +2739,17 @@ class PolyDataFilters(DataSetFilters):
         alg.SetCollisionMode(contact_mode)
         alg.SetGenerateScalars(generate_scalars)
         _update_alg(alg, progress_bar, 'Computing collisions')
-        return _get_output(alg), alg.GetNumberOfContacts()
+
+        output = _get_output(alg)
+
+        if generate_scalars:
+            # must rename array as VTK sets the cell scalars array name to
+            # a nullptr.
+            # See https://github.com/pyvista/pyvista/pull/1540
+            #
+            # Note: Since all other cell arrays are destroyed when
+            # generate_scalars is True, we can always index the first cell
+            # array.
+            output.cell_arrays.GetAbstractArray(0).SetName('collision_rgba')
+
+        return output, alg.GetNumberOfContacts()

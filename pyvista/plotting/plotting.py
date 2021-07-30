@@ -1314,7 +1314,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  render_points_as_spheres=None, render_lines_as_tubes=False,
                  smooth_shading=None, ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
-                 culling=None, rgb=False, categories=False, silhouette=False,
+                 culling=None, rgb=None, categories=False, silhouette=False,
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
                  log_scale=False, pbr=False, metallic=0.0, roughness=0.5,
@@ -1494,8 +1494,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         rgb : bool, optional
             If an 2 dimensional array is passed as the scalars, plot
-            those values as RGB(A) colors. ``rgba`` is also an accepted
-            alias for this.  Opacity (the A) is optional.
+            those values as RGB(A) colors. ``rgba`` is also an
+            accepted alias for this.  Opacity (the A) is optional.  If
+            a scalars array ending with ``"_rgba"`` is passed, this is
+            automatically enabled.
 
         categories : bool, optional
             If set to ``True``, then the number of unique values in
@@ -1841,6 +1843,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         original_scalar_name = None
         if isinstance(scalars, str):
             self.mapper.SetArrayName(scalars)
+
+            # enable rgb if the scalars name ends with rgb or rgba
+            if rgb is None:
+                if scalars.endswith('_rgb') or scalars.endswith('_rgba'):
+                    rgb = True
+
             original_scalar_name = scalars
             scalars = get_array(mesh, scalars,
                                 preference=preference, err=True)
