@@ -35,16 +35,23 @@ class ScalarBars():
         return '\n'.join(lines)
 
     def _remove_mapper_from_plotter(self, actor, reset_camera=False, render=False):
-        """Remove an actor's mapper from the given plotter's _scalar_bar_mappers."""
+        """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
+
+        This ensures that when actors are removed, their corresponding
+        scalar bars are removed.
+
+        """
         try:
             mapper = actor.GetMapper()
         except AttributeError:
             return
-        for name in list(self._scalar_bar_mappers):
+
+        for name in self._scalar_bar_mappers:
             try:
                 self._scalar_bar_mappers[name].remove(mapper)
             except ValueError:
                 pass
+
             if not self._scalar_bar_mappers[name]:
                 slot = self._plotter._scalar_bar_slot_lookup.pop(name, None)
                 if slot is not None:
@@ -79,14 +86,19 @@ class ScalarBars():
             else:
                 title = list(self._scalar_bar_actors.keys())[0]
 
+        actor = self._scalar_bar_actors.pop(title)
+        self._plotter.remove_actor(actor, render=render)
         self._scalar_bar_ranges.pop(title)
         self._scalar_bar_mappers.pop(title)
+
+        # add back in the scalar bar slot
+        slot = self._plotter._scalar_bar_slot_lookup.pop(title, None)
+        if slot is not None:
+            self._plotter._scalar_bar_slots.add(slot)
+
         widget = self._scalar_bar_widgets.pop(title, None)
         if widget is not None:
             widget.SetEnabled(0)
-
-        actor = self._scalar_bar_actors.pop(title)
-        self._plotter.remove_actor(actor, render=render)
 
     def __len__(self):
         """Return the number of scalar bar actors."""
@@ -436,7 +448,6 @@ class ScalarBars():
         title_text.SetColor(color)
 
         self._scalar_bar_actors[title] = scalar_bar
-
         if interactive:
             scalar_widget = _vtk.vtkScalarBarWidget()
             scalar_widget.SetScalarBarActor(scalar_bar)
@@ -468,4 +479,5 @@ class ScalarBars():
         # finally, add to the actor and return the scalar bar
         self._plotter.add_actor(scalar_bar, reset_camera=False,
                                 pickable=False, render=render)
+
         return scalar_bar
