@@ -82,7 +82,7 @@ jobs:
     displayName: Build wheel and install pyvista
 
   - script: |
-      .ci/setup_headless_display.sh
+      sudo apt-get update && sudo apt-get install libgl1-mesa-glx xvfb -y
     displayName: Install headless display
 
   - script: |
@@ -94,7 +94,7 @@ jobs:
     displayName: 'Install test dependencies'
 
   - script: |
-      pytest -v --doctest-modules pyvista
+      xvfb-run pytest -v --doctest-modules pyvista
     displayName: 'Test Package Docstrings'
 
   - script: |
