@@ -3022,7 +3022,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mwriter = get_writer(filename, mode='I')
 
     def write_frame(self):
-        """Write a single frame to the movie file."""
+        """Write a single frame to the movie file.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.open_movie(filename)  # doctest:+SKIP
+        >>> plotter.add_mesh(pyvista.Sphere())  # doctest:+SKIP
+        >>> plotter.write_frame()  # doctest:+SKIP
+
+        See :ref:`movie_example` for a full example using this method.
+
+        """
         # if off screen, show has not been called and we must render
         # before extracting an image
         if self._first_time:
