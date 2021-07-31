@@ -3004,6 +3004,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Filename of the gif to open.  Filename must end in ``"gif"``.
 
+        Examples
+        --------
+        Open a gif file.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter
+        >>> pl.open_gif('movie.gif')  # doctest:+SKIP
+
         """
         from imageio import get_writer
         if filename[-3:] != 'gif':
