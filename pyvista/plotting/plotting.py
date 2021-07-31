@@ -3810,18 +3810,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        factor : float
+        factor : float, optional
             A scaling factor when building the orbital extent.
 
-        n_points : int
+        n_points : int, optional
             Number of points on the orbital path.
 
-        viewup : list(float)
+        viewup : list(float), optional
             The normal to the orbital plane.
 
         shift : float, optional
             Shift the plane up/down from the center of the scene by
             this amount.
+
+        Examples
+        --------
+        Generate an orbital path around a sphere.
+
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(pyvista.Sphere())
+        >>> viewup = [0, 0, 1]
+        >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=50,
+        ...                                       shift=0.0, viewup=viewup)
+
+        See :ref:`orbiting_example` for a full example using this method.
 
         """
         if viewup is None:
@@ -3873,18 +3886,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         progress_bar : bool, optional
             Show the progress bar when proceeding through the path.
+            This can be helpful to show progress when generating
+            movies with ``off_screen=True``.
 
         Examples
         --------
-        Plot an orbit around the earth.
+        Plot an orbit around the earth.  Save the gif as a temporary file.
 
+        >>> import tempfile
+        >>> import os
         >>> import pyvista
+        >>> filename = os.path.join(tempfile._get_default_tempdir(),
+        ...                         next(tempfile._get_candidate_names()) + '.gif')
         >>> from pyvista import examples
         >>> plotter = pyvista.Plotter(window_size=[300, 300])
         >>> _ = plotter.add_mesh(examples.load_globe(), smooth_shading=True)
-        >>> plotter.open_gif('movie.gif')
+        >>> plotter.open_gif(filename)
         >>> viewup = [0, 0, 1]
-        >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=50,
+        >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=24,
         ...                                       shift=0.0, viewup=viewup)
         >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, 
         ...                       step=0.02)
