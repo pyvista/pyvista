@@ -16,7 +16,6 @@ from typing import Dict
 
 import numpy as np
 import scooby
-from tqdm import tqdm
 
 import pyvista
 from pyvista import _vtk
@@ -3925,9 +3924,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Make sure the whole scene is visible
         self.camera.thickness = path.length
 
+        if progress_bar:
+            try:  # pragma: no cover
+                from tqdm import tqdm
+            except ImportError:
+                raise ImportError("Please install `tqdm` to use ``progress_bar=True``")
+
         def orbit():
             """Define the internal thread for running the orbit."""
-            if progress_bar:
+            if progress_bar:  # pragma: no cover
                 points_seq = tqdm(points)
             else:
                 points_seq = points
