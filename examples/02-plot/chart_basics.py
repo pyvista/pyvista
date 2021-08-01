@@ -121,34 +121,6 @@ p.add_chart(chart)
 p.show()
 
 ###############################################################################
-# Some limited functionality for 3D charts also exists. The interface is the
-# same as for the 2D counterparts.
-
-x = np.arange(11)
-y = rng.integers(-5, 6, 11)
-z = rng.integers(-5, 6, 11)
-p = pv.Plotter()
-p.background_color = (1, 1, 1)
-chart = pv.Chart3D()
-chart.plot(x, y, z, 'x-b')  # Show markers (marker style is ignored), solid line and blue color 'b'
-p.add_chart(chart)
-p.show()
-
-###############################################################################
-# 3D surfaces can be visualized on such a chart as well.
-
-x = np.linspace(-1, 1, 100)
-y = np.linspace(-1, 1, 100)
-xx, yy = np.meshgrid(x, y)
-z = np.cos(6*(xx**2+yy**2))
-p = pv.Plotter()
-p.background_color = (1, 1, 1)
-chart = pv.Chart3D()
-chart.surface(x, y, z)
-p.add_chart(chart)
-p.show()
-
-###############################################################################
 # Beside the flexible Chart2D used in the previous examples, there are a couple
 # other dedicated charts you can create. The example below shows how a pie
 # chart can be created.

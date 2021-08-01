@@ -1,5 +1,7 @@
+"""Module containing pyvista wrappers for the vtk Charts API."""
+
 import numpy as np
-from typing import Tuple, Sequence, Union
+from typing import Tuple, Sequence, Union, Optional
 
 import pyvista
 from pyvista import _vtk
@@ -12,7 +14,10 @@ try:
 except ModuleNotFoundError:
     _HAS_MPL = False
 
-#region Some metaclass wrapping magic until a wrapped vtkPlotPie object can be added to a vtkChartPie
+# Type definitions
+Color4f = Tuple[float, float, float, float]
+
+#region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):
 
     def __call__(cls, *args, _wrap=None, **kwargs):
@@ -47,7 +52,7 @@ class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
 #endregion
 
 class Pen(_vtkWrapper, _vtk.vtkPen):
-    """ Pythonic wrapper for a VTK Pen, used to draw lines. """
+    """Pythonic wrapper for a VTK Pen, used to draw lines."""
 
     LINE_STYLES = {
         "": _vtk.vtkPen.NO_PEN,
@@ -58,37 +63,93 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         "-..": _vtk.vtkPen.DASH_DOT_DOT_LINE
     }
 
-    def __init__(self, color="k", width=1, style="-"):
+    def __init__(self, color: Sequence = "k", width: float = 1, style: Optional[str] = "-"):
+        """Initialize a new Pen instance.
+
+        Parameters
+        ----------
+        color : str or sequence, optional
+            Color of the lines drawn using this pen. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+            to ``"k"``.
+
+        width : float, optional
+            Width of the lines drawn using this pen. Defaults to ``1``.
+
+        style : str, optional
+            Style of the lines drawn using this pen. See ``Pen.LINE_STYLES`` for a list of allowed line styles. Defaults
+            to ``"-"``.
+
+        """
         super().__init__()
         self.color = color
         self.width = width
         self.style = style
 
     @property
-    def color(self):
+    def color(self) -> Color4f:
+        """Get the pen's current color."""
         return self._color
 
     @color.setter
-    def color(self, val):
-        self._color = (0, 0, 0, 0) if val is None else parse_color(val)
-        if len(self._color) == 3:
-            self._color = (*self._color, 1)
+    def color(self, val: Sequence):
+        """Set the pen's color.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> p = pyvista.Plotter()
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> plot.pen.color = 'r'
+        >>> p.add_chart(chart)
+        >>> p.show()
+
+        """
+        self._color = (0, 0, 0, 0) if val is None else parse_color(val, opacity=1)
         self.SetColorF(*self._color)
 
     @property
-    def width(self):
+    def width(self) -> float:
+        """Get the pen's current width."""
         return self.GetWidth()
 
     @width.setter
-    def width(self, val):
+    def width(self, val: float):
+        """Set the pen's width.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> p = pyvista.Plotter()
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> plot.pen.width = 10
+        >>> p.add_chart(chart)
+        >>> p.show()
+
+        """
         self.SetWidth(float(val))
 
     @property
-    def style(self):
+    def style(self) -> Optional[str]:
+        """Get the pen's current line style."""
         return self._line_style
 
     @style.setter
-    def style(self, val):
+    def style(self, val: Optional[str]):
+        """Set the pen's line style.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> p = pyvista.Plotter()
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> plot.pen.style = '-.'
+        >>> p.add_chart(chart)
+        >>> p.show()
+
+        """
         if val is None:
             val = ""
         if val in self.LINE_STYLES:
@@ -100,30 +161,72 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
 
 class Brush(_vtkWrapper, _vtk.vtkBrush):
-    """ Pythonic wrapper for a VTK Brush, used to fill shapes. """
+    """Pythonic wrapper for a VTK Brush, used to fill shapes."""
 
-    def __init__(self, color="k", texture=None):
+    def __init__(self, color: Sequence = "k", texture=None):
+        """Initialize a new Pen instance.
+
+        Parameters
+        ----------
+        color : str or sequence, optional
+            Fill color of the shapes drawn using this brush. Any color parsable by ``pyvista.parse_color`` is allowed.
+            Defaults to ``"k"``.
+
+        texture : ``pyvista.Texture``, optional
+            Texture used to fill shapes drawn using this brush. Any object convertible to a ``pyvista.Texture`` is
+            allowed. Defaults to ``None``.
+
+        """
         super().__init__()
         self.color = color
         self.texture = texture
+        self._interpolate = True  # vtkBrush textureProperties defaults to LINEAR & STRETCH
+        self._repeat = False
 
     @property
-    def color(self):
+    def color(self) -> Color4f:
+        """Get the brush's current color."""
         return self._color
 
     @color.setter
-    def color(self, val):
-        self._color = (0, 0, 0, 0) if val is None else parse_color(val)
-        if len(self._color) == 3:
-            self._color = (*self._color, 1)
+    def color(self, val: Sequence):
+        """Set the brush's color.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> p = pyvista.Plotter()
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
+        >>> plot.brush.color = 'r'
+        >>> p.add_chart(chart)
+        >>> p.show()
+
+        """
+        self._color = (0, 0, 0, 0) if val is None else parse_color(val, opacity=1)
         self.SetColorF(*self._color)
 
     @property
-    def texture(self):
+    def texture(self) -> Optional["pyvista.Texture"]:
+        """Get the brush's current texture."""
         return self._texture
 
     @texture.setter
     def texture(self, val):
+        """Set the brush's texture.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> p = pyvista.Plotter()
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
+        >>> plot.brush.texture = examples.download_puppy_texture()
+        >>> p.add_chart(chart)
+        >>> p.show()
+
+        """
         if val is None:
             self._texture = None
             self.SetTexture(None)
@@ -131,19 +234,76 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
             self._texture = pyvista.Texture(val)
             self.SetTexture(self._texture.to_image())
 
+    @property
+    def texture_interpolate(self) -> bool:
+        """Get texture interpolation mode (NEAREST = ``False``, LINEAR = ``TRUE``)."""
+        return self._interpolate
+
+    @texture_interpolate.setter
+    def texture_interpolate(self, val: bool):
+        """Set texture interpolation mode (NEAREST = ``False``, LINEAR = ``TRUE``).
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> p = pyvista.Plotter()
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
+        >>> plot.brush.texture = examples.download_puppy_texture()
+        >>> plot.brush.texture_interpolate = False
+        >>> p.add_chart(chart)
+        >>> p.show()
+
+        """
+        self._interpolate = bool(val)
+        self._update_textureprops()
+
+    @property
+    def texture_repeat(self) -> bool:
+        """Get texture repeat mode (STRETCH = ``False``, REPEAT = ``TRUE``)."""
+        return self._repeat
+
+    @texture_repeat.setter
+    def texture_repeat(self, val: bool):
+        """Set texture repeat mode (STRETCH = ``False``, REPEAT = ``TRUE``).
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> p = pyvista.Plotter()
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
+        >>> plot.brush.texture = examples.download_puppy_texture()
+        >>> plot.brush.texture_repeat = True
+        >>> p.add_chart(chart)
+        >>> p.show()
+
+        """
+        self._repeat = bool(val)
+        self._update_textureprops()
+
+    def _update_textureprops(self):
+        # Interpolation: NEAREST = 0x01, LINEAR = 0x02
+        # Stretch/repeat: STRETCH = 0x04, REPEAT = 0x08
+        self.SetTextureProperties(1+int(self._interpolate) + 4*(1+int(self._repeat)))
+
 
 class Axis(_vtkWrapper, _vtk.vtkAxis):
+    """Pythonic interface for a VTK Axis, used by 2D charts."""
     BEHAVIORS = {
         "auto": _vtk.vtkAxis.AUTO,
         "fixed": _vtk.vtkAxis.FIXED
     }
 
-    def __init__(self):
+    def __init__(self, behavior="auto"):
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
         self._tick_labels = _vtk.vtkStringArray()
         self.pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())
         self.grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())
+        self.behavior = behavior
 
     @property
     def label(self):
@@ -317,7 +477,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
 
         def Initialize(self, item):
             # item is the _CustomContextItem subclass instance
-            return item.initialize()
+            return True
 
         def Paint(self, item, painter):
             # item is the _CustomContextItem subclass instance
@@ -325,10 +485,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
 
     def __init__(self):
         super().__init__()
-        self.SetPythonObject(_CustomContextItem.ItemWrapper())  # This will call ItemWrapper.Initialize, which calls self.initialize
-
-    def initialize(self):
-        return True
+        self.SetPythonObject(_CustomContextItem.ItemWrapper())  # This will also call ItemWrapper.Initialize
 
     def paint(self, painter: _vtk.vtkContext2D):
         return True
@@ -340,12 +497,9 @@ class _ChartBackground(_CustomContextItem):
     def __init__(self, chart):
         super().__init__()
         self._chart = chart  # Chart to draw the background for
-
-    def initialize(self):
         # Default background is translucent with black border line
         self.BorderPen = Pen(color=(0, 0, 0))
         self.BackgroundBrush = Brush(color=(0, 0, 0, 0))
-        return True
 
     def paint(self, painter: _vtk.vtkContext2D):
         if self._chart.visible:
@@ -1140,7 +1294,12 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         raise ValueError("Cannot set ChartPie geometry, it fills up the entire viewport by default.")
 
 
-class LinePlot3D(_vtk.vtkPlotLine3D, _Plot):
+#region 3D charts
+# Basic implementation of 3D line, scatter and volume plots, to be used in a 3D chart.
+# Unfortunately, they are much less customisable than their 2D counterparts and they do not respect the enforced
+# size/geometry constraints once you start interacting with them. So for now they are not further supported and not
+# publicly exposed in pyvista.
+class _LinePlot3D(_vtk.vtkPlotLine3D, _Plot):
 
     def __init__(self, x, y, z, color="b", width=1.0, style="-"):
         super().__init__()
@@ -1161,7 +1320,7 @@ class LinePlot3D(_vtk.vtkPlotLine3D, _Plot):
             self.visible = False
 
 
-class ScatterPlot3D(_vtk.vtkPlotPoints3D, _Plot):
+class _ScatterPlot3D(_vtk.vtkPlotPoints3D, _Plot):
 
     def __init__(self, x, y, z, color="b"):
         super().__init__()
@@ -1179,7 +1338,7 @@ class ScatterPlot3D(_vtk.vtkPlotPoints3D, _Plot):
             self.visible = False
 
 
-class SurfacePlot(_vtk.vtkPlotSurface, _Plot):
+class _SurfacePlot(_vtk.vtkPlotSurface, _Plot):
 
     def __init__(self, x, y, z):
         super().__init__()
@@ -1200,11 +1359,11 @@ class SurfacePlot(_vtk.vtkPlotSurface, _Plot):
             self.visible = False
 
 
-class Chart3D(_vtk.vtkChartXYZ, _Chart):
+class _Chart3D(_vtk.vtkChartXYZ, _Chart):
     PLOT_TYPES = {
-        "scatter": ScatterPlot3D,
-        "line": LinePlot3D,
-        "surface": SurfacePlot
+        "scatter": _ScatterPlot3D,
+        "line": _LinePlot3D,
+        "surface": _SurfacePlot
     }
 
     def __init__(self, size=(0.8, 0.8), loc=(0.1, 0.1), x_label="x", y_label="y", z_label="z"):
@@ -1237,15 +1396,6 @@ class Chart3D(_vtk.vtkChartXYZ, _Chart):
         self.SetGeometry(_vtk.vtkRectf(*val))
         self._geom = tuple(val)
 
-    def _resize(self):
-        r_w, r_h = self.renderer.GetSize()  # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
-        _, _, c_w, c_h = self._geometry
-        # Target size is calculated from specified normalized width and height and the renderer's current size
-        t_w = self._size[0] * r_w
-        t_h = self._size[1] * r_h
-        if c_w != t_w or c_h != t_h:
-            self._geometry = (self._loc[0] * r_w, self._loc[1] * r_h, t_w, t_h)
-
     def _add_plot(self, plot_type, *args, **kwargs):
         plot = self.PLOT_TYPES[plot_type](*args, **kwargs)
         self.AddPlot(plot)
@@ -1253,7 +1403,26 @@ class Chart3D(_vtk.vtkChartXYZ, _Chart):
         return plot
 
     def plot(self, x, y, z, fmt):
-        """ Matplotlib like plot method """
+        """Matplotlib like plot method
+
+        Examples
+        --------
+        ###############################################################################
+        # Some limited functionality for 3D charts also exists. The interface is the
+        # same as for the 2D counterparts. (To be added to ``chart_basics`` example
+        # once supported.)
+
+        >>> x = np.arange(11)
+        >>> y = rng.integers(-5, 6, 11)
+        >>> z = rng.integers(-5, 6, 11)
+        >>> p = pv.Plotter()
+        >>> p.background_color = (1, 1, 1)
+        >>> chart = pv.Chart3D()
+        >>> chart.plot(x, y, z, 'x-b')  # Show markers (marker style is ignored), solid line and blue color 'b'
+        >>> p.add_chart(chart)
+        >>> p.show()
+
+        """
         # TODO: make x and fmt optional, allow multiple ([x], y, z, [fmt]) entries
         marker_style, line_style, color = _Plot.parse_format(fmt)
         scatter_plot, line_plot = None, None
@@ -1270,6 +1439,25 @@ class Chart3D(_vtk.vtkChartXYZ, _Chart):
         return self._add_plot("line", x, y, z, color=color, width=width, style=style)
 
     def surface(self, x, y, z):
+        """
+        Examples
+        --------
+        ###############################################################################
+        # 3D surfaces can be visualized on such a chart as well. (To be added to
+        # ``chart_basics`` example once supported.)
+
+        >>> x = np.linspace(-1, 1, 100)
+        >>> y = np.linspace(-1, 1, 100)
+        >>> xx, yy = np.meshgrid(x, y)
+        >>> z = np.cos(6*(xx**2+yy**2))
+        >>> p = pv.Plotter()
+        >>> p.background_color = (1, 1, 1)
+        >>> chart = pv.Chart3D()
+        >>> chart.surface(x, y, z)
+        >>> p.add_chart(chart)
+        >>> p.show()
+
+        """
         return self._add_plot("surface", x, y, z)
 
     def plots(self, plot_type=None):
@@ -1340,6 +1528,7 @@ class Chart3D(_vtk.vtkChartXYZ, _Chart):
     @z_range.setter
     def z_range(self, val):
         self.z_axis.range = val
+#endregion
 
 
 class ChartMPL(_vtk.vtkImageItem, _Chart):
@@ -1430,36 +1619,43 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         self.SetPosition(*val)
 
 #region Type definitions
-Chart = Union[Chart2D, ChartBox, ChartPie, Chart3D, ChartMPL]
+Chart = Union[Chart2D, ChartBox, ChartPie, ChartMPL]
 #endregion
 
 class Charts:
 
-    def __init__(self, renderer):
+    def __init__(self, renderer: "pyvista.Renderer"):
         self._charts = []
 
+        self._scene = None  # Postpone creation of scene and actor objects until they are needed. Otherwise they are
+        self._actor = None  # not properly cleaned up in case the Plotter's initialization fails.
+        self._renderer = renderer
+
+    def setup_scene(self):
         self._scene = _vtk.vtkContextScene()
         self._actor = _vtk.vtkContextActor()
 
         self._actor.SetScene(self._scene)
-        renderer.AddActor(self._actor)
-        self._scene.SetRenderer(renderer)
+        self._renderer.AddActor(self._actor)
+        self._scene.SetRenderer(self._renderer)
 
     def deep_clean(self):
-        for chart in self._charts:
-            self.remove_chart(chart)
         if self._scene is not None:
-            self._scene.GetRenderer().RemoveActor(self._actor)
-            self._scene = None
-            self._actor = None
+            for chart in self._charts:
+                self.remove_chart(chart)
+            self._renderer.RemoveActor(self._actor)
+        self._scene = None
+        self._actor = None
 
     def add_chart(self, chart: Chart):
+        if self._scene is None:
+            self.setup_scene()
         self._charts.append(chart)
         self._scene.AddItem(chart._background)
         self._scene.AddItem(chart)
         chart.SetInteractive(False)  # Charts are not interactive by default
 
-    def remove_chart(self, chart_or_index):
+    def remove_chart(self, chart_or_index: Union[Chart, int]):
         chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
         assert chart in self._charts
         self._charts.remove(chart)

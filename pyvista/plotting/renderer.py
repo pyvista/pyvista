@@ -125,7 +125,6 @@ class Renderer(_vtk.vtkRenderer):
         self._lights = []
         self._camera = Camera(self)
         self.SetActiveCamera(self._camera)
-        self.AddObserver("StartEvent", partial(try_callback, self.render_event))
 
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
@@ -145,6 +144,7 @@ class Renderer(_vtk.vtkRenderer):
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self.__charts is None:
             self.__charts = Charts(self)
+            self.AddObserver("StartEvent", partial(try_callback, self.render_event))
         return self.__charts
 
     @property
@@ -274,7 +274,7 @@ class Renderer(_vtk.vtkRenderer):
 
     def render_event(self, *args, **kwargs):
         # Notify all charts about render event
-        for chart in self.charts:
+        for chart in self._charts:
             chart.render_event(*args, **kwargs)
 
     #### Everything else ####
@@ -380,10 +380,6 @@ class Renderer(_vtk.vtkRenderer):
         self.AddViewProp(actor)
         self.Modified()
         return actor
-
-    @property
-    def charts(self):
-        return self._charts
 
     def add_chart(self, chart):
         self._charts.add_chart(chart)
@@ -2085,10 +2081,11 @@ class Renderer(_vtk.vtkRenderer):
             self.remove_bounding_box(render=render)
         if self._shadow_pass is not None:
             self.disable_shadows()
+        if self.__charts is not None:
+            self.__charts.deep_clean()
 
         self.remove_floors(render=render)
         self.RemoveAllViewProps()
-        self._charts.deep_clean()
         self._actors = {}
         self._camera = None
         self._bounding_box = None
