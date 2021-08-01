@@ -46,7 +46,8 @@ class ScalarBars():
         except AttributeError:
             return
 
-        for name in self._scalar_bar_mappers:
+        # NOTE: keys to list to prevent iterator changing during loop
+        for name in list(self._scalar_bar_mappers):
             try:
                 self._scalar_bar_mappers[name].remove(mapper)
             except ValueError:
