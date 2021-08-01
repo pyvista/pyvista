@@ -2007,4 +2007,4 @@ def test_chart_matplotlib_plot():
     pl = pyvista.Plotter()
     chart = pyvista.ChartMPL(fig)
     pl.add_chart(chart)
-    pl.show(before_close_callback=verify_cache_image)
+    pl.show()
