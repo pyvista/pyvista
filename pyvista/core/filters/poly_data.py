@@ -2601,3 +2601,155 @@ class PolyDataFilters(DataSetFilters):
         alg.SetPassThroughPointIds(pass_point_ids)
         _update_alg(alg, progress_bar, 'Stripping Mesh')
         return _get_output(alg)
+
+    def collision(poly_data, other_mesh, contact_mode=0, box_tolerance=0.001,
+                  cell_tolerance=0.0, n_cells_per_node=2, generate_scalars=False,
+                  progress_bar=False):
+        """Perform collision determination between two polyhedral surfaces.
+
+        If ``collision_mode`` is set to all contacts, the output will
+        be lines of contact. If ``collision_mode`` is first contact or half
+        contacts then the Contacts output will be vertices.
+
+        Parameters
+        ----------
+        other_mesh : pyvista.DataSet
+            Other mesh to test collision with.  If the other mesh is
+            not a surface, its external surface will be extracted and
+            triangulated.
+
+        contact_mode : int, optional
+            Contact mode.  One of the following:
+
+            * 0 - All contacts. Find all the contacting cell pairs
+              with two points per collision
+            * 1 - First contact. Quickly find the first contact point.
+            * 2 - Half contacts. Find all the contacting cell pairs
+              with one point per collision.
+
+        box_tolerance : float, optional
+             Oriented bounding box (OBB) tree tolerance in world coordinates.
+
+        cell_tolerance : float, optional
+            Cell tolerance (squared value).
+
+        n_cells_per_node : int, optional
+            Number of cells in each OBB.
+
+        generate_scalars : bool, optional
+            Flag to visualize the contact cells.  If ``True``, the
+            contacting cells will be colored from red through blue,
+            with collisions first determined colored red.  This array
+            is stored as ``"collision_rgba"``.
+
+            .. note::
+               This will remove any other cell arrays in the mesh.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        :class:`pyvista.PolyData`
+            Mesh containing collisions in the ``field_arrays``
+            attribute named ``"ContactCells"``.  Array only exists
+            when there are collisions.
+
+        int
+            Number of collisions.
+
+        Notes
+        -----
+        Due to the nature of the `vtk.vtkCollisionDetectionFilter
+        <https://vtk.org/doc/nightly/html/classvtkCollisionDetectionFilter.html>`_,
+        repeated uses of this method will be slower that using the
+        ``vtk.vtkCollisionDetectionFilter`` directly.  The first
+        update of the filter creates two instances of `vtkOBBTree
+        <https://vtk.org/doc/nightly/html/classvtkOBBTree.html>`_,
+        which can be subsequently updated by modifying the transform or
+        matrix of the input meshes.
+
+        This method assumes no transform and is easier to use for
+        single collision tests, but it is recommended to use a
+        combination of ``pyvista`` and ``vtk`` for rapidly computing
+        repeated collisions.  See the `Collision Detection Example
+        <https://kitware.github.io/vtk-examples/site/Python/Visualization/CollisionDetection/>`_
+
+        Examples
+        --------
+        Compute the collision between a sphere and the back faces of a
+        cube and output the cell indices of the first 10 collisions.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> mesh_a = pyvista.Sphere(radius=0.5)
+        >>> mesh_b = pyvista.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
+        >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
+        >>> collision['ContactCells'][:10]
+        array([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
+
+        Plot the collisions by creating a collision mask with the
+        ``"ContactCells"`` field array.  Cells with a collision are
+        colored red.
+
+        >>> scalars = np.zeros(collision.n_cells, dtype=bool)
+        >>> scalars[collision.field_arrays['ContactCells']] = True
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(collision, scalars=scalars, show_scalar_bar=False,
+        ...                 cmap='bwr')
+        >>> _ = pl.add_mesh(mesh_b, color='tan', line_width=5, opacity=0.7,
+        ...                 show_edges=True)
+        >>> pl.show()
+
+        Alternatively, simply plot the collisions using the default
+        ``'collision_rgba'`` array after enabling ``generate_scalars``.
+
+        >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1,
+        ...                                    generate_scalars=True)
+        >>> collision.plot()
+
+        See :ref:`collision_example` for more examples using this filter.
+
+        Warnings
+        --------
+        Currently only triangles are processed. Use
+        :func:`PolyDataFilters.triangulate` to convert any strips or
+        polygons to triangles.  Otherwise, the mesh will be converted
+        for you within this method.
+
+        """
+        # other mesh must be a polydata
+        if not isinstance(other_mesh, pyvista.PolyData):
+            other_mesh = other_mesh.extract_surface()
+
+        # according to VTK limitations
+        if not poly_data.is_all_triangles():
+            poly_data = poly_data.triangulate()
+        if not other_mesh.is_all_triangles():
+            other_mesh = other_mesh.triangulate()
+
+        alg = _vtk.vtkCollisionDetectionFilter()
+        alg.SetInputData(0, poly_data)
+        alg.SetTransform(0, _vtk.vtkTransform())
+        alg.SetInputData(1, other_mesh)
+        alg.SetMatrix(1, _vtk.vtkMatrix4x4())
+        alg.SetBoxTolerance(box_tolerance)
+        alg.SetCellTolerance(cell_tolerance)
+        alg.SetNumberOfCellsPerNode(n_cells_per_node)
+        alg.SetCollisionMode(contact_mode)
+        alg.SetGenerateScalars(generate_scalars)
+        _update_alg(alg, progress_bar, 'Computing collisions')
+
+        output = _get_output(alg)
+
+        if generate_scalars:
+            # must rename array as VTK sets the cell scalars array name to
+            # a nullptr.
+            # See https://github.com/pyvista/pyvista/pull/1540
+            #
+            # Note: Since all other cell arrays are destroyed when
+            # generate_scalars is True, we can always index the first cell
+            # array.
+            output.cell_arrays.GetAbstractArray(0).SetName('collision_rgba')
+
+        return output, alg.GetNumberOfContacts()

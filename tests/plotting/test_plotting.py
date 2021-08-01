@@ -1,5 +1,8 @@
 """
+This test module tests any functionality that requires plotting.
+
 See the image regression notes in doc/extras/developer_notes.rst
+
 """
 import time
 import platform
@@ -15,6 +18,7 @@ import imageio
 import numpy as np
 import pytest
 import vtk
+import matplotlib.pyplot as plt
 
 import pyvista
 from pyvista._vtk import VTK9
@@ -1955,69 +1959,52 @@ def test_scalar_cell_priorities():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-# charts
-def test_pen():
-    from pyvista.plotting import charts
-    c_red, c_blue = (1, 0, 0, 1), (0, 0, 1, 1)
-    w_thin, w_thick = 2, 10
-    s_dash, s_dot, s_inv = "--", ":", "|"
-    assert s_inv not in charts.Pen.LINE_STYLES, "New line styles added? Change this test."
+def test_collision_plot():
+    """Verify rgba arrays automatically plot"""
+    sphere0 = pyvista.Sphere()
+    sphere1 = pyvista.Sphere(radius=0.6, center=(-1, 0, 0))
+    col, n_contacts = sphere0.collision(sphere1, generate_scalars=True)
 
-    # Test constructor arguments
-    pen = charts.Pen(color=c_red, width=w_thin, style=s_dash)
-    assert np.allclose(pen.color, c_red) and np.isclose(pen.width, w_thin) and pen.style == s_dash
-
-    # Test properties
-    pen.color = c_blue
-    color = [0.0, 0.0, 0.0]
-    pen.GetColorF(color)
-    color.append(pen.GetOpacity() / 255)
-    assert np.allclose(pen.color, c_blue) and np.allclose(color, c_blue)
-
-    pen.width = w_thick
-    assert np.isclose(pen.width, w_thick) and np.isclose(pen.GetWidth(), w_thick)
-
-    pen.style = s_dot
-    assert pen.style == s_dot and pen.GetLineType() == charts.Pen.LINE_STYLES[s_dot]
-    with pytest.raises(ValueError):
-        pen.style = s_inv
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(col)
+    plotter.camera_position = 'zy'
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-def test_wrapping():
-    from pyvista.plotting import charts
-    width = 5
-    # Test wrapping of VTK Pen object
-    vtkPen = pyvista._vtk.vtkPen()
-    wrappedPen = charts.Pen(_wrap=vtkPen)
-    assert wrappedPen.__this__ == vtkPen.__this__
-    assert wrappedPen.width == vtkPen.GetWidth()
-    wrappedPen.width = width
-    assert wrappedPen.width == vtkPen.GetWidth() and vtkPen.GetWidth() == width
+def test_chart_plot():
+    """Basic test to verify chart plots correctly"""
+    x = np.linspace(0, 2*np.pi)
+    y = np.cos(x)
+    chart = pyvista.Chart2D()
+    chart.background_color = 'w'
+    out = chart.scatter(x, y, size=10, style="+")
+
+    from pyvista.plotting.charts import ScatterPlot2D
+    assert isinstance(out, ScatterPlot2D)
+
+    pl = pyvista.Plotter()
+    pl.add_chart(chart)
+    pl.show(before_close_callback=verify_cache_image)
 
 
-def test_brush():
-    from pyvista.plotting import charts
-    c_red, c_blue = (1, 0, 0, 1), (0, 0, 1, 1)
-    t_masonry, t_puppy = examples.download_masonry_texture(), examples.download_puppy_texture()
+def test_chart_matplotlib_plot():
+    """Test integration with matplotlib"""
+    rng = np.random.default_rng(1)
+    # First, create the matplotlib figure
+    # use tight layout to keep axis labels visible on smaller figuresx
+    fig, ax = plt.subplots(tight_layout=True)
+    alphas = [0.5+i for i in range(5)]
+    betas = [*reversed(alphas)]
+    N = int(1e4)
+    data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas)]
+    labels = [f"$\\alpha={alpha:.1f}\\,;\\,\\beta={beta:.1f}$" for alpha, beta in zip(alphas, betas)]
+    ax.violinplot(data)
+    ax.set_xticks(np.arange(1, 1 + len(labels)))
+    ax.set_xticklabels(labels)
+    ax.set_title("$B(\\alpha, \\beta)$")
 
-    # Test constructor arguments
-    brush = charts.Brush(color=c_red, texture=t_masonry)
-    assert np.allclose(brush.color, c_red) and np.allclose(brush.texture.to_array(), t_masonry.to_array())
-
-    # Test properties
-    brush.color = c_blue
-    color = [0.0, 0.0, 0.0, 0.0]
-    brush.GetColorF(color)
-    assert np.allclose(brush.color, c_blue) and np.allclose(color, c_blue)
-
-    brush.texture = t_puppy
-    t = pyvista.Texture(brush.GetTexture())
-    assert np.allclose(brush.texture.to_array(), t_puppy.to_array()) and np.allclose(t.to_array(), t_puppy.to_array())
-
-    brush.texture_interpolate = False
-    NEAREST = 0x01
-    assert not brush.texture_interpolate and brush.GetTextureProperties() & NEAREST
-
-    brush.texture_repeat = True
-    REPEAT = 0x08
-    assert brush.texture_repeat and brush.GetTextureProperties() & REPEAT
+    # Next, embed the figure into a pyvista plotting window
+    pl = pyvista.Plotter()
+    chart = pyvista.ChartMPL(fig)
+    pl.add_chart(chart)
+    pl.show(before_close_callback=verify_cache_image)
