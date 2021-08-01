@@ -25,6 +25,7 @@ all plotting functionality in PyVista.
 
    Plotter
    Renderer
+   Chart2D
 
 
 Widget API

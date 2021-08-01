@@ -1059,6 +1059,58 @@ class StackPlot(_vtk.vtkPlotStacked, _Plot, _MultiCompPlot):
 
 
 class Chart2D(_vtk.vtkChartXY, _Chart):
+    """2D chart class similar to a ``matplotlib`` figure.
+
+    Parameters
+    ----------
+    size : list or tuple, optional
+        TODO:
+
+    loc : list or tuple, optional
+        TODO:
+
+    x_label : str, optional
+        Label along the x-axis.  Defaults to ``'x'``
+
+    y_label : str, optional
+        Label along the y-axis.  Defaults to ``'y'``
+
+    grid : bool, optional
+        Show the background grid in the plot.  Default ``True``.
+
+    Examples
+    --------
+    Plot a simple sine wave as a scatter and line plot.
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> x = np.linspace(0, 2*np.pi, 20)
+    >>> y = np.sin(x)
+    >>> chart = pyvista.Chart2D()
+    >>> _ = chart.scatter(x, y)
+    >>> _ = chart.line(x, y, 'r')
+    >>> chart.show()
+
+    Create a bar plot.
+
+    >>> rng = np.random.default_rng(1)
+    >>> x = np.arange(1, 13)
+    >>> y1 = rng.integers(1e2, 1e4, 12)
+    >>> y2 = rng.integers(1e2, 1e4, 12)
+    >>> chart = pyvista.Chart2D()
+    >>> chart.background_color = 'w'
+    >>> _ = chart.bar(x, y1, color="b", label="2020")
+    >>> _ = chart.bar(x, y2, color="r", label="2021")
+    >>> chart.x_axis.tick_locations = x
+    >>> chart.x_axis.tick_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+    ...                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    >>> chart.x_label = "Month"
+    >>> chart.y_axis.tick_labels = "2e"
+    >>> chart.y_label = "# incidents"
+    >>> chart.show()
+
+    """
+
     PLOT_TYPES = {
         "scatter": ScatterPlot2D,
         "line": LinePlot2D,
@@ -1226,12 +1278,18 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         >>> x = np.linspace(0, 2*np.pi, 20)
         >>> y = np.sin(x)
         >>> chart = pyvista.Chart2D()
-        >>> chart.line(x, y, 'r')
+        >>> _ = chart.line(x, y, 'r')
         >>> chart.grid = False
         >>> chart.show()
 
         Enable the grid
 
+        >>> import pyvista
+        >>> import numpy as np
+        >>> x = np.linspace(0, 2*np.pi, 20)
+        >>> y = np.sin(x)
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line(x, y, 'r')
         >>> chart.grid = True
         >>> chart.show()
 
@@ -1244,7 +1302,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.y_axis.grid = val
 
     def show(self, off_screen=None, full_screen=None, screenshot=None,
-             window_size=None, notebook=notebook, background='w'):
+             window_size=None, notebook=None, background='w'):
         """Show this chart in a self contained plotter.
 
         Parameters
@@ -1293,18 +1351,19 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         >>> x = np.linspace(0, 2*np.pi, 20)
         >>> y = np.sin(x)
         >>> chart = pyvista.Chart2D()
-        >>> chart.scatter(x, y)
-        >>> chart.line(x, y, 'r')
+        >>> _ = chart.scatter(x, y)
+        >>> _ = chart.line(x, y, 'r')
         >>> chart.show()
 
         """
         pl = pyvista.Plotter(window_size=window_size,
-                             full_screen=full_screen,
                              notebook=notebook,
                              off_screen=off_screen)
         pl.background_color = background
         pl.add_chart(self)
-        return pl.show(screenshot=screenshot)
+        return pl.show(screenshot=screenshot,
+                       full_screen=full_screen,
+        )
 
 
 class BoxPlot(_vtk.vtkPlotBox, _Plot, _MultiCompPlot):
