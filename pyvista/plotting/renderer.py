@@ -382,6 +382,22 @@ class Renderer(_vtk.vtkRenderer):
         return actor
 
     def add_chart(self, chart):
+        """Add a chart to this renderer.
+
+        Parameters
+        ----------
+        chart : pyvista.plotting.charts._Chart
+            Chart to add to renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> chart.plot(range(10), range(10))
+        >>> pl = pyvista.Plotter()
+        >>> pl.add
+
+        """
         self._charts.add_chart(chart)
 
     @property

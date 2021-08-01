@@ -667,6 +667,7 @@ class _Plot(object):
 
     @classmethod
     def parse_format(cls, fmt):
+        """Parse format string."""
         # TODO: add tests for different combinations/positions of marker, line and color
         marker_style = ""
         line_style = ""
@@ -1091,8 +1092,42 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self._plots[plot_type].append(plot)
         return plot
 
-    def plot(self, x, y, fmt):
-        """ Matplotlib like plot method """
+    def plot(self, x, y, fmt='-'):
+        """Matplotlib like plot method.
+
+        Parameters
+        ----------
+        x : sequence
+            Values to plot on the X-axis.
+
+        y : sequence
+            Values to plot on the Y-axis.
+
+        fmt : str, optional
+            A format string, e.g. 'ro' for red circles. See the Notes
+            section for a full description of the format strings.
+
+        Examples
+        --------
+        Generate a line plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _, line_plot = chart.plot(range(10), range(10))
+
+        Generate a line and scatter plot.
+
+        >>> scatter_plot, line_plot = chart.plot(range(10), range(10), fmt='o-')
+
+        Notes
+        -----
+        This plot method shares many of the same plotting features as
+        the `matplotlib.pyplot.plot
+        <https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html>`_.
+        Please reference the documentation there for a full
+        description of the allowable format strings.
+
+        """
         # TODO: make x and fmt optional, allow multiple ([x], y, [fmt]) entries
         marker_style, line_style, color = _Plot.parse_format(fmt)
         scatter_plot, line_plot = None, None
@@ -1103,6 +1138,18 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return scatter_plot, line_plot
 
     def scatter(self, x, y, color="b", size=10, style="o", label=""):
+        """Add a scatter plot to this chart.
+
+        Examples
+        --------
+
+        Generate a scatter plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> scatter_plot = chart.scatter(range(10), range(10))
+
+        """
         return self._add_plot("scatter", x, y, color=color, size=size, style=style, label=label)
 
     def line(self, x, y, color="b", width=1.0, style="-", label=""):
@@ -1168,12 +1215,96 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def grid(self):
+        """Enable or disable the chart grid.
+
+        Examples
+        --------
+        Disable the grid.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> x = np.linspace(0, 2*np.pi, 20)
+        >>> y = np.sin(x)
+        >>> chart = pyvista.Chart2D()
+        >>> chart.line(x, y, 'r')
+        >>> chart.grid = False
+        >>> chart.show()
+
+        Enable the grid
+
+        >>> chart.grid = True
+        >>> chart.show()
+
+        """
         return self.x_axis.grid and self.y_axis.grid
 
     @grid.setter
     def grid(self, val):
         self.x_axis.grid = val
         self.y_axis.grid = val
+
+    def show(self, off_screen=None, full_screen=None, screenshot=None,
+             window_size=None, notebook=notebook, background='w'):
+        """Show this chart in a self contained plotter.
+
+        Parameters
+        ----------
+        off_screen : bool
+            Plots off screen when ``True``.  Helpful for saving screenshots
+            without a window popping up.  Defaults to active theme setting in
+            :attr:`pyvista.global_theme.full_screen
+            <pyvista.themes.DefaultTheme.full_screen`
+
+        full_screen : bool, optional
+            Opens window in full screen.  When enabled, ignores
+            ``window_size``.  Defaults to active theme setting in
+            :attr:`pyvista.global_theme.full_screen
+            <pyvista.themes.DefaultTheme.full_screen`
+
+        screenshot : str or bool, optional
+            Saves screenshot to file when enabled.  See:
+            :func:`Plotter.screenshot() <pyvista.Plotter.screenshot>`.
+            Default ``False``.
+
+            When ``True``, takes screenshot and returns ``numpy`` array of
+            image.
+
+        window_size : list, optional
+            Window size in pixels.  Defaults to global theme
+            :attr:`pyvista.global_theme.window_size
+            <pyvista.themes.DefaultTheme.window_size>`
+
+        notebook : bool, optional
+            When ``True``, the resulting plot is placed inline a
+            jupyter notebook.  Assumes a jupyter console is active.
+
+        background : string or 3 item list, optional
+            Use to make the entire mesh have a single solid color.
+            Either a string, RGB list, or hex color string.  For example:
+            ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+            ``color='#FFFFFF'``.  Defaults to ``'w'``.
+
+        Examples
+        --------
+        Plot a simple sine wave as a scatter and line plot.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> x = np.linspace(0, 2*np.pi, 20)
+        >>> y = np.sin(x)
+        >>> chart = pyvista.Chart2D()
+        >>> chart.scatter(x, y)
+        >>> chart.line(x, y, 'r')
+        >>> chart.show()
+
+        """
+        pl = pyvista.Plotter(window_size=window_size,
+                             full_screen=full_screen,
+                             notebook=notebook,
+                             off_screen=off_screen)
+        pl.background_color = background
+        pl.add_chart(self)
+        return pl.show(screenshot=screenshot)
 
 
 class BoxPlot(_vtk.vtkPlotBox, _Plot, _MultiCompPlot):
