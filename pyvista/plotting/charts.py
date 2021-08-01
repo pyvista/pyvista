@@ -1639,6 +1639,9 @@ class Charts:
     def deep_clean(self):
         if self._scene is not None:
             for chart in self._charts:
+                chart._x_axis = None
+                chart._y_axis = None
+                chart._z_axis = None
                 self.remove_chart(chart)
             self._renderer.RemoveActor(self._actor)
         self._scene = None
