@@ -88,7 +88,7 @@ jobs:
   - script: |
       sudo apt-get install python3-tk
       pip install -r requirements_test.txt
-      python -c "import pyvista; print(pyvista.Report())"
+      xvfb-run python -c "import pyvista; print(pyvista.Report())"
       which python
       pip list
     displayName: 'Install test dependencies'
