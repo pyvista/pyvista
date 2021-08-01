@@ -63,7 +63,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         "-..": _vtk.vtkPen.DASH_DOT_DOT_LINE
     }
 
-    def __init__(self, color: Sequence = "k", width: float = 1, style: Optional[str] = "-"):
+    def __init__(self, color="k", width=1, style="-"):
         """Initialize a new Pen instance.
 
         Parameters
@@ -86,12 +86,12 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         self.style = style
 
     @property
-    def color(self) -> Color4f:
+    def color(self):
         """Get the pen's current color."""
         return self._color
 
     @color.setter
-    def color(self, val: Sequence):
+    def color(self, val):
         """Set the pen's color.
 
         Examples
@@ -109,12 +109,12 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         self.SetColorF(*self._color)
 
     @property
-    def width(self) -> float:
+    def width(self):
         """Get the pen's current width."""
         return self.GetWidth()
 
     @width.setter
-    def width(self, val: float):
+    def width(self, val):
         """Set the pen's width.
 
         Examples
@@ -131,12 +131,12 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         self.SetWidth(float(val))
 
     @property
-    def style(self) -> Optional[str]:
+    def style(self):
         """Get the pen's current line style."""
         return self._line_style
 
     @style.setter
-    def style(self, val: Optional[str]):
+    def style(self, val):
         """Set the pen's line style.
 
         Examples
@@ -163,7 +163,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 class Brush(_vtkWrapper, _vtk.vtkBrush):
     """Pythonic wrapper for a VTK Brush, used to fill shapes."""
 
-    def __init__(self, color: Sequence = "k", texture=None):
+    def __init__(self, color="k", texture=None):
         """Initialize a new Pen instance.
 
         Parameters
@@ -184,12 +184,12 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         self._repeat = False
 
     @property
-    def color(self) -> Color4f:
+    def color(self):
         """Get the brush's current color."""
         return self._color
 
     @color.setter
-    def color(self, val: Sequence):
+    def color(self, val):
         """Set the brush's color.
 
         Examples
@@ -207,7 +207,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         self.SetColorF(*self._color)
 
     @property
-    def texture(self) -> Optional["pyvista.Texture"]:
+    def texture(self):
         """Get the brush's current texture."""
         return self._texture
 
@@ -235,12 +235,12 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
             self.SetTexture(self._texture.to_image())
 
     @property
-    def texture_interpolate(self) -> bool:
+    def texture_interpolate(self):
         """Get texture interpolation mode (NEAREST = ``False``, LINEAR = ``TRUE``)."""
         return self._interpolate
 
     @texture_interpolate.setter
-    def texture_interpolate(self, val: bool):
+    def texture_interpolate(self, val):
         """Set texture interpolation mode (NEAREST = ``False``, LINEAR = ``TRUE``).
 
         Examples
@@ -260,12 +260,12 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         self._update_textureprops()
 
     @property
-    def texture_repeat(self) -> bool:
+    def texture_repeat(self):
         """Get texture repeat mode (STRETCH = ``False``, REPEAT = ``TRUE``)."""
         return self._repeat
 
     @texture_repeat.setter
-    def texture_repeat(self, val: bool):
+    def texture_repeat(self, val):
         """Set texture repeat mode (STRETCH = ``False``, REPEAT = ``TRUE``).
 
         Examples
@@ -314,11 +314,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetTitle(val)
 
     @property
-    def label_visibility(self):
+    def label_visible(self):
         return self.GetTitleVisible()
 
-    @label_visibility.setter
-    def label_visibility(self, val):
+    @label_visible.setter
+    def label_visible(self, val):
         self.SetTitleVisible(bool(val))
 
     @property
@@ -449,20 +449,20 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetLabelOffset(float(val))
 
     @property
-    def tick_labels_visibility(self):
+    def tick_labels_visible(self):
         return self.GetLabelsVisible()
 
-    @tick_labels_visibility.setter
-    def tick_labels_visibility(self, val):
+    @tick_labels_visible.setter
+    def tick_labels_visible(self, val):
         self.SetLabelsVisible(bool(val))
         self.SetRangeLabelsVisible(bool(val))
 
     @property
-    def tick_visibility(self):
+    def ticks_visible(self):
         return self.GetTicksVisible()
 
-    @tick_visibility.setter
-    def tick_visibility(self, val):
+    @ticks_visible.setter
+    def ticks_visible(self, val):
         self.SetTicksVisible(bool(val))
 
     def _update_ticks(self):
@@ -487,7 +487,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
         super().__init__()
         self.SetPythonObject(_CustomContextItem.ItemWrapper())  # This will also call ItemWrapper.Initialize
 
-    def paint(self, painter: _vtk.vtkContext2D):
+    def paint(self, painter):
         return True
 
 
@@ -501,7 +501,7 @@ class _ChartBackground(_CustomContextItem):
         self.BorderPen = Pen(color=(0, 0, 0))
         self.BackgroundBrush = Brush(color=(0, 0, 0, 0))
 
-    def paint(self, painter: _vtk.vtkContext2D):
+    def paint(self, painter):
         if self._chart.visible:
             painter.ApplyPen(self.BorderPen)
             painter.ApplyBrush(self.BackgroundBrush)
@@ -636,11 +636,11 @@ class _Chart(object):
         self.SetTitle(val)
 
     @property
-    def legend(self):
+    def legend_visible(self):
         return self.GetShowLegend()
 
-    @legend.setter
-    def legend(self, val):
+    @legend_visible.setter
+    def legend_visible(self, val):
         self.SetShowLegend(val)
 
 
@@ -1079,7 +1079,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.x_label = x_label
         self.y_label = y_label
         self.grid = grid
-        self.legend = True
+        self.legend_visible = True
 
     def render_event(self, *args, **kwargs):
         self.RecalculateBounds()
@@ -1200,7 +1200,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         self._plot = BoxPlot(data)
         self.SetPlot(self._plot)
         self.SetColumnVisibilityAll(True)
-        self.legend = True
+        self.legend_visible = True
 
     def render_event(self, *args, **kwargs):
         pass  # ChartBox fills entire scene by default, so no resizing is needed (nor possible at this moment)
@@ -1259,7 +1259,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         super().__init__()
         self.AddPlot(0)  # We can't manually set a wrapped vtkPlotPie instance...
         self._plot = PiePlot(data, labels, _wrap=self.GetPlot(0))  # So we have to wrap the existing one
-        self.legend = True
+        self.legend_visible = True
 
     def render_event(self, *args, **kwargs):
         pass  # ChartPie fills entire scene by default, so no resizing is needed (nor possible at this moment)
@@ -1412,15 +1412,15 @@ class _Chart3D(_vtk.vtkChartXYZ, _Chart):
         # same as for the 2D counterparts. (To be added to ``chart_basics`` example
         # once supported.)
 
-        >>> x = np.arange(11)
-        >>> y = rng.integers(-5, 6, 11)
-        >>> z = rng.integers(-5, 6, 11)
-        >>> p = pv.Plotter()
-        >>> p.background_color = (1, 1, 1)
-        >>> chart = pv.Chart3D()
-        >>> chart.plot(x, y, z, 'x-b')  # Show markers (marker style is ignored), solid line and blue color 'b'
-        >>> p.add_chart(chart)
-        >>> p.show()
+        # x = np.arange(11)
+        # y = rng.integers(-5, 6, 11)
+        # z = rng.integers(-5, 6, 11)
+        # p = pv.Plotter()
+        # p.background_color = (1, 1, 1)
+        # chart = pv.Chart3D()
+        # chart.plot(x, y, z, 'x-b')  # Show markers (marker style is ignored), solid line and blue color 'b'
+        # p.add_chart(chart)
+        # p.show()
 
         """
         # TODO: make x and fmt optional, allow multiple ([x], y, z, [fmt]) entries
@@ -1446,16 +1446,16 @@ class _Chart3D(_vtk.vtkChartXYZ, _Chart):
         # 3D surfaces can be visualized on such a chart as well. (To be added to
         # ``chart_basics`` example once supported.)
 
-        >>> x = np.linspace(-1, 1, 100)
-        >>> y = np.linspace(-1, 1, 100)
-        >>> xx, yy = np.meshgrid(x, y)
-        >>> z = np.cos(6*(xx**2+yy**2))
-        >>> p = pv.Plotter()
-        >>> p.background_color = (1, 1, 1)
-        >>> chart = pv.Chart3D()
-        >>> chart.surface(x, y, z)
-        >>> p.add_chart(chart)
-        >>> p.show()
+        # x = np.linspace(-1, 1, 100)
+        # y = np.linspace(-1, 1, 100)
+        # xx, yy = np.meshgrid(x, y)
+        # z = np.cos(6*(xx**2+yy**2))
+        # p = pv.Plotter()
+        # p.background_color = (1, 1, 1)
+        # chart = pv.Chart3D()
+        # chart.surface(x, y, z)
+        # p.add_chart(chart)
+        # p.show()
 
         """
         return self._add_plot("surface", x, y, z)
@@ -1533,7 +1533,7 @@ class _Chart3D(_vtk.vtkChartXYZ, _Chart):
 
 class ChartMPL(_vtk.vtkImageItem, _Chart):
 
-    def __init__(self, figure: matplotlib.figure.Figure, size: Tuple[int, int] = (1, 1), loc: Tuple[int, int] = (0, 0)):
+    def __init__(self, figure, size=(1, 1), loc=(0, 0)):
         """
         Create new chart from an existing matplotlib figure.
         :param figure: The matplotlib figure to draw
@@ -1618,13 +1618,10 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         assert len(val) == 2
         self.SetPosition(*val)
 
-#region Type definitions
-Chart = Union[Chart2D, ChartBox, ChartPie, ChartMPL]
-#endregion
 
 class Charts:
 
-    def __init__(self, renderer: "pyvista.Renderer"):
+    def __init__(self, renderer):
         self._charts = []
 
         self._scene = None  # Postpone creation of scene and actor objects until they are needed. Otherwise they are
@@ -1647,7 +1644,7 @@ class Charts:
         self._scene = None
         self._actor = None
 
-    def add_chart(self, chart: Chart):
+    def add_chart(self, chart):
         if self._scene is None:
             self.setup_scene()
         self._charts.append(chart)
@@ -1655,7 +1652,7 @@ class Charts:
         self._scene.AddItem(chart)
         chart.SetInteractive(False)  # Charts are not interactive by default
 
-    def remove_chart(self, chart_or_index: Union[Chart, int]):
+    def remove_chart(self, chart_or_index):
         chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
         assert chart in self._charts
         self._charts.remove(chart)
