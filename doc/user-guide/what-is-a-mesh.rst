@@ -37,18 +37,21 @@ You can create one by defining a 2D array XYZ coordinates like so:
     :hide-code:
 
     # backend may not be panel, so we have to set this here.
+    import pyvista
     import pyvista as pv
-    pv.set_jupyter_backend('panel')
-    pv.set_plot_theme('document')
+
+    pyvista.set_plot_theme('document')
+    pyvista.set_jupyter_backend('pythreejs')
+    pyvista.global_theme.antialiasing = True
+    pyvista.global_theme.window_size = [600, 400]
 
 .. jupyter-execute::
 
     import numpy as np
-    import pyvista as pv
 
     nodes = np.random.rand(100, 3)
     mesh = pv.PolyData(nodes)
-    mesh.plot(point_size=10)
+    mesh.plot(point_size=10, style='points')
 
 But it's import to note that most meshes have some sort of
 connectivity between nodes such as this gridded mesh:
@@ -65,7 +68,7 @@ connectivity between nodes such as this gridded mesh:
     pl = pv.Plotter()
     pl.add_mesh(mesh, show_edges=True, color='white')
     pl.add_mesh(pv.PolyData(mesh.points), color='red',
-           point_size=10, render_points_as_spheres=True)
+                point_size=10, render_points_as_spheres=True)
     pl.camera_position = cpos
     pl.show()
 
@@ -139,7 +142,6 @@ plotting the values between nodes are interpolated across the cells.
 .. jupyter-execute::
 
     mesh.point_arrays['my point values'] = np.arange(mesh.n_points)
-
     mesh.plot(scalars='my point values', cpos=cpos,
               show_edges=True)
 

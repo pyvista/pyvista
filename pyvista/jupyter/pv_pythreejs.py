@@ -151,7 +151,7 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
     else:
         trimesh = surf.triangulate()
 
-    position = array_to_point_buffer(surf.points)
+    position = array_to_point_buffer(trimesh.points)
 
     # convert to minimum index type
     face_ind = trimesh.faces.reshape(-1, 4)[:, 1:]
@@ -166,10 +166,10 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
     # extract point/cell scalars for coloring
     scalars = None
     if mapper.GetScalarModeAsString() == 'UsePointData':
-        scalars = surf.point_arrays.active_scalars
+        scalars = trimesh.point_arrays.active_scalars
     elif mapper.GetScalarModeAsString() == 'UseCellData':
-        scalars = surf.cell_arrays.active_scalars.repeat(3)
-        position = array_to_point_buffer(surf.points[face_ind])
+        scalars = trimesh.cell_arrays.active_scalars.repeat(3)
+        position = array_to_point_buffer(trimesh.points[face_ind])
         attr = {'position': position}
 
     if scalars is not None:
@@ -179,7 +179,7 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
     surf_geo = tjs.BufferGeometry(attributes=attr)
 
     shared_attr = {'color': color_to_hex(prop.GetColor()),
-                   'vertexColors': get_coloring(mapper, surf),
+                   'vertexColors': get_coloring(mapper, trimesh),
                    'wireframe': prop.GetRepresentation() == 1,
                    'opacity': prop.GetOpacity(),
                    'wireframeLinewidth': prop.GetLineWidth(),
