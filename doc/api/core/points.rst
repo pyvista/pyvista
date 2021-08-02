@@ -37,7 +37,7 @@ For example, the PyVista package contains example meshes and these can be loaded
     :hide-code:
 
     import pyvista
-    pyvista.set_jupyter_backend('panel')
+    pyvista.set_jupyter_backend('pythreejs')
     pyvista.set_plot_theme('document')
 
 

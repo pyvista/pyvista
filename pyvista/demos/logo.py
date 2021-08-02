@@ -106,7 +106,7 @@ def logo_basic():
 
 
 def plot_logo(window_size=None, off_screen=None, screenshot=None,
-              cpos=None, just_return_plotter=False, **kwargs):
+              cpos=None, just_return_plotter=False, show_note=False, **kwargs):
     """Plot the stylized PyVista logo.
 
     Examples
@@ -180,9 +180,17 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None,
     scalars = grid.points[cells[:, 1], 1]
     plotter.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens')
 
+    if show_note:
+        text = text_3d("You can move me!", depth=0.1)
+        text.points *= 0.1
+        text.translate([4.0, -0.3, 0])
+        plotter.add_mesh(text, color='black')
+
     # finalize plot and show it
     plotter.set_background(kwargs.pop('background', 'white'))
     plotter.camera_position = 'xy'
+    if 'zoom' in kwargs:
+        plotter.camera.zoom(kwargs.pop('zoom'))
 
     plotter.remove_scalar_bar()
     plotter.enable_anti_aliasing()

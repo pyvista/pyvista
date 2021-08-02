@@ -3,7 +3,7 @@
 import pyvista
 from .itkplotter import PlotterITK
 
-ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'pyvistajs', 'none']
+ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'pythreejs', 'none']
 
 
 def _validate_jupyter_backend(backend):
@@ -37,11 +37,11 @@ def _validate_jupyter_backend(backend):
                          f'Use one of the following:\n{backend_list_str}')
 
     # verify required packages are installed
-    if backend == 'pyvistajs':
+    if backend == 'pythreejs':
         try:
-            import pyvistajs
+            import pythreejs
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install `pyvistajs` to use this feature.')
+            raise ImportError('Please install `pythreejs` to use this feature.')
 
     if backend == 'ipyvtklink':
         try:
@@ -91,10 +91,10 @@ def set_jupyter_backend(backend):
           this is the only method that does not require a virtual
           framebuffer.  Must have ``ipygany`` installed.
 
-        * ``'pyvistajs'`` : Convert all the meshes into ``pyvistajs``
+        * ``'pythreejs'`` : Convert all the meshes into ``pythreejs``
           meshes and streams those to be rendered on the client side.
           Aside from ``ipygany``, this is the only method that does
-          not require a virtual framebuffer.  Must have ``pyvistajs``
+          not require a virtual framebuffer.  Must have ``pythreejs``
           installed.
 
         * ``'static'`` : Display a single static image within the
@@ -109,10 +109,10 @@ def set_jupyter_backend(backend):
 
     Examples
     --------
-    Enable the pyvistajs backend.
+    Enable the pythreejs backend.
 
     >>> import pyvista as pv
-    >>> pv.set_jupyter_backend('pyvistajs')  # doctest:+SKIP
+    >>> pv.set_jupyter_backend('pythreejs')  # doctest:+SKIP
 
     Enable the ipygany backend.
 

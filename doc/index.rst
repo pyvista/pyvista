@@ -4,10 +4,9 @@
    :hide-code:
 
    from pyvista.demos import logo
-   renderer = logo.plot_logo(jupyter_backend='pyvistajs', return_viewer=True)
-   renderer.layout.height = '200px'
-   renderer
-
+   from pyvista.demos import logo
+   logo.plot_logo(jupyter_backend='pythreejs', window_size=[600, 200], zoom=2.5,
+                  show_note=True)
 
 .. raw:: html
 
@@ -70,12 +69,13 @@ might want to use PyVista:
 
    # must have this here as our global backend may not be static
    import pyvista
-   pyvista.set_jupyter_backend('pyvistajs')
+   pyvista.set_jupyter_backend('pythreejs')
    pyvista.global_theme.background = 'white'
-   pyvista.global_theme.window_size = [400, 400]
+   pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
    pyvista.global_theme.smooth_shading = True
    pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.show_scalar_bar = False
 
 
 Maps and Geoscience
@@ -88,7 +88,7 @@ Download the surface elevation map of Mount St. Helens and plot it.
     mesh = examples.download_st_helens()
     warped = mesh.warp_by_scalar('Elevation')
     surf = warped.extract_surface().triangulate()
-    surf = surf.decimate_pro(0.75)  # reduce the size of the mesh by 75%
+    surf = surf.decimate_pro(0.75)  # reduce the density of the mesh by 75%
     surf.plot(cmap='gist_earth')
 
 
@@ -100,8 +100,7 @@ Plot the 'X' component of elastic stress of a 3D notch specimen.
 
    from pyvista import examples
    mesh = examples.download_notch_stress()
-   mesh.plot(scalars='Nodal Stress', component=0, cmap='turbo',
-             cpos='xy', show_scalar_bar=False)
+   mesh.plot(scalars='Nodal Stress', component=0, cmap='turbo', cpos='xy')
 
 
 Simple Point Cloud with Numpy
@@ -122,7 +121,7 @@ the points directly.
     # create many spheres from the point cloud
     sphere = pyvista.Sphere(radius=0.02, phi_resolution=10, theta_resolution=10)
     pc = pdata.glyph(scale=False, geom=sphere)
-    pc.plot(background='black', cmap='Reds', show_scalar_bar=False)
+    pc.plot(cmap='Reds')
 
 
 Plot a Spline

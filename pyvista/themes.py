@@ -1293,10 +1293,10 @@ class DefaultTheme(_ThemeConfig):
           this is the only method that does not require a virtual
           framebuffer.  Must have ``ipygany`` installed.
 
-        * ``'pyvistajs'`` : Convert all the meshes into ``pyvistajs``
+        * ``'pythreejs'`` : Convert all the meshes into ``pythreejs``
           meshes and streams those to be rendered on the client side.
           Aside from ``ipygany``, this is the only method that does
-          not require a virtual framebuffer.  Must have ``pyvistajs``
+          not require a virtual framebuffer.  Must have ``pythreejs``
           installed.
 
         * ``'static'`` : Display a single static image within the
@@ -1311,10 +1311,10 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Enable the pyvistajs backend.
+        Enable the pythreejs backend.
 
         >>> import pyvista as pv
-        >>> pv.set_jupyter_backend('pyvistajs')  # doctest:+SKIP
+        >>> pv.set_jupyter_backend('pythreejs')  # doctest:+SKIP
 
         Enable the ipygany backend.
 

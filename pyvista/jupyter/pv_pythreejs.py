@@ -400,4 +400,10 @@ def renderer_from_plotter(pl):
                             antialias=pl.renderer.GetUseFXAA(),
     )
 
+    # for now, we can't dynamically size the render windows.  If
+    # unset, the renderer widget will attempt to resize and the
+    # threejs renderer will not resize.
+    renderer.layout.width = f'{width}px'
+    renderer.layout.height = f'{height}px'
+
     return renderer

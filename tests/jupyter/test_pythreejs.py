@@ -10,6 +10,14 @@ except:
 import pyvista
 
 
+def test_set_jupyter_backend_ipygany():
+    try:
+        pyvista.global_theme.jupyter_backend = 'pythreejs'
+        assert pyvista.global_theme.jupyter_backend == 'pythreejs'
+    finally:
+        pyvista.global_theme.jupyter_backend = None
+
+
 def test_export_to_html(cube, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.html'))
 

@@ -173,9 +173,8 @@ def build_panel_bounds(actor):
 
 def show_pythreejs(plotter, return_viewer, **kwargs):
     """Show a pyvista plotting scene using pythreejs."""
-    import pyvistajs
-
-    renderer = pyvistajs.renderer_from_plotter(plotter)
+    from .pv_pythreejs import renderer_from_plotter
+    renderer = renderer_from_plotter(plotter)
     if return_viewer:
         return renderer
     display.display_html(renderer)

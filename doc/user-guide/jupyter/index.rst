@@ -6,13 +6,8 @@ Plot with ``pyvista`` interactively within a `Juptyer
 <https://jupyter.org/>`_ notebook!
 
 
-Demo Using ``panel``
-~~~~~~~~~~~~~~~~~~~~
-
-.. jupyter-execute::
-
-   from pyvista import demos
-   demos.plot_logo(background='white', jupyter_backend='panel')
+Demo Using ``pythreejs``
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Demo Using ``ipygany``
@@ -35,6 +30,15 @@ Demo Using ``ipygany``
              show_scalar_bar=True)
 
 
+Demo Using ``panel``
+~~~~~~~~~~~~~~~~~~~~
+
+.. jupyter-execute::
+
+   from pyvista import demos
+   demos.plot_logo(background='white', jupyter_backend='panel')
+
+
 Supported Modules
 ~~~~~~~~~~~~~~~~~
 The PyVista module supports a variety of backends when plotting within
@@ -42,6 +46,7 @@ a jupyter notebook:
 
 * Server-side rendering with PyVista streaming to the notebook through
   `ipyvtklink <https://github.com/Kitware/ipyvtklink/>`_
+* Client-side rendering with `pythreejs <https://github.com/jupyter-widgets/pythreejs>`_ using ``threejs``.
 * Client-side rendering with `ipygany <https://github.com/QuantStack/ipygany>`_ using ``threejs``.
 * Client-side rendering using `panel <https://github.com/holoviz/panel>`_ using ``vtk.js``.
 * Client-side rendering with `itkwidgets <https://github.com/InsightSoftwareConsortium/itkwidgets>`_ using ``itk.js`` and ``vtk.js``.
@@ -57,6 +62,7 @@ details on how to use these plotting backends.
 .. toctree::
    :maxdepth: 1
 
+   pythreejs
    ipygany
    panel
    ipyvtk_plotting
@@ -74,8 +80,9 @@ State of 3D Interactive Jupyterlab Plotting
    more and more users and developers shift to the cloud or cloud-based
    visualization.  Things here are likely to break and rapidly change
 
-   This was written in March 2021, and may already be out of date.  Be
-   sure to check the developer websites for any changes.
+   This was written in March 2021 and updated in August 2021, and may
+   already be out of date.  Be sure to check the developer websites
+   for any changes.
 
 When plotting using Jupyterlab you have the option of using one of
 many modules, each of which has its advantages, disadvantages, and
@@ -95,6 +102,8 @@ jupyter notebook plotting modules:
 +---------------+--------------+--------------------+---------+----------------------+
 | panel         | Yes          | Client             | vtk.js  | Yes                  |
 +---------------+--------------+--------------------+---------+----------------------+
+| pythreejs     | Yes          | Client             | threejs | No                   |
++---------------+--------------+--------------------+---------+----------------------+
 | ipygany       | Yes          | Client             | threejs | No                   |
 +---------------+--------------+--------------------+---------+----------------------+
 | ipyvtklink    | Yes          | Server             | vtk     | Yes                  |
@@ -102,14 +111,14 @@ jupyter notebook plotting modules:
 | itkwidgets    | No           | Client             | vtk.js  | Yes                  |
 +---------------+--------------+--------------------+---------+----------------------+
 
-At the moment, ``itkwidgets`` and ``ipyvtklink`` are incompatible
-with Jupyterlab 3, and will result in a "Error displaying widget:
-model not found" message from juptyer.  Additionally, all the modules
-other than ``ipygany`` require a framebuffer, which can be setup on a
-headless environment with ``pyvista.start_xvfb()``.  However, on
-Google Colab, where it's not possible to install system packages, you
-should stick with a module like ``threejs``, which does not require
-any server side rendering or framebuffer.
+At the moment, ``itkwidgets`` and ``ipyvtklink`` are incompatible with
+Jupyterlab 3, and will result in a "Error displaying widget: model not
+found" message from juptyer.  Additionally, all the modules other than
+``ipygany`` and ``pythreejs`` require a framebuffer, which can be
+setup on a headless environment with ``pyvista.start_xvfb()``.
+However, on Google Colab, where it's not possible to install system
+packages, you should stick with a module like ``threejs``, which does
+not require any server side rendering or framebuffer.
 
 See :ref:`install_ref` for more details installing on a headless
 environment for the backends requiring a framebuffer.  When installing

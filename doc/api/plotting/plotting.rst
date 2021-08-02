@@ -64,14 +64,15 @@ It is possible to use the ``Plotter`` class as well.
     plotter.show(jupyter_backend='static')
 
 Additionally, you can generate interactive plots by leveraging a
-jupyter plotting backend like ``panel`` or ``ipygany``.  You can even
-use it to create interactive documentations online.
+jupyter plotting backend like ``panel``, ``ipygany``, or
+``pythreejs``.  You can even use it to create interactive
+documentation online.
 
 .. jupyter-execute::
 
     plotter = pv.Plotter(notebook=True)
     plotter.add_mesh(sphere)
-    plotter.show(jupyter_backend='ipygany')
+    plotter.show(jupyter_backend='pythreejs')
 
 For more details, see the section on :ref:`jupyter_plotting`.
 

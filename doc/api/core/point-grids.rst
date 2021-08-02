@@ -73,7 +73,7 @@ grid from NumPy arrays.
 
     import pyvista
     pv.OFF_SCREEN = True
-    pyvista.set_jupyter_backend('panel')
+    pyvista.set_jupyter_backend('pythreejs')
     pyvista.set_plot_theme('document')
 
 .. jupyter-execute::
@@ -248,7 +248,7 @@ string.
 .. jupyter-execute::
     :hide-code:
 
-    # labels to not show in panel
+    # labels to not show in interactive backends
     pyvista.set_jupyter_backend('static')
 
 .. jupyter-execute::

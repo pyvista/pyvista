@@ -1076,7 +1076,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def window_size(self):
-        """Return the render window size."""
+        """Return the render window size in ``(width, height)``.
+
+        Examples
+        --------
+        Change the window size from ``200 x 200`` to ``400 x 400``.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(window_size=[200, 200])
+        >>> pl.window_size
+        [200, 200]
+        >>> pl.window_size = [400, 400]
+        [400, 400]
+
+        """
         return list(self.ren_win.GetSize())
 
     @window_size.setter
@@ -4369,6 +4382,7 @@ class Plotter(BasePlotter):
             following:
 
             * ``'none'`` : Do not display in the notebook.
+            * ``'pythreejs'`` : Show a ``pythreejs`` widget
             * ``'static'`` : Display a static figure.
             * ``'ipygany'`` : Show a ``ipygany`` widget
             * ``'panel'`` : Show a ``panel`` widget.
@@ -4426,13 +4440,13 @@ class Plotter(BasePlotter):
         >>> pl.show(auto_close=False)  # doctest:+SKIP
         >>> pl.show(screenshot='my_image.png')  # doctest:+SKIP
 
-        Display an ``ipygany`` scene within a jupyter notebook
+        Display an ``pythreejs`` scene within a jupyter notebook
 
-        >>> pl.show(jupyter_backend='ipygany')  # doctest:+SKIP
+        >>> pl.show(jupyter_backend='pythreejs')  # doctest:+SKIP
 
-        Return an ``ipygany`` scene.
+        Return an ``pythreejs`` scene.
 
-        >>> pl.show(jupyter_backend='ipygany', return_viewer=True)  # doctest:+SKIP
+        >>> pl.show(jupyter_backend='pythreejs', return_viewer=True)  # doctest:+SKIP
 
         Obtain the camera position when using ``show``.
 
