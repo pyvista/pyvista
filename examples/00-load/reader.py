@@ -53,8 +53,8 @@ print(f"Available cell data:    {reader.cell_array_names}")
 ###############################################################################
 # We can select which data to read by selectively disabling or enabling
 # specific arrays or all arrays.  Here we disable all the cell arrays and
-# the `Normals` point array to leave only the `id` point array.  The data is
-# finally read into a pyvista object that only has the `id` point array
+# the `Normals` point array to leave only the `height` point array.  The data
+# is finally read into a pyvista object that only has the `height` point array.
 
 reader.disable_all_cell_arrays()
 reader.disable_point_array('Normals')
