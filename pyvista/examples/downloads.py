@@ -515,7 +515,7 @@ def download_kitchen(split=False, load=True):
 
     """
     mesh = _download_and_read('kitchen.vtk', load=load)
-    if filename:
+    if not load:
          return mesh
     if not split:
         return mesh
@@ -671,7 +671,7 @@ def download_backward_facing_step(load=True):
     """Download an ensight gold case of a fluid simulation."""
     folder, _ = _download_file('EnSight.zip')
     filename = os.path.join(folder, "foam_case_0_0_0_0.case")
-    if filename:
+    if not load:
         return filename
     return pyvista.read(filename)
 
