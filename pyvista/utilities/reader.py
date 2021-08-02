@@ -227,7 +227,22 @@ class XMLPImageDataReader(BaseReader, DataArraySelection):
 
     
 class XMLRectilinearGridReader(BaseReader, DataArraySelection):
-    """XML RectilinearGrid Reader."""
+    """XML RectilinearGrid Reader.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_rectilinear_grid(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    RectilinearGrid.vtr
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> sliced_mesh = mesh.slice('y')
+    >>> sliced_mesh.plot(scalars="Void Volume Fraction",
+    ...                  cpos='xz', show_scalar_bar=False)
+
+    """
 
     _class_reader = _vtk.vtkXMLRectilinearGridReader
 
@@ -239,7 +254,21 @@ class XMLPRectilinearGridReader(BaseReader, DataArraySelection):
 
 
 class XMLUnstructuredGridReader(BaseReader, DataArraySelection):
-    """XML UnstructuredGrid Reader."""
+    """XML UnstructuredGrid Reader.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_notch_displacement(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    notch_disp.vtu
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(scalars="Nodal Displacement", component=0,
+    ...           cpos='xy', show_scalar_bar=False)
+
+    """
 
     _class_reader = _vtk.vtkXMLUnstructuredGridReader
 
@@ -251,13 +280,42 @@ class XMLPUnstructuredGridReader(BaseReader, DataArraySelection):
 
 
 class XMLPolyDataReader(BaseReader, DataArraySelection):
-    """XML PolyData Reader."""
+    """XML PolyData Reader.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_cow_head(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    cowHead.vtp
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(
+    ...    cpos=((12, 3.5, -4.5), (4.5, 1.6, 0), (0, 1, 0.3)),
+    ...    clim=[0, 100], show_scalar_bar=False
+    ... )
+
+    """
 
     _class_reader = _vtk.vtkXMLPolyDataReader
 
 
 class XMLStructuredGridReader(BaseReader, DataArraySelection):
-    """XML StructuredGrid Reader."""
+    """XML StructuredGrid Reader.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_structured_grid(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    StructuredGrid.vts
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(style='wireframe', line_width=4, show_scalar_bar=False)
+
+    """
 
     _class_reader = _vtk.vtkXMLStructuredGridReader
 
@@ -269,7 +327,21 @@ class XMLMultiBlockDataReader(BaseReader, DataArraySelection):
 
 
 class EnSightReader(BaseReader, DataArraySelection):
-    """EnSight Reader."""
+    """EnSight Reader.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_cylinder_crossflow(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    cylinder_Re35.case
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(scalars="velocity", component=1, clim=[-20, 20], 
+    ...           cpos='xy', cmap='RdBu', show_scalar_bar=False)
+
+    """
 
     _class_reader = _vtk.vtkGenericEnSightReader
 
@@ -289,25 +361,78 @@ class OpenFOAMReader(BaseReader, DataArraySelection):
 
 
 class PLYReader(BaseReader):
-    """PLY Reader."""
+    """PLY Reader.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_lobster(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    lobster.ply
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
 
     _class_reader = _vtk.vtkPLYReader
 
 
 class OBJReader(BaseReader):
-    """OBJ Reader."""
+    """OBJ Reader.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_trumpet(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    trumpet.obj
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(cpos='yz', show_scalar_bar=False)
+
+    """
 
     _class_reader = _vtk.vtkOBJReader
 
 
 class STLReader(BaseReader):
-    """STL Reader."""
+    """STL Reader.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_cad_model(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    42400-IDGH.stl
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
 
     _class_reader = _vtk.vtkSTLReader
 
 
 class VTKDataSetReader(BaseReader):
-    """VTK Data Set Reader."""
+    """VTK Data Set Reader.
+    
+        Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_brain(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    brain.vtk
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> sliced_mesh = mesh.slice('x')
+    >>> sliced_mesh.plot(cpos='yz', show_scalar_bar=False)
+
+    """
 
     _class_reader = _vtk.vtkDataSetReader
 
@@ -319,13 +444,37 @@ class VTKPDataSetReader(BaseReader):
 
 
 class BYUReader(BaseReader):
-    """BYU Reader."""
+    """BYU Reader.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_teapot(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    teapot.g
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(cpos='xy', show_scalar_bar=False)
+    """
 
     _class_reader = _vtk.vtkBYUReader
 
 
 class FacetReader(BaseReader):
-    """Facet Reader."""
+    """Facet Reader.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_clown(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    clown.facet
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(color="red")
+    """
 
     _class_reader = staticmethod(_vtk.lazy_vtkFacetReader)
 
@@ -337,7 +486,20 @@ class Plot3DMetaReader(BaseReader):
 
 
 class BinaryMarchingCubesReader(BaseReader):
-    """BinaryMarchingCubes Reader."""
+    """BinaryMarchingCubes Reader.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_pine_roots(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    pine_root.tri
+    >>> reader = pyvista.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(color="brown")
+
+    """
 
     _class_reader = _vtk.vtkMCubesReader
 
