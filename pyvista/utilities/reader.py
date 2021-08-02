@@ -76,7 +76,7 @@ class BaseReader:
         # different subclass.
         self.filename = filename
         self.reader.SetFileName(filename)
-        self.update()
+        self._update_information()
 
     def read(self):
         """Read data in file.
@@ -86,14 +86,17 @@ class BaseReader:
         :class:`pyvista.DataSet`
 
         """
-        self.update()
+        self._update()
         data = wrap(self.reader.GetOutputDataObject(0))
         data._post_file_load_processing()
         return data
 
-    def update(self):
+    def _update(self):
         """Update reader."""
         self.reader.Update()
+
+    def _update_information(self):
+        self.reader.UpdateInformation()
 
 
 class DataArraySelection:
@@ -351,7 +354,7 @@ class EnSightReader(BaseReader, DataArraySelection):
         # different subclass.
         self.filename = filename
         self.reader.SetCaseFileName(filename)
-        self.update()
+        self._update_information()
 
 
 class OpenFOAMReader(BaseReader, DataArraySelection):
