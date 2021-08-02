@@ -2957,23 +2957,43 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False)
         return self.textActor
 
-    def open_movie(self, filename, framerate=24):
+    def open_movie(self, filename, framerate=24, quality=5, **kwargs):
         """Establish a connection to the ffmpeg writer.
 
         Parameters
         ----------
         filename : str
             Filename of the movie to open.  Filename should end in mp4,
-            but other filetypes may be supported.  See "imagio.get_writer"
+            but other filetypes may be supported.  See ``imagio.get_writer``
 
         framerate : int, optional
             Frames per second.
+
+        quality : int, optional
+            Quality 10 is the top possible quality for any codec. The
+            range is ``0 - 10``.  Higher quality leads to a larger file.
+
+        **kwargs : dict
+            See the documentation for ``imageio.get_writer`` for additional kwargs.
+
+        Examples
+        --------
+        Open a MP4 movie and set the quality to maximum.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter
+        >>> pl.open_movie('movie.mp4', quality=10)  # doctest:+SKIP
+
+        See Also
+        --------
+        See the documentation for `imageio.get_writer
+        <https://imageio.readthedocs.io/en/stable/userapi.html#imageio.get_writer>`_
 
         """
         from imageio import get_writer
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
-        self.mwriter = get_writer(filename, fps=framerate)
+        self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
     def open_gif(self, filename):
         """Open a gif file.
@@ -2981,7 +3001,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         filename : str
-            Filename of the gif to open.  Filename must end in gif.
+            Filename of the gif to open.  Filename must end in ``"gif"``.
+
+        Examples
+        --------
+        Open a gif file.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter
+        >>> pl.open_gif('movie.gif')  # doctest:+SKIP
 
         """
         from imageio import get_writer
@@ -2993,7 +3021,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mwriter = get_writer(filename, mode='I')
 
     def write_frame(self):
-        """Write a single frame to the movie file."""
+        """Write a single frame to the movie file.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.open_movie(filename)  # doctest:+SKIP
+        >>> plotter.add_mesh(pyvista.Sphere())  # doctest:+SKIP
+        >>> plotter.write_frame()  # doctest:+SKIP
+
+        See :ref:`movie_example` for a full example using this method.
+
+        """
         # if off screen, show has not been called and we must render
         # before extracting an image
         if self._first_time:
@@ -3769,18 +3809,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        factor : float
+        factor : float, optional
             A scaling factor when building the orbital extent.
 
-        n_points : int
+        n_points : int, optional
             Number of points on the orbital path.
 
-        viewup : list(float)
+        viewup : list(float), optional
             The normal to the orbital plane.
 
         shift : float, optional
             Shift the plane up/down from the center of the scene by
             this amount.
+
+        Examples
+        --------
+        Generate an orbital path around a sphere.
+
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(pyvista.Sphere())
+        >>> viewup = [0, 0, 1]
+        >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=50,
+        ...                                       shift=0.0, viewup=viewup)
+
+        See :ref:`orbiting_example` for a full example using this method.
 
         """
         if viewup is None:
@@ -3804,31 +3857,58 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.iren.fly_to(self.renderer, point)
 
     def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None,
-                      write_frames=False, threaded=False):
+                      write_frames=False, threaded=False, progress_bar=False):
         """Orbit on the given path focusing on the focus point.
 
         Parameters
         ----------
         path : pyvista.PolyData
             Path of orbital points. The order in the points is the order of
-            travel
+            travel.
 
         focus : list(float) of length 3, optional
             The point of focus the camera.
 
         step : float, optional
-            The timestep between flying to each camera position
+            The timestep between flying to each camera position.
 
-        viewup : list(float)
+        viewup : list(float), optional
             the normal to the orbital plane
 
-        write_frames : bool
-            Assume a file is open and write a frame on each camera view during
-            the orbit.
+        write_frames : bool, optional
+            Assume a file is open and write a frame on each camera
+            view during the orbit.
 
         threaded : bool, optional
             Run this as a background thread.  Generally used within a
             GUI (i.e. PyQt).
+
+        progress_bar : bool, optional
+            Show the progress bar when proceeding through the path.
+            This can be helpful to show progress when generating
+            movies with ``off_screen=True``.
+
+        Examples
+        --------
+        Plot an orbit around the earth.  Save the gif as a temporary file.
+
+        >>> import tempfile
+        >>> import os
+        >>> import pyvista
+        >>> filename = os.path.join(tempfile._get_default_tempdir(),
+        ...                         next(tempfile._get_candidate_names()) + '.gif')
+        >>> from pyvista import examples
+        >>> plotter = pyvista.Plotter(window_size=[300, 300])
+        >>> _ = plotter.add_mesh(examples.load_globe(), smooth_shading=True)
+        >>> plotter.open_gif(filename)
+        >>> viewup = [0, 0, 1]
+        >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=24,
+        ...                                       shift=0.0, viewup=viewup)
+        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, 
+        ...                       step=0.02)
+        >>> plotter.close()
+
+        See :ref:`orbiting_example` for a full example using this method.
 
         """
         if focus is None:
@@ -3844,17 +3924,32 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Make sure the whole scene is visible
         self.camera.thickness = path.length
 
+        if progress_bar:
+            try:  # pragma: no cover
+                from tqdm import tqdm
+            except ImportError:
+                raise ImportError("Please install `tqdm` to use ``progress_bar=True``")
+
         def orbit():
             """Define the internal thread for running the orbit."""
-            for point in points:
+            if progress_bar:  # pragma: no cover
+                points_seq = tqdm(points)
+            else:
+                points_seq = points
+
+            for point in points_seq:
+                tstart = time.time()  # include the render time in the step time
                 self.set_position(point)
                 self.set_focus(focus)
                 self.set_viewup(viewup)
                 self.renderer.ResetCameraClippingRange()
-                self.render()
-                time.sleep(step)
                 if write_frames:
                     self.write_frame()
+                else:
+                    self.render()
+                sleep_time = step - (time.time() - tstart)
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
 
         if threaded:
             thread = Thread(target=orbit)
