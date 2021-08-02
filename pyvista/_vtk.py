@@ -284,6 +284,7 @@ if VTK9:
                                                vtkButterflySubdivisionFilter,
                                                vtkLoopSubdivisionFilter,
                                                vtkAdaptiveSubdivisionFilter,
+                                               vtkCollisionDetectionFilter,
                                                vtkSelectEnclosedPoints)
     from vtkmodules.vtkFiltersSources import (vtkOutlineCornerFilter,
                                               vtkParametricFunctionSource,

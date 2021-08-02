@@ -1953,3 +1953,15 @@ def test_scalar_cell_priorities():
                      rgb=True,
                      preference='cell')
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_collision_plot():
+    """Verify rgba arrays automatically plot"""
+    sphere0 = pyvista.Sphere()
+    sphere1 = pyvista.Sphere(radius=0.6, center=(-1, 0, 0))
+    col, n_contacts = sphere0.collision(sphere1, generate_scalars=True)
+
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(col)
+    plotter.camera_position = 'zy'
+    plotter.show(before_close_callback=verify_cache_image)

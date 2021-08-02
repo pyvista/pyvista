@@ -108,6 +108,48 @@ tex = pv.numpy_to_texture(image)
 curvsurf.plot(texture=tex)
 
 ###############################################################################
+# Create a GIF Movie with updating textures
+# +++++++++++++++++++++++++++++++++++++++++
+# Generate a moving gif from an active plotter with updating textures.
+
+# Create a plotter object
+plotter = pv.Plotter(notebook=False, off_screen=True)
+
+# Open a gif
+plotter.open_gif("texture.gif")
+
+pts = curvsurf.points.copy()
+
+# Update Z and write a frame for each updated position
+nframe = 15
+for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
+
+    # create an image using numpy,
+    z = np.sin(r + phase)
+    pts[:, -1] = z.ravel()
+
+    # Creating a custom RGB image
+    zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
+    hue = norm(zz.ravel()) * 0.5 * (1.0 + np.sin(phase))
+    colors = (cmap(hue)[:, 0:3] * 255.0).astype(np.uint8)
+    image = colors.reshape((xx.shape[0], xx.shape[1], 3), order="F")
+
+    # Convert 3D numpy array to texture
+    tex = pv.numpy_to_texture(image)
+
+    plotter.add_mesh(curvsurf, smooth_shading=True, texture=tex)
+    plotter.update_coordinates(pts, render=False)
+
+    # must update normals when smooth shading is enabled
+    plotter.mesh.compute_normals(cell_normals=False, inplace=True)
+    plotter.render()
+    plotter.write_frame()
+    plotter.clear()
+
+# Closes and finalizes movie
+plotter.close()
+
+###############################################################################
 # Textures with Transparency
 # ++++++++++++++++++++++++++
 #

@@ -263,7 +263,7 @@ class DataSetFilters:
         result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
         return result
 
-    def clip_scalar(dataset, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False):
+    def clip_scalar(dataset, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False, both=False):
         """Clip a dataset by a scalar.
 
         Parameters
@@ -285,10 +285,13 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        both : bool, optional
+            If ``True``, also returns the complementary clipped mesh.
+
         Returns
         -------
-        pdata : pyvista.PolyData
-            Clipped dataset.
+        :class:`pyvista.PolyData` or tuple
+            Clipped dataset if ``both=False``.  If ``both=True`` then returns a tuple of both clipped datasets.
 
         Examples
         --------
@@ -300,14 +303,19 @@ class DataSetFilters:
         >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100)
         >>> clipped.plot()
 
-        Remove the part of the mesh with "sample_point_scalars" below
-        100.  Since these scalars are already active, there's no need
-        to specify ``scalars=``
+        Get clipped meshes corresponding to the portions of the mesh above and below 100.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
-        >>> clipped = dataset.clip_scalar(value=100, invert=False)
+        >>> _below, _above = dataset.clip_scalar(scalars="sample_point_scalars", value=100, both=True)
+
+        Remove the part of the mesh with "sample_point_scalars" below 100.
+        
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.load_hexbeam()
+        >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100, invert=False)
         >>> clipped.plot()
 
         """
@@ -318,21 +326,27 @@ class DataSetFilters:
 
         alg.SetInputDataObject(dataset)
         alg.SetValue(value)
-        if scalars is None:
-            field, scalars = dataset.active_scalars_info
-        _, field = get_array(dataset, scalars, preference='point', info=True)
+        if scalars is not None:
+            dataset.set_active_scalars(scalars)
 
-        # SetInputArrayToProcess(idx, port, connection, field, name)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInsideOut(invert)  # invert the clip if needed
+        alg.SetGenerateClippedOutput(both)
+
         _update_alg(alg, progress_bar, 'Clipping by a Scalar')
-        result = _get_output(alg)
+        result0 = _get_output(alg)
 
         if inplace:
-            dataset.overwrite(result)
-            return dataset
+            dataset.overwrite(result0)
+            result0 = dataset
+
+        if both:
+            result1 = _get_output(alg, oport=1)
+            if isinstance(dataset, _vtk.vtkPolyData):
+                # For some reason vtkClipPolyData with SetGenerateClippedOutput on leaves unreferenced vertices
+                result0, result1 = (r.clean() for r in (result0, result1))
+            return result0, result1
         else:
-            return result
+            return result0
 
     def clip_surface(dataset, surface, invert=True, value=0.0,
                      compute_distance=False, progress_bar=False):

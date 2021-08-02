@@ -9,7 +9,7 @@ from vtk import VTK_QUADRATIC_HEXAHEDRON
 
 from pyvista._vtk import VTK9
 import pyvista
-from pyvista import examples
+from pyvista import examples, Sphere
 from pyvista.core.errors import VTKVersionError
 
 
@@ -21,6 +21,18 @@ skip_py2_nobind = pytest.mark.skipif(int(sys.version[0]) < 3,
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
+
+
+def aprox_le(a, b, rtol=1E-5, atol=1E-8):
+    """Return if that ``a <= b`` within a tolerance.
+
+    See numpy.isclose for the description of ``rtol`` and ``atol``.
+
+    """
+    if a < b:
+        return True
+    else:
+        return np.isclose(a, b, rtol, atol)
 
 
 @pytest.fixture
@@ -67,24 +79,56 @@ def test_clip_filter(datasets):
             else:
                 assert isinstance(clp, pyvista.UnstructuredGrid)
 
+
 @skip_windows
 @skip_mac
-def test_clip_by_scalars_filter(datasets):
+@pytest.mark.parametrize('both', [False, True])
+@pytest.mark.parametrize('invert', [False, True])
+def test_clip_by_scalars_filter(datasets, both, invert):
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset_in in enumerate(datasets):
         dataset = dataset_in.copy()  # don't modify in-place
-        if dataset.active_scalars_info.name is None:
-            dataset['scalars'] = np.arange(dataset.n_points)
+        dataset.point_arrays['to_clip'] = np.arange(dataset.n_points)
+
         clip_value = dataset.n_points/2
-        clp = dataset.clip_scalar(value=clip_value)
 
-        assert clp is not None
-        if isinstance(dataset, pyvista.PolyData):
-            assert isinstance(clp, pyvista.PolyData)
+        if both:
+            clps = dataset.clip_scalar(scalars='to_clip', value=clip_value, both=True, invert=invert)
+            assert len(clps) == 2
+            expect_les = (invert, not invert)
         else:
-            assert isinstance(clp, pyvista.UnstructuredGrid)
+            clps = dataset.clip_scalar(scalars='to_clip', value=clip_value, both=False, invert=invert),
+            assert len(clps) == 1
+            expect_les = invert,
 
-        assert dataset.active_scalars.min() <= clip_value
+        for clp, expect_le in zip(clps, expect_les):
+            assert clp is not None
+            if isinstance(dataset, pyvista.PolyData):
+                assert isinstance(clp, pyvista.PolyData)
+            else:
+                assert isinstance(clp, pyvista.UnstructuredGrid)
+
+            if expect_le:
+                # VTK clip filter appears to not clip exactly to the clip value.
+                # here we allow for a wider range of acceptable values
+                assert aprox_le(clp.point_arrays['to_clip'].max(), clip_value,
+                                rtol=1E-1)
+            else:
+                assert clp.point_arrays['to_clip'].max() >= clip_value
+
+
+def test_clip_filter_scalar_multiple():
+    mesh = pyvista.Plane()
+    mesh['x'] = mesh.points[:, 0].copy()
+    mesh['y'] = mesh.points[:, 1].copy()
+    mesh['z'] = mesh.points[:, 2].copy()
+
+    mesh_clip_x = mesh.clip_scalar(scalars='x', value=0.0)
+    assert np.isclose(mesh_clip_x['x'].max(), 0.0)
+    mesh_clip_y = mesh.clip_scalar(scalars='y', value=0.0)
+    assert np.isclose(mesh_clip_y['y'].max(), 0.0)
+    mesh_clip_z = mesh.clip_scalar(scalars='z', value=0.0)
+    assert np.isclose(mesh_clip_z['z'].max(), 0.0)
 
 
 @skip_py2_nobind
@@ -1582,3 +1626,27 @@ def test_subdivide_adaptive(sphere, inplace):
     assert sub.n_faces > orig_n_faces
     if inplace:
         assert sphere.n_faces == sub.n_faces
+
+
+def test_collision(sphere):
+    moved_sphere = sphere.copy()
+    moved_sphere.translate((0.5, 0, 0))
+    output, n_collision = sphere.collision(moved_sphere)
+    assert isinstance(output, pyvista.PolyData)
+    assert n_collision > 40
+    assert 'ContactCells' in output.field_arrays
+
+    # test no collision
+    moved_sphere.translate((1000, 0, 0))
+    _, n_collision = sphere.collision(moved_sphere)
+    assert not n_collision
+
+
+def test_collision_solid_non_triangle(hexbeam):
+    # test non-triangular mesh with a unstructured grid
+    cube = pyvista.Cube()
+    output, n_collision = cube.collision(hexbeam)
+    assert isinstance(output, pyvista.PolyData)
+    assert n_collision > 40
+    assert 'ContactCells' in output.field_arrays
+    assert output.is_all_triangles()
