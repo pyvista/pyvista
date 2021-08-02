@@ -311,6 +311,41 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if set_camera:
             self.camera_position = 'xy'
 
+    def export_html(self, filename):
+        """Export this plotter as an interactive scene to a HTML file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to export the html file to.
+
+        Examples
+        --------
+        >>> import pyvista
+
+        Notes
+        -----
+        You will need ``ipywidgets`` and ``pythreejs`` installed for
+        this feature.
+
+        """
+        pythreejs_renderer = self.to_pythreejs()
+
+        # import after converting as we check for pythreejs import first
+        try:
+            from ipywidgets.embed import embed_minimal_html
+        except ImportError:
+            raise ImportError('Please install ipywidgets with:\n'
+                              '\n\tpip install ipywidgets')
+
+        # convert and write to file
+        embed_minimal_html(filename, views=[pythreejs_renderer], title=self.title)
+
+    def to_pythreejs(self):
+        """Convert this plotting scene to a pythreejs renderer."""
+        from pyvista.jupyter.pv_pythreejs import renderer_from_plotter
+        return renderer_from_plotter(self)
+
     def export_gltf(self, filename, inline_data=True, rotate_scene=True,
                     save_normals=True):
         """Export the current rendering scene as a glTF file.

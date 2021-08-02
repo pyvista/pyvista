@@ -5,6 +5,8 @@ Includes:
 
 * ``ipyvtklink``
 * ``panel``
+* ``pythreejs``
+* ``ipygany``
 
 """
 import warnings
@@ -45,8 +47,8 @@ def handle_plotter(plotter, backend=None, screenshot=None,
         screenshot = None
 
     try:
-        if backend == 'pyvistajs':
-            return show_pyvistajs(plotter, return_viewer, **kwargs)
+        if backend == 'pythreejs':
+            return show_pythreejs(plotter, return_viewer, **kwargs)
         if backend == 'ipyvtklink':
             return show_ipyvtk(plotter, return_viewer)
         if backend == 'panel':
@@ -169,8 +171,8 @@ def build_panel_bounds(actor):
     return bounds
 
 
-def show_pyvistajs(plotter, return_viewer, **kwargs):
-    """Show a pyvista plotting scene using """
+def show_pythreejs(plotter, return_viewer, **kwargs):
+    """Show a pyvista plotting scene using pythreejs."""
     import pyvistajs
 
     renderer = pyvistajs.renderer_from_plotter(plotter)

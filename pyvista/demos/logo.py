@@ -159,7 +159,8 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None,
                      backface_culling=True, render_lines_as_tubes=True)
 
     # letter 't'
-    mesh = mesh_letters['t']
+    mesh = mesh_letters['t'].clean().compute_normals()
+    mesh.flip_normals()
     scalars = mesh.points[:, 0]
     plotter.add_mesh(mesh, scalars=scalars, show_edges=True,
                      cmap='autumn', lighting=True)

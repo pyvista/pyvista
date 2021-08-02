@@ -27,3 +27,4 @@ sphinxcontrib-websupport
 trimesh
 typed-ast
 typing-extensions
+pythreejs
