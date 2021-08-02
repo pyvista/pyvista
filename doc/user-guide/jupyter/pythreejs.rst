@@ -42,6 +42,7 @@ setting it in `:func:`pyvista.Plotter.plot`.
     from pyvista import examples
 
     mesh = examples.download_bunny()
+    mesh.flip_normals()
     
     pl = pv.Plotter()
     pl.add_mesh(mesh, color='lightgrey')
@@ -75,8 +76,8 @@ then shown as a complete widget.  For example, you could even display
 two side by side using ``ipywidgets.AppLayout``.
 
 
-Plots match PyVista Plotting Style
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Plotting Representation and Materials
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The pyvista plotting scenes are faithfully serialized the same plotting
 scene within three.js using the same lighting, camera projection, and
 materials.
@@ -113,8 +114,8 @@ materials.
    pl.show()
 
 
-Plots match PyVista Plotting Style
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Scalars Support
+~~~~~~~~~~~~~~~
 The ``pythreejs`` backend supports plotting scalars for faces and
 points for point, wireframe, and surface representations.
 
@@ -158,8 +159,8 @@ points for point, wireframe, and surface representations.
 
 
 
-Plot a Point Cloud
-------------------
+Point Cloud Example
+~~~~~~~~~~~~~~~~~~~
 Plot a sample point cloud with pyvista using the ``pythreejs`` backend
 while giving the scalars random values.
 
