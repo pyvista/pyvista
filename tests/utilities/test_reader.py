@@ -140,8 +140,7 @@ def test_reader_cell_point_data(tmpdir):
 
 
 def test_ensightreader():
-    folder, _ = _download_file('EnSight.zip')
-    filename = os.path.join(folder, "foam_case_0_0_0_0.case")
+    filename = examples.download_backward_facing_step(load=False)
 
     reader = pyvista.get_reader(filename)
     assert reader.filename == filename
@@ -190,7 +189,7 @@ def test_plyreader():
 
 
 def test_objreader():
-    filename, _ = _download_file('doorman/doorman.obj')
+    filename = examples.download_doorman(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.OBJReader)
     assert reader.filename == filename
@@ -200,7 +199,7 @@ def test_objreader():
 
 
 def test_stlreader():
-    filename, _ = _download_file('gears.stl')
+    filename = examples.download_gears(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.STLReader)
     assert reader.filename == filename
@@ -220,7 +219,7 @@ def test_vtkreader():
 
 
 def test_byureader():
-    filename, _ = _download_file('teapot.g')
+    filename = examples.download_teapot(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.BYUReader)
     assert reader.filename == filename
@@ -230,7 +229,7 @@ def test_byureader():
 
 
 def test_facetreader():
-    filename, _ = _download_file('clown.facet')
+    filename = examples.download_clown(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.FacetReader)
     assert reader.filename == filename
@@ -254,7 +253,7 @@ def test_plot3dmetareader():
 
 
 def test_binarymarchingcubesreader():
-    filename, _ = _download_file('pine_root.tri')
+    filename = examples.download_pine_roots(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.BinaryMarchingCubesReader)
     assert reader.filename == filename
