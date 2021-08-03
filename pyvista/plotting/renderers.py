@@ -305,21 +305,22 @@ class Renderers():
             appear in one window.
 
         Returns
-        pyvista.BackgroundRenderer
+        -------
+        :class:`pyvista.BackgroundRenderer`
             Newly created background renderer.
 
         """
         # verify no render exists
         if as_global:
             for renderer in self:
-                renderer.SetLayer(2)
+                renderer.layer = 2
             view_port = None
         else:
-            self.active_renderer.SetLayer(2)
+            self.active_renderer.layer = 2
             view_port = self.active_renderer.GetViewport()
 
         renderer = BackgroundRenderer(self._plotter, image_path, scale, view_port)
-        renderer.SetLayer(1)
+        renderer.layer = 1
         self._background_renderers[self.active_index] = renderer
         return renderer
 

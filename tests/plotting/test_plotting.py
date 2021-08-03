@@ -1965,3 +1965,14 @@ def test_collision_plot():
     plotter.add_mesh(col)
     plotter.camera_position = 'zy'
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_add_remove_background(sphere):
+    plotter = pyvista.Plotter(shape=(1, 2))
+    plotter.add_mesh(sphere, color='w')
+    plotter.add_background_image(examples.mapfile, as_global=False)
+    plotter.subplot(0, 1)
+    plotter.add_mesh(sphere, color='w')
+    plotter.add_background_image(examples.mapfile, as_global=False)
+    plotter.remove_background_image()
+    plotter.show(before_close_callback=verify_cache_image)

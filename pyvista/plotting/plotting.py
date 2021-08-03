@@ -229,6 +229,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._image_depth_null = None
         self.last_image_depth = None
         self.last_image = None
+        self._has_background_layer = False
 
         # set hidden line removal based on theme
         if self.theme.hidden_line_removal:
@@ -4044,7 +4045,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Need to change the number of layers to support an additional
         # background layer
-        self.ren_win.SetNumberOfLayers(3)
+        if not self._has_background_layer:
+            self.ren_win.SetNumberOfLayers(3)
         renderer = self.renderers.add_background_renderer(image_path, scale, as_global)
         self.ren_win.AddRenderer(renderer)
 
@@ -4055,6 +4057,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def remove_background_image(self):
         """Remove the background image from the current subplot."""
         self.renderers.remove_background_image()
+
+        # return the active renderer to the top, otherwise flat background
+        # will not be rendered
+        self.renderer.layer = 0
 
     def _on_first_render_request(self, cpos=None):
         """Once an image or render is officially requested, run this routine.
