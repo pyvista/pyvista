@@ -174,7 +174,7 @@ class RenderWindowInteractor():
         scene = None
         for renderer in self._plotter.renderers:
             if scene is None and renderer.IsInViewport(*mouse_pos):
-                scene = renderer.charts.toggle_interaction(mouse_pos)
+                scene = renderer._charts.toggle_interaction(mouse_pos)
             else:
                 # Not in viewport or already an active chart found (in case they overlap), so disable interaction
                 renderer.charts.toggle_interaction(False)

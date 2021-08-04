@@ -14,8 +14,6 @@ try:
 except ModuleNotFoundError:
     _HAS_MPL = False
 
-# Type definitions
-Color4f = Tuple[float, float, float, float]
 
 #region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):
@@ -642,6 +640,70 @@ class _Chart(object):
     @legend_visible.setter
     def legend_visible(self, val):
         self.SetShowLegend(val)
+
+    def show(self, off_screen=None, full_screen=None, screenshot=None,
+             window_size=None, notebook=None, background='w'):
+        """Show this chart in a self contained plotter.
+
+        Parameters
+        ----------
+        off_screen : bool
+            Plots off screen when ``True``.  Helpful for saving screenshots
+            without a window popping up.  Defaults to active theme setting in
+            :attr:`pyvista.global_theme.full_screen
+            <pyvista.themes.DefaultTheme.full_screen`
+
+        full_screen : bool, optional
+            Opens window in full screen.  When enabled, ignores
+            ``window_size``.  Defaults to active theme setting in
+            :attr:`pyvista.global_theme.full_screen
+            <pyvista.themes.DefaultTheme.full_screen`
+
+        screenshot : str or bool, optional
+            Saves screenshot to file when enabled.  See:
+            :func:`Plotter.screenshot() <pyvista.Plotter.screenshot>`.
+            Default ``False``.
+
+            When ``True``, takes screenshot and returns ``numpy`` array of
+            image.
+
+        window_size : list, optional
+            Window size in pixels.  Defaults to global theme
+            :attr:`pyvista.global_theme.window_size
+            <pyvista.themes.DefaultTheme.window_size>`
+
+        notebook : bool, optional
+            When ``True``, the resulting plot is placed inline a
+            jupyter notebook.  Assumes a jupyter console is active.
+
+        background : string or 3 item list, optional
+            Use to make the entire mesh have a single solid color.
+            Either a string, RGB list, or hex color string.  For example:
+            ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+            ``color='#FFFFFF'``.  Defaults to ``'w'``.
+
+        Examples
+        --------
+        Plot a simple sine wave as a scatter and line plot.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> x = np.linspace(0, 2*np.pi, 20)
+        >>> y = np.sin(x)
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.scatter(x, y)
+        >>> _ = chart.line(x, y, 'r')
+        >>> chart.show()
+
+        """
+        pl = pyvista.Plotter(window_size=window_size,
+                             notebook=notebook,
+                             off_screen=off_screen)
+        pl.background_color = background
+        pl.add_chart(self)
+        return pl.show(screenshot=screenshot,
+                       full_screen=full_screen,
+        )
 
 
 class _Plot(object):
@@ -1300,70 +1362,6 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     def grid(self, val):
         self.x_axis.grid = val
         self.y_axis.grid = val
-
-    def show(self, off_screen=None, full_screen=None, screenshot=None,
-             window_size=None, notebook=None, background='w'):
-        """Show this chart in a self contained plotter.
-
-        Parameters
-        ----------
-        off_screen : bool
-            Plots off screen when ``True``.  Helpful for saving screenshots
-            without a window popping up.  Defaults to active theme setting in
-            :attr:`pyvista.global_theme.full_screen
-            <pyvista.themes.DefaultTheme.full_screen`
-
-        full_screen : bool, optional
-            Opens window in full screen.  When enabled, ignores
-            ``window_size``.  Defaults to active theme setting in
-            :attr:`pyvista.global_theme.full_screen
-            <pyvista.themes.DefaultTheme.full_screen`
-
-        screenshot : str or bool, optional
-            Saves screenshot to file when enabled.  See:
-            :func:`Plotter.screenshot() <pyvista.Plotter.screenshot>`.
-            Default ``False``.
-
-            When ``True``, takes screenshot and returns ``numpy`` array of
-            image.
-
-        window_size : list, optional
-            Window size in pixels.  Defaults to global theme
-            :attr:`pyvista.global_theme.window_size
-            <pyvista.themes.DefaultTheme.window_size>`
-
-        notebook : bool, optional
-            When ``True``, the resulting plot is placed inline a
-            jupyter notebook.  Assumes a jupyter console is active.
-
-        background : string or 3 item list, optional
-            Use to make the entire mesh have a single solid color.
-            Either a string, RGB list, or hex color string.  For example:
-            ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
-            ``color='#FFFFFF'``.  Defaults to ``'w'``.
-
-        Examples
-        --------
-        Plot a simple sine wave as a scatter and line plot.
-
-        >>> import pyvista
-        >>> import numpy as np
-        >>> x = np.linspace(0, 2*np.pi, 20)
-        >>> y = np.sin(x)
-        >>> chart = pyvista.Chart2D()
-        >>> _ = chart.scatter(x, y)
-        >>> _ = chart.line(x, y, 'r')
-        >>> chart.show()
-
-        """
-        pl = pyvista.Plotter(window_size=window_size,
-                             notebook=notebook,
-                             off_screen=off_screen)
-        pl.background_color = background
-        pl.add_chart(self)
-        return pl.show(screenshot=screenshot,
-                       full_screen=full_screen,
-        )
 
 
 class BoxPlot(_vtk.vtkPlotBox, _Plot, _MultiCompPlot):
