@@ -10,8 +10,9 @@ except ImportError:
 
 import pyvista as pv
 
+
 def segment_poly_cells(mesh):
-    """Segment lines from a mesh into line segments"""
+    """Segment lines from a mesh into line segments."""
     if not pv.is_pyvista_dataset(mesh):
         mesh = pv.wrap(mesh)
     polylines = []
@@ -116,7 +117,7 @@ def gen_circle(width=256, height=256):
     return array
 
 
-def array_to_point_buffer(points):
+def array_to_float_buffer(points):
     """Convert a numpy array to a pythreejs compatible point buffer."""
     # create buffered points
     points = points.astype(np.float32, copy=False)
@@ -127,6 +128,7 @@ def array_to_point_buffer(points):
         warnings.filterwarnings("ignore", message="Given trait value dtype")
         position = tjs.BufferAttribute(array=points, normalized=False)
     return position
+
 
 def cast_to_min_size(ind, max_index):
     """Return a buffered attribute of the minimum index size."""
@@ -169,7 +171,7 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
     else:
         trimesh = surf.triangulate()
 
-    position = array_to_point_buffer(trimesh.points)
+    position = array_to_float_buffer(trimesh.points)
 
     # convert to minimum index type
     face_ind = trimesh.faces.reshape(-1, 4)[:, 1:]
@@ -182,17 +184,24 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
         attr['normal'] = buffer_normals(trimesh)
 
     # extract point/cell scalars for coloring
-    scalars = None
+    colors = None
     if mapper.GetScalarModeAsString() == 'UsePointData':
         scalars = trimesh.point_arrays.active_scalars
+        colors = get_colors(scalars, mapper.cmap).astype(np.float32, copy=False)
     elif mapper.GetScalarModeAsString() == 'UseCellData':
-        scalars = trimesh.cell_arrays.active_scalars.repeat(3)
-        position = array_to_point_buffer(trimesh.points[face_ind])
+        # special handling for RGBA
+        if mapper.GetColorMode() == 2:
+            scalars = trimesh.cell_arrays.active_scalars.repeat(3, axis=0)
+            scalars = scalars.astype(np.float32, copy=False)
+            colors = scalars[:, :3]/255  # ignore alpha
+        else:
+            scalars = trimesh.cell_arrays.active_scalars.repeat(3)
+            colors = get_colors(scalars, mapper.cmap).astype(np.float32, copy=False)
+        position = array_to_float_buffer(trimesh.points[face_ind])
         attr = {'position': position}
 
-    if scalars is not None:
-        colors = get_colors(scalars, mapper.cmap).astype(np.float32, copy=False)
-        attr['color'] = tjs.BufferAttribute(array=colors)
+    if colors is not None:
+        attr['color'] = array_to_float_buffer(colors)
 
     surf_geo = tjs.BufferGeometry(attributes=attr)
 
@@ -235,7 +244,7 @@ def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
         edges_mesh = surf.extract_all_edges()
         edges = edges_mesh.lines.reshape(-1, 3)[:, 1:]
 
-    attr = {'position': array_to_point_buffer(edges_mesh.points),
+    attr = {'position': array_to_float_buffer(edges_mesh.points),
             'index': cast_to_min_size(edges, surf.n_points),
     }
 
@@ -246,7 +255,7 @@ def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
             edge_scalars = edges_mesh.point_arrays.active_scalars
 
         edge_colors = get_colors(edge_scalars, mapper.cmap)
-        attr['color'] = array_to_point_buffer(edge_colors)
+        attr['color'] = array_to_float_buffer(edge_colors)
 
     edge_geo = tjs.BufferGeometry(attributes=attr)
 
@@ -270,13 +279,13 @@ def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
 def to_tjs_points(dataset, mapper, prop, as_circles=True):
     """Extract the points from a dataset and return a buffered geometry."""
     attr = {
-        'position': array_to_point_buffer(dataset.points),
+        'position': array_to_float_buffer(dataset.points),
     }
 
     coloring = get_coloring(mapper, dataset)
     if coloring != 'NoColors':
         colors = get_colors(dataset.point_arrays.active_scalars, mapper.cmap)
-        attr['color'] = array_to_point_buffer(colors)
+        attr['color'] = array_to_float_buffer(colors)
 
     geo = tjs.BufferGeometry(attributes=attr)
 
