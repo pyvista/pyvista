@@ -72,7 +72,7 @@ def discover_modules(entry, recurse=True):
 
 
 def evaluate_examples_coverage(entry=None, modules=None):
-    """Check whether docstrings contain an eample section.
+    """Check whether docstrings contain an example section.
 
     Parameters
     ----------
