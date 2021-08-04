@@ -4,7 +4,6 @@
    :hide-code:
 
    from pyvista.demos import logo
-   from pyvista.demos import logo
    logo.plot_logo(jupyter_backend='pythreejs', window_size=[600, 200], zoom=2.5,
                   show_note=True)
 

@@ -11,6 +11,7 @@ additional details see :ref:`ref_geometric_example` example.
 
    Arrow
    Box
+   Circle
    CircularArc
    CircularArcFromNormal
    Cone

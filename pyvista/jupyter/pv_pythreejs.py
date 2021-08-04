@@ -10,6 +10,24 @@ except ImportError:
 
 import pyvista as pv
 
+def segment_poly_cells(mesh):
+    """Segment lines from a mesh into line segments"""
+    if not pv.is_pyvista_dataset(mesh):
+        mesh = pv.wrap(mesh)
+    polylines = []
+    i, offset = 0, 0
+    cc = mesh.lines  # fetch up front
+    while i < mesh.n_cells:
+        nn = cc[offset]
+        polylines.append(cc[offset+1:offset+1+nn])
+        offset += nn + 1
+        i += 1
+
+    lines = []
+    for poly in polylines:
+        lines.append(np.column_stack((poly[:-1], poly[1:])))
+    return np.vstack(lines)
+
 
 def buffer_normals(trimesh):
     """Extract surface normals and return a buffer attribute."""
@@ -127,7 +145,7 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
 
     General Notes
     -------------
-    
+
     * THREE.BufferGeometry expects position and index attributes
       representing a triangulated mesh points and face indices or just
       a position array representing individual faces of a mesh. 
@@ -206,12 +224,16 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
 
 
 
-def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True):
+def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
     """Convert a pyvista surface to a three.js edge mesh."""
     # extract all edges from the surface.  Should not use triangular
     # mesh here as mesh may contain more than triangular faces
-    edges_mesh = surf.extract_all_edges()
-    edges = edges_mesh.lines.reshape(-1, 3)[:, 1:]
+    if use_lines:
+        edges_mesh = surf
+        edges = segment_poly_cells(surf)
+    else:
+        edges_mesh = surf.extract_all_edges()
+        edges = edges_mesh.lines.reshape(-1, 3)[:, 1:]
 
     attr = {'position': array_to_point_buffer(edges_mesh.points),
             'index': cast_to_min_size(edges, surf.n_points),
@@ -321,12 +343,15 @@ def actor_to_mesh(actor, focal_point):
         return
 
     dataset = mapper.GetInputAsDataSet()
+    has_faces = True
+    if hasattr(dataset, 'faces'):
+        has_faces = np.any(dataset.faces)
 
     prop = actor.GetProperty()
     rep_type = prop.GetRepresentationAsString()
 
     meshes = []
-    if rep_type == 'Surface':
+    if rep_type == 'Surface' and has_faces:
         surf = extract_surface_mesh(dataset)
         add_attr = {}
         if prop.GetEdgeVisibility():
@@ -339,11 +364,19 @@ def actor_to_mesh(actor, focal_point):
 
         meshes.append(to_surf_mesh(surf, mapper, prop, add_attr))
 
-    elif rep_type == 'Wireframe':
-        surf = extract_surface_mesh(dataset)
-        meshes.append(to_edge_mesh(surf, mapper, prop, use_edge_coloring=False))
-    else:
+    elif rep_type == 'Points':
         meshes.append(to_tjs_points(dataset, mapper, prop))
+    else:  # wireframe
+        if has_faces:
+            surf = extract_surface_mesh(dataset)
+            mesh = to_edge_mesh(surf, mapper, prop, use_edge_coloring=False)
+        elif np.any(dataset.lines):
+            mesh = to_edge_mesh(dataset, mapper, prop, use_edge_coloring=False,
+                                use_lines=True)
+        else:  # empty mesh
+            return
+
+        meshes.append(mesh)
 
     # the camera in three.js has no concept of a "focal point".  In
     # three.js, the scene is always centered at the origin, which
