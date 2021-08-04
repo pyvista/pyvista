@@ -149,12 +149,28 @@ A more complex plot can be created using:
 
     plotter.show()
 
-
 You can animate the motion of the beam by updating the positions and
-scalars of the grid copied to the plotting object.  First you have to
-set up the plotting object:
+scalars of the grid copied to the plotting object.  Here is a full example:
 
-.. jupyter-execute::
+.. pyvista-plot::
+   :context:
+
+    # Load module and example file
+    import pyvista as pv
+    from pyvista import examples
+    import numpy as np
+
+    # Load example beam grid
+    grid = pv.UnstructuredGrid(examples.hexbeamfile)
+
+    # Create fictitious displacements as a function of Z location
+    d = np.zeros_like(grid.points)
+    d[:, 1] = grid.points[:, 2]**3/250
+
+    # use hardcoded camera position
+    cpos = [(11.915, 6.114, 3.612),
+            (0.0, 0.375, 2.0),
+            (-0.425, 0.902, -0.0679)]       
 
     plotter = pv.Plotter(window_size=(800, 600))
     plotter.add_mesh(grid, scalars=d[:, 1],
@@ -163,13 +179,6 @@ set up the plotting object:
                      interpolate_before_map=True)
     plotter.add_axes()
     plotter.camera_position = cpos
-
-You then open the render window by plotting before opening the movie file.
-Set auto_close to False so the plotter does not close automatically.
-Disabling interactive means the plot will automatically continue without waiting
-for the user to exit the window.
-
-.. jupyter-execute::
 
     # open movie file.  A mp4 file can be written instead.  Requires moviepy
     plotter.open_gif('beam.gif')  # or beam.mp4
@@ -181,57 +190,34 @@ for the user to exit the window.
         plotter.update_scalars(d[:, 1]*np.cos(phase))
         plotter.write_frame()
 
-    # Close the movie and plot
-    plotter.close()
-
-.. jupyter-execute::
-    :hide-code:
-
-    # move to the right location
-    # note that this will be executed relative to pyvista/doc
-    import shutil
-    import os
-    shutil.move('beam.gif', 
-                os.path.join(os.getcwd(), './images/auto-generated/beam.gif'))
-
-.. image:: ../../images/auto-generated/beam.gif
+    # close the plotter when complete
+    # plotter.close()
 
 
 You can also render the beam as as a wire-frame object:
 
-.. jupyter-execute::
+.. pyvista-plot::
+   :context:
 
-    # Animate plot as a wire-frame
-    plotter = pv.Plotter(window_size=(800, 600))
-    plotter.add_mesh(grid, scalars=d[:, 1],
-                     scalar_bar_args={'title': 'Y Displacement'},
-                     show_edges=True,
-                     rng=[-d.max(), d.max()], interpolate_before_map=True,
-                     style='wireframe')
-    plotter.add_axes()
-    plotter.camera_position = cpos
+   # Animate plot as a wire-frame
+   plotter = pv.Plotter(window_size=(800, 600))
+   plotter.add_mesh(grid, scalars=d[:, 1],
+                    scalar_bar_args={'title': 'Y Displacement'},
+                    show_edges=True,
+                    rng=[-d.max(), d.max()], interpolate_before_map=True,
+                    style='wireframe')
+   plotter.add_axes()
+   plotter.camera_position = cpos
 
-    #plotter.OpenMovie('beam_wireframe.mp4')
-    plotter.open_gif('beam_wireframe.gif')
-    for phase in np.linspace(0, 2*np.pi, 20):
-        plotter.update_coordinates(grid.points + d*np.cos(phase), render=False)
-        plotter.update_scalars(d[:, 1]*np.cos(phase), render=False)
-        plotter.render()
-        plotter.write_frame()
+   plotter.open_gif('beam_wireframe.gif')
+   for phase in np.linspace(0, 2*np.pi, 20):
+       plotter.update_coordinates(grid.points + d*np.cos(phase), render=False)
+       plotter.update_scalars(d[:, 1]*np.cos(phase), render=False)
+       plotter.render()
+       plotter.write_frame()
 
-    plotter.close()
-
-.. jupyter-execute::
-    :hide-code:
-
-    # move to the right location
-    # note that this will be executed relative to pyvista/doc
-    import shutil
-    import os
-    shutil.move('beam_wireframe.gif', 
-                 os.path.join(os.getcwd(), './images/auto-generated/beam_wireframe.gif'))
-
-.. image:: ../../images/auto-generated/beam_wireframe.gif
+   # close the plotter when complete
+   # plotter.close()
 
 
 Adding Labels to a Plot
@@ -245,13 +231,11 @@ number of points, and that labels is a list containing one entry per
 point.  The code automatically converts each item in the list to a
 string.
 
-.. jupyter-execute::
-    :hide-code:
+..
+   here we use pyvista plot since labels do not show in interactive backends
 
-    # labels to not show in interactive backends
-    pyvista.set_jupyter_backend('static')
-
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     # Load module and example file
     import pyvista as pv
@@ -280,7 +264,8 @@ string.
 This example is similar and shows how labels can be combined with a
 scalar bar to show the exact value of certain points.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     # Label the Z position
     values = grid.points[:, 2]
@@ -348,8 +333,6 @@ pv.StructuredGrid Class Methods
 The following is a description of the methods available to a
 ``pv.StructuredGrid`` object.  It inherits all methods from the original
 ``vtk`` object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html>`_.
-
-
 
 .. rubric:: Attributes
 

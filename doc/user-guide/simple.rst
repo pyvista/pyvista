@@ -126,7 +126,13 @@ to each PyVista data object:
 
    # must have this here as our global backend may not be static
    import pyvista
-   pyvista.set_jupyter_backend('static')
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.background = 'white'
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.smooth_shading = True
+   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.show_scalar_bar = False
 
 
 .. jupyter-execute::
@@ -138,18 +144,19 @@ to each PyVista data object:
     mesh.plot()
 
 
-You can also create the plotter to highly control the scene. First, instantiate
-a plotter such as :class:`pyvista.Plotter` or :class:`pyvistaqt.BackgroundPlotter`:
+You can also create the plotter to highly control the scene. First,
+instantiate a plotter such as :class:`pyvista.Plotter` or
+:class:`pyvistaqt.BackgroundPlotter`.  The :class:`pyvista.Plotter`
+will create a rendering window that will pause the execution of the
+code after calling ``show``.
 
-The :class:`pyvista.Plotter` will create a rendering window that will pause the
-execution of the code after calling ``show``.
-
-.. testcode:: python
+.. jupyter-execute::
 
     mesh = examples.load_airplane()
 
     plotter = pv.Plotter()    # instantiate the plotter
     plotter.add_mesh(mesh)    # add a mesh to the scene
+    plotter.camera.zoom(2)    # Note how we can now access underlying attributes
     plotter.show()            # show the rendering window
 
 

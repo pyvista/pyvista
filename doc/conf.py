@@ -85,6 +85,7 @@ intersphinx_mapping = {
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
     'pytest': ('https://docs.pytest.org/en/stable', None),
+    'pyvistaqt': ('https://qtdocs.pyvista.org/', None),
 }
 
 linkcheck_retries = 3
