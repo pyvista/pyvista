@@ -2705,7 +2705,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 interactive = False
         elif interactive and self.shape != (1, 1):
             raise ValueError('Interactive scalar bars disabled for multi-renderer plots')
-
+        # by default, use the plotter local theme
+        kwargs.setdefault('theme', self._theme)
         return self.scalar_bars.add_scalar_bar(**kwargs)
 
     def update_scalars(self, scalars, mesh=None, render=True):
