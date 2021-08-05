@@ -139,8 +139,8 @@ def test_reader_cell_point_data(tmpdir):
     assert reader.point_array_status('Normals') is True
 
 
-def test_ensightreader():
     filename = examples.download_backward_facing_step(load=False)
+def test_ensightreader_arrays():
 
     reader = pyvista.get_reader(filename)
     assert reader.filename == filename
@@ -178,6 +178,33 @@ def test_ensightreader():
                                            'omega', 'f', 'epsilon', 'U']
 
 
+def test_ensightreader_timepoints():
+    filename, _ = _download_file('naca.bin.case')
+    _download_file('naca.gold.bin.DENS_1')
+    _download_file('naca.gold.bin.DENS_3')
+    _download_file('naca.gold.bin.geo')
+
+    reader = pyvista.get_reader(filename)
+    assert reader.filename == filename
+
+    assert reader.number_time_points == 2
+    assert reader.time_values == [1.0, 3.0]
+    assert reader.time_point_value(0) == 1.0
+    assert reader.time_point_value(1) == 3.0
+    
+    assert reader.active_time_value == 1.0
+    mesh_1 = reader.read()
+
+    reader.set_active_time_value(3.0)
+    assert reader.active_time_value == 3.0
+    mesh_3 = reader.read()
+
+    # assert all the data is different
+    for m_1, m_3 in zip(mesh_1, mesh_3):
+        assert not all(m_1['DENS'] == m_3['DENS'])
+
+    reader.set_active_time_point(0)
+    assert reader.active_time_value == 1.0
 def test_plyreader():
     filename = examples.spherefile
     reader = pyvista.get_reader(filename)
@@ -260,3 +287,42 @@ def test_binarymarchingcubesreader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_pvdfilerader():
+    filename = "./wavy/wavy.pvd"
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.PVDFileReader)
+    assert reader.filename == filename
+    
+    assert reader.number_time_points == 15
+    assert reader.time_point_value(1) == 1.0
+    assert np.array_equal(reader.time_values, np.arange(0, 15, dtype=np.float))
+    
+    assert reader.active_time_value == reader.time_values[0]
+    
+    active_datasets = reader.active_datasets
+    assert len(active_datasets) == 1
+    active_dataset = active_datasets[0]
+    assert active_dataset.time == 0.0
+    assert active_dataset.filename == "wavy00.vts"
+    assert active_dataset.group == ""
+    assert active_dataset.part == 0
+
+    assert len(reader.datasets) == len(reader.time_values)
+
+    active_readers = reader.active_readers
+    assert len(active_readers) == 1
+    active_reader = active_readers[0]
+    assert isinstance(active_reader, pyvista.XMLStructuredGridReader)
+
+    reader.set_active_time_value(1.0)
+    assert reader.active_time_value == 1.0
+
+    reader.set_active_time_point(2)
+    assert reader.active_time_value == 2.0
+
+    mesh = reader.read()
+    assert isinstance(mesh, pyvista.MultiBlock)
+    assert len(mesh) == 1
+    assert isinstance(mesh[0], pyvista.StructuredGrid)

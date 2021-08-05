@@ -1,5 +1,11 @@
 """Fine-grained control of reading data files."""
+from abc import ABC, abstractmethod
+from attr import dataclass
+import functools
+import os
+from xml.etree import ElementTree
 
+import pyvista
 from typing import Any
 
 from pyvista.utilities import wrap, get_ext
@@ -217,6 +223,36 @@ class DataArraySelection:
         return {name: self.cell_array_status(name) for name in self.cell_array_names}
 
 
+class TimeReader(ABC):
+    """Abstract class for readers supporting time."""
+
+    @property
+    @abstractmethod
+    def number_time_points(self):
+        pass
+
+    @abstractmethod
+    def time_point_value(self, time_point):
+        pass
+
+    @property
+    def time_values(self):
+        return [self.time_point_value(idx) for idx in range(self.number_time_points)]
+
+    @property
+    @abstractmethod
+    def active_time_value(self):
+        pass
+
+    @abstractmethod
+    def set_active_time_value(self, time_value):
+        pass
+
+    @abstractmethod
+    def set_active_time_point(self, time_point):
+        pass
+
+
 class XMLImageDataReader(BaseReader, DataArraySelection):
     """XML Image Data Reader."""
 
@@ -329,7 +365,7 @@ class XMLMultiBlockDataReader(BaseReader, DataArraySelection):
     _class_reader = _vtk.vtkXMLMultiBlockDataReader
 
 
-class EnSightReader(BaseReader, DataArraySelection):
+class EnSightReader(BaseReader, DataArraySelection, TimeReader):
     """EnSight Reader.
     
     Examples
@@ -356,11 +392,53 @@ class EnSightReader(BaseReader, DataArraySelection):
         self.reader.SetCaseFileName(filename)
         self._update_information()
 
+    @property
+    def number_time_points(self):
+        return self.reader.GetTimeSets().GetItem(0).GetSize()
 
-class OpenFOAMReader(BaseReader, DataArraySelection):
+    def time_point_value(self, time_point):
+        return self.reader.GetTimeSets().GetItem(0).GetValue(time_point)
+
+    @property
+    def active_time_value(self):
+        return self.reader.GetTimeValue()
+
+    def set_active_time_value(self, time_value):
+        if time_value not in self.time_values:
+            raise ValueError(
+                f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
+            )
+        return self.reader.SetTimeValue(time_value)
+
+    def set_active_time_point(self, time_point):
+        return self.reader.SetTimeValue(self.time_point_value(time_point))
+
+
+class OpenFOAMReader(BaseReader, DataArraySelection, TimeReader):
     """OpenFOAM Reader."""
 
     _class_reader = _vtk.vtkOpenFOAMReader
+
+    @property
+    def number_time_points(self):
+        return self.reader.GetTimeValues().GetNumberOfValues()
+
+    def time_point_value(self, time_point):
+        return self.reader.GetTimeValues().GetValue(time_point)
+
+    @property
+    def active_time_value(self):
+        raise NotImplementedError("vtkOpenFOAMReader does not yet support this")
+
+    def set_active_time_value(self, time_value):
+        if time_value not in self.time_values:
+            raise ValueError(
+                f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
+            )
+        return self.reader.SetTimeValue(time_value)
+
+    def set_active_time_point(self, time_point):
+        return self.reader.SetTimeValue(self.time_point_value(time_point))
 
 
 class PLYReader(BaseReader):
@@ -507,6 +585,151 @@ class BinaryMarchingCubesReader(BaseReader):
     _class_reader = _vtk.vtkMCubesReader
 
 
+@functools.total_ordering
+@dataclass
+class PVDDataSet:
+    """Class for storing dataset info from PVD file."""
+
+    time: float
+    group: str
+    part: int
+    filename: str
+
+    def __eq__(self, other):
+        """Two datasets are equal when the time and part are equal."""
+        return (self.time == other.time and self.part == other.part)
+
+    def __lt__(self, other):
+        """First sort by time, then by part."""
+        if self.time < other.time:
+            return True
+        if self.time > other.time:
+            return False
+        if self.part < other.part:
+            return True
+        return False
+
+
+class PVDFileReader(BaseReader, TimeReader):
+    """PVD file reader."""
+
+    def __init__(self, filename):
+        """Initialize PVD file reader."""
+        self._reader = None
+        self.filename = filename
+        self._directory = None
+        self._datasets = []
+        self._active_datasets = []
+        self._active_readers = []
+        self._time_values = []
+
+        self._set_filename(filename)
+        
+    @property
+    def reader(self):
+        """Return the PVDFileReader."""
+        return self
+
+    @property
+    def active_readers(self):
+        """Return the active readers."""
+        return self._active_readers
+
+    @property
+    def datasets(self):
+        """Return all datasets as a list."""
+        return self._datasets
+
+    @property
+    def active_datasets(self):
+        """Return all active datasets as a list."""
+        return self._active_datasets
+
+    def _set_filename(self, filename):
+        """Set filename and update reader."""
+        self.filename = filename
+        self._directory = os.path.dirname(filename)
+        self._datasets = None
+        self._active_datasets = None
+        self._update_information()
+
+    def read(self):
+        """Read data from PVD timepoint
+
+        Returns
+        -------
+        :class:`pyvista.MultiBlock`
+
+        """
+        return pyvista.MultiBlock([reader.read() for reader in self.active_readers])
+
+    def _update_information(self):
+        """If dataset information is unavailable, parse file."""
+        if self.datasets is None:
+            self._parse_file()
+
+    def _update(self):
+        """Unused in PVDFileReader."""
+        pass
+
+    def _parse_file(self):
+        """Parse PVD file."""
+        if self.filename is None:
+            raise ValueError("Filename must be set")
+        tree = ElementTree.parse(self.filename)
+        root = tree.getroot()
+        dataset_elements = root[0].findall("DataSet")
+        datasets = []
+        for element in dataset_elements:
+            element_attrib = element.attrib
+            datasets.append(
+                PVDDataSet(
+                    float(element_attrib['timestep']),
+                    element_attrib['group'],
+                    int(element_attrib['part']),
+                    element_attrib['file'],
+                )
+            )
+        self._datasets = sorted(datasets)
+        self._time_values = sorted(list(set([dataset.time for dataset in self.datasets])))
+
+        self.set_active_time_value(self.time_values[0])
+
+    @property
+    def time_values(self):
+        """Returns all time values as list."""
+        return self._time_values
+
+    @property
+    def number_time_points(self):
+        """Returns number of time points."""
+        return len(self.time_values)
+    
+    def time_point_value(self, time_point):
+        """Returns value of time point."""
+        return self.time_values[time_point]
+
+    @property
+    def active_time_value(self):
+        """Returns value of active time."""
+        # all active datasets have the same time
+        return self.active_datasets[0].time
+
+    def set_active_time_value(self, time_value):
+        """Set active time value."""
+        self._active_datasets = [
+            dataset for dataset in self.datasets if dataset.time == time_value
+        ]
+        self._active_readers = [
+            get_reader(os.path.join(self._directory, dataset.filename))
+            for dataset in self.active_datasets
+        ]
+
+    def set_active_time_point(self, time_point):
+        """Set active time by time point."""
+        self.set_active_time_value(self.time_values[time_point])
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.vti': XMLImageDataReader,
@@ -530,4 +753,5 @@ CLASS_READERS = {
     '.facet': FacetReader,
     '.p3d': Plot3DMetaReader,
     '.tri': BinaryMarchingCubesReader,
+    '.pvd': PVDFileReader,
 }

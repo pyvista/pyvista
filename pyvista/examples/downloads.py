@@ -806,3 +806,13 @@ def download_cylinder_crossflow(load=True):
     if not load:
         return filename
     return pyvista.read(filename)
+
+
+def download_naca(load=True):
+    filename, _ = _download_file('EnSight/naca.bin.case')
+    _download_file('EnSight/naca.gold.bin.DENS_1')
+    _download_file('EnSight/naca.gold.bin.DENS_3')
+    _download_file('EnSight/naca.gold.bin.geo')
+    if not load:
+        return filename
+    return pyvista.read(filename)
