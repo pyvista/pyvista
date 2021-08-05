@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 from vtk import VTK_QUADRATIC_HEXAHEDRON
 
-from pyvista._vtk import VTK9
+from pyvista._vtk import VTK9, vtkStaticCellLocator
 import pyvista
 from pyvista import examples, Sphere
 from pyvista.core.errors import VTKVersionError
@@ -721,14 +721,15 @@ def test_resample():
 
 @pytest.mark.parametrize('use_points', [True, False])
 @pytest.mark.parametrize('categorical', [True, False])
-def test_probe(categorical, use_points):
+@pytest.mark.parametrize('locator', [None, vtkStaticCellLocator()])
+def test_probe(categorical, use_points, locator):
     mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
     if use_points:
         dataset = np.array(mesh.points)
     else:
         dataset = mesh
-    result = data_to_probe.probe(dataset, tolerance=1E-5, categorical=categorical, progress_bar=True)
+    result = data_to_probe.probe(dataset, tolerance=1E-5, categorical=categorical, progress_bar=True, locator=locator)
     name = 'Spatial Point Data'
     assert name in result.array_names
     assert isinstance(result, type(mesh))

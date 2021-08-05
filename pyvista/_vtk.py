@@ -121,6 +121,7 @@ if VTK9:
                                                vtkDataSet,
                                                vtkPointLocator,
                                                vtkCellLocator,
+                                               vtkStaticCellLocator,
                                                vtkMultiBlockDataSet,
                                                vtkCompositeDataSet,
                                                vtkFieldData,
