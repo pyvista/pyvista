@@ -1069,9 +1069,7 @@ def test_scale():
     scale1 = mesh.copy()
     scale2 = mesh.copy()
     scale1.scale(xyz)
-    scale2.points[:, 0] *= xyz[0]
-    scale2.points[:, 1] *= xyz[1]
-    scale2.points[:, 2] *= xyz[2]
+    scale2.points *= xyz
     assert np.allclose(scale1.points, scale2.points)
 
 def test_flip():

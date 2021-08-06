@@ -595,9 +595,7 @@ class DataSet(DataSetFilters, DataObject):
             Length 3 list, tuple or array.
 
         """
-        self.points[:, 0] *= np.asarray(xyz)[0]
-        self.points[:, 1] *= np.asarray(xyz)[1]
-        self.points[:, 2] *= np.asarray(xyz)[2]
+        self.points *= np.asarray(xyz)
 
     def flip_x(self):
         """Flip mesh about the x-axis."""
