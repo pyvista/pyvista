@@ -1060,3 +1060,37 @@ def test_rotations_should_match_by_a_360_degree_difference():
     rot1.rotate_vector(vector=vector, angle=angle, point=point)
     rot2.rotate_vector(vector=vector, angle=angle - 360.0, point=point)
     assert np.allclose(rot1.points, rot2.points)
+
+
+def test_scale():
+    mesh = examples.load_airplane()
+
+    xyz = np.random.random(3)
+    scale1 = mesh.copy()
+    scale2 = mesh.copy()
+    scale1.scale(xyz)
+    scale2.points[:, 0] *= xyz[0]
+    scale2.points[:, 1] *= xyz[1]
+    scale2.points[:, 2] *= xyz[2]
+    assert np.allclose(scale1.points, scale2.points)
+
+def test_flip():
+    mesh = examples.load_airplane()
+
+    flip_x1 = mesh.copy()
+    flip_x2 = mesh.copy()
+    flip_x1.flip_x()
+    flip_x2.points[:, 0] *= -1.0
+    assert np.allclose(flip_x1.points, flip_x2.points)
+
+    flip_y1 = mesh.copy()
+    flip_y2 = mesh.copy()
+    flip_y1.flip_y()
+    flip_y2.points[:, 1] *= -1.0
+    assert np.allclose(flip_y1.points, flip_y2.points)
+
+    flip_z1 = mesh.copy()
+    flip_z2 = mesh.copy()
+    flip_z1.flip_z()
+    flip_z2.points[:, 2] *= -1.0
+    assert np.allclose(flip_z1.points, flip_z2.points)

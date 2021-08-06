@@ -586,6 +586,31 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.points += np.asarray(xyz)
 
+    def scale(self, xyz: Union[list, tuple, np.ndarray]):
+        """Scale the mesh.
+
+        Parameters
+        ----------
+        xyz : scale factor list or tuple or np.ndarray
+            Length 3 list, tuple or array.
+
+        """
+        self.points[:, 0] *= np.asarray(xyz)[0]
+        self.points[:, 1] *= np.asarray(xyz)[1]
+        self.points[:, 2] *= np.asarray(xyz)[2]
+
+    def flip_x(self):
+        """Flip mesh about the x-axis."""
+        self.points[:, 0] *= -1.0
+
+    def flip_y(self):
+        """Flip mesh about the y-axis."""
+        self.points[:, 1] *= -1.0
+
+    def flip_z(self):
+        """Flip mesh about the z-axis."""
+        self.points[:, 2] *= -1.0
+
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object."""
         self._active_scalars_info = ido.active_scalars_info
