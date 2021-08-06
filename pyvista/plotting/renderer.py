@@ -275,7 +275,7 @@ class Renderer(_vtk.vtkRenderer):
     def render_event(self, *args, **kwargs):
         # Notify all charts about render event
         for chart in self._charts:
-            chart.render_event(*args, **kwargs)
+            chart._render_event(*args, **kwargs)
 
     #### Everything else ####
 

@@ -95,12 +95,10 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         Examples
         --------
         >>> import pyvista
-        >>> p = pyvista.Plotter()
         >>> chart = pyvista.Chart2D()
         >>> plot = chart.line([0, 1, 2], [2, 1, 3])
         >>> plot.pen.color = 'r'
-        >>> p.add_chart(chart)
-        >>> p.show()
+        >>> chart.show()
 
         """
         self._color = (0, 0, 0, 0) if val is None else parse_color(val, opacity=1)
@@ -118,12 +116,10 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         Examples
         --------
         >>> import pyvista
-        >>> p = pyvista.Plotter()
         >>> chart = pyvista.Chart2D()
         >>> plot = chart.line([0, 1, 2], [2, 1, 3])
         >>> plot.pen.width = 10
-        >>> p.add_chart(chart)
-        >>> p.show()
+        >>> chart.show()
 
         """
         self.SetWidth(float(val))
@@ -140,12 +136,10 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         Examples
         --------
         >>> import pyvista
-        >>> p = pyvista.Plotter()
         >>> chart = pyvista.Chart2D()
         >>> plot = chart.line([0, 1, 2], [2, 1, 3])
         >>> plot.pen.style = '-.'
-        >>> p.add_chart(chart)
-        >>> p.show()
+        >>> chart.show()
 
         """
         if val is None:
@@ -193,12 +187,10 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         Examples
         --------
         >>> import pyvista
-        >>> p = pyvista.Plotter()
         >>> chart = pyvista.Chart2D()
         >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
         >>> plot.brush.color = 'r'
-        >>> p.add_chart(chart)
-        >>> p.show()
+        >>> chart.show()
 
         """
         self._color = (0, 0, 0, 0) if val is None else parse_color(val, opacity=1)
@@ -217,12 +209,10 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         --------
         >>> import pyvista
         >>> from pyvista import examples
-        >>> p = pyvista.Plotter()
         >>> chart = pyvista.Chart2D()
         >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
         >>> plot.brush.texture = examples.download_puppy_texture()
-        >>> p.add_chart(chart)
-        >>> p.show()
+        >>> chart.show()
 
         """
         if val is None:
@@ -243,15 +233,16 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
         Examples
         --------
+        Setup a brush with a texture.
         >>> import pyvista
         >>> from pyvista import examples
-        >>> p = pyvista.Plotter()
         >>> chart = pyvista.Chart2D()
         >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
         >>> plot.brush.texture = examples.download_puppy_texture()
+        >>> chart.show()
+        Disable linear interpolation.
         >>> plot.brush.texture_interpolate = False
-        >>> p.add_chart(chart)
-        >>> p.show()
+        >>> chart.show()
 
         """
         self._interpolate = bool(val)
@@ -268,15 +259,16 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
         Examples
         --------
+        Setup a brush with a texture.
         >>> import pyvista
         >>> from pyvista import examples
-        >>> p = pyvista.Plotter()
         >>> chart = pyvista.Chart2D()
         >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
         >>> plot.brush.texture = examples.download_puppy_texture()
+        >>> chart.show()
+        Enable texture repeat.
         >>> plot.brush.texture_repeat = True
-        >>> p.add_chart(chart)
-        >>> p.show()
+        >>> chart.show()
 
         """
         self._repeat = bool(val)
@@ -295,38 +287,105 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         "fixed": _vtk.vtkAxis.FIXED
     }
 
-    def __init__(self, behavior="auto"):
+    def __init__(self, label="", range=None, behavior="auto", grid=True):
+        """Initialize a new Axis instance.
+
+        Parameters
+        ----------
+        label : str, optional
+            Axis label. Defaults to the empty string ``""`` (no visible label).
+
+        range : sequence, optional
+            Axis range, denoting the minimum and maximum values displayed on this axis. Setting this to any valid value
+            other than ``None`` will change this axis behavior to ``'fixed'``. Setting it to ``None`` will change the
+            axis behavior to ``'auto'``. Defaults to ``None`` (automatically scale axis).
+
+        behavior : str, optional
+            Scaling behavior of this axis. Either ``'auto'`` to automatically rescale the axis to fit all visible
+            datapoints in the plot or ``'fixed'`` to use the user defined range. Defaults to ``"auto"``.
+
+        grid : bool, optional
+            Flag to toggle grid lines visibility for this axis. Defaults to ``True``.
+
+        """
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
         self._tick_labels = _vtk.vtkStringArray()
         self.pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())
         self.grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())
+        self.label = label
+        self.range = range
         self.behavior = behavior
+        self.grid = grid
 
     @property
     def label(self):
+        """Get the current axis label."""
         return self.GetTitle()
 
     @label.setter
     def label(self, val):
+        """Set the axis label.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_axis.label = "Axis Label"
+        >>> chart.show()
+
+        """
         self.SetTitle(val)
 
     @property
     def label_visible(self):
+        """Get the axis label's visibility."""
         return self.GetTitleVisible()
 
     @label_visible.setter
     def label_visible(self, val):
+        """Set the axis label's visibility.
+
+        Examples
+        --------
+        Hide the x-axis label of a 2D chart.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_axis.label_visible = False
+        >>> chart.show()
+
+        """
         self.SetTitleVisible(bool(val))
 
     @property
     def range(self):
+        """Get the current axis range."""
         r = [0.0, 0.0]
         self.GetRange(r)
         return r
 
     @range.setter
     def range(self, val):
+        """Manually set the axis range.
+        This will automatically set the axis behavior to ``"fixed"`` when a valid range is given. Setting the range
+        to ``None`` will set the axis behavior to ``"auto"``.
+
+        Examples
+        --------
+        Manually specify the x-axis range of a 2D chart.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_axis.range = [0, 5]
+        >>> chart.show()
+        Revert to automatic axis scaling.
+        >>> chart.x_axis.range = None
+        >>> print(chart.x_axis.range)
+        >>> chart.show()
+
+        """
         if val is None:
             self.behavior = "auto"
         else:
@@ -335,10 +394,28 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     @property
     def behavior(self):
+        """Get the current axis behavior."""
         return self._behavior
 
     @behavior.setter
     def behavior(self, val):
+        """Set the axis' scaling behavior. Allowed behaviors are ``'auto'`` to automatically rescale the axis to fit all
+        visible datapoints in the plot; or ``'fixed'`` to use the user defined range.
+
+        Examples
+        --------
+        Manually specify the x-axis range of a 2D chart.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_axis.range = [0, 5]
+        >>> chart.show()
+        Revert to automatic axis scaling.
+        >>> chart.x_axis.behavior = "auto"
+        >>> print(chart.x_axis.range)
+        >>> chart.show()
+
+        """
         if val in self.BEHAVIORS:
             self._behavior = val
             self.SetBehavior(self.BEHAVIORS[val])
@@ -347,58 +424,172 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
             raise ValueError(f"Invalid behavior. Allowed behaviors: \"{formatted_behaviors}\"")
 
     @property
-    def margins(self):
-        return self.GetMargins()
+    def margin(self):
+        """Get the axis margin."""
+        return self.GetMargins()[0]
 
-    @margins.setter
-    def margins(self, val):
-        self.SetMargins(*val)
+    @margin.setter
+    def margin(self, val):
+        """Set the axis margin.
+
+        Examples
+        --------
+        Create a 2D chart.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+        Manually specify a larger (bottom) margin for the x-axis and a larger (left) margin for the y-axis.
+        >>> chart.x_axis.margin = 50
+        >>> chart.y_axis.margin = 50
+        >>> chart.show()
+
+        """
+        # Second margin doesn't seem to have any effect? So we only expose the first entry as 'the margin'.
+        m = self.GetMargins()
+        self.SetMargins(val, m)
 
     @property
     def log_scale(self):
-        # Returns whether a log scale is used on this axis
+        """Flag denoting whether a log scale is used for this axis."""
         return self.GetLogScaleActive()
 
     @log_scale.setter
     def log_scale(self, val):
+        """Try to (de)activate the usage of a log scale for this axis.
+        Note that setting this property to ``True`` will NOT guarantee that the log scale will be enabled, verify
+        whether activating the log scale succeeded by rereading this property.
+
+        Examples
+        --------
+        Create a 2D chart.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2, 3, 4], [1e0, 1e1, 1e2, 1e3, 1e4])
+        >>> chart.show()
+        Try to enable the log scale on the y-axis.
+        >>> chart.y_axis.log_scale = True
+        >>> print(f"Enabling log scale {'succeeded' if chart.y_axis.log_scale else 'failed'}.")
+        >>> chart.show()
+
+        """
         # False: log_scale will be disabled, True: axis will attempt to activate log_scale if possible
         self.SetLogScale(bool(val))
 
     @property
     def grid(self):
+        """Get the axis' grid line visibility."""
         return self.GetGridVisible()
 
     @grid.setter
     def grid(self, val):
+        """Set the axis' grid line visibility.
+
+        Examples
+        --------
+        Create a 2D chart with grid lines disabled for the x-axis.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_axis.grid = False
+        >>> chart.show()
+
+        """
         self.SetGridVisible(bool(val))
 
     @property
     def visible(self):
+        """Get the axis' visibility."""
         return self.GetAxisVisible()
 
     @visible.setter
     def visible(self, val):
+        """Set the axis' visibility.
+
+        Examples
+        --------
+        Create a 2D chart with no visible y-axis.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.y_axis.visible = False
+        >>> chart.show()
+
+        """
         self.SetAxisVisible(bool(val))
 
     def toggle(self):
+        """Toggle the axis' visibility.
+
+        Examples
+        --------
+        Create a 2D chart.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+        Toggle the visibility of the y-axis.
+        >>> chart.y_axis.toggle()
+        >>> chart.show()
+
+        """
         self.visible = not self.visible
 
     # --- Ticks ---
     @property
     def tick_count(self):
+        """Get the number of ticks drawn on this axis."""
         return self.GetNumberOfTicks()
 
     @tick_count.setter
     def tick_count(self, val):
+        """Set the number of ticks drawn on this axis.
+        Setting this property to a negative value or ``None`` will automatically determine the appropriate amount of
+        ticks to draw.
+
+        Examples
+        --------
+        Create a 2D chart with a reduced number of ticks on the x-axis.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_axis.tick_count = 5
+        >>> chart.show()
+        Revert back to automatic tick behavior.
+        >>> chart.x_axis.tick_count = None
+        >>> chart.show()
+
+        """
+        if val is None or val < 0:
+            val = -1
         self.SetNumberOfTicks(int(val))
 
     @property
     def tick_locations(self):
+        """Get the current tick locations for this axis."""
         positions = self.GetTickPositions()
         return tuple(positions.GetValue(i) for i in range(positions.GetNumberOfValues()))
 
     @tick_locations.setter
     def tick_locations(self, val):
+        """Manually specify the tick locations for this axis.
+        Setting this to ``None`` will revert back to the default, automatically determined, tick locations.
+
+        Examples
+        --------
+        Create a 2D chart with custom tick locations and labels on the y-axis.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
+        >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small", "Small?", "Not large", "Large?", "Very large"]
+        >>> chart.show()
+        Revert back to automatic tick placement.
+        >>> chart.y_axis.tick_locations = None
+        >>> chart.y_axis.tick_labels = None
+        >>> chart.show()
+
+        """
         self._tick_locs.Reset()
         if val is not None:
             for loc in val:
@@ -407,13 +598,36 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     @property
     def tick_labels(self):
+        """Get the current tick labels for this axis."""
         labels = self.GetTickLabels()
         return tuple(labels.GetValue(i) for i in range(labels.GetNumberOfValues()))
 
     @tick_labels.setter
     def tick_labels(self, val):
-        # val is either None to fallback to the default labelling, a sequence to manually specify each label or a string
-        # describing the label format to use for each label.
+        """Manually specify the tick labels for this axis.
+        You can specify a sequence, to provide a unique label to every tick position; a string, to describe the label
+        format to use for each label; or ``None``, which will revert back to the default tick labels.
+        A label format is a string consisting of an integer part, denoting the precision to use, and a final character,
+        denoting the notation to use. Allowed notations: ``"f"`` for fixed notation ; ``"e"`` for scientific notation.
+
+        Examples
+        --------
+        Create a 2D chart with custom tick locations and labels on the y-axis.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
+        >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small", "Small?", "Not large", "Large?", "Very large"]
+        >>> chart.show()
+        Revert back to automatic tick placement.
+        >>> chart.y_axis.tick_locations = None
+        >>> chart.y_axis.tick_labels = None
+        >>> chart.show()
+        Specify a custom label format to use (fixed notation with precision 2).
+        >>> chart.y_axis.tick_labels = "2f"
+        >>> chart.show()
+
+        """
         self._tick_labels.Reset()
         self.SetNotation(_vtk.vtkAxis.STANDARD_NOTATION)
         if isinstance(val, str):
@@ -432,35 +646,89 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     @property
     def tick_size(self):
+        """Get the size of this axis' ticks."""
         return self.GetTickLength()
 
     @tick_size.setter
     def tick_size(self, val):
+        """Set the size of this axis' ticks.
+
+        Examples
+        --------
+        Create a 2D chart with an x-axis with an increased tick size and adjusted offset for the tick labels.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_axis.tick_size += 10
+        >>> chart.x_axis.tick_labels_offset += 12
+        >>> chart.show()
+
+        """
         self.SetTickLength(val)
 
     @property
     def tick_labels_offset(self):
+        """Get the offset of the tick labels for this axis."""
         return self.GetLabelOffset()
 
     @tick_labels_offset.setter
     def tick_labels_offset(self, val):
+        """Set the offset of the tick labels for this axis.
+
+        Examples
+        --------
+        Create a 2D chart with an x-axis with an increased tick size and adjusted offset for the tick labels.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_axis.tick_size += 10
+        >>> chart.x_axis.tick_labels_offset += 12
+        >>> chart.show()
+
+        """
         self.SetLabelOffset(float(val))
 
     @property
     def tick_labels_visible(self):
+        """Get the tick label visibility for this axis."""
         return self.GetLabelsVisible()
 
     @tick_labels_visible.setter
     def tick_labels_visible(self, val):
+        """Set the tick label visibility for this axis.
+
+        Examples
+        --------
+        Create a 2D chart with hidden tick labels on the y-axis.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.y_axis.tick_labels_visible = False
+        >>> chart.show()
+
+        """
         self.SetLabelsVisible(bool(val))
         self.SetRangeLabelsVisible(bool(val))
 
     @property
     def ticks_visible(self):
+        """Get the tick visibility for this axis."""
         return self.GetTicksVisible()
 
     @ticks_visible.setter
     def ticks_visible(self, val):
+        """Set the tick visibility for this axis.
+
+        Examples
+        --------
+        Create a 2D chart with hidden ticks on the y-axis.
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.y_axis.ticks_visible = False
+        >>> chart.show()
+
+        """
         self.SetTicksVisible(bool(val))
 
     def _update_ticks(self):
@@ -490,7 +758,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
 
 
 class _ChartBackground(_CustomContextItem):
-    """ Utility class for chart backgrounds (until native VTK support is available) """
+    """Utility class for chart backgrounds (until native VTK support is available)."""
 
     def __init__(self, chart):
         super().__init__()
@@ -509,7 +777,7 @@ class _ChartBackground(_CustomContextItem):
 
 
 class _Chart(object):
-    """ Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances """
+    """Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances."""
 
     def __init__(self):
         super().__init__()
@@ -519,18 +787,23 @@ class _Chart(object):
         self._z_axis = Axis()
 
     @property
-    def scene(self):
+    def _scene(self):
+        """Get a reference to the vtkScene in which this chart is drawn."""
         return self.GetScene()
 
     @property
-    def renderer(self):
-        return self.scene.GetRenderer()
+    def _renderer(self):
+        """Get a reference to the vtkRenderer in which this chart is drawn."""
+        return self._scene.GetRenderer()
 
-    def render_event(self, *args, **kwargs):
+    def _render_event(self, *args, **kwargs):
+        # Called before every render
         self._resize()
 
     def _resize(self):
-        r_w, r_h = self.renderer.GetSize()  # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
+        """Resize this chart such that it always occupies the specified geometry (matching the specified location and
+        size)."""
+        r_w, r_h = self._renderer.GetSize()  # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
         _, _, c_w, c_h = self._geometry
         # Target size is calculated from specified normalized width and height and the renderer's current size
         t_w = self._size[0] * r_w
@@ -541,14 +814,16 @@ class _Chart(object):
 
     @property
     def _geometry(self):
-        """ Chart geometry (x and y position of bottom left corner and width and height in pixels). """
+        """Chart geometry (x and y position of bottom left corner and width and height in pixels)."""
         return self.GetSize()
 
     @_geometry.setter
     def _geometry(self, val):
+        """Set the chart geometry."""
         self.SetSize(_vtk.vtkRectf(*val))
 
-    def is_within(self, pos):
+    def _is_within(self, pos):
+        """Check whether the specified position (in pixels) lies within this chart's geometry."""
         l, b, w, h = self._geometry
         return l <= pos[0] <= l+w and b <= pos[1] <= b+h
 
@@ -1196,9 +1471,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.grid = grid
         self.legend_visible = True
 
-    def render_event(self, *args, **kwargs):
+    def _render_event(self, *args, **kwargs):
         self.RecalculateBounds()
-        super().render_event(*args, **kwargs)
+        super()._render_event(*args, **kwargs)
 
     def _add_plot(self, plot_type, *args, **kwargs):
         plot = self.PLOT_TYPES[plot_type](*args, **kwargs)
@@ -1390,13 +1665,13 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         self.SetColumnVisibilityAll(True)
         self.legend_visible = True
 
-    def render_event(self, *args, **kwargs):
+    def _render_event(self, *args, **kwargs):
         pass  # ChartBox fills entire scene by default, so no resizing is needed (nor possible at this moment)
 
     @property
     def _geometry(self):
         # Needed for background (remove once resizing is possible)
-        return (0, 0, *self.renderer.GetSize())
+        return (0, 0, *self._renderer.GetSize())
 
     @_geometry.setter
     def _geometry(self, value):
@@ -1449,13 +1724,13 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         self._plot = PiePlot(data, labels, _wrap=self.GetPlot(0))  # So we have to wrap the existing one
         self.legend_visible = True
 
-    def render_event(self, *args, **kwargs):
+    def _render_event(self, *args, **kwargs):
         pass  # ChartPie fills entire scene by default, so no resizing is needed (nor possible at this moment)
 
     @property
     def _geometry(self):
         # Needed for background (remove once resizing is possible)
-        return (0, 0, *self.renderer.GetSize())
+        return (0, 0, *self._renderer.GetSize())
 
     @_geometry.setter
     def _geometry(self, value):
@@ -1570,9 +1845,9 @@ class _Chart3D(_vtk.vtkChartXYZ, _Chart):
         self.y_label = y_label
         self.z_label = z_label
 
-    def render_event(self, *args, **kwargs):
+    def _render_event(self, *args, **kwargs):
         self.RecalculateBounds()
-        super().render_event(*args, **kwargs)
+        super()._render_event(*args, **kwargs)
 
     @property
     def _geometry(self):
@@ -1743,7 +2018,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         self.redraw()
 
     def _resize(self):
-        r_w, r_h = self.renderer.GetSize()
+        r_w, r_h = self._renderer.GetSize()
         c_w, c_h = self._canvas.get_width_height()
         # Calculate target size from specified normalized width and height and the renderer's current size
         t_w = self._size[0]*r_w
@@ -1767,13 +2042,13 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
             self.SetImage(img_data)
 
-    def render_event(self, *args, **kwargs):
+    def _render_event(self, *args, **kwargs):
         self._resize()  # Update figure dimensions if needed
         self.redraw()  # Redraw figure
 
     @property
     def _geometry(self):
-        r_w, r_h = self.renderer.GetSize()
+        r_w, r_h = self._renderer.GetSize()
         t_w = self._size[0]*r_w
         t_h = self._size[1]*r_h
         return (*self.position, t_w, t_h)
@@ -1855,7 +2130,7 @@ class Charts:
         # (to disable interaction with all charts, except the one indicated by the mouse, if any)
         enable = False
         for chart in self._charts:
-            if chart.visible and (mouse_pos is not False and chart.is_within(mouse_pos)):
+            if chart.visible and (mouse_pos is not False and chart._is_within(mouse_pos)):
                 chart.SetInteractive(True)
                 if chart._x_axis is not None:
                     chart._x_axis.behavior = "fixed"  # Change the chart's axis behaviour to fixed, such that the user
