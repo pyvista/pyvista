@@ -99,7 +99,24 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def active_scalars_info(self) -> ActiveArrayInfo:
-        """Return the active scalar's field and name: [field, name]."""
+        """Return the active scalar's field and name.
+
+        Field is the data accociation (e.g. point, cell, or field),
+        and name of the scalars.
+
+        Examples
+        --------
+        Create a mesh, add scalars to the mesh, and return the active
+        scalars info.  Note how when the scalars are added, they
+        automatically become the active scalars.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh['Z Height'] = mesh.points[:, 2]
+        >>> mesh.active_scalars_info
+        ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Z Height')
+
+        """
         field, name = self._active_scalars_info
         exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
         if name in exclude:
@@ -120,7 +137,20 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def active_vectors_info(self) -> ActiveArrayInfo:
-        """Return the active scalar's field and name: [field, name]."""
+        """Return the active vector's field and name.
+
+        Exmaples
+        --------
+        Create a mesh, compute the normals, and show that the active
+        vectors are the ``'Normals'`` array.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.compute_normals(inplace=True)
+        >>> mesh.active_vectors_info
+        ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Normals')
+
+        """
         if self._active_vectors_info.name is None:
             # Sometimes, precomputed normals aren't set as active
             if 'Normals' in self.array_names:
