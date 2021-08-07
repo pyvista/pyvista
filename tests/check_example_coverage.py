@@ -151,7 +151,6 @@ def evaluate_examples_coverage(entry=None, modules=None):
         all_methods_without_example_list.extend(method_list)
 
     package_total = len(all_methods_with_example_list) + len(all_methods_without_example_list)
-    # package_total = 1
     package_missing = len(all_methods_without_example_list)
     package_percentage_covered = (package_total - package_missing) / package_total * 100
     print ('-' * 74)
