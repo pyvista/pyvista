@@ -609,6 +609,23 @@ class DataSet(DataSetFilters, DataObject):
         """Flip mesh about the z-axis."""
         self.points[:, 2] *= -1.0
 
+    def flip_vector(self, vector):
+        """Flip mesh about the vector.
+
+        Parameters
+        ----------
+        vector : tuple
+           Normal vector to rotate about.
+        """
+
+        # Householder matrix
+        # https://en.wikipedia.org/wiki/Householder_transformation#Householder_matrix
+        vector /= np.linalg.norm(vector)
+        matrix = np.matrix(vector / np.linalg.norm(vector))
+        householder_matrix = np.eye(3) - 2.0 * np.outer(matrix, matrix.H)
+
+        self.points = (householder_matrix @ self.points.T).T
+
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object."""
         self._active_scalars_info = ido.active_scalars_info

@@ -1092,3 +1092,21 @@ def test_flip():
     flip_z1.flip_z()
     flip_z2.points[:, 2] *= -1.0
     assert np.allclose(flip_z1.points, flip_z2.points)
+
+    flip_vector1 = mesh.copy()
+    flip_vector2 = mesh.copy()
+    flip_vector1.flip_vector(vector=[1.0, 0.0, 0.0])
+    flip_vector2.flip_x()
+    assert np.allclose(flip_vector1.points, flip_vector2.points)
+
+    flip_vector3 = mesh.copy()
+    flip_vector4 = mesh.copy()
+    flip_vector3.flip_vector(vector=[0.0, 1.0, 0.0])
+    flip_vector4.flip_y()
+    assert np.allclose(flip_vector3.points, flip_vector4.points)
+
+    flip_vector5 = mesh.copy()
+    flip_vector6 = mesh.copy()
+    flip_vector5.flip_vector(vector=[0.0, 0.0, 1.0])
+    flip_vector6.flip_z()
+    assert np.allclose(flip_vector5.points, flip_vector6.points)
