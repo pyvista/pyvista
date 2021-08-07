@@ -2209,7 +2209,8 @@ class DataSetFilters:
         return out
 
     def probe(dataset, points, tolerance=None, pass_cell_arrays=True,
-              pass_point_arrays=True, categorical=False, progress_bar=False):
+              pass_point_arrays=True, categorical=False, progress_bar=False,
+              locator=None):
         """Sample data values at specified point locations.
 
         This uses :class:`vtk.vtkProbeFilter`.
@@ -2242,6 +2243,9 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        locator: vtkAbstractCellLocator, optional
+            Prototype cell locator to perform the FindCell() operation.
+
         Returns
         -------
         pyvista.DataSet
@@ -2268,9 +2272,14 @@ class DataSetFilters:
         alg.SetPassCellArrays(pass_cell_arrays)
         alg.SetPassPointArrays(pass_point_arrays)
         alg.SetCategoricalData(categorical)
+
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
+
+        if locator:
+            alg.SetCellLocatorPrototype(locator)
+
         _update_alg(alg, progress_bar, 'Sampling Data Values at Specified Point Locations')
         return _get_output(alg)
 

@@ -2120,3 +2120,12 @@ class Renderer(_vtk.vtkRenderer):
     def disable_hidden_line_removal(self):
         """Disable hidden line removal."""
         self.UseHiddenLineRemovalOff()
+
+    @property
+    def layer(self):
+        """Return or set the current layer of this renderer."""
+        return self.GetLayer()
+
+    @layer.setter
+    def layer(self, layer):
+        self.SetLayer(layer)

@@ -2008,3 +2008,14 @@ def test_chart_matplotlib_plot():
     chart = pyvista.ChartMPL(fig)
     pl.add_chart(chart)
     pl.show()
+
+
+def test_add_remove_background(sphere):
+    plotter = pyvista.Plotter(shape=(1, 2))
+    plotter.add_mesh(sphere, color='w')
+    plotter.add_background_image(examples.mapfile, as_global=False)
+    plotter.subplot(0, 1)
+    plotter.add_mesh(sphere, color='w')
+    plotter.add_background_image(examples.mapfile, as_global=False)
+    plotter.remove_background_image()
+    plotter.show(before_close_callback=verify_cache_image)
