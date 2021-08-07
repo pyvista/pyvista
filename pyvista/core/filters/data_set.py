@@ -1485,7 +1485,7 @@ class DataSetFilters:
             If ``True``, use the active vectors array to orient the glyphs.
             If string, the vector array to use to orient the glyphs.
 
-        scale : bool or str, optional
+        scale : bool, str or sequence, optional
             If ``True``, use the active scalars to scale the glyphs.
             If string, the scalar array to use to scale the glyphs.
 
@@ -1593,9 +1593,11 @@ class DataSetFilters:
                     alg.SetIndexModeToScalar()
             else:
                 alg.SetIndexModeToOff()
+
         if isinstance(scale, str):
             dataset.active_scalars_name = scale
             scale = True
+
         if scale:
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
@@ -1604,9 +1606,11 @@ class DataSetFilters:
                     alg.SetScaleModeToScaleByScalar()
         else:
             alg.SetScaleModeToDataScalingOff()
+
         if isinstance(orient, str):
             dataset.active_vectors_name = orient
             orient = True
+
         if scale and orient:
             if (dataset.active_vectors_info.association == FieldAssociation.CELL
                 and dataset.active_scalars_info.association == FieldAssociation.CELL

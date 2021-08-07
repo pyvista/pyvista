@@ -139,14 +139,14 @@ class DataSet(DataSetFilters, DataObject):
     def active_vectors_info(self) -> ActiveArrayInfo:
         """Return the active vector's field and name.
 
-        Exmaples
+        Examples
         --------
-        Create a mesh, compute the normals, and show that the active
-        vectors are the ``'Normals'`` array.
+        Create a mesh, compute the normals inplace, and show that the
+        active vectors are the ``'Normals'`` array associated with points.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.compute_normals(inplace=True)
+        >>> _ = mesh.compute_normals(inplace=True)
         >>> mesh.active_vectors_info
         ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Normals')
 
@@ -164,7 +164,27 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def active_vectors(self) -> Optional[pyvista_ndarray]:
-        """Return the active vectors array."""
+        """Return the active vectors array.
+
+        Examples
+        --------
+        Create a mesh, compute the normals inplace, and return the
+        normals vector array.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> _ = mesh.compute_normals(inplace=True)
+        >>> mesh.active_vectors  # doctest:+SKIP
+        pyvista_ndarray([[-2.48721432e-10, -1.08815623e-09, -1.00000000e+00],
+                         [-2.48721432e-10, -1.08815623e-09,  1.00000000e+00],
+                         [-1.18888125e-01,  3.40539310e-03, -9.92901802e-01],
+                         ...,
+                         [-3.11940581e-01, -6.81432486e-02,  9.47654784e-01],
+                         [-2.09880397e-01, -4.65070531e-02,  9.76620376e-01],
+                         [-1.15582108e-01, -2.80492082e-02,  9.92901802e-01]],
+                        dtype=float32)
+
+        """
         field, name = self.active_vectors_info
         try:
             if field is FieldAssociation.POINT:
@@ -195,32 +215,93 @@ class DataSet(DataSetFilters, DataObject):
 
     @active_tensors_name.setter
     def active_tensors_name(self, name: str):
-        """Set the name of the active tensor."""
         self.set_active_tensors(name)
 
     @property
     def active_vectors_name(self) -> str:
-        """Return the name of the active vectors array."""
+        """Return the name of the active vectors array.
+
+        Examples
+        --------
+        Create a mesh, compute the normals, and return the
+        name of the active vectors.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh_w_normals = mesh.compute_normals()
+        >>> mesh_w_normals.active_vectors_name
+        'Normals'
+
+        """
         return self.active_vectors_info.name
 
     @active_vectors_name.setter
     def active_vectors_name(self, name: str):
-        """Set the name of the active vector."""
         self.set_active_vectors(name)
 
     @property
     def active_scalars_name(self) -> str:
-        """Return the active scalar's name."""
+        """Return the name of the active scalars.
+
+        Examples
+        --------
+        Create a mesh, add scalars to the mesh, and return the name of
+        the active scalars.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh['Z Height'] = mesh.points[:, 2]
+        >>> mesh.active_scalars_name
+        'Z Height'
+        """
         return self.active_scalars_info.name
 
     @active_scalars_name.setter
     def active_scalars_name(self, name: str):
-        """Set the name of the active scalar."""
         self.set_active_scalars(name)
 
     @property
     def points(self) -> pyvista_ndarray:
-        """Return a pointer to the points as a numpy object."""
+        """Return a pointer to the points as a numpy object.
+
+        Examples
+        --------
+        Create a mesh and return the points of the mesh as a numpy
+        array.
+
+        >>> import pyvista
+        >>> cube = pyvista.Cube().clean()
+        >>> points = cube.points
+        >>> print(points)
+        [[-0.5 -0.5 -0.5]
+         [-0.5 -0.5  0.5]
+         [-0.5  0.5  0.5]
+         [-0.5  0.5 -0.5]
+         [ 0.5 -0.5 -0.5]
+         [ 0.5  0.5 -0.5]
+         [ 0.5  0.5  0.5]
+         [ 0.5 -0.5  0.5]]
+
+        Shift these points in the z direction and show that their
+        position is reflected in the mesh points.
+
+        >>> points[:, 2] += 1
+        >>> print(cube.points)
+        [[-0.5 -0.5  0.5]
+         [-0.5 -0.5  1.5]
+         [-0.5  0.5  1.5]
+         [-0.5  0.5  0.5]
+         [ 0.5 -0.5  0.5]
+         [ 0.5  0.5  0.5]
+         [ 0.5  0.5  1.5]
+         [ 0.5 -0.5  1.5]]
+
+        You can also update the points in-place.  For example, you can
+        scale the mesh with:
+
+        >>> cube.points *= 2
+
+        """
         _points = self.GetPoints()
         try:
             _points = _points.GetData()
@@ -233,7 +314,6 @@ class DataSet(DataSetFilters, DataObject):
 
     @points.setter
     def points(self, points: np.ndarray):
-        """Set points without copying."""
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -259,20 +339,39 @@ class DataSet(DataSetFilters, DataObject):
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points of the mesh and
-        their size will be dependent on the length of the vector.
+        their size will be dependent on the norm of the vector.
         Their direction will be the "direction" of the vector
 
         Returns
         -------
-        arrows : pyvista.PolyData
-            Active scalars represented as arrows.
+        pyvista.PolyData
+            Active vectors represented as arrows.
+
+        Examples
+        --------
+        Create a mesh, compute the normals, and plot the active vectors.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube().clean()
+        >>> mesh_w_normals = mesh.compute_normals()
+        >>> arrows = mesh_w_normals.arrows
+        >>> arrows.plot(show_scalar_bar=False)
 
         """
-        name = self.active_vectors_name
-        return None if name is None else self.glyph(scale=name, orient=name)
+        vectors_name = self.active_vectors_name
+        if vectors_name is None:
+            return
+
+        if self.active_vectors.ndim != 2:
+            raise ValueError('Active vectors are not vectors.')
+
+        scale = np.linalg.norm(self.active_vectors, axis=1)
+        self.point_arrays.append(scale, '_vector_scale', active_vectors=False,
+                                 active_scalars=False)
+        return self.glyph(orient=vectors_name, scale='_vector_scale')
 
     @property
-    def vectors(self) -> Optional[pyvista_ndarray]:
+    def vectors(self) -> Optional[pyvista_ndarray]:  # pragma: no cover
         """Return active vectors."""
         warnings.warn( "Use of `DataSet.vectors` is deprecated. "
             "Use `DataSet.active_vectors` instead.",
@@ -281,7 +380,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_vectors
 
     @vectors.setter
-    def vectors(self, array: np.ndarray):
+    def vectors(self, array: np.ndarray):  # pragma: no cover
         """Set the active vector."""
         warnings.warn("Use of `DataSet.vectors` to add vector data is deprecated. "
             "Use `DataSet['vector_name'] = data`. "
@@ -301,26 +400,65 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def t_coords(self) -> Optional[pyvista_ndarray]:
-        """Return the active texture coordinates on the points."""
+        """Return the active texture coordinates on the points.
+
+        Examples
+        --------
+        Return the active texture coordinates from the globe example.
+
+        >>> from pyvista import examples
+        >>> globe = examples.load_globe()
+        >>> print(globe.t_coords)
+        [[0.         0.        ]
+         [0.         0.07142857]
+         [0.         0.14285714]
+         ...
+         [1.         0.85714286]
+         [1.         0.92857143]
+         [1.         1.        ]]
+
+        """
         return self.point_arrays.t_coords
 
     @t_coords.setter
     def t_coords(self, t_coords: np.ndarray):
-        """Set the array to use as the texture coordinates."""
         self.point_arrays.t_coords = t_coords  # type: ignore
 
     @property
     def textures(self) -> Dict[str, _vtk.vtkTexture]:
         """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
 
-        When casting back to a VTK dataset or filtering this dataset, these textures
-        will not be passed.
+        When casting back to a VTK dataset or filtering this dataset,
+        these textures will not be passed.
+
+        Examples
+        --------
+        Return the active texture datasets from the globe example.
+
+        >>> from pyvista import examples
+        >>> globe = examples.load_globe()
+        >>> globe.textures
+        {'2k_earth_daymap': (Texture)...}
 
         """
         return self._textures
 
     def clear_textures(self):
-        """Clear the textures from this mesh."""
+        """Clear the textures from this mesh.
+
+        Examples
+        --------
+        Clear the texture from the globe example
+
+        >>> from pyvista import examples
+        >>> globe = examples.load_globe()
+        >>> globe.textures
+        {'2k_earth_daymap': (Texture)...}
+        >>> globe.clear_textures()
+        >>> globe.textures
+        {}
+
+        """
         self._textures.clear()
 
     def _activate_texture(mesh, name: str) -> _vtk.vtkTexture:
@@ -335,7 +473,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        vtk.vtkTexture : The active texture
+        vtk.vtkTexture
+            The active texture
 
         """
         if name is True or isinstance(name, int):
@@ -369,7 +508,6 @@ class DataSet(DataSetFilters, DataObject):
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
-
         """
         if name is None:
             self.GetCellData().SetActiveScalars(None)
@@ -436,7 +574,35 @@ class DataSet(DataSetFilters, DataObject):
         self._active_tensors_info = ActiveArrayInfo(field, name)
 
     def rename_array(self, old_name: str, new_name: str, preference='cell'):
-        """Change array name by searching for the array then renaming it."""
+        """Change array name by searching for the array then renaming it.
+
+        Parameters
+        ----------
+        old_name : str
+            Name of the array to rename.
+
+        new_name : str
+            Name to rename the array to.
+
+        preference : str, optional
+            If there are two arrays of the same name associated with
+            points, cells, or field data, will priortize an array
+            matching this type.  Can be either ``'cell'``,
+            ``'field'``, or ``'point'``.
+
+        Examples
+        --------
+        Create a cube, assign a point array to the mesh named
+        ``'my_array'``, and rename it to ``'my_renamed_array'``.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> cube = pyvista.Cube().clean()
+        >>> cube['my_array'] = range(cube.n_points)
+        >>> cube.rename_array('my_array', 'my_renamed_array')
+        >>> cube['my_renamed_array']
+        array([0, 1, 2, 3, 4, 5, 6, 7])
+        """
         _, field = get_array(self, old_name, preference=preference, info=True)
         was_active = False
         if self.active_scalars_name == old_name:
@@ -504,7 +670,22 @@ class DataSet(DataSetFilters, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
     def points_to_double(self):
-        """Make points double precision."""
+        """Convert the points datatype to double precision.
+
+        Examples
+        --------
+        Create a mesh that has points of the type ``float32`` and
+        convert the points to ``float64``.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.points.dtype
+        dtype('float32')
+        >>> mesh.points_to_double()
+        >>> mesh.points.dtype
+        dtype('float64')
+
+        """
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
 
@@ -577,8 +758,9 @@ class DataSet(DataSetFilters, DataObject):
         t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_vector(self, vector: List[float], angle, point=None, transform_all_input_vectors=False):
-        """Rotate mesh about the vector.
+    def rotate_vector(self, vector: List[float], angle, point=None,
+                      transform_all_input_vectors=False):
+        """Rotate mesh about a vector.
 
         Parameters
         ----------
@@ -613,6 +795,18 @@ class DataSet(DataSetFilters, DataObject):
         xyz : list or tuple or np.ndarray
             Length 3 list, tuple or array.
 
+        Examples
+        --------
+        Create a sphere and translate it by ``(2, 1, 2)``
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.center
+        [0.0, 0.0, 0.0]
+        >>> mesh.translate((2, 1, 2))
+        >>> mesh.center
+        [2.0, 1.0, 2.0]
+
         """
         self.points += np.asarray(xyz)
 
@@ -625,11 +819,56 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def point_arrays(self) -> DataSetAttributes:
-        """Return vtkPointData as DataSetAttributes."""
-        return DataSetAttributes(self.GetPointData(), dataset=self, association=FieldAssociation.POINT)
+        """Return vtkPointData as DataSetAttributes.
+
+        Examples
+        --------
+        Add point arrays to a mesh and list the available ``point_arrays``
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> mesh = pyvista.Cube().clean()
+        >>> mesh.clear_arrays()
+        >>> mesh.point_arrays['my_array'] = np.random.random(mesh.n_points)
+        >>> mesh.point_arrays['my_other_array'] = np.arange(mesh.n_points)
+        >>> mesh.point_arrays
+        pyvista DataSetAttributes
+        Association: POINT
+        Contains keys:
+        ...my_array
+        ...my_other_array
+
+        Access an array from point_arrays
+
+        >>> mesh.point_arrays['my_other_array']
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
+
+        Or access it directly from the mesh.
+
+        >>> mesh['my_array'].shape
+        (8,)
+
+        """
+        return DataSetAttributes(self.GetPointData(), dataset=self,
+                                 association=FieldAssociation.POINT)
 
     def clear_point_arrays(self):
-        """Remove all point arrays."""
+        """Remove all point arrays.
+
+        Examples
+        --------
+        Clear all point arrays from a mesh.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.point_arrays.keys()
+        ['Normals']
+        >>> mesh.clear_point_arrays()
+        >>> mesh.point_arrays.keys()
+        []
+
+        """
         self.point_arrays.clear()
 
     def clear_cell_arrays(self):
@@ -637,7 +876,22 @@ class DataSet(DataSetFilters, DataObject):
         self.cell_arrays.clear()
 
     def clear_arrays(self):
-        """Remove all arrays from point/cell/field data."""
+        """Remove all arrays from point/cell/field data.
+
+        Examples
+        --------
+        Clear all arrays from a mesh.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.point_arrays.keys()
+        ['Normals']
+        >>> mesh.clear_arrays()
+        >>> mesh.point_arrays.keys()
+        []
+
+        """
         self.clear_point_arrays()
         self.clear_cell_arrays()
         self.clear_field_arrays()
@@ -645,16 +899,46 @@ class DataSet(DataSetFilters, DataObject):
     @property
     def cell_arrays(self) -> DataSetAttributes:
         """Return vtkCellData as DataSetAttributes."""
-        return DataSetAttributes(self.GetCellData(), dataset=self, association=FieldAssociation.CELL)
+        return DataSetAttributes(self.GetCellData(), dataset=self,
+                                 association=FieldAssociation.CELL)
 
     @property
     def n_points(self) -> int:
-        """Return the number of points in the entire dataset."""
+        """Return the number of points in the entire dataset.
+
+        Examples
+        --------
+        Create a mesh and return the number of points in the
+        mesh.
+
+        >>> import pyvista
+        >>> cube = pyvista.Cube().clean()
+        >>> cube.n_points
+        8
+
+        """
         return self.GetNumberOfPoints()
 
     @property
     def n_cells(self) -> int:
-        """Return the number of cells in the entire dataset."""
+        """Return the number of cells in the entire dataset.
+
+        Examples
+        --------
+        Create a mesh and return the number of cells in the
+        mesh.
+
+        >>> import pyvista
+        >>> cube = pyvista.Cube().clean()
+        >>> cube.n_cells
+        6
+
+        Notes
+        -----
+        For :class:`pyvista.PolyData`, this will also return the
+        number of faces.
+
+        """
         return self.GetNumberOfCells()
 
     @property
@@ -671,7 +955,16 @@ class DataSet(DataSetFilters, DataObject):
     def bounds(self) -> List[float]:
         """Return the bounding box of this dataset.
 
-        The form is: (xmin,xmax, ymin,ymax, zmin,zmax).
+        The form is: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+
+        Examples
+        --------
+        Create a cube and return the bounds of the mesh.
+
+        >>> import pyvista
+        >>> cube = pyvista.Cube().clean()
+        >>> cube.bounds
+        [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
 
         """
         return list(self.GetBounds())
@@ -808,6 +1101,16 @@ class DataSet(DataSetFilters, DataObject):
 
         This makes sure to put the active scalars' name first in the list.
 
+        Examples
+        --------
+        Return the array names for a mesh.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.point_arrays['my_array'] = range(mesh.n_points)
+        >>> mesh.array_names
+        ['my_array', 'Normals']
+
         """
         names = []
         names.extend(self.field_arrays.keys())
@@ -912,7 +1215,6 @@ class DataSet(DataSetFilters, DataObject):
         True
 
         """
-
         # using subclass here to allow users to subclass our datatypes
         if not issubclass(type(self), type(mesh)):
             raise TypeError(f'The Input DataSet type {type(mesh)} must match '
