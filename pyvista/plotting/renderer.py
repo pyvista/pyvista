@@ -140,7 +140,7 @@ class Renderer(_vtk.vtkRenderer):
 
     @property
     def _charts(self):
-        """Return charts collection"""
+        """Return the charts collection."""
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self.__charts is None:
             self.__charts = Charts(self)
@@ -270,26 +270,23 @@ class Renderer(_vtk.vtkRenderer):
         self.set_background(color)
         self.Modified()
 
-    #### Events ####
-
     def render_event(self, *args, **kwargs):
-        # Notify all charts about render event
+        """Notify all charts about render event."""
         for chart in self._charts:
             chart._render_event(*args, **kwargs)
-
-    #### Everything else ####
 
     def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=None):
         """Enable depth peeling to improve rendering of translucent geometry.
 
         Parameters
         ----------
-        number_of_peels : int
+        number_of_peels : int, optional
             The maximum number of peeling layers. Initial value is 4
-            and is set in the ``pyvista.global_theme``. A special value of
-            0 means no maximum limit.  It has to be a positive value.
+            and is set in the :attr:`pyvista.global_theme`. A special
+            value of 0 means no maximum limit.  It has to be a
+            positive value.
 
-        occlusion_ratio : float
+        occlusion_ratio : float, optional
             The threshold under which the depth peeling algorithm
             stops to iterate over peel layers. This is the ratio of
             the number of pixels that have been touched by the last
