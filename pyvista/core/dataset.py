@@ -648,12 +648,36 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def length(self) -> float:
-        """Return the length of the diagonal of the bounding box."""
+        """Return the length of the diagonal of the bounding box.
+
+        Examples
+        --------
+        Get the length of the bounding box of a sphere.  This should
+        match ``3**(1/2)`` since it is the diagonal of a cube that is
+        ``1 x 1 x 1`` 
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> mesh.length
+        1.7320508075688772
+
+        """
         return self.GetLength()
 
     @property
     def center(self) -> Vector:
-        """Return the center of the bounding box."""
+        """Return the center of the bounding box.
+
+        Examples
+        --------
+        Get the center of a mesh.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere(center=(1, 2, 0))
+        >>> mesh.center
+        [1.0, 2.0, 0.0]
+
+        """
         return list(self.GetCenter())
 
     @property
@@ -683,6 +707,15 @@ class DataSet(DataSetFilters, DataObject):
         -------
         volume : float
             Total volume of the mesh.
+
+        Examples
+        --------
+        Get the volume of a sphere
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.volume
+        0.51825
 
         """
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
@@ -828,23 +861,57 @@ class DataSet(DataSetFilters, DataObject):
         return self.head(display=False, html=False)
 
     def overwrite(self, mesh: _vtk.vtkDataSet):
-        """Overwrite this mesh inplace with the new mesh's geometries and data.
+        """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         Parameters
         ----------
         mesh : vtk.vtkDataSet
             The overwriting mesh.
 
+        Examples
+        --------
+        Create two meshes and overwrite ``mesh_a`` with ``mesh_b``.
+        Show that the array of points from ``mesh_a`` are identical and point
+        to the points in ``mesh_b``.
+
+        >>> import pyvista
+        >>> mesh_a = pyvista.Sphere()
+        >>> mesh_b = pyvista.Cube().clean()
+        >>> mesh_a.overwrite(mesh_b)
+        >>> id(mesh_a.points) == id(mesh_b.points)
+        True
+
         """
-        if not isinstance(mesh, type(self)):
-            raise TypeError('The Input DataSet type must match '
+
+        # using subclass here to allow users to subclass our datatypes
+        if not issubclass(type(self), type(mesh)):
+            raise TypeError(f'The Input DataSet type {type(mesh)} must match '
                             f'the one being overwritten {type(self)}')
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
-        """Get a new representation of this object as an :class:`pyvista.UnstructuredGrid`."""
+        """Get a new representation of this object as an :class:`pyvista.UnstructuredGrid`.
+
+        Returns
+        :class:`pyvista.UnstructuredGrid`
+            Dataset cast into an UnstructuredGrid.
+
+        Examples
+        --------
+        Cast a :class:`pyvista.PolyData` to a
+        :class:`pyvista.UnstructuredGrid`.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> type(mesh)
+        <class 'pyvista.core.pointset.PolyData'>
+        >>> grid = mesh.cast_to_unstructured_grid()
+        >>> type(grid)
+        <class 'pyvista.core.pointset.UnstructuredGrid'>
+
+        """
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
         alg.Update()
@@ -869,7 +936,24 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        int : the index of the point in this mesh that is closes to the given point.
+        int
+            the index of the point in this mesh that is closes to the given point.
+
+        Examples
+        --------
+        Find the index of the closest point to ``(0, 1, 0))``.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> index = mesh.find_closest_point((0, 1, 0))
+        >>> index
+        212
+
+        Get the coordinate of that point.
+
+        >>> print(mesh.points[index])
+        [-0.05218758  0.49653167  0.02706946]
+
         """
         if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
             raise TypeError("Given point must be a length three sequence.")
@@ -1026,7 +1110,7 @@ class DataSet(DataSetFilters, DataObject):
         Parameters
         ----------
         ind : int
-            Cell ID.
+            Cell type ID.
 
         Returns
         -------
