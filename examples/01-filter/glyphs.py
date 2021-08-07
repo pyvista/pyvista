@@ -54,13 +54,13 @@ sphere["vectors"] = vectors * 0.3
 sphere.set_active_vectors("vectors")
 
 # plot just the arrows
-sphere.arrows.plot(scalars='GlyphScale')
+sphere.arrows.plot()
 
 ###############################################################################
+# Plot the arrows and the sphere.
 
-# plot the arrows and the sphere
 p = pv.Plotter()
-p.add_mesh(sphere.arrows, scalars='GlyphScale', lighting=False,
+p.add_mesh(sphere.arrows, lighting=False,
            scalar_bar_args={'title': "Vector Magnitude"})
 p.add_mesh(sphere, color="grey", ambient=0.6, opacity=0.5, show_edges=False)
 p.show()
@@ -83,5 +83,5 @@ arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
 
 p = pv.Plotter()
 p.add_mesh(arrows, color="black")
-p.add_mesh(mesh, scalars="Elevation", cmap="terrain")
+p.add_mesh(mesh, scalars="Elevation", cmap="terrain", smooth_shading=True)
 p.show()

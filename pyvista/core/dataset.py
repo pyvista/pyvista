@@ -272,34 +272,43 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> cube = pyvista.Cube().clean()
         >>> points = cube.points
-        >>> print(points)
-        [[-0.5 -0.5 -0.5]
-         [-0.5 -0.5  0.5]
-         [-0.5  0.5  0.5]
-         [-0.5  0.5 -0.5]
-         [ 0.5 -0.5 -0.5]
-         [ 0.5  0.5 -0.5]
-         [ 0.5  0.5  0.5]
-         [ 0.5 -0.5  0.5]]
+        >>> points
+        pyvista_ndarray([[-0.5, -0.5, -0.5],
+                         [-0.5, -0.5,  0.5],
+                         [-0.5,  0.5,  0.5],
+                         [-0.5,  0.5, -0.5],
+                         [ 0.5, -0.5, -0.5],
+                         [ 0.5,  0.5, -0.5],
+                         [ 0.5,  0.5,  0.5],
+                         [ 0.5, -0.5,  0.5]], dtype=float32)
 
         Shift these points in the z direction and show that their
         position is reflected in the mesh points.
 
         >>> points[:, 2] += 1
-        >>> print(cube.points)
-        [[-0.5 -0.5  0.5]
-         [-0.5 -0.5  1.5]
-         [-0.5  0.5  1.5]
-         [-0.5  0.5  0.5]
-         [ 0.5 -0.5  0.5]
-         [ 0.5  0.5  0.5]
-         [ 0.5  0.5  1.5]
-         [ 0.5 -0.5  1.5]]
+        >>> cube.points
+        pyvista_ndarray([[-0.5, -0.5,  0.5],
+                         [-0.5, -0.5,  1.5],
+                         [-0.5,  0.5,  1.5],
+                         [-0.5,  0.5,  0.5],
+                         [ 0.5, -0.5,  0.5],
+                         [ 0.5,  0.5,  0.5],
+                         [ 0.5,  0.5,  1.5],
+                         [ 0.5, -0.5,  1.5]], dtype=float32)
 
         You can also update the points in-place.  For example, you can
         scale the mesh with:
 
         >>> cube.points *= 2
+        >>> cube.points
+        pyvista_ndarray([[-1., -1.,  1.],
+                         [-1., -1.,  3.],
+                         [-1.,  1.,  3.],
+                         [-1.,  1.,  1.],
+                         [ 1., -1.,  1.],
+                         [ 1.,  1.,  1.],
+                         [ 1.,  1.,  3.],
+                         [ 1., -1.,  3.]], dtype=float32)
 
         """
         _points = self.GetPoints()
@@ -362,7 +371,7 @@ class DataSet(DataSetFilters, DataObject):
         if vectors_name is None:
             return
 
-        if self.active_vectors.ndim != 2:
+        if self.active_vectors.ndim != 2:  # type: ignore
             raise ValueError('Active vectors are not vectors.')
 
         scale = np.linalg.norm(self.active_vectors, axis=1)
@@ -408,14 +417,14 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> from pyvista import examples
         >>> globe = examples.load_globe()
-        >>> print(globe.t_coords)
-        [[0.         0.        ]
-         [0.         0.07142857]
-         [0.         0.14285714]
-         ...
-         [1.         0.85714286]
-         [1.         0.92857143]
-         [1.         1.        ]]
+        >>> globe.t_coords
+        pyvista_ndarray([[0.        , 0.        ],
+                         [0.        , 0.07142857],
+                         [0.        , 0.14285714],
+                         ...,
+                         [1.        , 0.85714286],
+                         [1.        , 0.92857143],
+                         [1.        , 1.        ]])
 
         """
         return self.point_arrays.t_coords
@@ -808,7 +817,7 @@ class DataSet(DataSetFilters, DataObject):
         [2.0, 1.0, 2.0]
 
         """
-        self.points += np.asarray(xyz)
+        self.points += np.asarray(xyz)  # type: ignore
 
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object."""
@@ -1283,8 +1292,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Get the coordinate of that point.
 
-        >>> print(mesh.points[index])
-        [-0.05218758  0.49653167  0.02706946]
+        >>> mesh.points[index]
+        pyvista_ndarray([-0.05218758,  0.49653167,  0.02706946], dtype=float32)
 
         """
         if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
