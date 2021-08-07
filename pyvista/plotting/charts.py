@@ -6,14 +6,7 @@ from typing import Tuple, Sequence, Union, Optional
 import pyvista
 from pyvista import _vtk
 from .tools import parse_color
-
-try:
-    import matplotlib.figure
-    from matplotlib.backends.backend_agg import FigureCanvasAgg
-    _HAS_MPL = True
-except ModuleNotFoundError:
-    _HAS_MPL = False
-
+    
 
 #region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):
@@ -2062,17 +2055,29 @@ class _Chart3D(_vtk.vtkChartXYZ, _Chart):
 
 
 class ChartMPL(_vtk.vtkImageItem, _Chart):
+    """Create new chart from an existing matplotlib figure.
+
+    Parameters
+    ----------
+    figure : matplotlib.figure.Figure
+        The matplotlib figure to draw.
+
+    size : tuple, optional
+        The normalized size of the chart (values between 0 and
+        1). None to completely fill the renderer and autoresize
+
+    loc : tuple, optional
+        The normalized location of the chart (values between 0 and
+        1). Set to ``None`` to manually set the position (in pixels)
+
+    """
 
     def __init__(self, figure, size=(1, 1), loc=(0, 0)):
-        """
-        Create new chart from an existing matplotlib figure.
-        :param figure: The matplotlib figure to draw
-        :param size: The normalized size of the chart (values between 0 and 1). None to completely fill the renderer
-                     and autoresize
-        :param loc: The normalized location of the chart (values between 0 and 1). None to manually set the position
-                    (in pixels)
-        """
-        if not _HAS_MPL:
+        """Initialize chart."""
+        try:
+            import matplotlib.figure
+            from matplotlib.backends.backend_agg import FigureCanvasAgg
+        except ModuleNotFoundError:
             raise ImportError("ChartMPL requires matplotlib")
 
         super().__init__()
@@ -2154,8 +2159,11 @@ class Charts:
     def __init__(self, renderer):
         self._charts = []
 
-        self._scene = None  # Postpone creation of scene and actor objects until they are needed. Otherwise they are
-        self._actor = None  # not properly cleaned up in case the Plotter's initialization fails.
+        # Postpone creation of scene and actor objects until they are
+        # needed. Otherwise they are not properly cleaned up in case
+        # the Plotter's initialization fails.
+        self._scene = None
+        self._actor = None
         self._renderer = renderer
 
     def setup_scene(self):
@@ -2167,6 +2175,7 @@ class Charts:
         self._scene.SetRenderer(self._renderer)
 
     def deep_clean(self):
+        """Remove all references to the chart objects and internal objects."""
         if self._scene is not None:
             for chart in self._charts:
                 chart._x_axis = None
