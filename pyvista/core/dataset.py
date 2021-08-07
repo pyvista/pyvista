@@ -594,19 +594,87 @@ class DataSet(DataSetFilters, DataObject):
         xyz : scale factor list or tuple or np.ndarray
             Length 3 list, tuple or array.
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> pl.show_grid()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> pl.show_grid()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.scale([10.0, 10.0, 10.0])
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
         """
         self.points *= np.asarray(xyz)
 
     def flip_x(self):
-        """Flip mesh about the x-axis."""
+        """Flip mesh about the x-axis.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_x()
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
         self.points[:, 0] *= -1.0
 
     def flip_y(self):
-        """Flip mesh about the y-axis."""
+        """Flip mesh about the y-axis.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_y()
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
         self.points[:, 1] *= -1.0
 
     def flip_z(self):
-        """Flip mesh about the z-axis."""
+        """Flip mesh about the z-axis.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_z()
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
         self.points[:, 2] *= -1.0
 
     def flip_vector(self, vector):
@@ -616,14 +684,28 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         vector : tuple
            Normal vector to rotate about.
-        """
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_vector([1.0, 1.0, 1.0])
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
         # Householder matrix
         # https://en.wikipedia.org/wiki/Householder_transformation#Householder_matrix
         vector /= np.linalg.norm(vector)
         matrix = np.matrix(vector / np.linalg.norm(vector))
         householder_matrix = np.eye(3) - 2.0 * np.outer(matrix, matrix.H)
-
         self.points = (householder_matrix @ self.points.T).T
 
     def copy_meta_from(self, ido: 'DataSet'):
