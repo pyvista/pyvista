@@ -47,7 +47,6 @@ the VTK API, you can choose to wrap VTK arrays, but you may find that
 using :class:`numpy.ndarray` is more convienent and avoids the looping
 overhead in Python.
 
-
 Wrapping a VTK Array
 ~~~~~~~~~~~~~~~~~~~~
 Let's define points of a triangle.  Using the VTK API, this can be
@@ -57,7 +56,7 @@ done with:
 
    >>> import vtk
    >>> vtk_array = vtk.vtkDoubleArray()
-   >>> vtk_array.SetNumberOfComponents(2)
+   >>> vtk_array.SetNumberOfComponents(3)
    >>> vtk_array.SetNumberOfValues(9)
    >>> vtk_array.SetValue(0, 0)
    >>> vtk_array.SetValue(1, 0)
@@ -70,6 +69,12 @@ done with:
    >>> vtk_array.SetValue(8, 0)
    >>> print(vtk_array)
 
+PyVista supports creating objects directly from vtkDataArrays, but
+there's a better, and more pythonic alternative by using
+:class:`numpy.ndarray`.
+
+Using NumPy with PyVista
+~~~~~~~~~~~~~~~~~~~~~~~~
 However, there's no reason to do this since Python already has the
 excellent C array library `NumPy <https://numpy.org/>`_.  You could
 more create a points array with:
@@ -77,10 +82,10 @@ more create a points array with:
 .. jupyter-execute::
 
    >>> import numpy as np
-   >>> points = np.array([[0, 0, 0],
-   ...                    [1, 0, 0],
-   ...                    [0.5, 0.667, 0]])
-   >>> points
+   >>> np_points = np.array([[0, 0, 0],
+   ...                       [1, 0, 0],
+   ...                       [0.5, 0.667, 0]])
+   >>> np_points
 
 We use a :class:`numpy.ndarray` here so that PyVista directly "point"
 the underlying C array to VTK.  VTK already has APIs to directly read
@@ -107,11 +112,22 @@ on the "VTK side".
 
 .. jupyter-execute::
 
-   >>> wrapped[0] = 10
+   >>> wrapped[0, 0] = 10
    >>> vtk_array.GetValue(0)
 
-If we attempt to pass a Python list, it will be converted over into a
-VTK array at some point.
+Or we can change the value from the VTK array and see it reflected in
+the numpy wrapped array.  Let's change the value back:
+
+.. jupyter-execute::
+
+   >>> vtk_array.SetValue(0, 0)
+   >>> wrapped[0, 0]
+
+
+Using a Python List
+~~~~~~~~~~~~~~~~~~~
+PyVista supports the use of Python lists, and you could define a your
+points using a nested list of lists via:
 
 .. jupyter-execute::
 
@@ -119,13 +135,66 @@ VTK array at some point.
    ...           [1, 0, 0],
    ...           [0.5, 0.667, 0]]
 
+When used in the context of :class:`pyvista.PolyData` to create the
+mesh, this list will automatically be wrapped using numpy and then
+passed to VTK.  This avoids any looping overhead and while still
+allowing you to use native python classes.
+
+Finally, let's show how we can use these three objects in the context
+of a PyVista geometry class.  Here, we create a simple point mesh
+containing just the three points:
+
+.. jupyter-execute::
+   
+   >>> from_vtk = pyvista.PolyData(vtk_array)
+   >>> from_np = pyvista.PolyData(np_points)
+   >>> from_list = pyvista.PolyData(points)
+
+These point meshes all contain three points and are effecively
+identical.  Let's show this by accessing the underlying points array
+from the mesh, which is represented as a :class:`pyvista_ndarray`
+
+.. jupyter-execute::
+
+   >>> from_vtk.points
+
+And show that these are all identical
+
+.. jupyter-execute::
+
+   >>> assert np.allclose(from_vtk.points, from_np.points)
+   >>> assert np.allclose(from_vtk.points, from_list.points)
+   >>> assert np.allclose(from_np.points, from_list.points)
+
+Finally, let's plot this (very) simple example using PyVista's
+:func:`pyvista.plot` method.  Let's make this a full example so you
+can see the entire process.
+
+.. pyvista-plot::
+   :context:
+
+   >>> import pyvista
+   >>> points = [[0, 0, 0],
+   ...           [1, 0, 0],
+   ...           [0.5, 0.667, 0]]
+   >>> mesh = pyvista.PolyData(points)
+   >>> mesh.plot(show_bounds=True, cpos='xy', point_size=20)
+
+We'll get into PyVista's data classes and attributes later, but for
+now we've show how create a simple mesh containing only points.  To
+create a surface, we must specify the connectivity of the geometry, and
+to do that we need to specify the cells (or faces) of this mesh.
 
 
-PLACEHOLDER: Cells
-==================
+Geometry and Mesh Connectivity within PyVista
+---------------------------------------------
+With our previous example, we defined our "mesh" as three disconnected
+points.  While this is useful for representing "point clouds", if we
+want to create a surface, we have to describe the connectivity of the
+mesh.  Tod do this, let's define a single cell.
 
-Next, let's define a single cell.  This cell will be composed of three
-points in the same order as we defined.
+This cell will be composed of three points in the same order as we
+defined earlier.
 
 .. note::
    Observe how we had insert a leading ``3`` to tell VTK that our face
@@ -138,15 +207,22 @@ points in the same order as we defined.
 
    >>> cells = [3, 0, 1, 2]
 
-We now have all the necessary pieces to assemble an instance of
-:class:`pyvista.PolyData`.
+Now we have all the necessary pieces to assemble an instance of
+:class:`pyvista.PolyData` that contains a single triangle.
 
 .. jupyter-execute::
 
-   >>> import pyvista
    >>> mesh = pyvista.PolyData(points, cells)
    >>> mesh
-              
+
+Let's also plot this:
+
+.. pyvista-plot::
+   :context:
+
+   >>> mesh = pyvista.PolyData(points, [3, 0, 1, 2])
+   >>> mesh.plot(cpos='xy', show_edges=True)
+
 This instance has several attributes to access the underlying data of
 the mesh.  For example, if you wish to access or modify the points of
 the mesh, you can simply:
@@ -154,3 +230,22 @@ the mesh, you can simply:
 .. jupyter-execute::
 
    >>> mesh.points
+
+cells...
+
+methods...
+
+transition to data arrays...
+
+Data Arrays
+-----------
+
+Point Arrays
+~~~~~~~~~~~~
+
+Cell Arrays
+~~~~~~~~~~~
+
+Field Arrays
+~~~~~~~~~~~~
+

@@ -241,7 +241,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             return
 
         # First parameter is points
-        if isinstance(var_inp, (np.ndarray, list)):
+        if isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
             self.SetPoints(pyvista.vtk_points(var_inp, deep=deep))
         else:
             msg = f"""
@@ -252,6 +252,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
                 - pyvista.PolyData
                 - numeric numpy.ndarray (1 or 2 dimensions)
                 - List (flat or nested with 3 points per vertex)
+                - vtk.vtkDataArray
 
                 Instead got: {type(var_inp)}"""
             raise TypeError(dedent(msg.strip('\n')))
