@@ -694,6 +694,10 @@ def wrap(dataset):
         else:
             raise NotImplementedError('NumPy array could not be wrapped pyvista.')
 
+    # VTK arrays
+    if isinstance(dataset, _vtk.vtkDataArray):
+        return pyvista.pyvista_ndarray(dataset)
+
     wrappers = {
         'vtkExplicitStructuredGrid': pyvista.ExplicitStructuredGrid,
         'vtkUnstructuredGrid': pyvista.UnstructuredGrid,

@@ -374,10 +374,11 @@ class DataSet(DataSetFilters, DataObject):
         if self.active_vectors.ndim != 2:  # type: ignore
             raise ValueError('Active vectors are not vectors.')
 
+        scale_name = f'{vectors_name} Magnitude'
         scale = np.linalg.norm(self.active_vectors, axis=1)
-        self.point_arrays.append(scale, '_vector_scale', active_vectors=False,
+        self.point_arrays.append(scale, scale_name, active_vectors=False,
                                  active_scalars=False)
-        return self.glyph(orient=vectors_name, scale='_vector_scale')
+        return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
     def vectors(self) -> Optional[pyvista_ndarray]:  # pragma: no cover
@@ -1224,10 +1225,12 @@ class DataSet(DataSetFilters, DataObject):
         True
 
         """
-        # using subclass here to allow users to subclass our datatypes
-        if not issubclass(type(self), type(mesh)):
+        # ``self`` should be first to permit it to be a subtype of mesh
+        # see https://github.com/pyvista/pyvista/pull/1571
+        if not isinstance(self, type(mesh)):
             raise TypeError(f'The Input DataSet type {type(mesh)} must match '
                             f'the one being overwritten {type(self)}')
+
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
@@ -1236,6 +1239,7 @@ class DataSet(DataSetFilters, DataObject):
         """Get a new representation of this object as an :class:`pyvista.UnstructuredGrid`.
 
         Returns
+        -------
         :class:`pyvista.UnstructuredGrid`
             Dataset cast into an UnstructuredGrid.
 

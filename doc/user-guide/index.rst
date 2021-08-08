@@ -53,6 +53,7 @@ User Guide Contents
 
    what-is-a-mesh
    simple
+   data_model
    jupyter/index
    optional_features
    themes
