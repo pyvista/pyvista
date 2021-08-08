@@ -614,8 +614,18 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.points *= np.asarray(xyz)
 
-    def flip_x(self):
+    def flip_x(self, point=None, transform_all_input_vectors=False):
         """Flip mesh about the x-axis.
+
+        Parameters
+        ----------
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
 
         Examples
         --------
@@ -633,10 +643,25 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
-        self.points[:, 0] *= -1.0
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.reflection((1, 0, 0), point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def flip_y(self):
+    def flip_y(self, point=None, transform_all_input_vectors=False):
         """Flip mesh about the y-axis.
+
+        Parameters
+        ----------
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
 
         Examples
         --------
@@ -654,10 +679,25 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
-        self.points[:, 1] *= -1.0
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.reflection((0, 1, 0), point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def flip_z(self):
+    def flip_z(self, point=None, transform_all_input_vectors=False):
         """Flip mesh about the z-axis.
+
+        Parameters
+        ----------
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
 
         Examples
         --------
@@ -675,15 +715,28 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
-        self.points[:, 2] *= -1.0
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.reflection((0, 0, 1), point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def flip_vector(self, vector):
-        """Flip mesh about the vector.
+    def flip_normal(self, normal: List[float], point=None, transform_all_input_vectors=False):
+        """Flip mesh about the normal.
 
         Parameters
         ----------
-        vector : tuple
-           Normal vector to rotate about.
+        normal : tuple
+           Normal vector to flip about.
+
+        point : list, optional
+            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
 
         Examples
         --------
@@ -697,16 +750,18 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.subplot(0, 1)
         >>> pl.show_axes()
         >>> mesh2 = mesh1.copy()
-        >>> mesh2.flip_vector([1.0, 1.0, 1.0])
+        >>> mesh2.flip_normal([1.0, 1.0, 1.0])
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
-        # Householder matrix
-        # https://en.wikipedia.org/wiki/Householder_transformation#Householder_matrix
-        vector /= np.linalg.norm(vector)
-        matrix = np.matrix(vector / np.linalg.norm(vector))
-        householder_matrix = np.eye(3) - 2.0 * np.outer(matrix, matrix.H)
-        self.points = (householder_matrix @ self.points.T).T
+        if point is None:
+            point = (0.0, 0.0, 0.0)
+        if len(normal) != 3:
+            raise ValueError('Normal must be a vector of 3 values.')
+        if len(point) != 3:
+            raise ValueError('Point must be a vector of 3 values.')
+        t = transformations.reflection(normal, point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object."""

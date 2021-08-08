@@ -1072,41 +1072,46 @@ def test_scale():
     scale2.points *= xyz
     assert np.allclose(scale1.points, scale2.points)
 
-def test_flip():
+def test_flip_x():
     mesh = examples.load_airplane()
-
     flip_x1 = mesh.copy()
     flip_x2 = mesh.copy()
     flip_x1.flip_x()
     flip_x2.points[:, 0] *= -1.0
     assert np.allclose(flip_x1.points, flip_x2.points)
 
+def test_flip_y():
+    mesh = examples.load_airplane()
     flip_y1 = mesh.copy()
     flip_y2 = mesh.copy()
     flip_y1.flip_y()
     flip_y2.points[:, 1] *= -1.0
     assert np.allclose(flip_y1.points, flip_y2.points)
 
+def test_flip_z():
+    mesh = examples.load_airplane()
     flip_z1 = mesh.copy()
     flip_z2 = mesh.copy()
     flip_z1.flip_z()
     flip_z2.points[:, 2] *= -1.0
     assert np.allclose(flip_z1.points, flip_z2.points)
 
-    flip_vector1 = mesh.copy()
-    flip_vector2 = mesh.copy()
-    flip_vector1.flip_vector(vector=[1.0, 0.0, 0.0])
-    flip_vector2.flip_x()
-    assert np.allclose(flip_vector1.points, flip_vector2.points)
+def test_flip_normal():
+    mesh = examples.load_airplane()
+    flip_normal1 = mesh.copy()
+    flip_normal2 = mesh.copy()
+    flip_normal1.flip_normal(normal=[1.0, 0.0, 0.0])
+    flip_normal2.flip_x()
+    assert np.allclose(flip_normal1.points, flip_normal2.points)
 
-    flip_vector3 = mesh.copy()
-    flip_vector4 = mesh.copy()
-    flip_vector3.flip_vector(vector=[0.0, 1.0, 0.0])
-    flip_vector4.flip_y()
-    assert np.allclose(flip_vector3.points, flip_vector4.points)
+    flip_normal3 = mesh.copy()
+    flip_normal4 = mesh.copy()
+    flip_normal3.flip_normal(normal=[0.0, 1.0, 0.0])
+    flip_normal4.flip_y()
+    assert np.allclose(flip_normal3.points, flip_normal4.points)
 
-    flip_vector5 = mesh.copy()
-    flip_vector6 = mesh.copy()
-    flip_vector5.flip_vector(vector=[0.0, 0.0, 1.0])
-    flip_vector6.flip_z()
-    assert np.allclose(flip_vector5.points, flip_vector6.points)
+    flip_normal5 = mesh.copy()
+    flip_normal6 = mesh.copy()
+    flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
+    flip_normal6.flip_z()
+    assert np.allclose(flip_normal5.points, flip_normal6.points)
