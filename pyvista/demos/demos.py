@@ -137,3 +137,106 @@ def orientation_plotter():
     pl.add_mesh(ocube['z_n'], color='red')
     pl.show_axes()
     return pl
+
+
+def plot_datasets():
+    """Plot the pyvista dataset types.
+
+    This demo plots the following PyVista dataset types:
+
+    * :class:`pyvista.PolyData`
+    * :class:`pyvista.UnstructuredGrid`
+    * :class:`pyvista.UniformGrid`
+    * :class:`pyvista.RectilinearGrid`
+    * :class:`pyvista.StructuredGrid`
+
+    Examples
+    --------
+    >>> from pyvista import demos
+    >>> demos.plot_datasets()
+
+    """
+    ###########################################################################
+    # uniform grid
+    image = pv.UniformGrid((6, 6, 1))
+
+    ###########################################################################
+    # RectilinearGrid
+    xrng = np.array([0, 0.3, 1, 4, 5, 6, 6.2, 6.6])
+    yrng = np.linspace(-2, 2, 5)
+    zrng = [1]
+    rec_grid = pv.RectilinearGrid(xrng, yrng, zrng)
+
+    ###########################################################################
+    # structured grid
+    ang = np.linspace(0, np.pi/2, 10)
+    r = np.linspace(6, 10, 8)
+    z = [0]
+    ang, r, z = np.meshgrid(ang, r, z)
+
+    x = r*np.sin(ang)
+    y = r*np.cos(ang)
+
+    struct_grid = pv.StructuredGrid(x, y, z)
+
+    ###########################################################################
+    # polydata
+    points = pv.PolyData([[1, 2, 2], [2, 2, 2]])
+
+    line = pv.Line()
+    line.points += np.array((2, 0, 0))
+    line.clear_arrays()
+
+    tri = pv.Triangle()
+    tri.points += np.array([0, 1, 0])
+    circ = pv.Circle()
+    circ.points += np.array([1.5, 1.5, 0])
+
+    poly = tri + circ
+
+    ###########################################################################
+    # unstructuredgrid
+    pyr = pv.Pyramid()
+    pyr.points *= 0.7
+    cube = pv.Cube(center=(2, 0, 0))
+    ugrid = circ + pyr + cube + tri
+
+    pl = pv.Plotter(shape='3/2')
+
+    # polydata
+    pl.subplot(0)
+    pl.add_text('4. PolyData')
+    pl.add_points(points, point_size=20)
+    pl.add_mesh(line, line_width=5)
+    pl.add_mesh(poly)
+    pl.add_mesh(poly.extract_all_edges(), line_width=2, color='k')
+
+    # unstructuredgrid
+    pl.subplot(1)
+    pl.add_text('5. UnstructuredGrid')
+    pl.add_mesh(ugrid)
+    pl.add_mesh(ugrid.extract_all_edges(), line_width=2, color='k')
+
+    # UniformGrid
+    pl.subplot(2)
+    pl.add_text('1. UniformGrid')
+    pl.add_mesh(image)
+    pl.add_mesh(image.extract_all_edges(), color='k', style='wireframe', line_width=2)
+    pl.camera_position = 'xy'
+
+    # RectilinearGrid
+    pl.subplot(3)
+    pl.add_text('2. RectilinearGrid')
+    pl.add_mesh(rec_grid)
+    pl.add_mesh(rec_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
+    pl.camera_position = 'xy'
+
+    # StructuredGrid
+    pl.subplot(4)
+    pl.add_text('3. StructuredGrid')
+    pl.add_mesh(struct_grid)
+    pl.add_mesh(struct_grid.extract_all_edges(), color='k', style='wireframe',
+                line_width=2)
+    pl.camera_position = 'xy'
+
+    pl.show()

@@ -34,7 +34,6 @@ time we interact with `vtkDataSet`_ objects rather than with
 `vtkDataObject`_ objects. PyVista uses the same data types as VTK, but
 structures them in a more pythonic manner for ease of use.
 
-
 If you'd like a background for how VTK structures its data, see
 `Introduction to VTK in Python by Kitware
 <https://vimeo.com/32232190>`_, as well as the numerous code examples
@@ -52,15 +51,57 @@ At the most fundamental level, all PyVista geometry objects are
 :ref:`ref_dataset`. A dataset is a surface or volume in 3D space
 containing points, cells, and attributes describing that geometry.
 
-Geometry in PyVista is represented as points and cells. In certain
-geometry types, such as :class:`pyvista.PolyData` or
-:class:`pyvista.UnstructuredGrids`, these cells must be explicitly
-defined. In other data types, such as :class:`pyvista.UniformGrid`,
-the cells are defined as a emergent property based on the shape of the
-point array.
+Geometry in PyVista is represented as points and cells.  For example,
+consider a single cell within a :class:`pyvista.PolyData`
+
+.. jupyter-execute::
+   :hide-code:
+
+   import pyvista
+   pyvista.set_plot_theme('document')
+   pyvista.set_jupyter_backend('static')
+   points = [[.2, 0, 0], [1.3, 0, 0], [1, 1.2, 0], [0, 1, 0]]
+   cells = [4, 0, 1, 2, 3]
+   mesh = pyvista.PolyData(points, cells)
+
+   pl = pyvista.Plotter()
+   pl.add_mesh(mesh, show_edges=False)
+   pl.add_mesh(mesh.extract_feature_edges(), line_width=5, color='k')
+   pl.add_point_labels(mesh.points, [f'Point {i}' for i in range(4)], font_size=20, point_size=20)
+   pl.add_point_labels(mesh.center, ['Cell'], font_size=28)
+   pl.camera_position = 'xy'
+   pl.show()
+
+We would need a way to describe the position of each of these points
+in space, but we're limited to expressing the values themselves as
+we've done above (lists of arrays with indices). VTK (and hence
+PyVista) have multiple classes that represent different data
+shapes. The most important dataset classes are shown below:
+
+.. jupyter-execute::
+   :hide-code:
+
+   from pyvista import demos
+   demos.plot_datasets()
+
+Here, the above datasets are ordered from most (5) to least complex
+(1). That is, every dataset can be represented as an
+:class:`pyvista.UnstructuredGrid`, but the
+:class:`pyvista.UnstructuredGrid` class takes the most amount of
+memory to store since they must account for every individual point and
+cell . On the other hand, since `vtkImageData`_
+(:class:`pyvista.UniformGrid`) is uniformly spaced, a few integers and
+floats can describe the shape, so it takes the least amount of memory
+to store."
+
+This is because in :class:`pyvista.PolyData` or
+:class:`pyvista.UnstructuredGrid`, points and cells must be explicitly
+defined.  In other data types, such as :class:`pyvista.UniformGrid`,
+the cells (and even points) are defined as a emergent property based
+on the dimensionality of the grid.
 
 To see this in practice, let's create the simplest surface represented
-as a :class:`pyvista.PolyData`. But first, we need to define our points.
+as a :class:`pyvista.PolyData`. First, we need to define our points.
 
 
 Points and Arrays in PyVista
