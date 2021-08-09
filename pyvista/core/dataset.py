@@ -729,7 +729,7 @@ class DataSet(DataSetFilters, DataObject):
            Normal vector to flip about.
 
         point : list, optional
-            Point to rotate about.  Defaults to origin ``(0.0, 0.0, 0.0)``.
+            Point to rotate about.  Defaults to center of mesh.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
