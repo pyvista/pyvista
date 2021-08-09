@@ -47,9 +47,10 @@ by Prof. Keenan Crane at Carnegie Melon. The concepts taught here
 will help improve your understanding of why data sets are structured
 the way they are in libraries like VTK.
 
-At the most fundamental level, all PyVista geometry objects are
-:ref:`ref_dataset`. A dataset is a surface or volume in 3D space
-containing points, cells, and attributes describing that geometry.
+At the most fundamental level, all PyVista geometry classes inherit
+from the :ref:`ref_dataset` class. A dataset has geometry, topology,
+and attributes describing that geometry in the form of point, cell, or
+field arrays.
 
 Geometry in PyVista is represented as points and cells.  For example,
 consider a single cell within a :class:`pyvista.PolyData`
@@ -196,10 +197,11 @@ the numpy wrapped array. Let's change the value back:
    >>> wrapped[0, 0]
 
 
-Using a Python List
-~~~~~~~~~~~~~~~~~~~
-PyVista supports the use of Python lists, and you could define a your
-points using a nested list of lists via:
+Using Python Lists or Tuples
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PyVista supports the use of Python sequences (i.e. :class:`list` or
+:class:`tuple`, and you could define a your points using a nested list
+of lists via:
 
 .. jupyter-execute::
 
@@ -234,9 +236,9 @@ And show that these are all identical
 
 .. jupyter-execute::
 
-   >>> assert np.allclose(from_vtk.points, from_np.points)
-   >>> assert np.allclose(from_vtk.points, from_list.points)
-   >>> assert np.allclose(from_np.points, from_list.points)
+   >>> assert np.array_equal(from_vtk.points, from_np.points)
+   >>> assert np.array_equal(from_vtk.points, from_list.points)
+   >>> assert np.array_equal(from_np.points, from_list.points)
 
 Finally, let's plot this (very) simple example using PyVista's
 :func:`pyvista.plot` method. Let's make this a full example so you
@@ -258,8 +260,8 @@ To create a surface, we must specify the connectivity of the geometry,
 and to do that we need to specify the cells (or faces) of this surface.
 
 
-Geometry and Mesh Connectivity within PyVista
----------------------------------------------
+Geometry and Mesh Connectivity/Topology within PyVista
+------------------------------------------------------
 With our previous example, we defined our "mesh" as three disconnected
 points. While this is useful for representing "point clouds", if we
 want to create a surface, we have to describe the connectivity of the
