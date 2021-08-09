@@ -12,7 +12,7 @@ the two approaches in a series of examples.
 For example, to hard-code points for a `vtk.vtkImageData`_ data
 structure using VTK Python's bindings, one would write the following:
 
-.. jupyter-execute::
+.. code:: python
 
    >>> import vtk
    >>> from math import cos, sin
@@ -38,7 +38,6 @@ structure using VTK Python's bindings, one would write the following:
    Assign the points to the image
 
    >>> image_data.GetPointData().SetScalars(points)
-   >>> image_data
 
 As you can see, there is quite a bit of boiler-plate that goes into
 the creation of a simple `vtk.vtkImageData`_ dataset, PyVista provides
@@ -46,9 +45,9 @@ a much cleaner syntax that is both more readable and intuitive. The
 equivalent code in pyvista is:
 
 
-.. jupyter-execute::
+.. code:: python
 
-   >>> import pyvista as pv
+   >>> import pyvista
    >>> import numpy as np
 
    Use the meshgrid method to create 2D "grids" of the x and y values.
@@ -62,9 +61,8 @@ equivalent code in pyvista is:
 
    >>> grid = pyvista.UniformGrid((300, 300, 1))
    >>> grid.point_arrays["values"] = values.flatten(order="F")
-   >>> grid
 
-Here, pyvista has done several things for us:
+Here, PyVista has done several things for us:
 
 #. PyVista combines the dimensionality of the data (in the shape of
    the :class:`numpy.ndarray`) with the values of the data in one line. VTK uses
@@ -75,23 +73,23 @@ Here, pyvista has done several things for us:
    variable.
 
 #. :class:`pyvista.UniformGrid` wraps `vtk.vtkImageData`_, just with a
-  better name; they are both containers of evenly spaced points. Your
-  data does not have to be an "image" to use it with vtk.vtkImageData;
-  rather, like images, values in the dataset are evenly spaced apart
-  like pixels in an image.
+   better name; they are both containers of evenly spaced points. Your
+   data does not have to be an "image" to use it with vtk.vtkImageData;
+   rather, like images, values in the dataset are evenly spaced apart
+   like pixels in an image.
 
-  Furthermore, since we know the container is for uniformly spaced data,
-  pyvista sets the origin and spacing by default to ``(0, 0, 0)`` and
-  ``(1, 1, 1)``. This is another great thing about PyVista and python!
-  Rather than having to know everything about the VTK library up front,
-  you can get started very easily! Once you get more familiar with it
-  and need to do something more complex, you can dive deeper. For
-  example, changing the origin and spacing is as simple as:
+   Furthermore, since we know the container is for uniformly spaced data,
+   pyvista sets the origin and spacing by default to ``(0, 0, 0)`` and
+   ``(1, 1, 1)``. This is another great thing about PyVista and python!
+   Rather than having to know everything about the VTK library up front,
+   you can get started very easily! Once you get more familiar with it
+   and need to do something more complex, you can dive deeper. For
+   example, changing the origin and spacing is as simple as:
 
-  .. code:: python
+   .. code:: python
 
-     >>> grid.origin = (10, 20, 10)
-     >>> grid.spacing = (2, 3, 5)
+      >>> grid.origin = (10, 20, 10)
+      >>> grid.spacing = (2, 3, 5)
 
 #. The name for the :attr:`point_array <pyvista.point_array>` is given
    directly in dictionary-style fashion. Also, since VTK stores data
@@ -104,5 +102,49 @@ Here, pyvista has done several things for us:
    following the Python best practice of "Explicit is better than
    implicit".
 
-.. _vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
+Finally, with PyVista, each geometry class contains methods that allow
+you to immediately plot the mesh without also setting up the plot.
+For example, in VTK you would:
 
+.. code:: python
+
+   >>> actor = vtk.vtkImageActor()
+   >>> actor.GetMapper().SetInputData(image_data)
+   >>> ren = vtk.vtkRenderer()
+   >>> renWin = vtk.vtkRenderWindow()
+   >>> renWin.AddRenderer(ren)
+   >>> renWin.SetWindowName('ReadSTL')
+   >>> iren = vtk.vtkRenderWindowInteractor()
+   >>> iren.SetRenderWindow(renWin)
+   >>> ren.AddActor(actor)
+   >>> iren.Initialize()
+   >>> renWin.Render()
+   >>> iren.Start()
+
+However, with PyVista you simply need:
+
+.. code:: python
+
+   grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
+
+..
+   This is here so we can generate a plot.  We have to repeat
+   everything since jupyter-execute doesn't allow for
+   plain text between command blocks.
+
+.. jupyter-execute::
+   :hide-code:
+
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
+   import numpy as np
+   xi = np.arange(300)
+   x, y = np.meshgrid(xi, xi)
+   values = 127.5 + (1.0 + np.sin(x/25.0)*np.cos(y/25.0))
+   grid = pv.UniformGrid((300, 300, 1))
+   grid.point_arrays["values"] = values.flatten(order="F")
+   grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
+
+
+.. _vtk.vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html

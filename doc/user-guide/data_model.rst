@@ -4,7 +4,7 @@
 PyVista Data Model
 ==================
 This section of the user guide explains in detail how to construct
-meshes from scratch and to utialize the underlying VTK data model but
+meshes from scratch and to utilize the underlying VTK data model but
 using the PyVista framework.  Many of our :ref:`ref_examples` simply
 load data from files, but don't explain how to construct meshes or
 place data within datasets.
@@ -18,10 +18,25 @@ place data within datasets.
 
 The PyVista DataSet
 -------------------
+To visualize data in VTK or PyVista, two pieces of information are
+required: the data's geometry, which describes where the data is
+positioned in space and what is values are, and its topology, which
+describes how points in the dataset are connected to one another.
 
-PyVista uses the same data types as VTK, but structures them in a more
-pythonic manner for ease of use. If you'd like a background for how
-VTK structures its data, see `Introduction to VTK in Python by Kitware
+At the top level, we have `vtkDataObject`_, which are just "blobs" of
+data without geometry or topology. These contain arrays of
+`vtkFieldData`_. Under this are `vtkDataSet`_, which add geometry and
+topolgy to `vtkDataObject`_. Associated with every point and cell in
+the dataset is a specific value. Since these values must be positioned
+and connected in space, they are held in the `vtkDataArray`_ class,
+which are simply memory buffers on the heap. In PyVista, 99% of the
+time we interact with `vtkDataSet`_ objects rather than with
+`vtkDataObject`_ objects. PyVista uses the same data types as VTK, but
+structures them in a more pythonic manner for ease of use.
+
+
+If you'd like a background for how VTK structures its data, see
+`Introduction to VTK in Python by Kitware
 <https://vimeo.com/32232190>`_, as well as the numerous code examples
 on `Kitware's GitHub site
 <https://kitware.github.io/vtk-examples/site/>`_. An excellent
@@ -29,23 +44,23 @@ introduction to mathematical concept relevant to 3D modeling in
 general implemented in VTK is provided by the `Discrete Differential
 Geometry YouTube Series
 <https://www.youtube.com/playlist?list=PL9_jI1bdZmz0hIrNCMQW1YmZysAiIYSSS>`_
-by Prof. Keenan Crane at Carnegie Melon.  The concepts taught here
+by Prof. Keenan Crane at Carnegie Melon. The concepts taught here
 will help improve your understanding of why data sets are structured
 the way they are in libraries like VTK.
 
 At the most fundamental level, all PyVista geometry objects are
-:ref:`ref_dataset`.  A dataset is a surface or volume in 3D space
+:ref:`ref_dataset`. A dataset is a surface or volume in 3D space
 containing points, cells, and attributes describing that geometry.
 
-Geometry in PyVista is represented as points and cells.  In certain
+Geometry in PyVista is represented as points and cells. In certain
 geometry types, such as :class:`pyvista.PolyData` or
-:class:`pyvista.UnstructuredGrids`, these cells must be explicitaly
-defined.  In other data types, such as :class:`pyvista.UniformGrid`,
+:class:`pyvista.UnstructuredGrids`, these cells must be explicitly
+defined. In other data types, such as :class:`pyvista.UniformGrid`,
 the cells are defined as a emergent property based on the shape of the
 point array.
 
 To see this in practice, let's create the simplest surface represented
-as a :class:`pyvista.PolyData`.  But first, we need to define our points.
+as a :class:`pyvista.PolyData`. But first, we need to define our points.
 
 
 Points and Arrays in PyVista
@@ -57,14 +72,14 @@ There are a variety of ways to create points within PyVista, and this section sh
 * Or just using a :class:`list`
 
 PyVista provides pythonic methods for all three approaches so you can
-choose whatever is most efficient for you.  If you're comfortable with
+choose whatever is most efficient for you. If you're comfortable with
 the VTK API, you can choose to wrap VTK arrays, but you may find that
-using :class:`numpy.ndarray` is more convienent and avoids the looping
+using :class:`numpy.ndarray` is more convenient and avoids the looping
 overhead in Python.
 
 Wrapping a VTK Array
 ~~~~~~~~~~~~~~~~~~~~
-Let's define points of a triangle.  Using the VTK API, this can be
+Let's define points of a triangle. Using the VTK API, this can be
 done with:
 
 .. jupyter-execute::
@@ -84,14 +99,15 @@ done with:
    >>> vtk_array.SetValue(8, 0)
    >>> print(vtk_array)
 
-PyVista supports creating objects directly from vtkDataArrays, but
-there's a better, and more pythonic alternative by using
+PyVista supports creating objects directly from the `vtkDataArray`_
+class, but there's a better, and more pythonic alternative by using
 :class:`numpy.ndarray`.
+
 
 Using NumPy with PyVista
 ~~~~~~~~~~~~~~~~~~~~~~~~
 However, there's no reason to do this since Python already has the
-excellent C array library `NumPy <https://numpy.org/>`_.  You could
+excellent C array library `NumPy <https://numpy.org/>`_. You could
 more create a points array with:
 
 .. jupyter-execute::
@@ -103,14 +119,14 @@ more create a points array with:
    >>> np_points
 
 We use a :class:`numpy.ndarray` here so that PyVista directly "point"
-the underlying C array to VTK.  VTK already has APIs to directly read
+the underlying C array to VTK. VTK already has APIs to directly read
 in the C arrays from ``numpy``, and since VTK is written in C++,
 everything from Python that is transferred over to VTK needs to be in a
 format that VTK can process.
 
 Should you wish to use VTK objects within PyVista, you can still do
-this.  In fact, using :func:`pyvista.wrap`, you can even get a numpy-like
-representation of the data.  For example:
+this. In fact, using :func:`pyvista.wrap`, you can even get a numpy-like
+representation of the data. For example:
 
 .. jupyter-execute::
 
@@ -119,9 +135,9 @@ representation of the data.  For example:
    >>> wrapped
 
 Note that when wrapping the underlying VTK array, we actually perform
-a shallow copy of the data.  In other words, we pass the pointer from
+a shallow copy of the data. In other words, we pass the pointer from
 the underlying C array to the numpy :class:`numpy.ndarray`, meaning
-that the two arrays are now efficiently linked.  This means that we
+that the two arrays are now efficiently linked. This means that we
 can change the array using numpy array indexing and have it modified
 on the "VTK side".
 
@@ -131,7 +147,7 @@ on the "VTK side".
    >>> vtk_array.GetValue(0)
 
 Or we can change the value from the VTK array and see it reflected in
-the numpy wrapped array.  Let's change the value back:
+the numpy wrapped array. Let's change the value back:
 
 .. jupyter-execute::
 
@@ -152,11 +168,11 @@ points using a nested list of lists via:
 
 When used in the context of :class:`pyvista.PolyData` to create the
 mesh, this list will automatically be wrapped using numpy and then
-passed to VTK.  This avoids any looping overhead and while still
+passed to VTK. This avoids any looping overhead and while still
 allowing you to use native python classes.
 
 Finally, let's show how we can use these three objects in the context
-of a PyVista geometry class.  Here, we create a simple point mesh
+of a PyVista geometry class. Here, we create a simple point mesh
 containing just the three points:
 
 .. jupyter-execute::
@@ -165,8 +181,8 @@ containing just the three points:
    >>> from_np = pyvista.PolyData(np_points)
    >>> from_list = pyvista.PolyData(points)
 
-These point meshes all contain three points and are effecively
-identical.  Let's show this by accessing the underlying points array
+These point meshes all contain three points and are effectively
+identical. Let's show this by accessing the underlying points array
 from the mesh, which is represented as a :class:`pyvista.pyvista_ndarray`
 
 .. jupyter-execute::
@@ -182,7 +198,7 @@ And show that these are all identical
    >>> assert np.allclose(from_np.points, from_list.points)
 
 Finally, let's plot this (very) simple example using PyVista's
-:func:`pyvista.plot` method.  Let's make this a full example so you
+:func:`pyvista.plot` method. Let's make this a full example so you
 can see the entire process.
 
 .. pyvista-plot::
@@ -196,34 +212,36 @@ can see the entire process.
    >>> mesh.plot(show_bounds=True, cpos='xy', point_size=20)
 
 We'll get into PyVista's data classes and attributes later, but for
-now we've show how create a simple mesh containing only points.  To
-create a surface, we must specify the connectivity of the geometry, and
-to do that we need to specify the cells (or faces) of this mesh.
+now we've shown how create a simple geometry containing just points.
+To create a surface, we must specify the connectivity of the geometry,
+and to do that we need to specify the cells (or faces) of this surface.
 
 
 Geometry and Mesh Connectivity within PyVista
 ---------------------------------------------
 With our previous example, we defined our "mesh" as three disconnected
-points.  While this is useful for representing "point clouds", if we
+points. While this is useful for representing "point clouds", if we
 want to create a surface, we have to describe the connectivity of the
-mesh.  Tod do this, let's define a single cell.
-
-This cell will be composed of three points in the same order as we
-defined earlier.
-
-.. note::
-   Observe how we had insert a leading ``3`` to tell VTK that our face
-   will contain three points.  In our :class:`pyvista.PolyData` VTK
-   doesn't assume that faces always contain three points, so we have
-   to define that.  This actually gives us the flexibility to define
-   as many (or as few as one) points per cell as we wish.
+mesh. To do this, let's define a single cell composed of three points
+in the same order as we defined earlier.
 
 .. jupyter-execute::
 
    >>> cells = [3, 0, 1, 2]
 
+.. note::
+   Observe how we had insert a leading ``3`` to tell VTK that our face
+   will contain three points. In our :class:`pyvista.PolyData` VTK
+   doesn't assume that faces always contain three points, so we have
+   to define that. This actually gives us the flexibility to define
+   as many (or as few as one) points per cell as we wish.
+
+
 Now we have all the necessary pieces to assemble an instance of
-:class:`pyvista.PolyData` that contains a single triangle.
+:class:`pyvista.PolyData` that contains a single triangle. To do
+this, we simply provide the ``points`` and ``cells`` to the
+constructor of a :class:`pyvista.PolyData`. We can see from the
+representation that this geometry contains three points and one cell
 
 .. jupyter-execute::
 
@@ -255,7 +273,7 @@ You can clearly see how the polygon is created based on the
 connectivity of the points.
 
 This instance has several attributes to access the underlying data of
-the mesh.  For example, if you wish to access or modify the points of
+the mesh. For example, if you wish to access or modify the points of
 the mesh, you can simply access the points attribute with:
 attr:`points <pyvista.core.dataset.DataSet.points>`.
 
@@ -263,17 +281,18 @@ attr:`points <pyvista.core.dataset.DataSet.points>`.
 
    >>> mesh.points
 
-The connectivity can also be accessed from the :attr:`cells <pyvista.UnstructuredGrid.cells>` attribute with:
+The connectivity can also be accessed from the :attr:`cells
+<pyvista.PolyData.cells>` attribute with:
 
 .. jupyter-execute::
 
-   >>> mesh.cells
+   >>> mesh.faces
 
 Or we could simply get `__repr__` of the mesh with:
 
 .. jupyter-execute::
 
-   >>> mesh.cells
+   >>> mesh
 
 
 methods...
@@ -291,4 +310,16 @@ Cell Arrays
 
 Field Arrays
 ~~~~~~~~~~~~
+
+
+.. _vtkDataArray: https://vtk.org/doc/nightly/html/classvtkDataArray.html
+.. _vtkDataSet: https://vtk.org/doc/nightly/html/classvtkDataSet.html
+.. _vtkFieldData: https://vtk.org/doc/nightly/html/classvtkFieldData.html
+.. _vtkDataObject: https://vtk.org/doc/nightly/html/classvtkDataObject.html
+.. _vtk.vtkPolyData: https://vtk.org/doc/nightly/html/classvtkPolyData.html
+.. _vtk.UnstructuredGrid: https://vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
+.. _vtk.vtkStructuredGrid: https://vtk.org/doc/nightly/html/classvtkStructuredGrid.html
+.. _vtk.vtkRectilinearGrid: https://vtk.org/doc/nightly/html/classvtkRectilinearGrid.html
+.. _vtk.vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
+.. _vtk.vtkMultiBlockDataSet: https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html
 
