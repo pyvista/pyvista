@@ -681,8 +681,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
-        if len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
+        check_valid_vector(point, 'point')
         t = transformations.reflection((0, 1, 0), point=point)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
