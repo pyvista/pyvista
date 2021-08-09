@@ -313,7 +313,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
+    def _from_specs(self, dims, spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)):
         """Create VTK image data directly from numpy arrays.
 
         A uniform grid is defined by the node spacings for each axis

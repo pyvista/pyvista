@@ -3,20 +3,35 @@
 
 PyVista Data Model
 ==================
+This section of the user guide explains in detail how to construct
+meshes from scratch and to utialize the underlying VTK data model but
+using the PyVista framework.  Many of our :ref:`ref_examples` simply
+load data from files, but don't explain how to construct meshes or
+place data within datasets.
+
+.. note::
+   The following discussion mentions VTK, does not assume that you
+   have knowledge of VTK.  For those wishing to compare or translate
+   code written for the Python bindings of VTK to PyVista, please see
+   :ref:`pyvista_to_vtk_docs`.
+
+
+The PyVista DataSet
+-------------------
+
 PyVista uses the same data types as VTK, but structures them in a more
 pythonic manner for ease of use. If you'd like a background for how
 VTK structures its data, see `Introduction to VTK in Python by Kitware
 <https://vimeo.com/32232190>`_, as well as the numerous code examples
 on `Kitware's GitHub site
 <https://kitware.github.io/vtk-examples/site/>`_. An excellent
-introduction to mathematical concept implemented in VTK is provided by
-the `Discrete Differential Geometry YouTube Series
+introduction to mathematical concept relevant to 3D modeling in
+general implemented in VTK is provided by the `Discrete Differential
+Geometry YouTube Series
 <https://www.youtube.com/playlist?list=PL9_jI1bdZmz0hIrNCMQW1YmZysAiIYSSS>`_
-by Prof. Keenan Crane at Carnegie Melon.
-
-
-PyVista DataSet
-===============
+by Prof. Keenan Crane at Carnegie Melon.  The concepts taught here
+will help improve your understanding of why data sets are structured
+the way they are in libraries like VTK.
 
 At the most fundamental level, all PyVista geometry objects are
 :ref:`ref_dataset`.  A dataset is a surface or volume in 3D space
@@ -152,7 +167,7 @@ containing just the three points:
 
 These point meshes all contain three points and are effecively
 identical.  Let's show this by accessing the underlying points array
-from the mesh, which is represented as a :class:`pyvista_ndarray`
+from the mesh, which is represented as a :class:`pyvista.pyvista_ndarray`
 
 .. jupyter-execute::
 
@@ -223,15 +238,43 @@ Let's also plot this:
    >>> mesh = pyvista.PolyData(points, [3, 0, 1, 2])
    >>> mesh.plot(cpos='xy', show_edges=True)
 
+While we're at it, let's annotate this plot to describe this mesh.
+
+.. pyvista-plot::
+   :context:
+
+   >>> pl = pyvista.Plotter()
+   >>> pl.add_mesh(mesh, show_edges=True, line_width=5)
+   >>> pl.add_point_labels(mesh.points, [f'Point {i}' for i in range(3)], 
+   ...                     font_size=20, point_size=20)
+   >>> pl.add_point_labels([0.43, 0.2, 0], ['Cell 0'], font_size=20)
+   >>> pl.camera_position = 'xy'
+   >>> pl.show()
+
+You can clearly see how the polygon is created based on the
+connectivity of the points.
+
 This instance has several attributes to access the underlying data of
 the mesh.  For example, if you wish to access or modify the points of
-the mesh, you can simply:
+the mesh, you can simply access the points attribute with:
+attr:`points <pyvista.core.dataset.DataSet.points>`.
 
 .. jupyter-execute::
 
    >>> mesh.points
 
-cells...
+The connectivity can also be accessed from the :attr:`cells <pyvista.UnstructuredGrid.cells>` attribute with:
+
+.. jupyter-execute::
+
+   >>> mesh.cells
+
+Or we could simply get `__repr__` of the mesh with:
+
+.. jupyter-execute::
+
+   >>> mesh.cells
+
 
 methods...
 
