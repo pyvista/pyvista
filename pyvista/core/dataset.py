@@ -680,7 +680,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show(cpos="xy")
         """
         if point is None:
-            point = (0.0, 0.0, 0.0)
+            point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 1, 0), point=point)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
@@ -715,7 +715,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show(cpos="xy")
         """
         if point is None:
-            point = (0.0, 0.0, 0.0)
+            point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 0, 1), point=point)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
@@ -753,7 +753,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show(cpos="xy")
         """
         if point is None:
-            point = (0.0, 0.0, 0.0)
+            point = self.center
         check_valid_vector(normal, 'normal')
         check_valid_vector(point, 'point')
         t = transformations.reflection(normal, point=point)

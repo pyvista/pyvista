@@ -1076,7 +1076,7 @@ def test_flip_x():
     mesh = examples.load_airplane()
     flip_x1 = mesh.copy()
     flip_x2 = mesh.copy()
-    flip_x1.flip_x()
+    flip_x1.flip_x(point=(0, 0, 0))
     flip_x2.points[:, 0] *= -1.0
     assert np.allclose(flip_x1.points, flip_x2.points)
 
@@ -1084,7 +1084,7 @@ def test_flip_y():
     mesh = examples.load_airplane()
     flip_y1 = mesh.copy()
     flip_y2 = mesh.copy()
-    flip_y1.flip_y()
+    flip_y1.flip_y(point=(0, 0, 0))
     flip_y2.points[:, 1] *= -1.0
     assert np.allclose(flip_y1.points, flip_y2.points)
 
@@ -1092,7 +1092,7 @@ def test_flip_z():
     mesh = examples.load_airplane()
     flip_z1 = mesh.copy()
     flip_z2 = mesh.copy()
-    flip_z1.flip_z()
+    flip_z1.flip_z(point=(0, 0, 0))
     flip_z2.points[:, 2] *= -1.0
     assert np.allclose(flip_z1.points, flip_z2.points)
 
