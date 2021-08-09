@@ -13,6 +13,7 @@ from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                raise_not_matching, vtk_id_list_to_array,
                                abstract_class, axis_rotation, transformations)
 from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.errors import check_valid_vector
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -645,8 +646,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
-        if len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
+        check_valid_vector(point, 'point')
         t = transformations.reflection((1, 0, 0), point=point)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
@@ -681,8 +681,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
-        if len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
+        check_valid_vector(point, 'point')
         t = transformations.reflection((0, 1, 0), point=point)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
@@ -717,8 +716,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
-        if len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
+        check_valid_vector(point, 'point')
         t = transformations.reflection((0, 0, 1), point=point)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
@@ -756,10 +754,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
-        if len(normal) != 3:
-            raise ValueError('Normal must be a vector of 3 values.')
-        if len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
+        check_valid_vector(normal, 'normal')
+        check_valid_vector(point, 'point')
         t = transformations.reflection(normal, point=point)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
