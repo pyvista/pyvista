@@ -47,6 +47,7 @@ class DataObject:
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
         data = pyvista.read(filename, **kwargs)
+        print(self, type(data))
         if not isinstance(self, type(data)):
             raise ValueError(f'Reading file returned data of `{data.GetClassName()}`, '
                              f'but `{self.GetClassName()}` was expected.')
