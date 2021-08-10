@@ -1225,12 +1225,9 @@ class DataSet(DataSetFilters, DataObject):
         True
 
         """
-        # ``self`` should be first to permit it to be a subtype of mesh
-        # see https://github.com/pyvista/pyvista/pull/1571
-        if not isinstance(self, type(mesh)):
-            raise TypeError(f'The Input DataSet type {type(mesh)} must match '
+        if not isinstance(mesh, type(self)):
+            raise TypeError('The Input DataSet type must match '
                             f'the one being overwritten {type(self)}')
-
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
