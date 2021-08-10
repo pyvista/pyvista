@@ -148,3 +148,67 @@ However, with PyVista you simply need:
 
 
 .. _vtk.vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
+
+
+
+Tradeoffs
+~~~~~~~~~
+While most features can, not everything can be simplified without
+losing functionality or performance.
+
+In the :class:`collision <pyvista.PolyDataFilters.collision>` filter,
+we demonstrate how to calculate the collision between two meshes.  For
+example:
+
+.. jupyter-execute::
+
+   import pyvista
+
+   # create a default sphere and a shifted sphere
+   mesh_a = pyvista.Sphere()
+   mesh_b = pyvista.Sphere(center=(-0.4, 0, 0))
+   out, n_coll = mesh_a.collision(mesh_b, generate_scalars=True, contact_mode=2)
+
+   pl = pyvista.Plotter()
+   pl.add_mesh(out)
+   pl.add_mesh(mesh_b, style='wireframe', color='k')
+   pl.camera_position = 'xy'
+   pl.show()
+
+Under the hood, the collision filter detects mesh collisions using a
+oriented bounding box (OBB) trees.  For a single collision, this filter
+is as performant as the vtk counterpart, but when computing multiple
+collisions with the same meshes, as in the :ref:`collision_example`
+example, it is more efficient (though less convienent) to use the VTK
+underlying `vtkCollisionDetectionFilter
+<https://vtk.org/doc/nightly/html/classvtkCollisionDetectionFilter.html>`_,
+as the OBB tree is computed once for each mesh.  In most cases, pure
+PyVista is sufficient for most data science, but there are times when
+you may want to use VTK classes directly.
+
+Note that nothing stops you from using VTK classes and then wrapping
+the output with PyVista.  For example:
+
+.. jupyter-execute::
+   
+   import vtk
+   import pyvista
+
+   # Create a circle using vtk
+   polygonSource = vtk.vtkRegularPolygonSource()
+   polygonSource.GeneratePolygonOff()
+   polygonSource.SetNumberOfSides(50)
+   polygonSource.SetRadius(5.0)
+   polygonSource.SetCenter(0.0, 0.0, 0.0)
+   polygonSource.Update()
+
+   # wrap and plot using pyvista
+   mesh = pyvista.wrap(polygonSource.GetOutput())
+   mesh.plot(line_width=3, cpos='xy', color='k')
+
+In this manner, you can get the "best of both worlds" should you need
+the flexibility of PyVista and the functionality of VTK.
+
+.. note::
+   You can use :func:`pyvista.Circle` for a one line replacement of
+   the above VTK code.

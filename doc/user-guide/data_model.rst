@@ -368,4 +368,3 @@ Field Arrays
 .. _vtk.vtkRectilinearGrid: https://vtk.org/doc/nightly/html/classvtkRectilinearGrid.html
 .. _vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
 .. _vtk.vtkMultiBlockDataSet: https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html
-

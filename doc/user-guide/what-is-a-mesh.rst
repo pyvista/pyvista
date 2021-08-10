@@ -132,7 +132,7 @@ easy access to data dictionaries to hold arrays for attributes that
 live either on all points or on all cells of a mesh. These attributes
 can be accessed by dictionaries attached to any PyVista mesh called
 :attr:`point_arrays <pyvista.core.dataset.DataSet.point_arrays>` or
-      :attr:`cell_arrays <pyvista.core.dataset.DataSet.cell_arrays>`.
+:attr:`cell_arrays <pyvista.core.dataset.DataSet.cell_arrays>`.
 
 
 Point data refers to arrays of values (scalars, vectors, etc.) that
