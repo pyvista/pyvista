@@ -50,6 +50,7 @@ def test_wrappers():
 
     class Foo(pyvista.PolyData):
         """A user defined subclass of pyvista.PolyData."""
+        pass
 
     pyvista._wrappers['vtkPolyData'] = Foo
 
