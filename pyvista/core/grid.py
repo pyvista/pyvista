@@ -60,9 +60,9 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
 
     Examples
     --------
-    import pyvista
-    import vtk
-    import numpy as np
+    >>> import pyvista
+    >>> import vtk
+    >>> import numpy as np
 
     Create an empty grid
 
@@ -79,7 +79,6 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     >>> yrng = np.arange(-10, 10, 5)
     >>> zrng = np.arange(-10, 10, 1)
     >>> grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
-
 
     """
 

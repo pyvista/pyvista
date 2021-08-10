@@ -15,6 +15,8 @@ place data within datasets.
    code written for the Python bindings of VTK to PyVista, please see
    :ref:`pyvista_to_vtk_docs`.
 
+For a more general description of our api, see :ref:`what_is_a_mesh`.
+
 
 The PyVista DataSet
 -------------------
@@ -317,21 +319,21 @@ connectivity of the points.
 
 This instance has several attributes to access the underlying data of
 the mesh. For example, if you wish to access or modify the points of
-the mesh, you can simply access the points attribute with:
-attr:`points <pyvista.core.dataset.DataSet.points>`.
+the mesh, you can simply access the points attribute with
+:attr:`points <pyvista.core.dataset.DataSet.points>`.
 
 .. jupyter-execute::
 
    >>> mesh.points
 
-The connectivity can also be accessed from the :attr:`cells
-<pyvista.PolyData.cells>` attribute with:
+The connectivity can also be accessed from the :attr:`faces <pyvista.PolyData.faces>`
+attribute with:
 
 .. jupyter-execute::
 
    >>> mesh.faces
 
-Or we could simply get `__repr__` of the mesh with:
+Or we could simply get the representation of the mesh with:
 
 .. jupyter-execute::
 
@@ -355,6 +357,7 @@ Field Arrays
 ~~~~~~~~~~~~
 
 
+
 .. _vtkDataArray: https://vtk.org/doc/nightly/html/classvtkDataArray.html
 .. _vtkDataSet: https://vtk.org/doc/nightly/html/classvtkDataSet.html
 .. _vtkFieldData: https://vtk.org/doc/nightly/html/classvtkFieldData.html
@@ -363,6 +366,6 @@ Field Arrays
 .. _vtk.UnstructuredGrid: https://vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
 .. _vtk.vtkStructuredGrid: https://vtk.org/doc/nightly/html/classvtkStructuredGrid.html
 .. _vtk.vtkRectilinearGrid: https://vtk.org/doc/nightly/html/classvtkRectilinearGrid.html
-.. _vtk.vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
+.. _vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
 .. _vtk.vtkMultiBlockDataSet: https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html
 

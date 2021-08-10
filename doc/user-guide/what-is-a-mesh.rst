@@ -2,7 +2,6 @@
 
 What is a Mesh?
 ===============
-
 In PyVista, a mesh is any spatially referenced information and usually consists
 of geometrical representations of a surface or volume in 3D space.
 We commonly refer to any spatially referenced dataset as a mesh, so often the
@@ -18,12 +17,17 @@ cells are 2D or 3D is not always of importance and we've worked hard to make
 PyVista work for datasets of either or mixed geometries so that you as a user
 do not have to get bogged down in the nuances.
 
-What is a Node?
----------------
+.. note::
+   This is a high level overview of the PyVista API.  For further
+   details regarding our data model and how it relates to the
+   underlying VTK data model, please see :ref:`pyvista_data_model`.
 
-Nodes are the vertices of the mesh - the XYZ coordinates of the underlying
-structure. All PyVista datasets (meshes!) have nodes and sometimes,
-you can have a mesh that only has nodes - like a point cloud.
+
+What is a point?
+----------------
+Points are the vertices of the mesh - the XYZ coordinates of the underlying
+structure. All PyVista datasets (meshes!) have points and sometimes,
+you can have a mesh that only has points - like a point cloud.
 
 For example, you can create a point cloud mesh using the
 :class:`pyvista.PolyData` class which is built for meshes that have 1D and 2D
@@ -39,13 +43,13 @@ You can create one by defining a 2D array XYZ coordinates like so:
     import numpy as np
     import pyvista as pv
 
-    nodes = np.random.rand(100, 3)
-    mesh = pv.PolyData(nodes)
+    points = np.random.rand(100, 3)
+    mesh = pv.PolyData(points)
     mesh.plot(point_size=30, render_points_as_spheres=True)
 
 
 But it's import to note that most meshes have some sort of
-connectivity between nodes such as this gridded mesh:
+connectivity between points such as this gridded mesh:
 
 
 .. pyvista-plot::
@@ -90,11 +94,11 @@ Or this triangulated surface:
 What is a Cell?
 ---------------
 
-A cell is the geometry between nodes that defines the connectivity or
+A cell is the geometry between points that defines the connectivity or
 topology of a mesh. In the examples above, cells are defined by the
-lines (edges colored in black) connecting nodes (colored in red).  For
+lines (edges colored in black) connecting points (colored in red).  For
 example, a cell in the beam example is a a voxel defined by region
-between eight nodes in that mesh:
+between eight points in that mesh:
 
 .. pyvista-plot::
     :context:
@@ -116,26 +120,26 @@ between eight nodes in that mesh:
 
 
 Cells aren't limited to voxels, they could be a triangle between three
-nodes, a line between two nodes, or even a single node could be its
+points, a line between two points, or even a single point could be its
 own cell (but that's a special case).
 
 
 What are attributes?
 --------------------
-
-Attributes are data values that live on either the nodes or cells of a
+Attributes are data values that live on either the points or cells of a
 mesh. In PyVista, we work with both point data and cell data and allow
 easy access to data dictionaries to hold arrays for attributes that
-live either on all nodes or on all cells of a mesh. These attributes
+live either on all points or on all cells of a mesh. These attributes
 can be accessed by dictionaries attached to any PyVista mesh called
-``.point_arrays`` or ``.cell_arrays``.
+:attr:`point_arrays <pyvista.core.dataset.DataSet.point_arrays>` or
+      :attr:`cell_arrays <pyvista.core.dataset.DataSet.cell_arrays>`.
 
 
 Point data refers to arrays of values (scalars, vectors, etc.) that
-live on each node of the mesh.  The order of this array is crucial!
-Each element in an attribute array must correspond to a node or cell
+live on each point of the mesh.  The order of this array is crucial!
+Each element in an attribute array must correspond to a point or cell
 in the mesh.  Let's create some point data for the beam mesh.  When
-plotting the values between nodes are interpolated across the cells.
+plotting the values between points are interpolated across the cells.
 
 .. pyvista-plot::
     :context:
@@ -145,9 +149,8 @@ plotting the values between nodes are interpolated across the cells.
 
 
 Cell data refers to arrays of values (scalars, vectors, etc.) that
-live throughout each cell of the mesh.
-That is the entire cell (2D face or 3D volume) is assigned the value of
-that attribute.
+live throughout each cell of the mesh.  That is the entire cell (2D
+face or 3D volume) is assigned the value of that attribute.
 
 .. pyvista-plot::
     :context:
@@ -156,8 +159,8 @@ that attribute.
     mesh.plot(scalars='my cell values', cpos=cpos, show_edges=True)
 
 
-Here's a comparison of point data vs. cell data and how point data is
-interpolated across cells when mapping colors. This is unlike cell
+Here's a comparison of point data versus cell data and how point data
+is interpolated across cells when mapping colors. This is unlike cell
 data which has a single value across the cell's domain:
 
 .. pyvista-plot::
