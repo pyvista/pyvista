@@ -20,6 +20,8 @@ from pyvista.themes import DefaultTheme as _GlobalTheme  # hide this
 # Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
+from pyvista.utilities.wrappers import _wrappers
+
 global_theme = _GlobalTheme()
 rcParams = _rcParams()  # raises DeprecationError when used
 

@@ -43,6 +43,32 @@ def test_make_tri_mesh(sphere):
     assert np.allclose(sphere.faces, mesh.faces)
 
 
+def test_wrappers():
+    vtk_data = vtk.vtkPolyData()
+    pv_data = pyvista.wrap(vtk_data)
+    assert isinstance(pv_data, pyvista.PolyData)
+
+    class Foo(pyvista.PolyData):
+        """A user defined subclass of pyvista.PolyData."""
+
+    pyvista._wrappers['vtkPolyData'] = Foo
+
+    pv_data = pyvista.wrap(vtk_data)
+    assert isinstance(pv_data, Foo)
+
+    tri_data = pv_data.delaunay_2d()
+
+    assert isinstance(tri_data, Foo)
+
+    uniform_grid = pyvista.UniformGrid()
+    surface = uniform_grid.extract_surface()
+
+    assert isinstance(surface, Foo)
+
+    surface.delaunay_2d(inplace=True)
+    assert isinstance(surface, Foo)
+
+
 def test_skybox(tmpdir):
     path = str(tmpdir.mkdir("tmpdir"))
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
