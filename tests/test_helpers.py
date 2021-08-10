@@ -52,22 +52,27 @@ def test_wrappers():
         """A user defined subclass of pyvista.PolyData."""
         pass
 
-    pyvista._wrappers['vtkPolyData'] = Foo
+    default_wrappers = pyvista._wrappers.copy()
+    # Use try...finally to set and reset _wrappers
+    try:
+        pyvista._wrappers['vtkPolyData'] = Foo
 
-    pv_data = pyvista.wrap(vtk_data)
-    assert isinstance(pv_data, Foo)
+        pv_data = pyvista.wrap(vtk_data)
+        assert isinstance(pv_data, Foo)
 
-    tri_data = pv_data.delaunay_2d()
+        tri_data = pv_data.delaunay_2d()
 
-    assert isinstance(tri_data, Foo)
+        assert isinstance(tri_data, Foo)
 
-    uniform_grid = pyvista.UniformGrid()
-    surface = uniform_grid.extract_surface()
+        uniform_grid = pyvista.UniformGrid()
+        surface = uniform_grid.extract_surface()
 
-    assert isinstance(surface, Foo)
+        assert isinstance(surface, Foo)
 
-    surface.delaunay_2d(inplace=True)
-    assert isinstance(surface, Foo)
+        surface.delaunay_2d(inplace=True)
+        assert isinstance(surface, Foo)
+    finally:
+        pyvista._wrappers = default_wrappers  # always reset back to default
 
 
 def test_skybox(tmpdir):
