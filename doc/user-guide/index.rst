@@ -57,9 +57,9 @@ User Guide Contents
    simple
    data_model
    pyvista_to_vtk
+   themes
    jupyter/index
    optional_features
-   themes
 
 Videos
 ======

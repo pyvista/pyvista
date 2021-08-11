@@ -10,9 +10,10 @@ load data from files, but don't explain how to construct meshes or
 place data within datasets.
 
 .. note::
-   The following discussion mentions VTK, does not assume that you
-   have knowledge of VTK.  For those wishing to compare or translate
-   code written for the Python bindings of VTK to PyVista, please see
+   Though the following documentation section references VTK, it does
+   not require that you have knowledge of VTK.  For those who wish to
+   see a detailed comparison to VTK or translate code written for the
+   Python bindings of VTK to PyVista, please see
    :ref:`pyvista_to_vtk_docs`.
 
 For a more general description of our api, see :ref:`what_is_a_mesh`.
@@ -55,7 +56,7 @@ and attributes describing that geometry in the form of point, cell, or
 field arrays.
 
 Geometry in PyVista is represented as points and cells.  For example,
-consider a single cell within a :class:`pyvista.PolyData`
+consider a single cell within a :class:`pyvista.PolyData`:
 
 .. jupyter-execute::
    :hide-code:
@@ -339,13 +340,71 @@ Or we could simply get the representation of the mesh with:
 
    >>> mesh
 
+In this representation we see:
 
-methods...
+* Number of points :attr:`n_points <pyvista.core.dataset.DataSet.n_points>`
+* Number of cells :attr:`n_points <pyvista.core.dataset.DataSet.n_cells>`
+* Bounds of the mesh :attr:`bounds <pyvista.core.dataset.DataSet.bounds>`
+* Number of data arrays :attr:`n_arrays <pyvista.core.dataset.DataSet.n_arrays>`
 
-transition to data arrays...
+This is vastly different from the output from VTK.  See
+:ref:`pyvista_vs_vtk_object_repr` for the comparison between the two
+representations.
+
+This mesh contains no data arrays consists only of geometry.  This
+makes it useful for plotting just the geometry of the mesh, but
+datasets often contain more than just geometry.  For example:
+
+* An electrical field computed from a changing magnetic field
+* Vector field of blood flow through artery
+* Surface stresses from a structural finite element analysis
+* Mineral deposits from geophysics
+* Weather patterns as a vector field or surface data.
+
+While each one of these datasets could be represented as a different
+geometry class, they would all contain point, cell, or field data that
+explains the value of the data at a certain location within the
+geometry.
+
 
 Data Arrays
 -----------
+Each :class:`pyvista.DataSet <pyvista.core.dataset.DataSet>` contains attributes that allow you to access the underlying numeric data.  This numerical data may be associated with the :attr:`points <pyvista.core.dataset.DataSet.points>`, :attr:`cells <pyvista.core.dataset.DataSet.cells>`, or not associated with points or cells and attached to the mesh in general.
+
+To illustrate data arrays within PyVista, let's first construct a
+slightly more complex mesh than our previous example.  Here, we create
+a simple mesh containing four equal cells by starting with a
+:class:`pyvista.UniformGrid` and then casting it to a
+:class:`pyvista.UnstructuredGrid` with with :func:`cast_to_unstructured_grid <pyvista.core.dataset.DataSet.cast_to_unstructured_grid`.
+
+.. jupyter-execute::
+
+   >>> grid = pyvista.UniformGrid((3, 3, 1))
+   >>> ugrid = grid.cast_to_unstructured_grid()
+   >>> ugrid
+
+Let's also plot this basic mesh:
+
+.. pyvista-plot::
+   :context:
+   :include-source: False
+
+   >>> grid = pyvista.UniformGrid((3, 3, 1))
+   >>> ugrid = grid.cast_to_unstructured_grid()
+
+.. pyvista-plot::
+   :context:
+
+   >>> pl = pyvista.Plotter()
+   >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
+   >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]
+   >>> pl.add_point_labels(ugrid.points, point_labels,
+   ...                     font_size=25, point_size=20)
+   >>> cell_labels = [f'Cell {i}' for i in range(ugrid.n_cells)]
+   >>> pl.add_point_labels(ugrid.cell_centers(), cell_labels, font_size=25)
+   >>> pl.camera_position = 'xy'
+   >>> pl.show()
+
 
 Point Arrays
 ~~~~~~~~~~~~
@@ -368,3 +427,5 @@ Field Arrays
 .. _vtk.vtkRectilinearGrid: https://vtk.org/doc/nightly/html/classvtkRectilinearGrid.html
 .. _vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
 .. _vtk.vtkMultiBlockDataSet: https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html
+
+.. _cast_to_unstructured_grid: :func:`cast_to_unstructured_grid <pyvista.core.dataset.DataSet.cast_to_unstructured_grid>`

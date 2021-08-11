@@ -150,9 +150,122 @@ However, with PyVista you simply need:
 .. _vtk.vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
 
 
+PointSet Construction
+---------------------
+PyVista heavily relies on NumPy to efficiently allocate and access
+VTK's C arrays.  For example, to create an array of points within VTK
+one would normally loop through all the points of a list and supply
+that to a  `vtkPoints`_ class.  For example:
+
+.. jupyter-execute::
+
+   >>> import vtk
+   >>> vtk_array = vtk.vtkDoubleArray()
+   >>> vtk_array.SetNumberOfComponents(3)
+   >>> vtk_array.SetNumberOfValues(9)
+   >>> vtk_array.SetValue(0, 0)
+   >>> vtk_array.SetValue(1, 0)
+   >>> vtk_array.SetValue(2, 0)
+   >>> vtk_array.SetValue(3, 1)
+   >>> vtk_array.SetValue(4, 0)
+   >>> vtk_array.SetValue(5, 0)
+   >>> vtk_array.SetValue(6, 0.5)
+   >>> vtk_array.SetValue(7, 0.667)
+   >>> vtk_array.SetValue(8, 0)
+   >>> vtk_points = vtk.vtkPoints()
+   >>> vtk_points.SetData(vtk_array)
+   >>> print(vtk_points)
+
+To do the same within PyVista, you simply need to create a NumPy array:
+
+.. jupyter-execute::
+
+   >>> import numpy as np
+   >>> np_points = np.array([[0, 0, 0],
+   ...                       [1, 0, 0],
+   ...                       [0.5, 0.667, 0]])
+
+.. note::
+   You can use :func:`pyvista.vtk_points` to construct a `vtkPoints`_
+   object, but this is unnecessary in almost all situations.
+
+Since the end goal is to construct a :class:`pyvista.DataSet
+<pyvista.core.dataset.DataSet>`, you would simply pass the
+``np_points`` array to the :class:`pyvista.PolyData` constructor:
+
+.. jupyter-execute::
+
+   >>> import pyvista
+   >>> poly_data = pyvista.PolyData(np_points)
+
+Whereas in VTK you would have to:
+
+.. jupyter-execute::
+
+   >>> vtk_poly_data = vtk.vtkPolyData()
+   >>> vtk_poly_data.SetPoints(vtk_points)
+
+The same goes with assigning face or cell connectivity/topology.  With
+VTK you would normally have to loop using ``InsertNextCell`` and
+``InsertCellPoint``.  For example, to create a single cell (triangle)
+and then assign it to `vtkPolyData`_:
+
+.. jupyter-execute::
+
+   >>> cell_arr = vtk.vtkCellArray()
+   >>> cell_arr.InsertNextCell(3)
+   >>> cell_arr.InsertCellPoint(0)
+   >>> cell_arr.InsertCellPoint(1)
+   >>> cell_arr.InsertCellPoint(2)
+   >>> vtk_poly_data.SetPolys(cell_arr)
+
+In PyVista, we can assign this directly in the constructor and then
+access it (or change it) from from the :attr:`faces
+<pyvista.PolyData.faces>` attribute.
+
+.. jupyter-execute::
+
+   >>> faces = np.array([3, 0, 1, 2])
+   >>> poly_data = pyvista.PolyData(np_points, faces)
+   >>> poly_data.faces
+
+.. _pyvista_vs_vtk_object_repr:
+
+Object Representation
+---------------------
+Both VTK and PyVista provide representations for their objects.
+
+VTK provides a verbose representation of their datatypes that can be
+accessed via ``print`` as their ``__repr__`` is exposed from
+``__str__``:
+
+.. jupyter-execute::
+
+   >>> print(vtk_poly_data)
+
+PyVista provides minimal set of data and prefers to have attributes
+accessed dynamically.  For example:
+
+.. jupyter-execute::
+
+   >>> poly_data
+
+In this representation we see:
+
+* Number of points :attr:`n_points <pyvista.core.dataset.DataSet.n_points>`
+* Number of cells :attr:`n_points <pyvista.core.dataset.DataSet.n_cells>`
+* Bounds of the mesh :attr:`bounds <pyvista.core.dataset.DataSet.bounds>`
+* Number of data arrays :attr:`n_arrays <pyvista.core.dataset.DataSet.n_arrays>`
+
+All other attributes like :attr:`lines <pyvista.PolyData.lines>`,
+:attr:`point_arrays <pyvista.core.dataset.DataSet.point_arrays>`, or
+:attr:`cell_arrays <pyvista.core.dataset.DataSet.cell_arrays>` can be
+accessed directly from the object.  This approach was chosen to allow
+for a brief summary showing key parts of the :class:`pyvista.DataSet
+<pyvista.core.dataset.DataSet>` without overwhelming the user.
 
 Tradeoffs
-~~~~~~~~~
+---------
 While most features can, not everything can be simplified without
 losing functionality or performance.
 
@@ -212,3 +325,9 @@ the flexibility of PyVista and the functionality of VTK.
 .. note::
    You can use :func:`pyvista.Circle` for a one line replacement of
    the above VTK code.
+
+
+.. _vtkDataArray: https://vtk.org/doc/nightly/html/classvtkDataArray.html
+.. _vtkPolyData: https://vtk.org/doc/nightly/html/classvtkPolyData.html
+.. _vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
+.. _vtkpoints: https://vtk.org/doc/nightly/html/classvtkPoints.html
