@@ -7,7 +7,7 @@ subclass of a pyvista DataSet class.
 Examples
 --------
 A user-defined Foo class is defined that extends the functionality of
-:class:pyvista.PolyData.  This class is set as the default wrapper for
+:class:`pyvista.PolyData`.  This class is set as the default wrapper for
 ``vtkPolyData`` objects.
 
 >>> import pyvista
