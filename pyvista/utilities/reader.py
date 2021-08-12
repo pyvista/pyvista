@@ -42,6 +42,20 @@ def get_reader(filename):
     :class:`pyvista.BaseReader`
         A subclass of `pyvista.BaseReader` is returned based on file type.
 
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_cow_head(load=False)
+    >>> print(filename.split("/")[-1])  # omit the path
+    cowHead.vtp
+    >>> reader = pyvista.get_reader(filename)
+    >>> reader  # doctest:+ELLIPSIS
+    XMLPolyDataReader('.../cowHead.vtp')
+    >>> mesh = reader.read()
+    >>> mesh # doctest:+ELLIPSIS
+    PolyData ...
+
     """
     ext = get_ext(filename)
 
@@ -62,6 +76,9 @@ class BaseReader:
         self._reader = self._class_reader()
         self.filename = filename
         self._set_filename(filename)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}('{self.filename}')"
 
     @property
     def reader(self):
