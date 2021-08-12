@@ -46,15 +46,16 @@ def get_reader(filename):
     --------
     >>> import pyvista
     >>> from pyvista import examples
-    >>> filename = examples.download_cow_head(load=False)
+    >>> filename = examples.download_human(load=False)
     >>> print(filename.split("/")[-1])  # omit the path
-    cowHead.vtp
+    Human.vtp
     >>> reader = pyvista.get_reader(filename)
-    >>> reader  # doctest:+ELLIPSIS
-    XMLPolyDataReader('.../cowHead.vtp')
+    >>> reader  # doctest: +ELLIPSIS
+    XMLPolyDataReader('.../Human.vtp')
     >>> mesh = reader.read()
-    >>> mesh # doctest:+ELLIPSIS
+    >>> mesh # doctest: +ELLIPSIS
     PolyData ...
+    >>> mesh.plot(color='tan')
 
     """
     ext = get_ext(filename)
@@ -67,7 +68,14 @@ def get_reader(filename):
     return Reader(filename)
 
 class BaseReader:
-    """The base Reader class."""
+    """The Base Reader class.
+    
+    The base functionality includes reading data from a file,
+    and allowing access to the underlying vtk reader. See
+    :class:`pyvista.get_reader` for an example using
+    a built-in subclass.
+    
+    """
 
     _class_reader: Any = None
 
@@ -124,7 +132,31 @@ class BaseReader:
 
 
 class DataArraySelection:
-    """Mixin for readers that support data array selections."""
+    """Mixin for readers that support data array selections.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_backward_facing_step(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'foam_case_0_0_0_0.case'
+    >>> reader = pyvista.get_reader(filename)
+    >>> reader  # doctest: +ELLIPSIS
+    EnSightReader('.../foam_case_0_0_0_0.case')
+    >>> reader.cell_array_names
+    ['v2', 'nut', 'k', 'nuTilda', 'p', 'omega', 'f', 'epsilon', 'U']
+    >>> reader.point_array_names
+    []
+    >>> reader.all_cell_arrays_status  # doctest: +NORMALIZE_WHITESPACE
+    {'v2': True, 'nut': True, 'k': True, 'nuTilda': True, 'p': True, 'omega': True, 'f': True, 'epsilon': True, 'U': True}
+    >>> reader.disable_all_cell_arrays()
+    >>> reader.enable_cell_array('U')
+    >>> mesh = reader.read()  # MultiBlock mesh
+    >>> mesh[0].array_names
+    ['U']
+    
+    """
 
     @property
     def number_point_arrays(self):
