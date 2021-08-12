@@ -1072,6 +1072,7 @@ def test_scale():
     scale2.points *= xyz
     assert np.allclose(scale1.points, scale2.points)
 
+
 def test_flip_x():
     mesh = examples.load_airplane()
     flip_x1 = mesh.copy()
@@ -1079,6 +1080,7 @@ def test_flip_x():
     flip_x1.flip_x(point=(0, 0, 0))
     flip_x2.points[:, 0] *= -1.0
     assert np.allclose(flip_x1.points, flip_x2.points)
+
 
 def test_flip_y():
     mesh = examples.load_airplane()
@@ -1088,6 +1090,7 @@ def test_flip_y():
     flip_y2.points[:, 1] *= -1.0
     assert np.allclose(flip_y1.points, flip_y2.points)
 
+
 def test_flip_z():
     mesh = examples.load_airplane()
     flip_z1 = mesh.copy()
@@ -1095,6 +1098,7 @@ def test_flip_z():
     flip_z1.flip_z(point=(0, 0, 0))
     flip_z2.points[:, 2] *= -1.0
     assert np.allclose(flip_z1.points, flip_z2.points)
+
 
 def test_flip_normal():
     mesh = examples.load_airplane()

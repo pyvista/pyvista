@@ -621,7 +621,8 @@ class DataSet(DataSetFilters, DataObject):
         Parameters
         ----------
         point : list, optional
-            Point to rotate about.  Defaults to center of mesh.
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
@@ -656,7 +657,8 @@ class DataSet(DataSetFilters, DataObject):
         Parameters
         ----------
         point : list, optional
-            Point to rotate about.  Defaults to center of mesh.
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
@@ -691,7 +693,8 @@ class DataSet(DataSetFilters, DataObject):
         Parameters
         ----------
         point : list, optional
-            Point to rotate about.  Defaults to center of mesh.
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
@@ -729,7 +732,8 @@ class DataSet(DataSetFilters, DataObject):
            Normal vector to flip about.
 
         point : list, optional
-            Point to rotate about.  Defaults to center of mesh.
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
