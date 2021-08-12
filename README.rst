@@ -198,6 +198,12 @@ to learn more about the developers of PyVista.
 Contributing
 ============
 
+.. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
+   :target: https://www.codetriage.com/pyvista/pyvista
+   :alt: Code Triage
+
+|codetriage|
+
 We absolutely welcome contributions and we hope that our `Contributing Guide`_
 will facilitate your ability to make PyVista better. PyVista is mostly
 maintained on a volunteer basis and thus we need to foster a community that can
