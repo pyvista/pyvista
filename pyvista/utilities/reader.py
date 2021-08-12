@@ -67,7 +67,7 @@ def get_reader(filename):
     return Reader(filename)
 
 class BaseReader:
-    """The base reader class."""
+    """The base Reader class."""
 
     _class_reader: Any = None
 
@@ -82,7 +82,13 @@ class BaseReader:
 
     @property
     def reader(self):
-        """Return the vtk Reader object."""
+        """Return the vtk Reader object.
+        
+        Returns
+        -------
+        A vtk Reader object
+
+        """
         if self._reader is None:
             raise NotImplementedError
         return self._reader
@@ -109,10 +115,11 @@ class BaseReader:
         return data
 
     def _update(self):
-        """Update reader."""
+        """Update reader by reading data."""
         self.reader.Update()
 
     def _update_information(self):
+        """Update reader information."""
         self.reader.UpdateInformation()
 
 
@@ -121,12 +128,24 @@ class DataArraySelection:
 
     @property
     def number_point_arrays(self):
-        """Return the number of point arrays."""
+        """Return the number of point arrays.
+        
+        Returns
+        -------
+        int
+
+        """
         return self.reader.GetNumberOfPointArrays()
 
     @property
     def point_array_names(self):
-        """Return the list of all point array names."""
+        """Return the list of all point array names.
+        
+        Returns
+        -------
+        list[int]
+
+        """
         return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
 
     def enable_point_array(self, name):
@@ -156,6 +175,10 @@ class DataArraySelection:
         ----------
         name: str
 
+        Returns
+        -------
+        bool
+
         """
         if self.reader.GetPointArrayStatus(name):
             return True
@@ -173,17 +196,35 @@ class DataArraySelection:
 
     @property
     def all_point_arrays_status(self):
-        """Return the status of all point arrays as a dict."""
+        """Return the status of all point arrays.
+        
+        Returns
+        -------
+        dict[str, bool]
+
+        """
         return {name: self.point_array_status(name) for name in self.point_array_names}
 
     @property
     def number_cell_arrays(self):
-        """Return the number of cell arrays."""
+        """Return the number of cell arrays.
+        
+        Returns
+        -------
+        int
+
+        """
         return self.reader.GetNumberOfCellArrays()
 
     @property
     def cell_array_names(self):
-        """Return the list of all cell array names."""
+        """Return the list of all cell array names.
+        
+        Returns
+        -------
+        list[str]
+
+        """
         return [self.reader.GetCellArrayName(i) for i in range(self.number_cell_arrays)]
 
     def enable_cell_array(self, name):
@@ -213,6 +254,10 @@ class DataArraySelection:
         ----------
         name: str
 
+        Returns
+        -------
+        bool
+
         """
         if self.reader.GetCellArrayStatus(name):
             return True
@@ -230,7 +275,12 @@ class DataArraySelection:
 
     @property
     def all_cell_arrays_status(self):
-        """Return the status of all cell arrays as a dict."""
+        """Return the status of all cell arrays.
+        
+        Returns
+        -------
+        dict[str, bool]
+        """
         return {name: self.cell_array_status(name) for name in self.cell_array_names}
 
 
@@ -476,6 +526,7 @@ class BYUReader(BaseReader):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(cpos='xy', show_scalar_bar=False)
+
     """
 
     _class_reader = _vtk.vtkBYUReader
@@ -494,6 +545,7 @@ class FacetReader(BaseReader):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(color="red")
+
     """
 
     _class_reader = staticmethod(_vtk.lazy_vtkFacetReader)
