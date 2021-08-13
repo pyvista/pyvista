@@ -68,7 +68,6 @@ def _retrieve_file(retriever, filename):
     filename : str
         The name of the file
     """
-
     _check_examples_path()
     # First check if file has already been downloaded
     local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
