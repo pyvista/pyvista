@@ -45,6 +45,12 @@ try:
 except KeyError:
     pass
 
+# If available, a local vtk-data instance will be used for examples
+if 'PYVISTA_VTK_DATA' in os.environ:
+    VTK_DATA_PATH = os.environ['PYVISTA_VTK_DATA']
+else:
+    VTK_DATA_PATH = None
+
 # flag for when building the sphinx_gallery
 BUILDING_GALLERY = False
 if 'PYVISTA_BUILDING_GALLERY' in os.environ:
