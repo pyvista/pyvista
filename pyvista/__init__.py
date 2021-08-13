@@ -2,6 +2,7 @@
 
 MAX_N_COLOR_BARS = 10
 
+from typing import Optional
 import warnings
 import os
 import appdirs
@@ -46,10 +47,9 @@ except KeyError:
     pass
 
 # If available, a local vtk-data instance will be used for examples
+VTK_DATA: Optional[str] = None
 if 'PYVISTA_VTK_DATA' in os.environ:
     VTK_DATA_PATH = os.environ['PYVISTA_VTK_DATA']
-else:
-    VTK_DATA_PATH = None
 
 # flag for when building the sphinx_gallery
 BUILDING_GALLERY = False
