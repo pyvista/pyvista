@@ -47,7 +47,7 @@ except KeyError:
     pass
 
 # If available, a local vtk-data instance will be used for examples
-VTK_DATA: Optional[str] = None
+VTK_DATA_PATH: Optional[str] = None
 if 'PYVISTA_VTK_DATA' in os.environ:
     VTK_DATA_PATH = os.environ['PYVISTA_VTK_DATA']
 
