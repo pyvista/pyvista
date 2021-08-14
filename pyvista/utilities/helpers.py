@@ -9,6 +9,7 @@ import sys
 from threading import Thread
 import threading
 import traceback
+from typing import Any
 
 import numpy as np
 
@@ -181,7 +182,8 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(mesh, name, preference='cell', info=False, err=False):
+#TODO should be Union[Tuple, np.ndarray], but causes cascading static checking issues
+def get_array(mesh, name, preference='cell', info=False, err=False) -> Any:
     """Search point, cell and field data for an array.
 
     Parameters

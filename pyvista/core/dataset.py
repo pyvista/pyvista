@@ -2,7 +2,7 @@
 
 import collections.abc
 import logging
-from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
+from typing import Optional, List, Tuple, Iterable, Union, Any, Dict, overload, Literal
 
 import numpy as np
 
@@ -676,11 +676,17 @@ class DataSet(DataSetFilters, DataObject):
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
         return np.sum(sizes.cell_arrays['Volume'])
 
+    @overload
+    def get_array(self, name: str, preference='cell', info:Literal[False]=False) -> np.ndarray: ...
+
+    @overload
+    def get_array(self, name: str, preference='cell', info:Literal[True]=True) -> Tuple: ...
+
     def get_array(self, name: str, preference='cell', info=False) -> Union[Tuple, np.ndarray]:
         """Search both point, cell and field data for an array."""
         return get_array(self, name, preference=preference, info=info, err=True)
 
-    def __getitem__(self, index: Union[Iterable, str]) -> Union[Tuple, np.ndarray]:
+    def __getitem__(self, index: Union[Iterable, str]) -> np.ndarray:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
             name, preference = tuple(index)
