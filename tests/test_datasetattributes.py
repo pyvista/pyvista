@@ -59,6 +59,60 @@ def test_valid_array_len_cells(hexbeam):
     assert hexbeam.cell_arrays.valid_array_len == hexbeam.n_cells
 
 
+def test_get(sphere):
+    point_data = np.arange(sphere.n_points)
+    sphere.clear_arrays()
+    key = 'my-data'
+    sphere.point_arrays[key] = point_data
+    assert np.array_equal(sphere.point_arrays.get(key), point_data)
+    assert sphere.point_arrays.get('invalid-key') is None
+
+    default = 'default'
+    assert sphere.point_arrays.get('invalid-key', default) is default
+
+
+def test_active_scalars_name(sphere):
+    sphere.clear_arrays()
+    assert sphere.point_arrays.active_scalars_name is None
+
+    key = 'data0'
+    sphere.point_arrays[key] = range(sphere.n_points)
+    assert sphere.point_arrays.active_scalars_name == key
+
+def test_active_scalars_name(sphere):
+    sphere.clear_arrays()
+    assert sphere.point_arrays.active_vectors_name is None
+
+    key = 'my-vectors'
+    sphere.point_arrays[key] = np.ones((sphere.n_points, 3))
+    assert sphere.point_arrays.active_vectors_name == key
+
+
+def test_eq(sphere):
+    sphere = pyvista.Sphere()
+    sphere.clear_arrays()
+
+    # check wrong type
+    assert sphere.point_arrays != [1, 2, 3]
+
+    sphere.point_arrays['data0'] = np.zeros(sphere.n_points)
+    sphere.point_arrays['data1'] = np.arange(sphere.n_points)
+    deep_cp = sphere.copy(deep=True)
+    shal_cp = sphere.copy(deep=False)
+    assert sphere.point_arrays == deep_cp.point_arrays
+    assert sphere.point_arrays == shal_cp.point_arrays
+
+    # verify inplace change
+    sphere.point_arrays['data0'] += 1
+    assert sphere.point_arrays != deep_cp.point_arrays
+    assert sphere.point_arrays == shal_cp.point_arrays
+
+    # verify key removal
+    deep_cp = sphere.copy(deep=True)
+    del deep_cp.point_arrays['data0']
+    assert sphere.point_arrays != deep_cp.point_arrays
+
+
 def test_append_matrix(hexbeam):
     mat_shape = (hexbeam.n_points, 3, 2)
     mat = np.random.random(mat_shape)
@@ -79,6 +133,13 @@ def test_set_active_vectors_invalid(hexbeam):
     not_vectors = np.random.random((hexbeam.points.shape))
     hexbeam.point_arrays['not_vectors'] = not_vectors
     assert np.allclose(hexbeam.point_arrays.active_vectors, not_vectors)
+
+
+def test_set_vectors(sphere):
+    vectors = np.random.random((sphere.n_points, 3))
+    name = 'my-vectors'
+    sphere.point_arrays.set_vectors(vectors, name)
+    assert sphere.point_arrays.VTKObject.GetVectors().GetName() == name
 
 
 @mark.parametrize('array_key', ['invalid_array_name', -1])

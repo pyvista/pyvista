@@ -2,7 +2,6 @@
 
 Datasets
 ========
-
 Datasets are any spatially referenced information and usually consist of
 geometrical representations of a surface or volume in 3D space.
 In VTK, this superclass is represented by the `vtk.vtkDataSet`_ abstract class.

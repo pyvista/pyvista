@@ -189,12 +189,24 @@ class DataObject:
         Parameters
         ----------
         deep : bool, optional
-            When True makes a full copy of the object.
+            When ``True`` makes a full copy of the object.  When
+            ``False``, performs a shallow copy where the points, cell,
+            and data arrays are pointers to the original object.
 
         Returns
         -------
-        newobject : same as input
-           Deep or shallow copy of the input.
+        :class:`pyvista.DataSet`
+            Deep or shallow copy of the input.
+
+        Examples
+        --------
+        Create and make a deep copy a PolyData object.
+
+        >>> import pyvista
+        >>> mesh_a = pyvista.Sphere()
+        >>> mesh_b = mesh_a.copy()
+        >>> mesh_a == mesh_b
+        True
 
         """
         thistype = type(self)
@@ -206,22 +218,137 @@ class DataObject:
         newobject.copy_meta_from(self)
         return newobject
 
+    def __eq__(self, other):
+        if not isinstance(self, type(other)):
+            return False
+
+        # check if points are equal if DataSet contains points
+        # this also checks if the number of points is equal
+        if hasattr(self, 'points'):
+            if not np.array_equal(self.points, other.points):
+                return False
+
+        # check if cells are equal if DataSet contains cells
+        # this also checks if the number of cells is equal
+        if hasattr(self, 'cells'):
+            if not np.array_equal(self.cells, other.cells):
+                return False        
+
+        # check if cells are equal if DataSet contains cells
+        # this also checks if the number of cells is equal
+        if hasattr(self, 'faces'):
+            if not np.array_equal(self.faces, other.faces):
+                return False        
+
+        if self.field_arrays != other.field_arrays:
+            return False
+
+        if hasattr(self, 'point_arrays'):
+            if self.point_arrays != other.point_arrays:
+                return False
+
+        if hasattr(self, 'cell_arrays'):
+            if self.cell_arrays != other.cell_arrays:
+                return False
+
+        return True
+
     def add_field_array(self, scalars: np.ndarray, name: str, deep=True):
-        """Add a field array."""
+        """Add a field array.
+
+        Use field arrays when the array you wish to associate with the
+        dataset does not match the number of points or cells of the
+        dataset.
+
+        Examples
+        --------
+        Add a field array to a PolyData dataset.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.add_field_array(np.arange(10), 'my-field-data')
+        >>> mesh['my-field-data']
+        array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+        Add a field array to a UniformGrid dataset.
+
+        >>> mesh = pyvista.UniformGrid((2, 2, 1))
+        >>> mesh.add_field_array(['I could', 'write', 'notes', 'here'], 
+        ...                      'my-field-data')
+        >>> mesh['my-field-data']
+        array(['I could', 'write', 'notes', 'here'], dtype='<U7')
+
+        Add a field array to a MultiBlock dataset.
+
+        >>> blocks = pyvista.MultiBlock()
+        >>> blocks.append(pyvista.Sphere())
+        >>> blocks["cube"] = pyvista.Cube(center=(0, 0, -1))
+        >>> blocks.add_field_array([1, 2, 3], 'my-field-data')
+        >>> blocks.field_arrays['my-field-data']
+        pyvista_ndarray([1, 2, 3])
+
+        """
         self.field_arrays.append(scalars, name, deep_copy=deep)
 
     @property
     def field_arrays(self) -> DataSetAttributes:
-        """Return vtkFieldData as DataSetAttributes."""
+        """Return FieldData as DataSetAttributes.
+
+        Use field arrays when the array you wish to associate with the
+        dataset does not match the number of points or cells of the
+        dataset.
+
+        Examples
+        --------
+        Add a field array to a PolyData dataset and then return it.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.field_arrays['my-field-data'] = np.arange(10)
+        >>> mesh.field_arrays['my-field-data']
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+        """
         return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
 
     def clear_field_arrays(self):
-        """Remove all field arrays."""
+        """Remove all field arrays.
+
+        Examples
+        --------
+        Add a field array to a PolyData dataset and then return it.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.field_arrays['my-field-data'] = range(10)
+        >>> len(mesh.field_arrays)
+        1
+        >>> mesh.clear_field_arrays()
+        >>> len(mesh.field_arrays)
+        0
+
+        """
         self.field_arrays.clear()
 
     @property
     def memory_address(self) -> str:
-        """Get address of the underlying C++ object in format 'Addr=%p'."""
+        """Get address of the underlying VTK C++ object.
+
+        Returns
+        -------
+        str
+            Memory address formatted as ``'Addr=%p'``.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.memory_address  # doctest:+SKIP
+        'Addr=0x237c980'
+
+        """
         return self.GetInformation().GetAddressAsString("")
 
     @property
