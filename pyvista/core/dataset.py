@@ -2,7 +2,8 @@
 
 import collections.abc
 import logging
-from typing import Optional, List, Tuple, Iterable, Union, Any, Dict, overload, Literal
+from typing import Optional, List, Tuple, Iterable, Union, Any, Dict, overload
+from typing_extensions import Literal # for python versions <3.8
 
 import numpy as np
 
