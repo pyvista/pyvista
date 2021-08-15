@@ -383,9 +383,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             dataset = mapper.GetInputAsDataSet()
                             if 'Normals' in dataset.point_arrays:
                                 normals = dataset.point_arrays['Normals']
-                                dataset.point_array.append(normals, 'NORMAL',
-                                                           active_scalars=False,
-                                                           deep_copy=False)
+                                dataset.point_array.set_array(normals, 'NORMAL',
+                                                              active_scalars=False,
+                                                              deep_copy=False)
                                 
                         except:
                             pass
@@ -1978,11 +1978,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
                 # Scalars interpolation approach
                 if use_points:
-                    self.mesh.point_arrays.append(scalars, title, True)
+                    self.mesh.point_arrays.set_array(scalars, title, True)
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUsePointData()
                 elif use_cells:
-                    self.mesh.cell_arrays.append(scalars, title, True)
+                    self.mesh.cell_arrays.set_array(scalars, title, True)
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUseCellData()
                 else:
@@ -2447,10 +2447,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars interpolation approach
         if scalars.shape[0] == volume.n_points:
-            volume.point_arrays.append(scalars, title, True)
+            volume.point_arrays.set_array(scalars, title, True)
             self.mapper.SetScalarModeToUsePointData()
         elif scalars.shape[0] == volume.n_cells:
-            volume.cell_arrays.append(scalars, title, True)
+            volume.cell_arrays.set_array(scalars, title, True)
             self.mapper.SetScalarModeToUseCellData()
         else:
             raise_not_matching(scalars, volume)

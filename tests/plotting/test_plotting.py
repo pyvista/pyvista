@@ -966,7 +966,7 @@ def test_multi_block_plot():
     multi.append(examples.load_rectilinear())
     uni = examples.load_uniform()
     arr = np.random.rand(uni.n_cells)
-    uni.cell_arrays.append(arr, 'Random Data')
+    uni.cell_arrays.set_array(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
     multi[3] = examples.load_airplane()

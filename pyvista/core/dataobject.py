@@ -224,6 +224,7 @@ class DataObject:
         return newobject
 
     def __eq__(self, other):
+        """Test equalvency between data objects."""
         if not isinstance(self, type(other)):
             return False
 
@@ -294,7 +295,7 @@ class DataObject:
         pyvista_ndarray([1, 2, 3])
 
         """
-        self.field_arrays.append(scalars, name, deep_copy=deep)
+        self.field_arrays.set_array(scalars, name, deep_copy=deep)
 
     @property
     def field_arrays(self) -> DataSetAttributes:

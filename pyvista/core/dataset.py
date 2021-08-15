@@ -376,13 +376,18 @@ class DataSet(DataSetFilters, DataObject):
 
         scale_name = f'{vectors_name} Magnitude'
         scale = np.linalg.norm(self.active_vectors, axis=1)
-        self.point_arrays.append(scale, scale_name, active_vectors=False,
-                                 active_scalars=False)
+        self.point_arrays.set_array(scale, scale_name, active_vectors=False,
+                                    active_scalars=False)
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
     def vectors(self) -> Optional[pyvista_ndarray]:  # pragma: no cover
-        """Return active vectors."""
+        """Return active vectors.
+
+        .. deprecated:: 0.31.0
+           Use of `DataSet.vectors` to return vector data is deprecated.
+
+        """
         warnings.warn( "Use of `DataSet.vectors` is deprecated. "
             "Use `DataSet.active_vectors` instead.",
             PyvistaDeprecationWarning
@@ -391,7 +396,12 @@ class DataSet(DataSetFilters, DataObject):
 
     @vectors.setter
     def vectors(self, array: np.ndarray):  # pragma: no cover
-        """Set the active vector."""
+        """Set the active vector.
+
+        .. deprecated:: 0.31.0
+           Use of `DataSet.vectors` to add vector data is deprecated.
+
+        """
         warnings.warn("Use of `DataSet.vectors` to add vector data is deprecated. "
             "Use `DataSet['vector_name'] = data`. "
             "Use `DataSet.active_vectors_name = 'vector_name' to make active."
@@ -843,10 +853,13 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.point_arrays['my_other_array'] = np.arange(mesh.n_points)
         >>> mesh.point_arrays
         pyvista DataSetAttributes
-        Association: POINT
-        Contains keys:
-        ...my_array
-        ...my_other_array
+        Association     : POINT
+        Active Scalars  : my_other_array
+        Active Vectors  : None
+        Active Texture  : None
+        Contains arrays : 
+            my_array                float64    (8,)
+            my_other_array          int64      (8,)
 
         Access an array from point_arrays
 

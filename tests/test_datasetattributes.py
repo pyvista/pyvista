@@ -12,6 +12,13 @@ from pyvista.utilities import FieldAssociation
 
 
 @fixture()
+def sphere_empty_attributes(sphere):
+    ds_attr = hexbeam.point_arrays
+    ds_attr.clear()
+    return ds_attr
+
+
+@fixture()
 def hexbeam_point_attributes(hexbeam):
     return hexbeam.point_arrays
 
@@ -33,14 +40,8 @@ def insert_arange_narray(hexbeam_point_attributes):
 def insert_bool_array(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.ones(n_points, np.bool_)
-    hexbeam_point_attributes.append(sample_array, 'sample_array')
+    hexbeam_point_attributes.set_array(sample_array, 'sample_array')
     return hexbeam_point_attributes, sample_array
-
-
-def test_repr(hexbeam_point_attributes):
-    assert 'POINT' in str(hexbeam_point_attributes)
-    assert 'DataSetAttributes' in str(hexbeam_point_attributes)
-    assert 'Contains keys:' in str(hexbeam_point_attributes)
 
 
 def test_init(hexbeam):
@@ -51,12 +52,38 @@ def test_init(hexbeam):
     assert attributes.association == FieldAssociation.POINT
 
 
+def test_repr(hexbeam_point_attributes):
+    repr_str = str(hexbeam_point_attributes)
+    assert 'POINT' in repr_str
+    assert 'DataSetAttributes' in repr_str
+    assert 'Contains arrays' in repr_str
+    assert '...' not in repr_str
+
+    # ensure long names are abbreviated
+    first_arr = hexbeam_point_attributes.keys()[0]
+    sz = hexbeam_point_attributes[first_arr].size
+    data = np.zeros(sz)
+    hexbeam_point_attributes['verylongnameover20char'] = data
+    assert '...' in str(hexbeam_point_attributes)
+
+    # ensure datatype str is in repr
+    assert str(data.dtype) in str(hexbeam_point_attributes)
+
+
 def test_empty_active_vectors(hexbeam):
     assert hexbeam.active_vectors is None
 
 
+def test_valid_array_len_points(hexbeam):
+    assert hexbeam.point_arrays.valid_array_len == hexbeam.n_points
+
+
 def test_valid_array_len_cells(hexbeam):
     assert hexbeam.cell_arrays.valid_array_len == hexbeam.n_cells
+
+
+def test_valid_array_len_field(hexbeam):
+    assert hexbeam.field_arrays.valid_array_len == 0
 
 
 def test_get(sphere):
@@ -79,14 +106,6 @@ def test_active_scalars_name(sphere):
     sphere.point_arrays[key] = range(sphere.n_points)
     assert sphere.point_arrays.active_scalars_name == key
 
-
-# def test_active_scalars_name(sphere):
-#     sphere.clear_arrays()
-#     assert sphere.point_arrays.active_vectors_name is None
-
-#     key = 'my-vectors'
-#     sphere.point_arrays[key] = np.ones((sphere.n_points, 3))
-#     assert sphere.point_arrays.active_vectors_name == key
 
 def test_set_scalars(sphere):
     scalars = np.array(sphere.n_points)
@@ -119,19 +138,26 @@ def test_eq(sphere):
     assert sphere.point_arrays != deep_cp.point_arrays
 
 
-def test_append_matrix(hexbeam):
+def test_add_matrix(hexbeam):
     mat_shape = (hexbeam.n_points, 3, 2)
     mat = np.random.random(mat_shape)
-    hexbeam.point_arrays.append(mat, 'mat')
+    hexbeam.point_arrays.set_array(mat, 'mat')
     matout = hexbeam.point_arrays['mat'].reshape(mat_shape)
     assert np.allclose(mat, matout)
 
 
-def test_set_vectors(hexbeam):
+def test_set_active_vectors(hexbeam):
     vectors = np.random.random((hexbeam.n_points, 3))
     hexbeam['vectors'] = vectors
     hexbeam.set_active_vectors('vectors')
     assert np.allclose(hexbeam.active_vectors, vectors)
+
+
+def test_set_vectors(hexbeam):
+    assert hexbeam.point_arrays.active_vectors is None
+    vectors = np.random.random((hexbeam.n_points, 3))
+    hexbeam.point_arrays.set_vectors(vectors, 'my-vectors')
+    assert np.allclose(hexbeam.point_arrays.active_vectors, vectors)
 
 
 def test_set_active_vectors_invalid(hexbeam):
@@ -159,17 +185,17 @@ def test_get_array_bool_array_should_be_identical(insert_bool_array):
     assert np.array_equal(output_array, sample_array)
 
 
-def test_append_should_not_add_none_array(hexbeam_point_attributes):
+def test_add_should_not_add_none_array(hexbeam_point_attributes):
     with raises(TypeError):
-        hexbeam_point_attributes.append(None, 'sample_array')
+        hexbeam_point_attributes.set_array(None, 'sample_array')
 
 
-def test_append_should_contain_array_name(insert_arange_narray):
+def test_add_should_contain_array_name(insert_arange_narray):
     dsa, _ = insert_arange_narray
     assert 'sample_array' in dsa
 
 
-def test_append_should_contain_exact_array(insert_arange_narray):
+def test_add_should_contain_exact_array(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     assert np.array_equal(sample_array, dsa['sample_array'])
 
@@ -188,28 +214,28 @@ def test_contains_should_contain_when_added(insert_arange_narray):
 
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
-def test_append_should_accept_scalar_value(scalar, hexbeam_point_attributes):
-    hexbeam_point_attributes.append(narray=scalar, name='int_array')
+def test_set_array_should_accept_scalar_value(scalar, hexbeam_point_attributes):
+    hexbeam_point_attributes.set_array(scalar, name='int_array')
 
 
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
-def test_append_scalar_value_should_give_array(scalar, hexbeam_point_attributes):
-    hexbeam_point_attributes.append(narray=scalar, name='int_array')
+def test_set_array_scalar_value_should_give_array(scalar, hexbeam_point_attributes):
+    hexbeam_point_attributes.set_array(scalar, name='int_array')
     expected = np.full(hexbeam_point_attributes.dataset.n_points, scalar)
     assert np.array_equal(expected, hexbeam_point_attributes['int_array'])
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=lists(text(alphabet=ascii_letters + digits + whitespace), max_size=16))
-def test_append_string_lists_should_equal(arr, hexbeam_field_attributes):
+def test_set_array_string_lists_should_equal(arr, hexbeam_field_attributes):
     hexbeam_field_attributes['string_arr'] = arr
     assert arr == hexbeam_field_attributes['string_arr'].tolist()
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
-def test_append_string_array_should_equal(arr, hexbeam_field_attributes):
+def test_set_array_string_array_should_equal(arr, hexbeam_field_attributes):
     hexbeam_field_attributes['string_arr'] = arr
     assert np.array_equiv(arr, hexbeam_field_attributes['string_arr'])
 
@@ -269,11 +295,11 @@ def test_pop_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
         hexbeam_point_attributes.pop(removed_key)
 
 
-def test_length_should_increment_on_append(hexbeam_point_attributes):
+def test_length_should_increment_on_set_array(hexbeam_point_attributes):
     initial_len = len(hexbeam_point_attributes)
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.arange(n_points)
-    hexbeam_point_attributes.append(sample_array, 'sample_array')
+    hexbeam_point_attributes.set_array(sample_array, 'sample_array')
     assert len(hexbeam_point_attributes) == initial_len + 1
 
 

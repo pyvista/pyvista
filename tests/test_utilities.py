@@ -189,14 +189,14 @@ def test_get_array():
     grid = pyvista.UnstructuredGrid(ex.hexbeamfile)
     # add array to both point/cell data with same name
     carr = np.random.rand(grid.n_cells)
-    grid.cell_arrays.append(carr, 'test_data')
+    grid.cell_arrays.set_array(carr, 'test_data')
     parr = np.random.rand(grid.n_points)
-    grid.point_arrays.append(parr, 'test_data')
+    grid.point_arrays.set_array(parr, 'test_data')
     # add other data
     oarr = np.random.rand(grid.n_points)
-    grid.point_arrays.append(oarr, 'other')
+    grid.point_arrays.set_array(oarr, 'other')
     farr = np.random.rand(grid.n_points * grid.n_cells)
-    grid.field_arrays.append(farr, 'field_data')
+    grid.field_arrays.set_array(farr, 'field_data')
     assert np.allclose(carr, helpers.get_array(grid, 'test_data', preference='cell'))
     assert np.allclose(parr, helpers.get_array(grid, 'test_data', preference='point'))
     assert np.allclose(oarr, helpers.get_array(grid, 'other'))
