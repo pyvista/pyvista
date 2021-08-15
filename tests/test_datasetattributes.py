@@ -25,7 +25,7 @@ def hexbeam_field_attributes(hexbeam):
 def insert_arange_narray(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.arange(n_points)
-    hexbeam_point_attributes.append(sample_array, 'sample_array')
+    hexbeam_point_attributes.set_array(sample_array, 'sample_array')
     return hexbeam_point_attributes, sample_array
 
 
@@ -79,13 +79,19 @@ def test_active_scalars_name(sphere):
     sphere.point_arrays[key] = range(sphere.n_points)
     assert sphere.point_arrays.active_scalars_name == key
 
-def test_active_scalars_name(sphere):
-    sphere.clear_arrays()
-    assert sphere.point_arrays.active_vectors_name is None
 
-    key = 'my-vectors'
-    sphere.point_arrays[key] = np.ones((sphere.n_points, 3))
-    assert sphere.point_arrays.active_vectors_name == key
+# def test_active_scalars_name(sphere):
+#     sphere.clear_arrays()
+#     assert sphere.point_arrays.active_vectors_name is None
+
+#     key = 'my-vectors'
+#     sphere.point_arrays[key] = np.ones((sphere.n_points, 3))
+#     assert sphere.point_arrays.active_vectors_name == key
+
+def test_set_scalars(sphere):
+    scalars = np.array(sphere.n_points)
+    sphere.point_arrays.set_scalars(scalars, 'scalars')
+    # assert 
 
 
 def test_eq(sphere):
@@ -133,13 +139,6 @@ def test_set_active_vectors_invalid(hexbeam):
     not_vectors = np.random.random((hexbeam.points.shape))
     hexbeam.point_arrays['not_vectors'] = not_vectors
     assert np.allclose(hexbeam.point_arrays.active_vectors, not_vectors)
-
-
-def test_set_vectors(sphere):
-    vectors = np.random.random((sphere.n_points, 3))
-    name = 'my-vectors'
-    sphere.point_arrays.set_vectors(vectors, name)
-    assert sphere.point_arrays.VTKObject.GetVectors().GetName() == name
 
 
 @mark.parametrize('array_key', ['invalid_array_name', -1])

@@ -67,7 +67,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                f'Active Vectors : {self.active_vectors_name}\n' \
                f'Contains keys:\n\t{keys}' \
 
-
     def get(self, key: str, value: Optional[Any] = None) -> Optional[pyvista_ndarray]:
         """Returns the value of the item with the specified key.
 
@@ -110,7 +109,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __setitem__(self, key: str, value: np.ndarray):
         """Implement setting with the [] operator."""
-        self._append(narray=value, name=key)
+        self.set_array(value, name=key)
 
     def __delitem__(self, key: Union[str, int]):
         """Implement del with array name or index."""
@@ -188,11 +187,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Set the vectors of this data attribute.
 
         """
-        self._append(vectors, name, deep_copy=deep_copy, vectors_only=True)
-
-    def set_scalars(self, scalars: Union[Sequence[Number], Number, np.ndarray],
-                    name: str, deep_copy=False):
-        self._append(scalars, name, deep_copy=deep_copy, active_vectors=False)
+        pass
 
     @property
     def valid_array_len(self) -> int:
@@ -240,7 +235,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             The name or index of the array to return.
 
         Returns
-        ----------
+        -------
         array : ``pyvista_ndarray`` or ``vtkDataArray``
             A ``pyvista_ndarray`` if the underlying array is a
             ``vtk.vtkDataArray`` or ``vtk.vtkStringArray``,
@@ -260,39 +255,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             narray = narray.view(np.bool_)
         return narray
 
-    def append(self, narray: Union[Sequence[Number], Number, np.ndarray],
-               name: str, deep_copy=False, active_vectors=True,
-               active_scalars=True, vectors_only=False) -> None:
-        """Add an array to this object.
-
-        .. deprecated:: 0.32.0
-           Use one of the following instead:
-
-           * :func:`DataSetAttributes.add_array`
-           * :func:`DataSetAttributes.set_scalars`
-           * :func:`DataSetAttributes.set_vectors`
-           * The ``[]`` operator
-
-        """
-        warnings.warn("\n\n`DataSetAttributes.append` is deprecated.\n\n"
-                      "Use one of the following instead:\n"
-                      "    - `DataSetAttributes.add_array`\n"
-                      "    - `DataSetAttributes.set_scalars`\n"
-                      "    - `DataSetAttributes.set_vectors`\n"
-                      "    - The [] operator",
-            PyvistaDeprecationWarning
-        )
-        self._append(narray, name, deep_copy, active_vectors,
-                     active_scalars, vectors_only)
-
-    def _append(self, narray: Union[Sequence[Number], Number, np.ndarray],
-               name: str, deep_copy=False, active_vectors=True,
-               active_scalars=True, vectors_only=False) -> None:
+    def set_array(self, data: Union[Sequence[Number], Number, np.ndarray],
+                  name: str, deep_copy=False, active_vectors=True,
+                  active_scalars=True) -> None:
         """Add an array to this object.
 
         Parameters
         ----------
-        narray : array_like, scalar value
+        data : sequence
             A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
             ``tuple`` or scalar value.
 
@@ -303,76 +273,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             When ``True`` makes a full copy of the array.
 
         active_vectors : bool, optional
-            If ``True``, make this the active vector array.
+            If ``True``, also make this the active vector array.
 
         active_scalars : bool, optional
-            If ``True``, make this the active scalar array.
-
-        vectors_only : bool, optional
-            If ``True``, does not add array as a scalars array, only
-            as a vectors array.
+            If ``True``, also make this the active scalar array.
 
         """
-        if narray is None:
-            raise TypeError('narray cannot be None.')
-        if isinstance(narray, Iterable):
-            narray = pyvista_ndarray(narray)
-
-        if vectors_only:
-            active_scalars = False
-
-        if self.association == FieldAssociation.POINT:
-            array_len = self.dataset.GetNumberOfPoints()
-        elif self.association == FieldAssociation.CELL:
-            array_len = self.dataset.GetNumberOfCells()
-        else:
-            array_len = narray.shape[0] if isinstance(narray, np.ndarray) else 1
-
-        # Fixup input array length for scalar input:
-        if not isinstance(narray, np.ndarray) or np.ndim(narray) == 0:
-            tmparray = np.empty(array_len)
-            tmparray.fill(narray)
-            narray = tmparray
-        if narray.shape[0] != array_len:
-            raise ValueError(f'narray length of ({narray.shape[0]}) != required length ({array_len})')
-
-        if narray.dtype == np.bool_:
-            self.dataset.association_bitarray_names[self.association].add(name)
-            narray = narray.view(np.uint8)
-
-        shape = narray.shape
-        if len(shape) == 3:
-            # Array of matrices. We need to make sure the order  in memory is right.
-            # If column order (c order), transpose. VTK wants row order (fortran
-            # order). The deep copy later will make sure that the array is contiguous.
-            # If row order but not contiguous, transpose so that the deep copy below
-            # does not happen.
-            size = narray.dtype.itemsize
-            if (narray.strides[1] / size == 3 and narray.strides[2] / size == 1) or \
-                (narray.strides[1] / size == 1 and narray.strides[2] / size == 3 and \
-                 not narray.flags.contiguous):
-                narray = narray.transpose(0, 2, 1)
-
-        # If array is not contiguous, make a deep copy that is contiguous
-        if not narray.flags.contiguous:
-            narray = np.ascontiguousarray(narray)
-
-        # Flatten array of matrices to array of vectors
-        if len(shape) == 3:
-            narray = narray.reshape(shape[0], shape[1]*shape[2])
-
-        # Swap bytes from big to little endian.
-        if narray.dtype.byteorder == '>':
-            narray = narray.byteswap(inplace=True)
-
-        # this handles the case when an input array is directly appended on the
-        # output. We want to make sure that the array added to the output is not
-        # referring to the input dataset.
-        copy = pyvista_ndarray(narray)
-
-        vtk_arr = helpers.convert_array(copy, name, deep=deep_copy)
-        if not vectors_only:
-            self.VTKObject.AddArray(vtk_arr)
+        vtk_arr, shape = self._prepare_array(data, name, deep_copy)
+        self.VTKObject.AddArray(vtk_arr)
 
         try:
             if active_scalars or self.active_scalars is None:
@@ -385,6 +293,112 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         except TypeError:
             pass
         self.VTKObject.Modified()
+
+    def set_scalars(self, data: Union[Sequence[Number], Number, np.ndarray],
+                    name='scalars', deep_copy=False):
+        """Set the scalars of the dataset.
+
+        Parameters
+        ----------
+        data : sequence
+            A ``pyvista_ndarray``, ``numpy.ndarray``, ``list``,
+            ``tuple`` or scalar value.
+
+        name : str
+            Name of the array to add.
+
+        deep_copy : bool, optional
+            When ``True`` makes a full copy of the array.
+
+        """
+        vtk_arr, shape = self._prepare_array(data, name, deep_copy)
+        self.VTKObject.SetScalars(vtk_arr)
+        self.VTKObject.Modified()
+
+    def _prepare_array(self, data: Union[Sequence[Number], Number, np.ndarray],
+                       name: str, deep_copy: bool) -> Tuple[_vtk.vtkDataSet, Tuple]:
+        """Prepare an array to be added to this dataset."""
+        if data is None:
+            raise TypeError('data cannot be None.')
+        if isinstance(data, Iterable):
+            data = pyvista_ndarray(data)
+
+        if self.association == FieldAssociation.POINT:
+            array_len = self.dataset.GetNumberOfPoints()
+        elif self.association == FieldAssociation.CELL:
+            array_len = self.dataset.GetNumberOfCells()
+        else:
+            array_len = data.shape[0] if isinstance(data, np.ndarray) else 1
+
+        # Fixup input array length for scalar input
+        if not isinstance(data, np.ndarray) or np.ndim(data) == 0:
+            tmparray = np.empty(array_len)
+            tmparray.fill(data)
+            data = tmparray
+        if data.shape[0] != array_len:
+            raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
+
+        if data.dtype == np.bool_:
+            self.dataset.association_bitarray_names[self.association].add(name)
+            data = data.view(np.uint8)
+
+        shape = data.shape
+        if len(shape) == 3:
+            # Array of matrices. We need to make sure the order  in memory is right.
+            # If column order (c order), transpose. VTK wants row order (fortran
+            # order). The deep copy later will make sure that the array is contiguous.
+            # If row order but not contiguous, transpose so that the deep copy below
+            # does not happen.
+            size = data.dtype.itemsize
+            if (data.strides[1] / size == 3 and data.strides[2] / size == 1) or \
+                (data.strides[1] / size == 1 and data.strides[2] / size == 3 and \
+                 not data.flags.contiguous):
+                data = data.transpose(0, 2, 1)
+
+        # If array is not contiguous, make a deep copy that is contiguous
+        if not data.flags.contiguous:
+            data = np.ascontiguousarray(data)
+
+        # Flatten array of matrices to array of vectors
+        if len(shape) == 3:
+            data = data.reshape(shape[0], shape[1]*shape[2])
+
+        # Swap bytes from big to little endian.
+        if data.dtype.byteorder == '>':
+            data = data.byteswap(inplace=True)
+
+        # this handles the case when an input array is directly added to the
+        # output. We want to make sure that the array added to the output is not
+        # referring to the input dataset.
+        copy = pyvista_ndarray(data)
+
+        vtk_arr = helpers.convert_array(copy, name, deep=deep_copy)
+        return vtk_arr, shape
+
+    def append(self, narray: Union[Sequence[Number], Number, np.ndarray],
+               name: str, deep_copy=False, active_vectors=True,
+               active_scalars=True) -> None:
+        """Add an array to this object.
+
+        .. deprecated:: 0.32.0
+           Use one of the following instead:
+
+           * :func:`DataSetAttributes.set_array`
+           * :func:`DataSetAttributes.set_scalars`
+           * :func:`DataSetAttributes.set_vectors`
+           * The ``[]`` operator
+
+        """
+        warnings.warn("\n\n`DataSetAttributes.append` is deprecated.\n\n"
+                      "Use one of the following instead:\n"
+                      "    - `DataSetAttributes.set_array`\n"
+                      "    - `DataSetAttributes.set_scalars`\n"
+                      "    - `DataSetAttributes.set_vectors`\n"
+                      "    - The [] operator",
+            PyvistaDeprecationWarning
+        )
+        self.set_array(narray, name, deep_copy, active_vectors,
+                       active_scalars)
 
     def remove(self, key: Union[int, str]) -> None:
         """Remove an array.

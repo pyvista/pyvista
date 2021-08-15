@@ -211,6 +211,11 @@ class DataObject:
         """
         thistype = type(self)
         newobject = thistype()
+
+        # this must be called to ensure scalars active are "active"
+        # before performing a deep copy
+        self.active_scalars_info
+
         if deep:
             newobject.deep_copy(self)
         else:
