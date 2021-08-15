@@ -129,7 +129,7 @@ class DataSet(DataSetFilters, DataObject):
                 first_arr = next((arr for arr in attributes if arr not in exclude), None)
                 if first_arr is not None:
                     self._active_scalars_info = ActiveArrayInfo(attributes.association, first_arr)
-                    attributes.active_scalars = first_arr  # type: ignore
+                    attributes.active_scalars_name = first_arr
                     break
             else:
                 self._active_scalars_info = ActiveArrayInfo(field, None)
@@ -376,7 +376,7 @@ class DataSet(DataSetFilters, DataObject):
 
         scale_name = f'{vectors_name} Magnitude'
         scale = np.linalg.norm(self.active_vectors, axis=1)
-        self.point_arrays.set_array(scale, scale_name, active_scalars=False)
+        self.point_arrays.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property

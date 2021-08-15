@@ -354,7 +354,7 @@ def test_active_scalars_setter(hexbeam_point_attributes):
     dsa = hexbeam_point_attributes
     assert dsa.active_scalars is None
 
-    dsa.active_scalars = 'sample_point_scalars'
+    dsa.active_scalars_name = 'sample_point_scalars'
     assert dsa.active_scalars is not None
     assert dsa.GetScalars().GetName() == 'sample_point_scalars'
 
