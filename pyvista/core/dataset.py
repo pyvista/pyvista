@@ -857,7 +857,7 @@ class DataSet(DataSetFilters, DataObject):
         Active Scalars  : my_other_array
         Active Vectors  : None
         Active Texture  : None
-        Contains arrays : 
+        Contains arrays :
             my_array                float64    (8,)
             my_other_array          int64      (8,)
 

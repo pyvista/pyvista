@@ -410,7 +410,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Scalars  : None
         Active Vectors  : my-vectors
         Active Texture  : None
-        Contains arrays : 
+        Contains arrays :
             my-vectors              float64    (8, 3)
 
         """
