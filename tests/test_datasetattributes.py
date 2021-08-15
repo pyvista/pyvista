@@ -109,8 +109,9 @@ def test_active_scalars_name(sphere):
 
 def test_set_scalars(sphere):
     scalars = np.array(sphere.n_points)
-    sphere.point_arrays.set_scalars(scalars, 'scalars')
-    # assert 
+    key = 'scalars'
+    sphere.point_arrays.set_scalars(scalars, key)
+    assert sphere.point_arrays.active_scalars_name == key
 
 
 def test_eq(sphere):
