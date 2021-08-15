@@ -376,8 +376,7 @@ class DataSet(DataSetFilters, DataObject):
 
         scale_name = f'{vectors_name} Magnitude'
         scale = np.linalg.norm(self.active_vectors, axis=1)
-        self.point_arrays.set_array(scale, scale_name, active_vectors=False,
-                                    active_scalars=False)
+        self.point_arrays.set_array(scale, scale_name, active_scalars=False)
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
