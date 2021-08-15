@@ -57,17 +57,32 @@ class DataObject:
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
         pass
 
-    def save(self, filename: str, binary=True):
+    def save(self, filename: str, binary=True, texture=None):
         """Save this vtk object to file.
 
         Parameters
         ----------
         filename : str, pathlib.Path
-         Filename of output file. Writer type is inferred from
-         the extension of the filename.
+            Filename of output file. Writer type is inferred from
+            the extension of the filename.
 
         binary : bool, optional
-         If True, write as binary, else ASCII.
+            If ``True``, write as binary.  Otherwise, write as ASCII.
+            
+
+        texture : str, np.ndarray, optional
+            Write a single texture array to file when using a PLY
+            file.  Texture array must be a 3 or 4 component array with
+            the datatype ``np.uint8``.  Array may be a cell array or a
+            point array, and may also be a string if the array already
+            exists in the PolyData.
+
+            If a string is provided, the texture array will be saved
+            to disk as that name.  If an array is provided, the
+            texture array will be saved as ``'RGBA'``
+
+            .. note::
+               This feature is only available when saving PLY files. 
 
         Notes
         -----
@@ -91,6 +106,18 @@ class DataObject:
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(str(file_path))
         writer.SetInputData(self)
+        if file_ext == '.ply' and texture is not None:
+            if isinstance(texture, str):
+                writer.SetArrayName(texture)
+                array_name = texture
+            elif isinstance(texture, np.ndarray):
+                array_name = '_color_array'
+                self[array_name] = texture
+                writer.SetArrayName(array_name)
+
+            # enable alpha channel if applicable
+            if self[array_name].shape[-1] == 4:  # type: ignore
+                writer.SetEnableAlpha(True)
         writer.Write()
 
     @abstractmethod
@@ -226,7 +253,7 @@ class DataObject:
         >>> source = pv.UniformGrid((10, 10, 5))
         >>> target = pv.UniformGrid()
         >>> target.copy_structure(source)
-        >>> cpos = target.plot(show_edges=True)
+        >>> target.plot(show_edges=True)
 
         """
         self.CopyStructure(dataset)
@@ -241,7 +268,7 @@ class DataObject:
         >>> source = source.compute_cell_sizes()
         >>> target = pv.UniformGrid((10, 10, 5))
         >>> target.copy_attributes(source)
-        >>> cpos = target.plot(scalars='Volume', show_edges=True)
+        >>> target.plot(scalars='Volume', show_edges=True)
 
         """
         self.CopyAttributes(dataset)

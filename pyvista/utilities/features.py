@@ -1,10 +1,12 @@
 """Module containing geometry helper functions."""
 
 import ctypes
+import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 def voxelize(mesh, density=None, check_surface=True):
@@ -25,24 +27,24 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Returns
     -------
-    vox : pyvista.core.pointset.UnstructuredGrid
-        voxelized unstructured grid for original mesh
+    :class:`pyvista.core.pointset.UnstructuredGrid`
+        Voxelized unstructured grid of the original mesh.
 
     Examples
     --------
-    This example creates an equal density voxelized mesh.
+    Create an equal density voxelized mesh.
 
     >>> import pyvista as pv
-    >>> import pyvista.examples as ex
-    >>> mesh = pv.PolyData(ex.load_uniform().points)
+    >>> from pyvista import examples
+    >>> mesh = pv.PolyData(examples.load_uniform().points)
     >>> vox = pv.voxelize(mesh, density=0.5)
+    >>> vox.plot()
 
-    This example creates a voxelized mesh using unequal density dimensions
+    Create a voxelized mesh using unequal density dimensions.
 
-    >>> import pyvista as pv
-    >>> import pyvista.examples as ex
-    >>> mesh = pv.PolyData(ex.load_uniform().points)
+    >>> mesh = pv.PolyData(examples.load_uniform().points)
     >>> vox = pv.voxelize(mesh, density=[0.5, 0.9, 1.4])
+    >>> vox.plot()
 
     """
     if not pyvista.is_pyvista_dataset(mesh):
@@ -100,6 +102,10 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
 
 def single_triangle():
     """Create a single PolyData triangle."""
+    warnings.warn( "Use of `single_triangle` is deprecated. "
+        "Use `pyvista.triangle` instead.",
+        PyvistaDeprecationWarning
+    )
     points = np.zeros((3, 3))
     points[1] = [1, 0, 0]
     points[2] = [0.5, 0.707, 0]
@@ -121,7 +127,8 @@ def grid_from_sph_coords(theta, phi, r):
 
     Returns
     -------
-    pyvista.StructuredGrid
+    :class:`pyvista.StructuredGrid`
+        Structured grid.
 
     """
     x, y, z = np.meshgrid(np.radians(theta), np.radians(phi), r)
@@ -155,7 +162,7 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
 
     Returns
     -------
-    u_t, v_t, w_t: array-like
+    u_t, v_t, w_t: :class:`numpy.ndarray`
         Arrays of transformed x-, y-, z-components, respectively.
 
     """

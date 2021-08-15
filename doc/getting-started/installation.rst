@@ -47,6 +47,26 @@ To install this package with ``conda`` run::
 
     conda install -c conda-forge pyvista
 
+Installing the Current Development Branch from GitHub 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There may be features or bug-fixes that have been implemented in PyVista but
+have not made their way into a release.  To install ``pyvista`` from the latest
+up-to-date development branch from github, use one of the following
+
+.. code::
+
+   pip install -U git+https://github.com/pyvista/pyvista.git@main
+
+Alternatively, you can clone the repository with git and install it with pip.
+
+.. code::
+
+   git clone https://github.com/pyvista/pyvista.git
+   cd pyvista
+   pip install . -e
+
+Note the development flag ``-e``.  This allows you to change pyvista in-place without
+having to reinstall it for each change.
 
 Optional Dependencies
 ~~~~~~~~~~~~~~~~~~~~~
@@ -90,7 +110,7 @@ Alternatively, you can install the latest version from GitHub by visiting
     python -m pip install -e .
 
 
-The latest documentation for the ``master`` branch of PyVista can be found at
+The latest documentation for the ``main`` branch of PyVista can be found at
 `dev.pyvista.org <https://dev.pyvista.org>`_.
 
 
@@ -123,8 +143,8 @@ See other examples and demos:
     repository. For details on how to clone and test the PyVista source, please
     see our `Contributing Guide`_ and specifically, the `Testing`_ section.
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md
-.. _Testing: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md#testing
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md
+.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md#testing
 
 
 Running on CI Services

@@ -9,6 +9,11 @@ Plot with ``pyvista`` interactively within a `Juptyer
 Demo Using ``panel``
 ~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+   Depending on the state of the `panel
+   <https://pypi.org/project/panel/>`__ package, this may fail to
+   render.
+
 .. jupyter-execute::
 
    from pyvista import demos

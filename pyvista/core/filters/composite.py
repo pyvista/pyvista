@@ -65,7 +65,7 @@ class CompositeFilters:
 
     triangulate = DataSetFilters.triangulate
 
-    def outline(composite, generate_faces=False, nested=False):
+    def outline(composite, generate_faces=False, nested=False, progress_bar=False):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
         Parameters
@@ -76,13 +76,16 @@ class CompositeFilters:
         nested : bool, optional
             If True, these creates individual outlines for each nested dataset
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         """
         if nested:
-            return DataSetFilters.outline(composite, generate_faces=generate_faces)
+            return DataSetFilters.outline(composite, generate_faces=generate_faces, progress_bar=progress_bar)
         box = pyvista.Box(bounds=composite.bounds)
-        return box.outline(generate_faces=generate_faces)
+        return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
-    def outline_corners(composite, factor=0.2, nested=False):
+    def outline_corners(composite, factor=0.2, nested=False, progress_bar=False):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
         Parameters
@@ -94,8 +97,11 @@ class CompositeFilters:
         nested : bool, optional
             If True, these creates individual outlines for each nested dataset
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         """
         if nested:
-            return DataSetFilters.outline_corners(composite, factor=factor)
+            return DataSetFilters.outline_corners(composite, factor=factor, progress_bar=progress_bar)
         box = pyvista.Box(bounds=composite.bounds)
-        return box.outline_corners(factor=factor)
+        return box.outline_corners(factor=factor, progress_bar=progress_bar)

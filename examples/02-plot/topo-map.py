@@ -1,4 +1,6 @@
 """
+.. _ref_topo_map_example:
+
 Topographic Map
 ~~~~~~~~~~~~~~~
 

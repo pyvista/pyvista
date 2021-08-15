@@ -1,5 +1,6 @@
 """Attributes common to PolyData and Grid Objects."""
 
+import warnings
 import collections.abc
 import logging
 from typing import Optional, List, Tuple, Iterable, Union, Any, Dict, overload
@@ -12,6 +13,8 @@ from pyvista import _vtk
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
                                raise_not_matching, vtk_id_list_to_array,
                                abstract_class, axis_rotation, transformations)
+from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.errors import check_valid_vector
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -243,11 +246,21 @@ class DataSet(DataSetFilters, DataObject):
     @property
     def vectors(self) -> Optional[pyvista_ndarray]:
         """Return active vectors."""
+        warnings.warn( "Use of `DataSet.vectors` is deprecated. "
+            "Use `DataSet.active_vectors` instead.",
+            PyvistaDeprecationWarning
+        )
         return self.active_vectors
 
     @vectors.setter
     def vectors(self, array: np.ndarray):
         """Set the active vector."""
+        warnings.warn("Use of `DataSet.vectors` to add vector data is deprecated. "
+            "Use `DataSet['vector_name'] = data`. "
+            "Use `DataSet.active_vectors_name = 'vector_name' to make active."
+            ,
+            PyvistaDeprecationWarning
+        )
         if array.ndim != 2:
             raise ValueError('vector array must be a 2-dimensional array')
         elif array.shape[1] != 3:
@@ -499,7 +512,7 @@ class DataSet(DataSetFilters, DataObject):
             Angle in degrees to rotate about the y-axis.
 
         point : float, optional
-            Point to ratate about.
+            Point to rotate about.
 
         transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are
@@ -574,6 +587,182 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         self.points += np.asarray(xyz)
+
+    def scale(self, xyz: Union[list, tuple, np.ndarray]):
+        """Scale the mesh.
+
+        Parameters
+        ----------
+        xyz : scale factor list or tuple or np.ndarray
+            Length 3 list, tuple or array.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> _ = pl.show_grid()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> _ = pl.show_grid()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.scale([10.0, 10.0, 10.0])
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
+        self.points *= np.asarray(xyz)
+
+    def flip_x(self, point=None, transform_all_input_vectors=False):
+        """Flip mesh about the x-axis.
+
+        Parameters
+        ----------
+        point : list, optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_x()
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
+        if point is None:
+            point = self.center
+        check_valid_vector(point, 'point')
+        t = transformations.reflection((1, 0, 0), point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+
+    def flip_y(self, point=None, transform_all_input_vectors=False):
+        """Flip mesh about the y-axis.
+
+        Parameters
+        ----------
+        point : list, optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_y()
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
+        if point is None:
+            point = self.center
+        check_valid_vector(point, 'point')
+        t = transformations.reflection((0, 1, 0), point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+
+    def flip_z(self, point=None, transform_all_input_vectors=False):
+        """Flip mesh about the z-axis.
+
+        Parameters
+        ----------
+        point : list, optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_z()
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
+        if point is None:
+            point = self.center
+        check_valid_vector(point, 'point')
+        t = transformations.reflection((0, 0, 1), point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+
+    def flip_normal(self, normal: List[float], point=None, transform_all_input_vectors=False):
+        """Flip mesh about the normal.
+
+        Parameters
+        ----------
+        normal : tuple
+           Normal vector to flip about.
+
+        point : list, optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_normal([1.0, 1.0, 1.0])
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
+        if point is None:
+            point = self.center
+        check_valid_vector(normal, 'normal')
+        check_valid_vector(point, 'point')
+        t = transformations.reflection(normal, point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object."""
@@ -914,7 +1103,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import numpy as np
         >>> points = np.random.random((1000, 3))
         >>> indices = mesh.find_closest_cell(points)
-        >>> print(indices.shape)
+        >>> indices.shape
         (1000,)
         """
         if isinstance(point, collections.abc.Sequence):

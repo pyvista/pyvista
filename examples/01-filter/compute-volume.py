@@ -1,4 +1,6 @@
 """
+.. _volumetric_example:
+
 Volumetric Analysis
 ~~~~~~~~~~~~~~~~~~~
 

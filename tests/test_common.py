@@ -451,13 +451,13 @@ def test_texture_airplane():
 
 def test_invalid_vector(grid):
     with pytest.raises(ValueError):
-        grid.vectors = np.empty(10)
+        grid["vectors"] = np.empty(10)
 
     with pytest.raises(ValueError):
-        grid.vectors = np.empty((3, 2))
+        grid["vectors"] = np.empty((3, 2))
 
     with pytest.raises(ValueError):
-        grid.vectors = np.empty((3, 3))
+        grid["vectors"] = np.empty((3, 3))
 
 
 def test_no_t_coords(grid):
@@ -468,7 +468,7 @@ def test_no_arrows(grid):
     assert grid.arrows is None
 
 
-def test_arrows(grid):
+def test_arrows():
     sphere = pyvista.Sphere(radius=3.14)
 
     # make cool swirly pattern
@@ -477,16 +477,16 @@ def test_arrows(grid):
                          np.cos(sphere.points[:, 2]))).T
 
     # add and scales
-    sphere.vectors = vectors*0.3
+    sphere["vectors"] = vectors*0.3
+    sphere.set_active_vectors("vectors")
     assert np.allclose(sphere.active_vectors, vectors*0.3)
-    assert np.allclose(sphere.vectors, vectors*0.3)
+    assert np.allclose(sphere["vectors"], vectors*0.3)
 
-    assert sphere.active_vectors_info[1] == '_vectors'
+    assert sphere.active_vectors_info[1] == 'vectors'
     arrows = sphere.arrows
     assert isinstance(arrows, pyvista.PolyData)
     assert np.any(arrows.points)
-    sphere.set_active_vectors('_vectors')
-    assert sphere.active_vectors_name == '_vectors'
+    assert arrows.active_vectors_name == 'vectors'
 
 
 def active_component_consistency_check(grid, component_type, field_association="point"):
@@ -1060,3 +1060,62 @@ def test_rotations_should_match_by_a_360_degree_difference():
     rot1.rotate_vector(vector=vector, angle=angle, point=point)
     rot2.rotate_vector(vector=vector, angle=angle - 360.0, point=point)
     assert np.allclose(rot1.points, rot2.points)
+
+
+def test_scale():
+    mesh = examples.load_airplane()
+
+    xyz = np.random.random(3)
+    scale1 = mesh.copy()
+    scale2 = mesh.copy()
+    scale1.scale(xyz)
+    scale2.points *= xyz
+    assert np.allclose(scale1.points, scale2.points)
+
+
+def test_flip_x():
+    mesh = examples.load_airplane()
+    flip_x1 = mesh.copy()
+    flip_x2 = mesh.copy()
+    flip_x1.flip_x(point=(0, 0, 0))
+    flip_x2.points[:, 0] *= -1.0
+    assert np.allclose(flip_x1.points, flip_x2.points)
+
+
+def test_flip_y():
+    mesh = examples.load_airplane()
+    flip_y1 = mesh.copy()
+    flip_y2 = mesh.copy()
+    flip_y1.flip_y(point=(0, 0, 0))
+    flip_y2.points[:, 1] *= -1.0
+    assert np.allclose(flip_y1.points, flip_y2.points)
+
+
+def test_flip_z():
+    mesh = examples.load_airplane()
+    flip_z1 = mesh.copy()
+    flip_z2 = mesh.copy()
+    flip_z1.flip_z(point=(0, 0, 0))
+    flip_z2.points[:, 2] *= -1.0
+    assert np.allclose(flip_z1.points, flip_z2.points)
+
+
+def test_flip_normal():
+    mesh = examples.load_airplane()
+    flip_normal1 = mesh.copy()
+    flip_normal2 = mesh.copy()
+    flip_normal1.flip_normal(normal=[1.0, 0.0, 0.0])
+    flip_normal2.flip_x()
+    assert np.allclose(flip_normal1.points, flip_normal2.points)
+
+    flip_normal3 = mesh.copy()
+    flip_normal4 = mesh.copy()
+    flip_normal3.flip_normal(normal=[0.0, 1.0, 0.0])
+    flip_normal4.flip_y()
+    assert np.allclose(flip_normal3.points, flip_normal4.points)
+
+    flip_normal5 = mesh.copy()
+    flip_normal6 = mesh.copy()
+    flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
+    flip_normal6.flip_z()
+    assert np.allclose(flip_normal5.points, flip_normal6.points)
