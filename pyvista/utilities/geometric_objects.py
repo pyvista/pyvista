@@ -942,17 +942,15 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
     return arc
 
 
-def Pyramid(points=None):
+def Pyramid(points):
     """Create a pyramid defined by 5 points.
 
     Parameters
     ----------
-    points : sequence, optional
+    points : np.ndarray or list
         Points of the pyramid.  Points are ordered such that the first
         four points are the four counterclockwise points on the
         quadrilateral face, and the last point is the apex.
-
-        Defaults to pyramid in example.
 
     Returns
     -------
@@ -970,13 +968,6 @@ def Pyramid(points=None):
     >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
     >>> pyramid.plot(show_edges=True, line_width=5)
     """
-    if points is None:
-        points = [[1.0, 1.0, 0.0],
-                  [-1.0, 1.0, 0.0],
-                  [-1.0, -1.0, 0.0],
-                  [1.0, -1.0, 0.0],
-                  [0.0, 0.0, 1.67]]
-
     if len(points) != 5:
         raise TypeError('Points must be given as length 5 np.ndarray or list')
 
@@ -1035,7 +1026,7 @@ def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
     return triangle
 
 
-def Rectangle(points=[[1.0, 0.0, 0], [1.0, 1.0, 0], [0.0, 1.0, 0], [0.0, 0.0, 0.0]]):
+def Rectangle(points=[[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
     """Create a rectangle defined by 4 points.
 
     Parameters
@@ -1051,10 +1042,10 @@ def Rectangle(points=[[1.0, 0.0, 0], [1.0, 1.0, 0], [0.0, 1.0, 0], [0.0, 0.0, 0.
     Examples
     --------
     >>> import pyvista
-    >>> pointa = [1.0, 0.0, 0.0]
-    >>> pointb = [1.0, 1.0, 0.0]
-    >>> pointc = [0.0, 1.0, 0.0]
-    >>> pointd = [0.0, 0.0, 0.0]
+    >>> pointa = [1, 0, 0]
+    >>> pointb = [1, 1, 0]
+    >>> pointc = [0, 1, 0]
+    >>> pointd = [0, 0, 0]
     >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc, pointd])
     >>> rectangle.plot(show_edges=True, line_width=5)
     """

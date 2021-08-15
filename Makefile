@@ -29,9 +29,6 @@ doctest-modules-local-namespace:
 	@echo "Running module doctesting using docstring local namespace"
 	python tests/check_doctest_names.py
 
-example-coverage:
-	python tests/check_example_coverage.py
-
 coverage:
 	@echo "Running coverage"
 	@pytest -v --cov pyvista

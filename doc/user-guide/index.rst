@@ -11,12 +11,10 @@ Simple Interactive Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 This basic example demonstrates three key features of PyVista:
 
-- Simple `numpy`_ and `matplotlib`_ like interface
+- Simple ``numpy`` and ``matplotlib`` like interface
 - Variety of built-in examples
 - Intuitive plotting with keyword arguments.
 
-.. _numpy: https://numpy.org/
-.. _matplotlib: https://matplotlib.org/
 
 .. jupyter-execute::
    :hide-code:
@@ -55,11 +53,9 @@ User Guide Contents
 
    what-is-a-mesh
    simple
-   data_model
-   pyvista_to_vtk
-   themes
    jupyter/index
    optional_features
+   themes
 
 Videos
 ======

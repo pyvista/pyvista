@@ -21,7 +21,6 @@ except:
 skip_windows_dev_whl = pytest.mark.skipif(os.name == 'nt' and vtk_dev,
                                           reason='Test fails on Windows with VTK dev wheels')
 
-
 @skip_no_plotting
 def test_plot_glyphs():
     demos.plot_glyphs(2)
@@ -49,9 +48,3 @@ def test_logo_voxel():
 def test_plot_logo():
     # simply should not fail
     demos.plot_logo()
-
-
-@skip_no_plotting
-def test_plot_datasets():
-    # simply should not fail
-    demos.plot_datasets()

@@ -64,21 +64,19 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     >>> import vtk
     >>> import numpy as np
 
-    Create an empty grid
-
+    >>> # Create empty grid
     >>> grid = pyvista.RectilinearGrid()
 
-    Initialize from a vtk.vtkRectilinearGrid object
-
+    >>> # Initialize from a vtk.vtkRectilinearGrid object
     >>> vtkgrid = vtk.vtkRectilinearGrid()
     >>> grid = pyvista.RectilinearGrid(vtkgrid)
 
-    Create from NumPy arrays
-
+    >>> # Create from NumPy arrays
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 5)
     >>> zrng = np.arange(-10, 10, 1)
     >>> grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+
 
     """
 
@@ -315,7 +313,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    def _from_specs(self, dims, spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)):
+    def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
         """Create VTK image data directly from numpy arrays.
 
         A uniform grid is defined by the node spacings for each axis
