@@ -235,6 +235,8 @@ def get_array(mesh, name, preference='cell', info=False, err=False) -> Any:
         else:
             raise ValueError(f'Data field ({preference}) not supported.')
 
+    arr = None
+    field = FieldAssociation.NONE
     if parr is not None:
         arr = parr
         field = FieldAssociation.POINT
