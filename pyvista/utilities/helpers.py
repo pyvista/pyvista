@@ -234,8 +234,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False) -> Any:
                 return farr
         else:
             raise ValueError(f'Data field ({preference}) not supported.')
-    arr = None
-    field = None
+
     if parr is not None:
         arr = parr
         field = FieldAssociation.POINT
@@ -247,6 +246,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False) -> Any:
         field = FieldAssociation.NONE
     elif err:
         raise KeyError(f'Data array ({name}) not present in this dataset.')
+
     if info:
         return arr, field
     return arr
