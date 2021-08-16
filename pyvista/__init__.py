@@ -50,6 +50,10 @@ except KeyError:
 VTK_DATA_PATH: Optional[str] = None
 if 'PYVISTA_VTK_DATA' in os.environ:
     VTK_DATA_PATH = os.environ['PYVISTA_VTK_DATA']
+    if not os.path.isdir(VTK_DATA_PATH):
+        warnings.warn(f"VTK_DATA_PATH: {VTK_DATA_PATH} is an invalid path")
+    if not os.path.isdir(os.path.join(VTK_DATA_PATH, 'Data')):
+        warnings.warn(f"VTK_DATA_PATH: {os.path.join(VTK_DATA_PATH, 'Data')} does not exist")
 
 # flag for when building the sphinx_gallery
 BUILDING_GALLERY = False
@@ -62,7 +66,6 @@ REPR_VOLUME_MAX_CELLS = 1e6
 
 # Set where figures are saved
 FIGURE_PATH = None
-
 
 
 # allow user to override the examples path
