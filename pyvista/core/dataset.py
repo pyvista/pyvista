@@ -253,6 +253,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh['Z Height'] = mesh.points[:, 2]
         >>> mesh.active_scalars_name
         'Z Height'
+
         """
         return self.active_scalars_info.name
 
@@ -621,6 +622,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> cube.rename_array('my_array', 'my_renamed_array')
         >>> cube['my_renamed_array']
         array([0, 1, 2, 3, 4, 5, 6, 7])
+
         """
         _, field = get_array(self, old_name, preference=preference, info=True)
         was_active = False
@@ -997,7 +999,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Get the length of the bounding box of a sphere.  This should
+        Get the length of the bounding box of a cube.  This should
         match ``3**(1/2)`` since it is the diagonal of a cube that is
         ``1 x 1 x 1`` 
 

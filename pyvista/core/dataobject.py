@@ -352,7 +352,7 @@ class DataObject:
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh.memory_address  # doctest:+SKIP
-        'Addr=0x237c980'
+        'Addr=...'
 
         """
         return self.GetInformation().GetAddressAsString("")
