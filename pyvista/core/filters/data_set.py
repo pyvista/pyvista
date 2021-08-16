@@ -7,7 +7,8 @@ import numpy as np
 import pyvista
 from pyvista import _vtk, FieldAssociation
 from pyvista.utilities import (
-    NORMALS, assert_empty_kwargs, generate_plane, get_array, wrap, abstract_class
+    NORMALS, assert_empty_kwargs, generate_plane, get_array, wrap,
+    abstract_class, get_array_association
 )
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
@@ -793,7 +794,8 @@ class DataSetFilters:
         # set the scalars to threshold on
         if scalars is None:
             field, scalars = dataset.active_scalars_info
-        arr, field = get_array(dataset, scalars, preference=preference, info=True)
+        arr = get_array(dataset, scalars, preference=preference)
+        field = get_array_association(dataset, scalars, preference=preference)
 
         if arr is None:
             raise ValueError('No arrays present to threshold.')
@@ -1237,7 +1239,7 @@ class DataSetFilters:
         if scalars is None:
             field, scalars = dataset.active_scalars_info
         else:
-            _, field = get_array(dataset, scalars, preference=preference, info=True)
+            field = get_array_association(dataset, scalars, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
             raise TypeError(f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.')
@@ -1807,7 +1809,8 @@ class DataSetFilters:
         assert_empty_kwargs(**kwargs)
         if scalars is None:
             field, scalars = dataset.active_scalars_info
-        arr, field = get_array(dataset, scalars, preference='point', info=True)
+        arr = get_array(dataset, scalars, preference='point')
+        field = get_array_association(dataset, scalars, preference='point')
         if field != FieldAssociation.POINT:
             raise TypeError('Dataset can only by warped by a point data array.')
         # Run the algorithm
@@ -1880,7 +1883,8 @@ class DataSetFilters:
         """
         if vectors is None:
             field, vectors = dataset.active_vectors_info
-        arr, field = get_array(dataset, vectors, preference='point', info=True)
+        arr = get_array(dataset, scalars, preference='point')
+        field = get_array_association(dataset, scalars, preference='point')
         if arr is None:
             raise TypeError('No active vectors')
 
@@ -4040,7 +4044,8 @@ class DataSetFilters:
         alg.SetQCriterionArrayName(qcriterion)
 
         alg.SetFasterApproximation(faster)
-        _, field = dataset.get_array(scalars, preference=preference, info=True)
+        arr = get_array(dataset, scalars, preference=preference)
+        field = get_array_association(dataset, scalars, preference=preference)
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInputData(dataset)

@@ -920,7 +920,7 @@ def test_get_data_range(grid):
     mesh.clear_arrays()
     rng = mesh.get_data_range()
     assert all(np.isnan(rng))
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         rng = mesh.get_data_range('some data')
 
     # Test with some data

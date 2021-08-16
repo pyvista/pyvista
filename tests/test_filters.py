@@ -293,6 +293,7 @@ def test_threshold(datasets):
     with pytest.raises(TypeError):
         dataset.threshold({100, 500}, progress_bar=True)
     # Now test DATASETS without arrays
+    breakpoint()
     with pytest.raises(ValueError):
         for i, dataset in enumerate(datasets[3:-1]):
             thresh = dataset.threshold(progress_bar=True)
