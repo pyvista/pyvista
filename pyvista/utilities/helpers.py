@@ -9,7 +9,7 @@ import sys
 from threading import Thread
 import threading
 import traceback
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 
@@ -182,7 +182,7 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(mesh, name, preference='cell', err=False) -> np.ndarray:
+def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -231,7 +231,7 @@ def get_array(mesh, name, preference='cell', err=False) -> np.ndarray:
         return farr
     elif err:
         raise KeyError(f'Data array ({name}) not present in this dataset.')
-    return np.array([])
+    return None
 
 
 def get_array_association(mesh, name, preference='cell', err=False) -> FieldAssociation:

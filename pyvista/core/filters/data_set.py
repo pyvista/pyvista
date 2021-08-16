@@ -794,11 +794,11 @@ class DataSetFilters:
         # set the scalars to threshold on
         if scalars is None:
             field, scalars = dataset.active_scalars_info
-        arr = get_array(dataset, scalars, preference=preference)
-        field = get_array_association(dataset, scalars, preference=preference)
-
+        arr = get_array(dataset, scalars, preference=preference, err=False)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
+
+        field = get_array_association(dataset, scalars, preference=preference)
 
         # If using an inverted range, merge the result of two filters:
         if isinstance(value, (np.ndarray, collections.abc.Sequence)) and invert:
@@ -1810,6 +1810,10 @@ class DataSetFilters:
         if scalars is None:
             field, scalars = dataset.active_scalars_info
         arr = get_array(dataset, scalars, preference='point')
+
+        if arr is None:
+            raise ValueError('No vectors present to warp by vector.')
+
         field = get_array_association(dataset, scalars, preference='point')
         if field != FieldAssociation.POINT:
             raise TypeError('Dataset can only by warped by a point data array.')
@@ -1883,15 +1887,15 @@ class DataSetFilters:
         """
         if vectors is None:
             field, vectors = dataset.active_vectors_info
-        arr = get_array(dataset, scalars, preference='point')
-        field = get_array_association(dataset, scalars, preference='point')
+        arr = get_array(dataset, vectors, preference='point')
+        field = get_array_association(dataset, vectors, preference='point')
         if arr is None:
-            raise TypeError('No active vectors')
+            raise ValueError('No vectors present to warp by vector.')
 
         # check that this is indeed a vector field
         if arr.ndim != 2 or arr.shape[1] != 3:
             raise ValueError(
-                'Dataset can only by warped by a 3D vector point data array.' + \
+                'Dataset can only by warped by a 3D vector point data array.'
                 'The values you provided do not satisfy this requirement')
         alg = _vtk.vtkWarpVector()
         alg.SetInputDataObject(dataset)
