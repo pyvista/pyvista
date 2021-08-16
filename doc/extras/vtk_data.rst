@@ -1,6 +1,6 @@
 
-Using local vtk-data
-=====================
+Using Local VTK-Data
+====================
 
 Normally, the PyVista examples will be downloaded from the 
 `pyvista/vtk-data repository <https://github.com/pyvista/vtk-data>`_.

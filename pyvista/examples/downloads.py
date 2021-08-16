@@ -75,8 +75,7 @@ def _retrieve_file(retriever, filename):
     if os.path.isfile(local_path_no_zip) or os.path.isdir(local_path_no_zip):
         return local_path_no_zip, None
     if isinstance(retriever, str):
-        url = _get_vtk_file_url(filename)
-        retriever = partial(_http_request, url)
+        retriever = partial(_http_request, retriever)
     saved_file, resp = retriever()
     # new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
     # Make sure folder exists!
