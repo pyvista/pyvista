@@ -945,17 +945,17 @@ class DataSet(DataSetFilters, DataObject):
 
         Get the point data array association.
 
-        >>> mesh.get_array('point-data')
+        >>> mesh.get_array_association('point-data')
         <FieldAssociation.POINT: 0>
 
         Get the cell data array association.
 
-        >>> mesh.get_array('cell-data')
+        >>> mesh.get_array_association('cell-data')
         <FieldAssociation.CELL: 1>
 
         Get the field data array association.
 
-        >>> mesh.get_array('field-data')
+        >>> mesh.get_array_association('field-data')
         <FieldAssociation.NONE: 2>
 
         """
