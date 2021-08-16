@@ -468,6 +468,8 @@ class DataSet(DataSetFilters, DataObject):
             arr = arr_var
 
         # If array has no tuples return a NaN range
+        if arr is None:
+            return (np.nan, np.nan)
         if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)
         # Use the array range
@@ -906,7 +908,10 @@ class DataSet(DataSetFilters, DataObject):
         array(['a', 'b', 'c'], dtype='<U1')
 
         """
-        return get_array(self, name, preference=preference, err=True)
+        arr = get_array(self, name, preference=preference, err=True)
+        if arr is None:  # pragma: no cover
+            raise KeyError(f'Array {name} not present')
+        return arr
 
     def get_array_association(self, name: str, preference='cell') -> FieldAssociation:
         """Get the association of an array.

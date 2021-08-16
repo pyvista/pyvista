@@ -7,7 +7,7 @@ import numpy as np
 import pyvista
 from pyvista import (
     abstract_class, _vtk, NORMALS, generate_plane, assert_empty_kwargs,
-    vtk_id_list_to_array, get_array
+    vtk_id_list_to_array, get_array, get_array_association
 )
 from pyvista.core.errors import NotAllTrianglesError, DeprecationError
 from pyvista.core.filters import _get_output, _update_alg
@@ -865,7 +865,7 @@ class PolyDataFilters(DataSetFilters):
         if scalars is not None:
             if not isinstance(scalars, str):
                 raise TypeError('scalars array must be given as a string name')
-            _, field = poly_data.get_array(scalars, preference=preference, info=True)
+            field = poly_data.get_array_association(scalars, preference=preference)
             # args: (idx, port, connection, field, name)
             tube.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
             tube.SetVaryRadiusToVaryRadiusByScalar()
@@ -2324,7 +2324,8 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            arr, field = get_array(poly_data, scalars, preference=preference, info=True)
+            arr = get_array(poly_data, scalars, preference=preference)
+            field = get_array_association(poly_data, scalars, preference=preference)
         if width is None:
             width = poly_data.length * 0.1
         alg = _vtk.vtkRibbonFilter()
