@@ -97,9 +97,9 @@ def _download_file(filename):
         retriever = partial(_http_request, url)
     else:
         if not os.path.isdir(pyvista.VTK_DATA_PATH):
-            raise FileNotFoundError('VTK data repository path does not exist')
+            raise FileNotFoundError(f'VTK data repository path does not exist at:\n\n{pyvista.VTK_DATA_PATH}')
         if not os.path.isdir(os.path.join(pyvista.VTK_DATA_PATH), 'Data'):
-            raise FileNotFoundError("VTK data repository does not have 'Data' folder")
+            raise FileNotFoundError(f'VTK data repository does not have 'Data' folder at:\n\n{pyvista.VTK_DATA_PATH}')
         retriever = partial(_repo_file_request, pyvista.VTK_DATA_PATH, filename)
     return _retrieve_file(retriever, filename)
 
