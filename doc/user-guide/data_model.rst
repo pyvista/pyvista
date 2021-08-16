@@ -369,7 +369,12 @@ geometry.
 
 Data Arrays
 -----------
-Each :class:`pyvista.DataSet <pyvista.core.dataset.DataSet>` contains attributes that allow you to access the underlying numeric data.  This numerical data may be associated with the :attr:`points <pyvista.core.dataset.DataSet.points>`, :attr:`cells <pyvista.core.dataset.DataSet.cells>`, or not associated with points or cells and attached to the mesh in general.
+Each :class:`pyvista.DataSet <pyvista.core.dataset.DataSet>` contains
+attributes that allow you to access the underlying numeric data.  This
+numerical data may be associated with the :attr:`points
+<pyvista.core.dataset.DataSet.points>`, :attr:`cells
+<pyvista.core.dataset.DataSet.cells>`, or not associated with points
+or cells and attached to the mesh in general.
 
 To illustrate data arrays within PyVista, let's first construct a
 slightly more complex mesh than our previous example.  Here, we create
@@ -405,12 +410,78 @@ Let's also plot this basic mesh:
    >>> pl.camera_position = 'xy'
    >>> pl.show()
 
+Now that we have a simple mesh to work with, we can start assigning it
+data.  There are two main types of data that can be associated with
+mesh, scalar data and vector data. Scalar data is single or
+multi-component data that is non directional and may include values
+like temperature, or in the case of multi-component data, RGBA values.
+Vector data contains magnitude and direction and is represented as
+arrays containing three components.
+
+When plotting, we can easily display scalar data, but this data must
+be "associated" with either points or cells.  For example, we may wish
+to assign values to the cells of our example mesh, which we can do by
+accessing the `attr:`cell_arrays <pyvista.DataSet.cell_arrays>`
+attribute of our mesh.
+
+
+Cell Arrays
+~~~~~~~~~~~
+The easiest way to add scalar data to a :class:`DataSet
+<pyvista.core.dataset.DataSet>` is to use the ``[]`` operator.
+Continuing with our example above, let's assign each cell a single
+integer.  We can do this using a python :class:`list` and making it
+the same length as the number of cells in the
+:class:`pyvista.UnstructuredGrid`.  Here we create the list, add it to
+the `attr:`cell_arrays <pyvista.DataSet.cell_arrays>`, and then access
+it using the ``[]`` operator.
+
+.. jupyter-execute::
+
+   >>> simple_list = range(ugrid.n_cells)
+   >>> ugrid.cell_arrays['my-data'] = simple_list
+   >>> ugrid.cell_arrays['my-data']
+
+Note how we are returned a :class:`pyvista.pyvista_ndarray`.  Since
+VTK requires C arrays, PyVista will internally wrap or convert all
+inputs to C arrays.  We can then plot this with:
+
+.. pyvista-plot::
+   :context:
+   :include-source: False
+
+   >>> ugrid.cell_arrays['my-data'] = range(ugrid.n_cells)
+
+.. pyvista-plot::
+   :context:
+
+   >>> ugrid.plot(cpos='xy', show_edges=True)
+
+Note how we did not have to specify which cell data to plot as the
+``[]`` operator automatically sets the active scalars:
+
+.. jupyter-execute::
+
+   >>> ugrid.cell_arrays
+
+We can also add 
+
+   >>> pl = pyvista.Plotter()
+   >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
+   >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]
+   >>> pl.add_point_labels(ugrid.points, point_labels,
+   ...                     font_size=25, point_size=20)
+   >>> cell_labels = [f'Cell {i}' for i in range(ugrid.n_cells)]
+   >>> pl.add_point_labels(ugrid.cell_centers(), cell_labels, font_size=25)
+   >>> pl.camera_position = 'xy'
+   >>> pl.show()
+
 
 Point Arrays
 ~~~~~~~~~~~~
 
-Cell Arrays
-~~~~~~~~~~~
+
+
 
 Field Arrays
 ~~~~~~~~~~~~
