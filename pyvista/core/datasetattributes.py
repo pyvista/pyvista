@@ -135,7 +135,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     arr_type = ''
 
                 # special treatment for vector data
-                if hasattr(vtk_arr, '_is_vector') or name == self.active_vectors_name:
+                if name == self.active_vectors_name:
                     arr_type = 'VECTOR'
 
                 line = f'{name[:23]:<24}{str(array.dtype):<9}{str(array.shape):<20} {arr_type}'.strip()
@@ -611,7 +611,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         # prepare the array and add an attribute so that we can track this as a vector
         vtk_arr = self._prepare_array(vectors, name, deep_copy)
-        vtk_arr._is_vector = True
 
         n_comp = vtk_arr.GetNumberOfComponents()
         if n_comp != 3:
