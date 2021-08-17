@@ -69,6 +69,11 @@ def test_repr(hexbeam_point_attributes):
     # ensure datatype str is in repr
     assert str(data.dtype) in str(hexbeam_point_attributes)
 
+    # ensure VECTOR in repr
+    vectors0 = np.random.random((sz, 3))
+    hexbeam_point_attributes.set_vectors(vectors0, 'vectors0')
+    assert 'VECTOR' in str(hexbeam_point_attributes)
+
 
 def test_empty_active_vectors(hexbeam):
     assert hexbeam.active_vectors is None
@@ -373,3 +378,78 @@ def test_assign_labels_to_points(hexbeam):
     labels = [f"Label {i}" for i in range(hexbeam.n_points)]
     hexbeam['labels'] = labels
     assert np.all(hexbeam.active_scalars == labels)
+
+
+def test_normals_get(plane):
+    plane.clear_arrays()
+    assert plane.point_arrays.normals is None
+
+    plane_w_normals = plane.compute_normals()
+    assert np.allclose(plane_w_normals.point_arrays.normals,
+                       plane_w_normals.point_normals)
+
+
+def test_normals_set():
+    plane = pyvista.Plane(i_resolution=1, j_resolution=1)
+    plane.point_arrays.normals = plane.point_normals
+    assert np.allclose(plane.point_arrays.normals,
+                       plane.point_normals)
+
+    with raises(ValueError, match='must be a 2-dim'):
+        plane.point_arrays.normals = [1]
+    with raises(ValueError, match='must match number of points'):
+        plane.point_arrays.normals = [[1, 1, 1], [0, 0, 0]]
+    with raises(ValueError, match='Normals must have exactly 3 components'):
+        plane.point_arrays.normals = [[1, 1], [0, 0], [0, 0], [0, 0]]
+
+
+def test_normals_raise_field(plane):
+    with raises(AttributeError):
+        plane.field_arrays.normals
+
+
+def test_add_two_vectors():
+    """Ensure we can add two vectors"""
+    mesh = pyvista.Plane(i_resolution=1, j_resolution=1)
+    mesh.point_arrays.set_array(range(4), 'my-scalars')
+    mesh.point_arrays.set_array(range(5, 9), 'my-other-scalars')
+    vectors0 = np.random.random((4, 3))
+    mesh.point_arrays.set_vectors(vectors0, 'vectors0')
+    vectors1 = np.random.random((4, 3))
+    mesh.point_arrays.set_vectors(vectors1, 'vectors1')
+
+    assert 'vectors0' in mesh.point_arrays
+    assert 'vectors1' in mesh.point_arrays
+
+
+def test_active_vectors_name_setter():
+    mesh = pyvista.Plane(i_resolution=1, j_resolution=1)
+    mesh.point_arrays.set_array(range(4), 'my-scalars')
+    vectors0 = np.random.random((4, 3))
+    mesh.point_arrays.set_vectors(vectors0, 'vectors0')
+    vectors1 = np.random.random((4, 3))
+    mesh.point_arrays.set_vectors(vectors1, 'vectors1')
+
+    assert mesh.point_arrays.active_vectors_name == 'vectors1'
+    mesh.point_arrays.active_vectors_name = 'vectors0'
+    assert mesh.point_arrays.active_vectors_name == 'vectors0'
+
+    with raises(KeyError, match='does not contain'):
+        mesh.point_arrays.active_vectors_name = 'not a valid key'
+
+    with raises(ValueError, match='needs 3 components'):
+        mesh.point_arrays.active_vectors_name = 'my-scalars'
+
+
+def test_active_vectors_eq():
+    mesh = pyvista.Plane(i_resolution=1, j_resolution=1)
+    vectors0 = np.random.random((4, 3))
+    mesh.point_arrays.set_vectors(vectors0, 'vectors0')
+    vectors1 = np.random.random((4, 3))
+    mesh.point_arrays.set_vectors(vectors1, 'vectors1')
+    other_mesh = mesh.copy(deep=True)
+
+    mesh.point_arrays.active_vectors_name = 'vectors1'
+    assert mesh == other_mesh
+    mesh.point_arrays.active_vectors_name = 'vectors0'
+    assert mesh != other_mesh

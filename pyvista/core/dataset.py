@@ -859,8 +859,8 @@ class DataSet(DataSetFilters, DataObject):
         Active Vectors  : None
         Active Texture  : None
         Contains arrays :
-            my_array                float64    (8,)
-            my_other_array          int64      (8,)
+            my_array                float64  (8,)
+            my_other_array          int64    (8,)                 SCALARS
 
         Access an array from point_arrays
 
@@ -1001,7 +1001,7 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Get the length of the bounding box of a cube.  This should
         match ``3**(1/2)`` since it is the diagonal of a cube that is
-        ``1 x 1 x 1`` 
+        ``1 x 1 x 1``
 
         >>> import pyvista
         >>> mesh = pyvista.Cube()
