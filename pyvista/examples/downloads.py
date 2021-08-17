@@ -1,5 +1,6 @@
 """Functions to download sample datasets from the VTK data repository."""
 
+from functools import partial
 import os
 import shutil
 import sys
@@ -10,7 +11,6 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-# Helpers:
 
 def _check_examples_path():
     """Check if the examples path exists."""
@@ -39,13 +39,7 @@ def _get_vtk_file_url(filename):
     return f'https://github.com/pyvista/vtk-data/raw/master/Data/{filename}'
 
 
-def _retrieve_file(url, filename):
-    _check_examples_path()
-    # First check if file has already been downloaded
-    local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
-    local_path_no_zip = local_path.replace('.zip', '')
-    if os.path.isfile(local_path_no_zip) or os.path.isdir(local_path_no_zip):
-        return local_path_no_zip, None
+def _http_request(url):
     # grab the correct url retriever
     if sys.version_info < (3,):
         import urllib
@@ -54,12 +48,43 @@ def _retrieve_file(url, filename):
         import urllib.request
         urlretrieve = urllib.request.urlretrieve
     # Perform download
-    saved_file, resp = urlretrieve(url)
+    return urlretrieve(url)
+
+
+def _repo_file_request(repo_path, filename):
+    return os.path.join(repo_path, 'Data', filename), None
+
+
+def _retrieve_file(retriever, filename):
+    """Retrieve file and cache it in pyvsita.EXAMPLES_PATH.
+
+    Parameters
+    ----------
+    retriever : str or callable
+        If str, it is treated as a url.
+        If callable, the function must take no arguments and must
+        return a tuple like (file_path, resp), where file_path is
+        the path to the file to use.
+    filename : str
+        The name of the file
+    """
+    _check_examples_path()
+    # First check if file has already been downloaded
+    local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
+    local_path_no_zip = local_path.replace('.zip', '')
+    if os.path.isfile(local_path_no_zip) or os.path.isdir(local_path_no_zip):
+        return local_path_no_zip, None
+    if isinstance(retriever, str):
+        retriever = partial(_http_request, retriever)
+    saved_file, resp = retriever()
     # new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
     # Make sure folder exists!
     if not os.path.isdir(os.path.dirname((local_path))):
         os.makedirs(os.path.dirname((local_path)))
-    shutil.move(saved_file, local_path)
+    if pyvista.VTK_DATA_PATH is None:
+        shutil.move(saved_file, local_path)
+    else:
+        shutil.copy(saved_file, local_path)
     if pyvista.get_ext(local_path) in ['.zip']:
         _decompress(local_path)
         local_path = local_path[:-4]
@@ -67,8 +92,16 @@ def _retrieve_file(url, filename):
 
 
 def _download_file(filename):
-    url = _get_vtk_file_url(filename)
-    return _retrieve_file(url, filename)
+    if pyvista.VTK_DATA_PATH is None:
+        url = _get_vtk_file_url(filename)
+        retriever = partial(_http_request, url)
+    else:
+        if not os.path.isdir(pyvista.VTK_DATA_PATH):
+            raise FileNotFoundError(f'VTK data repository path does not exist at:\n\n{pyvista.VTK_DATA_PATH}')
+        if not os.path.isdir(os.path.join(pyvista.VTK_DATA_PATH), 'Data'):
+            raise FileNotFoundError(f'VTK data repository does not have "Data" folder at:\n\n{pyvista.VTK_DATA_PATH}')
+        retriever = partial(_repo_file_request, pyvista.VTK_DATA_PATH, filename)
+    return _retrieve_file(retriever, filename)
 
 
 def _download_and_read(filename, texture=False, file_format=None, load=True):

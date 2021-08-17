@@ -9,6 +9,7 @@ Plotting
 
    plotting
    qt_plotting
+   theme
 
 
 Plotting API Reference
@@ -22,7 +23,6 @@ all plotting functionality in PyVista.
    :toctree: _autosummary
    :template: custom-class-template.rst
 
-   BasePlotter
    Plotter
    Renderer
 
