@@ -1511,7 +1511,7 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_arrays)
 ])
 def test_transform_inplace_bad_types(dataset):
     # assert that transformations of these types throw the correct error
-    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90, progress_bar=True)  # rotate about x-axis by 90 degrees
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
     with pytest.raises(TypeError):
         dataset.transform(tf, inplace=True)
 
