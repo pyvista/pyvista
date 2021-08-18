@@ -15,3 +15,18 @@ XML RectilinearGrid Readers
    :show-inheritance:
    :members:
    :undoc-members:
+
+.. rubric:: Attributes
+
+.. autoautosummary:: pyvista.XMLPRectilinearGridReader
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.XMLPRectilinearGridReader
+   :methods:
+
+.. autoclass:: pyvista.XMLPRectilinearGridReader
+   :show-inheritance:
+   :members:
+   :undoc-members:
