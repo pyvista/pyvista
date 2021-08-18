@@ -54,7 +54,8 @@ class CompositeFilters:
         alg = _vtk.vtkAppendFilter()
         for block in composite:
             if isinstance(block, _vtk.vtkMultiBlockDataSet):
-                block = CompositeFilters.combine(block, merge_points=merge_points)
+                block = CompositeFilters.combine(block, merge_points=merge_points,
+                                                 tolerance=tolerance)
             alg.AddInputData(block)
         alg.SetMergePoints(merge_points)
         alg.SetTolerance(tolerance)
