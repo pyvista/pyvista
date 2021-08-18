@@ -347,7 +347,8 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> sliced_mesh = mesh.slice('y')
-    >>> sliced_mesh.plot(scalars="Void Volume Fraction", cpos='xz', show_scalar_bar=False)
+    >>> sliced_mesh.plot(scalars='Void Volume Fraction',
+    ...                  cpos='xz', show_scalar_bar=False)
 
     """
 
