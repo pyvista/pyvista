@@ -131,7 +131,7 @@ class BaseReader:
         self.reader.UpdateInformation()
 
 
-class DataArraySelection:
+class PointCellDataSelection:
     """Mixin for readers that support data array selections.
 
     Examples
@@ -186,6 +186,7 @@ class DataArraySelection:
         Parameters
         ----------
         name: str
+            Point array name
 
         """
         self.reader.SetPointArrayStatus(name, 1)
@@ -196,6 +197,7 @@ class DataArraySelection:
         Parameters
         ----------
         name: str
+            Point array name
 
         """
         self.reader.SetPointArrayStatus(name, 0)
@@ -206,6 +208,7 @@ class DataArraySelection:
         Parameters
         ----------
         name: str
+            Point array name
 
         Returns
         -------
@@ -265,6 +268,7 @@ class DataArraySelection:
         Parameters
         ----------
         name: str
+            Cell array name
 
         """
         self.reader.SetCellArrayStatus(name, 1)
@@ -275,6 +279,7 @@ class DataArraySelection:
         Parameters
         ----------
         name: str
+            Cell array name
 
         """
         self.reader.SetCellArrayStatus(name, 0)
@@ -316,19 +321,19 @@ class DataArraySelection:
         return {name: self.cell_array_status(name) for name in self.cell_array_names}
 
 
-class XMLImageDataReader(BaseReader, DataArraySelection):
+class XMLImageDataReader(BaseReader, PointCellDataSelection):
     """XML Image Data Reader."""
 
     _class_reader =_vtk.vtkXMLImageDataReader
 
 
-class XMLPImageDataReader(BaseReader, DataArraySelection):
+class XMLPImageDataReader(BaseReader, PointCellDataSelection):
     """XML P Image Data Reader."""
 
     _class_reader = _vtk.vtkXMLPImageDataReader
 
     
-class XMLRectilinearGridReader(BaseReader, DataArraySelection):
+class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     """XML RectilinearGrid Reader.
     
     Examples
@@ -341,21 +346,20 @@ class XMLRectilinearGridReader(BaseReader, DataArraySelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> sliced_mesh = mesh.slice('y')
-    >>> sliced_mesh.plot(scalars="Void Volume Fraction",
-    ...                  cpos='xz', show_scalar_bar=False)
+    >>> sliced_mesh.plot(scalars="Void Volume Fraction", cpos='xz', show_scalar_bar=False)
 
     """
 
     _class_reader = _vtk.vtkXMLRectilinearGridReader
 
 
-class XMLPRectilinearGridReader(BaseReader, DataArraySelection):
+class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
     """XML P RectilinearGrid Reader."""
 
     _class_reader = _vtk.vtkXMLPRectilinearGridReader
 
 
-class XMLUnstructuredGridReader(BaseReader, DataArraySelection):
+class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
     """XML UnstructuredGrid Reader.
     
     Examples
@@ -375,13 +379,13 @@ class XMLUnstructuredGridReader(BaseReader, DataArraySelection):
     _class_reader = _vtk.vtkXMLUnstructuredGridReader
 
 
-class XMLPUnstructuredGridReader(BaseReader, DataArraySelection):
+class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
     """XML P UnstructuredGrid Reader."""
 
     _class_reader = _vtk.vtkXMLPUnstructuredGridReader
 
 
-class XMLPolyDataReader(BaseReader, DataArraySelection):
+class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     """XML PolyData Reader.
     
     Examples
@@ -403,7 +407,7 @@ class XMLPolyDataReader(BaseReader, DataArraySelection):
     _class_reader = _vtk.vtkXMLPolyDataReader
 
 
-class XMLStructuredGridReader(BaseReader, DataArraySelection):
+class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
     """XML StructuredGrid Reader.
     
     Examples
@@ -422,13 +426,13 @@ class XMLStructuredGridReader(BaseReader, DataArraySelection):
     _class_reader = _vtk.vtkXMLStructuredGridReader
 
 
-class XMLMultiBlockDataReader(BaseReader, DataArraySelection):
+class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
     """XML MultiBlock Data Reader."""
 
     _class_reader = _vtk.vtkXMLMultiBlockDataReader
 
 
-class EnSightReader(BaseReader, DataArraySelection):
+class EnSightReader(BaseReader, PointCellDataSelection):
     """EnSight Reader.
     
     Examples
@@ -456,7 +460,7 @@ class EnSightReader(BaseReader, DataArraySelection):
         self._update_information()
 
 
-class OpenFOAMReader(BaseReader, DataArraySelection):
+class OpenFOAMReader(BaseReader, PointCellDataSelection):
     """OpenFOAM Reader."""
 
     _class_reader = _vtk.vtkOpenFOAMReader
