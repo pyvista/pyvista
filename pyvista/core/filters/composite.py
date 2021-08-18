@@ -29,7 +29,7 @@ class CompositeFilters:
         merge_points : bool, optional
             Merge coincidental points.
 
-        tolerance : float
+        tolerance : float, optional
             The tolerance to use to find coincident points when
             ``merge_points=True``.
 
