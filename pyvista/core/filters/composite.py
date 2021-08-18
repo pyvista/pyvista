@@ -30,7 +30,7 @@ class CompositeFilters:
             Merge coincidental points.
 
         tolerance : float, optional
-            The tolerance to use to find coincident points when
+            The absolute tolerance to use to find coincident points when
             ``merge_points=True``.
 
         Examples
