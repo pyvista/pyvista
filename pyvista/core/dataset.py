@@ -836,9 +836,10 @@ class DataSet(DataSetFilters, DataObject):
             The overwriting mesh.
 
         """
-        if not isinstance(mesh, type(self)):
-            raise TypeError('The Input DataSet type must match '
-                            f'the one being overwritten {type(self)}')
+        # Allow child classes to overwrite parent classes
+        if not isinstance(self, type(mesh)):
+            raise TypeError(f'The Input DataSet type {type(mesh)} must be '
+                            f'compatible with the one being overwritten {type(self)}')
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
