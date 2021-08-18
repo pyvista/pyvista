@@ -4103,9 +4103,9 @@ class DataSetFilters:
             transformation matrix.
 
         transform_all_input_vectors: bool, optional
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
+            When ``True``, all arrays with three components are
+            transformed. Otherwise, only the normals and vectors are
+            transformed.  See the warning for more details.
 
         inplace : bool, optional
             When ``True``, modifies the dataset inplace.
@@ -4121,7 +4121,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
-        Here a 4x4 ``numpy`` array is used, but
+        Here a 4x4 :class:`numpy.ndarray` is used, but
         ``vtk.vtkMatrix4x4`` and ``vtk.vtkTransform`` are also
         accepted.
 
@@ -4131,6 +4131,14 @@ class DataSetFilters:
         ...                              [0, 0, 0, 1]])
         >>> transformed = mesh.transform(transform_matrix)
         >>> transformed.plot(show_edges=True)
+
+        Warnings
+        --------
+        When using ``transform_all_input_vectors=True``, there is no
+        distinction in VTK between vectors and arrays with three
+        components.  This may be an issue if you have scalar data with
+        three components (e.g. RGB data).  This will be improperly
+        transformed as if it was vector data rather than scalar data.
 
         """
         if isinstance(trans, _vtk.vtkMatrix4x4):

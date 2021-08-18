@@ -101,7 +101,7 @@ class DataSet(DataSetFilters, DataObject):
     def active_scalars_info(self) -> ActiveArrayInfo:
         """Return the active scalar's field and name.
 
-        Field is the data accociation (e.g. point, cell, or field),
+        Field is the data association (e.g. point, cell, or field),
         and name of the scalars.
 
         Examples

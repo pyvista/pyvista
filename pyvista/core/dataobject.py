@@ -200,7 +200,7 @@ class DataObject:
 
         Examples
         --------
-        Create and make a deep copy a PolyData object.
+        Create and make a deep copy of a PolyData object.
 
         >>> import pyvista
         >>> mesh_a = pyvista.Sphere()

@@ -101,7 +101,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         my-data                 int64    (4,)
         my-other-data           int64    (4,)
         vectors1                float64  (4, 3)               VECTOR
-        vectors0                float64  (4, 3)               VECTOR
+        vectors0                float64  (4, 3)
 
     Notes
     -----
