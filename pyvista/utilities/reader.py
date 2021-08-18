@@ -86,6 +86,7 @@ class BaseReader:
         self._set_filename(filename)
 
     def __repr__(self):
+        """Representation of a Reader object."""
         return f"{self.__class__.__name__}('{self.filename}')"
 
     @property
