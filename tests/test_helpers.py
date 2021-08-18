@@ -71,8 +71,32 @@ def test_wrappers():
 
         surface.delaunay_2d(inplace=True)
         assert isinstance(surface, Foo)
+
+        sphere = pyvista.Sphere()
+        assert isinstance(sphere, Foo)
+
+        circle = pyvista.Circle()
+        assert isinstance(circle, Foo)
+
     finally:
         pyvista._wrappers = default_wrappers  # always reset back to default
+
+
+def test_inheritance_no_wrappers():
+    class Foo(pyvista.PolyData):
+        pass
+
+    # inplace operations do not change type
+    mesh = Foo(pyvista.Sphere())
+    mesh.decimate(0.5, inplace=True)
+    assert isinstance(mesh, Foo)
+
+    # without using _wrappers, we need to explicitly handle inheritance
+    mesh = Foo(pyvista.Sphere())
+    new_mesh = mesh.decimate(0.5)  
+    assert isinstance(new_mesh, pyvista.PolyData)
+    foo_new_mesh = Foo(new_mesh)
+    assert isinstance(foo_new_mesh, Foo)
 
 
 def test_skybox(tmpdir):
