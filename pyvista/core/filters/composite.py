@@ -21,13 +21,34 @@ class CompositeFilters:
         gf.Update()
         return wrap(gf.GetOutputDataObject(0))
 
-    def combine(composite, merge_points=False):
-        """Append all blocks into a single unstructured grid.
+    def combine(composite, merge_points=False, tolerance=0.0):
+        """Combine all blocks into a single unstructured grid.
 
         Parameters
         ----------
         merge_points : bool, optional
             Merge coincidental points.
+
+        tolerance : float
+            The tolerance to use to find coincident points when
+            ``merge_points=True``.
+
+        Examples
+        --------
+        Combine blocks within a multiblock without merging points.
+
+        >>> import pyvista
+        >>> block = pyvista.MultiBlock([pyvista.Cube(),
+        ...                             pyvista.Cube(center=(1, 0, 0))])
+        >>> merged = block.combine()
+        >>> merged.n_points
+        48
+
+        Combine blocks and merge points
+
+        >>> merged = block.combine(merge_points=True)
+        >>> merged.n_points
+        12
 
         """
         alg = _vtk.vtkAppendFilter()
@@ -36,6 +57,7 @@ class CompositeFilters:
                 block = CompositeFilters.combine(block, merge_points=merge_points)
             alg.AddInputData(block)
         alg.SetMergePoints(merge_points)
+        alg.SetTolerance(tolerance)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
 
