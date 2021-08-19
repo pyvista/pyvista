@@ -10,27 +10,52 @@ def get_reader(filename):
     """Get a reader for fine-grained control of reading data files.
 
     Supported file types and Readers:
-    * .vti: :class:`pyvista.XMLImageDataReader`
-    * .pvti: :class:`pyvista.XMLPImageDataReader`
-    * .vtr: :class:`pyvista.XMLRectilinearGridReader`
-    * .pvtr: :class:`pyvista.XMLPRectilinearGridReader`
-    * .vtu: :class:`pyvista.XMLUnstructuredGridReader`
-    * .pvtu: :class:`pyvista.XMLPUnstructuredGridReader`
-    * .vtp: :class:`pyvista.XMLPolyDataReader`
-    * .vts: :class:`pyvista.XMLStructuredGridReader`
-    * .vtm: :class:`pyvista.XMLMultiBlockDataReader`
-    * .vtmb: :class:`pyvista.XMLMultiBlockDataReader`
-    * .case: :class:`pyvista.EnSightReader`
-    * .foam: :class:`pyvista.OpenFOAMReader`
-    * .ply: :class:`pyvista.PLYReader`
-    * .obj: :class:`pyvista.OBJReader`
-    * .stl: :class:`pyvista.STLReader`
-    * .vtk: :class:`pyvista.VTKDataSetReader`
-    * .pvtk: :class:`pyvista.VTKPDataSetReader`
-    * .g: :class:`pyvista.BYUReader`
-    * .facet: :class:`pyvista.FacetReader`
-    * .p3d: :class:`pyvista.Plot3DMetaReader`
-    * .tri: :class:`pyvista.BinaryMarchingCubesReader`
+
+    +----------------+---------------------------------------------+
+    | File Extension | Class                                       |
+    +================+=============================================+
+    | ``.case``      | :class:`pyvista.EnSightReader`              |
+    +----------------+---------------------------------------------+
+    | ``.facet``     | :class:`pyvista.FacetReader`                |
+    +----------------+---------------------------------------------+
+    | ``.foam``      | :class:`pyvista.OpenFOAMReader`             |
+    +----------------+---------------------------------------------+
+    | ``.g``         | :class:`pyvista.BYUReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.obj``       | :class:`pyvista.OBJReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.p3d``       | :class:`pyvista.Plot3DMetaReader`           |
+    +----------------+---------------------------------------------+
+    | ``.ply``       | :class:`pyvista.PLYReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.pvti``      | :class:`pyvista.XMLPImageDataReader`        |
+    +----------------+---------------------------------------------+
+    | ``.pvtk``      | :class:`pyvista.VTKPDataSetReader`          |
+    +----------------+---------------------------------------------+
+    | ``.pvtr``      | :class:`pyvista.XMLPRectilinearGridReader`  |
+    +----------------+---------------------------------------------+
+    | ``.pvtu``      | :class:`pyvista.XMLPUnstructuredGridReader` |
+    +----------------+---------------------------------------------+
+    | ``.stl``       | :class:`pyvista.STLReader`                  |
+    +----------------+---------------------------------------------+
+    | ``.tri``       | :class:`pyvista.BinaryMarchingCubesReader`  |
+    +----------------+---------------------------------------------+
+    | ``.vti``       | :class:`pyvista.XMLImageDataReader`         |
+    +----------------+---------------------------------------------+
+    | ``.vtk``       | :class:`pyvista.VTKDataSetReader`           |
+    +----------------+---------------------------------------------+
+    | ``.vtm``       | :class:`pyvista.XMLMultiBlockDataReader`    |
+    +----------------+---------------------------------------------+
+    | ``.vtmb``      | :class:`pyvista.XMLMultiBlockDataReader`    |
+    +----------------+---------------------------------------------+
+    | ``.vtp``       | :class:`pyvista.XMLPolyDataReader`          |
+    +----------------+---------------------------------------------+
+    | ``.vtr``       | :class:`pyvista.XMLRectilinearGridReader`   |
+    +----------------+---------------------------------------------+
+    | ``.vts``       | :class:`pyvista.XMLStructuredGridReader`    |
+    +----------------+---------------------------------------------+
+    | ``.vtu``       | :class:`pyvista.XMLUnstructuredGridReader`  |
+    +----------------+---------------------------------------------+
 
     Parameters
     ----------
