@@ -45,7 +45,7 @@ class FooData(pyvista.PolyData):
 #
 # Now a ``foo_sphere`` object is created of type ``FooData``.
 # The index of the point and location of the point of interest can be obtained
-# directly. The sphere has a radius of 0.5, so the maximum extendtin the
+# directly. The sphere has a radius of 0.5, so the maximum extent in the
 # direction (1, 0, 1) is :math:`0.5\sqrt{0.5}\approx0.354`
 #
 
@@ -68,7 +68,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 ###############################################################################
 # However, filter operations can return different ``DataSet`` types including
 # ones that differ from the original type.  In this case, the
-# :func:`pyvista.PolyData.decimate` method returns a 
+# :func:`decimate <pyvista.PolyDataFilters.decimate>` method returns a 
 # :class:`pyvista.PolyData` object.
 
 print("\nDecimated foo sphere:")
@@ -87,7 +87,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 # Automatically Managing Types
 # ++++++++++++++++++++++++++++
 #
-# The default ``DataSet`` type can be set using ``pyvista._wrappers``.  In this
+# The default :class:`pyvista.DataSet` type can be set using ``pyvista._wrappers``.  In this
 # example, all objects that would have been created as
 # :class:`pyvista.PolyData` would now be created as a ``FooData`` object. Note,
 # that the key is the underlying vtk object.
@@ -105,7 +105,7 @@ print(f"Maximum point index: {foo_sphere.max_point}")
 print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
 
 ###############################################################################
-# Using an inplace operation like :func:`pyvista.DataSet.rotate_y` does not
+# Using an inplace operation like :func:`rotate_y <pyvista.DataSet.rotate_y>` does not
 # affect the type of the object.
 
 foo_sphere.rotate_y(90)

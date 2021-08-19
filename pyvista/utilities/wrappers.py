@@ -1,8 +1,8 @@
 """Wrapper mapping.
 
-Setting pyvista._wrappers allows for developers to override the default class used
+Setting ``pyvista._wrappers`` allows for developers to override the default class used
 to coerce a ``vtkDataSet`` into a pyvista object.  This is useful when creating a
-subclass of a pyvista DataSet class.
+subclass of a :class:`pyvista.DataSet` class.
 
 Examples
 --------
