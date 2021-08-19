@@ -356,7 +356,7 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
 
 
 class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
-    """XML Parallel RectilinearGrid Reader for .pvtr files."""
+    """Parallel XML RectilinearGrid Reader for .pvtr files."""
 
     _class_reader = _vtk.vtkXMLPRectilinearGridReader
 
