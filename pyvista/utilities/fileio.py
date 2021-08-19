@@ -92,7 +92,7 @@ def get_ext(filename):
     return ext
 
 
-def get_reader(filename, force_ext=None):
+def get_vtk_reader(filename, force_ext=None):
     """Get the corresponding reader based on file extension and instantiates it."""
     ext = _get_ext_force(filename, force_ext=force_ext)
     return READERS[ext]()  # Get and instantiate the reader
@@ -349,7 +349,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
 
     # From the extension, decide which reader to use
     if attrs is not None:
-        reader = get_reader(filename, force_ext=ext)
+        reader = get_vtk_reader(filename, force_ext=ext)
         return standard_reader_routine(reader, filename, attrs=attrs)
     elif ext in ['.e', '.exo']:
         return read_exodus(filename)
@@ -359,7 +359,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
     else:
         # Attempt find a reader in the readers mapping
         try:
-            reader = get_reader(filename, force_ext=ext)
+            reader = get_vtk_reader(filename, force_ext=ext)
             return standard_reader_routine(reader, filename)
         except KeyError:
             # Don't fall back to meshio if using `force_ext`, which is really
@@ -417,7 +417,7 @@ def read_texture(filename, attrs=None):
     filename = os.path.abspath(os.path.expanduser(filename))
     try:
         # initialize the reader using the extension to find it
-        reader = get_reader(filename)
+        reader = get_vtk_reader(filename)
         image = standard_reader_routine(reader, filename, attrs=attrs)
         if image.n_points < 2:
             raise ValueError("Problem reading the image with VTK.")

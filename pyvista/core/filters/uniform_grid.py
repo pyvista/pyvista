@@ -39,7 +39,7 @@ class UniformGridFilters(DataSetFilters):
         if scalars is None:
             field, scalars = dataset.active_scalars_info
         else:
-            _, field = dataset.get_array(scalars, preference=preference, info=True)
+            field = dataset.get_array_association(scalars, preference=preference)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         if isinstance(radius_factor, collections.abc.Iterable):
             alg.SetRadiusFactors(radius_factor)

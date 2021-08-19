@@ -920,7 +920,7 @@ def test_get_data_range(grid):
     mesh.clear_arrays()
     rng = mesh.get_data_range()
     assert all(np.isnan(rng))
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         rng = mesh.get_data_range('some data')
 
     # Test with some data
@@ -1060,3 +1060,62 @@ def test_rotations_should_match_by_a_360_degree_difference():
     rot1.rotate_vector(vector=vector, angle=angle, point=point)
     rot2.rotate_vector(vector=vector, angle=angle - 360.0, point=point)
     assert np.allclose(rot1.points, rot2.points)
+
+
+def test_scale():
+    mesh = examples.load_airplane()
+
+    xyz = np.random.random(3)
+    scale1 = mesh.copy()
+    scale2 = mesh.copy()
+    scale1.scale(xyz)
+    scale2.points *= xyz
+    assert np.allclose(scale1.points, scale2.points)
+
+
+def test_flip_x():
+    mesh = examples.load_airplane()
+    flip_x1 = mesh.copy()
+    flip_x2 = mesh.copy()
+    flip_x1.flip_x(point=(0, 0, 0))
+    flip_x2.points[:, 0] *= -1.0
+    assert np.allclose(flip_x1.points, flip_x2.points)
+
+
+def test_flip_y():
+    mesh = examples.load_airplane()
+    flip_y1 = mesh.copy()
+    flip_y2 = mesh.copy()
+    flip_y1.flip_y(point=(0, 0, 0))
+    flip_y2.points[:, 1] *= -1.0
+    assert np.allclose(flip_y1.points, flip_y2.points)
+
+
+def test_flip_z():
+    mesh = examples.load_airplane()
+    flip_z1 = mesh.copy()
+    flip_z2 = mesh.copy()
+    flip_z1.flip_z(point=(0, 0, 0))
+    flip_z2.points[:, 2] *= -1.0
+    assert np.allclose(flip_z1.points, flip_z2.points)
+
+
+def test_flip_normal():
+    mesh = examples.load_airplane()
+    flip_normal1 = mesh.copy()
+    flip_normal2 = mesh.copy()
+    flip_normal1.flip_normal(normal=[1.0, 0.0, 0.0])
+    flip_normal2.flip_x()
+    assert np.allclose(flip_normal1.points, flip_normal2.points)
+
+    flip_normal3 = mesh.copy()
+    flip_normal4 = mesh.copy()
+    flip_normal3.flip_normal(normal=[0.0, 1.0, 0.0])
+    flip_normal4.flip_y()
+    assert np.allclose(flip_normal3.points, flip_normal4.points)
+
+    flip_normal5 = mesh.copy()
+    flip_normal6 = mesh.copy()
+    flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
+    flip_normal6.flip_z()
+    assert np.allclose(flip_normal5.points, flip_normal6.points)

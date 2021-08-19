@@ -1,18 +1,22 @@
 """Attributes common to PolyData and Grid Objects."""
 
+import warnings
 import collections.abc
 import logging
 from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
-import warnings
+from typing_extensions import Literal # for python versions <3.8
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
-                               raise_not_matching, vtk_id_list_to_array,
-                               abstract_class, axis_rotation, transformations)
+from pyvista.utilities import (FieldAssociation, get_array,
+                               get_array_association,
+                               is_pyvista_dataset, raise_not_matching,
+                               vtk_id_list_to_array, abstract_class,
+                               axis_rotation, transformations)
 from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities.errors import check_valid_vector
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -533,7 +537,7 @@ class DataSet(DataSetFilters, DataObject):
             self.GetCellData().SetActiveScalars(None)
             self.GetPointData().SetActiveScalars(None)
             return
-        _, field = get_array(self, name, preference=preference, info=True)
+        field = get_array_association(self, name, preference=preference)
         self._last_active_scalars_name = self.active_scalars_info.name
         if field == FieldAssociation.POINT:
             ret = self.GetPointData().SetActiveScalars(name)
@@ -557,7 +561,7 @@ class DataSet(DataSetFilters, DataObject):
             self.GetPointData().SetActiveVectors(None)
             field = FieldAssociation.POINT
         else:
-            _, field = get_array(self, name, preference=preference, info=True)
+            field = get_array_association(self, name, preference=preference)
             if field == FieldAssociation.POINT:
                 ret = self.GetPointData().SetActiveVectors(name)
             elif field == FieldAssociation.CELL:
@@ -580,7 +584,7 @@ class DataSet(DataSetFilters, DataObject):
             self.GetPointData().SetActiveTensors(None)
             field = FieldAssociation.POINT
         else:
-            _, field = get_array(self, name, preference=preference, info=True)
+            field = get_array_association(self, name, preference=preference)
             if field == FieldAssociation.POINT:
                 ret = self.GetPointData().SetActiveTensors(name)
             elif field == FieldAssociation.CELL:
@@ -624,7 +628,8 @@ class DataSet(DataSetFilters, DataObject):
         array([0, 1, 2, 3, 4, 5, 6, 7])
 
         """
-        _, field = get_array(self, old_name, preference=preference, info=True)
+        field = get_array_association(self, old_name, preference=preference)
+
         was_active = False
         if self.active_scalars_name == old_name:
             was_active = True
@@ -676,15 +681,13 @@ class DataSet(DataSetFilters, DataObject):
 
         if isinstance(arr_var, str):
             name = arr_var
-            # This can return None when an array is not found - expected
-            arr = get_array(self, name, preference=preference)
-            if arr is None:
-                # Raise a value error if fetching the range of an unknown array
-                raise ValueError(f'Array `{name}` not present.')
+            arr = get_array(self, name, preference=preference, err=True)
         else:
             arr = arr_var
 
         # If array has no tuples return a NaN range
+        if arr is None:
+            return (np.nan, np.nan)
         if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)
         # Use the array range
@@ -830,6 +833,182 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         self.points += np.asarray(xyz)  # type: ignore
+
+    def scale(self, xyz: Union[list, tuple, np.ndarray]):
+        """Scale the mesh.
+
+        Parameters
+        ----------
+        xyz : scale factor list or tuple or np.ndarray
+            Length 3 list, tuple or array.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> _ = pl.show_grid()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> _ = pl.show_grid()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.scale([10.0, 10.0, 10.0])
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
+        self.points *= np.asarray(xyz)
+
+    def flip_x(self, point=None, transform_all_input_vectors=False):
+        """Flip mesh about the x-axis.
+
+        Parameters
+        ----------
+        point : list, optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_x()
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
+        if point is None:
+            point = self.center
+        check_valid_vector(point, 'point')
+        t = transformations.reflection((1, 0, 0), point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+
+    def flip_y(self, point=None, transform_all_input_vectors=False):
+        """Flip mesh about the y-axis.
+
+        Parameters
+        ----------
+        point : list, optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_y()
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
+        if point is None:
+            point = self.center
+        check_valid_vector(point, 'point')
+        t = transformations.reflection((0, 1, 0), point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+
+    def flip_z(self, point=None, transform_all_input_vectors=False):
+        """Flip mesh about the z-axis.
+
+        Parameters
+        ----------
+        point : list, optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_z()
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
+        if point is None:
+            point = self.center
+        check_valid_vector(point, 'point')
+        t = transformations.reflection((0, 0, 1), point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+
+    def flip_normal(self, normal: List[float], point=None, transform_all_input_vectors=False):
+        """Flip mesh about the normal.
+
+        Parameters
+        ----------
+        normal : tuple
+           Normal vector to flip about.
+
+        point : list, optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.flip_normal([1.0, 1.0, 1.0])
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
+        if point is None:
+            point = self.center
+        check_valid_vector(normal, 'normal')
+        check_valid_vector(point, 'point')
+        t = transformations.reflection(normal, point=point)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object."""
@@ -1068,11 +1247,99 @@ class DataSet(DataSetFilters, DataObject):
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
         return np.sum(sizes.cell_arrays['Volume'])
 
-    def get_array(self, name: str, preference='cell', info=False) -> Union[Tuple, np.ndarray]:
-        """Search both point, cell and field data for an array."""
-        return get_array(self, name, preference=preference, info=info, err=True)
+    def get_array(self, name: str, preference: Literal['cell', 'point', 'field']='cell') -> np.ndarray:
+        """Search both point, cell and field data for an array.
 
-    def __getitem__(self, index: Union[Iterable, str]) -> Union[Tuple, np.ndarray]:
+        Parameters
+        ----------
+        name : str
+            Name of the array.
+
+        preference : str, optional
+            When scalars is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'``, ``'cell'``, or ``'field'``
+
+        Examples
+        --------
+        Create a DataSet with a variety of arrays.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube().clean()
+        >>> mesh.clear_arrays()
+        >>> mesh.point_arrays['point-data'] = range(mesh.n_points)
+        >>> mesh.cell_arrays['cell-data'] = range(mesh.n_cells)
+        >>> mesh.field_arrays['field-data'] = ['a', 'b', 'c']
+        >>> mesh.array_names
+        ['point-data', 'field-data', 'cell-data']
+
+        Get the point data array.
+
+        >>> mesh.get_array('point-data')
+        array([0, 1, 2, 3, 4, 5, 6, 7])
+
+        Get the cell data array.
+
+        >>> mesh.get_array('cell-data')
+        array([0, 1, 2, 3, 4, 5])
+
+        Get the field data array.
+
+        >>> mesh.get_array('field-data')
+        array(['a', 'b', 'c'], dtype='<U1')
+
+        """
+        return get_array(self, name, preference=preference, err=True)
+
+    def get_array_association(self, name: str, preference: Literal['cell', 'point', 'field']='cell') -> FieldAssociation:
+        """Get the association of an array.
+
+        Parameters
+        ----------
+        name : str
+            Name of the array.
+
+        preference : str, optional
+            When scalars is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'``, ``'cell'``, or ``'field'``
+
+        err : bool, optional
+            Boolean to control whether to throw an error if array is
+            not present.
+
+        Examples
+        --------
+        Create a DataSet with a variety of arrays.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube().clean()
+        >>> mesh.clear_arrays()
+        >>> mesh.point_arrays['point-data'] = range(mesh.n_points)
+        >>> mesh.cell_arrays['cell-data'] = range(mesh.n_cells)
+        >>> mesh.field_arrays['field-data'] = ['a', 'b', 'c']
+        >>> mesh.array_names
+        ['point-data', 'field-data', 'cell-data']
+
+        Get the point data array association.
+
+        >>> mesh.get_array_association('point-data')
+        <FieldAssociation.POINT: 0>
+
+        Get the cell data array association.
+
+        >>> mesh.get_array_association('cell-data')
+        <FieldAssociation.CELL: 1>
+
+        Get the field data array association.
+
+        >>> mesh.get_array_association('field-data')
+        <FieldAssociation.NONE: 2>
+
+        """
+        return get_array_association(self, name, preference=preference, err=True)
+
+    def __getitem__(self, index: Union[Iterable, str]) -> np.ndarray:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
             name, preference = tuple(index)
@@ -1082,7 +1349,7 @@ class DataSet(DataSetFilters, DataObject):
         else:
             raise KeyError(f'Index ({index}) not understood.'
                            ' Index must be a string name or a tuple of string name and string preference.')
-        return self.get_array(name, preference=preference, info=False)
+        return self.get_array(name, preference=preference)
 
     def _ipython_key_completions_(self) -> List[str]:
         return self.array_names

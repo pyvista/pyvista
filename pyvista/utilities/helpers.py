@@ -9,6 +9,7 @@ import sys
 from threading import Thread
 import threading
 import traceback
+from typing import Optional
 
 import numpy as np
 
@@ -181,11 +182,14 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(mesh, name, preference='cell', info=False, err=False):
+def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters
     ----------
+    mesh : Dataset
+        Dataset to get the array from.
+
     name : str
         The name of the array to get the range.
 
@@ -193,9 +197,6 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         When scalars is specified, this is the preferred array type to
         search for in the dataset.  Must be either ``'point'``,
         ``'cell'``, or ``'field'``
-
-    info : bool
-        Return info about the array rather than the array itself.
 
     err : bool
         Boolean to control whether to throw an error if array is not present.
@@ -205,50 +206,85 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         arr = row_array(mesh, name)
         if arr is None and err:
             raise KeyError(f'Data array ({name}) not present in this dataset.')
-        field = FieldAssociation.ROW
-        if info:
-            return arr, field
         return arr
 
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
     farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
-    if np.sum([parr is not None, carr is not None, farr is not None]) > 1:
+    if sum([array is not None for array in (parr, carr, farr)]) > 1:
         if preference == FieldAssociation.CELL:
-            if info:
-                return carr, FieldAssociation.CELL
-            else:
-                return carr
+            return carr
         elif preference == FieldAssociation.POINT:
-            if info:
-                return parr, FieldAssociation.POINT
-            else:
-                return parr
+            return parr
         elif preference == FieldAssociation.NONE:
-            if info:
-                return farr, FieldAssociation.NONE
-            else:
-                return farr
+            return farr
         else:
             raise ValueError(f'Data field ({preference}) not supported.')
-    arr = None
-    field = None
+
     if parr is not None:
-        arr = parr
-        field = FieldAssociation.POINT
+        return parr
     elif carr is not None:
-        arr = carr
-        field = FieldAssociation.CELL
+        return carr
     elif farr is not None:
-        arr = farr
-        field = FieldAssociation.NONE
+        return farr
     elif err:
         raise KeyError(f'Data array ({name}) not present in this dataset.')
-    if info:
-        return arr, field
-    return arr
+    return None
 
+
+def get_array_association(mesh, name, preference='cell', err=False) -> FieldAssociation:
+    """Return the array association.
+
+    Parameters
+    ----------
+    mesh : Dataset
+        Dataset to get the array association from.
+
+    name : str
+        The name of the array.
+
+    preference : str, optional
+        When scalars is specified, this is the preferred array type to
+        search for in the dataset.  Must be either ``'point'``,
+        ``'cell'``, or ``'field'``
+
+    err : bool, optional
+        Boolean to control whether to throw an error if array is not present.
+
+    Returns
+    -------
+    :class:`pyvista.FieldAssociation`
+        Association of the array
+
+    """
+    if isinstance(mesh, _vtk.vtkTable):
+        arr = row_array(mesh, name)
+        if arr is None and err:
+            raise KeyError(f'Data array ({name}) not present in this dataset.')
+        return FieldAssociation.ROW
+
+    # with multiple arrays, return the array preference
+    parr = point_array(mesh, name)
+    carr = cell_array(mesh, name)
+    farr = field_array(mesh, name)
+    preference = parse_field_choice(preference)
+    if sum([array is not None for array in (parr, carr, farr)]) > 1:
+        if preference in [FieldAssociation.CELL, FieldAssociation.POINT,
+                          FieldAssociation.NONE]:
+            return preference
+        else:
+            raise ValueError(f'Data field ({preference}) not supported.')
+
+    if parr is not None:
+        return FieldAssociation.POINT
+    elif carr is not None:
+        return FieldAssociation.CELL
+    elif farr is not None:
+        return FieldAssociation.NONE
+    elif err:
+        raise KeyError(f'Data array ({name}) not present in this dataset.')
+    return FieldAssociation.NONE
 
 def vtk_points(points, deep=True):
     """Convert numpy array or array-like to a vtkPoints object.

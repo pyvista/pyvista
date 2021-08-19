@@ -396,16 +396,16 @@ def test_multi_block_save_lines(tmpdir):
 
 def test_multi_block_data_range():
     volume = pyvista.Wavelet()
-    a = volume.slice_along_axis(5,'x')
-    with pytest.raises(ValueError):
+    a = volume.slice_along_axis(5, 'x')
+    with pytest.raises(KeyError):
         a.get_data_range('foo')
     mi, ma = a.get_data_range(volume.active_scalars_name)
     assert mi is not None
     assert ma is not None
     # Test on a nested MultiBlock
     b = volume.slice_along_axis(5,'y')
-    slices = pyvista.MultiBlock([a,b])
-    with pytest.raises(ValueError):
+    slices = pyvista.MultiBlock([a, b])
+    with pytest.raises(KeyError):
         slices.get_data_range('foo')
     mi, ma = slices.get_data_range(volume.active_scalars_name)
     assert mi is not None
