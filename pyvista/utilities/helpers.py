@@ -182,7 +182,7 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(mesh, name, preference='cell', err=True) -> Optional[np.ndarray]:
+def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -212,13 +212,10 @@ def get_array(mesh, name, preference='cell', err=True) -> Optional[np.ndarray]:
     carr = cell_array(mesh, name)
     farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
-    if np.sum([parr is not None, carr is not None, farr is not None]) > 1:
-        if preference == FieldAssociation.CELL:
-            return carr
-        elif preference == FieldAssociation.POINT:
-            return parr
-        elif preference == FieldAssociation.NONE:
-            return farr
+    if sum([array is not None for array in (parr, carr, farr)]) > 1:
+        if preference in [FieldAssociation.CELL, FieldAssociation.POINT,
+                          FieldAssociation.NONE]:
+            return preference
         else:
             raise ValueError(f'Data field ({preference}) not supported.')
 
@@ -269,23 +266,22 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     carr = cell_array(mesh, name)
     farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
-    if any([array is not None for array in (parr, carr, farr)]):
-        if preference in [FieldAssociation.CELL, FieldAssociation.POINT, FieldAssociation.NONE]:
+    if sum([array is not None for array in (parr, carr, farr)]) > 1:
+        if preference in [FieldAssociation.CELL, FieldAssociation.POINT,
+                          FieldAssociation.NONE]:
             return preference
         else:
             raise ValueError(f'Data field ({preference}) not supported.')
 
-    field = FieldAssociation.NONE
     if parr is not None:
-        field = FieldAssociation.POINT
+        FieldAssociation.POINT
     elif carr is not None:
-        field = FieldAssociation.CELL
+        FieldAssociation.CELL
     elif farr is not None:
-        field = FieldAssociation.NONE
+        FieldAssociation.NONE
     elif err:
         raise KeyError(f'Data array ({name}) not present in this dataset.')
-
-    return field
+    return FieldAssociation.NONE
 
 
 def vtk_points(points, deep=True):
