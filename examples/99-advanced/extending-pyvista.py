@@ -95,7 +95,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 pyvista._wrappers['vtkPolyData'] = FooData
 
 ###############################################################################
-# It is no longer neccessary to specifically wrap :class:`pyvista.PolyData`
+# It is no longer necessary to specifically wrap :class:`pyvista.PolyData`
 # objects to obtain a ``FooData`` object.
 
 foo_sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
