@@ -1,0 +1,139 @@
+"""
+.. _extending_pyvista_example:
+
+Extending PyVista
+~~~~~~~~~~~~~~~~~
+
+A :class:`pyvista.DataSet`, such as :class:`pyvista.PolyData`, can be extended
+by users.  For example, if the user wants to keep track of the location of the
+maximum point in the (1, 0, 1) direction on the mesh.
+
+There are two methods by which users can handle subclassing.  One is directly managing
+the types objects.  This may require checking types during filter
+operations.
+
+The second is automatic managing of types.  Users can control whether user defined
+classes are nearly always used for particular types of DataSets.
+
+.. note::
+This is for advanced usage only.  Automatic managing of types
+will not work in all situations, in particular when a builtin dataset is directly 
+instantiated.  See examples below.
+
+"""
+
+import pyvista
+import numpy as np
+import vtk
+
+pyvista.set_plot_theme("document")
+
+###############################################################################
+# A user defined subclass of :class:`pyvista.PolyData`, ``FooData`` is defined.
+# It includes a property to keep track of the point on the mesh that is
+# furthest along in the (1, 0, 1) direction.
+
+class FooData(pyvista.PolyData):
+    @property
+    def max_point(self):
+        """Returns index of point that is furthest along (1, 0, 1) direction."""
+        return np.argmax(np.dot(self.points, (1.0, 0.0, 1.0)))
+
+###############################################################################
+# Directly Managing Types
+# +++++++++++++++++++++++
+#
+# Now a ``foo_sphere`` object is created of type ``FooData``.
+# The index of the point and location of the point of interest can be obtained
+# directly. The sphere has a radius of 0.5, so the maximum extendtin the
+# direction (1, 0, 1) is :math:`0.5\sqrt{0.5}\approx0.354`
+#
+
+foo_sphere = FooData(pyvista.Sphere(theta_resolution=100, phi_resolution=100))
+print("Original foo sphere:")
+print(f"Type: {type(foo_sphere)}")
+print(f"Maximum point index: {foo_sphere.max_point}")
+print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+
+###############################################################################
+# Using an inplace operation like :func:`pyvista.DataSet.rotate_y` does not
+# affect the type of the object.
+
+foo_sphere.rotate_y(90)
+print("\nRotated foo sphere:")
+print(f"Type: {type(foo_sphere)}")
+print(f"Maximum point index: {foo_sphere.max_point}")
+print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+
+###############################################################################
+# However, filter operations can return different ``DataSet`` types including
+# ones that differ from the original type.  In this case, the
+# :func:`pyvista.PolyData.decimate` method returns a 
+# :class:`pyvista.PolyData` object.
+
+print("\nDecimated foo sphere:")
+decimated_foo_sphere = foo_sphere.decimate(0.5)
+print(f"Type: {type(decimated_foo_sphere)}")
+
+###############################################################################
+# It is now required to explicitly wrap the object into ``FooData``.
+
+decimated_foo_sphere = FooData(foo_sphere.decimate(0.5))
+print(f"Type: {type(decimated_foo_sphere)}")
+print(f"Maximum point index: {decimated_foo_sphere.max_point}")
+print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+
+###############################################################################
+# Automatically Managing Types
+# ++++++++++++++++++++++++++++
+#
+# The default ``DataSet`` type can be set using ``pyvsta._wrappers``.  In this
+# example, all objects that would have been created as
+# :class:`pyvista.PolyData` would now be created as a ``FooData`` object. Note,
+# that the key is the underlying vtk object.
+
+pyvista._wrappers['vtkPolyData'] = FooData
+
+###############################################################################
+# It is no longer neccessary to specifically wrap :class:``pyvista.PolyData``
+# objects to obtain a ``FooData`` object.
+
+foo_sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
+print("Original foo sphere:")
+print(f"Type: {type(foo_sphere)}")
+print(f"Maximum point index: {foo_sphere.max_point}")
+print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+
+###############################################################################
+# Using an inplace operation like :func:`pyvista.DataSet.rotate_y` does not
+# affect the type of the object.
+
+foo_sphere.rotate_y(90)
+print("\nTranslated foo sphere:")
+print(f"Type: {type(foo_sphere)}")
+print(f"Maximum point index: {foo_sphere.max_point}")
+print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+
+###############################################################################
+# Filter operations that return :class:``pyvista.PolyData`` now return 
+# ``FooData``
+
+print("\nDecimated foo sphere:")
+decimated_foo_sphere = foo_sphere.decimate(0.5)
+print(f"Type: {type(decimated_foo_sphere)}")
+print(f"Maximum point index: {decimated_foo_sphere.max_point}")
+print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+
+###############################################################################
+# Users can still create a native :class:`pyvista.PolyData` object, but
+# using this method may incur unintended consequences.  In this case,
+# it is recommend to use the :ref:`Directly Managing Types` method.
+
+poly_object = pyvista.PolyData(vtk.vtkPolyData())
+print(f"Type: {type(poly_object)}")
+# catch error
+try:
+    poly_object.rotate_y(90)
+except TypeError:
+    print("This operation fails")
+

@@ -19,3 +19,4 @@ and how you can help develop PyVista.
    flask
    developer_notes
    plot_directive
+   extending_pyvista
