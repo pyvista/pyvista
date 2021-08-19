@@ -28,6 +28,13 @@ clean:
 	rm -f getting-started/external_examples.rst
 	find . -type d -name "_autosummary" -exec rm -rf {} +
 
+clean-except-examples:
+	rm -rf $(BUILDDIR)/*
+	rm -f errors.txt
+	rm -rf images/auto-generated
+	rm -f getting-started/external_examples.rst
+	find . -type d -name "_autosummary" -exec rm -rf {} +
+
 # build html docs in parallel using all available CPUs
 # WARNING: this is a resource hog
 phtml:
