@@ -970,8 +970,8 @@ def test_multi_block_plot():
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
     multi[3] = examples.load_airplane()
-    with pytest.raises(ValueError):
-        # The scalars are not available in all datasets so raises ValueError
+    with pytest.raises(KeyError):
+        # The scalars are not available in all datasets so raises KeyError
         multi.plot(scalars='Random Data', multi_colors=True)
     multi.plot(multi_colors=True, before_close_callback=verify_cache_image)
 

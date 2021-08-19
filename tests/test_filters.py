@@ -292,12 +292,12 @@ def test_threshold(datasets):
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
         dataset.threshold({100, 500}, progress_bar=True)
-    # Now test DATASETS without arrays
+
+    # Now test DataSet without arrays
     with pytest.raises(ValueError):
-        for i, dataset in enumerate(datasets[3:-1]):
-            thresh = dataset.threshold(progress_bar=True)
-            assert thresh is not None
-            assert isinstance(thresh, pyvista.UnstructuredGrid)
+        dataset = datasets[3]  # polydata with no arrays
+        thresh = dataset.threshold()
+
     dataset = examples.load_uniform()
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300], progress_bar=True)
@@ -644,7 +644,7 @@ def test_invalid_warp_vector(sphere):
 
     # no vectors
     sphere.point_arrays.clear()
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         sphere.warp_by_vector()
 
 
