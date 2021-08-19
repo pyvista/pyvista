@@ -396,7 +396,7 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     >>> from pyvista import examples
     >>> filename = examples.download_cow_head(load=False)
     >>> filename.split("/")[-1]  # omit the path
-    cowHead.vtp
+    'cowHead.vtp'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(
