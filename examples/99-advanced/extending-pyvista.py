@@ -16,9 +16,9 @@ The second is automatic managing of types.  Users can control whether user defin
 classes are nearly always used for particular types of DataSets.
 
 .. note::
-This is for advanced usage only.  Automatic managing of types
-will not work in all situations, in particular when a builtin dataset is directly 
-instantiated.  See examples below.
+    This is for advanced usage only.  Automatic managing of types
+    will not work in all situations, in particular when a builtin dataset is directly 
+    instantiated.  See examples below.
 
 """
 
@@ -87,7 +87,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 # Automatically Managing Types
 # ++++++++++++++++++++++++++++
 #
-# The default ``DataSet`` type can be set using ``pyvsta._wrappers``.  In this
+# The default ``DataSet`` type can be set using ``pyvista._wrappers``.  In this
 # example, all objects that would have been created as
 # :class:`pyvista.PolyData` would now be created as a ``FooData`` object. Note,
 # that the key is the underlying vtk object.
@@ -95,7 +95,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 pyvista._wrappers['vtkPolyData'] = FooData
 
 ###############################################################################
-# It is no longer neccessary to specifically wrap :class:``pyvista.PolyData``
+# It is no longer neccessary to specifically wrap :class:`pyvista.PolyData`
 # objects to obtain a ``FooData`` object.
 
 foo_sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
@@ -115,7 +115,7 @@ print(f"Maximum point index: {foo_sphere.max_point}")
 print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
 
 ###############################################################################
-# Filter operations that return :class:``pyvista.PolyData`` now return 
+# Filter operations that return :class:`pyvista.PolyData` now return 
 # ``FooData``
 
 print("\nDecimated foo sphere:")
@@ -127,7 +127,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 ###############################################################################
 # Users can still create a native :class:`pyvista.PolyData` object, but
 # using this method may incur unintended consequences.  In this case,
-# it is recommend to use the :ref:`Directly Managing Types` method.
+# it is recommend to use the directly managing types method.
 
 poly_object = pyvista.PolyData(vtk.vtkPolyData())
 print(f"Type: {type(poly_object)}")
