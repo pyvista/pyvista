@@ -24,7 +24,6 @@ Also, see :ref:`reader_example` for a full example using reader classes.
     XMLPolyDataReader
     XMLStructuredGridReader
     XMLMultiBlockDataReader
-    XMLMultiBlockDataReader
     EnSightReader
     OpenFOAMReader
     PLYReader
