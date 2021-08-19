@@ -109,7 +109,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 # affect the type of the object.
 
 foo_sphere.rotate_y(90)
-print("\nTranslated foo sphere:")
+print("\nRotated foo sphere:")
 print(f"Type: {type(foo_sphere)}")
 print(f"Maximum point index: {foo_sphere.max_point}")
 print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
