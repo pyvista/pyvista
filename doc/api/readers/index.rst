@@ -13,6 +13,14 @@ Also, see :ref:`reader_example` for a full example using reader classes.
 
 .. autosummary::
    :toctree: _autosummary
+
+   get_reader
+
+Reader Classes
+~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: _autosummary
    :template: custom-class-template.rst
 
     XMLImageDataReader
