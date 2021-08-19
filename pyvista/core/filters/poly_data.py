@@ -2324,7 +2324,6 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            arr = get_array(poly_data, scalars, preference=preference)
             field = get_array_association(poly_data, scalars, preference=preference)
         if width is None:
             width = poly_data.length * 0.1

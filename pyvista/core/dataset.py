@@ -866,7 +866,7 @@ class DataSet(DataSetFilters, DataObject):
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
         return np.sum(sizes.cell_arrays['Volume'])
 
-    def get_array(self, name: str, preference='cell') -> np.ndarray:
+    def get_array(self, name: str, preference: Literal['cell', 'point', 'field']='cell') -> np.ndarray:
         """Search both point, cell and field data for an array.
 
         Parameters
@@ -908,12 +908,9 @@ class DataSet(DataSetFilters, DataObject):
         array(['a', 'b', 'c'], dtype='<U1')
 
         """
-        arr = get_array(self, name, preference=preference, err=True)
-        if arr is None:  # pragma: no cover
-            raise KeyError(f'Array {name} not present')
-        return arr
+        return get_array(self, name, preference=preference, err=True)
 
-    def get_array_association(self, name: str, preference='cell') -> FieldAssociation:
+    def get_array_association(self, name: str, preference: Literal['cell', 'point', 'field']='cell') -> FieldAssociation:
         """Get the association of an array.
 
         Parameters

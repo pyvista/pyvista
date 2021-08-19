@@ -793,7 +793,7 @@ class DataSetFilters:
 
         # set the scalars to threshold on
         if scalars is None:
-            field, scalars = dataset.active_scalars_info
+            _, scalars = dataset.active_scalars_info
         arr = get_array(dataset, scalars, preference=preference, err=False)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
@@ -1809,10 +1809,7 @@ class DataSetFilters:
         assert_empty_kwargs(**kwargs)
         if scalars is None:
             field, scalars = dataset.active_scalars_info
-        arr = get_array(dataset, scalars, preference='point')
-
-        if arr is None:
-            raise ValueError('No vectors present to warp by vector.')
+        arr = get_array(dataset, scalars, preference='point', err=True)
 
         field = get_array_association(dataset, scalars, preference='point')
         if field != FieldAssociation.POINT:
@@ -1895,7 +1892,7 @@ class DataSetFilters:
         # check that this is indeed a vector field
         if arr.ndim != 2 or arr.shape[1] != 3:
             raise ValueError(
-                'Dataset can only by warped by a 3D vector point data array.'
+                'Dataset can only by warped by a 3D vector point data array. '
                 'The values you provided do not satisfy this requirement')
         alg = _vtk.vtkWarpVector()
         alg.SetInputDataObject(dataset)
@@ -4048,7 +4045,6 @@ class DataSetFilters:
         alg.SetQCriterionArrayName(qcriterion)
 
         alg.SetFasterApproximation(faster)
-        arr = get_array(dataset, scalars, preference=preference)
         field = get_array_association(dataset, scalars, preference=preference)
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)

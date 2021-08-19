@@ -9,7 +9,7 @@ import sys
 from threading import Thread
 import threading
 import traceback
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -182,7 +182,7 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
+def get_array(mesh, name, preference='cell', err=True) -> Optional[np.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -206,7 +206,6 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
         arr = row_array(mesh, name)
         if arr is None and err:
             raise KeyError(f'Data array ({name}) not present in this dataset.')
-        field = FieldAssociation.ROW
         return arr
 
     parr = point_array(mesh, name)
@@ -270,13 +269,9 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     carr = cell_array(mesh, name)
     farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
-    if np.sum([parr is not None, carr is not None, farr is not None]) > 1:
-        if preference == FieldAssociation.CELL:
-            return FieldAssociation.CELL
-        elif preference == FieldAssociation.POINT:
-            return FieldAssociation.POINT
-        elif preference == FieldAssociation.NONE:
-            return FieldAssociation.NONE
+    if any([array is not None for array in (parr, carr, farr)]):
+        if preference in [FieldAssociation.CELL, FieldAssociation.POINT, FieldAssociation.NONE]:
+            return preference
         else:
             raise ValueError(f'Data field ({preference}) not supported.')
 
