@@ -1,4 +1,6 @@
 """
+.. _reader_example:
+
 Load data using a Reader
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

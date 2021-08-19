@@ -47,8 +47,8 @@ def get_reader(filename):
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_human(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    Human.vtp
+    >>> filename.split("/")[-1]  # omit the path
+    'Human.vtp'
     >>> reader = pyvista.get_reader(filename)
     >>> reader  # doctest: +ELLIPSIS
     XMLPolyDataReader('.../Human.vtp')
@@ -67,12 +67,13 @@ def get_reader(filename):
 
     return Reader(filename)
 
+
 class BaseReader:
     """The Base Reader class.
     
     The base functionality includes reading data from a file,
     and allowing access to the underlying vtk reader. See
-    :class:`pyvista.get_reader` for an example using
+    :func:`pyvista.get_reader` for an example using
     a built-in subclass.
     
     """
@@ -92,7 +93,7 @@ class BaseReader:
     @property
     def reader(self):
         """Return the vtk Reader object.
-        
+
         Returns
         -------
         A vtk Reader object
@@ -323,32 +324,31 @@ class PointCellDataSelection:
 
 
 class XMLImageDataReader(BaseReader, PointCellDataSelection):
-    """XML Image Data Reader."""
+    """XML Image Data Reader for .vti files."""
 
     _class_reader =_vtk.vtkXMLImageDataReader
 
 
 class XMLPImageDataReader(BaseReader, PointCellDataSelection):
-    """XML P Image Data Reader."""
+    """Parallel XML Image Data Reader for .pvti files."""
 
     _class_reader = _vtk.vtkXMLPImageDataReader
 
     
 class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
-    """XML RectilinearGrid Reader.
+    """XML RectilinearGrid Reader for .vtr files.
     
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_rectilinear_grid(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    RectilinearGrid.vtr
+    >>> filename.split("/")[-1]  # omit the path
+    'RectilinearGrid.vtr'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> sliced_mesh = mesh.slice('y')
-    >>> sliced_mesh.plot(scalars='Void Volume Fraction',
-    ...                  cpos='xz', show_scalar_bar=False)
+    >>> sliced_mesh.plot(scalars='Void Volume Fraction', cpos='xz', show_scalar_bar=False)
 
     """
 
@@ -356,21 +356,21 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
 
 
 class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
-    """XML P RectilinearGrid Reader."""
+    """XML Parallel RectilinearGrid Reader for .pvtr files."""
 
     _class_reader = _vtk.vtkXMLPRectilinearGridReader
 
 
 class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
-    """XML UnstructuredGrid Reader.
+    """XML UnstructuredGrid Reader for .vtu files.
     
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_notch_displacement(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    notch_disp.vtu
+    >>> filename.split("/")[-1]  # omit the path
+    'notch_disp.vtu'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(scalars="Nodal Displacement", component=0,
@@ -382,20 +382,20 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
 
 
 class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
-    """XML P UnstructuredGrid Reader."""
+    """Parallel XML UnstructuredGrid Reader for .pvtu files."""
 
     _class_reader = _vtk.vtkXMLPUnstructuredGridReader
 
 
 class XMLPolyDataReader(BaseReader, PointCellDataSelection):
-    """XML PolyData Reader.
+    """XML PolyData Reader for .vtp files.
     
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_cow_head(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
+    >>> filename.split("/")[-1]  # omit the path
     cowHead.vtp
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
@@ -410,15 +410,15 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
 
 
 class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
-    """XML StructuredGrid Reader.
+    """XML StructuredGrid Reader for .vts files.
     
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_structured_grid(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    StructuredGrid.vts
+    >>> filename.split("/")[-1]  # omit the path
+    'StructuredGrid.vts'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(style='wireframe', line_width=4, show_scalar_bar=False)
@@ -429,21 +429,21 @@ class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
 
 
 class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
-    """XML MultiBlock Data Reader."""
+    """XML MultiBlock Data Reader for .vtm or .vtmb files."""
 
     _class_reader = _vtk.vtkXMLMultiBlockDataReader
 
 
 class EnSightReader(BaseReader, PointCellDataSelection):
-    """EnSight Reader.
+    """EnSight Reader for .case files.
     
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_cylinder_crossflow(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    cylinder_Re35.case
+    >>> filename.split("/")[-1]  # omit the path
+    'cylinder_Re35.case'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(scalars="velocity", component=1, clim=[-20, 20], 
@@ -463,21 +463,21 @@ class EnSightReader(BaseReader, PointCellDataSelection):
 
 
 class OpenFOAMReader(BaseReader, PointCellDataSelection):
-    """OpenFOAM Reader."""
+    """OpenFOAM Reader for .foam files."""
 
     _class_reader = _vtk.vtkOpenFOAMReader
 
 
 class PLYReader(BaseReader):
-    """PLY Reader.
+    """PLY Reader for reading .ply files.
     
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_lobster(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    lobster.ply
+    >>> filename.split("/")[-1]  # omit the path
+    'lobster.ply'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
@@ -488,15 +488,15 @@ class PLYReader(BaseReader):
 
 
 class OBJReader(BaseReader):
-    """OBJ Reader.
+    """OBJ Reader for reading .obj files.
     
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_trumpet(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    trumpet.obj
+    >>> filename.split("/")[-1]  # omit the path
+    'trumpet.obj'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(cpos='yz', show_scalar_bar=False)
@@ -507,15 +507,15 @@ class OBJReader(BaseReader):
 
 
 class STLReader(BaseReader):
-    """STL Reader.
+    """STL Reader for .stl files.
     
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_cad_model(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    42400-IDGH.stl
+    >>> filename.split("/")[-1]  # omit the path
+    '42400-IDGH.stl'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
@@ -526,15 +526,15 @@ class STLReader(BaseReader):
 
 
 class VTKDataSetReader(BaseReader):
-    """VTK Data Set Reader.
+    """VTK Data Set Reader for .vtk files.
     
-        Examples
+    Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_brain(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    brain.vtk
+    >>> filename.split("/")[-1]  # omit the path
+    'brain.vtk'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> sliced_mesh = mesh.slice('x')
@@ -546,21 +546,21 @@ class VTKDataSetReader(BaseReader):
 
 
 class VTKPDataSetReader(BaseReader):
-    """VTK P Data Set Reader."""
+    """Parallel VTK Data Set Reader for .pvtk files."""
 
     _class_reader = staticmethod(_vtk.lazy_vtkPDataSetReader)
 
 
 class BYUReader(BaseReader):
-    """BYU Reader.
+    """BYU Reader for .g files.
     
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_teapot(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    teapot.g
+    >>> filename.split("/")[-1]  # omit the path
+    'teapot.g'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(cpos='xy', show_scalar_bar=False)
@@ -571,15 +571,15 @@ class BYUReader(BaseReader):
 
 
 class FacetReader(BaseReader):
-    """Facet Reader.
+    """Facet Reader for .facet files.
     
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_clown(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    clown.facet
+    >>> filename.split("/")[-1]  # omit the path
+    'clown.facet'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(color="red")
@@ -590,21 +590,21 @@ class FacetReader(BaseReader):
 
 
 class Plot3DMetaReader(BaseReader):
-    """Plot3DMeta Reader."""
+    """Plot3DMeta Reader for .p3d files."""
 
     _class_reader = staticmethod(_vtk.lazy_vtkPlot3DMetaReader)
 
 
 class BinaryMarchingCubesReader(BaseReader):
-    """BinaryMarchingCubes Reader.
+    """BinaryMarchingCubes Reader for .tri files.
     
     Examples
     --------
     >>> import pyvista
     >>> from pyvista import examples
     >>> filename = examples.download_pine_roots(load=False)
-    >>> print(filename.split("/")[-1])  # omit the path
-    pine_root.tri
+    >>> filename.split("/")[-1]  # omit the path
+    'pine_root.tri'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(color="brown")
