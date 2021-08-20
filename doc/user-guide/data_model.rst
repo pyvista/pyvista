@@ -464,21 +464,23 @@ Note how we did not have to specify which cell data to plot as the
 
    >>> ugrid.cell_arrays
 
-We can also add 
+We can also labels to our plot to show which cells are assigned which
+scalars.  Note how this is in the same order as the scalars we
+assigned.
 
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
-   >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]
-   >>> pl.add_point_labels(ugrid.points, point_labels,
-   ...                     font_size=25, point_size=20)
    >>> cell_labels = [f'Cell {i}' for i in range(ugrid.n_cells)]
    >>> pl.add_point_labels(ugrid.cell_centers(), cell_labels, font_size=25)
    >>> pl.camera_position = 'xy'
    >>> pl.show()
 
+We can continue to assign cell data to our :class:`DataSet <pyvista.core.dataset.DataSet>` using the ``[]`` operator, but if you do no wish the new array to become the active array, you can add it using
+
 
 Point Arrays
 ~~~~~~~~~~~~
+Data can be ass
 
 
 
