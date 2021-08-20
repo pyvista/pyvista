@@ -142,11 +142,20 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 lines.append(line)
             array_info = '\n    ' + '\n    '.join(lines)
 
+        if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
+            scalar_info = f'Active Scalars  : {self.active_scalars_name}\n'
+            vector_info = f'Active Vectors  : {self.active_vectors_name}\n'
+            texture_info = f'Active Texture  : {self.active_texture_name}\n'
+        else:
+            scalar_info = ''
+            vector_info = ''
+            texture_info = ''
+
         return 'pyvista DataSetAttributes\n' \
                f'Association     : {self.association.name}\n' \
-               f'Active Scalars  : {self.active_scalars_name}\n' \
-               f'Active Vectors  : {self.active_vectors_name}\n' \
-               f'Active Texture  : {self.active_texture_name}\n' \
+               f'{scalar_info}' \
+               f'{vector_info}' \
+               f'{texture_info}' \
                f'Contains arrays :{array_info}' \
 
     def get(self, key: str, value: Optional[Any] = None) -> Optional[pyvista_ndarray]:
