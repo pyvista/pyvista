@@ -87,8 +87,11 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 # Automatically Managing Types
 # ++++++++++++++++++++++++++++
 #
-# The default :class:`pyvista.DataSet` type can be set using ``pyvista._wrappers``.  In this
-# example, all objects that would have been created as
+# The default :class:`pyvista.DataSet` type can be set using ``pyvista._wrappers``.
+# In general, it is best to use this method when it is expected to primarily 
+# use the user defined class.  
+# 
+# In this example, all objects that would have been created as
 # :class:`pyvista.PolyData` would now be created as a ``FooData`` object. Note,
 # that the key is the underlying vtk object.
 
@@ -127,7 +130,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 ###############################################################################
 # Users can still create a native :class:`pyvista.PolyData` object, but
 # using this method may incur unintended consequences.  In this case,
-# it is recommend to use the directly managing types method.
+# it is recommended to use the directly managing types method.
 
 poly_object = pyvista.PolyData(vtk.vtkPolyData())
 print(f"Type: {type(poly_object)}")
@@ -137,3 +140,18 @@ try:
 except TypeError:
     print("This operation fails")
 
+###############################################################################
+# Usage of ``pyvista._wrappers`` may require resetting the default value
+# to avoid leaking the setting into cases where it is unused.
+
+pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+
+###############################################################################
+# For instances where a localized usage is preferred, a tear-down method is
+# recommended.  One example is a ``try...finally`` block.
+
+try:
+    pyvista._wrappers['vtkPolyData'] = FooData
+    # some operation that sometimes raises an error
+finally:
+    pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
