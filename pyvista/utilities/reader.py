@@ -353,6 +353,8 @@ class PointCellDataSelection:
         -------
         dict[str, bool]
         """
+        return {name: self.cell_array_status(name) for name in self.cell_array_names}
+
 
 
 class TimeReader(ABC):
@@ -361,27 +363,76 @@ class TimeReader(ABC):
     @property
     @abstractmethod
     def number_time_points(self):
+        """The number of time points or iterations available to read.
+        
+        Returns
+        -------
+        int
+
+        """
         pass
 
     @abstractmethod
     def time_point_value(self, time_point):
+        """Value of time point or iteration by index.
+        
+        Parameters
+        ----------
+        time_point: int
+            Time point index.
+
+        Returns
+        -------
+        float
+
+        """
         pass
 
     @property
     def time_values(self):
+        """All time or iteration values.
+
+        Returns
+        -------
+        list[float]
+
+        """
         return [self.time_point_value(idx) for idx in range(self.number_time_points)]
 
     @property
     @abstractmethod
     def active_time_value(self):
+        """Active time or iteration value.
+
+        Returns
+        -------
+        float
+
+        """
         pass
 
     @abstractmethod
     def set_active_time_value(self, time_value):
+        """Set active time or iteration value.
+
+        Parameters
+        ----------
+        time_value: float
+            Time or iteration value to set as active.
+
+        """
         pass
 
     @abstractmethod
     def set_active_time_point(self, time_point):
+        """Set active time or iteration by index.
+
+        Parameters
+        ----------
+        time_point: int
+            Time or iteration point index for setting active time.
+
+        """
         pass
 
 
@@ -496,7 +547,7 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
     _class_reader = _vtk.vtkXMLMultiBlockDataReader
 
 
-class EnSightReader(BaseReader, PointCellDataSelection):
+class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     """EnSight Reader for .case files.
     
     Examples
@@ -743,8 +794,8 @@ class PVDDataSet:
         return False
 
 
-class PVDFileReader(BaseReader, TimeReader):
-    """PVD file reader."""
+class PVDReader(BaseReader, TimeReader):
+    """PVD Reader for .pvd files."""
 
     def __init__(self, filename):
         """Initialize PVD file reader."""
@@ -760,22 +811,45 @@ class PVDFileReader(BaseReader, TimeReader):
         
     @property
     def reader(self):
-        """Return the PVDFileReader."""
+        """Return the PVDReader.
+        
+        ..note::
+
+        This Reader does not have an uderlying vtk Reader.
+        """
         return self
 
     @property
     def active_readers(self):
-        """Return the active readers."""
+        """Return the active readers.
+        
+        Returns
+        -------
+        list[:class:`pyvista.BaseReader`]
+
+        """
         return self._active_readers
 
     @property
     def datasets(self):
-        """Return all datasets as a list."""
+        """Return all datasets.
+        
+        Returns
+        -------
+        list[:class:`pyvista.PVDDataSet`]
+
+        """
         return self._datasets
 
     @property
     def active_datasets(self):
-        """Return all active datasets as a list."""
+        """Return all active datasets.
+        
+        Returns
+        -------
+        list[:class:`pyvista.PVDDataSet`]
+
+        """
         return self._active_datasets
 
     def _set_filename(self, filename):
@@ -787,7 +861,9 @@ class PVDFileReader(BaseReader, TimeReader):
         self._update_information()
 
     def read(self):
-        """Read data from PVD timepoint
+        """Read data from PVD timepoint.
+
+        Overrides :func:`pyvista.BaseReader.read`.
 
         Returns
         -------
@@ -802,7 +878,7 @@ class PVDFileReader(BaseReader, TimeReader):
             self._parse_file()
 
     def _update(self):
-        """Unused in PVDFileReader."""
+        """Unused in PVDReader."""
         pass
 
     def _parse_file(self):
@@ -830,26 +906,21 @@ class PVDFileReader(BaseReader, TimeReader):
 
     @property
     def time_values(self):
-        """Returns all time values as list."""
         return self._time_values
 
     @property
     def number_time_points(self):
-        """Returns number of time points."""
         return len(self.time_values)
     
     def time_point_value(self, time_point):
-        """Returns value of time point."""
         return self.time_values[time_point]
 
     @property
     def active_time_value(self):
-        """Returns value of active time."""
         # all active datasets have the same time
         return self.active_datasets[0].time
 
     def set_active_time_value(self, time_value):
-        """Set active time value."""
         self._active_datasets = [
             dataset for dataset in self.datasets if dataset.time == time_value
         ]
@@ -859,7 +930,6 @@ class PVDFileReader(BaseReader, TimeReader):
         ]
 
     def set_active_time_point(self, time_point):
-        """Set active time by time point."""
         self.set_active_time_value(self.time_values[time_point])
 
 
@@ -886,5 +956,5 @@ CLASS_READERS = {
     '.facet': FacetReader,
     '.p3d': Plot3DMetaReader,
     '.tri': BinaryMarchingCubesReader,
-    '.pvd': PVDFileReader,
+    '.pvd': PVDReader,
 }

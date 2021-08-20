@@ -179,10 +179,7 @@ def test_ensightreader_arrays():
 
 
 def test_ensightreader_timepoints():
-    filename, _ = _download_file('naca.bin.case')
-    _download_file('naca.gold.bin.DENS_1')
-    _download_file('naca.gold.bin.DENS_3')
-    _download_file('naca.gold.bin.geo')
+    filename = examples.download_naca(load=False)
 
     reader = pyvista.get_reader(filename)
     assert reader.filename == filename
@@ -290,9 +287,9 @@ def test_binarymarchingcubesreader():
 
 
 def test_pvdfilerader():
-    filename = "./wavy/wavy.pvd"
+    filename = "../wavy/wavy.pvd"
     reader = pyvista.get_reader(filename)
-    assert isinstance(reader, pyvista.PVDFileReader)
+    assert isinstance(reader, pyvista.PVDReader)
     assert reader.filename == filename
     
     assert reader.number_time_points == 15

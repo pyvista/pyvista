@@ -19,4 +19,4 @@ from .reader import (get_reader, BaseReader, PointCellDataSelection,
                      XMLMultiBlockDataReader, EnSightReader, OpenFOAMReader,
                      PLYReader, OBJReader, STLReader, VTKDataSetReader,
                      VTKPDataSetReader, BYUReader, FacetReader, Plot3DMetaReader,
-                     BinaryMarchingCubesReader, PVDFileReader)
+                     BinaryMarchingCubesReader, PVDDataSet, PVDReader)
