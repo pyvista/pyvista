@@ -287,7 +287,7 @@ def test_binarymarchingcubesreader():
 
 
 def test_pvdfilerader():
-    filename = "../wavy/wavy.pvd"
+    filename = examples.download_wavy(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.PVDReader)
     assert reader.filename == filename

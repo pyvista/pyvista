@@ -849,3 +849,11 @@ def download_naca(load=True):
     if not load:
         return filename
     return pyvista.read(filename)
+
+
+def download_wavy(load=True):
+    folder, _ = _download_file('PVD/wavy.zip')
+    filename = os.path.join(folder, 'wavy.pvd')
+    if not load:
+        return filename
+    return pyvista.PVDReader(filename).read()

@@ -129,12 +129,13 @@ plotter.camera_position= ((0.5, 0, 8), (0.5, 0, 0), (0, 1, 0))
 plotter.show()
 
 ###############################################################################
-# Reading time points can also be utilized to make a movie. Compare to
-# :ref:`gif_movie_example`, but here a set of files are read in through a
-# ParaView Data format file. This file format and reader also return a
+# Reading time points or iterations can also be utilized to make a movie.
+# Compare to :ref:`gif_movie_example`, but here a set of files are read in 
+# through a ParaView Data format file. This file format and reader also return a
 # :class:`pyvista.MultiBlock` mesh.
 
-reader = pyvista.get_reader("./wavy/wavy.pvd")
+filename = examples.download_wavy(load=False)
+reader = pyvista.get_reader(filename)
 print(reader)
 
 plotter = pyvista.Plotter(notebook=False, off_screen=True)
@@ -143,6 +144,8 @@ plotter.open_gif("wave_pvd.gif")
 
 ###############################################################################
 # For each time point, plot the mesh colored by the height.
+# Put iteration value in top left
+#
 
 for time_value in reader.time_values:
     reader.set_active_time_value(time_value)
@@ -150,7 +153,7 @@ for time_value in reader.time_values:
 
     plotter.clear()
     plotter.add_mesh(mesh, scalars=mesh.points[:,-1], show_scalar_bar=False)
-    plotter.add_text(f"Time: {time_value:.0f}")
+    plotter.add_text(f"Time: {time_value:.0f}", color="black")
     plotter.render()
     plotter.write_frame()
 
