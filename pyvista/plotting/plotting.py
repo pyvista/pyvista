@@ -229,6 +229,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._image_depth_null = None
         self.last_image_depth = None
         self.last_image = None
+        self._has_background_layer = False
+
+        # set hidden line removal based on theme
+        if self.theme.hidden_line_removal:
+            self.enable_hidden_line_removal()
 
     @property
     def theme(self):
@@ -255,6 +260,220 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             '``pyvista.themes.DefaultTheme``, '
                             f'not {type(theme).__name__}.')
         self._theme.load_theme(pyvista.global_theme)
+
+    def import_gltf(self, filename, set_camera=True):
+        """Import a glTF file into the plotter.
+
+        See https://www.khronos.org/gltf/ for more information.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the glTF file.
+
+        set_camera : bool, optional
+            Set the camera viewing angle to one compatible with the
+            default three.js perspective (``'xy'``).
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> helmet_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
+        >>> texture = examples.hdr.download_dikhololo_night()  # doctest:+SKIP
+        >>> pl = pyvista.Plotter()  # doctest:+SKIP
+        >>> pl.import_gltf(helmet_file)  # doctest:+SKIP
+        >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
+        >>> pl.camera.zoom(1.8)  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
+
+        See :ref:`load_gltf` for a full example using this method.
+
+        """
+        if not _vtk.VTK9:  # pragma: no cover
+            raise RuntimeError('Support for glTF requires VTK v9 or newer')
+
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        from vtkmodules.vtkIOImport import vtkGLTFImporter
+        importer = vtkGLTFImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.ren_win)
+        importer.Update()
+
+        # set camera position to a three.js viewing perspective
+        if set_camera:
+            self.camera_position = 'xy'
+
+    def export_gltf(self, filename, inline_data=True, rotate_scene=True,
+                    save_normals=True):
+        """Export the current rendering scene as a glTF file.
+
+        Visit https://gltf-viewer.donmccurdy.com/ for an online viewer.
+
+        See https://vtk.org/doc/nightly/html/classvtkGLTFExporter.html
+        for limitations regarding the exporter.
+
+        Parameters
+        ----------
+        filename : str
+            Path to export the gltf file to.
+
+        inline_data : bool, optional
+            Sets if the binary data be included in the json file as a
+            base64 string.  When ``True``, only one file is exported.
+
+        rotate_scene : bool, optional
+            Rotate scene to be compatible with the glTF specifications.
+
+        save_normals : bool, optional
+            Saves the point array ``'Normals'`` as ``'NORMALS'`` in
+            the outputted scene.
+
+        Examples
+        --------
+        Output a simple point cloud represented as balls.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> point_cloud = np.random.random((100, 3))
+        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata['orig_sphere'] = np.arange(100)
+        >>> sphere = pyvista.Sphere(radius=0.02)
+        >>> pc = pdata.glyph(scale=False, geom=sphere)
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pc, cmap='reds', smooth_shading=True,
+        ...                 show_scalar_bar=False)
+        >>> pl.export_gltf('balls.gltf')  # doctest:+SKIP
+        >>> pl.show()
+
+        Output the orientation plotter.
+
+        >>> from pyvista import demos
+        >>> pl = demos.orientation_plotter()
+        >>> pl.export_gltf('orientation_plotter.gltf')  # doctest:+SKIP
+        >>> pl.show()
+
+        """
+        if not _vtk.VTK9:  # pragma: no cover
+            raise RuntimeError('Support for glTF requires VTK v9 or newer')
+
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError('This plotter has been closed and is unable to export '
+                               'the scene.')
+
+        from vtkmodules.vtkIOExport import vtkGLTFExporter
+
+        # rotate scene to gltf compatible view
+        if rotate_scene:
+            for renderer in self.renderers:
+                for actor in renderer.actors.values():
+                    if hasattr(actor, 'RotateX'):
+                        actor.RotateX(-90)
+                        actor.RotateZ(-90)
+
+                    if save_normals:
+                        try:
+                            mapper = actor.GetMapper()
+                            if mapper is None:
+                                continue
+                            dataset = mapper.GetInputAsDataSet()
+                            if 'Normals' in dataset.point_arrays:
+                                normals = dataset.point_arrays['Normals']
+                                dataset.point_array.append(normals, 'NORMAL',
+                                                           active_scalars=False,
+                                                           deep_copy=False)
+                                
+                        except:
+                            pass
+
+        exporter = vtkGLTFExporter()
+        exporter.SetRenderWindow(self.ren_win)
+        exporter.SetFileName(filename)
+        exporter.SetInlineData(inline_data)
+        exporter.SetSaveNormal(save_normals)
+        exporter.Update()
+
+        # rotate back if applicable
+        if rotate_scene:
+            for renderer in self.renderers:
+                for actor in renderer.actors.values():
+                    if hasattr(actor, 'RotateX'):
+                        actor.RotateZ(90)
+                        actor.RotateX(90)
+
+    def enable_hidden_line_removal(self, all_renderers=True):
+        """Enable hidden line removal.
+
+        Wireframe geometry will be drawn using hidden line removal if
+        the rendering engine supports it.
+
+        Parameters
+        ----------
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If
+            ``False``, then only applies to the active renderer.
+
+        See Also
+        --------
+        :func:`disable_hidden_line_removal <BasePlotter.disable_hidden_line_removal>`
+
+        Examples
+        --------
+        Create a side-by-side plotter and render a sphere in wireframe
+        with hidden line removal enabled on the left and disabled on
+        the right.
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere(theta_resolution=20, phi_resolution=20)
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
+        >>> _ = pl.add_text("With hidden line removal")
+        >>> pl.enable_hidden_line_removal(all_renderers=False)
+        >>> pl.subplot(0, 1)
+        >>> pl.disable_hidden_line_removal(all_renderers=False)
+        >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
+        >>> _ = pl.add_text("Without hidden line removal")
+        >>> pl.show()
+
+        """
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.enable_hidden_line_removal()
+        else:
+            self.renderer.enable_hidden_line_removal()
+
+    def disable_hidden_line_removal(self, all_renderers=True):
+        """Disable hidden line removal.
+
+        Parameters
+        ----------
+        all_renderers : bool
+            If ``True``, applies to all renderers in subplots. If
+            ``False``, then only applies to the active renderer.
+
+        See Also
+        --------
+        :func:`enable_hidden_line_removal <BasePlotter.enable_hidden_line_removal>`
+
+        Examples
+        --------
+        Enable and then disable hidden line removal.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.enable_hidden_line_removal()
+        >>> pl.disable_hidden_line_removal()
+
+        """
+        if all_renderers:
+            for renderer in self.renderers:
+                renderer.disable_hidden_line_removal()
+        else:
+            self.renderer.disable_hidden_line_removal()
 
     @property
     def scalar_bar(self):
@@ -1075,12 +1294,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if Plotter.last_update_time > curr_time:
             Plotter.last_update_time = curr_time
 
-        update_rate = self.iren.get_desired_update_rate()
-        if (curr_time - Plotter.last_update_time) > (1.0/update_rate):
-            self.right_timer_id = self.iren.create_repeating_timer(stime)
-            self.render()
-            Plotter.last_update_time = curr_time
-        elif force_redraw:
+        if self.iren is not None:
+            update_rate = self.iren.get_desired_update_rate()
+            if (curr_time - Plotter.last_update_time) > (1.0/update_rate):
+                self.right_timer_id = self.iren.create_repeating_timer(stime)
+                self.render()
+                Plotter.last_update_time = curr_time
+                return
+
+        if force_redraw:
             self.render()
 
     def add_mesh(self, mesh, color=None, style=None, scalars=None,
@@ -1093,7 +1315,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  render_points_as_spheres=None, render_lines_as_tubes=False,
                  smooth_shading=None, ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
-                 culling=None, rgb=False, categories=False, silhouette=False,
+                 culling=None, rgb=None, categories=False, silhouette=False,
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
                  log_scale=False, pbr=False, metallic=0.0, roughness=0.5,
@@ -1273,8 +1495,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         rgb : bool, optional
             If an 2 dimensional array is passed as the scalars, plot
-            those values as RGB(A) colors. ``rgba`` is also an accepted
-            alias for this.  Opacity (the A) is optional.
+            those values as RGB(A) colors. ``rgba`` is also an
+            accepted alias for this.  Opacity (the A) is optional.  If
+            a scalars array ending with ``"_rgba"`` is passed, the default
+            becomes ``True``.  This can be overridden by setting this
+            parameter to ``False``.
 
         categories : bool, optional
             If set to ``True``, then the number of unique values in
@@ -1620,6 +1845,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         original_scalar_name = None
         if isinstance(scalars, str):
             self.mapper.SetArrayName(scalars)
+
+            # enable rgb if the scalars name ends with rgb or rgba
+            if rgb is None:
+                if scalars.endswith('_rgb') or scalars.endswith('_rgba'):
+                    rgb = True
+
             original_scalar_name = scalars
             scalars = get_array(mesh, scalars,
                                 preference=preference, err=True)
@@ -2474,7 +2705,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 interactive = False
         elif interactive and self.shape != (1, 1):
             raise ValueError('Interactive scalar bars disabled for multi-renderer plots')
-
+        # by default, use the plotter local theme
+        kwargs.setdefault('theme', self._theme)
         return self.scalar_bars.add_scalar_bar(**kwargs)
 
     def update_scalars(self, scalars, mesh=None, render=True):
@@ -2727,23 +2959,43 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False)
         return self.textActor
 
-    def open_movie(self, filename, framerate=24):
+    def open_movie(self, filename, framerate=24, quality=5, **kwargs):
         """Establish a connection to the ffmpeg writer.
 
         Parameters
         ----------
         filename : str
             Filename of the movie to open.  Filename should end in mp4,
-            but other filetypes may be supported.  See "imagio.get_writer"
+            but other filetypes may be supported.  See ``imagio.get_writer``
 
         framerate : int, optional
             Frames per second.
+
+        quality : int, optional
+            Quality 10 is the top possible quality for any codec. The
+            range is ``0 - 10``.  Higher quality leads to a larger file.
+
+        **kwargs : dict
+            See the documentation for ``imageio.get_writer`` for additional kwargs.
+
+        Examples
+        --------
+        Open a MP4 movie and set the quality to maximum.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter
+        >>> pl.open_movie('movie.mp4', quality=10)  # doctest:+SKIP
+
+        See Also
+        --------
+        See the documentation for `imageio.get_writer
+        <https://imageio.readthedocs.io/en/stable/userapi.html#imageio.get_writer>`_
 
         """
         from imageio import get_writer
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
-        self.mwriter = get_writer(filename, fps=framerate)
+        self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
     def open_gif(self, filename):
         """Open a gif file.
@@ -2751,7 +3003,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         filename : str
-            Filename of the gif to open.  Filename must end in gif.
+            Filename of the gif to open.  Filename must end in ``"gif"``.
+
+        Examples
+        --------
+        Open a gif file.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter
+        >>> pl.open_gif('movie.gif')  # doctest:+SKIP
 
         """
         from imageio import get_writer
@@ -2763,7 +3023,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mwriter = get_writer(filename, mode='I')
 
     def write_frame(self):
-        """Write a single frame to the movie file."""
+        """Write a single frame to the movie file.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.open_movie(filename)  # doctest:+SKIP
+        >>> plotter.add_mesh(pyvista.Sphere())  # doctest:+SKIP
+        >>> plotter.write_frame()  # doctest:+SKIP
+
+        See :ref:`movie_example` for a full example using this method.
+
+        """
         # if off screen, show has not been called and we must render
         # before extracting an image
         if self._first_time:
@@ -3539,18 +3811,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        factor : float
+        factor : float, optional
             A scaling factor when building the orbital extent.
 
-        n_points : int
+        n_points : int, optional
             Number of points on the orbital path.
 
-        viewup : list(float)
+        viewup : list(float), optional
             The normal to the orbital plane.
 
         shift : float, optional
             Shift the plane up/down from the center of the scene by
             this amount.
+
+        Examples
+        --------
+        Generate an orbital path around a sphere.
+
+        >>> import pyvista
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(pyvista.Sphere())
+        >>> viewup = [0, 0, 1]
+        >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=50,
+        ...                                       shift=0.0, viewup=viewup)
+
+        See :ref:`orbiting_example` for a full example using this method.
 
         """
         if viewup is None:
@@ -3574,31 +3859,58 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.iren.fly_to(self.renderer, point)
 
     def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None,
-                      write_frames=False, threaded=False):
+                      write_frames=False, threaded=False, progress_bar=False):
         """Orbit on the given path focusing on the focus point.
 
         Parameters
         ----------
         path : pyvista.PolyData
             Path of orbital points. The order in the points is the order of
-            travel
+            travel.
 
         focus : list(float) of length 3, optional
             The point of focus the camera.
 
         step : float, optional
-            The timestep between flying to each camera position
+            The timestep between flying to each camera position.
 
-        viewup : list(float)
+        viewup : list(float), optional
             the normal to the orbital plane
 
-        write_frames : bool
-            Assume a file is open and write a frame on each camera view during
-            the orbit.
+        write_frames : bool, optional
+            Assume a file is open and write a frame on each camera
+            view during the orbit.
 
         threaded : bool, optional
             Run this as a background thread.  Generally used within a
             GUI (i.e. PyQt).
+
+        progress_bar : bool, optional
+            Show the progress bar when proceeding through the path.
+            This can be helpful to show progress when generating
+            movies with ``off_screen=True``.
+
+        Examples
+        --------
+        Plot an orbit around the earth.  Save the gif as a temporary file.
+
+        >>> import tempfile
+        >>> import os
+        >>> import pyvista
+        >>> filename = os.path.join(tempfile._get_default_tempdir(),
+        ...                         next(tempfile._get_candidate_names()) + '.gif')
+        >>> from pyvista import examples
+        >>> plotter = pyvista.Plotter(window_size=[300, 300])
+        >>> _ = plotter.add_mesh(examples.load_globe(), smooth_shading=True)
+        >>> plotter.open_gif(filename)
+        >>> viewup = [0, 0, 1]
+        >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=24,
+        ...                                       shift=0.0, viewup=viewup)
+        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, 
+        ...                       step=0.02)
+        >>> plotter.close()
+
+        See :ref:`orbiting_example` for a full example using this method.
 
         """
         if focus is None:
@@ -3614,17 +3926,32 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Make sure the whole scene is visible
         self.camera.thickness = path.length
 
+        if progress_bar:
+            try:  # pragma: no cover
+                from tqdm import tqdm
+            except ImportError:
+                raise ImportError("Please install `tqdm` to use ``progress_bar=True``")
+
         def orbit():
             """Define the internal thread for running the orbit."""
-            for point in points:
+            if progress_bar:  # pragma: no cover
+                points_seq = tqdm(points)
+            else:
+                points_seq = points
+
+            for point in points_seq:
+                tstart = time.time()  # include the render time in the step time
                 self.set_position(point)
                 self.set_focus(focus)
                 self.set_viewup(viewup)
                 self.renderer.ResetCameraClippingRange()
-                self.render()
-                time.sleep(step)
                 if write_frames:
                     self.write_frame()
+                else:
+                    self.render()
+                sleep_time = step - (time.time() - tstart)
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
 
         if threaded:
             thread = Thread(target=orbit)
@@ -3719,7 +4046,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Need to change the number of layers to support an additional
         # background layer
-        self.ren_win.SetNumberOfLayers(3)
+        if not self._has_background_layer:
+            self.ren_win.SetNumberOfLayers(3)
         renderer = self.renderers.add_background_renderer(image_path, scale, as_global)
         self.ren_win.AddRenderer(renderer)
 
@@ -3730,6 +4058,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def remove_background_image(self):
         """Remove the background image from the current subplot."""
         self.renderers.remove_background_image()
+
+        # return the active renderer to the top, otherwise flat background
+        # will not be rendered
+        self.renderer.layer = 0
 
     def _on_first_render_request(self, cpos=None):
         """Once an image or render is officially requested, run this routine.
@@ -4047,21 +4379,21 @@ class Plotter(BasePlotter):
         ----------
         title : string, optional
             Title of plotting window.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.title`.
+            :attr:`pyvista.global_theme.title <pyvista.themes.DefaultTheme.title>`.
 
         window_size : list, optional
             Window size in pixels.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.window_size`.
+            :attr:`pyvista.global_theme.window_size <pyvista.themes.DefaultTheme.window_size>`.
 
         interactive : bool, optional
             Enabled by default.  Allows user to pan and move figure.
             Defaults to
-            :attr:`pyvista.themes.DefaultTheme.interacitve`.
+            :attr:`pyvista.global_theme.interactive <pyvista.themes.DefaultTheme.interactive>`.
 
         auto_close : bool, optional
             Exits plotting session when user closes the window when
             interactive is ``True``.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.auto_close`.
+            :attr:`pyvista.global_theme.auto_close <pyvista.themes.DefaultTheme.auto_close>`.
 
         interactive_update: bool, optional
             Disabled by default.  Allows user to non-blocking draw,
@@ -4070,7 +4402,7 @@ class Plotter(BasePlotter):
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
             ``window_size``.  Defaults to
-            :attr:`pyvista.themes.DefaultTheme.full_screen`.
+            :attr:`pyvista.global_theme.full_screen <pyvista.themes.DefaultTheme.full_screen>`.
 
         cpos : list(tuple(floats))
             The camera position.  You can also set this with

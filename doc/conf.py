@@ -23,10 +23,10 @@ pyvista.set_error_output_file("errors.txt")
 pyvista.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
 pyvista.set_plot_theme("document")
-pyvista.global_theme.window_size = np.array([1024, 768]) * 2
-pyvista.global_theme.font.size = 40
-pyvista.global_theme.font.label_size = 40
-pyvista.global_theme.font.title_size = 40
+pyvista.global_theme.window_size = [1024, 768]
+pyvista.global_theme.font.size = 22
+pyvista.global_theme.font.label_size = 22
+pyvista.global_theme.font.title_size = 22
 pyvista.global_theme.return_cpos = False
 pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
@@ -56,6 +56,7 @@ sys.path.append(os.path.abspath("./_ext"))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.intersphinx",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.doctest",
@@ -70,6 +71,21 @@ extensions = [
     "pyvista.ext.plot_directive",
 ]
 
+# return type inline with the description.
+napoleon_use_rtype = False
+
+add_module_names = False
+
+# Intersphinx mapping
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/dev', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'numpy': ('https://numpy.org/devdocs', None),
+    'matplotlib': ('https://matplotlib.org/stable', None),
+    'imageio': ('https://imageio.readthedocs.io/en/stable', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
+    'pytest': ('https://docs.pytest.org/en/stable', None),
+}
 
 linkcheck_retries = 3
 linkcheck_timeout = 500
@@ -116,9 +132,6 @@ pygments_style = "friendly"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
-
-# Generate plots for example sections
-numpydoc_use_plots = True
 
 # -- Sphinx Gallery Options
 from sphinx_gallery.sorting import FileNameSortKey

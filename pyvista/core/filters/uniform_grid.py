@@ -39,7 +39,7 @@ class UniformGridFilters(DataSetFilters):
         if scalars is None:
             field, scalars = dataset.active_scalars_info
         else:
-            _, field = dataset.get_array(scalars, preference=preference, info=True)
+            field = dataset.get_array_association(scalars, preference=preference)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         if isinstance(radius_factor, collections.abc.Iterable):
             alg.SetRadiusFactors(radius_factor)
@@ -52,7 +52,7 @@ class UniformGridFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Gaussian Smoothing')
         return _get_output(alg)
 
-    def extract_subset(dataset, voi, rate=(1, 1, 1), boundary=False):
+    def extract_subset(dataset, voi, rate=(1, 1, 1), boundary=False, progress_bar=False):
         """Select piece (e.g., volume of interest).
 
         To use this filter set the VOI ivar which are i-j-k min/max indices
@@ -83,13 +83,16 @@ class UniformGridFilters(DataSetFilters):
             the grid even though the sample rate is not an even multiple of
             the grid dimensions. (By default this is off.)
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         """
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)
         alg.SetInputDataObject(dataset)
         alg.SetSampleRate(rate)
         alg.SetIncludeBoundary(boundary)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Extracting Subset')
         result = _get_output(alg)
         # Adjust for the confusing issue with the extents
         #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938

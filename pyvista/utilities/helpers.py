@@ -9,6 +9,7 @@ import sys
 from threading import Thread
 import threading
 import traceback
+from typing import Optional
 
 import numpy as np
 
@@ -137,19 +138,19 @@ def is_pyvista_dataset(obj):
 
 
 def point_array(mesh, name):
-    """Return point array of a vtk object."""
+    """Return point array of a pyvista or vtk object."""
     vtkarr = mesh.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 
 def field_array(mesh, name):
-    """Return field array of a vtk object."""
+    """Return field array of a pyvista or vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 
 def cell_array(mesh, name):
-    """Return cell array of a vtk object."""
+    """Return cell array of a pyvista or vtk object."""
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
@@ -181,11 +182,14 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(mesh, name, preference='cell', info=False, err=False):
+def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters
     ----------
+    mesh : Dataset
+        Dataset to get the array from.
+
     name : str
         The name of the array to get the range.
 
@@ -193,9 +197,6 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         When scalars is specified, this is the preferred array type to
         search for in the dataset.  Must be either ``'point'``,
         ``'cell'``, or ``'field'``
-
-    info : bool
-        Return info about the array rather than the array itself.
 
     err : bool
         Boolean to control whether to throw an error if array is not present.
@@ -205,53 +206,114 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         arr = row_array(mesh, name)
         if arr is None and err:
             raise KeyError(f'Data array ({name}) not present in this dataset.')
-        field = FieldAssociation.ROW
-        if info:
-            return arr, field
         return arr
 
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
     farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
-    if np.sum([parr is not None, carr is not None, farr is not None]) > 1:
+    if sum([array is not None for array in (parr, carr, farr)]) > 1:
         if preference == FieldAssociation.CELL:
-            if info:
-                return carr, FieldAssociation.CELL
-            else:
-                return carr
+            return carr
         elif preference == FieldAssociation.POINT:
-            if info:
-                return parr, FieldAssociation.POINT
-            else:
-                return parr
+            return parr
         elif preference == FieldAssociation.NONE:
-            if info:
-                return farr, FieldAssociation.NONE
-            else:
-                return farr
+            return farr
         else:
             raise ValueError(f'Data field ({preference}) not supported.')
-    arr = None
-    field = None
+
     if parr is not None:
-        arr = parr
-        field = FieldAssociation.POINT
+        return parr
     elif carr is not None:
-        arr = carr
-        field = FieldAssociation.CELL
+        return carr
     elif farr is not None:
-        arr = farr
-        field = FieldAssociation.NONE
+        return farr
     elif err:
         raise KeyError(f'Data array ({name}) not present in this dataset.')
-    if info:
-        return arr, field
-    return arr
+    return None
 
+
+def get_array_association(mesh, name, preference='cell', err=False) -> FieldAssociation:
+    """Return the array association.
+
+    Parameters
+    ----------
+    mesh : Dataset
+        Dataset to get the array association from.
+
+    name : str
+        The name of the array.
+
+    preference : str, optional
+        When scalars is specified, this is the preferred array type to
+        search for in the dataset.  Must be either ``'point'``,
+        ``'cell'``, or ``'field'``
+
+    err : bool, optional
+        Boolean to control whether to throw an error if array is not present.
+
+    Returns
+    -------
+    :class:`pyvista.FieldAssociation`
+        Association of the array
+
+    """
+    if isinstance(mesh, _vtk.vtkTable):
+        arr = row_array(mesh, name)
+        if arr is None and err:
+            raise KeyError(f'Data array ({name}) not present in this dataset.')
+        return FieldAssociation.ROW
+
+    # with multiple arrays, return the array preference
+    parr = point_array(mesh, name)
+    carr = cell_array(mesh, name)
+    farr = field_array(mesh, name)
+    preference = parse_field_choice(preference)
+    if sum([array is not None for array in (parr, carr, farr)]) > 1:
+        if preference in [FieldAssociation.CELL, FieldAssociation.POINT,
+                          FieldAssociation.NONE]:
+            return preference
+        else:
+            raise ValueError(f'Data field ({preference}) not supported.')
+
+    if parr is not None:
+        return FieldAssociation.POINT
+    elif carr is not None:
+        return FieldAssociation.CELL
+    elif farr is not None:
+        return FieldAssociation.NONE
+    elif err:
+        raise KeyError(f'Data array ({name}) not present in this dataset.')
+    return FieldAssociation.NONE
 
 def vtk_points(points, deep=True):
-    """Convert numpy array or array-like to a vtkPoints object."""
+    """Convert numpy array or array-like to a vtkPoints object.
+
+    Parameters
+    ----------
+    points : np.ndarray or sequence
+        Points to convert.  Should be 1 or 2 dimensional.  Accepts a
+        single point or several points.
+
+    deep : bool, optional
+        Perform a deep copy of the array.  Only applicable if
+        ``points`` is a ``np.ndarray``.
+
+    Returns
+    -------
+    vtk.vtkPoints
+        vtkPoints object.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> import numpy as np
+    >>> points = np.random.random((10, 3))
+    >>> vpoints = pyvista.vtk_points(points)
+    >>> vpoints  # doctest:+SKIP
+    (vtkmodules.vtkCommonCore.vtkPoints)0x7f0c2e26af40
+
+    """
     points = np.asanyarray(points)
 
     # verify is numeric
@@ -413,7 +475,44 @@ def make_tri_mesh(points, faces):
 
 
 def vector_poly_data(orig, vec):
-    """Create a vtkPolyData object composed of vectors."""
+    """Create a pyvista.PolyData object composed of vectors.
+
+    Parameters
+    ----------
+    orig : np.ndarray
+        Array of vector origins.
+
+    vec : np.ndarray
+        Array of vectors.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh containing the ``orig`` points along with the
+        ``'vectors'`` and ``'mag'`` point arrays representing the
+        vectors and magnitude of the the vectors at each point.
+
+    Examples
+    --------
+    Create basic vector field.  This is a point cloud where each point
+    has a vector and magnitude attached to it.
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> x, y = np.meshgrid(np.linspace(-5,5,10),np.linspace(-5,5,10))
+    >>> points = np.vstack((x.ravel(), y.ravel(), np.zeros(x.size))).T
+    >>> u = x/np.sqrt(x**2 + y**2)
+    >>> v = y/np.sqrt(x**2 + y**2)
+    >>> vectors = np.vstack((u.ravel()**3, v.ravel()**3, np.zeros(u.size))).T
+    >>> pdata = pyvista.vector_poly_data(points, vectors)
+    >>> pdata.point_arrays.keys()
+    ['vectors', 'mag']
+
+    Convert these to arrows and plot it.
+
+    >>> pdata.glyph(orient='vectors', scale='mag').plot()
+
+    """
     # shape, dimension checking
     if not isinstance(orig, np.ndarray):
         orig = np.asarray(orig)
@@ -537,10 +636,11 @@ def wrap(dataset):
     """Wrap any given VTK data object to its appropriate pyvista data object.
 
     Other formats that are supported include:
+
     * 2D :class:`numpy.ndarray` of XYZ vertices
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
     * 3D :class:`trimesh.Trimesh` mesh.
-    * 3D :class:`meshio` mesh.
+    * 3D :class:`meshio.Mesh` mesh.
 
     Parameters
     ----------
@@ -705,15 +805,45 @@ def is_inside_bounds(point, bounds):
 
 
 def fit_plane_to_points(points, return_meta=False):
-    """Fit a plane to a set of points.
+    """Fit a plane to a set of points using the SVD algorithm.
 
     Parameters
     ----------
-    points : np.ndarray
-        Size n by 3 array of points to fit a plane through
+    points : sequence
+        Size ``[N x 3]`` sequence of points to fit a plane through.
 
     return_meta : bool
-        If true, also returns the center and normal used to generate the plane
+        If ``True``, also returns the center and normal used to
+        generate the plane.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Plane mesh.
+
+    np.ndarray
+        Plane center if ``return_meta=True``.
+
+    np.ndarray
+        Plane normal if ``return_meta=True``.
+
+    Examples
+    --------
+    Fit a plane to a random point cloud.
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> cloud = np.random.random((10, 3))
+    >>> cloud[:, 2] *= 0.1
+    >>> plane, center, normal = pyvista.fit_plane_to_points(cloud, return_meta=True)
+
+    Plot the fitted plane.
+
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_mesh(plane, color='tan', style='wireframe', line_width=4)
+    >>> _ = pl.add_points(cloud, render_points_as_spheres=True, 
+    ...                   color='r', point_size=30)
+    >>> pl.show()
 
     """
     data = np.array(points)
@@ -1009,6 +1139,8 @@ def cubemap(path='', prefix='', ext='.jpg'):
                                     f'{file_str}')
 
     texture = pyvista.Texture()
+    texture.SetMipmap(True)
+    texture.SetInterpolate(True)
     texture.cube_map = True  # Must be set prior to setting images
 
     # add each image to the cubemap

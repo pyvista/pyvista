@@ -1,12 +1,15 @@
 """
+.. _reader_example:
+
 Load data using a Reader
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 ###############################################################################
 # To have more control over reading data files, use a class based reader.
 # This class allows for more fine-grained control over reading datasets from
-# files.  See :class:`pyvista.get_reader` for a list of file types supported.
+# files.  See :func:`pyvista.get_reader` for a list of file types supported.
+
 
 import pyvista
 from pyvista import examples
@@ -14,12 +17,15 @@ import numpy as np
 from tempfile import NamedTemporaryFile
 
 ###############################################################################
-# An XML PolyData file in `.vtp` format is created.  :class:`pyvista.Sphere`
-# already includes `Normals` point data.  Additionally `height` point data
-# and `id` cell data is added.
+# An XML PolyData file in ``.vtp`` format is created.  It will be saved in a
+# temporary file for this example.
 
 temp_file = NamedTemporaryFile('w', suffix=".vtp")
-print(temp_file.name)
+temp_file.name
+
+###############################################################################
+# :class:`pyvista.Sphere` already includes ``Normals`` point data.  Additionally
+# ``height`` point data and ``id`` cell data is added.
 mesh = pyvista.Sphere()
 mesh['height'] = mesh.points[:, 1]
 mesh['id'] = np.arange(mesh.n_cells)
@@ -33,11 +39,11 @@ new_mesh = pyvista.read(temp_file.name)
 print(f"All arrays: {mesh.array_names}")
 
 ###############################################################################
-# Using :class:`get_reader` enables more fine-grained control of reading data
-# files. Reading in a ".vtp" file uses the :class:`pyvista.XMLPolyDataReader`.
+# Using :func:`pyvista.get_reader` enables more fine-grained control of reading data
+# files. Reading in a ``.vtp``` file uses the :class:`pyvista.XMLPolyDataReader`.
 
 reader = pyvista.get_reader(temp_file.name)
-print(type(reader))
+reader
 # Alternative method: reader = pyvista.XMLPolyDataReader(temp_file.name)
 
 ###############################################################################
@@ -53,8 +59,8 @@ print(f"Available cell data:    {reader.cell_array_names}")
 ###############################################################################
 # We can select which data to read by selectively disabling or enabling
 # specific arrays or all arrays.  Here we disable all the cell arrays and
-# the `Normals` point array to leave only the `height` point array.  The data
-# is finally read into a pyvista object that only has the `height` point array.
+# the ``Normals`` point array to leave only the ``height`` point array.  The data
+# is finally read into a pyvista object that only has the ``height`` point array.
 
 reader.disable_all_cell_arrays()
 reader.disable_point_array('Normals')

@@ -67,3 +67,14 @@ def test_actor_removal(sphere):
     assert len(pl.scalar_bars) == 1
     pl.remove_actor(actor)
     assert len(pl.scalar_bars) == 0
+
+
+def test_add_remove_bar(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=sphere.points[:, 2], show_scalar_bar=False)
+
+    # verify that the number of slots is restored
+    init_slots = len(pl._scalar_bar_slots)
+    pl.add_scalar_bar()
+    pl.remove_scalar_bar()
+    assert len(pl._scalar_bar_slots) == init_slots

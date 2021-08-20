@@ -139,8 +139,8 @@ def test_reader_cell_point_data(tmpdir):
     assert reader.point_array_status('Normals') is True
 
 
-    filename = examples.download_backward_facing_step(load=False)
 def test_ensightreader_arrays():
+    filename = examples.download_backward_facing_step(load=False)
 
     reader = pyvista.get_reader(filename)
     assert reader.filename == filename

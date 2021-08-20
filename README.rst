@@ -95,7 +95,7 @@ Highlights
 ==========
 
 .. |binder| image:: https://static.mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/main
+   :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
    :alt: Launch on Binder
 
 Head over to the `Quick Examples`_ page in the docs to explore our gallery of
@@ -197,6 +197,12 @@ to learn more about the developers of PyVista.
 
 Contributing
 ============
+
+.. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
+   :target: https://www.codetriage.com/pyvista/pyvista
+   :alt: Code Triage
+
+|codetriage|
 
 We absolutely welcome contributions and we hope that our `Contributing Guide`_
 will facilitate your ability to make PyVista better. PyVista is mostly

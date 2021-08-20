@@ -21,21 +21,44 @@ class CompositeFilters:
         gf.Update()
         return wrap(gf.GetOutputDataObject(0))
 
-    def combine(composite, merge_points=False):
-        """Append all blocks into a single unstructured grid.
+    def combine(composite, merge_points=False, tolerance=0.0):
+        """Combine all blocks into a single unstructured grid.
 
         Parameters
         ----------
         merge_points : bool, optional
             Merge coincidental points.
 
+        tolerance : float, optional
+            The absolute tolerance to use to find coincident points when
+            ``merge_points=True``.
+
+        Examples
+        --------
+        Combine blocks within a multiblock without merging points.
+
+        >>> import pyvista
+        >>> block = pyvista.MultiBlock([pyvista.Cube(),
+        ...                             pyvista.Cube(center=(1, 0, 0))])
+        >>> merged = block.combine()
+        >>> merged.n_points
+        48
+
+        Combine blocks and merge points
+
+        >>> merged = block.combine(merge_points=True)
+        >>> merged.n_points
+        12
+
         """
         alg = _vtk.vtkAppendFilter()
         for block in composite:
             if isinstance(block, _vtk.vtkMultiBlockDataSet):
-                block = CompositeFilters.combine(block, merge_points=merge_points)
+                block = CompositeFilters.combine(block, merge_points=merge_points,
+                                                 tolerance=tolerance)
             alg.AddInputData(block)
         alg.SetMergePoints(merge_points)
+        alg.SetTolerance(tolerance)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
 
@@ -65,7 +88,7 @@ class CompositeFilters:
 
     triangulate = DataSetFilters.triangulate
 
-    def outline(composite, generate_faces=False, nested=False):
+    def outline(composite, generate_faces=False, nested=False, progress_bar=False):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
         Parameters
@@ -76,13 +99,16 @@ class CompositeFilters:
         nested : bool, optional
             If True, these creates individual outlines for each nested dataset
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         """
         if nested:
-            return DataSetFilters.outline(composite, generate_faces=generate_faces)
+            return DataSetFilters.outline(composite, generate_faces=generate_faces, progress_bar=progress_bar)
         box = pyvista.Box(bounds=composite.bounds)
-        return box.outline(generate_faces=generate_faces)
+        return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
-    def outline_corners(composite, factor=0.2, nested=False):
+    def outline_corners(composite, factor=0.2, nested=False, progress_bar=False):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
         Parameters
@@ -94,8 +120,11 @@ class CompositeFilters:
         nested : bool, optional
             If True, these creates individual outlines for each nested dataset
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         """
         if nested:
-            return DataSetFilters.outline_corners(composite, factor=factor)
+            return DataSetFilters.outline_corners(composite, factor=factor, progress_bar=progress_bar)
         box = pyvista.Box(bounds=composite.bounds)
-        return box.outline_corners(factor=factor)
+        return box.outline_corners(factor=factor, progress_bar=progress_bar)

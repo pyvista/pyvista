@@ -198,18 +198,47 @@ def _contains_doctest(text):
     return bool(m)
 
 
+def _strip_comments(code):
+    """Remove comments from a line of python code."""
+    return re.sub(r'(?m)^ *#.*\n?', '', code)
+
+
 def _split_code_at_show(text):
-    """Split code at plt.show()."""
+    """Split code at plt.show() or plt.plot().
+
+    Includes logic to deal with edge cases like:
+
+    >>> import pyvista
+    >>> pyvista.Sphere().plot(color='blue',
+    ...                       cpos='xy')
+
+    >>> pyvista.Sphere().plot(color='red',
+    ...                       cpos='xy')
+
+    """
     parts = []
     is_doctest = _contains_doctest(text)
     part = []
+
+    within_plot = False
     for line in text.split("\n"):
-        if '.show(' in line or '.plot(' in line:
-            part.append(line)
-            parts.append("\n".join(part))
-            part = []
-        else:
-            part.append(line)
+        part.append(line)
+
+        # check if show(...) or plot(...) is within the line
+        line = _strip_comments(line)
+        if within_plot:  # allow for multi-line plot(...
+            if _strip_comments(line).endswith(')'):
+                parts.append("\n".join(part))
+                part = []
+                within_plot = False
+
+        elif '.show(' in line or '.plot(' in line:
+            if _strip_comments(line).endswith(')'):
+                parts.append("\n".join(part))
+                part = []
+            else:  # allow for multi-line plot(...
+                within_plot = True
+
     if "\n".join(part).strip():
         parts.append("\n".join(part))
     return is_doctest, parts
@@ -302,7 +331,6 @@ def render_figures(code, code_path, output_dir, output_base, context,
     ns = plot_context if context else {}
 
     for i, code_piece in enumerate(code_pieces):
-
         # generate the plot
         _run_code(doctest.script_from_examples(code_piece) if is_doctest
                   else code_piece,
@@ -310,9 +338,13 @@ def render_figures(code, code_path, output_dir, output_base, context,
 
         images = []
         figures = pyvista.plotting._ALL_PLOTTERS
-        for j, (address, plotter) in enumerate(figures.items()):            
-            image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
-            plotter.screenshot(image_file.filename)
+        for j, (address, plotter) in enumerate(figures.items()):
+            if hasattr(plotter, '_gif_filename'):
+                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
+                shutil.move(plotter._gif_filename, image_file.filename)
+            else:
+                image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
+                plotter.screenshot(image_file.filename)
             images.append(image_file)
 
         pyvista.close_all() # close and clear all plotters

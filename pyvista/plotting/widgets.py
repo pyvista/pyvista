@@ -4,7 +4,8 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import NORMALS, generate_plane, get_array, try_callback
+from pyvista.utilities import (NORMALS, generate_plane, get_array,
+                               try_callback, get_array_association)
 from .tools import parse_color
 
 
@@ -977,9 +978,11 @@ class WidgetHelper:
         name = kwargs.get('name', mesh.memory_address)
         if scalars is None:
             field, scalars = mesh.active_scalars_info
-        arr, field = get_array(mesh, scalars, preference=preference, info=True)
+        arr = get_array(mesh, scalars, preference=preference)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
+        field = get_array_association(mesh, scalars, preference=preference)
+
         rng = mesh.get_data_range(scalars)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         if title is None:
@@ -1049,7 +1052,7 @@ class WidgetHelper:
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         else:
-            _, field = get_array(mesh, scalars, preference=preference, info=True)
+            field = get_array_association(mesh, scalars, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
             raise TypeError(f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.')

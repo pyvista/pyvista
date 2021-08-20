@@ -21,7 +21,8 @@ build/
 dist/
 
 # MISC
-.mypy_cache/
+.mypy_cache
+
 
 # doc generated
 tests/tinypages/_build

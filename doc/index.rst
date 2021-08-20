@@ -80,7 +80,7 @@ Download the surface elevation map of Mount St. Helens and plot it.
     from pyvista import examples
     mesh = examples.download_st_helens()
     warped = mesh.warp_by_scalar('Elevation')
-    warped.plot(cmap='spectral')
+    warped.plot(cmap='Spectral')
 
 
 Finite Element Analysis
@@ -91,7 +91,7 @@ Plot the 'X' component of elastic stress of a 3D notch specimen.
 
    from pyvista import examples
    mesh = examples.download_notch_stress()
-   mesh.plot(scalars='Nodal Stress', component=0, cmap='Turbo',
+   mesh.plot(scalars='Nodal Stress', component=0, cmap='turbo',
              cpos='xy', show_scalar_bar=False)
 
 

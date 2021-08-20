@@ -1,4 +1,6 @@
 """
+.. _movie_example:
+
 Create a MP4 Movie
 ~~~~~~~~~~~~~~~~~~
 

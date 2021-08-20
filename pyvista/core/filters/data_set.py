@@ -7,7 +7,8 @@ import numpy as np
 import pyvista
 from pyvista import _vtk, FieldAssociation
 from pyvista.utilities import (
-    NORMALS, assert_empty_kwargs, generate_plane, get_array, wrap, abstract_class
+    NORMALS, assert_empty_kwargs, generate_plane, get_array, wrap,
+    abstract_class, get_array_association
 )
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
@@ -19,7 +20,7 @@ from pyvista.utilities.cells import numpy_to_idarr
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
-    def _clip_with_function(dataset, function, invert=True, value=0.0, return_clipped=False):
+    def _clip_with_function(dataset, function, invert=True, value=0.0, return_clipped=False, progress_bar=False):
         """Clip using an implicit function (internal helper)."""
         if isinstance(dataset, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
@@ -34,7 +35,7 @@ class DataSetFilters:
         alg.SetInsideOut(invert)  # invert the clip if needed
         if return_clipped:
             alg.GenerateClippedOutputOn()
-        alg.Update()  # Perform the Cut
+        _update_alg(alg, progress_bar, 'Clipping with Function')
 
         if return_clipped:
             a = _get_output(alg, oport=0)
@@ -44,7 +45,7 @@ class DataSetFilters:
             return _get_output(alg)
 
     def clip(dataset, normal='x', origin=None, invert=True, value=0.0, inplace=False,
-             return_clipped=False):
+             return_clipped=False, progress_bar=False):
         """Clip a dataset by a plane by specifying the origin and normal.
 
         If no parameters are given the clip will occur in the center
@@ -73,6 +74,9 @@ class DataSetFilters:
 
         return_clipped : bool, optional
             Return both unclipped and clipped parts of the dataset.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -112,7 +116,8 @@ class DataSetFilters:
         # run the clip
         result = DataSetFilters._clip_with_function(dataset, function,
                                                     invert=invert, value=value,
-                                                    return_clipped=return_clipped)
+                                                    return_clipped=return_clipped,
+                                                    progress_bar=progress_bar)
         if inplace:
             if return_clipped:
                 dataset.overwrite(result[0])
@@ -123,7 +128,7 @@ class DataSetFilters:
         else:
             return result
 
-    def clip_box(dataset, bounds=None, invert=True, factor=0.35):
+    def clip_box(dataset, bounds=None, invert=True, factor=0.35, progress_bar=False):
         """Clip a dataset by a bounding box defined by the bounds.
 
         If no bounds are given, a corner of the dataset bounds will be removed.
@@ -146,6 +151,9 @@ class DataSetFilters:
         factor : float, optional
             If bounds are not given this is the factor along each axis to
             extract the default box.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -198,7 +206,7 @@ class DataSetFilters:
             # invert the clip if needed
             port = 1
             alg.GenerateClippedOutputOn()
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Clipping a Dataset by a Bounding Box')
         return _get_output(alg, oport=port)
 
     def compute_implicit_distance(dataset, surface, inplace=False):
@@ -256,7 +264,7 @@ class DataSetFilters:
         result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
         return result
 
-    def clip_scalar(dataset, scalars=None, invert=True, value=0.0, inplace=False):
+    def clip_scalar(dataset, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False, both=False):
         """Clip a dataset by a scalar.
 
         Parameters
@@ -275,10 +283,16 @@ class DataSetFilters:
         inplace : bool, optional
             Update mesh in-place.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        both : bool, optional
+            If ``True``, also returns the complementary clipped mesh.
+
         Returns
         -------
-        pdata : pyvista.PolyData
-            Clipped dataset.
+        :class:`pyvista.PolyData` or tuple
+            Clipped dataset if ``both=False``.  If ``both=True`` then returns a tuple of both clipped datasets.
 
         Examples
         --------
@@ -290,14 +304,19 @@ class DataSetFilters:
         >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100)
         >>> clipped.plot()
 
-        Remove the part of the mesh with "sample_point_scalars" below
-        100.  Since these scalars are already active, there's no need
-        to specify ``scalars=``
+        Get clipped meshes corresponding to the portions of the mesh above and below 100.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
-        >>> clipped = dataset.clip_scalar(value=100, invert=False)
+        >>> _below, _above = dataset.clip_scalar(scalars="sample_point_scalars", value=100, both=True)
+
+        Remove the part of the mesh with "sample_point_scalars" below 100.
+        
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.load_hexbeam()
+        >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100, invert=False)
         >>> clipped.plot()
 
         """
@@ -308,24 +327,30 @@ class DataSetFilters:
 
         alg.SetInputDataObject(dataset)
         alg.SetValue(value)
-        if scalars is None:
-            field, scalars = dataset.active_scalars_info
-        _, field = get_array(dataset, scalars, preference='point', info=True)
+        if scalars is not None:
+            dataset.set_active_scalars(scalars)
 
-        # SetInputArrayToProcess(idx, port, connection, field, name)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInsideOut(invert)  # invert the clip if needed
-        alg.Update()  # Perform the Cut
-        result = _get_output(alg)
+        alg.SetGenerateClippedOutput(both)
+
+        _update_alg(alg, progress_bar, 'Clipping by a Scalar')
+        result0 = _get_output(alg)
 
         if inplace:
-            dataset.overwrite(result)
-            return dataset
+            dataset.overwrite(result0)
+            result0 = dataset
+
+        if both:
+            result1 = _get_output(alg, oport=1)
+            if isinstance(dataset, _vtk.vtkPolyData):
+                # For some reason vtkClipPolyData with SetGenerateClippedOutput on leaves unreferenced vertices
+                result0, result1 = (r.clean() for r in (result0, result1))
+            return result0, result1
         else:
-            return result
+            return result0
 
     def clip_surface(dataset, surface, invert=True, value=0.0,
-                     compute_distance=False):
+                     compute_distance=False, progress_bar=False):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
         This will return a :class:`pyvista.UnstructuredGrid` of the clipped
@@ -352,6 +377,9 @@ class DataSetFilters:
             dataset.  A new array called ``'implicit_distance'`` will
             be added to the output clipped mesh.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Examples
         --------
         Clip a cube with a sphere.
@@ -377,11 +405,12 @@ class DataSetFilters:
             dataset['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
         result = DataSetFilters._clip_with_function(dataset, function,
-                                                    invert=invert, value=value)
+                                                    invert=invert, value=value,
+                                                    progress_bar=progress_bar)
         return result
 
     def slice(dataset, normal='x', origin=None, generate_triangles=False,
-              contour=False):
+              contour=False, progress_bar=False):
         """Slice a dataset by a plane at the specified origin and normal vector orientation.
 
         If no origin is specified, the center of the input dataset will be used.
@@ -404,6 +433,9 @@ class DataSetFilters:
 
         contour : bool, optional
             If ``True``, apply a ``contour`` filter after slicing.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -433,14 +465,14 @@ class DataSetFilters:
         alg.SetCutFunction(plane)  # the cutter to use the plane we made
         if not generate_triangles:
             alg.GenerateTrianglesOff()
-        alg.Update()  # Perform the Cut
+        _update_alg(alg, progress_bar, 'Slicing')
         output = _get_output(alg)
         if contour:
             return output.contour()
         return output
 
     def slice_orthogonal(dataset, x=None, y=None, z=None,
-                         generate_triangles=False, contour=False):
+                         generate_triangles=False, contour=False, progress_bar=False):
         """Create three orthogonal slices through the dataset on the three cartesian planes.
 
         Yields a MutliBlock dataset of the three slices.
@@ -463,6 +495,9 @@ class DataSetFilters:
 
         contour : bool, optional
             If ``True``, apply a ``contour`` filter after slicing.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -490,14 +525,15 @@ class DataSetFilters:
                     generate_triangles=generate_triangles,
                     contour=contour)
             return output
-        output[0, 'YZ'] = dataset.slice(normal='x', origin=[x,y,z], generate_triangles=generate_triangles)
-        output[1, 'XZ'] = dataset.slice(normal='y', origin=[x,y,z], generate_triangles=generate_triangles)
-        output[2, 'XY'] = dataset.slice(normal='z', origin=[x,y,z], generate_triangles=generate_triangles)
+        output[0, 'YZ'] = dataset.slice(normal='x', origin=[x,y,z], generate_triangles=generate_triangles, progress_bar=progress_bar)
+        output[1, 'XZ'] = dataset.slice(normal='y', origin=[x,y,z], generate_triangles=generate_triangles, progress_bar=progress_bar)
+        output[2, 'XY'] = dataset.slice(normal='z', origin=[x,y,z], generate_triangles=generate_triangles, progress_bar=progress_bar)
         return output
 
     def slice_along_axis(dataset, n=5, axis='x', tolerance=None,
                          generate_triangles=False, contour=False,
-                         bounds=None, center=None):
+                         bounds=None, center=None, slice=False,
+                         progress_bar=False):
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -534,6 +570,9 @@ class DataSetFilters:
             A 3-length sequence specifying the position of the line
             along which slices are taken. Defaults to the center of
             the mesh.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -590,12 +629,12 @@ class DataSetFilters:
             center[ax_index] = rng[i]
             slc = DataSetFilters.slice(dataset, normal=ax_label, origin=center,
                                        generate_triangles=generate_triangles,
-                                       contour=contour)
+                                       contour=contour, progress_bar=progress_bar)
             output[i, f'slice{i}'] = slc
         return output
 
     def slice_along_line(dataset, line, generate_triangles=False,
-                         contour=False):
+                         contour=False, progress_bar=False):
         """Slice a dataset using a polyline/spline as the path.
 
         This also works for lines generated with :func:`pyvista.Line`.
@@ -612,6 +651,9 @@ class DataSetFilters:
 
         contour : bool, optional
             If ``True``, apply a ``contour`` filter after slicing.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -654,14 +696,14 @@ class DataSetFilters:
         alg.SetCutFunction(polyplane)  # the cutter to use the poly planes
         if not generate_triangles:
             alg.GenerateTrianglesOff()
-        alg.Update()  # Perform the Cut
+        _update_alg(alg, progress_bar, 'Slicing along Line')
         output = _get_output(alg)
         if contour:
             return output.contour()
         return output
 
     def threshold(dataset, value=None, scalars=None, invert=False, continuous=False,
-                  preference='cell', all_scalars=False):
+                  preference='cell', all_scalars=False, progress_bar=False):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
         This filter will apply a ``vtkThreshold`` filter to the input
@@ -704,6 +746,9 @@ class DataSetFilters:
             with a scalar value satisfying the threshold criterion
             will extract the cell.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Examples
         --------
         >>> import pyvista
@@ -711,7 +756,7 @@ class DataSetFilters:
         >>> volume = np.zeros([10, 10, 10])
         >>> volume[:3] = 1
         >>> vol = pyvista.wrap(volume)
-        >>> threshed = vol.threshold(0.1) 
+        >>> threshed = vol.threshold(0.1)
         >>> threshed  # doctest:+SKIP
         UnstructuredGrid (0x7f00f9983fa0)
           N Cells:	243
@@ -748,11 +793,12 @@ class DataSetFilters:
 
         # set the scalars to threshold on
         if scalars is None:
-            field, scalars = dataset.active_scalars_info
-        arr, field = get_array(dataset, scalars, preference=preference, info=True)
-
+            _, scalars = dataset.active_scalars_info
+        arr = get_array(dataset, scalars, preference=preference, err=False)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
+
+        field = get_array_association(dataset, scalars, preference=preference)
 
         # If using an inverted range, merge the result of two filters:
         if isinstance(value, (np.ndarray, collections.abc.Sequence)) and invert:
@@ -766,7 +812,7 @@ class DataSetFilters:
             appender = _vtk.vtkAppendFilter()
             appender.AddInputData(t1)
             appender.AddInputData(t2)
-            appender.Update()
+            _update_alg(appender, progress_bar, 'Thresholding')
             return _get_output(appender)
 
         # Run a standard threshold algorithm
@@ -793,11 +839,11 @@ class DataSetFilters:
             else:
                 alg.ThresholdByUpper(value)
         # Run the threshold
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Thresholding')
         return _get_output(alg)
 
     def threshold_percent(dataset, percent=0.50, scalars=None, invert=False,
-                          continuous=False, preference='cell'):
+                          continuous=False, preference='cell', progress_bar=False):
         """Threshold the dataset by a percentage of its range on the active scalars array.
 
         Parameters
@@ -826,6 +872,9 @@ class DataSetFilters:
             When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -879,15 +928,18 @@ class DataSetFilters:
         # Use the normal thresholding function on these values
         return DataSetFilters.threshold(dataset, value=value, scalars=scalars,
                                         invert=invert, continuous=continuous,
-                                        preference=preference)
+                                        preference=preference, progress_bar=progress_bar)
 
-    def outline(dataset, generate_faces=False):
+    def outline(dataset, generate_faces=False, progress_bar=False):
         """Produce an outline of the full extent for the input dataset.
 
         Parameters
         ----------
         generate_faces : bool, optional
             Generate solid faces for the box. This is off by default
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -905,10 +957,10 @@ class DataSetFilters:
         alg = _vtk.vtkOutlineFilter()
         alg.SetInputDataObject(dataset)
         alg.SetGenerateFaces(generate_faces)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Producing an outline')
         return wrap(alg.GetOutputDataObject(0))
 
-    def outline_corners(dataset, factor=0.2):
+    def outline_corners(dataset, factor=0.2, progress_bar=False):
         """Produce an outline of the corners for the input dataset.
 
         Parameters
@@ -916,6 +968,9 @@ class DataSetFilters:
         factor : float, optional
             Controls the relative size of the corners to the length of
             the corresponding bounds
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -931,10 +986,10 @@ class DataSetFilters:
         alg = _vtk.vtkOutlineCornerFilter()
         alg.SetInputDataObject(dataset)
         alg.SetCornerFactor(factor)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(dataset):
+    def extract_geometry(dataset, progress_bar=False):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -942,6 +997,11 @@ class DataSetFilters:
 
         .. note::
             This tends to be less efficient than :func:`extract_surface`.
+
+        Parameters
+        ----------
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -969,7 +1029,7 @@ class DataSetFilters:
         """
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(dataset)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
 
     def extract_all_edges(dataset, progress_bar=False):
@@ -1179,7 +1239,7 @@ class DataSetFilters:
         if scalars is None:
             field, scalars = dataset.active_scalars_info
         else:
-            _, field = get_array(dataset, scalars, preference=preference, info=True)
+            field = get_array_association(dataset, scalars, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
             raise TypeError(f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.')
@@ -1201,7 +1261,7 @@ class DataSetFilters:
 
     def texture_map_to_plane(dataset, origin=None, point_u=None, point_v=None,
                              inplace=False, name='Texture Coordinates',
-                             use_bounds=False):
+                             use_bounds=False, progress_bar=False):
         """Texture map this dataset to a user defined plane.
 
         This is often used to define a plane to texture map an image
@@ -1235,6 +1295,9 @@ class DataSetFilters:
             Use the bounds to set the mapping plane by default (bottom plane
             of the bounding box).
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         pyvista.DataSet
@@ -1260,7 +1323,7 @@ class DataSetFilters:
             alg.SetPoint1(point_u) # BOTTOM RIGHT CORNER
             alg.SetPoint2(point_v) # TOP LEFT CORNER
         alg.SetInputDataObject(dataset)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Texturing Map to Plane')
         output = _get_output(alg)
         if not inplace:
             return output
@@ -1274,7 +1337,8 @@ class DataSetFilters:
         return dataset
 
     def texture_map_to_sphere(dataset, center=None, prevent_seam=True,
-                              inplace=False, name='Texture Coordinates'):
+                              inplace=False, name='Texture Coordinates',
+                              progress_bar=False):
         """Texture map this dataset to a user defined sphere.
 
         This is often used to define a sphere to texture map an image
@@ -1305,6 +1369,9 @@ class DataSetFilters:
             The string name to give the new texture coordinates if applying
             the filter inplace.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Examples
         --------
         See :ref:`ref_texture_example`.
@@ -1318,7 +1385,7 @@ class DataSetFilters:
             alg.SetCenter(center)
         alg.SetPreventSeam(prevent_seam)
         alg.SetInputDataObject(dataset)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Texturing Map to Sphere')
         output = _get_output(alg)
         if not inplace:
             return output
@@ -1368,7 +1435,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Computing Cell Sizes')
         return _get_output(alg)
 
-    def cell_centers(dataset, vertex=True):
+    def cell_centers(dataset, vertex=True, progress_bar=False):
         """Generate points at the center of the cells in this dataset.
 
         These points can be used for placing glyphs or vectors.
@@ -1377,6 +1444,9 @@ class DataSetFilters:
         ----------
         vertex : bool
             Enable or disable the generation of vertex cells.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -1396,7 +1466,7 @@ class DataSetFilters:
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(dataset)
         alg.SetVertexCells(vertex)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
         return _get_output(alg)
 
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
@@ -1493,7 +1563,7 @@ class DataSetFilters:
         # Make glyphing geometry if necessary
         if geom is None:
             arrow = _vtk.vtkArrowSource()
-            arrow.Update()
+            _update_alg(arrow, progress_bar, 'Making Arrow')
             geom = arrow.GetOutput()
         # Check if a table of geometries was passed
         if isinstance(geom, (np.ndarray, collections.abc.Sequence)):
@@ -1563,7 +1633,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Computing Glyphs')
         return _get_output(alg)
 
-    def connectivity(dataset, largest=False):
+    def connectivity(dataset, largest=False, progress_bar=False):
         """Find and label connected bodies/volumes.
 
         This adds an ID array to the point and cell data to
@@ -1578,6 +1648,9 @@ class DataSetFilters:
         ----------
         largest : bool
             Extract the largest connected part of the mesh.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -1598,10 +1671,10 @@ class DataSetFilters:
         else:
             alg.SetExtractionModeToAllRegions()
         alg.SetColorRegions(True)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Finding and Labeling Connected Bodies/Volumes.')
         return _get_output(alg)
 
-    def extract_largest(dataset, inplace=False):
+    def extract_largest(dataset, inplace=False, progress_bar=False):
         """Extract largest connected set in mesh.
 
         Can be used to reduce residues obtained when generating an
@@ -1612,6 +1685,9 @@ class DataSetFilters:
         ----------
         inplace : bool, optional
             Updates mesh in-place.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -1632,14 +1708,14 @@ class DataSetFilters:
         See :ref:`volumetric_example` for more examples using this filter.
 
         """
-        mesh = DataSetFilters.connectivity(dataset, largest=True)
+        mesh = DataSetFilters.connectivity(dataset, largest=True, progress_bar=False)
         if inplace:
             dataset.overwrite(mesh)
             return dataset
         else:
             return mesh
 
-    def split_bodies(dataset, label=False):
+    def split_bodies(dataset, label=False, progress_bar=False):
         """Find, label, and split connected bodies/volumes.
 
         This splits different connected bodies into blocks in a
@@ -1650,6 +1726,9 @@ class DataSetFilters:
         label : bool, optional
             A flag on whether to keep the ID arrays given by the
             ``connectivity`` filter.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -1672,7 +1751,7 @@ class DataSetFilters:
         bodies = pyvista.MultiBlock()
         for vid in np.unique(classifier):
             # Now extract it:
-            b = labeled.threshold([vid-0.5, vid+0.5], scalars='RegionId')
+            b = labeled.threshold([vid-0.5, vid+0.5], scalars='RegionId', progress_bar=False)
             if not label:
                 # strange behavior:
                 # must use this method rather than deleting from the point_arrays
@@ -1684,7 +1763,7 @@ class DataSetFilters:
         return bodies
 
     def warp_by_scalar(dataset, scalars=None, factor=1.0, normal=None,
-                       inplace=False, **kwargs):
+                       inplace=False, progress_bar=False, **kwargs):
         """Warp the dataset's points by a point data scalars array's values.
 
         This modifies point coordinates by moving points along point
@@ -1707,6 +1786,9 @@ class DataSetFilters:
         inplace : bool, optional
             If ``True``, the points of the given dataset will be updated.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Examples
         --------
         First, plot the unwarped mesh.
@@ -1727,7 +1809,9 @@ class DataSetFilters:
         assert_empty_kwargs(**kwargs)
         if scalars is None:
             field, scalars = dataset.active_scalars_info
-        arr, field = get_array(dataset, scalars, preference='point', info=True)
+        arr = get_array(dataset, scalars, preference='point', err=True)
+
+        field = get_array_association(dataset, scalars, preference='point')
         if field != FieldAssociation.POINT:
             raise TypeError('Dataset can only by warped by a point data array.')
         # Run the algorithm
@@ -1738,7 +1822,7 @@ class DataSetFilters:
         if normal is not None:
             alg.SetNormal(normal)
             alg.SetUseNormal(True)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Warping by Scalar')
         output = _get_output(alg)
         if inplace:
             if isinstance(dataset, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
@@ -1748,7 +1832,8 @@ class DataSetFilters:
         else:
             return output
 
-    def warp_by_vector(dataset, vectors=None, factor=1.0, inplace=False):
+    def warp_by_vector(dataset, vectors=None, factor=1.0, inplace=False,
+                       progress_bar=False):
         """Warp the dataset's points by a point data vectors array's values.
 
         This modifies point coordinates by moving points along point
@@ -1768,6 +1853,9 @@ class DataSetFilters:
 
         inplace : bool, optional
             If ``True``, the function will update the mesh in-place.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -1796,20 +1884,21 @@ class DataSetFilters:
         """
         if vectors is None:
             field, vectors = dataset.active_vectors_info
-        arr, field = get_array(dataset, vectors, preference='point', info=True)
+        arr = get_array(dataset, vectors, preference='point')
+        field = get_array_association(dataset, vectors, preference='point')
         if arr is None:
-            raise TypeError('No active vectors')
+            raise ValueError('No vectors present to warp by vector.')
 
         # check that this is indeed a vector field
         if arr.ndim != 2 or arr.shape[1] != 3:
             raise ValueError(
-                'Dataset can only by warped by a 3D vector point data array.' + \
+                'Dataset can only by warped by a 3D vector point data array. '
                 'The values you provided do not satisfy this requirement')
         alg = _vtk.vtkWarpVector()
         alg.SetInputDataObject(dataset)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, vectors)
         alg.SetScaleFactor(factor)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Warping by Vector')
         warped_mesh = _get_output(alg)
         if inplace:
             dataset.overwrite(warped_mesh)
@@ -1817,7 +1906,7 @@ class DataSetFilters:
         else:
             return warped_mesh
 
-    def cell_data_to_point_data(dataset, pass_cell_data=False):
+    def cell_data_to_point_data(dataset, pass_cell_data=False, progress_bar=False):
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -1834,6 +1923,9 @@ class DataSetFilters:
         ----------
         pass_cell_data : bool
             If enabled, pass the input cell data through to the output
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -1858,13 +1950,13 @@ class DataSetFilters:
         alg = _vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(dataset)
         alg.SetPassCellData(pass_cell_data)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Transforming cell data into point data.')
         active_scalars = None
         if not isinstance(dataset, pyvista.MultiBlock):
             active_scalars = dataset.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
-    def ctp(dataset, pass_cell_data=False):
+    def ctp(dataset, pass_cell_data=False, progress_bar=False):
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -1875,9 +1967,9 @@ class DataSetFilters:
         :func:`pyvista.DataSetFilters.cell_data_to_point_data`.
 
         """
-        return DataSetFilters.cell_data_to_point_data(dataset, pass_cell_data=pass_cell_data)
+        return DataSetFilters.cell_data_to_point_data(dataset, pass_cell_data=pass_cell_data, progress_bar=progress_bar)
 
-    def point_data_to_cell_data(dataset, pass_point_data=False):
+    def point_data_to_cell_data(dataset, pass_point_data=False, progress_bar=False):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified within cells.
@@ -1889,6 +1981,9 @@ class DataSetFilters:
         ----------
         pass_point_data : bool
             If enabled, pass the input point data through to the output
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -1917,13 +2012,13 @@ class DataSetFilters:
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(dataset)
         alg.SetPassPointData(pass_point_data)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Transforming point data into cell data')
         active_scalars = None
         if not isinstance(dataset, pyvista.MultiBlock):
             active_scalars = dataset.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
-    def ptc(dataset, pass_point_data=False):
+    def ptc(dataset, pass_point_data=False, progress_bar=False):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified
@@ -1934,9 +2029,9 @@ class DataSetFilters:
         :func:`pyvista.DataSetFilters.point_data_to_cell_data`.
 
         """
-        return DataSetFilters.point_data_to_cell_data(dataset, pass_point_data=pass_point_data)
+        return DataSetFilters.point_data_to_cell_data(dataset, pass_point_data=pass_point_data, progress_bar=progress_bar)
 
-    def triangulate(dataset, inplace=False):
+    def triangulate(dataset, inplace=False, progress_bar=False):
         """Return an all triangle mesh.
 
         More complex polygons will be broken down into triangles.
@@ -1945,6 +2040,9 @@ class DataSetFilters:
         ----------
         inplace : bool, optional
             Updates mesh in-place.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -1968,7 +2066,7 @@ class DataSetFilters:
         """
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(dataset)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Converting to triangle mesh')
 
         mesh = _get_output(alg)
         if inplace:
@@ -2028,7 +2126,8 @@ class DataSetFilters:
         return _get_output(alg)
 
     def select_enclosed_points(dataset, surface, tolerance=0.001,
-                               inside_out=False, check_surface=True):
+                               inside_out=False, check_surface=True,
+                               progress_bar=False):
         """Mark points as to whether they are inside a closed surface.
 
         This evaluates all the input points to determine whether they are in an
@@ -2068,6 +2167,9 @@ class DataSetFilters:
             manifold. If the surface is not closed and manifold, a runtime
             error is raised.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         pyvista.PolyData
@@ -2102,7 +2204,7 @@ class DataSetFilters:
         alg.SetSurfaceData(surface)
         alg.SetTolerance(tolerance)
         alg.SetInsideOut(inside_out)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Selecting Enclosed Points')
         result = _get_output(alg)
         out = dataset.copy()
         bools = result['SelectedPoints'].astype(np.uint8)
@@ -2112,7 +2214,8 @@ class DataSetFilters:
         return out
 
     def probe(dataset, points, tolerance=None, pass_cell_arrays=True,
-              pass_point_arrays=True, categorical=False):
+              pass_point_arrays=True, categorical=False, progress_bar=False,
+              locator=None):
         """Sample data values at specified point locations.
 
         This uses :class:`vtk.vtkProbeFilter`.
@@ -2142,6 +2245,12 @@ class DataSetFilters:
             categorical. If the data is categorical, then the resultant data
             will be determined by a nearest neighbor interpolation scheme.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        locator: vtkAbstractCellLocator, optional
+            Prototype cell locator to perform the FindCell() operation.
+
         Returns
         -------
         pyvista.DataSet
@@ -2168,14 +2277,19 @@ class DataSetFilters:
         alg.SetPassCellArrays(pass_cell_arrays)
         alg.SetPassPointArrays(pass_point_arrays)
         alg.SetCategoricalData(categorical)
+
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
-        alg.Update()  # Perform the resampling
+
+        if locator:
+            alg.SetCellLocatorPrototype(locator)
+
+        _update_alg(alg, progress_bar, 'Sampling Data Values at Specified Point Locations')
         return _get_output(alg)
 
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
-               pass_point_arrays=True, categorical=False):
+               pass_point_arrays=True, categorical=False, progress_bar=False):
         """Resample array data from a passed mesh onto this mesh.
 
         This uses :class:`vtk.vtkResampleWithDataSet`.
@@ -2204,6 +2318,9 @@ class DataSetFilters:
             Control whether the source point data is to be treated as
             categorical. If the data is categorical, then the resultant data
             will be determined by a nearest neighbor interpolation scheme.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -2235,13 +2352,13 @@ class DataSetFilters:
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
-        alg.Update() # Perform the resampling
+        _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
     def interpolate(dataset, target, sharpness=2, radius=1.0,
                     strategy='null_value', null_value=0.0, n_points=None,
                     pass_cell_arrays=True, pass_point_arrays=True,
-                    progress_bar=False, ):
+                    progress_bar=False):
         """Interpolate values onto this mesh from a given dataset.
 
         The input dataset is typically a point cloud.
@@ -2362,7 +2479,7 @@ class DataSetFilters:
                     source_radius=None, n_points=100,
                     start_position=None,
                     return_source=False, pointa=None, pointb=None,
-                    **kwargs):
+                    progress_bar=False, **kwargs):
         """Integrate a vector field to generate streamlines.
 
         The default behavior uses a sphere as the source - set its
@@ -2406,6 +2523,9 @@ class DataSetFilters:
         pointa, pointb : tuple(float), optional
             The coordinates of a start and end point for a line source. This
             will override the sphere and start_position point source.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -2452,7 +2572,7 @@ class DataSetFilters:
             source.SetNumberOfPoints(n_points)
         source.Update()
         input_source = pyvista.wrap(source.GetOutput())
-        output = dataset.streamlines_from_source(input_source, vectors, **kwargs)
+        output = dataset.streamlines_from_source(input_source, vectors, progress_bar=progress_bar, **kwargs)
         if return_source:
             return output, input_source
         return output
@@ -2463,7 +2583,7 @@ class DataSetFilters:
                     step_unit='cl', min_step_length=0.01, max_step_length=1.0,
                     max_steps=2000, terminal_speed=1e-12, max_error=1e-6,
                     max_time=None, compute_vorticity=True, rotation_scale=1.0,
-                    interpolator_type='point'):
+                    interpolator_type='point', progress_bar=False):
         """Generate streamlines of vectors from the points of a source mesh.
 
         The integration is performed using a specified integrator, by default
@@ -2541,6 +2661,9 @@ class DataSetFilters:
         rotation_scale : float, optional
             This can be used to scale the rate with which the streamribbons
             twist. The default is 1.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -2620,15 +2743,16 @@ class DataSetFilters:
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
         # run the algorithm
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Generating Streamlines')
         return _get_output(alg)
 
     def streamlines_evenly_spaced_2D(dataset, vectors=None, start_position=None,
                                     integrator_type=2, step_length=0.5, step_unit='cl',
                                     max_steps=2000, terminal_speed=1e-12, interpolator_type='point',
-                                    separating_distance=10, separating_distance_ratio=None,
-                                    closed_loop_maximum_distance=0.5, loop_angle=20,  
-                                    minimum_number_of_loop_points=4, compute_vorticity=True):
+                                    separating_distance=10, separating_distance_ratio=0.5,
+                                    closed_loop_maximum_distance=0.5, loop_angle=20,
+                                    minimum_number_of_loop_points=4, compute_vorticity=True,
+                                    progress_bar=False):
         """Generate evenly spaced streamlines on a 2D dataset.
 
         This filter only supports datasets that lie on the xy plane, i.e. ``z=0``.
@@ -2653,7 +2777,7 @@ class DataSetFilters:
         step_length : float, optional
             Constant Step size used for line integration, expressed in length
             units or cell length units (see ``step_unit`` parameter).
-            
+
         step_unit : {'cl', 'l'}, optional
             Uniform integration step unit. The valid unit is now limited to
             only LENGTH_UNIT (``'l'``) and CELL_LENGTH_UNIT (``'cl'``).
@@ -2679,10 +2803,9 @@ class DataSetFilters:
         separating_distance_ratio : float, optional
             Streamline integration is stopped if streamlines are closer than
             ``SeparatingDistance*SeparatingDistanceRatio`` to other streamlines.
-            The default behavior is set by vtk.
 
         closed_loop_maximum_distance : float, optional
-            The distance between points on a streamline to determine a 
+            The distance between points on a streamline to determine a
             closed loop.
 
         loop_angle : float, optional
@@ -2696,16 +2819,24 @@ class DataSetFilters:
             Vorticity computation at streamline points. Necessary for generating
             proper stream-ribbons using the ``vtkRibbonFilter``.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
-        streamlines : pyvista.PolyData
+        :class:`pyvista.PolyData`
             This produces polylines as the output, with each cell
             (i.e., polyline) representing a streamline. The attribute values
             associated with each streamline are stored in the cell data, whereas
             those associated with streamline-points are stored in the point data.
 
-        Example
-        -------
+        Warnings
+        --------
+        This filter is unstable for ``vtk<9.0``.
+        See `pyvista issue 1508 <https://github.com/pyvista/pyvista/issues/1508>`_.
+
+        Examples
+        --------
         Plot evenly spaced streamlines for cylinder in a crossflow.
         This dataset is a multiblock dataset, and the fluid velocity is in the
         first block.
@@ -2775,10 +2906,10 @@ class DataSetFilters:
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
         # Run the algorithm
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Generating Evenly Spaced Streamlines on a 2D Dataset')
         return _get_output(alg)
 
-    def decimate_boundary(dataset, target_reduction=0.5):
+    def decimate_boundary(dataset, target_reduction=0.5, progress_bar=False):
         """Return a decimated version of a triangulation of the boundary.
 
         Only the outer surface of the input dataset will be considered.
@@ -2791,6 +2922,9 @@ class DataSetFilters:
             the data set to 10% of its original size and will remove 90%
             of the input triangles.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         pyvista.PolyData
@@ -2801,9 +2935,9 @@ class DataSetFilters:
         See the :ref:`linked_views_example` example.
 
         """
-        return dataset.extract_geometry().triangulate().decimate(target_reduction)
+        return dataset.extract_geometry(progress_bar=progress_bar).triangulate().decimate(target_reduction)
 
-    def sample_over_line(dataset, pointa, pointb, resolution=None, tolerance=None):
+    def sample_over_line(dataset, pointa, pointb, resolution=None, tolerance=None, progress_bar=False):
         """Sample a dataset onto a line.
 
         Parameters
@@ -2821,6 +2955,9 @@ class DataSetFilters:
         tolerance: float, optional
             Tolerance used to compute whether a point in the source is in a
             cell of the input.  If not given, tolerance is automatically generated.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -2854,12 +2991,12 @@ class DataSetFilters:
             resolution = int(dataset.n_cells)
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-        sampled_line = line.sample(dataset, tolerance=tolerance)
+        sampled_line = line.sample(dataset, tolerance=tolerance, progress_bar=progress_bar)
         return sampled_line
 
     def plot_over_line(dataset, pointa, pointb, resolution=None, scalars=None,
                        title=None, ylabel=None, figsize=None, figure=True,
-                       show=True, tolerance=None, fname=None):
+                       show=True, tolerance=None, fname=None, progress_bar=False):
         """Sample a dataset along a high resolution line and plot.
 
         Plot the variables of interest in 2D using matplotlib where the
@@ -2904,6 +3041,9 @@ class DataSetFilters:
         fname : str, optional
             Save the figure this file name when set.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Examples
         --------
         See the :ref:`plot_over_line_example` example.
@@ -2916,7 +3056,7 @@ class DataSetFilters:
             raise ImportError('matplotlib must be available to use this filter.')
 
         # Sample on line
-        sampled = DataSetFilters.sample_over_line(dataset, pointa, pointb, resolution, tolerance)
+        sampled = DataSetFilters.sample_over_line(dataset, pointa, pointb, resolution, tolerance, progress_bar=progress_bar)
 
         # Get variable of interest
         if scalars is None:
@@ -2949,7 +3089,8 @@ class DataSetFilters:
             return plt.show()
 
     def sample_over_circular_arc(dataset, pointa, pointb, center,
-                                 resolution=None, tolerance=None):
+                                 resolution=None, tolerance=None,
+                                 progress_bar=False):
         """Sample a dataset over a circular arc.
 
         Parameters
@@ -2972,6 +3113,9 @@ class DataSetFilters:
             Tolerance used to compute whether a point in the source is
             in a cell of the input.  If not given, tolerance is
             automatically generated.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -3001,11 +3145,12 @@ class DataSetFilters:
             resolution = int(dataset.n_cells)
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
-        sampled_circular_arc = circular_arc.sample(dataset, tolerance=tolerance)
+        sampled_circular_arc = circular_arc.sample(dataset, tolerance=tolerance, progress_bar=progress_bar)
         return sampled_circular_arc
 
     def sample_over_circular_arc_normal(dataset, center, resolution=None, normal=None,
-                                        polar=None, angle=None, tolerance=None):
+                                        polar=None, angle=None, tolerance=None,
+                                        progress_bar=False):
         """Sample a dataset over a circular arc defined by a normal and polar vector and plot it.
 
         The number of segments composing the polyline is controlled by
@@ -3038,6 +3183,9 @@ class DataSetFilters:
             in a cell of the input.  If not given, tolerance is
             automatically generated.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Examples
         --------
         Sample a dataset over a circular arc.
@@ -3066,12 +3214,13 @@ class DataSetFilters:
                                                      normal=normal,
                                                      polar=polar,
                                                      angle=angle)
-        return circular_arc.sample(dataset, tolerance=tolerance)
+        return circular_arc.sample(dataset, tolerance=tolerance, progress_bar=progress_bar)
 
     def plot_over_circular_arc(dataset, pointa, pointb, center,
                                resolution=None, scalars=None,
                                title=None, ylabel=None, figsize=None,
-                               figure=True, show=True, tolerance=None, fname=None):
+                               figure=True, show=True, tolerance=None, fname=None,
+                               progress_bar=False):
         """Sample a dataset along a circular arc and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -3121,6 +3270,9 @@ class DataSetFilters:
         fname : str, optional
             Save the figure this file name when set.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Examples
         --------
         Sample a dataset along a high resolution circular arc and plot.
@@ -3145,7 +3297,8 @@ class DataSetFilters:
                                                           pointb,
                                                           center,
                                                           resolution,
-                                                          tolerance)
+                                                          tolerance,
+                                                          progress_bar=progress_bar)
 
         # Get variable of interest
         if scalars is None:
@@ -3180,7 +3333,8 @@ class DataSetFilters:
     def plot_over_circular_arc_normal(dataset, center, resolution=None, normal=None,
                                       polar=None, angle=None, scalars=None,
                                       title=None, ylabel=None, figsize=None,
-                                      figure=True, show=True, tolerance=None, fname=None):
+                                      figure=True, show=True, tolerance=None, fname=None,
+                                      progress_bar=False):
         """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -3236,6 +3390,9 @@ class DataSetFilters:
         fname : str, optional
             Save the figure this file name when set.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Examples
         --------
         Sample a dataset along a high resolution circular arc and plot.
@@ -3262,7 +3419,8 @@ class DataSetFilters:
                                                                  normal,
                                                                  polar,
                                                                  angle,
-                                                                 tolerance)
+                                                                 tolerance,
+                                                                 progress_bar=progress_bar)
 
         # Get variable of interest
         if scalars is None:
@@ -3294,7 +3452,7 @@ class DataSetFilters:
         if show:  # pragma: no cover
             return plt.show()
 
-    def extract_cells(dataset, ind):
+    def extract_cells(dataset, ind, progress_bar=False):
         """Return a subset of the grid.
 
         Parameters
@@ -3306,6 +3464,9 @@ class DataSetFilters:
         -------
         subgrid : pyvista.UnstructuredGrid
             Subselected grid
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -3334,7 +3495,7 @@ class DataSetFilters:
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, dataset)
         extract_sel.SetInputData(1, selection)
-        extract_sel.Update()
+        _update_alg(extract_sel, progress_bar, 'Extracting Cells')
         subgrid = _get_output(extract_sel)
 
         # extracts only in float32
@@ -3345,7 +3506,7 @@ class DataSetFilters:
 
         return subgrid
 
-    def extract_points(dataset, ind, adjacent_cells=True, include_cells=True):
+    def extract_points(dataset, ind, adjacent_cells=True, include_cells=True, progress_bar=False):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
 
         Parameters
@@ -3360,6 +3521,8 @@ class DataSetFilters:
         include_cells : bool, optional
             Specifies if the cells shall be returned or not. The default
             is ``True``.
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -3401,11 +3564,11 @@ class DataSetFilters:
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, dataset)
         extract_sel.SetInputData(1, selection)
-        extract_sel.Update()
+        _update_alg(extract_sel, progress_bar, 'Extracting Points')
         return _get_output(extract_sel)
 
     def extract_surface(dataset, pass_pointid=True, pass_cellid=True,
-                        nonlinear_subdivision=1):
+                        nonlinear_subdivision=1, progress_bar=False):
         """Extract surface mesh of the grid.
 
         Parameters
@@ -3432,6 +3595,9 @@ class DataSetFilters:
             value to greater than 1 may cause some point data to not
             be passed even if no nonlinear faces exist. This option
             has no effect if the input is not an unstructured grid.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -3465,11 +3631,16 @@ class DataSetFilters:
         # available in 9.0.2
         # surf_filter.SetDelegation(delegation)
 
-        surf_filter.Update()
+        _update_alg(surf_filter, progress_bar, 'Extracting Surface')
         return _get_output(surf_filter)
 
-    def surface_indices(dataset):
+    def surface_indices(dataset, progress_bar=False):
         """Return the surface indices of a grid.
+
+        Parameters
+        ----------
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -3487,12 +3658,12 @@ class DataSetFilters:
         pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4])
 
         """
-        surf = DataSetFilters.extract_surface(dataset, pass_cellid=True)
+        surf = DataSetFilters.extract_surface(dataset, pass_cellid=True, progress_bar=progress_bar)
         return surf.point_arrays['vtkOriginalPointIds']
 
     def extract_feature_edges(dataset, feature_angle=30, boundary_edges=True,
                               non_manifold_edges=True, feature_edges=True,
-                              manifold_edges=True):
+                              manifold_edges=True, progress_bar=False):
         """Extract edges from the surface of the mesh.
 
         If the given mesh is not PolyData, the external surface of the given
@@ -3526,6 +3697,9 @@ class DataSetFilters:
         manifold_edges : bool, optional
             Extract manifold edges. Defaults to ``True``.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         Returns
         -------
         edges : pyvista.PolyData
@@ -3555,11 +3729,11 @@ class DataSetFilters:
         featureEdges.SetBoundaryEdges(boundary_edges)
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
-        featureEdges.Update()
+        _update_alg(featureEdges, progress_bar, 'Extracting Feature Edges')
         return _get_output(featureEdges)
 
     def merge(dataset, grid=None, merge_points=True, inplace=False,
-              main_has_priority=True):
+              main_has_priority=True, progress_bar=False):
         """Join one or many other grids to this grid.
 
         Grid is updated in-place by default.
@@ -3588,6 +3762,9 @@ class DataSetFilters:
             When this parameter is true and merge_points is true,
             the arrays of the merging grids will be overwritten
             by the original main mesh.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -3628,7 +3805,7 @@ class DataSetFilters:
         if main_has_priority:
             append_filter.AddInputData(dataset)
 
-        append_filter.Update()
+        _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
         if inplace:
             if type(dataset) == type(merged):
@@ -3643,7 +3820,7 @@ class DataSetFilters:
         """Combine this mesh with another into an :class:`pyvista.UnstructuredGrid`."""
         return DataSetFilters.merge(dataset, grid)
 
-    def compute_cell_quality(dataset, quality_measure='scaled_jacobian', null_value=-1.0):
+    def compute_cell_quality(dataset, quality_measure='scaled_jacobian', null_value=-1.0, progress_bar=False):
         """Compute a function of (geometric) quality for each cell of a mesh.
 
         The per-cell quality is added to the mesh's cell data, in an
@@ -3696,6 +3873,9 @@ class DataSetFilters:
             the particular geometry of cell in question, e.g. a volume query
             for a triangle. Undefined quality will always be undefined.
             The default value is -1.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -3755,12 +3935,12 @@ class DataSetFilters:
             raise KeyError(f'Cell quality type ({quality_measure}) not available. Options are: {options}')
         alg.SetInputData(dataset)
         alg.SetUndefinedQuality(null_value)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Computing Cell Quality')
         return _get_output(alg)
 
     def compute_derivative(dataset, scalars=None, gradient=True,
                            divergence=None, vorticity=None, qcriterion=None,
-                           faster=False, preference='point'):
+                           faster=False, preference='point', progress_bar=False):
         """Compute derivative-based quantities of point/cell scalar field.
 
         Utilize ``vtkGradientFilter`` to compute derivative-based quantities,
@@ -3803,6 +3983,9 @@ class DataSetFilters:
 
         preference: str, optional
             Data type preference. Either ``'point'`` or ``'cell'``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -3862,11 +4045,11 @@ class DataSetFilters:
         alg.SetQCriterionArrayName(qcriterion)
 
         alg.SetFasterApproximation(faster)
-        _, field = dataset.get_array(scalars, preference=preference, info=True)
+        field = get_array_association(dataset, scalars, preference=preference)
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInputData(dataset)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Computing Derivative')
         return _get_output(alg)
 
     def shrink(dataset, shrink_factor=1.0, progress_bar=False):
@@ -3911,7 +4094,7 @@ class DataSetFilters:
 
     def transform(dataset: _vtk.vtkDataSet,
                   trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
-                  transform_all_input_vectors=False, inplace=True):
+                  transform_all_input_vectors=False, inplace=True, progress_bar=False):
         """Transform this mesh with a 4x4 transform.
 
         Parameters
@@ -3927,6 +4110,9 @@ class DataSetFilters:
 
         inplace : bool, optional
             When ``True``, modifies the dataset inplace.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -3991,7 +4177,7 @@ class DataSetFilters:
                 raise VTKVersionError('The installed version of VTK does not support '
                                       'transformation of all input vectors.')
 
-        f.Update()
+        _update_alg(f, progress_bar, 'Transforming')
         res = pyvista.core.filters._get_output(f)
 
         # make the previously active scalars active again
@@ -4009,7 +4195,7 @@ class DataSetFilters:
             return res
 
     def reflect(dataset, normal, point=None, inplace=False,
-                transform_all_input_vectors=False):
+                transform_all_input_vectors=False, progress_bar=False):
         """Reflect a dataset across a plane.
 
         Parameters
@@ -4018,7 +4204,7 @@ class DataSetFilters:
             Normal direction for reflection.
 
         point : tuple(float), optional
-            Point which, along with ``normal``, defines the reflection 
+            Point which, along with ``normal``, defines the reflection
             plane. If not specified, this is the origin.
 
         inplace : bool, optional
@@ -4027,6 +4213,9 @@ class DataSetFilters:
         transform_all_input_vectors: bool, optional
             When ``True``, all input vectors are transformed. Otherwise,
             only the points, normals and active vectors are transformed.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         Examples
         --------
@@ -4040,4 +4229,4 @@ class DataSetFilters:
         """
         t = transformations.reflection(normal, point=point)
         return dataset.transform(t, transform_all_input_vectors=transform_all_input_vectors,
-                                 inplace=inplace)
+                                 inplace=inplace, progress_bar=progress_bar)

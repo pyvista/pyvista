@@ -302,10 +302,10 @@ def test_surface_indices(hexbeam):
 
 
 def test_extract_feature_edges(hexbeam):
-    edges = hexbeam.extract_feature_edges(90)
+    edges = hexbeam.extract_feature_edges(90, progress_bar=True)
     assert edges.n_points
 
-    edges = hexbeam.extract_feature_edges(180)
+    edges = hexbeam.extract_feature_edges(180, progress_bar=True)
     assert not edges.n_points
 
 
@@ -474,7 +474,7 @@ def test_init_structured(struct_grid):
 
 def test_slice_structured(struct_grid):
     sliced = struct_grid[1, :, 1:3]  # three different kinds of slices
-    assert sliced.dimensions == [1, struct_grid.dimensions[1], 2]
+    assert sliced.dimensions == (1, struct_grid.dimensions[1], 2)
 
     # check that points are in the right place
     assert struct_grid.x[1, :, 1:3].ravel() == pytest.approx(sliced.x.ravel())

@@ -61,6 +61,7 @@ if VTK9:
                                           vtkOpenFOAMReader,
                                           vtkSTLWriter,
                                           vtkBYUReader,
+                                          vtkGLTFReader,
                                           vtkOBJReader)
     from vtkmodules.vtkIOImage import (vtkBMPReader,
                                        vtkDEMReader,
@@ -71,6 +72,7 @@ if VTK9:
                                        vtkPNGReader,
                                        vtkPNMReader,
                                        vtkSLCReader,
+                                       vtkHDRReader,
                                        vtkTIFFReader)
     from vtkmodules.vtkIOXML import (vtkXMLReader,
                                      vtkXMLWriter,
@@ -119,6 +121,7 @@ if VTK9:
                                                vtkDataSet,
                                                vtkPointLocator,
                                                vtkCellLocator,
+                                               vtkStaticCellLocator,
                                                vtkMultiBlockDataSet,
                                                vtkCompositeDataSet,
                                                vtkFieldData,
@@ -282,6 +285,7 @@ if VTK9:
                                                vtkButterflySubdivisionFilter,
                                                vtkLoopSubdivisionFilter,
                                                vtkAdaptiveSubdivisionFilter,
+                                               vtkCollisionDetectionFilter,
                                                vtkSelectEnclosedPoints)
     from vtkmodules.vtkFiltersSources import (vtkOutlineCornerFilter,
                                               vtkParametricFunctionSource,
@@ -415,4 +419,23 @@ else:  # pragma: no cover
     class vtkExplicitStructuredGrid():  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
-        pass
+        def __init__(self):  # pragma: no cover
+            """Raise version error on init."""
+            from pyvista.core.errors import VTKVersionError
+            raise VTKVersionError('vtkHDRReader requires VTK v9 or newer')
+
+    class vtkHDRReader():   # type: ignore
+        """Empty placeholder for VTK9 compatibility."""
+
+        def __init__(self):  # pragma: no cover
+            """Raise version error on init."""
+            from pyvista.core.errors import VTKVersionError
+            raise VTKVersionError('vtkHDRReader requires VTK v9 or newer')
+
+    class vtkGLTFReader():   # type: ignore
+        """Empty placeholder for VTK9 compatibility."""
+
+        def __init__(self):  # pragma: no cover
+            """Raise version error on init."""
+            from pyvista.core.errors import VTKVersionError
+            raise VTKVersionError('vtkGLTFReader requires VTK v9 or newer')
