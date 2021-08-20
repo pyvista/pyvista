@@ -2093,7 +2093,7 @@ class PolyDataFilters(DataSetFilters):
 
         f = poly_data.faces.reshape((-1, 4))
         f[:, 1:] = f[:, 1:][:, ::-1]
-        poly_data.faces = f
+        poly_data.faces[:] = f.ravel()
 
     def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     inplace=False, edge_source=None, progress_bar=False):
