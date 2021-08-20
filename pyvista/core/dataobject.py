@@ -191,7 +191,7 @@ class DataObject:
         deep : bool, optional
             When ``True`` makes a full copy of the object.  When
             ``False``, performs a shallow copy where the points, cell,
-            and data arrays are pointers to the original object.
+            and data arrays are references to the original object.
 
         Returns
         -------
@@ -212,7 +212,7 @@ class DataObject:
         thistype = type(self)
         newobject = thistype()
 
-        # this must be called to ensure scalars active are "active"
+        # this must be called to ensure active scalars are "active"
         # before performing a deep copy
         self.active_scalars_info
 
@@ -224,7 +224,7 @@ class DataObject:
         return newobject
 
     def __eq__(self, other):
-        """Test equalvency between data objects."""
+        """Test equivalency between data objects."""
         if not isinstance(self, type(other)):
             return False
 
@@ -324,7 +324,7 @@ class DataObject:
 
         Examples
         --------
-        Add a field array to a PolyData dataset and then return it.
+        Add a field array to a PolyData dataset and then remove it.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
@@ -351,7 +351,7 @@ class DataObject:
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.memory_address  # doctest:+SKIP
+        >>> mesh.memory_address
         'Addr=...'
 
         """
