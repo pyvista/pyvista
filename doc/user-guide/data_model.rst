@@ -425,6 +425,8 @@ accessing the `attr:`cell_arrays <pyvista.DataSet.cell_arrays>`
 attribute of our mesh.
 
 
+.. _pyvista_data_model_cell_arrays:
+
 Cell Arrays
 ~~~~~~~~~~~
 The easiest way to add scalar data to a :class:`DataSet
@@ -475,19 +477,102 @@ assigned.
    >>> pl.camera_position = 'xy'
    >>> pl.show()
 
-We can continue to assign cell data to our :class:`DataSet <pyvista.core.dataset.DataSet>` using the ``[]`` operator, but if you do no wish the new array to become the active array, you can add it using
+We can continue to assign cell data to our :class:`DataSet
+<pyvista.core.dataset.DataSet>` using the ``[]`` operator, but if you
+do no wish the new array to become the active array, you can add it
+using ``add_array``...
+
+..
+   Show how we can add multiple cell arrays and set which ones are the
+   active "scalars".
+
+   Pending #1593
 
 
 Point Arrays
 ~~~~~~~~~~~~
-Data can be ass
+Data can be associated to points in the same manner as in
+:ref:`pyvista_data_model_cell_arrays`.  The :attr:`point_arrays
+<pyvista.DataSet.point_arrays>` attribute allows you to associate point
+data to the points of a :class:`DataSet
+<pyvista.core.dataset.DataSet>`.  Here, we will associate a simple
+list to the points using the ``[]`` operator.
 
+.. jupyter-execute::
 
+   >>> simple_list = range(ugrid.n_points)
+   >>> ugrid.point_arrays['my-point-data'] = simple_list
+   >>> ugrid.point_arrays['my-point-data']
+
+Again, these values become the active scalars in our point arrays by
+default by using the ``[]`` operator:
+
+.. jupyter-execute::
+
+   >>> simple_list = range(ugrid.n_points)
+   >>> ugrid.point_arrays
+
+Let's plot the point data.  Note how this varies from the cell arrays
+plot; each individual point is assigned a scalar value which is
+interpolated across a cell to create a smooth color map between the
+lowest value at ``Point 0`` to the highest value at ``Point 9``.
+
+.. pyvista-plot::
+   :context:
+   :include-source: False
+
+   We need this here since we have to update the pyvista-plot context.
+
+   >>> ugrid.point_arrays['my-data'] = range(ugrid.n_points)
+
+.. pyvista-plot::
+   :context:
+
+   >>> pl = pyvista.Plotter()
+   >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
+   >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]
+   >>> pl.add_point_labels(ugrid.points, point_labels,
+   ...                     font_size=25, point_size=20)
+   >>> pl.camera_position = 'xy'
+   >>> pl.show()
+
+As in :ref:`pyvista_data_model_cell_arrays`, we can assign multiple
+arrays to :attr:`point_arrays <pyvista.DataSet.point_arrays>` using the ``add_array`` method.
+
+..
+   Show how we can add multiple cell arrays and set which ones are the
+   active "vectors".
+
+   Pending #1593
 
 
 Field Arrays
 ~~~~~~~~~~~~
+Field arrays are different from :attr:`point_arrays
+<pyvista.DataSet.point_arrays>` and :attr:`cell_arrays
+<pyvista.DataSet.cell_arrays>` in that they are not associated with
+the geometry of the :class:`DataSet <pyvista.core.dataset.DataSet>`.
+This means that while it's not possible to designate the field data as
+active scalars or vectors, you can use it to "attach" arrays of any
+row and columns.  You can even add string arrays in the field data:
 
+.. jupyter-execute::
+
+   >>> ugrid.field_arrays['my-field-data'] = ['hello', 'world']
+   >>> ugrid.point_arrays['my-field-data']
+
+Note that the field data is automatically transfered to VTK C-style arrays and then represented as a numpy data format:
+
+.. jupyter-execute::
+
+   >>> ugrid.point_arrays
+
+..
+   Add a new section containing the description of scalars
+   vs. vectors.  Talk about the special array attributes for our data
+   arrays
+
+   Pending #1593
 
 
 .. _vtkDataArray: https://vtk.org/doc/nightly/html/classvtkDataArray.html
