@@ -93,6 +93,9 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     >>> points = np.column_stack((x, y, z))
     >>> kochanek_spline = pv.KochanekSpline(points, n_points=6)
     >>> kochanek_spline.plot(line_width=4, color="k")
+
+    See :ref:`create_kochanek_spline_example` for an additional example.
+
     """
     if tension is None:
         tension = np.array([0.0, 0.0, 0.0])
