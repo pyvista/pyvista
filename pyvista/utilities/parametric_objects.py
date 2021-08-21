@@ -138,6 +138,239 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     spline = surface_from_para(spline_function, u_res)
     return spline.compute_arc_length()
 
+def ParametricBohemianDome(a=None, **kwargs):
+    """Generate a Bohemian dome surface.
+
+    Parameters
+    ----------
+    a : float, optional
+        Bohemian dome surface parameter.
+
+    Returns
+    -------
+    pyvista.PolyData
+        ParametricBohemianDome surface.
+
+    Examples
+    --------
+    Create a ParametricBohemianDome mesh.
+
+    >>> import pyvista
+    >>> mesh = pyvista.ParametricBohemianDome()
+    >>> mesh.plot(color='w', smooth_shading=True)
+
+    """
+    parametric_function = _vtk.vtkParametricBohemianDome()
+    if a is not None:
+        parametric_function.SetA(a)
+
+    center = kwargs.pop('center', [0., 0., 0.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
+    translate(surf, center, direction)
+
+    return surf
+
+
+def ParametricBour(**kwargs):
+    """Generate Bour's minimal surface.
+
+    Returns
+    -------
+    surf : pyvista.PolyData
+        ParametricBour surface.
+
+    Examples
+    --------
+    Create a ParametricBour mesh.
+
+    >>> import pyvista
+    >>> mesh = pyvista.ParametricBour()
+    >>> mesh.plot(color='w', smooth_shading=True)
+
+    """
+    parametric_function = _vtk.vtkParametricBour()
+
+    center = kwargs.pop('center', [0., 0., 0.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
+    translate(surf, center, direction)
+
+    return surf
+
+
+def ParametricBoy(zscale=None, **kwargs):
+    """Generate Boy's surface.
+
+    This is a model of the projective plane without singularities.  It
+    was found by Werner Boy on assignment from David Hilbert.
+
+    For further information about this surface, please consult the
+    technical description "Parametric surfaces" in the
+    "VTK Technical Documents" section in the VTK.org web pages.
+
+    Parameters
+    ----------
+    zscale : float, optional
+        The scale factor for the z-coordinate.
+
+    Returns
+    -------
+    surf : pyvista.PolyData
+        ParametricBoy surface.
+
+    Examples
+    --------
+    Create a ParametricBoy mesh
+
+    >>> import pyvista
+    >>> mesh = pyvista.ParametricBoy()
+    >>> mesh.plot(color='w', smooth_shading=True)
+
+    """
+    parametric_function = _vtk.vtkParametricBoy()
+    if zscale is not None:
+        parametric_function.SetZScale(zscale)
+
+    center = kwargs.pop('center', [0., 0., 0.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
+    translate(surf, center, direction)
+
+    return surf
+
+
+def ParametricCatalanMinimal(**kwargs):
+    """Generate Catalan's minimal surface.
+
+    ParametricCatalanMinimal generates Catalan's minimal surface
+    parametrically. This minimal surface contains the cycloid as a
+    geodesic.
+
+    Returns
+    -------
+    surf : pyvista.PolyData
+        ParametricCatalanMinimal surface.
+
+    Example
+    -------
+    Create a ParametricCatalanMinimal mesh
+
+    >>> import pyvista
+    >>> mesh = pyvista.ParametricCatalanMinimal()
+    >>> mesh.plot(color='w', smooth_shading=True)
+
+    """
+    parametric_function = _vtk.vtkParametricCatalanMinimal()
+
+    center = kwargs.pop('center', [0., 0., 0.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
+    translate(surf, center, direction)
+
+    return surf
+
+
+def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
+    """Generate conic spiral surfaces that resemble sea-shells.
+
+    ParametricConicSpiral generates conic spiral surfaces. These can
+    resemble sea shells, or may look like a torus "eating" its own
+    tail.
+
+    Parameters
+    ----------
+    a : float, optional
+        The scale factor.
+        Default is 0.2.
+
+    b : float, optional
+        The A function coefficient.
+        See the definition in Parametric surfaces referred to above.
+        Default is 1.
+
+    c : float, optional
+        The B function coefficient.
+        See the definition in Parametric surfaces referred to above.
+        Default is 0.1.
+
+    n : float, optional
+        The C function coefficient.
+        See the definition in Parametric surfaces referred to above.
+        Default is 2.
+
+    Returns
+    -------
+    surf : pyvista.PolyData
+        ParametricConicSpiral surface
+
+    Examples
+    --------
+    Create a ParametricConicSpiral mesh
+
+    >>> import pyvista
+    >>> mesh = pyvista.ParametricConicSpiral()
+    >>> mesh.plot(color='w', smooth_shading=True)
+
+    """
+    parametric_function = _vtk.vtkParametricConicSpiral()
+    if a is not None:
+        parametric_function.SetA(a)
+
+    if b is not None:
+        parametric_function.SetB(b)
+
+    if c is not None:
+        parametric_function.SetC(c)
+
+    if n is not None:
+        parametric_function.SetN(n)
+
+    center = kwargs.pop('center', [0., 0., 0.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
+    translate(surf, center, direction)
+
+    return surf
+
+
+def ParametricCrossCap(**kwargs):
+    """Generate a cross-cap.
+
+    ParametricCrossCap generates a cross-cap which is a non-orientable
+    self-intersecting single-sided surface.  This is one possible
+    image of a projective plane in three-space.
+
+    Returns
+    -------
+    surf : pyvista.PolyData
+        ParametricCrossCap surface.
+
+    Examples
+    --------
+    Create a ParametricCrossCap mesh.
+
+    >>> import pyvista
+    >>> mesh = pyvista.ParametricCrossCap()
+    >>> mesh.plot(color='w', smooth_shading=True)
+
+    """
+    parametric_function = _vtk.vtkParametricCrossCap()
+
+    center = kwargs.pop('center', [0., 0., 0.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
+    translate(surf, center, direction)
+
+    return surf
+
+
 def ParametricDini(a=None, b=None, **kwargs):
     """Generate Dini's surface.
 
