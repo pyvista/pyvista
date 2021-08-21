@@ -5,6 +5,8 @@ from math import pi
 
 import pyvista
 from pyvista import _vtk
+from pyvista.utilities.errors import check_valid_vector
+import numpy as np
 from .geometric_objects import translate
 
 
@@ -54,238 +56,87 @@ def Spline(points, n_points=None):
     return spline.compute_arc_length()
 
 
-def ParametricBohemianDome(a=None, **kwargs):
-    """Generate a Bohemian dome surface.
+def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=None):
+    """Create a kochanek spline from points.
 
     Parameters
     ----------
-    a : float, optional
-        Bohemian dome surface parameter.
+    points : np.ndarray
+        Array of points to build a kochanek spline out of.  Array must be 3D
+        and directionally ordered.
 
-    Returns
-    -------
-    pyvista.PolyData
-        ParametricBohemianDome surface.
+    tension : np.ndarray, optional
+        Changes the length of the tangent vector.
 
-    Examples
-    --------
-    Create a ParametricBohemianDome mesh.
+    bias : np.ndarray, optional
+        Primarily changes the direction of the tangent vector.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricBohemianDome()
-    >>> mesh.plot(color='w', smooth_shading=True)
-
-    """
-    parametric_function = _vtk.vtkParametricBohemianDome()
-    if a is not None:
-        parametric_function.SetA(a)
-
-    center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [1., 0., 0.])
-    surf = surface_from_para(parametric_function, **kwargs)
-
-    translate(surf, center, direction)
-
-    return surf
-
-
-def ParametricBour(**kwargs):
-    """Generate Bour's minimal surface.
-
-    Returns
-    -------
-    surf : pyvista.PolyData
-        ParametricBour surface.
+    continuity : np.ndarray, optional
+        Changes the sharpness in change between tangents.
 
     Examples
     --------
-    Create a ParametricBour mesh.
+    Construct a kochanek spline
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricBour()
-    >>> mesh.plot(color='w', smooth_shading=True)
-
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
+    >>> z = np.linspace(-2, 2, 100)
+    >>> r = z ** 2 + 1
+    >>> x = r * np.sin(theta)
+    >>> y = r * np.cos(theta)
+    >>> kochanek_spline = pv.KochanekSpline(points, n_points=6)
+    >>> kochanek_spline.plot(line_width=4, color="k")
     """
-    parametric_function = _vtk.vtkParametricBour()
 
-    center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [1., 0., 0.])
-    surf = surface_from_para(parametric_function, **kwargs)
+    if tension is None:
+        tension = np.array([0.0, 0.0, 0.0])
+    check_valid_vector(tension, "tension")
+    if not np.all(np.abs(tension) <= 1.0):
+        raise ValueError("All absolute value of tension array elements must be <= 1.0 ")
 
-    translate(surf, center, direction)
+    if bias is None:
+        bias = np.array([0.0, 0.0, 0.0])
+    check_valid_vector(bias, "bias")
+    if not np.all(np.abs(bias) <= 1.0):
+        raise ValueError("All absolute value of bias array elements must be <= 1.0 ")
 
-    return surf
+    if continuity is None:
+        continuity = np.array([0.0, 0.0, 0.0])
+    check_valid_vector(continuity, "continuity")
+    if not np.all(np.abs(continuity) <= 1.0):
+        raise ValueError(
+            "All absolute value of continuity array elements must be <= 1.0 "
+        )
 
+    spline_function = _vtk.vtkParametricSpline()
+    spline_function.SetPoints(pyvista.vtk_points(points, False))
 
-def ParametricBoy(zscale=None, **kwargs):
-    """Generate Boy's surface.
+    # set kochanek spline for each direction
+    xspline = _vtk.vtkKochanekSpline()
+    yspline = _vtk.vtkKochanekSpline()
+    zspline = _vtk.vtkKochanekSpline()
+    xspline.SetDefaultBias(bias[0])
+    yspline.SetDefaultBias(bias[1])
+    zspline.SetDefaultBias(bias[2])
+    xspline.SetDefaultTension(tension[0])
+    yspline.SetDefaultTension(tension[1])
+    zspline.SetDefaultTension(tension[2])
+    xspline.SetDefaultContinuity(continuity[0])
+    yspline.SetDefaultContinuity(continuity[1])
+    zspline.SetDefaultContinuity(continuity[2])
+    spline_function.SetXSpline(xspline)
+    spline_function.SetYSpline(yspline)
+    spline_function.SetZSpline(zspline)
 
-    This is a model of the projective plane without singularities.  It
-    was found by Werner Boy on assignment from David Hilbert.
+    # get interpolation density
+    u_res = n_points
+    if u_res is None:
+        u_res = points.shape[0]
 
-    For further information about this surface, please consult the
-    technical description "Parametric surfaces" in the
-    "VTK Technical Documents" section in the VTK.org web pages.
-
-    Parameters
-    ----------
-    zscale : float, optional
-        The scale factor for the z-coordinate.
-
-    Returns
-    -------
-    surf : pyvista.PolyData
-        ParametricBoy surface.
-
-    Examples
-    --------
-    Create a ParametricBoy mesh
-
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricBoy()
-    >>> mesh.plot(color='w', smooth_shading=True)
-
-    """
-    parametric_function = _vtk.vtkParametricBoy()
-    if zscale is not None:
-        parametric_function.SetZScale(zscale)
-
-    center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [1., 0., 0.])
-    surf = surface_from_para(parametric_function, **kwargs)
-
-    translate(surf, center, direction)
-
-    return surf
-
-
-def ParametricCatalanMinimal(**kwargs):
-    """Generate Catalan's minimal surface.
-
-    ParametricCatalanMinimal generates Catalan's minimal surface
-    parametrically. This minimal surface contains the cycloid as a
-    geodesic.
-
-    Returns
-    -------
-    surf : pyvista.PolyData
-        ParametricCatalanMinimal surface.
-
-    Example
-    -------
-    Create a ParametricCatalanMinimal mesh
-
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricCatalanMinimal()
-    >>> mesh.plot(color='w', smooth_shading=True)
-
-    """
-    parametric_function = _vtk.vtkParametricCatalanMinimal()
-
-    center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [1., 0., 0.])
-    surf = surface_from_para(parametric_function, **kwargs)
-
-    translate(surf, center, direction)
-
-    return surf
-
-
-def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
-    """Generate conic spiral surfaces that resemble sea-shells.
-
-    ParametricConicSpiral generates conic spiral surfaces. These can
-    resemble sea shells, or may look like a torus "eating" its own
-    tail.
-
-    Parameters
-    ----------
-    a : float, optional
-        The scale factor.
-        Default is 0.2.
-
-    b : float, optional
-        The A function coefficient.
-        See the definition in Parametric surfaces referred to above.
-        Default is 1.
-
-    c : float, optional
-        The B function coefficient.
-        See the definition in Parametric surfaces referred to above.
-        Default is 0.1.
-
-    n : float, optional
-        The C function coefficient.
-        See the definition in Parametric surfaces referred to above.
-        Default is 2.
-
-    Returns
-    -------
-    surf : pyvista.PolyData
-        ParametricConicSpiral surface
-
-    Examples
-    --------
-    Create a ParametricConicSpiral mesh
-
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricConicSpiral()
-    >>> mesh.plot(color='w', smooth_shading=True)
-
-    """
-    parametric_function = _vtk.vtkParametricConicSpiral()
-    if a is not None:
-        parametric_function.SetA(a)
-
-    if b is not None:
-        parametric_function.SetB(b)
-
-    if c is not None:
-        parametric_function.SetC(c)
-
-    if n is not None:
-        parametric_function.SetN(n)
-
-    center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [1., 0., 0.])
-    surf = surface_from_para(parametric_function, **kwargs)
-
-    translate(surf, center, direction)
-
-    return surf
-
-
-def ParametricCrossCap(**kwargs):
-    """Generate a cross-cap.
-
-    ParametricCrossCap generates a cross-cap which is a non-orientable
-    self-intersecting single-sided surface.  This is one possible
-    image of a projective plane in three-space.
-
-    Returns
-    -------
-    surf : pyvista.PolyData
-        ParametricCrossCap surface.
-
-    Examples
-    --------
-    Create a ParametricCrossCap mesh.
-
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricCrossCap()
-    >>> mesh.plot(color='w', smooth_shading=True)
-
-    """
-    parametric_function = _vtk.vtkParametricCrossCap()
-
-    center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [1., 0., 0.])
-    surf = surface_from_para(parametric_function, **kwargs)
-
-    translate(surf, center, direction)
-
-    return surf
-
+    u_res -= 1
+    spline = surface_from_para(spline_function, u_res)
+    return spline.compute_arc_length()
 
 def ParametricDini(a=None, b=None, **kwargs):
     """Generate Dini's surface.
