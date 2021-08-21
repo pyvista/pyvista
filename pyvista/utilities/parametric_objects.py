@@ -66,13 +66,20 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
         be 3D and directionally ordered.
 
     tension : sequence, optional
-        Changes the length of the tangent vector.
+        Changes the length of the tangent vector.  Defaults to ``[0.0,
+        0.0, 0.0]``.
 
     bias : sequence, optional
         Primarily changes the direction of the tangent vector.
+        Defaults to ``[0.0, 0.0, 0.0]``.
 
     continuity : sequence, optional
-        Changes the sharpness in change between tangents.
+        Changes the sharpness in change between tangents.  Defaults to
+        ``[0.0, 0.0, 0.0]``.
+
+    n_points : int, optional
+        Number of points on the spline.  Defaults to the number of
+        points in ``points``.
 
     Returns
     -------
@@ -101,20 +108,20 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
         tension = np.array([0.0, 0.0, 0.0])
     check_valid_vector(tension, "tension")
     if not np.all(np.abs(tension) <= 1.0):
-        raise ValueError("All absolute value of tension array elements must be <= 1.0 ")
+        raise ValueError("The absolute value of all values of the tension array elements must be <= 1.0 ")
 
     if bias is None:
         bias = np.array([0.0, 0.0, 0.0])
     check_valid_vector(bias, "bias")
     if not np.all(np.abs(bias) <= 1.0):
-        raise ValueError("All absolute value of bias array elements must be <= 1.0 ")
+        raise ValueError("The absolute value of all values of the bias array elements must be <= 1.0 ")
 
     if continuity is None:
         continuity = np.array([0.0, 0.0, 0.0])
     check_valid_vector(continuity, "continuity")
     if not np.all(np.abs(continuity) <= 1.0):
         raise ValueError(
-            "All absolute value of continuity array elements must be <= 1.0 "
+            "The absolute value of all values continuity array elements must be <= 1.0 "
         )
 
     spline_function = _vtk.vtkParametricSpline()
