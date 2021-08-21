@@ -61,18 +61,23 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
 
     Parameters
     ----------
-    points : np.ndarray
-        Array of points to build a kochanek spline out of.  Array must be 3D
-        and directionally ordered.
+    points : sequence
+        Array of points to build a kochanek spline out of.  Array must
+        be 3D and directionally ordered.
 
-    tension : np.ndarray, optional
+    tension : sequence, optional
         Changes the length of the tangent vector.
 
-    bias : np.ndarray, optional
+    bias : sequence, optional
         Primarily changes the direction of the tangent vector.
 
-    continuity : np.ndarray, optional
+    continuity : sequence, optional
         Changes the sharpness in change between tangents.
+
+    Returns
+    -------
+    :class:`pyvista.PolyData`
+        Kochanek spline.
 
     Examples
     --------

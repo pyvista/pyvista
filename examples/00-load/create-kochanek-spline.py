@@ -1,8 +1,8 @@
 """
-.. _ref_create_kochanek_spline:
+.. _create_kochanek_spline_example:
 
-Creating a Kochanek Spline
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Create a Kochanek Spline
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create a kochanek spline/polyline from a numpy array of XYZ vertices
 """
@@ -30,7 +30,7 @@ points = make_points()
 points[0:5, :]
 
 ###############################################################################
-# You could interpolate those points onto a parametric kochanek spline
+# Interpolate those points onto a parametric kochanek spline
 
 # Create kochanek spline with 6 interpolation points
 p = pv.Plotter(shape=(3, 5))
