@@ -88,7 +88,6 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     >>> kochanek_spline = pv.KochanekSpline(points, n_points=6)
     >>> kochanek_spline.plot(line_width=4, color="k")
     """
-
     if tension is None:
         tension = np.array([0.0, 0.0, 0.0])
     check_valid_vector(tension, "tension")
