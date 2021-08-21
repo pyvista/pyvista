@@ -85,6 +85,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     >>> r = z ** 2 + 1
     >>> x = r * np.sin(theta)
     >>> y = r * np.cos(theta)
+    >>> points = np.column_stack((x, y, z))
     >>> kochanek_spline = pv.KochanekSpline(points, n_points=6)
     >>> kochanek_spline.plot(line_width=4, color="k")
     """
