@@ -228,34 +228,24 @@ class DataObject:
         if not isinstance(self, type(other)):
             return False
 
-        # check if points are equal if DataSet contains points
-        # this also checks if the number of points is equal
-        if hasattr(self, 'points'):
-            if not np.array_equal(self.points, other.points):
-                return False
+        # these attrs use numpy.array_equal
+        equal_attrs = ['verts',  # DataObject
+                       'points',  # DataObject
+                       'faces',  # DataObject
+                       'cells',  # UnstructuredGrid
+                       'celltypes',  # UnstructuredGrid
+                       ]
+        for attr in equal_attrs:
+            if hasattr(self, attr):
+                if not np.array_equal(getattr(self, attr), getattr(other, attr)):
+                    return False
 
-        # check if cells are equal if DataSet contains cells
-        # this also checks if the number of cells is equal
-        if hasattr(self, 'cells'):
-            if not np.array_equal(self.cells, other.cells):
-                return False        
-
-        # check if cells are equal if DataSet contains cells
-        # this also checks if the number of cells is equal
-        if hasattr(self, 'faces'):
-            if not np.array_equal(self.faces, other.faces):
-                return False        
-
-        if self.field_arrays != other.field_arrays:
-            return False
-
-        if hasattr(self, 'point_arrays'):
-            if self.point_arrays != other.point_arrays:
-                return False
-
-        if hasattr(self, 'cell_arrays'):
-            if self.cell_arrays != other.cell_arrays:
-                return False
+        # these attrs can be directly compared
+        attrs = ['field_arrays', 'point_arrays', 'cell_arrays']
+        for attr in attrs:
+            if hasattr(self, attr):
+                if getattr(self, attr) != getattr(other, attr):
+                    return False
 
         return True
 
