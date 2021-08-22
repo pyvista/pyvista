@@ -5,6 +5,8 @@ from math import pi
 
 import pyvista
 from pyvista import _vtk
+from pyvista.utilities.errors import check_valid_vector
+import numpy as np
 from .geometric_objects import translate
 
 
@@ -53,6 +55,103 @@ def Spline(points, n_points=None):
     spline = surface_from_para(spline_function, u_res)
     return spline.compute_arc_length()
 
+
+def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=None):
+    """Create a kochanek spline from points.
+
+    Parameters
+    ----------
+    points : sequence
+        Array of points to build a kochanek spline out of.  Array must
+        be 3D and directionally ordered.
+
+    tension : sequence, optional
+        Changes the length of the tangent vector.  Defaults to ``[0.0,
+        0.0, 0.0]``.
+
+    bias : sequence, optional
+        Primarily changes the direction of the tangent vector.
+        Defaults to ``[0.0, 0.0, 0.0]``.
+
+    continuity : sequence, optional
+        Changes the sharpness in change between tangents.  Defaults to
+        ``[0.0, 0.0, 0.0]``.
+
+    n_points : int, optional
+        Number of points on the spline.  Defaults to the number of
+        points in ``points``.
+
+    Returns
+    -------
+    :class:`pyvista.PolyData`
+        Kochanek spline.
+
+    Examples
+    --------
+    Construct a kochanek spline
+
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
+    >>> z = np.linspace(-2, 2, 100)
+    >>> r = z ** 2 + 1
+    >>> x = r * np.sin(theta)
+    >>> y = r * np.cos(theta)
+    >>> points = np.column_stack((x, y, z))
+    >>> kochanek_spline = pv.KochanekSpline(points, n_points=6)
+    >>> kochanek_spline.plot(line_width=4, color="k")
+
+    See :ref:`create_kochanek_spline_example` for an additional example.
+
+    """
+    if tension is None:
+        tension = np.array([0.0, 0.0, 0.0])
+    check_valid_vector(tension, "tension")
+    if not np.all(np.abs(tension) <= 1.0):
+        raise ValueError("The absolute value of all values of the tension array elements must be <= 1.0 ")
+
+    if bias is None:
+        bias = np.array([0.0, 0.0, 0.0])
+    check_valid_vector(bias, "bias")
+    if not np.all(np.abs(bias) <= 1.0):
+        raise ValueError("The absolute value of all values of the bias array elements must be <= 1.0 ")
+
+    if continuity is None:
+        continuity = np.array([0.0, 0.0, 0.0])
+    check_valid_vector(continuity, "continuity")
+    if not np.all(np.abs(continuity) <= 1.0):
+        raise ValueError(
+            "The absolute value of all values continuity array elements must be <= 1.0 "
+        )
+
+    spline_function = _vtk.vtkParametricSpline()
+    spline_function.SetPoints(pyvista.vtk_points(points, False))
+
+    # set kochanek spline for each direction
+    xspline = _vtk.vtkKochanekSpline()
+    yspline = _vtk.vtkKochanekSpline()
+    zspline = _vtk.vtkKochanekSpline()
+    xspline.SetDefaultBias(bias[0])
+    yspline.SetDefaultBias(bias[1])
+    zspline.SetDefaultBias(bias[2])
+    xspline.SetDefaultTension(tension[0])
+    yspline.SetDefaultTension(tension[1])
+    zspline.SetDefaultTension(tension[2])
+    xspline.SetDefaultContinuity(continuity[0])
+    yspline.SetDefaultContinuity(continuity[1])
+    zspline.SetDefaultContinuity(continuity[2])
+    spline_function.SetXSpline(xspline)
+    spline_function.SetYSpline(yspline)
+    spline_function.SetZSpline(zspline)
+
+    # get interpolation density
+    u_res = n_points
+    if u_res is None:
+        u_res = points.shape[0]
+
+    u_res -= 1
+    spline = surface_from_para(spline_function, u_res)
+    return spline.compute_arc_length()
 
 def ParametricBohemianDome(a=None, **kwargs):
     """Generate a Bohemian dome surface.

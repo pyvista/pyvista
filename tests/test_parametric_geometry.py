@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 import pyvista
 
@@ -15,8 +16,37 @@ def test_spline():
     assert spline.n_points == 1000
 
 
+def test_kochanek_spline():
+    theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
+    z = np.linspace(-2, 2, 100)
+    r = z**2 + 1
+    x = r * np.sin(theta)
+    y = r * np.cos(theta)
+
+    tension = np.random.random(3)
+    bias = np.random.random(3)
+    continuity = np.random.random(3)
+
+    n_points = 1000
+    points = np.column_stack((x, y, z))
+    kochanek_spline = pyvista.KochanekSpline(points, tension, bias, continuity, n_points)
+    assert kochanek_spline.n_points == n_points
+
+    # test default
+    kochanek_spline = pyvista.KochanekSpline(points, n_points=n_points)
+    assert kochanek_spline.n_points == n_points
+
+    # test invalid
+    with pytest.raises(ValueError, match='tension'):
+        kochanek_spline = pyvista.KochanekSpline(points, [-2, 0, 0], bias, continuity, n_points)
+    with pytest.raises(ValueError, match='bias'):
+        kochanek_spline = pyvista.KochanekSpline(points, tension, [-2, 0, 0], continuity, n_points)
+    with pytest.raises(ValueError, match='continuity'):
+        kochanek_spline = pyvista.KochanekSpline(points, tension, bias, [-2, 0, 0], n_points)
+
+
 def test_ParametricBohemianDome():
-    geom = pyvista.ParametricBohemianDome(direction=[0,0,1])
+    geom = pyvista.ParametricBohemianDome(direction=[0, 0, 1])
     assert geom.n_points
 
 
