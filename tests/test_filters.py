@@ -472,9 +472,8 @@ def test_texture_map_to_plane():
     assert isinstance(out, type(dataset))
     assert 'Texture Coordinates' in out.array_names
     # FINAL: Test in place modifiacation
-    dataset.texture_map_to_plane(inplace=True, progress_bar=True)
+    dataset.texture_map_to_plane(inplace=True)
     assert 'Texture Coordinates' in dataset.array_names
-
 
 def test_texture_map_to_sphere():
     dataset = pyvista.Sphere(radius=1.0)

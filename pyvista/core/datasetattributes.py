@@ -200,7 +200,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __setitem__(self, key: str, value: np.ndarray):
         """Implement setting with the ``[]`` operator."""
+        has_arr = key in self
         self.set_array(value, name=key)
+
+        # do not make array active if it already exists.  This covers
+        # an inplace update like self.point_arrays[key] += 1
+        if has_arr:
+            return
+
         # make active if not field data
         if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
             self.active_scalars_name = key
@@ -945,6 +952,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def active_scalars_name(self, name: str) -> None:
         self._raise_field_data_no_scalars_vectors()
         dtype = self[name].dtype
+        # only vtkDataArray subclasses can be set as active attributes
         if np.issubdtype(dtype, np.number) or dtype == bool:
             self.SetActiveScalars(name)
 

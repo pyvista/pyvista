@@ -924,6 +924,7 @@ def test_get_data_range(grid):
         rng = mesh.get_data_range('some data')
 
     # Test with some data
+    grid.active_scalars_name = 'sample_point_scalars'
     rng = grid.get_data_range()  # active scalars
     assert len(rng) == 2
     assert np.allclose(rng, (1, 302))

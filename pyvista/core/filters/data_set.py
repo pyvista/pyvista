@@ -1157,10 +1157,11 @@ class DataSetFilters:
         alg.SetHighPoint(high_point)
         _update_alg(alg, progress_bar, 'Computing Elevation')
         # Decide on updating active scalars array
-        name = 'Elevation' # Note that this is added to the PointData
+        output = _get_output(alg)
         if not set_active:
-            name = None
-        return _get_output(alg, active_scalars=name, active_scalars_field='point')
+            # 'Elevation' is automatically made active by the VTK filter
+            output.point_arrays.active_scalars_name = dataset.point_arrays.active_scalars_name
+        return output
 
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
                 compute_gradients=False, compute_scalars=True, rng=None,
@@ -1597,7 +1598,7 @@ class DataSetFilters:
                 alg.SetIndexModeToOff()
 
         if isinstance(scale, str):
-            dataset.active_scalars_name = scale
+            dataset.set_active_scalars(scale, 'cell')
             scale = True
 
         if scale:
@@ -1623,6 +1624,7 @@ class DataSetFilters:
             ):
                 source_data = dataset
             else:
+                breakpoint()
                 raise ValueError("Both ``scale`` and ``orient`` must use "
                                  "point data or cell data.")
         else:

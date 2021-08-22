@@ -214,7 +214,6 @@ class DataObject:
 
         # this must be called to ensure active scalars are "active"
         # before performing a deep copy
-        self.active_scalars_info
 
         if deep:
             newobject.deep_copy(self)

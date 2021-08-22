@@ -126,17 +126,38 @@ class DataSet(DataSetFilters, DataObject):
         if name in exclude:
             name = self._last_active_scalars_name
 
-        all_arrays = self.point_arrays.keys() + self.cell_arrays.keys()
-        if name is None or name not in all_arrays:
-            # find first available array name
-            for attributes in (self.point_arrays, self.cell_arrays):
-                first_arr = next((arr for arr in attributes if arr not in exclude), None)
-                if first_arr is not None:
-                    self._active_scalars_info = ActiveArrayInfo(attributes.association, first_arr)
-                    attributes.active_scalars_name = first_arr
+        # verify this field is still valid
+        if name is not None:
+            if field is FieldAssociation.CELL:
+                if self.cell_arrays.active_scalars_name != name:
+                    name = None
+            elif field is FieldAssociation.POINT:
+                if self.point_arrays.active_scalars_name != name:
+                    name = None
+
+        if name is None:
+            # check for the active scalars in point or cell arrays
+            self._active_scalars_info = ActiveArrayInfo(field, None)
+            for attr in [self.point_arrays, self.cell_arrays]:
+                if attr.active_scalars_name is not None:
+                    self._active_scalars_info = ActiveArrayInfo(attr.association, attr.active_scalars_name)
+                    attr.active_scalars_name = attr.active_scalars_name
                     break
-            else:
-                self._active_scalars_info = ActiveArrayInfo(field, None)
+
+        return self._active_scalars_info
+
+        # # otherwise, pick something
+        # all_arrays = self.point_arrays.keys() + self.cell_arrays.keys()
+        # if name is None or name not in all_arrays:
+        #     # find first available array name
+        #     for attributes in (self.point_arrays, self.cell_arrays):
+        #         first_arr = next((arr for arr in attributes if arr not in exclude), None)
+        #         if first_arr is not None:
+        #             self._active_scalars_info = ActiveArrayInfo(attributes.association, first_arr)
+        #             attributes.active_scalars_name = first_arr
+        #             break
+        #     else:
+        #         self._active_scalars_info = ActiveArrayInfo(field, None)
         return self._active_scalars_info
 
     @property

@@ -377,7 +377,7 @@ def test_assign_labels_to_points(hexbeam):
     hexbeam.point_arrays.clear()
     labels = [f"Label {i}" for i in range(hexbeam.n_points)]
     hexbeam['labels'] = labels
-    assert np.all(hexbeam.active_scalars == labels)
+    assert (hexbeam['labels'] == np.array(labels)).all()
 
 
 def test_normals_get(plane):
