@@ -2088,12 +2088,21 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, opacity=0.5)
 
         """
-        if not poly_data.is_all_triangles:
+        if not poly_data.is_all_triangles():
             raise NotAllTrianglesError('Can only flip normals on an all triangle mesh')
 
-        f = poly_data.faces.reshape((-1, 4))
-        f[:, 1:] = f[:, 1:][:, ::-1]
-        poly_data.faces[:] = f.ravel()
+        if _vtk.VTK9:
+            # use new connectivity API
+            faces = poly_data._connectivity_array.reshape(-1, 3)
+
+            # shuffle these in-place
+            # See: https://stackoverflow.com/a/33362288/3369879
+            faces[:, 0], faces[:, 2] = faces[:, 2], faces[:, 0].copy()
+
+        else:  # pragma: no cover
+            f = poly_data.faces.reshape((-1, 4))
+            f[:, 1:] = f[:, 1:][:, ::-1]
+            poly_data.faces[:] = f.ravel()
 
     def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     inplace=False, edge_source=None, progress_bar=False):

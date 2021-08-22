@@ -771,3 +771,13 @@ def test_flip_normals(sphere):
     sphere_flipped.compute_normals(inplace=True)
     assert np.allclose(sphere_flipped.point_arrays['Normals'],
                        -sphere.point_arrays['Normals'])
+
+
+def test_n_verts():
+    mesh = pyvista.PolyData([[1, 0, 0], [1, 1, 1]])
+    assert mesh.n_verts == 2
+
+
+def test_n_lines():
+    mesh = pyvista.Line()
+    assert mesh.n_lines == 1

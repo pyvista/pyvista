@@ -392,6 +392,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         if isinstance(faces, CellArray):
             self.SetPolys(faces)
         else:
+            # faster to mutate in-place if array is same size?
             self.SetPolys(CellArray(faces))
 
     def is_all_triangles(self):
@@ -415,18 +416,70 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
         """
         # Need to make sure there are only face cells and no lines/verts
-        faces = self.faces  # grab once as this takes time to build
-        if not len(faces) or len(self.lines) > 0 or len(self.verts) > 0:
+        if not self.n_faces or self.n_lines or self.n_verts:
             return False
 
-        # All we have are faces, check if all faces are indeed triangles
-        if faces.size % 4 == 0:
-            return (faces[::4] == 3).all()
-        return False
+        # in VTK9, they use connectivity and offset rather than cell
+        # data.  Use the new API as this is faster
+        if _vtk.VTK9 and False:
+            # early return if not all triangular
+            if self._connectivity_array.size % 3:
+                return False
+
+            # next, check if there are three points per face
+            return np.all(np.diff(self._offset_array) == 3)
+
+        else:  # pragma: no cover
+            # All we have are faces, check if all faces are indeed triangles
+            faces = self.faces  # grab once as this takes time to build
+            if faces.size % 4 == 0:
+                return (faces[::4] == 3).all()
+            return False
 
     def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""
         return self.boolean_difference(cutting_mesh)
+
+    @property
+    def _offset_array(self):
+        """Return the array used to store cell offsets."""
+        return _vtk.vtk_to_numpy(self.GetPolys().GetOffsetsArray())
+
+    @property
+    def _connectivity_array(self):
+        """Return the array with the point ids that define the cells connectivity."""
+        return _vtk.vtk_to_numpy(self.GetPolys().GetConnectivityArray())
+
+    @property
+    def n_lines(self):
+        """Return the number of lines
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Line()
+        >>> mesh.n_lines
+        1
+
+        """
+        return self.GetNumberOfLines()
+
+    @property
+    def n_verts(self):
+        """Return the number of vertices.
+
+        Examples
+        --------
+        Create a simple mesh containing just two points and return the
+        number of vertices.
+
+        >>> import pyvista
+        >>> mesh = pyvista.PolyData([[1, 0, 0], [1, 1, 1]])
+        >>> mesh.n_verts
+        2
+
+        """
+        return self.GetNumberOfVerts()
 
     @property
     def n_faces(self):
