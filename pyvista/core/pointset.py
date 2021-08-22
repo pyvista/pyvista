@@ -426,13 +426,13 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             Programmer note: We must subclass int and not bool
             https://stackoverflow.com/questions/2172189/why-i-cant-extend-bool-in-python
 
-            Implemented for backwards compatiblity as
+            Implemented for backwards compatibility as
             ``is_all_triangles`` was changed to be a property in
             ``0.32.0``.
             """
 
             def __new__(cls, value):
-                """Use new instead of __init__
+                """Use new instead of __init__.
 
                 See:
                 https://jfine-python-classes.readthedocs.io/en/latest/subclass-int.html#emulating-bool-using-new

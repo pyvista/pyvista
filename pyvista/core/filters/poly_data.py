@@ -2095,7 +2095,7 @@ class PolyDataFilters(DataSetFilters):
             # use new connectivity API
             f = poly_data._connectivity_array
 
-            # swap first and last point index these in-place
+            # swap first and last point index in-place
             # See: https://stackoverflow.com/a/33362288/3369879
             f[::3], f[2::3] = f[2::3], f[::3].copy()
 
