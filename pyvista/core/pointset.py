@@ -452,7 +452,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def n_lines(self):
-        """Return the number of lines
+        """Return the number of lines.
 
         Examples
         --------
