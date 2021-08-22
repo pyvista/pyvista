@@ -196,7 +196,7 @@ class DataObject:
         Returns
         -------
         :class:`pyvista.DataSet`
-            Deep or shallow copy of the input.
+            Deep or shallow copy of the input.  Type is identical to the input.
 
         Examples
         --------
