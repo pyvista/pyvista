@@ -46,3 +46,28 @@ def test_polydata_eq(sphere):
     copy = sphere.copy(deep=True)
     copy.point_arrays.active_scalars_name = 'data1'
     assert sphere != copy
+
+    copy = sphere.copy(deep=True)
+    copy.lines = [2, 0, 1]
+    assert sphere != copy
+
+    copy = sphere.copy(deep=True)
+    copy.verts = [1, 0]
+    assert sphere != copy
+
+
+def test_unstructured_grid_eq(hexbeam):
+    copy = hexbeam.copy()
+    assert hexbeam == copy
+
+    copy = hexbeam.copy()
+    hexbeam.celltypes[0] = 0
+    assert hexbeam != copy
+
+    copy = hexbeam.copy()
+
+    if pyvista._vtk.VTK9:
+        hexbeam.cell_connectivity[0] += 1
+    else:
+        hexbeam.cells[0] += 1
+    assert hexbeam != copy

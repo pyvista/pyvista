@@ -231,10 +231,10 @@ class DataObject:
         # these attrs use numpy.array_equal
         equal_attrs = ['verts',  # DataObject
                        'points',  # DataObject
+                       'lines',  # DataObject
                        'faces',  # DataObject
                        'cells',  # UnstructuredGrid
-                       'celltypes',  # UnstructuredGrid
-                       ]
+                       'celltypes']  # UnstructuredGrid
         for attr in equal_attrs:
             if hasattr(self, attr):
                 if not np.array_equal(getattr(self, attr), getattr(other, attr)):
