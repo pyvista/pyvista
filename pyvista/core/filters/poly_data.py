@@ -2089,7 +2089,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not poly_data.is_all_triangles():
-            raise NotAllTrianglesError('Can only flip normals on an all triangle mesh')
+            raise NotAllTrianglesError('Can only flip normals on an all triangle mesh.')
 
         if _vtk.VTK9:
             # use new connectivity API

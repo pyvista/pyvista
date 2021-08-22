@@ -201,7 +201,8 @@ if VTK9:
                                                            vtkParametricSuperToroid,
                                                            vtkParametricTorus,
                                                            vtkParametricFunction,
-                                                           vtkParametricBohemianDome)
+                                                           vtkParametricBohemianDome,
+                                                           vtkKochanekSpline)
     from vtkmodules.vtkCommonCore import (VTK_COURIER,
                                           VTK_TIMES,
                                           VTK_ARIAL,

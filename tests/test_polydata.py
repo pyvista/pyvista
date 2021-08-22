@@ -763,7 +763,7 @@ def test_extrude():
     assert arc.n_points != n_points_old
 
 
-def test_flip_normals(sphere):
+def test_flip_normals(sphere, plane):
     sphere_flipped = sphere.copy()
     sphere_flipped.flip_normals()
 
@@ -771,6 +771,10 @@ def test_flip_normals(sphere):
     sphere_flipped.compute_normals(inplace=True)
     assert np.allclose(sphere_flipped.point_arrays['Normals'],
                        -sphere.point_arrays['Normals'])
+
+    # invalid case
+    with pytest.raises(NotAllTrianglesError):
+        plane.flip_normals()
 
 
 def test_n_verts():
