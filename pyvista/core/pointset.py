@@ -395,8 +395,13 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             # faster to mutate in-place if array is same size?
             self.SetPolys(CellArray(faces))
 
+    @property
     def is_all_triangles(self):
         """Return ``True`` if all the faces of the ``PolyData`` are triangles.
+
+        .. versionchanged:: 0.32.0
+           Is now a property.  Evaluating this value will warn the
+           user that this should not be called.
 
         Returns
         -------
@@ -407,34 +412,64 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         --------
         >>> import pyvista
         >>> plane = pyvista.Plane()
-        >>> plane.is_all_triangles()
+        >>> plane.is_all_triangles
         False
 
         >>> sphere = pyvista.Sphere()
-        >>> sphere.is_all_triangles()
+        >>> sphere.is_all_triangles
         True
 
         """
+        class CallableBool(int):  # pragma: no cover
+            """Boolean that can be called.
+
+            Programmer note: We must subclass int and not bool
+            https://stackoverflow.com/questions/2172189/why-i-cant-extend-bool-in-python
+
+            Implemented for backwards compatiblity as
+            ``is_all_triangles`` was changed to be a property in
+            ``0.32.0``.
+            """
+
+            def __new__(cls, value):
+                """Use new instead of __init__
+
+                See:
+                https://jfine-python-classes.readthedocs.io/en/latest/subclass-int.html#emulating-bool-using-new
+
+                """
+                return int.__new__(cls, bool(value))        
+
+            def __call__(self):
+                """Return bool of self and permit calling this bool."""
+                warnings.warn('``is_all_triangles`` is now property as of 0.32.0 and '
+                              'does not need ()', DeprecationWarning)
+                return bool(self)
+
+            def __repr__(self):
+                """Return the string of bool."""
+                return str(bool(self))
+
         # Need to make sure there are only face cells and no lines/verts
         if not self.n_faces or self.n_lines or self.n_verts:
-            return False
+            return CallableBool(False)
 
         # in VTK9, they use connectivity and offset rather than cell
         # data.  Use the new API as this is faster
-        if _vtk.VTK9 and False:
+        if _vtk.VTK9:
             # early return if not all triangular
             if self._connectivity_array.size % 3:
-                return False
+                return CallableBool(False)
 
             # next, check if there are three points per face
-            return np.all(np.diff(self._offset_array) == 3)
+            return CallableBool((np.diff(self._offset_array) == 3).all())
 
         else:  # pragma: no cover
             # All we have are faces, check if all faces are indeed triangles
             faces = self.faces  # grab once as this takes time to build
             if faces.size % 4 == 0:
-                return (faces[::4] == 3).all()
-            return False
+                return CallableBool((faces[::4] == 3).all())
+            return CallableBool(False)
 
     def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""
@@ -443,12 +478,18 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     @property
     def _offset_array(self):
         """Return the array used to store cell offsets."""
-        return _vtk.vtk_to_numpy(self.GetPolys().GetOffsetsArray())
+        try:
+            return _vtk.vtk_to_numpy(self.GetPolys().GetOffsetsArray())
+        except AttributeError:  # pragma: no cover
+            raise VTKVersionError('Offset array implemented in VTK 9 or newer.')
 
     @property
     def _connectivity_array(self):
         """Return the array with the point ids that define the cells connectivity."""
-        return _vtk.vtk_to_numpy(self.GetPolys().GetConnectivityArray())
+        try:
+            return _vtk.vtk_to_numpy(self.GetPolys().GetConnectivityArray())
+        except AttributeError:  # pragma: no cover
+            raise VTKVersionError('Connectivity array implemented in VTK 9 or newer.')
 
     @property
     def n_lines(self):
