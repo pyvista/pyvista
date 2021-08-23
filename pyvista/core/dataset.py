@@ -282,8 +282,8 @@ class DataSet(DataSetFilters, DataObject):
     def active_vectors_name(self, name: str):
         self.set_active_vectors(name)
 
-    @property
-    def active_scalars_name(self) -> str:
+    @property  # type: ignore
+    def active_scalars_name(self) -> str:  # type: ignore
         """Return the name of the active scalars.
 
         Examples
