@@ -32,6 +32,7 @@ Reader Classes
     XMLPolyDataReader
     XMLStructuredGridReader
     XMLMultiBlockDataReader
+    PVDReader
     EnSightReader
     OpenFOAMReader
     PLYReader
@@ -62,3 +63,4 @@ support inspecting and setting data related to point and cell arrays.
 
    BaseReader
    PointCellDataSelection
+   TimeReader
