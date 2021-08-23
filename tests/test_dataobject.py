@@ -25,11 +25,6 @@ def test_polydata_eq(sphere):
     sphere.point_arrays['data0'] = np.zeros(sphere.n_points)
     sphere.point_arrays['data1'] = np.arange(sphere.n_points)
 
-    # error here:
-    # was = sphere.point_arrays.active_scalars_name
-    # sphere.active_scalars_info
-    # now = sphere.point_arrays.active_scalars_name
-    # assert was == now
 
     copy = sphere.copy(deep=True)
     assert sphere == copy

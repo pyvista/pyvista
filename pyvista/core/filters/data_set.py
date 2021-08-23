@@ -4145,6 +4145,8 @@ class DataSetFilters:
         components.  This may be an issue if you have scalar data with
         three components (e.g. RGB data).  This will be improperly
         transformed as if it was vector data rather than scalar data.
+        One possible (albeit ugly) workaround is to store the three
+        components as separate scalar arrays.
 
         """
         if isinstance(trans, _vtk.vtkMatrix4x4):

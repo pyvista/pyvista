@@ -11,11 +11,6 @@ import pyvista
 from pyvista.utilities import FieldAssociation
 
 
-@fixture()
-def sphere_empty_attributes(sphere):
-    ds_attr = hexbeam.point_arrays
-    ds_attr.clear()
-    return ds_attr
 
 
 @fixture()
@@ -60,8 +55,7 @@ def test_repr(hexbeam_point_attributes):
     assert '...' not in repr_str
 
     # ensure long names are abbreviated
-    first_arr = hexbeam_point_attributes.keys()[0]
-    sz = hexbeam_point_attributes[first_arr].size
+    sz = hexbeam_point_attributes.values()[0].size
     data = np.zeros(sz)
     hexbeam_point_attributes['verylongnameover20char'] = data
     assert '...' in str(hexbeam_point_attributes)
@@ -377,7 +371,7 @@ def test_assign_labels_to_points(hexbeam):
     hexbeam.point_arrays.clear()
     labels = [f"Label {i}" for i in range(hexbeam.n_points)]
     hexbeam['labels'] = labels
-    assert (hexbeam['labels'] == np.array(labels)).all()
+    assert (hexbeam['labels'] == labels).all()
 
 
 def test_normals_get(plane):

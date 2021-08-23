@@ -37,7 +37,7 @@ def test_wrap_pyvista_ndarray_vtk(dtypes):
     vtk_array.SetNumberOfComponents(3)
     vtk_array.SetNumberOfValues(9)
     for i in range(9):
-        vtk_array.SetValue(i, np_array.ravel()[i])
+        vtk_array.SetValue(i, np_array.flat[i])
 
     wrapped = pyvista.wrap(vtk_array)
     assert np.allclose(wrapped, np_array)

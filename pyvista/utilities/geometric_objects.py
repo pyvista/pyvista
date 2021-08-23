@@ -1035,7 +1035,7 @@ def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
     return triangle
 
 
-def Rectangle(points=[[1.0, 0.0, 0], [1.0, 1.0, 0], [0.0, 1.0, 0], [0.0, 0.0, 0.0]]):
+def Rectangle(points=None):
     """Create a rectangle defined by 4 points.
 
     Parameters
@@ -1058,6 +1058,8 @@ def Rectangle(points=[[1.0, 0.0, 0], [1.0, 1.0, 0], [0.0, 1.0, 0], [0.0, 0.0, 0.
     >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc, pointd])
     >>> rectangle.plot(show_edges=True, line_width=5)
     """
+    if points is None:
+        points = [[1.0, 0.0, 0], [1.0, 1.0, 0], [0.0, 1.0, 0], [0.0, 0.0, 0.0]]
     if len(points) != 4:
         raise TypeError('Points must be given as length 4 np.ndarray or list')
 
