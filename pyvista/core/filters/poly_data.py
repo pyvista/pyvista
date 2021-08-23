@@ -2653,7 +2653,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         :class:`pyvista.PolyData`
-            Mesh containing collisions in the ``field_arrays``
+            Mesh containing collisions in the ``field_data``
             attribute named ``"ContactCells"``.  Array only exists
             when there are collisions.
 
@@ -2691,11 +2691,11 @@ class PolyDataFilters(DataSetFilters):
         array([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
 
         Plot the collisions by creating a collision mask with the
-        ``"ContactCells"`` field array.  Cells with a collision are
+        ``"ContactCells"`` field data.  Cells with a collision are
         colored red.
 
         >>> scalars = np.zeros(collision.n_cells, dtype=bool)
-        >>> scalars[collision.field_arrays['ContactCells']] = True
+        >>> scalars[collision.field_data['ContactCells']] = True
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(collision, scalars=scalars, show_scalar_bar=False,
         ...                 cmap='bwr')

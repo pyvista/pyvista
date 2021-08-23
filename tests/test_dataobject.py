@@ -32,7 +32,7 @@ def test_polydata_eq(sphere):
     assert sphere != copy
 
     copy = sphere.copy(deep=True)
-    copy.field_arrays['new'] = [1]
+    copy.field_data['new'] = [1]
     assert sphere != copy
 
     copy = sphere.copy(deep=True)

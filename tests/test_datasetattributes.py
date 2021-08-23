@@ -18,7 +18,7 @@ def hexbeam_point_attributes(hexbeam):
 
 @fixture()
 def hexbeam_field_attributes(hexbeam):
-    return hexbeam.field_arrays
+    return hexbeam.field_data
 
 
 @fixture()
@@ -80,7 +80,7 @@ def test_valid_array_len_cells(hexbeam):
 
 
 def test_valid_array_len_field(hexbeam):
-    assert hexbeam.field_arrays.valid_array_len == 0
+    assert hexbeam.field_data.valid_array_len == 0
 
 
 def test_get(sphere):
@@ -358,11 +358,11 @@ def test_active_scalars_setter(hexbeam_point_attributes):
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
-def test_preserve_field_arrays_after_extract_cells(hexbeam, arr):
+def test_preserve_field_data_after_extract_cells(hexbeam, arr):
     # https://github.com/pyvista/pyvista/pull/934
-    hexbeam.field_arrays["foo"] = arr
+    hexbeam.field_data["foo"] = arr
     extracted = hexbeam.extract_cells([0, 1, 2, 3])
-    assert "foo" in extracted.field_arrays
+    assert "foo" in extracted.field_data
 
 
 def test_assign_labels_to_points(hexbeam):
@@ -397,7 +397,7 @@ def test_normals_set():
 
 def test_normals_raise_field(plane):
     with raises(AttributeError):
-        plane.field_arrays.normals
+        plane.field_data.normals
 
 
 def test_add_two_vectors():

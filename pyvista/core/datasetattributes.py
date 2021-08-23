@@ -323,7 +323,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         --------
         Show the valid array lengths match the number of points and
         cells for point and cell arrays, and there is no length limit
-        for field arrays.
+        for field data.
 
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
@@ -333,7 +333,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         8
         >>> mesh.cell_arrays.valid_array_len
         6
-        >>> mesh.field_arrays.valid_array_len
+        >>> mesh.field_data.valid_array_len
         0
 
         """
@@ -502,11 +502,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> mesh.cell_arrays['my-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5])
 
-        Add a field array to a mesh.
+        Add field data to a mesh.
 
         >>> field_data = range(3)
-        >>> mesh.field_arrays.set_array(field_data, 'my-data')
-        >>> mesh.field_arrays['my-data']
+        >>> mesh.field_data.set_array(field_data, 'my-data')
+        >>> mesh.field_data['my-data']
         pyvista_ndarray([0, 1, 2])
 
         Notes

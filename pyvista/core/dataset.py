@@ -686,7 +686,7 @@ class DataSet(DataSetFilters, DataObject):
         elif field == FieldAssociation.CELL:
             self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
         elif field == FieldAssociation.NONE:
-            self.field_arrays[new_name] = self.field_arrays.pop(old_name)
+            self.field_data[new_name] = self.field_data.pop(old_name)
         else:
             raise KeyError(f'Array with name {old_name} not found.')
         if was_active:
@@ -1145,7 +1145,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.clear_point_arrays()
         self.clear_cell_arrays()
-        self.clear_field_arrays()
+        self.clear_field_data()
 
     @property
     def cell_arrays(self) -> DataSetAttributes:
@@ -1349,7 +1349,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.clear_arrays()
         >>> mesh.point_arrays['point-data'] = range(mesh.n_points)
         >>> mesh.cell_arrays['cell-data'] = range(mesh.n_cells)
-        >>> mesh.field_arrays['field-data'] = ['a', 'b', 'c']
+        >>> mesh.field_data['field-data'] = ['a', 'b', 'c']
         >>> mesh.array_names
         ['point-data', 'field-data', 'cell-data']
 
@@ -1397,7 +1397,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.clear_arrays()
         >>> mesh.point_arrays['point-data'] = range(mesh.n_points)
         >>> mesh.cell_arrays['cell-data'] = range(mesh.n_cells)
-        >>> mesh.field_arrays['field-data'] = ['a', 'b', 'c']
+        >>> mesh.field_data['field-data'] = ['a', 'b', 'c']
         >>> mesh.array_names
         ['point-data', 'field-data', 'cell-data']
 
@@ -1484,7 +1484,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         names = []
-        names.extend(self.field_arrays.keys())
+        names.extend(self.field_data.keys())
         names.extend(self.point_arrays.keys())
         names.extend(self.cell_arrays.keys())
         try:
@@ -1548,7 +1548,7 @@ class DataSet(DataSetFilters, DataObject):
                 fmt += format_array(key, arr, 'Points')
             for key, arr in self.cell_arrays.items():
                 fmt += format_array(key, arr, 'Cells')
-            for key, arr in self.field_arrays.items():
+            for key, arr in self.field_data.items():
                 fmt += format_array(key, arr, 'Fields')
 
             fmt += "</table>\n"

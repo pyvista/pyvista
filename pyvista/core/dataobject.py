@@ -237,7 +237,7 @@ class DataObject:
                     return False
 
         # these attrs can be directly compared
-        attrs = ['field_arrays', 'point_arrays', 'cell_arrays']
+        attrs = ['field_data', 'point_arrays', 'cell_arrays']
         for attr in attrs:
             if hasattr(self, attr):
                 if getattr(self, attr) != getattr(other, attr):
@@ -245,107 +245,107 @@ class DataObject:
 
         return True
 
-    def add_field_array(self, scalars: np.ndarray, name: str, deep=True):
-        """Add a field array.
+    def add_field_data(self, scalars: np.ndarray, name: str, deep=True):
+        """Add field data.
 
-        Use field arrays when the array you wish to associate with the
-        dataset does not match the number of points or cells of the
-        dataset.
+        Use field data when size of the data you wish to associate
+        with the dataset does not match the number of points or cells
+        of the dataset.
 
         Examples
         --------
-        Add a field array to a PolyData dataset.
+        Add field data to a PolyData dataset.
 
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Sphere()
-        >>> mesh.add_field_array(np.arange(10), 'my-field-data')
+        >>> mesh.add_field_data(np.arange(10), 'my-field-data')
         >>> mesh['my-field-data']
         array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-        Add a field array to a UniformGrid dataset.
+        Add field data to a UniformGrid dataset.
 
         >>> mesh = pyvista.UniformGrid((2, 2, 1))
-        >>> mesh.add_field_array(['I could', 'write', 'notes', 'here'], 
+        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'], 
         ...                      'my-field-data')
         >>> mesh['my-field-data']
         array(['I could', 'write', 'notes', 'here'], dtype='<U7')
 
-        Add a field array to a MultiBlock dataset.
+        Add field data to a MultiBlock dataset.
 
         >>> blocks = pyvista.MultiBlock()
         >>> blocks.append(pyvista.Sphere())
         >>> blocks["cube"] = pyvista.Cube(center=(0, 0, -1))
-        >>> blocks.add_field_array([1, 2, 3], 'my-field-data')
-        >>> blocks.field_arrays['my-field-data']
+        >>> blocks.add_field_data([1, 2, 3], 'my-field-data')
+        >>> blocks.field_data['my-field-data']
         pyvista_ndarray([1, 2, 3])
 
         """
-        self.field_arrays.set_array(scalars, name, deep_copy=deep)
+        self.field_data.set_array(scalars, name, deep_copy=deep)
 
     @property
-    def field_arrays(self) -> DataSetAttributes:
+    def field_data(self) -> DataSetAttributes:
         """Return FieldData as DataSetAttributes.
 
-        Use field arrays when the array you wish to associate with the
-        dataset does not match the number of points or cells of the
-        dataset.
+        Use field data when size of the data you wish to associate
+        with the dataset does not match the number of points or cells
+        of the dataset.
 
         Examples
         --------
-        Add a field array to a PolyData dataset and then return it.
+        Add field data to a PolyData dataset and then return it.
 
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Sphere()
-        >>> mesh.field_arrays['my-field-data'] = np.arange(10)
-        >>> mesh.field_arrays['my-field-data']
+        >>> mesh.field_data['my-field-data'] = np.arange(10)
+        >>> mesh.field_data['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
         """
         return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
 
     @property
-    def field_arrays(self) -> DataSetAttributes:
+    def field_data(self) -> DataSetAttributes:
         """Return FieldData as DataSetAttributes.
 
-        Use field arrays when the array you wish to associate with the
-        dataset does not match the number of points or cells of the
-        dataset.
+        Use field data when the size of the data you wish to associate
+        with the dataset does not match the number of points or cells
+        of the dataset.
 
         Examples
         --------
-        Add a field array to a PolyData dataset and then return it.
+        Add field data to a PolyData dataset and then return it.
 
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Sphere()
-        >>> mesh.field_arrays['my-field-data'] = np.arange(10)
-        >>> mesh.field_arrays['my-field-data']
+        >>> mesh.field_data['my-field-data'] = np.arange(10)
+        >>> mesh.field_data['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
         """
         return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
 
 
-    def clear_field_arrays(self):
-        """Remove all field arrays.
+    def clear_field_data(self):
+        """Remove all field data.
 
         Examples
         --------
-        Add a field array to a PolyData dataset and then remove it.
+        Add field data to a PolyData dataset and then remove it.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.field_arrays['my-field-data'] = range(10)
-        >>> len(mesh.field_arrays)
+        >>> mesh.field_data['my-field-data'] = range(10)
+        >>> len(mesh.field_data)
         1
-        >>> mesh.clear_field_arrays()
-        >>> len(mesh.field_arrays)
+        >>> mesh.clear_field_data()
+        >>> len(mesh.field_data)
         0
 
         """
-        self.field_arrays.clear()
+        self.field_data.clear()
 
     @property
     def memory_address(self) -> str:

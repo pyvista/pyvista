@@ -196,7 +196,7 @@ def test_get_array():
     oarr = np.random.rand(grid.n_points)
     grid.point_arrays.set_array(oarr, 'other')
     farr = np.random.rand(grid.n_points * grid.n_cells)
-    grid.field_arrays.set_array(farr, 'field_data')
+    grid.field_data.set_array(farr, 'field_data')
     assert np.allclose(carr, helpers.get_array(grid, 'test_data', preference='cell'))
     assert np.allclose(parr, helpers.get_array(grid, 'test_data', preference='point'))
     assert np.allclose(oarr, helpers.get_array(grid, 'other'))

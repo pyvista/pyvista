@@ -143,8 +143,8 @@ def point_array(mesh, name):
     return convert_array(vtkarr)
 
 
-def field_array(mesh, name):
-    """Return field array of a pyvista or vtk object."""
+def field_data(mesh, name):
+    """Return field data of a pyvista or vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
@@ -210,7 +210,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
-    farr = field_array(mesh, name)
+    farr = field_data(mesh, name)
     preference = parse_field_choice(preference)
     if sum([array is not None for array in (parr, carr, farr)]) > 1:
         if preference == FieldAssociation.CELL:
@@ -267,7 +267,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     # with multiple arrays, return the array preference
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
-    farr = field_array(mesh, name)
+    farr = field_data(mesh, name)
     preference = parse_field_choice(preference)
     if sum([array is not None for array in (parr, carr, farr)]) > 1:
         if preference in [FieldAssociation.CELL, FieldAssociation.POINT,

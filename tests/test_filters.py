@@ -1635,7 +1635,7 @@ def test_collision(sphere):
     output, n_collision = sphere.collision(moved_sphere)
     assert isinstance(output, pyvista.PolyData)
     assert n_collision > 40
-    assert 'ContactCells' in output.field_arrays
+    assert 'ContactCells' in output.field_data
 
     # test no collision
     moved_sphere.translate((1000, 0, 0))
@@ -1649,5 +1649,5 @@ def test_collision_solid_non_triangle(hexbeam):
     output, n_collision = cube.collision(hexbeam)
     assert isinstance(output, pyvista.PolyData)
     assert n_collision > 40
-    assert 'ContactCells' in output.field_arrays
+    assert 'ContactCells' in output.field_data
     assert output.is_all_triangles()
