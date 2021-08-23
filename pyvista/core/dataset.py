@@ -356,7 +356,7 @@ class DataSet(DataSetFilters, DataObject):
 
         You can also update the points in-place:
 
-        >>> cube.points[...] = 2*(points + 1)
+        >>> cube.points[...] = 2*points
         >>> cube.points
         pyvista_ndarray([[-1., -1.,  1.],
                          [-1., -1.,  3.],
@@ -1575,14 +1575,13 @@ class DataSet(DataSetFilters, DataObject):
         Examples
         --------
         Create two meshes and overwrite ``mesh_a`` with ``mesh_b``.
-        Show that the array of points from ``mesh_a`` are identical and point
-        to the points in ``mesh_b``.
+        Show that ``mesh_a`` is equal to ``mesh_b``.
 
         >>> import pyvista
         >>> mesh_a = pyvista.Sphere()
         >>> mesh_b = pyvista.Cube().clean()
         >>> mesh_a.overwrite(mesh_b)
-        >>> mesh_a.points is mesh_b.points
+        >>> mesh_a == mesh_b
         True
 
         """

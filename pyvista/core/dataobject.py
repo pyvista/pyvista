@@ -305,6 +305,29 @@ class DataObject:
         """
         return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
 
+    @property
+    def field_arrays(self) -> DataSetAttributes:
+        """Return FieldData as DataSetAttributes.
+
+        Use field arrays when the array you wish to associate with the
+        dataset does not match the number of points or cells of the
+        dataset.
+
+        Examples
+        --------
+        Add a field array to a PolyData dataset and then return it.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.field_arrays['my-field-data'] = np.arange(10)
+        >>> mesh.field_arrays['my-field-data']
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+        """
+        return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
+
+
     def clear_field_arrays(self):
         """Remove all field arrays.
 
