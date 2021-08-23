@@ -302,7 +302,7 @@ def test_pvdfilerader():
     assert len(active_datasets) == 1
     active_dataset = active_datasets[0]
     assert active_dataset.time == 0.0
-    assert active_dataset.filename == "wavy00.vts"
+    assert active_dataset.filename == "wavy/wavy00.vts"
     assert active_dataset.group == ""
     assert active_dataset.part == 0
 
