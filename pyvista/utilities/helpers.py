@@ -751,7 +751,7 @@ def wrap(dataset):
     if hasattr(dataset, 'GetClassName'):
         key = dataset.GetClassName()
         try:
-            return wrappers[key](dataset)
+            return pyvista._wrappers[key](dataset)
         except KeyError:
             logging.warning(f'VTK data type ({key}) is not currently supported by pyvista.')
         return

@@ -158,6 +158,8 @@ sphinx_gallery_conf = {
         "%matplotlib inline\n"
         "from pyvista import set_plot_theme\n"
         "set_plot_theme('document')\n"
+        # Reset all values of wrapping `vtkPolyData` in examples
+        "pyvista._wrappers['vtkPolyData'] = pyvista.PolyData\n"
     ),
 }
 

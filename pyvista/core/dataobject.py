@@ -48,8 +48,8 @@ class DataObject:
     def _from_file(self, filename: Union[str, Path], **kwargs):
         data = pyvista.read(filename, **kwargs)
         if not isinstance(self, type(data)):
-            raise ValueError(f'Reading file returned data of `{data.GetClassName()}`, '
-                             f'but `{self.GetClassName()}` was expected.')
+            raise ValueError(f'Reading file returned data of `{type(data).__name__}`, '
+                             f'but `{type(self).__name__}` was expected.')
         self.shallow_copy(data)
         self._post_file_load_processing()
 

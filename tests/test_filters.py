@@ -1511,8 +1511,8 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_arrays)
 ])
 def test_transform_inplace_bad_types(dataset):
     # assert that transformations of these types throw the correct error
-    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90, progress_bar=True)  # rotate about x-axis by 90 degrees
-    with pytest.raises(ValueError):
+    tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)  # rotate about x-axis by 90 degrees
+    with pytest.raises(TypeError):
         dataset.transform(tf, inplace=True)
 
 
@@ -1578,9 +1578,9 @@ def test_reflect_inplace(dataset):
     examples.load_uniform(),  # UniformGrid
     examples.load_rectilinear(),  # RectilinearGrid
 ])
-def test_transform_inplace_bad_types(dataset):
+def test_transform_inplace_bad_types_2(dataset):
     # assert that transformations of these types throw the correct error
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         dataset.reflect((1, 0, 0), inplace=True)
 
 

@@ -2090,8 +2090,8 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, opacity=0.5)
 
         """
-        if not poly_data.is_all_triangles:
-            raise NotAllTrianglesError('Can only flip normals on an all triangle mesh')
+        if not poly_data.is_all_triangles():
+            raise NotAllTrianglesError('Can only flip normals on an all triangle mesh.')
 
         f = poly_data.faces.reshape((-1, 4))
         f[:, 1:] = f[:, 1:][:, ::-1]
