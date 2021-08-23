@@ -392,32 +392,47 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         if isinstance(faces, CellArray):
             self.SetPolys(faces)
         else:
-            # faster to mutate in-place if array is same size?
+            # TODO: faster to mutate in-place if array is same size?
             self.SetPolys(CellArray(faces))
 
     @property
     def is_all_triangles(self):
-        """Return ``True`` if all the faces of the ``PolyData`` are triangles.
+        """Return if all the faces of the :class:`pyvista.PolyData` are triangles.
 
         .. versionchanged:: 0.32.0
-           Is now a property.  Calling this value will warn the
-           user that this should not be called.
+           ``is_all_triangles`` is now a property.  Calling this value
+           will warn the user that this should not be called.
+           Additionally, the ``is`` operator will not work the return
+           value of this property since it is not a ``bool``           
 
         Returns
         -------
-        bool
-            ``True`` if all the faces of the ``PolyData`` are triangles.
+        CallableBool
+            ``True`` if all the faces of the :class:`pyvista.PolyData`
+            are triangles and does not contain any vertices or lines.
 
         Examples
         --------
+        Show a mesh from :func:`pyvista.Plane` is not composed of all
+        triangles.
+
         >>> import pyvista
         >>> plane = pyvista.Plane()
         >>> plane.is_all_triangles
-        False
+        False <CallableBool>
+
+        Show that the mesh from :func:`pyvista.Sphere` contains only
+        triangles.
 
         >>> sphere = pyvista.Sphere()
         >>> sphere.is_all_triangles
-        True
+        True <CallableBool>
+
+        Notes
+        -----
+        The return value is not a ``bool`` for compatibility
+        reasons, though this behavior will change in a future
+        release.  Future versions will simply return a ``bool``.
 
         """
         class CallableBool(int):  # pragma: no cover
@@ -442,14 +457,14 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
                 return int.__new__(cls, bool(value))        
 
             def __call__(self):
-                """Return bool of self and permit calling this bool."""
+                """Return a ``bool`` of self."""
                 warnings.warn('``is_all_triangles`` is now property as of 0.32.0 and '
                               'does not need ()', DeprecationWarning)
                 return bool(self)
 
             def __repr__(self):
                 """Return the string of bool."""
-                return str(bool(self))
+                return f'{bool(self)} <CallableBool>'
 
         # Need to make sure there are only face cells and no lines/verts
         if not self.n_faces or self.n_lines or self.n_verts:
