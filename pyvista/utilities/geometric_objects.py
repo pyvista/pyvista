@@ -103,7 +103,7 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
     cylinderSource.SetCapping(capping)
     cylinderSource.SetResolution(resolution)
     cylinderSource.Update()
-    surf = pyvista.PolyData(cylinderSource.GetOutput())
+    surf = pyvista.wrap(cylinderSource.GetOutput())
     surf.rotate_z(-90)
     translate(surf, center, direction)
     return surf
@@ -253,7 +253,7 @@ def Arrow(start=(0., 0., 0.), direction=(1., 0., 0.), tip_length=0.25,
     arrow.SetShaftRadius(shaft_radius)
     arrow.SetShaftResolution(shaft_resolution)
     arrow.Update()
-    surf = pyvista.PolyData(arrow.GetOutput())
+    surf = pyvista.wrap(arrow.GetOutput())
 
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
@@ -329,7 +329,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     sphere.SetStartPhi(start_phi)
     sphere.SetEndPhi(end_phi)
     sphere.Update()
-    surf = pyvista.PolyData(sphere.GetOutput())
+    surf = pyvista.wrap(sphere.GetOutput())
     surf.rotate_y(-90)
     translate(surf, center, direction)
     return surf
@@ -378,7 +378,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
     planeSource.SetYResolution(j_resolution)
     planeSource.Update()
 
-    surf = pyvista.PolyData(planeSource.GetOutput())
+    surf = pyvista.wrap(planeSource.GetOutput())
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
@@ -679,7 +679,7 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
     src.Update()
     normal = np.array(normal)
     center = np.array(center)
-    surf = pyvista.PolyData(src.GetOutput())
+    surf = pyvista.wrap(src.GetOutput())
     surf.rotate_y(90)
     translate(surf, center, normal)
     return surf
@@ -1021,7 +1021,7 @@ def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
-    triangle = pyvista.PolyData(points, cells)
+    triangle = pyvista.wrap(pyvista.PolyData(points, cells))
 
     return triangle
 
@@ -1058,7 +1058,7 @@ def Rectangle(points=[[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
     check_valid_vector(points[3], 'points[3]')
 
     cells = np.array([[4, 0, 1, 2, 3]], ctypes.c_long)
-    rectangle = pyvista.PolyData(points, cells)
+    rectangle = pyvista.wrap(pyvista.PolyData(points, cells))
 
     return rectangle
 
@@ -1091,6 +1091,6 @@ def Circle(radius=0.5, resolution=100):
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))], ctypes.c_long)
-    circle = pyvista.PolyData(points, cells)
+    circle = pyvista.wrap(pyvista.PolyData(points, cells))
 
     return circle
