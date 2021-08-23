@@ -4172,10 +4172,13 @@ class DataSetFilters:
             raise ValueError(
                 "Transform element (3,3), the inverse scale term, is zero")
 
+        # vtkTransformFilter doesn't respect active scalars.  We need to track this
+        active_point_scalars_name = dataset.point_arrays.active_scalars_name
+        active_cell_scalars_name = dataset.cell_arrays.active_scalars_name
+
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
-        active_scalars_name = dataset.active_scalars_name
-        dataset.set_active_scalars(None)
+        dataset.active_scalars_name = None
 
         f = _vtk.vtkTransformFilter()
         f.SetInputDataObject(dataset)
@@ -4194,8 +4197,12 @@ class DataSetFilters:
         res = pyvista.core.filters._get_output(f)
 
         # make the previously active scalars active again
-        dataset.set_active_scalars(active_scalars_name)
-        res.set_active_scalars(active_scalars_name)
+        if active_point_scalars_name is not None:
+            dataset.point_arrays.active_scalars_name = active_point_scalars_name
+            res.point_arrays.active_scalars_name = active_point_scalars_name
+        if active_cell_scalars_name is not None:
+            dataset.cell_arrays.active_scalars_name = active_cell_scalars_name
+            res.cell_arrays.active_scalars_name = active_cell_scalars_name
 
         if inplace:
             if not isinstance(dataset, type(res)):

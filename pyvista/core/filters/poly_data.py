@@ -1198,7 +1198,9 @@ class PolyDataFilters(DataSetFilters):
                         flip_normals=False, consistent_normals=True,
                         auto_orient_normals=False,
                         non_manifold_traversal=True,
-                        feature_angle=30.0, inplace=False, progress_bar=False):
+                        feature_angle=30.0,
+                        inplace=False,
+                        progress_bar=False):
         """Compute point and/or cell normals for a mesh.
 
         The filter can reorder polygons to insure consistent

@@ -447,9 +447,9 @@ def test_active_vectors_eq():
     mesh.point_arrays.set_vectors(vectors0, 'vectors0')
     vectors1 = np.random.random((4, 3))
     mesh.point_arrays.set_vectors(vectors1, 'vectors1')
-    other_mesh = mesh.copy(deep=True)
 
-    mesh.point_arrays.active_vectors_name = 'vectors1'
+    other_mesh = mesh.copy(deep=True)
     assert mesh == other_mesh
+
     mesh.point_arrays.active_vectors_name = 'vectors0'
     assert mesh != other_mesh

@@ -120,6 +120,12 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.active_scalars_info
         ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Z Height')
 
+        Notes
+        -----
+        If both cell and point scalars are present and neither have
+        been set active within at the dataset level, point scalars
+        will be made active.
+
         """
         field, name = self._active_scalars_info
         exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
@@ -146,40 +152,51 @@ class DataSet(DataSetFilters, DataObject):
 
         return self._active_scalars_info
 
-        # # otherwise, pick something
-        # all_arrays = self.point_arrays.keys() + self.cell_arrays.keys()
-        # if name is None or name not in all_arrays:
-        #     # find first available array name
-        #     for attributes in (self.point_arrays, self.cell_arrays):
-        #         first_arr = next((arr for arr in attributes if arr not in exclude), None)
-        #         if first_arr is not None:
-        #             self._active_scalars_info = ActiveArrayInfo(attributes.association, first_arr)
-        #             attributes.active_scalars_name = first_arr
-        #             break
-        #     else:
-        #         self._active_scalars_info = ActiveArrayInfo(field, None)
-        return self._active_scalars_info
-
     @property
     def active_vectors_info(self) -> ActiveArrayInfo:
         """Return the active vector's field and name.
 
         Examples
         --------
-        Create a mesh, compute the normals inplace, and show that the
-        active vectors are the ``'Normals'`` array associated with points.
+        Create a mesh, compute the normals inplace, set the active
+        vectors to the normals, and show that the active vectors are
+        the ``'Normals'`` array associated with points.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> _ = mesh.compute_normals(inplace=True)
+        >>> mesh.active_vectors_name = 'Normals'
         >>> mesh.active_vectors_info
         ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Normals')
 
+        Notes
+        -----
+        If both cell and point vectors are present and neither have
+        been set active within at the dataset level, point vectors
+        will be made active.
+
         """
-        if self._active_vectors_info.name is None:
-            # Sometimes, precomputed normals aren't set as active
-            if 'Normals' in self.array_names:
-                self.set_active_vectors('Normals')
+        field, name = self._active_vectors_info
+
+        # verify this field is still valid
+        if name is not None:
+            if field is FieldAssociation.POINT:
+                if self.point_arrays.active_vectors_name != name:
+                    name = None
+            if field is FieldAssociation.CELL:
+                if self.cell_arrays.active_vectors_name != name:
+                    name = None
+
+        if name is None:
+            # check for the active vectors in point or cell arrays
+            self._active_vectors_info = ActiveArrayInfo(field, None)
+            for attr in [self.point_arrays, self.cell_arrays]:
+                name = attr.active_vectors_name
+                if name is not None:
+                    self._active_vectors_info = ActiveArrayInfo(attr.association, name)
+                    attr.active_vectors_name = name
+                    break
+
         return self._active_vectors_info
 
     @property
@@ -248,12 +265,13 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Create a mesh, compute the normals, and return the
-        name of the active vectors.
+        Create a mesh, compute the normals, set them as active, and
+        return the name of the active vectors.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> mesh_w_normals = mesh.compute_normals()
+        >>> mesh_w_normals.active_vectors_name = 'Normals'
         >>> mesh_w_normals.active_vectors_name
         'Normals'
 
@@ -379,16 +397,18 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.PolyData
+        :class:`pyvista.PolyData`
             Active vectors represented as arrows.
 
         Examples
         --------
-        Create a mesh, compute the normals, and plot the active vectors.
+        Create a mesh, compute the normals and set them active, and
+        plot the active vectors.
 
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
         >>> mesh_w_normals = mesh.compute_normals()
+        >>> mesh_w_normals.active_vectors_name = 'Normals'
         >>> arrows = mesh_w_normals.arrows
         >>> arrows.plot(show_scalar_bar=False)
 

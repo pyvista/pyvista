@@ -486,7 +486,7 @@ def test_arrows():
     arrows = sphere.arrows
     assert isinstance(arrows, pyvista.PolyData)
     assert np.any(arrows.points)
-    assert arrows.active_vectors_name == 'vectors'
+    assert arrows.active_vectors_name == 'GlyphVector'
 
 
 def active_component_consistency_check(grid, component_type, field_association="point"):
