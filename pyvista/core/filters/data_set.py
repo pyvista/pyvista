@@ -1624,7 +1624,6 @@ class DataSetFilters:
             ):
                 source_data = dataset
             else:
-                breakpoint()
                 raise ValueError("Both ``scale`` and ``orient`` must use "
                                  "point data or cell data.")
         else:

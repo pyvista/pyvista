@@ -602,6 +602,7 @@ def test_warp_by_scalar():
     assert data.n_points == warped.n_points
     # Test in place!
     foo = examples.load_hexbeam()
+    foo.point_arrays.active_scalars_name = 'sample_point_scalars'
     warped = foo.warp_by_scalar(progress_bar=True)
     foo.warp_by_scalar(inplace=True, progress_bar=True)
     assert np.allclose(foo.points, warped.points)

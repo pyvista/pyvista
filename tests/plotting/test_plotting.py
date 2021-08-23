@@ -1569,9 +1569,8 @@ def test_user_annotations_scalar_bar_mesh(uniform):
 
 def test_user_annotations_scalar_bar_volume(uniform):
     p = pyvista.Plotter()
-    p.add_volume(uniform, annotations={100.: 'yum'})
+    p.add_volume(uniform, scalars='Spatial Point Data', annotations={100.: 'yum'})
     p.show(before_close_callback=verify_cache_image)
-
 
 def test_scalar_bar_args_unmodified_add_mesh(sphere):
     sargs = {"vertical": True}

@@ -991,7 +991,6 @@ def test_cell_type(grid):
     assert isinstance(ctype, int)
 
 
-
 def test_serialize_deserialize(datasets):
     for dataset in datasets:
         dataset_2 = pickle.loads(pickle.dumps(dataset))

@@ -459,7 +459,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if type(vtk_arr) == _vtk.vtkAbstractArray:
                 return vtk_arr
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
-        if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
+        if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association.name]:
             narray = narray.view(np.bool_)
         return narray
 
@@ -669,7 +669,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
 
         if data.dtype == np.bool_:
-            self.dataset.association_bitarray_names[self.association].add(name)
+            self.dataset.association_bitarray_names[self.association.name].add(name)
             data = data.view(np.uint8)
 
         shape = data.shape
@@ -762,7 +762,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         name = self.get_array(key).GetName()  # type: ignore
         try:
-            self.dataset.association_bitarray_names[self.association].remove(name)
+            self.dataset.association_bitarray_names[self.association.name].remove(name)
         except KeyError:
             pass
         self.VTKObject.RemoveArray(key)
