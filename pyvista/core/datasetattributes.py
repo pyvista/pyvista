@@ -92,7 +92,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     >>> mesh.point_arrays
     pyvista DataSetAttributes
     Association     : POINT
-    Active Scalars  : TextureCoordinates
+    Active Scalars  : None
     Active Vectors  : vectors1
     Active Texture  : TextureCoordinates
     Contains arrays :
@@ -1026,7 +1026,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> mesh.point_arrays
         pyvista DataSetAttributes
         Association     : POINT
-        Active Scalars  : TextureCoordinates
+        Active Scalars  : None
         Active Vectors  : None
         Active Texture  : TextureCoordinates
         Contains arrays :
