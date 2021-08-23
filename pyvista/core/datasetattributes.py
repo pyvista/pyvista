@@ -97,7 +97,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     Active Texture  : TextureCoordinates
     Contains arrays :
         Normals                 float32  (4, 3)               NORMALS
-        TextureCoordinates      float32  (4, 2)               SCALARS
+        TextureCoordinates      float32  (4, 2)               TCOORDS
         my-data                 int64    (4,)
         my-other-data           int64    (4,)
         vectors1                float64  (4, 3)               VECTOR
@@ -1031,7 +1031,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Texture  : TextureCoordinates
         Contains arrays :
             Normals                 float32  (4, 3)               NORMALS
-            TextureCoordinates      float32  (4, 2)               SCALARS
+            TextureCoordinates      float32  (4, 2)               TCOORDS
 
         >>> mesh.point_arrays.normals
         pyvista_ndarray([[0.000000e+00,  0.000000e+00, -1.000000e+00],
