@@ -76,7 +76,7 @@ def test_valid_array_len_points(hexbeam):
 
 
 def test_valid_array_len_cells(hexbeam):
-    assert hexbeam.cell_arrays.valid_array_len == hexbeam.n_cells
+    assert hexbeam.cell_data.valid_array_len == hexbeam.n_cells
 
 
 def test_valid_array_len_field(hexbeam):

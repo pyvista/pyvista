@@ -1602,7 +1602,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [.5, .667, 0], [0.5, .33, 0.667]])
         >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]])
         >>> mesh = pyvista.PolyData(vertices, faces)
-        >>> mesh.cell_arrays['colors'] = [[255, 255, 255],
+        >>> mesh.cell_data['colors'] = [[255, 255, 255],
         ...                               [0, 255, 0],
         ...                               [0, 0, 255],
         ...                               [255, 0, 0]]
@@ -1980,7 +1980,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUsePointData()
                 elif use_cells:
-                    self.mesh.cell_arrays.set_array(scalars, title, True)
+                    self.mesh.cell_data.set_array(scalars, title, True)
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUseCellData()
                 else:
@@ -2448,7 +2448,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             volume.point_data.set_array(scalars, title, True)
             self.mapper.SetScalarModeToUsePointData()
         elif scalars.shape[0] == volume.n_cells:
-            volume.cell_arrays.set_array(scalars, title, True)
+            volume.cell_data.set_array(scalars, title, True)
             self.mapper.SetScalarModeToUseCellData()
         else:
             raise_not_matching(scalars, volume)
@@ -2845,7 +2845,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.renderers.deep_clean()
         if getattr(self, 'mesh', None) is not None:
             self.mesh.point_data = None
-            self.mesh.cell_arrays = None
+            self.mesh.cell_data = None
         self.mesh = None
         if getattr(self, 'mapper', None) is not None:
             self.mapper.lookup_table = None

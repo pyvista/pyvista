@@ -126,8 +126,8 @@ class StructuredGridFilters(DataSetFilters):
         if not set(dataset.point_data.keys()) == \
                set(other.point_data.keys()):
             raise RuntimeError('Grid to concatenate has different point array names.')
-        if not set(dataset.cell_arrays.keys()) == \
-               set(other.cell_arrays.keys()):
+        if not set(dataset.cell_data.keys()) == \
+               set(other.cell_data.keys()):
             raise RuntimeError('Grid to concatenate has different cell array names.')
 
         # check that points are coincident (within tolerance) along seam
@@ -164,9 +164,9 @@ class StructuredGridFilters(DataSetFilters):
 
         # concatenate cell arrays
         new_cell_data = {}
-        for name, cell_array in dataset.cell_arrays.items():
+        for name, cell_array in dataset.cell_data.items():
             arr_1 = dataset._reshape_cell_array(cell_array)
-            arr_2 = other._reshape_cell_array(other.cell_arrays[name])
+            arr_2 = other._reshape_cell_array(other.cell_data[name])
             new_cell_data[name] = np.concatenate((arr_1, arr_2),
                                                  axis=axis).ravel(order='F')
 
@@ -175,6 +175,6 @@ class StructuredGridFilters(DataSetFilters):
         joined.dimensions = list(new_dims)
         joined.points = new_points.reshape((-1, 3), order='F')
         joined.point_data.update(new_point_data)
-        joined.cell_arrays.update(new_cell_data)
+        joined.cell_data.update(new_cell_data)
 
         return joined

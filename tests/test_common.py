@@ -73,40 +73,40 @@ def test_ipython_key_completions(grid):
     assert isinstance(grid._ipython_key_completions_(), list)
 
 
-def test_cell_arrays(grid):
+def test_cell_data(grid):
     key = 'test_array_cells'
     grid[key] = np.arange(grid.n_cells)
-    assert key in grid.cell_arrays
+    assert key in grid.cell_data
 
-    orig_value = grid.cell_arrays[key][0]/1.0
-    grid.cell_arrays[key][0] += 1
-    assert orig_value == grid.cell_arrays[key][0] - 1
+    orig_value = grid.cell_data[key][0]/1.0
+    grid.cell_data[key][0] += 1
+    assert orig_value == grid.cell_data[key][0] - 1
 
-    del grid.cell_arrays[key]
-    assert key not in grid.cell_arrays
+    del grid.cell_data[key]
+    assert key not in grid.cell_data
 
-    grid.cell_arrays[key] = np.arange(grid.n_cells)
-    assert key in grid.cell_arrays
+    grid.cell_data[key] = np.arange(grid.n_cells)
+    assert key in grid.cell_data
 
     assert np.allclose(grid[key], np.arange(grid.n_cells))
 
-    grid.cell_arrays['list'] = np.arange(grid.n_cells).tolist()
-    assert isinstance(grid.cell_arrays['list'], np.ndarray)
-    assert np.allclose(grid.cell_arrays['list'], np.arange(grid.n_cells))
+    grid.cell_data['list'] = np.arange(grid.n_cells).tolist()
+    assert isinstance(grid.cell_data['list'], np.ndarray)
+    assert np.allclose(grid.cell_data['list'], np.arange(grid.n_cells))
 
 
 def test_cell_array_range(grid):
     rng = range(grid.n_cells)
-    grid.cell_arrays['tmp'] = rng
-    assert np.allclose(rng, grid.cell_arrays['tmp'])
+    grid.cell_data['tmp'] = rng
+    assert np.allclose(rng, grid.cell_data['tmp'])
 
 
-def test_cell_arrays_bad_value(grid):
+def test_cell_data_bad_value(grid):
     with pytest.raises(TypeError):
-        grid.cell_arrays['new_array'] = None
+        grid.cell_data['new_array'] = None
 
     with pytest.raises(ValueError):
-        grid.cell_arrays['new_array'] = np.arange(grid.n_cells - 1)
+        grid.cell_data['new_array'] = np.arange(grid.n_cells - 1)
 
 
 def test_field_data(grid):
@@ -293,11 +293,11 @@ def test_points_np_bool(grid):
 
 def test_cells_np_bool(grid):
     bool_arr = np.zeros(grid.n_cells, np.bool_)
-    grid.cell_arrays['bool_arr'] = bool_arr
+    grid.cell_data['bool_arr'] = bool_arr
     bool_arr[:] = True
-    assert grid.cell_arrays['bool_arr'].all()
-    assert grid.cell_arrays['bool_arr'].all()
-    assert grid.cell_arrays['bool_arr'].dtype == np.bool_
+    assert grid.cell_data['bool_arr'].all()
+    assert grid.cell_data['bool_arr'].all()
+    assert grid.cell_data['bool_arr'].dtype == np.bool_
 
 
 def test_field_np_bool(grid):
@@ -311,9 +311,9 @@ def test_field_np_bool(grid):
 
 def test_cells_uint8(grid):
     arr = np.zeros(grid.n_cells, np.uint8)
-    grid.cell_arrays['arr'] = arr
+    grid.cell_data['arr'] = arr
     arr[:] = np.arange(grid.n_cells)
-    assert np.allclose(grid.cell_arrays['arr'], np.arange(grid.n_cells))
+    assert np.allclose(grid.cell_data['arr'], np.arange(grid.n_cells))
 
 
 def test_points_uint8(grid):
@@ -358,7 +358,7 @@ def test_bitarray_cells(grid):
         np_array[i] = value
 
     grid.GetCellData().AddArray(vtk_array)
-    assert np.allclose(grid.cell_arrays['bint_arr'], np_array)
+    assert np.allclose(grid.cell_data['bint_arr'], np_array)
 
 
 def test_bitarray_field(grid):
@@ -594,7 +594,7 @@ def test_set_active_tensors_fail(grid):
 
 def test_set_active_scalars(grid):
     arr = np.arange(grid.n_cells)
-    grid.cell_arrays['tmp'] = arr
+    grid.cell_data['tmp'] = arr
     grid.set_active_scalars('tmp')
     assert np.allclose(grid.active_scalars, arr)
     # Make sure we can set no active scalars
@@ -621,12 +621,12 @@ def test_rename_array_point(grid):
 
 
 def test_rename_array_cell(grid):
-    cell_keys = list(grid.cell_arrays.keys())
+    cell_keys = list(grid.cell_data.keys())
     old_name = cell_keys[0]
     new_name = 'cell changed'
     grid.rename_array(old_name, new_name)
-    assert new_name in grid.cell_arrays
-    assert old_name not in grid.cell_arrays
+    assert new_name in grid.cell_data
+    assert old_name not in grid.cell_data
 
 
 def test_rename_array_field(grid):
@@ -647,7 +647,7 @@ def test_change_name_fail(grid):
 def test_get_cell_array_fail():
     sphere = pyvista.Sphere()
     with pytest.raises(KeyError):
-        sphere.cell_arrays[None]
+        sphere.cell_data[None]
 
 
 def test_extent_none(grid):
@@ -696,7 +696,7 @@ def test_str(grid):
 
 def test_set_cell_vectors(grid):
     arr = np.random.random((grid.n_cells, 3))
-    grid.cell_arrays['_cell_vectors'] = arr
+    grid.cell_data['_cell_vectors'] = arr
     grid.set_active_vectors('_cell_vectors')
     assert grid.active_vectors_name == '_cell_vectors'
     assert np.allclose(grid.active_vectors, arr)
@@ -783,7 +783,7 @@ def test_handle_array_with_null_name():
     poly.GetCellData().AddArray(pyvista.convert_array(np.array([])))
     html = poly._repr_html_()
     assert html is not None
-    cdata = poly.cell_arrays
+    cdata = poly.cell_data
     assert cdata is not None
     assert len(cdata) == 1
     # Add field array with no name
@@ -951,7 +951,7 @@ def test_copy_structure(grid):
     assert copy.n_cells == grid.n_cells
     assert copy.n_points == grid.n_points
     assert len(copy.field_data) == 0
-    assert len(copy.cell_arrays) == 0
+    assert len(copy.cell_data) == 0
     assert len(copy.point_data) == 0
 
 
@@ -962,7 +962,7 @@ def test_copy_attributes(grid):
     assert copy.n_cells == 0
     assert copy.n_points == 0
     assert copy.field_data.keys() == grid.field_data.keys()
-    assert copy.cell_arrays.keys() == grid.cell_arrays.keys()
+    assert copy.cell_data.keys() == grid.cell_data.keys()
     assert copy.point_data.keys() == grid.point_data.keys()
 
 
@@ -1015,9 +1015,9 @@ def test_serialize_deserialize(datasets):
             arr_expected = dataset.point_data[name]
             assert arr_have == pytest.approx(arr_expected)
 
-        for name in dataset.cell_arrays:
-            arr_have = dataset_2.cell_arrays[name]
-            arr_expected = dataset.cell_arrays[name]
+        for name in dataset.cell_data:
+            arr_have = dataset_2.cell_data[name]
+            arr_expected = dataset.cell_data[name]
             assert arr_have == pytest.approx(arr_expected)
 
         for name in dataset.field_data:

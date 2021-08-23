@@ -40,7 +40,7 @@ def test_polydata_eq(sphere):
     assert sphere != copy
 
     copy = sphere.copy(deep=True)
-    copy.cell_arrays['new'] = range(sphere.n_cells)
+    copy.cell_data['new'] = range(sphere.n_cells)
     assert sphere != copy
 
     copy = sphere.copy(deep=True)

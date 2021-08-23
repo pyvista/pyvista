@@ -237,7 +237,7 @@ class DataObject:
                     return False
 
         # these attrs can be directly compared
-        attrs = ['field_data', 'point_data', 'cell_arrays']
+        attrs = ['field_data', 'point_data', 'cell_data']
         for attr in attrs:
             if hasattr(self, attr):
                 if getattr(self, attr) != getattr(other, attr):

@@ -331,7 +331,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         (8, 6)
         >>> mesh.point_data.valid_array_len
         8
-        >>> mesh.cell_arrays.valid_array_len
+        >>> mesh.cell_data.valid_array_len
         6
         >>> mesh.field_data.valid_array_len
         0
@@ -498,8 +498,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Add a cell array to a mesh
 
         >>> cell_data = range(mesh.n_cells)
-        >>> mesh.cell_arrays.set_array(cell_data, 'my-data')
-        >>> mesh.cell_arrays['my-data']
+        >>> mesh.cell_data.set_array(cell_data, 'my-data')
+        >>> mesh.cell_data['my-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5])
 
         Add field data to a mesh.
@@ -825,9 +825,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
         >>> mesh.clear_arrays()
-        >>> mesh.cell_arrays['data0'] = [0]*mesh.n_cells
-        >>> mesh.cell_arrays['data1'] = range(mesh.n_cells)
-        >>> mesh.cell_arrays.items()
+        >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
+        >>> mesh.cell_data['data1'] = range(mesh.n_cells)
+        >>> mesh.cell_data.items()
         [('data0', pyvista_ndarray([0, 0, 0, 0, 0, 0])), ('data1', pyvista_ndarray([0, 1, 2, 3, 4, 5]))]
 
         """
@@ -862,9 +862,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
         >>> mesh.clear_arrays()
-        >>> mesh.cell_arrays['data0'] = [0]*mesh.n_cells
-        >>> mesh.cell_arrays['data1'] = range(mesh.n_cells)
-        >>> mesh.cell_arrays.values()
+        >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
+        >>> mesh.cell_data['data1'] = range(mesh.n_cells)
+        >>> mesh.cell_data.values()
         [pyvista_ndarray([0, 0, 0, 0, 0, 0]), pyvista_ndarray([0, 1, 2, 3, 4, 5])]
 
         """
@@ -1044,8 +1044,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Assign normals to the cell arrays.  An array will be added
         named ``"Normals"``.
 
-        >>> mesh.cell_arrays.normals = [[0.0, 0.0, 1.0]]
-        >>> mesh.cell_arrays
+        >>> mesh.cell_data.normals = [[0.0, 0.0, 1.0]]
+        >>> mesh.cell_data
         pyvista DataSetAttributes
         Association     : CELL
         Active Scalars  : None

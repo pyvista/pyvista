@@ -625,7 +625,7 @@ def from_meshio(mesh):
     grid.point_data.update({k: np.array(v, np.float64) for k, v in mesh.point_data.items()})
 
     # Set cell data
-    grid.cell_arrays.update(cell_data)
+    grid.cell_data.update(cell_data)
 
     # Call datatype-specific post-load processing
     grid._post_file_load_processing()
@@ -726,7 +726,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     point_data = {k.replace(" ", "_"): v for k, v in mesh.point_data.items()}
 
     # Get cell data
-    vtk_cell_data = mesh.cell_arrays
+    vtk_cell_data = mesh.cell_data
     n_cells = np.cumsum([len(c[1]) for c in cells[:-1]])
     cell_data = (
         {k.replace(" ", "_"): np.split(v, n_cells) for k, v in vtk_cell_data.items()}

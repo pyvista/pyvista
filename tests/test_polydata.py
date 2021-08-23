@@ -500,7 +500,7 @@ def test_compute_normals(sphere):
     sphere_normals.compute_normals(inplace=True)
 
     point_normals = sphere_normals.point_data['Normals']
-    cell_normals = sphere_normals.cell_arrays['Normals']
+    cell_normals = sphere_normals.cell_data['Normals']
     assert point_normals.shape[0] == sphere.n_points
     assert cell_normals.shape[0] == sphere.n_cells
 
@@ -585,7 +585,7 @@ def test_remove_points_any(sphere):
 
 def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
-    sphere_copy.cell_arrays['ind'] = np.arange(sphere_copy.n_faces)
+    sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces)
     remove = sphere.faces[1:4]
     sphere_copy.remove_points(remove, inplace=True, mode='all')
     assert sphere_copy.n_points == sphere.n_points

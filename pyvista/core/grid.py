@@ -439,7 +439,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         zcoords = gen_coords(2)
         grid = pyvista.RectilinearGrid(xcoords, ycoords, zcoords)
         grid.point_data.update(self.point_data)
-        grid.cell_arrays.update(self.cell_arrays)
+        grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
         grid.copy_meta_from(self)
         return grid

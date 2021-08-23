@@ -1288,7 +1288,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_with_norm = sphere.compute_normals()
         >>> sphere_with_norm.point_data['Normals'].shape
         (842, 3)
-        >>> sphere_with_norm.cell_arrays['Normals'].shape
+        >>> sphere_with_norm.cell_data['Normals'].shape
         (1680, 3)
 
         See :ref:`surface_normal_example` for more examples using this filter.
@@ -2062,9 +2062,9 @@ class PolyDataFilters(DataSetFilters):
             for key in poly_data.point_data:
                 newmesh.point_data[key] = poly_data.point_data[key][ridx]
 
-            for key in poly_data.cell_arrays:
+            for key in poly_data.cell_data:
                 try:
-                    newmesh.cell_arrays[key] = poly_data.cell_arrays[key][fmask]
+                    newmesh.cell_data[key] = poly_data.cell_data[key][fmask]
                 except:
                     logging.warning(f'Unable to pass cell key {key} onto reduced mesh')
 
@@ -2752,6 +2752,6 @@ class PolyDataFilters(DataSetFilters):
             # Note: Since all other cell arrays are destroyed when
             # generate_scalars is True, we can always index the first cell
             # array.
-            output.cell_arrays.GetAbstractArray(0).SetName('collision_rgba')
+            output.cell_data.GetAbstractArray(0).SetName('collision_rgba')
 
         return output, alg.GetNumberOfContacts()

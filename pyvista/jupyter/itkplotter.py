@@ -154,7 +154,7 @@ class PlotterITK():
 
         # make the scalars active
         if isinstance(scalars, str):
-            if scalars in mesh.point_data or scalars in mesh.cell_arrays:
+            if scalars in mesh.point_data or scalars in mesh.cell_data:
                 array = mesh[scalars].copy()
             else:
                 raise ValueError(f'Scalars ({scalars}) not in mesh')
@@ -172,8 +172,8 @@ class PlotterITK():
         if 'vtkOriginalPointIds' in mesh.point_data:
             mesh.point_data.pop('vtkOriginalPointIds')
 
-        if 'vtkOriginalCellIds' in mesh.cell_arrays:
-            mesh.cell_arrays.pop('vtkOriginalCellIds')
+        if 'vtkOriginalCellIds' in mesh.cell_data:
+            mesh.cell_data.pop('vtkOriginalCellIds')
 
         from itkwidgets._transform_types import to_geometry
         mesh = to_geometry(mesh)

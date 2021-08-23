@@ -858,7 +858,7 @@ def test_show_axes():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-def test_plot_cell_arrays(sphere):
+def test_plot_cell_data(sphere):
     plotter = pyvista.Plotter()
     scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
@@ -966,7 +966,7 @@ def test_multi_block_plot():
     multi.append(examples.load_rectilinear())
     uni = examples.load_uniform()
     arr = np.random.rand(uni.n_cells)
-    uni.cell_arrays.set_array(arr, 'Random Data')
+    uni.cell_data.set_array(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
     multi[3] = examples.load_airplane()
@@ -1034,7 +1034,7 @@ def test_plot_rgb():
                             z_face_color,
                             z_face_color,
                             ], dtype=np.uint8)
-    cube.cell_arrays['face_colors'] = face_colors
+    cube.cell_data['face_colors'] = face_colors
     plotter = pyvista.Plotter()
     plotter.add_mesh(cube, scalars='face_colors', rgb=True)
     plotter.show(before_close_callback=verify_cache_image)
@@ -1945,7 +1945,7 @@ def test_scalar_cell_priorities():
         [255,255,255]
     ]
 
-    mesh.cell_arrays['colors'] = colors
+    mesh.cell_data['colors'] = colors
     plotter = pyvista.Plotter()
     plotter.add_mesh(mesh,
                      scalars='colors',

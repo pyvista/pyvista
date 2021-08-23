@@ -1707,7 +1707,7 @@ class DataSetFilters:
         >>> mesh = pyvista.Sphere() + pyvista.Cube()
         >>> largest = mesh.extract_largest()
         >>> largest.point_data.clear()
-        >>> largest.cell_arrays.clear()
+        >>> largest.cell_data.clear()
         >>> largest.plot()
 
         See :ref:`volumetric_example` for more examples using this filter.
@@ -1752,7 +1752,7 @@ class DataSetFilters:
         """
         # Get the connectivity and label different bodies
         labeled = DataSetFilters.connectivity(dataset)
-        classifier = labeled.cell_arrays['RegionId']
+        classifier = labeled.cell_data['RegionId']
         bodies = pyvista.MultiBlock()
         for vid in np.unique(classifier):
             # Now extract it:
@@ -1761,7 +1761,7 @@ class DataSetFilters:
                 # strange behavior:
                 # must use this method rather than deleting from the point_data
                 # or else object is collected.
-                b.cell_arrays.remove('RegionId')
+                b.cell_data.remove('RegionId')
                 b.point_data.remove('RegionId')
             bodies.append(b)
 
@@ -3887,7 +3887,7 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Dataset with the computed mesh quality in the
-            ``cell_arrays`` as the ``"CellQuality"`` array.
+            ``cell_data`` as the ``"CellQuality"`` array.
 
         Examples
         --------
@@ -4177,7 +4177,7 @@ class DataSetFilters:
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
         active_point_scalars_name = dataset.point_data.active_scalars_name
-        active_cell_scalars_name = dataset.cell_arrays.active_scalars_name
+        active_cell_scalars_name = dataset.cell_data.active_scalars_name
 
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
@@ -4204,8 +4204,8 @@ class DataSetFilters:
             dataset.point_data.active_scalars_name = active_point_scalars_name
             res.point_data.active_scalars_name = active_point_scalars_name
         if active_cell_scalars_name is not None:
-            dataset.cell_arrays.active_scalars_name = active_cell_scalars_name
-            res.cell_arrays.active_scalars_name = active_cell_scalars_name
+            dataset.cell_data.active_scalars_name = active_cell_scalars_name
+            res.cell_data.active_scalars_name = active_cell_scalars_name
 
         if inplace:
             dataset.overwrite(res)

@@ -652,7 +652,7 @@ def test_cell_data_to_point_data():
     data = examples.load_uniform()
     foo = data.cell_data_to_point_data(progress_bar=True)
     assert foo.n_arrays == 2
-    assert len(foo.cell_arrays.keys()) == 0
+    assert len(foo.cell_data.keys()) == 0
     _ = data.ctp()
 
 
@@ -1343,7 +1343,7 @@ def structured_grids_split_coincident():
     point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
     cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
     structured.point_data['point_data'] = point_data
-    structured.cell_arrays['cell_data'] = cell_data
+    structured.cell_data['cell_data'] = cell_data
     voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1])
     voi_2 = structured.extract_subset([0, 80, 40, 80, 0, 1])
     return voi_1, voi_2, structured
@@ -1356,7 +1356,7 @@ def structured_grids_split_disconnected():
     point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
     cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
     structured.point_data['point_data'] = point_data
-    structured.cell_arrays['cell_data'] = cell_data
+    structured.cell_data['cell_data'] = cell_data
     voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1])
     voi_2 = structured.extract_subset([0, 80, 45, 80, 0, 1])
     return voi_1, voi_2
@@ -1370,8 +1370,8 @@ def test_concatenate_structured(structured_grids_split_coincident,
     assert structured.volume == pytest.approx(joined.volume)
     assert structured.point_data['point_data'] ==\
            pytest.approx(joined.point_data['point_data'])
-    assert structured.cell_arrays['cell_data'] ==\
-           pytest.approx(joined.cell_arrays['cell_data'])
+    assert structured.cell_data['cell_data'] ==\
+           pytest.approx(joined.cell_data['cell_data'])
 
 
 def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident):
@@ -1411,7 +1411,7 @@ def test_concatenate_structured_different_arrays(structured_grids_split_coincide
         joined = voi_1.concatenate(voi_2, axis=1)
 
     voi_1.point_data['point_data'] = point_data
-    voi_1.cell_arrays.remove('cell_data')
+    voi_1.cell_data.remove('cell_data')
     with pytest.raises(RuntimeError):
         joined = voi_1.concatenate(voi_2, axis=1)
 
@@ -1444,7 +1444,7 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
         tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
-            dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+            dataset.cell_data['C%d' % i] = np.random.rand(dataset.n_cells, 3)
 
         for i in range(num_point_data):
             dataset.point_data['P%d' % i] = np.random.rand(dataset.n_points, 3)
@@ -1464,8 +1464,8 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
         for name, array in dataset.point_data.items():
             assert transformed.point_data[name] == pytest.approx(array)
 
-        for name, array in dataset.cell_arrays.items():
-            assert transformed.cell_arrays[name] == pytest.approx(array)
+        for name, array in dataset.cell_data.items():
+            assert transformed.cell_data[name] == pytest.approx(array)
 
 
 @pytest.mark.parametrize('num_cell_arrays,num_point_data',
@@ -1476,7 +1476,7 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
-            dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+            dataset.cell_data['C%d' % i] = np.random.rand(dataset.n_cells, 3)
 
         for i in range(num_point_data):
             dataset.point_data['P%d' % i] = np.random.rand(dataset.n_points, 3)
@@ -1495,9 +1495,9 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
 
         for i in range(num_cell_arrays):
-            assert dataset.cell_arrays['C%d' % i][:, 0] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 0])
-            assert dataset.cell_arrays['C%d' % i][:, 2] == pytest.approx(-transformed.cell_arrays['C%d' % i][:, 1])
-            assert dataset.cell_arrays['C%d' % i][:, 1] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 2])
+            assert dataset.cell_data['C%d' % i][:, 0] == pytest.approx( transformed.cell_data['C%d' % i][:, 0])
+            assert dataset.cell_data['C%d' % i][:, 2] == pytest.approx(-transformed.cell_data['C%d' % i][:, 1])
+            assert dataset.cell_data['C%d' % i][:, 1] == pytest.approx( transformed.cell_data['C%d' % i][:, 2])
 
         for i in range(num_point_data):
             assert dataset.point_data['P%d' % i][:, 0] == pytest.approx( transformed.point_data['P%d' % i][:, 0])
@@ -1533,7 +1533,7 @@ def test_reflect_mesh_with_vectors(datasets):
             dataset.compute_normals(inplace=True, progress_bar=True)
 
         # add vector data to cell and point arrays
-        dataset.cell_arrays['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
+        dataset.cell_data['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
             np.array([1, 2, 3], dtype=float).reshape((1, 3))
         dataset.point_data['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
             np.array([1, 2, 3], dtype=float).reshape((1, 3))
@@ -1548,14 +1548,14 @@ def test_reflect_mesh_with_vectors(datasets):
 
         # assert normals are reflected
         if hasattr(dataset, 'compute_normals'):
-            assert np.allclose(dataset.cell_arrays['Normals'][:, 0], -reflected.cell_arrays['Normals'][:, 0])
-            assert np.allclose(dataset.cell_arrays['Normals'][:, 1:], reflected.cell_arrays['Normals'][:, 1:])
+            assert np.allclose(dataset.cell_data['Normals'][:, 0], -reflected.cell_data['Normals'][:, 0])
+            assert np.allclose(dataset.cell_data['Normals'][:, 1:], reflected.cell_data['Normals'][:, 1:])
             assert np.allclose(dataset.point_data['Normals'][:, 0], -reflected.point_data['Normals'][:, 0])
             assert np.allclose(dataset.point_data['Normals'][:, 1:], reflected.point_data['Normals'][:, 1:])
 
         # assert other vector fields are reflected
-        assert np.allclose(dataset.cell_arrays['C'][:, 0], -reflected.cell_arrays['C'][:, 0])
-        assert np.allclose(dataset.cell_arrays['C'][:, 1:], reflected.cell_arrays['C'][:, 1:])
+        assert np.allclose(dataset.cell_data['C'][:, 0], -reflected.cell_data['C'][:, 0])
+        assert np.allclose(dataset.cell_data['C'][:, 1:], reflected.cell_data['C'][:, 1:])
         assert np.allclose(dataset.point_data['P'][:, 0], -reflected.point_data['P'][:, 0])
         assert np.allclose(dataset.point_data['P'][:, 1:], reflected.point_data['P'][:, 1:])
 
