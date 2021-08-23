@@ -400,7 +400,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         """Return ``True`` if all the faces of the ``PolyData`` are triangles.
 
         .. versionchanged:: 0.32.0
-           Is now a property.  Evaluating this value will warn the
+           Is now a property.  Calling this value will warn the
            user that this should not be called.
 
         Returns
@@ -429,6 +429,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             Implemented for backwards compatibility as
             ``is_all_triangles`` was changed to be a property in
             ``0.32.0``.
+
             """
 
             def __new__(cls, value):
