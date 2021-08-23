@@ -975,7 +975,7 @@ def Pyramid(points=None):
                   [-1.0, 1.0, 0.0],
                   [-1.0, -1.0, 0.0],
                   [1.0, -1.0, 0.0],
-                  [0.0, 0.0, np.sqrt(2.0**2-2.0*np.sqrt(2.0)/2.0)]]
+                  [0.0, 0.0, (4 - 2**0.5)**0.5]]
 
     if len(points) != 5:
         raise TypeError('Points must be given as length 5 np.ndarray or list')
