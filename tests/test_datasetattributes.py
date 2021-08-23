@@ -11,8 +11,6 @@ import pyvista
 from pyvista.utilities import FieldAssociation
 
 
-
-
 @fixture()
 def hexbeam_point_attributes(hexbeam):
     return hexbeam.point_arrays

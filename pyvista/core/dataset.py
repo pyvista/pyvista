@@ -103,10 +103,16 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def active_scalars_info(self) -> ActiveArrayInfo:
-        """Return the active scalar's field and name.
+        """Return the active scalar's association and name.
 
-        Field is the data association (e.g. point, cell, or field),
-        and name of the scalars.
+        Association refers to the data association (e.g. point, cell, or
+        field) of the active scalars.
+        
+        Returns
+        -------
+        ActiveArrayInfo
+            The scalars info in an object with namedtuple semantics,
+            with attributes ``association`` and ``name``.
 
         Examples
         --------
@@ -154,8 +160,16 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def active_vectors_info(self) -> ActiveArrayInfo:
-        """Return the active vector's field and name.
+        """Return the active vector's association and name.
 
+        Association refers to the data association (e.g. point, cell, or
+        field) of the active vectors.
+        
+        Returns
+        -------
+        ActiveArrayInfo
+            The vectors info in an object with namedtuple semantics,
+            with attributes ``association`` and ``name``.
         Examples
         --------
         Create a mesh, compute the normals inplace, set the active
@@ -306,7 +320,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def points(self) -> pyvista_ndarray:
-        """Return a pointer to the points as a numpy object.
+        """Return a reference to the points as a numpy object.
 
         Examples
         --------
@@ -340,10 +354,9 @@ class DataSet(DataSetFilters, DataObject):
                          [ 0.5,  0.5,  1.5],
                          [ 0.5, -0.5,  1.5]], dtype=float32)
 
-        You can also update the points in-place.  For example, you can
-        scale the mesh with:
+        You can also update the points in-place:
 
-        >>> cube.points *= 2
+        >>> cube.points[...] = 2*(points + 1)
         >>> cube.points
         pyvista_ndarray([[-1., -1.,  1.],
                          [-1., -1.,  3.],
@@ -429,7 +442,7 @@ class DataSet(DataSetFilters, DataObject):
     def vectors(self) -> Optional[pyvista_ndarray]:  # pragma: no cover
         """Return active vectors.
 
-        .. deprecated:: 0.31.0
+        .. deprecated:: 0.32.0
            Use of `DataSet.vectors` to return vector data is deprecated.
 
         """
@@ -441,12 +454,6 @@ class DataSet(DataSetFilters, DataObject):
 
     @vectors.setter
     def vectors(self, array: np.ndarray):  # pragma: no cover
-        """Set the active vector.
-
-        .. deprecated:: 0.31.0
-           Use of `DataSet.vectors` to add vector data is deprecated.
-
-        """
         warnings.warn("Use of `DataSet.vectors` to add vector data is deprecated. "
             "Use `DataSet['vector_name'] = data`. "
             "Use `DataSet.active_vectors_name = 'vector_name' to make active."
@@ -513,7 +520,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Clear the texture from the globe example
+        Clear the texture from the globe example.
 
         >>> from pyvista import examples
         >>> globe = examples.load_globe()
@@ -651,7 +658,7 @@ class DataSet(DataSetFilters, DataObject):
 
         preference : str, optional
             If there are two arrays of the same name associated with
-            points, cells, or field data, will priortize an array
+            points, cells, or field data, it will prioritize an array
             matching this type.  Can be either ``'cell'``,
             ``'field'``, or ``'point'``.
 
@@ -862,7 +869,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Create a sphere and translate it by ``(2, 1, 2)``
+        Create a sphere and translate it by ``(2, 1, 2)``.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
@@ -1064,7 +1071,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Add point arrays to a mesh and list the available ``point_arrays``
+        Add point arrays to a mesh and list the available ``point_arrays``.
 
         >>> import pyvista
         >>> import numpy as np
@@ -1082,7 +1089,7 @@ class DataSet(DataSetFilters, DataObject):
             my_array                float64  (8,)
             my_other_array          int64    (8,)                 SCALARS
 
-        Access an array from point_arrays
+        Access an array from ``point_arrays``.
 
         >>> mesh.point_arrays['my_other_array']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
@@ -1142,7 +1149,39 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def cell_arrays(self) -> DataSetAttributes:
-        """Return vtkCellData as DataSetAttributes."""
+        """Return vtkCellData as DataSetAttributes.
+
+        Examples
+        --------
+        Add cell arrays to a mesh and list the available ``cell_arrays``. 
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> mesh = pyvista.Cube().clean()
+        >>> mesh.clear_arrays()
+        >>> mesh.cell_arrays['my_array'] = np.random.random(mesh.n_cells)
+        >>> mesh.cell_arrays['my_other_array'] = np.arange(mesh.n_cells)
+        >>> mesh.cell_arrays
+        pyvista DataSetAttributes
+        Association     : CELL
+        Active Scalars  : my_other_array
+        Active Vectors  : None
+        Active Texture  : None
+        Contains arrays :
+            my_array                float64  (6,)
+            my_other_array          int64    (6,)                 SCALARS
+
+        Access an array from ``cell_arrays``.
+
+        >>> mesh.cell_arrays['my_other_array']
+        pyvista_ndarray([0, 1, 2, 3, 4, 5])
+
+        Or access it directly from the mesh.
+
+        >>> mesh['my_array'].shape
+        (6,)
+
+        """
         return DataSetAttributes(self.GetCellData(), dataset=self,
                                  association=FieldAssociation.CELL)
 
@@ -1179,8 +1218,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Notes
         -----
-        For :class:`pyvista.PolyData`, this will also return the
-        number of faces.
+        This is identical to :attr:`n_faces <pyvista.PolyData.n_faces>`
+        in :class:`pyvista.PolyData`.
 
         """
         return self.GetNumberOfCells()
@@ -1199,7 +1238,7 @@ class DataSet(DataSetFilters, DataObject):
     def bounds(self) -> List[float]:
         """Return the bounding box of this dataset.
 
-        The form is: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+        The form is: ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         Examples
         --------
@@ -1221,7 +1260,7 @@ class DataSet(DataSetFilters, DataObject):
         --------
         Get the length of the bounding box of a cube.  This should
         match ``3**(1/2)`` since it is the diagonal of a cube that is
-        ``1 x 1 x 1``
+        ``1 x 1 x 1``.
 
         >>> import pyvista
         >>> mesh = pyvista.Cube()
@@ -1277,7 +1316,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Get the volume of a sphere
+        Get the volume of a sphere.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
@@ -1543,7 +1582,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh_a = pyvista.Sphere()
         >>> mesh_b = pyvista.Cube().clean()
         >>> mesh_a.overwrite(mesh_b)
-        >>> id(mesh_a.points) == id(mesh_b.points)
+        >>> mesh_a.points is mesh_b.points
         True
 
         """
@@ -1556,12 +1595,12 @@ class DataSet(DataSetFilters, DataObject):
             self.copy_meta_from(mesh)
 
     def cast_to_unstructured_grid(self) -> 'pyvista.UnstructuredGrid':
-        """Get a new representation of this object as an :class:`pyvista.UnstructuredGrid`.
+        """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
 
         Returns
         -------
         :class:`pyvista.UnstructuredGrid`
-            Dataset cast into an UnstructuredGrid.
+            Dataset cast into an :class:`pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -1602,11 +1641,11 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         int
-            the index of the point in this mesh that is closes to the given point.
+            The index of the point in this mesh that is closest to the given point.
 
         Examples
         --------
-        Find the index of the closest point to ``(0, 1, 0))``.
+        Find the index of the closest point to ``(0, 1, 0)``.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()

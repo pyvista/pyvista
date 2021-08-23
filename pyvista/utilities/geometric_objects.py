@@ -1006,7 +1006,7 @@ def Triangle(points=None):
     Parameters
     ----------
     points : sequence, optional
-        Points of the triangle.  Defaults to an approximate isosceles
+        Points of the triangle.  Defaults to a right isosceles
         triangle (see example).
 
     Returns
@@ -1024,7 +1024,7 @@ def Triangle(points=None):
     >>> triangle.plot(show_edges=True, line_width=5)
     """
     if points is None:
-        points = [[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]
+        points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5**0.5, 0]]
 
     if len(points) != 3:
         raise TypeError('Points must be given as length 3 np.ndarray or list')
@@ -1059,9 +1059,10 @@ def Rectangle(points=None):
     >>> pointd = [0.0, 0.0, 0.0]
     >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc, pointd])
     >>> rectangle.plot(show_edges=True, line_width=5)
+
     """
     if points is None:
-        points = [[1.0, 0.0, 0], [1.0, 1.0, 0], [0.0, 1.0, 0], [0.0, 0.0, 0.0]]
+        points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
     if len(points) != 4:
         raise TypeError('Points must be given as length 4 np.ndarray or list')
 

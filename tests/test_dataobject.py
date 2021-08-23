@@ -25,7 +25,6 @@ def test_polydata_eq(sphere):
     sphere.point_arrays['data0'] = np.zeros(sphere.n_points)
     sphere.point_arrays['data1'] = np.arange(sphere.n_points)
 
-
     copy = sphere.copy(deep=True)
     assert sphere == copy
 
