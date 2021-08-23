@@ -505,7 +505,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         >>> sphere = pyvista.Sphere()
         >>> texture = np.zeros((sphere.n_points, 3), np.uint8)
         >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]  # just blue channel
-        >>> sphere.point_arrays['my_texture'] = texture
+        >>> sphere.point_data['my_texture'] = texture
         >>> sphere.save('my_mesh.ply', texture='my_texture')  # doctest: +SKIP
 
         Alternatively, provide just the texture array.  This will be
@@ -616,7 +616,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
         """
         mesh = self.compute_normals(cell_normals=False, inplace=False)
-        return mesh.point_arrays['Normals']
+        return mesh.point_data['Normals']
 
     @property
     def cell_normals(self):

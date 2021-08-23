@@ -144,13 +144,13 @@ class DataSet(DataSetFilters, DataObject):
                 if self.cell_arrays.active_scalars_name != name:
                     name = None
             elif field is FieldAssociation.POINT:
-                if self.point_arrays.active_scalars_name != name:
+                if self.point_data.active_scalars_name != name:
                     name = None
 
         if name is None:
             # check for the active scalars in point or cell arrays
             self._active_scalars_info = ActiveArrayInfo(field, None)
-            for attr in [self.point_arrays, self.cell_arrays]:
+            for attr in [self.point_data, self.cell_arrays]:
                 if attr.active_scalars_name is not None:
                     self._active_scalars_info = ActiveArrayInfo(attr.association, attr.active_scalars_name)
                     attr.active_scalars_name = attr.active_scalars_name
@@ -195,7 +195,7 @@ class DataSet(DataSetFilters, DataObject):
         # verify this field is still valid
         if name is not None:
             if field is FieldAssociation.POINT:
-                if self.point_arrays.active_vectors_name != name:
+                if self.point_data.active_vectors_name != name:
                     name = None
             if field is FieldAssociation.CELL:
                 if self.cell_arrays.active_vectors_name != name:
@@ -204,7 +204,7 @@ class DataSet(DataSetFilters, DataObject):
         if name is None:
             # check for the active vectors in point or cell arrays
             self._active_vectors_info = ActiveArrayInfo(field, None)
-            for attr in [self.point_arrays, self.cell_arrays]:
+            for attr in [self.point_data, self.cell_arrays]:
                 name = attr.active_vectors_name
                 if name is not None:
                     self._active_vectors_info = ActiveArrayInfo(attr.association, name)
@@ -244,7 +244,7 @@ class DataSet(DataSetFilters, DataObject):
         field, name = self.active_vectors_info
         try:
             if field is FieldAssociation.POINT:
-                return self.point_arrays[name]
+                return self.point_data[name]
             if field is FieldAssociation.CELL:
                 return self.cell_arrays[name]
         except KeyError:
@@ -257,7 +257,7 @@ class DataSet(DataSetFilters, DataObject):
         field, name = self.active_tensors_info
         try:
             if field is FieldAssociation.POINT:
-                return self.point_arrays[name]
+                return self.point_data[name]
             if field is FieldAssociation.CELL:
                 return self.cell_arrays[name]
         except KeyError:
@@ -435,7 +435,7 @@ class DataSet(DataSetFilters, DataObject):
 
         scale_name = f'{vectors_name} Magnitude'
         scale = np.linalg.norm(self.active_vectors, axis=1)
-        self.point_arrays.set_array(scale, scale_name)
+        self.point_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
@@ -467,7 +467,7 @@ class DataSet(DataSetFilters, DataObject):
         elif array.shape[0] != self.n_points:
             raise ValueError('Number of vectors be the same as the number of points')
 
-        self.point_arrays[DEFAULT_VECTOR_KEY] = array
+        self.point_data[DEFAULT_VECTOR_KEY] = array
         self.active_vectors_name = DEFAULT_VECTOR_KEY
 
     @property
@@ -490,11 +490,11 @@ class DataSet(DataSetFilters, DataObject):
                          [1.        , 1.        ]])
 
         """
-        return self.point_arrays.t_coords
+        return self.point_data.t_coords
 
     @t_coords.setter
     def t_coords(self, t_coords: np.ndarray):
-        self.point_arrays.t_coords = t_coords  # type: ignore
+        self.point_data.t_coords = t_coords  # type: ignore
 
     @property
     def textures(self) -> Dict[str, _vtk.vtkTexture]:
@@ -682,7 +682,7 @@ class DataSet(DataSetFilters, DataObject):
         if self.active_scalars_name == old_name:
             was_active = True
         if field == FieldAssociation.POINT:
-            self.point_arrays[new_name] = self.point_arrays.pop(old_name)
+            self.point_data[new_name] = self.point_data.pop(old_name)
         elif field == FieldAssociation.CELL:
             self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
         elif field == FieldAssociation.NONE:
@@ -698,7 +698,7 @@ class DataSet(DataSetFilters, DataObject):
         field, name = self.active_scalars_info
         try:
             if field == FieldAssociation.POINT:
-                return self.point_arrays[name]
+                return self.point_data[name]
             if field == FieldAssociation.CELL:
                 return self.cell_arrays[name]
         except KeyError:
@@ -1066,20 +1066,20 @@ class DataSet(DataSetFilters, DataObject):
         self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
 
     @property
-    def point_arrays(self) -> DataSetAttributes:
+    def point_data(self) -> DataSetAttributes:
         """Return vtkPointData as DataSetAttributes.
 
         Examples
         --------
-        Add point arrays to a mesh and list the available ``point_arrays``.
+        Add point arrays to a mesh and list the available ``point_data``.
 
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Cube().clean()
         >>> mesh.clear_arrays()
-        >>> mesh.point_arrays['my_array'] = np.random.random(mesh.n_points)
-        >>> mesh.point_arrays['my_other_array'] = np.arange(mesh.n_points)
-        >>> mesh.point_arrays
+        >>> mesh.point_data['my_array'] = np.random.random(mesh.n_points)
+        >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
+        >>> mesh.point_data
         pyvista DataSetAttributes
         Association     : POINT
         Active Scalars  : my_other_array
@@ -1089,9 +1089,9 @@ class DataSet(DataSetFilters, DataObject):
             my_array                float64  (8,)
             my_other_array          int64    (8,)                 SCALARS
 
-        Access an array from ``point_arrays``.
+        Access an array from ``point_data``.
 
-        >>> mesh.point_arrays['my_other_array']
+        >>> mesh.point_data['my_other_array']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
         Or access it directly from the mesh.
@@ -1103,7 +1103,7 @@ class DataSet(DataSetFilters, DataObject):
         return DataSetAttributes(self.GetPointData(), dataset=self,
                                  association=FieldAssociation.POINT)
 
-    def clear_point_arrays(self):
+    def clear_point_data(self):
         """Remove all point arrays.
 
         Examples
@@ -1113,14 +1113,14 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Sphere()
-        >>> mesh.point_arrays.keys()
+        >>> mesh.point_data.keys()
         ['Normals']
-        >>> mesh.clear_point_arrays()
-        >>> mesh.point_arrays.keys()
+        >>> mesh.clear_point_data()
+        >>> mesh.point_data.keys()
         []
 
         """
-        self.point_arrays.clear()
+        self.point_data.clear()
 
     def clear_cell_arrays(self):
         """Remove all cell arrays."""
@@ -1136,14 +1136,14 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Sphere()
-        >>> mesh.point_arrays.keys()
+        >>> mesh.point_data.keys()
         ['Normals']
         >>> mesh.clear_arrays()
-        >>> mesh.point_arrays.keys()
+        >>> mesh.point_data.keys()
         []
 
         """
-        self.clear_point_arrays()
+        self.clear_point_data()
         self.clear_cell_arrays()
         self.clear_field_data()
 
@@ -1347,7 +1347,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
         >>> mesh.clear_arrays()
-        >>> mesh.point_arrays['point-data'] = range(mesh.n_points)
+        >>> mesh.point_data['point-data'] = range(mesh.n_points)
         >>> mesh.cell_arrays['cell-data'] = range(mesh.n_cells)
         >>> mesh.field_data['field-data'] = ['a', 'b', 'c']
         >>> mesh.array_names
@@ -1395,7 +1395,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
         >>> mesh.clear_arrays()
-        >>> mesh.point_arrays['point-data'] = range(mesh.n_points)
+        >>> mesh.point_data['point-data'] = range(mesh.n_points)
         >>> mesh.cell_arrays['cell-data'] = range(mesh.n_cells)
         >>> mesh.field_data['field-data'] = ['a', 'b', 'c']
         >>> mesh.array_names
@@ -1435,7 +1435,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.array_names
 
     def __setitem__(self, name: str, scalars: np.ndarray):
-        """Add/set an array in the point_arrays, or cell_arrays accordingly.
+        """Add/set an array in the point_data, or cell_arrays accordingly.
 
         It depends on the array's length, or specified mode.
 
@@ -1449,7 +1449,7 @@ class DataSet(DataSetFilters, DataObject):
             scalars = np.array(scalars)
         # Now check array size to determine which field to place array
         if scalars.shape[0] == self.n_points:
-            self.point_arrays[name] = scalars
+            self.point_data[name] = scalars
         elif scalars.shape[0] == self.n_cells:
             self.cell_arrays[name] = scalars
         else:
@@ -1478,14 +1478,14 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.point_arrays['my_array'] = range(mesh.n_points)
+        >>> mesh.point_data['my_array'] = range(mesh.n_points)
         >>> mesh.array_names
         ['my_array', 'Normals']
 
         """
         names = []
         names.extend(self.field_data.keys())
-        names.extend(self.point_arrays.keys())
+        names.extend(self.point_data.keys())
         names.extend(self.cell_arrays.keys())
         try:
             names.remove(self.active_scalars_name)
@@ -1544,7 +1544,7 @@ class DataSet(DataSetFilters, DataObject):
                     ncomp = 1
                 return row.format(name, field, arr.dtype, ncomp, dl, dh)
 
-            for key, arr in self.point_arrays.items():
+            for key, arr in self.point_data.items():
                 fmt += format_array(key, arr, 'Points')
             for key, arr in self.cell_arrays.items():
                 fmt += format_array(key, arr, 'Cells')

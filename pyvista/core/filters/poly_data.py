@@ -48,7 +48,7 @@ class PolyDataFilters(DataSetFilters):
         """
         if not isinstance(poly_data, pyvista.PolyData):  # pragma: no cover
             poly_data = pyvista.PolyData(poly_data)
-        poly_data.point_arrays['point_ind'] = np.arange(poly_data.n_points)
+        poly_data.point_data['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
         featureEdges.FeatureEdgesOn()
@@ -60,7 +60,7 @@ class PolyDataFilters(DataSetFilters):
         edges = _get_output(featureEdges)
         orig_id = pyvista.point_array(edges, 'point_ind')
 
-        return np.in1d(poly_data.point_arrays['point_ind'], orig_id,
+        return np.in1d(poly_data.point_data['point_ind'], orig_id,
                        assume_unique=True)
 
     def _boolean(poly_data, btype, other_mesh, tolerance, progress_bar=False):
@@ -597,7 +597,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista
         >>> plane = pyvista.Plane()
-        >>> plane.point_arrays.clear()
+        >>> plane.point_data.clear()
         >>> plane.plot(show_edges=True, line_width=5)
 
         Convert it to an all triangle mesh.
@@ -1286,7 +1286,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> sphere_with_norm = sphere.compute_normals()
-        >>> sphere_with_norm.point_arrays['Normals'].shape
+        >>> sphere_with_norm.point_data['Normals'].shape
         (842, 3)
         >>> sphere_with_norm.cell_arrays['Normals'].shape
         (1680, 3)
@@ -2059,8 +2059,8 @@ class PolyDataFilters(DataSetFilters):
 
         # Add scalars back to mesh if requested
         if keep_scalars:
-            for key in poly_data.point_arrays:
-                newmesh.point_arrays[key] = poly_data.point_arrays[key][ridx]
+            for key in poly_data.point_data:
+                newmesh.point_data[key] = poly_data.point_data[key][ridx]
 
             for key in poly_data.cell_arrays:
                 try:

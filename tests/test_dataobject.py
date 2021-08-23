@@ -16,14 +16,14 @@ def test_uniform_eq():
     copy.origin = [0, 0, 0]
     assert orig == copy
 
-    copy.point_arrays.clear()
+    copy.point_data.clear()
     assert orig != copy
 
 
 def test_polydata_eq(sphere):
     sphere.clear_arrays()
-    sphere.point_arrays['data0'] = np.zeros(sphere.n_points)
-    sphere.point_arrays['data1'] = np.arange(sphere.n_points)
+    sphere.point_data['data0'] = np.zeros(sphere.n_points)
+    sphere.point_data['data1'] = np.arange(sphere.n_points)
 
     copy = sphere.copy(deep=True)
     assert sphere == copy
@@ -36,7 +36,7 @@ def test_polydata_eq(sphere):
     assert sphere != copy
 
     copy = sphere.copy(deep=True)
-    copy.point_arrays['new'] = range(sphere.n_points)
+    copy.point_data['new'] = range(sphere.n_points)
     assert sphere != copy
 
     copy = sphere.copy(deep=True)
@@ -44,7 +44,7 @@ def test_polydata_eq(sphere):
     assert sphere != copy
 
     copy = sphere.copy(deep=True)
-    copy.point_arrays.active_scalars_name = 'data0'
+    copy.point_data.active_scalars_name = 'data0'
     assert sphere != copy
 
     copy = sphere.copy(deep=True)

@@ -223,7 +223,7 @@ class DataSetFilters:
 
         inplace : bool
             If ``True``, a new scalar array will be added to the
-            ``point_arrays`` of this mesh and the modified mesh will
+            ``point_data`` of this mesh and the modified mesh will
             be returned. Otherwise a copy of this mesh is returned
             with that scalar field added.
 
@@ -258,10 +258,10 @@ class DataSetFilters:
         dists = _vtk.vtkDoubleArray()
         function.FunctionValue(points, dists)
         if inplace:
-            dataset.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
+            dataset.point_data['implicit_distance'] = pyvista.convert_array(dists)
             return dataset
         result = dataset.copy()
-        result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
+        result.point_data['implicit_distance'] = pyvista.convert_array(dists)
         return result
 
     def clip_scalar(dataset, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False, both=False):
@@ -1160,7 +1160,7 @@ class DataSetFilters:
         output = _get_output(alg)
         if not set_active:
             # 'Elevation' is automatically made active by the VTK filter
-            output.point_arrays.active_scalars_name = dataset.point_arrays.active_scalars_name
+            output.point_data.active_scalars_name = dataset.point_data.active_scalars_name
         return output
 
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
@@ -1453,7 +1453,7 @@ class DataSetFilters:
         --------
         >>> import pyvista
         >>> mesh = pyvista.Plane()
-        >>> mesh.point_arrays.clear()
+        >>> mesh.point_data.clear()
         >>> centers = mesh.cell_centers()
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(mesh, show_edges=True)
@@ -1556,7 +1556,7 @@ class DataSetFilters:
         # Clean the points before glyphing
         if tolerance is not None:
             small = pyvista.PolyData(dataset.points)
-            small.point_arrays.update(dataset.point_arrays)
+            small.point_data.update(dataset.point_data)
             dataset = small.clean(point_merging=True, merge_tol=tolerance,
                                   lines_to_points=False, polys_to_lines=False,
                                   strips_to_polys=False, inplace=False,
@@ -1706,7 +1706,7 @@ class DataSetFilters:
         >>> import pyvista
         >>> mesh = pyvista.Sphere() + pyvista.Cube()
         >>> largest = mesh.extract_largest()
-        >>> largest.point_arrays.clear()
+        >>> largest.point_data.clear()
         >>> largest.cell_arrays.clear()
         >>> largest.plot()
 
@@ -1759,10 +1759,10 @@ class DataSetFilters:
             b = labeled.threshold([vid-0.5, vid+0.5], scalars='RegionId', progress_bar=False)
             if not label:
                 # strange behavior:
-                # must use this method rather than deleting from the point_arrays
+                # must use this method rather than deleting from the point_data
                 # or else object is collected.
                 b.cell_arrays.remove('RegionId')
-                b.point_arrays.remove('RegionId')
+                b.point_data.remove('RegionId')
             bodies.append(b)
 
         return bodies
@@ -2060,7 +2060,7 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> plane = pyvista.Plane()
-        >>> plane.point_arrays.clear()
+        >>> plane.point_data.clear()
         >>> plane.plot(show_edges=True, line_width=5)
 
         Convert it to an all triangle mesh.
@@ -2178,7 +2178,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.PolyData
-            Mesh containing the ``point_arrays['SelectedPoints']`` array.
+            Mesh containing the ``point_data['SelectedPoints']`` array.
 
         Examples
         --------
@@ -2227,22 +2227,23 @@ class DataSetFilters:
 
         Parameters
         ----------
-        dataset: pyvista.DataSet
+        dataset : pyvista.DataSet
             The mesh to probe from - point and cell arrays from
             this object are probed onto the nodes of the ``points`` mesh
 
-        points: pyvista.DataSet
+        points : pyvista.DataSet
             The points to probe values on to. This should be a PyVista mesh
             or something :func:`pyvista.wrap` can handle.
 
-        tolerance: float, optional
-            Tolerance used to compute whether a point in the source is in a
-            cell of the input.  If not given, tolerance is automatically generated.
+        tolerance : float, optional
+            Tolerance used to compute whether a point in the source is
+            in a cell of the input.  If not given, tolerance is
+            automatically generated.
 
-        pass_cell_arrays: bool, optional
+        pass_cell_arrays : bool, optional
             Preserve source mesh's original cell data arrays.
 
-        pass_point_arrays: bool, optional
+        pass_point_arrays : bool, optional
             Preserve source mesh's original point data arrays.
 
         categorical : bool, optional
@@ -2258,19 +2259,19 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.DataSet
+        :class:`pyvista.DataSet`
             Dataset containing the probed data.
 
         Examples
         --------
-        Probe the active scalars in ``grid`` at the points in ``mesh``
+        Probe the active scalars in ``grid`` at the points in ``mesh``.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
         >>> grid = examples.load_uniform()
         >>> result = grid.probe(mesh)
-        >>> 'Spatial Point Data' in result.point_arrays
+        >>> 'Spatial Point Data' in result.point_data
         True
 
         """
@@ -2294,7 +2295,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
-               pass_point_arrays=True, categorical=False, progress_bar=False):
+               pass_point_data=True, categorical=False, progress_bar=False):
         """Resample array data from a passed mesh onto this mesh.
 
         This uses :class:`vtk.vtkResampleWithDataSet`.
@@ -2316,7 +2317,7 @@ class DataSetFilters:
         pass_cell_arrays: bool, optional
             Preserve source mesh's original cell data arrays
 
-        pass_point_arrays: bool, optional
+        pass_point_data: bool, optional
             Preserve source mesh's original point data arrays
 
         categorical : bool, optional
@@ -2352,7 +2353,7 @@ class DataSetFilters:
         alg.SetInputData(dataset)  # Set the Input data (actually the source i.e. where to sample from)
         alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to sample to)
         alg.SetPassCellArrays(pass_cell_arrays)
-        alg.SetPassPointArrays(pass_point_arrays)
+        alg.SetPassPointArrays(pass_point_data)
         alg.SetCategoricalData(categorical)
         if tolerance is not None:
             alg.SetComputeTolerance(False)
@@ -2362,7 +2363,7 @@ class DataSetFilters:
 
     def interpolate(dataset, target, sharpness=2, radius=1.0,
                     strategy='null_value', null_value=0.0, n_points=None,
-                    pass_cell_arrays=True, pass_point_arrays=True,
+                    pass_cell_arrays=True, pass_point_data=True,
                     progress_bar=False):
         """Interpolate values onto this mesh from a given dataset.
 
@@ -2412,7 +2413,7 @@ class DataSetFilters:
         pass_cell_arrays: bool, optional
             Preserve input mesh's original cell data arrays.
 
-        pass_point_arrays: bool, optional
+        pass_point_data: bool, optional
             Preserve input mesh's original point data arrays.
 
         progress_bar : bool, optional
@@ -2475,7 +2476,7 @@ class DataSetFilters:
             interpolator.SetNullPointsStrategyToClosestPoint()
         else:
             raise ValueError(f'strategy `{strategy}` not supported.')
-        interpolator.SetPassPointArrays(pass_point_arrays)
+        interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_arrays)
         _update_alg(interpolator, progress_bar, 'Interpolating')
         return _get_output(interpolator)
@@ -3506,7 +3507,7 @@ class DataSetFilters:
         # extracts only in float32
         if subgrid.n_points:
             if dataset.points.dtype is not np.dtype('float32'):
-                ind = subgrid.point_arrays['vtkOriginalPointIds']
+                ind = subgrid.point_data['vtkOriginalPointIds']
                 subgrid.points = dataset.points[ind]
 
         return subgrid
@@ -3664,7 +3665,7 @@ class DataSetFilters:
 
         """
         surf = DataSetFilters.extract_surface(dataset, pass_cellid=True, progress_bar=progress_bar)
-        return surf.point_arrays['vtkOriginalPointIds']
+        return surf.point_data['vtkOriginalPointIds']
 
     def extract_feature_edges(dataset, feature_angle=30, boundary_edges=True,
                               non_manifold_edges=True, feature_edges=True,
@@ -4175,7 +4176,7 @@ class DataSetFilters:
                 "Transform element (3,3), the inverse scale term, is zero")
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
-        active_point_scalars_name = dataset.point_arrays.active_scalars_name
+        active_point_scalars_name = dataset.point_data.active_scalars_name
         active_cell_scalars_name = dataset.cell_arrays.active_scalars_name
 
         # vtkTransformFilter sometimes doesn't transform all vector arrays
@@ -4200,8 +4201,8 @@ class DataSetFilters:
 
         # make the previously active scalars active again
         if active_point_scalars_name is not None:
-            dataset.point_arrays.active_scalars_name = active_point_scalars_name
-            res.point_arrays.active_scalars_name = active_point_scalars_name
+            dataset.point_data.active_scalars_name = active_point_scalars_name
+            res.point_data.active_scalars_name = active_point_scalars_name
         if active_cell_scalars_name is not None:
             dataset.cell_arrays.active_scalars_name = active_cell_scalars_name
             res.cell_arrays.active_scalars_name = active_cell_scalars_name

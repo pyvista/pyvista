@@ -142,19 +142,19 @@ class PlotterITK():
             if not isinstance(mesh, pv.PolyData):
                 grid = mesh
                 mesh = grid.extract_surface()
-                ind = mesh.point_arrays['vtkOriginalPointIds']
+                ind = mesh.point_data['vtkOriginalPointIds']
                 # remap scalars
                 if isinstance(scalars, np.ndarray):
                     scalars = scalars[ind]
 
             mesh.compute_normals(cell_normals=False, inplace=True)
-        elif 'Normals' in mesh.point_arrays:
-            # if 'normals' in mesh.point_arrays:
-            mesh.point_arrays.pop('Normals')
+        elif 'Normals' in mesh.point_data:
+            # if 'normals' in mesh.point_data:
+            mesh.point_data.pop('Normals')
 
         # make the scalars active
         if isinstance(scalars, str):
-            if scalars in mesh.point_arrays or scalars in mesh.cell_arrays:
+            if scalars in mesh.point_data or scalars in mesh.cell_arrays:
                 array = mesh[scalars].copy()
             else:
                 raise ValueError(f'Scalars ({scalars}) not in mesh')
@@ -169,8 +169,8 @@ class PlotterITK():
             mesh.active_scalars_name = None
 
         # itkwidgets does not support VTK_ID_TYPE
-        if 'vtkOriginalPointIds' in mesh.point_arrays:
-            mesh.point_arrays.pop('vtkOriginalPointIds')
+        if 'vtkOriginalPointIds' in mesh.point_data:
+            mesh.point_data.pop('vtkOriginalPointIds')
 
         if 'vtkOriginalCellIds' in mesh.cell_arrays:
             mesh.cell_arrays.pop('vtkOriginalCellIds')

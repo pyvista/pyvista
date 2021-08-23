@@ -88,7 +88,7 @@ def test_clip_by_scalars_filter(datasets, both, invert):
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset_in in enumerate(datasets):
         dataset = dataset_in.copy()  # don't modify in-place
-        dataset.point_arrays['to_clip'] = np.arange(dataset.n_points)
+        dataset.point_data['to_clip'] = np.arange(dataset.n_points)
 
         clip_value = dataset.n_points/2
 
@@ -111,10 +111,10 @@ def test_clip_by_scalars_filter(datasets, both, invert):
             if expect_le:
                 # VTK clip filter appears to not clip exactly to the clip value.
                 # here we allow for a wider range of acceptable values
-                assert aprox_le(clp.point_arrays['to_clip'].max(), clip_value,
+                assert aprox_le(clp.point_data['to_clip'].max(), clip_value,
                                 rtol=1E-1)
             else:
-                assert clp.point_arrays['to_clip'].max() >= clip_value
+                assert clp.point_data['to_clip'].max() >= clip_value
 
 
 def test_clip_filter_scalar_multiple():
@@ -205,9 +205,9 @@ def test_implicit_distance():
     xx = yy = zz = 1 - np.linspace(0, 51, 11) * 2 / 50
     dataset = pyvista.RectilinearGrid(xx, yy, zz)
     res = dataset.compute_implicit_distance(surface)
-    assert "implicit_distance" in res.point_arrays
+    assert "implicit_distance" in res.point_data
     dataset.compute_implicit_distance(surface, inplace=True)
-    assert "implicit_distance" in dataset.point_arrays
+    assert "implicit_distance" in dataset.point_data
 
 
 def test_slice_filter(datasets):
@@ -534,7 +534,7 @@ def test_glyph(datasets, sphere):
     sphere.compute_normals(inplace=True)
     sphere["vectors"] = np.ones([sphere.n_points,3])
     sphere.set_active_vectors("vectors")
-    sphere.point_arrays['arr'] = np.ones(sphere.n_points)
+    sphere.point_data['arr'] = np.ones(sphere.n_points)
 
     assert sphere.glyph(scale=False, progress_bar=True)
     assert sphere.glyph(scale='arr', progress_bar=True)
@@ -602,7 +602,7 @@ def test_warp_by_scalar():
     assert data.n_points == warped.n_points
     # Test in place!
     foo = examples.load_hexbeam()
-    foo.point_arrays.active_scalars_name = 'sample_point_scalars'
+    foo.point_data.active_scalars_name = 'sample_point_scalars'
     warped = foo.warp_by_scalar(progress_bar=True)
     foo.warp_by_scalar(inplace=True, progress_bar=True)
     assert np.allclose(foo.points, warped.points)
@@ -626,7 +626,7 @@ def test_warp_by_vector():
 
 def test_invalid_warp_scalar(sphere):
     sphere['cellscalars'] = np.random.random(sphere.n_cells)
-    sphere.point_arrays.clear()
+    sphere.point_data.clear()
     with pytest.raises(TypeError):
         sphere.warp_by_scalar()
 
@@ -638,12 +638,12 @@ def test_invalid_warp_scalar_inplace(uniform):
 
 def test_invalid_warp_vector(sphere):
     # bad vectors
-    sphere.point_arrays['Normals'] = np.empty((sphere.n_points, 2))
+    sphere.point_data['Normals'] = np.empty((sphere.n_points, 2))
     with pytest.raises(ValueError):
         sphere.warp_by_vector('Normals')
 
     # no vectors
-    sphere.point_arrays.clear()
+    sphere.point_data.clear()
     with pytest.raises(ValueError):
         sphere.warp_by_vector()
 
@@ -667,7 +667,7 @@ def test_point_data_to_cell_data():
     data = examples.load_uniform()
     foo = data.point_data_to_cell_data(progress_bar=True)
     assert foo.n_arrays == 2
-    assert len(foo.point_arrays.keys()) == 0
+    assert len(foo.point_data.keys()) == 0
     _ = data.ptc()
 
 
@@ -1314,7 +1314,7 @@ def test_compute_derivatives():
     with pytest.raises(TypeError):
         derv = mesh.compute_derivative(object)
 
-    mesh.point_arrays.clear()
+    mesh.point_data.clear()
     with pytest.raises(TypeError):
         derv = mesh.compute_derivative()
 
@@ -1342,7 +1342,7 @@ def structured_grids_split_coincident():
     structured = examples.load_structured()
     point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
     cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
-    structured.point_arrays['point_data'] = point_data
+    structured.point_data['point_data'] = point_data
     structured.cell_arrays['cell_data'] = cell_data
     voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1])
     voi_2 = structured.extract_subset([0, 80, 40, 80, 0, 1])
@@ -1355,7 +1355,7 @@ def structured_grids_split_disconnected():
     structured = examples.load_structured()
     point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
     cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
-    structured.point_arrays['point_data'] = point_data
+    structured.point_data['point_data'] = point_data
     structured.cell_arrays['cell_data'] = cell_data
     voi_1 = structured.extract_subset([0, 80, 0, 40, 0, 1])
     voi_2 = structured.extract_subset([0, 80, 45, 80, 0, 1])
@@ -1368,8 +1368,8 @@ def test_concatenate_structured(structured_grids_split_coincident,
     joined = voi_1.concatenate(voi_2, axis=1)
     assert structured.points == pytest.approx(joined.points)
     assert structured.volume == pytest.approx(joined.volume)
-    assert structured.point_arrays['point_data'] ==\
-           pytest.approx(joined.point_arrays['point_data'])
+    assert structured.point_data['point_data'] ==\
+           pytest.approx(joined.point_data['point_data'])
     assert structured.cell_arrays['cell_data'] ==\
            pytest.approx(joined.cell_arrays['cell_data'])
 
@@ -1391,7 +1391,7 @@ def test_concatenate_structured_bad_inputs(structured_grids_split_coincident):
         joined = voi_1.concatenate(voi_2, axis=3)
 
 
-def test_concatenate_structured_bad_point_arrays(structured_grids_split_coincident):
+def test_concatenate_structured_bad_point_data(structured_grids_split_coincident):
     voi_1, voi_2, structured = structured_grids_split_coincident
     voi_1['point_data'] = voi_1['point_data'] * 2.0
     with pytest.raises(RuntimeError):
@@ -1406,11 +1406,11 @@ def test_concatenate_structured_disconnected(structured_grids_split_disconnected
 
 def test_concatenate_structured_different_arrays(structured_grids_split_coincident):
     voi_1, voi_2, structured = structured_grids_split_coincident
-    point_data = voi_1.point_arrays.pop('point_data')
+    point_data = voi_1.point_data.pop('point_data')
     with pytest.raises(RuntimeError):
         joined = voi_1.concatenate(voi_2, axis=1)
 
-    voi_1.point_arrays['point_data'] = point_data
+    voi_1.point_data['point_data'] = point_data
     voi_1.cell_arrays.remove('cell_data')
     with pytest.raises(RuntimeError):
         joined = voi_1.concatenate(voi_2, axis=1)
@@ -1436,9 +1436,9 @@ def test_shrink():
     assert shrunk.area < mesh.area
 
 
-@pytest.mark.parametrize('num_cell_arrays,num_point_arrays',
+@pytest.mark.parametrize('num_cell_arrays,num_point_data',
                          itertools.product([0, 1, 2], [0, 1, 2]))
-def test_transform_mesh(datasets, num_cell_arrays, num_point_arrays):
+def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     # rotate about x-axis by 90 degrees
     for dataset in datasets:
         tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
@@ -1446,8 +1446,8 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_arrays):
         for i in range(num_cell_arrays):
             dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
 
-        for i in range(num_point_arrays):
-            dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
+        for i in range(num_point_data):
+            dataset.point_data['P%d' % i] = np.random.rand(dataset.n_points, 3)
 
         # deactivate any active vectors!
         # even if transform_all_input_vectors is False, vtkTransformfilter will
@@ -1461,16 +1461,16 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_arrays):
         assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
 
         # ensure that none of the vector data is changed
-        for name, array in dataset.point_arrays.items():
-            assert transformed.point_arrays[name] == pytest.approx(array)
+        for name, array in dataset.point_data.items():
+            assert transformed.point_data[name] == pytest.approx(array)
 
         for name, array in dataset.cell_arrays.items():
             assert transformed.cell_arrays[name] == pytest.approx(array)
 
 
-@pytest.mark.parametrize('num_cell_arrays,num_point_arrays',
+@pytest.mark.parametrize('num_cell_arrays,num_point_data',
                          itertools.product([0, 1, 2], [0, 1, 2]))
-def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_arrays):
+def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
         # rotate about x-axis by 90 degrees
         tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
@@ -1478,8 +1478,8 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_arrays)
         for i in range(num_cell_arrays):
             dataset.cell_arrays['C%d' % i] = np.random.rand(dataset.n_cells, 3)
 
-        for i in range(num_point_arrays):
-            dataset.point_arrays['P%d' % i] = np.random.rand(dataset.n_points, 3)
+        for i in range(num_point_data):
+            dataset.point_data['P%d' % i] = np.random.rand(dataset.n_points, 3)
 
         # handle
         f = pyvista._vtk.vtkTransformFilter()
@@ -1499,10 +1499,10 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_arrays)
             assert dataset.cell_arrays['C%d' % i][:, 2] == pytest.approx(-transformed.cell_arrays['C%d' % i][:, 1])
             assert dataset.cell_arrays['C%d' % i][:, 1] == pytest.approx( transformed.cell_arrays['C%d' % i][:, 2])
 
-        for i in range(num_point_arrays):
-            assert dataset.point_arrays['P%d' % i][:, 0] == pytest.approx( transformed.point_arrays['P%d' % i][:, 0])
-            assert dataset.point_arrays['P%d' % i][:, 2] == pytest.approx(-transformed.point_arrays['P%d' % i][:, 1])
-            assert dataset.point_arrays['P%d' % i][:, 1] == pytest.approx( transformed.point_arrays['P%d' % i][:, 2])
+        for i in range(num_point_data):
+            assert dataset.point_data['P%d' % i][:, 0] == pytest.approx( transformed.point_data['P%d' % i][:, 0])
+            assert dataset.point_data['P%d' % i][:, 2] == pytest.approx(-transformed.point_data['P%d' % i][:, 1])
+            assert dataset.point_data['P%d' % i][:, 1] == pytest.approx( transformed.point_data['P%d' % i][:, 2])
 
 
 @pytest.mark.parametrize('dataset', [
@@ -1535,7 +1535,7 @@ def test_reflect_mesh_with_vectors(datasets):
         # add vector data to cell and point arrays
         dataset.cell_arrays['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * \
             np.array([1, 2, 3], dtype=float).reshape((1, 3))
-        dataset.point_arrays['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
+        dataset.point_data['P'] = np.arange(dataset.n_points)[:, np.newaxis] * \
             np.array([1, 2, 3], dtype=float).reshape((1, 3))
 
         reflected = dataset.reflect((1, 0, 0), transform_all_input_vectors=True, inplace=False, progress_bar=True)
@@ -1550,14 +1550,14 @@ def test_reflect_mesh_with_vectors(datasets):
         if hasattr(dataset, 'compute_normals'):
             assert np.allclose(dataset.cell_arrays['Normals'][:, 0], -reflected.cell_arrays['Normals'][:, 0])
             assert np.allclose(dataset.cell_arrays['Normals'][:, 1:], reflected.cell_arrays['Normals'][:, 1:])
-            assert np.allclose(dataset.point_arrays['Normals'][:, 0], -reflected.point_arrays['Normals'][:, 0])
-            assert np.allclose(dataset.point_arrays['Normals'][:, 1:], reflected.point_arrays['Normals'][:, 1:])
+            assert np.allclose(dataset.point_data['Normals'][:, 0], -reflected.point_data['Normals'][:, 0])
+            assert np.allclose(dataset.point_data['Normals'][:, 1:], reflected.point_data['Normals'][:, 1:])
 
         # assert other vector fields are reflected
         assert np.allclose(dataset.cell_arrays['C'][:, 0], -reflected.cell_arrays['C'][:, 0])
         assert np.allclose(dataset.cell_arrays['C'][:, 1:], reflected.cell_arrays['C'][:, 1:])
-        assert np.allclose(dataset.point_arrays['P'][:, 0], -reflected.point_arrays['P'][:, 0])
-        assert np.allclose(dataset.point_arrays['P'][:, 1:], reflected.point_arrays['P'][:, 1:])
+        assert np.allclose(dataset.point_data['P'][:, 0], -reflected.point_data['P'][:, 0])
+        assert np.allclose(dataset.point_data['P'][:, 1:], reflected.point_data['P'][:, 1:])
 
 
 @pytest.mark.parametrize('dataset', [

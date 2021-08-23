@@ -381,12 +381,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             if mapper is None:
                                 continue
                             dataset = mapper.GetInputAsDataSet()
-                            if 'Normals' in dataset.point_arrays:
-                                normals = dataset.point_arrays['Normals']
-                                dataset.point_array.set_array(normals, 'NORMAL',
-                                                              active_scalars=False,
-                                                              deep_copy=False)
-                                
+                            if 'Normals' in dataset.point_data:
+                                # ensure normals are active
+                                normals = dataset.point_data['Normals']
+                                dataset.point_data.normals = normals.copy()
                         except:
                             pass
 
@@ -1800,7 +1798,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not isinstance(mesh, pyvista.PolyData):
                 grid = mesh
                 mesh = grid.extract_surface()
-                ind = mesh.point_arrays['vtkOriginalPointIds']
+                ind = mesh.point_data['vtkOriginalPointIds']
                 # remap scalars
                 if isinstance(scalars, np.ndarray):
                     scalars = scalars[ind]
@@ -1978,7 +1976,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
                 # Scalars interpolation approach
                 if use_points:
-                    self.mesh.point_arrays.set_array(scalars, title, True)
+                    self.mesh.point_data.set_array(scalars, title, True)
                     self.mesh.active_scalars_name = title
                     self.mapper.SetScalarModeToUsePointData()
                 elif use_cells:
@@ -2447,7 +2445,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars interpolation approach
         if scalars.shape[0] == volume.n_points:
-            volume.point_arrays.set_array(scalars, title, True)
+            volume.point_data.set_array(scalars, title, True)
             self.mapper.SetScalarModeToUsePointData()
         elif scalars.shape[0] == volume.n_cells:
             volume.cell_arrays.set_array(scalars, title, True)
@@ -2846,7 +2844,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         if getattr(self, 'mesh', None) is not None:
-            self.mesh.point_arrays = None
+            self.mesh.point_data = None
             self.mesh.cell_arrays = None
         self.mesh = None
         if getattr(self, 'mapper', None) is not None:
@@ -3316,7 +3314,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif is_pyvista_dataset(points):
             vtkpoints = pyvista.PolyData(points.points)
             if isinstance(labels, str):
-                labels = points.point_arrays[labels]
+                labels = points.point_data[labels]
         else:
             raise TypeError(f'Points type not usable: {type(points)}')
 
@@ -3416,7 +3414,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             fmt = self._theme.font.fmt
         if fmt is None:
             fmt = '%.6e'
-        scalars = points.point_arrays[labels]
+        scalars = points.point_data[labels]
         phrase = f'{preamble} %.3e'
         labels = [phrase % val for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)

@@ -297,7 +297,7 @@ def test_destructor():
 
 def test_surface_indices(hexbeam):
     surf = hexbeam.extract_surface()
-    surf_ind = surf.point_arrays['vtkOriginalPointIds']
+    surf_ind = surf.point_data['vtkOriginalPointIds']
     assert np.allclose(surf_ind, hexbeam.surface_indices())
 
 
@@ -631,8 +631,8 @@ def test_cast_rectilinear_grid():
     assert structured.n_points == grid.n_points
     assert structured.n_cells == grid.n_cells
     assert np.allclose(structured.points, grid.points)
-    for k, v in grid.point_arrays.items():
-        assert np.allclose(structured.point_arrays[k], v)
+    for k, v in grid.point_data.items():
+        assert np.allclose(structured.point_data[k], v)
     for k, v in grid.cell_arrays.items():
         assert np.allclose(structured.cell_arrays[k], v)
 

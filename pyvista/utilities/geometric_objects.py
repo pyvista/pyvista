@@ -370,7 +370,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     >>> import pyvista
     >>> mesh = pyvista.Plane()
-    >>> mesh.point_arrays.clear()
+    >>> mesh.point_data.clear()
     >>> mesh.plot(show_edges=True)
     """
     planeSource = _vtk.vtkPlaneSource()

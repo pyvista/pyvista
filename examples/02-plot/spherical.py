@@ -119,7 +119,7 @@ vectors *= RADIUS * 0.1
 grid_winds = pv.grid_from_sph_coords(x, y_polar, wind_level)
 
 # Add vectors to the grid
-grid_winds.point_arrays["example"] = vectors
+grid_winds.point_data["example"] = vectors
 
 # Show the result
 p = pv.Plotter()

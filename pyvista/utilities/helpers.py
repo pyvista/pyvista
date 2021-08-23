@@ -143,7 +143,7 @@ def point_array(mesh, name):
     return convert_array(vtkarr)
 
 
-def field_data(mesh, name):
+def field_array(mesh, name):
     """Return field data of a pyvista or vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
@@ -210,7 +210,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
-    farr = field_data(mesh, name)
+    farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
     if sum([array is not None for array in (parr, carr, farr)]) > 1:
         if preference == FieldAssociation.CELL:
@@ -267,7 +267,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     # with multiple arrays, return the array preference
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
-    farr = field_data(mesh, name)
+    farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
     if sum([array is not None for array in (parr, carr, farr)]) > 1:
         if preference in [FieldAssociation.CELL, FieldAssociation.POINT,
@@ -505,7 +505,7 @@ def vector_poly_data(orig, vec):
     >>> v = y/np.sqrt(x**2 + y**2)
     >>> vectors = np.vstack((u.ravel()**3, v.ravel()**3, np.zeros(u.size))).T
     >>> pdata = pyvista.vector_poly_data(points, vectors)
-    >>> pdata.point_arrays.keys()
+    >>> pdata.point_data.keys()
     ['vectors', 'mag']
 
     Convert these to arrows and plot it.

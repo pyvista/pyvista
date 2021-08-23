@@ -36,7 +36,7 @@ def test_createvectorpolydata_1D():
     vec = np.random.random(3)
     vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
-    assert np.any(vdata.point_arrays['vectors'])
+    assert np.any(vdata.point_data['vectors'])
 
 
 def test_createvectorpolydata():
@@ -44,7 +44,7 @@ def test_createvectorpolydata():
     vec = np.random.random((100, 3))
     vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
-    assert np.any(vdata.point_arrays['vectors'])
+    assert np.any(vdata.point_data['vectors'])
 
 
 @pytest.mark.parametrize('use_pathlib', [True, False])
@@ -191,10 +191,10 @@ def test_get_array():
     carr = np.random.rand(grid.n_cells)
     grid.cell_arrays.set_array(carr, 'test_data')
     parr = np.random.rand(grid.n_points)
-    grid.point_arrays.set_array(parr, 'test_data')
+    grid.point_data.set_array(parr, 'test_data')
     # add other data
     oarr = np.random.rand(grid.n_points)
-    grid.point_arrays.set_array(oarr, 'other')
+    grid.point_data.set_array(oarr, 'other')
     farr = np.random.rand(grid.n_points * grid.n_cells)
     grid.field_data.set_array(farr, 'field_data')
     assert np.allclose(carr, helpers.get_array(grid, 'test_data', preference='cell'))
