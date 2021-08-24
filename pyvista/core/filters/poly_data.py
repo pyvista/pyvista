@@ -67,7 +67,7 @@ class PolyDataFilters(DataSetFilters):
         """Perform boolean operation."""
         if not isinstance(other_mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
-        if not poly_data.is_all_triangles() or not other_mesh.is_all_triangles():
+        if not poly_data.is_all_triangles or not other_mesh.is_all_triangles:
             raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
 
         bfilter = _vtk.vtkBooleanOperationPolyDataFilter()
@@ -132,7 +132,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
            Both meshes must be composed of all triangles.  Check with
-           :func:`PolyData.is_all_triangles` and convert with
+           :attr:`PolyData.is_all_triangles` and convert with
            :func:`PolyDataFilters.triangulate`.
 
         .. versionchanged:: 0.32.0
@@ -202,7 +202,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
            Both meshes must be composed of all triangles.  Check with
-           :func:`PolyData.is_all_triangles` and convert with
+           :attr:`PolyData.is_all_triangles` and convert with
            :func:`PolyDataFilters.triangulate`.
 
         .. versionadded:: 0.32.0
@@ -264,7 +264,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
            Both meshes must be composed of all triangles.  Check with
-           :func:`PolyData.is_all_triangles` and convert with
+           :attr:`PolyData.is_all_triangles` and convert with
            :func:`PolyDataFilters.triangulate`.
 
         .. versionchanged:: 0.32.0
@@ -1627,7 +1627,7 @@ class PolyDataFilters(DataSetFilters):
         if not (0 <= start_vertex < poly_data.n_points and
                 0 <= end_vertex < poly_data.n_points):
             raise IndexError('Invalid point indices.')
-        if not poly_data.is_all_triangles():
+        if not poly_data.is_all_triangles:
             raise NotAllTrianglesError("Input mesh for geodesic path must be all triangles.")
 
         dijkstra = _vtk.vtkDijkstraGraphGeodesicPath()
@@ -1833,7 +1833,7 @@ class PolyDataFilters(DataSetFilters):
         'Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)'
 
         """
-        if not poly_data.is_all_triangles():
+        if not poly_data.is_all_triangles:
             raise NotAllTrianglesError
 
         try:
@@ -2035,7 +2035,7 @@ class PolyDataFilters(DataSetFilters):
             remove_mask = np.zeros(poly_data.n_points, np.bool_)
             remove_mask[remove] = True
 
-        if not poly_data.is_all_triangles():
+        if not poly_data.is_all_triangles:
             raise NotAllTrianglesError
 
         f = poly_data.faces.reshape(-1, 4)[:, 1:]
@@ -2090,12 +2090,21 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, opacity=0.5)
 
         """
-        if not poly_data.is_all_triangles():
+        if not poly_data.is_all_triangles:
             raise NotAllTrianglesError('Can only flip normals on an all triangle mesh.')
 
-        f = poly_data.faces.reshape((-1, 4))
-        f[:, 1:] = f[:, 1:][:, ::-1]
-        poly_data.faces = f
+        if _vtk.VTK9:
+            # use new connectivity API
+            f = poly_data._connectivity_array
+
+            # swap first and last point index in-place
+            # See: https://stackoverflow.com/a/33362288/3369879
+            f[::3], f[2::3] = f[2::3], f[::3].copy()
+
+        else:  # pragma: no cover
+            f = poly_data.faces
+            f[1::4], f[3::4] = f[3::4], f[1::4].copy()
+            poly_data.faces[:] = f
 
     def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     inplace=False, edge_source=None, progress_bar=False):
@@ -2725,9 +2734,9 @@ class PolyDataFilters(DataSetFilters):
             other_mesh = other_mesh.extract_surface()
 
         # according to VTK limitations
-        if not poly_data.is_all_triangles():
+        if not poly_data.is_all_triangles:
             poly_data = poly_data.triangulate()
-        if not other_mesh.is_all_triangles():
+        if not other_mesh.is_all_triangles:
             other_mesh = other_mesh.triangulate()
 
         alg = _vtk.vtkCollisionDetectionFilter()
