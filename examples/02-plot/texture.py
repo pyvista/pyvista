@@ -236,9 +236,10 @@ sphere.active_t_coords = np.zeros((sphere.points.shape[0], 2))
 
 # Populate by manually calculating
 for i in range(sphere.points.shape[0]):
-    sphere.active_t_coords[i] = [0.5 + np.arctan2(-sphere.points[i, 0],
-                                           sphere.points[i, 1])/(2 * np.pi),
-                          0.5 + np.arcsin(sphere.points[i, 2])/np.pi]
+    sphere.active_t_coords[i] = [
+         0.5 + np.arctan2(-sphere.points[i, 0], sphere.points[i, 1])/(2 * np.pi),
+         0.5 + np.arcsin(sphere.points[i, 2])/np.pi
+    ]
 
 # And let's display it with a world map
 tex = examples.load_globe_texture()

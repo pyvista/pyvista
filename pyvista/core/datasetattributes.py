@@ -365,10 +365,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Return the active texture coordinates.
 
         .. deprecated:: 0.32.0
-           Use :attr:`DataSetAttributes.active_t_coords` to return the
-           active texture coordinates.
+            Use :attr:`DataSetAttributes.active_t_coords` to return the
+            active texture coordinates.
+
         """
-        warnings.warn( "Use of `DataSetAttributes.t_coords` is deprecated. "
+        warnings.warn(
+            "Use of `DataSetAttributes.t_coords` is deprecated. "
             "Use `DataSetAttributes.active_t_coords` instead.",
             PyvistaDeprecationWarning
         )
@@ -376,6 +378,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @t_coords.setter
     def t_coords(self, t_coords: np.ndarray):  # pragma: no cover
+        warnings.warn(
+            "Use of `DataSetAttributes.t_coords` is deprecated. "
+            "Use `DataSetAttributes.active_t_coords` instead.",
+            PyvistaDeprecationWarning
+        )
         self.active_t_coords = t_coords  # type: ignore
 
     @property
@@ -430,11 +437,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Name of the active texture coordinates array.
 
         .. deprecated:: 0.32.0
-           Use :attr:`DataSetAttributes.active_t_coords` to return the
-           name active texture coordinates array.
+            Use :attr:`DataSetAttributes.active_t_coords_name` to
+            return the name of the active texture coordinates array.
 
         """
-        warnings.warn( "Use of `active_texture_name` is deprecated. "
+        warnings.warn(
+            "Use of `active_texture_name` is deprecated. "
             "Use `active_t_coords_name` instead.",
             PyvistaDeprecationWarning
         )
@@ -473,7 +481,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         key : str, int
             The name or index of the array to return.  Arrays are
             ordered within VTK DataSetAttributes, and this feature is
-            mirrored here
+            mirrored here.
 
         Returns
         -------
