@@ -95,7 +95,7 @@ def test_valid_array_len_field(hexbeam):
 
 def test_get(sphere):
     point_data = np.arange(sphere.n_points)
-    sphere.clear_arrays()
+    sphere.clear_data()
     key = 'my-data'
     sphere.point_data[key] = point_data
     assert np.array_equal(sphere.point_data.get(key), point_data)
@@ -106,7 +106,7 @@ def test_get(sphere):
 
 
 def test_active_scalars_name(sphere):
-    sphere.clear_arrays()
+    sphere.clear_data()
     assert sphere.point_data.active_scalars_name is None
 
     key = 'data0'
@@ -123,7 +123,7 @@ def test_set_scalars(sphere):
 
 def test_eq(sphere):
     sphere = pyvista.Sphere()
-    sphere.clear_arrays()
+    sphere.clear_data()
 
     # check wrong type
     assert sphere.point_data != [1, 2, 3]
@@ -293,12 +293,8 @@ def test_remove_should_fail_on_bad_argument(removed_key, hexbeam_point_attribute
 
 @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
 def test_del_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
-    if removed_key in [None, -1]:
-        with raises(TypeError):
-            del hexbeam_point_attributes[removed_key]
-    else:
-        with raises(KeyError):
-            del hexbeam_point_attributes[removed_key]
+    with raises(KeyError):
+        del hexbeam_point_attributes[removed_key]
 
 
 @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
@@ -387,7 +383,7 @@ def test_assign_labels_to_points(hexbeam):
 
 
 def test_normals_get(plane):
-    plane.clear_arrays()
+    plane.clear_data()
     assert plane.point_data.normals is None
 
     plane_w_normals = plane.compute_normals()

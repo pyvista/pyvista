@@ -1023,7 +1023,7 @@ def test_read_texture_from_numpy():
 def test_plot_rgb():
     """"Test adding a texture to a plot"""
     cube = pyvista.Cube()
-    cube.clear_arrays()
+    cube.clear_data()
     x_face_color = (255, 0, 0)
     y_face_color = (0, 255, 0)
     z_face_color = (0, 0, 255)

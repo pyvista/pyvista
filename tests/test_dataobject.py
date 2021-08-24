@@ -21,7 +21,7 @@ def test_uniform_eq():
 
 
 def test_polydata_eq(sphere):
-    sphere.clear_arrays()
+    sphere.clear_data()
     sphere.point_data['data0'] = np.zeros(sphere.n_points)
     sphere.point_data['data1'] = np.arange(sphere.n_points)
 

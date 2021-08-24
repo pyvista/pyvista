@@ -2432,7 +2432,7 @@ class DataSetFilters:
         >>> pdata = pyvista.PolyData(point_cloud)
         >>> pdata['values'] = np.random.random(5)
         >>> plane = pyvista.Plane()
-        >>> plane.clear_arrays()
+        >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3)
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
@@ -2983,7 +2983,7 @@ class DataSetFilters:
         >>> pdata = pyvista.PolyData(point_cloud)
         >>> pdata['values'] = np.random.random(5)
         >>> plane = pyvista.Plane()
-        >>> plane.clear_arrays()
+        >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
         >>> sample = plane.sample_over_line((-0.5, -0.5, 0), (0.5, 0.5, 0))
         >>> pl = pyvista.Plotter()
@@ -3542,7 +3542,7 @@ class DataSetFilters:
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
         >>> extracted = sphere.extract_points(sphere.points[:, 2] > 0)
-        >>> extracted.clear_arrays()  # clear for plotting
+        >>> extracted.clear_data()  # clear for plotting
         >>> extracted.plot()
 
         """
@@ -3719,7 +3719,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
         >>> feat_edges = hex_beam.extract_feature_edges()
-        >>> feat_edges.clear_arrays()  # clear array data for plotting
+        >>> feat_edges.clear_data()  # clear array data for plotting
         >>> feat_edges.plot(line_width=10)
 
         See the :ref:`extract_edges_example` for more examples using this filter.
@@ -4084,7 +4084,7 @@ class DataSetFilters:
         Now, plot the mesh with shrunk faces.
 
         >>> shrunk = mesh.shrink(0.5)
-        >>> shrunk.clear_arrays()  # cleans up plot
+        >>> shrunk.clear_data()  # cleans up plot
         >>> shrunk.plot(show_edges=True, line_width=5)
 
         """

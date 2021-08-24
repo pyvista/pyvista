@@ -1,5 +1,6 @@
 """Attributes common to PolyData and Grid Objects."""
 
+import warnings
 import collections.abc
 import logging
 from abc import abstractmethod
@@ -12,6 +13,7 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities import (FieldAssociation, fileio, abstract_class)
 from .datasetattributes import DataSetAttributes
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -282,6 +284,19 @@ class DataObject:
 
         """
         self.field_data.set_array(scalars, name, deep_copy=deep)
+
+    @property
+    def field_arrays(self) -> DataSetAttributes:  # pragma: no cover
+        """Return vtkFieldData as DataSetAttributes.
+
+        .. deprecated:: 0.32.0
+           Use :attr:`DataSet.field_data` to return field data.
+        """
+        warnings.warn( "Use of `field_arrays` is deprecated. "
+            "Use `field_data` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.field_data
 
     @property
     def field_data(self) -> DataSetAttributes:

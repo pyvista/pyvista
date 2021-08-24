@@ -223,7 +223,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __delitem__(self, key: str):
         """Implement del with array name or index."""
-        self._check_key(key)
         self.remove(key)
 
     def __contains__(self, name: str) -> bool:
@@ -438,7 +437,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> mesh.point_data['my_data'] = range(mesh.n_points)
 
         Access using an index.
@@ -564,7 +563,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> scalars = range(mesh.n_points)
         >>> mesh.point_data.set_scalars(scalars, 'my-scalars')
         >>> mesh.point_data
@@ -614,7 +613,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> vectors = np.random.random((mesh.n_points, 3))
         >>> mesh.point_data.set_vectors(vectors, 'my-vectors')
         >>> mesh.point_data
@@ -834,7 +833,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
         >>> mesh.cell_data['data1'] = range(mesh.n_cells)
         >>> mesh.cell_data.items()
@@ -850,7 +849,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> mesh.point_data['data0'] = [0]*mesh.n_points
         >>> mesh.point_data['data1'] = range(mesh.n_points)
         >>> mesh.point_data.keys()
@@ -871,7 +870,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
         >>> mesh.cell_data['data1'] = range(mesh.n_cells)
         >>> mesh.cell_data.values()
@@ -895,7 +894,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> mesh.point_data['my_data'] = range(mesh.n_points)
         >>> len(mesh.point_data)
         1

@@ -736,16 +736,16 @@ def test_string_arrays():
     assert len(back) == 10
 
 
-def test_clear_arrays():
+def test_clear_data():
     # First try on an empty mesh
     grid = pyvista.UniformGrid((10, 10, 10))
     # Now try something more complicated
-    grid.clear_arrays()
+    grid.clear_data()
     grid['foo-p'] = np.random.rand(grid.n_points)
     grid['foo-c'] = np.random.rand(grid.n_cells)
     grid.field_data['foo-f'] = np.random.rand(grid.n_points * grid.n_cells)
     assert grid.n_arrays == 3
-    grid.clear_arrays()
+    grid.clear_data()
     assert grid.n_arrays == 0
 
 
@@ -917,7 +917,7 @@ def test_no_active():
 def test_get_data_range(grid):
     # Test with blank mesh
     mesh = pyvista.Sphere()
-    mesh.clear_arrays()
+    mesh.clear_data()
     rng = mesh.get_data_range()
     assert all(np.isnan(rng))
     with pytest.raises(KeyError):

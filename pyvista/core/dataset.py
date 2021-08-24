@@ -1067,6 +1067,19 @@ class DataSet(DataSetFilters, DataObject):
         self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
 
     @property
+    def point_arrays(self) -> DataSetAttributes:  # pragma: no cover
+        """Return vtkPointData as DataSetAttributes.
+
+        .. deprecated:: 0.32.0
+           Use :attr:`DataSet.point_data` to return point data.
+        """
+        warnings.warn( "Use of `point_arrays` is deprecated. "
+            "Use `point_data` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.point_data
+
+    @property
     def point_data(self) -> DataSetAttributes:
         """Return vtkPointData as DataSetAttributes.
 
@@ -1077,7 +1090,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> mesh.point_data['my_array'] = np.random.random(mesh.n_points)
         >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
         >>> mesh.point_data
@@ -1127,7 +1140,7 @@ class DataSet(DataSetFilters, DataObject):
         """Remove all cell arrays."""
         self.cell_data.clear()
 
-    def clear_arrays(self):
+    def clear_data(self):
         """Remove all arrays from point/cell/field data.
 
         Examples
@@ -1139,7 +1152,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = pyvista.Sphere()
         >>> mesh.point_data.keys()
         ['Normals']
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> mesh.point_data.keys()
         []
 
@@ -1147,6 +1160,19 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_point_data()
         self.clear_cell_data()
         self.clear_field_data()
+
+    @property
+    def cell_arrays(self) -> DataSetAttributes:  # pragma: no cover
+        """Return vtkCellData as DataSetAttributes.
+
+        .. deprecated:: 0.32.0
+           Use :attr:`DataSet.cell_data` to return cell data.
+        """
+        warnings.warn( "Use of `cell_arrays` is deprecated. "
+            "Use `cell_data` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.cell_data
 
     @property
     def cell_data(self) -> DataSetAttributes:
@@ -1159,7 +1185,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> mesh.cell_data['my_array'] = np.random.random(mesh.n_cells)
         >>> mesh.cell_data['my_other_array'] = np.arange(mesh.n_cells)
         >>> mesh.cell_data
@@ -1347,7 +1373,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> mesh.point_data['point-data'] = range(mesh.n_points)
         >>> mesh.cell_data['cell-data'] = range(mesh.n_cells)
         >>> mesh.field_data['field-data'] = ['a', 'b', 'c']
@@ -1395,7 +1421,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.clear_arrays()
+        >>> mesh.clear_data()
         >>> mesh.point_data['point-data'] = range(mesh.n_points)
         >>> mesh.cell_data['cell-data'] = range(mesh.n_cells)
         >>> mesh.field_data['field-data'] = ['a', 'b', 'c']
