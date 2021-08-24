@@ -45,6 +45,16 @@ def test_init(hexbeam):
     assert attributes.association == FieldAssociation.POINT
 
 
+def test_bool(hexbeam_point_attributes):
+    assert bool(len(hexbeam_point_attributes)) is bool(hexbeam_point_attributes)
+    hexbeam_point_attributes.clear()
+    assert bool(len(hexbeam_point_attributes)) is bool(hexbeam_point_attributes)
+
+def test_getitem(hexbeam_point_attributes, match='Only strings'):
+    with raises(TypeError):
+        hexbeam_point_attributes[0]
+
+
 def test_repr(hexbeam_point_attributes):
     repr_str = str(hexbeam_point_attributes)
     assert 'POINT' in repr_str

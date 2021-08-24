@@ -242,13 +242,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         field, name = self.active_vectors_info
-        try:
-            if field is FieldAssociation.POINT:
-                return self.point_data[name]
-            if field is FieldAssociation.CELL:
-                return self.cell_data[name]
-        except KeyError:
-            return None
+        if name is not None:
+            try:
+                if field is FieldAssociation.POINT:
+                    return self.point_data[name]
+                if field is FieldAssociation.CELL:
+                    return self.cell_data[name]
+            except KeyError:
+                return None
         return None
 
     @property

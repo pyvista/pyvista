@@ -122,6 +122,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __repr__(self) -> str:
         """Printable representation of DataSetAttributes."""
+        info = ['pyvista DataSetAttributes']
         array_info = ' None'
         if len(self):
             lines = []
@@ -142,21 +143,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 lines.append(line)
             array_info = '\n    ' + '\n    '.join(lines)
 
+        info.append(f'Association     : {self.association.name}')
         if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
-            scalar_info = f'Active Scalars  : {self.active_scalars_name}\n'
-            vector_info = f'Active Vectors  : {self.active_vectors_name}\n'
-            texture_info = f'Active Texture  : {self.active_texture_name}\n'
-        else:
-            scalar_info = ''
-            vector_info = ''
-            texture_info = ''
+            info.append(f'Active Scalars  : {self.active_scalars_name}')
+            info.append(f'Active Vectors  : {self.active_vectors_name}')
+            info.append(f'Active Texture  : {self.active_texture_name}')
 
-        return 'pyvista DataSetAttributes\n' \
-               f'Association     : {self.association.name}\n' \
-               f'{scalar_info}' \
-               f'{vector_info}' \
-               f'{texture_info}' \
-               f'Contains arrays :{array_info}' \
+        info.append(f'Contains arrays :{array_info}')
+        return '\n'.join(info)
 
     def get(self, key: str, value: Optional[Any] = None) -> Optional[pyvista_ndarray]:
         """Return the value of the item with the specified key.
@@ -191,11 +185,20 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             return self[key]
         return value
 
+    def __bool__(self) -> bool:
+        """Returns ``True`` when there are arrays present."""
+        return bool(self.GetNumberOfArrays())
+
     def __getitem__(self, key: Union[str]) -> pyvista_ndarray:
-        """Implement [] operator.
+        """Implement ``[]`` operator.
 
         Accepts an array name.
         """
+        if not isinstance(key, str):
+            raise TypeError('Only strings are valid keys for DataSetAttributes.  '
+                            'Use ``get_array`` if you need to get an array from'
+                             ' an index')
+
         return self.get_array(key)
 
     def __setitem__(self, key: str, value: np.ndarray):
