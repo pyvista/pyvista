@@ -50,6 +50,7 @@ def test_bool(hexbeam_point_attributes):
     hexbeam_point_attributes.clear()
     assert bool(len(hexbeam_point_attributes)) is bool(hexbeam_point_attributes)
 
+
 def test_getitem(hexbeam_point_attributes, match='Only strings'):
     with raises(TypeError):
         hexbeam_point_attributes[0]
@@ -285,7 +286,7 @@ def test_should_pop_array_invalid(insert_arange_narray):
     assert dsa.pop(key, default) is default
 
 
-@mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
+@mark.parametrize('removed_key', [None, 'nonexistent_array_name', '', -1])
 def test_remove_should_fail_on_bad_argument(removed_key, hexbeam_point_attributes):
     if removed_key in [None, -1]:
         with raises(TypeError):
@@ -295,7 +296,7 @@ def test_remove_should_fail_on_bad_argument(removed_key, hexbeam_point_attribute
             hexbeam_point_attributes.remove(removed_key)
 
 
-@mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
+@mark.parametrize('removed_key', [None, 'nonexistent_array_name', '', -1])
 def test_del_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
     if removed_key in [None, -1]:
         with raises(TypeError):
@@ -305,7 +306,7 @@ def test_del_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
             del hexbeam_point_attributes[removed_key]
 
 
-@mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
+@mark.parametrize('removed_key', [None, 'nonexistent_array_name', '', -1])
 def test_pop_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
     if removed_key in [None, -1]:
         with raises(TypeError):

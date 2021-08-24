@@ -303,9 +303,11 @@ class DataObject:
         """Return vtkFieldData as DataSetAttributes.
 
         .. deprecated:: 0.32.0
-           Use :attr:`DataSet.field_data` to return field data.
+            Use :attr:`DataObject.field_data` to return field data.
+
         """
-        warnings.warn( "Use of `field_arrays` is deprecated. "
+        warnings.warn(
+            "Use of `field_arrays` is deprecated. "
             "Use `field_data` instead.",
             PyvistaDeprecationWarning
         )
@@ -337,9 +339,11 @@ class DataObject:
         """Remove all field data.
 
         .. deprecated:: 0.32.0
-           Use :func:`DataObject.clear_field_data` instead.
+            Use :func:`DataObject.clear_field_data` instead.
+
         """
-        warnings.warn("Use of `clear_field_arrays` is deprecated. "
+        warnings.warn(
+            "Use of `clear_field_arrays` is deprecated. "
             "Use `clear_field_data` instead.",
             PyvistaDeprecationWarning
         )

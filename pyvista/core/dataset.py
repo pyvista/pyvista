@@ -169,6 +169,7 @@ class DataSet(DataSetFilters, DataObject):
         ActiveArrayInfo
             The vectors info in an object with namedtuple semantics,
             with attributes ``association`` and ``name``.
+
         Examples
         --------
         Create a mesh, compute the normals inplace, set the active
@@ -446,7 +447,8 @@ class DataSet(DataSetFilters, DataObject):
            Use of `DataSet.vectors` to return vector data is deprecated.
 
         """
-        warnings.warn( "Use of `DataSet.vectors` is deprecated. "
+        warnings.warn(
+            "Use of `DataSet.vectors` is deprecated. "
             "Use `DataSet.active_vectors` instead.",
             PyvistaDeprecationWarning
         )
@@ -454,7 +456,8 @@ class DataSet(DataSetFilters, DataObject):
 
     @vectors.setter
     def vectors(self, array: np.ndarray):  # pragma: no cover
-        warnings.warn("Use of `DataSet.vectors` to add vector data is deprecated. "
+        warnings.warn(
+            "Use of `DataSet.vectors` to add vector data is deprecated. "
             "Use `DataSet['vector_name'] = data`. "
             "Use `DataSet.active_vectors_name = 'vector_name' to make active."
             ,
@@ -475,10 +478,12 @@ class DataSet(DataSetFilters, DataObject):
         """Return the active texture coordinates on the points.
 
         .. deprecated:: 0.32.0
-           Use :attr:`DataSet.active_t_coords` to return the active
-           texture coordinates.
+            Use :attr:`DataSet.active_t_coords` to return the active
+            texture coordinates.
+
         """
-        warnings.warn( "Use of `DataSet.t_coords` is deprecated. "
+        warnings.warn(
+            "Use of `DataSet.t_coords` is deprecated. "
             "Use `DataSet.active_t_coords` instead.",
             PyvistaDeprecationWarning
         )
@@ -1089,9 +1094,11 @@ class DataSet(DataSetFilters, DataObject):
         """Return vtkPointData as DataSetAttributes.
 
         .. deprecated:: 0.32.0
-           Use :attr:`DataSet.point_data` to return point data.
+            Use :attr:`DataSet.point_data` to return point data.
+
         """
-        warnings.warn( "Use of `point_arrays` is deprecated. "
+        warnings.warn(
+            "Use of `point_arrays` is deprecated. "
             "Use `point_data` instead.",
             PyvistaDeprecationWarning
         )
@@ -1140,9 +1147,11 @@ class DataSet(DataSetFilters, DataObject):
         """Remove all point data.
 
         .. deprecated:: 0.32.0
-           Use :func:`DataSet.clear_point_data` instead.
+            Use :func:`DataSet.clear_point_data` instead.
+
         """
-        warnings.warn( "Use of `clear_point_arrays` is deprecated. "
+        warnings.warn(
+            "Use of `clear_point_arrays` is deprecated. "
             "Use `clear_point_data` instead.",
             PyvistaDeprecationWarning
         )
@@ -1171,9 +1180,11 @@ class DataSet(DataSetFilters, DataObject):
         """Remove all cell data.
 
         .. deprecated:: 0.32.0
-           Use :func:`DataSet.clear_cell_data` instead.
+            Use :func:`DataSet.clear_cell_data` instead.
+
         """
-        warnings.warn("Use of `clear_cell_arrays` is deprecated. "
+        warnings.warn(
+            "Use of `clear_cell_arrays` is deprecated. "
             "Use `clear_cell_data` instead.",
             PyvistaDeprecationWarning
         )
@@ -1187,9 +1198,11 @@ class DataSet(DataSetFilters, DataObject):
         """Remove all arrays from point/cell/field data.
 
         .. deprecated:: 0.32.0
-           Use :func:`DataSet.clear_data` instead.
+            Use :func:`DataSet.clear_data` instead.
+
         """
-        warnings.warn("Use of `clear_arrays` is deprecated. "
+        warnings.warn(
+            "Use of `clear_arrays` is deprecated. "
             "Use `clear_data` instead.",
             PyvistaDeprecationWarning
         )
@@ -1221,9 +1234,11 @@ class DataSet(DataSetFilters, DataObject):
         """Return vtkCellData as DataSetAttributes.
 
         .. deprecated:: 0.32.0
-           Use :attr:`DataSet.cell_data` to return cell data.
+            Use :attr:`DataSet.cell_data` to return cell data.
+
         """
-        warnings.warn( "Use of `cell_arrays` is deprecated. "
+        warnings.warn(
+            "Use of `cell_arrays` is deprecated. "
             "Use `cell_data` instead.",
             PyvistaDeprecationWarning
         )

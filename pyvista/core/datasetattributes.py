@@ -32,15 +32,15 @@ attr_type = [
 ]
 
 # used to check if default args have changed in pop
-_SENTINEL = pyvista_ndarray(np.array([]))
+_SENTINEL = pyvista_ndarray([])
 
 
 class DataSetAttributes(_vtk.VTKObjectWrapper):
     """Python friendly wrapper of ``vtk.DataSetAttributes``.
 
-    Implement a ``dict`` like interface for interacting with
-    vtkDataArrays while also including functionality adding vector and
-    scalar data.
+    This class provides the ability to pick one of the present arrays as the
+    currently active array for each attribute type by implementing a
+    ``dict`` like interface.
 
     When adding data arrays but not desiring to set them as active
     scalars or vectors, use :func:`DataSetAttributes.set_array`.
@@ -51,6 +51,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     When adding non-directional data (such as temperature values or
     multi-component scalars like RGBA values), use
     :func:`DataSetAttributes.set_scalars`.
+
+    .. versionchanged:: 0.32.0
+        The ``[]`` operator no longer allows integers.  Use 
+        :func:`DataSetAttributes.get_array` to retrieve an array
+        using an index.
 
     Parameters
     ----------
@@ -109,11 +114,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     Notes
     -----
-    When printing out the point arrays, you can see which arrays are
-    the active scalars, vectors, normals, and textures.  In the arrays
-    list, ``SCALARS`` denotes that these are the active scalars, and
-    ``VECTORS`` denotes that these arrays are tagged as vectors data
-    (i.e. data with magnitude and direction).
+    When printing out the point arrays, you can see which arrays are                                     
+    the active scalars, vectors, normals, and texture coordinates.
+    In the arrays list, ``SCALARS`` denotes that these are the active                                    
+    scalars, ``VECTORS`` denotes that these arrays are tagged as the                                     
+    active vectors data (i.e. data with magnitude and direction) and                                     
+    so on.
 
     """
 
@@ -197,7 +203,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def __getitem__(self, key: str) -> pyvista_ndarray:
         """Implement ``[]`` operator.
 
-        Accepts an array name or, in the case of ROW assocaitions, an int.
+        Accepts an array name.
         """
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
@@ -510,7 +516,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                   name: str, deep_copy=False) -> None:
         """Add an array to this object.
 
-        Use this method when adding arrays to the DataSet.  These if
+        Use this method when adding arrays to the DataSet.  If
         needed, these arrays can later be assigned to become the
         active scalars, vectors, normals, or texture coordinates with:
 
@@ -527,7 +533,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         name : str
             Name to assign to the data.  If this name already exists,
-            this array will be written.
+            it will be overwritten.
 
         deep_copy : bool, optional
             When ``True`` makes a full copy of the array.
@@ -543,7 +549,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> mesh.point_data['my-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
-        Add a cell array to a mesh
+        Add a cell array to a mesh.
 
         >>> cell_data = range(mesh.n_cells)
         >>> mesh.cell_data.set_array(cell_data, 'my-data')
@@ -621,7 +627,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def set_vectors(self, vectors: Union[Sequence[Number], Number, np.ndarray],
                     name: str, deep_copy=False):
-        """Set the vectors of this data attribute.
+        """Set the active vectors of this data attribute.
 
         Vectors are a quantity that has magnitude and direction, such
         as normal vectors or a velocity field.
@@ -735,9 +741,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             # If column order but not contiguous, transpose so that the
             # deep copy below does not happen.
             size = data.dtype.itemsize
-            if (data.strides[1] / size == 3 and data.strides[2] / size == 1) or \
-                (data.strides[1] / size == 1 and data.strides[2] / size == 3 and \
-                 not data.flags.contiguous):
+            if ((data.strides[1] / size == 3 and data.strides[2] / size == 1) or
+                (data.strides[1] / size == 1 and data.strides[2] / size == 3 and
+                 not data.flags.contiguous)):
                 data = data.transpose(0, 2, 1)
 
         # If array is not contiguous, make a deep copy that is contiguous
@@ -765,20 +771,21 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Add an array to this object.
 
         .. deprecated:: 0.32.0
-           Use one of the following instead:
+            Use one of the following instead:
 
-           * :func:`DataSetAttributes.set_array`
-           * :func:`DataSetAttributes.set_scalars`
-           * :func:`DataSetAttributes.set_vectors`
-           * The ``[]`` operator
+            * :func:`DataSetAttributes.set_array`
+            * :func:`DataSetAttributes.set_scalars`
+            * :func:`DataSetAttributes.set_vectors`
+            * The ``[]`` operator
 
         """
-        warnings.warn("\n\n`DataSetAttributes.append` is deprecated.\n\n"
-                      "Use one of the following instead:\n"
-                      "  - `DataSetAttributes.set_array`\n"
-                      "  - `DataSetAttributes.set_scalars`\n"
-                      "  - `DataSetAttributes.set_vectors`\n"
-                      "  - The [] operator",
+        warnings.warn(
+            "\n\n`DataSetAttributes.append` is deprecated.\n\n"                                          
+            "Use one of the following instead:\n"                                                        
+            "  - `DataSetAttributes.set_array`\n"                                                        
+            "  - `DataSetAttributes.set_scalars`\n"                                                      
+            "  - `DataSetAttributes.set_vectors`\n"                                                      
+            "  - The [] operator",
             PyvistaDeprecationWarning
         )
         if active_vectors:  # pragma: no cover
@@ -812,7 +819,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Notes
         -----
-        You can also use the ``del`` operator.
+        You can also use the ``del`` statement.
 
         """
         if not isinstance(key, str):
@@ -847,7 +854,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Examples
         --------
-        Add a point data array to a DataSet and then remove it
+        Add a point data array to a DataSet and then remove it.
 
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
@@ -855,7 +862,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> mesh.point_data.pop('my_data')
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
-        Show that the array no longer exists in ``point_data``
+        Show that the array no longer exists in ``point_data``.
 
         >>> 'my_data' in mesh.point_data
         False
@@ -879,7 +886,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
 
     def items(self) -> List[Tuple[str, pyvista_ndarray]]:
-        """Return a list of (array name, array value).
+        """Return a list of (array name, array value) tuples.
 
         Examples
         --------
