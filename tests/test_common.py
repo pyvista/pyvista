@@ -418,9 +418,9 @@ def test_texture():
     # Create the poly data
     mesh = pyvista.PolyData(vertices, faces)
     # Attempt setting the texture coordinates
-    mesh.t_coords = t_coords
+    mesh.active_t_coords = t_coords
     # now grab the texture coordinates
-    foo = mesh.t_coords
+    foo = mesh.active_t_coords
     assert np.allclose(foo, t_coords)
     texture = Texture(examples.mapfile)
     mesh.textures['map'] = texture
@@ -438,9 +438,9 @@ def test_texture_airplane():
     mesh.textures["tex_a"] = texture.copy()
     mesh.textures["tex_b"] = texture.copy()
     mesh._activate_texture("tex_a")
-    assert np.allclose(mesh.t_coords, mesh["tex_a"])
+    assert np.allclose(mesh.active_t_coords, mesh["tex_a"])
     mesh._activate_texture("tex_b")
-    assert np.allclose(mesh.t_coords, mesh["tex_b"])
+    assert np.allclose(mesh.active_t_coords, mesh["tex_b"])
 
     # Now test copying
     cmesh = mesh.copy()
@@ -461,7 +461,7 @@ def test_invalid_vector(grid):
 
 
 def test_no_t_coords(grid):
-    assert grid.t_coords is None
+    assert grid.active_t_coords is None
 
 
 def test_no_arrows(grid):
@@ -533,16 +533,16 @@ def test_set_active_tensors(grid):
 
 def test_set_t_coords(grid):
     with pytest.raises(TypeError):
-        grid.t_coords = [1, 2, 3]
+        grid.active_t_coords = [1, 2, 3]
 
     with pytest.raises(ValueError):
-        grid.t_coords = np.empty(10)
+        grid.active_t_coords = np.empty(10)
 
     with pytest.raises(ValueError):
-        grid.t_coords = np.empty((3, 3))
+        grid.active_t_coords = np.empty((3, 3))
 
     with pytest.raises(ValueError):
-        grid.t_coords = np.empty((grid.n_points, 1))
+        grid.active_t_coords = np.empty((grid.n_points, 1))
 
 
 def test_activate_texture_none(grid):

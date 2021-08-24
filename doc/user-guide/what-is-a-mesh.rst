@@ -128,7 +128,7 @@ mesh. In PyVista, we work with both point data and cell data and allow
 easy access to data dictionaries to hold arrays for attributes that
 live either on all nodes or on all cells of a mesh. These attributes
 can be accessed by dictionaries attached to any PyVista mesh called
-``.point_arrays`` or ``.cell_arrays``.
+``.point_data`` or ``.cell_data``.
 
 
 Point data refers to arrays of values (scalars, vectors, etc.) that
@@ -140,7 +140,7 @@ plotting the values between nodes are interpolated across the cells.
 .. pyvista-plot::
     :context:
 
-    mesh.point_arrays['my point values'] = np.arange(mesh.n_points)
+    mesh.point_data['my point values'] = np.arange(mesh.n_points)
     mesh.plot(scalars='my point values', cpos=cpos, show_edges=True)
 
 
@@ -197,5 +197,5 @@ Note how this varies from assigning scalars to each point
     :context:
 
     cube = pv.Cube().clean()
-    cube.point_arrays['myscalars'] = range(8)
+    cube.point_data['myscalars'] = range(8)
     cube.plot(cmap='bwr')

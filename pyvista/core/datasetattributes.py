@@ -147,7 +147,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
             info.append(f'Active Scalars  : {self.active_scalars_name}')
             info.append(f'Active Vectors  : {self.active_vectors_name}')
-            info.append(f'Active Texture  : {self.active_texture_name}')
+            info.append(f'Active Texture  : {self.active_t_coords_name}')
 
         info.append(f'Contains arrays :{array_info}')
         return '\n'.join(info)
@@ -350,8 +350,26 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @property
-    def t_coords(self) -> Optional[pyvista_ndarray]:
-        """Return or set the active texture coordinates.
+    def t_coords(self) -> Optional[pyvista_ndarray]:  # pragma: no cover
+        """Return the active texture coordinates.
+
+        .. deprecated:: 0.32.0
+           Use :attr:`DataSetAttributes.active_t_coords` to return the
+           active texture coordinates.
+        """
+        warnings.warn( "Use of `DataSetAttributes.t_coords` is deprecated. "
+            "Use `DataSetAttributes.active_t_coords` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.active_t_coords
+
+    @t_coords.setter
+    def t_coords(self, t_coords: np.ndarray):  # pragma: no cover
+        self.active_t_coords = t_coords  # type: ignore
+
+    @property
+    def active_t_coords(self) -> Optional[pyvista_ndarray]:
+        """Return or set the active texture coordinates array.
 
         Returns
         -------
@@ -362,7 +380,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         --------
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.point_data.t_coords
+        >>> mesh.point_data.active_t_coords
         pyvista_ndarray([[ 0.,  0.],
                          [ 1.,  0.],
                          [ 1.,  1.],
@@ -378,8 +396,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             return pyvista_ndarray(t_coords, dataset=self.dataset, association=self.association)
         return None
 
-    @t_coords.setter
-    def t_coords(self, t_coords: np.ndarray):
+    @active_t_coords.setter
+    def active_t_coords(self, t_coords: np.ndarray):
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
@@ -395,21 +413,35 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.Modified()
 
     @property
-    def active_texture_name(self) -> Optional[str]:
-        """Name of the active texture array.
+    def active_texture_name(self) -> Optional[str]:  # pragma: no cover
+        """Name of the active texture coordinates array.
+
+        .. deprecated:: 0.32.0
+           Use :attr:`DataSetAttributes.active_t_coords` to return the
+           name active texture coordinates array.
+
+        """
+        warnings.warn( "Use of `active_texture_name` is deprecated. "
+            "Use `active_t_coords_name` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.active_t_coords_name
+
+    @property
+    def active_t_coords_name(self) -> Optional[str]:
+        """Name of the active texture coordinates array.
 
         Examples
         --------
         >>> import pyvista
         >>> mesh = pyvista.Cube().clean()
-        >>> mesh.point_data.active_texture_name
+        >>> mesh.point_data.active_t_coords_name
         'TCoords'
 
         """
-        try:
-            return self.GetTCoords().GetName()
-        except:
-            return None
+        if self.GetTCoords() is not None:
+            return str(self.GetTCoords().GetName())
+        return None
 
     def get_array(self, key: Union[str, int]) -> Union[pyvista_ndarray, _vtk.vtkDataArray, _vtk.vtkAbstractArray]:
         """Get an array in this object.
@@ -977,10 +1009,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         'my_data'
 
         """
-        try:
-            return self.GetVectors().GetName()
-        except:
-            return None
+        if self.GetVectors() is not None:
+            return str(self.GetVectors().GetName())
+        return None
 
     @active_vectors_name.setter
     def active_vectors_name(self, name: str) -> None:

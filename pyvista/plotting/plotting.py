@@ -1803,10 +1803,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if isinstance(scalars, np.ndarray):
                     scalars = scalars[ind]
             if texture:
-                _tcoords = mesh.t_coords
+                _tcoords = mesh.active_t_coords
             mesh.compute_normals(cell_normals=False, inplace=True)
             if texture:
-                mesh.t_coords = _tcoords
+                mesh.active_t_coords = _tcoords
 
         if mesh.n_points < 1:
             raise ValueError('Empty meshes cannot be plotted. Input mesh has zero points.')

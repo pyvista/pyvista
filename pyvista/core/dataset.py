@@ -471,8 +471,26 @@ class DataSet(DataSetFilters, DataObject):
         self.active_vectors_name = DEFAULT_VECTOR_KEY
 
     @property
-    def t_coords(self) -> Optional[pyvista_ndarray]:
+    def t_coords(self) -> Optional[pyvista_ndarray]:  # pragma: no cover
         """Return the active texture coordinates on the points.
+
+        .. deprecated:: 0.32.0
+           Use :attr:`DataSet.active_t_coords` to return the active
+           texture coordinates.
+        """
+        warnings.warn( "Use of `DataSet.t_coords` is deprecated. "
+            "Use `DataSet.active_t_coords` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.active_t_coords
+
+    @t_coords.setter
+    def t_coords(self, t_coords: np.ndarray):  # pragma: no cover
+        self.active_t_coords = t_coords  # type: ignore
+
+    @property
+    def active_t_coords(self) -> Optional[pyvista_ndarray]:
+        """Return or set the active texture coordinates on the points.
 
         Examples
         --------
@@ -480,7 +498,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> from pyvista import examples
         >>> globe = examples.load_globe()
-        >>> globe.t_coords
+        >>> globe.active_t_coords
         pyvista_ndarray([[0.        , 0.        ],
                          [0.        , 0.07142857],
                          [0.        , 0.14285714],
@@ -490,10 +508,10 @@ class DataSet(DataSetFilters, DataObject):
                          [1.        , 1.        ]])
 
         """
-        return self.point_data.t_coords
+        return self.point_data.active_t_coords
 
-    @t_coords.setter
-    def t_coords(self, t_coords: np.ndarray):
+    @active_t_coords.setter
+    def active_t_coords(self, t_coords: np.ndarray):
         self.point_data.t_coords = t_coords  # type: ignore
 
     @property
