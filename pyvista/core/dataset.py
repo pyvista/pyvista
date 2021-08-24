@@ -586,7 +586,7 @@ class DataSet(DataSetFilters, DataObject):
             Length 3 list, tuple or array.
 
         """
-        self.points += np.asarray(xyz)
+        self.points += np.asarray(xyz)  # type: ignore
 
     def scale(self, xyz: Union[list, tuple, np.ndarray]):
         """Scale the mesh.
@@ -614,7 +614,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
-        self.points *= np.asarray(xyz)
+        self.points *= np.asarray(xyz)  # type: ignore
 
     def flip_x(self, point=None, transform_all_input_vectors=False):
         """Flip mesh about the x-axis.
@@ -908,7 +908,10 @@ class DataSet(DataSetFilters, DataObject):
         array(['a', 'b', 'c'], dtype='<U1')
 
         """
-        return get_array(self, name, preference=preference, err=True)
+        arr = get_array(self, name, preference=preference, err=True)
+        if arr is None:  # pragma: no cover
+            raise RuntimeError  # this should never be reached with err=True
+        return arr
 
     def get_array_association(self, name: str, preference: Literal['cell', 'point', 'field']='cell') -> FieldAssociation:
         """Get the association of an array.
