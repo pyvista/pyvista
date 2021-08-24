@@ -153,7 +153,6 @@ class DataSet(DataSetFilters, DataObject):
             for attr in [self.point_data, self.cell_data]:
                 if attr.active_scalars_name is not None:
                     self._active_scalars_info = ActiveArrayInfo(attr.association, attr.active_scalars_name)
-                    self.active_scalars_name = attr.active_scalars_name
                     break
 
         return self._active_scalars_info
@@ -208,7 +207,6 @@ class DataSet(DataSetFilters, DataObject):
                 name = attr.active_vectors_name
                 if name is not None:
                     self._active_vectors_info = ActiveArrayInfo(attr.association, name)
-                    self.active_vectors_name = name
                     break
 
         return self._active_vectors_info
@@ -256,13 +254,14 @@ class DataSet(DataSetFilters, DataObject):
     def active_tensors(self) -> Optional[np.ndarray]:
         """Return the active tensors array."""
         field, name = self.active_tensors_info
-        try:
-            if field is FieldAssociation.POINT:
-                return self.point_data[name]
-            if field is FieldAssociation.CELL:
-                return self.cell_data[name]
-        except KeyError:
-            return None
+        if name is not None:
+            try:
+                if field is FieldAssociation.POINT:
+                    return self.point_data[name]
+                if field is FieldAssociation.CELL:
+                    return self.cell_data[name]
+            except KeyError:
+                return None
         return None
 
     @property
@@ -697,13 +696,14 @@ class DataSet(DataSetFilters, DataObject):
     def active_scalars(self) -> Optional[pyvista_ndarray]:
         """Return the active scalars as an array."""
         field, name = self.active_scalars_info
-        try:
-            if field == FieldAssociation.POINT:
-                return self.point_data[name]
-            if field == FieldAssociation.CELL:
-                return self.cell_data[name]
-        except KeyError:
-            return None
+        if name is not None:
+            try:
+                if field == FieldAssociation.POINT:
+                    return self.point_data[name]
+                if field == FieldAssociation.CELL:
+                    return self.cell_data[name]
+            except KeyError:
+                return None
         return None
 
     def get_data_range(self,

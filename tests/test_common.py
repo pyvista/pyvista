@@ -646,7 +646,7 @@ def test_change_name_fail(grid):
 
 def test_get_cell_array_fail():
     sphere = pyvista.Sphere()
-    with pytest.raises(KeyError):
+    with pytest.raises(TypeError):
         sphere.cell_data[None]
 
 
@@ -910,7 +910,7 @@ def test_no_active():
     pdata = pyvista.PolyData()
     assert pdata.active_scalars is None
 
-    with pytest.raises(KeyError):
+    with pytest.raises(TypeError):
         pdata.point_data[None]
 
 

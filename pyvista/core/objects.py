@@ -101,7 +101,7 @@ class Table(_vtk.vtkTable, DataObject):
 
         Returns
         -------
-        scalars : np.ndarray
+        :class: numpy.ndarray
             Numpy array of scalars
 
         """
@@ -110,7 +110,8 @@ class Table(_vtk.vtkTable, DataObject):
     @property
     def row_arrays(self):
         """Return the all row arrays."""
-        return DataSetAttributes(vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW)
+        return DataSetAttributes(vtkobject=self.GetRowData(), dataset=self,
+                                 association=FieldAssociation.ROW)
 
     def keys(self):
         """Return the table keys."""

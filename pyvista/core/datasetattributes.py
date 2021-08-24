@@ -100,7 +100,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         TextureCoordinates      float32  (4, 2)               TCOORDS
         my-data                 int64    (4,)
         my-other-data           int64    (4,)
-        vectors1                float64  (4, 3)               VECTOR
+        vectors1                float64  (4, 3)               VECTORS
         vectors0                float64  (4, 3)
 
     Notes
@@ -185,24 +185,30 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             return self[key]
         return value
 
+    def _check_key(self, key: Union[str, int]):
+        """Verify that a key is valid for the dunder methods."""
+        if self.association != FieldAssociation.ROW:
+            if not isinstance(key, str):
+                raise TypeError('Only strings are valid keys for DataSetAttributes with POINT, '
+                                'CELL, or FIELD assocaitions.')
+        elif not isinstance(key, (str, int)):
+            raise TypeError('Key must be either an int or string.')
+
     def __bool__(self) -> bool:
-        """Returns ``True`` when there are arrays present."""
+        """Return ``True`` when there are arrays present."""
         return bool(self.GetNumberOfArrays())
 
-    def __getitem__(self, key: str) -> pyvista_ndarray:
+    def __getitem__(self, key: Union[str, int]) -> pyvista_ndarray:
         """Implement ``[]`` operator.
 
-        Accepts an array name.
+        Accepts an array name or, in the case of ROW assocaitions, an int.
         """
-        if not isinstance(key, str):
-            raise TypeError('Only strings are valid keys for DataSetAttributes.  '
-                            'Use ``get_array`` if you need to get an array from'
-                             ' an index')
-
+        self._check_key(key)
         return self.get_array(key)
 
     def __setitem__(self, key: str, value: np.ndarray):
         """Implement setting with the ``[]`` operator."""
+        self._check_key(key)
         has_arr = key in self
         self.set_array(value, name=key)
 
@@ -217,6 +223,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __delitem__(self, key: str):
         """Implement del with array name or index."""
+        self._check_key(key)
         self.remove(key)
 
     def __contains__(self, name: str) -> bool:
@@ -317,10 +324,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.active_vectors_name = name
 
     @property
-    def valid_array_len(self) -> int:
+    def valid_array_len(self) -> Optional[int]:
         """Return the length data should be when added to the dataset.
 
-        If there are no restrictions, returns 0.
+        If there are no restrictions, returns ``None``.
 
         Examples
         --------
@@ -336,15 +343,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         8
         >>> mesh.cell_data.valid_array_len
         6
-        >>> mesh.field_data.valid_array_len
-        0
+        >>> mesh.field_data.valid_array_len is None
+        True
 
         """
         if self.association == FieldAssociation.POINT:
             return self.dataset.GetNumberOfPoints()
         if self.association == FieldAssociation.CELL:
             return self.dataset.GetNumberOfCells()
-        return 0
 
     @property
     def t_coords(self) -> Optional[pyvista_ndarray]:
@@ -618,7 +624,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Vectors  : my-vectors
         Active Texture  : None
         Contains arrays :
-            my-vectors              float64  (8, 3)               VECTOR
+            my-vectors              float64  (8, 3)               VECTORS
 
         Notes
         -----
@@ -676,12 +682,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             data = data.view(np.uint8)
 
         shape = data.shape
-        if ndarray.ndim == 3:
-            # Array of matrices. We need to make sure the order  in memory is right.
-            # If column order (c order), transpose. VTK wants row order (fortran
-            # order). The deep copy later will make sure that the array is contiguous.
-            # If row order but not contiguous, transpose so that the deep copy below
-            # does not happen.
+        if data.ndim == 3:
+            # Array of matrices. We need to make sure the order in
+            # memory is right.  If row major (C/C++),
+            # transpose. VTK wants row major (FORTRAN order). The deep
+            # copy later will make sure that the array is contiguous.
+            # If column order but not contiguous, transpose so that the
+            # deep copy below does not happen.
             size = data.dtype.itemsize
             if (data.strides[1] / size == 3 and data.strides[2] / size == 1) or \
                 (data.strides[1] / size == 1 and data.strides[2] / size == 3 and \

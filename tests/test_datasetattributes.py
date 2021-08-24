@@ -65,7 +65,7 @@ def test_repr(hexbeam_point_attributes):
     # ensure long names are abbreviated
     sz = hexbeam_point_attributes.values()[0].size
     data = np.zeros(sz)
-    hexbeam_point_attributes['verylongnameover20char'] = data
+    hexbeam_point_attributes['thisisaverylongnameover20char'] = data
     assert '...' in str(hexbeam_point_attributes)
 
     # ensure datatype str is in repr
@@ -90,7 +90,7 @@ def test_valid_array_len_cells(hexbeam):
 
 
 def test_valid_array_len_field(hexbeam):
-    assert hexbeam.field_data.valid_array_len == 0
+    assert hexbeam.field_data.valid_array_len is None
 
 
 def test_get(sphere):
@@ -293,8 +293,12 @@ def test_remove_should_fail_on_bad_argument(removed_key, hexbeam_point_attribute
 
 @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
 def test_del_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
-    with raises(KeyError):
-        del hexbeam_point_attributes[removed_key]
+    if removed_key in [None, -1]:
+        with raises(TypeError):
+            del hexbeam_point_attributes[removed_key]
+    else:
+        with raises(KeyError):
+            del hexbeam_point_attributes[removed_key]
 
 
 @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
