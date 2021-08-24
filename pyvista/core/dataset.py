@@ -1121,7 +1121,7 @@ class DataSet(DataSetFilters, DataObject):
         """Remove all point data.
 
         .. deprecated:: 0.32.0
-           Use :attr:`DataObject.clear_point_arrays` instead.
+           Use :func:`DataSet.clear_point_data` instead.
         """
         warnings.warn( "Use of `clear_point_arrays` is deprecated. "
             "Use `clear_point_data` instead.",
@@ -1152,9 +1152,9 @@ class DataSet(DataSetFilters, DataObject):
         """Remove all cell data.
 
         .. deprecated:: 0.32.0
-           Use :attr:`DataObject.clear_cell_arrays` instead.
+           Use :func:`DataSet.clear_cell_data` instead.
         """
-        warnings.warn( "Use of `clear_cell_arrays` is deprecated. "
+        warnings.warn("Use of `clear_cell_arrays` is deprecated. "
             "Use `clear_cell_data` instead.",
             PyvistaDeprecationWarning
         )
@@ -1163,6 +1163,18 @@ class DataSet(DataSetFilters, DataObject):
     def clear_cell_data(self):
         """Remove all cell arrays."""
         self.cell_data.clear()
+
+    def clear_arrays(self):  # pragma: no cover
+        """Remove all arrays from point/cell/field data.
+
+        .. deprecated:: 0.32.0
+           Use :func:`DataSet.clear_data` instead.
+        """
+        warnings.warn("Use of `clear_arrays` is deprecated. "
+            "Use `clear_data` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.clear_data()
 
     def clear_data(self):
         """Remove all arrays from point/cell/field data.

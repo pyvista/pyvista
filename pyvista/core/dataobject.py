@@ -247,6 +247,19 @@ class DataObject:
 
         return True
 
+    def add_field_array(self, scalars: np.ndarray, name: str,
+                        deep=True):  # pragma: no cover
+        """Add field data.
+
+        .. deprecated:: 0.32.0
+           Use :func:`DataObject.clear_point_arrays` instead.
+        """
+        warnings.warn( "Use of `clear_point_arrays` is deprecated. "
+            "Use `clear_point_data` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.clear_point_data()
+
     def add_field_data(self, scalars: np.ndarray, name: str, deep=True):
         """Add field data.
 
@@ -324,9 +337,9 @@ class DataObject:
         """Remove all field data.
 
         .. deprecated:: 0.32.0
-           Use :attr:`DataObject.clear_field_arrays` instead.
+           Use :func:`DataObject.clear_field_data` instead.
         """
-        warnings.warn( "Use of `clear_field_arrays` is deprecated. "
+        warnings.warn("Use of `clear_field_arrays` is deprecated. "
             "Use `clear_field_data` instead.",
             PyvistaDeprecationWarning
         )

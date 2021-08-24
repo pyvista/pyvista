@@ -293,8 +293,12 @@ def test_remove_should_fail_on_bad_argument(removed_key, hexbeam_point_attribute
 
 @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
 def test_del_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
-    with raises(KeyError):
-        del hexbeam_point_attributes[removed_key]
+    if removed_key in [None, -1]:
+        with raises(TypeError):
+            del hexbeam_point_attributes[removed_key]
+    else:
+        with raises(KeyError):
+            del hexbeam_point_attributes[removed_key]
 
 
 @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])

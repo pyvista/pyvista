@@ -185,30 +185,24 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             return self[key]
         return value
 
-    def _check_key(self, key: Union[str, int]):
-        """Verify that a key is valid for the dunder methods."""
-        if self.association != FieldAssociation.ROW:
-            if not isinstance(key, str):
-                raise TypeError('Only strings are valid keys for DataSetAttributes with POINT, '
-                                'CELL, or FIELD assocaitions.')
-        elif not isinstance(key, (str, int)):
-            raise TypeError('Key must be either an int or string.')
-
     def __bool__(self) -> bool:
         """Return ``True`` when there are arrays present."""
         return bool(self.GetNumberOfArrays())
 
-    def __getitem__(self, key: Union[str, int]) -> pyvista_ndarray:
+    def __getitem__(self, key: str) -> pyvista_ndarray:
         """Implement ``[]`` operator.
 
         Accepts an array name or, in the case of ROW assocaitions, an int.
         """
-        self._check_key(key)
+        if not isinstance(key, str):
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
     def __setitem__(self, key: str, value: np.ndarray):
         """Implement setting with the ``[]`` operator."""
-        self._check_key(key)
+        if not isinstance(key, str):
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
+
         has_arr = key in self
         self.set_array(value, name=key)
 
@@ -223,6 +217,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __delitem__(self, key: str):
         """Implement del with array name or index."""
+        if not isinstance(key, str):
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
+
         self.remove(key)
 
     def __contains__(self, name: str) -> bool:
@@ -350,6 +347,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             return self.dataset.GetNumberOfPoints()
         if self.association == FieldAssociation.CELL:
             return self.dataset.GetNumberOfCells()
+        return None
 
     @property
     def t_coords(self) -> Optional[pyvista_ndarray]:
@@ -953,10 +951,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         'my_data'
 
         """
-        try:
-            return self.GetScalars().GetName()
-        except:
-            return None
+        if self.GetScalars() is not None:
+            return str(self.GetScalars().GetName())
+        return None
 
     @active_scalars_name.setter
     def active_scalars_name(self, name: str) -> None:

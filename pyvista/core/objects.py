@@ -101,11 +101,11 @@ class Table(_vtk.vtkTable, DataObject):
 
         Returns
         -------
-        :class: numpy.ndarray
+        :class:`numpy.ndarray`
             Numpy array of scalars
 
         """
-        return self.row_arrays[name]
+        return self.row_arrays.get_array(name)
 
     @property
     def row_arrays(self):
