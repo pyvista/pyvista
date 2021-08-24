@@ -311,7 +311,7 @@ class DataObject:
             "Use `field_data` instead.",
             PyvistaDeprecationWarning
         )
-        return self.clear_field_data()
+        return self.field_data
 
     @property
     def field_data(self) -> DataSetAttributes:

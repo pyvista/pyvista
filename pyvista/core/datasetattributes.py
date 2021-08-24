@@ -402,6 +402,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                          [-1.,  0.]], dtype=float32)
 
         """
+        self._raise_no_t_coords()
         t_coords = self.GetTCoords()
         if t_coords is not None:
             return pyvista_ndarray(t_coords, dataset=self.dataset, association=self.association)
@@ -409,6 +410,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_t_coords.setter
     def active_t_coords(self, t_coords: np.ndarray):
+        self._raise_no_t_coords()
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
@@ -445,14 +447,23 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Examples
         --------
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.point_data.active_t_coords_name
         'TCoords'
 
         """
+        self._raise_no_t_coords()
         if self.GetTCoords() is not None:
             return str(self.GetTCoords().GetName())
         return None
+
+    @active_t_coords_name.setter
+    def active_t_coords_name(self, name: str) -> None:
+        self._raise_no_t_coords()
+        dtype = self[name].dtype
+        # only vtkDataArray subclasses can be set as active attributes
+        if np.issubdtype(dtype, np.number) or dtype == bool:
+            self.SetActiveScalars(name)
 
     def get_array(self, key: Union[str, int]) -> Union[pyvista_ndarray, _vtk.vtkDataArray, _vtk.vtkAbstractArray]:
         """Get an array in this object.
@@ -467,10 +478,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Returns
         -------
         :class:`pyvista.pyvista_ndarray` or ``vtkDataArray``
-            A :class:`pyvistapyvista_ndarray` if the underlying array
-            is a ``vtk.vtkDataArray`` or ``vtk.vtkStringArray``,
-            ``vtk.vtkAbstractArray`` if the former does not exist.
-            Raises ``KeyError`` if neither exist.
+            Returns a :class:`pyvista.pyvista_ndarray` if the
+            underlying array is either a ``vtk.vtkDataArray`` or
+            ``vtk.vtkStringArray``.  Otherwise, returns a
+            ``vtk.vtkAbstractArray``.
+
+        Raises
+        ------
+        KeyError
+            If the key does not exist.
 
         Examples
         --------
@@ -1063,17 +1079,17 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if set(self.keys()) != set(other.keys()):
             return False
 
+        # verify the value of the arrays
         for key, value in other.items():
             if not np.array_equal(value, self[key]):
                 return False
 
+        # check the name of the active attributes
         if self.association != FieldAssociation.NONE:
-            if other.active_scalars_name != self.active_scalars_name:
-                return False
-            if other.active_vectors_name != self.active_vectors_name:
-                return False
-            if other.active_t_coords_name != self.active_t_coords_name:
-                return False
+            for name in ['scalars', 'vectors', 't_coords', 'normals']:
+                attr = f'active_{name}_name'
+                if getattr(other, attr) != getattr(self, attr):
+                    return False
 
         return True
 
@@ -1188,3 +1204,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Raise AttributeError when attempting access normals for field data."""
         if self.association == FieldAssociation.NONE:
             raise AttributeError('FieldData does not have active normals.')
+
+    def _raise_no_t_coords(self):
+        """Raise AttributeError when attempting access t_coords for field data."""
+        if self.association == FieldAssociation.NONE:
+            raise AttributeError('FieldData does not have active texture coordinates.')

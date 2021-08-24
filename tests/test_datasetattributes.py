@@ -51,9 +51,15 @@ def test_bool(hexbeam_point_attributes):
     assert bool(len(hexbeam_point_attributes)) is bool(hexbeam_point_attributes)
 
 
-def test_getitem(hexbeam_point_attributes, match='Only strings'):
-    with raises(TypeError):
+def test_getitem(hexbeam_point_attributes):
+    with raises(TypeError, match='Only strings'):
         hexbeam_point_attributes[0]
+
+
+def test_setitem(hexbeam_point_attributes):
+    with raises(TypeError, match='Only strings'):
+        hexbeam_point_attributes[0]
+
 
 
 def test_repr(hexbeam_point_attributes):
@@ -478,3 +484,11 @@ def test_active_vectors_eq():
 
     mesh.point_data.active_vectors_name = 'vectors0'
     assert mesh != other_mesh
+
+
+def test_active_t_coords_name(plane):
+    plane.point_data['arr'] = plane.point_data.active_t_coords
+    plane.point_data.active_t_coords_name = 'arr'
+
+    with raises(AttributeError):
+        plane.field_data.active_t_coords_name = 'arr'
