@@ -305,29 +305,6 @@ class DataObject:
         """
         return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
 
-    @property
-    def field_data(self) -> DataSetAttributes:
-        """Return FieldData as DataSetAttributes.
-
-        Use field data when the size of the data you wish to associate
-        with the dataset does not match the number of points or cells
-        of the dataset.
-
-        Examples
-        --------
-        Add field data to a PolyData dataset and then return it.
-
-        >>> import pyvista
-        >>> import numpy as np
-        >>> mesh = pyvista.Sphere()
-        >>> mesh.field_data['my-field-data'] = np.arange(10)
-        >>> mesh.field_data['my-field-data']
-        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
-        """
-        return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
-
-
     def clear_field_data(self):
         """Remove all field data.
 

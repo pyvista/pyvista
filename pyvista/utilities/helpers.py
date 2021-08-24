@@ -730,22 +730,9 @@ def wrap(dataset):
         else:
             raise NotImplementedError('NumPy array could not be wrapped pyvista.')
 
-    # VTK arrays
+    # wrap VTK arrays as pyvista_ndarray
     if isinstance(dataset, _vtk.vtkDataArray):
         return pyvista.pyvista_ndarray(dataset)
-
-    wrappers = {
-        'vtkExplicitStructuredGrid': pyvista.ExplicitStructuredGrid,
-        'vtkUnstructuredGrid': pyvista.UnstructuredGrid,
-        'vtkRectilinearGrid': pyvista.RectilinearGrid,
-        'vtkStructuredGrid': pyvista.StructuredGrid,
-        'vtkPolyData': pyvista.PolyData,
-        'vtkImageData': pyvista.UniformGrid,
-        'vtkStructuredPoints': pyvista.UniformGrid,
-        'vtkMultiBlockDataSet': pyvista.MultiBlock,
-        'vtkTable': pyvista.Table,
-        # 'vtkParametricSpline': pyvista.Spline,
-    }
 
     # Check if a dataset is a VTK type
     if hasattr(dataset, 'GetClassName'):

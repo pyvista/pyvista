@@ -153,7 +153,7 @@ class DataSet(DataSetFilters, DataObject):
             for attr in [self.point_data, self.cell_data]:
                 if attr.active_scalars_name is not None:
                     self._active_scalars_info = ActiveArrayInfo(attr.association, attr.active_scalars_name)
-                    attr.active_scalars_name = attr.active_scalars_name
+                    self.active_scalars_name = attr.active_scalars_name
                     break
 
         return self._active_scalars_info
@@ -208,7 +208,7 @@ class DataSet(DataSetFilters, DataObject):
                 name = attr.active_vectors_name
                 if name is not None:
                     self._active_vectors_info = ActiveArrayInfo(attr.association, name)
-                    attr.active_vectors_name = name
+                    self.active_vectors_name = name
                     break
 
         return self._active_vectors_info
@@ -1600,7 +1600,7 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         :class:`pyvista.UnstructuredGrid`
-            Dataset cast into an :class:`pyvista.UnstructuredGrid`.
+            Dataset cast into a :class:`pyvista.UnstructuredGrid`.
 
         Examples
         --------

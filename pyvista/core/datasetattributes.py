@@ -45,7 +45,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     When adding directional data (such as velocity vectors), use
     :func:`DataSetAttributes.set_vectors`.
 
-    When adding non-directional data (such temperature values or
+    When adding non-directional data (such as temperature values or
     multi-component scalars like RGBA values), use
     :func:`DataSetAttributes.set_scalars`.
 
@@ -64,7 +64,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     Examples
     --------
-    Store data with point association in a DataSet
+    Store data with point association in a DataSet.
 
     >>> import pyvista
     >>> mesh = pyvista.Cube().clean()
@@ -108,7 +108,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     When printing out the point arrays, you can see which arrays are
     the active scalars, vectors, normals, and textures.  In the arrays
     list, ``SCALARS`` denotes that these are the active scalars, and
-    vectors denotes that these arrays are tagged as vectors data
+    ``VECTORS`` denotes that these arrays are tagged as vectors data
     (i.e. data with magnitude and direction).
 
     """
@@ -124,10 +124,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Printable representation of DataSetAttributes."""
         info = ['pyvista DataSetAttributes']
         array_info = ' None'
-        if len(self):
+        if self:
             lines = []
             for i, (name, array) in enumerate(self.items()):
-                if len(name) > 20:
+                if len(name) > 23:
                     name = f'{name[:20]}...'
                 vtk_arr = array.VTKObject
                 try:
@@ -137,7 +137,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
                 # special treatment for vector data
                 if name == self.active_vectors_name:
-                    arr_type = 'VECTOR'
+                    arr_type = 'VECTORS'
 
                 line = f'{name[:23]:<24}{str(array.dtype):<9}{str(array.shape):<20} {arr_type}'.strip()
                 lines.append(line)
@@ -189,7 +189,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Returns ``True`` when there are arrays present."""
         return bool(self.GetNumberOfArrays())
 
-    def __getitem__(self, key: Union[str]) -> pyvista_ndarray:
+    def __getitem__(self, key: str) -> pyvista_ndarray:
         """Implement ``[]`` operator.
 
         Accepts an array name.
@@ -237,9 +237,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Return the active scalars.
 
         .. versionchanged:: 0.32.0
-            Can no longer used to set the active scalars.  Either use
+            Can no longer be used to set the active scalars.  Either use
             :func:`DataSetAttributes.set_scalars` or if the array
-            already exists, use
+            already exists, assign to
             :attr:`DataSetAttribute.active_scalars_name`.
 
         Examples
@@ -264,7 +264,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_scalars.setter
     def active_scalars(self, name: str):  # pragma: no cover
-        warnings.warn("\n\n`Using active_scalars to set the active scalars has been "
+        warnings.warn("\n\nUsing active_scalars to set the active scalars has been "
                       "deprecated.  Use:\n\n"
                       "  - `DataSetAttributes.set_scalars`\n"
                       "  - `DataSetAttributes.active_scalars_name`\n"
@@ -278,15 +278,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Return the active vectors as a pyvista_ndarray.
 
         .. versionchanged:: 0.32.0
-            Can no longer used to set the active scalars.  Either use
-            :func:`DataSetAttributes.set_scalars` or if the array
-            already exists, use
-            :attr:`DataSetAttribute.active_scalars_name`.
+            Can no longer be used to set the active vectors.  Either use
+            :func:`DataSetAttributes.set_vectors` or if the array
+            already exists, assign to
+            :attr:`DataSetAttribute.active_vectors_name`.
 
         Examples
         --------
         Associate point data to a simple cube mesh and show that the
-        active scalars in the point array are the most recently added
+        active vectors in the point array are the most recently added
         array.
 
         >>> import pyvista
@@ -308,7 +308,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @active_vectors.setter
     def active_vectors(self, name: str):  # pragma: no cover
-        warnings.warn("\n\n`Using active_vectors to set the active vectors has been"
+        warnings.warn("\n\nUsing active_vectors to set the active vectors has been "
                       "deprecated.  Use:\n\n"
                       "  - `DataSetAttributes.set_vectors`\n"
                       "  - `DataSetAttributes.active_vectors_name`\n",
@@ -324,7 +324,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Examples
         --------
-        Show the valid array lengths match the number of points and
+        Show that valid array lengths match the number of points and
         cells for point and cell arrays, and there is no length limit
         for field data.
 
@@ -598,7 +598,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         deep_copy : bool, optional
             When ``True`` makes a full copy of the array.  When
-            ``False``, the data is "pointed" to the original array
+            ``False``, the data references the original array
             without copying it.
 
         Examples
@@ -676,7 +676,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             data = data.view(np.uint8)
 
         shape = data.shape
-        if len(shape) == 3:
+        if ndarray.ndim == 3:
             # Array of matrices. We need to make sure the order  in memory is right.
             # If column order (c order), transpose. VTK wants row order (fortran
             # order). The deep copy later will make sure that the array is contiguous.
@@ -962,7 +962,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     @property
     def active_vectors_name(self) -> Optional[str]:
-        """Name of the active scalars.
+        """Name of the active vectors.
 
         Examples
         --------
