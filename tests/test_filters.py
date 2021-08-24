@@ -1650,4 +1650,4 @@ def test_collision_solid_non_triangle(hexbeam):
     assert isinstance(output, pyvista.PolyData)
     assert n_collision > 40
     assert 'ContactCells' in output.field_arrays
-    assert output.is_all_triangles()
+    assert output.is_all_triangles
