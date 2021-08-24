@@ -1117,6 +1117,18 @@ class DataSet(DataSetFilters, DataObject):
         return DataSetAttributes(self.GetPointData(), dataset=self,
                                  association=FieldAssociation.POINT)
 
+    def clear_point_arrays(self):  # pragma: no cover
+        """Remove all point data.
+
+        .. deprecated:: 0.32.0
+           Use :attr:`DataObject.clear_point_arrays` instead.
+        """
+        warnings.warn( "Use of `clear_point_arrays` is deprecated. "
+            "Use `clear_point_data` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.clear_point_data()
+
     def clear_point_data(self):
         """Remove all point arrays.
 
@@ -1135,6 +1147,18 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         self.point_data.clear()
+
+    def clear_cell_arrays(self):  # pragma: no cover
+        """Remove all cell data.
+
+        .. deprecated:: 0.32.0
+           Use :attr:`DataObject.clear_cell_arrays` instead.
+        """
+        warnings.warn( "Use of `clear_cell_arrays` is deprecated. "
+            "Use `clear_cell_data` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.clear_cell_data()
 
     def clear_cell_data(self):
         """Remove all cell arrays."""

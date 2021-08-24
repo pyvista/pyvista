@@ -296,7 +296,7 @@ class DataObject:
             "Use `field_data` instead.",
             PyvistaDeprecationWarning
         )
-        return self.field_data
+        return self.clear_field_data()
 
     @property
     def field_data(self) -> DataSetAttributes:
@@ -319,6 +319,18 @@ class DataObject:
 
         """
         return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
+
+    def clear_field_arrays(self):  # pragma: no cover
+        """Remove all field data.
+
+        .. deprecated:: 0.32.0
+           Use :attr:`DataObject.clear_field_arrays` instead.
+        """
+        warnings.warn( "Use of `clear_field_arrays` is deprecated. "
+            "Use `clear_field_data` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.field_data
 
     def clear_field_data(self):
         """Remove all field data.
