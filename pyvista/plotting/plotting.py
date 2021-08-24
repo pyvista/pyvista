@@ -384,7 +384,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             if 'Normals' in dataset.point_data:
                                 # ensure normals are active
                                 normals = dataset.point_data['Normals']
-                                dataset.point_data.normals = normals.copy()
+                                dataset.point_data.active_normals = normals.copy()
                         except:
                             pass
 

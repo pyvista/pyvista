@@ -1117,6 +1117,7 @@ class DataSet(DataSetFilters, DataObject):
         Active Scalars  : my_other_array
         Active Vectors  : None
         Active Texture  : None
+        Active Normals  : None
         Contains arrays :
             my_array                float64  (8,)
             my_other_array          int64    (8,)                 SCALARS
@@ -1248,6 +1249,7 @@ class DataSet(DataSetFilters, DataObject):
         Active Scalars  : my_other_array
         Active Vectors  : None
         Active Texture  : None
+        Active Normals  : None
         Contains arrays :
             my_array                float64  (6,)
             my_other_array          int64    (6,)                 SCALARS

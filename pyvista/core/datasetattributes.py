@@ -31,6 +31,9 @@ attr_type = [
     '',  # 11  (not an attribute)
 ]
 
+# used to check if default args have changed in pop
+_SENTINEL = pyvista_ndarray(np.array([]))
+
 
 class DataSetAttributes(_vtk.VTKObjectWrapper):
     """Python friendly wrapper of ``vtk.DataSetAttributes``.
@@ -95,6 +98,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     Active Scalars  : None
     Active Vectors  : vectors1
     Active Texture  : TextureCoordinates
+    Active Normals  : Normals
     Contains arrays :
         Normals                 float32  (4, 3)               NORMALS
         TextureCoordinates      float32  (4, 2)               TCOORDS
@@ -148,6 +152,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             info.append(f'Active Scalars  : {self.active_scalars_name}')
             info.append(f'Active Vectors  : {self.active_vectors_name}')
             info.append(f'Active Texture  : {self.active_t_coords_name}')
+            info.append(f'Active Normals  : {self.active_normals_name}')
 
         info.append(f'Contains arrays :{array_info}')
         return '\n'.join(info)
@@ -505,9 +510,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                   name: str, deep_copy=False) -> None:
         """Add an array to this object.
 
-        This method is useful when adding arrays to the DataSet when
-        you do not wish for them to become the active vectors or
-        scalars (which will be displayed within a plot).
+        Use this method when adding arrays to the DataSet.  These if
+        needed, these arrays can later be assigned to become the
+        active scalars, vectors, normals, or texture coordinates with:
+
+        * :attr:`active_scalars_name <DataSetAttributes.active_scalars_name>`
+        * :attr:`active_vectors_name <DataSetAttributes.active_vectors_name>`
+        * :attr:`active_normals_name <DataSetAttributes.active_normals_name>`
+        * :attr:`active_t_coords_name <DataSetAttributes.active_t_coords_name>`
 
         Parameters
         ----------
@@ -550,15 +560,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Notes
         -----
         You can simply use the ``[]`` operator to add an array to the
-        point, cell, or field data.  Note that by default if this is
-        not field data, the array will be made the active scalars.
-
-        When adding directional data (such as velocity vectors), use
-        :func:`DataSetAttributes.set_vectors`.
-
-        When adding non-directional data (such temperature values or
-        multi-component scalars like RGBA values), you can also use
-        :func:`DataSetAttributes.set_scalars`.
+        dataset.  Note that this will automatically become the active
+        scalars.
 
         """
         vtk_arr = self._prepare_array(data, name, deep_copy)
@@ -602,8 +605,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Scalars  : my-scalars
         Active Vectors  : None
         Active Texture  : None
+        Active Normals  : None
         Contains arrays :
             my-scalars              int64    (8,)                 SCALARS
+
+        See Also
+        --------
+        When adding directional data (such as velocity vectors), use
+        :func:`DataSetAttributes.set_vectors`.
 
         """
         vtk_arr = self._prepare_array(scalars, name, deep_copy)
@@ -652,6 +661,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Scalars  : None
         Active Vectors  : my-vectors
         Active Texture  : None
+        Active Normals  : None
         Contains arrays :
             my-vectors              float64  (8, 3)               VECTORS
 
@@ -661,6 +671,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         performing operations. Vector data, unlike scalar data, is
         rotated along with the geometry when the DataSet is passed
         through a transformation filter.
+
+        See Also
+        --------
+        When adding non-directional data (such temperature values or
+        multi-component scalars like RGBA values), you can also use
+        :func:`DataSetAttributes.set_scalars`.
 
         """
         # prepare the array and add an attribute so that we can track this as a vector
@@ -789,25 +805,30 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> mesh.point_data['my_data'] = range(mesh.n_points)
         >>> mesh.point_data.remove('my_data')
 
-        Show that the array no longer exists in ``point_data``
+        Show that the array no longer exists in ``point_data``.
 
         >>> 'my_data' in mesh.point_data
         False
 
         Notes
         -----
-        This is provided as VTK supports indexed arrays in DataSetAttributes.
+        You can also use the ``del`` operator.
 
         """
-        name = self.get_array(key).GetName()  # type: ignore
+        if not isinstance(key, str):
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
+
+        if key not in self:
+            raise KeyError(f'{key} not present.')
+
         try:
-            self.dataset.association_bitarray_names[self.association.name].remove(name)
+            self.dataset.association_bitarray_names[self.association.name].remove(key)
         except KeyError:
             pass
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
-    def pop(self, key: str, default=pyvista_ndarray(array=[])) -> pyvista_ndarray:
+    def pop(self, key: str, default=_SENTINEL) -> pyvista_ndarray:
         """Remove an array and return it.
 
         Parameters
@@ -840,21 +861,22 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         False
 
         """
+        if not isinstance(key, str):
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
+
+        if key not in self:
+            if default is _SENTINEL:
+                raise KeyError(f'{key} not present.')
+            return default
+
         vtk_arr = self.GetArray(key)
         if vtk_arr:
             copy = vtk_arr.NewInstance()
             copy.DeepCopy(vtk_arr)
             vtk_arr = copy
 
-        try:
-            self.remove(key)
-        except KeyError:
-            if default in self.pop.__defaults__:  # type: ignore
-                raise
-            return default
-
-        return pyvista_ndarray(vtk_arr, dataset=self.dataset,
-                               association=self.association)
+        self.remove(key)
+        return pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
 
     def items(self) -> List[Tuple[str, pyvista_ndarray]]:
         """Return a list of (array name, array value).
@@ -1004,9 +1026,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista
         >>> import numpy as np
         >>> mesh = pyvista.Sphere()
-        >>> mesh.point_data['my_data'] = np.random.random((mesh.n_points, 3))
-        >>> mesh.point_data.active_scalars_name
-        'my_data'
+        >>> mesh.point_data.set_vectors(np.random.random((mesh.n_points, 3)),
+        ...                             'my-vectors')
+        >>> mesh.point_data.active_vectors_name
+        'my-vectors'
 
         """
         if self.GetVectors() is not None:
@@ -1042,11 +1065,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 return False
             if other.active_vectors_name != self.active_vectors_name:
                 return False
+            if other.active_t_coords_name != self.active_t_coords_name:
+                return False
 
         return True
 
     @property
-    def normals(self) -> Optional[pyvista_ndarray]:
+    def active_normals(self) -> Optional[pyvista_ndarray]:
         """Return or set the normals.
 
         Returns
@@ -1067,11 +1092,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Scalars  : None
         Active Vectors  : None
         Active Texture  : TextureCoordinates
+        Active Normals  : Normals
         Contains arrays :
             Normals                 float32  (4, 3)               NORMALS
             TextureCoordinates      float32  (4, 2)               TCOORDS
 
-        >>> mesh.point_data.normals
+        >>> mesh.point_data.active_normals
         pyvista_ndarray([[0.000000e+00,  0.000000e+00, -1.000000e+00],
                          [0.000000e+00,  0.000000e+00, -1.000000e+00],
                          [0.000000e+00,  0.000000e+00, -1.000000e+00],
@@ -1081,13 +1107,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Assign normals to the cell arrays.  An array will be added
         named ``"Normals"``.
 
-        >>> mesh.cell_data.normals = [[0.0, 0.0, 1.0]]
+        >>> mesh.cell_data.active_normals = [[0.0, 0.0, 1.0]]
         >>> mesh.cell_data
         pyvista DataSetAttributes
         Association     : CELL
         Active Scalars  : None
         Active Vectors  : None
         Active Texture  : None
+        Active Normals  : Normals
         Contains arrays :
             Normals                 float64  (1, 3)               NORMALS
 
@@ -1096,17 +1123,16 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Field data will have no normals.
 
         """
-        if self.association == FieldAssociation.NONE:
-            raise AttributeError('FieldData does not have normals.')
-
+        self._raise_no_normals()
         vtk_normals = self.GetNormals()
         if vtk_normals is not None:
             return pyvista_ndarray(vtk_normals, dataset=self.dataset,
                                    association=self.association)
         return None
 
-    @normals.setter
-    def normals(self, normals: Union[Sequence[Number], np.ndarray]):
+    @active_normals.setter
+    def active_normals(self, normals: Union[Sequence[Number], np.ndarray]):
+        self._raise_no_normals()
         normals = np.asarray(normals)
         if normals.ndim != 2:
             raise ValueError('Normals must be a 2-dimensional array')
@@ -1120,3 +1146,38 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         vtkarr = _vtk.numpyTovtkDataArray(normals, name='Normals')
         self.SetNormals(vtkarr)
         self.Modified()
+
+    @property
+    def active_normals_name(self) -> Optional[str]:
+        """Return or set the name of the normals array.
+
+        Returns
+        --------
+        str
+            Name of the active normals array.
+
+        Examples
+        --------
+        First, compute cell normals.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Plane(i_resolution=1, j_resolution=1)
+        >>> mesh_w_normals = mesh.compute_normals()
+        >>> mesh_w_normals.point_data.active_normals_name
+        'Normals'
+
+        """
+        self._raise_no_normals()
+        if self.GetNormals() is not None:
+            return str(self.GetNormals().GetName())
+        return None
+
+    @active_normals_name.setter
+    def active_normals_name(self, name: str) -> None:
+        self._raise_no_normals()
+        self.SetActiveNormals(name)
+
+    def _raise_no_normals(self):
+        """Raise AttributeError when attempting access normals for field data."""
+        if self.association == FieldAssociation.NONE:
+            raise AttributeError('FieldData does not have active normals.')

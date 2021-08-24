@@ -277,7 +277,7 @@ def test_pop_should_return_array(insert_arange_narray):
     assert np.array_equal(other_array, sample_array)
 
 
-def test_should_pop_array(insert_arange_narray):
+def test_should_pop_array_invalid(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     key = 'invalid_key'
     assert key not in dsa
@@ -287,8 +287,12 @@ def test_should_pop_array(insert_arange_narray):
 
 @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
 def test_remove_should_fail_on_bad_argument(removed_key, hexbeam_point_attributes):
-    with raises(KeyError):
-        hexbeam_point_attributes.remove(removed_key)
+    if removed_key in [None, -1]:
+        with raises(TypeError):
+            hexbeam_point_attributes.remove(removed_key)
+    else:
+        with raises(KeyError):
+            hexbeam_point_attributes.remove(removed_key)
 
 
 @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
@@ -303,8 +307,12 @@ def test_del_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
 
 @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
 def test_pop_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
-    with raises(KeyError):
-        hexbeam_point_attributes.pop(removed_key)
+    if removed_key in [None, -1]:
+        with raises(TypeError):
+            hexbeam_point_attributes.pop(removed_key)
+    else:
+        with raises(KeyError):
+            hexbeam_point_attributes.pop(removed_key)
 
 
 def test_length_should_increment_on_set_array(hexbeam_point_attributes):
@@ -388,30 +396,40 @@ def test_assign_labels_to_points(hexbeam):
 
 def test_normals_get(plane):
     plane.clear_data()
-    assert plane.point_data.normals is None
+    assert plane.point_data.active_normals is None
 
     plane_w_normals = plane.compute_normals()
-    assert np.allclose(plane_w_normals.point_data.normals,
-                       plane_w_normals.point_normals)
+    assert np.array_equal(plane_w_normals.point_data.active_normals,
+                          plane_w_normals.point_normals)
 
 
 def test_normals_set():
     plane = pyvista.Plane(i_resolution=1, j_resolution=1)
     plane.point_data.normals = plane.point_normals
-    assert np.allclose(plane.point_data.normals,
-                       plane.point_normals)
+    assert np.array_equal(plane.point_data.active_normals,
+                          plane.point_normals)
 
     with raises(ValueError, match='must be a 2-dim'):
-        plane.point_data.normals = [1]
+        plane.point_data.active_normals = [1]
     with raises(ValueError, match='must match number of points'):
-        plane.point_data.normals = [[1, 1, 1], [0, 0, 0]]
+        plane.point_data.active_normals = [[1, 1, 1], [0, 0, 0]]
     with raises(ValueError, match='Normals must have exactly 3 components'):
-        plane.point_data.normals = [[1, 1], [0, 0], [0, 0], [0, 0]]
+        plane.point_data.active_normals = [[1, 1], [0, 0], [0, 0], [0, 0]]
+
+
+def test_normals_name(plane):
+    plane.clear_data()
+    assert plane.point_data.active_normals_name is None
+
+    key = 'data'
+    plane.point_data.set_array(plane.point_normals, key)
+    plane.point_data.active_normals_name = key
+    assert plane.point_data.active_normals_name == key
 
 
 def test_normals_raise_field(plane):
     with raises(AttributeError):
-        plane.field_data.normals
+        plane.field_data.active_normals
 
 
 def test_add_two_vectors():
