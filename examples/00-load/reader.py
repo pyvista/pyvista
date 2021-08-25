@@ -138,14 +138,14 @@ filename = examples.download_wavy(load=False)
 reader = pyvista.get_reader(filename)
 print(reader)
 
-plotter = pyvista.Plotter(notebook=False, off_screen=True)
-# Open a gif
-plotter.open_gif("wave_pvd.gif")
-
 ###############################################################################
 # For each time point, plot the mesh colored by the height.
 # Put iteration value in top left
 #
+
+plotter = pyvista.Plotter(notebook=False, off_screen=True)
+# Open a gif
+plotter.open_gif("wave_pvd.gif")
 
 for time_value in reader.time_values:
     reader.set_active_time_value(time_value)
