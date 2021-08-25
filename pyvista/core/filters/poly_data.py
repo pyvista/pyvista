@@ -48,7 +48,7 @@ class PolyDataFilters(DataSetFilters):
         """
         if not isinstance(poly_data, pyvista.PolyData):  # pragma: no cover
             poly_data = pyvista.PolyData(poly_data)
-        poly_data.point_arrays['point_ind'] = np.arange(poly_data.n_points)
+        poly_data.point_data['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
         featureEdges.FeatureEdgesOn()
@@ -60,7 +60,7 @@ class PolyDataFilters(DataSetFilters):
         edges = _get_output(featureEdges)
         orig_id = pyvista.point_array(edges, 'point_ind')
 
-        return np.in1d(poly_data.point_arrays['point_ind'], orig_id,
+        return np.in1d(poly_data.point_data['point_ind'], orig_id,
                        assume_unique=True)
 
     def _boolean(poly_data, btype, other_mesh, tolerance, progress_bar=False):
@@ -597,7 +597,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista
         >>> plane = pyvista.Plane()
-        >>> plane.point_arrays.clear()
+        >>> plane.point_data.clear()
         >>> plane.plot(show_edges=True, line_width=5)
 
         Convert it to an all triangle mesh.
@@ -1198,7 +1198,9 @@ class PolyDataFilters(DataSetFilters):
                         flip_normals=False, consistent_normals=True,
                         auto_orient_normals=False,
                         non_manifold_traversal=True,
-                        feature_angle=30.0, inplace=False, progress_bar=False):
+                        feature_angle=30.0,
+                        inplace=False,
+                        progress_bar=False):
         """Compute point and/or cell normals for a mesh.
 
         The filter can reorder polygons to insure consistent
@@ -1284,9 +1286,9 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> sphere_with_norm = sphere.compute_normals()
-        >>> sphere_with_norm.point_arrays['Normals'].shape
+        >>> sphere_with_norm.point_data['Normals'].shape
         (842, 3)
-        >>> sphere_with_norm.cell_arrays['Normals'].shape
+        >>> sphere_with_norm.cell_data['Normals'].shape
         (1680, 3)
 
         See :ref:`surface_normal_example` for more examples using this filter.
@@ -2057,12 +2059,12 @@ class PolyDataFilters(DataSetFilters):
 
         # Add scalars back to mesh if requested
         if keep_scalars:
-            for key in poly_data.point_arrays:
-                newmesh.point_arrays[key] = poly_data.point_arrays[key][ridx]
+            for key in poly_data.point_data:
+                newmesh.point_data[key] = poly_data.point_data[key][ridx]
 
-            for key in poly_data.cell_arrays:
+            for key in poly_data.cell_data:
                 try:
-                    newmesh.cell_arrays[key] = poly_data.cell_arrays[key][fmask]
+                    newmesh.cell_data[key] = poly_data.cell_data[key][fmask]
                 except:
                     logging.warning(f'Unable to pass cell key {key} onto reduced mesh')
 
@@ -2660,7 +2662,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         :class:`pyvista.PolyData`
-            Mesh containing collisions in the ``field_arrays``
+            Mesh containing collisions in the ``field_data``
             attribute named ``"ContactCells"``.  Array only exists
             when there are collisions.
 
@@ -2698,11 +2700,11 @@ class PolyDataFilters(DataSetFilters):
         array([471, 471, 468, 468, 469, 469, 466, 466, 467, 467])
 
         Plot the collisions by creating a collision mask with the
-        ``"ContactCells"`` field array.  Cells with a collision are
+        ``"ContactCells"`` field data.  Cells with a collision are
         colored red.
 
         >>> scalars = np.zeros(collision.n_cells, dtype=bool)
-        >>> scalars[collision.field_arrays['ContactCells']] = True
+        >>> scalars[collision.field_data['ContactCells']] = True
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(collision, scalars=scalars, show_scalar_bar=False,
         ...                 cmap='bwr')
@@ -2759,6 +2761,6 @@ class PolyDataFilters(DataSetFilters):
             # Note: Since all other cell arrays are destroyed when
             # generate_scalars is True, we can always index the first cell
             # array.
-            output.cell_arrays.GetAbstractArray(0).SetName('collision_rgba')
+            output.cell_data.GetAbstractArray(0).SetName('collision_rgba')
 
         return output, alg.GetNumberOfContacts()

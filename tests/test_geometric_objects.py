@@ -181,6 +181,10 @@ def test_pyramid():
     assert mesh.n_cells
     assert np.allclose(mesh.points, points)
 
+    # test pyramid with default points
+    mesh = pyvista.Pyramid()
+    assert isinstance(mesh, pyvista.UnstructuredGrid)
+
 
 def test_triangle():
     pointa = [1.0, 1.0, 1.0]

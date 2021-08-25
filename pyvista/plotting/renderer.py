@@ -542,7 +542,7 @@ class Renderer(_vtk.vtkRenderer):
         if isinstance(actor, pyvista.DataSet):
             mapper = _vtk.vtkDataSetMapper()
             mesh = actor.copy()
-            mesh.clear_arrays()
+            mesh.clear_data()
             mapper.SetInputData(mesh)
             actor = _vtk.vtkActor()
             actor.SetMapper(mapper)
@@ -1228,7 +1228,7 @@ class Renderer(_vtk.vtkRenderer):
                                     i_size=i_size, j_size=j_size,
                                     i_resolution=i_resolution,
                                     j_resolution=j_resolution)
-        self._floor.clear_arrays()
+        self._floor.clear_data()
 
         if lighting is None:
             lighting = self._theme.lighting

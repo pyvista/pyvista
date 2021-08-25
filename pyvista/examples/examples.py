@@ -47,6 +47,7 @@ def load_rectilinear():
     """Load a sample uniform grid."""
     return pyvista.RectilinearGrid(rectfile)
 
+
 def load_hexbeam():
     """Load a sample UnstructuredGrid."""
     return pyvista.UnstructuredGrid(hexbeamfile)
@@ -60,6 +61,7 @@ def load_structured():
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
     return pyvista.StructuredGrid(x, y, z)
+
 
 def load_globe():
     """Load a globe source."""

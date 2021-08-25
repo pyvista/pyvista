@@ -370,7 +370,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     >>> import pyvista
     >>> mesh = pyvista.Plane()
-    >>> mesh.point_arrays.clear()
+    >>> mesh.point_data.clear()
     >>> mesh.plot(show_edges=True)
     """
     planeSource = _vtk.vtkPlaneSource()
@@ -942,15 +942,17 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
     return arc
 
 
-def Pyramid(points):
+def Pyramid(points=None):
     """Create a pyramid defined by 5 points.
 
     Parameters
     ----------
-    points : np.ndarray or list
+    points : sequence, optional
         Points of the pyramid.  Points are ordered such that the first
         four points are the four counterclockwise points on the
         quadrilateral face, and the last point is the apex.
+
+        Defaults to pyramid in example.
 
     Returns
     -------
@@ -964,10 +966,17 @@ def Pyramid(points):
     >>> pointb = [-1.0, 1.0, 0.0]
     >>> pointc = [-1.0, -1.0, 0.0]
     >>> pointd = [1.0, -1.0, 0.0]
-    >>> pointe = [0.0, 0.0, 1.67]
+    >>> pointe = [0.0, 0.0, 1.608]
     >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
     >>> pyramid.plot(show_edges=True, line_width=5)
     """
+    if points is None:
+        points = [[1.0, 1.0, 0.0],
+                  [-1.0, 1.0, 0.0],
+                  [-1.0, -1.0, 0.0],
+                  [1.0, -1.0, 0.0],
+                  [0.0, 0.0, (4 - 2**0.5)**0.5]]
+
     if len(points) != 5:
         raise TypeError('Points must be given as length 5 np.ndarray or list')
 
@@ -991,13 +1000,14 @@ def Pyramid(points):
     return pyvista.wrap(ug)
 
 
-def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
+def Triangle(points=None):
     """Create a triangle defined by 3 points.
 
     Parameters
     ----------
-    points : np.ndarray or list
-        Points of the triangle.
+    points : sequence, optional
+        Points of the triangle.  Defaults to a right isosceles
+        triangle (see example).
 
     Returns
     -------
@@ -1013,6 +1023,9 @@ def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
     >>> triangle = pyvista.Triangle([pointa, pointb, pointc])
     >>> triangle.plot(show_edges=True, line_width=5)
     """
+    if points is None:
+        points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5**0.5, 0]]
+
     if len(points) != 3:
         raise TypeError('Points must be given as length 3 np.ndarray or list')
 
@@ -1021,18 +1034,16 @@ def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
-    triangle = pyvista.wrap(pyvista.PolyData(points, cells))
-
-    return triangle
+    return pyvista.wrap(pyvista.PolyData(points, cells))
 
 
-def Rectangle(points=[[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
+def Rectangle(points=None):
     """Create a rectangle defined by 4 points.
 
     Parameters
     ----------
-    points : length 3 sequence
-        Points of the rectangle.
+    points : sequence, optional
+        Points of the rectangle.  Defaults to a simple example.
 
     Returns
     -------
@@ -1042,13 +1053,16 @@ def Rectangle(points=[[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
     Examples
     --------
     >>> import pyvista
-    >>> pointa = [1, 0, 0]
-    >>> pointb = [1, 1, 0]
-    >>> pointc = [0, 1, 0]
-    >>> pointd = [0, 0, 0]
+    >>> pointa = [1.0, 0.0, 0.0]
+    >>> pointb = [1.0, 1.0, 0.0]
+    >>> pointc = [0.0, 1.0, 0.0]
+    >>> pointd = [0.0, 0.0, 0.0]
     >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc, pointd])
     >>> rectangle.plot(show_edges=True, line_width=5)
+
     """
+    if points is None:
+        points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
     if len(points) != 4:
         raise TypeError('Points must be given as length 4 np.ndarray or list')
 
@@ -1058,9 +1072,7 @@ def Rectangle(points=[[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]]):
     check_valid_vector(points[3], 'points[3]')
 
     cells = np.array([[4, 0, 1, 2, 3]], ctypes.c_long)
-    rectangle = pyvista.wrap(pyvista.PolyData(points, cells))
-
-    return rectangle
+    return pyvista.wrap(pyvista.PolyData(points, cells))
 
 
 def Circle(radius=0.5, resolution=100):
@@ -1091,6 +1103,4 @@ def Circle(radius=0.5, resolution=100):
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))], ctypes.c_long)
-    circle = pyvista.wrap(pyvista.PolyData(points, cells))
-
-    return circle
+    return pyvista.wrap(pyvista.PolyData(points, cells))

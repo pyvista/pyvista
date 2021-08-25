@@ -153,7 +153,7 @@ class PickingHelper:
 
         def through_pick_call_back(picker, event_id):
             extract = _vtk.vtkExtractGeometry()
-            mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
+            mesh.cell_data['orig_extract_id'] = np.arange(mesh.n_cells)
             extract.SetInputData(mesh)
             extract.SetImplicitFunction(picker.GetFrustum())
             extract.Update()

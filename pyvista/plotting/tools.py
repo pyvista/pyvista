@@ -194,7 +194,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         axes_actor.GetCubeProperty().SetEdgeVisibility(False)
 
         cube = pyvista.Cube()
-        cube.clear_arrays() # remove normals
+        cube.clear_data() # remove normals
         face_colors = np.array([parse_color(x_face_color),
                                 parse_color(x_face_color),
                                 parse_color(y_face_color),
@@ -203,7 +203,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
                                 parse_color(z_face_color),
                                 ])
         face_colors = (face_colors * 255).astype(np.uint8)
-        cube.cell_arrays['face_colors'] = face_colors
+        cube.cell_data['face_colors'] = face_colors
 
         cube_mapper = _vtk.vtkPolyDataMapper()
         cube_mapper.SetInputData(cube)

@@ -101,7 +101,7 @@ class PointSet(DataSet):
         else:
             target = self.copy()
 
-        target.cell_arrays[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+        target.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
         target.RemoveGhostCells()
         return target
 
@@ -241,7 +241,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             return
 
         # First parameter is points
-        if isinstance(var_inp, (np.ndarray, list)):
+        if isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
             self.SetPoints(pyvista.vtk_points(var_inp, deep=deep))
         else:
             msg = f"""
@@ -252,6 +252,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
                 - pyvista.PolyData
                 - numeric numpy.ndarray (1 or 2 dimensions)
                 - List (flat or nested with 3 points per vertex)
+                - vtk.vtkDataArray
 
                 Instead got: {type(var_inp)}"""
             raise TypeError(dedent(msg.strip('\n')))
@@ -614,7 +615,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         >>> sphere = pyvista.Sphere()
         >>> texture = np.zeros((sphere.n_points, 3), np.uint8)
         >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]  # just blue channel
-        >>> sphere.point_arrays['my_texture'] = texture
+        >>> sphere.point_data['my_texture'] = texture
         >>> sphere.save('my_mesh.ply', texture='my_texture')  # doctest: +SKIP
 
         Alternatively, provide just the texture array.  This will be
@@ -725,7 +726,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
         """
         mesh = self.compute_normals(cell_normals=False, inplace=False)
-        return mesh.point_arrays['Normals']
+        return mesh.point_data['Normals']
 
     @property
     def cell_normals(self):
@@ -751,7 +752,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
         """
         mesh = self.compute_normals(point_normals=False, inplace=False)
-        return mesh.cell_arrays['Normals']
+        return mesh.cell_data['Normals']
 
     @property
     def face_normals(self):
@@ -1406,7 +1407,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         if not _vtk.VTK9:
             raise AttributeError('VTK 9 or higher is required')
         s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
-        s2 = self.cell_arrays.keys()
+        s2 = self.cell_data.keys()
         if not s1.issubset(s2):
             raise TypeError("'BLOCK_I', 'BLOCK_J' and 'BLOCK_K' cell arrays are required")
         alg = _vtk.vtkUnstructuredGridToExplicitStructuredGrid()
@@ -1416,7 +1417,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         alg.SetInputArrayToProcess(2, 0, 0, 1, 'BLOCK_K')
         alg.Update()
         grid = _get_output(alg)
-        grid.cell_arrays.remove('ConnectivityFlags')  # unrequired
+        grid.cell_data.remove('ConnectivityFlags')  # unrequired
         return grid
 
 
@@ -1660,7 +1661,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         # properly, additionally, calling self.RemoveGhostCells will
         # have no effect
 
-        self.cell_arrays[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+        self.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
 
     def _reshape_point_array(self, array):
         """Reshape point data to a 3-D matrix."""
@@ -1838,7 +1839,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         alg.SetInputDataObject(grid)
         alg.Update()
         grid = _get_output(alg)
-        grid.cell_arrays.remove('vtkOriginalCellIds')  # unrequired
+        grid.cell_data.remove('vtkOriginalCellIds')  # unrequired
         grid.copy_attributes(self)  # copy ghost cell array and other arrays
         return grid
 
@@ -1909,7 +1910,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             array = np.zeros(self.n_cells, dtype=np.uint8)
             array[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
             name = _vtk.vtkDataSetAttributes.GhostArrayName()
-            self.cell_arrays[name] = array
+            self.cell_data[name] = array
             return self
         else:
             grid = self.copy()
@@ -1948,8 +1949,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         """
         if inplace:
             name = _vtk.vtkDataSetAttributes.GhostArrayName()
-            if name in self.cell_arrays.keys():
-                array = self.cell_arrays[name]
+            if name in self.cell_data.keys():
+                array = self.cell_data[name]
                 ind = np.argwhere(array == _vtk.vtkDataSetAttributes.HIDDENCELL)
                 array[ind] = 0
             return self
@@ -2015,8 +2016,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         """
         name = _vtk.vtkDataSetAttributes.GhostArrayName()
-        if name in self.cell_arrays:
-            array = self.cell_arrays[name]
+        if name in self.cell_data:
+            array = self.cell_data[name]
             grid = self.extract_cells(array == 0)
             return grid.bounds
         else:
@@ -2318,16 +2319,16 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         """
         if inplace:
-            if 'ConnectivityFlags' in self.cell_arrays:
-                array = self.cell_arrays['ConnectivityFlags']
+            if 'ConnectivityFlags' in self.cell_data:
+                array = self.cell_data['ConnectivityFlags']
             else:
                 grid = self.compute_connectivity(inplace=False)
-                array = grid.cell_arrays['ConnectivityFlags']
+                array = grid.cell_data['ConnectivityFlags']
             array = array.reshape((-1, 1))
             array = array.astype(np.uint8)
             array = np.unpackbits(array, axis=1)
             array = array.sum(axis=1)
-            self.cell_arrays['number_of_connections'] = array
+            self.cell_data['number_of_connections'] = array
             return self
         else:
             grid = self.copy()
