@@ -491,6 +491,11 @@ class DataSet(DataSetFilters, DataObject):
 
     @t_coords.setter
     def t_coords(self, t_coords: np.ndarray):  # pragma: no cover
+        warnings.warn(
+            "Use of `DataSet.t_coords` is deprecated. "
+            "Use `DataSet.active_t_coords` instead.",
+            PyvistaDeprecationWarning
+        )
         self.active_t_coords = t_coords  # type: ignore
 
     @property
@@ -517,7 +522,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @active_t_coords.setter
     def active_t_coords(self, t_coords: np.ndarray):
-        self.point_data.t_coords = t_coords  # type: ignore
+        self.point_data.active_t_coords = t_coords  # type: ignore
 
     @property
     def textures(self) -> Dict[str, _vtk.vtkTexture]:
