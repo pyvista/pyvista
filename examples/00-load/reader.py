@@ -15,7 +15,6 @@ import pyvista
 from pyvista import examples
 import numpy as np
 from tempfile import NamedTemporaryFile
-import warnings
 
 ###############################################################################
 # An XML PolyData file in ``.vtp`` format is created.  It will be saved in a
@@ -151,8 +150,6 @@ plotter.open_gif("wave_pvd.gif")
 for time_value in reader.time_values:
     reader.set_active_time_value(time_value)
     mesh = reader.read()[0]  # This dataset only has 1 block
-    warnings.warn(mesh)
-    warnings.warn(mesh.points[:, -1].shape)
     plotter.add_mesh(mesh, scalars=mesh.points[:,-1], show_scalar_bar=False)
     plotter.add_text(f"Time: {time_value:.0f}", color="black")
     plotter.render()
