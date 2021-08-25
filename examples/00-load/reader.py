@@ -150,7 +150,7 @@ plotter.open_gif("wave_pvd.gif")
 for time_value in reader.time_values:
     reader.set_active_time_value(time_value)
     mesh = reader.read()[0]  # This dataset only has 1 block
-    plotter.add_mesh(mesh, scalars=mesh.points[:,-1], show_scalar_bar=False)
+    plotter.add_mesh(mesh, scalars='z', show_scalar_bar=False)
     plotter.add_text(f"Time: {time_value:.0f}", color="black")
     plotter.render()
     plotter.write_frame()
