@@ -286,7 +286,7 @@ def test_binarymarchingcubesreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_pvdfilerader():
+def test_pvdreader():
     filename = examples.download_wavy(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.PVDReader)

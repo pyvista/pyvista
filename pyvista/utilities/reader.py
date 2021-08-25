@@ -775,13 +775,9 @@ class PVDDataSet:
     """Class for storing dataset info from PVD file."""
 
     time: float
-    group: str
     part: int
     filename: str
-
-    def __eq__(self, other):
-        """Two datasets are equal when the time and part are equal."""
-        return (self.time == other.time and self.part == other.part)
+    group: str
 
     def __lt__(self, other):
         """First sort by time, then by part."""
@@ -894,8 +890,8 @@ class PVDReader(BaseReader, TimeReader):
             datasets.append(
                 PVDDataSet(
                     float(element_attrib['timestep']),
-                    element_attrib['group'],
                     int(element_attrib['part']),
+                    element_attrib['group'],
                     element_attrib['file'],
                 )
             )
