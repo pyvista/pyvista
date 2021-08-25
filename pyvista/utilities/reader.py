@@ -814,8 +814,8 @@ class PVDReader(BaseReader, TimeReader):
         """Return the PVDReader.
         
         ..note::
+            This Reader does not have an uderlying vtk Reader.
 
-        This Reader does not have an uderlying vtk Reader.
         """
         return self
 
