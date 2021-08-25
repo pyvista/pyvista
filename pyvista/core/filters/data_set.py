@@ -223,7 +223,7 @@ class DataSetFilters:
 
         inplace : bool
             If ``True``, a new scalar array will be added to the
-            ``point_arrays`` of this mesh and the modified mesh will
+            ``point_data`` of this mesh and the modified mesh will
             be returned. Otherwise a copy of this mesh is returned
             with that scalar field added.
 
@@ -258,10 +258,10 @@ class DataSetFilters:
         dists = _vtk.vtkDoubleArray()
         function.FunctionValue(points, dists)
         if inplace:
-            dataset.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
+            dataset.point_data['implicit_distance'] = pyvista.convert_array(dists)
             return dataset
         result = dataset.copy()
-        result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
+        result.point_data['implicit_distance'] = pyvista.convert_array(dists)
         return result
 
     def clip_scalar(dataset, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False, both=False):
@@ -1157,10 +1157,11 @@ class DataSetFilters:
         alg.SetHighPoint(high_point)
         _update_alg(alg, progress_bar, 'Computing Elevation')
         # Decide on updating active scalars array
-        name = 'Elevation' # Note that this is added to the PointData
+        output = _get_output(alg)
         if not set_active:
-            name = None
-        return _get_output(alg, active_scalars=name, active_scalars_field='point')
+            # 'Elevation' is automatically made active by the VTK filter
+            output.point_data.active_scalars_name = dataset.point_data.active_scalars_name
+        return output
 
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
                 compute_gradients=False, compute_scalars=True, rng=None,
@@ -1452,7 +1453,7 @@ class DataSetFilters:
         --------
         >>> import pyvista
         >>> mesh = pyvista.Plane()
-        >>> mesh.point_arrays.clear()
+        >>> mesh.point_data.clear()
         >>> centers = mesh.cell_centers()
         >>> pl = pyvista.Plotter()
         >>> actor = pl.add_mesh(mesh, show_edges=True)
@@ -1487,7 +1488,7 @@ class DataSetFilters:
             If ``True``, use the active vectors array to orient the glyphs.
             If string, the vector array to use to orient the glyphs.
 
-        scale : bool or str, optional
+        scale : bool, str or sequence, optional
             If ``True``, use the active scalars to scale the glyphs.
             If string, the scalar array to use to scale the glyphs.
 
@@ -1555,7 +1556,7 @@ class DataSetFilters:
         # Clean the points before glyphing
         if tolerance is not None:
             small = pyvista.PolyData(dataset.points)
-            small.point_arrays.update(dataset.point_arrays)
+            small.point_data.update(dataset.point_data)
             dataset = small.clean(point_merging=True, merge_tol=tolerance,
                                   lines_to_points=False, polys_to_lines=False,
                                   strips_to_polys=False, inplace=False,
@@ -1595,9 +1596,11 @@ class DataSetFilters:
                     alg.SetIndexModeToScalar()
             else:
                 alg.SetIndexModeToOff()
+
         if isinstance(scale, str):
-            dataset.active_scalars_name = scale
+            dataset.set_active_scalars(scale, 'cell')
             scale = True
+
         if scale:
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
@@ -1606,9 +1609,11 @@ class DataSetFilters:
                     alg.SetScaleModeToScaleByScalar()
         else:
             alg.SetScaleModeToDataScalingOff()
+
         if isinstance(orient, str):
             dataset.active_vectors_name = orient
             orient = True
+
         if scale and orient:
             if (dataset.active_vectors_info.association == FieldAssociation.CELL
                 and dataset.active_scalars_info.association == FieldAssociation.CELL
@@ -1701,8 +1706,8 @@ class DataSetFilters:
         >>> import pyvista
         >>> mesh = pyvista.Sphere() + pyvista.Cube()
         >>> largest = mesh.extract_largest()
-        >>> largest.point_arrays.clear()
-        >>> largest.cell_arrays.clear()
+        >>> largest.point_data.clear()
+        >>> largest.cell_data.clear()
         >>> largest.plot()
 
         See :ref:`volumetric_example` for more examples using this filter.
@@ -1747,17 +1752,17 @@ class DataSetFilters:
         """
         # Get the connectivity and label different bodies
         labeled = DataSetFilters.connectivity(dataset)
-        classifier = labeled.cell_arrays['RegionId']
+        classifier = labeled.cell_data['RegionId']
         bodies = pyvista.MultiBlock()
         for vid in np.unique(classifier):
             # Now extract it:
             b = labeled.threshold([vid-0.5, vid+0.5], scalars='RegionId', progress_bar=False)
             if not label:
                 # strange behavior:
-                # must use this method rather than deleting from the point_arrays
+                # must use this method rather than deleting from the point_data
                 # or else object is collected.
-                b.cell_arrays.remove('RegionId')
-                b.point_arrays.remove('RegionId')
+                b.cell_data.remove('RegionId')
+                b.point_data.remove('RegionId')
             bodies.append(b)
 
         return bodies
@@ -2055,7 +2060,7 @@ class DataSetFilters:
 
         >>> import pyvista
         >>> plane = pyvista.Plane()
-        >>> plane.point_arrays.clear()
+        >>> plane.point_data.clear()
         >>> plane.plot(show_edges=True, line_width=5)
 
         Convert it to an all triangle mesh.
@@ -2173,7 +2178,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.PolyData
-            Mesh containing the ``point_arrays['SelectedPoints']`` array.
+            Mesh containing the ``point_data['SelectedPoints']`` array.
 
         Examples
         --------
@@ -2222,22 +2227,23 @@ class DataSetFilters:
 
         Parameters
         ----------
-        dataset: pyvista.DataSet
+        dataset : pyvista.DataSet
             The mesh to probe from - point and cell arrays from
             this object are probed onto the nodes of the ``points`` mesh
 
-        points: pyvista.DataSet
+        points : pyvista.DataSet
             The points to probe values on to. This should be a PyVista mesh
             or something :func:`pyvista.wrap` can handle.
 
-        tolerance: float, optional
-            Tolerance used to compute whether a point in the source is in a
-            cell of the input.  If not given, tolerance is automatically generated.
+        tolerance : float, optional
+            Tolerance used to compute whether a point in the source is
+            in a cell of the input.  If not given, tolerance is
+            automatically generated.
 
-        pass_cell_arrays: bool, optional
+        pass_cell_arrays : bool, optional
             Preserve source mesh's original cell data arrays.
 
-        pass_point_arrays: bool, optional
+        pass_point_arrays : bool, optional
             Preserve source mesh's original point data arrays.
 
         categorical : bool, optional
@@ -2253,19 +2259,19 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.DataSet
+        :class:`pyvista.DataSet`
             Dataset containing the probed data.
 
         Examples
         --------
-        Probe the active scalars in ``grid`` at the points in ``mesh``
+        Probe the active scalars in ``grid`` at the points in ``mesh``.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
         >>> grid = examples.load_uniform()
         >>> result = grid.probe(mesh)
-        >>> 'Spatial Point Data' in result.point_arrays
+        >>> 'Spatial Point Data' in result.point_data
         True
 
         """
@@ -2289,7 +2295,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
-               pass_point_arrays=True, categorical=False, progress_bar=False):
+               pass_point_data=True, categorical=False, progress_bar=False):
         """Resample array data from a passed mesh onto this mesh.
 
         This uses :class:`vtk.vtkResampleWithDataSet`.
@@ -2311,7 +2317,7 @@ class DataSetFilters:
         pass_cell_arrays: bool, optional
             Preserve source mesh's original cell data arrays
 
-        pass_point_arrays: bool, optional
+        pass_point_data: bool, optional
             Preserve source mesh's original point data arrays
 
         categorical : bool, optional
@@ -2347,7 +2353,7 @@ class DataSetFilters:
         alg.SetInputData(dataset)  # Set the Input data (actually the source i.e. where to sample from)
         alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to sample to)
         alg.SetPassCellArrays(pass_cell_arrays)
-        alg.SetPassPointArrays(pass_point_arrays)
+        alg.SetPassPointArrays(pass_point_data)
         alg.SetCategoricalData(categorical)
         if tolerance is not None:
             alg.SetComputeTolerance(False)
@@ -2357,7 +2363,7 @@ class DataSetFilters:
 
     def interpolate(dataset, target, sharpness=2, radius=1.0,
                     strategy='null_value', null_value=0.0, n_points=None,
-                    pass_cell_arrays=True, pass_point_arrays=True,
+                    pass_cell_arrays=True, pass_point_data=True,
                     progress_bar=False):
         """Interpolate values onto this mesh from a given dataset.
 
@@ -2407,7 +2413,7 @@ class DataSetFilters:
         pass_cell_arrays: bool, optional
             Preserve input mesh's original cell data arrays.
 
-        pass_point_arrays: bool, optional
+        pass_point_data: bool, optional
             Preserve input mesh's original point data arrays.
 
         progress_bar : bool, optional
@@ -2426,7 +2432,7 @@ class DataSetFilters:
         >>> pdata = pyvista.PolyData(point_cloud)
         >>> pdata['values'] = np.random.random(5)
         >>> plane = pyvista.Plane()
-        >>> plane.clear_arrays()
+        >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3)
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
@@ -2470,7 +2476,7 @@ class DataSetFilters:
             interpolator.SetNullPointsStrategyToClosestPoint()
         else:
             raise ValueError(f'strategy `{strategy}` not supported.')
-        interpolator.SetPassPointArrays(pass_point_arrays)
+        interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_arrays)
         _update_alg(interpolator, progress_bar, 'Interpolating')
         return _get_output(interpolator)
@@ -2977,7 +2983,7 @@ class DataSetFilters:
         >>> pdata = pyvista.PolyData(point_cloud)
         >>> pdata['values'] = np.random.random(5)
         >>> plane = pyvista.Plane()
-        >>> plane.clear_arrays()
+        >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
         >>> sample = plane.sample_over_line((-0.5, -0.5, 0), (0.5, 0.5, 0))
         >>> pl = pyvista.Plotter()
@@ -3501,7 +3507,7 @@ class DataSetFilters:
         # extracts only in float32
         if subgrid.n_points:
             if dataset.points.dtype is not np.dtype('float32'):
-                ind = subgrid.point_arrays['vtkOriginalPointIds']
+                ind = subgrid.point_data['vtkOriginalPointIds']
                 subgrid.points = dataset.points[ind]
 
         return subgrid
@@ -3536,7 +3542,7 @@ class DataSetFilters:
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
         >>> extracted = sphere.extract_points(sphere.points[:, 2] > 0)
-        >>> extracted.clear_arrays()  # clear for plotting
+        >>> extracted.clear_data()  # clear for plotting
         >>> extracted.plot()
 
         """
@@ -3659,7 +3665,7 @@ class DataSetFilters:
 
         """
         surf = DataSetFilters.extract_surface(dataset, pass_cellid=True, progress_bar=progress_bar)
-        return surf.point_arrays['vtkOriginalPointIds']
+        return surf.point_data['vtkOriginalPointIds']
 
     def extract_feature_edges(dataset, feature_angle=30, boundary_edges=True,
                               non_manifold_edges=True, feature_edges=True,
@@ -3713,7 +3719,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
         >>> feat_edges = hex_beam.extract_feature_edges()
-        >>> feat_edges.clear_arrays()  # clear array data for plotting
+        >>> feat_edges.clear_data()  # clear array data for plotting
         >>> feat_edges.plot(line_width=10)
 
         See the :ref:`extract_edges_example` for more examples using this filter.
@@ -3881,7 +3887,7 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Dataset with the computed mesh quality in the
-            ``cell_arrays`` as the ``"CellQuality"`` array.
+            ``cell_data`` as the ``"CellQuality"`` array.
 
         Examples
         --------
@@ -4078,7 +4084,7 @@ class DataSetFilters:
         Now, plot the mesh with shrunk faces.
 
         >>> shrunk = mesh.shrink(0.5)
-        >>> shrunk.clear_arrays()  # cleans up plot
+        >>> shrunk.clear_data()  # cleans up plot
         >>> shrunk.plot(show_edges=True, line_width=5)
 
         """
@@ -4104,9 +4110,9 @@ class DataSetFilters:
             transformation matrix.
 
         transform_all_input_vectors: bool, optional
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
+            When ``True``, all arrays with three components are
+            transformed. Otherwise, only the normals and vectors are
+            transformed.  See the warning for more details.
 
         inplace : bool, optional
             When ``True``, modifies the dataset inplace.
@@ -4122,7 +4128,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
-        Here a 4x4 ``numpy`` array is used, but
+        Here a 4x4 :class:`numpy.ndarray` is used, but
         ``vtk.vtkMatrix4x4`` and ``vtk.vtkTransform`` are also
         accepted.
 
@@ -4132,6 +4138,16 @@ class DataSetFilters:
         ...                              [0, 0, 0, 1]])
         >>> transformed = mesh.transform(transform_matrix)
         >>> transformed.plot(show_edges=True)
+
+        Warnings
+        --------
+        When using ``transform_all_input_vectors=True``, there is no
+        distinction in VTK between vectors and arrays with three
+        components.  This may be an issue if you have scalar data with
+        three components (e.g. RGB data).  This will be improperly
+        transformed as if it was vector data rather than scalar data.
+        One possible (albeit ugly) workaround is to store the three
+        components as separate scalar arrays.
 
         """
         if isinstance(trans, _vtk.vtkMatrix4x4):
@@ -4159,10 +4175,13 @@ class DataSetFilters:
             raise ValueError(
                 "Transform element (3,3), the inverse scale term, is zero")
 
+        # vtkTransformFilter doesn't respect active scalars.  We need to track this
+        active_point_scalars_name = dataset.point_data.active_scalars_name
+        active_cell_scalars_name = dataset.cell_data.active_scalars_name
+
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
-        active_scalars_name = dataset.active_scalars_name
-        dataset.set_active_scalars(None)
+        dataset.active_scalars_name = None
 
         f = _vtk.vtkTransformFilter()
         f.SetInputDataObject(dataset)
@@ -4181,8 +4200,12 @@ class DataSetFilters:
         res = pyvista.core.filters._get_output(f)
 
         # make the previously active scalars active again
-        dataset.set_active_scalars(active_scalars_name)
-        res.set_active_scalars(active_scalars_name)
+        if active_point_scalars_name is not None:
+            dataset.point_data.active_scalars_name = active_point_scalars_name
+            res.point_data.active_scalars_name = active_point_scalars_name
+        if active_cell_scalars_name is not None:
+            dataset.cell_data.active_scalars_name = active_cell_scalars_name
+            res.cell_data.active_scalars_name = active_cell_scalars_name
 
         if inplace:
             dataset.overwrite(res)

@@ -101,16 +101,17 @@ class Table(_vtk.vtkTable, DataObject):
 
         Returns
         -------
-        scalars : np.ndarray
+        :class:`numpy.ndarray`
             Numpy array of scalars
 
         """
-        return self.row_arrays[name]
+        return self.row_arrays.get_array(name)
 
     @property
     def row_arrays(self):
         """Return the all row arrays."""
-        return DataSetAttributes(vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW)
+        return DataSetAttributes(vtkobject=self.GetRowData(), dataset=self,
+                                 association=FieldAssociation.ROW)
 
     def keys(self):
         """Return the table keys."""
@@ -332,7 +333,7 @@ class Texture(_vtk.vtkTexture, DataObject):
             n_components = 1
 
         grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
-        grid.point_arrays['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, n_components), order='F')
+        grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, n_components), order='F')
         grid.set_active_scalars('Image')
         return self._from_image_data(grid)
 

@@ -34,7 +34,7 @@ def wrap_image_array(arr):
     img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
     wrap_img = pyvista.wrap(img)
-    wrap_img.point_arrays['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
+    wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
     return wrap_img
 
 
@@ -138,5 +138,5 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         return img_diff.GetError()
 
     # otherwise, simply compute the mean pixel difference
-    diff = np.abs(im1.point_arrays[0] - im2.point_arrays[0])
-    return np.sum(diff) / im1.point_arrays[0].shape[0]
+    diff = np.abs(im1.point_data[0] - im2.point_data[0])
+    return np.sum(diff) / im1.point_data[0].shape[0]

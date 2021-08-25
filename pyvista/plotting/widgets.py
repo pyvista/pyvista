@@ -1463,7 +1463,7 @@ class WidgetHelper:
                 border_size:dims[0]-border_size,
                 border_size:dims[1]-border_size
             ] = color3  # apply color3
-            button.point_arrays['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
+            button.point_data['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
             return button
 
         button_on = create_button(color_on, background_color, color_on)

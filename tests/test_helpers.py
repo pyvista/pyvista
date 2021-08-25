@@ -6,7 +6,7 @@ from PIL import Image
 import vtk
 
 import pyvista
-
+from pyvista import _vtk
 
 def test_wrap_none():
     # check against the "None" edge case
@@ -16,6 +16,32 @@ def test_wrap_none():
 def test_wrap_pyvista_ndarray(sphere):
     pd = pyvista.wrap(sphere.points)
     assert isinstance(pd, pyvista.PolyData)
+
+
+# NOTE: It's not necessary to test all data types here, several of the
+# most used ones.  We're just checking that we can wrap VTK data types.
+@pytest.mark.parametrize('dtypes', [(np.float64, _vtk.vtkDoubleArray),
+                                    (np.float32, _vtk.vtkFloatArray),
+                                    (np.int64, _vtk.vtkTypeInt64Array),
+                                    (np.int32, _vtk.vtkTypeInt32Array),
+                                    (np.int8, _vtk.vtkSignedCharArray),
+                                    (np.uint8, _vtk.vtkUnsignedCharArray),
+                                    ])
+def test_wrap_pyvista_ndarray_vtk(dtypes):
+    np_dtype, vtk_class = dtypes
+    np_array = np.array([[0, 10, 20],
+                         [-10, -200, 0],
+                         [0.5, 0.667, 0]], dtype=np_dtype)
+
+    vtk_array = vtk_class()
+    vtk_array.SetNumberOfComponents(3)
+    vtk_array.SetNumberOfValues(9)
+    for i in range(9):
+        vtk_array.SetValue(i, np_array.flat[i])
+
+    wrapped = pyvista.wrap(vtk_array)
+    assert np.allclose(wrapped, np_array)
+    assert wrapped.dtype == np_array.dtype
 
 
 def test_wrap_trimesh():

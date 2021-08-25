@@ -144,7 +144,7 @@ def point_array(mesh, name):
 
 
 def field_array(mesh, name):
-    """Return field array of a pyvista or vtk object."""
+    """Return field data of a pyvista or vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
@@ -505,7 +505,7 @@ def vector_poly_data(orig, vec):
     >>> v = y/np.sqrt(x**2 + y**2)
     >>> vectors = np.vstack((u.ravel()**3, v.ravel()**3, np.zeros(u.size))).T
     >>> pdata = pyvista.vector_poly_data(points, vectors)
-    >>> pdata.point_arrays.keys()
+    >>> pdata.point_data.keys()
     ['vectors', 'mag']
 
     Convert these to arrows and plot it.
@@ -729,6 +729,10 @@ def wrap(dataset):
             return mesh
         else:
             raise NotImplementedError('NumPy array could not be wrapped pyvista.')
+
+    # wrap VTK arrays as pyvista_ndarray
+    if isinstance(dataset, _vtk.vtkDataArray):
+        return pyvista.pyvista_ndarray(dataset)
 
     # Check if a dataset is a VTK type
     if hasattr(dataset, 'GetClassName'):

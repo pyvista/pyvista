@@ -70,7 +70,7 @@ def voxelize(mesh, density=None, check_surface=True):
     selection = ugrid.select_enclosed_points(mesh.extract_surface(),
                                              tolerance=0.0,
                                              check_surface=check_surface)
-    mask = selection.point_arrays['SelectedPoints'].view(np.bool_)
+    mask = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
     vox = ugrid.extract_points(mask)

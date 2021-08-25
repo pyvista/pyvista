@@ -209,7 +209,7 @@ def test_geodesic(sphere):
     geodesic = sphere.geodesic(start, end)
     assert isinstance(geodesic, pyvista.PolyData)
     assert "vtkOriginalPointIds" in geodesic.array_names
-    ids = geodesic.point_arrays["vtkOriginalPointIds"]
+    ids = geodesic.point_data["vtkOriginalPointIds"]
     assert np.allclose(geodesic.points, sphere.points[ids])
 
     # check keep_order
@@ -392,7 +392,7 @@ def test_save_ply_texture_array(sphere, ndim, as_str, tmpdir):
     texture = np.ones((sphere.n_points, ndim), np.uint8)
     texture[:, 2] = np.arange(sphere.n_points)[::-1]
     if as_str:
-        sphere.point_arrays['texture'] = texture
+        sphere.point_data['texture'] = texture
         sphere.save(filename, texture='texture')
     else:
         sphere.save(filename, texture=texture)
@@ -409,7 +409,7 @@ def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
     texture = np.ones((sphere.n_points, 3), np.float32)
     with pytest.raises(ValueError, match='Invalid datatype'):
         if as_str:
-            sphere.point_arrays['texture'] = texture
+            sphere.point_data['texture'] = texture
             sphere.save(filename, texture='texture')
         else:
             sphere.save(filename, texture=texture)
@@ -499,8 +499,8 @@ def test_compute_normals(sphere):
     sphere_normals = sphere
     sphere_normals.compute_normals(inplace=True)
 
-    point_normals = sphere_normals.point_arrays['Normals']
-    cell_normals = sphere_normals.cell_arrays['Normals']
+    point_normals = sphere_normals.point_data['Normals']
+    cell_normals = sphere_normals.cell_data['Normals']
     assert point_normals.shape[0] == sphere.n_points
     assert cell_normals.shape[0] == sphere.n_cells
 
@@ -585,7 +585,7 @@ def test_remove_points_any(sphere):
 
 def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
-    sphere_copy.cell_arrays['ind'] = np.arange(sphere_copy.n_faces)
+    sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces)
     remove = sphere.faces[1:4]
     sphere_copy.remove_points(remove, inplace=True, mode='all')
     assert sphere_copy.n_points == sphere.n_points
@@ -771,8 +771,8 @@ def test_flip_normals(sphere, plane):
 
     sphere.compute_normals(inplace=True)
     sphere_flipped.compute_normals(inplace=True)
-    assert np.allclose(sphere_flipped.point_arrays['Normals'],
-                       -sphere.point_arrays['Normals'])
+    assert np.allclose(sphere_flipped.point_data['Normals'],
+                       -sphere.point_data['Normals'])
 
     # invalid case
     with pytest.raises(NotAllTrianglesError):
