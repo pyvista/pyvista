@@ -893,7 +893,6 @@ class PVDReader(BaseReader, TimeReader):
                     int(element_attrib['part']),
                     element_attrib['file'],
                     element_attrib['group'],
-
                 )
             )
         self._datasets = sorted(datasets)
