@@ -14,8 +14,6 @@ vtkRegularPolygonSource
 vtkPyramid
 
 """
-import ctypes
-
 import numpy as np
 
 import pyvista
@@ -1033,7 +1031,7 @@ def Triangle(points=None):
     check_valid_vector(points[1], 'points[1]')
     check_valid_vector(points[2], 'points[2]')
 
-    cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
+    cells = np.array([[3, 0, 1, 2]])
     return pyvista.wrap(pyvista.PolyData(points, cells))
 
 
@@ -1071,7 +1069,7 @@ def Rectangle(points=None):
     check_valid_vector(points[2], 'points[2]')
     check_valid_vector(points[3], 'points[3]')
 
-    cells = np.array([[4, 0, 1, 2, 3]], ctypes.c_long)
+    cells = np.array([[4, 0, 1, 2, 3]])
     return pyvista.wrap(pyvista.PolyData(points, cells))
 
 
@@ -1102,5 +1100,5 @@ def Circle(radius=0.5, resolution=100):
     theta = np.linspace(0.0, 2.0*np.pi, resolution)
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
-    cells = np.array([np.append(np.array([resolution]), np.arange(resolution))], ctypes.c_long)
+    cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
     return pyvista.wrap(pyvista.PolyData(points, cells))
