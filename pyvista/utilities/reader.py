@@ -1,6 +1,6 @@
 """Fine-grained control of reading data files."""
 from abc import ABC, abstractmethod
-from attr import dataclass
+from dataclasses import dataclass
 import functools
 import os
 from xml.etree import ElementTree
@@ -891,8 +891,9 @@ class PVDReader(BaseReader, TimeReader):
                 PVDDataSet(
                     float(element_attrib['timestep']),
                     int(element_attrib['part']),
-                    element_attrib['group'],
                     element_attrib['file'],
+                    element_attrib['group'],
+
                 )
             )
         self._datasets = sorted(datasets)
