@@ -842,6 +842,7 @@ def download_cylinder_crossflow(load=True):
 
 
 def download_naca(load=True):
+    """Download NACA airfoil dataset in EnSight format."""
     filename, _ = _download_file('EnSight/naca.bin.case')
     _download_file('EnSight/naca.gold.bin.DENS_1')
     _download_file('EnSight/naca.gold.bin.DENS_3')
@@ -852,6 +853,7 @@ def download_naca(load=True):
 
 
 def download_wavy(load=True):
+    """Download PVD file of a 2D wave."""
     folder, _ = _download_file('PVD/wavy.zip')
     filename = os.path.join(folder, 'wavy.pvd')
     if not load:
