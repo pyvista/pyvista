@@ -776,7 +776,25 @@ class PVDDataSet:
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
 class PVDReader(BaseReader, TimeReader):
-    """PVD Reader for .pvd files."""
+    """PVD Reader for .pvd files.
+    
+    Examples
+    --------
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> filename = examples.download_wavy(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'wavy.pvd'
+    >>> reader = pyvista.get_reader(filename)
+    >>> reader.time_values  # doctest: +ELLIPSIS
+    [0.0, 1.0, 2.0, 3.0, ... 12.0, 13.0, 14.0]
+    >>> reader.set_active_time_point(5)
+    >>> reader.active_time_value
+    5.0
+    >>> mesh = reader.read()[0]  # MultiBlock mesh with only 1 block
+    >>> mesh.plot(scalars='z')
+
+    """
 
     def __init__(self, filename):
         """Initialize PVD file reader."""
