@@ -26,7 +26,7 @@ import pyvista as pv
 
 # Alternatively, use the pickeled graph included in our examples.
 from pyvista import examples
-graph = examples.osmnx_graph()
+graph = examples.download_osmnx_graph()
 
 
 ###############################################################################
