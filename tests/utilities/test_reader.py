@@ -290,6 +290,7 @@ def test_pvdreader():
     filename = examples.download_wavy(load=False)
     reader = pyvista.get_reader(filename)
     assert isinstance(reader, pyvista.PVDReader)
+    assert reader.reader == reader  # PVDReader refers to itself
     assert reader.filename == filename
     
     assert reader.number_time_points == 15

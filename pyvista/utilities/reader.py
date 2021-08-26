@@ -369,7 +369,6 @@ class TimeReader(ABC):
         int
 
         """
-        pass
 
     @abstractmethod
     def time_point_value(self, time_point):
@@ -385,7 +384,6 @@ class TimeReader(ABC):
         float
 
         """
-        pass
 
     @property
     def time_values(self):
@@ -408,7 +406,6 @@ class TimeReader(ABC):
         float
 
         """
-        pass
 
     @abstractmethod
     def set_active_time_value(self, time_value):
@@ -420,7 +417,6 @@ class TimeReader(ABC):
             Time or iteration value to set as active.
 
         """
-        pass
 
     @abstractmethod
     def set_active_time_point(self, time_point):
@@ -432,7 +428,6 @@ class TimeReader(ABC):
             Time or iteration point index for setting active time.
 
         """
-        pass
 
 
 class XMLImageDataReader(BaseReader, PointCellDataSelection):
@@ -863,7 +858,7 @@ class PVDReader(BaseReader, TimeReader):
         if self.datasets is None:
             self._parse_file()
 
-    def _update(self):
+    def _update(self):  # pragma: no cover
         """Unused in PVDReader."""
         pass
 
