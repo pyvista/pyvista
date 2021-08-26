@@ -18,7 +18,7 @@ import numpy as np
 import pyvista as pv
 
 ###############################################################################
-# Read in the graph directly from the open street maps server.
+# Read in the graph directly from the Open Street Map server.
 
 # address = 'Holzgerlingen DE'
 # graph = ox.graph_from_address(address, dist=500, network_type='drive')
@@ -30,7 +30,8 @@ graph = examples.download_osmnx_graph()
 
 
 ###############################################################################
-# Next, convert the edges into pyvista lines.
+# Next, convert the edges into pyvista lines using
+# :func:`pyvista.lines_from_points`.
 
 nodes, edges = ox.graph_to_gdfs(graph)
 lines = []
