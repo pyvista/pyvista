@@ -56,6 +56,8 @@ the data.
 The :class:`PointCellDataSelection` is inherited by readers that
 support inspecting and setting data related to point and cell arrays.
 
+The :class:`TimeReader` is inherited by readers that support inspecting
+and setting time or iterations for reading.
 
 .. autosummary::
    :toctree: _autosummary
