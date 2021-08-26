@@ -1,4 +1,6 @@
 """
+.. _open_street_map_example:
+
 Plot Open Street Map Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -12,11 +14,20 @@ Start by generating a graph from an address.
 
 import osmnx as ox
 import numpy as np
+
 import pyvista as pv
 
-ox.config(use_cache=False)
-address = 'Holzgerlingen DE'
-graph = ox.graph_from_address(address, dist=500, network_type='drive')
+###############################################################################
+# Read in the graph directly from the open street maps server.
+
+# address = 'Holzgerlingen DE'
+# graph = ox.graph_from_address(address, dist=500, network_type='drive')
+# pickle.dump(graph, open('/tmp/tmp.p', 'wb'))
+
+# Alternatively, use the pickeled graph included in our examples.
+from pyvista import examples
+graph = examples.osmnx_graph()
+
 
 ###############################################################################
 # Next, convert the edges into pyvista lines.
@@ -38,5 +49,4 @@ for idx, row in edges.iterrows():
 # Finally, merge the lines and plot
 
 combined_lines = lines[0].merge(lines[1:])
-combined_lines.plot(line_width=5, cpos='xy', background='w', color='k')
-
+combined_lines.plot(line_width=3, cpos='xy')

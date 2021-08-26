@@ -10,6 +10,7 @@ lxml
 matplotlib
 mypy
 mypy-extensions
+osmnx==1.1.1
 panel
 param==1.10.1  # due to panel bug
 pydata-sphinx-theme
@@ -27,4 +28,3 @@ sphinxcontrib-websupport
 trimesh
 typed-ast
 typing-extensions
-osmnx

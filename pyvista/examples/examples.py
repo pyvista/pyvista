@@ -322,3 +322,37 @@ def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
 
     grid = pyvista.ExplicitStructuredGrid(dims, corners)
     return grid
+
+
+def osmnx_graph():  # pragma: no cover
+    """Load a simple street map from Open Street Map.
+
+    Generated from:
+
+    .. code:: python
+
+        >>> import osmnx as ox
+        >>> address = 'Holzgerlingen DE'
+        >>> graph = ox.graph_from_address(address, dist=500, network_type='drive')
+        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))
+
+    Returns
+    -------
+    networkx.classes.multidigraph.MultiDiGraph
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> graph = examples.osmnx_graph()  # doctest: +SKIP
+    
+    See :ref:`open_street_map_example` for a full example using this dataset.
+
+    """
+    try:
+        import osmnx
+    except ImportError:
+        raise ImportError('Install `osmnx` to use this example')
+
+    import pickle
+    graph_path = os.path.join(dir_path, 'osmnx_graph.p')
+    return pickle.load(open(graph_path, 'rb'))
