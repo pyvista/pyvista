@@ -769,8 +769,7 @@ class BinaryMarchingCubesReader(BaseReader):
     _class_reader = _vtk.vtkMCubesReader
 
 
-@functools.total_ordering
-@dataclass
+@dataclass(order=True)
 class PVDDataSet:
     """Class for storing dataset info from PVD file."""
 
@@ -778,16 +777,6 @@ class PVDDataSet:
     part: int
     filename: str
     group: str
-
-    def __lt__(self, other):
-        """First sort by time, then by part."""
-        if self.time < other.time:
-            return True
-        if self.time > other.time:
-            return False
-        if self.part < other.part:
-            return True
-        return False
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
