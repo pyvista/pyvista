@@ -201,7 +201,6 @@ class PointCellDataSelection:
         int
 
         """
-
         return self.reader.GetNumberOfPointArrays()
 
     @property
@@ -363,7 +362,7 @@ class TimeReader(ABC):
     @property
     @abstractmethod
     def number_time_points(self):
-        """The number of time points or iterations available to read.
+        """Return number of time points or iterations available to read.
         
         Returns
         -------
@@ -546,7 +545,7 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
 
     _class_reader = _vtk.vtkXMLMultiBlockDataReader
 
-
+# skip pydocstyle D102 check since docstring is taken from TimeReader
 class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     """EnSight Reader for .case files.
     
@@ -575,51 +574,52 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         self._update_information()
 
     @property
-    def number_time_points(self):
+    def number_time_points(self):  # noqa: D102
         return self.reader.GetTimeSets().GetItem(0).GetSize()
 
-    def time_point_value(self, time_point):
+    def time_point_value(self, time_point):  # noqa: D102
         return self.reader.GetTimeSets().GetItem(0).GetValue(time_point)
 
     @property
-    def active_time_value(self):
+    def active_time_value(self):  # noqa: D102
         return self.reader.GetTimeValue()
 
-    def set_active_time_value(self, time_value):
+    def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
                 f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
             )
         return self.reader.SetTimeValue(time_value)
 
-    def set_active_time_point(self, time_point):
+    def set_active_time_point(self, time_point):  # noqa: D102
         return self.reader.SetTimeValue(self.time_point_value(time_point))
 
 
+# skip pydocstyle D102 check since docstring is taken from TimeReader
 class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     """OpenFOAM Reader for .foam files."""
 
     _class_reader = _vtk.vtkOpenFOAMReader
 
     @property
-    def number_time_points(self):
+    def number_time_points(self):  # noqa: D102
         return self.reader.GetTimeValues().GetNumberOfValues()
 
-    def time_point_value(self, time_point):
+    def time_point_value(self, time_point):  # noqa: D102
         return self.reader.GetTimeValues().GetValue(time_point)
 
     @property
-    def active_time_value(self):
+    def active_time_value(self):  # noqa: D102
         raise NotImplementedError("vtkOpenFOAMReader does not yet support this")
 
-    def set_active_time_value(self, time_value):
+    def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
                 f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
             )
         return self.reader.SetTimeValue(time_value)
 
-    def set_active_time_point(self, time_point):
+    def set_active_time_point(self, time_point):  # noqa: D102
         return self.reader.SetTimeValue(self.time_point_value(time_point))
 
 
@@ -790,6 +790,7 @@ class PVDDataSet:
         return False
 
 
+# skip pydocstyle D102 check since docstring is taken from TimeReader
 class PVDReader(BaseReader, TimeReader):
     """PVD Reader for .pvd files."""
 
@@ -901,22 +902,22 @@ class PVDReader(BaseReader, TimeReader):
         self.set_active_time_value(self.time_values[0])
 
     @property
-    def time_values(self):
+    def time_values(self):  # noqa: D102
         return self._time_values
 
     @property
-    def number_time_points(self):
+    def number_time_points(self):  # noqa: D102
         return len(self.time_values)
     
-    def time_point_value(self, time_point):
+    def time_point_value(self, time_point):  # noqa: D102
         return self.time_values[time_point]
 
     @property
-    def active_time_value(self):
+    def active_time_value(self):  # noqa: D102
         # all active datasets have the same time
         return self.active_datasets[0].time
 
-    def set_active_time_value(self, time_value):
+    def set_active_time_value(self, time_value):  # noqa: D102
         self._active_datasets = [
             dataset for dataset in self.datasets if dataset.time == time_value
         ]
@@ -925,7 +926,7 @@ class PVDReader(BaseReader, TimeReader):
             for dataset in self.active_datasets
         ]
 
-    def set_active_time_point(self, time_point):
+    def set_active_time_point(self, time_point):  # noqa: D102
         self.set_active_time_value(self.time_values[time_point])
 
 
