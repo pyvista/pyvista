@@ -1,6 +1,5 @@
 """Module containing geometry helper functions."""
 
-import ctypes
 import warnings
 
 import numpy as np
@@ -100,16 +99,17 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     return image
 
 
-def single_triangle():
+def single_triangle():  # pragma: no cover
     """Create a single PolyData triangle."""
-    warnings.warn( "Use of `single_triangle` is deprecated. "
-        "Use `pyvista.triangle` instead.",
+    warnings.warn(
+        "Use of `single_triangle` is deprecated. "
+        "Use `pyvista.Triangle` instead.",
         PyvistaDeprecationWarning
     )
     points = np.zeros((3, 3))
     points[1] = [1, 0, 0]
     points[2] = [0.5, 0.707, 0]
-    cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
+    cells = np.array([[3, 0, 1, 2]])
     return pyvista.PolyData(points, cells)
 
 
