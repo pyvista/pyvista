@@ -409,15 +409,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Wireframe geometry will be drawn using hidden line removal if
         the rendering engine supports it.
 
+        Disable this with :func:`disable_hidden_line_removal
+        <BasePlotter.disable_hidden_line_removal>`
+
         Parameters
         ----------
         all_renderers : bool
             If ``True``, applies to all renderers in subplots. If
             ``False``, then only applies to the active renderer.
-
-        See Also
-        --------
-        :func:`disable_hidden_line_removal <BasePlotter.disable_hidden_line_removal>`
 
         Examples
         --------
@@ -447,15 +446,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def disable_hidden_line_removal(self, all_renderers=True):
         """Disable hidden line removal.
 
+        Enable again with :func:`enable_hidden_line_removal
+        <BasePlotter.enable_hidden_line_removal>`
+
         Parameters
         ----------
         all_renderers : bool
             If ``True``, applies to all renderers in subplots. If
             ``False``, then only applies to the active renderer.
-
-        See Also
-        --------
-        :func:`enable_hidden_line_removal <BasePlotter.enable_hidden_line_removal>`
 
         Examples
         --------
@@ -2976,6 +2974,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         **kwargs : dict
             See the documentation for ``imageio.get_writer`` for additional kwargs.
 
+        Notes
+        -----
+        See the documentation for `imageio.get_writer
+        <https://imageio.readthedocs.io/en/stable/userapi.html#imageio.get_writer>`_
+
         Examples
         --------
         Open a MP4 movie and set the quality to maximum.
@@ -2983,11 +2986,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista
         >>> pl = pyvista.Plotter
         >>> pl.open_movie('movie.mp4', quality=10)  # doctest:+SKIP
-
-        See Also
-        --------
-        See the documentation for `imageio.get_writer
-        <https://imageio.readthedocs.io/en/stable/userapi.html#imageio.get_writer>`_
 
         """
         from imageio import get_writer
@@ -3432,7 +3430,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             keyword arguments
 
         Returns
-        --------
+        -------
         vtk.vtkActor
             Actor of the mesh.
 

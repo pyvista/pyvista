@@ -1103,11 +1103,6 @@ class WidgetHelper:
         used to control a parametric function for building this spline. Click
         directly on the line to translate the widget.
 
-        Note
-        ----
-        This widget has trouble displaying certain colors. Use only simple
-        colors (white, black, yellow).
-
         Parameters
         ----------
         callback : callable
@@ -1145,6 +1140,11 @@ class WidgetHelper:
             The points to initialize the widget placement. Must have same
             number of elements as ``n_handles``. If the first and last point
             are the same, this will be a closed loop spline.
+
+        Notes
+        -----
+        This widget has trouble displaying certain colors. Use only simple
+        colors (white, black, yellow).
 
         """
         if initial_points is not None and len(initial_points) != n_handles:

@@ -19,8 +19,8 @@ class Table(_vtk.vtkTable, DataObject):
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
     or from a dictionary containing NumPy arrays.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import pyvista as pv
     >>> import numpy as np
     >>> arrays = np.random.rand(100, 3)

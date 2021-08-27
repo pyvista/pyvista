@@ -434,7 +434,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """Remove any null blocks in place.
 
         Parameters
-        -----------
+        ----------
         empty : bool
             Remove any meshes that are empty as well (have zero points).
 

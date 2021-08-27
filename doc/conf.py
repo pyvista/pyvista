@@ -58,7 +58,6 @@ sys.path.append(os.path.abspath("./_ext"))
 extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
     "sphinx.ext.doctest",
     "sphinx.ext.autosummary",
     "notfound.extension",
@@ -69,10 +68,13 @@ extensions = [
     "jupyter_sphinx",
     "sphinx_panels",
     "pyvista.ext.plot_directive",
+    "numpydoc"
 ]
 
-# return type inline with the description.
-napoleon_use_rtype = False
+# See https://numpydoc.readthedocs.io/en/latest/install.html
+numpydoc_use_plots = True
+numpydoc_show_class_members = False
+numpydoc_xref_param_type = True
 
 add_module_names = False
 
@@ -163,47 +165,37 @@ sphinx_gallery_conf = {
     ),
 }
 
+# -- .. pyvista-plot:: directive ----------------------------------------------
+from numpydoc.docscrape_sphinx import SphinxDocString
+import re
 
-# -- Options for HTML output ----------------------------------------------
-from sphinx.ext.napoleon import GoogleDocstring
-from sphinx.locale import _, __
-# rebind examples section to automate placement with our custom
-# .. pyvista-plot:: directive by mangling docstrings
+IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
+IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
-def _custom_parse_generic_section(self, section, use_admonition):
-    lines = self._strip_empty(self._consume_to_next_section())
-    lines = self._dedent(lines)
-    if use_admonition:
-        header = '.. admonition:: %s' % section
-        lines = self._indent(lines, 3)
+
+def _str_examples(self):
+    examples_str = "\n".join(self['Examples'])
+
+    if (self.use_plots and re.search(IMPORT_MATPLOTLIB_RE, examples_str)
+            and 'plot::' not in examples_str):
+        out = []
+        out += self._str_header('Examples')
+        out += ['.. plot::', '']
+        out += self._str_indent(self['Examples'])
+        out += ['']
+        return out
+    elif (re.search(IMPORT_PYVISTA_RE, examples_str)
+          and 'plot-pyvista::' not in examples_str):
+        out = []
+        out += self._str_header('Examples')
+        out += ['.. pyvista-plot::', '']
+        out += self._str_indent(self['Examples'])
+        out += ['']
+        return out
     else:
-        header = '.. rubric:: %s' % section
+        return self._str_section('Examples')
 
-    # check if section contains any mention of pyvista
-    has_plotting = False
-    has_pyvista = any(['pyvista' in line for line in lines])
-    if has_pyvista:
-        for line in lines:
-            if 'plot' in line or 'show' in line:
-                has_plotting = True
-    
-    # add directive and indent to entire section
-    if has_plotting:
-        old_lines = lines
-        lines = ['.. pyvista-plot::', '']
-        for line in old_lines:
-            if line:
-                lines.append(f'   {line}')
-            else:
-                lines.append(line)
-
-    if lines:
-        return [header, ''] + lines + ['']
-    else:
-        return [header, '']
-
-# override method
-GoogleDocstring._parse_generic_section = _custom_parse_generic_section
+SphinxDocString._str_examples = _str_examples
 
 
 # -- Options for HTML output ----------------------------------------------

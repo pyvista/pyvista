@@ -239,7 +239,7 @@ class PlotterITK():
             Size of the points displayed in the
 
         Returns
-        --------
+        -------
         viewer : itkwidgets.Viewer
             ``ITKwidgets`` viewer.
         """

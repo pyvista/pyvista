@@ -400,7 +400,7 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
         Number of pieces to divide line into.
 
     Returns
-    --------
+    -------
     :class:`pyvista.PolyData`
         Line mesh.
 

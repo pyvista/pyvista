@@ -10,6 +10,7 @@ lxml
 matplotlib
 mypy
 mypy-extensions
+numpydoc
 panel
 param==1.10.1  # due to panel bug
 pydata-sphinx-theme

@@ -583,7 +583,7 @@ class Renderer(_vtk.vtkRenderer):
 
         box : bool, optional
             Show a box orientation marker. Use ``box_args`` to adjust.
-            See :any:`pyvista.create_axes_orientation_box` for details.
+            See :func:`pyvista.create_axes_orientation_box` for details.
 
         x_color : str, optional
             Color used for the x axis arrow.  Defaults to theme axes parameters.

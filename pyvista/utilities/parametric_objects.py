@@ -997,11 +997,11 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     ----------
     ringradius : float, optional
         The radius from the center to the middle of the ring of the
-      supertoroid. Default is 1.
+        supertoroid. Default is 1.
 
     crosssectionradius : float, optional
         The radius of the cross section of ring of the supertoroid.
-      Default = 0.5.
+        Default = 0.5.
 
     xradius : float, optional
         The scaling factor for the x-axis. Default is 1.

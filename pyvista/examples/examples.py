@@ -295,8 +295,8 @@ def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
     Examples
     --------
     >>> from pyvista import examples
-    >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-    >>> grid.plot(show_edges=True)  # doctest: +SKIP
+    >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+    >>> grid.plot(show_edges=True)  # doctest:+SKIP
 
     """
     ni, nj, nk = np.asarray(dims)-1

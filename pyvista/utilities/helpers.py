@@ -85,8 +85,8 @@ def convert_array(arr, name=None, deep=0, array_type=None):
     """Convert a NumPy array to a vtkDataArray or vice versa.
 
     Parameters
-    -----------
-    arr : ndarray or vtkDataArry
+    ----------
+    arr : np.ndarray or vtkDataArry
         A numpy array or vtkDataArry to convert
     name : str
         The name of the data array for VTK

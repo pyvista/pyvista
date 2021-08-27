@@ -601,12 +601,12 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
-        >>> sphere.save('my_mesh.stl')  # doctest: +SKIP
+        >>> sphere.save('my_mesh.stl')  # doctest:+SKIP
 
         Save a mesh as a PLY.
 
         >>> sphere = pyvista.Sphere()
-        >>> sphere.save('my_mesh.ply')  # doctest: +SKIP
+        >>> sphere.save('my_mesh.ply')  # doctest:+SKIP
 
         Save a mesh as a PLY with a texture array.  Here we also
         create a simple RGB array representing the texture.
@@ -616,18 +616,18 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         >>> texture = np.zeros((sphere.n_points, 3), np.uint8)
         >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]  # just blue channel
         >>> sphere.point_data['my_texture'] = texture
-        >>> sphere.save('my_mesh.ply', texture='my_texture')  # doctest: +SKIP
+        >>> sphere.save('my_mesh.ply', texture='my_texture')  # doctest:+SKIP
 
         Alternatively, provide just the texture array.  This will be
         written to the file as ``'RGB'`` since it does not contain an
         alpha channel.
 
-        >>> sphere.save('my_mesh.ply', texture=texture)  # doctest: +SKIP
+        >>> sphere.save('my_mesh.ply', texture=texture)  # doctest:+SKIP
 
         Save a mesh as a VTK file.
 
         >>> sphere = pyvista.Sphere()
-        >>> sphere.save('my_mesh.vtk')  # doctest: +SKIP
+        >>> sphere.save('my_mesh.vtk')  # doctest:+SKIP
 
         Notes
         -----
@@ -714,7 +714,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         --------
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
-        >>> sphere.point_normals  # doctest: +SKIP
+        >>> sphere.point_normals  # doctest:+SKIP
         pyvista_ndarray([[-2.48721432e-10, -1.08815623e-09, -1.00000000e+00],
                          [-2.48721432e-10, -1.08815623e-09,  1.00000000e+00],
                          [-1.18888125e-01,  3.40539310e-03, -9.92901802e-01],
@@ -741,7 +741,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         --------
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
-        >>> sphere.cell_normals  # doctest: +SKIP
+        >>> sphere.cell_normals  # doctest:+SKIP
         pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
                          [-0.05177207,  0.01682176, -0.9985172 ],
                          [-0.04714328,  0.02721819, -0.9985172 ],
@@ -769,7 +769,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         --------
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
-        >>> sphere.face_normals  # doctest: +SKIP
+        >>> sphere.face_normals  # doctest:+SKIP
         pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
                          [-0.05177207,  0.01682176, -0.9985172 ],
                          [-0.04714328,  0.02721819, -0.9985172 ],
@@ -1111,7 +1111,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> import pyvista
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
-        >>> hex_beam.cells[:18]  # doctest: +SKIP
+        >>> hex_beam.cells[:18]  # doctest:+SKIP
         array([ 8,  0,  2,  8,  7, 27, 36, 90, 81,  8,  2,  1,  4,  
                 8, 36, 18, 54, 90])
 
@@ -1146,7 +1146,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> import pyvista
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
-        >>> hex_beam.cells_dict  # doctest: +SKIP
+        >>> hex_beam.cells_dict  # doctest:+SKIP
         {12: array([[ 0,  2,  8,  7, 27, 36, 90, 81],
                 [ 2,  1,  4,  8, 36, 18, 54, 90],
                 [ 7,  8,  6,  5, 81, 90, 72, 63],
@@ -1321,7 +1321,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> import pyvista
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
-        >>> hex_beam.celltypes  # doctest: +SKIP
+        >>> hex_beam.celltypes  # doctest:+SKIP
         array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
                12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
                12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
@@ -1385,8 +1385,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         See Also
         --------
-        ExplicitStructuredGrid.cast_to_unstructured_grid
-            Cast an explicit structured grid to an unstructured grid.
+        pyvista.ExplicitStructuredGrid.cast_to_unstructured_grid
 
         Examples
         --------
@@ -1709,7 +1708,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     >>> dims = np.array([ni, nj, nk]) + 1
     >>> grid = pv.ExplicitStructuredGrid(dims, corners)
     >>> _ = grid.compute_connectivity()
-    >>> grid.plot(show_edges=True)  # doctest: +SKIP
+    >>> grid.plot(show_edges=True)  # doctest:+SKIP
 
     """
 
@@ -1800,37 +1799,34 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Warnings
         --------
-            The ghost cell array is disabled before casting the
-            unstructured grid in order to allow the original structure
-            and attributes data of the explicit structured grid to be
-            restored. If you don't need to restore the explicit
-            structured grid later or want to extract an unstructured
-            grid from the visible subgrid, use the ``extract_cells``
-            filter and the cell indices where the ghost cell array is
-            ``0``.
+        The ghost cell array is disabled before casting the
+        unstructured grid in order to allow the original structure
+        and attributes data of the explicit structured grid to be
+        restored. If you don't need to restore the explicit
+        structured grid later or want to extract an unstructured
+        grid from the visible subgrid, use the ``extract_cells``
+        filter and the cell indices where the ghost cell array is
+        ``0``.
 
         See Also
         --------
-        DataSetFilters.extract_cells :
-            Extract a subset of a dataset.
-
-        UnstructuredGrid.cast_to_explicit_structured_grid :
-            Cast an unstructured grid to an explicit structured grid.
+        pyvista.DataSetFilters.extract_cells : Extract a subset of a dataset.
+        pyvista.UnstructuredGrid.cast_to_explicit_structured_grid : Cast an unstructured grid to an explicit structured grid.
 
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
-        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid.hide_cells(range(80, 120))  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
-        >>> grid = grid.cast_to_unstructured_grid()  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid = grid.cast_to_unstructured_grid()  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
-        >>> grid = grid.cast_to_explicit_structured_grid()  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid = grid.cast_to_explicit_structured_grid()  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
         """
         grid = ExplicitStructuredGrid()
@@ -1863,15 +1859,15 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
-        >>> grid.save('grid.vtu')  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+        >>> grid.hide_cells(range(80, 120))  # doctest:+SKIP
+        >>> grid.save('grid.vtu')  # doctest:+SKIP
 
-        >>> grid = pv.ExplicitStructuredGrid('grid.vtu')  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid = pv.ExplicitStructuredGrid('grid.vtu')  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
-        >>> grid.show_cells()  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid.show_cells()  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
         """
         grid = self.cast_to_unstructured_grid()
@@ -1900,9 +1896,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+        >>> grid.hide_cells(range(80, 120))  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
         """
         if inplace:
@@ -1939,12 +1935,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+        >>> grid.hide_cells(range(80, 120))  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
-        >>> grid.show_cells()  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid.show_cells()  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
         """
         if inplace:
@@ -1981,8 +1977,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> grid.dimensions  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+        >>> grid.dimensions  # doctest:+SKIP
         array([5, 6, 7])
 
         """
@@ -2006,12 +2002,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
-        >>> grid.bounds  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+        >>> grid.hide_cells(range(80, 120))  # doctest:+SKIP
+        >>> grid.bounds  # doctest:+SKIP
         [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
 
-        >>> grid.visible_bounds  # doctest: +SKIP
+        >>> grid.visible_bounds  # doctest:+SKIP
         [0.0, 80.0, 0.0, 50.0, 0.0, 4.0]
 
         """
@@ -2038,21 +2034,20 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         See Also
         --------
-        ExplicitStructuredGrid.cell_coords :
-            Return the cell structured coordinates.
+        pyvista.ExplicitStructuredGrid.cell_coords : Return the cell structured coordinates.
 
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> grid.cell_id((3, 4, 0))  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+        >>> grid.cell_id((3, 4, 0))  # doctest:+SKIP
         19
 
         >>> coords = [(3, 4, 0),
         ...           (3, 2, 1),
         ...           (1, 0, 2),
         ...           (2, 3, 2)]
-        >>> grid.cell_id(coords)  # doctest: +SKIP
+        >>> grid.cell_id(coords)  # doctest:+SKIP
         array([19, 31, 41, 54])
 
         """
@@ -2089,17 +2084,16 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         See Also
         --------
-        ExplicitStructuredGrid.cell_id :
-            Return the cell ID.
+        pyvista.ExplicitStructuredGrid.cell_id : Return the cell ID.
 
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> grid.cell_coords(19)  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+        >>> grid.cell_coords(19)  # doctest:+SKIP
         (3, 4, 0)
 
-        >>> grid.cell_coords((19, 31, 41, 54))  # doctest: +SKIP
+        >>> grid.cell_coords((19, 31, 41, 54))  # doctest:+SKIP
         array([[3, 4, 0],
                [3, 2, 1],
                [1, 0, 2],
@@ -2144,16 +2138,16 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> cell = grid.extract_cells(31)  # doctest: +SKIP
-        >>> ind = grid.neighbors(31)  # doctest: +SKIP
-        >>> neighbors = grid.extract_cells(ind)  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+        >>> cell = grid.extract_cells(31)  # doctest:+SKIP
+        >>> ind = grid.neighbors(31)  # doctest:+SKIP
+        >>> neighbors = grid.extract_cells(ind)  # doctest:+SKIP
         >>> 
         >>> plotter = pv.Plotter()
-        >>> plotter.add_axes()  # doctest: +SKIP
-        >>> plotter.add_mesh(cell, color='r', show_edges=True)  # doctest: +SKIP
-        >>> plotter.add_mesh(neighbors, color='w', show_edges=True)  # doctest: +SKIP
-        >>> plotter.show()  # doctest: +SKIP
+        >>> plotter.add_axes()  # doctest:+SKIP
+        >>> plotter.add_mesh(cell, color='r', show_edges=True)  # doctest:+SKIP
+        >>> plotter.add_mesh(neighbors, color='w', show_edges=True)  # doctest:+SKIP
+        >>> plotter.show()  # doctest:+SKIP
 
         """
         def connectivity(ind):
@@ -2267,16 +2261,15 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         See Also
         --------
-        ExplicitStructuredGrid.compute_connections :
-            Compute an array with the number of connected cell faces.
+        ExplicitStructuredGrid.compute_connections : Compute an array with the number of connected cell faces.
 
         Examples
         --------
         >>> from pyvista import examples
         >>> 
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> grid.compute_connectivity()  # doctest: +SKIP
-        >>> grid.plot(show_edges=True)  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+        >>> grid.compute_connectivity()  # doctest:+SKIP
+        >>> grid.plot(show_edges=True)  # doctest:+SKIP
 
         """
         if inplace:
@@ -2307,15 +2300,14 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         See Also
         --------
-        ExplicitStructuredGrid.compute_connectivity :
-            Compute the faces connectivity flags array.
+        ExplicitStructuredGrid.compute_connectivity : Compute the faces connectivity flags array.
 
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> grid.compute_connections()  # doctest: +SKIP
-        >>> grid.plot(show_edges=True)  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+        >>> grid.compute_connections()  # doctest:+SKIP
+        >>> grid.plot(show_edges=True)  # doctest:+SKIP
 
         """
         if inplace:
