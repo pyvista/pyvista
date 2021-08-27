@@ -114,6 +114,12 @@ class DataSet(DataSetFilters, DataObject):
             The scalars info in an object with namedtuple semantics,
             with attributes ``association`` and ``name``.
 
+        Notes
+        -----
+        If both cell and point scalars are present and neither have
+        been set active within at the dataset level, point scalars
+        will be made active.
+
         Examples
         --------
         Create a mesh, add scalars to the mesh, and return the active
@@ -125,12 +131,6 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh['Z Height'] = mesh.points[:, 2]
         >>> mesh.active_scalars_info
         ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Z Height')
-
-        Notes
-        -----
-        If both cell and point scalars are present and neither have
-        been set active within at the dataset level, point scalars
-        will be made active.
 
         """
         field, name = self._active_scalars_info
@@ -170,6 +170,12 @@ class DataSet(DataSetFilters, DataObject):
             The vectors info in an object with namedtuple semantics,
             with attributes ``association`` and ``name``.
 
+        Notes
+        -----
+        If both cell and point vectors are present and neither have
+        been set active within at the dataset level, point vectors
+        will be made active.
+
         Examples
         --------
         Create a mesh, compute the normals inplace, set the active
@@ -182,12 +188,6 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.active_vectors_name = 'Normals'
         >>> mesh.active_vectors_info
         ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Normals')
-
-        Notes
-        -----
-        If both cell and point vectors are present and neither have
-        been set active within at the dataset level, point vectors
-        will be made active.
 
         """
         field, name = self._active_vectors_info
@@ -1309,6 +1309,11 @@ class DataSet(DataSetFilters, DataObject):
     def n_cells(self) -> int:
         """Return the number of cells in the entire dataset.
 
+        Notes
+        -----
+        This is identical to :attr:`n_faces <pyvista.PolyData.n_faces>`
+        in :class:`pyvista.PolyData`.
+
         Examples
         --------
         Create a mesh and return the number of cells in the
@@ -1318,11 +1323,6 @@ class DataSet(DataSetFilters, DataObject):
         >>> cube = pyvista.Cube().clean()
         >>> cube.n_cells
         6
-
-        Notes
-        -----
-        This is identical to :attr:`n_faces <pyvista.PolyData.n_faces>`
-        in :class:`pyvista.PolyData`.
 
         """
         return self.GetNumberOfCells()
@@ -1484,12 +1484,10 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         name : str
             Name of the array.
-
         preference : str, optional
             When scalars is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'``, ``'cell'``, or ``'field'``
-
         err : bool, optional
             Boolean to control whether to throw an error if array is
             not present.

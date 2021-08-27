@@ -110,7 +110,7 @@ class RenderWindowInteractor():
             The side of the mouse for the button to track (left or
             right).  Default is left. Also accepts ``'r'`` or ``'l'``.
 
-        viewport: bool, optional
+        viewport : bool, optional
             If ``True``, uses the normalized viewport coordinate
             system (values between 0.0 and 1.0 and support for HiDPI)
             when passing the click position to the callback.

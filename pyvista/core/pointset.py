@@ -412,6 +412,12 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             ``True`` if all the faces of the :class:`pyvista.PolyData`
             are triangles and does not contain any vertices or lines.
 
+        Notes
+        -----
+        The return value is not a ``bool`` for compatibility
+        reasons, though this behavior will change in a future
+        release.  Future versions will simply return a ``bool``.
+
         Examples
         --------
         Show a mesh from :func:`pyvista.Plane` is not composed of all
@@ -428,12 +434,6 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         >>> sphere = pyvista.Sphere()
         >>> sphere.is_all_triangles
         True <CallableBool>
-
-        Notes
-        -----
-        The return value is not a ``bool`` for compatibility
-        reasons, though this behavior will change in a future
-        release.  Future versions will simply return a ``bool``.
 
         """
         class CallableBool(int):  # pragma: no cover
@@ -595,6 +595,11 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             .. note::
                This feature is only available when saving PLY files. 
 
+        Notes
+        -----
+        Binary files write much faster than ASCII and have a smaller
+        file size.
+
         Examples
         --------
         Save a mesh as a STL.
@@ -628,11 +633,6 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
         >>> sphere = pyvista.Sphere()
         >>> sphere.save('my_mesh.vtk')  # doctest:+SKIP
-
-        Notes
-        -----
-        Binary files write much faster than ASCII and have a smaller
-        file size.
 
         """
         filename = os.path.abspath(os.path.expanduser(str(filename)))
@@ -1797,8 +1797,13 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             ``'BLOCK_J'`` and ``'BLOCK_K'`` cell arrays. These arrays
             are required to restore the explicit structured grid.
 
-        Warnings
+        See Also
         --------
+        pyvista.DataSetFilters.extract_cells : Extract a subset of a dataset.
+        pyvista.UnstructuredGrid.cast_to_explicit_structured_grid : Cast an unstructured grid to an explicit structured grid.
+
+        Notes
+        -----
         The ghost cell array is disabled before casting the
         unstructured grid in order to allow the original structure
         and attributes data of the explicit structured grid to be
@@ -1807,11 +1812,6 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         grid from the visible subgrid, use the ``extract_cells``
         filter and the cell indices where the ghost cell array is
         ``0``.
-
-        See Also
-        --------
-        pyvista.DataSetFilters.extract_cells : Extract a subset of a dataset.
-        pyvista.UnstructuredGrid.cast_to_explicit_structured_grid : Cast an unstructured grid to an explicit structured grid.
 
         Examples
         --------
@@ -1849,8 +1849,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         binary : bool, optional
             If ``True`` (default), write as binary, else ASCII.
 
-        Warnings
-        --------
+        Notes
+        -----
         VTK adds the ``'BLOCK_I'``, ``'BLOCK_J'`` and ``'BLOCK_K'``
         cell arrays. These arrays are required to restore the explicit
         structured grid.

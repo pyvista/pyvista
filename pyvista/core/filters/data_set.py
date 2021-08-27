@@ -426,7 +426,7 @@ class DataSetFilters:
             The center ``(x, y, z)`` coordinate of the plane on which
             the slice occurs.
 
-        generate_triangles: bool, optional
+        generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will
             be triangles. Otherwise the output will be the intersection
             polygons.
@@ -488,7 +488,7 @@ class DataSetFilters:
         z : float, optional
             The Z location of the XY slice.
 
-        generate_triangles: bool, optional
+        generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will
             be triangles. Otherwise the output will be the intersection
             polygons.
@@ -553,7 +553,7 @@ class DataSetFilters:
             ``bounds`` along the specified axis. Defaults to 1% of the
             ``bounds`` along the specified axis.
 
-        generate_triangles: bool, optional
+        generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will
             be triangles. Otherwise the output will be the intersection
             polygons.
@@ -644,7 +644,7 @@ class DataSetFilters:
         line : pyvista.PolyData
             A PolyData object containing one single PolyLine cell.
 
-        generate_triangles: bool, optional
+        generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will
             be triangles. Otherwise the output will be the intersection
             polygons.
@@ -1519,10 +1519,10 @@ class DataSetFilters:
         absolute : bool, optional
             Control if ``tolerance`` is an absolute distance or a fraction.
 
-        clamping: bool, optional
+        clamping : bool, optional
             Turn on/off clamping of "scalar" values to range. Default ``False``.
 
-        rng: tuple(float), optional
+        rng : tuple(float), optional
             Set the range of values to be considered by the filter
             when scalars values are provided.
 
@@ -1531,7 +1531,7 @@ class DataSetFilters:
 
         Returns
         -------
-        glyphs : pyvista.PolyData
+        pyvista.PolyData
             Glyphs at either the cell centers or points.
 
         Examples
@@ -2254,7 +2254,7 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
-        locator: vtkAbstractCellLocator, optional
+        locator : vtkAbstractCellLocator, optional
             Prototype cell locator to perform the FindCell() operation.
 
         Returns
@@ -2302,23 +2302,23 @@ class DataSetFilters:
 
         Parameters
         ----------
-        dataset: pyvista.DataSet
-            The source vtk data object as the mesh to sample values on to
+        dataset : pyvista.DataSet
+            The source vtk data object as the mesh to sample values on to.
 
-        target: pyvista.DataSet
+        target : pyvista.DataSet
             The vtk data object to sample from - point and cell arrays from
-            this object are sampled onto the nodes of the ``dataset`` mesh
+            this object are sampled onto the nodes of the ``dataset`` mesh.
 
-        tolerance: float, optional
+        tolerance : float, optional
             Tolerance used to compute whether a point in the source is
             in a cell of the input.  If not given, tolerance is
             automatically generated.
 
-        pass_cell_arrays: bool, optional
-            Preserve source mesh's original cell data arrays
+        pass_cell_arrays : bool, optional
+            Preserve source mesh's original cell data arrays.
 
-        pass_point_data: bool, optional
-            Preserve source mesh's original point data arrays
+        pass_point_data : bool, optional
+            Preserve source mesh's original point data arrays.
 
         categorical : bool, optional
             Control whether the source point data is to be treated as
@@ -2375,8 +2375,8 @@ class DataSetFilters:
 
         Parameters
         ----------
-        target: pyvista.DataSet
-            The vtk data object to sample from - point and cell arrays from
+        target : pyvista.DataSet
+            The vtk data object to sample from. Point and cell arrays from
             this object are interpolated onto this mesh.
 
         sharpness : float, optional
@@ -2410,10 +2410,10 @@ class DataSetFilters:
             then all components of each null tuple are set to this value. By
             default the null value is set to zero.
 
-        pass_cell_arrays: bool, optional
+        pass_cell_arrays : bool, optional
             Preserve input mesh's original cell data arrays.
 
-        pass_point_data: bool, optional
+        pass_point_data : bool, optional
             Preserve input mesh's original point data arrays.
 
         progress_bar : bool, optional
@@ -2766,6 +2766,10 @@ class DataSetFilters:
         that do not result in too much memory being utilized.  The
         default unit is cell length.
 
+        .. warning::
+            This filter is unstable for ``vtk<9.0``.
+            See `pyvista issue 1508 <https://github.com/pyvista/pyvista/issues/1508>`_.
+
         Parameters
         ----------
         vectors : str, optional
@@ -2835,11 +2839,6 @@ class DataSetFilters:
             (i.e., polyline) representing a streamline. The attribute values
             associated with each streamline are stored in the cell data, whereas
             those associated with streamline-points are stored in the point data.
-
-        Warnings
-        --------
-        This filter is unstable for ``vtk<9.0``.
-        See `pyvista issue 1508 <https://github.com/pyvista/pyvista/issues/1508>`_.
 
         Examples
         --------
@@ -2958,7 +2957,7 @@ class DataSetFilters:
             Number of pieces to divide line into. Defaults to number of cells
             in the input mesh. Must be a positive integer.
 
-        tolerance: float, optional
+        tolerance : float, optional
             Tolerance used to compute whether a point in the source is in a
             cell of the input.  If not given, tolerance is automatically generated.
 
@@ -3018,7 +3017,7 @@ class DataSetFilters:
             Location in ``[x, y, z]``.
 
         resolution : int, optional
-            number of pieces to divide line into. Defaults to number of cells
+            Number of pieces to divide line into. Defaults to number of cells
             in the input mesh. Must be a positive integer.
 
         scalars : str, optional
@@ -3040,7 +3039,7 @@ class DataSetFilters:
         show : bool, optional
             Shows the matplotlib figure.
 
-        tolerance: float, optional
+        tolerance : float, optional
             Tolerance used to compute whether a point in the source is in a
             cell of the input.  If not given, tolerance is automatically generated.
 
@@ -3115,7 +3114,7 @@ class DataSetFilters:
             number of cells in the input mesh. Must be a positive
             integer.
 
-        tolerance: float, optional
+        tolerance : float, optional
             Tolerance used to compute whether a point in the source is
             in a cell of the input.  If not given, tolerance is
             automatically generated.
@@ -3184,7 +3183,7 @@ class DataSetFilters:
             Arc length (in degrees), beginning at the polar vector.  The
             direction is counterclockwise.  By default it is 360.
 
-        tolerance: float, optional
+        tolerance : float, optional
             Tolerance used to compute whether a point in the source is
             in a cell of the input.  If not given, tolerance is
             automatically generated.
@@ -3268,7 +3267,7 @@ class DataSetFilters:
         show : bool, optional
             Shows the ``matplotlib`` figure when ``True``.
 
-        tolerance: float, optional
+        tolerance : float, optional
             Tolerance used to compute whether a point in the source is
             in a cell of the input.  If not given, tolerance is
             automatically generated.
@@ -3353,7 +3352,7 @@ class DataSetFilters:
             Location in ``[x, y, z]``.
 
         resolution : int, optional
-            number of pieces to divide circular arc into. Defaults to
+            Number of pieces to divide circular arc into. Defaults to
             number of cells in the input mesh. Must be a positive
             integer.
 
@@ -3362,8 +3361,8 @@ class DataSetFilters:
             points in the positive Z direction.
 
         polar : np.ndarray or list, optional
-            (starting point of the arc).  By default it is the unit vector
-            in the positive x direction.
+            Starting point of the arc in polar coordinates.  By
+            default it is the unit vector in the positive x direction.
 
         angle : float, optional
             Arc length (in degrees), beginning at the polar vector.  The
@@ -3374,21 +3373,21 @@ class DataSetFilters:
             probe. The active scalar is used by default.
 
         title : str, optional
-            The string title of the `matplotlib` figure
+            The string title of the `matplotlib` figure.
 
         ylabel : str, optional
             The string label of the Y-axis. Defaults to variable name
 
         figsize : tuple(int), optional
-            the size of the new figure
+            The size of the new figure.
 
         figure : bool, optional
-            flag on whether or not to create a new figure
+            Flag on whether or not to create a new figure.
 
         show : bool, optional
             Shows the matplotlib figure
 
-        tolerance: float, optional
+        tolerance : float, optional
             Tolerance used to compute whether a point in the source is
             in a cell of the input.  If not given, tolerance is
             automatically generated.
@@ -3960,34 +3959,34 @@ class DataSetFilters:
             derivative quantities.  Defaults to the active scalars in
             the dataset.
 
-        gradient: bool, str, optional
+        gradient : bool, str, optional
             Calculate gradient. If a string is passed, the string will be used
             for the resulting array name. Otherwise, array name will be
             ``'gradient'``. Default ``True``.
 
-        divergence: bool, str, optional
+        divergence : bool, str, optional
             Calculate divergence. If a string is passed, the string will be
             used for the resulting array name. Otherwise, array name will be
             ``'divergence'``. Default ``None``.
 
-        vorticity: bool, str, optional
+        vorticity : bool, str, optional
             Calculate vorticity. If a string is passed, the string will be used
             for the resulting array name. Otherwise, array name will be
             ``'vorticity'``. Default ``None``.
 
-        qcriterion: bool, str, optional
+        qcriterion : bool, str, optional
             Calculate qcriterion. If a string is passed, the string will be
             used for the resulting array name. Otherwise, array name will be
             ``'qcriterion'``. Default ``None``.
 
-        faster: bool, optional
+        faster : bool, optional
             Use faster algorithm for computing derivative quantities. Result is
             less accurate and performs fewer derivative calculations,
             increasing computation speed. The error will feature smoothing of
             the output and possibly errors at boundaries. Option has no effect
             if DataSet is not UnstructuredGrid. Default ``False``.
 
-        preference: str, optional
+        preference : str, optional
             Data type preference. Either ``'point'`` or ``'cell'``.
 
         progress_bar : bool, optional
@@ -4103,13 +4102,24 @@ class DataSetFilters:
                   transform_all_input_vectors=False, inplace=True, progress_bar=False):
         """Transform this mesh with a 4x4 transform.
 
+        .. warning::
+            When using ``transform_all_input_vectors=True``, there is
+            no distinction in VTK between vectors and arrays with
+            three components.  This may be an issue if you have scalar
+            data with three components (e.g. RGB data).  This will be
+            improperly transformed as if it was vector data rather
+            than scalar data.  One possible (albeit ugly) workaround
+            is to store the three components as separate scalar
+            arrays.
+
+
         Parameters
         ----------
         trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
             Accepts a vtk transformation object or a 4x4
             transformation matrix.
 
-        transform_all_input_vectors: bool, optional
+        transform_all_input_vectors : bool, optional
             When ``True``, all arrays with three components are
             transformed. Otherwise, only the normals and vectors are
             transformed.  See the warning for more details.
@@ -4138,16 +4148,6 @@ class DataSetFilters:
         ...                              [0, 0, 0, 1]])
         >>> transformed = mesh.transform(transform_matrix)
         >>> transformed.plot(show_edges=True)
-
-        Warnings
-        --------
-        When using ``transform_all_input_vectors=True``, there is no
-        distinction in VTK between vectors and arrays with three
-        components.  This may be an issue if you have scalar data with
-        three components (e.g. RGB data).  This will be improperly
-        transformed as if it was vector data rather than scalar data.
-        One possible (albeit ugly) workaround is to store the three
-        components as separate scalar arrays.
 
         """
         if isinstance(trans, _vtk.vtkMatrix4x4):
@@ -4229,7 +4229,7 @@ class DataSetFilters:
         inplace : bool, optional
             When ``True``, modifies the dataset inplace.
 
-        transform_all_input_vectors: bool, optional
+        transform_all_input_vectors : bool, optional
             When ``True``, all input vectors are transformed. Otherwise,
             only the points, normals and active vectors are transformed.
 

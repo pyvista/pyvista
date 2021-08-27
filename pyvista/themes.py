@@ -1214,6 +1214,10 @@ class DefaultTheme(_ThemeConfig):
         Wireframe geometry will be drawn using hidden line removal if
         the rendering engine supports it.
 
+        See Also
+        --------
+        pyvista.BasePlotter.enable_hidden_line_removal
+
         Examples
         --------
         Enable hidden line removal.
@@ -1222,10 +1226,6 @@ class DefaultTheme(_ThemeConfig):
         >>> pyvista.global_theme.hidden_line_removal = True
         >>> pyvista.global_theme.hidden_line_removal
         True
-
-        See Also
-        --------
-        pyvista.BasePlotter.enable_hidden_line_removal
 
         """
         return self._hidden_line_removal

@@ -75,6 +75,19 @@ extensions = [
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
+numpydoc_validation_checks = {
+    # "GL01",  # "Docstring text (summary) should start in the line immediately after the opening quotes
+    # "GL02",  # Closing quotes should be placed in the line after the last text in the docstring.
+    # "GL03",  # Double line break found
+    "GL05",  # Tabs found at the start of line
+    "GL06",  # Found unknown section
+    "GL07",  # Sections are in the wrong order.
+    "PR04",  # 'Parameter has no type'
+    "PR07",  # 'Parameter has no description'
+    "PR08",  # 'Parameter description should start with a capital letter",
+    # "EX01",  # "No examples section found"
+}
+
 
 add_module_names = False
 

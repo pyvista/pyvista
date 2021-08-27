@@ -295,7 +295,7 @@ class PointCellDataSelection:
         Parameters
         ----------
         name: str
-            Cell array name
+            Cell array name.
 
         """
         self.reader.SetCellArrayStatus(name, 1)
@@ -306,7 +306,7 @@ class PointCellDataSelection:
         Parameters
         ----------
         name: str
-            Cell array name
+            Cell array name.
 
         """
         self.reader.SetCellArrayStatus(name, 0)
@@ -317,6 +317,7 @@ class PointCellDataSelection:
         Parameters
         ----------
         name: str
+            Cell array name.
 
         Returns
         -------
@@ -373,7 +374,8 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> sliced_mesh = mesh.slice('y')
-    >>> sliced_mesh.plot(scalars='Void Volume Fraction', cpos='xz', show_scalar_bar=False)
+    >>> sliced_mesh.plot(scalars='Void Volume Fraction', cpos='xz',
+    ...                  show_scalar_bar=False)
 
     """
 

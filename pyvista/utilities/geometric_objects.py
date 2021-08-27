@@ -276,10 +276,10 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     center : np.ndarray or list, optional
         Center in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray
+    direction : list or tuple or np.ndarray, optional
         Direction the top of the sphere points to in ``[x, y, z]``.
 
-    theta_resolution: int , optional
+    theta_resolution : int , optional
         Set the number of points in the longitude direction (ranging
         from ``start_theta`` to ``end_theta``).
 
@@ -446,13 +446,13 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
         Center in ``[x, y, z]``.
 
     x_length : float, optional
-        length of the cube in the x-direction.
+        Length of the cube in the x-direction.
 
     y_length : float, optional
-        length of the cube in the y-direction.
+        Length of the cube in the y-direction.
 
     z_length : float, optional
-        length of the cube in the z-direction.
+        Length of the cube in the z-direction.
 
     bounds : iterable, optional
         Specify the bounding box of the cube. If given, all other arguments are
@@ -654,10 +654,10 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
     normal : iterable
         Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
-    r_res: int, optional
+    r_res : int, optional
         Number of points in radial direction.
 
-    c_res: int, optional
+    c_res : int, optional
         Number of points in circumferential direction.
 
     Examples

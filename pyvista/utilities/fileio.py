@@ -182,19 +182,19 @@ def read_legacy(filename):
     :class:`pyvista.DataSet`
         Wrapped pyvista mesh
 
+    Notes
+    -----
+    Normally, you should use :func:`pyvista.read` to read in meshes
+    from file, and this reader will automatically used for ``'.vtk'``
+    and ``'.pvtk'`` files.
+
     Examples
     --------
-    Load an example mesh using the legacy reader
+    Load an example mesh using the legacy reader.
 
     >>> import pyvista
     >>> from pyvista import examples
     >>> mesh = pyvista.read_legacy(examples.uniformfile)
-
-    Notes
-    -----
-    Normally, you should use :func:`pyvista.read` to read in meshes
-    from file, and this reader will automatically used for ``'.vtk'`` and
-    ``'.pvtk'`` files.
 
     """
     filename = os.path.abspath(os.path.expanduser(str(filename)))
@@ -279,7 +279,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
        * ``'.foam'``
 
     .. note::
-       See https://github.com/nschloe/meshio for formats supported by ``meshio``
+       See https://github.com/nschloe/meshio for formats supported by ``meshio``.
 
     Parameters
     ----------
@@ -294,7 +294,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
 
-    force_ext: str, optional
+    force_ext : str, optional
         If specified, the reader will be chosen by an extension which
         is different to its actual extension. For example, ``'.vts'``,
         ``'.vtu'``.

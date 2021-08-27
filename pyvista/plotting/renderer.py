@@ -377,7 +377,7 @@ class Renderer(_vtk.vtkRenderer):
         Parameters
         ----------
         uinput : vtk.vtkMapper or vtk.vtkActor
-            vtk mapper or vtk actor to be added.
+            Vtk mapper or vtk actor to be added.
 
         reset_camera : bool, optional
             Resets the camera when true.

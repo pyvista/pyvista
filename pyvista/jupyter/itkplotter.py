@@ -50,9 +50,10 @@ class PlotterITK():
         Parameters
         ----------
         points : np.ndarray or pyvista.DataSet
-            n x 3 numpy array of points or pyvista dataset with points.
+            An ``n x 3`` numpy array of points or PyVista dataset with
+            points.
 
-        color : string or 3 item list, optional. Color of points (if visible).
+        color : string or 3 item list, optional
             Either a string, rgb list, or hex color string.  For example:
 
             ``color='white'``

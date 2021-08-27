@@ -70,7 +70,6 @@ class DataObject:
 
         binary : bool, optional
             If ``True``, write as binary.  Otherwise, write as ASCII.
-            
 
         texture : str, np.ndarray, optional
             Write a single texture array to file when using a PLY

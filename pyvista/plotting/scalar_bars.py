@@ -257,6 +257,11 @@ class ScalarBars():
             ``Plotter``, will use the plotter theme.  Setting to
             ``None`` will use the global theme.
 
+        Notes
+        -----
+        Setting ``title_font_size``, or ``label_font_size`` disables
+        automatic font sizing for both the title and label.
+
         Examples
         --------
         Add a custom interactive scalar bar that is horizontal, has an
@@ -272,11 +277,6 @@ class ScalarBars():
         ...                            label_font_size=30,
         ...                            outline=True, fmt='%10.5f')
         >>> plotter.show()
-
-        Notes
-        -----
-        Setting ``title_font_size``, or ``label_font_size`` disables
-        automatic font sizing for both the title and label.
 
         """
         if mapper is None:

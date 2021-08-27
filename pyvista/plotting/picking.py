@@ -40,6 +40,11 @@ class PickingHelper:
 
         Uses last input mesh for input by default.
 
+        .. warning::
+           Visible cell picking (``through=False``) will only work if
+           the mesh is displayed with a ``'surface'`` representation
+           style (the default).
+
         Parameters
         ----------
         mesh : pyvista.DataSet, optional
@@ -88,12 +93,6 @@ class PickingHelper:
         kwargs : optional
             All remaining keyword arguments are used to control how
             the selection is interactively displayed.
-
-        Warnings
-        --------
-        Visible cell picking (``through=False``) will only work if the
-        mesh is displayed with a ``'surface'`` representation style
-        (the default).
 
         """
         if mesh is None:

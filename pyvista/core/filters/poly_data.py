@@ -1269,6 +1269,21 @@ class PolyDataFilters(DataSetFilters):
         :class:`pyvista.PolyData`
             Updated mesh with cell and point normals.
 
+        Notes
+        -----
+        Previous arrays named ``"Normals"`` will be overwritten.
+
+        Normals are computed only for polygons and triangle
+        strips. Normals are not computed for lines or vertices.
+
+        Triangle strips are broken up into triangle polygons. You may
+        want to restrip the triangles.
+
+        It may be easier to run
+        :func:`pyvista.PolyData.point_normals` or
+        :func:`pyvista.PolyData.cell_normals` if you would just
+        like the array of point or cell normals.
+
         Examples
         --------
         Compute the point normals of the surface of a sphere.
@@ -1292,21 +1307,6 @@ class PolyDataFilters(DataSetFilters):
         (1680, 3)
 
         See :ref:`surface_normal_example` for more examples using this filter.
-
-        Notes
-        -----
-        Previous arrays named ``"Normals"`` will be overwritten.
-
-        Normals are computed only for polygons and triangle
-        strips. Normals are not computed for lines or vertices.
-
-        Triangle strips are broken up into triangle polygons. You may
-        want to restrip the triangles.
-
-        It may be easier to run
-        :func:`pyvista.PolyData.point_normals` or
-        :func:`pyvista.PolyData.cell_normals` if you would just
-        like the array of point or cell normals.
 
         """
         normal = _vtk.vtkPolyDataNormals()
@@ -2622,6 +2622,12 @@ class PolyDataFilters(DataSetFilters):
         be lines of contact. If ``collision_mode`` is first contact or half
         contacts then the Contacts output will be vertices.
 
+        .. warning::
+            Currently only triangles are processed. Use
+            :func:`PolyDataFilters.triangulate` to convert any strips
+            or polygons to triangles.  Otherwise, the mesh will be
+            converted for you within this method.
+
         Parameters
         ----------
         other_mesh : pyvista.DataSet
@@ -2720,13 +2726,6 @@ class PolyDataFilters(DataSetFilters):
         >>> collision.plot()
 
         See :ref:`collision_example` for more examples using this filter.
-
-        Warnings
-        --------
-        Currently only triangles are processed. Use
-        :func:`PolyDataFilters.triangulate` to convert any strips or
-        polygons to triangles.  Otherwise, the mesh will be converted
-        for you within this method.
 
         """
         # other mesh must be a polydata

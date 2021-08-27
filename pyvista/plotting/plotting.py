@@ -2573,8 +2573,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        2 item list
-            The new range of scalar bar. Example: ``[-1, 2]``.
+        clim: list
+            The new range of scalar bar. Two item list (e.g. ``[-1, 2]``).
 
         name : str, optional
             The title of the scalar bar to update
@@ -3075,6 +3075,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Image of depth values from camera orthogonal to image
             plane.
 
+        Notes
+        -----
+        Values in image_depth are negative to adhere to a
+        right-handed coordinate system.
+
         Examples
         --------
         >>> import pyvista
@@ -3083,11 +3088,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.store_image = True
         >>> plotter.show()
         >>> zval = plotter.get_image_depth()
-
-        Notes
-        -----
-        Values in image_depth are negative to adhere to a
-        right-handed coordinate system.
 
         """
         # allow no render window
@@ -3210,7 +3210,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         points : np.ndarray or pyvista.DataSet
-            n x 3 numpy array of points or pyvista dataset with points
+            An ``n x 3`` numpy array of points or pyvista dataset with points.
 
         labels : list or str
             List of labels.  Must be the same length as points. If a string name
@@ -3271,14 +3271,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         margin : int, optional
             The size of the margin on the label background shape. Default is 3.
 
-        shape_opacity : float
+        shape_opacity : float, optional
             The opacity of the shape between zero and one.
 
-        tolerance : float
-            a tolerance to use to determine whether a point label is visible.
-            A tolerance is usually required because the conversion from world
-            space to display space during rendering introduces numerical
-            round-off.
+        tolerance : float, optional
+            A tolerance to use to determine whether a point label is
+            visible.  A tolerance is usually required because the
+            conversion from world space to display space during
+            rendering introduces numerical round-off.
 
         reset_camera : bool, optional
             Reset the camera after adding the points to the scene.
@@ -3395,12 +3395,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         points : np.ndarray or pyvista.DataSet
-            n x 3 numpy array of points or pyvista dataset with points
+            An ``n x 3`` numpy array of points or pyvista dataset with points.
 
-        labels : str
+        labels : str, optional
             String name of the point data array to use.
 
-        fmt : str
+        fmt : str, optional
             String formatter used to format numerical data.
 
         """
@@ -3871,7 +3871,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The timestep between flying to each camera position.
 
         viewup : list(float), optional
-            the normal to the orbital plane
+            The normal to the orbital plane
 
         write_frames : bool, optional
             Assume a file is open and write a frame on each camera
@@ -4365,12 +4365,6 @@ class Plotter(BasePlotter):
              **kwargs):
         """Display the plotting window.
 
-        Notes
-        -----
-        Please use the ``q``-key to close the plotter as some
-        operating systems (namely Windows) will experience issues
-        saving a screenshot if the exit button in the GUI is pressed.
-
         Parameters
         ----------
         title : string, optional
@@ -4391,7 +4385,7 @@ class Plotter(BasePlotter):
             interactive is ``True``.  Defaults to
             :attr:`pyvista.global_theme.auto_close <pyvista.themes.DefaultTheme.auto_close>`.
 
-        interactive_update: bool, optional
+        interactive_update : bool, optional
             Disabled by default.  Allows user to non-blocking draw,
             user should call :func:`BasePlotter.update` in each iteration.
 
@@ -4465,6 +4459,12 @@ class Plotter(BasePlotter):
 
         widget
             IPython widget when ``return_viewer=True``.
+
+        Notes
+        -----
+        Please use the ``q``-key to close the plotter as some
+        operating systems (namely Windows) will experience issues
+        saving a screenshot if the exit button in the GUI is pressed.
 
         Examples
         --------

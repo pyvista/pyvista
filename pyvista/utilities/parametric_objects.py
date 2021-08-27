@@ -710,25 +710,24 @@ def ParametricMobius(radius=None, **kwargs):
 def ParametricPluckerConoid(n=None, **kwargs):
     """Generate Plucker's conoid surface.
 
-    ParametricPluckerConoid generates Plucker's conoid surface parametrically.
-    Plucker's conoid is a ruled surface, named after Julius Plucker. It is
-    possible to set the number of folds in this class via the parameter 'N'.
+    ParametricPluckerConoid generates Plucker's conoid surface
+    parametrically.  Plucker's conoid is a ruled surface, named after
+    Julius Plucker. It is possible to set the number of folds in this
+    class via the parameter 'n'.
 
     Parameters
     ----------
     n : int, optional
         This is the number of folds in the conoid.
 
-    vtkGetMacro(N, int);
-
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricPluckerConoid surface
+    pyvista.PolyData
+        ParametricPluckerConoid surface.
 
     Examples
     --------
-    Create a ParametricPluckerConoid mesh
+    Create a ParametricPluckerConoid mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricPluckerConoid()

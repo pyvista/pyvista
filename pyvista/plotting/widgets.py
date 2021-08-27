@@ -481,45 +481,45 @@ class WidgetHelper:
         mesh : pyvista.DataSet
             The input dataset to add to the scene and slice
 
-        normal : str or tuple(float)
-            The starting normal vector of the plane
+        normal : str or tuple(float), optional
+            The starting normal vector of the plane.
 
-        generate_triangles: bool, optional
+        generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
-        widget_color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.
+        widget_color : string or 3 item list, optional
+            Either a string, rgb list, or hex color string.  Defaults
+            to ``'white'``.
 
-        assign_to_axis : str or int
+        assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given axis:
             options are (0, 'x'), (1, 'y'), or (2, 'z').
 
-        tubing : bool
+        tubing : bool, optional
             When using an implicit plane wiget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
-        outline_translation : bool
+        outline_translation : bool, optional
             If ``False``, the plane widget cannot be translated and is strictly
             placed at the given bounds. Only valid when using an implicit
             plane.
 
-        origin_translation : bool
+        origin_translation : bool, optional
             If ``False``, the plane widget cannot be translated by its origin
             and is strictly placed at the given origin. Only valid when using
             an implicit plane.
 
-        implicit : bool
+        implicit : bool, optional
             When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
             ``False``, a ``vtkPlaneWidget`` is used.
 
-        normal_rotation : bool
+        normal_rotation : bool, optional
             Set the opacity of the normal vector arrow to 0 such that it is
             effectively disabled. This prevents the user from rotating the
             normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
-
-        kwargs : dict
+        kwargs : dict, optional
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
 
@@ -813,11 +813,11 @@ class WidgetHelper:
             are in ``pyvista.global_theme.slider_styles``. Defaults to
             ``None``.
 
-        title_height: float, optional
+        title_height : float, optional
             Relative height of the title as compared to the length of
             the slider.
 
-        title_opacity: str, optional
+        title_opacity : str, optional
             Opacity of title. Defaults to 1.0.
 
         title_color : string or 3 item list, optional
@@ -1223,11 +1223,11 @@ class WidgetHelper:
         mesh : pyvista.DataSet
             The input dataset to add to the scene and slice along the spline
 
-        generate_triangles: bool, optional
+        generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
-        kwargs : dict
+        kwargs : dict, optional
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
 
@@ -1297,7 +1297,7 @@ class WidgetHelper:
         radius : float, optional
             The radius of the sphere.
 
-        theta_resolution: int, optional
+        theta_resolution : int, optional
             Set the number of points in the longitude direction.
 
         phi_resolution : int, optional
@@ -1324,8 +1324,8 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        test_callback: bool, optional
-            if ``True``, run the callback function after the widget is
+        test_callback : bool, optional
+            If ``True``, run the callback function after the widget is
             created.
 
         """

@@ -81,25 +81,24 @@ def convert_string_array(arr, name=None):
     ########################################
 
 
-def convert_array(arr, name=None, deep=0, array_type=None):
+def convert_array(arr, name=None, deep=False, array_type=None):
     """Convert a NumPy array to a vtkDataArray or vice versa.
 
     Parameters
     ----------
-    arr : np.ndarray or vtkDataArry
+    arr : np.ndarray or vtkDataArray
         A numpy array or vtkDataArry to convert
-    name : str
-        The name of the data array for VTK
-    deep : bool
-        if input is numpy array then deep copy values
+    name : str, optional
+        The name of the data array for VTK.
+    deep : bool, optional
+        If input is numpy array then deep copy values.
 
     Returns
     -------
-    vtkDataArray, ndarray, or DataFrame:
-        the converted array (if input is a NumPy ndaray then returns
-        ``vtkDataArray`` or is input is ``vtkDataArray`` then returns NumPy
-        ``ndarray``). If pdf==True and the input is ``vtkDataArry``,
-        return a pandas DataFrame.
+    vtkDataArray, ndarray, or DataFrame
+        The converted array.  If input is a :class:`numpy.ndarray` then
+        returns ``vtkDataArray`` or is input is ``vtkDataArray`` then
+        returns NumPy ``ndarray``.
 
     """
     if arr is None:
