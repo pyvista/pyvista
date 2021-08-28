@@ -128,7 +128,7 @@ numpydoc_validation_exclude = {  # set of regex
     # inherit from BaseReader
     r'\.Reader$',
 
-    # depricated
+    # deprecated
     r'\.PolyDataFilters.boolean_add$'
     r'\.PolyDataFilters.boolean_cut$'
 }

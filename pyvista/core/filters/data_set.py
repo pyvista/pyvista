@@ -1794,6 +1794,9 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        **kwargs : dict, optional
+            Accepts ``scale_factor`` instead of ``factor``.
+
         Examples
         --------
         First, plot the unwarped mesh.
@@ -2526,6 +2529,9 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        **kwargs : dict, optional
+            See :func:`pyvista.DataSetFilters.streamlines_from_source`.
+
         Returns
         -------
         streamlines : pyvista.PolyData
@@ -2650,16 +2656,16 @@ class DataSetFilters:
             Vorticity computation at streamline points. Necessary for generating
             proper stream-ribbons using the ``vtkRibbonFilter``.
 
+        rotation_scale : float, optional
+            This can be used to scale the rate with which the streamribbons
+            twist. The default is 1.
+
         interpolator_type : str, optional
             Set the type of the velocity field interpolator to locate cells
             during streamline integration either by points or cells.
             The cell locator is more robust then the point locator. Options
             are ``'point'`` or ``'cell'`` (abbreviations of ``'p'`` and ``'c'``
             are also supported).
-
-        rotation_scale : float, optional
-            This can be used to scale the rate with which the streamribbons
-            twist. The default is 1.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
