@@ -19,20 +19,20 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
 
     Parameters
     ----------
-    item : vtk or numpy object
+    var_item : pyvista.Dataset, vtk, or numpy object
         VTK object or ``numpy`` array to be plotted.
 
-    off_screen : bool
+    off_screen : bool, optional
         Plots off screen when ``True``.  Helpful for saving screenshots
         without a window popping up.  Defaults to active theme setting in
         :attr:`pyvista.global_theme.full_screen
-        <pyvista.themes.DefaultTheme.full_screen`
+        <pyvista.themes.DefaultTheme.full_screen`.
 
     full_screen : bool, optional
         Opens window in full screen.  When enabled, ignores
         ``window_size``.  Defaults to active theme setting in
         :attr:`pyvista.global_theme.full_screen
-        <pyvista.themes.DefaultTheme.full_screen`
+        <pyvista.themes.DefaultTheme.full_screen`.
 
     screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
@@ -48,7 +48,7 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
 
     window_size : list, optional
         Window size in pixels.  Defaults to global theme
-        :attr:`pyvista.global_theme.window_size <pyvista.themes.DefaultTheme.window_size>`
+        :attr:`pyvista.global_theme.window_size <pyvista.themes.DefaultTheme.window_size>`.
 
     show_bounds : bool, optional
         Shows mesh bounds when ``True``.  Default ``False``.
@@ -59,7 +59,7 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
 
     show_axes : bool, optional
         Shows a vtk axes widget.  If ``None``, enabled according to
-        :attr:`pyvista.global_theme.axes.show <pyvista.themes._AxesConfig.show>`
+        :attr:`pyvista.global_theme.axes.show <pyvista.themes._AxesConfig.show>`.
 
     text : str, optional
         Adds text at the bottom of the plot.
@@ -227,19 +227,19 @@ def plot_arrows(cent, direction, **kwargs):
 
     Parameters
     ----------
-    cent : np.ndarray
+    cent : numpy.ndarray
         Accepts a single 3d point or array of 3d points.
 
-    directions : np.ndarray
+    direction : numpy.ndarray
         Accepts a single 3d point or array of 3d vectors.
-        Must contain the same number of items as cent.
+        Must contain the same number of items as ``cent``.
 
-    **kwargs : additional arguments, optional
+    **kwargs : dict, optional
         See :func:`pyvista.plot`.
 
-    Returns
-    -------
-    See :func:`pyvista.plot`.
+    See Also
+    --------
+    :func:`pyvista.plot`
 
     Examples
     --------
@@ -319,7 +319,7 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
         :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
         points.
 
-    color : string or 3 item list, optional, defaults to white
+    color : str or 3 item list, optional, defaults to white
         Use to make the entire mesh have a single solid color.  Either
         a string, RGB list, or hex color string.  For example:
         ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or

@@ -75,19 +75,26 @@ extensions = [
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
-numpydoc_validation_checks = {
-    # "GL01",  # "Docstring text (summary) should start in the line immediately after the opening quotes
-    # "GL02",  # Closing quotes should be placed in the line after the last text in the docstring.
-    # "GL03",  # Double line break found
-    "GL05",  # Tabs found at the start of line
-    "GL06",  # Found unknown section
-    "GL07",  # Sections are in the wrong order.
-    "PR04",  # 'Parameter has no type'
-    "PR07",  # 'Parameter has no description'
-    "PR08",  # 'Parameter description should start with a capital letter",
-    # "EX01",  # "No examples section found"
-}
 
+# see https://github.com/pyvista/pyvista/pull/1612
+numpydoc_validate = True
+numpydoc_validation_checks = {
+    "all",  # all but the following:
+    "GL01",  # Contradicts numpydoc examples
+    "GL02",  # Permit a blank line after the end of our docstring
+    "GL03",  # Considering enforcing
+    "PR01",  # not enabling due to abstract classes (consider enabling)
+    "RT01",  # Disabled as we will not enforce return sections for None
+    "SA01",  # Not all docstrings need a see also
+    "SA04",  # See also section does not need descriptions
+    "SS05",  # Appears to be broken.
+    "ES01",  # not all docstrings need an extend summary.
+    "EX01",  # Will eventually enforce
+    "YD01",  # No plan to enforce
+}
+numpydoc_validation_exclude = {  # set of regex
+    r'\.Plotter$',  # Issue with class parameter documentation
+}
 
 add_module_names = False
 

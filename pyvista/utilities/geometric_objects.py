@@ -62,19 +62,19 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
 
     Parameters
     ----------
-    center : list or tuple or np.ndarray
+    center : sequence, optional
         Location of the centroid in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray
+    direction : sequence, optional
         Direction cylinder points to  in ``[x, y, z]``.
 
-    radius : float
+    radius : float, optional
         Radius of the cylinder.
 
-    height : float
+    height : float, optional
         Height of the cylinder.
 
-    resolution : int
+    resolution : int, optional
         Number of points on the circular face of the cylinder.
 
     capping : bool, optional
@@ -82,7 +82,7 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Cylinder surface.
 
     Examples
@@ -118,26 +118,26 @@ def CylinderStructured(radius=0.5, height=1.0,
 
     Parameters
     ----------
-    radius : float, iterable, optional
-        Radius of the cylinder. If an iterable, then describes the
+    radius : float, sequence, optional
+        Radius of the cylinder. If a sequence, then describes the
         radial coordinates of the cells as a range of values as
         specified by the ``radius``.
 
     height : float, optional
         Height of the cylinder along its Z-axis.
 
-    center : list or tuple or np.ndarray
-        Location of the centroid in ``[x, y, z]``
+    center : sequence
+        Location of the centroid in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray
+    direction : sequence
         Direction cylinder Z-axis in ``[x, y, z]``.
 
-    theta_resolution : int
+    theta_resolution : int, optional
         Number of points on the circular face of the cylinder.
         Ignored if ``radius`` is an iterable.
 
-    z_resolution : int
-        Number of points along the height (Z-axis) of the cylinder
+    z_resolution : int, optional
+        Number of points along the height (Z-axis) of the cylinder.
 
     Examples
     --------
@@ -231,7 +231,7 @@ def Arrow(start=(0., 0., 0.), direction=(1., 0., 0.), tip_length=0.25,
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Arrow mesh.
 
     Examples
@@ -301,7 +301,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Sphere mesh.
 
     Examples
@@ -359,7 +359,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Plane mesh.
 
     Examples
@@ -401,7 +401,7 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Line mesh.
 
     Examples
@@ -442,7 +442,7 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
 
     Parameters
     ----------
-    center : iterable, optional
+    center : sequence, optional
         Center in ``[x, y, z]``.
 
     x_length : float, optional
@@ -454,13 +454,13 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
     z_length : float, optional
         Length of the cube in the z-direction.
 
-    bounds : iterable, optional
+    bounds : sequence, optional
         Specify the bounding box of the cube. If given, all other arguments are
-        ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``
+        ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Mesh of the cube.
 
     Examples
@@ -493,7 +493,7 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
     ----------
     bounds : iterable, optional
         Specify the bounding box of the cube.
-        ``(xMin, xMax, yMin, yMax, zMin, zMax)``
+        ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
     level : int, optional
         Level of subdivision of the faces.
@@ -504,7 +504,7 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Mesh of the box.
 
     Examples
@@ -562,7 +562,7 @@ def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=None,
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Cone mesh.
 
     Examples
@@ -611,7 +611,7 @@ def Polygon(center=(0., 0., 0.), radius=1, normal=(0, 0, 1), n_sides=6):
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Mesh of the polygon.
 
     Examples
@@ -727,9 +727,9 @@ def Wavelet(extent=(-10, 10, -10, 10, -10, 10), center=(0, 0, 0), maximum=255,
 
     Parameters
     ----------
-    extent : list or tuple, optional
+    extent : sequence, optional
         Set/Get the extent of the whole output image.  Default
-        ``(-10, 10, -10, 10, -10, 10)``
+        ``(-10, 10, -10, 10, -10, 10)``.
 
     center : list, optional
         Center of the wavelet.
@@ -1009,7 +1009,7 @@ def Triangle(points=None):
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Triangle mesh.
 
     Examples
@@ -1045,7 +1045,7 @@ def Rectangle(points=None):
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Rectangle mesh.
 
     Examples
@@ -1086,7 +1086,7 @@ def Circle(radius=0.5, resolution=100):
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Circle mesh.
 
     Examples

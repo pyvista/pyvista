@@ -152,7 +152,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             The result of the boolean operation.
 
         Examples
@@ -221,7 +221,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             The result of the boolean operation.
 
         Examples
@@ -284,7 +284,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             The result of the boolean operation.
 
         Examples
@@ -344,7 +344,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData` or :class:`pyvista.UnstructuredGrid`
+        pyvista.DataSet
             :class:`pyvista.PolyData` if ``dataset`` is a
             :class:`pyvista.PolyData`, otherwise a
             :class:`pyvista.UnstructuredGrid`.
@@ -419,14 +419,14 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             The intersection line.
 
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             The first mesh split along the intersection. Returns the
             original first mesh if ``split_first=False``.
 
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             The second mesh split along the intersection. Returns the
             original second mesh if ``split_second=False``.
 
@@ -544,7 +544,7 @@ class PolyDataFilters(DataSetFilters):
             * ``'Maximum'``
             * ``'Minimum'``
 
-        **kwargs : optional
+        **kwargs : dict, optional
             See :func:`pyvista.plot`.
 
         Returns
@@ -588,7 +588,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Mesh containing only triangles.
 
         Examples
@@ -661,7 +661,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Smoothed mesh.
 
         Examples
@@ -755,7 +755,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Decimated mesh.
 
         Examples
@@ -830,7 +830,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Tube-filtered mesh.
 
         Examples
@@ -907,7 +907,7 @@ class PolyDataFilters(DataSetFilters):
             ``nface*4**nsub`` where ``nface`` is the current number of
             faces.
 
-        subfilter : string, optional
+        subfilter : str, optional
             Can be one of the following:
 
             * ``'butterfly'``
@@ -922,7 +922,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Subdivided mesh.
 
         Examples
@@ -1030,8 +1030,8 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
-            Subdivided mesh
+        pyvista.PolyData
+            Subdivided mesh.
 
         Examples
         --------
@@ -1075,14 +1075,9 @@ class PolyDataFilters(DataSetFilters):
                  tensors_weight=0.1, inplace=False, progress_bar=False):
         """Reduce the number of triangles in a triangular mesh using ``vtkQuadricDecimation``.
 
-        .. note::
-           If you encounter a segmentation fault or other error,
-           consider using :func:`pyvista.clean` to remove any invalid
-           cells before using this filter.
-
         Parameters
         ----------
-        mesh : vtk.PolyData
+        poly_data : vtk.PolyData
             Mesh to decimate.
 
         target_reduction : float
@@ -1147,8 +1142,14 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Decimated mesh.
+
+        Notes
+        -----
+        If you encounter a segmentation fault or other error,
+        consider using :func:`pyvista.clean` to remove any invalid
+        cells before using this filter.
 
         Examples
         --------
@@ -1266,7 +1267,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Updated mesh with cell and point normals.
 
         Notes
@@ -1376,7 +1377,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             The clipped mesh.
 
         Examples
@@ -1453,7 +1454,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Mesh with holes filled if ``inplace=False``.
 
         Examples
@@ -1524,7 +1525,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Cleaned mesh.
 
         Examples
@@ -1603,7 +1604,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             ``PolyData`` object consisting of the line segment between the
             two given vertices. If ``inplace`` is ``True`` this is the
             same object as the input mesh.
@@ -1789,33 +1790,34 @@ class PolyDataFilters(DataSetFilters):
         implementation would return an intersection.  If the result
         appears to be missing some intersection points, set
         ``retry=True`` to run a second pass over rays that returned no
-        intersections, using the VTK ``ray_trace`` implementation.
+        intersections, using :func:`PolyDataFilters.ray_trace`.
 
         Parameters
         ----------
-        origins : np.ndarray or list
+        origins : sequence
             Starting point for each trace.
 
-        directions : np.ndarray or list
+        directions : sequence
             Direction vector for each trace.
 
         first_point : bool, optional
             Returns intersection of first point only.
 
         retry : bool, optional
-            Will retry rays that return no intersections using the ray_trace
+            Will retry rays that return no intersections using
+            :func:`PolyDataFilters.ray_trace`.
 
         Returns
         -------
-        intersection_points : :class:`np.ndarray`
+        intersection_points : numpy.ndarray
             Location of the intersection points.  Empty array if no
             intersections.
 
-        intersection_rays : :class:`np.ndarray`
+        intersection_rays : numpy.ndarray
             Indices of the ray for each intersection point. Empty array if no
             intersections.
 
-        intersection_cells : :class:`np.ndarray`
+        intersection_cells : numpy.ndarray
             Indices of the intersection cells.  Empty array if no
             intersections.
 
@@ -1884,7 +1886,8 @@ class PolyDataFilters(DataSetFilters):
 
         return locations, index_ray, index_tri
 
-    def plot_boundaries(poly_data, edge_color="red", line_width=None, progress_bar=False, **kwargs):
+    def plot_boundaries(poly_data, edge_color="red", line_width=None,
+                        progress_bar=False, **kwargs):
         """Plot boundaries of a mesh.
 
         Parameters
@@ -1895,16 +1898,16 @@ class PolyDataFilters(DataSetFilters):
         line_width : int, optional
             Width of the boundary lines.
 
-        kwargs : optional
-            All additional keyword arguments will be passed to
-            :func:`pyvista.BasePlotter.add_mesh`
-
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        **kwargs : dict, optional
+            All additional keyword arguments will be passed to
+            :func:`pyvista.BasePlotter.add_mesh`.
+
         Returns
         -------
-        :class:`pyvista.CameraPosition`
+        pyvista.CameraPosition
             List of camera position, focal point, and view up.
             Returned when ``return_cpos`` is ``True``.
 
@@ -2005,10 +2008,10 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Mesh without the points flagged for removal.
 
-        :class:`np.ndarray`
+        numpy.ndarray
             Indices of new points relative to the original mesh.
 
         Examples
@@ -2301,7 +2304,7 @@ class PolyDataFilters(DataSetFilters):
 
         factor : float, optional
             Set the maximum ribbon width in terms of a multiple of the
-            minimum width. The default is 2.0
+            minimum width. The default is 2.0.
 
         normal : tuple(float), optional
             Normal to use as default.
@@ -2385,10 +2388,10 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        mesh : pyvista.PolyData
+        poly_data : pyvista.PolyData
             Mesh to extrude.
 
-        vector : np.ndarray or list
+        vector : numpy.ndarray or sequence
             Direction and length to extrude the mesh in.
 
         capping : bool, optional
@@ -2402,7 +2405,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Extruded mesh.
 
         Examples
@@ -2488,7 +2491,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Rotationally extruded mesh.
 
         Examples
@@ -2589,7 +2592,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Stripped mesh.
 
         Examples
@@ -2667,7 +2670,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Mesh containing collisions in the ``field_data``
             attribute named ``"ContactCells"``.  Array only exists
             when there are collisions.

@@ -142,7 +142,7 @@ class BaseReader:
         Returns
         -------
         :class:`pyvista.DataSet`
-
+            PyVista Dataset.
         """
         self._update()
         data = wrap(self.reader.GetOutputDataObject(0))
@@ -212,8 +212,8 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
-            Point array name
+        name : str
+            Point array name.
 
         """
         self.reader.SetPointArrayStatus(name, 1)
@@ -223,8 +223,8 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
-            Point array name
+        name : str
+            Point array name.
 
         """
         self.reader.SetPointArrayStatus(name, 0)
@@ -234,12 +234,13 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
-            Point array name
+        name : str
+            Point array name.
 
         Returns
         -------
         bool
+            Whether reading the cell array is enabled.
 
         """
         if self.reader.GetPointArrayStatus(name):
@@ -294,7 +295,7 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
+        name : str
             Cell array name.
 
         """
@@ -305,7 +306,7 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
+        name : str
             Cell array name.
 
         """
@@ -316,12 +317,13 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
+        name : str
             Cell array name.
 
         Returns
         -------
         bool
+            Whether reading the cell array is enabled.
 
         """
         if self.reader.GetCellArrayStatus(name):

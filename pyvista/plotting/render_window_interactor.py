@@ -51,10 +51,10 @@ class RenderWindowInteractor():
         Parameters
         ----------
         key : str
-            The key to trigger the event
+            The key to trigger the event.
 
         callback : callable
-            A callable that takes no arguments
+            A callable that takes no arguments.
 
         """
         if not callable(callback):

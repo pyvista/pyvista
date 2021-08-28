@@ -1441,7 +1441,7 @@ class DataSet(DataSetFilters, DataObject):
         preference : str, optional
             When scalars is specified, this is the preferred array
             type to search for in the dataset.  Must be either
-            ``'point'``, ``'cell'``, or ``'field'``
+            ``'point'``, ``'cell'``, or ``'field'``.
 
         Examples
         --------
@@ -1487,10 +1487,7 @@ class DataSet(DataSetFilters, DataObject):
         preference : str, optional
             When scalars is specified, this is the preferred array
             type to search for in the dataset.  Must be either
-            ``'point'``, ``'cell'``, or ``'field'``
-        err : bool, optional
-            Boolean to control whether to throw an error if array is
-            not present.
+            ``'point'``, ``'cell'``, or ``'field'``.
 
         Examples
         --------
@@ -1789,7 +1786,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        index : int or np.ndarray
+        int or numpy.ndarray
             Index or indices of the cell in this mesh that is closest
             to the given point.
 

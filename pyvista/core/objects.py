@@ -130,7 +130,7 @@ class Table(_vtk.vtkTable, DataObject):
         self.row_arrays.update(data)
 
     def pop(self, name):
-        """Pops off an array by the specified name."""
+        """Pop off an array by the specified name."""
         return self.row_arrays.pop(name)
 
     def _add_row_array(self, scalars, name, deep=True):
@@ -258,9 +258,9 @@ class Table(_vtk.vtkTable, DataObject):
 
         Parameters
         ----------
-        arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalar
-            is used
+        arr : str, numpy.ndarray, optional
+            The name of the array to get the range. If ``None``, the active scalar
+            is used.
 
         preference : str, optional
             When scalars is specified, this is the preferred array type

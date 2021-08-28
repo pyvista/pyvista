@@ -87,7 +87,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     Parameters
     ----------
     arr : np.ndarray or vtkDataArray
-        A numpy array or vtkDataArry to convert
+        A numpy array or vtkDataArry to convert.
     name : str, optional
         The name of the data array for VTK.
     deep : bool, optional
@@ -95,7 +95,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
 
     Returns
     -------
-    vtkDataArray, ndarray, or DataFrame
+    vtkDataArray, numpy.ndarray, or DataFrame
         The converted array.  If input is a :class:`numpy.ndarray` then
         returns ``vtkDataArray`` or is input is ``vtkDataArray`` then
         returns NumPy ``ndarray``.
@@ -186,7 +186,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     Parameters
     ----------
-    mesh : Dataset
+    mesh : pyvista.DataSet
         Dataset to get the array from.
 
     name : str
@@ -195,10 +195,10 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     preference : str, optional
         When scalars is specified, this is the preferred array type to
         search for in the dataset.  Must be either ``'point'``,
-        ``'cell'``, or ``'field'``
+        ``'cell'``, or ``'field'``.
 
-    err : bool
-        Boolean to control whether to throw an error if array is not present.
+    err : bool, optional
+        Whether to throw an error if array is not present.
 
     """
     if isinstance(mesh, _vtk.vtkTable):
@@ -246,7 +246,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     preference : str, optional
         When scalars is specified, this is the preferred array type to
         search for in the dataset.  Must be either ``'point'``,
-        ``'cell'``, or ``'field'``
+        ``'cell'``, or ``'field'``.
 
     err : bool, optional
         Boolean to control whether to throw an error if array is not present.
@@ -286,22 +286,22 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     return FieldAssociation.NONE
 
 def vtk_points(points, deep=True):
-    """Convert numpy array or array-like to a vtkPoints object.
+    """Convert numpy array or array-like to a ``vtkPoints`` object.
 
     Parameters
     ----------
-    points : np.ndarray or sequence
+    points : numpy.ndarray or sequence
         Points to convert.  Should be 1 or 2 dimensional.  Accepts a
         single point or several points.
 
     deep : bool, optional
         Perform a deep copy of the array.  Only applicable if
-        ``points`` is a ``np.ndarray``.
+        ``points`` is a :class:`numpy.ndarray`.
 
     Returns
     -------
     vtk.vtkPoints
-        vtkPoints object.
+        The vtkPoints object.
 
     Examples
     --------
@@ -347,17 +347,15 @@ def line_segments_from_points(points):
 
     Parameters
     ----------
-    points : np.ndarray
+    points : numpy.ndarray
         Points representing line segments. An even number must be
         given as every two vertices represent a single line
         segment. For example, two line segments would be represented
-        as:
-
-        ``np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])``
+        as ``np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
     Returns
     -------
-    lines : pyvista.PolyData
+    pyvista.PolyData
         PolyData with lines and cells.
 
     Examples
@@ -391,10 +389,9 @@ def lines_from_points(points, close=False):
     Parameters
     ----------
     points : np.ndarray
-        Points representing the vertices of the connected segments. For
-        example, two line segments would be represented as:
-
-        ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``
+        Points representing the vertices of the connected
+        segments. For example, two line segments would be represented
+        as ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
     close : bool, optional
         If ``True``, close the line segments into a loop.
@@ -444,7 +441,7 @@ def make_tri_mesh(points, faces):
 
     Returns
     -------
-    tri_mesh : pyvista.PolyData
+    pyvista.PolyData
         PolyData instance containing the triangle mesh.
 
     Examples
@@ -632,7 +629,7 @@ def is_meshio_mesh(mesh):
 
 
 def wrap(dataset):
-    """Wrap any given VTK data object to its appropriate pyvista data object.
+    """Wrap any given VTK data object to its appropriate PyVista data object.
 
     Other formats that are supported include:
 
@@ -648,8 +645,8 @@ def wrap(dataset):
 
     Returns
     -------
-    wrapped_dataset : pyvista class
-        The `pyvista` wrapped dataset.
+    pyvista.DataSet
+        The PyVista wrapped dataset.
 
     Examples
     --------
@@ -1099,14 +1096,14 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
     Parameters
     ----------
+    path : str, optional
+        Directory containing the cubemap images.
+
     prefix : str, optional
         Prefix to the filename.
 
     ext : str, optional
         The filename extension.  For example ``'.jpg'``.
-
-    path : str, optional
-        Directory containing the cubemap images.
 
     Returns
     -------

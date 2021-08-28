@@ -39,11 +39,11 @@ class PointSet(DataSet):
         Parameters
         ----------
         scalars_weight : bool, optional
-            Flag for using the mesh scalars as weights. Defaults to False.
+            Flag for using the mesh scalars as weights. Defaults to ``False``.
 
         Returns
         -------
-        center : np.ndarray, float
+        center : numpy.ndarray, float
             Coordinates for the center of mass.
 
         Examples
@@ -61,7 +61,7 @@ class PointSet(DataSet):
         return np.array(alg.GetCenter())
 
     def shallow_copy(self, to_copy):
-        """Do a shallow copy the pointset."""
+        """Create a shallow copy the pointset."""
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(_vtk.vtkPoints())
@@ -77,7 +77,7 @@ class PointSet(DataSet):
             boolean array of the same size as the number of cells.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing when ``True``.
+            Updates mesh in-place.
 
         Examples
         --------
@@ -574,7 +574,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
             ftype.  Can be one of many of the supported  the following
-            types (``'.ply'``, ``'.stl'``, ``'.vtk``)
+            types (``'.ply'``, ``'.stl'``, ``'.vtk``).
 
         binary : bool, optional
             Writes the file as binary when ``True`` and ASCII when ``False``.
@@ -853,12 +853,12 @@ class PointGrid(PointSet):
             - ``'maximum'``
             - ``'minimum'``
 
-        **kwargs : optional
-            Optional keyword arguments.  See :func:`pyvista.plot`
+        **kwargs : dict, optional
+            Optional keyword arguments.  See :func:`pyvista.plot`.
 
         Returns
         -------
-        cpos : list
+        list
             Camera position, focal point, and view up.  Returned when
             ``return_cpos`` is ``True``.
 
@@ -1625,7 +1625,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     def hide_cells(self, ind):
         """Hide cells without deleting them.
 
-        Hides cells by setting the ghost_cells array to HIDDEN_CELL.
+        Hides cells by setting the ghost_cells array to ``HIDDEN_CELL``.
 
         Parameters
         ----------
@@ -1674,7 +1674,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
 
 class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
-    """Extend the functionality of a ``vtk.vtkExplicitStructuredGrid`` object.
+    """Extend the functionality of the ``vtk.vtkExplicitStructuredGrid`` class.
 
     Can be initialized by the following:
 
@@ -1890,7 +1890,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        grid : ExplicitStructuredGrid or None
+        ExplicitStructuredGrid or None
             A deep copy of this grid if ``inplace=False`` or ``None`` otherwise.
 
         Examples
@@ -1927,7 +1927,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        grid : ExplicitStructuredGrid
+        ExplicitStructuredGrid
             A deep copy of this grid if ``inplace=False`` with the
             hidden cells shown.  Otherwise, this dataset with the
             shown cells.
@@ -2029,7 +2029,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        ind : int, numpy.ndarray or None
+        int, numpy.ndarray, or None
             Cell IDs. ``None`` if ``coords`` is outside the grid extent.
 
         See Also
@@ -2078,7 +2078,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        coords : tuple(int), numpy.ndarray or None
+        tuple(int), numpy.ndarray, or None
             Cell structured coordinates. ``None`` if ``ind`` is
             outside the grid extent.
 
@@ -2131,7 +2131,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        indices : list(int)
+        list(int)
             Indices of neighboring cells.
 
         Examples
@@ -2256,7 +2256,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        grid : ExplicitStructuredGrid
+        ExplicitStructuredGrid
             A deep copy of this grid if ``inplace=False``.
 
         See Also
@@ -2295,7 +2295,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        grid : ExplicitStructuredGrid or None
+        ExplicitStructuredGrid or None
             A deep copy of this grid if ``inplace=False`` or ``None`` otherwise.
 
         See Also

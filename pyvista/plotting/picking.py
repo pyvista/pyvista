@@ -69,6 +69,10 @@ class PickingHelper:
         show : bool
             Show the selection interactively.
 
+        show_message : bool or str, optional
+            Show the message about how to use the cell picking tool. If this
+            is a string, that will be the message shown.
+
         style : str
             Visualization style of the selection.  One of the
             following: ``style='surface'``, ``style='wireframe'``, or
@@ -80,17 +84,13 @@ class PickingHelper:
         color : str, optional
             The color of the selected mesh is shown.
 
-        show_message : bool or str, optional
-            Show the message about how to use the cell picking tool. If this
-            is a string, that will be the message shown.
-
         font_size : int, optional
             Sets the font size of the message.
 
         start : bool, optional
             Automatically start the cell selection tool.
 
-        kwargs : optional
+        **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the selection is interactively displayed.
 
@@ -237,17 +237,12 @@ class PickingHelper:
 
         Parameters
         ----------
-        callback : function, optional
+        callback : callable, optional
             When input, calls this function after a pick is made.  The
             picked point is input as the first parameter to this
             function.  If ``use_mesh`` is ``True``, the callback
             function will be passed a pointer to the picked mesh and
             the point ID of the selected mesh.
-
-        use_mesh : bool, optional
-            If ``True``, the callback function will be passed a
-            pointer to the picked mesh and the point ID of the
-            selected mesh.
 
         show_message : bool or str, optional
             Show the message about how to use the point picking
@@ -256,21 +251,29 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
+        color : str, optional
+            The color of the selected mesh is shown.
+
         point_size : int, optional
             Size of picked points if ``show_point`` is
             ``True``. Default 10.
 
-        color : str, optional
-            The color of the selected mesh is shown.
+        use_mesh : bool, optional
+            If ``True``, the callback function will be passed a
+            pointer to the picked mesh and the point ID of the
+            selected mesh.
+
+        show_point : bool, optional
+            Show the picked point after clicking.
 
         tolerance : float, optional
             Specify tolerance for performing pick operation. Tolerance
             is specified as fraction of rendering window
-            size. (Rendering window size is measured across diagonal.)
+            size. Rendering window size is measured across diagonal.
 
-        kwargs : optional, optional
+        **kwargs : dict, optional
             All remaining keyword arguments are used to control how
-            the picked point is interactively displayed
+            the picked point is interactively displayed.
 
         """
 
@@ -311,16 +314,16 @@ class PickingHelper:
                             **kwargs):
         """Enable picking at paths.
 
-        This is a convenience method for ``enable_point_picking`` to
-        keep track of the picked points and create a line using those
-        points.
+        This is a convenience method for :func:`enable_point_picking
+        <PickingHelper.enable_point_picking>` to keep track of the
+        picked points and create a line using those points.
 
         The line is saved to the ``.picked_path`` attribute of this
         plotter
 
         Parameters
         ----------
-        callback : callable
+        callback : callable, optional
             When given, calls this function after a pick is made.  The
             entire picked path is passed as the only parameter to this
             function.
@@ -329,31 +332,31 @@ class PickingHelper:
             Show the message about how to use the point picking
             tool. If this is a string, that will be the message shown.
 
-        show_path : bool, optional
-            Show the picked path interactively
-
         font_size : int, optional
             Sets the size of the message.
+
+        color : str, optional
+            The color of the selected mesh is shown.
 
         point_size : int, optional
             Size of picked points if ``show_path`` is
             ``True``. Default 10.
 
-        color : str, optional
-            The color of the selected mesh is shown.
-
         line_width : float, optional
             Thickness of path representation if ``show_path`` is
             ``True``.  Default 5.
+
+        show_path : bool, optional
+            Show the picked path interactively.
 
         tolerance : float, optional
             Specify tolerance for performing pick operation. Tolerance
             is specified as fraction of rendering window
             size.  Rendering window size is measured across diagonal.
 
-        kwargs : optional
+        **kwargs : dict, optional
             All remaining keyword arguments are used to control how
-            the picked path is interactively displayed
+            the picked path is interactively displayed.
 
         """
         kwargs.setdefault('pickable', False)
@@ -418,9 +421,6 @@ class PickingHelper:
             entire picked, geodesic path is passed as the only
             parameter to this function.
 
-        show_path : bool, optional
-            Show the picked path interactively
-
         show_message : bool or str, optional
             Show the message about how to use the point picking
             tool. If this is a string, that will be the message shown.
@@ -428,12 +428,12 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
+        color : str, optional
+            The color of the selected mesh is shown.
+
         point_size : int, optional
             Size of picked points if ``show_path`` is
             ``True``. Default 10.
-
-        color : str, optional
-            The color of the selected mesh is shown.
 
         line_width : float, optional
             Thickness of path representation if ``show_path`` is
@@ -443,6 +443,9 @@ class PickingHelper:
             Specify tolerance for performing pick operation. Tolerance
             is specified as fraction of rendering window
             size.  Rendering window size is measured across diagonal.
+
+        show_path : bool, optional
+            Show the picked path interactively.
 
         keep_order : bool, optional
             If ``True``, the created geodesic path is a single ordered
@@ -457,7 +460,7 @@ class PickingHelper:
 
             .. versionadded:: 0.32.0
 
-        kwargs : optional
+        **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
 
@@ -531,19 +534,12 @@ class PickingHelper:
             function.
 
         normal : tuple(float), optional
-            The normal to the horizon surface's projection plane
+            The normal to the horizon surface's projection plane.
 
         width : float, optional
             The width of the horizon surface. Default behaviour will
             dynamically change the surface width depending on its
             length.
-
-        show_horizon : bool, optional
-            Show the picked horizon surface interactively.
-
-        show_path : bool, optional
-            Show the picked path that the horizon is built from
-            interactively.
 
         show_message : bool or str, optional
             Show the message about how to use the horizon picking
@@ -552,28 +548,30 @@ class PickingHelper:
         font_size : int, optional
             Sets the font size of the message.
 
+        color : str, optional
+            The color of the horizon surface if shown.
+
         point_size : int, optional
             Size of picked points if ``show_horizon`` is
             ``True``. Default 10.
-
-        color : str, optional
-            The color of the horizon surface if shown.
 
         line_width : float, optional
             Thickness of path representation if ``show_horizon`` is
             ``True``.  Default 5.
 
+        show_path : bool, optional
+            Show the picked path that the horizon is built from
+            interactively.
+
         opacity : float, optional
             The opacity of the horizon surface if shown.
 
-        tolerance : float, optional
-            Specify tolerance for performing pick operation. Tolerance
-            is specified as fraction of rendering window
-            size. Rendering window size is measured across diagonal.
+        show_horizon : bool, optional
+            Show the picked horizon surface interactively.
 
-        kwargs : optional
+        **kwargs : dict, optional
             All remaining keyword arguments are used to control how
-            the picked path is interactively displayed
+            the picked path is interactively displayed.
 
         """
         name = '_horizon'
@@ -630,6 +628,12 @@ class PickingHelper:
         A convenience method to track right click positions and fly to
         the picked point in the scene. The callback will be passed the
         point in 3D space.
+
+        Parameters
+        ----------
+        callback : callable
+            Callback function to call immediately after right
+            clicking.
 
         """
 

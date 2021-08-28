@@ -66,7 +66,7 @@ def _retrieve_file(retriever, filename):
         return a tuple like (file_path, resp), where file_path is
         the path to the file to use.
     filename : str
-        The name of the file
+        The name of the file.
     """
     _check_examples_path()
     # First check if file has already been downloaded

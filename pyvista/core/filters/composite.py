@@ -94,10 +94,10 @@ class CompositeFilters:
         Parameters
         ----------
         generate_faces : bool, optional
-            Generate solid faces for the box. This is off by default
+            Generate solid faces for the box. This is disabled by default.
 
         nested : bool, optional
-            If True, these creates individual outlines for each nested dataset
+            If ``True``, these creates individual outlines for each nested dataset.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -115,10 +115,10 @@ class CompositeFilters:
         ----------
         factor : float, optional
             Controls the relative size of the corners to the length of
-            the corresponding bounds
+            the corresponding bounds.
 
         nested : bool, optional
-            If ``True``, these creates individual outlines for each nested dataset
+            If ``True``, these creates individual outlines for each nested dataset.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.

@@ -80,7 +80,7 @@ class DataSetFilters:
 
         Returns
         -------
-        mesh : pyvista.PolyData or tuple(pyvista.PolyData)
+        pyvista.PolyData or tuple(pyvista.PolyData)
             Clipped mesh when ``return_clipped=False``,
             otherwise a tuple containing the unclipped and clipped datasets.
 
@@ -735,7 +735,7 @@ class DataSetFilters:
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the preferred array
+            When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
@@ -936,7 +936,7 @@ class DataSetFilters:
         Parameters
         ----------
         generate_faces : bool, optional
-            Generate solid faces for the box. This is off by default
+            Generate solid faces for the box. This is disabled by default.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -967,7 +967,7 @@ class DataSetFilters:
         ----------
         factor : float, optional
             Controls the relative size of the corners to the length of
-            the corresponding bounds
+            the corresponding bounds.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1696,8 +1696,8 @@ class DataSetFilters:
 
         Returns
         -------
-        mesh : pyvista.PolyData
-            Largest connected set in mesh
+        pyvista.PolyData
+            Largest connected set in mesh.
 
         Examples
         --------
@@ -1926,8 +1926,8 @@ class DataSetFilters:
 
         Parameters
         ----------
-        pass_cell_data : bool
-            If enabled, pass the input cell data through to the output
+        pass_cell_data : bool, optional
+            If enabled, pass the input cell data through to the output.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -1984,8 +1984,8 @@ class DataSetFilters:
 
         Parameters
         ----------
-        pass_point_data : bool
-            If enabled, pass the input point data through to the output
+        pass_point_data : bool, optional
+            If enabled, pass the input point data through to the output.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -2229,7 +2229,7 @@ class DataSetFilters:
         ----------
         dataset : pyvista.DataSet
             The mesh to probe from - point and cell arrays from
-            this object are probed onto the nodes of the ``points`` mesh
+            this object are probed onto the points of the ``points`` mesh.
 
         points : pyvista.DataSet
             The points to probe values on to. This should be a PyVista mesh
@@ -2642,7 +2642,7 @@ class DataSetFilters:
 
         max_steps : int, optional
             Maximum number of steps for integrating a streamline.
-            Defaults to ``2000``
+            Defaults to ``2000``.
 
         terminal_speed : float, optional
             Terminal speed value, below which integration is terminated.
@@ -2795,7 +2795,7 @@ class DataSetFilters:
 
         max_steps : int, optional
             Maximum number of steps for integrating a streamline.
-            Defaults to ``2000``
+            Defaults to ``2000``.
 
         terminal_speed : float, optional
             Terminal speed value, below which integration is terminated.
@@ -3125,7 +3125,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.PolyData
-            Arc containing the sampled data
+            Arc containing the sampled data.
 
         Examples
         --------
@@ -3190,6 +3190,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sampled Dataset.
 
         Examples
         --------
@@ -3376,7 +3381,7 @@ class DataSetFilters:
             The string title of the `matplotlib` figure.
 
         ylabel : str, optional
-            The string label of the Y-axis. Defaults to variable name
+            The string label of the Y-axis. Defaults to variable name.
 
         figsize : tuple(int), optional
             The size of the new figure.
@@ -3385,7 +3390,7 @@ class DataSetFilters:
             Flag on whether or not to create a new figure.
 
         show : bool, optional
-            Shows the matplotlib figure
+            Shows the matplotlib figure.
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
@@ -3468,7 +3473,7 @@ class DataSetFilters:
         Returns
         -------
         subgrid : pyvista.UnstructuredGrid
-            Subselected grid
+            Subselected grid.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -3580,11 +3585,11 @@ class DataSetFilters:
         ----------
         pass_pointid : bool, optional
             Adds a point array "vtkOriginalPointIds" that idenfities which
-            original points these surface points correspond to
+            original points these surface points correspond to.
 
         pass_cellid : bool, optional
             Adds a cell array "vtkOriginalPointIds" that idenfities which
-            original cells these surface cells correspond to
+            original cells these surface cells correspond to.
 
         nonlinear_subdivision : int, optional
             If the input is an unstructured grid with nonlinear faces,
@@ -3707,7 +3712,7 @@ class DataSetFilters:
 
         Returns
         -------
-        edges : pyvista.PolyData
+        pyvista.PolyData
             Extracted edges.
 
         Examples

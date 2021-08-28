@@ -139,7 +139,7 @@ class ScalarBars():
 
         Parameters
         ----------
-        title : string, optional
+        title : str, optional
             Title of the scalar bar.  Default ``''`` which is
             rendered as an empty title.
 
@@ -164,7 +164,7 @@ class ScalarBars():
             Sets the size of the title font.  Defaults to ``None`` and is sized
             according to :attr:`pyvista.themes.DefaultTheme.font`.
 
-        color : string or 3 item list, optional
+        color : str or 3 item list, optional
             Either a string, rgb list, or hex color string.  Default
             set by :attr:`pyvista.themes.DefaultTheme.font`.  Can be
             in one of the following formats:

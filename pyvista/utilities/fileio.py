@@ -180,7 +180,7 @@ def read_legacy(filename):
     Returns
     -------
     :class:`pyvista.DataSet`
-        Wrapped pyvista mesh
+        Wrapped pyvista mesh.
 
     Notes
     -----
@@ -305,7 +305,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
     Returns
     -------
     :class:`pyvista.DataSet`
-        Wrapped pyvista mesh
+        Wrapped PyVista dataset.
 
     Examples
     --------
@@ -471,7 +471,7 @@ def read_exodus(filename,
     Returns
     -------
     :class:`pyvista.DataSet`
-        Wrapped pyvista mesh
+        Wrapped PyVista dataset.
 
     Examples
     --------
@@ -659,7 +659,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
         is normally inferred from the extension but this can be
         overridden.
 
-    kwargs : additional keyword arguments
+    **kwargs : dict, optional
         Additional keyword arguments.  See
         ``meshio.write_points_cells`` for more details.
 

@@ -193,7 +193,7 @@ def ParametricBour(**kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricBour surface.
 
     Examples
@@ -233,7 +233,7 @@ def ParametricBoy(zscale=None, **kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricBoy surface.
 
     Examples
@@ -267,7 +267,7 @@ def ParametricCatalanMinimal(**kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricCatalanMinimal surface.
 
     Example
@@ -320,7 +320,7 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricConicSpiral surface
 
     Examples
@@ -363,7 +363,7 @@ def ParametricCrossCap(**kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricCrossCap surface.
 
     Examples
@@ -395,19 +395,17 @@ def ParametricDini(a=None, b=None, **kwargs):
     Parameters
     ----------
     a : float, optional
-        The scale factor.
-        See the definition in Parametric surfaces referred to above.
-        Default is 1.
+        The scale factor.  See the definition in Parametric surfaces
+        referred to above.  Default is 1.
 
     b : float, optional
-        The scale factor.
-        See the definition in Parametric surfaces referred to above.
-        Default is 0.2
+        The scale factor.  See the definition in Parametric surfaces
+        referred to above.  Default is 0.2.
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricDini surface
+    pyvista.PolyData
+        ParametricDini surface.
 
     Examples
     --------
@@ -457,8 +455,8 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricEllipsoid surface
+    pyvista.PolyData
+        ParametricEllipsoid surface.
 
     Examples
     --------
@@ -507,12 +505,12 @@ def ParametricEnneper(**kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricEnneper surface
+    pyvista.PolyData
+        ParametricEnneper surface.
 
     Examples
     --------
-    Create a ParametricEnneper mesh
+    Create a ParametricEnneper mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricEnneper()
@@ -544,7 +542,7 @@ def ParametricFigure8Klein(radius=None, **kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricFigure8Klein surface.
 
     Examples
@@ -574,8 +572,8 @@ def ParametricHenneberg(**kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricHenneberg surface
+    pyvista.PolyData
+        ParametricHenneberg surface.
 
     Examples
     --------
@@ -607,8 +605,8 @@ def ParametricKlein(**kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricKlein surface
+    pyvista.PolyData
+        ParametricKlein surface.
 
     Examples
     --------
@@ -647,12 +645,12 @@ def ParametricKuen(deltav0=None, **kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricKuen surface
+    pyvista.PolyData
+        ParametricKuen surface.
 
     Examples
     --------
-    Create a ParametricKuen mesh
+    Create a ParametricKuen mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricKuen()
@@ -682,12 +680,12 @@ def ParametricMobius(radius=None, **kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricMobius surface
+    pyvista.PolyData
+        ParametricMobius surface.
 
     Examples
     --------
-    Create a ParametricMobius mesh
+    Create a ParametricMobius mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricMobius()
@@ -757,12 +755,12 @@ def ParametricPseudosphere(**kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricPseudosphere surface
+    pyvista.PolyData
+        ParametricPseudosphere surface.
 
     Examples
     --------
-    Create a ParametricPseudosphere mesh
+    Create a ParametricPseudosphere mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricPseudosphere()
@@ -832,12 +830,12 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricRandomHills surface
+    pyvista.PolyData
+        ParametricRandomHills surface.
 
     Examples
     --------
-    Create a ParametricRandomHills mesh
+    Create a ParametricRandomHills mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricRandomHills()
@@ -888,12 +886,12 @@ def ParametricRoman(radius=None, **kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricRoman surface
+    pyvista.PolyData
+        ParametricRoman surface.
 
     Examples
     --------
-    Create a ParametricRoman mesh
+    Create a ParametricRoman mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricRoman()
@@ -941,12 +939,12 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricSuperEllipsoid surface
+    pyvista.PolyData
+        ParametricSuperEllipsoid surface.
 
     Examples
     --------
-    Create a ParametricSuperEllipsoid mesh
+    Create a ParametricSuperEllipsoid mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricSuperEllipsoid()
@@ -1019,12 +1017,12 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricSuperToroid surface
+    pyvista.PolyData
+        ParametricSuperToroid surface.
 
     Examples
     --------
-    Create a ParametricSuperToroid mesh
+    Create a ParametricSuperToroid mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricSuperToroid()
@@ -1076,12 +1074,12 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricTorus surface
+    pyvista.PolyData
+        ParametricTorus surface.
 
     Examples
     --------
-    Create a ParametricTorus mesh
+    Create a ParametricTorus mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricTorus()

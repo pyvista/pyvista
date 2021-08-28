@@ -27,8 +27,9 @@ class UniformGridFilters(DataSetFilters):
             Name of scalars to process. Defaults to currently active scalars.
 
         preference : str, optional
-            When scalars is specified, this is the preferred array type to
-            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+            When scalars is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -71,17 +72,18 @@ class UniformGridFilters(DataSetFilters):
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
-        rate : tuple(int)
+        rate : tuple(int), optional
             Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
-            Default: ``(1, 1, 1)``
+            Default: ``(1, 1, 1)``.
 
-        boundary : bool
-            Control whether to enforce that the "boundary" of the grid is
-            output in the subsampling process. (This only has effect
-            when the rate in any direction is not equal to 1). When
-            this is on, the subsampling will always include the boundary of
-            the grid even though the sample rate is not an even multiple of
-            the grid dimensions. (By default this is off.)
+        boundary : bool, optional
+            Control whether to enforce that the "boundary" of the grid
+            is output in the subsampling process. This only has effect
+            when the rate in any direction is not equal to 1. When
+            this is enabled, the subsampling will always include the
+            boundary of the grid even though the sample rate is not an
+            even multiple of the grid dimensions. By default this is
+            disabled.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.

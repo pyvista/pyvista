@@ -550,8 +550,8 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         Returns
         -------
-        newobject : same as input
-           Deep or shallow copy of the input.
+        pyvista.DataSet
+           Deep or shallow copy of the input.  Type matches input.
 
         Examples
         --------

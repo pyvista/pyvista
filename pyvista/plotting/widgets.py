@@ -37,26 +37,28 @@ class WidgetHelper:
             Length 6 tuple of the bounding box where the widget is placed.
 
         factor : float, optional
-            An inflation factor to expand on the bounds when placing
+            An inflation factor to expand on the bounds when placing.
 
-        rotation_enabled : bool
+        rotation_enabled : bool, optional
             If ``False``, the box widget cannot be rotated and is strictly
             orthogonal to the cartesian axes.
 
-        color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.
+        color : str or sequence, optional
+            Either a string, rgb sequence, or hex color string.
+            Defaults to :attr:`pyvista.global_theme.font.color
+            <pyvista.themes._Font.color>`.
 
         use_planes : bool, optional
             Changes the arguments passed to the callback to the planes that
             make up the box.
 
-        outline_translation : bool
+        outline_translation : bool, optional
             If ``False``, the box widget cannot be translated and is strictly
             placed at the given bounds.
 
-        pass_widget : bool
-            If true, the widget will be passed as the last argument of the
-            callback
+        pass_widget : bool, optional
+            If ``True``, the widget will be passed as the last argument of the
+            callback.
 
         """
         if not hasattr(self, "box_widgets"):
@@ -104,7 +106,6 @@ class WidgetHelper:
             for widget in self.box_widgets:
                 widget.Off()
             del self.box_widgets
-        return
 
     def add_mesh_clip_box(self, mesh, invert=False, rotation_enabled=True,
                           widget_color=None, outline_translation=True,
@@ -120,18 +121,32 @@ class WidgetHelper:
         Parameters
         ----------
         mesh : pyvista.DataSet
-            The input dataset to add to the scene and clip
+            The input dataset to add to the scene and clip.
 
-        invert : bool
-            Flag on whether to flip/invert the clip
+        invert : bool, optional
+            Flag on whether to flip/invert the clip.
 
-        rotation_enabled : bool
+        rotation_enabled : bool, optional
             If ``False``, the box widget cannot be rotated and is strictly
             orthogonal to the cartesian axes.
 
-        kwargs : dict
-            All additional keyword arguments are passed to ``add_mesh`` to
-            control how the mesh is displayed.
+        widget_color : str or sequence, optional
+            Color of the widget.  Either a string, RGB sequence, or
+            hex color string.  For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
+        outline_translation : bool, optional
+            If ``False``, the plane widget cannot be translated and is
+            strictly placed at the given bounds.
+
+        **kwargs : dict, optional
+            All additional keyword arguments are passed to
+            :func:`BasePlotter.add_mesh` to control how the mesh is
+            displayed.
 
         """
         name = kwargs.get('name', mesh.memory_address)
@@ -194,53 +209,54 @@ class WidgetHelper:
             arguments, the normal and origin of the plane in that order.
 
         normal : str or tuple(float)
-            The starting normal vector of the plane
+            The starting normal vector of the plane.
 
         origin : tuple(float)
-            The starting coordinate of the center of the place
+            The starting coordinate of the center of the place.
 
         bounds : tuple(float)
             Length 6 tuple of the bounding box where the widget is placed.
 
         factor : float, optional
-            An inflation factor to expand on the bounds when placing
+            An inflation factor to expand on the bounds when placing.
 
-        color : string or 3 item list, optional, defaults to white
+        color : str or sequence, optional
             Either a string, rgb list, or hex color string.
 
-        assign_to_axis : str or int
+        assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given axis:
-            options are (0, 'x'), (1, 'y'), or (2, 'z').
+            options are ``(0, 'x')``, ``(1, 'y')``, or ``(2, 'z')``.
 
-        tubing : bool
+        tubing : bool, optional
             When using an implicit plane wiget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
-        outline_translation : bool
+        outline_translation : bool, optional
             If ``False``, the plane widget cannot be translated and is strictly
             placed at the given bounds. Only valid when using an implicit
             plane.
 
-        origin_translation : bool
+        origin_translation : bool, optional
             If ``False``, the plane widget cannot be translated by its origin
             and is strictly placed at the given origin. Only valid when using
             an implicit plane.
 
-        implicit : bool
+        implicit : bool, optional
             When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
             ``False``, a ``vtkPlaneWidget`` is used.
 
-        pass_widget : bool
-            If true, the widget will be passed as the last argument of the
-            callback
+        pass_widget : bool, optional
+            If ``True``, the widget will be passed as the last argument of the
+            callback.
 
-        test_callback : bool
-            If true, run the callback function after the widget is created.
+        test_callback : bool, optional
+            If ``True``, run the callback function after the widget is created.
 
-        normal_rotation : bool
-            Set the opacity of the normal vector arrow to 0 such that it is
-            effectively disabled. This prevents the user from rotating the
-            normal. This is forced to ``False`` when ``assign_to_axis`` is set.
+        normal_rotation : bool, optional
+            Set the opacity of the normal vector arrow to 0 such that
+            it is effectively disabled. This prevents the user from
+            rotating the normal. This is forced to ``False`` when
+            ``assign_to_axis`` is set.
 
         """
         if not hasattr(self, "plane_widgets"):
@@ -374,51 +390,49 @@ class WidgetHelper:
         Parameters
         ----------
         mesh : pyvista.DataSet
-            The input dataset to add to the scene and clip
+            The input dataset to add to the scene and clip.
 
-        normal : str or tuple(float)
-            The starting normal vector of the plane
+        normal : str or tuple(float), optional
+            The starting normal vector of the plane.
 
-        invert : bool
-            Flag on whether to flip/invert the clip
+        invert : bool, optional
+            Flag on whether to flip/invert the clip.
 
-        widget_color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.
+        widget_color : str or sequence, optional
+            Either a string, RGB list, or hex color string.
 
         value : float, optional
             Set the clipping value along the normal direction.
             The default value is 0.0.
 
-        assign_to_axis : str or int
-            Assign the normal of the plane to be parallel with a given axis:
-            options are (0, 'x'), (1, 'y'), or (2, 'z').
+        assign_to_axis : str or int, optional
+            Assign the normal of the plane to be parallel with a given
+            axis.  Options are ``(0, 'x')``, ``(1, 'y')``, or ``(2,
+            'z')``.
 
-        tubing : bool
+        tubing : bool, optional
             When using an implicit plane wiget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
-        outline_translation : bool
-            If ``False``, the plane widget cannot be translated and is strictly
-            placed at the given bounds. Only valid when using an implicit
-            plane.
-
-        origin_translation : bool
+        origin_translation : bool, optional
             If ``False``, the plane widget cannot be translated by its origin
             and is strictly placed at the given origin. Only valid when using
             an implicit plane.
 
-        implicit : bool
-            When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
-            ``False``, a ``vtkPlaneWidget`` is used.
+        implicit : bool, optional
+            When ``True``, a ``vtkImplicitPlaneWidget`` is used and
+            when ``False``, a ``vtkPlaneWidget`` is used.
 
-        normal_rotation : bool
-            Set the opacity of the normal vector arrow to 0 such that it is
-            effectively disabled. This prevents the user from rotating the
-            normal. This is forced to ``False`` when ``assign_to_axis`` is set.
+        normal_rotation : bool, optional
+            Set the opacity of the normal vector arrow to 0 such that
+            it is effectively disabled. This prevents the user from
+            rotating the normal. This is forced to ``False`` when
+            ``assign_to_axis`` is set.
 
-        kwargs : dict
-            All additional keyword arguments are passed to ``add_mesh`` to
-            control how the mesh is displayed.
+        **kwargs : dict, optional
+            All additional keyword arguments are passed to
+            :func:`BasePlotter.add_mesh` to control how the mesh is
+            displayed.
 
         """
         name = kwargs.get('name', mesh.memory_address)
@@ -479,7 +493,7 @@ class WidgetHelper:
         Parameters
         ----------
         mesh : pyvista.DataSet
-            The input dataset to add to the scene and slice
+            The input dataset to add to the scene and slice.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -488,7 +502,7 @@ class WidgetHelper:
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
-        widget_color : string or 3 item list, optional
+        widget_color : str or 3 item list, optional
             Either a string, rgb list, or hex color string.  Defaults
             to ``'white'``.
 
@@ -499,11 +513,6 @@ class WidgetHelper:
         tubing : bool, optional
             When using an implicit plane wiget, this controls whether or not
             tubing is shown around the plane's boundaries.
-
-        outline_translation : bool, optional
-            If ``False``, the plane widget cannot be translated and is strictly
-            placed at the given bounds. Only valid when using an implicit
-            plane.
 
         origin_translation : bool, optional
             If ``False``, the plane widget cannot be translated by its origin
@@ -519,9 +528,10 @@ class WidgetHelper:
             effectively disabled. This prevents the user from rotating the
             normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
-        kwargs : dict, optional
-            All additional keyword arguments are passed to ``add_mesh`` to
-            control how the mesh is displayed.
+        **kwargs : dict, optional
+            All additional keyword arguments are passed to
+            :func:`BasePlotter.add_mesh` to control how the mesh is
+            displayed.
 
         """
         name = kwargs.get('name', mesh.memory_address)
@@ -568,6 +578,33 @@ class WidgetHelper:
         Adds three interactive plane slicing widgets for orthogonal slicing
         along each cartesian axis.
 
+        Parameters
+        ----------
+        mesh : pyvista.DataSet
+            The input dataset to add to the scene and threshold.
+        
+        generate_triangles : bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
+        widget_color : str or sequence, optional
+            Color of the widget.  Either a string, RGB sequence, or
+            hex color string.  For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
+        tubing : bool, optional
+            When using an implicit plane wiget, this controls whether or not
+            tubing is shown around the plane's boundaries.
+
+        **kwargs : dict, optional
+            All additional keyword arguments are passed to
+            :func:`BasePlotter.add_mesh` to control how the mesh is
+            displayed.
+
         """
         actors = []
         for ax in ["x", "y", "z"]:
@@ -598,25 +635,25 @@ class WidgetHelper:
             if ``use_vertices=True``, then it can take two arguments of the
             coordinates of the line's end points.
 
-        bounds : tuple(float)
+        bounds : tuple(float), optional
             Length 6 tuple of the bounding box where the widget is placed.
 
         factor : float, optional
-            An inflation factor to expand on the bounds when placing
+            An inflation factor to expand on the bounds when placing.
 
-        resolution : int
-            The number of points in the line created
+        resolution : int, optional
+            The number of points in the line created.
 
-        color : string or 3 item list, optional, defaults to white
+        color : str or 3 item sequence, optional, defaults to white
             Either a string, rgb list, or hex color string.
 
         use_vertices : bool, optional
             Changess the arguments of the callback method to take the end
             points of the line instead of a PolyData object.
 
-        pass_widget : bool
-            If true, the widget will be passed as the last argument of the
-            callback
+        pass_widget : boollist
+            If ``True``, the widget will be passed as the last argument of the
+            callback.
 
         """
         if not hasattr(self, "line_widgets"):
@@ -679,28 +716,30 @@ class WidgetHelper:
         ----------
         callback : callable
             The method called every time the slider is updated. This should take
-            a single parameter: the float value of the slider
+            a single parameter: the float value of the slider.
 
-        data: list
-            The list of possible values displayed on the slider bar
+        data : list
+            The list of possible values displayed on the slider bar.
 
         value : float, optional
-            The starting value of the slider
+            The starting value of the slider.
 
-        pointa : tuple(float)
+        pointa : tuple(float), optional
             The relative coordinates of the left point of the slider on the
-            display port
+            display port.
 
-        pointb : tuple(float)
+        pointb : tuple(float), optional
             The relative coordinates of the right point of the slider on the
-            display port
+            display port.
 
-        color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.
+        color : str or sequence, optional
+            Either a string, RGB list, or hex color string.  Defaults
+            to :attr:`pyvista.global_theme.font.color
+            <pyvista.themes._Font.color>`.
 
-        event_type: str
-            Either 'start', 'end' or 'always', this defines how often the
-            slider interacts with the callback.
+        event_type : str, optional
+            Either ``'start'``, ``'end'`` or ``'always'``, this
+            defines how often the slider interacts with the callback.
 
         style : str, optional
             The name of the slider style. The list of available styles
@@ -765,7 +804,8 @@ class WidgetHelper:
                           pointa=(.4, .9), pointb=(.9, .9),
                           color=None, pass_widget=False,
                           event_type='end', style=None,
-                          title_height=0.03, title_opacity=1.0, title_color=None, fmt=None):
+                          title_height=0.03, title_opacity=1.0, title_color=None,
+                          fmt=None):
         """Add a slider bar widget.
 
         This is useless without a callback function. You can pass a
@@ -795,10 +835,12 @@ class WidgetHelper:
 
         pointb : tuple(float)
             The relative coordinates of the right point of the slider
-            on the display port
+            on the display port.
 
-        color : string or 3 item list, optional
-            Either a string, rgb list, or hex color string.
+        color : str or sequence, optional
+            Either a string, RGB list, or hex color string.  Defaults
+            to :attr:`pyvista.global_theme.font.color
+            <pyvista.themes._Font.color>`.
 
         pass_widget : bool, optional
             If ``True``, the widget will be passed as the last
@@ -820,7 +862,7 @@ class WidgetHelper:
         title_opacity : str, optional
             Opacity of title. Defaults to 1.0.
 
-        title_color : string or 3 item list, optional
+        title_color : str or 3 item list, optional
             Either a string, rgb list, or hex color string.  Defaults
             to the value given in ``color``.
 
@@ -960,15 +1002,48 @@ class WidgetHelper:
         Parameters
         ----------
         mesh : pyvista.DataSet
-            The input dataset to add to the scene and threshold
+            The input dataset to add to the scene and threshold.
 
-        scalars : str
-            The string name of the scalars on the mesh to threshold and display
+        scalars : str, optional
+            The string name of the scalars on the mesh to threshold and display.
 
-        invert : bool
-            Invert/flip the threshold
+        invert : bool, optional
+            Invert (flip) the threshold.
 
-        kwargs : dict
+        widget_color : str or sequence, optional
+            Color of the widget.  Either a string, RGB sequence, or
+            hex color string.  For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
+        preference : str, optional
+            When ``mesh.n_points == mesh.n_cells`` and setting
+            scalars, this parameter sets how the scalars will be
+            mapped to the mesh.  Default ``'points'``, causes the
+            scalars will be associated with the mesh points.  Can be
+            either ``'points'`` or ``'cells'``.
+
+        title : str, optional
+            The string label of the slider widget.
+
+        pointa : sequence, optional
+            The relative coordinates of the left point of the slider
+            on the display port.
+
+        pointb : sequence, optional
+            The relative coordinates of the right point of the slider
+            on the display port.
+
+        continuous : bool, optional
+            If this is enabled (default is ``False``), use the continuous
+            interval ``[minimum cell scalar, maxmimum cell scalar]``
+            to intersect the threshold bound, rather than the set of
+            discrete scalar values from the vertices.
+
+        **kwargs : dict, optional
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
 
@@ -1025,22 +1100,66 @@ class WidgetHelper:
         """Create a contour of a mesh with a slider.
 
         Add a mesh to the scene with a slider widget that is used to
-        contour at an isovalue of the *point* data on the mesh interactively.
+        contour at an isovalue of the *point* data on the mesh
+        interactively.
 
-        The isovalue mesh is saved to the ``.isovalue_meshes`` attribute on
-        the plotter.
+        The isovalue mesh is saved to the ``.isovalue_meshes``
+        attribute on the plotter.
 
         Parameters
         ----------
         mesh : pyvista.DataSet
-            The input dataset to add to the scene and contour
+            The input dataset to add to the scene and contour.
 
-        scalars : str
-            The string name of the scalars on the mesh to contour and display
+        scalars : str, optional
+            The string name of the scalars on the mesh to contour and display.
 
-        kwargs : dict
-            All additional keyword arguments are passed to ``add_mesh`` to
-            control how the mesh is displayed.
+        compute_normals : bool, optional
+            Enable or disable the computation of normals.  If the
+            output data will be processed by filters that modify
+            topology or geometry, it may be wise to disable computing
+            normals.
+
+        compute_gradients : bool, optional
+            Enable or disable the computation of gradients.  If the
+            output data will be processed by filters that modify
+            topology or geometry, it may be wise to disable computing
+            gradients.
+
+        compute_scalars : bool, optional
+            Enable or disable the computation of scalars.
+
+        preference : str, optional
+            When ``mesh.n_points == mesh.n_cells`` and setting
+            scalars, this parameter sets how the scalars will be
+            mapped to the mesh.  Default ``'points'``, causes the
+            scalars will be associated with the mesh points.  Can be
+            either ``'points'`` or ``'cells'``.
+
+        title : str, optional
+            The string label of the slider widget.
+
+        pointa : sequence, optional
+            The relative coordinates of the left point of the slider
+            on the display port.
+
+        pointb : sequence
+            The relative coordinates of the right point of the slider
+            on the display port.
+
+        widget_color : str or sequence, optional
+            Color of the widget.  Either a string, RGB sequence, or
+            hex color string.  For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
+        **kwargs : dict, optional
+            All additional keyword arguments are passed to
+            :func:`BasePlotter.add_mesh` to control how the mesh is
+            displayed.
 
         """
         if isinstance(mesh, pyvista.MultiBlock):
@@ -1114,29 +1233,29 @@ class WidgetHelper:
             Length 6 tuple of the bounding box where the widget is placed.
 
         factor : float, optional
-            An inflation factor to expand on the bounds when placing
+            An inflation factor to expand on the bounds when placing.
 
-        n_handles : int
+        n_handles : int, optional
             The number of interactive spheres to control the spline's
             parametric function.
 
-        resolution : int
-            The number of points in the spline created between all the handles
+        resolution : int, optional
+            The number of points in the spline created between all the handles.
 
-        color : string or 3 item list, optional, defaults to white
+        color : str or sequence, optional
             Either a string, rgb list, or hex color string.
 
-        show_ribbon : bool
+        show_ribbon : bool, optional
             If ``True``, the poly plane used for slicing will also be shown.
 
-        pass_widget : bool
-            If true, the widget will be passed as the last argument of the
-            callback
+        pass_widget : bool, optional
+            If ``True``, the widget will be passed as the last argument of the
+            callback.
 
-        closed : bool
+        closed : bool, optional
             Make the spline a closed loop.
 
-        initial_points : np.ndarray
+        initial_points : sequence, optional
             The points to initialize the widget placement. Must have same
             number of elements as ``n_handles``. If the first and last point
             are the same, this will be a closed loop spline.
@@ -1221,15 +1340,16 @@ class WidgetHelper:
         Parameters
         ----------
         mesh : pyvista.DataSet
-            The input dataset to add to the scene and slice along the spline
+            The input dataset to add to the scene and slice along the spline.
 
         generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
-        kwargs : dict, optional
-            All additional keyword arguments are passed to ``add_mesh`` to
-            control how the mesh is displayed.
+        **kwargs : dict, optional
+            All additional keyword arguments are passed to
+            :func:`BasePlotter.add_mesh` to control how the mesh is
+            displayed.
 
         """
         name = kwargs.get('name', mesh.memory_address)
@@ -1303,7 +1423,7 @@ class WidgetHelper:
         phi_resolution : int, optional
             Set the number of points in the latitude direction.
 
-        color : string or 3 item iterable, optional
+        color : str or 3 item iterable, optional
             The color of the sphere's surface.  If multiple centers
             are passed, then this must be a list of colors.  Each
             color is either a string, rgb list, or hex color string.
@@ -1418,32 +1538,32 @@ class WidgetHelper:
         ----------
         callback : callable
             The method called every time the button is clicked. This should take
-            a single parameter: the bool value of the button
+            a single parameter: the bool value of the button.
 
-        value : bool
-            The default state of the button
+        value : bool, optional
+            The default state of the button.
 
-        position: tuple(float)
-            The absolute coordinates of the bottom left point of the button
+        position : tuple(float), optional
+            The absolute coordinates of the bottom left point of the button.
 
-        size : int
-            The size of the button in number of pixels
+        size : int, optional
+            The size of the button in number of pixels.
 
-        border_size : int
-            The size of the borders of the button in pixels
+        border_size : int, optional
+            The size of the borders of the button in pixels.
 
-        color_on : string or 3 item list, optional
-            The color used when the button is checked. Default is 'blue'
+        color_on : str or 3 item list, optional
+            The color used when the button is checked. Default is ``'blue'``.
 
-        color_off : string or 3 item list, optional
-            The color used when the button is not checked. Default is 'grey'
+        color_off : str or 3 item list, optional
+            The color used when the button is not checked. Default is ``'grey'``.
 
-        background_color : string or 3 item list, optional
-            The background color of the button. Default is 'white'
+        background_color : str or sequence, optional
+            The background color of the button. Default is ``'white'``.
 
         Returns
         -------
-        button_widget: vtk.vtkButtonWidget
+        vtk.vtkButtonWidget
             The VTK button widget configured as a checkbox button.
 
         """

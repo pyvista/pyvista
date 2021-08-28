@@ -457,13 +457,13 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
-        x_color : string or 3 item sequence, optional
+        x_color : str or 3 item sequence, optional
             The color of the x axes arrow.
 
-        y_color : string or 3 item sequence, optional
+        y_color : str or 3 item sequence, optional
             The color of the y axes arrow.
 
-        z_color : string or 3 item sequence, optional
+        z_color : str or 3 item sequence, optional
             The color of the z axes arrow.
 
         xlabel : str, optional
@@ -517,13 +517,15 @@ class Renderer(_vtk.vtkRenderer):
         actor : vtk.vtkActor or pyvista.DataSet
             The mesh or actor to use as the marker.
 
-        interactive : bool
+        interactive : bool, optional
             Control if the orientation widget is interactive.  By
-            default uses the value from ``theme.interactive``.
+            default uses the value from
+            :attr:`pyvista.global_theme.interactive
+            <pyvista.themes.DefaultTheme.interactive>`.
 
-        color : string, optional
+        color : str or sequence, optional
             The color of the actor.  This only applies if ``actor`` is
-            a ``pyvista.DataSet``
+            a :class:`pyvista.DataSet`.
 
         opacity : int or float, optional
             Opacity of the marker.
@@ -575,11 +577,11 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
-        interacitve : bool
+        interactive : bool, optional
             Enable this orientation widget to be moved by the user.
 
         line_width : int, optional
-            The width of the marker lines
+            The width of the marker lines.
 
         box : bool, optional
             Show a box orientation marker. Use ``box_args`` to adjust.
@@ -726,8 +728,8 @@ class Renderer(_vtk.vtkRenderer):
             Input mesh to draw bounds axes around.
 
         bounds : list or tuple, optional
-            Bounds to override mesh bounds.
-            ``[xmin, xmax, ymin, ymax, zmin, zmax]``
+            Bounds to override mesh bounds in the form ``[xmin, xmax,
+            ymin, ymax, zmin, zmax]``.
 
         show_xaxis : bool, optional
             Makes x axis visible.  Default ``True``.
@@ -753,11 +755,11 @@ class Renderer(_vtk.vtkRenderer):
         font_size : float, optional
             Sets the size of the label font.  Defaults to 16.
 
-        font_family : string, optional
+        font_family : str, optional
             Font family.  Must be either ``'courier'``, ``'times'``,
             or ``'arial'``.
 
-        color : string or 3 item list, optional
+        color : str or 3 item list, optional
             Color of all labels and axis titles.  Default white.
             Either a string, rgb list, or hex color string.  For
             example:
@@ -767,13 +769,13 @@ class Renderer(_vtk.vtkRenderer):
             * ``color=[1, 1, 1]``
             * ``color='#FFFFFF'``
 
-        xlabel : string, optional
+        xlabel : str, optional
             Title of the x axis.  Default ``"X Axis"``.
 
-        ylabel : string, optional
+        ylabel : str, optional
             Title of the y axis.  Default ``"Y Axis"``.
 
-        zlabel : string, optional
+        zlabel : str, optional
             Title of the z axis.  Default ``"Z Axis"``.
 
         use_2d : bool, optional
@@ -823,7 +825,7 @@ class Renderer(_vtk.vtkRenderer):
 
         Returns
         -------
-        cube_axes_actor : vtk.vtkCubeAxesActor
+        vtk.vtkCubeAxesActor
             Bounds actor.
 
         Examples
@@ -1040,6 +1042,16 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
+        color : str or sequence, optional
+            Color of all labels and axis titles.  Default white.
+            Either a string, rgb sequence, or hex color string.  For
+            example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
         corner_factor : float, optional
             This is the factor along each axis to draw the default
             box. Default is 0.5 to show the full box.
@@ -1048,7 +1060,7 @@ class Renderer(_vtk.vtkRenderer):
             Thickness of lines.
 
         opacity : float, optional
-            Opacity of mesh.  Should be between 0 and 1.  Default 1.0
+            Opacity of mesh.  Default 1.0 and should be between 0 and 1.
 
         render_lines_as_tubes : bool, optional
             Show lines as thick tubes rather than flat lines.  Control
@@ -1062,7 +1074,7 @@ class Renderer(_vtk.vtkRenderer):
 
         outline : bool
             Default is ``True``. when ``False``, a box with faces is shown
-            with the specified culling
+            with the specified culling.
 
         culling : str, optional
             Does not render faces that are culled. Options are
@@ -1143,7 +1155,7 @@ class Renderer(_vtk.vtkRenderer):
         j_resolution : int, optional
             Number of points on the plane in the j direction.
 
-        color : string or 3 item list, optional
+        color : str or 3 item list, optional
             Color of all labels and axis titles.  Default gray.
             Either a string, rgb list, or hex color string.
 
@@ -1157,7 +1169,7 @@ class Renderer(_vtk.vtkRenderer):
         show_edges : bool, optional
             Flag on whether to show the mesh edges for tiling.
 
-        ine_width : float, optional
+        line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
             representations.  Default ``None``.
 
@@ -1165,14 +1177,24 @@ class Renderer(_vtk.vtkRenderer):
             Enable or disable view direction lighting.  Default
             ``False``.
 
-        edge_color : string or 3 item list, optional
+        edge_color : str or 3 item sequence, optional
             Color of of the edges of the mesh.
+
+        reset_camera : bool, optional
+            Resets the camera when ``True`` after adding the floor.
 
         pad : float, optional
             Percentage padding between 0 and 1.
 
         offset : float, optional
             Percentage offset along plane normal.
+
+        pickable : bool, optional
+            Make this floor actor pickable in the renderer.
+
+        store_floor_kwargs : bool, optional
+            Stores the kwargs used when adding this floor.  Useful
+            when updating the bounds and regenerating the floor.
 
         Examples
         --------
@@ -1554,9 +1576,9 @@ class Renderer(_vtk.vtkRenderer):
 
         Returns
         -------
-        success : bool
-            True when actor removed.  False when actor has not been
-            removed.
+        bool
+            ``True`` when actor removed.  ``False`` when actor has not
+            been removed.
 
         Examples
         --------
@@ -1980,7 +2002,7 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
-        color : string or 3 item list, optional
+        color : str or 3 item list, optional
             Either a string, rgb list, or hex color string.  Defaults
             to theme default.  For example:
 
@@ -1989,7 +2011,7 @@ class Renderer(_vtk.vtkRenderer):
             * ``color=[1, 1, 1]``
             * ``color='#FFFFFF'``
 
-        top : string or 3 item list, optional
+        top : str or 3 item list, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in
             ``top`` will be the color at the top of the renderer.

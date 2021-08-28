@@ -129,7 +129,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : string or 3 item list, optional
+    border_color : str or sequence, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -1104,7 +1104,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.iren.add_key_event(*args, **kwargs)
 
     def clear_events_for_key(self, key):
-        """Remove the callbacks associated to the key."""
+        """Remove the callbacks associated to the key.
+
+        Parameters
+        ----------
+        key : str
+            Key to clear events for.
+
+        """
         self.iren.clear_events_for_key(key)
 
     def store_mouse_position(self, *args):
@@ -1329,14 +1336,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             that :func:`pyvista.wrap` can handle including NumPy
             arrays of XYZ points.
 
-        color : string or 3 item list, optional, defaults to white
+        color : str or 3 item list, optional, defaults to white
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
 
-        style : string, optional
+        style : str, optional
             Visualization style of the mesh.  One of the following:
             ``style='surface'``, ``style='wireframe'``, ``style='points'``.
             Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
@@ -1359,7 +1366,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : string or 3 item list, optional, defaults to black
+        edge_color : str or 3 item list, optional, defaults to black
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
@@ -1412,14 +1419,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             You can also specify a list of colors to override an
             existing colormap with a custom one.  For example, to
             create a three color colormap you might specify
-            ``['green', 'red', 'blue']``
+            ``['green', 'red', 'blue']``.
 
         label : str, optional
             String label to use when adding a legend to the scene with
-            :func:`pyvista.BasePlotter.add_legend`
+            :func:`pyvista.BasePlotter.add_legend`.
 
         reset_camera : bool, optional
-            Reset the camera after adding this mesh to the scene
+            Reset the camera after adding this mesh to the scene.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the
@@ -1439,7 +1446,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        texture : vtk.vtkTexture or np.ndarray or boolean, optional
+        texture : vtk.vtkTexture or np.ndarray or bool, optional
             A texture to apply if the input mesh has texture
             coordinates.  This will not work with MultiBlock
             datasets. If set to ``True``, the first available texture
@@ -1461,26 +1468,27 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Automatically enabled when ``pbr=True``.
 
         ambient : float, optional
-            When lighting is enabled, this is the amount of light from
-            0 to 1 that reaches the actor when not directed at the
-            light source emitted from the viewer.  Default 0.0
+            When lighting is enabled, this is the amount of light in
+            the range of 0 to 1 (default 0.0) that reaches the actor
+            when not directed at the light source emitted from the
+            viewer.
 
         diffuse : float, optional
-            The diffuse lighting coefficient. Default 1.0
+            The diffuse lighting coefficient. Default 1.0.
 
         specular : float, optional
-            The specular lighting coefficient. Default 0.0
+            The specular lighting coefficient. Default 0.0.
 
         specular_power : float, optional
-            The specular power. Between 0.0 and 128.0
+            The specular power. Between 0.0 and 128.0.
 
-        nan_color : string or 3 item list, optional, defaults to gray
+        nan_color : str or 3 item list, optional, defaults to gray
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
         nan_opacity : float, optional
             Opacity of ``NaN`` values.  Should be between 0 and 1.
-            Default 1.0
+            Default 1.0.
 
         culling : str, optional
             Does not render faces that are culled. Options are
@@ -1519,12 +1527,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Invert the opacity mappings and make the values correspond
             to transparency.
 
-        below_color : string or 3 item list, optional
+        below_color : str or 3 item list, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'Below'``.
 
-        above_color : string or 3 item list, optional
+        above_color : str or 3 item list, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'Above'``.
@@ -1535,7 +1543,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             and the values are the the string annotations.
 
         pickable : bool, optional
-            Set whether this mesh is pickable.
+            Set whether this actor is pickable.
 
         preference : str, optional
             When ``mesh.n_points == mesh.n_cells`` and setting
@@ -1573,9 +1581,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
+        **kwargs : dict, optional
+            Optional developer keyword arguments.
+
         Returns
         -------
-        actor : vtk.vtkActor
+        vtk.vtkActor
             VTK actor of the mesh.
 
         Examples
@@ -2189,7 +2200,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
 
-        opacity : string or numpy.ndarray, optional
+        resolution : list, optional
+            Block resolution.
+
+        opacity : str or numpy.ndarray, optional
             Opacity mapping for the scalars array.
             A string can also be specified to map the scalars range to a
             predefined opacity transfer function (options include: 'linear',
@@ -2213,7 +2227,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             this as well.
 
         reset_camera : bool, optional
-            Reset the camera after adding this mesh to the scene
+            Reset the camera after adding this mesh to the scene.
 
         name : str, optional
             The name for the added actor so that it can be easily
@@ -2225,15 +2239,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             0 to 1 that reaches the actor when not directed at the
             light source emitted from the viewer.  Default 0.0.
 
+        categories : bool, optional
+            If set to ``True``, then the number of unique values in the scalar
+            array will be used as the ``n_colors`` argument.
+
         culling : str, optional
             Does not render faces that are culled. Options are ``'front'`` or
             ``'back'``. This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
             meshes to be partially displayed.  Defaults ``False``.
-
-        categories : bool, optional
-            If set to ``True``, then the number of unique values in the scalar
-            array will be used as the ``n_colors`` argument.
 
         multi_colors : bool, optional
             Whether or not to use multiple colors when plotting MultiBlock
@@ -2265,6 +2279,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             values in the scalars range to annotate on the scalar bar
             and the values are the the string annotations.
 
+        pickable : bool, optional
+            Set whether this mesh is pickable.
+
+        preference : str, optional
+            When ``mesh.n_points == mesh.n_cells`` and setting
+            scalars, this parameter sets how the scalars will be
+            mapped to the mesh.  Default ``'points'``, causes the
+            scalars will be associated with the mesh points.  Can be
+            either ``'points'`` or ``'cells'``.
+
         opacity_unit_distance : float
             Set/Get the unit distance on which the scalar opacity
             transfer function is defined. Meaning that over that
@@ -2282,16 +2306,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
             flag is on.
 
         diffuse : float, optional
-            The diffuse lighting coefficient. Default 1.0
+            The diffuse lighting coefficient. Default ``1.0``.
 
         specular : float, optional
-            The specular lighting coefficient. Default 0.0
+            The specular lighting coefficient. Default ``0.0``.
 
         specular_power : float, optional
-            The specular power. Between 0.0 and 128.0
+            The specular power. Between ``0.0`` and ``128.0``.
 
         render : bool, optional
             Force a render when True.  Default ``True``.
+
+        **kwargs : dict, optional
+            Optional keyword arguments.
 
         Returns
         -------
@@ -2338,7 +2365,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(volume, np.ndarray):
                 volume = wrap(volume)
                 if resolution is None:
-                    resolution = [1,1,1]
+                    resolution = [1, 1, 1]
                 elif len(resolution) != 3:
                     raise ValueError('Invalid resolution dimensions.')
                 volume.spacing = resolution
@@ -2573,11 +2600,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        clim: list
+        clim : sequence
             The new range of scalar bar. Two item list (e.g. ``[-1, 2]``).
 
         name : str, optional
-            The title of the scalar bar to update
+            The title of the scalar bar to update.
 
         """
         if isinstance(clim, float) or isinstance(clim, int):
@@ -2797,7 +2824,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self.ren_win
 
     def close(self, render=False):
-        """Close the render window."""
+        """Close the render window.
+
+        Parameters
+        ----------
+        render : bool
+            Unused argument.
+
+        """
         # optionally run just prior to exiting the plotter
         if self._before_close_callback is not None:
             self._before_close_callback(self)
@@ -2858,9 +2892,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         text : str
-            The text to add the rendering
+            The text to add the rendering.
 
-        position : str, tuple(float)
+        position : str, tuple(float), optional
             Position to place the bottom left corner of the text box.
             If tuple is used, the position of the text uses the pixel
             coordinate system (default). In this case,
@@ -2871,28 +2905,50 @@ class BasePlotter(PickingHelper, WidgetHelper):
             and place text box up there. Available position: ``'lower_left'``,
             ``'lower_right'``, ``'upper_left'``, ``'upper_right'``,
             ``'lower_edge'``, ``'upper_edge'``, ``'right_edge'``, and
-            ``'left_edge'``
+            ``'left_edge'``.
 
-        font : string, optional
-            Font name may be courier, times, or arial
+        font_size : float, optional
+            Sets the size of the title font.  Defaults to 18.
+
+        color : str or sequence, optional
+            Either a string, RGB list, or hex color string.  For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
+            Defaults to :attr:`pyvista.global_theme.font.color <pyvista.themes._Font.color>`.
+
+        font : str, optional
+            Font name may be ``'courier'``, ``'times'``, or ``'arial'``.
 
         shadow : bool, optional
-            Adds a black shadow to the text.  Defaults to False
+            Adds a black shadow to the text.  Defaults to ``False``.
 
         name : str, optional
             The name for the added actor so that it can be easily updated.
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
-        viewport: bool
-            If True and position is a tuple of float, uses
-            the normalized viewport coordinate system (values between 0.0
+        viewport : bool, optional
+            If ``True`` and position is a tuple of float, uses the
+            normalized viewport coordinate system (values between 0.0
             and 1.0 and support for HiDPI).
 
         Returns
         -------
-        textActor : vtk.vtkTextActor
-            Text actor added to plot
+        vtk.vtkTextActor
+            Text actor added to plot.
+
+        Examples
+        --------
+        Add ``'hello world'`` to the plotter.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.add_text('hello world', font_size=24)
+        >>> pl.show()
 
         """
         if font is None:
@@ -2962,7 +3018,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ----------
         filename : str
             Filename of the movie to open.  Filename should end in mp4,
-            but other filetypes may be supported.  See ``imagio.get_writer``
+            but other filetypes may be supported.  See ``imagio.get_writer``.
 
         framerate : int, optional
             Frames per second.
@@ -2971,7 +3027,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Quality 10 is the top possible quality for any codec. The
             range is ``0 - 10``.  Higher quality leads to a larger file.
 
-        **kwargs : dict
+        **kwargs : dict, optional
             See the documentation for ``imageio.get_writer`` for additional kwargs.
 
         Notes
@@ -3071,7 +3127,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        image_depth : numpy.ndarray
+        numpy.ndarray
             Image of depth values from camera orthogonal to image
             plane.
 
@@ -3134,12 +3190,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         lines : np.ndarray or pyvista.PolyData
-            Points representing line segments.  For example, two line segments
-            would be represented as:
+            Points representing line segments.  For example, two line
+            segments would be represented as ``np.array([[0, 0, 0],
+            [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
-            np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
-
-        color : string or 3 item list, optional, defaults to white
+        color : str or sequence, optional
             Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -3148,7 +3203,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``color='#FFFFFF'``
 
         width : float, optional
-            Thickness of lines
+            Thickness of lines.
+
+        label : str, optional
+            String label to use when adding a legend to the scene with
+            :func:`pyvista.BasePlotter.add_legend`.
 
         name : str, optional
             The name for the added actor so that it can be easily updated.
@@ -3157,7 +3216,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        actor : vtk.vtkActor
+        vtk.vtkActor
             Lines actor.
 
         """
@@ -3209,61 +3268,65 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : np.ndarray or pyvista.DataSet
-            An ``n x 3`` numpy array of points or pyvista dataset with points.
+        points : sequence or pyvista.DataSet
+            An ``n x 3`` sequence points or pyvista dataset with points.
 
         labels : list or str
-            List of labels.  Must be the same length as points. If a string name
-            is given with a pyvista.DataSet input for points, then these are fetched.
+            List of labels.  Must be the same length as points. If a
+            string name is given with a :class:`pyvista.DataSet` input for
+            points, then these are fetched.
 
         italic : bool, optional
-            Italicises title and bar labels.  Default False.
+            Italicises title and bar labels.  Default ``False``.
 
         bold : bool, optional
-            Bolds title and bar labels.  Default True
+            Bolds title and bar labels.  Default ``True``.
 
         font_size : float, optional
             Sets the size of the title font.  Defaults to 16.
 
-        text_color : string or 3 item list, optional
-            Color of text. Either a string, rgb list, or hex color string.
+        text_color : str or 3 item list, optional
+            Color of text. Either a string, RGB sequence, or hex color string.
 
-                text_color='white'
-                text_color='w'
-                text_color=[1, 1, 1]
-                text_color='#FFFFFF'
+            * ``text_color='white'``
+            * ``text_color='w'``
+            * ``text_color=[1, 1, 1]``
+            * ``text_color='#FFFFFF'``
 
-        font_family : string, optional
-            Font family.  Must be either courier, times, or arial.
+        font_family : str, optional
+            Font family.  Must be either ``'courier'``, ``'times'``,
+            or ``'arial``.
 
         shadow : bool, optional
-            Adds a black shadow to the text.  Defaults to False
+            Adds a black shadow to the text.  Defaults to ``False``.
 
         show_points : bool, optional
-            Controls if points are visible.  Default True
+            Controls if points are visible.  Default ``True``.
 
-        point_color : string or 3 item list, optional. Color of points (if visible).
-            Either a string, rgb list, or hex color string.  For example:
+        point_color : str or sequence, optional
+            Either a string, rgb list, or hex color string.  One of
+            the following.
 
-            * ``color='white'``
-            * ``color='w'``
-            * ``color=[1, 1, 1]``
-            * ``color='#FFFFFF'``
+            * ``point_color='white'``
+            * ``point_color='w'``
+            * ``point_color=[1, 1, 1]``
+            * ``point_color='#FFFFFF'``
 
         point_size : float, optional
-            Size of points (if visible)
+            Size of points if visible.
 
         name : str, optional
-            The name for the added actor so that it can be easily updated.
-            If an actor of this name already exists in the rendering window, it
-            will be replaced by the new actor.
+            The name for the added actor so that it can be easily
+            updated.  If an actor of this name already exists in the
+            rendering window, it will be replaced by the new actor.
 
-        shape_color : string or 3 item list, optional. Color of points (if visible).
-            Either a string, rgb list, or hex color string.  For example:
+        shape_color : str or sequence, optional
+            Color of points (if visible).  Either a string, rgb
+            sequence, or hex color string.
 
         shape : str, optional
             The string name of the shape to use. Options are ``'rect'`` or
-            ``'rounded_rect'``. If you want no shape, pass ``None``
+            ``'rounded_rect'``. If you want no shape, pass ``None``.
 
         fill_shape : bool, optional
             Fill the shape with the ``shape_color``. Outlines if ``False``.
@@ -3272,7 +3335,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The size of the margin on the label background shape. Default is 3.
 
         shape_opacity : float, optional
-            The opacity of the shape between zero and one.
+            The opacity of the shape in the range of ``[0, 1]``.
+
+        pickable : bool, optional
+            Set whether this actor is pickable.
+
+        render_points_as_spheres : bool, optional
+            Render points as spheres rather than dots.
 
         tolerance : float, optional
             A tolerance to use to determine whether a point label is
@@ -3291,7 +3360,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        labelActor : vtk.vtkActor2D
+        vtk.vtkActor2D
             VTK label actor.  Can be used to change properties of the labels.
 
         """
@@ -3394,14 +3463,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : np.ndarray or pyvista.DataSet
-            An ``n x 3`` numpy array of points or pyvista dataset with points.
+        points : numpy.ndarray or pyvista.DataSet
+            An ``n x 3`` numpy.ndarray or pyvista dataset with points.
 
         labels : str, optional
             String name of the point data array to use.
 
         fmt : str, optional
             String formatter used to format numerical data.
+
+        preamble : str, optional
+            Text before the start of each label.
+
+        **kwargs : dict, optional
+            Keyword arguments passed to
+            :func:`pyvista.BasePlotter.add_point_labels`.
 
         """
         if not is_pyvista_dataset(points):
@@ -3422,12 +3498,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : np.ndarray or pyvista.
+        points : numpy.ndarray or pyvista.DataSet
             Array of points or the points from a pyvista object.
 
-        **kwargs : optional keyword arguments
+        **kwargs : dict, optional
             See :func:`pyvista.BasePlotter.add_mesh` for optional
-            keyword arguments
+            keyword arguments.
 
         Returns
         -------
@@ -3592,7 +3668,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        img : numpy.ndarray
+        numpy.ndarray
             Array containing pixel RGB and alpha.  Sized:
 
             * [Window height x Window width x 3] if
@@ -3652,16 +3728,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         labels : list, optional
             When set to None, uses existing labels as specified by
 
-            - add_mesh
-            - add_lines
-            - add_points
+            - :func:`add_mesh <BasePlotter.add_mesh>`
+            - :func:`add_lines <BasePlotter.add_lines>`
+            - :func:`add_points <BasePlotter.add_points>`
 
             List containing one entry for each item to be added to the
             legend.  Each entry must contain two strings, [label,
             color], where label is the name of the item to add, and
             color is the color of the label to add.
 
-        bcolor : list or string, optional
+        bcolor : list or str, optional
             Background color, either a three item 0 to 1 RGB color
             list, or a matplotlib color string (e.g. 'w' or 'white'
             for a white color).  If None, legend background is
@@ -3697,7 +3773,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        legend : vtk.vtkLegendBoxActor
+        vtk.vtkLegendBoxActor
             Actor for the legend.
 
         Examples
@@ -3851,6 +3927,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         The movement is animated over the number of frames specified in
         NumberOfFlyFrames. The LOD desired frame rate is used.
 
+        Parameters
+        ----------
+        point : sequence
+            Point to fly to in the form of ``(x, y, z)``.
+
         """
         return self.iren.fly_to(self.renderer, point)
 
@@ -3871,7 +3952,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The timestep between flying to each camera position.
 
         viewup : list(float), optional
-            The normal to the orbital plane
+            The normal to the orbital plane.
 
         write_frames : bool, optional
             Assume a file is open and write a frame on each camera
@@ -3962,6 +4043,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         It can be used for rendering in a web browser.
 
+        Parameters
+        ----------
+        filename : str
+            Filename to export the scene to.  A filename extension of
+            ``'.vtkjs'`` will be added.
+
+        compress_arrays : bool, optional
+            Enable array compression.
         """
         if not hasattr(self, 'ren_win'):
             raise RuntimeError('Export must be called before showing/closing the scene.')
@@ -3972,7 +4061,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
 
     def export_obj(self, filename):
-        """Export scene to OBJ format."""
+        """Export scene to OBJ format.
+
+        Parameters
+        ----------
+        filename : str
+            Filename to export the scene to.  Should end in ``'.obj'``.
+
+        Returns
+        -------
+        vtkOBJExporter
+            Object exporter.
+
+        """
         # lazy import vtkOBJExporter here as it takes a long time to
         # load and is not always used
         try:
@@ -4151,7 +4252,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        places : list(tuple(int))
+        list(tuple(int))
             A list with the subplot coordinates of the actor.
 
         Examples
@@ -4198,13 +4299,13 @@ class Plotter(BasePlotter):
         with ``shape=(2, 2)``.  By default there is only one render
         window.  Can also accept a string descriptor as shape. E.g.:
 
-            * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
-            * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
+        * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
+        * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : string or 3 item list, optional
+    border_color : str or 3 item list, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -4224,9 +4325,6 @@ class Plotter(BasePlotter):
 
     line_smoothing : bool, optional
         If ``True``, enable line smoothing.
-
-    point_smoothing : bool, optional
-        If ``True``, enable point smoothing.
 
     polygon_smoothing : bool, optional
         If ``True``, enable polygon smoothing.
@@ -4367,7 +4465,7 @@ class Plotter(BasePlotter):
 
         Parameters
         ----------
-        title : string, optional
+        title : str, optional
             Title of plotting window.  Defaults to
             :attr:`pyvista.global_theme.title <pyvista.themes.DefaultTheme.title>`.
 
@@ -4652,7 +4750,7 @@ class Plotter(BasePlotter):
             Sets the size of the title font.  Defaults to 16 or the
             value of the global theme if set.
 
-        color : string or 3 item list, optional, 
+        color : str or 3 item list, optional, 
             Either a string, rgb list, or hex color string.  Defaults
             to white or the value of the global theme if set.  For
             example:
@@ -4662,7 +4760,7 @@ class Plotter(BasePlotter):
             * ``color=[1, 1, 1]``
             * ``color='#FFFFFF'``
 
-        font : string, optional
+        font : str, optional
             Font name may be ``'courier'``, ``'times'``, or ``'arial'``.
 
         shadow : bool, optional
