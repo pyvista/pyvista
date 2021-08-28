@@ -419,6 +419,10 @@ class WidgetHelper:
             and is strictly placed at the given origin. Only valid when using
             an implicit plane.
 
+        outline_translation : bool, optional
+            If ``False``, the box widget cannot be translated and is strictly
+            placed at the given bounds.
+
         implicit : bool, optional
             When ``True``, a ``vtkImplicitPlaneWidget`` is used and
             when ``False``, a ``vtkPlaneWidget`` is used.
@@ -518,6 +522,10 @@ class WidgetHelper:
             If ``False``, the plane widget cannot be translated by its origin
             and is strictly placed at the given origin. Only valid when using
             an implicit plane.
+
+        outline_translation : bool, optional
+            If ``False``, the box widget cannot be translated and is strictly
+            placed at the given bounds.
 
         implicit : bool, optional
             When ``True``, a ``vtkImplicitPlaneWidget`` is used and when
@@ -859,7 +867,7 @@ class WidgetHelper:
             Relative height of the title as compared to the length of
             the slider.
 
-        title_opacity : str, optional
+        title_opacity : float, optional
             Opacity of title. Defaults to 1.0.
 
         title_color : str or 3 item list, optional
@@ -1248,6 +1256,14 @@ class WidgetHelper:
         show_ribbon : bool, optional
             If ``True``, the poly plane used for slicing will also be shown.
 
+        ribbon_color : str or sequence, optional
+            Color of the ribbon.  Either a string, RGB sequence, or
+            hex color string.
+
+        ribbon_opacity : float, optional
+            Opacity of ribbon. Defaults to 1.0 and must be between
+            ``[0, 1]``.
+
         pass_widget : bool, optional
             If ``True``, the widget will be passed as the last argument of the
             callback.
@@ -1346,6 +1362,41 @@ class WidgetHelper:
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
+        n_handles : int, optional
+            The number of interactive spheres to control the spline's
+            parametric function.
+
+        resolution : int, optional
+            The number of points to generate on the spline.
+
+        widget_color : str or sequence, optional
+            Color of the widget.  Either a string, RGB sequence, or
+            hex color string.  For example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
+        show_ribbon : bool, optional
+            If ``True``, the poly plane used for slicing will also be shown.
+
+        ribbon_color : str or sequence, optional
+            Color of the ribbon.  Either a string, RGB sequence, or
+            hex color string.
+
+        ribbon_opacity : float, optional
+            Opacity of ribbon. Defaults to 1.0 and must be between
+            ``[0, 1]``.
+
+        initial_points : sequence, optional
+            The points to initialize the widget placement. Must have same
+            number of elements as ``n_handles``. If the first and last point
+            are the same, this will be a closed loop spline.
+
+        closed : bool, optional
+            Make the spline a closed loop.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -1439,6 +1490,9 @@ class WidgetHelper:
 
         selected_color : str, optional
             Color of the widget when selected during interaction.
+
+        indices : sequence, optional
+            Indices to assign the sphere widgets.
 
         pass_widget : bool, optional
             If ``True``, the widget will be passed as the last

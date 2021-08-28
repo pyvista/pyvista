@@ -1002,6 +1002,12 @@ class Renderer(_vtk.vtkRenderer):
         outer edges. This is intended to be similar to
         ``matplotlib``'s ``grid`` function.
 
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            See :func:`Renderer.show_bounds` for additional keyword
+            arguments.
+
         """
         kwargs.setdefault('grid', 'back')
         kwargs.setdefault('location', 'outer')
@@ -1692,6 +1698,11 @@ class Renderer(_vtk.vtkRenderer):
 
         Uses ResetCamera to make a useful view.
 
+        Parameters
+        ----------
+        negative : bool
+            View from the opposite direction.
+
         """
         focal_pt = self.center
         if any(np.isnan(focal_pt)):
@@ -1810,7 +1821,14 @@ class Renderer(_vtk.vtkRenderer):
         return self.reset_camera()
 
     def view_xy(self, negative=False):
-        """View the XY plane."""
+        """View the XY plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([0,0,1])
         viewup = np.array([0,1,0])
         if negative:
@@ -1818,7 +1836,14 @@ class Renderer(_vtk.vtkRenderer):
         return self.view_vector(vec, viewup)
 
     def view_yx(self, negative=False):
-        """View the YX plane."""
+        """View the YX plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([0,0,-1])
         viewup = np.array([1,0,0])
         if negative:
@@ -1826,7 +1851,14 @@ class Renderer(_vtk.vtkRenderer):
         return self.view_vector(vec, viewup)
 
     def view_xz(self, negative=False):
-        """View the XZ plane."""
+        """View the XZ plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([0,-1,0])
         viewup = np.array([0,0,1])
         if negative:
@@ -1834,7 +1866,14 @@ class Renderer(_vtk.vtkRenderer):
         return self.view_vector(vec, viewup)
 
     def view_zx(self, negative=False):
-        """View the ZX plane."""
+        """View the ZX plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([0,1,0])
         viewup = np.array([1,0,0])
         if negative:
@@ -1842,7 +1881,14 @@ class Renderer(_vtk.vtkRenderer):
         return self.view_vector(vec, viewup)
 
     def view_yz(self, negative=False):
-        """View the YZ plane."""
+        """View the YZ plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([1,0,0])
         viewup = np.array([0,0,1])
         if negative:
@@ -1850,7 +1896,14 @@ class Renderer(_vtk.vtkRenderer):
         return self.view_vector(vec, viewup)
 
     def view_zy(self, negative=False):
-        """View the ZY plane."""
+        """View the ZY plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([-1,0,0])
         viewup = np.array([0,1,0])
         if negative:

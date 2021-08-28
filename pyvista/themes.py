@@ -2054,6 +2054,11 @@ class DefaultTheme(_ThemeConfig):
     def load_theme(self, theme):
         """Overwrite the current theme with a theme.
 
+        Parameters
+        ----------
+        theme : pyvista.DefaultTheme
+            Theme to use to overwrite this theme.
+
         Examples
         --------
         Create a custom theme from the default theme and load it into

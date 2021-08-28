@@ -83,7 +83,7 @@ numpydoc_validation_checks = {
     "GL01",  # Contradicts numpydoc examples
     "GL02",  # Permit a blank line after the end of our docstring
     "GL03",  # Considering enforcing
-    "PR01",  # not enabling due to abstract classes (consider enabling)
+    "PR01",  # in-progress
     "RT01",  # Disabled as we will not enforce return sections for None
     "SA01",  # Not all docstrings need a see also
     "SA04",  # See also section does not need descriptions
@@ -94,7 +94,45 @@ numpydoc_validation_checks = {
 }
 numpydoc_validation_exclude = {  # set of regex
     r'\.Plotter$',  # Issue with class parameter documentation
+
+    r'\.from_dict$',
+    r'\.__init__$',
+
+    # parm of abstract classes
+    r'\.CompositeFilters$',
+    r'\.PolyDataFilters$',
+    r'\.CompositeFilters$',
+    r'\.PolyDataFilters$',
+    r'\.UniformGridFilters$',
+    r'\.DataSetFilters$',
+    r'\.UnstructuredGridFilters$',
+    r'\.MultiBlock$',
+    r'\.DataSet$',
+    r'\.DataSetFilters$',
+    r'\.PolyDataFilters$',
+    r'\.UnstructuredGridFilters$',
+    r'\.UniformGridFilters$',
+    r'\.CompositeFilters$',
+    r'\.Grid$',
+    r'\.RectilinearGrid$',
+    r'\.UniformGrid$',
+    r'\.DataObject$',
+    r'\.Table.save$',
+    r'\.Table$',
+    r'\.Table.save$',
+    r'\.UnstructuredGrid$',
+    r'\.ExplicitStructuredGrid$',
+    r'\.StructuredGrid$',
+    r'\.PointGrid$',
+
+    # inherit from BaseReader
+    r'\.Reader$',
+
+    # depricated
+    r'\.PolyDataFilters.boolean_add$'
+    r'\.PolyDataFilters.boolean_cut$'
 }
+
 
 add_module_names = False
 

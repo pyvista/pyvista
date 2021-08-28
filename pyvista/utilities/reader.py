@@ -100,7 +100,11 @@ class BaseReader:
     and allowing access to the underlying vtk reader. See
     :func:`pyvista.get_reader` for an example using
     a built-in subclass.
-    
+
+    Parameters
+    ----------
+    filename : str
+        Path of the file to read.
     """
 
     _class_reader: Any = None

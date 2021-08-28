@@ -2941,15 +2941,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         vtk.vtkTextActor
             Text actor added to plot.
 
-        Examples
-        --------
-        Add ``'hello world'`` to the plotter.
-
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> _ = pl.add_text('hello world', font_size=24)
-        >>> pl.show()
-
         """
         if font is None:
             font = self._theme.font.family

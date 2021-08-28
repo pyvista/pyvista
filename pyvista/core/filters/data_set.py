@@ -532,8 +532,7 @@ class DataSetFilters:
 
     def slice_along_axis(self, n=5, axis='x', tolerance=None,
                          generate_triangles=False, contour=False,
-                         bounds=None, center=None, slice=False,
-                         progress_bar=False):
+                         bounds=None, center=None, progress_bar=False):
         """Create many slices of the input dataset along a specified axis.
 
         Parameters

@@ -423,6 +423,11 @@ class DataObject:
     def copy_attributes(self, dataset: _vtk.vtkDataSet):
         """Copy the data attributes of the input dataset object.
 
+        Parameters
+        ----------
+        dataset : pyvista.DataSet
+            Dataset to copy the data attributes from.
+
         Examples
         --------
         >>> import pyvista as pv

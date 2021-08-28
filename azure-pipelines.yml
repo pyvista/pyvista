@@ -94,7 +94,7 @@ jobs:
     displayName: 'Install test dependencies'
 
   - script: |
-      xvfb-run pytest -v -n 2 --doctest-modules pyvista
+      xvfb-run pytest -v --doctest-modules pyvista
     displayName: 'Test Package Docstrings'
 
   - script: |
