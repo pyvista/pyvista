@@ -2947,7 +2947,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
-        >>> pl.add_text('hello world', font_size=24)
+        >>> _ = pl.add_text('hello world', font_size=24)
         >>> pl.show()
 
         """
