@@ -419,7 +419,7 @@ class RenderWindowInteractor():
         """
         self._style = 'Terrain'
         self._style_class = None
-        return_value = self.update_style()
+        self.update_style()
 
         if mouse_wheel_zooms:
             def wheel_zoom_callback(obj, event):  # pragma: no cover
@@ -452,8 +452,6 @@ class RenderWindowInteractor():
 
             for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
                 self._style_class.AddObserver(event, callback)
-
-        return return_value
 
     def enable_rubber_band_style(self):
         """Set the interactive style to Rubber Band Picking.
@@ -568,19 +566,44 @@ class RenderWindowInteractor():
         self.interactor.MouseMoveEvent()
 
     def get_event_position(self):
-        """Get the event position."""
+        """Get the event position.
+
+        Returns
+        -------
+        tuple
+            The ``(x, y)`` coordinate position.
+
+        """
         return self.interactor.GetEventPosition()
 
     def get_interactor_style(self):
-        """Get the interactor style."""
+        """Get the interactor style.
+
+        Returns
+        -------
+        vtk.vtkInteractorStyle
+            VTK interactor style.
+        """
         return self.interactor.GetInteractorStyle()
 
     def get_desired_update_rate(self):
-        """Get the desired update rate."""
+        """Get the desired update rate.
+
+        Returns
+        -------
+        float
+            Desired update rate.
+        """
         return self.interactor.GetDesiredUpdateRate()
 
     def create_repeating_timer(self, stime):
-        """Create a repeating timer."""
+        """Create a repeating timer.
+
+        Returns
+        -------
+        int
+            Timer ID.
+        """
         timer_id = self.interactor.CreateRepeatingTimer(stime)
         if hasattr(self.interactor, 'ProcessEvents'):
             self.process_events()
@@ -615,7 +638,13 @@ class RenderWindowInteractor():
         return self.interactor.GetInitialized()
 
     def get_picker(self):
-        """Get the piccker."""
+        """Get the picker.
+
+        Returns
+        -------
+        vtk.vtkAbstractPicker
+            VTK picker.
+        """
         return self.interactor.GetPicker()
 
     def set_picker(self, picker):

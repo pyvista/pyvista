@@ -220,8 +220,6 @@ class PickingHelper:
         if start:
             self.iren._style_class.StartSelect()
 
-        return
-
     def enable_point_picking(self, callback=None, show_message=True,
                              font_size=18, color='pink', point_size=10,
                              use_mesh=False, show_point=True, tolerance=0.025,
@@ -306,8 +304,6 @@ class PickingHelper:
             self.add_text(str(show_message), font_size=font_size,
                           name='_point_picking_message')
 
-        return
-
     def enable_path_picking(self, callback=None, show_message=True,
                             font_size=18, color='pink', point_size=10,
                             line_width=5, show_path=True, tolerance=0.025,
@@ -385,21 +381,21 @@ class PickingHelper:
                               reset_camera=False, **kwargs)
             if callable(callback):
                 try_callback(callback, self.picked_path)
-            return
 
         def _clear_path_event_watcher():
             del the_points[:]
             del the_ids[:]
             self.remove_actor('_picked_path')
-            return
 
         self.add_key_event('c', _clear_path_event_watcher)
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        return self.enable_point_picking(callback=_the_callback, use_mesh=True,
-                font_size=font_size, show_message=show_message,
-                show_point=False, tolerance=tolerance)
+        self.enable_point_picking(callback=_the_callback,
+                                  use_mesh=True, font_size=font_size,
+                                  show_message=show_message,
+                                  show_point=False,
+                                  tolerance=tolerance)
 
     def enable_geodesic_picking(self, callback=None, show_message=True,
                                 font_size=18, color='pink', point_size=10,
@@ -439,7 +435,7 @@ class PickingHelper:
             Thickness of path representation if ``show_path`` is
             ``True``.  Default 5.
 
-        tolerance : float
+        tolerance : float, optional
             Specify tolerance for performing pick operation. Tolerance
             is specified as fraction of rendering window
             size.  Rendering window size is measured across diagonal.
@@ -499,21 +495,21 @@ class PickingHelper:
                               reset_camera=False, **kwargs)
             if callable(callback):
                 try_callback(callback, self.picked_geodesic)
-            return
 
         def _clear_g_path_event_watcher():
             self.picked_geodesic = pyvista.PolyData()
             self.remove_actor('_picked_path')
             self._last_picked_idx = None
-            return
 
         self.add_key_event('c', _clear_g_path_event_watcher)
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        return self.enable_point_picking(callback=_the_callback, use_mesh=True,
-                font_size=font_size, show_message=show_message,
-                tolerance=tolerance, show_point=False)
+        self.enable_point_picking(callback=_the_callback,
+                                  use_mesh=True, font_size=font_size,
+                                  show_message=show_message,
+                                  tolerance=tolerance,
+                                  show_point=False)
 
     def enable_horizon_picking(self, callback=None, normal=(0,0,1),
                                width=None, show_message=True,
@@ -597,7 +593,14 @@ class PickingHelper:
             **kwargs)
 
     def pick_click_position(self):
-        """Get corresponding click location in the 3D plot."""
+        """Get corresponding click location in the 3D plot.
+
+        Returns
+        -------
+        tuple
+            Three item tuple with the 3D picked position.
+
+        """
         if self.click_position is None:
             self.store_click_position()
         picker = _vtk.vtkWorldPointPicker()
@@ -605,7 +608,14 @@ class PickingHelper:
         return picker.GetPickPosition()
 
     def pick_mouse_position(self):
-        """Get corresponding mouse location in the 3D plot."""
+        """Get corresponding mouse location in the 3D plot.
+
+        Returns
+        -------
+        tuple
+            Three item tuple with the 3D picked position.
+
+        """
         if self.mouse_position is None:
             self.store_mouse_position()
         picker = _vtk.vtkWorldPointPicker()

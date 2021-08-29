@@ -83,7 +83,7 @@ numpydoc_validation_checks = {
     "GL01",  # Contradicts numpydoc examples
     "GL02",  # Permit a blank line after the end of our docstring
     "GL03",  # Considering enforcing
-    # "RT01",  # Disabled as we will not enforce return sections for None
+    "RT01",  # In progress
     "SA01",  # Not all docstrings need a see also
     "SA04",  # See also section does not need descriptions
     "SS05",  # Appears to be broken.
@@ -134,6 +134,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.*boolean_add$',
     r'\.*boolean_cut$',
     r'\.*add_field_array$',
+    r'\.*add_field_array$',
 
     # methods we probably should make private
     r'\.store_click_position$',
@@ -146,6 +147,10 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.*PlotterITK$',
     r'\.*MultiBlock.copy_meta_from$',
     r'\.DataObject.copy_meta_from$',
+
+    # wraps
+    r'\.*Plotter.enable_depth_peeling$',
+    r'\.*add_scalar_bar$',
 
 }
 

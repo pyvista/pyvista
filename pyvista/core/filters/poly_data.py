@@ -31,7 +31,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`numpy.ndarray`
+        numpy.ndarray
             Mask of points with an angle greater than ``angle``.
 
         Examples
@@ -489,7 +489,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`numpy.ndarray`
+        numpy.ndarray
             Array of curvature values.
 
         Examples
@@ -1519,7 +1519,6 @@ class PolyDataFilters(DataSetFilters):
             Accepts for ``merge_tol`` to replace the ``tolerance``
             keyword argument.  This may be deprecated in future.
 
-
         Returns
         -------
         pyvista.PolyData
@@ -1565,8 +1564,7 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             self.overwrite(output)
             return self
-        else:
-            return output
+        return output
 
     def geodesic(self, start_vertex, end_vertex, inplace=False,
                  keep_order=True, progress_bar=False):
@@ -1668,7 +1666,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`float`
+        float
             Length of the geodesic segment.
 
         Examples
@@ -1715,11 +1713,11 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        intersection_points : :class:`np.ndarray`
+        intersection_points : numpy.ndarray
             Location of the intersection points.  Empty array if no
             intersections.
 
-        intersection_cells : :class:`np.ndarray`
+        intersection_cells : numpy.ndarray
             Indices of the intersection cells.  Empty array if no
             intersections.
 
@@ -2076,8 +2074,7 @@ class PolyDataFilters(DataSetFilters):
         if inplace:
             self.overwrite(newmesh)
             return self, ridx
-        else:
-            return newmesh, ridx
+        return newmesh, ridx
 
     def flip_normals(self):
         """Flip normals of a triangular mesh by reversing the point ordering.
@@ -2156,6 +2153,11 @@ class PolyDataFilters(DataSetFilters):
             Display a progress bar to indicate progress. Default
             ``False``.
 
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh from the 2D delaunay filter.
+
         Examples
         --------
         First, generate 30 points on circle and plot them.
@@ -2207,7 +2209,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`float`
+        float
             Arc length of the length of the probed line.
 
         Examples
@@ -2242,17 +2244,22 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        origin : np.ndarray or collections.abc.Sequence, optional
+        origin : numpy.ndarray or collections.abc.Sequence, optional
             Plane origin.  Defaults to the approximate center of the
             input mesh minus half the length of the input mesh in the
             direction of the normal.
 
-        normal : np.ndarray or collections.abc.Sequence, optional
+        normal : numpy.ndarray or collections.abc.Sequence, optional
             Plane normal.  Defaults to +Z, i.e. ``[0, 0, 1]``.
 
         inplace : bool, optional
             Whether to overwrite the original mesh with the projected
             points.
+
+        Returns
+        -------
+        pyvista.PolyData
+            The points of this mesh projected onto a plane.
 
         Examples
         --------

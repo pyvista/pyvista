@@ -50,7 +50,14 @@ SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 VERY_FIRST_RENDER = True  # windows plotter helper
 
 def close_all():
-    """Close all open/active plotters and clean up memory."""
+    """Close all open/active plotters and clean up memory.
+
+    Returns
+    -------
+    bool
+        ``True`` when all plotters have been closed.
+
+    """
     for key, p in _ALL_PLOTTERS.items():
         if not p._closed:
             p.close()
@@ -844,7 +851,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(Renderer.disable_eye_dome_lighting)
     def disable_eye_dome_lighting(self, *args, **kwargs):
         """Wrap ``Renderer.disable_eye_dome_lighting``."""
-        return self.renderer.disable_eye_dome_lighting(*args, **kwargs)
+        self.renderer.disable_eye_dome_lighting(*args, **kwargs)
 
     @wraps(Renderer.reset_camera)
     def reset_camera(self, *args, **kwargs):
@@ -855,57 +862,57 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(Renderer.isometric_view)
     def isometric_view(self, *args, **kwargs):
         """Wrap ``Renderer.isometric_view``."""
-        return self.renderer.isometric_view(*args, **kwargs)
+        self.renderer.isometric_view(*args, **kwargs)
 
     @wraps(Renderer.view_isometric)
     def view_isometric(self, *args, **kwarg):
         """Wrap ``Renderer.view_isometric``."""
-        return self.renderer.view_isometric(*args, **kwarg)
+        self.renderer.view_isometric(*args, **kwarg)
 
     @wraps(Renderer.view_vector)
     def view_vector(self, *args, **kwarg):
         """Wrap ``Renderer.view_vector``."""
-        return self.renderer.view_vector(*args, **kwarg)
+        self.renderer.view_vector(*args, **kwarg)
 
     @wraps(Renderer.view_xy)
     def view_xy(self, *args, **kwarg):
         """Wrap ``Renderer.view_xy``."""
-        return self.renderer.view_xy(*args, **kwarg)
+        self.renderer.view_xy(*args, **kwarg)
 
     @wraps(Renderer.view_yx)
     def view_yx(self, *args, **kwarg):
         """Wrap ``Renderer.view_yx``."""
-        return self.renderer.view_yx(*args, **kwarg)
+        self.renderer.view_yx(*args, **kwarg)
 
     @wraps(Renderer.view_xz)
     def view_xz(self, *args, **kwarg):
         """Wrap ``Renderer.view_xz``."""
-        return self.renderer.view_xz(*args, **kwarg)
+        self.renderer.view_xz(*args, **kwarg)
 
     @wraps(Renderer.view_zx)
     def view_zx(self, *args, **kwarg):
         """Wrap ``Renderer.view_zx``."""
-        return self.renderer.view_zx(*args, **kwarg)
+        self.renderer.view_zx(*args, **kwarg)
 
     @wraps(Renderer.view_yz)
     def view_yz(self, *args, **kwarg):
         """Wrap ``Renderer.view_yz``."""
-        return self.renderer.view_yz(*args, **kwarg)
+        self.renderer.view_yz(*args, **kwarg)
 
     @wraps(Renderer.view_zy)
     def view_zy(self, *args, **kwarg):
         """Wrap ``Renderer.view_zy``."""
-        return self.renderer.view_zy(*args, **kwarg)
+        self.renderer.view_zy(*args, **kwarg)
 
     @wraps(Renderer.disable)
     def disable(self, *args, **kwarg):
         """Wrap ``Renderer.disable``."""
-        return self.renderer.disable(*args, **kwarg)
+        self.renderer.disable(*args, **kwarg)
 
     @wraps(Renderer.enable)
     def enable(self, *args, **kwarg):
         """Wrap ``Renderer.enable``."""
-        return self.renderer.enable(*args, **kwarg)
+        self.renderer.enable(*args, **kwarg)
 
     @wraps(Renderer.enable_depth_peeling)
     def enable_depth_peeling(self, *args, **kwargs):
@@ -914,7 +921,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             result = self.renderer.enable_depth_peeling(*args, **kwargs)
             if result:
                 self.ren_win.AlphaBitPlanesOn()
-
         return result
 
     @wraps(Renderer.disable_depth_peeling)
@@ -2171,7 +2177,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.add_scalar_bar(**scalar_bar_args)
 
         self.renderer.Modified()
-
         return actor
 
     def add_volume(self, volume, scalars=None, clim=None, resolution=None,
@@ -3445,12 +3450,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                           render_points_as_spheres=render_points_as_spheres,
                           reset_camera=reset_camera, render=render)
 
-        labelActor = _vtk.vtkActor2D()
-        labelActor.SetMapper(labelMapper)
-        self.add_actor(labelActor, reset_camera=False,
+        label_actor = _vtk.vtkActor2D()
+        label_actor.SetMapper(labelMapper)
+        self.add_actor(label_actor, reset_camera=False,
                        name=f'{name}-labels', pickable=False)
-
-        return labelActor
+        return label_actor
 
     def add_point_scalar_labels(self, points, labels, fmt=None, preamble='', **kwargs):
         """Label the points from a dataset with the values of their scalars.
@@ -3474,6 +3478,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         **kwargs : dict, optional
             Keyword arguments passed to
             :func:`pyvista.BasePlotter.add_point_labels`.
+
+        Returns
+        -------
+        vtk.vtkActor2D
+            VTK label actor.  Can be used to change properties of the labels.
 
         """
         if not is_pyvista_dataset(points):
@@ -3952,7 +3961,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Point to fly to in the form of ``(x, y, z)``.
 
         """
-        return self.iren.fly_to(self.renderer, point)
+        self.iren.fly_to(self.renderer, point)
 
     def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None,
                       write_frames=False, threaded=False, progress_bar=False):
@@ -4055,8 +4064,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             orbit()
 
-        return
-
     def export_vtkjs(self, filename, compress_arrays=False):
         """Export the current rendering scene as a VTKjs scene.
 
@@ -4077,7 +4084,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         else:
             filename = os.path.abspath(os.path.expanduser(filename))
-        return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
+
+        export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
 
     def export_obj(self, filename):
         """Export scene to OBJ format.

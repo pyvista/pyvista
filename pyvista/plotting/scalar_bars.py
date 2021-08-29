@@ -257,6 +257,11 @@ class ScalarBars():
             ``Plotter``, will use the plotter theme.  Setting to
             ``None`` will use the global theme.
 
+        Returns
+        -------
+        vtk.vtkScalarBarActor
+            Scalar bar actor.
+
         Notes
         -----
         Setting ``title_font_size``, or ``label_font_size`` disables

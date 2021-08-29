@@ -48,7 +48,7 @@ class DataObject:
             Data object to perform a shallow copy from.
 
         """
-        return self.ShallowCopy(to_copy)
+        self.ShallowCopy(to_copy)
 
     def deep_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
         """Overwrite this data object with another data object as a deep copy.
@@ -59,7 +59,7 @@ class DataObject:
             Data object to perform a deep copy from.
 
         """
-        return self.DeepCopy(to_copy)
+        self.DeepCopy(to_copy)
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
         data = pyvista.read(filename, **kwargs)
@@ -158,6 +158,11 @@ class DataObject:
         html : bool, optional
             Generate the output as HTML.
 
+        Returns
+        -------
+        str
+            Header statistics.
+
         """
         # Generate the output
         if html:
@@ -219,8 +224,9 @@ class DataObject:
 
         Returns
         -------
-        :class:`pyvista.DataSet`
-            Deep or shallow copy of the input.  Type is identical to the input.
+        pyvista.DataSet
+            Deep or shallow copy of the input.  Type is identical to
+            the input.
 
         Examples
         --------
