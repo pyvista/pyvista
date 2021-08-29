@@ -160,7 +160,7 @@ class RenderWindowInteractor():
         if self._style_class is None:
             # We need an actually custom style to handle button up events
             self._style_class = _style_factory(self._style)(self)
-        return self.interactor.SetInteractorStyle(self._style_class)
+        self.interactor.SetInteractorStyle(self._style_class)
 
     def enable_trackball_style(self):
         """Set the interactive style to Trackball Camera.
@@ -190,7 +190,7 @@ class RenderWindowInteractor():
         """
         self._style = 'TrackballCamera'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_trackball_actor_style(self):
         """Set the interactive style to Trackball Actor.
@@ -221,7 +221,7 @@ class RenderWindowInteractor():
         """
         self._style = 'TrackballActor'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_image_style(self):
         """Set the interactive style to Image.
@@ -251,7 +251,7 @@ class RenderWindowInteractor():
         """
         self._style = 'Image'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_joystick_style(self):
         """Set the interactive style to Joystick Camera.
@@ -284,7 +284,7 @@ class RenderWindowInteractor():
         """
         self._style = 'JoystickCamera'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_joystick_actor_style(self):
         """Set the interactive style to Joystick Actor.
@@ -318,7 +318,7 @@ class RenderWindowInteractor():
         """
         self._style = 'JoystickActor'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_zoom_style(self):
         """Set the interactive style to Rubber Band Zoom.
@@ -344,7 +344,7 @@ class RenderWindowInteractor():
         """
         self._style = 'RubberBandZoom'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_terrain_style(self, mouse_wheel_zooms=False, shift_pans=False):
         """Set the interactive style to Terrain.
@@ -484,7 +484,7 @@ class RenderWindowInteractor():
         """
         self._style = 'RubberBandPick'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_rubber_band_2d_style(self):
         """Set the interactive style to Rubber Band 2D.
@@ -519,7 +519,7 @@ class RenderWindowInteractor():
         """
         self._style = 'RubberBand2D'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def _simulate_keypress(self, key):  # pragma: no cover
         """Simulate a keypress."""

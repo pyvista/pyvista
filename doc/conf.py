@@ -83,7 +83,7 @@ numpydoc_validation_checks = {
     "GL01",  # Contradicts numpydoc examples
     "GL02",  # Permit a blank line after the end of our docstring
     "GL03",  # Considering enforcing
-    "RT01",  # Disabled as we will not enforce return sections for None
+    # "RT01",  # Disabled as we will not enforce return sections for None
     "SA01",  # Not all docstrings need a see also
     "SA04",  # See also section does not need descriptions
     "SS05",  # Appears to be broken.

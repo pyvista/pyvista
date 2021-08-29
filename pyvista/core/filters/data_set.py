@@ -20,7 +20,8 @@ from pyvista.utilities.cells import numpy_to_idarr
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
-    def _clip_with_function(self, function, invert=True, value=0.0, return_clipped=False, progress_bar=False):
+    def _clip_with_function(self, function, invert=True, value=0.0,
+                            return_clipped=False, progress_bar=False):
         """Clip using an implicit function (internal helper)."""
         if isinstance(self, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
@@ -125,8 +126,7 @@ class DataSetFilters:
             else:
                 self.overwrite(result)
                 return self
-        else:
-            return result
+        return result
 
     def clip_box(self, bounds=None, invert=True, factor=0.35, progress_bar=False):
         """Clip a dataset by a bounding box defined by the bounds.
@@ -135,7 +135,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        bounds : tuple(float)
+        bounds : tuple(float), optional
             Length 6 sequence of floats: (xmin, xmax, ymin, ymax, zmin, zmax).
             Length 3 sequence of floats: distances from the min coordinate of
             of the input mesh. Single float value: uniform distance from the
@@ -145,7 +145,7 @@ class DataSetFilters:
             a box with 6 faces that all form a standard box, then planes will
             be extracted from the box to define the clipping region.
 
-        invert : bool
+        invert : bool, optional
             Flag on whether to flip/invert the clip.
 
         factor : float, optional
@@ -154,6 +154,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Clipped dataset.
 
         Examples
         --------
@@ -221,11 +226,17 @@ class DataSetFilters:
         surface : pyvista.DataSet
             The surface used to compute the distance.
 
-        inplace : bool
+        inplace : bool, optional
             If ``True``, a new scalar array will be added to the
             ``point_data`` of this mesh and the modified mesh will
             be returned. Otherwise a copy of this mesh is returned
             with that scalar field added.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset containing the ``'implicit_distance'`` array in
+            ``point_data``.
 
         Examples
         --------
@@ -291,8 +302,9 @@ class DataSetFilters:
 
         Returns
         -------
-        :class:`pyvista.PolyData` or tuple
-            Clipped dataset if ``both=False``.  If ``both=True`` then returns a tuple of both clipped datasets.
+        pyvista.PolyData or tuple
+            Clipped dataset if ``both=False``.  If ``both=True`` then
+            returns a tuple of both clipped datasets.
 
         Examples
         --------
@@ -346,8 +358,7 @@ class DataSetFilters:
                 # For some reason vtkClipPolyData with SetGenerateClippedOutput on leaves unreferenced vertices
                 result0, result1 = (r.clean() for r in (result0, result1))
             return result0, result1
-        else:
-            return result0
+        return result0
 
     def clip_surface(self, surface, invert=True, value=0.0,
                      compute_distance=False, progress_bar=False):
@@ -360,9 +371,9 @@ class DataSetFilters:
         Parameters
         ----------
         surface : pyvista.PolyData
-            The ``PolyData`` surface mesh to use as a clipping function.
-            If this mesh is not ``PolyData``, the external surface will
-            be extracted.
+            The ``PolyData`` surface mesh to use as a clipping
+            function.  If this input mesh is not a :class`pyvista.PolyData`,
+            the external surface will be extracted.
 
         invert : bool, optional
             Flag on whether to flip/invert the clip.
@@ -379,6 +390,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Clipped surface.
 
         Examples
         --------
@@ -436,6 +452,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sliced dataset.
 
         Examples
         --------
@@ -498,6 +519,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sliced dataset.
 
         Examples
         --------
@@ -572,6 +598,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sliced dataset.
 
         Examples
         --------
@@ -653,6 +684,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sliced dataset.
 
         Examples
         --------
@@ -747,6 +783,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Dataset containing geometry that meets the threshold requirements.
 
         Examples
         --------
@@ -875,6 +916,11 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Dataset containing geometry that meets the threshold requirements.
+
         Examples
         --------
         Apply a 50% threshold filter.
@@ -940,6 +986,11 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh containing an outline of the original dataset.
+
         Examples
         --------
         Generate and plot the outline of a sphere.  This is
@@ -970,6 +1021,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh containing outlined corners.
 
         Examples
         --------
@@ -1111,6 +1167,12 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset containing elevation scalars in the
+            ``"Elevation"`` array in ``point_data``.
+
         Examples
         --------
         Generate the "elevation" scalars for a sphere mesh.  This is
@@ -1207,6 +1269,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Contoured surface.
 
         Examples
         --------
@@ -1372,6 +1439,12 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset containing the texture mapped to a sphere.  Return
+            type matches input.
+
         Examples
         --------
         See :ref:`ref_texture_example`.
@@ -1385,7 +1458,7 @@ class DataSetFilters:
             alg.SetCenter(center)
         alg.SetPreventSeam(prevent_seam)
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Texturing Map to Sphere')
+        _update_alg(alg, progress_bar, 'Maping texture to sphere')
         output = _get_output(alg)
         if not inplace:
             return output
@@ -1415,6 +1488,18 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with `cell_data` containing the ``"Length"``,
+            ``"Area"``, and ``"Volume"`` arrays if set in the
+            parameters.  Return type matches input.
+
+        Notes
+        -----
+        If cells do not have a dimension (for example, the length of
+        hexahedral cells), the corresponding array will be all zeros.
 
         Examples
         --------
@@ -1447,6 +1532,12 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Polydata where the points are the cell centers of the
+            original dataset.
 
         Examples
         --------
@@ -1657,6 +1748,12 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with labeled connected bodies.  Return type
+            matches input.
+
         Examples
         --------
         Join two meshes together and plot their connectivity.
@@ -1696,8 +1793,8 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Largest connected set in mesh.
+        pyvista.DataSet
+            Largest connected set in the dataset.  Return type matches input.
 
         Examples
         --------
@@ -1717,14 +1814,13 @@ class DataSetFilters:
         if inplace:
             self.overwrite(mesh)
             return self
-        else:
-            return mesh
+        return mesh
 
     def split_bodies(self, label=False, progress_bar=False):
         """Find, label, and split connected bodies/volumes.
 
         This splits different connected bodies into blocks in a
-        ``MultiBlock`` dataset.
+        :class:`pyvista.MultiBlock` dataset.
 
         Parameters
         ----------
@@ -1734,6 +1830,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            MultiBlock with a split bodies.
 
         Examples
         --------
@@ -1797,6 +1898,11 @@ class DataSetFilters:
         **kwargs : dict, optional
             Accepts ``scale_factor`` instead of ``factor``.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Warped Dataset.  Return type matches input.
+
         Examples
         --------
         First, plot the unwarped mesh.
@@ -1837,8 +1943,7 @@ class DataSetFilters:
                 raise TypeError("This filter cannot be applied inplace for this mesh type.")
             self.overwrite(output)
             return self
-        else:
-            return output
+        return output
 
     def warp_by_vector(self, vectors=None, factor=1.0, inplace=False,
                        progress_bar=False):
@@ -1934,6 +2039,12 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the point data transformed into cell data.
+            Return type matches input.
 
         Examples
         --------
@@ -2051,6 +2162,12 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the point data transformed into cell data.
+            Return type matches input.
 
         """
         return DataSetFilters.point_data_to_cell_data(self, pass_point_data=pass_point_data, progress_bar=progress_bar)
@@ -2274,7 +2391,7 @@ class DataSetFilters:
 
         Returns
         -------
-        :class:`pyvista.DataSet`
+        pyvista.DataSet
             Dataset containing the probed data.
 
         Examples
@@ -2430,6 +2547,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Interpolated dataset.  Return type matches input.
 
         Examples
         --------
@@ -2849,11 +2971,12 @@ class DataSetFilters:
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             This produces polylines as the output, with each cell
-            (i.e., polyline) representing a streamline. The attribute values
-            associated with each streamline are stored in the cell data, whereas
-            those associated with streamline-points are stored in the point data.
+            (i.e., polyline) representing a streamline. The attribute
+            values associated with each streamline are stored in the
+            cell data, whereas those associated with streamline-points
+            are stored in the point data.
 
         Examples
         --------
@@ -3106,7 +3229,7 @@ class DataSetFilters:
         if fname:
             plt.savefig(fname)
         if show:  # pragma: no cover
-            return plt.show()
+            plt.show()
 
     def sample_over_circular_arc(self, pointa, pointb, center,
                                  resolution=None, tolerance=None,
@@ -3353,7 +3476,7 @@ class DataSetFilters:
         if fname:
             plt.savefig(fname)
         if show:  # pragma: no cover
-            return plt.show()
+            plt.show()
 
     def plot_over_circular_arc_normal(self, center, resolution=None, normal=None,
                                       polar=None, angle=None, scalars=None,
@@ -3475,7 +3598,7 @@ class DataSetFilters:
         if fname:
             plt.savefig(fname)
         if show:  # pragma: no cover
-            return plt.show()
+            plt.show()
 
     def extract_cells(self, ind, progress_bar=False):
         """Return a subset of the grid.
@@ -3839,8 +3962,7 @@ class DataSetFilters:
                 return self
             else:
                 raise TypeError(f"Mesh type {type(self)} cannot be overridden by output.")
-        else:
-            return merged
+        return merged
 
     def __add__(self, grid):
         """Combine this mesh with another into an :class:`pyvista.UnstructuredGrid`."""
@@ -4093,6 +4215,11 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with shrunk faces.  Return type matches input.
+
         Examples
         --------
         First, plot the original cube.
@@ -4133,7 +4260,6 @@ class DataSetFilters:
             is to store the three components as separate scalar
             arrays.
 
-
         Parameters
         ----------
         trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
@@ -4150,6 +4276,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Transformed dataset.  Return type matches input.
 
         Examples
         --------
@@ -4231,8 +4362,7 @@ class DataSetFilters:
         if inplace:
             self.overwrite(res)
             return self
-        else:
-            return res
+        return res
 
     def reflect(self, normal, point=None, inplace=False,
                 transform_all_input_vectors=False, progress_bar=False):
@@ -4256,6 +4386,11 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Reflected dataset.  Return type matches input.
 
         Examples
         --------

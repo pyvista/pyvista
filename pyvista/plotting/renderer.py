@@ -1962,11 +1962,11 @@ class Renderer(_vtk.vtkRenderer):
 
     def disable(self):
         """Disable this renderer's camera from being interactive."""
-        return self.SetInteractive(0)
+        self.SetInteractive(0)
 
     def enable(self):
         """Enable this renderer's camera to be interactive."""
-        return self.SetInteractive(1)
+        self.SetInteractive(1)
 
     def enable_eye_dome_lighting(self):
         """Enable eye dome lighting (EDL).
@@ -2145,7 +2145,6 @@ class Renderer(_vtk.vtkRenderer):
         else:
             self.GradientBackgroundOff()
         self.Modified()
-        return
 
     def set_environment_texture(self, texture):
         """Set the environment texture used for image based lighting.

@@ -34,6 +34,11 @@ class UniformGridFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.UniformGrid
+            Uniform grid with smoothed scalars.
+
         """
         alg = _vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(self)
@@ -88,6 +93,10 @@ class UniformGridFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.UniformGrid
+            UniformGrid subset.
         """
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)
