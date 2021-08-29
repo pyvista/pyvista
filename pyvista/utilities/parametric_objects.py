@@ -83,7 +83,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Kochanek spline.
 
     Examples
@@ -161,6 +161,9 @@ def ParametricBohemianDome(a=None, **kwargs):
     a : float, optional
         Bohemian dome surface parameter.
 
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
     pyvista.PolyData
@@ -191,9 +194,14 @@ def ParametricBohemianDome(a=None, **kwargs):
 def ParametricBour(**kwargs):
     """Generate Bour's minimal surface.
 
+    Parameters
+    ----------
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricBour surface.
 
     Examples
@@ -231,9 +239,12 @@ def ParametricBoy(zscale=None, **kwargs):
     zscale : float, optional
         The scale factor for the z-coordinate.
 
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricBoy surface.
 
     Examples
@@ -265,9 +276,14 @@ def ParametricCatalanMinimal(**kwargs):
     parametrically. This minimal surface contains the cycloid as a
     geodesic.
 
+    Parameters
+    ----------
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricCatalanMinimal surface.
 
     Example
@@ -318,9 +334,12 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
         See the definition in Parametric surfaces referred to above.
         Default is 2.
 
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricConicSpiral surface
 
     Examples
@@ -361,9 +380,14 @@ def ParametricCrossCap(**kwargs):
     self-intersecting single-sided surface.  This is one possible
     image of a projective plane in three-space.
 
+    Parameters
+    ----------
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricCrossCap surface.
 
     Examples
@@ -395,19 +419,20 @@ def ParametricDini(a=None, b=None, **kwargs):
     Parameters
     ----------
     a : float, optional
-        The scale factor.
-        See the definition in Parametric surfaces referred to above.
-        Default is 1.
+        The scale factor.  See the definition in Parametric surfaces
+        referred to above.  Default is 1.
 
     b : float, optional
-        The scale factor.
-        See the definition in Parametric surfaces referred to above.
-        Default is 0.2
+        The scale factor.  See the definition in Parametric surfaces
+        referred to above.  Default is 0.2.
+
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricDini surface
+    pyvista.PolyData
+        ParametricDini surface.
 
     Examples
     --------
@@ -455,10 +480,14 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
     zradius : float, optional
         The scaling factor for the z-axis. Default is 1.
 
+    **kwargs : dict, optional
+        See :func:`surface_from_para` and :func:`parametric_keywords`
+        for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricEllipsoid surface
+    pyvista.PolyData
+        ParametricEllipsoid surface.
 
     Examples
     --------
@@ -505,14 +534,19 @@ def ParametricEnneper(**kwargs):
     is a self-intersecting minimal surface possessing constant
     negative Gaussian curvature.
 
+    Parameters
+    ----------
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricEnneper surface
+    pyvista.PolyData
+        ParametricEnneper surface.
 
     Examples
     --------
-    Create a ParametricEnneper mesh
+    Create a ParametricEnneper mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricEnneper()
@@ -541,10 +575,12 @@ def ParametricFigure8Klein(radius=None, **kwargs):
     ----------
     radius : float, optional
         The radius of the bottle. Default is 1.
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
 
     Returns
     -------
-    surf : pyvista.PolyData
+    pyvista.PolyData
         ParametricFigure8Klein surface.
 
     Examples
@@ -572,10 +608,15 @@ def ParametricFigure8Klein(radius=None, **kwargs):
 def ParametricHenneberg(**kwargs):
     """Generate Henneberg's minimal surface.
 
+    Parameters
+    ----------
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricHenneberg surface
+    pyvista.PolyData
+        ParametricHenneberg surface.
 
     Examples
     --------
@@ -605,10 +646,15 @@ def ParametricKlein(**kwargs):
     surface.  It is unrealisable in 3 dimensions without intersecting
     surfaces.
 
+    Parameters
+    ----------
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricKlein surface
+    pyvista.PolyData
+        ParametricKlein surface.
 
     Examples
     --------
@@ -639,20 +685,23 @@ def ParametricKuen(deltav0=None, **kwargs):
     Parameters
     ----------
     deltav0 : float, optional
-        The value to use when V == 0.
+        The value to use when ``V == 0``.
         Default is 0.05, giving the best appearance with the default settings.
         Setting it to a value less than 0.05 extrapolates the surface
         towards a pole in the -z direction.
         Setting it to 0 retains the pole whose z-value is -inf.
 
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricKuen surface
+    pyvista.PolyData
+        ParametricKuen surface.
 
     Examples
     --------
-    Create a ParametricKuen mesh
+    Create a ParametricKuen mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricKuen()
@@ -680,14 +729,17 @@ def ParametricMobius(radius=None, **kwargs):
     radius : float, optional
         The radius of the Mobius strip. Default is 1.
 
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricMobius surface
+    pyvista.PolyData
+        ParametricMobius surface.
 
     Examples
     --------
-    Create a ParametricMobius mesh
+    Create a ParametricMobius mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricMobius()
@@ -710,25 +762,27 @@ def ParametricMobius(radius=None, **kwargs):
 def ParametricPluckerConoid(n=None, **kwargs):
     """Generate Plucker's conoid surface.
 
-    ParametricPluckerConoid generates Plucker's conoid surface parametrically.
-    Plucker's conoid is a ruled surface, named after Julius Plucker. It is
-    possible to set the number of folds in this class via the parameter 'N'.
+    ParametricPluckerConoid generates Plucker's conoid surface
+    parametrically.  Plucker's conoid is a ruled surface, named after
+    Julius Plucker. It is possible to set the number of folds in this
+    class via the parameter 'n'.
 
     Parameters
     ----------
     n : int, optional
         This is the number of folds in the conoid.
 
-    vtkGetMacro(N, int);
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
 
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricPluckerConoid surface
+    pyvista.PolyData
+        ParametricPluckerConoid surface.
 
     Examples
     --------
-    Create a ParametricPluckerConoid mesh
+    Create a ParametricPluckerConoid mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricPluckerConoid()
@@ -756,14 +810,19 @@ def ParametricPseudosphere(**kwargs):
     tractrix about it's asymptote, and is a surface of constant
     negative Gaussian curvature.
 
+    Parameters
+    ----------
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricPseudosphere surface
+    pyvista.PolyData
+        ParametricPseudosphere surface.
 
     Examples
     --------
-    Create a ParametricPseudosphere mesh
+    Create a ParametricPseudosphere mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricPseudosphere()
@@ -831,14 +890,17 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
         The scaling factor for the amplitude.
         Default is 13.
 
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricRandomHills surface
+    pyvista.PolyData
+        ParametricRandomHills surface.
 
     Examples
     --------
-    Create a ParametricRandomHills mesh
+    Create a ParametricRandomHills mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricRandomHills()
@@ -887,14 +949,17 @@ def ParametricRoman(radius=None, **kwargs):
     radius : float, optional
         The radius. Default is 1.
 
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricRoman surface
+    pyvista.PolyData
+        ParametricRoman surface.
 
     Examples
     --------
-    Create a ParametricRoman mesh
+    Create a ParametricRoman mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricRoman()
@@ -940,14 +1005,17 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
     n2 : float, optional
         The "squareness" parameter in the x-y plane. Default is 1.
 
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricSuperEllipsoid surface
+    pyvista.PolyData
+        ParametricSuperEllipsoid surface.
 
     Examples
     --------
-    Create a ParametricSuperEllipsoid mesh
+    Create a ParametricSuperEllipsoid mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricSuperEllipsoid()
@@ -997,11 +1065,11 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     ----------
     ringradius : float, optional
         The radius from the center to the middle of the ring of the
-      supertoroid. Default is 1.
+        supertoroid. Default is 1.
 
     crosssectionradius : float, optional
         The radius of the cross section of ring of the supertoroid.
-      Default = 0.5.
+        Default = 0.5.
 
     xradius : float, optional
         The scaling factor for the x-axis. Default is 1.
@@ -1018,14 +1086,17 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     n2 : float, optional
         The shape of the cross section of the ring. Default is 1.
 
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricSuperToroid surface
+    pyvista.PolyData
+        ParametricSuperToroid surface.
 
     Examples
     --------
-    Create a ParametricSuperToroid mesh
+    Create a ParametricSuperToroid mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricSuperToroid()
@@ -1075,14 +1146,17 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
     crosssectionradius : float, optional
         The radius of the cross section of ring of the torus. Default is 0.5.
 
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
-    surf : pyvista.PolyData
-        ParametricTorus surface
+    pyvista.PolyData
+        ParametricTorus surface.
 
     Examples
     --------
-    Create a ParametricTorus mesh
+    Create a ParametricTorus mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricTorus()
@@ -1112,6 +1186,9 @@ def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
 
     Parameters
     ----------
+    parametric_function : vtk.vtkParametricFunction
+        Parametric function to generate mesh from.
+
     min_u : float, optional
         The minimum u-value.
 
@@ -1156,8 +1233,7 @@ def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
     parametric_function.SetClockwiseOrdering(clockwise)
 
 
-def surface_from_para(parametric_function, u_res=100, v_res=100,
-                      w_res=100):
+def surface_from_para(parametric_function, u_res=100, v_res=100, w_res=100):
     """Construct a mesh from a parametric function.
 
     Parameters
@@ -1173,6 +1249,11 @@ def surface_from_para(parametric_function, u_res=100, v_res=100,
 
     w_res : int, optional
         Resolution in the w direction.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Surface from the parametric function.
 
     """
     # convert to a mesh

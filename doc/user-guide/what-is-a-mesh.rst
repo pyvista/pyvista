@@ -152,7 +152,7 @@ that attribute.
 .. pyvista-plot::
     :context:
 
-    mesh.cell_arrays['my cell values'] = np.arange(mesh.n_cells)
+    mesh.cell_data['my cell values'] = np.arange(mesh.n_cells)
     mesh.plot(scalars='my cell values', cpos=cpos, show_edges=True)
 
 
@@ -183,7 +183,7 @@ generate cube containing 6 faces and assign each face an integer from
     :context:
 
     cube = pv.Cube()
-    cube.cell_arrays['myscalars'] = range(6)
+    cube.cell_data['myscalars'] = range(6)
     cube.plot(cmap='bwr')
 
 Note how this varies from assigning scalars to each point

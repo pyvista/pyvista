@@ -114,6 +114,12 @@ class DataSet(DataSetFilters, DataObject):
             The scalars info in an object with namedtuple semantics,
             with attributes ``association`` and ``name``.
 
+        Notes
+        -----
+        If both cell and point scalars are present and neither have
+        been set active within at the dataset level, point scalars
+        will be made active.
+
         Examples
         --------
         Create a mesh, add scalars to the mesh, and return the active
@@ -125,12 +131,6 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh['Z Height'] = mesh.points[:, 2]
         >>> mesh.active_scalars_info
         ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Z Height')
-
-        Notes
-        -----
-        If both cell and point scalars are present and neither have
-        been set active within at the dataset level, point scalars
-        will be made active.
 
         """
         field, name = self._active_scalars_info
@@ -170,6 +170,12 @@ class DataSet(DataSetFilters, DataObject):
             The vectors info in an object with namedtuple semantics,
             with attributes ``association`` and ``name``.
 
+        Notes
+        -----
+        If both cell and point vectors are present and neither have
+        been set active within at the dataset level, point vectors
+        will be made active.
+
         Examples
         --------
         Create a mesh, compute the normals inplace, set the active
@@ -182,12 +188,6 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.active_vectors_name = 'Normals'
         >>> mesh.active_vectors_info
         ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Normals')
-
-        Notes
-        -----
-        If both cell and point vectors are present and neither have
-        been set active within at the dataset level, point vectors
-        will be made active.
 
         """
         field, name = self._active_vectors_info
@@ -411,7 +411,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Active vectors represented as arrows.
 
         Examples
@@ -608,6 +608,18 @@ class DataSet(DataSetFilters, DataObject):
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
+
+        Parameters
+        ----------
+        name : str
+            Name of the scalars array to assign as active.
+
+        preference : str, optional
+            If there are two arrays of the same name associated with
+            points, cells, or field data, it will prioritize an array
+            matching this type.  Can be either ``'cell'``,
+            ``'field'``, or ``'point'``.
+
         """
         if name is None:
             self.GetCellData().SetActiveScalars(None)
@@ -631,6 +643,18 @@ class DataSet(DataSetFilters, DataObject):
         """Find the vectors by name and appropriately sets it as active.
 
         To deactivate any active vectors, pass ``None`` as the ``name``.
+
+        Parameters
+        ----------
+        name : str
+            Name of the vectors array to assign as active.
+
+        preference : str, optional
+            If there are two arrays of the same name associated with
+            points, cells, or field data, it will prioritize an array
+            matching this type.  Can be either ``'cell'``,
+            ``'field'``, or ``'point'``.
+
         """
         if name is None:
             self.GetCellData().SetActiveVectors(None)
@@ -654,6 +678,18 @@ class DataSet(DataSetFilters, DataObject):
         """Find the tensors by name and appropriately sets it as active.
 
         To deactivate any active tensors, pass ``None`` as the ``name``.
+
+        Parameters
+        ----------
+        name : str
+            Name of the tensors array to assign as active.
+
+        preference : str, optional
+            If there are two arrays of the same name associated with
+            points, cells, or field data, it will prioritize an array
+            matching this type.  Can be either ``'cell'``,
+            ``'field'``, or ``'point'``.
+
         """
         if name is None:
             self.GetCellData().SetActiveTensors(None)
@@ -749,6 +785,11 @@ class DataSet(DataSetFilters, DataObject):
             When scalars is specified, this is the preferred array type
             to search for in the dataset.  Must be either ``'point'``,
             ``'cell'``, or ``'field'``.
+
+        Returns
+        -------
+        tuple
+            ``(min, max)`` of the named array.
 
         """
         if arr_var is None:  # use active scalars array
@@ -1088,7 +1129,14 @@ class DataSet(DataSetFilters, DataObject):
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
     def copy_meta_from(self, ido: 'DataSet'):
-        """Copy pyvista meta data onto this object from another object."""
+        """Copy pyvista meta data onto this object from another object.
+
+        Parameters
+        ----------
+        ido : pyvista.DataSet
+            Dataset to copy the metadata from.
+
+        """
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
         self.clear_textures()
@@ -1160,7 +1208,7 @@ class DataSet(DataSetFilters, DataObject):
             "Use `clear_point_data` instead.",
             PyvistaDeprecationWarning
         )
-        return self.clear_point_data()
+        self.clear_point_data()
 
     def clear_point_data(self):
         """Remove all point arrays.
@@ -1193,7 +1241,7 @@ class DataSet(DataSetFilters, DataObject):
             "Use `clear_cell_data` instead.",
             PyvistaDeprecationWarning
         )
-        return self.clear_cell_data()
+        self.clear_cell_data()
 
     def clear_cell_data(self):
         """Remove all cell arrays."""
@@ -1211,7 +1259,7 @@ class DataSet(DataSetFilters, DataObject):
             "Use `clear_data` instead.",
             PyvistaDeprecationWarning
         )
-        return self.clear_data()
+        self.clear_data()
 
     def clear_data(self):
         """Remove all arrays from point/cell/field data.
@@ -1309,6 +1357,11 @@ class DataSet(DataSetFilters, DataObject):
     def n_cells(self) -> int:
         """Return the number of cells in the entire dataset.
 
+        Notes
+        -----
+        This is identical to :attr:`n_faces <pyvista.PolyData.n_faces>`
+        in :class:`pyvista.PolyData`.
+
         Examples
         --------
         Create a mesh and return the number of cells in the
@@ -1318,11 +1371,6 @@ class DataSet(DataSetFilters, DataObject):
         >>> cube = pyvista.Cube().clean()
         >>> cube.n_cells
         6
-
-        Notes
-        -----
-        This is identical to :attr:`n_faces <pyvista.PolyData.n_faces>`
-        in :class:`pyvista.PolyData`.
 
         """
         return self.GetNumberOfCells()
@@ -1414,7 +1462,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        volume : float
+        float
             Total volume of the mesh.
 
         Examples
@@ -1441,7 +1489,12 @@ class DataSet(DataSetFilters, DataObject):
         preference : str, optional
             When scalars is specified, this is the preferred array
             type to search for in the dataset.  Must be either
-            ``'point'``, ``'cell'``, or ``'field'``
+            ``'point'``, ``'cell'``, or ``'field'``.
+
+        Returns
+        -------
+        pyvista.pyvista_ndarray
+            Requested array.
 
         Examples
         --------
@@ -1484,15 +1537,15 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         name : str
             Name of the array.
-
         preference : str, optional
             When scalars is specified, this is the preferred array
             type to search for in the dataset.  Must be either
-            ``'point'``, ``'cell'``, or ``'field'``
+            ``'point'``, ``'cell'``, or ``'field'``.
 
-        err : bool, optional
-            Boolean to control whether to throw an error if array is
-            not present.
+        Returns
+        -------
+        pyvista.FieldAssociation
+            Field association of the array.
 
         Examples
         --------
@@ -1704,7 +1757,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        :class:`pyvista.UnstructuredGrid`
+        pyvista.UnstructuredGrid
             Dataset cast into a :class:`pyvista.UnstructuredGrid`.
 
         Examples
@@ -1791,7 +1844,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        index : int or np.ndarray
+        int or numpy.ndarray
             Index or indices of the cell in this mesh that is closest
             to the given point.
 

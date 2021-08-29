@@ -64,8 +64,8 @@ def get_reader(filename):
 
     Returns
     -------
-    :class:`pyvista.BaseReader`
-        A subclass of `pyvista.BaseReader` is returned based on file type.
+    pyvista.BaseReader
+        A subclass of :class:`pyvista.BaseReader` is returned based on file type.
 
     Examples
     --------
@@ -100,7 +100,11 @@ class BaseReader:
     and allowing access to the underlying vtk reader. See
     :func:`pyvista.get_reader` for an example using
     a built-in subclass.
-    
+
+    Parameters
+    ----------
+    filename : str
+        Path of the file to read.
     """
 
     _class_reader: Any = None
@@ -141,8 +145,8 @@ class BaseReader:
 
         Returns
         -------
-        :class:`pyvista.DataSet`
-
+        pyvista.DataSet
+            PyVista Dataset.
         """
         self._update()
         data = wrap(self.reader.GetOutputDataObject(0))
@@ -212,8 +216,8 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
-            Point array name
+        name : str
+            Point array name.
 
         """
         self.reader.SetPointArrayStatus(name, 1)
@@ -223,8 +227,8 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
-            Point array name
+        name : str
+            Point array name.
 
         """
         self.reader.SetPointArrayStatus(name, 0)
@@ -234,12 +238,13 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
-            Point array name
+        name : str
+            Point array name.
 
         Returns
         -------
         bool
+            Whether reading the cell array is enabled.
 
         """
         if self.reader.GetPointArrayStatus(name):
@@ -294,8 +299,8 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
-            Cell array name
+        name : str
+            Cell array name.
 
         """
         self.reader.SetCellArrayStatus(name, 1)
@@ -305,8 +310,8 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
-            Cell array name
+        name : str
+            Cell array name.
 
         """
         self.reader.SetCellArrayStatus(name, 0)
@@ -316,11 +321,13 @@ class PointCellDataSelection:
 
         Parameters
         ----------
-        name: str
+        name : str
+            Cell array name.
 
         Returns
         -------
         bool
+            Whether reading the cell array is enabled.
 
         """
         if self.reader.GetCellArrayStatus(name):
@@ -373,7 +380,8 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
     >>> sliced_mesh = mesh.slice('y')
-    >>> sliced_mesh.plot(scalars='Void Volume Fraction', cpos='xz', show_scalar_bar=False)
+    >>> sliced_mesh.plot(scalars='Void Volume Fraction', cpos='xz',
+    ...                  show_scalar_bar=False)
 
     """
 
