@@ -95,9 +95,8 @@ projecting the random_hills example data to a triangular plane.
     elevations = data.point_data["Elevation"][data_inds]
 
     # Mask points on planes
-    planes.cell_arrays["Elevation"] = np.zeros((planes.n_cells,))
-    planes.cell_arrays["Elevation"][pt_inds] = elevations
-    planes.set_active_scalars("Elevation")  # Probably not necessary, but just in case
+    planes.cell_data["Elevation"] = np.zeros((planes.n_cells,))
+    planes.cell_data["Elevation"][pt_inds] = elevations
 
     # Create axes
     axis_length = 20

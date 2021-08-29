@@ -15,7 +15,7 @@ The wrapping function is under the :mod:`pyvista.utilities` module which is
 usable from the top level of PyVista. This allows users to quickly wrap any
 VTK dataset they have as a PyVista object:
 
-.. testcode:: python
+.. code:: python
 
     import vtk
     import pyvista as pv
@@ -40,14 +40,14 @@ passing the filename:
 Accessing the Wrapped Data Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now that you have a wrapped VTK data object, you can start accessing and
-modifying the dataset! Some of the most common properties to access include the
-points and point/cell data (the data attributes assigned to the nodes or cells
-of the mesh respectively).
+Now that you have a wrapped VTK data object, you can start accessing
+and modifying the dataset! Some of the most common properties to
+access include the points and point/cell data (the data attributes
+assigned to the nodes or cells of the mesh respectively).
 
 First, check out some common meta-properties:
 
-.. testcode:: python
+.. code-block:: python
 
     import pyvista as pv
     from pyvista import examples
@@ -56,22 +56,29 @@ First, check out some common meta-properties:
 .. code-block:: python
 
     >>> mesh = examples.load_airplane()
-    >>> # Inspect how many cells are in this mesh
+
+    Inspect how many cells are in this mesh
+
     >>> mesh.n_cells
     2452
-    >>> # Inspect how many points are in this mesh
+
+    Inspect how many points are in this mesh
     >>> mesh.n_points
     1335
-    >>> # What about scalar arrays? Are there any?
+
+    What about scalar arrays? Are there any?
+
     >>> mesh.n_arrays
     0
-    >>> # What are the mesh bounds?
+
+    What are the mesh bounds?
     >>> mesh.bounds
     [139.06100463867188, 1654.9300537109375, 32.09429931640625, 1319.949951171875, -17.741199493408203, 282.1300048828125]
-    >>> # Hm, where is the center of this mesh?
+
+    Where is the center of this mesh?
+
     >>> mesh.center
     [896.9955291748047, 676.0221252441406, 132.19440269470215]
-
 
 
 Access the points by fetching the ``.points`` attribute on any
@@ -82,6 +89,7 @@ PyVista mesh as a NumPy array:
     >>> the_pts = mesh.points
     >>> isinstance(the_pts, np.ndarray)
     True
+
     >>> the_pts[0:5, :]
     array([[896.994 ,  48.7601,  82.2656],
            [906.593 ,  48.7601,  80.7452],
@@ -99,15 +107,23 @@ access an array on that dataset, then add some more data:
 .. code-block:: python
 
     >>> mesh = examples.load_uniform()
-    >>> # Fetch a data array from the point data dictionary
+
+    Fetch a data array from the point data dictionary
+
     >>> arr = mesh.point_data['Spatial Point Data']
-    >>> # Assign a new array to the cell data:
+
+    Assign a new array to the cell data:
+
     >>> mesh.cell_arrays['foo'] = np.random.rand(mesh.n_cells)
-    >>> # Don't remember if your array is point or cell data? Doesn't matter!
+
+    Don't remember if your array is point or cell data? Doesn't matter!
+
     >>> foo = mesh['foo']
     >>> isinstance(foo, np.ndarray)
     True
-    >>> # Or maybe you just want to add an array where it fits
+
+    Or maybe you just want to add an array where it fits.
+
     >>> mesh['new-array'] = np.random.rand(mesh.n_points)
 
 
@@ -137,7 +153,7 @@ instantiate a plotter using :class:`pyvista.Plotter`.  The code block
 below creates rendering window that will pause the execution of the
 code after calling :func:`show() <pyvista.Plotter.show>`.
 
-.. testcode:: python
+.. code:: python
 
     mesh = examples.load_airplane()
 

@@ -153,7 +153,7 @@ def plot_datasets():
     Examples
     --------
     >>> from pyvista import demos
-    >>> demos.plot_datasets()
+    >>> demos.plot_datasets()  # doctest:+SKIP
 
     """
     ###########################################################################

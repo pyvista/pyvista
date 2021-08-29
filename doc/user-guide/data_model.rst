@@ -108,8 +108,8 @@ To see this in practice, let's create the simplest surface represented
 as a :class:`pyvista.PolyData`. First, we need to define our points.
 
 
-Points and Arrays in PyVista
-----------------------------
+Points and Arrays within in PyVista
+-----------------------------------
 There are a variety of ways to create points within PyVista, and this section shows how to efficiently create an array of points by either:
 
 * Wrapping a VTK array
@@ -421,28 +421,28 @@ arrays containing three components.
 When plotting, we can easily display scalar data, but this data must
 be "associated" with either points or cells.  For example, we may wish
 to assign values to the cells of our example mesh, which we can do by
-accessing the `attr:`cell_arrays <pyvista.DataSet.cell_arrays>`
+accessing the `attr:`cell_data <pyvista.DataSet.cell_data>`
 attribute of our mesh.
 
 
-.. _pyvista_data_model_cell_arrays:
+.. _pyvista_data_model_cell_data:
 
-Cell Arrays
-~~~~~~~~~~~
+Cell Data
+~~~~~~~~~
 The easiest way to add scalar data to a :class:`DataSet
 <pyvista.core.dataset.DataSet>` is to use the ``[]`` operator.
 Continuing with our example above, let's assign each cell a single
 integer.  We can do this using a python :class:`list` and making it
 the same length as the number of cells in the
 :class:`pyvista.UnstructuredGrid`.  Here we create the list, add it to
-the `attr:`cell_arrays <pyvista.DataSet.cell_arrays>`, and then access
+the `attr:`cell_data <pyvista.DataSet.cell_data>`, and then access
 it using the ``[]`` operator.
 
 .. jupyter-execute::
 
    >>> simple_list = range(ugrid.n_cells)
-   >>> ugrid.cell_arrays['my-data'] = simple_list
-   >>> ugrid.cell_arrays['my-data']
+   >>> ugrid.cell_data['my-data'] = simple_list
+   >>> ugrid.cell_data['my-data']
 
 Note how we are returned a :class:`pyvista.pyvista_ndarray`.  Since
 VTK requires C arrays, PyVista will internally wrap or convert all
@@ -452,7 +452,7 @@ inputs to C arrays.  We can then plot this with:
    :context:
    :include-source: False
 
-   >>> ugrid.cell_arrays['my-data'] = range(ugrid.n_cells)
+   >>> ugrid.cell_data['my-data'] = range(ugrid.n_cells)
 
 .. pyvista-plot::
    :context:
@@ -464,7 +464,7 @@ Note how we did not have to specify which cell data to plot as the
 
 .. jupyter-execute::
 
-   >>> ugrid.cell_arrays
+   >>> ugrid.cell_data
 
 We can also labels to our plot to show which cells are assigned which
 scalars.  Note how this is in the same order as the scalars we
@@ -489,11 +489,11 @@ using ``add_array``...
    Pending #1593
 
 
-Point Arrays
-~~~~~~~~~~~~
+Point Data
+~~~~~~~~~~
 Data can be associated to points in the same manner as in
-:ref:`pyvista_data_model_cell_arrays`.  The :attr:`point_arrays
-<pyvista.DataSet.point_arrays>` attribute allows you to associate point
+:ref:`pyvista_data_model_cell_data`.  The :attr:`point_data
+<pyvista.DataSet.point_data>` attribute allows you to associate point
 data to the points of a :class:`DataSet
 <pyvista.core.dataset.DataSet>`.  Here, we will associate a simple
 list to the points using the ``[]`` operator.
@@ -501,8 +501,8 @@ list to the points using the ``[]`` operator.
 .. jupyter-execute::
 
    >>> simple_list = range(ugrid.n_points)
-   >>> ugrid.point_arrays['my-point-data'] = simple_list
-   >>> ugrid.point_arrays['my-point-data']
+   >>> ugrid.point_data['my-point-data'] = simple_list
+   >>> ugrid.point_data['my-point-data']
 
 Again, these values become the active scalars in our point arrays by
 default by using the ``[]`` operator:
@@ -510,9 +510,9 @@ default by using the ``[]`` operator:
 .. jupyter-execute::
 
    >>> simple_list = range(ugrid.n_points)
-   >>> ugrid.point_arrays
+   >>> ugrid.point_data
 
-Let's plot the point data.  Note how this varies from the cell arrays
+Let's plot the point data.  Note how this varies from the cell data
 plot; each individual point is assigned a scalar value which is
 interpolated across a cell to create a smooth color map between the
 lowest value at ``Point 0`` to the highest value at ``Point 9``.
@@ -523,7 +523,7 @@ lowest value at ``Point 0`` to the highest value at ``Point 9``.
 
    We need this here since we have to update the pyvista-plot context.
 
-   >>> ugrid.point_arrays['my-data'] = range(ugrid.n_points)
+   >>> ugrid.point_data['my-data'] = range(ugrid.n_points)
 
 .. pyvista-plot::
    :context:
@@ -536,8 +536,8 @@ lowest value at ``Point 0`` to the highest value at ``Point 9``.
    >>> pl.camera_position = 'xy'
    >>> pl.show()
 
-As in :ref:`pyvista_data_model_cell_arrays`, we can assign multiple
-arrays to :attr:`point_arrays <pyvista.DataSet.point_arrays>` using the ``add_array`` method.
+As in :ref:`pyvista_data_model_cell_data`, we can assign multiple
+arrays to :attr:`point_data <pyvista.DataSet.point_data>` using the ``add_array`` method.
 
 ..
    Show how we can add multiple cell arrays and set which ones are the
@@ -546,11 +546,11 @@ arrays to :attr:`point_arrays <pyvista.DataSet.point_arrays>` using the ``add_ar
    Pending #1593
 
 
-Field Arrays
-~~~~~~~~~~~~
-Field arrays are different from :attr:`point_arrays
-<pyvista.DataSet.point_arrays>` and :attr:`cell_arrays
-<pyvista.DataSet.cell_arrays>` in that they are not associated with
+Field Data
+~~~~~~~~~~
+Field arrays are different from :attr:`point_data
+<pyvista.DataSet.point_data>` and :attr:`cell_data
+<pyvista.DataSet.cell_data>` in that they are not associated with
 the geometry of the :class:`DataSet <pyvista.core.dataset.DataSet>`.
 This means that while it's not possible to designate the field data as
 active scalars or vectors, you can use it to "attach" arrays of any
@@ -558,15 +558,15 @@ row and columns.  You can even add string arrays in the field data:
 
 .. jupyter-execute::
 
-   >>> ugrid.field_arrays['my-field-data'] = ['hello', 'world']
-   >>> ugrid.point_arrays['my-field-data']
+   >>> ugrid.field_data['my-field-data'] = ['hello', 'world']
+   >>> ugrid.field_data['my-field-data']
 
 Note that the field data is automatically transferred to VTK C-style
 arrays and then represented as a numpy data format:
 
 .. jupyter-execute::
 
-   >>> ugrid.point_arrays
+   >>> ugrid.point_data
 
 ..
    Add a new section containing the description of scalars

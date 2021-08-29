@@ -60,7 +60,7 @@ equivalent code in pyvista is:
    Create the grid.  Note how the values must use FORTRAN ordering.
 
    >>> grid = pyvista.UniformGrid((300, 300, 1))
-   >>> grid.point_arrays["values"] = values.flatten(order="F")
+   >>> grid.point_data["values"] = values.flatten(order="F")
 
 Here, PyVista has done several things for us:
 
@@ -143,7 +143,7 @@ However, with PyVista you simply need:
    x, y = np.meshgrid(xi, xi)
    values = 127.5 + (1.0 + np.sin(x/25.0)*np.cos(y/25.0))
    grid = pv.UniformGrid((300, 300, 1))
-   grid.point_arrays["values"] = values.flatten(order="F")
+   grid.point_data["values"] = values.flatten(order="F")
    grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
 
 
@@ -258,8 +258,8 @@ In this representation we see:
 * Number of data arrays :attr:`n_arrays <pyvista.core.dataset.DataSet.n_arrays>`
 
 All other attributes like :attr:`lines <pyvista.PolyData.lines>`,
-:attr:`point_arrays <pyvista.core.dataset.DataSet.point_arrays>`, or
-:attr:`cell_arrays <pyvista.core.dataset.DataSet.cell_arrays>` can be
+:attr:`point_data <pyvista.core.dataset.DataSet.point_data>`, or
+:attr:`cell_data <pyvista.core.dataset.DataSet.cell_data>` can be
 accessed directly from the object.  This approach was chosen to allow
 for a brief summary showing key parts of the :class:`pyvista.DataSet
 <pyvista.core.dataset.DataSet>` without overwhelming the user.
