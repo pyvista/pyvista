@@ -64,8 +64,8 @@ def get_reader(filename):
 
     Returns
     -------
-    :class:`pyvista.BaseReader`
-        A subclass of `pyvista.BaseReader` is returned based on file type.
+    pyvista.BaseReader
+        A subclass of :class:`pyvista.BaseReader` is returned based on file type.
 
     Examples
     --------
@@ -145,7 +145,7 @@ class BaseReader:
 
         Returns
         -------
-        :class:`pyvista.DataSet`
+        pyvista.DataSet
             PyVista Dataset.
         """
         self._update()

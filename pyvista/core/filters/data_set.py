@@ -3804,7 +3804,7 @@ class DataSetFilters:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             Indices of the surface points.
 
         Examples

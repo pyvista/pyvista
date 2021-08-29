@@ -179,7 +179,7 @@ def read_legacy(filename):
 
     Returns
     -------
-    :class:`pyvista.DataSet`
+    pyvista.DataSet
         Wrapped pyvista mesh.
 
     Notes
@@ -304,7 +304,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
 
     Returns
     -------
-    :class:`pyvista.DataSet`
+    pyvista.DataSet
         Wrapped PyVista dataset.
 
     Examples
@@ -397,7 +397,7 @@ def read_texture(filename, attrs=None):
 
     Returns
     -------
-    :class:`pyvista.Texture`
+    pyvista.Texture
         PyVista texture object.
 
     Examples
@@ -470,7 +470,7 @@ def read_exodus(filename,
 
     Returns
     -------
-    :class:`pyvista.DataSet`
+    pyvista.DataSet
         Wrapped PyVista dataset.
 
     Examples
@@ -541,7 +541,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
 
     Returns
     -------
-    :class:`pyvista.MultiBlock`
+    pyvista.MultiBlock
         Data read from the file.
 
     """

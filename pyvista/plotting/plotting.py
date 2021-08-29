@@ -2332,8 +2332,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        actor: vtk.vtkVolume
-            VTK volume of the input data.
+        vtk.vtkActor
+            VTK actor of the volume.
 
         """
         # Handle default arguments

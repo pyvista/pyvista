@@ -411,7 +411,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        :class:`pyvista.PolyData`
+        pyvista.PolyData
             Active vectors represented as arrows.
 
         Examples
@@ -1462,7 +1462,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        volume : float
+        float
             Total volume of the mesh.
 
         Examples

@@ -26,7 +26,7 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Returns
     -------
-    :class:`pyvista.core.pointset.UnstructuredGrid`
+    pyvista.UnstructuredGrid
         Voxelized unstructured grid of the original mesh.
 
     Examples
@@ -119,15 +119,15 @@ def grid_from_sph_coords(theta, phi, r):
     Parameters
     ----------
     theta: array-like
-        Azimuthal angle in degrees [0, 360)
+        Azimuthal angle in degrees ``[0, 360]``.
     phi: array-like
-        Polar (zenith) angle in degrees [0, 180]
+        Polar (zenith) angle in degrees ``[0, 180]``.
     r: array-like
-        Distance (radius) from the point of origin
+        Distance (radius) from the point of origin.
 
     Returns
     -------
-    :class:`pyvista.StructuredGrid`
+    pyvista.StructuredGrid
         Structured grid.
 
     """
@@ -147,22 +147,22 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
 
     Parameters
     ----------
-    theta: array-like
-        Azimuthal angle in degrees [0, 360) of shape (M,)
-    phi: array-like
-        Polar (zenith) angle in degrees [0, 180] of shape (N,)
-    r: array-like
+    theta : sequence
+        Azimuthal angle in degrees ``[0, 360]`` of shape (M,)
+    phi : sequence
+        Polar (zenith) angle in degrees ``[0, 180]`` of shape (N,)
+    r : sequence
         Distance (radius) from the point of origin of shape (P,)
-    u: array-like
+    u : sequence
         X-component of the vector of shape (P, N, M)
-    v: array-like
+    v : sequence
         Y-component of the vector of shape (P, N, M)
-    w: array-like
+    w : sequence
         Z-component of the vector of shape (P, N, M)
 
     Returns
     -------
-    u_t, v_t, w_t: :class:`numpy.ndarray`
+    u_t, v_t, w_t : :class:`numpy.ndarray`
         Arrays of transformed x-, y-, z-components, respectively.
 
     """

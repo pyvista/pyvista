@@ -43,7 +43,7 @@ class PointSet(DataSet):
 
         Returns
         -------
-        center : numpy.ndarray, float
+        numpy.ndarray
             Coordinates for the center of mass.
 
         Examples
@@ -1133,7 +1133,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Returns
         -------
-        cells_dict : dict
+        dict
             A dictionary mapping containing all cells of this unstructured grid.
             Structure: vtk_enum_type (int) -> cells (np.ndarray)
 

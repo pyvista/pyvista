@@ -366,7 +366,7 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
 
     Returns
     --------
-    plotter : itkwidgets.Viewer
+    itkwidgets.Viewer
         ITKwidgets viewer.
     """
     pl = pyvista.PlotterITK()

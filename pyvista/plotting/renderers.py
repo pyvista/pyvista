@@ -306,7 +306,7 @@ class Renderers():
 
         Returns
         -------
-        :class:`pyvista.BackgroundRenderer`
+        pyvista.BackgroundRenderer
             Newly created background renderer.
 
         """

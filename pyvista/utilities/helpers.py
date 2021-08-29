@@ -394,7 +394,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
 
     Returns
     -------
-    :class:`pyvista.FieldAssociation`
+    pyvista.FieldAssociation
         Association of the array
 
     """

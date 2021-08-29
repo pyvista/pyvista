@@ -83,7 +83,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Kochanek spline.
 
     Examples

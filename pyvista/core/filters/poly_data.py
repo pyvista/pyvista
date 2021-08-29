@@ -547,7 +547,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        :class:`pyvista.CameraPosition`
+        pyvista.CameraPosition
             List of camera position, focal point, and view up.
             Returned when ``return_cpos`` is ``True``.
 

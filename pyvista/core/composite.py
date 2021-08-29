@@ -198,7 +198,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         Returns
         -------
-        volume : float
+        float
             Total volume of the mesh.
 
         Examples

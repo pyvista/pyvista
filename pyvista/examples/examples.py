@@ -171,7 +171,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
 
     Returns
     -------
-    points : np.ndarray
+    numpy.ndarray
         Position of points at last frame.
 
     """
@@ -289,7 +289,7 @@ def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
 
     Returns
     -------
-    grid : pyvista.ExplicitStructuredGrid
+    pyvista.ExplicitStructuredGrid
         An explicit structured grid.
 
     Examples
