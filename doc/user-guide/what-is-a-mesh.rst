@@ -131,12 +131,8 @@ mesh. In PyVista, we work with both point data and cell data and allow
 easy access to data dictionaries to hold arrays for attributes that
 live either on all points or on all cells of a mesh. These attributes
 can be accessed by dictionaries attached to any PyVista mesh called
-<<<<<<< HEAD
-:attr:`point_arrays <pyvista.core.dataset.DataSet.point_arrays>` or
-:attr:`cell_arrays <pyvista.core.dataset.DataSet.cell_arrays>`.
-=======
-``.point_data`` or ``.cell_data``.
->>>>>>> main
+:attr:`point_data <pyvista.core.dataset.DataSet.point_data>` or
+:attr:`cell_data <pyvista.core.dataset.DataSet.cell_data>`.
 
 
 Point data refers to arrays of values (scalars, vectors, etc.) that
