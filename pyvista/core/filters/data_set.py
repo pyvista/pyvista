@@ -1974,6 +1974,14 @@ class DataSetFilters:
         This method is an alias for
         :func:`pyvista.DataSetFilters.cell_data_to_point_data`.
 
+        Parameters
+        ----------
+        pass_cell_data : bool, optional
+            If enabled, pass the input cell data through to the output.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         """
         return DataSetFilters.cell_data_to_point_data(self, pass_cell_data=pass_cell_data, progress_bar=progress_bar)
 
@@ -2035,6 +2043,14 @@ class DataSetFilters:
 
         This method is an alias for
         :func:`pyvista.DataSetFilters.point_data_to_cell_data`.
+
+        Parameters
+        ----------
+        pass_point_data : bool, optional
+            If enabled, pass the input point data through to the output.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
 
         """
         return DataSetFilters.point_data_to_cell_data(self, pass_point_data=pass_point_data, progress_bar=progress_bar)
@@ -2383,12 +2399,6 @@ class DataSetFilters:
         radius : float, optional
             Specify the radius within which the basis points must lie.
 
-        n_points : int, optional
-            If given, specifies the number of the closest points used to form
-            the interpolation basis. This will invalidate the radius argument
-            in favor of an N closest points approach. This typically has poorer
-            results.
-
         strategy : str, optional
             Specify a strategy to use when encountering a "null" point during
             the interpolation process. Null points occur when the local
@@ -2405,6 +2415,12 @@ class DataSetFilters:
             Specify the null point value. When a null point is encountered
             then all components of each null tuple are set to this value. By
             default the null value is set to zero.
+
+        n_points : int, optional
+            If given, specifies the number of the closest points used to form
+            the interpolation basis. This will invalidate the radius argument
+            in favor of an N closest points approach. This typically has poorer
+            results.
 
         pass_cell_arrays : bool, optional
             Preserve input mesh's original cell data arrays.
@@ -3469,13 +3485,13 @@ class DataSetFilters:
         ind : np.ndarray
             Numpy array of cell indices to be extracted.
 
-        Returns
-        -------
-        subgrid : pyvista.UnstructuredGrid
-            Subselected grid.
-
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Subselected grid.
 
         Examples
         --------

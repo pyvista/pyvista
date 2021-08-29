@@ -332,7 +332,22 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
 
     def add_border(self, color=[1, 1, 1], width=2.0):
-        """Add borders around the frame."""
+        """Add borders around the frame.
+
+        Parameters
+        ----------
+        color : str or sequence, optional
+            Color of the border.
+
+        width : float, optional
+            Width of the border.
+
+        Returns
+        -------
+        vtk.vtkActor2D
+            Border actor.
+
+        """
         points = np.array([[1., 1., 0.],
                            [0., 1., 0.],
                            [0., 0., 0.],
@@ -380,7 +395,10 @@ class Renderer(_vtk.vtkRenderer):
             Vtk mapper or vtk actor to be added.
 
         reset_camera : bool, optional
-            Resets the camera when true.
+            Resets the camera when ``True``.
+
+        name : str, optional
+            Name to assign to the actor.  Defaults to the memory address.
 
         culling : str, optional
             Does not render faces that are culled. Options are
@@ -388,6 +406,14 @@ class Renderer(_vtk.vtkRenderer):
             surface meshes, especially when edges are visible, but can
             cause flat meshes to be partially displayed.  Default
             ``False``.
+
+        pickable : bool, optional
+            Whether to allow this actor to be pickable within the
+            render window.
+
+        render : bool, optional
+            If the render window is being shown, trigger a render
+            after adding the actor.
 
         Returns
         -------
@@ -583,17 +609,16 @@ class Renderer(_vtk.vtkRenderer):
         line_width : int, optional
             The width of the marker lines.
 
-        box : bool, optional
-            Show a box orientation marker. Use ``box_args`` to adjust.
-            See :func:`pyvista.create_axes_orientation_box` for details.
+        color : str or sequence, optional
+            Color of the labels.
 
-        x_color : str, optional
+        x_color : str or sequence, optional
             Color used for the x axis arrow.  Defaults to theme axes parameters.
 
-        y_color : str, optional
+        y_color : str or sequence, optional
             Color used for the y axis arrow.  Defaults to theme axes parameters.
 
-        z_color : str, optional
+        z_color : str or sequence, optional
             Color used for the z axis arrow.  Defaults to theme axes parameters.
 
         xlabel : str, optional
@@ -609,8 +634,8 @@ class Renderer(_vtk.vtkRenderer):
             Enable or disable the text labels for the axes.
 
         box : bool, optional
-            When ``True`` use the axes orientation widget instead of
-            the default arrows. Defaults to theme axes parameters.
+            Show a box orientation marker. Use ``box_args`` to adjust.
+            See :func:`pyvista.create_axes_orientation_box` for details.
 
         box_args : dict, optional
             Parameters for the orientation box widget when
@@ -822,6 +847,10 @@ class Renderer(_vtk.vtkRenderer):
             An optional percent padding along each axial direction to
             cushion the datasets in the scene from the axes
             annotations. Defaults to 0 (no padding).
+
+        render : bool, optional
+            If the render window is being shown, trigger a render
+            after showing bounds.
 
         Returns
         -------
@@ -1333,7 +1362,14 @@ class Renderer(_vtk.vtkRenderer):
             self.Modified()
 
     def add_light(self, light):
-        """Add a light to the renderer."""
+        """Add a light to the renderer.
+
+        Parameters
+        ----------
+        light : vtk.vtkLight or pyvista.Light
+            Light to add.
+
+        """
         # convert from a vtk type if applicable
         if isinstance(light, _vtk.vtkLight) and not isinstance(light, pyvista.Light):
             light = pyvista.Light.from_vtk(light)
@@ -1426,6 +1462,10 @@ class Renderer(_vtk.vtkRenderer):
         ----------
         point : sequence
             Cartesian point to focus on in the form of ``[x, y, z]``.
+
+        reset : bool, optional
+            Whether to reset the camera after setting the camera
+            position.
 
         Examples
         --------
@@ -1811,14 +1851,24 @@ class Renderer(_vtk.vtkRenderer):
         return self.reset_camera()
 
     def view_vector(self, vector, viewup=None):
-        """Point the camera in the direction of the given vector."""
+        """Point the camera in the direction of the given vector.
+
+        Parameters
+        ----------
+        vector : sequence
+            Three item sequence to point the camera in.
+
+        viewup : sequence, optional
+            Three item sequence describing the view up of the camera.
+
+        """
         focal_pt = self.center
         if viewup is None:
             viewup = self._theme.camera['viewup']
         cpos = CameraPosition(vector + np.array(focal_pt),
                 focal_pt, viewup)
         self.camera_position = cpos
-        return self.reset_camera()
+        self.reset_camera()
 
     def view_xy(self, negative=False):
         """View the XY plane.
@@ -2108,6 +2158,11 @@ class Renderer(_vtk.vtkRenderer):
         must be expressed in linear color space. If the texture is in
         sRGB color space, set the color flag on the texture or set the
         argument isSRGB to true.
+
+        Parameters
+        ----------
+        texture : vtk.vtkTexture
+            Texture.
         """
         self.UseImageBasedLightingOn()
         self.SetEnvironmentTexture(texture)
@@ -2126,7 +2181,15 @@ class Renderer(_vtk.vtkRenderer):
             self._empty_str = None
 
     def deep_clean(self, render=False):
-        """Clean the renderer of the memory."""
+        """Clean the renderer of the memory.
+
+        Parameters
+        ----------
+        render : bool, optional
+            Render the render window after removing the bounding box
+            (if applicable).
+
+        """
         if hasattr(self, 'cube_axes_actor'):
             del self.cube_axes_actor
         if hasattr(self, 'edl_pass'):

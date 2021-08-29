@@ -83,14 +83,13 @@ numpydoc_validation_checks = {
     "GL01",  # Contradicts numpydoc examples
     "GL02",  # Permit a blank line after the end of our docstring
     "GL03",  # Considering enforcing
-    "PR01",  # in-progress
     "RT01",  # Disabled as we will not enforce return sections for None
     "SA01",  # Not all docstrings need a see also
     "SA04",  # See also section does not need descriptions
     "SS05",  # Appears to be broken.
-    "ES01",  # not all docstrings need an extend summary.
-    "EX01",  # Will eventually enforce
-    "YD01",  # No plan to enforce
+    "ES01",  # Not all docstrings need an extend summary.
+    "EX01",  # Examples: Will eventually enforce
+    "YD01",  # Yields: No plan to enforce
 }
 numpydoc_validation_exclude = {  # set of regex
     r'\.Plotter$',  # Issue with class parameter documentation
@@ -125,12 +124,29 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.StructuredGrid$',
     r'\.PointGrid$',
 
-    # inherit from BaseReader
-    r'\.Reader$',
+    # classes inherit from BaseReader
+    r'\.*Reader$',
+
+    # internal
+    r'\.Renderer$',
 
     # deprecated
-    r'\.PolyDataFilters.boolean_add$'
-    r'\.PolyDataFilters.boolean_cut$'
+    r'\.*boolean_add$',
+    r'\.*boolean_cut$',
+    r'\.*add_field_array$',
+
+    # methods we probably should make private
+    r'\.store_click_position$',
+    r'\.store_mouse_position$',
+    r'\.*fly_to_mouse_position$',
+    r'\.*key_press_event$',
+    r'\.*left_button_down$',
+
+    # MISC
+    r'\.*PlotterITK$',
+    r'\.*MultiBlock.copy_meta_from$',
+    r'\.DataObject.copy_meta_from$',
+
 }
 
 

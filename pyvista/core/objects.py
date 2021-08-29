@@ -126,11 +126,25 @@ class Table(_vtk.vtkTable, DataObject):
         return self.row_arrays.values()
 
     def update(self, data):
-        """Set the table data."""
+        """Set the table data using a dict-like update.
+
+        Parameters
+        ----------
+        data : DataSetAttributes
+            Other dataset attributes to update from.
+
+        """
         self.row_arrays.update(data)
 
     def pop(self, name):
-        """Pop off an array by the specified name."""
+        """Pop off an array by the specified name.
+
+        Parameters
+        ----------
+        name : int or str
+            Index or name of the row array.
+
+        """
         return self.row_arrays.pop(name)
 
     def _add_row_array(self, scalars, name, deep=True):
@@ -159,7 +173,13 @@ class Table(_vtk.vtkTable, DataObject):
         return self.keys()
 
     def get(self, index):
-        """Get an array by its name."""
+        """Get an array by its name.
+
+        Parameters
+        ----------
+        index : int or str
+            Index or name of the row.
+        """
         return self[index]
 
     def __setitem__(self, name, scalars):

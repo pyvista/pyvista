@@ -1174,7 +1174,14 @@ class Light(vtkLight):
         return self._renderers
 
     def add_renderer(self, renderer):
-        """Attach a renderer to this light."""
+        """Attach a renderer to this light.
+
+        Parameters
+        ----------
+        renderer : vtk.vtkRenderer
+            Renderer.
+
+        """
         # quick check to avoid adding twice
         if renderer not in self.renderers:
             self.renderers.append(renderer)

@@ -1163,8 +1163,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def increment_point_size_and_line_width(self, increment):
         """Increment point size and line width of all actors.
 
-        For every actor in the scene, increment both its point size and
-        line width by the given value.
+        For every actor in the scene, increment both its point size
+        and line width by the given value.
+
+        Parameters
+        ----------
+        increment : float
+            Amount to increment point size and line width.
 
         """
         for renderer in self.renderers:
@@ -3531,6 +3536,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mag : float, optional
             Amount to scale the direction vectors.
 
+        **kwargs : dict, optional
+            See :func:`pyvista.BasePlotter.add_mesh` for optional
+            keyword arguments.
+
         Examples
         --------
         Plot a random field of vectors and save a screenshot of it.
@@ -3596,8 +3605,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if return_img:
             return image
 
-    def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True):
+    def save_graphic(self, filename, title='PyVista Export',
+                     raster=True, painter=True):
         """Save a screenshot of the rendering window as a graphic file.
+
+        This can be helpful for publication documents.
 
         The supported formats are: 
 
@@ -3607,6 +3619,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         * ``'.pdf'``
         * ``'.tex'``
 
+        Parameters
+        ----------
+        filename : str
+            Path to fsave the graphic file to.
+
+        title : str, optional
+            Title to use within the file properties.
+
+        raster : bool, optional
+            Attempt to write 3D properties as a raster image.
+
+        painter : bool, optional
+            Configure the exporter to expect a painter-ordered 2D
+            rendering, that is, a rendering at a fixed depth where
+            primitives are drawn from the bottom up.
+
         """
         if not hasattr(self, 'ren_win'):
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
@@ -3614,9 +3642,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         filename = os.path.abspath(os.path.expanduser(filename))
         extension = pyvista.fileio.get_ext(filename)
-        valid = ['.svg', '.eps', '.ps', '.pdf', '.tex']
-        if extension not in valid:
-            raise ValueError(f"Extension ({extension}) is an invalid choice. Valid options include: {', '.join(valid)}")
+
         writer = _vtk.lazy_vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
@@ -3625,6 +3651,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             '.pdf': writer.SetFileFormatToPDF,
             '.tex': writer.SetFileFormatToTeX,
         }
+        if extension not in modes:
+            raise ValueError(f"Extension ({extension}) is an invalid choice.\n\n"
+                             f"Valid options include: {', '.join(modes.keys())}")
         writer.CompressOff()
         writer.SetFilePrefix(filename.replace(extension, ''))
         writer.SetInput(self.ren_win)
@@ -3634,7 +3663,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if painter:
             writer.UsePainterSettings()
         writer.Update()
-        return
 
     def screenshot(self, filename=None, transparent_background=None,
                    return_img=True, window_size=None):
@@ -4483,10 +4511,6 @@ class Plotter(BasePlotter):
             ``window_size``.  Defaults to
             :attr:`pyvista.global_theme.full_screen <pyvista.themes.DefaultTheme.full_screen>`.
 
-        cpos : list(tuple(floats))
-            The camera position.  You can also set this with
-            :attr:`Plotter.camera_position`.
-
         screenshot : str or bool, optional
             Take a screenshot of the initial state of the plot.
             If a string, it specifies the path to which the screenshot
@@ -4500,6 +4524,10 @@ class Plotter(BasePlotter):
         return_img : bool
             Returns a numpy array representing the last image along
             with the camera position.
+
+        cpos : list(tuple(floats))
+            The camera position.  You can also set this with
+            :attr:`Plotter.camera_position`.
 
         use_ipyvtk : bool, optional
             Deprecated.  Instead, set the backend either globally with
@@ -4526,6 +4554,9 @@ class Plotter(BasePlotter):
             Return the last camera position from the render window
             when enabled.  Default based on theme setting.  See
             :attr:`pyvista.themes.DefaultTheme.return_cpos`.
+
+        **kwargs : dict, optional
+            Developer keyword arguments.
 
         Returns
         -------

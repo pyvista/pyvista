@@ -237,6 +237,9 @@ class PlotterITK():
         show_bounds : bool, optional
             Show the bounding box.  Default ``False``.
 
+        **kwargs : dict, optional
+            Additional arguments to pass to ``itkwidgets.Viewer``.
+
         Returns
         -------
         itkwidgets.Viewer

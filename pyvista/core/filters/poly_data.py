@@ -1515,6 +1515,10 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        **kwargs : dict, optional
+            Accepts for ``merge_tol`` to replace the ``tolerance``
+            keyword argument.  This may be depricated in future.
+
         Returns
         -------
         pyvista.PolyData
@@ -1945,9 +1949,13 @@ class PolyDataFilters(DataSetFilters):
             Color of the arrows.  Defaults to
             :attr:`pyvista.themes.DefaultTheme.edge_color`.
 
+        **kwargs : dict, optional
+            All additional keyword arguments will be passed to
+            :func:`pyvista.BasePlotter.add_mesh`.
+
         Returns
         -------
-        :class:`pyvista.CameraPosition`
+        pyvista.CameraPosition
             List of camera position, focal point, and view up.
             Returned when ``return_cpos`` is ``True``.
 
@@ -2305,6 +2313,10 @@ class PolyDataFilters(DataSetFilters):
             If ``True``, generate texture coordinates along the
             ribbon. This can also be specified to generate the texture
             coordinates with either ``'length'`` or ``'normalized'``.
+
+        preference : str, optional
+            The field preference when searching for the scalars array by
+            name.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.

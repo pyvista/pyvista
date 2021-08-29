@@ -40,11 +40,25 @@ class DataObject:
         return super().__getattribute__(item)
 
     def shallow_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
-        """Shallow copy the given mesh to this mesh."""
+        """Shallow copy the given mesh to this mesh.
+
+        Parameters
+        ----------
+        to_copy : pyvista.DataObject or vtk.vtkDataObject
+            Data object to perform a shallow copy from.
+
+        """
         return self.ShallowCopy(to_copy)
 
     def deep_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
-        """Overwrite this mesh with the given mesh as a deep copy."""
+        """Overwrite this data object with another data object as a deep copy.
+
+        Parameters
+        ----------
+        to_copy : pyvista.DataObject or vtk.vtkDataObject
+            Data object to perform a deep copy from.
+
+        """
         return self.DeepCopy(to_copy)
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
@@ -133,7 +147,16 @@ class DataObject:
     def head(self, display=True, html: bool = None):
         """Return the header stats of this dataset.
 
-        If in IPython, this will be formatted to HTML. Otherwise returns a console friendly string.
+        If in IPython, this will be formatted to HTML. Otherwise
+        returns a console friendly string.
+
+        Parameters
+        ----------
+        display : bool, optional
+            Display this header in iPython.
+
+        html : bool, optional
+            Generate the output as HTML.
 
         """
         # Generate the output
@@ -251,7 +274,7 @@ class DataObject:
         """Add field data.
 
         .. deprecated:: 0.32.0
-           Use :func:`DataObject.clear_point_arrays` instead.
+           Use :func:`DataObject.add_field_data` instead.
         """
         warnings.warn( "Use of `clear_point_arrays` is deprecated. "
             "Use `clear_point_data` instead.",
@@ -259,12 +282,24 @@ class DataObject:
         )
         return self.clear_point_data()
 
-    def add_field_data(self, scalars: np.ndarray, name: str, deep=True):
+    def add_field_data(self, array: np.ndarray, name: str, deep=True):
         """Add field data.
 
         Use field data when size of the data you wish to associate
         with the dataset does not match the number of points or cells
         of the dataset.
+
+        Parameters
+        ----------
+        array : sequence
+            Array of data to add to the dataset as a field array.
+
+        name : str
+            Name to assign the field array.
+
+        deep : bool, optional
+            Perform a deep copy of the data when adding it to the
+            dataset.  Default ``True``.
 
         Examples
         --------
@@ -295,7 +330,7 @@ class DataObject:
         pyvista_ndarray([1, 2, 3])
 
         """
-        self.field_data.set_array(scalars, name, deep_copy=deep)
+        self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
     def field_arrays(self) -> DataSetAttributes:  # pragma: no cover
@@ -408,6 +443,11 @@ class DataObject:
 
     def copy_structure(self, dataset: _vtk.vtkDataSet):
         """Copy the structure (geometry and topology) of the input dataset object.
+
+        Parameters
+        ----------
+        dataset : vtk.vtkDataSet
+            Dataset to copy the geometry and topology from.
 
         Examples
         --------

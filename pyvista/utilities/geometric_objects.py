@@ -54,8 +54,7 @@ def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
 
 
 def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
-             radius=0.5, height=1.0, resolution=100, capping=True,
-             **kwargs):
+             radius=0.5, height=1.0, resolution=100, capping=True):
     """Create the surface of a cylinder.
 
     See also :func:`pyvista.CylinderStructured`.
@@ -93,8 +92,6 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
     ...                             radius=1, height=2)
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
     """
-    capping = kwargs.pop('cap_ends', capping)
-    assert_empty_kwargs(**kwargs)
     cylinderSource = _vtk.vtkCylinderSource()
     cylinderSource.SetRadius(radius)
     cylinderSource.SetHeight(height)

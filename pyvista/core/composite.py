@@ -214,7 +214,14 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         return sum(block.volume for block in self if block)
 
     def get_data_range(self, name: str) -> Tuple[float, float]:  # type: ignore
-        """Get the min/max of an array given its name across all blocks."""
+        """Get the min/max of an array given its name across all blocks.
+
+        Parameters
+        ----------
+        name : str
+            Name of the array.
+
+        """
         mini, maxi = np.inf, -np.inf
         for i in range(self.n_blocks):
             data = self[i]
@@ -230,6 +237,16 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     def get_index_by_name(self, name: str) -> int:
         """Find the index number by block name.
+
+        Parameters
+        ----------
+        name : str
+            Name of the block.
+
+        Returns
+        -------
+        int
+            Index of the block.
 
         Examples
         --------
@@ -280,8 +297,13 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             self.refs.append(data)
         return data
 
-    def append(self, data: DataSet):
+    def append(self, dataset: DataSet):
         """Add a data set to the next block index.
+
+        Parameters
+        ----------
+        dataset : pyvista.DataSet
+            Dataset to append to this multi-block.
 
         Examples
         --------
@@ -294,19 +316,32 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         """
         index = self.n_blocks  # note off by one so use as index
-        self[index] = data
-        self.refs.append(data)
+        self[index] = dataset
+        self.refs.append(dataset)
 
     def get(self, index: Union[int, str]) -> Optional['MultiBlock']:
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
 
+        Parameters
+        ----------
+        index : int or str
+            Index or name of the dataset within the multiblock.
+
         """
         return self[index]
 
     def set_block_name(self, index: int, name: str):
         """Set a block's string name at the specified index.
+
+        Parameters
+        ----------
+        index : int
+            Index or the dataset within the multiblock.
+
+        name : str
+            Name to assign to the block at ``index``.
 
         Examples
         --------
@@ -326,6 +361,16 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     def get_block_name(self, index: int) -> Optional[str]:
         """Return the string name of the block at the given index.
+
+        Parameters
+        ----------
+        index : int
+            Index of the block to get the name of.
+
+        Returns
+        -------
+        str
+            Name of the block at the given index.
 
         Examples
         --------
@@ -425,7 +470,14 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     __next__ = next
 
     def pop(self, index: Union[int, str]) -> Optional['MultiBlock']:
-        """Pop off a block at the specified index."""
+        """Pop off a block at the specified index.
+
+        Parameters
+        ----------
+        index : int or str
+            Index or name of the dataset within the multiblock.
+
+        """
         data = self[index]
         del self[index]
         return data

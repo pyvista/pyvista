@@ -608,6 +608,18 @@ class DataSet(DataSetFilters, DataObject):
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
+
+        Parameters
+        ----------
+        name : str
+            Name of the scalars array to assign as active.
+
+        preference : str, optional
+            If there are two arrays of the same name associated with
+            points, cells, or field data, it will prioritize an array
+            matching this type.  Can be either ``'cell'``,
+            ``'field'``, or ``'point'``.
+
         """
         if name is None:
             self.GetCellData().SetActiveScalars(None)
@@ -631,6 +643,18 @@ class DataSet(DataSetFilters, DataObject):
         """Find the vectors by name and appropriately sets it as active.
 
         To deactivate any active vectors, pass ``None`` as the ``name``.
+
+        Parameters
+        ----------
+        name : str
+            Name of the vectors array to assign as active.
+
+        preference : str, optional
+            If there are two arrays of the same name associated with
+            points, cells, or field data, it will prioritize an array
+            matching this type.  Can be either ``'cell'``,
+            ``'field'``, or ``'point'``.
+
         """
         if name is None:
             self.GetCellData().SetActiveVectors(None)
@@ -654,6 +678,18 @@ class DataSet(DataSetFilters, DataObject):
         """Find the tensors by name and appropriately sets it as active.
 
         To deactivate any active tensors, pass ``None`` as the ``name``.
+
+        Parameters
+        ----------
+        name : str
+            Name of the tensors array to assign as active.
+
+        preference : str, optional
+            If there are two arrays of the same name associated with
+            points, cells, or field data, it will prioritize an array
+            matching this type.  Can be either ``'cell'``,
+            ``'field'``, or ``'point'``.
+
         """
         if name is None:
             self.GetCellData().SetActiveTensors(None)
@@ -1088,7 +1124,14 @@ class DataSet(DataSetFilters, DataObject):
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
     def copy_meta_from(self, ido: 'DataSet'):
-        """Copy pyvista meta data onto this object from another object."""
+        """Copy pyvista meta data onto this object from another object.
+
+        Parameters
+        ----------
+        ido : pyvista.DataSet
+            Dataset to copy the metadata from.
+
+        """
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
         self.clear_textures()

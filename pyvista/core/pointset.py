@@ -165,6 +165,11 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         original arrays can be modified outside the mesh without
         affecting the mesh. Default is ``False``.
 
+    force_ext : str, optional
+        If initializing from a file, force the reader to treat the
+        file as if it had this extension as opposed to the one in the
+        file.
+
     Examples
     --------
     >>> import vtk

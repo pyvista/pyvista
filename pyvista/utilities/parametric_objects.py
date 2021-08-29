@@ -1186,6 +1186,9 @@ def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
 
     Parameters
     ----------
+    parametric_function : vtk.vtkParametricFunction
+        Parametric function to generate mesh from.
+
     min_u : float, optional
         The minimum u-value.
 

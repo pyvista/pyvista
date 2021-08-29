@@ -16,7 +16,14 @@ import collections
 
 
 def set_error_output_file(filename):
-    """Set a file to write out the VTK errors."""
+    """Set a file to write out the VTK errors.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the file to write VTK errors to.
+
+    """
     filename = os.path.abspath(os.path.expanduser(filename))
     fileOutputWindow = _vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)

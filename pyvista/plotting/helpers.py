@@ -46,6 +46,9 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
         Allows user to pan and move figure.  Defaults to
         :attr:`pyvista.global_theme.interactive <pyvista.themes.DefaultTheme.interactive>`.
 
+    cpos : list, optional
+        List of camera position, focal point, and view up.
+
     window_size : list, optional
         Window size in pixels.  Defaults to global theme
         :attr:`pyvista.global_theme.window_size <pyvista.themes.DefaultTheme.window_size>`.
@@ -53,19 +56,32 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
     show_bounds : bool, optional
         Shows mesh bounds when ``True``.  Default ``False``.
 
-    notebook : bool, optional
-        When ``True``, the resulting plot is placed inline a jupyter
-        notebook.  Assumes a jupyter console is active.
-
     show_axes : bool, optional
         Shows a vtk axes widget.  If ``None``, enabled according to
         :attr:`pyvista.global_theme.axes.show <pyvista.themes._AxesConfig.show>`.
 
+    notebook : bool, optional
+        When ``True``, the resulting plot is placed inline a jupyter
+        notebook.  Assumes a jupyter console is active.
+
+    background : str or sequence, optional
+        Color of the background.
+
     text : str, optional
         Adds text at the bottom of the plot.
 
+    return_img : bool, optional
+        Returns numpy array of the last image rendered.
+
+    eye_dome_lighting : bool, optional
+        Enables eye dome lighting.
+
     volume : bool, optional
-        Use the :func:`Plotter.add_volume() <pyvista.Plotter.add_volume>` method for volume rendering.
+        Use the :func:`Plotter.add_volume()
+        <pyvista.Plotter.add_volume>` method for volume rendering.
+
+    parallel_projection : bool, optional
+        Enable parallel projection.
 
     use_ipyvtk : bool, optional
         Deprecated.  Instead, set the backend either globally with
@@ -84,9 +100,6 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
         This can also be set globally with
         :func:`pyvista.set_jupyter_backend`.
 
-    jupyter_kwargs : dict, optional
-        Keyword arguments for the Jupyter notebook plotting backend.
-
     return_viewer : bool, optional
         Return the jupyterlab viewer, scene, or display object
         when plotting with jupyter notebook.
@@ -94,6 +107,9 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
     return_cpos : bool, optional
         Return the last camera position from the render window
         when enabled.  Defaults to value in theme settings.
+
+    jupyter_kwargs : dict, optional
+        Keyword arguments for the Jupyter notebook plotting backend.
 
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.

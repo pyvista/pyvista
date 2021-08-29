@@ -2099,6 +2099,11 @@ class DefaultTheme(_ThemeConfig):
     def save(self, filename):
         """Serialize this theme to a json file.
 
+        Parameters
+        ----------
+        filename : str
+            Path to save the theme to.  Should end in ``'.json'``.
+
         Examples
         --------
         Export and then load back in a theme.
