@@ -1655,5 +1655,5 @@ def test_collision_solid_non_triangle(hexbeam):
 
 def test_reconstruct_surface(sphere):
     pc = pyvista.wrap(sphere.points)
-    surf = pc.reconstruct_surface(nbr_sz=10, sample_spacing=0.25)
+    surf = pc.reconstruct_surface(nbr_sz=10, sample_spacing=50)
     assert surf.is_all_triangles

@@ -4479,7 +4479,6 @@ class DataSetFilters:
         using this filter.
 
         """
-
         alg = _vtk.vtkSurfaceReconstructionFilter()
         alg.SetInputDataObject(self)
         if nbr_sz is not None:
