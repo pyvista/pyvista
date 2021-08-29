@@ -12,13 +12,6 @@ from pyvista.utilities import FieldAssociation
 
 
 @fixture()
-def sphere_empty_attributes(sphere):
-    ds_attr = hexbeam.point_arrays
-    ds_attr.clear()
-    return ds_attr
-
-
-@fixture()
 def hexbeam_point_attributes(hexbeam):
     return hexbeam.point_data
 
@@ -128,7 +121,6 @@ def test_active_scalars_name(sphere):
 
 def test_set_scalars(sphere):
     scalars = np.array(sphere.n_points)
-    sphere.point_arrays.set_scalars(scalars, 'scalars')
     key = 'scalars'
     sphere.point_data.set_scalars(scalars, key)
     assert sphere.point_data.active_scalars_name == key
