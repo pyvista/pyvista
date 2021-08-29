@@ -1517,7 +1517,8 @@ class PolyDataFilters(DataSetFilters):
 
         **kwargs : dict, optional
             Accepts for ``merge_tol`` to replace the ``tolerance``
-            keyword argument.  This may be depricated in future.
+            keyword argument.  This may be deprecated in future.
+
 
         Returns
         -------

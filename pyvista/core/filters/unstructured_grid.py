@@ -45,7 +45,7 @@ class UnstructuredGridFilters(DataSetFilters):
             Display a progress bar to indicate progress.
 
         """
-        return pyvista.PolyData(ugrid.points).delaunay_2d(tol=tol, alpha=alpha,
-                                                          offset=offset,
-                                                          bound=bound,
-                                                          progress_bar=progress_bar)
+        return pyvista.PolyData(self.points).delaunay_2d(tol=tol, alpha=alpha,
+                                                         offset=offset,
+                                                         bound=bound,
+                                                         progress_bar=progress_bar)

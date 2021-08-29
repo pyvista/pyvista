@@ -255,7 +255,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     ...    color_box=False,
     ...    labels_off=False, opacity=1.0)
     >>> pl = pyvista.Plotter()
-    >>> pl.add_actor(actor)
+    >>> _ = pl.add_actor(actor)
     >>> pl.show()  # doctest:+SKIP
 
     """

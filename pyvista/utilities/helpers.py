@@ -1189,7 +1189,7 @@ class ProgressMonitor():
         VTK algorithm or filter.
 
     message : str, optional
-        Mesage to display in the progress bar.
+        Message to display in the progress bar.
 
     scaling : float, optional
         Unused keyword argument.
