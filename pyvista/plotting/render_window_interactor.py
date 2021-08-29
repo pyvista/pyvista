@@ -51,10 +51,10 @@ class RenderWindowInteractor():
         Parameters
         ----------
         key : str
-            The key to trigger the event
+            The key to trigger the event.
 
         callback : callable
-            A callable that takes no arguments
+            A callable that takes no arguments.
 
         """
         if not callable(callback):
@@ -110,7 +110,7 @@ class RenderWindowInteractor():
             The side of the mouse for the button to track (left or
             right).  Default is left. Also accepts ``'r'`` or ``'l'``.
 
-        viewport: bool, optional
+        viewport : bool, optional
             If ``True``, uses the normalized viewport coordinate
             system (values between 0.0 and 1.0 and support for HiDPI)
             when passing the click position to the callback.
@@ -160,7 +160,7 @@ class RenderWindowInteractor():
         if self._style_class is None:
             # We need an actually custom style to handle button up events
             self._style_class = _style_factory(self._style)(self)
-        return self.interactor.SetInteractorStyle(self._style_class)
+        self.interactor.SetInteractorStyle(self._style_class)
 
     def enable_trackball_style(self):
         """Set the interactive style to Trackball Camera.
@@ -190,7 +190,7 @@ class RenderWindowInteractor():
         """
         self._style = 'TrackballCamera'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_trackball_actor_style(self):
         """Set the interactive style to Trackball Actor.
@@ -221,7 +221,7 @@ class RenderWindowInteractor():
         """
         self._style = 'TrackballActor'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_image_style(self):
         """Set the interactive style to Image.
@@ -251,7 +251,7 @@ class RenderWindowInteractor():
         """
         self._style = 'Image'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_joystick_style(self):
         """Set the interactive style to Joystick Camera.
@@ -284,7 +284,7 @@ class RenderWindowInteractor():
         """
         self._style = 'JoystickCamera'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_joystick_actor_style(self):
         """Set the interactive style to Joystick Actor.
@@ -318,7 +318,7 @@ class RenderWindowInteractor():
         """
         self._style = 'JoystickActor'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_zoom_style(self):
         """Set the interactive style to Rubber Band Zoom.
@@ -344,7 +344,7 @@ class RenderWindowInteractor():
         """
         self._style = 'RubberBandZoom'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_terrain_style(self, mouse_wheel_zooms=False, shift_pans=False):
         """Set the interactive style to Terrain.
@@ -419,7 +419,7 @@ class RenderWindowInteractor():
         """
         self._style = 'Terrain'
         self._style_class = None
-        return_value = self.update_style()
+        self.update_style()
 
         if mouse_wheel_zooms:
             def wheel_zoom_callback(obj, event):  # pragma: no cover
@@ -453,8 +453,6 @@ class RenderWindowInteractor():
             for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
                 self._style_class.AddObserver(event, callback)
 
-        return return_value
-
     def enable_rubber_band_style(self):
         """Set the interactive style to Rubber Band Picking.
 
@@ -484,7 +482,7 @@ class RenderWindowInteractor():
         """
         self._style = 'RubberBandPick'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def enable_rubber_band_2d_style(self):
         """Set the interactive style to Rubber Band 2D.
@@ -519,7 +517,7 @@ class RenderWindowInteractor():
         """
         self._style = 'RubberBand2D'
         self._style_class = None
-        return self.update_style()
+        self.update_style()
 
     def _simulate_keypress(self, key):  # pragma: no cover
         """Simulate a keypress."""
@@ -568,19 +566,44 @@ class RenderWindowInteractor():
         self.interactor.MouseMoveEvent()
 
     def get_event_position(self):
-        """Get the event position."""
+        """Get the event position.
+
+        Returns
+        -------
+        tuple
+            The ``(x, y)`` coordinate position.
+
+        """
         return self.interactor.GetEventPosition()
 
     def get_interactor_style(self):
-        """Get the interactor style."""
+        """Get the interactor style.
+
+        Returns
+        -------
+        vtk.vtkInteractorStyle
+            VTK interactor style.
+        """
         return self.interactor.GetInteractorStyle()
 
     def get_desired_update_rate(self):
-        """Get the desired update rate."""
+        """Get the desired update rate.
+
+        Returns
+        -------
+        float
+            Desired update rate.
+        """
         return self.interactor.GetDesiredUpdateRate()
 
     def create_repeating_timer(self, stime):
-        """Create a repeating timer."""
+        """Create a repeating timer.
+
+        Returns
+        -------
+        int
+            Timer ID.
+        """
         timer_id = self.interactor.CreateRepeatingTimer(stime)
         if hasattr(self.interactor, 'ProcessEvents'):
             self.process_events()
@@ -615,7 +638,13 @@ class RenderWindowInteractor():
         return self.interactor.GetInitialized()
 
     def get_picker(self):
-        """Get the piccker."""
+        """Get the picker.
+
+        Returns
+        -------
+        vtk.vtkAbstractPicker
+            VTK picker.
+        """
         return self.interactor.GetPicker()
 
     def set_picker(self, picker):

@@ -66,7 +66,7 @@ def _retrieve_file(retriever, filename):
         return a tuple like (file_path, resp), where file_path is
         the path to the file to use.
     filename : str
-        The name of the file
+        The name of the file.
     """
     _check_examples_path()
     # First check if file has already been downloaded
@@ -848,10 +848,10 @@ def download_osmnx_graph():  # pragma: no cover
 
     .. code:: python
 
-        >>> import osmnx as ox
-        >>> address = 'Holzgerlingen DE'
-        >>> graph = ox.graph_from_address(address, dist=500, network_type='drive')
-        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))
+        >>> import osmnx as ox  # doctest: +SKIP
+        >>> address = 'Holzgerlingen DE'  # doctest: +SKIP
+        >>> graph = ox.graph_from_address(address, dist=500, network_type='drive')  # doctest: +SKIP
+        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))  # doctest: +SKIP
 
     Returns
     -------

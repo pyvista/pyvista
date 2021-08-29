@@ -23,7 +23,7 @@ def glyphs(grid_sz=3, **kwargs):
 
     # add random scalars
     rng_int = rng.integers(0, n, size=x.size)
-    mesh.point_arrays['scalars'] = rng_int
+    mesh.point_data['scalars'] = rng_int
 
     # construct the glyphs on top of the mesh; don't scale by scalars now
     return mesh.glyph(geom=geoms, indices=values, scale=False,
@@ -75,7 +75,7 @@ def orientation_cube():
     x_p.rotate_x(90)
     x_p.translate(-np.array(x_p.center))
     x_p.translate([0.5, 0, 0])
-    # x_p.point_arrays['mesh'] = 1
+    # x_p.point_data['mesh'] = 1
 
     x_n = text_3d('X-', depth=0.2)
     x_n.points *= 0.45
@@ -84,7 +84,7 @@ def orientation_cube():
     x_n.rotate_z(180)
     x_n.translate(-np.array(x_n.center))
     x_n.translate([-0.5, 0, 0])
-    # x_n.point_arrays['mesh'] = 2
+    # x_n.point_data['mesh'] = 2
 
     y_p = text_3d('Y+', depth=0.2)
     y_p.points *= 0.45
@@ -92,21 +92,21 @@ def orientation_cube():
     y_p.rotate_z(180)
     y_p.translate(-np.array(y_p.center))
     y_p.translate([0, 0.5, 0])
-    # y_p.point_arrays['mesh'] = 3
+    # y_p.point_data['mesh'] = 3
 
     y_n = text_3d('Y-', depth=0.2)
     y_n.points *= 0.45
     y_n.rotate_x(90)
     y_n.translate(-np.array(y_n.center))
     y_n.translate([0, -0.5, 0])
-    # y_n.point_arrays['mesh'] = 4
+    # y_n.point_data['mesh'] = 4
 
     z_p = text_3d('Z+', depth=0.2)
     z_p.points *= 0.45
     z_p.rotate_z(90)
     z_p.translate(-np.array(z_p.center))
     z_p.translate([0, 0, 0.5])
-    # z_p.point_arrays['mesh'] = 5
+    # z_p.point_data['mesh'] = 5
 
     z_n = text_3d('Z-', depth=0.2)
     z_n.points *= 0.45

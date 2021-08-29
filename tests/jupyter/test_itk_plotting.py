@@ -83,7 +83,7 @@ def test_itk_plotting_class_npndarray_scalars():
 
 @no_itk
 def test_itk_plotting_class_unstructured(hexbeam):
-    hexbeam.clear_arrays()
+    hexbeam.clear_data()
     pl = pyvista.PlotterITK()
     pl.add_mesh(hexbeam, smooth_shading=True)
     viewer = pl.show()

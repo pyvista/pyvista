@@ -179,22 +179,22 @@ def read_legacy(filename):
 
     Returns
     -------
-    :class:`pyvista.DataSet`
-        Wrapped pyvista mesh
-
-    Examples
-    --------
-    Load an example mesh using the legacy reader
-
-    >>> import pyvista
-    >>> from pyvista import examples
-    >>> mesh = pyvista.read_legacy(examples.uniformfile)
+    pyvista.DataSet
+        Wrapped pyvista mesh.
 
     Notes
     -----
     Normally, you should use :func:`pyvista.read` to read in meshes
-    from file, and this reader will automatically used for ``'.vtk'`` and
-    ``'.pvtk'`` files.
+    from file, and this reader will automatically used for ``'.vtk'``
+    and ``'.pvtk'`` files.
+
+    Examples
+    --------
+    Load an example mesh using the legacy reader.
+
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> mesh = pyvista.read_legacy(examples.uniformfile)
 
     """
     filename = os.path.abspath(os.path.expanduser(str(filename)))
@@ -279,7 +279,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
        * ``'.foam'``
 
     .. note::
-       See https://github.com/nschloe/meshio for formats supported by ``meshio``
+       See https://github.com/nschloe/meshio for formats supported by ``meshio``.
 
     Parameters
     ----------
@@ -294,7 +294,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
 
-    force_ext: str, optional
+    force_ext : str, optional
         If specified, the reader will be chosen by an extension which
         is different to its actual extension. For example, ``'.vts'``,
         ``'.vtu'``.
@@ -304,8 +304,8 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
 
     Returns
     -------
-    :class:`pyvista.DataSet`
-        Wrapped pyvista mesh
+    pyvista.DataSet
+        Wrapped PyVista dataset.
 
     Examples
     --------
@@ -397,7 +397,7 @@ def read_texture(filename, attrs=None):
 
     Returns
     -------
-    :class:`pyvista.Texture`
+    pyvista.Texture
         PyVista texture object.
 
     Examples
@@ -470,8 +470,8 @@ def read_exodus(filename,
 
     Returns
     -------
-    :class:`pyvista.DataSet`
-        Wrapped pyvista mesh
+    pyvista.DataSet
+        Wrapped PyVista dataset.
 
     Examples
     --------
@@ -541,7 +541,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
 
     Returns
     -------
-    :class:`pyvista.MultiBlock`
+    pyvista.MultiBlock
         Data read from the file.
 
     """
@@ -622,10 +622,10 @@ def from_meshio(mesh):
         )
 
     # Set point data
-    grid.point_arrays.update({k: np.array(v, np.float64) for k, v in mesh.point_data.items()})
+    grid.point_data.update({k: np.array(v, np.float64) for k, v in mesh.point_data.items()})
 
     # Set cell data
-    grid.cell_arrays.update(cell_data)
+    grid.cell_data.update(cell_data)
 
     # Call datatype-specific post-load processing
     grid._post_file_load_processing()
@@ -659,7 +659,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
         is normally inferred from the extension but this can be
         overridden.
 
-    kwargs : additional keyword arguments
+    **kwargs : dict, optional
         Additional keyword arguments.  See
         ``meshio.write_points_cells`` for more details.
 
@@ -723,10 +723,10 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
         cells[k] = (c[0], np.array(c[1]))
 
     # Get point data
-    point_data = {k.replace(" ", "_"): v for k, v in mesh.point_arrays.items()}
+    point_data = {k.replace(" ", "_"): v for k, v in mesh.point_data.items()}
 
     # Get cell data
-    vtk_cell_data = mesh.cell_arrays
+    vtk_cell_data = mesh.cell_data
     n_cells = np.cumsum([len(c[1]) for c in cells[:-1]])
     cell_data = (
         {k.replace(" ", "_"): np.split(v, n_cells) for k, v in vtk_cell_data.items()}
