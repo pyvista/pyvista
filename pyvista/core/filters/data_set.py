@@ -4463,7 +4463,7 @@ class DataSetFilters:
         Create a point cloud out of a sphere and reconstruct a surface
         from it.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> points = pv.wrap(pv.Sphere().points)
         >>> surf = points.reconstruct_surface()
 
