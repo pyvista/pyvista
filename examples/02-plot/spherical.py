@@ -75,7 +75,7 @@ levels = [RADIUS * 1.01]
 grid_scalar = pv.grid_from_sph_coords(xx_bounds, yy_bounds, levels)
 
 # And fill its cell arrays with the scalar data
-grid_scalar.cell_arrays["example"] = np.array(scalar).swapaxes(-2, -1).ravel("C")
+grid_scalar.cell_data["example"] = np.array(scalar).swapaxes(-2, -1).ravel("C")
 
 # Make a plot
 p = pv.Plotter()
@@ -119,7 +119,7 @@ vectors *= RADIUS * 0.1
 grid_winds = pv.grid_from_sph_coords(x, y_polar, wind_level)
 
 # Add vectors to the grid
-grid_winds.point_arrays["example"] = vectors
+grid_winds.point_data["example"] = vectors
 
 # Show the result
 p = pv.Plotter()
@@ -150,7 +150,7 @@ levels = z_scale * (np.arange(scalar_3d.shape[0] + 1)) ** 2 + z_offset
 grid_scalar_3d = pv.grid_from_sph_coords(xx_bounds, yy_bounds, levels)
 
 # Add data to the grid
-grid_scalar_3d.cell_arrays["example"] = np.array(scalar_3d).swapaxes(-2, -1).ravel("C")
+grid_scalar_3d.cell_data["example"] = np.array(scalar_3d).swapaxes(-2, -1).ravel("C")
 
 # Create a set of isosurfaces
 surfaces = grid_scalar_3d.cell_data_to_point_data().contour(isosurfaces=[1, 5, 10, 15])

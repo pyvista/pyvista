@@ -561,7 +561,8 @@ row and columns.  You can even add string arrays in the field data:
    >>> ugrid.field_arrays['my-field-data'] = ['hello', 'world']
    >>> ugrid.point_arrays['my-field-data']
 
-Note that the field data is automatically transfered to VTK C-style arrays and then represented as a numpy data format:
+Note that the field data is automatically transferred to VTK C-style
+arrays and then represented as a numpy data format:
 
 .. jupyter-execute::
 

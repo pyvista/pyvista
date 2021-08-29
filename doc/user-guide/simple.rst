@@ -100,7 +100,7 @@ access an array on that dataset, then add some more data:
 
     >>> mesh = examples.load_uniform()
     >>> # Fetch a data array from the point data dictionary
-    >>> arr = mesh.point_arrays['Spatial Point Data']
+    >>> arr = mesh.point_data['Spatial Point Data']
     >>> # Assign a new array to the cell data:
     >>> mesh.cell_arrays['foo'] = np.random.rand(mesh.n_cells)
     >>> # Don't remember if your array is point or cell data? Doesn't matter!

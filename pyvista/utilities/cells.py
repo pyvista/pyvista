@@ -132,7 +132,7 @@ def generate_cell_offsets_loop(cells, cell_types):
 
     Returns
     -------
-    offset : np.ndarray (int)
+    numpy.ndarray
         Array of VTK offsets
 
     Raises
@@ -176,7 +176,7 @@ def generate_cell_offsets(cells, cell_types):
 
     Returns
     -------
-    offset : np.ndarray (int)
+    numpy.ndarray
         Array of VTK offsets
 
     Raises
@@ -232,13 +232,13 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
 
     Returns
     -------
-    cell_types : np.ndarray (uint8)
+    cell_types : numpy.ndarray (uint8)
         Types of each cell
 
-    cell_arr : np.ndarray (int)
+    cell_arr : numpy.ndarray (int)
         VTK-cell array. Format depends if the VTK version is < 9.0 or not.
 
-    cell_offsets : np.ndarray (int)
+    cell_offsets : numpy.ndarray (int)
         Array of VTK offsets.  Only for VTK versions < 9.0
 
     Raises
@@ -327,7 +327,7 @@ def get_mixed_cells(vtkobj):
 
     Returns
     -------
-    cells_dict : dict
+    dict
         Dictionary of cells.
 
     Raises

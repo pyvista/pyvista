@@ -14,8 +14,6 @@ vtkRegularPolygonSource
 vtkPyramid
 
 """
-import ctypes
-
 import numpy as np
 
 import pyvista
@@ -56,27 +54,26 @@ def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
 
 
 def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
-             radius=0.5, height=1.0, resolution=100, capping=True,
-             **kwargs):
+             radius=0.5, height=1.0, resolution=100, capping=True):
     """Create the surface of a cylinder.
 
     See also :func:`pyvista.CylinderStructured`.
 
     Parameters
     ----------
-    center : list or tuple or np.ndarray
+    center : sequence, optional
         Location of the centroid in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray
+    direction : sequence, optional
         Direction cylinder points to  in ``[x, y, z]``.
 
-    radius : float
+    radius : float, optional
         Radius of the cylinder.
 
-    height : float
+    height : float, optional
         Height of the cylinder.
 
-    resolution : int
+    resolution : int, optional
         Number of points on the circular face of the cylinder.
 
     capping : bool, optional
@@ -84,7 +81,7 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Cylinder surface.
 
     Examples
@@ -95,15 +92,13 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
     ...                             radius=1, height=2)
     >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
     """
-    capping = kwargs.pop('cap_ends', capping)
-    assert_empty_kwargs(**kwargs)
     cylinderSource = _vtk.vtkCylinderSource()
     cylinderSource.SetRadius(radius)
     cylinderSource.SetHeight(height)
     cylinderSource.SetCapping(capping)
     cylinderSource.SetResolution(resolution)
     cylinderSource.Update()
-    surf = pyvista.PolyData(cylinderSource.GetOutput())
+    surf = pyvista.wrap(cylinderSource.GetOutput())
     surf.rotate_z(-90)
     translate(surf, center, direction)
     return surf
@@ -120,26 +115,31 @@ def CylinderStructured(radius=0.5, height=1.0,
 
     Parameters
     ----------
-    radius : float, iterable, optional
-        Radius of the cylinder. If an iterable, then describes the
+    radius : float, sequence, optional
+        Radius of the cylinder. If a sequence, then describes the
         radial coordinates of the cells as a range of values as
         specified by the ``radius``.
 
     height : float, optional
         Height of the cylinder along its Z-axis.
 
-    center : list or tuple or np.ndarray
-        Location of the centroid in ``[x, y, z]``
+    center : sequence
+        Location of the centroid in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray
+    direction : sequence
         Direction cylinder Z-axis in ``[x, y, z]``.
 
-    theta_resolution : int
+    theta_resolution : int, optional
         Number of points on the circular face of the cylinder.
         Ignored if ``radius`` is an iterable.
 
-    z_resolution : int
-        Number of points along the height (Z-axis) of the cylinder
+    z_resolution : int, optional
+        Number of points along the height (Z-axis) of the cylinder.
+
+    Returns
+    -------
+    pyvista.StructuredGrid
+        Structured cylinder.
 
     Examples
     --------
@@ -194,7 +194,6 @@ def CylinderStructured(radius=0.5, height=1.0,
     # Translate to given center
     grid.points -= np.array(grid.center)
     grid.points += np.array(center)
-
     return grid
 
 
@@ -233,7 +232,7 @@ def Arrow(start=(0., 0., 0.), direction=(1., 0., 0.), tip_length=0.25,
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Arrow mesh.
 
     Examples
@@ -253,7 +252,7 @@ def Arrow(start=(0., 0., 0.), direction=(1., 0., 0.), tip_length=0.25,
     arrow.SetShaftRadius(shaft_radius)
     arrow.SetShaftResolution(shaft_resolution)
     arrow.Update()
-    surf = pyvista.PolyData(arrow.GetOutput())
+    surf = pyvista.wrap(arrow.GetOutput())
 
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
@@ -278,10 +277,10 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     center : np.ndarray or list, optional
         Center in ``[x, y, z]``.
 
-    direction : list or tuple or np.ndarray
+    direction : list or tuple or np.ndarray, optional
         Direction the top of the sphere points to in ``[x, y, z]``.
 
-    theta_resolution: int , optional
+    theta_resolution : int , optional
         Set the number of points in the longitude direction (ranging
         from ``start_theta`` to ``end_theta``).
 
@@ -303,7 +302,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Sphere mesh.
 
     Examples
@@ -329,7 +328,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     sphere.SetStartPhi(start_phi)
     sphere.SetEndPhi(end_phi)
     sphere.Update()
-    surf = pyvista.PolyData(sphere.GetOutput())
+    surf = pyvista.wrap(sphere.GetOutput())
     surf.rotate_y(-90)
     translate(surf, center, direction)
     return surf
@@ -361,7 +360,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Plane mesh.
 
     Examples
@@ -370,7 +369,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     >>> import pyvista
     >>> mesh = pyvista.Plane()
-    >>> mesh.point_arrays.clear()
+    >>> mesh.point_data.clear()
     >>> mesh.plot(show_edges=True)
     """
     planeSource = _vtk.vtkPlaneSource()
@@ -378,7 +377,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
     planeSource.SetYResolution(j_resolution)
     planeSource.Update()
 
-    surf = pyvista.PolyData(planeSource.GetOutput())
+    surf = pyvista.wrap(planeSource.GetOutput())
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
@@ -402,8 +401,8 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
         Number of pieces to divide line into.
 
     Returns
-    --------
-    :class:`pyvista.PolyData`
+    -------
+    pyvista.PolyData
         Line mesh.
 
     Examples
@@ -444,25 +443,25 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
 
     Parameters
     ----------
-    center : iterable, optional
+    center : sequence, optional
         Center in ``[x, y, z]``.
 
     x_length : float, optional
-        length of the cube in the x-direction.
+        Length of the cube in the x-direction.
 
     y_length : float, optional
-        length of the cube in the y-direction.
+        Length of the cube in the y-direction.
 
     z_length : float, optional
-        length of the cube in the z-direction.
+        Length of the cube in the z-direction.
 
-    bounds : iterable, optional
+    bounds : sequence, optional
         Specify the bounding box of the cube. If given, all other arguments are
-        ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``
+        ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Mesh of the cube.
 
     Examples
@@ -495,7 +494,7 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
     ----------
     bounds : iterable, optional
         Specify the bounding box of the cube.
-        ``(xMin, xMax, yMin, yMax, zMin, zMax)``
+        ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
     level : int, optional
         Level of subdivision of the faces.
@@ -506,7 +505,7 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Mesh of the box.
 
     Examples
@@ -564,7 +563,7 @@ def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=None,
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Cone mesh.
 
     Examples
@@ -613,7 +612,7 @@ def Polygon(center=(0., 0., 0.), radius=1, normal=(0, 0, 1), n_sides=6):
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Mesh of the polygon.
 
     Examples
@@ -656,11 +655,16 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
     normal : iterable
         Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
-    r_res: int, optional
+    r_res : int, optional
         Number of points in radial direction.
 
-    c_res: int, optional
+    c_res : int, optional
         Number of points in circumferential direction.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Disk mesh.
 
     Examples
     --------
@@ -679,7 +683,7 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
     src.Update()
     normal = np.array(normal)
     center = np.array(center)
-    surf = pyvista.PolyData(src.GetOutput())
+    surf = pyvista.wrap(src.GetOutput())
     surf.rotate_y(90)
     translate(surf, center, normal)
     return surf
@@ -695,6 +699,11 @@ def Text3D(string, depth=0.5):
 
     depth : float, optional
         Depth of the text.  Defaults to ``0.5``.
+
+    Returns
+    -------
+    pyvista.PolyData
+        3D text mesh.
 
     Examples
     --------
@@ -729,9 +738,9 @@ def Wavelet(extent=(-10, 10, -10, 10, -10, 10), center=(0, 0, 0), maximum=255,
 
     Parameters
     ----------
-    extent : list or tuple, optional
+    extent : sequence, optional
         Set/Get the extent of the whole output image.  Default
-        ``(-10, 10, -10, 10, -10, 10)``
+        ``(-10, 10, -10, 10, -10, 10)``.
 
     center : list, optional
         Center of the wavelet.
@@ -762,6 +771,11 @@ def Wavelet(extent=(-10, 10, -10, 10, -10, 10), center=(0, 0, 0), maximum=255,
 
     subsample_rate : int, optional
         The sub-sample rate.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Wavelet mesh.
 
     Examples
     --------
@@ -806,13 +820,13 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
 
     Parameters
     ----------
-    pointa : np.ndarray or list
+    pointa : sequence
         Position of the first end point.
 
-    pointb : np.ndarray or list
+    pointb : sequence
         Position of the other end point.
 
-    center : np.ndarray or list
+    center : sequence
         Center of the circle that defines the arc.
 
     resolution : int, optional
@@ -826,6 +840,11 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
         By setting this to ``True``, the longest angular sector is
         used instead (i.e. the negative coterminal angle to the
         shortest one).
+
+    Returns
+    -------
+    pyvista.PolyData
+        Circular arc mesh.
 
     Examples
     --------
@@ -881,24 +900,29 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
 
     Parameters
     ----------
-    center : np.ndarray or list
+    center : sequence
         Center of the circle that defines the arc.
 
     resolution : int, optional
         The number of segments of the polyline that draws the arc.
         Resolution of 1 will just create a line.
 
-    normal : np.ndarray or list, optional
+    normal : sequence, optional
         The normal vector to the plane of the arc.  By default it
         points in the positive Z direction.
 
-    polar : np.ndarray or list, optional
+    polar : sequence, optional
         Starting point of the arc in polar coordinates.  By default it
         is the unit vector in the positive x direction.
 
     angle : float, optional
         Arc length (in degrees) beginning at the polar vector.  The
         direction is counterclockwise.  By default it is 90.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Circular arc mesh.
 
     Examples
     --------
@@ -956,7 +980,7 @@ def Pyramid(points=None):
 
     Returns
     -------
-    :class:`pyvista.UnstructuredGrid`
+    pyvista.UnstructuredGrid
         Unstructured grid containing a single pyramid cell.
 
     Examples
@@ -966,7 +990,7 @@ def Pyramid(points=None):
     >>> pointb = [-1.0, 1.0, 0.0]
     >>> pointc = [-1.0, -1.0, 0.0]
     >>> pointd = [1.0, -1.0, 0.0]
-    >>> pointe = [0.0, 0.0, 1.67]
+    >>> pointe = [0.0, 0.0, 1.608]
     >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
     >>> pyramid.plot(show_edges=True, line_width=5)
     """
@@ -975,7 +999,7 @@ def Pyramid(points=None):
                   [-1.0, 1.0, 0.0],
                   [-1.0, -1.0, 0.0],
                   [1.0, -1.0, 0.0],
-                  [0.0, 0.0, 1.67]]
+                  [0.0, 0.0, (4 - 2**0.5)**0.5]]
 
     if len(points) != 5:
         raise TypeError('Points must be given as length 5 np.ndarray or list')
@@ -1000,17 +1024,18 @@ def Pyramid(points=None):
     return pyvista.wrap(ug)
 
 
-def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
+def Triangle(points=None):
     """Create a triangle defined by 3 points.
 
     Parameters
     ----------
-    points : np.ndarray or list
-        Points of the triangle.
+    points : sequence, optional
+        Points of the triangle.  Defaults to a right isosceles
+        triangle (see example).
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Triangle mesh.
 
     Examples
@@ -1022,6 +1047,9 @@ def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
     >>> triangle = pyvista.Triangle([pointa, pointb, pointc])
     >>> triangle.plot(show_edges=True, line_width=5)
     """
+    if points is None:
+        points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5**0.5, 0]]
+
     if len(points) != 3:
         raise TypeError('Points must be given as length 3 np.ndarray or list')
 
@@ -1029,23 +1057,21 @@ def Triangle(points=[[0, 0, 0], [1, 0, 0], [0.5, 0.707, 0]]):
     check_valid_vector(points[1], 'points[1]')
     check_valid_vector(points[2], 'points[2]')
 
-    cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
-    triangle = pyvista.PolyData(points, cells)
-
-    return triangle
+    cells = np.array([[3, 0, 1, 2]])
+    return pyvista.wrap(pyvista.PolyData(points, cells))
 
 
-def Rectangle(points=[[1.0, 0.0, 0], [1.0, 1.0, 0], [0.0, 1.0, 0], [0.0, 0.0, 0.0]]):
+def Rectangle(points=None):
     """Create a rectangle defined by 4 points.
 
     Parameters
     ----------
-    points : length 3 sequence
-        Points of the rectangle.
+    points : sequence, optional
+        Points of the rectangle.  Defaults to a simple example.
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Rectangle mesh.
 
     Examples
@@ -1057,7 +1083,10 @@ def Rectangle(points=[[1.0, 0.0, 0], [1.0, 1.0, 0], [0.0, 1.0, 0], [0.0, 0.0, 0.
     >>> pointd = [0.0, 0.0, 0.0]
     >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc, pointd])
     >>> rectangle.plot(show_edges=True, line_width=5)
+
     """
+    if points is None:
+        points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
     if len(points) != 4:
         raise TypeError('Points must be given as length 4 np.ndarray or list')
 
@@ -1066,10 +1095,8 @@ def Rectangle(points=[[1.0, 0.0, 0], [1.0, 1.0, 0], [0.0, 1.0, 0], [0.0, 0.0, 0.
     check_valid_vector(points[2], 'points[2]')
     check_valid_vector(points[3], 'points[3]')
 
-    cells = np.array([[4, 0, 1, 2, 3]], ctypes.c_long)
-    rectangle = pyvista.PolyData(points, cells)
-
-    return rectangle
+    cells = np.array([[4, 0, 1, 2, 3]])
+    return pyvista.wrap(pyvista.PolyData(points, cells))
 
 
 def Circle(radius=0.5, resolution=100):
@@ -1085,7 +1112,7 @@ def Circle(radius=0.5, resolution=100):
 
     Returns
     -------
-    :class:`pyvista.PolyData`
+    pyvista.PolyData
         Circle mesh.
 
     Examples
@@ -1099,7 +1126,5 @@ def Circle(radius=0.5, resolution=100):
     theta = np.linspace(0.0, 2.0*np.pi, resolution)
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
-    cells = np.array([np.append(np.array([resolution]), np.arange(resolution))], ctypes.c_long)
-    circle = pyvista.PolyData(points, cells)
-
-    return circle
+    cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
+    return pyvista.wrap(pyvista.PolyData(points, cells))

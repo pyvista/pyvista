@@ -20,3 +20,4 @@ and how you can help develop PyVista.
    developer_notes
    plot_directive
    vtk_data
+   extending_pyvista

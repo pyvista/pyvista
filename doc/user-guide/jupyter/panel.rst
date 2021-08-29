@@ -64,10 +64,10 @@ Alternatively, you can set the backend globally:
     # create a sphere for Mars
     sphere = pyvista.Sphere(radius=1, theta_resolution=90, phi_resolution=90,
                             start_theta=270.001, end_theta=270)
-    sphere.t_coords = numpy.zeros((sphere.points.shape[0], 2))
+    sphere.active_t_coords = numpy.zeros((sphere.points.shape[0], 2))
 
-    sphere.t_coords[:, 0] = 0.5 + np.arctan2(-sphere.points[:, 0], sphere.points[:, 1])/(2 * math.pi)
-    sphere.t_coords[:, 1] = 0.5 + np.arcsin(sphere.points[:, 2]) / math.pi
+    sphere.active_t_coords[:, 0] = 0.5 + np.arctan2(-sphere.points[:, 0], sphere.points[:, 1])/(2 * math.pi)
+    sphere.active_t_coords[:, 1] = 0.5 + np.arcsin(sphere.points[:, 2]) / math.pi
 
     tex = pyvista.read_texture(examples.download_mars_jpg())
 

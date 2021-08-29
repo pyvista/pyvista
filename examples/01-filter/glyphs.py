@@ -16,7 +16,12 @@ import numpy as np
 # Glyphying can be done via the :func:`pyvista.DataSetFilters.glyph` filter
 
 mesh = examples.download_carotid().threshold(145, scalars="scalars")
+<<<<<<< HEAD
 mesh['scalars'][mesh['scalars'] < 210] = 0  # null out smaller vectors
+=======
+mask = mesh['scalars'] < 210
+mesh['scalars'][mask] = 0  # null out smaller vectors
+>>>>>>> main
 
 # Make a geometric object to use as the glyph
 geom = pv.Arrow()  # This could be any dataset
