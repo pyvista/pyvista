@@ -2093,6 +2093,12 @@ class DataSetFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the cell data transformed into point data.
+            Return type matches input.
+
         """
         return DataSetFilters.cell_data_to_point_data(self, pass_cell_data=pass_cell_data, progress_bar=progress_bar)
 
@@ -2111,6 +2117,12 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the point data transformed into cell data.
+            Return type matches input.
 
         Examples
         --------

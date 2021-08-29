@@ -44,6 +44,11 @@ class UnstructuredGridFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.PolyData
+            Surface mesh containing the delaunay filter.
+
         """
         return pyvista.PolyData(self.points).delaunay_2d(tol=tol, alpha=alpha,
                                                          offset=offset,

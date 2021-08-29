@@ -2329,6 +2329,11 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.PolyData
+            Ribbon mesh.  Empty if there are no lines in the input dataset.
+
         Examples
         --------
         Convert a line to a ribbon and plot it.

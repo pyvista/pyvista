@@ -335,6 +335,12 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     err : bool, optional
         Whether to throw an error if array is not present.
 
+    Returns
+    -------
+    pyvista.pyvista_ndarray or ``None``
+        Requested array.  Return ``None`` if there is no array
+        matching the ``name`` and ``err=False``.
+
     """
     if isinstance(mesh, _vtk.vtkTable):
         arr = row_array(mesh, name)
@@ -707,13 +713,18 @@ def trans_from_matrix(matrix):  # pragma: no cover
 
 
 def array_from_vtkmatrix(matrix):
-    """Convert a vtk matrix to a ``numpy.ndarray``.
+    """Convert a vtk matrix to an array.
 
     Parameters
     ----------
     matrix : vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4
         The vtk matrix to be converted to a ``numpy.ndarray``.
         Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
+
+    Returns
+    -------
+    numpy.ndarray
+        Numpy array containing the data from ``matrix``.
 
     """
     if isinstance(matrix, _vtk.vtkMatrix3x3):
@@ -740,6 +751,11 @@ def vtkmatrix_from_array(array):
         Shape (3, 3) gets converted to a ``vtk.vtkMatrix3x3``, shape (4, 4)
         gets converted to a ``vtk.vtkMatrix4x4``. No other shapes are valid.
 
+    Returns
+    -------
+    vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4
+        VTK matrix.
+
     """
     array = np.asarray(array)
     if array.shape == (3, 3):
@@ -755,11 +771,23 @@ def vtkmatrix_from_array(array):
     return matrix
 
 
-def is_meshio_mesh(mesh):
-    """Test if passed object is instance of ``meshio.Mesh``."""
+def is_meshio_mesh(obj):
+    """Test if passed object is instance of ``meshio.Mesh``.
+
+    Parameters
+    ----------
+    obj
+        Any object.
+
+    Returns
+    -------
+    bool
+        ``True`` if ``obj`` is an ``meshio.Mesh``.
+
+    """
     try:
         import meshio
-        return isinstance(mesh, meshio.Mesh)
+        return isinstance(obj, meshio.Mesh)
     except ImportError:
         return False
 
@@ -938,6 +966,11 @@ def is_inside_bounds(point, bounds):
 
     bounds : sequence
         Six item bounds in the form of ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    Returns
+    -------
+    bool
+        ``True`` when ``point`` is inside ``bounds``.
 
     """
     if isinstance(point, (int, float)):

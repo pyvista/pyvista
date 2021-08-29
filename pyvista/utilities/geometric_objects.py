@@ -136,6 +136,11 @@ def CylinderStructured(radius=0.5, height=1.0,
     z_resolution : int, optional
         Number of points along the height (Z-axis) of the cylinder.
 
+    Returns
+    -------
+    pyvista.StructuredGrid
+        Structured cylinder.
+
     Examples
     --------
     Default structured cylinder
@@ -189,7 +194,6 @@ def CylinderStructured(radius=0.5, height=1.0,
     # Translate to given center
     grid.points -= np.array(grid.center)
     grid.points += np.array(center)
-
     return grid
 
 
@@ -657,6 +661,11 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
     c_res : int, optional
         Number of points in circumferential direction.
 
+    Returns
+    -------
+    pyvista.PolyData
+        Disk mesh.
+
     Examples
     --------
     Create a disc with 50 points in the circumferential direction.
@@ -690,6 +699,11 @@ def Text3D(string, depth=0.5):
 
     depth : float, optional
         Depth of the text.  Defaults to ``0.5``.
+
+    Returns
+    -------
+    pyvista.PolyData
+        3D text mesh.
 
     Examples
     --------
@@ -758,6 +772,11 @@ def Wavelet(extent=(-10, 10, -10, 10, -10, 10), center=(0, 0, 0), maximum=255,
     subsample_rate : int, optional
         The sub-sample rate.
 
+    Returns
+    -------
+    pyvista.PolyData
+        Wavelet mesh.
+
     Examples
     --------
     >>> import pyvista
@@ -801,13 +820,13 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
 
     Parameters
     ----------
-    pointa : np.ndarray or list
+    pointa : sequence
         Position of the first end point.
 
-    pointb : np.ndarray or list
+    pointb : sequence
         Position of the other end point.
 
-    center : np.ndarray or list
+    center : sequence
         Center of the circle that defines the arc.
 
     resolution : int, optional
@@ -821,6 +840,11 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
         By setting this to ``True``, the longest angular sector is
         used instead (i.e. the negative coterminal angle to the
         shortest one).
+
+    Returns
+    -------
+    pyvista.PolyData
+        Circular arc mesh.
 
     Examples
     --------
@@ -876,24 +900,29 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
 
     Parameters
     ----------
-    center : np.ndarray or list
+    center : sequence
         Center of the circle that defines the arc.
 
     resolution : int, optional
         The number of segments of the polyline that draws the arc.
         Resolution of 1 will just create a line.
 
-    normal : np.ndarray or list, optional
+    normal : sequence, optional
         The normal vector to the plane of the arc.  By default it
         points in the positive Z direction.
 
-    polar : np.ndarray or list, optional
+    polar : sequence, optional
         Starting point of the arc in polar coordinates.  By default it
         is the unit vector in the positive x direction.
 
     angle : float, optional
         Arc length (in degrees) beginning at the polar vector.  The
         direction is counterclockwise.  By default it is 90.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Circular arc mesh.
 
     Examples
     --------
@@ -951,7 +980,7 @@ def Pyramid(points=None):
 
     Returns
     -------
-    :class:`pyvista.UnstructuredGrid`
+    pyvista.UnstructuredGrid
         Unstructured grid containing a single pyramid cell.
 
     Examples

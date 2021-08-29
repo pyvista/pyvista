@@ -227,10 +227,18 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     @Grid.dimensions.setter  # type: ignore
     def dimensions(self, dims):
         """Do not let the dimensions of the RectilinearGrid be set."""
-        raise AttributeError("The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.")
+        raise AttributeError("The dimensions of a `RectilinearGrid` are implicitly "
+                             "defined and thus cannot be set.")
 
     def cast_to_structured_grid(self):
-        """Cast this rectilinear grid to a :class:`pyvista.StructuredGrid`."""
+        """Cast this rectilinear grid to a structured grid.
+
+        Returns
+        -------
+        pyvista.StructuredGrid
+            This grid as a structured grid.
+
+        """
         alg = _vtk.vtkRectilinearGridToPointSet()
         alg.SetInputData(self)
         alg.Update()
@@ -421,14 +429,28 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         return attrs
 
     def cast_to_structured_grid(self):
-        """Cast this uniform grid to a :class:`pyvista.StructuredGrid`."""
+        """Cast this uniform grid to a structured grid.
+
+        Returns
+        -------
+        pyvista.StructuredGrid
+            This grid as a structured grid.
+
+        """
         alg = _vtk.vtkImageToStructuredGrid()
         alg.SetInputData(self)
         alg.Update()
         return _get_output(alg)
 
     def cast_to_rectilinear_grid(self):
-        """Cast this uniform grid to a :class:`pyvista.RectilinearGrid`."""
+        """Cast this uniform grid to a rectilinear grid.
+
+        Returns
+        -------
+        pyvista.RectilinearGrid
+            This uniform grid as a rectilinear grid.
+
+        """
         def gen_coords(i):
             coords = np.cumsum(np.insert(np.full(self.dimensions[i] - 1,
                                                  self.spacing[i]), 0, 0)

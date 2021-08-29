@@ -9,11 +9,16 @@ class CompositeFilters:
     """An internal class to manage filters/algorithms for composite datasets."""
 
     def extract_geometry(self):
-        """Combine the geometry of all blocks into a single ``PolyData`` object.
+        """Extract the surface the geometry of all blocks.
 
         Place this filter at the end of a pipeline before a polydata
-        consumer such as a polydata mapper to extract geometry from all blocks
-        and append them to one polydata object.
+        consumer such as a polydata mapper to extract geometry from
+        all blocks and append them to one polydata object.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Surface of the composite dataset.
 
         """
         gf = _vtk.vtkCompositeDataGeometryFilter()
@@ -32,6 +37,11 @@ class CompositeFilters:
         tolerance : float, optional
             The absolute tolerance to use to find coincident points when
             ``merge_points=True``.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Combined blocks.
 
         Examples
         --------
@@ -102,9 +112,15 @@ class CompositeFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh containing the outline.
+
         """
         if nested:
-            return DataSetFilters.outline(self, generate_faces=generate_faces, progress_bar=progress_bar)
+            return DataSetFilters.outline(self, generate_faces=generate_faces,
+                                          progress_bar=progress_bar)
         box = pyvista.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
@@ -123,8 +139,14 @@ class CompositeFilters:
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh containing outlined corners.
+
         """
         if nested:
-            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
+            return DataSetFilters.outline_corners(self, factor=factor,
+                                                  progress_bar=progress_bar)
         box = pyvista.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)

@@ -3549,6 +3549,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             See :func:`pyvista.BasePlotter.add_mesh` for optional
             keyword arguments.
 
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the arrows.
+
         Examples
         --------
         Plot a random field of vectors and save a screenshot of it.
@@ -3923,6 +3928,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         shift : float, optional
             Shift the plane up/down from the center of the scene by
             this amount.
+
+        Returns
+        -------
+        pyvista.PolyData
+            PolyData containing the orbital path.
 
         Examples
         --------

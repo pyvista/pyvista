@@ -253,6 +253,11 @@ def plot_arrows(cent, direction, **kwargs):
     **kwargs : dict, optional
         See :func:`pyvista.plot`.
 
+    Returns
+    -------
+    tuple
+        See the returns of :func:`pyvista.plot`.
+
     See Also
     --------
     :func:`pyvista.plot`

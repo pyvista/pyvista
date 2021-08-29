@@ -1250,6 +1250,11 @@ def surface_from_para(parametric_function, u_res=100, v_res=100, w_res=100):
     w_res : int, optional
         Resolution in the w direction.
 
+    Returns
+    -------
+    pyvista.PolyData
+        Surface from the parametric function.
+
     """
     # convert to a mesh
     para_source = _vtk.vtkParametricFunctionSource()

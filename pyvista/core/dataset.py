@@ -786,6 +786,11 @@ class DataSet(DataSetFilters, DataObject):
             to search for in the dataset.  Must be either ``'point'``,
             ``'cell'``, or ``'field'``.
 
+        Returns
+        -------
+        tuple
+            ``(min, max)`` of the named array.
+
         """
         if arr_var is None:  # use active scalars array
             _, arr_var = self.active_scalars_info
@@ -1203,7 +1208,7 @@ class DataSet(DataSetFilters, DataObject):
             "Use `clear_point_data` instead.",
             PyvistaDeprecationWarning
         )
-        return self.clear_point_data()
+        self.clear_point_data()
 
     def clear_point_data(self):
         """Remove all point arrays.
@@ -1236,7 +1241,7 @@ class DataSet(DataSetFilters, DataObject):
             "Use `clear_cell_data` instead.",
             PyvistaDeprecationWarning
         )
-        return self.clear_cell_data()
+        self.clear_cell_data()
 
     def clear_cell_data(self):
         """Remove all cell arrays."""
@@ -1254,7 +1259,7 @@ class DataSet(DataSetFilters, DataObject):
             "Use `clear_data` instead.",
             PyvistaDeprecationWarning
         )
-        return self.clear_data()
+        self.clear_data()
 
     def clear_data(self):
         """Remove all arrays from point/cell/field data.
@@ -1486,6 +1491,11 @@ class DataSet(DataSetFilters, DataObject):
             type to search for in the dataset.  Must be either
             ``'point'``, ``'cell'``, or ``'field'``.
 
+        Returns
+        -------
+        pyvista.pyvista_ndarray
+            Requested array.
+
         Examples
         --------
         Create a DataSet with a variety of arrays.
@@ -1531,6 +1541,11 @@ class DataSet(DataSetFilters, DataObject):
             When scalars is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'``, ``'cell'``, or ``'field'``.
+
+        Returns
+        -------
+        pyvista.FieldAssociation
+            Field association of the array.
 
         Examples
         --------
@@ -1742,7 +1757,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        :class:`pyvista.UnstructuredGrid`
+        pyvista.UnstructuredGrid
             Dataset cast into a :class:`pyvista.UnstructuredGrid`.
 
         Examples

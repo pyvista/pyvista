@@ -113,7 +113,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
                 self.SetBlock(i, pyvista.wrap(block))
-        return
 
     @property
     def bounds(self) -> List[float]:
@@ -220,6 +219,11 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         ----------
         name : str
             Name of the array.
+
+        Returns
+        -------
+        tuple
+            ``(min, max)`` of the named array.
 
         """
         mini, maxi = np.inf, -np.inf
@@ -329,6 +333,11 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         index : int or str
             Index or name of the dataset within the multiblock.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset from the given index.
+
         """
         return self[index]
 
@@ -389,6 +398,11 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def keys(self) -> List[Optional[str]]:
         """Get all the block names in the dataset.
 
+        Returns
+        -------
+        list
+            List of block names.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -398,10 +412,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         ['cube', 'sphere']
 
         """
-        names = []
-        for i in range(self.n_blocks):
-            names.append(self.get_block_name(i))
-        return names
+        return [self.get_block_name(i) for i in range(self.n_blocks)]
 
     def _ipython_key_completions_(self) -> List[Optional[str]]:
         return self.keys()
@@ -477,6 +488,11 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         index : int or str
             Index or name of the dataset within the multiblock.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset from the given index.
+
         """
         data = self[index]
         del self[index]
@@ -517,7 +533,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             # Cast as int because windows is super annoying
             del self[int(null_blocks[i])]
             null_blocks -= 1
-        return
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""

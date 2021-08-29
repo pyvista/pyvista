@@ -387,7 +387,7 @@ class DataObject:
             "Use `clear_field_data` instead.",
             PyvistaDeprecationWarning
         )
-        return self.field_data
+        self.field_data
 
     def clear_field_data(self):
         """Remove all field data.

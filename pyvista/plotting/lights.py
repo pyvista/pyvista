@@ -968,16 +968,21 @@ class Light(vtkLight):
     def copy(self, deep=True):
         """Return a shallow or a deep copy of the light.
 
-        The only mutable attribute of ``Light`` objects is the
+        The only mutable attribute of :class:`pyvista.Light` is the
         transformation matrix (if it exists). Thus asking for a
         shallow copy merely implies that the returned light and the
         original share the transformation matrix instance.
 
         Parameters
         ----------
-        deep : bool
+        deep : bool, optional
             Whether to return a deep copy rather than a shallow
             one. Default ``True``.
+
+        Returns
+        -------
+        pyvista.Light
+            Copied light.
 
         Examples
         --------

@@ -149,7 +149,14 @@ class _ThemeConfig():
         return inst
 
     def to_dict(self) -> dict:
-        """Return theme config parameters as a dictionary."""
+        """Return theme config parameters as a dictionary.
+
+        Returns
+        -------
+        dict
+            This theme parameter represented as a dictionary.
+
+        """
         # remove the first underscore in each entry
         dict_ = {}
         for key in self.__slots__:

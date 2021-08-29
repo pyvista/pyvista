@@ -20,7 +20,14 @@ class PickingHelper:
     picked_horizon = None
 
     def get_pick_position(self):
-        """Get the pick position/area as x0, y0, x1, y1."""
+        """Get the pick position or area.
+
+        Returns
+        -------
+        sequence
+            Picked position or area as ``(x0, y0, x1, y1)``.
+
+        """
         return self.renderer.get_pick_position()
 
     def enable_cell_picking(self, mesh=None, callback=None, through=True,
