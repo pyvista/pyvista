@@ -4871,5 +4871,8 @@ def _kill_display(disp_id):  # pragma: no cover
         cdisp_id = ctypes.c_size_t(int(disp_id[1:].split('_')[0], 16))
 
         # check display can be closed and then close it in the background
-        if not X11.XEventsQueued(cdisp_id, 0):
-            Thread(target=X11.XCloseDisplay, args=(cdisp_id, )).start()
+        # if not X11.XEventsQueued(cdisp_id, 0):
+
+        # this is unsafe as events might be queued, but sometimes the
+        # window fails to close without this
+        Thread(target=X11.XCloseDisplay, args=(cdisp_id, )).start()
