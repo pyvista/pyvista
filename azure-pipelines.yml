@@ -56,6 +56,7 @@ jobs:
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
+    PYVISTA_KILL_DISPLAY: "True"
 
   steps:
   - task: UsePythonVersion@0
