@@ -292,20 +292,20 @@ def test_pvdreader():
     assert isinstance(reader, pyvista.PVDReader)
     assert reader.reader == reader  # PVDReader refers to itself
     assert reader.filename == filename
-    
+
     assert reader.number_time_points == 15
     assert reader.time_point_value(1) == 1.0
     assert np.array_equal(reader.time_values, np.arange(0, 15, dtype=np.float))
-    
+
     assert reader.active_time_value == reader.time_values[0]
-    
+
     active_datasets = reader.active_datasets
     assert len(active_datasets) == 1
-    active_dataset = active_datasets[0]
-    assert active_dataset.time == 0.0
-    assert active_dataset.filename == "wavy/wavy00.vts"
-    assert active_dataset.group == ""
-    assert active_dataset.part == 0
+    active_dataset0 = active_datasets[0]
+    assert active_dataset0.time == 0.0
+    assert active_dataset0.filename == "wavy/wavy00.vts"
+    assert active_dataset0.group == ""
+    assert active_dataset0.part == 0
 
     assert len(reader.datasets) == len(reader.time_values)
 
@@ -324,3 +324,18 @@ def test_pvdreader():
     assert isinstance(mesh, pyvista.MultiBlock)
     assert len(mesh) == 1
     assert isinstance(mesh[0], pyvista.StructuredGrid)
+
+
+def test_pvdreader_no_time_group():
+    examples.download_dual_sphere_animation(load=False)  # download all the files
+    # Use a pvd file that has no timestep or group and two parts.
+    filename, _ = _download_file('PVD/paraview/dualSphereNoTime.pvd')
+    reader = pyvista.PVDReader(filename)
+    assert reader.time_values == [0.0]
+    assert reader.active_time_value == 0.0
+
+    assert len(reader.active_datasets) == 2
+    for i, dataset in enumerate(reader.active_datasets):
+        assert dataset.time == 0.0
+        assert dataset.group == None
+        assert dataset.part == i

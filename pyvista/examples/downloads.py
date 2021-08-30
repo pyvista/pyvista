@@ -84,7 +84,10 @@ def _retrieve_file(retriever, filename):
     if pyvista.VTK_DATA_PATH is None:
         shutil.move(saved_file, local_path)
     else:
-        shutil.copy(saved_file, local_path)
+        if os.path.isdir(saved_file):
+            shutil.copytree(saved_file, local_path)
+        else:
+            shutil.copy(saved_file, local_path)
     if pyvista.get_ext(local_path) in ['.zip']:
         _decompress(local_path)
         local_path = local_path[:-4]
@@ -859,3 +862,24 @@ def download_wavy(load=True):
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
+
+
+def download_single_sphere_animation(load=True):
+    """Download PVD file for single sphere."""
+
+    filename, _ = _download_file('PVD/paraview/singleSphereAnimation.pvd')
+    folder, _ =_download_file('PVD/paraview/singleSphereAnimation')
+    if not load:
+        return filename
+    return pyvista.PVDReader(filename).read()
+
+
+def download_dual_sphere_animation(load=True):
+    """Download PVD file for double sphere."""
+
+    filename, _ = _download_file('PVD/paraview/dualSphereAnimation.pvd')
+    folder, _ =_download_file('PVD/paraview/dualSphereAnimation')
+    if not load:
+        return filename
+    return pyvista.PVDReader(filename).read()
+

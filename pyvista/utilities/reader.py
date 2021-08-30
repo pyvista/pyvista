@@ -892,10 +892,10 @@ class PVDReader(BaseReader, TimeReader):
             element_attrib = element.attrib
             datasets.append(
                 PVDDataSet(
-                    float(element_attrib['timestep']),
+                    float(element_attrib.get('timestep', 0)),
                     int(element_attrib['part']),
                     element_attrib['file'],
-                    element_attrib['group'],
+                    element_attrib.get('group'),
                 )
             )
         self._datasets = sorted(datasets)
