@@ -4468,11 +4468,11 @@ class DataSetFilters:
         >>> surf = points.reconstruct_surface()
 
         >>> pl = pv.Plotter(shape=(1,2))
-        >>> pl.add_mesh(points)
-        >>> pl.add_title('Point Cloud of 3D Surface')
+        >>> _ = pl.add_mesh(points)
+        >>> _ = pl.add_title('Point Cloud of 3D Surface')
         >>> pl.subplot(0,1)
-        >>> pl.add_mesh(surf, color=True, show_edges=True)
-        >>> pl.add_title('Reconstructed Surface')
+        >>> _ = pl.add_mesh(surf, color=True, show_edges=True)
+        >>> _ = pl.add_title('Reconstructed Surface')
         >>> pl.show()  # doctest:+SKIP
 
         See :ref:`surface_reconstruction_example` for more examples
