@@ -866,7 +866,6 @@ def download_wavy(load=True):
 
 def download_single_sphere_animation(load=True):
     """Download PVD file for single sphere."""
-
     filename, _ = _download_file('PVD/paraview/singleSphereAnimation.pvd')
     folder, _ =_download_file('PVD/paraview/singleSphereAnimation')
     if not load:
@@ -876,7 +875,6 @@ def download_single_sphere_animation(load=True):
 
 def download_dual_sphere_animation(load=True):
     """Download PVD file for double sphere."""
-
     filename, _ = _download_file('PVD/paraview/dualSphereAnimation.pvd')
     folder, _ =_download_file('PVD/paraview/dualSphereAnimation')
     if not load:
