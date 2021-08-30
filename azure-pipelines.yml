@@ -94,12 +94,12 @@ jobs:
     displayName: 'Install test dependencies'
 
   - script: |
-      xvfb-run -s "-maxclients 512" pytest -v --doctest-modules pyvista
-    displayName: 'Test Package Docstrings'
-
-  - script: |
       xvfb-run -s "-maxclients 512" make doctest-modules-local-namespace
     displayName: 'Test Package Docstrings with Local Namespace'
+
+  - script: |
+      xvfb-run -s "-maxclients 512" pytest -v --doctest-modules pyvista
+    displayName: 'Test Package Docstrings'
 
   # don't run job on no-ci builds
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
