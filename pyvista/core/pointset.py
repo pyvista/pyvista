@@ -1651,6 +1651,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> x, y, z = np.meshgrid(x, y, z)
         >>> grid = pv.StructuredGrid(x, y, z)
         >>> grid.hide_cells(range(79*30, 79*50))
+        >>> grid.plot(color=True, show_edges=True)
         """
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
@@ -1666,6 +1667,47 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         # have no effect
 
         self.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+
+    def hide_points(self, ind):
+        """Hide points without deleting them.
+
+        Hides points by setting the ghost_points array to ``HIDDEN_CELL``.
+
+        Parameters
+        ----------
+        ind : iterable
+            List or array of point indices to be hidden.  The array
+            can also be a boolean array of the same size as the number
+            of points.
+
+        Examples
+        --------
+        Hide part of the middle of a structured surface.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> x = np.arange(-10, 10, 0.25)
+        >>> y = np.arange(-10, 10, 0.25)
+        >>> z = 0
+        >>> x, y, z = np.meshgrid(x, y, z)
+        >>> grid = pv.StructuredGrid(x, y, z)
+        >>> grid.hide_points(range(80*30, 80*50))
+        >>> grid.plot(color=True, show_edges=True)
+        """
+        if isinstance(ind, np.ndarray):
+            if ind.dtype == np.bool_ and ind.size != self.n_points:
+                raise ValueError('Boolean array size must match the '
+                                 f'number of points ({self.n_points})')
+        ghost_points = np.zeros(self.n_points, np.uint8)
+        ghost_points[ind] = _vtk.vtkDataSetAttributes.HIDDENPOINT
+
+        # NOTE: cells cannot be removed from a structured grid, only
+        # hidden setting ghost_points to a value besides
+        # vtk.vtkDataSetAttributes.HIDDENCELL will not hide them
+        # properly, additionally, calling self.RemoveGhostCells will
+        # have no effect
+
+        self.point_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_points
 
     def _reshape_point_array(self, array):
         """Reshape point data to a 3-D matrix."""
