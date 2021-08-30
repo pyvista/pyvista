@@ -6,12 +6,10 @@ CODESPELL_IGNORE ?= "ignore_words.txt"
 
 # doctest modules must be off screen to avoid plotting everything, and
 # we must enable killing of the display when using VTK 9+
-doctest-modules:
-    export PYVISTA_OFF_SCREEN = True
-    export PYVISTA_KILL_DISPLAY = True
-doctest-modules-local-namespace:
-    export PYVISTA_KILL_DISPLAY = True
-    export PYVISTA_OFF_SCREEN = True
+doctest-modules: export PYVISTA_OFF_SCREEN = True
+doctest-modules: export PYVISTA_KILL_DISPLAY = True
+doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
+doctest-modules-local-namespace: export PYVISTA_KILL_DISPLAY = True
 
 all: doctest
 
