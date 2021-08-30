@@ -1940,12 +1940,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.hide_cells(range(80, 120))  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> _ = grid.hide_cells(range(80, 120), inplace=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
-        >>> grid.show_cells()  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> _ = grid.show_cells(inplace=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         """
         if inplace:
