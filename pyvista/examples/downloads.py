@@ -66,7 +66,7 @@ def _retrieve_file(retriever, filename):
         return a tuple like (file_path, resp), where file_path is
         the path to the file to use.
     filename : str
-        The name of the file
+        The name of the file.
     """
     _check_examples_path()
     # First check if file has already been downloaded
@@ -883,3 +883,37 @@ def download_dual_sphere_animation(load=True):
         return filename
     return pyvista.PVDReader(filename).read()
 
+
+def download_osmnx_graph():  # pragma: no cover
+    """Load a simple street map from Open Street Map.
+
+    Generated from:
+
+    .. code:: python
+
+        >>> import osmnx as ox  # doctest: +SKIP
+        >>> address = 'Holzgerlingen DE'  # doctest: +SKIP
+        >>> graph = ox.graph_from_address(address, dist=500, network_type='drive')  # doctest: +SKIP
+        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))  # doctest: +SKIP
+
+    Returns
+    -------
+    networkx.classes.multidigraph.MultiDiGraph
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> graph = examples.download_osmnx_graph()  # doctest: +SKIP
+    
+    See :ref:`open_street_map_example` for a full example using this dataset.
+
+    """
+    import pickle
+
+    try:
+        import osmnx
+    except ImportError:
+        raise ImportError('Install `osmnx` to use this example')
+
+    filename, _ = _download_file('osmnx_graph.p')
+    return pickle.load(open(filename, 'rb'))

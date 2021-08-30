@@ -391,7 +391,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Returns
         -------
-        :class:`pyvista.pyvista_ndarray`
+        pyvista.pyvista_ndarray
             Array of the active texture coordinates.
 
         Examples
@@ -485,7 +485,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Returns
         -------
-        :class:`pyvista.pyvista_ndarray` or ``vtkDataArray``
+        pyvista.pyvista_ndarray or vtkDataArray
             Returns a :class:`pyvista.pyvista_ndarray` if the
             underlying array is either a ``vtk.vtkDataArray`` or
             ``vtk.vtkStringArray``.  Otherwise, returns a
@@ -622,6 +622,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         deep_copy : bool, optional
             When ``True`` makes a full copy of the array.
 
+        Notes
+        -----
+        When adding directional data (such as velocity vectors), use
+        :func:`DataSetAttributes.set_vectors`.
+
         Examples
         --------
         >>> import pyvista
@@ -638,11 +643,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Normals  : None
         Contains arrays :
             my-scalars              int64    (8,)                 SCALARS
-
-        See Also
-        --------
-        When adding directional data (such as velocity vectors), use
-        :func:`DataSetAttributes.set_vectors`.
 
         """
         vtk_arr = self._prepare_array(scalars, name, deep_copy)
@@ -702,8 +702,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         rotated along with the geometry when the DataSet is passed
         through a transformation filter.
 
-        See Also
-        --------
         When adding non-directional data (such temperature values or
         multi-component scalars like RGBA values), you can also use
         :func:`DataSetAttributes.set_scalars`.
@@ -873,7 +871,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Returns
         -------
-        :class:`pyvista_ndarray`
+        pyvista_ndarray
             Requested array.
 
         Examples
@@ -1107,7 +1105,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Returns
         -------
-        :class:`pyvista_ndarray`
+        pyvista_ndarray
             Normals of this dataset attributes.  ``None`` if no
             normals have been set.
 

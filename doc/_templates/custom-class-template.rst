@@ -10,7 +10,7 @@
    .. rubric:: {{ _('Methods') }}
 
    .. autosummary::
-      :toctree: _autosummary
+      :toctree:
    {% for item in methods %}
       {% if item != "__init__" %}
       {{ name }}.{{ item }}
@@ -24,7 +24,7 @@
    .. rubric:: {{ _('Attributes') }}
 
    .. autosummary::
-      :toctree: _autosummary
+      :toctree:
    {% for item in attributes %}
       {% if item.0 != item.upper().0 %}
       {{ name }}.{{ item }}

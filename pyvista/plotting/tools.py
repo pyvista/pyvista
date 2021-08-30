@@ -77,7 +77,7 @@ def system_supports_plotting():
 
     Returns
     -------
-    system_supports_plotting : bool
+    bool
         ``True`` when system supports plotting.
 
     """
@@ -89,8 +89,8 @@ def system_supports_plotting():
     return SUPPORTS_PLOTTING
 
 
-def update_axes_label_color(axes_actor, color=None):
-    """Set the axes label color (internale helper)."""
+def _update_axes_label_color(axes_actor, color=None):
+    """Set the axes label color (internal helper)."""
     if color is None:
         color = pyvista.global_theme.font.color
     color = parse_color(color)
@@ -104,13 +104,47 @@ def update_axes_label_color(axes_actor, color=None):
     elif isinstance(axes_actor, _vtk.vtkAnnotatedCubeActor):
         axes_actor.GetTextEdgesProperty().SetColor(color)
 
-    return
-
 
 def create_axes_marker(label_color=None, x_color=None, y_color=None,
                        z_color=None, xlabel='X', ylabel='Y', zlabel='Z',
                        labels_off=False, line_width=2):
-    """Return an axis actor to add in the scene."""
+    """Create an axis actor.
+
+    Parameters
+    ----------
+    label_color : str or sequence, optional
+        Unknown
+
+    x_color : str or sequence, optional
+        Color of the x axis text.
+
+    y_color : str or sequence, optional
+        Color of the y axis text.
+
+    z_color : str or sequence, optional
+        Color of the z axis text.
+
+    xlabel : str, optional
+        Text used for the x axis.
+
+    ylabel : str, optional
+        Text used for the y axis.
+
+    zlabel : str, optional
+        Text used for the z axis.
+
+    labels_off : bool, optional
+        Enable or disable the text labels for the axes.
+
+    line_width : float, optional
+        The width of the marker lines.
+
+    Returns
+    -------
+    vtk.vtkAxesActor
+        Axes actor.
+
+    """
     if x_color is None:
         x_color = pyvista.global_theme.axes.x_color
     if y_color is None:
@@ -135,7 +169,7 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
     axes_actor.GetYAxisShaftProperty().SetLineWidth(line_width)
     axes_actor.GetZAxisShaftProperty().SetLineWidth(line_width)
 
-    update_axes_label_color(axes_actor, label_color)
+    _update_axes_label_color(axes_actor, label_color)
 
     return axes_actor
 
@@ -148,8 +182,83 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
                                 y_face_color='green',
                                 z_face_color='blue',
                                 color_box=False, label_color=None,
-                                labels_off=False, opacity=0.5,):
-    """Create a Box axes orientation widget with labels."""
+                                labels_off=False, opacity=0.5):
+    """Create a Box axes orientation widget with labels.
+
+    Parameters
+    ----------
+    line_width : float, optional
+        The width of the marker lines.
+
+    text_scale : float, optional
+        Size of the text relative to the faces.
+
+    edge_color : str or sequence, optional
+        Color of the edges.
+
+    x_color : str or sequence, optional
+        Color of the x axis text.
+
+    y_color : str or sequence, optional
+        Color of the y axis text.
+
+    z_color : str or sequence, optional
+        Color of the z axis text.
+
+    xlabel : str, optional
+        Text used for the x axis.
+
+    ylabel : str, optional
+        Text used for the y axis.
+
+    zlabel : str, optional
+        Text used for the z axis.
+
+    x_face_color : str or sequence, optional
+        Color used for the x axis arrow.  Defaults to theme axes
+        parameters.
+
+    y_face_color : str or sequence, optional
+        Color used for the y axis arrow.  Defaults to theme axes
+        parameters.
+
+    z_face_color : str or sequence, optional
+        Color used for the z axis arrow.  Defaults to theme axes
+        parameters.
+
+    color_box : bool, optional
+        Enable or disable the face colors.  Otherwise, box is white.
+
+    label_color : str or sequence, optional
+        Color of the labels.
+
+    labels_off : bool, optional
+        Enable or disable the text labels for the axes.
+
+    opacity : float, optional
+        Opacity in the range of ``[0, 1]`` of the orientation box.
+
+    Returns
+    -------
+    vtk.vtkAnnotatedCubeActor
+        Annotated cube actor.
+
+    Examples
+    --------
+    Create and plot an orientation box
+    >>> import pyvista
+    >>> actor = pyvista.create_axes_orientation_box(
+    ...    line_width=1, text_scale=0.53,
+    ...    edge_color='black', x_color='k',
+    ...    y_color=None, z_color=None,
+    ...    xlabel='X', ylabel='Y', zlabel='Z',
+    ...    color_box=False,
+    ...    labels_off=False, opacity=1.0)
+    >>> pl = pyvista.Plotter()
+    >>> _ = pl.add_actor(actor)
+    >>> pl.show()  # doctest:+SKIP
+
+    """
     if x_color is None:
         x_color = pyvista.global_theme.axes.x_color
     if y_color is None:
@@ -222,7 +331,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     else:
         actor = axes_actor
 
-    update_axes_label_color(actor, label_color)
+    _update_axes_label_color(actor, label_color)
 
     return actor
 

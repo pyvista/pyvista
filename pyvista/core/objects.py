@@ -19,8 +19,8 @@ class Table(_vtk.vtkTable, DataObject):
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
     or from a dictionary containing NumPy arrays.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import pyvista as pv
     >>> import numpy as np
     >>> arrays = np.random.rand(100, 3)
@@ -53,7 +53,6 @@ class Table(_vtk.vtkTable, DataObject):
         np_table = arrays.T
         for i, array in enumerate(np_table):
             self.row_arrays[f'Array {i}'] = array
-        return
 
     def _from_dict(self, array_dict):
         for array in array_dict.values():
@@ -61,7 +60,6 @@ class Table(_vtk.vtkTable, DataObject):
                 raise ValueError('Dictionary must contain only NumPy arrays with maximum of 2D.')
         for name, array in array_dict.items():
             self.row_arrays[name] = array
-        return
 
     def _from_pandas(self, data_frame):
         for name in data_frame.keys():
@@ -101,8 +99,8 @@ class Table(_vtk.vtkTable, DataObject):
 
         Returns
         -------
-        :class:`numpy.ndarray`
-            Numpy array of scalars
+        numpy.ndarray
+            Numpy array of the row.
 
         """
         return self.row_arrays.get_array(name)
@@ -114,23 +112,63 @@ class Table(_vtk.vtkTable, DataObject):
                                  association=FieldAssociation.ROW)
 
     def keys(self):
-        """Return the table keys."""
+        """Return the table keys.
+
+        Returns
+        -------
+        list
+            List of the array names of this table.
+
+        """
         return self.row_arrays.keys()
 
     def items(self):
-        """Return the table items."""
+        """Return the table items.
+
+        Returns
+        -------
+        list
+            List containing tuples pairs of the name and array of the table arrays.
+
+        """
         return self.row_arrays.items()
 
     def values(self):
-        """Return the table values."""
+        """Return the table values.
+
+        Returns
+        -------
+        list
+            List of the table arrays.
+
+        """
         return self.row_arrays.values()
 
     def update(self, data):
-        """Set the table data."""
+        """Set the table data using a dict-like update.
+
+        Parameters
+        ----------
+        data : DataSetAttributes
+            Other dataset attributes to update from.
+
+        """
         self.row_arrays.update(data)
 
     def pop(self, name):
-        """Pops off an array by the specified name."""
+        """Pop off an array by the specified name.
+
+        Parameters
+        ----------
+        name : int or str
+            Index or name of the row array.
+
+        Returns
+        -------
+        pyvista.pyvista_ndarray
+            PyVista array.
+
+        """
         return self.row_arrays.pop(name)
 
     def _add_row_array(self, scalars, name, deep=True):
@@ -159,7 +197,18 @@ class Table(_vtk.vtkTable, DataObject):
         return self.keys()
 
     def get(self, index):
-        """Get an array by its name."""
+        """Get an array by its name.
+
+        Parameters
+        ----------
+        index : int or str
+            Index or name of the row.
+
+        Returns
+        -------
+        pyvista.pyvista_ndarray
+            PyVista array.
+        """
         return self[index]
 
     def __setitem__(self, name, scalars):
@@ -238,7 +287,14 @@ class Table(_vtk.vtkTable, DataObject):
         return self.head(display=False, html=False)
 
     def to_pandas(self):
-        """Create a Pandas DataFrame from this Table."""
+        """Create a Pandas DataFrame from this Table.
+
+        Returns
+        -------
+        pandas.DataFrame
+            This table represented as a pandas dataframe.
+
+        """
         try:
             import pandas as pd
         except ImportError:  # pragma: no cover
@@ -258,14 +314,19 @@ class Table(_vtk.vtkTable, DataObject):
 
         Parameters
         ----------
-        arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalar
-            is used
+        arr : str, numpy.ndarray, optional
+            The name of the array to get the range. If ``None``, the active scalar
+            is used.
 
         preference : str, optional
             When scalars is specified, this is the preferred array type
             to search for in the dataset.  Must be either ``'row'`` or
             ``'field'``.
+
+        Returns
+        -------
+        tuple
+            ``(min, max)`` of the array.
 
         """
         if arr is None:
@@ -317,7 +378,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         if not isinstance(image, pyvista.UniformGrid):
             image = pyvista.UniformGrid(image)
         self.SetInputDataObject(image)
-        return self.Update()
+        self.Update()
 
     def _from_array(self, image):
         """Create a texture from a np.ndarray."""
@@ -335,7 +396,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
         grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, n_components), order='F')
         grid.set_active_scalars('Image')
-        return self._from_image_data(grid)
+        self._from_image_data(grid)
 
     @property
     def repeat(self):
@@ -358,14 +419,28 @@ class Texture(_vtk.vtkTexture, DataObject):
             raise ValueError(f"Axis {axis} out of bounds")
         array = self.to_array()
         array = np.flip(array, axis=1 - axis)
-        return self._from_array(array)
+        self._from_array(array)
 
     def to_image(self):
-        """Return the texture as an image."""
+        """Return the texture as an image.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            Texture represented as a uniform grid.
+
+        """
         return self.GetInput()
 
     def to_array(self):
-        """Return the texture as a np.ndarray."""
+        """Return the texture as an array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Texture as a numpy array
+
+        """
         image = self.to_image()
 
         if image.active_scalars.ndim > 1:
@@ -396,11 +471,24 @@ class Texture(_vtk.vtkTexture, DataObject):
         self.SetCubeMap(flag)
 
     def copy(self):
-        """Make a copy of this texture."""
+        """Make a copy of this texture.
+
+        Returns
+        -------
+        pyvista.Texture
+            Copied texture.
+        """
         return Texture(self.to_image().copy())
 
     def to_skybox(self):
-        """Return the texture as a ``vtkSkybox`` if cube mapping is enabled."""
+        """Return the texture as a ``vtkSkybox`` if cube mapping is enabled.
+
+        Returns
+        -------
+        vtk.vtkSkybox
+            Skybox if cube mapping is enabled.  Otherwise, ``None``.
+
+        """
         if self.cube_map:
             skybox = _vtk.vtkSkybox()
             skybox.SetTexture(self)
