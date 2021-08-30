@@ -1,18 +1,31 @@
-scipy
-matplotlib
-imageio>=2.5.0
-imageio-ffmpeg
-colorcet
 cmocean
-Sphinx
+colorcet
+imageio-ffmpeg
+imageio>=2.5.0
+ipygany
+ipyvtklink
+jupyter_sphinx==0.3.2
+jupyterlab>=3.0.12
+lxml
+matplotlib
+mypy
+mypy-extensions
+osmnx==1.1.1
+https://github.com/numpy/numpydoc/archive/main.zip  # need latest
+panel
+param==1.10.1  # due to panel bug
+pydata-sphinx-theme
+pypandoc
+pytest-sphinx
+scipy
+Sphinx>=4.0.0
 sphinx-autobuild
-sphinx-rtd-theme
+sphinx-copybutton
+sphinx-gallery>=0.8.1
+sphinx-notfound-page>=0.3.0
+sphinx-panels
 sphinxcontrib-napoleon
 sphinxcontrib-websupport
-pytest-sphinx
-sphinx-notfound-page>=0.3.0
-sphinx-copybutton
-sphinx-gallery>=0.4.0
-lxml
 trimesh
-vtk==8.1.2  # needed because 9.0.X has an issue with the plotter closing with iren
+typed-ast
+typing-extensions

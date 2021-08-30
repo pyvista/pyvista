@@ -7,25 +7,89 @@ import sys
 
 import numpy as np
 import scooby
-import vtk
 
 import pyvista
+from pyvista import _vtk
+
+import contextlib
+import collections
 
 
 def set_error_output_file(filename):
-    """Set a file to write out the VTK errors."""
+    """Set a file to write out the VTK errors.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the file to write VTK errors to.
+
+    Returns
+    -------
+    vtkFileOutputWindow
+        VTK file output window.
+    vtkOutputWindow
+        VTK output window.
+
+    """
     filename = os.path.abspath(os.path.expanduser(filename))
-    fileOutputWindow = vtk.vtkFileOutputWindow()
+    fileOutputWindow = _vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)
-    outputWindow = vtk.vtkOutputWindow()
+    outputWindow = _vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow
+
+
+class VtkErrorCatcher:
+    """Context manager to temporarily catch VTK errors.
+
+    Parameters
+    ----------
+    raise_errors : bool, optional
+        Raise a ``RuntimeError`` when a VTK error is encountered.
+        Defaults to ``False``.
+
+    send_to_logging : bool, optional
+        Determine whether VTK errors raised within the context should
+        also be sent to logging.  Defaults to ``True``.
+
+    Examples
+    --------
+    Catch VTK errors using the context manager.
+
+    >>> import pyvista
+    >>> with pyvista.VtkErrorCatcher() as error_catcher:
+    ...     sphere = pyvista.Sphere()
+    """
+
+    def __init__(self, raise_errors=False, send_to_logging=True):
+        """Initialize context manager."""
+        self.raise_errors = raise_errors
+        self.send_to_logging = send_to_logging
+
+    def __enter__(self):
+        """Observe VTK string output window for errors."""
+        error_output = _vtk.vtkStringOutputWindow()
+        error_win = _vtk.vtkOutputWindow()
+        self._error_output_orig = error_win.GetInstance()
+        error_win.SetInstance(error_output)
+        obs = Observer(log=self.send_to_logging, store_history=True)
+        obs.observe(error_output)
+        self._observer = obs
+
+    def __exit__(self, type, val, traceback):
+        """Stop observing VTK string output window."""
+        error_win = _vtk.vtkOutputWindow()
+        error_win.SetInstance(self._error_output_orig)
+        self.events = self._observer.event_history
+        if self.raise_errors and self.events:
+            errors = [RuntimeError(f'{e.kind}: {e.alert}', e.path, e.address) for e in self.events]
+            raise RuntimeError(errors)
 
 
 class Observer:
     """A standard class for observing VTK objects."""
 
-    def __init__(self, event_type='ErrorEvent', log=True):
+    def __init__(self, event_type='ErrorEvent', log=True, store_history=False):
         """Initialize observer."""
         self.__event_occurred = False
         self.__message = None
@@ -34,6 +98,9 @@ class Observer:
         self.__observing = False
         self.event_type = event_type
         self.__log = log
+
+        self.store_history = store_history
+        self.event_history = []
 
     @staticmethod
     def parse_message(message):
@@ -66,9 +133,12 @@ class Observer:
         self.__message = alert
         if self.__log:
             self.log_message(kind, alert)
+        if self.store_history:
+            VtkEvent = collections.namedtuple('VtkEvent', ['kind', 'path', 'address', 'alert'])
+            self.event_history.append(VtkEvent(kind, path, address, alert))
 
     def has_event_occurred(self):
-        """Ask self if an error has occurred since last querried.
+        """Ask self if an error has occurred since last queried.
 
         This resets the observer's status.
 
@@ -80,8 +150,8 @@ class Observer:
     def get_message(self, etc=False):
         """Get the last set error message.
 
-        Return
-        ------
+        Returns
+        -------
             str: the last set error message
 
         """
@@ -102,8 +172,8 @@ class Observer:
 
 def send_errors_to_logging():
     """Send all VTK error/warning messages to Python's logging module."""
-    error_output = vtk.vtkStringOutputWindow()
-    error_win = vtk.vtkOutputWindow()
+    error_output = _vtk.vtkStringOutputWindow()
+    error_win = _vtk.vtkOutputWindow()
     error_win.SetInstance(error_output)
     obs = Observer()
     return obs.observe(error_output)
@@ -218,7 +288,7 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = ['matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'ipyvtk_simple', 'scipy', 'itkwidgets', 'tqdm']
+                    'cmocean', 'ipyvtklink', 'scipy', 'itkwidgets', 'tqdm']
 
         # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.

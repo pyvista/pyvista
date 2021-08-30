@@ -17,7 +17,7 @@ import pyvista as pv
 from pyvista import examples
 import numpy as np
 
-pv.set_plot_theme('doc')
+pv.set_plot_theme('document')
 
 mesh = examples.download_kitchen()
 furniture = examples.download_kitchen(split=True)

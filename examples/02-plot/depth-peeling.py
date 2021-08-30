@@ -3,10 +3,11 @@ Depth Peeling
 ~~~~~~~~~~~~~
 
 Depth peeling is a technique to correctly render translucent geometry.
-This is not enabled by default in :any:`pyvista.rcParams` as some operating
-systems and versions of VTK have issues with this routine.
+This is not enabled by default in ``pyvista.global_theme`` as some
+operating systems and versions of VTK have issues with this routine.
 
-For this example, we will showcase the difference that depth peeling provides.
+For this example, we will showcase the difference that depth peeling
+provides.
 
 """
 # sphinx_gallery_thumbnail_number = 2
@@ -26,13 +27,13 @@ for i, c in enumerate(centers):
 ###############################################################################
 dargs = dict(opacity=0.5, color="red", smooth_shading=True)
 
-p = pv.Plotter(shape=(1,2), multi_samples=8)
+p = pv.Plotter(shape=(1, 2), multi_samples=8)
 
 p.add_mesh(spheres, **dargs)
 p.enable_depth_peeling(10)
 p.add_text("Depth Peeling")
 
-p.subplot(0,1)
+p.subplot(0, 1)
 p.add_text("Standard")
 p.add_mesh(spheres.copy(), **dargs)
 
@@ -50,7 +51,7 @@ p.show()
 
 room = examples.download_room_surface_mesh()
 
-p = pv.Plotter(shape=(1,2))
+p = pv.Plotter(shape=(1, 2))
 
 p.enable_depth_peeling(number_of_peels=4, occlusion_ratio=0)
 p.add_mesh(room, opacity=0.5, color="tan")
@@ -63,7 +64,7 @@ p.add_mesh(room.copy(), opacity=0.5, color="tan")
 p.link_views()
 p.camera_position = [(43.6, 49.5, 19.8),
                      (0.0, 2.25, 0.0),
-                    (-0.57, 0.70, -0.42)]
+                     (-0.57, 0.70, -0.42)]
 
 p.show()
 

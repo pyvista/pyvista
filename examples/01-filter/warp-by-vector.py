@@ -1,4 +1,6 @@
 """
+.. _warp_by_vectors_example:
+
 Warping by Vectors
 ~~~~~~~~~~~~~~~~~~
 
@@ -14,10 +16,13 @@ from pyvista import examples
 
 sphere = examples.load_sphere_vectors()
 warped = sphere.warp_by_vector()
-warped.translate([0, 0., -7.])
 
-p = pv.Plotter()
+p = pv.Plotter(shape=(1, 2))
+p.subplot(0, 0)
+p.add_text("Before warp")
 p.add_mesh(sphere, color='white')
+p.subplot(0, 1)
+p.add_text("After warp")
 p.add_mesh(warped, color='white')
 p.show()
 

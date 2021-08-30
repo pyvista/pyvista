@@ -49,7 +49,7 @@ def test_table_init(tmpdir):
         assert np.allclose(arrays[:,i], table[f'foo{i}'])
 
     dataset = examples.load_hexbeam()
-    array_dict = dict(dataset.point_arrays)
+    array_dict = dict(dataset.point_data)
     table = pyvista.Table(array_dict)
     assert table.n_rows == dataset.n_points
     assert table.n_columns == len(array_dict)
@@ -117,7 +117,7 @@ def test_table_row_arrays():
     assert table.n_columns == 0
 
     dataset = examples.load_hexbeam()
-    array_dict = dataset.point_arrays
+    array_dict = dataset.point_data
     # Test dict methods
     table = pyvista.Table()
     table.update(array_dict)
@@ -216,3 +216,15 @@ def test_texture():
     texture.flip(1)
     texture = pyvista.Texture(examples.load_globe_texture())
     assert texture is not None
+
+
+def test_skybox():
+    texture = examples.load_globe_texture()
+    texture.cube_map = False
+    assert texture.cube_map is False
+
+    texture.cube_map = True
+    assert texture.cube_map is True
+
+    skybox = texture.to_skybox()
+    assert isinstance(skybox, vtk.vtkOpenGLSkybox)

@@ -76,9 +76,9 @@ pl.show()
 # Compare directions. Normalize them so we can get a reasonable direction
 # comparison.
 
-flow_a = a.point_arrays['ssavelocity'].copy()
+flow_a = a.point_data['ssavelocity'].copy()
 flow_a /= np.linalg.norm(flow_a, axis=1).reshape(-1, 1)
-flow_b = b.point_arrays['ssavelocity'].copy()
+flow_b = b.point_data['ssavelocity'].copy()
 flow_b /= np.linalg.norm(flow_b, axis=1).reshape(-1, 1)
 
 
@@ -98,7 +98,8 @@ pl.show()
 agree = flow_a.dot(flow_b.mean(0))
 
 pl = pv.Plotter()
-pl.add_mesh(a, scalars=agree, cmap='bwr', stitle='Flow agreement with block b')
+pl.add_mesh(a, scalars=agree, cmap='bwr',
+            scalar_bar_args={'title': 'Flow agreement with block b'})
 pl.add_mesh(b, color='w')
 pl.show(cpos='xy')
 
@@ -107,5 +108,6 @@ agree = flow_b.dot(flow_a.mean(0))
 
 pl = pv.Plotter()
 pl.add_mesh(a, color='w')
-pl.add_mesh(b, scalars=agree, cmap='bwr', stitle='Flow agreement with block a')
+pl.add_mesh(b, scalars=agree, cmap='bwr',
+            scalar_bar_args={'title': 'Flow agreement with block a'})
 pl.show(cpos='xy')

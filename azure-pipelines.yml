@@ -24,7 +24,7 @@ jobs:
 # DESCRIPTION: Quickly check the spelling and documentation style
 - job: CodeSpellStyle
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: 'ubuntu-20.04'
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -35,10 +35,80 @@ jobs:
     displayName: 'Run doctest'
 
 
-# DESCRIPTION: Core API and doc string testing for Linux
+# DESCRIPTION: Static code check
+- job: StaticCodeCheck
+  pool:
+    vmImage: 'ubuntu-20.04'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.8'
+  - script: |
+      pip install -r requirements_static.txt
+      make mypy
+    displayName: 'Run static code check'
+
+
+# DESCRIPTION: Doc string testing
+- job: DocstringTesting
+  pool:
+    vmImage: 'ubuntu-20.04'
+  variables:
+    DISPLAY: ':99.0'
+    PYVISTA_OFF_SCREEN: 'True'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.9'
+
+  - script: |
+      PIP_CACHE_PATH=$(pip cache dir)
+      echo "##vso[task.setvariable variable=PIP_CACHE_PATH]$PIP_CACHE_PATH"
+      PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
+      echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
+    displayName: 'Store pip cache path and pyvista version'
+
+  - task: Cache@2
+    inputs:
+      key: 'PIP_WHEEL_CACHE | $(Agent.OS) | "$(python.version)" | "$(PYVISTA_VERSION)"'
+      path: $(PIP_CACHE_PATH)
+    displayName: Cache pip
+
+  - script: |
+      pip install wheel
+      python setup.py bdist_wheel
+      pip install dist/pyvista*.whl
+    displayName: Build wheel and install pyvista
+
+  - script: |
+      sudo apt-get update && sudo apt-get install libgl1-mesa-glx xvfb -y
+    displayName: Install headless display
+
+  - script: |
+      sudo apt-get install python3-tk
+      pip install -r requirements_test.txt
+      xvfb-run python -c "import pyvista; print(pyvista.Report())"
+      which python
+      pip list
+    displayName: 'Install test dependencies'
+
+  - script: |
+      xvfb-run pytest -v --doctest-modules pyvista
+    displayName: 'Test Package Docstrings'
+
+  - script: |
+      xvfb-run make doctest-modules-local-namespace
+    displayName: 'Test Package Docstrings with Local Namespace'
+
+  # don't run job on no-ci builds
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
+
+
+# DESCRIPTION: Core API testing for Linux
 - job: Linux
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
@@ -49,6 +119,10 @@ jobs:
         python.version: '3.6'
       Python37:
         python.version: '3.7'
+      Python38:
+        python.version: '3.8'
+      Python39:
+        python.version: '3.9'
 
   steps:
   - task: UsePythonVersion@0
@@ -93,10 +167,6 @@ jobs:
     displayName: 'Test Core API'
 
   - script: |
-      pytest -v --doctest-modules pyvista
-    displayName: 'Test Package Docstrings'
-
-  - script: |
       bash <(curl -s https://codecov.io/bash)
     displayName: 'Upload coverage to codecov.io'
     condition: eq(variables['python.version'], '3.7')
@@ -106,9 +176,9 @@ jobs:
       python setup.py sdist
       twine upload --skip-existing dist/pyvista*
     displayName: 'Upload to PyPi'
-    condition: and(eq(variables['python.version'], '3.7'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
+    condition: and(eq(variables['python.version'], '3.8'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
     env:
-      TWINE_USERNAME: $(twine.username)
+      TWINE_USERNAME: __token__
       TWINE_PASSWORD: $(twine.password)
       TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
@@ -116,64 +186,10 @@ jobs:
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
 
-# DESCRIPTION: Core API and doc string testing across VTK versions using conda
-- job: LinuxConda
-  pool:
-    vmImage: 'ubuntu-16.04'
-  variables:
-    DISPLAY: ':99.0'
-    PYVISTA_OFF_SCREEN: 'True'
-
-  strategy:
-    matrix:
-      VTKv81:
-        VTK.VERSION: 8.1
-      VTKv82:
-        VTK.VERSION: 8.2
-
-  steps:
-
-    - script: |
-        .ci/setup_headless_display.sh
-      displayName: Install headless display
-
-    - script: |
-        export CONDA_ALWAYS_YES=1
-        source /usr/share/miniconda/etc/profile.d/conda.sh
-        conda config --add channels conda-forge
-        sed -i -e 's/- vtk$/- vtk=$(VTK.VERSION)/' environment.yml
-        conda env create --quiet -n pyvista-vtk$(VTK.VERSION) --file environment.yml
-        conda activate pyvista-vtk$(VTK.VERSION)
-        pip install -e .
-        conda list
-        which python
-        python -c "import pyvista; print(pyvista.Report(gpu=False))"
-      displayName: Create Anaconda environment
-
-    - script: |
-        source /usr/share/miniconda/etc/profile.d/conda.sh
-        conda activate pyvista-vtk$(VTK.VERSION)
-        pytest -v --ignore=tests/plotting
-      displayName: 'Test Core API'
-
-    - script: |
-        source /usr/share/miniconda/etc/profile.d/conda.sh
-        conda activate pyvista-vtk$(VTK.VERSION)
-        pytest -v tests/plotting --cov-report html
-      displayName: 'Test Core Plotting API'
-
-    - script: |
-        source /usr/share/miniconda/etc/profile.d/conda.sh
-        conda activate pyvista-vtk$(VTK.VERSION)
-        pytest -v --doctest-modules pyvista
-      displayName: 'Test Package Docstrings against VTK'
-  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
-
-
 # DESCRIPTION: Core API testing for Windows
 - job: Windows
   pool:
-    vmIMage: 'VS2017-Win2016'
+    vmIMage: 'windows-2019'
   variables:
     AZURE_CI_WINDOWS: 'true'
   strategy:
@@ -185,6 +201,8 @@ jobs:
         python.version: '3.7'
       Python38-64bit:
         python.version: '3.8'
+      Python39-64bit:
+        python.version: '3.9'
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -196,11 +214,6 @@ jobs:
       $PYVISTA_VERSION = $(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)") | Out-String
       echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
     displayName: 'Store pip cache path and pyvista version'
-  - task: Cache@2
-    inputs:
-      key: 'PIP_WHEEL_CACHE | $(Agent.OS) | "$(python.version)" | "$(PYVISTA_VERSION)"'
-      path: $(PIP_CACHE_PATH)
-    displayName: Cache pip
   - powershell: |
       Set-StrictMode -Version Latest
       $ErrorActionPreference = "Stop"
@@ -208,54 +221,20 @@ jobs:
       git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
       powershell gl-ci-helpers/appveyor/install_opengl.ps1
     displayName: 'Install OpenGL'
+
   - script: |
       pip install wheel
       pip install .
       python -c "import pyvista; print(pyvista.Report(gpu=False))"
     displayName: 'Install PyVista'
+
   - script: |
       pip install -r requirements_test.txt
     displayName: 'Install test dependencies'
+
   - script: |
       python -m pytest --cov -v .
-    displayName: 'Run Tests'
-
-  # don't run job on no-ci builds
-  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
-
-
-# DESCRIPTION: Core API testing for MacOS
-- job: macOS
-  variables:
-    python.architecture: 'x64'
-  strategy:
-    matrix:
-      Python36:
-        python.version: '3.6'
-      Python37:
-        python.version: '3.7'
-      Python38:
-        python.version: '3.8'
-  pool:
-    vmImage: 'macOS-10.15'
-  steps:
-    - script: .ci/macos-install-python.sh '$(python.version)'
-      displayName: Install Python
-
-    - script: |
-        python setup.py sdist
-        python setup.py install
-        python -c "import pyvista; print(pyvista.Report(gpu=False))"
-      displayName: 'Install PyVista'
-
-    - script: |
-        python -m pip install -r requirements_test.txt
-        python -m pip install pytest-azurepipelines
-      displayName: 'Install test dependencies'
-
-    - script: |
-        python -m pytest -v --cov pyvista --cov-report html --durations=0
-      displayName: 'Run Tests'
+    displayName: 'Test Core API'
 
   # don't run job on no-ci builds
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
@@ -264,7 +243,7 @@ jobs:
 # Builds the documentation
 - job: BuildDocumentation
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
 
   variables:
     DISPLAY: ':99.0'
@@ -273,8 +252,8 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: 3.7
-    displayName: 'Use Python 3.7'
+      versionSpec: 3.8
+    displayName: 'Use Python 3.8'
 
   - script: |
       git config --global user.name ${GH_NAME}
@@ -289,13 +268,13 @@ jobs:
       pip install -e .
     displayName: Install pyvista
 
-  - script: |
+  - script: |      
       .ci/setup_headless_display.sh
       # python .ci/pyvista_test.py  # for debug
     displayName: Install headless display
 
   - script: |
-      sudo apt-get install python3-tk
+      sudo apt-get install python3-tk pandoc
       pip install -r requirements_docs.txt
     displayName: 'Install dependencies'
 
@@ -317,28 +296,23 @@ jobs:
   - task: Cache@2
     inputs:
       key: 'PYVISTA_DOC_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
-      path: '$(Build.SourcesDirectory)/docs/examples'
+      path: '$(Build.SourcesDirectory)/doc/examples'
     displayName: Build pyvista doc examples cache
 
+  # run this three times since VTK9 fails to close render windows
   - script: |
-      make -C docs html -b coverage
-      cat docs/_build/coverage/python.txt
+      make -C doc phtml || true  # will fail on VTK9
+      make -C doc phtml || true  # need it again due to all our docstring examples
+      make -C doc phtml -b coverage SPHINXOPTS="-W"
+      cat doc/_build/coverage/python.txt
     displayName: 'Build documentation'
-
-  - script: |
-      make -C docs doctest
-    displayName: 'Test documentation code snippets'
-
-  - script: |
-      make -C docs html
-    displayName: 'Update figures from doctest'
 
   # Push example notebooks to pyvista-examples
   - script: |
       pip install cookiecutter
-      cookiecutter -f --no-input --config-file ./docs/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+      cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
       rm -rf ../pyvista-examples/notebooks/
-      cd docs
+      cd doc
       find examples -type f -name '*.ipynb' | cpio -p -d -v ../../pyvista-examples/
       cd ../../pyvista-examples/
       git init
@@ -346,7 +320,7 @@ jobs:
       git commit -am "Azure CI commit ref $(Build.SourceVersion)"
       REMOTE="https://${GH_TOKEN}@github.com/pyvista/pyvista-examples"
       git remote add origin ${REMOTE}
-      git push -uf origin master
+      git push -uf origin main
       cd $BUILD_SOURCESDIRECTORY
     displayName: 'Upload binder examples'
     condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'))
@@ -356,9 +330,9 @@ jobs:
   # Push example notebooks to pyvista-examples develop branch
   - script: |
       pip install cookiecutter
-      cookiecutter -f --no-input --config-file ./docs/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+      cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
       rm -rf ../pyvista-examples/notebooks/
-      cd docs
+      cd doc
       find examples -type f -name '*.ipynb' | cpio -p -d -v ../../pyvista-examples/
       cd ../../pyvista-examples/
       git init
@@ -370,7 +344,7 @@ jobs:
       git push -uf origin develop
       cd $BUILD_SOURCESDIRECTORY
     displayName: 'Upload binder examples to develop'
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     env:
       GH_TOKEN: $(gh.token)
 
@@ -381,9 +355,9 @@ jobs:
       git gc --prune=now
       git remote prune origin
       rm -rf *
-      cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
-      cp $BUILD_SOURCESDIRECTORY/docs/README.md .
-      cp $BUILD_SOURCESDIRECTORY/docs/ads.txt .
+      cp -r $BUILD_SOURCESDIRECTORY/doc/_build/html/* .
+      cp $BUILD_SOURCESDIRECTORY/doc/README.md .
+      cp $BUILD_SOURCESDIRECTORY/doc/ads.txt .
       touch .nojekyll
       echo "docs.pyvista.org" >> CNAME
       git add .
@@ -394,15 +368,15 @@ jobs:
       GH_TOKEN: $(gh.token)
     condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'))
 
-  # upload documentation to pyvista-docs develop when merging with master
+  # upload documentation to pyvista-docs develop when merging with main
   - script: |
       mkdir pyvista-docs-dev
       cd pyvista-docs-dev
       git init
       git checkout -b gh-pages
-      cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
-      cp $BUILD_SOURCESDIRECTORY/docs/README.md .
-      cp $BUILD_SOURCESDIRECTORY/docs/ads.txt .
+      cp -r $BUILD_SOURCESDIRECTORY/doc/_build/html/* .
+      cp $BUILD_SOURCESDIRECTORY/doc/README.md .
+      cp $BUILD_SOURCESDIRECTORY/doc/ads.txt .
       touch .nojekyll
       echo "dev.pyvista.org" >> CNAME
       git add .
@@ -413,7 +387,7 @@ jobs:
     displayName: Upload Documentation to pyvista-docs-dev
     env:
       GH_TOKEN: $(gh.token)
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
 
   # don't run job on no-ci builds
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))

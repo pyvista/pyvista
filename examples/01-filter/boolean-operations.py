@@ -1,110 +1,164 @@
 """
+.. _boolean_example:
+
 Boolean Operations
 ~~~~~~~~~~~~~~~~~~
 
-Perform boolean operations with closed surfaces (intersect, cut, etc.).
+Perform boolean operations with closed (manifold) surfaces.
 
-Boolean/topological operations (intersect, cut, etc.) methods are implemented
-for :class:`pyvista.PolyData` mesh types only and are accessible directly from
-any :class:`pyvista.PolyData` mesh. Check out :class:`pyvista.PolyDataFilters`
-and take a look at the following filters:
+Boolean/topological operations (intersect, union, difference) methods
+are implemented for :class:`pyvista.PolyData` mesh types only and are
+accessible directly from any :class:`pyvista.PolyData` mesh. Check out
+:class:`pyvista.PolyDataFilters` and take a look at the following
+filters:
 
-* :func:`pyvista.PolyDataFilters.boolean_add`
-* :func:`pyvista.PolyDataFilters.boolean_cut`
 * :func:`pyvista.PolyDataFilters.boolean_difference`
 * :func:`pyvista.PolyDataFilters.boolean_union`
+* :func:`pyvista.PolyDataFilters.boolean_intersection`
 
-For merging, the ``+`` operator can be used between any two meshes in PyVista
-which simply calls the ``.merge()`` filter to combine any two meshes.
-Similarly, the ``-`` operator can be used between any two :class:`pyvista.PolyData`
-meshes in PyVista to cut the first mesh by the second.
+Essentially, boolean union, difference, and intersection are all the
+same operation. Just different parts of the objects are kept at the
+end.
+
+The ``-`` operator can be used between any two :class:`pyvista.PolyData`
+meshes in PyVista to cut the first mesh by the second.  These meshes
+must be all triangle meshes, which you can check with
+:attr:`pyvista.PolyData.is_all_triangles`.
+
+.. note::
+   For merging, the ``+`` operator can be used between any two meshes
+   in PyVista which simply calls the ``.merge()`` filter to combine
+   any two meshes.  This is different from ``boolean_union`` as it
+   simply superimposes the two meshes without performing additional
+   calculations on the result.
+
+.. warning::
+   If your boolean operations don't react the way you think they
+   should (i.e. the wrong parts disappear), one of your meshes
+   probably has its normals pointing inward. Use
+   :func:`pyvista.PolyDataFilters.plot_normals` to visualize the normals.
+
+
 """
 
 # sphinx_gallery_thumbnail_number = 6
 import pyvista as pv
 import numpy as np
 
-def make_cube():
-    x = np.linspace(-0.5, 0.5, 25)
-    grid = pv.StructuredGrid(*np.meshgrid(x, x, x))
-    return grid.extract_surface().triangulate()
-
-# Create to examplee PolyData meshes for boolean operations
-sphere = pv.Sphere(radius=0.65, center=(0, 0, 0))
-cube = make_cube()
-
-p = pv.Plotter()
-p.add_mesh(sphere, color="yellow", opacity=0.5, show_edges=True)
-p.add_mesh(cube, color="royalblue", opacity=0.5, show_edges=True)
-p.show()
-
-###############################################################################
-# Boolean Add
-# +++++++++++
-#
-# Add all of the two meshes together using the
-# :func:`pyvista.PolyDataFilters.boolean_add` filter or the ``+`` operator.
-#
-# Order of operations does not matter for boolean add as the entirety of both
-# meshes are appended together.
-
-add = sphere + cube
-add.plot(opacity=0.5, color=True, show_edges=True)
+sphere_a = pv.Sphere()
+sphere_b = pv.Sphere(center=(0.5, 0, 0))
 
 
 ###############################################################################
-# Boolean Cut
-# +++++++++++
+# Boolean Union
+# +++++++++++++
 #
-# Perform a boolean cut of ``a`` using ``b`` with the
-# :func:`pyvista.PolyDataFilters.boolean_cut` filter or the ``-`` operator
-# since both meshes are :class:`pyvista.PolyData`.
+# Perform a boolean union of ``A`` and ``B`` using the
+# :func:`pyvista.PolyDataFilters.boolean_union` filter.
 #
-# Order of operations does not matter for boolean cut.
+# The union of two manifold meshes ``A`` and ``B`` is the mesh
+# which is in ``A``, in ``B``, or in both ``A`` and ``B``.
+#
+# Order of operands does not matter for boolean union (the operation is
+# commutative).
 
-cut = cube - sphere
+result = sphere_a.boolean_union(sphere_b)
+pl = pv.Plotter()
+_ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+_ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+_ = pl.add_mesh(result, color='tan')
+pl.camera_position = 'xz'
+pl.show()
 
-p = pv.Plotter()
-p.add_mesh(cut, opacity=0.5, show_edges=True, color=True)
-p.show()
 
 
 ###############################################################################
 # Boolean Difference
 # ++++++++++++++++++
 #
-# Combine two meshes and retains only the volume in common between the meshes
-# using the :func:`pyvista.PolyDataFilters.boolean_difference` method.
+# Perform a boolean difference of ``A`` and ``B`` using the
+# :func:`pyvista.PolyDataFilters.boolean_difference` filter or the
+# ``-`` operator since both meshes are :class:`pyvista.PolyData`.
 #
-# Note that the order of operations for a boolean difference will affect the
-# results.
+# The difference of two manifold meshes ``A`` and ``B`` is the volume
+# of the mesh in ``A`` not belonging to ``B``.
+#
+# Order of operands matters for boolean difference.
 
-diff = sphere.boolean_difference(cube)
-
-p = pv.Plotter()
-p.add_mesh(diff, opacity=0.5, show_edges=True, color=True)
-p.show()
+result = sphere_a.boolean_difference(sphere_b)
+pl = pv.Plotter()
+_ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+_ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+_ = pl.add_mesh(result, color='tan')
+pl.camera_position = 'xz'
+pl.show()
 
 
 ###############################################################################
+# Boolean Intersection
+# ++++++++++++++++++++
+#
+# Perform a boolean intersection of ``A`` and ``B`` using the
+# :func:`pyvista.PolyDataFilters.boolean_intersection` filter.
+#
+# The intersection of two manifold meshes ``A`` and ``B`` is the mesh
+# which is the volume of ``A`` that is also in ``B``.
+#
+# Order of operands does not matter for boolean intersection (the
+# operation is commutative).
 
-diff = cube.boolean_difference(sphere)
+result = sphere_a.boolean_intersection(sphere_b)
+pl = pv.Plotter()
+_ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+_ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+_ = pl.add_mesh(result, color='tan')
+pl.camera_position = 'xz'
+pl.show()
 
-p = pv.Plotter()
-p.add_mesh(diff, opacity=0.5, show_edges=True, color=True)
-p.show()
+
 
 ###############################################################################
-# Boolean Union
-# +++++++++++++
+# Behavior due to flipped normals
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Note that these boolean filters behave differently depending on the
+# orientation of the normals.
 #
-# Combine two meshes and attempts to create a manifold mesh using the
-# :func:`pyvista.PolyDataFilters.boolean_union` method.
-#
-# Order of operations does not matter for boolean union.
+# Boolean difference with both cube and sphere normals pointed
+# outward.  This is the "normal" behavior.
 
-union = sphere.boolean_union(cube)
+cube = pv.Cube().clean().triangulate().subdivide(3).clean()
+sphere = pv.Sphere(radius=0.6)
+result = cube.boolean_difference(sphere)
+result.plot(color='tan')
 
-p = pv.Plotter()
-p.add_mesh(union,  opacity=0.5, show_edges=True, color=True)
-p.show()
+
+###############################################################################
+# Boolean difference with cube normals outward, sphere inward.
+
+cube = pv.Cube().triangulate().subdivide(3).clean()
+sphere = pv.Sphere(radius=0.6)
+sphere.flip_normals()
+result = cube.boolean_difference(sphere)
+result.plot(color='tan')
+
+
+###############################################################################
+# Boolean difference with cube normals inward, sphere outward.
+
+cube = pv.Cube().triangulate().subdivide(3).clean()
+cube.flip_normals()
+sphere = pv.Sphere(radius=0.6)
+result = cube.boolean_difference(sphere)
+result.plot(color='tan')
+
+
+###############################################################################
+# Both cube and sphere normals inward.
+
+cube = pv.Cube().triangulate().subdivide(3).clean()
+cube.flip_normals()
+sphere = pv.Sphere(radius=0.6)
+sphere.flip_normals()
+result = cube.boolean_difference(sphere)
+result.plot(color='tan')
+

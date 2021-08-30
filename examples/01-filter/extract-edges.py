@@ -1,6 +1,8 @@
 """
+.. _extract_edges_example:
+
 Extract Edges
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 Extracts edges from a surface.
 """
@@ -17,7 +19,7 @@ from pyvista import examples
 # 3. feature edges (edges used by two triangles and whose dihedral angle > feature_angle)
 # 4. manifold edges (edges used by exactly two polygons).
 #
-# This filter will extract those edges given a feature angle and return a datset
+# This filter will extract those edges given a feature angle and return a dataset
 # with lines that represent the edges of the original mesh.
 # To demonstrate, we will first extract the edges around Queen Nefertiti's eyes:
 
@@ -27,7 +29,7 @@ mesh = examples.download_nefertiti()
 # Extract the edges above a 12 degree feature angle
 edges = mesh.extract_feature_edges(12)
 
-# Render the edge lines ontop of the original mesh
+# Render the edge lines on top of the original mesh
 p = pv.Plotter()
 p.add_mesh(mesh, color=True)
 p.add_mesh(edges, color="red", line_width=5)
@@ -36,7 +38,7 @@ p.camera_position = [(96.0, -197.0, 45.0), (7.0, -109.0, 22.0), (0, 0, 1)]
 p.show()
 
 ###############################################################################
-# We can do this anaylsis for any :class:`pyvista.PolyData` object. Let's try
+# We can do this analysis for any :class:`pyvista.PolyData` object. Let's try
 # the cow mesh example:
 
 mesh = examples.download_cow()

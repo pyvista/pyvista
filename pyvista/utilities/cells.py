@@ -1,12 +1,42 @@
 """pyvista wrapping of vtkCellArray."""
-import numpy as np
-from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
-from vtk import vtkCellArray
-import vtk
 
+import sys
+from collections import deque
+from itertools import islice, count
+
+import numpy as np
+
+from pyvista import _vtk
 import pyvista
-from .cell_type_helpers.cell_selector import enum_cell_type_nr_points_map
-VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
+
+
+def ncells_from_cells_py36(cells):  # pragma: no cover
+    """Get the number of cells from a VTK cell connectivity array.
+
+    Works on all Python>=3.5
+    """
+    c = 0
+    n_cells = 0
+    while c < cells.size:
+        c += cells[c] + 1
+        n_cells += 1
+    return n_cells
+
+
+def ncells_from_cells(cells):
+    """Get the number of cells from a VTK cell connectivity array.
+
+    Works on Python>=3.7
+    """
+    consumer = deque(maxlen=0)
+    it = cells.flat
+    for n_cells in count():
+        skip = next(it, None)
+        if skip is None:
+            break
+        consumer.extend(islice(it, skip))
+    return n_cells
+
 
 def numpy_to_idarr(ind, deep=False, return_ind=False):
     """Safely convert a numpy array to a vtkIdTypeArray."""
@@ -24,13 +54,13 @@ def numpy_to_idarr(ind, deep=False, return_ind=False):
         ind = np.ascontiguousarray(ind, dtype=pyvista.ID_TYPE)
 
     # must ravel or segfault when saving MultiBlock
-    vtk_idarr = numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
+    vtk_idarr = _vtk.numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
     if return_ind:
         return vtk_idarr, ind
     return vtk_idarr
 
 
-class CellArray(vtkCellArray):
+class CellArray(_vtk.vtkCellArray):
     """pyvista wrapping of vtkCellArray.
 
     Provides convenience functions to simplify creating a CellArray from
@@ -57,14 +87,17 @@ class CellArray(vtkCellArray):
 
     def _set_cells(self, cells, n_cells, deep):
         vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)
-        # get number of cells if none
+
+        # Get number of cells if None.  This is quite a performance
+        # bottleneck and we can consider adding a warning.  Good
+        # candidate for Cython or JIT compilation
         if n_cells is None:
             if cells.ndim == 1:
-                c = 0
-                n_cells = 0
-                while c < cells.size:
-                    c += cells[c] + 1
-                    n_cells += 1
+                if sys.version_info.minor > 6:
+                    n_cells = ncells_from_cells(cells)
+                else:  # pragma: no cover
+                    # About 20% slower
+                    n_cells = ncells_from_cells_py36(cells)
             else:
                 n_cells = cells.shape[0]
 
@@ -73,7 +106,7 @@ class CellArray(vtkCellArray):
     @property
     def cells(self):
         """Return a numpy array of the cells."""
-        return vtk_to_numpy(self.GetData()).ravel()
+        return _vtk.vtk_to_numpy(self.GetData()).ravel()
 
     @property
     def n_cells(self):
@@ -84,11 +117,12 @@ class CellArray(vtkCellArray):
 def generate_cell_offsets_loop(cells, cell_types):
     """Create cell offsets that are required by VTK < 9 versions.
 
-    This method creates the cell offsets, that need to be passed to the
-    vtk unstructured grid constructor. The offsets are automatically generated
-    from the data. This function will generate the cell offset in an iterative fashion,
-    usable also for dynamic sized cells.
-    
+    This method creates the cell offsets, that need to be passed to
+    the vtk unstructured grid constructor. The offsets are
+    automatically generated from the data. This function will generate
+    the cell offset in an iterative fashion, usable also for dynamic
+    sized cells.
+
     Parameters
     ----------
     cells : np.ndarray (int)
@@ -96,9 +130,9 @@ def generate_cell_offsets_loop(cells, cell_types):
     cell_types : np.ndarray (int)
         The types of the cell arrays given to the function
 
-    Return
-    ------
-    offset : np.ndarray (int)
+    Returns
+    -------
+    numpy.ndarray
         Array of VTK offsets
 
     Raises
@@ -140,9 +174,9 @@ def generate_cell_offsets(cells, cell_types):
     cell_types : np.ndarray (int)
         The types of the cell arrays given to the function
 
-    Return
-    ------
-    offset : np.ndarray (int)
+    Returns
+    -------
+    numpy.ndarray
         Array of VTK offsets
 
     Raises
@@ -150,6 +184,8 @@ def generate_cell_offsets(cells, cell_types):
     ValueError
         If cell types and cell arrays are inconsistent, or have wrong size/dtype
     """
+    from .cell_type_helper import enum_cell_type_nr_points_map
+
     if (not np.issubdtype(cells.dtype, np.integer) or not np.issubdtype(cell_types.dtype, np.integer)):
         raise ValueError("The cells and cell-type arrays must have an integral data-type")
     
@@ -170,52 +206,64 @@ def generate_cell_offsets(cells, cell_types):
 
     return offsets
 
+
 def create_mixed_cells(mixed_cell_dict, nr_points=None):
     """Generate the required cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
 
-    This function generates all required cell arrays (cells, celltypes and offsets for VTK versions < 9.0),
-    according to a given cell dictionary. The given cell-dictionary should contain a proper mapping of
-    vtk_type -> np.ndarray (int), where the given ndarray for each cell-type has to be an array of dimensions
-    [N, D] or [N*D], where N is the number of cells and D is the size of the cells for the given type (e.g. 3 for triangles).
-    Multiple vtk_type keys with associated arrays can be present in one dictionary.
-    This function only accepts cell types of fixed size and not dynamic sized cells like VTK_POLYGON
+    This function generates all required cell arrays (cells, celltypes
+    and offsets for VTK versions < 9.0), according to a given cell
+    dictionary. The given cell-dictionary should contain a proper
+    mapping of vtk_type -> np.ndarray (int), where the given ndarray
+    for each cell-type has to be an array of dimensions [N, D] or
+    [N*D], where N is the number of cells and D is the size of the
+    cells for the given type (e.g. 3 for triangles).  Multiple
+    vtk_type keys with associated arrays can be present in one
+    dictionary.  This function only accepts cell types of fixed size
+    and not dynamic sized cells like ``vtk.VTK_POLYGON``
 
     Parameters
     ----------
     mixed_cell_dict : dict
-        A dictionary that maps VTK-Enum-types (e.g. VTK_TRIANGLE) to np.ndarrays of type int.
-        The np.ndarrays describe the cell connectivity
+        A dictionary that maps VTK-Enum-types (e.g. VTK_TRIANGLE) to
+        np.ndarrays of type int.  The ``np.ndarrays`` describe the cell connectivity
     nr_points : int, optional
         Number of points of the grid. Used only to allow additional runtime checks for
         invalid indices, by default None
 
     Returns
     -------
-    cell_types : np.ndarray (uint8)
+    cell_types : numpy.ndarray (uint8)
         Types of each cell
 
-    cell_arr : np.ndarray (int)
-        VTK-cell array. Format depends if the VTK version is < 9.0 or not
+    cell_arr : numpy.ndarray (int)
+        VTK-cell array. Format depends if the VTK version is < 9.0 or not.
 
-    cell_offsets : np.ndarray (int) (for VTK versions < 9.0 only!)
-        Array of VTK offsets
+    cell_offsets : numpy.ndarray (int)
+        Array of VTK offsets.  Only for VTK versions < 9.0
 
     Raises
     ------
     ValueError
-        If any of the cell types are not supported, have dynamic sized cells, map to
-        values with wrong size, or cell indices point outside the given number of points.
+        If any of the cell types are not supported, have dynamic sized
+        cells, map to values with wrong size, or cell indices point
+        outside the given number of points.
 
     Examples
     --------
     Create the cell arrays containing two triangles.
 
+    This will generate cell arrays to generate a mesh with two
+    disconnected triangles from 6 points.
+
+    >>> import numpy as np
+    >>> import vtk
     >>> from pyvista.utilities.cells import create_mixed_cells
-    >>> #Will generate cell arrays two generate a mesh with two disconnected triangles from 6 points
     >>> cell_arrays = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
     >>> #VTK versions < 9.0: cell_types, cell_arr, cell_offsets = cell_arrays
     >>> #VTK versions >= 9.0: cell_types, cell_arr = cell_arrays
     """
+    from .cell_type_helper import enum_cell_type_nr_points_map
+
     if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
         raise ValueError("Found unknown or unsupported VTK cell type in your requested cells")
 
@@ -247,28 +295,30 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(np.concatenate([np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1).reshape([-1]))
 
-        if not VTK9:
+        if not _vtk.VTK9:
             final_cell_offsets.append(current_cell_offset + (nr_points_per_elem+1) * (np.arange(nr_elems)+1))
             current_cell_offset += final_cell_offsets[-1][-1]
 
     final_cell_types = np.concatenate(final_cell_types)
     final_cell_arr = np.concatenate(final_cell_arr)
 
-    if not VTK9:
+    if not _vtk.VTK9:
         final_cell_offsets = np.concatenate(final_cell_offsets)[:-1]
 
-    if not VTK9:
+    if not _vtk.VTK9:
         return final_cell_types, final_cell_arr, final_cell_offsets
     else:
         return final_cell_types, final_cell_arr
 
+
 def get_mixed_cells(vtkobj):
     """Create the cells dictionary from the given pyvista.UnstructuredGrid.
 
-    This functions creates a cells dictionary (see create_mixed_cells), with
-    a mapping vtk_type -> np.ndarray (int) for fixed size cell types. The
-    returned dictionary will have arrays of size [N, D], where N is the number 
-    of cells and D is the size of the cells for the given type (e.g. 3 for triangles).
+    This functions creates a cells dictionary (see
+    create_mixed_cells), with a mapping vtk_type -> np.ndarray (int)
+    for fixed size cell types. The returned dictionary will have
+    arrays of size [N, D], where N is the number of cells and D is the
+    size of the cells for the given type (e.g. 3 for triangles).
 
     Parameters
     ----------
@@ -277,15 +327,18 @@ def get_mixed_cells(vtkobj):
 
     Returns
     -------
-    cells_dict : dict
-        Contains the 
+    dict
+        Dictionary of cells.
 
     Raises
     ------
     ValueError
-        If vtkobj is not a pyvista.UnstructuredGrid, any of the present cells are unsupported, 
-        or have dynamic cell sizes, like VTK_POLYGON.
+        If vtkobj is not a pyvista.UnstructuredGrid, any of the
+        present cells are unsupported, or have dynamic cell sizes,
+        like VTK_POLYGON.
     """
+    from .cell_type_helper import enum_cell_type_nr_points_map
+
     return_dict = {}
 
     if not isinstance(vtkobj, pyvista.UnstructuredGrid):
@@ -309,19 +362,19 @@ def get_mixed_cells(vtkobj):
 
     cell_sizes = np.zeros_like(cell_types)
     for cell_type in unique_cell_types:
-      mask = cell_types == cell_type
-      cell_sizes[mask] = enum_cell_type_nr_points_map[cell_type]
+        mask = cell_types == cell_type
+        cell_sizes[mask] = enum_cell_type_nr_points_map[cell_type]
 
     cell_ends = np.cumsum(cell_sizes + 1)
     cell_starts = np.concatenate([np.array([0], dtype=cell_ends.dtype), cell_ends[:-1]]) + 1
 
     for cell_type in unique_cell_types:
-      cell_size = enum_cell_type_nr_points_map[cell_type]
-      mask = cell_types == cell_type
-      current_cell_starts = cell_starts[mask]
+        cell_size = enum_cell_type_nr_points_map[cell_type]
+        mask = cell_types == cell_type
+        current_cell_starts = cell_starts[mask]
 
-      cells_inds = current_cell_starts[..., np.newaxis] + np.arange(cell_size)[np.newaxis].astype(cell_starts.dtype)
+        cells_inds = current_cell_starts[..., np.newaxis] + np.arange(cell_size)[np.newaxis].astype(cell_starts.dtype)
 
-      return_dict[cell_type] = cells[cells_inds]
+        return_dict[cell_type] = cells[cells_inds]
 
     return return_dict

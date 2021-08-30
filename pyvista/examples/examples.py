@@ -47,6 +47,7 @@ def load_rectilinear():
     """Load a sample uniform grid."""
     return pyvista.RectilinearGrid(rectfile)
 
+
 def load_hexbeam():
     """Load a sample UnstructuredGrid."""
     return pyvista.UnstructuredGrid(hexbeamfile)
@@ -60,6 +61,7 @@ def load_structured():
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
     return pyvista.StructuredGrid(x, y, z)
+
 
 def load_globe():
     """Load a globe source."""
@@ -105,7 +107,8 @@ def plot_ants_plane(off_screen=None, notebook=None):
 
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]
-    plotter.add_mesh(airplane, scalars=plane_scalars, stitle='Plane Y\nLocation')
+    plotter.add_mesh(airplane, scalars=plane_scalars,
+                     scalar_bar_args={'title': 'Plane Y\nLocation'})
     plotter.add_text('Ants and Plane Example')
     plotter.show()
 
@@ -135,11 +138,12 @@ def beam_example(off_screen=None, notebook=None):
 
     # plot this displaced beam
     plotter = pyvista.Plotter(off_screen=off_screen, notebook=notebook)
-    plotter.add_mesh(grid, scalars=d, stitle='Y Displacement',
+    plotter.add_mesh(grid, scalars=d,
+                     scalar_bar_args={'title': 'Y Displacement'},
                      rng=[-d.max(), d.max()], cmap=cmap)
     plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
-    cpos = plotter.show()  # store camera position
+    plotter.show()
 
 
 def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
@@ -165,9 +169,9 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
         Enables off screen rendering when True.  Used for automated testing.
         Disabled by default.
 
-    Return
-    ------
-    points : np.ndarray
+    Returns
+    -------
+    numpy.ndarray
         Position of points at last frame.
 
     """
@@ -268,5 +272,55 @@ def load_sphere_vectors():
     ).T
 
     # add and scale
-    sphere.vectors = vectors * 0.3
+    sphere["vectors"] = vectors * 0.3
+    sphere.set_active_vectors("vectors")
     return sphere
+
+
+def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
+    """Load a simple explicit structured grid.
+
+    Parameters
+    ----------
+    dims : tuple(int), optional
+        Grid dimensions. Default is (5, 6, 7).
+    spacing : tuple(int), optional
+        Grid spacing. Default is (20, 10, 1).
+
+    Returns
+    -------
+    pyvista.ExplicitStructuredGrid
+        An explicit structured grid.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
+    >>> grid.plot(show_edges=True)  # doctest:+SKIP
+
+    """
+    ni, nj, nk = np.asarray(dims)-1
+    si, sj, sk = spacing
+
+    xcorn = np.arange(0, (ni+1)*si, si)
+    xcorn = np.repeat(xcorn, 2)
+    xcorn = xcorn[1:-1]
+    xcorn = np.tile(xcorn, 4*nj*nk)
+
+    ycorn = np.arange(0, (nj+1)*sj, sj)
+    ycorn = np.repeat(ycorn, 2)
+    ycorn = ycorn[1:-1]
+    ycorn = np.tile(ycorn, (2*ni, 2*nk))
+    ycorn = np.transpose(ycorn)
+    ycorn = ycorn.flatten()
+
+    zcorn = np.arange(0, (nk+1)*sk, sk)
+    zcorn = np.repeat(zcorn, 2)
+    zcorn = zcorn[1:-1]
+    zcorn = np.repeat(zcorn, (4*ni*nj))
+
+    corners = np.stack((xcorn, ycorn, zcorn))
+    corners = corners.transpose()
+
+    grid = pyvista.ExplicitStructuredGrid(dims, corners)
+    return grid

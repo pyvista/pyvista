@@ -4,7 +4,7 @@ Hide Cells with Ghosting
 
 Specify specific cells to hide when plotting.
 
-This is a lightwieght alternative to thresholding to quickly hide cells in a
+This is a lightweight alternative to thresholding to quickly hide cells in a
 mesh without creating a new mesh.
 
 Notably, the mesh must be cast to an :class:`pyvista.UnstructuredGrid` type

@@ -1,0 +1,57 @@
+{% block sponsor %}
+
+    <style>
+        div.extra-content {
+            display: block !important;
+        }
+        .extra-content {
+            padding: 0.5em;
+            margin: 1em 0;
+            padding-top: 1em;
+            clear: both;
+            display: none !important;
+            margin-top: 1em;
+            border: 0;
+            /* background-color: #eee; */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            color: #0a0a0a;
+            font-size: 14px;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        .sidebar-extra-content {
+            padding: 0 1em;
+        }
+        .sidebar-extra-content .extra-content {
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        .internal-content, .adsbygoogle {
+            background-color: transparent;
+            text-align: center;
+        }
+
+    </style>
+
+    <div class="sidebar-extra-content">
+        <div class="extra-content">
+            <div class="internal-content">
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+                <ins class="adsbygoogle"
+                     style="display:inline-block;width:250px;height:250px"
+                     data-ad-client="ca-pub-1379117569915790"
+                     data-ad-slot="5874500440"></ins>
+                <script>
+                     (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+            </div>
+            <div>
+                We use ads to cover the cost of maintenance for this site and fund beverages for the occasional hackathon (🍺 on us!)
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,4 +1,6 @@
 """
+.. _gradients_example:
+
 Compute Gradients of a Field
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -48,7 +50,7 @@ gradients
 ###############################################################################
 # And we can add all of those components as individual arrays back to the mesh
 # by:
-mesh_g.point_arrays.update(gradients)
+mesh_g.point_data.update(gradients)
 mesh_g
 
 ###############################################################################
@@ -78,7 +80,7 @@ gradients
 
 ###############################################################################
 
-mesh_g.point_arrays.update(gradients)
+mesh_g.point_data.update(gradients)
 
 keys = np.array(list(gradients.keys())).reshape(1,3)
 

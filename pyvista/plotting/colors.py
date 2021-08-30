@@ -152,8 +152,22 @@ white
 whitesmoke
 yellow
 yellowgreen
+tab:blue
+tab:orange
+tab:green
+tab:red
+tab:purple
+tab:brown
+tab:pink
+tab:gray
+tab:olive
+tab:cyan
 
 """
+
+IPYGANY_MAP = {'reds': 'Reds',
+               'spectral': 'Spectral',
+}
 
 # shamelessly copied from matplotlib.colors
 hexcolors = {
@@ -305,7 +319,17 @@ hexcolors = {
     'white':                '#FFFFFF',
     'whitesmoke':           '#F5F5F5',
     'yellow':               '#FFFF00',
-    'yellowgreen':          '#9ACD32'}
+    'yellowgreen':          '#9ACD32',
+    'tab:blue':             '#1f77b4',
+    'tab:orange':           '#ff7f0e',
+    'tab:green':            '#2ca02c',
+    'tab:red':              '#d62728',
+    'tab:purple':           '#9467bd',
+    'tab:brown':            '#8c564b',
+    'tab:pink':             '#e377c2',
+    'tab:gray':             '#7f7f7f',
+    'tab:olive':            '#bcbd22',
+    'tab:cyan':             '#17becf'}
 
 color_char_to_word = {
         'b': 'blue',
@@ -377,6 +401,10 @@ def get_cmap_safe(cmap):
     except ImportError:
         raise ImportError('cmap requires matplotlib')
     if isinstance(cmap, str):
+        # check if this colormap has been mapped between ipygany
+        if cmap in IPYGANY_MAP:
+            cmap = IPYGANY_MAP[cmap]
+
         # Try colorcet first
         try:
             import colorcet

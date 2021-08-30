@@ -4,9 +4,9 @@ import logging
 import weakref
 
 import numpy as np
-import vtk
 
 import pyvista
+from pyvista import _vtk
 from pyvista.utilities import try_callback
 
 
@@ -20,7 +20,14 @@ class PickingHelper:
     picked_horizon = None
 
     def get_pick_position(self):
-        """Get the pick position/area as x0, y0, x1, y1."""
+        """Get the pick position or area.
+
+        Returns
+        -------
+        sequence
+            Picked position or area as ``(x0, y0, x1, y1)``.
+
+        """
         return self.renderer.get_pick_position()
 
     def enable_cell_picking(self, mesh=None, callback=None, through=True,
@@ -29,67 +36,70 @@ class PickingHelper:
                             start=False, **kwargs):
         """Enable picking at cells.
 
-        Press "r" to enable retangle based selection.  Press "r" again to
-        turn it off. Selection will be saved to ``self.picked_cells``. Also
-        press "p" to pick a single cell under the mouse location.
+        Press ``"r"`` to enable retangle based selection.  Press
+        ``"r"`` again to turn it off. Selection will be saved to
+        ``self.picked_cells``. Also press ``"p"`` to pick a single
+        cell under the mouse location.
 
-        When using ``through=False``, and multiple meshes are being picked,
-        the picked cells in ````self.picked_cells`` will be a
+        When using ``through=False``, and multiple meshes are being
+        picked, the picked cells in ````self.picked_cells`` will be a
         :class:`MultiBlock` dataset for each mesh's selection.
 
         Uses last input mesh for input by default.
 
-        Warning
-        -------
-        Visible cell picking (``through=False``) will only work if the mesh is
-        displayed with a ``'surface'`` representation style (the default).
+        .. warning::
+           Visible cell picking (``through=False``) will only work if
+           the mesh is displayed with a ``'surface'`` representation
+           style (the default).
 
         Parameters
         ----------
-        mesh : pyvista.Common, optional
-            Mesh to select cells from. When ``through`` is ``True``, uses last
-            input mesh by default. When ``through`` is ``False``, all meshes
-            in the scene are available for picking and this argument is
-            ignored. If you would like to only pick a single mesh in the scene,
-            use the ``pickable=False`` argument when adding the other meshes
+        mesh : pyvista.DataSet, optional
+            Mesh to select cells from. When ``through`` is ``True``,
+            uses last input mesh by default. When ``through`` is
+            ``False``, all meshes in the scene are available for
+            picking and this argument is ignored. If you would like to
+            only pick a single mesh in the scene, use the
+            ``pickable=False`` argument when adding the other meshes
             to the scene.
 
         callback : function, optional
             When input, calls this function after a selection is made.
-            The picked_cells are input as the first parameter to this function.
+            The picked_cells are input as the first parameter to this
+            function.
 
         through : bool, optional
-            When True (default) the picker will select all cells through the
-            mesh. When False, the picker will select only visible cells on the
-            mesh's surface.
+            When ``True`` (default) the picker will select all cells
+            through the mesh. When ``False``, the picker will select
+            only visible cells on the mesh's surface.
 
         show : bool
-            Show the selection interactively
+            Show the selection interactively.
+
+        show_message : bool or str, optional
+            Show the message about how to use the cell picking tool. If this
+            is a string, that will be the message shown.
 
         style : str
-            Visualization style of the selection.  One of the following:
-            ``style='surface'``, ``style='wireframe'``, ``style='points'``.
-            Defaults to ``'wireframe'``.
+            Visualization style of the selection.  One of the
+            following: ``style='surface'``, ``style='wireframe'``, or
+            ``style='points'``.  Defaults to ``'wireframe'``.
 
         line_width : float, optional
             Thickness of selected mesh edges. Default 5.
 
-        color : str
+        color : str, optional
             The color of the selected mesh is shown.
 
-        show_message : bool, str
-            Show the message about how to use the cell picking tool. If this
-            is a string, that will be the message shown.
+        font_size : int, optional
+            Sets the font size of the message.
 
-        font_size : int
-            Sets the size of the message.
-
-        start : bool
+        start : bool, optional
             Automatically start the cell selection tool.
 
-        kwargs : optional
-            All remaining keyword arguments are used to control how the
-            selection is intereactively displayed.
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the selection is interactively displayed.
 
         """
         if mesh is None:
@@ -114,26 +124,42 @@ class PickingHelper:
             is_valid_selection = picked.n_cells > 0
 
             if show and is_valid_selection:
+                # Select the renderer where the mesh is added.
+                active_renderer_index = self_().renderers._active_index
+                for index in range(len(self.renderers)):
+                    renderer = self.renderers[index]
+                    for actor in renderer._actors.values():
+                        mapper = actor.GetMapper()
+                        if isinstance(mapper, _vtk.vtkDataSetMapper) and mapper.GetInput() == mesh:
+                            loc = self_().renderers.index_to_loc(index)
+                            self_().subplot(*loc)
+                            break
+
                 # Use try in case selection is empty
                 self_().add_mesh(picked, name='_cell_picking_selection',
                                  style=style, color=color,
                                  line_width=line_width, pickable=False,
                                  reset_camera=False, **kwargs)
 
+                # Reset to the active renderer.
+                loc = self_().renderers.index_to_loc(active_renderer_index)
+                self_().subplot(*loc)
+
                 # render here prior to running the callback
                 self_().render()
             elif not is_valid_selection:
                 self.remove_actor('_cell_picking_selection')
+                self_().picked_cells = None
 
-            if callback is not None and is_valid_selection:
+            if callback is not None:
                 try_callback(callback, self_().picked_cells)
 
             # TODO: Deactivate selection tool
             return
 
         def through_pick_call_back(picker, event_id):
-            extract = vtk.vtkExtractGeometry()
-            mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
+            extract = _vtk.vtkExtractGeometry()
+            mesh.cell_data['orig_extract_id'] = np.arange(mesh.n_cells)
             extract.SetInputData(mesh)
             extract.SetImplicitFunction(picker.GetFrustum())
             extract.Update()
@@ -141,47 +167,54 @@ class PickingHelper:
             return end_pick_helper(picker, event_id)
 
         def visible_pick_call_back(picker, event_id):
-            x0,y0,x1,y1 = renderer_().get_pick_position()
-            selector = vtk.vtkOpenGLHardwareSelector()
-            selector.SetFieldAssociation(vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
-            selector.SetRenderer(renderer_())
-            selector.SetArea(x0,y0,x1,y1)
-            selection = selector.Select()
             picked = pyvista.MultiBlock()
-            for node in range(selection.GetNumberOfNodes()):
-                selection_node = selection.GetNode(node)
-                if selection_node is None:
-                    # No selection
-                    continue
-                cids = pyvista.convert_array(selection_node.GetSelectionList())
-                actor = selection_node.GetProperties().Get(vtk.vtkSelectionNode.PROP())
-                if actor.GetProperty().GetRepresentation() != 2: # surface
-                    logging.warning("Display representations other than `surface` will result in incorrect results.")
-                smesh = actor.GetMapper().GetInputAsDataSet()
-                smesh = smesh.copy()
-                smesh["original_cell_ids"] = np.arange(smesh.n_cells)
-                tri_smesh = smesh.extract_surface().triangulate()
-                cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
-                picked.append(smesh.extract_cells(cids_to_get))
+            x0, y0, x1, y1 = renderer_().get_pick_position()
+            if x0 >= 0:  # initial pick position is (-1, -1, -1, -1)
+                selector = _vtk.vtkOpenGLHardwareSelector()
+                selector.SetFieldAssociation(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
+                selector.SetRenderer(renderer_())
+                selector.SetArea(x0, y0, x1, y1)
+                selection = selector.Select()
+
+                for node in range(selection.GetNumberOfNodes()):
+                    selection_node = selection.GetNode(node)
+                    if selection_node is None:
+                        # No selection
+                        continue
+                    cids = pyvista.convert_array(selection_node.GetSelectionList())
+                    actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
+                    if actor.GetProperty().GetRepresentation() != 2:  # surface
+                        logging.warning("Display representations other than `surface` will result in incorrect results.")
+                    smesh = actor.GetMapper().GetInputAsDataSet()
+                    smesh = smesh.copy()
+                    smesh["original_cell_ids"] = np.arange(smesh.n_cells)
+                    tri_smesh = smesh.extract_surface().triangulate()
+                    cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
+                    picked.append(smesh.extract_cells(cids_to_get))
+
+                # memory leak issues on vtk==9.0.20210612.dev0
+                # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
+                selection.UnRegister(selection)
+
             if len(picked) == 1:
                 self_().picked_cells = picked[0]
             else:
                 self_().picked_cells = picked
             return end_pick_helper(picker, event_id)
 
-        area_picker = vtk.vtkRenderedAreaPicker()
+        area_picker = _vtk.vtkRenderedAreaPicker()
         if through:
-            area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, through_pick_call_back)
+            area_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, through_pick_call_back)
         else:
             # NOTE: there can be issues with non-triangulated meshes
             # Reference:
             #     https://github.com/pyvista/pyvista/issues/277
             #     https://github.com/pyvista/pyvista/pull/281
             #     https://discourse.vtk.org/t/visible-cell-selection-hardwareselector-py-example-is-not-working-reliably/1262
-            area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
+            area_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
         self.enable_rubber_band_style()
-        self.iren.SetPicker(area_picker)
+        self.iren.set_picker(area_picker)
 
         # Now add text about cell-selection
         if show_message:
@@ -192,9 +225,7 @@ class PickingHelper:
             self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
 
         if start:
-            self._style_class.StartSelect()
-
-        return
+            self.iren._style_class.StartSelect()
 
     def enable_point_picking(self, callback=None, show_message=True,
                              font_size=18, color='pink', point_size=10,
@@ -202,45 +233,52 @@ class PickingHelper:
                              **kwargs):
         """Enable picking at points.
 
-        Enable picking a point at the mouse location in the render view
-        using the ``P`` key. This point is saved to the ``.picked_point``
-        attrbute on the plotter. Pass a callback function that takes that
-        point as an argument. The picked point can either be a point on the
-        first intersecting mesh, or a point in the 3D window.
+        Enable picking a point at the mouse location in the render
+        view using the ``P`` key. This point is saved to the
+        ``.picked_point`` attrbute on the plotter. Pass a callback
+        function that takes that point as an argument. The picked
+        point can either be a point on the first intersecting mesh, or
+        a point in the 3D window.
 
         Parameters
         ----------
-        callback : function, optional
-            When input, calls this function after a pick is made.
-            The picked point is input as the first parameter to this function.
-            If ``use_mesh`` is ``True``, the callback function will be passed
-            a pointer to the picked mesh and the point ID of the selected mesh.
+        callback : callable, optional
+            When input, calls this function after a pick is made.  The
+            picked point is input as the first parameter to this
+            function.  If ``use_mesh`` is ``True``, the callback
+            function will be passed a pointer to the picked mesh and
+            the point ID of the selected mesh.
 
-        use_mesh : bool
-            If ``True``, the callback function will be passed
-            a pointer to the picked mesh and the point ID of the selected mesh.
+        show_message : bool or str, optional
+            Show the message about how to use the point picking
+            tool. If this is a string, that will be the message shown.
 
-        show_message : bool, str
-            Show the message about how to use the point picking tool. If this
-            is a string, that will be the message shown.
-
-        font_size : int
+        font_size : int, optional
             Sets the size of the message.
 
-        point_size : int, optional
-            Size of picked points if ``show_point`` is ``True``. Default 10.
-
-        color : str
+        color : str, optional
             The color of the selected mesh is shown.
 
-        tolerance : float
-            Specify tolerance for performing pick operation. Tolerance is
-            specified as fraction of rendering window size. (Rendering window
-            size is measured across diagonal.)
+        point_size : int, optional
+            Size of picked points if ``show_point`` is
+            ``True``. Default 10.
 
-        kwargs : optional
-            All remaining keyword arguments are used to control how the
-            picked point is intereactively displayed
+        use_mesh : bool, optional
+            If ``True``, the callback function will be passed a
+            pointer to the picked mesh and the point ID of the
+            selected mesh.
+
+        show_point : bool, optional
+            Show the picked point after clicking.
+
+        tolerance : float, optional
+            Specify tolerance for performing pick operation. Tolerance
+            is specified as fraction of rendering window
+            size. Rendering window size is measured across diagonal.
+
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the picked point is interactively displayed.
 
         """
 
@@ -252,27 +290,26 @@ class PickingHelper:
                 self.add_mesh(self.picked_point, color=color,
                               point_size=point_size, name='_picked_point',
                               pickable=False, reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 if use_mesh:
                     try_callback(callback, self.picked_mesh, self.picked_point_id)
                 else:
                     try_callback(callback, self.picked_point)
 
-        point_picker = vtk.vtkPointPicker()
+        point_picker = _vtk.vtkPointPicker()
         point_picker.SetTolerance(tolerance)
-        self.picker=point_picker
-        point_picker.AddObserver(vtk.vtkCommand.EndPickEvent, _end_pick_event)
+        self.picker = point_picker
+        point_picker.AddObserver(_vtk.vtkCommand.EndPickEvent, _end_pick_event)
 
         self.enable_trackball_style()
-        self.iren.SetPicker(point_picker)
+        self.iren.set_picker(point_picker)
 
         # Now add text about cell-selection
         if show_message:
             if show_message is True:
                 show_message = "Press P to pick under the mouse"
-            self.add_text(str(show_message), font_size=font_size, name='_point_picking_message')
-
-        return
+            self.add_text(str(show_message), font_size=font_size,
+                          name='_point_picking_message')
 
     def enable_path_picking(self, callback=None, show_message=True,
                             font_size=18, color='pink', point_size=10,
@@ -280,46 +317,49 @@ class PickingHelper:
                             **kwargs):
         """Enable picking at paths.
 
-        This is a convenience method for ``enable_point_picking`` to keep
-        track of the picked points and create a line using those points.
+        This is a convenience method for :func:`enable_point_picking
+        <PickingHelper.enable_point_picking>` to keep track of the
+        picked points and create a line using those points.
 
-        The line is saved to the ``.picked_path`` attribute of this plotter
+        The line is saved to the ``.picked_path`` attribute of this
+        plotter
 
         Parameters
         ----------
-        callback : callable
-            When given, calls this function after a pick is made.
-            The entire picked path is passed as the only parameter to this
+        callback : callable, optional
+            When given, calls this function after a pick is made.  The
+            entire picked path is passed as the only parameter to this
             function.
 
-        show_message : bool, str
-            Show the message about how to use the point picking tool. If this
-            is a string, that will be the message shown.
+        show_message : bool or str, optional
+            Show the message about how to use the point picking
+            tool. If this is a string, that will be the message shown.
 
-        show_path : bool
-            Show the picked path interactively
-
-        font_size : int
+        font_size : int, optional
             Sets the size of the message.
 
-        point_size : int, optional
-            Size of picked points if ``show_path`` is ``True``. Default 10.
-
-        color : str
+        color : str, optional
             The color of the selected mesh is shown.
 
+        point_size : int, optional
+            Size of picked points if ``show_path`` is
+            ``True``. Default 10.
+
         line_width : float, optional
-            Thickness of path representation if ``show_path`` is ``True``.
-            Default 5.
+            Thickness of path representation if ``show_path`` is
+            ``True``.  Default 5.
 
-        tolerance : float
-            Specify tolerance for performing pick operation. Tolerance is
-            specified as fraction of rendering window size. (Rendering window
-            size is measured across diagonal.)
+        show_path : bool, optional
+            Show the picked path interactively.
 
-        kwargs : optional
-            All remaining keyword arguments are used to control how the
-            picked path is intereactively displayed
+        tolerance : float, optional
+            Specify tolerance for performing pick operation. Tolerance
+            is specified as fraction of rendering window
+            size.  Rendering window size is measured across diagonal.
+
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the picked path is interactively displayed.
 
         """
         kwargs.setdefault('pickable', False)
@@ -346,72 +386,86 @@ class PickingHelper:
                 self.add_mesh(self.picked_path, color=color, name='_picked_path',
                               line_width=line_width, point_size=point_size,
                               reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, self.picked_path)
-            return
 
         def _clear_path_event_watcher():
             del the_points[:]
             del the_ids[:]
             self.remove_actor('_picked_path')
-            return
 
         self.add_key_event('c', _clear_path_event_watcher)
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        return self.enable_point_picking(callback=_the_callback, use_mesh=True,
-                font_size=font_size, show_message=show_message,
-                show_point=False, tolerance=tolerance)
+        self.enable_point_picking(callback=_the_callback,
+                                  use_mesh=True, font_size=font_size,
+                                  show_message=show_message,
+                                  show_point=False,
+                                  tolerance=tolerance)
 
     def enable_geodesic_picking(self, callback=None, show_message=True,
                                 font_size=18, color='pink', point_size=10,
                                 line_width=5, tolerance=0.025, show_path=True,
-                                **kwargs):
+                                keep_order=True, **kwargs):
         """Enable picking at geodesic paths.
 
-        This is a convenience method for ``enable_point_picking`` to keep
-        track of the picked points and create a geodesic path using those
-        points.
+        This is a convenience method for ``enable_point_picking`` to
+        keep track of the picked points and create a geodesic path
+        using those points.
 
-        The geodesic path is saved to the ``.picked_geodesic`` attribute of
-        this plotter
+        The geodesic path is saved to the ``.picked_geodesic``
+        attribute of this plotter.
 
         Parameters
         ----------
-        callback : callable
-            When given, calls this function after a pick is made.
-            The entire picked, geodesic path is passed as the only parameter
-            to this function.
+        callback : callable, optional
+            When given, calls this function after a pick is made.  The
+            entire picked, geodesic path is passed as the only
+            parameter to this function.
 
-        show_path : bool
-            Show the picked path interactively
+        show_message : bool or str, optional
+            Show the message about how to use the point picking
+            tool. If this is a string, that will be the message shown.
 
-        show_message : bool, str
-            Show the message about how to use the point picking tool. If this
-            is a string, that will be the message shown.
-
-        font_size : int
+        font_size : int, optional
             Sets the size of the message.
 
-        point_size : int, optional
-            Size of picked points if ``show_path`` is ``True``. Default 10.
-
-        color : str
+        color : str, optional
             The color of the selected mesh is shown.
 
+        point_size : int, optional
+            Size of picked points if ``show_path`` is
+            ``True``. Default 10.
+
         line_width : float, optional
-            Thickness of path representation if ``show_path`` is ``True``.
-            Default 5.
+            Thickness of path representation if ``show_path`` is
+            ``True``.  Default 5.
 
-        tolerance : float
-            Specify tolerance for performing pick operation. Tolerance is
-            specified as fraction of rendering window size. (Rendering window
-            size is measured across diagonal.)
+        tolerance : float, optional
+            Specify tolerance for performing pick operation. Tolerance
+            is specified as fraction of rendering window
+            size.  Rendering window size is measured across diagonal.
 
-        kwargs : optional
-            All remaining keyword arguments are used to control how the
-            picked path is intereactively displayed
+        show_path : bool, optional
+            Show the picked path interactively.
+
+        keep_order : bool, optional
+            If ``True``, the created geodesic path is a single ordered
+            and cleaned line from the first point to the last.
+
+            .. note::
+
+                In older versions there were apparent discontinuities
+                in the resulting path due to the behavior of the
+                underlying VTK filter which corresponds to
+                ``keep_order=False``.
+
+            .. versionadded:: 0.32.0
+
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the picked path is interactively displayed.
 
         """
         kwargs.setdefault('pickable', False)
@@ -425,37 +479,44 @@ class PickingHelper:
             point = mesh.points[idx]
             if self._last_picked_idx is None:
                 self.picked_geodesic = pyvista.PolyData(point)
+                self.picked_geodesic['vtkOriginalPointIds'] = [idx]
             else:
                 surface = mesh.extract_surface().triangulate()
-                locator = vtk.vtkPointLocator()
+                locator = _vtk.vtkPointLocator()
                 locator.SetDataSet(surface)
                 locator.BuildLocator()
                 start_idx = locator.FindClosestPoint(mesh.points[self._last_picked_idx])
                 end_idx = locator.FindClosestPoint(point)
-                self.picked_geodesic = self.picked_geodesic + surface.geodesic(start_idx, end_idx)
+                self.picked_geodesic += surface.geodesic(start_idx, end_idx,
+                                                         keep_order=keep_order)
+                if keep_order:
+                    # it makes sense to remove adjacent duplicate points
+                    self.picked_geodesic.clean(inplace=True, lines_to_points=False,
+                                               polys_to_lines=False,
+                                               strips_to_polys=False)
             self._last_picked_idx = idx
 
             if show_path:
                 self.add_mesh(self.picked_geodesic, color=color, name='_picked_path',
                               line_width=line_width, point_size=point_size,
                               reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, self.picked_geodesic)
-            return
 
         def _clear_g_path_event_watcher():
             self.picked_geodesic = pyvista.PolyData()
             self.remove_actor('_picked_path')
             self._last_picked_idx = None
-            return
 
         self.add_key_event('c', _clear_g_path_event_watcher)
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        return self.enable_point_picking(callback=_the_callback, use_mesh=True,
-                font_size=font_size, show_message=show_message,
-                tolerance=tolerance, show_point=False)
+        self.enable_point_picking(callback=_the_callback,
+                                  use_mesh=True, font_size=font_size,
+                                  show_message=show_message,
+                                  tolerance=tolerance,
+                                  show_point=False)
 
     def enable_horizon_picking(self, callback=None, normal=(0,0,1),
                                width=None, show_message=True,
@@ -464,58 +525,56 @@ class PickingHelper:
                                show_horizon=True, **kwargs):
         """Enable horizon picking.
 
-        Helper for the ``enable_path_picking`` method to also show a ribbon
-        surface along the picked path. Ribbon is saved under
+        Helper for the ``enable_path_picking`` method to also show a
+        ribbon surface along the picked path. Ribbon is saved under
         ``.picked_horizon``.
 
         Parameters
         ----------
-        callback : callable
-            When given, calls this function after a pick is made.
-            The entire picked path is passed as the only parameter to this
+        callback : callable, optional
+            When given, calls this function after a pick is made.  The
+            entire picked path is passed as the only parameter to this
             function.
 
-        normal : tuple(float)
-            The normal to the horizon surface's projection plane
+        normal : tuple(float), optional
+            The normal to the horizon surface's projection plane.
 
-        width : float
+        width : float, optional
             The width of the horizon surface. Default behaviour will
-            dynamically change the surface width depending on it's length.
+            dynamically change the surface width depending on its
+            length.
 
-        show_horizon : bool
-            Show the picked horizon surface interactively
+        show_message : bool or str, optional
+            Show the message about how to use the horizon picking
+            tool. If this is a string, that will be the message shown.
 
-        show_path : bool
-            Show the picked path that the horizon is built from interactively
+        font_size : int, optional
+            Sets the font size of the message.
 
-        show_message : bool, str
-            Show the message about how to use the horizon picking tool. If this
-            is a string, that will be the message shown.
-
-        font_size : int
-            Sets the size of the message.
-
-        point_size : int, optional
-            Size of picked points if ``show_horizon`` is ``True``. Default 10.
-
-        color : str
+        color : str, optional
             The color of the horizon surface if shown.
 
-        line_width : float, optional
-            Thickness of path representation if ``show_horizon`` is ``True``.
-            Default 5.
+        point_size : int, optional
+            Size of picked points if ``show_horizon`` is
+            ``True``. Default 10.
 
-        opacity : float
+        line_width : float, optional
+            Thickness of path representation if ``show_horizon`` is
+            ``True``.  Default 5.
+
+        show_path : bool, optional
+            Show the picked path that the horizon is built from
+            interactively.
+
+        opacity : float, optional
             The opacity of the horizon surface if shown.
 
-        tolerance : float
-            Specify tolerance for performing pick operation. Tolerance is
-            specified as fraction of rendering window size. (Rendering window
-            size is measured across diagonal.)
+        show_horizon : bool, optional
+            Show the picked horizon surface interactively.
 
-        kwargs : optional
-            All remaining keyword arguments are used to control how the
-            picked path is intereactively displayed
+        **kwargs : dict, optional
+            All remaining keyword arguments are used to control how
+            the picked path is interactively displayed.
 
         """
         name = '_horizon'
@@ -532,7 +591,7 @@ class PickingHelper:
                               opacity=opacity, pickable=False,
                               reset_camera=False)
 
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, path)
 
         self.enable_path_picking(callback=_the_callback,
@@ -541,18 +600,32 @@ class PickingHelper:
             **kwargs)
 
     def pick_click_position(self):
-        """Get corresponding click location in the 3D plot."""
+        """Get corresponding click location in the 3D plot.
+
+        Returns
+        -------
+        tuple
+            Three item tuple with the 3D picked position.
+
+        """
         if self.click_position is None:
             self.store_click_position()
-        picker = vtk.vtkWorldPointPicker()
+        picker = _vtk.vtkWorldPointPicker()
         picker.Pick(self.click_position[0], self.click_position[1], 0, self.renderer)
         return picker.GetPickPosition()
 
     def pick_mouse_position(self):
-        """Get corresponding mouse location in the 3D plot."""
+        """Get corresponding mouse location in the 3D plot.
+
+        Returns
+        -------
+        tuple
+            Three item tuple with the 3D picked position.
+
+        """
         if self.mouse_position is None:
             self.store_mouse_position()
-        picker = vtk.vtkWorldPointPicker()
+        picker = _vtk.vtkWorldPointPicker()
         picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
         return picker.GetPickPosition()
 
@@ -569,17 +642,22 @@ class PickingHelper:
     def enable_fly_to_right_click(self, callback=None):
         """Set the camera to track right click positions.
 
-        A convenience method to track right click positions and fly to the
-        picked point in the scene. The callback will be passed the point in
-        3D space.
+        A convenience method to track right click positions and fly to
+        the picked point in the scene. The callback will be passed the
+        point in 3D space.
+
+        Parameters
+        ----------
+        callback : callable
+            Callback function to call immediately after right
+            clicking.
 
         """
 
         def _the_callback(*args):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)
-            if hasattr(callback, '__call__'):
+            if callable(callback):
                 try_callback(callback, click_point)
 
         self.track_click_position(callback=_the_callback, side="right")
-        return

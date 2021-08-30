@@ -8,19 +8,20 @@ import collections.abc
 import logging
 
 import numpy as np
-import vtk
-from vtk import vtkMultiBlockDataSet
+from typing import List, Tuple, Union, Optional, Any, cast
 
 import pyvista
 from pyvista.utilities import get_array, is_pyvista_dataset, wrap
-from .common import DataObject
+from pyvista import _vtk
+from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
+from .._typing import Vector
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
+class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     """A composite class to hold many data sets which can be iterated over.
 
     This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so that we can
@@ -42,37 +43,40 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     >>> # Or add a named block
     >>> blocks["cube"] = pv.Cube()
 
-    >>> # instantiate from a list of objects
-    >>> data = [pv.Sphere(), pv.Cube(), pv.Cone()]
-    >>> blocks = pv.MultiBlock(data)
+    Instantiate from a list of objects
 
-    >>> # instantiate from a dictionary
-    >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere()}
+    >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
     >>> blocks = pv.MultiBlock(data)
+    >>> blocks.plot()
 
-    >>> # now iterate over the collection
+    Instantiate from a dictionary
+
+    >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+    >>> blocks = pv.MultiBlock(data)
+    >>> blocks.plot()
+
+    Iterate over the collection
+
     >>> for name in blocks.keys():
-    ...     block = blocks[name] # do something!
+    ...     block = blocks[name]
 
     >>> for block in blocks:
-    ...     surf = block.extract_surface() # Do something with each dataset
+    ...     surf = block.extract_surface()  # Do something with each dataset
 
     """
 
     # Bind pyvista.plotting.plot to the object
     plot = pyvista.plot
-    _READERS = {'.vtm': vtk.vtkXMLMultiBlockDataReader, '.vtmb': vtk.vtkXMLMultiBlockDataReader,
-                '.case': vtk.vtkGenericEnSightReader}
-    _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataWriter)
+    _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)
-        self.refs = []
+        self.refs: Any = []
 
         if len(args) == 1:
-            if isinstance(args[0], vtk.vtkMultiBlockDataSet):
+            if isinstance(args[0], _vtk.vtkMultiBlockDataSet):
                 if deep:
                     self.deep_copy(args[0])
                 else:
@@ -81,7 +85,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 for block in args[0]:
                     self.append(block)
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._from_file(args[0])
+                self._from_file(args[0], **kwargs)
             elif isinstance(args[0], dict):
                 idx = 0
                 for key, block in args[0].items():
@@ -109,78 +113,119 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
                 self.SetBlock(i, pyvista.wrap(block))
-        return
 
     @property
-    def bounds(self):
+    def bounds(self) -> List[float]:
         """Find min/max for bounds across blocks.
 
-        Return
-        ------
-        tuple(float):
+        Returns
+        -------
+        tuple(float)
             length 6 tuple of floats containing min/max along each axis
 
+        Examples
+        --------
+        Return the bounds across blocks.
+
+        >>> import pyvista as pv
+        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.bounds
+        [-0.5, 2.5, -0.5, 2.5, -0.5, 0.5]
+
         """
-        bounds = [np.inf,-np.inf, np.inf,-np.inf, np.inf,-np.inf]
-
-        def update_bounds(ax, nb, bounds):
-            """Update bounds while keeping track (internal helper)."""
-            if nb[2*ax] < bounds[2*ax]:
-                bounds[2*ax] = nb[2*ax]
-            if nb[2*ax+1] > bounds[2*ax+1]:
-                bounds[2*ax+1] = nb[2*ax+1]
-            return bounds
-
-        # get bounds for each block and update
-        for i in range(self.n_blocks):
-            if self[i] is None:
-                continue
-            bnds = self[i].bounds
-            for a in range(3):
-                bounds = update_bounds(a, bnds, bounds)
-
-        return bounds
+        # apply reduction of min and max over each block
+        all_bounds = [block.bounds for block in self if block]
+        minima = np.minimum.reduce(all_bounds)[::2]
+        maxima = np.maximum.reduce(all_bounds)[1::2]
+        # interleave minima and maxima for bounds
+        return np.stack([minima, maxima]).ravel('F').tolist()
 
     @property
-    def center(self):
-        """Return the center of the bounding box."""
-        return np.array(self.bounds).reshape(3,2).mean(axis=1)
+    def center(self) -> Any:
+        """Return the center of the bounding box.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.center  # doctest:+SKIP
+        array([1., 1., 0.])
+
+        """
+        return np.reshape(self.bounds, (3, 2)).mean(axis=1)
 
     @property
-    def length(self):
-        """Return the length of the diagonal of the bounding box."""
+    def length(self) -> float:
+        """Return the length of the diagonal of the bounding box.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.length
+        4.3584
+
+        """
         return pyvista.Box(self.bounds).length
 
     @property
-    def n_blocks(self):
-        """Return the total number of blocks set."""
+    def n_blocks(self) -> int:
+        """Return the total number of blocks set.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.n_blocks
+        3
+
+        """
         return self.GetNumberOfBlocks()
 
     @n_blocks.setter
     def n_blocks(self, n):
-        """Return the total number of blocks set."""
+        """Change the total number of blocks set."""
         self.SetNumberOfBlocks(n)
         self.Modified()
 
     @property
-    def volume(self):
+    def volume(self) -> float:
         """Return the total volume of all meshes in this dataset.
 
-        Return
-        ------
-        volume : float
+        Returns
+        -------
+        float
             Total volume of the mesh.
 
-        """
-        volume = 0.0
-        for block in self:
-            if block is None:
-                continue
-            volume += block.volume
-        return volume
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.volume
+        1.7348
 
-    def get_data_range(self, name):
-        """Get the min/max of an array given its name across all blocks."""
+        """
+        return sum(block.volume for block in self if block)
+
+    def get_data_range(self, name: str) -> Tuple[float, float]:  # type: ignore
+        """Get the min/max of an array given its name across all blocks.
+
+        Parameters
+        ----------
+        name : str
+            Name of the array.
+
+        Returns
+        -------
+        tuple
+            ``(min, max)`` of the named array.
+
+        """
         mini, maxi = np.inf, -np.inf
         for i in range(self.n_blocks):
             data = self[i]
@@ -194,14 +239,34 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 maxi = tma
         return mini, maxi
 
-    def get_index_by_name(self, name):
-        """Find the index number by block name."""
+    def get_index_by_name(self, name: str) -> int:
+        """Find the index number by block name.
+
+        Parameters
+        ----------
+        name : str
+            Name of the block.
+
+        Returns
+        -------
+        int
+            Index of the block.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.get_index_by_name('sphere')
+        1
+
+        """
         for i in range(self.n_blocks):
             if self.get_block_name(i) == name:
                 return i
         raise KeyError(f'Block name ({name}) not found')
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: Union[int, str]) -> Optional['MultiBlock']:
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
@@ -217,11 +282,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         elif isinstance(index, (list, tuple, np.ndarray)):
             multi = MultiBlock()
             for i in index:
-                if isinstance(i, str):
-                    name = i
-                else:
-                    name = self.get_block_name(i)
-                multi[-1, name] = self[i]
+                name = i if isinstance(i, str) else self.get_block_name(i)
+                multi[-1, name] = self[i]  # type: ignore
             return multi
         elif isinstance(index, str):
             index = self.get_index_by_name(index)
@@ -239,45 +301,123 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             self.refs.append(data)
         return data
 
-    def append(self, data):
-        """Add a data set to the next block index."""
-        index = self.n_blocks # note off by one so use as index
-        self[index] = data
-        self.refs.append(data)
+    def append(self, dataset: DataSet):
+        """Add a data set to the next block index.
 
-    def get(self, index):
+        Parameters
+        ----------
+        dataset : pyvista.DataSet
+            Dataset to append to this multi-block.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.append(pv.Cone())
+        >>> len(blocks)
+        3
+
+        """
+        index = self.n_blocks  # note off by one so use as index
+        self[index] = dataset
+        self.refs.append(dataset)
+
+    def get(self, index: Union[int, str]) -> Optional['MultiBlock']:
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
 
+        Parameters
+        ----------
+        index : int or str
+            Index or name of the dataset within the multiblock.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset from the given index.
+
         """
         return self[index]
 
-    def set_block_name(self, index, name):
-        """Set a block's string name at the specified index."""
+    def set_block_name(self, index: int, name: str):
+        """Set a block's string name at the specified index.
+
+        Parameters
+        ----------
+        index : int
+            Index or the dataset within the multiblock.
+
+        name : str
+            Name to assign to the block at ``index``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.append(pv.Cone())
+        >>> blocks.set_block_name(2, 'cone')
+        >>> blocks.keys()
+        ['cube', 'sphere', 'cone']
+
+        """
         if name is None:
             return
-        self.GetMetaData(index).Set(vtk.vtkCompositeDataSet.NAME(), name)
+        self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
-    def get_block_name(self, index):
-        """Return the string name of the block at the given index."""
+    def get_block_name(self, index: int) -> Optional[str]:
+        """Return the string name of the block at the given index.
+
+        Parameters
+        ----------
+        index : int
+            Index of the block to get the name of.
+
+        Returns
+        -------
+        str
+            Name of the block at the given index.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.get_block_name(0)
+        'cube'
+
+        """
         meta = self.GetMetaData(index)
         if meta is not None:
-            return meta.Get(vtk.vtkCompositeDataSet.NAME())
+            return meta.Get(_vtk.vtkCompositeDataSet.NAME())
         return None
 
-    def keys(self):
-        """Get all the block names in the dataset."""
-        names = []
-        for i in range(self.n_blocks):
-            names.append(self.get_block_name(i))
-        return names
+    def keys(self) -> List[Optional[str]]:
+        """Get all the block names in the dataset.
 
-    def _ipython_key_completions_(self):
+        Returns
+        -------
+        list
+            List of block names.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.keys()
+        ['cube', 'sphere']
+
+        """
+        return [self.get_block_name(i) for i in range(self.n_blocks)]
+
+    def _ipython_key_completions_(self) -> List[Optional[str]]:
         return self.keys()
 
-    def __setitem__(self, index, data):
+    def __setitem__(self, index: Union[Tuple[int, Optional[str]], int, str], data: DataSet):
         """Set a block with a VTK data object.
 
         To set the name simultaneously, pass a string name as the 2nd index.
@@ -293,6 +433,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         3
 
         """
+        i: int = 0
+        name: Optional[str] = None
         if isinstance(index, (np.ndarray, collections.abc.Sequence)) and not isinstance(index, str):
             i, name = index[0], index[1]
         elif isinstance(index, str):
@@ -302,7 +444,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 i = -1
             name = index
         else:
-            i, name = index, None
+            i, name = cast(int, index), None
         if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
         if i == -1:
@@ -316,18 +458,18 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if data not in self.refs:
             self.refs.append(data)
 
-    def __delitem__(self, index):
+    def __delitem__(self, index: Union[int, str]):
         """Remove a block at the specified index."""
         if isinstance(index, str):
             index = self.get_index_by_name(index)
         self.RemoveBlock(index)
 
-    def __iter__(self):
+    def __iter__(self) -> 'MultiBlock':
         """Return the iterator across all blocks."""
         self._iter_n = 0
         return self
 
-    def next(self):
+    def next(self) -> Optional['MultiBlock']:
         """Get the next block from the iterator."""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
@@ -338,8 +480,20 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     __next__ = next
 
-    def pop(self, index):
-        """Pop off a block at the specified index."""
+    def pop(self, index: Union[int, str]) -> Optional['MultiBlock']:
+        """Pop off a block at the specified index.
+
+        Parameters
+        ----------
+        index : int or str
+            Index or name of the dataset within the multiblock.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset from the given index.
+
+        """
         data = self[index]
         del self[index]
         return data
@@ -348,9 +502,18 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """Remove any null blocks in place.
 
         Parameters
-        -----------
+        ----------
         empty : bool
             Remove any meshes that are empty as well (have zero points).
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = {"cube": pv.Cube(), "empty": pv.PolyData()}
+        >>> blocks = pv.MultiBlock(data)
+        >>> blocks.clean(empty=True)
+        >>> blocks.keys()
+        ['cube']
 
         """
         null_blocks = []
@@ -370,7 +533,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             # Cast as int because windows is super annoying
             del self[int(null_blocks[i])]
             null_blocks -= 1
-        return
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
@@ -382,7 +544,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3f}, {:.3f}"))
         return attrs
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         """Define a pretty representation for Jupyter notebooks."""
         fmt = ""
         fmt += "<table>"
@@ -417,7 +579,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         fmt += "</td></tr> </table>"
         return fmt
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Define an adequate representation."""
         # return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
@@ -430,11 +592,11 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the str representation of the multi block."""
         return MultiBlock.__repr__(self)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of blocks."""
         return self.n_blocks
 
@@ -451,12 +613,21 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         Parameters
         ----------
         deep : bool, optional
-            When True makes a full copy of the object.
+            When ``True``, make a full copy of the object.
 
-        Return
-        ------
-        newobject : same as input
-           Deep or shallow copy of the input.
+        Returns
+        -------
+        pyvista.DataSet
+           Deep or shallow copy of the input.  Type matches input.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+        >>> blocks = pv.MultiBlock(data)
+        >>> new_blocks = blocks.copy()
+        >>> len(new_blocks)
+        3
 
         """
         thistype = type(self)
