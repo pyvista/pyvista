@@ -98,7 +98,7 @@ jobs:
     displayName: 'Test Package Docstrings'
 
   - script: |
-      xvfb-run make doctest-modules-local-namespace
+      xvfb-run -s "-maxclients 512" make doctest-modules-local-namespace
     displayName: 'Test Package Docstrings with Local Namespace'
 
   # don't run job on no-ci builds

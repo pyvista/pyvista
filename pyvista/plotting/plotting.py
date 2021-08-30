@@ -51,10 +51,9 @@ SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 VERY_FIRST_RENDER = True  # windows plotter helper
 
 
-# permit pyvista to kill the render window
-KILL_DISPLAY = False
-if platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY'):
-    KILL_DISPLAY = True
+# EXPERIMENTAL: permit pyvista to kill the render window
+KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
+if KILL_DISPLAY:  # pragma: no cover
     X11 = ctypes.CDLL("libX11.so")
 
 
@@ -2871,7 +2870,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.clear()
 
         # grab the display id before clearing the window
-        if KILL_DISPLAY:
+        # this is an experimental feature
+        if KILL_DISPLAY:  # pragma: no cover
             disp_id = None
             if hasattr(self, 'ren_win'):
                 disp_id = self.ren_win.GetGenericDisplayId()
@@ -2880,7 +2880,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.iren is not None:
             self.iren.remove_observers()
             self.iren.terminate_app()
-            if KILL_DISPLAY:
+            if KILL_DISPLAY:  # pragma: no cover
                 _kill_display(disp_id)
             self.iren = None
 
