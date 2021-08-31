@@ -4473,7 +4473,9 @@ class Plotter(BasePlotter):
             self.ren_win.SetOffScreenRendering(1)
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
-            # off_screen
+            # off_screen.  We still want an interactor for off screen
+            # plotting since there are some widgets (like the axes
+            # widget) that need an interactor
             interactor = _vtk.vtkGenericRenderWindowInteractor()
         else:
             interactor = None
