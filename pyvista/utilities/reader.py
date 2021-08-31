@@ -592,10 +592,10 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
             raise ValueError(
                 f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
             )
-        return self.reader.SetTimeValue(time_value)
+        self.reader.SetTimeValue(time_value)
 
     def set_active_time_point(self, time_point):  # noqa: D102
-        return self.reader.SetTimeValue(self.time_point_value(time_point))
+        self.reader.SetTimeValue(self.time_point_value(time_point))
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
@@ -620,10 +620,10 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             raise ValueError(
                 f"Not a valid time {time_value} from available time values: {self.reader_time_values}"
             )
-        return self.reader.SetTimeValue(time_value)
+        self.reader.SetTimeValue(time_value)
 
     def set_active_time_point(self, time_point):  # noqa: D102
-        return self.reader.SetTimeValue(self.time_point_value(time_point))
+        self.reader.SetTimeValue(self.time_point_value(time_point))
 
 
 class PLYReader(BaseReader):
