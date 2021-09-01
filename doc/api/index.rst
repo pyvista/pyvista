@@ -17,6 +17,7 @@ Highlights of the API include:
    core/index
    plotting/index
    utilities/index
+   readers/index
 
 
 .. panels::
@@ -42,6 +43,18 @@ Highlights of the API include:
     .. link-button:: plotting/index
         :type: ref
         :text: Plotting API
+        :classes: btn-outline-primary btn-block stretched-link
+
+    ---
+
+    File API
+    ^^^^^^^^
+
+    Use PyVista's Reader classes to read data files.
+
+    .. link-button:: readers/index
+        :type: ref
+        :text: Readers
         :classes: btn-outline-primary btn-block stretched-link
 
     ---

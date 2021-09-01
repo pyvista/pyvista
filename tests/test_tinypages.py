@@ -45,7 +45,7 @@ def test_tinypages(tmpdir):
     assert plot_file(9, 1, 0).exists()
 
     # test skip directive
-    assert not plot_file(13, 0, 0).exists()
+    assert not plot_file(10, 0, 0).exists()
 
     # verify external file generated figure
     cone_file = html_dir / f'plot_cone_00_00.png'

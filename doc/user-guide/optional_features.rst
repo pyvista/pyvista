@@ -92,7 +92,7 @@ projecting the random_hills example data to a triangular plane.
     tree = KDTree(data.points.astype(np.double))
     _, data_inds = tree.query(points)
 
-    elevations = data.point_arrays["Elevation"][data_inds]
+    elevations = data.point_data["Elevation"][data_inds]
 
     # Mask points on planes
     planes.cell_arrays["Elevation"] = np.zeros((planes.n_cells,))
@@ -128,13 +128,13 @@ projecting the random_hills example data to a triangular plane.
     x_label = pv.PolyData([axis_length, 0, 0])
     y_label = pv.PolyData([0, axis_length, 0])
     z_label = pv.PolyData([0, 0, axis_length])
-    x_label.point_arrays["label"] = [
+    x_label.point_data["label"] = [
         "x",
     ]
-    y_label.point_arrays["label"] = [
+    y_label.point_data["label"] = [
         "y",
     ]
-    z_label.point_arrays["label"] = [
+    z_label.point_data["label"] = [
         "z",
     ]
 

@@ -63,19 +63,19 @@ Plot 7 uses ``include-source``:
     # Only a comment
 
 
-Plot 8 uses an external file with the plot commands and a caption:
+Plot _ uses an external file with the plot commands and a caption:
 
 .. pyvista-plot:: plot_cone.py
 
    This is the caption for plot 8.
 
 
-Plot 9 uses a specific function in a file with plot commands:
+Plot _ uses a specific function in a file with plot commands:
 
 .. pyvista-plot:: plot_polygon.py plot_poly
 
 
-Plot 10 gets a caption specified by the :caption: option:
+Plot 8 gets a caption specified by the :caption: option:
 
 .. pyvista-plot::
    :caption: Plot 10 uses the caption option.
@@ -84,14 +84,14 @@ Plot 10 gets a caption specified by the :caption: option:
    pyvista.Disc().plot()
 
 
-Plot 11 uses an external file with the plot commands and a caption
+Plot __ uses an external file with the plot commands and a caption
 using the :caption: option:
 
 .. pyvista-plot:: plot_cone.py
    :caption: This is the caption for plot 11.
 
 
-Plot 12 shows that the default template correctly prints the multi-image
+Plot 9 shows that the default template correctly prints the multi-image
 scenario:
 
 .. pyvista-plot::
@@ -103,23 +103,35 @@ scenario:
    pyvista.Text3D('world').plot()
 
 
-Plot 13 uses the skip directive and should not generate a plot.
+Plot 10 uses the skip directive and should not generate a plot.
 
 .. pyvista-plot::
 
    import pyvista
    pyvista.Sphere().plot()  # doctest:+SKIP
 
-Plot 14 uses ``include-source`` False:
+Plot 11 uses ``include-source`` False:
 
 .. pyvista-plot::
     :include-source: False
 
     # you should not be reading this right now
 
-Plot 14 uses ``include-source`` with no args:
+Plot 12 uses ``include-source`` with no args:
 
 .. pyvista-plot::
     :include-source:
 
     # should be printed: include-source with no args
+
+Plot 13 should create two plots and be able to plot while skipping
+lines, even in two sections.
+
+.. pyvista-plot::
+
+    >>> import pyvista
+    >>> pyvista.Sphere().plot(color='blue',
+    ...                       cpos='xy')
+
+    >>> pyvista.Sphere().plot(color='red',
+    ...                       cpos='xy')

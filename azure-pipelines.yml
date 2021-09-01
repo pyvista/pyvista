@@ -299,10 +299,7 @@ jobs:
       path: '$(Build.SourcesDirectory)/doc/examples'
     displayName: Build pyvista doc examples cache
 
-  # run this three times since VTK9 fails to close render windows
   - script: |
-      make -C doc phtml || true  # will fail on VTK9
-      make -C doc phtml || true  # need it again due to all our docstring examples
       make -C doc phtml -b coverage SPHINXOPTS="-W"
       cat doc/_build/coverage/python.txt
     displayName: 'Build documentation'

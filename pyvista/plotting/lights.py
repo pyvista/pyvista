@@ -44,11 +44,11 @@ class Light(vtkLight):
         has a transformation matrix.  See also the
         :py:attr:`focal_point` property.
 
-    color : string or 3-length sequence, optional
+    color : str or 3-length sequence, optional
         The color of the light. The ambient, diffuse and specular
         colors will all be set to this color on creation.
 
-    light_type : string or int, optional
+    light_type : str or int, optional
         The type of the light. If a string, one of ``'headlight'``,
         ``'camera light'`` or ``'scene light'``. If an int, one of 1,
         2 or 3, respectively. The class constants ``Light.HEADLIGHT``,
@@ -968,16 +968,21 @@ class Light(vtkLight):
     def copy(self, deep=True):
         """Return a shallow or a deep copy of the light.
 
-        The only mutable attribute of ``Light`` objects is the
+        The only mutable attribute of :class:`pyvista.Light` is the
         transformation matrix (if it exists). Thus asking for a
         shallow copy merely implies that the returned light and the
         original share the transformation matrix instance.
 
         Parameters
         ----------
-        deep : bool
+        deep : bool, optional
             Whether to return a deep copy rather than a shallow
             one. Default ``True``.
+
+        Returns
+        -------
+        pyvista.Light
+            Copied light.
 
         Examples
         --------
@@ -1174,7 +1179,14 @@ class Light(vtkLight):
         return self._renderers
 
     def add_renderer(self, renderer):
-        """Attach a renderer to this light."""
+        """Attach a renderer to this light.
+
+        Parameters
+        ----------
+        renderer : vtk.vtkRenderer
+            Renderer.
+
+        """
         # quick check to avoid adding twice
         if renderer not in self.renderers:
             self.renderers.append(renderer)

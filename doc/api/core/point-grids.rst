@@ -131,7 +131,7 @@ A more complex plot can be created with:
     :context:
 
     # Store Camera position.  This can be obtained manually by getting the
-    # output of grid.plot()
+    # output of grid.plot
     # it's hard-coded in this example
     cpos = [(11.915126303095157, 6.11392754955802, 3.6124956735471914),
             (0.0, 0.375, 2.0),

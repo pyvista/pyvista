@@ -12,6 +12,11 @@ from pyvista.utilities.misc import PyvistaDeprecationWarning
 class Camera(_vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
+    Parameters
+    ----------
+    renderer : pyvista.Renderer, optional
+        Renderer to attach the camera to.
+
     Examples
     --------
     Create a camera at the pyvista module level.
@@ -269,6 +274,11 @@ class Camera(_vtk.vtkCamera):
         factor. A value greater than 1 is a zoom-in, a value less than
         1 is a zoom-out.
 
+        Parameters
+        ----------
+        value : float
+            Zoom of the camera.  Must be greater than 0.
+
         Examples
         --------
         >>> import pyvista
@@ -425,7 +435,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista
         >>> plotter = pyvista.Plotter()
-        >>> plotter.camera.direction  # doctest: +SKIP
+        >>> plotter.camera.direction  # doctest:+SKIP
         (0.0, 0.0, -1.0)
 
         """
