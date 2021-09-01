@@ -300,9 +300,14 @@ jobs:
     displayName: Build pyvista doc examples cache
 
   - script: |
-      make -C doc phtml -b coverage SPHINXOPTS="-W"
+      make -C doc html -b coverage SPHINXOPTS="-j auto -w build_errors.txt -N"
       cat doc/_build/coverage/python.txt
     displayName: 'Build documentation'
+
+    # Verify that sphinx generates no warnings
+    - name: Check for warnings
+      run: |
+        python doc/print_errors.py
 
   # Push example notebooks to pyvista-examples
   - script: |
