@@ -35,7 +35,7 @@ Examples using this class:
 
 
 MultiBlock API Reference
----------------------
+------------------------
 The :class:`pyvista.MultiBlock` class holds attributes that
 are *common* to all spatially referenced datasets in PyVista.  This
 base class is analogous to VTK's `vtk.vtkMultiBlockDataSet`_ class.
