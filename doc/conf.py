@@ -125,6 +125,7 @@ numpydoc_validation_exclude = {  # set of regex
 
     # classes inherit from BaseReader
     r'\.*Reader$',
+    # r'\.*OpenFOAMReader*',
 
     # internal
     r'\.Renderer$',
