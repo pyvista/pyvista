@@ -4471,9 +4471,18 @@ class Plotter(BasePlotter):
 
         if self.off_screen:
             self.ren_win.SetOffScreenRendering(1)
+            # vtkGenericRenderWindowInteractor has no event loop and
+            # allows the display client to close on Linux when
+            # off_screen.  We still want an interactor for off screen
+            # plotting since there are some widgets (like the axes
+            # widget) that need an interactor
+            interactor = _vtk.vtkGenericRenderWindowInteractor()
+        else:
+            interactor = None
 
         # Add ren win and interactor
-        self.iren = RenderWindowInteractor(self, light_follow_camera=False)
+        self.iren = RenderWindowInteractor(self, light_follow_camera=False,
+                                           interactor=interactor)
         self.iren.set_render_window(self.ren_win)
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
