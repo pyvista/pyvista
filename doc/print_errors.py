@@ -27,5 +27,7 @@ if os.path.isfile(error_file):
     print()
     if errors:
         raise Exception(f'Sphinx reported unique {len(errors)} warnings\n\n')
+else:
+    print(f'build_errors.txt not found at {my_path}')
 
 print(f'Sphinx Reported no warnings\n\n')

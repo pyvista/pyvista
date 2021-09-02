@@ -30,7 +30,7 @@ doc/_build
 wiki/
 **/beam.gif
 **/beam_wireframe.gif
-
+doc/build_errors.txt
 
 # testing coverage and cache
 .pytest_cache/
