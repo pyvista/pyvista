@@ -87,7 +87,7 @@ numpydoc_validation_checks = {
     "SA04",  # See also section does not need descriptions
     "SS05",  # Appears to be broken.
     "ES01",  # Not all docstrings need an extend summary.
-    # "EX01",  # Examples: Will eventually enforce
+    "EX01",  # Examples: Will eventually enforce
     "YD01",  # Yields: No plan to enforce
 }
 numpydoc_validation_exclude = {  # set of regex
