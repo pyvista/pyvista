@@ -161,13 +161,13 @@ add_module_names = False
 
 # Intersphinx mapping
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/dev', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'numpy': ('https://numpy.org/devdocs', None),
-    'matplotlib': ('https://matplotlib.org/stable', None),
-    'imageio': ('https://imageio.readthedocs.io/en/stable', None),
-    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
-    'pytest': ('https://docs.pytest.org/en/stable', None),
+    'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-inv.txt')),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', (None, 'intersphinx/scipy-inv.txt')),
+    'numpy': ('https://numpy.org/devdocs', (None, 'intersphinx/numpy-inv.txt')),
+    'matplotlib': ('https://matplotlib.org/stable', (None, 'intersphinx/matplotlib-inv.txt')),
+    'imageio': ('https://imageio.readthedocs.io/en/stable', (None, 'intersphinx/imageio-inv.txt')),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', (None, 'intersphinx/pandas-inv.txt')),
+    'pytest': ('https://docs.pytest.org/en/stable', (None, 'intersphinx/pytest-inv.txt')),
 }
 
 linkcheck_retries = 3
