@@ -152,6 +152,7 @@ if VTK9:
                                                    vtkAnnotatedCubeActor,
                                                    vtkLegendBoxActor,
                                                    vtkCubeAxesActor)
+    from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
     from vtkmodules.vtkRenderingCore import (vtkTexture,
                                              vtkSkybox,
                                              vtkPropAssembly,
