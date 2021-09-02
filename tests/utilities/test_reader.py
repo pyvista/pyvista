@@ -202,6 +202,8 @@ def test_ensightreader_timepoints():
 
     reader.set_active_time_point(0)
     assert reader.active_time_value == 1.0
+
+
 def test_plyreader():
     filename = examples.spherefile
     reader = pyvista.get_reader(filename)

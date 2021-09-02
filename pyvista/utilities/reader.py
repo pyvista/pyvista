@@ -820,7 +820,7 @@ class PVDReader(BaseReader, TimeReader):
     def reader(self):
         """Return the PVDReader.
         
-        ..note::
+        .. note::
             This Reader does not have an uderlying vtk Reader.
 
         """
@@ -832,7 +832,7 @@ class PVDReader(BaseReader, TimeReader):
         
         Returns
         -------
-        list[:class:`pyvista.BaseReader`]
+        list[pyvista.BaseReader]
 
         """
         return self._active_readers
@@ -843,7 +843,7 @@ class PVDReader(BaseReader, TimeReader):
         
         Returns
         -------
-        list[:class:`pyvista.PVDDataSet`]
+        list[pyvista.PVDDataSet]
 
         """
         return self._datasets
@@ -854,7 +854,7 @@ class PVDReader(BaseReader, TimeReader):
         
         Returns
         -------
-        list[:class:`pyvista.PVDDataSet`]
+        list[pyvista.PVDDataSet]
 
         """
         return self._active_datasets
@@ -874,7 +874,7 @@ class PVDReader(BaseReader, TimeReader):
 
         Returns
         -------
-        :class:`pyvista.MultiBlock`
+        pyvista.MultiBlock
 
         """
         return pyvista.MultiBlock([reader.read() for reader in self.active_readers])
