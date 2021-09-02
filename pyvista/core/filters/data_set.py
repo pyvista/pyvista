@@ -2230,7 +2230,10 @@ class DataSetFilters:
     def delaunay_3d(self, alpha=0, tol=0.001, offset=2.5, progress_bar=False):
         """Construct a 3D Delaunay triangulation of the mesh.
 
-        This helps smooth out a rugged mesh.
+        This filter can be used to generate a 3D tetrahedral mesh from
+        a surface or scattered points.  If you want to create a
+        surface from a point cloud, see
+        :func:`pyvista.DataSetFilters.reconstruct_surface`.
 
         Parameters
         ----------
@@ -4473,7 +4476,7 @@ class DataSetFilters:
         >>> pl.subplot(0,1)
         >>> _ = pl.add_mesh(surf, color=True, show_edges=True)
         >>> _ = pl.add_title('Reconstructed Surface')
-        >>> pl.show()  # doctest:+SKIP
+        >>> pl.show()
 
         See :ref:`surface_reconstruction_example` for more examples
         using this filter.
