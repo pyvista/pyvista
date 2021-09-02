@@ -304,10 +304,10 @@ jobs:
       cat doc/_build/coverage/python.txt
     displayName: 'Build documentation'
 
-    # Verify that sphinx generates no warnings
-    - name: Check for warnings
-      run: |
-        python doc/print_errors.py
+  # Verify that sphinx generates no warnings
+  - script: |
+      python doc/print_errors.py
+    displayName: Check for warnings
 
   # Push example notebooks to pyvista-examples
   - script: |
