@@ -72,7 +72,7 @@ class PointSet(DataSet):
 
         Parameters
         ----------
-        ind : iterable
+        ind : sequence
             Cell indices to be removed.  The array can also be a
             boolean array of the same size as the number of cells.
 
@@ -1634,7 +1634,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Parameters
         ----------
-        ind : iterable
+        ind : sequence
             List or array of cell indices to be hidden.  The array can
             also be a boolean array of the same size as the number of
             cells.
@@ -1666,7 +1666,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         # properly, additionally, calling self.RemoveGhostCells will
         # have no effect
 
-        self.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+        # add but do not make active
+        self.cell_data.set_array(ghost_cells, _vtk.vtkDataSetAttributes.GhostArrayName())
 
     def hide_points(self, ind):
         """Hide points without deleting them.
@@ -1675,7 +1676,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Parameters
         ----------
-        ind : iterable
+        ind : sequence
             List or array of point indices to be hidden.  The array
             can also be a boolean array of the same size as the number
             of points.
@@ -1701,13 +1702,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         ghost_points = np.zeros(self.n_points, np.uint8)
         ghost_points[ind] = _vtk.vtkDataSetAttributes.HIDDENPOINT
 
-        # NOTE: cells cannot be removed from a structured grid, only
-        # hidden setting ghost_points to a value besides
-        # vtk.vtkDataSetAttributes.HIDDENCELL will not hide them
-        # properly, additionally, calling self.RemoveGhostCells will
-        # have no effect
-
-        self.point_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_points
+        # add but do not make active
+        self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())
 
     def _reshape_point_array(self, array):
         """Reshape point data to a 3-D matrix."""
