@@ -30,7 +30,7 @@ doctest-modules-local-namespace:
 	python tests/check_doctest_names.py
 
 example-coverage:
-	python tests/check_example_coverage.py
+	python -m ansys.tools.example_coverage -f pyvista
 
 coverage:
 	@echo "Running coverage"
