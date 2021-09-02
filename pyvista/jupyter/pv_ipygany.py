@@ -64,7 +64,7 @@ def pyvista_polydata_to_polymesh(obj):
         surf = mesh
 
     # convert to an all-triangular surface
-    if surf.is_all_triangles():
+    if surf.is_all_triangles:
         trimesh = surf
     else:
         trimesh = surf.triangulate()

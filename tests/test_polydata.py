@@ -209,7 +209,7 @@ def test_geodesic(sphere):
     geodesic = sphere.geodesic(start, end)
     assert isinstance(geodesic, pyvista.PolyData)
     assert "vtkOriginalPointIds" in geodesic.array_names
-    ids = geodesic.point_arrays["vtkOriginalPointIds"]
+    ids = geodesic.point_data["vtkOriginalPointIds"]
     assert np.allclose(geodesic.points, sphere.points[ids])
 
     # check keep_order
@@ -392,7 +392,7 @@ def test_save_ply_texture_array(sphere, ndim, as_str, tmpdir):
     texture = np.ones((sphere.n_points, ndim), np.uint8)
     texture[:, 2] = np.arange(sphere.n_points)[::-1]
     if as_str:
-        sphere.point_arrays['texture'] = texture
+        sphere.point_data['texture'] = texture
         sphere.save(filename, texture='texture')
     else:
         sphere.save(filename, texture=texture)
@@ -409,7 +409,7 @@ def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
     texture = np.ones((sphere.n_points, 3), np.float32)
     with pytest.raises(ValueError, match='Invalid datatype'):
         if as_str:
-            sphere.point_arrays['texture'] = texture
+            sphere.point_data['texture'] = texture
             sphere.save(filename, texture='texture')
         else:
             sphere.save(filename, texture=texture)
@@ -439,13 +439,13 @@ def test_invalid_save(sphere):
 
 
 def test_triangulate_filter(plane):
-    assert not plane.is_all_triangles()
+    assert not plane.is_all_triangles
     plane.triangulate(inplace=True)
-    assert plane.is_all_triangles()
+    assert plane.is_all_triangles
     # Make a point cloud and assert false
-    assert not pyvista.PolyData(plane.points).is_all_triangles()
+    assert not pyvista.PolyData(plane.points).is_all_triangles
     # Extract lines and make sure false
-    assert not plane.extract_all_edges().is_all_triangles()
+    assert not plane.extract_all_edges().is_all_triangles
 
 
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
@@ -499,8 +499,8 @@ def test_compute_normals(sphere):
     sphere_normals = sphere
     sphere_normals.compute_normals(inplace=True)
 
-    point_normals = sphere_normals.point_arrays['Normals']
-    cell_normals = sphere_normals.cell_arrays['Normals']
+    point_normals = sphere_normals.point_data['Normals']
+    cell_normals = sphere_normals.cell_data['Normals']
     assert point_normals.shape[0] == sphere.n_points
     assert cell_normals.shape[0] == sphere.n_cells
 
@@ -585,7 +585,7 @@ def test_remove_points_any(sphere):
 
 def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
-    sphere_copy.cell_arrays['ind'] = np.arange(sphere_copy.n_faces)
+    sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces)
     remove = sphere.faces[1:4]
     sphere_copy.remove_points(remove, inplace=True, mode='all')
     assert sphere_copy.n_points == sphere.n_points
@@ -747,8 +747,10 @@ def test_is_all_triangles():
                        [3, 1, 2, 4]])    # triangle
 
     mesh = pyvista.PolyData(vertices, faces)
-    assert not mesh.is_all_triangles()
+    assert not mesh.is_all_triangles
     mesh = mesh.triangulate()
+    assert mesh.is_all_triangles
+    # for backwards compatibility, check if we can call this
     assert mesh.is_all_triangles()
 
 
@@ -763,11 +765,25 @@ def test_extrude():
     assert arc.n_points != n_points_old
 
 
-def test_flip_normals(sphere):
+def test_flip_normals(sphere, plane):
     sphere_flipped = sphere.copy()
     sphere_flipped.flip_normals()
 
     sphere.compute_normals(inplace=True)
     sphere_flipped.compute_normals(inplace=True)
-    assert np.allclose(sphere_flipped.point_arrays['Normals'],
-                       -sphere.point_arrays['Normals'])
+    assert np.allclose(sphere_flipped.point_data['Normals'],
+                       -sphere.point_data['Normals'])
+
+    # invalid case
+    with pytest.raises(NotAllTrianglesError):
+        plane.flip_normals()
+
+
+def test_n_verts():
+    mesh = pyvista.PolyData([[1, 0, 0], [1, 1, 1]])
+    assert mesh.n_verts == 2
+
+
+def test_n_lines():
+    mesh = pyvista.Line()
+    assert mesh.n_lines == 1

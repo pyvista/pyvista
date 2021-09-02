@@ -139,7 +139,7 @@ class ScalarBars():
 
         Parameters
         ----------
-        title : string, optional
+        title : str, optional
             Title of the scalar bar.  Default ``''`` which is
             rendered as an empty title.
 
@@ -164,7 +164,7 @@ class ScalarBars():
             Sets the size of the title font.  Defaults to ``None`` and is sized
             according to :attr:`pyvista.themes.DefaultTheme.font`.
 
-        color : string or 3 item list, optional
+        color : str or 3 item list, optional
             Either a string, rgb list, or hex color string.  Default
             set by :attr:`pyvista.themes.DefaultTheme.font`.  Can be
             in one of the following formats:
@@ -257,6 +257,16 @@ class ScalarBars():
             ``Plotter``, will use the plotter theme.  Setting to
             ``None`` will use the global theme.
 
+        Returns
+        -------
+        vtk.vtkScalarBarActor
+            Scalar bar actor.
+
+        Notes
+        -----
+        Setting ``title_font_size``, or ``label_font_size`` disables
+        automatic font sizing for both the title and label.
+
         Examples
         --------
         Add a custom interactive scalar bar that is horizontal, has an
@@ -272,11 +282,6 @@ class ScalarBars():
         ...                            label_font_size=30,
         ...                            outline=True, fmt='%10.5f')
         >>> plotter.show()
-
-        Notes
-        -----
-        Setting ``title_font_size``, or ``label_font_size`` disables
-        automatic font sizing for both the title and label.
 
         """
         if mapper is None:

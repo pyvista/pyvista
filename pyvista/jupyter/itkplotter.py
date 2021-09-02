@@ -49,20 +49,22 @@ class PlotterITK():
 
         Parameters
         ----------
-        points : np.ndarray or pyvista.DataSet
-            n x 3 numpy array of points or pyvista dataset with points.
+        points : numpy.ndarray or pyvista.DataSet
+            An ``n x 3`` numpy array of points or PyVista dataset with
+            points.
 
-        color : string or 3 item list, optional. Color of points (if visible).
-            Either a string, rgb list, or hex color string.  For example:
+        color : str or sequence, optional
+            Either a string, RGB sequence, or hex color string.  For one
+            of the following.
 
-            ``color='white'``
-            ``color='w'``
-            ``color=[1, 1, 1]``
-            ``color='#FFFFFF'``
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         point_size : float, optional
             Point size of any nodes in the dataset plotted. Also applicable
-            when style='points'. Default ``3.0``
+            when style='points'. Default ``3.0``.
 
         Examples
         --------
@@ -107,7 +109,7 @@ class PlotterITK():
             that :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
             points.
 
-        color : string or 3 item list, optional, defaults to white
+        color : str sequence, optional
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
@@ -125,12 +127,12 @@ class PlotterITK():
         opacity : float, optional
             Opacity of the mesh. If a single float value is given, it will be
             the global opacity of the mesh and uniformly applied everywhere -
-            should be between 0 and 1.  Default 1.0
+            should be between 0 and 1.  Default 1.0.
 
         smooth_shading : bool, optional
             Smooth mesh surface mesh by taking into account surface
             normals.  Surface will appear smoother while sharp edges
-            will still look sharp.  Default False.
+            will still look sharp.  Default ``False``.
 
         """
         if not pv.is_pyvista_dataset(mesh):
@@ -142,19 +144,19 @@ class PlotterITK():
             if not isinstance(mesh, pv.PolyData):
                 grid = mesh
                 mesh = grid.extract_surface()
-                ind = mesh.point_arrays['vtkOriginalPointIds']
+                ind = mesh.point_data['vtkOriginalPointIds']
                 # remap scalars
                 if isinstance(scalars, np.ndarray):
                     scalars = scalars[ind]
 
             mesh.compute_normals(cell_normals=False, inplace=True)
-        elif 'Normals' in mesh.point_arrays:
-            # if 'normals' in mesh.point_arrays:
-            mesh.point_arrays.pop('Normals')
+        elif 'Normals' in mesh.point_data:
+            # if 'normals' in mesh.point_data:
+            mesh.point_data.pop('Normals')
 
         # make the scalars active
         if isinstance(scalars, str):
-            if scalars in mesh.point_arrays or scalars in mesh.cell_arrays:
+            if scalars in mesh.point_data or scalars in mesh.cell_data:
                 array = mesh[scalars].copy()
             else:
                 raise ValueError(f'Scalars ({scalars}) not in mesh')
@@ -169,11 +171,11 @@ class PlotterITK():
             mesh.active_scalars_name = None
 
         # itkwidgets does not support VTK_ID_TYPE
-        if 'vtkOriginalPointIds' in mesh.point_arrays:
-            mesh.point_arrays.pop('vtkOriginalPointIds')
+        if 'vtkOriginalPointIds' in mesh.point_data:
+            mesh.point_data.pop('vtkOriginalPointIds')
 
-        if 'vtkOriginalCellIds' in mesh.cell_arrays:
-            mesh.cell_arrays.pop('vtkOriginalCellIds')
+        if 'vtkOriginalCellIds' in mesh.cell_data:
+            mesh.cell_data.pop('vtkOriginalCellIds')
 
         from itkwidgets._transform_types import to_geometry
         mesh = to_geometry(mesh)
@@ -233,14 +235,14 @@ class PlotterITK():
             Appears to be computationally intensive.
 
         show_bounds : bool, optional
-            Show the bounding box.  Default False
+            Show the bounding box.  Default ``False``.
 
-        point_size : int, optional
-            Size of the points displayed in the
+        **kwargs : dict, optional
+            Additional arguments to pass to ``itkwidgets.Viewer``.
 
         Returns
-        --------
-        viewer : itkwidgets.Viewer
+        -------
+        itkwidgets.Viewer
             ``ITKwidgets`` viewer.
         """
         if self._background_color is not None:

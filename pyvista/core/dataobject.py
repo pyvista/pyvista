@@ -1,5 +1,6 @@
 """Attributes common to PolyData and Grid Objects."""
 
+import warnings
 import collections.abc
 import logging
 from abc import abstractmethod
@@ -12,6 +13,7 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities import (FieldAssociation, fileio, abstract_class)
 from .datasetattributes import DataSetAttributes
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -38,18 +40,32 @@ class DataObject:
         return super().__getattribute__(item)
 
     def shallow_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
-        """Shallow copy the given mesh to this mesh."""
-        return self.ShallowCopy(to_copy)
+        """Shallow copy the given mesh to this mesh.
+
+        Parameters
+        ----------
+        to_copy : pyvista.DataObject or vtk.vtkDataObject
+            Data object to perform a shallow copy from.
+
+        """
+        self.ShallowCopy(to_copy)
 
     def deep_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
-        """Overwrite this mesh with the given mesh as a deep copy."""
-        return self.DeepCopy(to_copy)
+        """Overwrite this data object with another data object as a deep copy.
+
+        Parameters
+        ----------
+        to_copy : pyvista.DataObject or vtk.vtkDataObject
+            Data object to perform a deep copy from.
+
+        """
+        self.DeepCopy(to_copy)
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
         data = pyvista.read(filename, **kwargs)
         if not isinstance(self, type(data)):
-            raise ValueError(f'Reading file returned data of `{data.GetClassName()}`, '
-                             f'but `{self.GetClassName()}` was expected.')
+            raise ValueError(f'Reading file returned data of `{type(data).__name__}`, '
+                             f'but `{type(self).__name__}` was expected.')
         self.shallow_copy(data)
         self._post_file_load_processing()
 
@@ -68,7 +84,6 @@ class DataObject:
 
         binary : bool, optional
             If ``True``, write as binary.  Otherwise, write as ASCII.
-            
 
         texture : str, np.ndarray, optional
             Write a single texture array to file when using a PLY
@@ -132,7 +147,21 @@ class DataObject:
     def head(self, display=True, html: bool = None):
         """Return the header stats of this dataset.
 
-        If in IPython, this will be formatted to HTML. Otherwise returns a console friendly string.
+        If in IPython, this will be formatted to HTML. Otherwise
+        returns a console friendly string.
+
+        Parameters
+        ----------
+        display : bool, optional
+            Display this header in iPython.
+
+        html : bool, optional
+            Generate the output as HTML.
+
+        Returns
+        -------
+        str
+            Header statistics.
 
         """
         # Generate the output
@@ -189,16 +218,30 @@ class DataObject:
         Parameters
         ----------
         deep : bool, optional
-            When True makes a full copy of the object.
+            When ``True`` makes a full copy of the object.  When
+            ``False``, performs a shallow copy where the points, cell,
+            and data arrays are references to the original object.
 
         Returns
         -------
-        newobject : same as input
-           Deep or shallow copy of the input.
+        pyvista.DataSet
+            Deep or shallow copy of the input.  Type is identical to
+            the input.
+
+        Examples
+        --------
+        Create and make a deep copy of a PolyData object.
+
+        >>> import pyvista
+        >>> mesh_a = pyvista.Sphere()
+        >>> mesh_b = mesh_a.copy()
+        >>> mesh_a == mesh_b
+        True
 
         """
         thistype = type(self)
         newobject = thistype()
+
         if deep:
             newobject.deep_copy(self)
         else:
@@ -206,22 +249,182 @@ class DataObject:
         newobject.copy_meta_from(self)
         return newobject
 
-    def add_field_array(self, scalars: np.ndarray, name: str, deep=True):
-        """Add a field array."""
-        self.field_arrays.append(scalars, name, deep_copy=deep)
+    def __eq__(self, other):
+        """Test equivalency between data objects."""
+        if not isinstance(self, type(other)):
+            return False
+
+        # these attrs use numpy.array_equal
+        equal_attrs = ['verts',  # DataObject
+                       'points',  # DataObject
+                       'lines',  # DataObject
+                       'faces',  # DataObject
+                       'cells',  # UnstructuredGrid
+                       'celltypes']  # UnstructuredGrid
+        for attr in equal_attrs:
+            if hasattr(self, attr):
+                if not np.array_equal(getattr(self, attr), getattr(other, attr)):
+                    return False
+
+        # these attrs can be directly compared
+        attrs = ['field_data', 'point_data', 'cell_data']
+        for attr in attrs:
+            if hasattr(self, attr):
+                if getattr(self, attr) != getattr(other, attr):
+                    return False
+
+        return True
+
+    def add_field_array(self, scalars: np.ndarray, name: str,
+                        deep=True):  # pragma: no cover
+        """Add field data.
+
+        .. deprecated:: 0.32.0
+           Use :func:`DataObject.add_field_data` instead.
+        """
+        warnings.warn( "Use of `clear_point_arrays` is deprecated. "
+            "Use `clear_point_data` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.clear_point_data()
+
+    def add_field_data(self, array: np.ndarray, name: str, deep=True):
+        """Add field data.
+
+        Use field data when size of the data you wish to associate
+        with the dataset does not match the number of points or cells
+        of the dataset.
+
+        Parameters
+        ----------
+        array : sequence
+            Array of data to add to the dataset as a field array.
+
+        name : str
+            Name to assign the field array.
+
+        deep : bool, optional
+            Perform a deep copy of the data when adding it to the
+            dataset.  Default ``True``.
+
+        Examples
+        --------
+        Add field data to a PolyData dataset.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.add_field_data(np.arange(10), 'my-field-data')
+        >>> mesh['my-field-data']
+        array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+        Add field data to a UniformGrid dataset.
+
+        >>> mesh = pyvista.UniformGrid((2, 2, 1))
+        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'], 
+        ...                      'my-field-data')
+        >>> mesh['my-field-data']
+        array(['I could', 'write', 'notes', 'here'], dtype='<U7')
+
+        Add field data to a MultiBlock dataset.
+
+        >>> blocks = pyvista.MultiBlock()
+        >>> blocks.append(pyvista.Sphere())
+        >>> blocks["cube"] = pyvista.Cube(center=(0, 0, -1))
+        >>> blocks.add_field_data([1, 2, 3], 'my-field-data')
+        >>> blocks.field_data['my-field-data']
+        pyvista_ndarray([1, 2, 3])
+
+        """
+        self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
-    def field_arrays(self) -> DataSetAttributes:
-        """Return vtkFieldData as DataSetAttributes."""
+    def field_arrays(self) -> DataSetAttributes:  # pragma: no cover
+        """Return vtkFieldData as DataSetAttributes.
+
+        .. deprecated:: 0.32.0
+            Use :attr:`DataObject.field_data` to return field data.
+
+        """
+        warnings.warn(
+            "Use of `field_arrays` is deprecated. "
+            "Use `field_data` instead.",
+            PyvistaDeprecationWarning
+        )
+        return self.field_data
+
+    @property
+    def field_data(self) -> DataSetAttributes:
+        """Return FieldData as DataSetAttributes.
+
+        Use field data when size of the data you wish to associate
+        with the dataset does not match the number of points or cells
+        of the dataset.
+
+        Examples
+        --------
+        Add field data to a PolyData dataset and then return it.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.field_data['my-field-data'] = np.arange(10)
+        >>> mesh.field_data['my-field-data']
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+        """
         return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
 
-    def clear_field_arrays(self):
-        """Remove all field arrays."""
-        self.field_arrays.clear()
+    def clear_field_arrays(self):  # pragma: no cover
+        """Remove all field data.
+
+        .. deprecated:: 0.32.0
+            Use :func:`DataObject.clear_field_data` instead.
+
+        """
+        warnings.warn(
+            "Use of `clear_field_arrays` is deprecated. "
+            "Use `clear_field_data` instead.",
+            PyvistaDeprecationWarning
+        )
+        self.field_data
+
+    def clear_field_data(self):
+        """Remove all field data.
+
+        Examples
+        --------
+        Add field data to a PolyData dataset and then remove it.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.field_data['my-field-data'] = range(10)
+        >>> len(mesh.field_data)
+        1
+        >>> mesh.clear_field_data()
+        >>> len(mesh.field_data)
+        0
+
+        """
+        self.field_data.clear()
 
     @property
     def memory_address(self) -> str:
-        """Get address of the underlying C++ object in format 'Addr=%p'."""
+        """Get address of the underlying VTK C++ object.
+
+        Returns
+        -------
+        str
+            Memory address formatted as ``'Addr=%p'``.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.memory_address
+        'Addr=...'
+
+        """
         return self.GetInformation().GetAddressAsString("")
 
     @property
@@ -247,6 +450,11 @@ class DataObject:
     def copy_structure(self, dataset: _vtk.vtkDataSet):
         """Copy the structure (geometry and topology) of the input dataset object.
 
+        Parameters
+        ----------
+        dataset : vtk.vtkDataSet
+            Dataset to copy the geometry and topology from.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -260,6 +468,11 @@ class DataObject:
 
     def copy_attributes(self, dataset: _vtk.vtkDataSet):
         """Copy the data attributes of the input dataset object.
+
+        Parameters
+        ----------
+        dataset : pyvista.DataSet
+            Dataset to copy the data attributes from.
 
         Examples
         --------
