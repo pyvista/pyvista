@@ -404,3 +404,11 @@ def test_load_theme(tmpdir, default_theme):
 
     default_theme.load_theme(filename)
     assert default_theme == pyvista.themes.DarkTheme()
+
+
+def test_antialiasing(default_theme):
+    default_theme.antialiasing = True
+    assert default_theme.antialiasing is True
+
+    default_theme.antialiasing = False
+    assert default_theme.antialiasing is False

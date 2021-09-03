@@ -1150,6 +1150,7 @@ class DefaultTheme(_ThemeConfig):
                  '_slider_styles',
                  '_return_cpos',
                  '_hidden_line_removal',
+                 '_antialiasing',
     ]
 
     def __init__(self):
@@ -1213,6 +1214,7 @@ class DefaultTheme(_ThemeConfig):
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
+        self._antialiasing = False
 
     @property
     def hidden_line_removal(self) -> bool:
@@ -1821,6 +1823,26 @@ class DefaultTheme(_ThemeConfig):
         self._title = title
 
     @property
+    def antialiasing(self) -> bool:
+        """Enable or disable antialiasing.
+
+        Examples
+        --------
+        Enable or antialiasing.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.antialiasing = True
+        >>> pyvista.global_theme.antialiasing
+        True
+
+        """
+        return self._antialiasing
+
+    @antialiasing.setter
+    def antialiasing(self, antialiasing: bool):
+        self._antialiasing = antialiasing
+
+    @property
     def multi_samples(self) -> int:
         """Return or set the default ``multi_samples`` parameter.
 
@@ -2042,6 +2064,7 @@ class DefaultTheme(_ThemeConfig):
             'Slider Styles': 'slider_styles',
             'Return Camera Position': 'return_cpos',
             'Hidden Line Removal': 'hidden_line_removal',
+            'Anti-Aliasing': '_antialiasing',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
