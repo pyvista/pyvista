@@ -305,6 +305,7 @@ class Renderers():
             appear in one window.
 
         Returns
+        -------
         pyvista.BackgroundRenderer
             Newly created background renderer.
 
@@ -312,14 +313,14 @@ class Renderers():
         # verify no render exists
         if as_global:
             for renderer in self:
-                renderer.SetLayer(2)
+                renderer.layer = 2
             view_port = None
         else:
-            self.active_renderer.SetLayer(2)
+            self.active_renderer.layer = 2
             view_port = self.active_renderer.GetViewport()
 
         renderer = BackgroundRenderer(self._plotter, image_path, scale, view_port)
-        renderer.SetLayer(1)
+        renderer.layer = 1
         self._background_renderers[self.active_index] = renderer
         return renderer
 
@@ -367,7 +368,7 @@ class Renderers():
 
         Parameters
         ----------
-        color : string or 3 item sequence, optional
+        color : str or 3 item sequence, optional
             Either a string, rgb list, or hex color string.  Defaults
             to current theme parameters.  For example:
 
@@ -376,7 +377,7 @@ class Renderers():
             * ``color=[1, 1, 1]``
             * ``color='#FFFFFF'``
 
-        top : string or 3 item sequence, optional
+        top : str or 3 item sequence, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in ``top``
             will be the color at the top of the renderer.

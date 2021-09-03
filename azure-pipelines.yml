@@ -82,23 +82,23 @@ jobs:
     displayName: Build wheel and install pyvista
 
   - script: |
-      .ci/setup_headless_display.sh
+      sudo apt-get update && sudo apt-get install libgl1-mesa-glx xvfb -y
     displayName: Install headless display
 
   - script: |
       sudo apt-get install python3-tk
       pip install -r requirements_test.txt
-      python -c "import pyvista; print(pyvista.Report())"
+      xvfb-run python -c "import pyvista; print(pyvista.Report())"
       which python
       pip list
     displayName: 'Install test dependencies'
 
   - script: |
-      pytest -v --doctest-modules pyvista
+      xvfb-run pytest -v --doctest-modules pyvista
     displayName: 'Test Package Docstrings'
 
   - script: |
-      make doctest-modules-local-namespace
+      xvfb-run make doctest-modules-local-namespace
     displayName: 'Test Package Docstrings with Local Namespace'
 
   # don't run job on no-ci builds
@@ -299,13 +299,21 @@ jobs:
       path: '$(Build.SourcesDirectory)/doc/examples'
     displayName: Build pyvista doc examples cache
 
-  # run this three times since VTK9 fails to close render windows
   - script: |
-      make -C doc phtml || true  # will fail on VTK9
-      make -C doc phtml || true  # need it again due to all our docstring examples
-      make -C doc phtml -b coverage SPHINXOPTS="-W"
-      cat doc/_build/coverage/python.txt
+      make -C doc html SPHINXOPTS="-j auto -w build_errors.txt -N"
     displayName: 'Build documentation'
+
+  # Verify that sphinx generates no warnings
+  - script: |
+      python doc/print_errors.py
+    displayName: Check for warnings
+
+  # report coverage.  This must be run separately as to not overwrite
+  # build errors file.  Run quietly since we've already run sphinx.
+  - script: |
+      make -C doc html SPHINXOPTS="-Q" -b coverage
+      cat doc/_build/coverage/python.txt
+    displayName: Report documentation coverage
 
   # Push example notebooks to pyvista-examples
   - script: |

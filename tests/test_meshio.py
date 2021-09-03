@@ -25,10 +25,10 @@ def test_meshio(mesh_in, tmpdir):
         assert np.allclose(cells, mesh.cells)
     else:
         assert np.allclose(mesh_in.cells, mesh.cells)
-    for k, v in mesh_in.point_arrays.items():
-        assert np.allclose(v, mesh.point_arrays[k.replace(" ", "_")])
-    for k, v in mesh_in.cell_arrays.items():
-        assert np.allclose(v, mesh.cell_arrays[k.replace(" ", "_")])
+    for k, v in mesh_in.point_data.items():
+        assert np.allclose(v, mesh.point_data[k.replace(" ", "_")])
+    for k, v in mesh_in.cell_data.items():
+        assert np.allclose(v, mesh.cell_data[k.replace(" ", "_")])
 
 
 def test_pathlib_read_write(tmpdir, sphere):

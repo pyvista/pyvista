@@ -26,9 +26,10 @@ file:
 
 Plotting a Mesh using Python's VTK
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Using this `example <http://www.vtk.org/Wiki/VTK/Examples/Python/STLReader>`_,
-loading and plotting an STL file requires a lot of code when using only the
-``vtk`` module.
+Using this `example
+<https://kitware.github.io/vtk-examples/site/Python/IO/ReadSTL/>`_ as
+a baseline example, loading and plotting an STL file requires a lot of
+code when using only the ``vtk`` module.
 
 +----------------------------------------------+-------------------------------------------+
 | Read a stl file using ``vtk``                | Read a stl file using ``pyvista``         |

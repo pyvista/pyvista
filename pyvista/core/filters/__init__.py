@@ -43,8 +43,8 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
     data = wrap(algorithm.GetOutputDataObject(oport))
     if not isinstance(data, pyvista.MultiBlock):
         data.copy_meta_from(ido)
-        if not data.field_arrays and ido.field_arrays:
-            data.field_arrays.update(ido.field_arrays)
+        if not data.field_data and ido.field_data:
+            data.field_data.update(ido.field_data)
         if active_scalars is not None:
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
     return data

@@ -9,6 +9,7 @@ import sys
 from threading import Thread
 import threading
 import traceback
+from typing import Optional
 
 import numpy as np
 
@@ -28,13 +29,19 @@ class FieldAssociation(enum.Enum):
 
 
 def get_vtk_type(typ):
-    """Look up the VTK type for a give python data type.
+    """Look up the VTK type for a given numpy data type.
 
     Corrects for string type mapping issues.
 
+    Parameters
+    ----------
+    typ : numpy.dtype
+        Numpy data type.
+
     Returns
     -------
-        int : the integer type id specified in vtkType.h
+    int
+        Integer type id specified in ``vtkType.h``
 
     """
     typ = _vtk.get_vtk_array_type(typ)
@@ -45,23 +52,65 @@ def get_vtk_type(typ):
 
 
 def vtk_bit_array_to_char(vtkarr_bint):
-    """Cast vtk bit array to a char array."""
+    """Cast vtk bit array to a char array.
+
+    Parameters
+    ----------
+    vtkarr_bint : vtk.vtkBitArray
+        VTK binary array.
+
+    Returns
+    -------
+    vtk.vtkCharArray
+        VTK char array.
+
+    Notes
+    -----
+    This performs a copy.
+
+    """
     vtkarr = _vtk.vtkCharArray()
     vtkarr.DeepCopy(vtkarr_bint)
     return vtkarr
 
 
 def vtk_id_list_to_array(vtk_id_list):
-    """Convert a vtkIdList to a NumPy array."""
+    """Convert a vtkIdList to a NumPy array.
+
+    Parameters
+    ----------
+    vtk_id_list : vtk.vtkIdList
+        VTK ID list.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of IDs.
+
+    """
     return np.array([vtk_id_list.GetId(i) for i in range(vtk_id_list.GetNumberOfIds())])
 
 
 def convert_string_array(arr, name=None):
     """Convert a numpy array of strings to a vtkStringArray or vice versa.
 
-    Note that this is terribly inefficient - inefficient support
-    is better than no support :). If you have ideas on how to make this faster,
-    please consider opening a pull request.
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        Numpy string array to convert.
+
+    name : str, optional
+        Name to set the vtkStringArray to.
+
+    Returns
+    -------
+    vtkStringArray
+        VTK string array.
+
+    Notes
+    -----
+    Note that this is terribly inefficient. If you have ideas on how
+    to make this faster, please consider opening a pull request.
 
     """
     if isinstance(arr, np.ndarray):
@@ -80,25 +129,26 @@ def convert_string_array(arr, name=None):
     ########################################
 
 
-def convert_array(arr, name=None, deep=0, array_type=None):
+def convert_array(arr, name=None, deep=False, array_type=None):
     """Convert a NumPy array to a vtkDataArray or vice versa.
 
     Parameters
-    -----------
-    arr : ndarray or vtkDataArry
-        A numpy array or vtkDataArry to convert
-    name : str
-        The name of the data array for VTK
-    deep : bool
-        if input is numpy array then deep copy values
+    ----------
+    arr : np.ndarray or vtkDataArray
+        A numpy array or vtkDataArry to convert.
+    name : str, optional
+        The name of the data array for VTK.
+    deep : bool, optional
+        If input is numpy array then deep copy values.
+    array_type : int, optional
+        VTK array type ID as specified in specified in ``vtkType.h``.
 
     Returns
     -------
-    vtkDataArray, ndarray, or DataFrame:
-        the converted array (if input is a NumPy ndaray then returns
-        ``vtkDataArray`` or is input is ``vtkDataArray`` then returns NumPy
-        ``ndarray``). If pdf==True and the input is ``vtkDataArry``,
-        return a pandas DataFrame.
+    vtkDataArray, numpy.ndarray, or DataFrame
+        The converted array.  If input is a :class:`numpy.ndarray` then
+        returns ``vtkDataArray`` or is input is ``vtkDataArray`` then
+        returns NumPy ``ndarray``.
 
     """
     if arr is None:
@@ -132,36 +182,121 @@ def convert_array(arr, name=None, deep=0, array_type=None):
 
 
 def is_pyvista_dataset(obj):
-    """Return True if the Object is a PyVista wrapped dataset."""
+    """Return ``True`` if the object is a PyVista wrapped dataset.
+
+    Parameters
+    ----------
+    obj : anything
+        Any object to test.
+
+    Returns
+    -------
+    bool
+        ``True`` when the object is a :class:`pyvista.DataSet`.
+
+    """
     return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
 
 
-def point_array(mesh, name):
-    """Return point array of a pyvista or vtk object."""
-    vtkarr = mesh.GetPointData().GetAbstractArray(name)
+def point_array(obj, name):
+    """Return point array of a pyvista or vtk object.
+
+    Parameters
+    ----------
+    obj : pyvista.DataSet or vtk.vtkDataSet
+        PyVista or VTK dataset.
+
+    name : str
+        Name of the array.
+
+    Returns
+    -------
+    numpy.ndarray
+        Wrapped array.
+
+    """
+    vtkarr = obj.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 
-def field_array(mesh, name):
-    """Return field array of a pyvista or vtk object."""
-    vtkarr = mesh.GetFieldData().GetAbstractArray(name)
+def field_array(obj, name):
+    """Return field data of a pyvista or vtk object.
+
+    Parameters
+    ----------
+    obj : pyvista.DataSet or vtk.vtkDataSet
+        PyVista or VTK dataset.
+
+    name : str
+        Name of the array.
+
+    Returns
+    -------
+    numpy.ndarray
+        Wrapped array.
+
+    """
+    vtkarr = obj.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 
-def cell_array(mesh, name):
-    """Return cell array of a pyvista or vtk object."""
-    vtkarr = mesh.GetCellData().GetAbstractArray(name)
+def cell_array(obj, name):
+    """Return cell array of a pyvista or vtk object.
+
+    Parameters
+    ----------
+    obj : pyvista.DataSet or vtk.vtkDataSet
+        PyVista or VTK dataset.
+
+    name : str
+        Name of the array.
+
+    Returns
+    -------
+    numpy.ndarray
+        Wrapped array.
+
+    """
+    vtkarr = obj.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 
-def row_array(data_object, name):
-    """Return row array of a vtk object."""
-    vtkarr = data_object.GetRowData().GetAbstractArray(name)
+def row_array(obj, name):
+    """Return row array of a vtk object.
+
+    Parameters
+    ----------
+    obj : vtk.vtkDataSet
+        PyVista or VTK dataset.
+
+    name : str
+        Name of the array.
+
+    Returns
+    -------
+    numpy.ndarray
+        Wrapped array.
+
+    """
+    vtkarr = obj.GetRowData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 
 def parse_field_choice(field):
-    """Return the id of the given field."""
+    """Return a field association object for a given field type string.
+
+    Parameters
+    ----------
+    field : str, FieldAssociation
+        Name of the field (e.g, ``'cell'``, ``'field'``, ``'point'``,
+        ``'row'``).
+
+    Returns
+    -------
+    pyvista.FieldAssociation
+        Field association.
+
+    """
     if isinstance(field, str):
         field = field.strip().lower()
         if field in ['cell', 'c', 'cells']:
@@ -181,92 +316,134 @@ def parse_field_choice(field):
     return field
 
 
-def get_array(mesh, name, preference='cell', info=False, err=False):
+def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters
     ----------
+    mesh : pyvista.DataSet
+        Dataset to get the array from.
+
     name : str
         The name of the array to get the range.
 
     preference : str, optional
         When scalars is specified, this is the preferred array type to
         search for in the dataset.  Must be either ``'point'``,
-        ``'cell'``, or ``'field'``
+        ``'cell'``, or ``'field'``.
 
-    info : bool
-        Return info about the array rather than the array itself.
+    err : bool, optional
+        Whether to throw an error if array is not present.
 
-    err : bool
-        Boolean to control whether to throw an error if array is not present.
+    Returns
+    -------
+    pyvista.pyvista_ndarray or ``None``
+        Requested array.  Return ``None`` if there is no array
+        matching the ``name`` and ``err=False``.
 
     """
     if isinstance(mesh, _vtk.vtkTable):
         arr = row_array(mesh, name)
         if arr is None and err:
             raise KeyError(f'Data array ({name}) not present in this dataset.')
-        field = FieldAssociation.ROW
-        if info:
-            return arr, field
         return arr
 
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
     farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
-    if np.sum([parr is not None, carr is not None, farr is not None]) > 1:
+    if sum([array is not None for array in (parr, carr, farr)]) > 1:
         if preference == FieldAssociation.CELL:
-            if info:
-                return carr, FieldAssociation.CELL
-            else:
-                return carr
+            return carr
         elif preference == FieldAssociation.POINT:
-            if info:
-                return parr, FieldAssociation.POINT
-            else:
-                return parr
+            return parr
         elif preference == FieldAssociation.NONE:
-            if info:
-                return farr, FieldAssociation.NONE
-            else:
-                return farr
+            return farr
         else:
             raise ValueError(f'Data field ({preference}) not supported.')
-    arr = None
-    field = None
+
     if parr is not None:
-        arr = parr
-        field = FieldAssociation.POINT
+        return parr
     elif carr is not None:
-        arr = carr
-        field = FieldAssociation.CELL
+        return carr
     elif farr is not None:
-        arr = farr
-        field = FieldAssociation.NONE
+        return farr
     elif err:
         raise KeyError(f'Data array ({name}) not present in this dataset.')
-    if info:
-        return arr, field
-    return arr
+    return None
 
 
-def vtk_points(points, deep=True):
-    """Convert numpy array or array-like to a vtkPoints object.
+def get_array_association(mesh, name, preference='cell', err=False) -> FieldAssociation:
+    """Return the array association.
 
     Parameters
     ----------
-    points : np.ndarray or sequence
+    mesh : Dataset
+        Dataset to get the array association from.
+
+    name : str
+        The name of the array.
+
+    preference : str, optional
+        When scalars is specified, this is the preferred array type to
+        search for in the dataset.  Must be either ``'point'``,
+        ``'cell'``, or ``'field'``.
+
+    err : bool, optional
+        Boolean to control whether to throw an error if array is not present.
+
+    Returns
+    -------
+    pyvista.FieldAssociation
+        Association of the array
+
+    """
+    if isinstance(mesh, _vtk.vtkTable):
+        arr = row_array(mesh, name)
+        if arr is None and err:
+            raise KeyError(f'Data array ({name}) not present in this dataset.')
+        return FieldAssociation.ROW
+
+    # with multiple arrays, return the array preference
+    parr = point_array(mesh, name)
+    carr = cell_array(mesh, name)
+    farr = field_array(mesh, name)
+    preference = parse_field_choice(preference)
+    if sum([array is not None for array in (parr, carr, farr)]) > 1:
+        if preference in [FieldAssociation.CELL, FieldAssociation.POINT,
+                          FieldAssociation.NONE]:
+            return preference
+        else:
+            raise ValueError(f'Data field ({preference}) not supported.')
+
+    if parr is not None:
+        return FieldAssociation.POINT
+    elif carr is not None:
+        return FieldAssociation.CELL
+    elif farr is not None:
+        return FieldAssociation.NONE
+    elif err:
+        raise KeyError(f'Data array ({name}) not present in this dataset.')
+    return FieldAssociation.NONE
+
+
+def vtk_points(points, deep=True):
+    """Convert numpy array or array-like to a ``vtkPoints`` object.
+
+    Parameters
+    ----------
+    points : numpy.ndarray or sequence
         Points to convert.  Should be 1 or 2 dimensional.  Accepts a
         single point or several points.
 
     deep : bool, optional
         Perform a deep copy of the array.  Only applicable if
-        ``points`` is a ``np.ndarray``.
+        ``points`` is a :class:`numpy.ndarray`.
 
     Returns
     -------
     vtk.vtkPoints
-        vtkPoints object.
+        The vtkPoints object.
 
     Examples
     --------
@@ -312,17 +489,15 @@ def line_segments_from_points(points):
 
     Parameters
     ----------
-    points : np.ndarray
+    points : numpy.ndarray
         Points representing line segments. An even number must be
         given as every two vertices represent a single line
         segment. For example, two line segments would be represented
-        as:
-
-        ``np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])``
+        as ``np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
     Returns
     -------
-    lines : pyvista.PolyData
+    pyvista.PolyData
         PolyData with lines and cells.
 
     Examples
@@ -356,10 +531,9 @@ def lines_from_points(points, close=False):
     Parameters
     ----------
     points : np.ndarray
-        Points representing the vertices of the connected segments. For
-        example, two line segments would be represented as:
-
-        ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``
+        Points representing the vertices of the connected
+        segments. For example, two line segments would be represented
+        as ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
     close : bool, optional
         If ``True``, close the line segments into a loop.
@@ -409,7 +583,7 @@ def make_tri_mesh(points, faces):
 
     Returns
     -------
-    tri_mesh : pyvista.PolyData
+    pyvista.PolyData
         PolyData instance containing the triangle mesh.
 
     Examples
@@ -443,10 +617,10 @@ def vector_poly_data(orig, vec):
 
     Parameters
     ----------
-    orig : np.ndarray
+    orig : numpy.ndarray
         Array of vector origins.
 
-    vec : np.ndarray
+    vec : numpy.ndarray
         Array of vectors.
 
     Returns
@@ -469,7 +643,7 @@ def vector_poly_data(orig, vec):
     >>> v = y/np.sqrt(x**2 + y**2)
     >>> vectors = np.vstack((u.ravel()**3, v.ravel()**3, np.zeros(u.size))).T
     >>> pdata = pyvista.vector_poly_data(points, vectors)
-    >>> pdata.point_arrays.keys()
+    >>> pdata.point_data.keys()
     ['vectors', 'mag']
 
     Convert these to arrows and plot it.
@@ -539,13 +713,18 @@ def trans_from_matrix(matrix):  # pragma: no cover
 
 
 def array_from_vtkmatrix(matrix):
-    """Convert a vtk matrix to a ``numpy.ndarray``.
+    """Convert a vtk matrix to an array.
 
     Parameters
     ----------
     matrix : vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4
         The vtk matrix to be converted to a ``numpy.ndarray``.
         Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
+
+    Returns
+    -------
+    numpy.ndarray
+        Numpy array containing the data from ``matrix``.
 
     """
     if isinstance(matrix, _vtk.vtkMatrix3x3):
@@ -572,6 +751,11 @@ def vtkmatrix_from_array(array):
         Shape (3, 3) gets converted to a ``vtk.vtkMatrix3x3``, shape (4, 4)
         gets converted to a ``vtk.vtkMatrix4x4``. No other shapes are valid.
 
+    Returns
+    -------
+    vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4
+        VTK matrix.
+
     """
     array = np.asarray(array)
     if array.shape == (3, 3):
@@ -587,17 +771,29 @@ def vtkmatrix_from_array(array):
     return matrix
 
 
-def is_meshio_mesh(mesh):
-    """Test if passed object is instance of ``meshio.Mesh``."""
+def is_meshio_mesh(obj):
+    """Test if passed object is instance of ``meshio.Mesh``.
+
+    Parameters
+    ----------
+    obj
+        Any object.
+
+    Returns
+    -------
+    bool
+        ``True`` if ``obj`` is an ``meshio.Mesh``.
+
+    """
     try:
         import meshio
-        return isinstance(mesh, meshio.Mesh)
+        return isinstance(obj, meshio.Mesh)
     except ImportError:
         return False
 
 
 def wrap(dataset):
-    """Wrap any given VTK data object to its appropriate pyvista data object.
+    """Wrap any given VTK data object to its appropriate PyVista data object.
 
     Other formats that are supported include:
 
@@ -613,8 +809,8 @@ def wrap(dataset):
 
     Returns
     -------
-    wrapped_dataset : pyvista class
-        The `pyvista` wrapped dataset.
+    pyvista.DataSet
+        The PyVista wrapped dataset.
 
     Examples
     --------
@@ -694,24 +890,15 @@ def wrap(dataset):
         else:
             raise NotImplementedError('NumPy array could not be wrapped pyvista.')
 
-    wrappers = {
-        'vtkExplicitStructuredGrid': pyvista.ExplicitStructuredGrid,
-        'vtkUnstructuredGrid': pyvista.UnstructuredGrid,
-        'vtkRectilinearGrid': pyvista.RectilinearGrid,
-        'vtkStructuredGrid': pyvista.StructuredGrid,
-        'vtkPolyData': pyvista.PolyData,
-        'vtkImageData': pyvista.UniformGrid,
-        'vtkStructuredPoints': pyvista.UniformGrid,
-        'vtkMultiBlockDataSet': pyvista.MultiBlock,
-        'vtkTable': pyvista.Table,
-        # 'vtkParametricSpline': pyvista.Spline,
-    }
+    # wrap VTK arrays as pyvista_ndarray
+    if isinstance(dataset, _vtk.vtkDataArray):
+        return pyvista.pyvista_ndarray(dataset)
 
     # Check if a dataset is a VTK type
     if hasattr(dataset, 'GetClassName'):
         key = dataset.GetClassName()
         try:
-            return wrappers[key](dataset)
+            return pyvista._wrappers[key](dataset)
         except KeyError:
             logging.warning(f'VTK data type ({key}) is not currently supported by pyvista.')
         return
@@ -734,12 +921,36 @@ def wrap(dataset):
 
 
 def image_to_texture(image):
-    """Convert ``vtkImageData`` (:class:`pyvista.UniformGrid`) to a ``vtkTexture``."""
+    """Convert ``vtkImageData`` (:class:`pyvista.UniformGrid`) to a ``vtkTexture``.
+
+    Parameters
+    ----------
+    image : pyvista.UniformGrid or vtkImageData
+        Image to convert.
+
+    Returns
+    -------
+    vtkTexture
+        VTK texture.
+
+    """
     return pyvista.Texture(image)
 
 
 def numpy_to_texture(image):
-    """Convert a NumPy image array to a vtk.vtkTexture."""
+    """Convert a NumPy image array to a vtk.vtkTexture.
+
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Numpy image array.
+
+    Returns
+    -------
+    vtkTexture
+        VTK texture.
+
+    """
     return pyvista.Texture(image)
 
 
@@ -747,6 +958,19 @@ def is_inside_bounds(point, bounds):
     """Check if a point is inside a set of bounds.
 
     This is implemented through recursion so that this is N-dimensional.
+
+    Parameters
+    ----------
+    point : sequence
+        Three item cartesian point (i.e. ``[x, y, z]``).
+
+    bounds : sequence
+        Six item bounds in the form of ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    Returns
+    -------
+    bool
+        ``True`` when ``point`` is inside ``bounds``.
 
     """
     if isinstance(point, (int, float)):
@@ -776,7 +1000,7 @@ def fit_plane_to_points(points, return_meta=False):
     points : sequence
         Size ``[N x 3]`` sequence of points to fit a plane through.
 
-    return_meta : bool
+    return_meta : bool, optional
         If ``True``, also returns the center and normal used to
         generate the plane.
 
@@ -785,10 +1009,10 @@ def fit_plane_to_points(points, return_meta=False):
     pyvista.PolyData
         Plane mesh.
 
-    np.ndarray
+    numpy.ndarray
         Plane center if ``return_meta=True``.
 
-    np.ndarray
+    numpy.ndarray
         Plane normal if ``return_meta=True``.
 
     Examples
@@ -820,17 +1044,46 @@ def fit_plane_to_points(points, return_meta=False):
     return plane
 
 
-def raise_not_matching(scalars, mesh):
-    """Raise exception about inconsistencies."""
-    if isinstance(mesh, _vtk.vtkTable):
-        raise ValueError(f'Number of scalars ({scalars.size}) must match number of rows ({mesh.n_rows}).')
+def raise_not_matching(scalars, dataset):
+    """Raise exception about inconsistencies.
+
+    Parameters
+    ----------
+    scalars : numpy.ndarray
+        Array of scalars.
+
+    dataset : pyvista.DataSet
+        Dataset to check against.
+
+    Raises
+    ------
+    ValueError
+        Raises a ValueError if the size of scalars does not the dataset.
+    """
+    if isinstance(dataset, _vtk.vtkTable):
+        raise ValueError(f'Number of scalars ({scalars.size}) must match number of rows ({dataset.n_rows}).')
     raise ValueError(f'Number of scalars ({scalars.size}) '
-                     f'must match either the number of points ({mesh.n_points}) '
-                     f'or the number of cells ({mesh.n_cells}).')
+                     f'must match either the number of points ({dataset.n_points}) '
+                     f'or the number of cells ({dataset.n_cells}).')
 
 
 def generate_plane(normal, origin):
-    """Return a _vtk.vtkPlane."""
+    """Return a _vtk.vtkPlane.
+
+    Parameters
+    ----------
+    normal : sequence
+        Three item sequence representing the normal of the plane.
+
+    origin : sequence
+        Three item sequence representing the origin of the plane.
+
+    Returns
+    -------
+    vtk.vtkPlane
+        VTK plane.
+
+    """
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
     normal = normal / np.linalg.norm(normal)
@@ -840,7 +1093,17 @@ def generate_plane(normal, origin):
 
 
 def try_callback(func, *args):
-    """Wrap a given callback in a try statement."""
+    """Wrap a given callback in a try statement.
+
+    Parameters
+    ----------
+    func : callable
+        Callable object.
+
+    *args
+        Any arguments.
+
+    """
     try:
         func(*args)
     except Exception:
@@ -851,7 +1114,6 @@ def try_callback(func, *args):
             ''.join(traceback.format_list(stack) +
                     traceback.format_exception_only(etype, exc)).rstrip('\n')
         logging.warning(formatted_exception)
-    return
 
 
 def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
@@ -861,6 +1123,20 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     current environment. Returns ``True`` if depth peeling is
     available and has been successfully leveraged, otherwise
     ``False``.
+
+    Parameters
+    ----------
+    number_of_peels : int, optional
+        Maximum number of depth peels.
+
+    occlusion_ratio : float, optional
+        Occlusion ratio.
+
+    Returns
+    -------
+    bool
+        ``True`` when system supports depth peeling with the specified
+        settings.
 
     """
     # Try Depth Peeling with a basic scene
@@ -886,7 +1162,19 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
 
 
 def threaded(fn):
-    """Call a function using a thread."""
+    """Call a function using a thread.
+
+    Parameters
+    ----------
+    fn : callable
+        Callable object.
+
+    Returns
+    -------
+    function
+        Wrapped function.
+
+    """
 
     def wrapper(*args, **kwargs):
         thread = Thread(target=fn, args=args, kwargs=kwargs)
@@ -897,7 +1185,16 @@ def threaded(fn):
 
 
 class conditional_decorator:
-    """Conditional decorator for methods."""
+    """Conditional decorator for methods.
+
+    Parameters
+    ----------
+    dec
+        Decorator
+    condition
+        Condition to match.
+
+    """
 
     def __init__(self, dec, condition):
         """Initialize."""
@@ -918,6 +1215,17 @@ class ProgressMonitor():
     This must be use in a ``with`` context and it will block keyboard
     interrupts from happening until the exit event as interrupts will crash
     the kernel if the VTK algorithm is still executing.
+
+    Parameters
+    ----------
+    algorithm
+        VTK algorithm or filter.
+
+    message : str, optional
+        Message to display in the progress bar.
+
+    scaling : float, optional
+        Unused keyword argument.
 
     """
 
@@ -1018,7 +1326,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
 
     Returns
     -------
-    points : numpy.ndarray
+    numpy.ndarray
         Rotated points.
 
     Examples
@@ -1073,14 +1381,14 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
     Parameters
     ----------
+    path : str, optional
+        Directory containing the cubemap images.
+
     prefix : str, optional
         Prefix to the filename.
 
     ext : str, optional
         The filename extension.  For example ``'.jpg'``.
-
-    path : str, optional
-        Directory containing the cubemap images.
 
     Returns
     -------

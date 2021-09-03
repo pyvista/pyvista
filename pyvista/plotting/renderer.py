@@ -30,6 +30,11 @@ def scale_point(camera, point, invert=False):
         transform a point from world coordinates to the camera's
         transformed space.
 
+    Returns
+    -------
+    tuple
+        Scaling of the camera in ``(x, y, z)``.
+
     """
     if invert:
         mtx = _vtk.vtkMatrix4x4()
@@ -51,7 +56,21 @@ class CameraPosition:
         self._viewup = viewup
 
     def to_list(self):
-        """Convert to a list of the position, focal point, and viewup."""
+        """Convert to a list of the position, focal point, and viewup.
+
+        Returns
+        -------
+        list
+            List of the position, focal point, and view up of the camera.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> pl.camera_position.to_list()
+        [(0.0, 0.0, 1.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+
+        """
         return [self._position, self._focal_point, self._viewup]
 
     def __repr__(self):
@@ -134,11 +153,16 @@ class Renderer(_vtk.vtkRenderer):
         if border:
             self.add_border(border_color, border_width)
 
-    #### Properties ####
-
     @property
     def camera_position(self):
-        """Return camera position of active render window."""
+        """Return camera position of active render window.
+
+        Returns
+        -------
+        pyvista.CameraPosition
+            Camera position.
+
+        """
         return CameraPosition(
             scale_point(self.camera, self.camera.position, invert=True),
             scale_point(self.camera, self.camera.focal_point, invert=True),
@@ -236,12 +260,25 @@ class Renderer(_vtk.vtkRenderer):
 
     @property
     def length(self):
-        """Return the length of the diagonal of the bounding box of the scene."""
+        """Return the length of the diagonal of the bounding box of the scene.
+
+        Returns
+        -------
+        float
+            Length of the diagional of the bounding box.
+        """
         return pyvista.Box(self.bounds).length
 
     @property
     def center(self):
-        """Return the center of the bounding box around all data present in the scene."""
+        """Return the center of the bounding box around all data present in the scene.
+
+        Returns
+        -------
+        list
+            Cartesian coordinates of the center.
+
+        """
         bounds = self.bounds
         x = (bounds[1] + bounds[0])/2
         y = (bounds[3] + bounds[2])/2
@@ -258,8 +295,6 @@ class Renderer(_vtk.vtkRenderer):
         """Set the background color of this renderer."""
         self.set_background(color)
         self.Modified()
-
-    #### Everything else ####
 
     def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=None):
         """Enable depth peeling to improve rendering of translucent geometry.
@@ -279,6 +314,11 @@ class Renderer(_vtk.vtkRenderer):
             area. Initial value is 0.0, meaning rendering has to be
             exact. Greater values may speed up the rendering with
             small impact on the quality.
+
+        Returns
+        -------
+        bool
+            If depth peeling is supported.
 
         """
         if number_of_peels is None:
@@ -332,7 +372,22 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
 
     def add_border(self, color=[1, 1, 1], width=2.0):
-        """Add borders around the frame."""
+        """Add borders around the frame.
+
+        Parameters
+        ----------
+        color : str or sequence, optional
+            Color of the border.
+
+        width : float, optional
+            Width of the border.
+
+        Returns
+        -------
+        vtk.vtkActor2D
+            Border actor.
+
+        """
         points = np.array([[1., 1., 0.],
                            [0., 1., 0.],
                            [0., 0., 0.],
@@ -377,10 +432,13 @@ class Renderer(_vtk.vtkRenderer):
         Parameters
         ----------
         uinput : vtk.vtkMapper or vtk.vtkActor
-            vtk mapper or vtk actor to be added.
+            Vtk mapper or vtk actor to be added.
 
         reset_camera : bool, optional
-            Resets the camera when true.
+            Resets the camera when ``True``.
+
+        name : str, optional
+            Name to assign to the actor.  Defaults to the memory address.
 
         culling : str, optional
             Does not render faces that are culled. Options are
@@ -388,6 +446,14 @@ class Renderer(_vtk.vtkRenderer):
             surface meshes, especially when edges are visible, but can
             cause flat meshes to be partially displayed.  Default
             ``False``.
+
+        pickable : bool, optional
+            Whether to allow this actor to be pickable within the
+            render window.
+
+        render : bool, optional
+            If the render window is being shown, trigger a render
+            after adding the actor.
 
         Returns
         -------
@@ -457,13 +523,13 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
-        x_color : string or 3 item sequence, optional
+        x_color : str or 3 item sequence, optional
             The color of the x axes arrow.
 
-        y_color : string or 3 item sequence, optional
+        y_color : str or 3 item sequence, optional
             The color of the y axes arrow.
 
-        z_color : string or 3 item sequence, optional
+        z_color : str or 3 item sequence, optional
             The color of the z axes arrow.
 
         xlabel : str, optional
@@ -517,16 +583,23 @@ class Renderer(_vtk.vtkRenderer):
         actor : vtk.vtkActor or pyvista.DataSet
             The mesh or actor to use as the marker.
 
-        interactive : bool
+        interactive : bool, optional
             Control if the orientation widget is interactive.  By
-            default uses the value from ``theme.interactive``.
+            default uses the value from
+            :attr:`pyvista.global_theme.interactive
+            <pyvista.themes.DefaultTheme.interactive>`.
 
-        color : string, optional
+        color : str or sequence, optional
             The color of the actor.  This only applies if ``actor`` is
-            a ``pyvista.DataSet``
+            a :class:`pyvista.DataSet`.
 
         opacity : int or float, optional
             Opacity of the marker.
+
+        Returns
+        -------
+        vtk.vtkOrientationMarkerWidget
+            Orientation marker widget.
 
         Examples
         --------
@@ -542,7 +615,7 @@ class Renderer(_vtk.vtkRenderer):
         if isinstance(actor, pyvista.DataSet):
             mapper = _vtk.vtkDataSetMapper()
             mesh = actor.copy()
-            mesh.clear_arrays()
+            mesh.clear_data()
             mapper.SetInputData(mesh)
             actor = _vtk.vtkActor()
             actor.SetMapper(mapper)
@@ -575,23 +648,22 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
-        interacitve : bool
+        interactive : bool, optional
             Enable this orientation widget to be moved by the user.
 
         line_width : int, optional
-            The width of the marker lines
+            The width of the marker lines.
 
-        box : bool, optional
-            Show a box orientation marker. Use ``box_args`` to adjust.
-            See :any:`pyvista.create_axes_orientation_box` for details.
+        color : str or sequence, optional
+            Color of the labels.
 
-        x_color : str, optional
+        x_color : str or sequence, optional
             Color used for the x axis arrow.  Defaults to theme axes parameters.
 
-        y_color : str, optional
+        y_color : str or sequence, optional
             Color used for the y axis arrow.  Defaults to theme axes parameters.
 
-        z_color : str, optional
+        z_color : str or sequence, optional
             Color used for the z axis arrow.  Defaults to theme axes parameters.
 
         xlabel : str, optional
@@ -607,13 +679,18 @@ class Renderer(_vtk.vtkRenderer):
             Enable or disable the text labels for the axes.
 
         box : bool, optional
-            When ``True`` use the axes orientation widget instead of
-            the default arrows. Defaults to theme axes parameters.
+            Show a box orientation marker. Use ``box_args`` to adjust.
+            See :func:`pyvista.create_axes_orientation_box` for details.
 
         box_args : dict, optional
             Parameters for the orientation box widget when
             ``box=True``. See the parameters of
             :func:`pyvista.create_axes_orientation_box`.
+
+        Returns
+        -------
+        vtk.vtkAxesActor
+            Axes actor.
 
         Examples
         --------
@@ -726,8 +803,8 @@ class Renderer(_vtk.vtkRenderer):
             Input mesh to draw bounds axes around.
 
         bounds : list or tuple, optional
-            Bounds to override mesh bounds.
-            ``[xmin, xmax, ymin, ymax, zmin, zmax]``
+            Bounds to override mesh bounds in the form ``[xmin, xmax,
+            ymin, ymax, zmin, zmax]``.
 
         show_xaxis : bool, optional
             Makes x axis visible.  Default ``True``.
@@ -753,11 +830,11 @@ class Renderer(_vtk.vtkRenderer):
         font_size : float, optional
             Sets the size of the label font.  Defaults to 16.
 
-        font_family : string, optional
+        font_family : str, optional
             Font family.  Must be either ``'courier'``, ``'times'``,
             or ``'arial'``.
 
-        color : string or 3 item list, optional
+        color : str or 3 item list, optional
             Color of all labels and axis titles.  Default white.
             Either a string, rgb list, or hex color string.  For
             example:
@@ -767,13 +844,13 @@ class Renderer(_vtk.vtkRenderer):
             * ``color=[1, 1, 1]``
             * ``color='#FFFFFF'``
 
-        xlabel : string, optional
+        xlabel : str, optional
             Title of the x axis.  Default ``"X Axis"``.
 
-        ylabel : string, optional
+        ylabel : str, optional
             Title of the y axis.  Default ``"Y Axis"``.
 
-        zlabel : string, optional
+        zlabel : str, optional
             Title of the z axis.  Default ``"Z Axis"``.
 
         use_2d : bool, optional
@@ -821,9 +898,13 @@ class Renderer(_vtk.vtkRenderer):
             cushion the datasets in the scene from the axes
             annotations. Defaults to 0 (no padding).
 
+        render : bool, optional
+            If the render window is being shown, trigger a render
+            after showing bounds.
+
         Returns
         -------
-        cube_axes_actor : vtk.vtkCubeAxesActor
+        vtk.vtkCubeAxesActor
             Bounds actor.
 
         Examples
@@ -1000,6 +1081,17 @@ class Renderer(_vtk.vtkRenderer):
         outer edges. This is intended to be similar to
         ``matplotlib``'s ``grid`` function.
 
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            See :func:`Renderer.show_bounds` for additional keyword
+            arguments.
+
+        Returns
+        -------
+        vtk.vtkAxesActor
+            Bounds actor.
+
         """
         kwargs.setdefault('grid', 'back')
         kwargs.setdefault('location', 'outer')
@@ -1040,6 +1132,16 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
+        color : str or sequence, optional
+            Color of all labels and axis titles.  Default white.
+            Either a string, rgb sequence, or hex color string.  For
+            example:
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
         corner_factor : float, optional
             This is the factor along each axis to draw the default
             box. Default is 0.5 to show the full box.
@@ -1048,7 +1150,7 @@ class Renderer(_vtk.vtkRenderer):
             Thickness of lines.
 
         opacity : float, optional
-            Opacity of mesh.  Should be between 0 and 1.  Default 1.0
+            Opacity of mesh.  Default 1.0 and should be between 0 and 1.
 
         render_lines_as_tubes : bool, optional
             Show lines as thick tubes rather than flat lines.  Control
@@ -1061,13 +1163,18 @@ class Renderer(_vtk.vtkRenderer):
             Reset camera position when ``True`` to include all actors.
 
         outline : bool
-            Default is ``True``. when ``False``, a box with faces is shown
-            with the specified culling
+            Default is ``True``. when ``False``, a box with faces is
+            shown with the specified culling.
 
         culling : str, optional
             Does not render faces that are culled. Options are
             ``'front'`` or ``'back'``. Default is ``'front'`` for
             bounding box.
+
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the floor.
 
         Examples
         --------
@@ -1131,11 +1238,12 @@ class Renderer(_vtk.vtkRenderer):
         Parameters
         ----------
         face : str, optional
-            The face at which to place the plane. Options are (``'-z'``,
-            ``'-y'``, ``'-x'``, ``'+z'``, ``'+y'``, and ``'+z'``). Where the -/+
-            sign indicates on which side of the axis the plane will
-            lie.  For example, ``'-z'`` would generate a floor on the
-            XY-plane and the bottom of the scene (minimum z).
+            The face at which to place the plane. Options are
+            (``'-z'``, ``'-y'``, ``'-x'``, ``'+z'``, ``'+y'``, and
+            ``'+z'``). Where the ``-/+`` sign indicates on which side of
+            the axis the plane will lie.  For example, ``'-z'`` would
+            generate a floor on the XY-plane and the bottom of the
+            scene (minimum z).
 
         i_resolution : int, optional
             Number of points on the plane in the i direction.
@@ -1143,7 +1251,7 @@ class Renderer(_vtk.vtkRenderer):
         j_resolution : int, optional
             Number of points on the plane in the j direction.
 
-        color : string or 3 item list, optional
+        color : str or 3 item list, optional
             Color of all labels and axis titles.  Default gray.
             Either a string, rgb list, or hex color string.
 
@@ -1157,7 +1265,7 @@ class Renderer(_vtk.vtkRenderer):
         show_edges : bool, optional
             Flag on whether to show the mesh edges for tiling.
 
-        ine_width : float, optional
+        line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
             representations.  Default ``None``.
 
@@ -1165,14 +1273,30 @@ class Renderer(_vtk.vtkRenderer):
             Enable or disable view direction lighting.  Default
             ``False``.
 
-        edge_color : string or 3 item list, optional
+        edge_color : str or sequence, optional
             Color of of the edges of the mesh.
+
+        reset_camera : bool, optional
+            Resets the camera when ``True`` after adding the floor.
 
         pad : float, optional
             Percentage padding between 0 and 1.
 
         offset : float, optional
             Percentage offset along plane normal.
+
+        pickable : bool, optional
+            Make this floor actor pickable in the renderer.
+
+        store_floor_kwargs : bool, optional
+            Stores the keyword arguments used when adding this floor.
+            Useful when updating the bounds and regenerating the
+            floor.
+
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the floor.
 
         Examples
         --------
@@ -1228,7 +1352,7 @@ class Renderer(_vtk.vtkRenderer):
                                     i_size=i_size, j_size=j_size,
                                     i_resolution=i_resolution,
                                     j_resolution=j_resolution)
-        self._floor.clear_arrays()
+        self._floor.clear_data()
 
         if lighting is None:
             lighting = self._theme.lighting
@@ -1305,7 +1429,14 @@ class Renderer(_vtk.vtkRenderer):
             self.Modified()
 
     def add_light(self, light):
-        """Add a light to the renderer."""
+        """Add a light to the renderer.
+
+        Parameters
+        ----------
+        light : vtk.vtkLight or pyvista.Light
+            Light to add.
+
+        """
         # convert from a vtk type if applicable
         if isinstance(light, _vtk.vtkLight) and not isinstance(light, pyvista.Light):
             light = pyvista.Light.from_vtk(light)
@@ -1398,6 +1529,10 @@ class Renderer(_vtk.vtkRenderer):
         ----------
         point : sequence
             Cartesian point to focus on in the form of ``[x, y, z]``.
+
+        reset : bool, optional
+            Whether to reset the camera after setting the camera
+            position.
 
         Examples
         --------
@@ -1495,6 +1630,7 @@ class Renderer(_vtk.vtkRenderer):
 
         self.camera.disable_parallel_projection()
         self.Modified()
+
     @property
     def parallel_projection(self):
         """Return parallel projection state of active render window.
@@ -1554,9 +1690,9 @@ class Renderer(_vtk.vtkRenderer):
 
         Returns
         -------
-        success : bool
-            True when actor removed.  False when actor has not been
-            removed.
+        bool
+            ``True`` when actor removed.  ``False`` when actor has not
+            been removed.
 
         Examples
         --------
@@ -1625,13 +1761,16 @@ class Renderer(_vtk.vtkRenderer):
         Parameters
         ----------
         xscale : float, optional
-            Scaling in the x direction.  Default is ``None``, which does not change existing scaling.
+            Scaling in the x direction.  Default is ``None``, which
+            does not change existing scaling.
 
         yscale : float, optional
-            Scaling in the y direction.  Default is ``None``, which does not change existing scaling.
+            Scaling in the y direction.  Default is ``None``, which
+            does not change existing scaling.
 
         zscale : float, optional
-            Scaling in the z direction.  Default is ``None``, which does not change existing scaling.
+            Scaling in the z direction.  Default is ``None``, which
+            does not change existing scaling.
 
         reset_camera : bool, optional
             Resets camera so all actors can be seen.  Default ``True``.
@@ -1669,6 +1808,20 @@ class Renderer(_vtk.vtkRenderer):
         """Return the default focal points and viewup.
 
         Uses ResetCamera to make a useful view.
+
+        Parameters
+        ----------
+        negative : bool
+            View from the opposite direction.
+
+        Returns
+        -------
+        list
+            List of camera position:
+
+            * Position
+            * Focal point
+            * View up
 
         """
         focal_pt = self.center
@@ -1743,7 +1896,7 @@ class Renderer(_vtk.vtkRenderer):
         DEPRECATED: Please use ``view_isometric``.
 
         """
-        return self.view_isometric()
+        self.view_isometric()
 
     def view_isometric(self, negative=False):
         """Reset the camera to a default isometric view.
@@ -1775,73 +1928,125 @@ class Renderer(_vtk.vtkRenderer):
         position = self.get_default_cam_pos(negative=negative)
         self.camera_position = CameraPosition(*position)
         self.camera_set = negative
-        return self.reset_camera()
+        self.reset_camera()
 
     def view_vector(self, vector, viewup=None):
-        """Point the camera in the direction of the given vector."""
+        """Point the camera in the direction of the given vector.
+
+        Parameters
+        ----------
+        vector : sequence
+            Three item sequence to point the camera in.
+
+        viewup : sequence, optional
+            Three item sequence describing the view up of the camera.
+
+        """
         focal_pt = self.center
         if viewup is None:
             viewup = self._theme.camera['viewup']
         cpos = CameraPosition(vector + np.array(focal_pt),
                 focal_pt, viewup)
         self.camera_position = cpos
-        return self.reset_camera()
+        self.reset_camera()
 
     def view_xy(self, negative=False):
-        """View the XY plane."""
+        """View the XY plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([0,0,1])
         viewup = np.array([0,1,0])
         if negative:
             vec *= -1
-        return self.view_vector(vec, viewup)
+        self.view_vector(vec, viewup)
 
     def view_yx(self, negative=False):
-        """View the YX plane."""
+        """View the YX plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([0,0,-1])
         viewup = np.array([1,0,0])
         if negative:
             vec *= -1
-        return self.view_vector(vec, viewup)
+        self.view_vector(vec, viewup)
 
     def view_xz(self, negative=False):
-        """View the XZ plane."""
+        """View the XZ plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([0,-1,0])
         viewup = np.array([0,0,1])
         if negative:
             vec *= -1
-        return self.view_vector(vec, viewup)
+        self.view_vector(vec, viewup)
 
     def view_zx(self, negative=False):
-        """View the ZX plane."""
+        """View the ZX plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([0,1,0])
         viewup = np.array([1,0,0])
         if negative:
             vec *= -1
-        return self.view_vector(vec, viewup)
+        self.view_vector(vec, viewup)
 
     def view_yz(self, negative=False):
-        """View the YZ plane."""
+        """View the YZ plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([1,0,0])
         viewup = np.array([0,0,1])
         if negative:
             vec *= -1
-        return self.view_vector(vec, viewup)
+        self.view_vector(vec, viewup)
 
     def view_zy(self, negative=False):
-        """View the ZY plane."""
+        """View the ZY plane.
+
+        Parameters
+        ----------
+        negative : bool, optional
+            View from the opposite direction.
+
+        """
         vec = np.array([-1,0,0])
         viewup = np.array([0,1,0])
         if negative:
             vec *= -1
-        return self.view_vector(vec, viewup)
+        self.view_vector(vec, viewup)
 
     def disable(self):
         """Disable this renderer's camera from being interactive."""
-        return self.SetInteractive(0)
+        self.SetInteractive(0)
 
     def enable(self):
         """Enable this renderer's camera to be interactive."""
-        return self.SetInteractive(1)
+        self.SetInteractive(1)
 
     def enable_eye_dome_lighting(self):
         """Enable eye dome lighting (EDL).
@@ -1980,7 +2185,7 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
-        color : string or 3 item list, optional
+        color : str or 3 item list, optional
             Either a string, rgb list, or hex color string.  Defaults
             to theme default.  For example:
 
@@ -1989,7 +2194,7 @@ class Renderer(_vtk.vtkRenderer):
             * ``color=[1, 1, 1]``
             * ``color='#FFFFFF'``
 
-        top : string or 3 item list, optional
+        top : str or 3 item list, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in
             ``top`` will be the color at the top of the renderer.
@@ -2020,7 +2225,6 @@ class Renderer(_vtk.vtkRenderer):
         else:
             self.GradientBackgroundOff()
         self.Modified()
-        return
 
     def set_environment_texture(self, texture):
         """Set the environment texture used for image based lighting.
@@ -2033,6 +2237,11 @@ class Renderer(_vtk.vtkRenderer):
         must be expressed in linear color space. If the texture is in
         sRGB color space, set the color flag on the texture or set the
         argument isSRGB to true.
+
+        Parameters
+        ----------
+        texture : vtk.vtkTexture
+            Texture.
         """
         self.UseImageBasedLightingOn()
         self.SetEnvironmentTexture(texture)
@@ -2051,7 +2260,15 @@ class Renderer(_vtk.vtkRenderer):
             self._empty_str = None
 
     def deep_clean(self, render=False):
-        """Clean the renderer of the memory."""
+        """Clean the renderer of the memory.
+
+        Parameters
+        ----------
+        render : bool, optional
+            Render the render window after removing the bounding box
+            (if applicable).
+
+        """
         if hasattr(self, 'cube_axes_actor'):
             del self.cube_axes_actor
         if hasattr(self, 'edl_pass'):
@@ -2079,3 +2296,12 @@ class Renderer(_vtk.vtkRenderer):
     def disable_hidden_line_removal(self):
         """Disable hidden line removal."""
         self.UseHiddenLineRemovalOff()
+
+    @property
+    def layer(self):
+        """Return or set the current layer of this renderer."""
+        return self.GetLayer()
+
+    @layer.setter
+    def layer(self, layer):
+        self.SetLayer(layer)

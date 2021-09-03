@@ -10,6 +10,7 @@ SPHINXPROJ    = pyvista
 SOURCEDIR     = .
 BUILDDIR      = _build
 
+
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
@@ -17,12 +18,20 @@ help:
 .PHONY: help Makefile
 
 .PHONY: all
+
 all:
-    echo PYVISTA_OFF_SCREEN: $$PYVISTA_OFF_SCREEN
+	echo PYVISTA_OFF_SCREEN: $$PYVISTA_OFF_SCREEN
 
 clean:
 	rm -rf $(BUILDDIR)/*
 	rm -rf examples/
+	rm -f errors.txt
+	rm -rf images/auto-generated
+	rm -f getting-started/external_examples.rst
+	find . -type d -name "_autosummary" -exec rm -rf {} +
+
+clean-except-examples:
+	rm -rf $(BUILDDIR)/*
 	rm -f errors.txt
 	rm -rf images/auto-generated
 	rm -f getting-started/external_examples.rst

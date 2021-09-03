@@ -122,7 +122,7 @@ values change through time:
 
 
     globe = examples.load_globe()
-    globe.point_arrays['scalars'] = np.random.rand(globe.n_points)
+    globe.point_data['scalars'] = np.random.rand(globe.n_points)
     globe.set_active_scalars('scalars')
 
 
@@ -135,7 +135,7 @@ values change through time:
         for i in range(50):
             globe.points *= 0.95
             # Update scalars
-            globe.point_arrays['scalars'] = np.random.rand(globe.n_points)
+            globe.point_data['scalars'] = np.random.rand(globe.n_points)
             time.sleep(0.5)
 
     thread = Thread(target=shrink)

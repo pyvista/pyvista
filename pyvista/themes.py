@@ -149,7 +149,14 @@ class _ThemeConfig():
         return inst
 
     def to_dict(self) -> dict:
-        """Return theme config parameters as a dictionary."""
+        """Return theme config parameters as a dictionary.
+
+        Returns
+        -------
+        dict
+            This theme parameter represented as a dictionary.
+
+        """
         # remove the first underscore in each entry
         dict_ = {}
         for key in self.__slots__:
@@ -1218,7 +1225,7 @@ class DefaultTheme(_ThemeConfig):
 
         See Also
         --------
-        :func:`Plotter.enable_hidden_line_removal <BasePlotter.enable_hidden_line_removal>`
+        pyvista.BasePlotter.enable_hidden_line_removal
 
         Examples
         --------
@@ -1228,6 +1235,7 @@ class DefaultTheme(_ThemeConfig):
         >>> pyvista.global_theme.hidden_line_removal = True
         >>> pyvista.global_theme.hidden_line_removal
         True
+
         """
         return self._hidden_line_removal
 
@@ -2087,6 +2095,11 @@ class DefaultTheme(_ThemeConfig):
     def load_theme(self, theme):
         """Overwrite the current theme with a theme.
 
+        Parameters
+        ----------
+        theme : pyvista.DefaultTheme
+            Theme to use to overwrite this theme.
+
         Examples
         --------
         Create a custom theme from the default theme and load it into
@@ -2126,6 +2139,11 @@ class DefaultTheme(_ThemeConfig):
 
     def save(self, filename):
         """Serialize this theme to a json file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to save the theme to.  Should end in ``'.json'``.
 
         Examples
         --------

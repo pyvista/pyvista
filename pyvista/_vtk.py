@@ -20,7 +20,8 @@ except ImportError:  # pragma: no cover
 
 if VTK9:
 
-    from vtkmodules.vtkImagingHybrid import vtkSampleFunction
+    from vtkmodules.vtkImagingHybrid import (vtkSampleFunction,
+                                             vtkSurfaceReconstructionFilter)
     from vtkmodules.vtkInteractionWidgets import (vtkScalarBarWidget,
                                                   vtkSplineWidget,
                                                   vtkSphereWidget,
@@ -121,6 +122,7 @@ if VTK9:
                                                vtkDataSet,
                                                vtkPointLocator,
                                                vtkCellLocator,
+                                               vtkStaticCellLocator,
                                                vtkMultiBlockDataSet,
                                                vtkCompositeDataSet,
                                                vtkFieldData,
@@ -150,6 +152,7 @@ if VTK9:
                                                    vtkAnnotatedCubeActor,
                                                    vtkLegendBoxActor,
                                                    vtkCubeAxesActor)
+    from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
     from vtkmodules.vtkRenderingCore import (vtkTexture,
                                              vtkSkybox,
                                              vtkPropAssembly,
@@ -200,7 +203,8 @@ if VTK9:
                                                            vtkParametricSuperToroid,
                                                            vtkParametricTorus,
                                                            vtkParametricFunction,
-                                                           vtkParametricBohemianDome)
+                                                           vtkParametricBohemianDome,
+                                                           vtkKochanekSpline)
     from vtkmodules.vtkCommonCore import (VTK_COURIER,
                                           VTK_TIMES,
                                           VTK_ARIAL,
@@ -208,6 +212,10 @@ if VTK9:
                                           vtkIdTypeArray,
                                           vtkCharArray,
                                           vtkBitArray,
+                                          vtkFloatArray,
+                                          vtkTypeInt32Array,
+                                          vtkTypeInt64Array,
+                                          vtkSignedCharArray,
                                           vtkFileOutputWindow,
                                           vtkOutputWindow,
                                           vtkStringOutputWindow,
