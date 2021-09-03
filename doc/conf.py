@@ -71,11 +71,23 @@ extensions = [
     "numpydoc"
 ]
 
-# Configuration of sphinx.ext.coverage
-coverage_show_missing_items = True
+# Configuration of pyvista.ext.coverage
 coverage_additional_modules = [
     'pyvista',
-    'pyvista.plotting',
+    'pyvista.themes',
+
+    'pyvista.plotting.axes',
+    'pyvista.plotting.camera',
+    'pyvista.plotting.helpers',
+    'pyvista.plotting.lights',
+    'pyvista.plotting.picking',
+    'pyvista.plotting.plotting',
+    'pyvista.plotting.renderer',
+    'pyvista.plotting.renderers',
+    'pyvista.plotting.scalar_bars',
+    'pyvista.plotting.theme',
+    'pyvista.plotting.tools',
+    'pyvista.plotting.widgets',
 
     'pyvista.core.common_data',
     'pyvista.core.common_data',
@@ -97,8 +109,23 @@ coverage_additional_modules = [
     'pyvista.core.filters.uniform_grid',
     'pyvista.core.filters.unstructured_grid',
 
+    'pyvista.demos',
+    'pyvista.examples.examples',
+
+    'pyvista.utilities.features',
+    'pyvista.utilities.fileio',
+    'pyvista.utilities.geometric_objects',
+    'pyvista.utilities.parametric_objects',
+    'pyvista.utilities.reader',
+    'pyvista.utilities.xvfb',
+    'pyvista.utilities.transformations',
+    'pyvista.utilities.regression',
 
 ]
+coverage_ignore_modules = [
+    r'\.plot_directive$',  # Issue with class parameter documentation
+]
+
 
 # See https://numpydoc.readthedocs.io/en/latest/install.html
 numpydoc_use_plots = True

@@ -47,6 +47,19 @@ def compile_regex_list(name: str, exps: str) -> List[Pattern]:
     return lst
 
 
+def method_from_obj(obj_name):
+    """Return the class and method from an object name.
+
+    pyvista.core.filters.poly_data.PolyDataFilters.boolean_add
+
+    becomes
+
+    boolean_add
+
+    """
+    return '.'.join(obj_name.split('.')[-1:])
+
+
 class CoverageBuilder(Builder):
     """
     Evaluates coverage of code in the documentation.
@@ -145,6 +158,15 @@ class CoverageBuilder(Builder):
 
     def build_py_coverage(self) -> None:
         objects = self.env.domaindata['py']['objects']
+
+        # objects are sometimes not referenced in the docs as they are
+        # in the source.  Here we simply grab the method and class of
+        # the object
+        abbr_names = set()
+        for obj_name in objects:
+            # only include method and class
+            abbr_names.add(method_from_obj(obj_name))
+
         modules = self.env.domaindata['py']['modules']
         for mod_name in self.add_modules:
             modules[mod_name] = None
@@ -229,7 +251,10 @@ class CoverageBuilder(Builder):
                             if self.ignore_pyobj(full_attr_name):
                                 continue
                             if full_attr_name not in objects:
-                                attrs.append(attr_name)
+                                # it's possible object is abbreviated
+                                abbr_name = method_from_obj(obj_name)
+                                if abbr_name not in abbr_names:
+                                    attrs.append(attr_name)
                         if attrs:
                             # some attributes are undocumented
                             classes[name] = attrs
