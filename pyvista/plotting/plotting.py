@@ -1105,6 +1105,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.window_size
         [200, 200]
         >>> pl.window_size = [400, 400]
+        >>> pl.window_size
         [400, 400]
 
         """

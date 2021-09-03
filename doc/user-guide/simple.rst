@@ -160,10 +160,12 @@ code after calling ``show``.
     plotter.show()            # show the rendering window
 
 
-Note that by default the ``show`` method will return the last used camera position
-of the rendering window in case you want to choose a camera position and use it
-again later. The camera position is also available as the ``camera_position``
-attribute of the plotter (even after it's closed).
+Note that by default :func:`show() <pyvista.Plotter.show>` will return
+the last used camera position of the rendering window in case you want
+to choose a camera position and use it again later. The camera
+position is also available as the :attr:`camera_position
+<pyvista.Plotter.camera_position>` attribute of the plotter (even
+after it's closed).
 
 You can then use this cached camera for additional plotting without having to
 manually interact with the plotting window:
@@ -190,9 +192,9 @@ Be sure to check out all the available plotters for your use case:
 Exporting
 ~~~~~~~~~
 
-Any PyVista mesh object can be saved to a VTK file format using the ``.save()``
-method bound directly on those objects. For example, the mesh used above could
-be saved like:
+Any PyVista mesh object can be saved to a VTK file format using
+:func:`save() <pyvista.DataObject.save>`. For example, the mesh in the
+code block above could be saved like:
 
 .. code-block:: python
 

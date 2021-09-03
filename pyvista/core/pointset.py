@@ -46,6 +46,13 @@ class PointSet(DataSet):
         numpy.ndarray
             Coordinates for the center of mass.
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere(center=(1, 1, 1))
+        >>> mesh.center_of_mass()
+        array([1., 1., 1.])
+
         """
         alg = _vtk.vtkCenterOfMass()
         alg.SetInputDataObject(self)
@@ -74,11 +81,13 @@ class PointSet(DataSet):
 
         Examples
         --------
-        Remove first 1000 cells from an unstructured grid.
+        Remove 20 cells from an unstructured grid.
 
+        >>> from pyvista import examples
         >>> import pyvista
-        >>> letter_a = pyvista.examples.download_letter_a()
-        >>> trimmed = letter_a.remove_cells(range(1000))
+        >>> hex_mesh = pyvista.read(examples.hexbeamfile)
+        >>> removed = hex_mesh.remove_cells(range(10, 20))
+        >>> removed.plot(color='tan', show_edges=True, line_width=3)
         """
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
@@ -94,12 +103,11 @@ class PointSet(DataSet):
 
         target.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
         target.RemoveGhostCells()
-
         return target
 
 
 class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
-    """Extend the functionality of a vtk.vtkPolyData object.
+    """Extend the functionality of a ``vtk.vtkPolyData`` object.
 
     Can be initialized in several ways:
 
@@ -169,31 +177,31 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     >>> from pyvista import examples
     >>> import pyvista
 
-    Create an empty mesh
+    Create an empty mesh.
 
     >>> mesh = pyvista.PolyData()
 
-    Initialize from a ``vtk.vtkPolyData`` object
+    Initialize from a ``vtk.vtkPolyData`` object.
 
     >>> vtkobj = vtk.vtkPolyData()
     >>> mesh = pyvista.PolyData(vtkobj)
 
-    Initialize from just vertices
+    Initialize from just vertices.
 
     >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0]])
     >>> mesh = pyvista.PolyData(vertices)
 
-    Initialize from vertices and faces
+    Initialize from vertices and faces.
 
     >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]])
     >>> mesh = pyvista.PolyData(vertices, faces)
 
-    Initialize from vertices and lines
+    Initialize from vertices and lines.
 
     >>> lines = np.hstack([[2, 0, 1], [2, 1, 2]])
     >>> mesh = pyvista.PolyData(vertices, lines=lines)
 
-    Initialize from a filename
+    Initialize from a filename.
 
     >>> mesh = pyvista.PolyData(examples.antfile)
 
@@ -294,7 +302,33 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def verts(self):
-        """Get the vertex cells."""
+        """Get the vertex cells.
+
+        Returns 
+        -------
+        numpy.ndarray
+            Array of vertex cell indices.
+
+        Examples
+        --------
+        Create a point cloud polydata and return the vertex cells.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> points = np.random.random((5, 3))
+        >>> pdata = pyvista.PolyData(points)
+        >>> pdata.verts
+        array([1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
+
+        Set vertex cells.  Note how the mesh plots both the surface
+        mesh and the additional vertices in a single plot.
+
+        >>> mesh = pyvista.Plane(i_resolution=3, j_resolution=3)
+        >>> mesh.verts = np.vstack((np.ones(mesh.n_points, dtype=np.int64),
+        ...                         np.arange(mesh.n_points))).T
+        >>> mesh.plot(color='tan', render_points_as_spheres=True, point_size=60)
+
+        """
         return _vtk.vtk_to_numpy(self.GetVerts().GetData())
 
     @verts.setter
@@ -307,7 +341,20 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def lines(self):
-        """Return a pointer to the lines as a numpy object."""
+        """Return a pointer to the lines as a numpy array.
+
+        Examples
+        --------
+        Return the lines from a spline.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> points = np.random.random((3, 3))
+        >>> spline = pyvista.Spline(points, 10)
+        >>> spline.lines
+        array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
+
+        """
         return _vtk.vtk_to_numpy(self.GetLines().GetData()).ravel()
 
     @lines.setter
@@ -320,7 +367,29 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def faces(self):
-        """Return a pointer to the faces as a numpy object."""
+        """Return a pointer to the faces as a numpy array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of face indices.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> plane = pv.Plane(i_resolution=2, j_resolution=2)
+        >>> plane.faces
+        array([4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7])
+
+        Note how the faces contain a "padding" indicating the number
+        of points per face:
+
+        >>> plane.faces.reshape(-1, 5)
+        array([[4, 0, 1, 4, 3],
+               [4, 1, 2, 5, 4],
+               [4, 3, 4, 7, 6],
+               [4, 4, 5, 8, 7]])
+        """
         return _vtk.vtk_to_numpy(self.GetPolys().GetData())
 
     @faces.setter
@@ -1363,7 +1432,26 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     @property
     def dimensions(self):
-        """Return a length 3 tuple of the grid's dimensions."""
+        """Return a length 3 tuple of the grid's dimensions.
+
+        Returns
+        -------
+        tuple
+            Grid dimensions.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> import numpy as np
+        >>> xrng = np.arange(-10, 10, 1)
+        >>> yrng = np.arange(-10, 10, 2)
+        >>> zrng = np.arange(-10, 10, 5)
+        >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
+        >>> grid = pyvista.StructuredGrid(x, y, z)
+        >>> grid.dimensions
+        (10, 20, 4)
+        
+        """
         return tuple(self.GetDimensions())
 
     @dimensions.setter
@@ -1375,7 +1463,26 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     @property
     def x(self):
-        """Return the X coordinates of all points."""
+        """Return the X coordinates of all points.
+
+        Returns
+        -------
+        numpy.ndarray
+            Numpy array of all X coordinates.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> import numpy as np
+        >>> xrng = np.arange(-10, 10, 1)
+        >>> yrng = np.arange(-10, 10, 2)
+        >>> zrng = np.arange(-10, 10, 5)
+        >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
+        >>> grid = pyvista.StructuredGrid(x, y, z)
+        >>> grid.x.shape
+        (10, 20, 4)
+
+        """
         return self._reshape_point_array(self.points[:, 0])
 
     @property
