@@ -407,8 +407,6 @@ def test_load_theme(tmpdir, default_theme):
 
 
 def test_antialiasing(default_theme):
-    default_theme.antialiasing = True
-    assert default_theme.antialiasing is True
-
-    default_theme.antialiasing = False
-    assert default_theme.antialiasing is False
+    for value in [True, False]:
+        default_theme.antialiasing = value
+        assert default_theme.antialiasing is value
