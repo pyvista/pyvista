@@ -1934,27 +1934,30 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Returns
         -------
         ExplicitStructuredGrid or None
-            A deep copy of this grid if ``inplace=False`` or ``None`` otherwise.
+            A deep copy of this grid if ``inplace=False`` with the
+            hidden cells, or this grid with the hidden cells if
+            otherwise.
 
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
-        >>> grid.hide_cells(range(80, 120))  # doctest:+SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> _ = grid.hide_cells(range(80, 120))
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         """
+        ind = np.asarray(ind)
+
         if inplace:
-            ind = np.asarray(ind)
             array = np.zeros(self.n_cells, dtype=np.uint8)
             array[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
             name = _vtk.vtkDataSetAttributes.GhostArrayName()
             self.cell_data[name] = array
             return self
-        else:
-            grid = self.copy()
-            grid.hide_cells(ind)
-            return grid
+
+        grid = self.copy()
+        grid.hide_cells(ind)
+        return grid
 
     def show_cells(self, inplace=True):
         """Show hidden cells.

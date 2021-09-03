@@ -1,5 +1,7 @@
 """PyVista plotting module."""
 
+import platform
+import ctypes
 import sys
 import pathlib
 import collections.abc
@@ -45,9 +47,22 @@ def _has_matplotlib():
     except ImportError:  # pragma: no cover
         return False
 
-
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 VERY_FIRST_RENDER = True  # windows plotter helper
+
+
+# EXPERIMENTAL: permit pyvista to kill the render window
+KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
+if KILL_DISPLAY:  # pragma: no cover
+    # this won't work under wayland
+    try:
+        X11 = ctypes.CDLL("libX11.so")
+        X11.XCloseDisplay.argtypes = [ctypes.c_void_p]
+    except OSError:
+        warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\n'
+                      'Probably using wayland')
+        KILL_DISPLAY = False
+
 
 def close_all():
     """Close all open/active plotters and clean up memory.
@@ -2861,11 +2876,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # reset scalar bars
         self.clear()
 
+        # grab the display id before clearing the window
+        # this is an experimental feature
+        if KILL_DISPLAY:  # pragma: no cover
+            disp_id = None
+            if hasattr(self, 'ren_win'):
+                disp_id = self.ren_win.GetGenericDisplayId()
         self._clear_ren_win()
 
         if self.iren is not None:
             self.iren.remove_observers()
             self.iren.terminate_app()
+            if KILL_DISPLAY:  # pragma: no cover
+                _kill_display(disp_id)
             self.iren = None
 
         if hasattr(self, 'textActor'):
@@ -4841,3 +4864,28 @@ class Plotter(BasePlotter):
 # Tracks created plotters.  At the end of the file as we need to
 # define ``BasePlotter`` before including it in the type definition.
 _ALL_PLOTTERS: Dict[str, BasePlotter] = {}
+
+
+def _kill_display(disp_id):  # pragma: no cover
+    """Forcibly close the display on Linux.
+
+    See: https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
+
+    And more details into why...
+    https://stackoverflow.com/questions/64811503
+
+    Notes
+    -----
+    This is to be used experimentally and is known to cause issues
+    on `pyvistaqt`
+
+    """
+    if platform.system() != 'Linux':
+        raise OSError('This method only works on Linux')
+
+    if disp_id:
+        cdisp_id = int(disp_id[1:].split('_')[0], 16)
+
+        # this is unsafe as events might be queued, but sometimes the
+        # window fails to close if we don't just close it
+        Thread(target=X11.XCloseDisplay, args=(cdisp_id, )).start()
