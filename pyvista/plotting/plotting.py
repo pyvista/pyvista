@@ -57,8 +57,8 @@ if KILL_DISPLAY:  # pragma: no cover
     # this won't work under wayland
     try:
         X11 = ctypes.CDLL("libX11.so")
-        x11.XCloseDisplay.argtypes = ctypes.c_void_p
-    except:
+        X11.XCloseDisplay.argtypes = [ctypes.c_void_p]
+    except OSError:
         warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\n'
                       'Probably using wayland')
         KILL_DISPLAY = False
@@ -2878,7 +2878,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # grab the display id before clearing the window
         # this is an experimental feature
-        breakpoint()
         if KILL_DISPLAY:  # pragma: no cover
             disp_id = None
             if hasattr(self, 'ren_win'):
@@ -4870,14 +4869,15 @@ _ALL_PLOTTERS: Dict[str, BasePlotter] = {}
 def _kill_display(disp_id):  # pragma: no cover
     """Forcibly close the display on Linux.
 
-    See:
-    https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
+    See: https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
 
     And more details into why...
     https://stackoverflow.com/questions/64811503
 
-    # this is to be used experimentally and is known to cause issues
-    # on `pyvistaqt`
+    Notes
+    -----
+    This is to be used experimentally and is known to cause issues
+    on `pyvistaqt`
 
     """
     if platform.system() != 'Linux':
@@ -4887,5 +4887,5 @@ def _kill_display(disp_id):  # pragma: no cover
         cdisp_id = int(disp_id[1:].split('_')[0], 16)
 
         # this is unsafe as events might be queued, but sometimes the
-        # window fails to close if we don't just try to close it
+        # window fails to close if we don't just close it
         Thread(target=X11.XCloseDisplay, args=(cdisp_id, )).start()
