@@ -159,6 +159,13 @@ def test_add_matrix(hexbeam):
     assert np.allclose(mat, matout)
 
 
+def test_set_active_scalars_fail(hexbeam):
+    with raises(ValueError):
+        hexbeam.set_active_scalars('foo', preference='field')
+    with raises(KeyError):
+        hexbeam.set_active_scalars('foo')
+
+
 def test_set_active_vectors(hexbeam):
     vectors = np.random.random((hexbeam.n_points, 3))
     hexbeam['vectors'] = vectors

@@ -141,12 +141,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 vtk_arr = array.VTKObject
                 try:
                     arr_type = attr_type[self.IsArrayAnAttribute(i)]
-                except (IndexError, TypeError):  # pragma: no cover
+                except (IndexError, TypeError, AttributeError):  # pragma: no cover
                     arr_type = ''
 
                 # special treatment for vector data
-                if name == self.active_vectors_name:
-                    arr_type = 'VECTORS'
+                if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
+                    if name == self.active_vectors_name:
+                        arr_type = 'VECTORS'
 
                 line = f'{name[:23]:<24}{str(array.dtype):<9}{str(array.shape):<20} {arr_type}'.strip()
                 lines.append(line)

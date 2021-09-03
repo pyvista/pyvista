@@ -1,6 +1,5 @@
 .. _pyvista_data_model:
 
-
 PyVista Data Model
 ==================
 This section of the user guide explains in detail how to construct
@@ -427,6 +426,7 @@ attribute of our mesh.
 
 .. _pyvista_data_model_cell_data:
 
+
 Cell Data
 ~~~~~~~~~
 The easiest way to add scalar data to a :class:`DataSet
@@ -485,7 +485,7 @@ using :func:`set_array() <pyvista.DataSet.set_array>`
 .. jupyter-execute::
 
    >>> data = np.linspace(0, 1, ugrid.n_cells)
-   >>> ugrid.cell_data.set_array(data, 'my-linspace')
+   >>> ugrid.cell_data.set_array(data, 'my-cell-data')
    >>> ugrid.cell_data
 
 Now, ``ugrid`` contains two arrays, one of which is the "active"
@@ -495,7 +495,16 @@ automatically when ``scalars`` is unset in either :func:`add_mesh()
 possible to have an many cell arrays associated with a dataset and
 track which one will plotted as the active cell scalars by default.
 
-The active scalars can also be accessed or set via :attr:`active_scalars <pyvista.core.dataset.DataSet.active_scalars>`, and the name of the active scalars array can be accessed or set with :attr:`active_scalars_name <pyvista.core.dataset.DataSet.active_scalars_name>`.
+The active scalars can also be accessed or set via
+:attr:`active_scalars <pyvista.core.dataset.DataSet.active_scalars>`,
+and the name of the active scalars array can be accessed or set with
+:attr:`active_scalars_name
+<pyvista.core.dataset.DataSet.active_scalars_name>`.
+
+.. jupyter-execute::
+
+   >>> ugrid.cell_data.active_scalars_name = 'my-cell-data'
+   >>> ugrid.cell_data
 
 
 Point Data
@@ -510,8 +519,8 @@ list to the points using the ``[]`` operator.
 .. jupyter-execute::
 
    >>> simple_list = range(ugrid.n_points)
-   >>> ugrid.point_data['my-point-data'] = simple_list
-   >>> ugrid.point_data['my-point-data']
+   >>> ugrid.point_data['my-data'] = simple_list
+   >>> ugrid.point_data['my-data']
 
 Again, these values become the active scalars in our point arrays by
 default by using the ``[]`` operator:
@@ -546,13 +555,67 @@ lowest value at ``Point 0`` to the highest value at ``Point 9``.
    >>> pl.show()
 
 As in :ref:`pyvista_data_model_cell_data`, we can assign multiple
-arrays to :attr:`point_data <pyvista.DataSet.point_data>` using the ``add_array`` method.
+arrays to :attr:`point_data <pyvista.dataset.DataSet.point_data>`
+using :func:`set_array() <pyvista.DataSet.set_array>`.
 
-..
-   Show how we can add multiple cell arrays and set which ones are the
-   active "vectors".
+.. jupyter-execute::
 
-   Pending #1593
+   >>> data = np.linspace(0, 1, ugrid.n_points)
+   >>> ugrid.point_data.set_array(data, 'my-point-data')
+   >>> ugrid.point_data
+
+Again, here there are now two arrays associated to the point data, and
+only one is the "active" scalars.  Like as in the cell data, can set
+or retrieve this with :attr:`active_scalars
+<pyvista.core.dataset.DataSet.active_scalars>`, and the name of the
+active scalars array can be accessed or set with
+:attr:`active_scalars_name
+<pyvista.core.dataset.DataSet.active_scalars_name>`.
+
+.. jupyter-execute::
+
+   >>> ugrid.point_data.active_scalars_name = 'my-point-data'
+   >>> ugrid.point_data
+
+
+Dataset Active Scalars
+~~~~~~~~~~~~~~~~~~~~~~
+Continuing from the previous sections, our ``ugrid`` dataset now
+contains both point and cell data:
+
+.. jupyter-execute::
+
+   >>> ugrid.point_data
+
+.. jupyter-execute::
+
+   >>> ugrid.cell_data
+
+There are active scalars in both point and cell data, but only one
+type of scalars can be "active" at the dataset level.  The reason for
+this is only one scalar type (be it point or cell) can be plotted at
+once, and this data can be obtained from :attr:`active_scalars_info
+<pyvista.core.dataset.DataSet.active_scalars_info>`:
+
+.. jupyter-execute::
+
+   >>> ugrid.active_scalars_info
+
+Note that the active scalars are by default the point scalars.  You
+can change this by setting the active scalars with
+:func:`set_active_scalars
+<pyvista.core.dataset.DataSet.set_active_scalars>`.  Note that if you
+want to set the active scalars and both the point and cell data have
+an array of the same name, you must specify the ``preference``:
+
+.. jupyter-execute::
+
+   >>> ugrid.set_active_scalars('my-data', preference='cell')
+   >>> ugrid.active_scalars_info
+
+This can also be set when plotting using the ``preference``
+parameter in :func:`add_mesh() <pyvista.Plotter.add_mesh>` or
+:func:`pyvista.plot`.
 
 
 Field Data
@@ -571,18 +634,72 @@ row and columns.  You can even add string arrays in the field data:
    >>> ugrid.field_data['my-field-data']
 
 Note that the field data is automatically transferred to VTK C-style
-arrays and then represented as a numpy data format:
+arrays and then represented as a numpy data format.
+
+When listing the current field data, note that the association is "NONE":
 
 .. jupyter-execute::
 
-   >>> ugrid.point_data
+   >>> ugrid.field_data
 
-..
-   Add a new section containing the description of scalars
-   vs. vectors.  Talk about the special array attributes for our data
-   arrays
+This is because the data is not associated with points or cells, and
+cannot be made so because field data is not expected to match the
+number of cells or points.  As such, it also cannot be plotted.
 
-   Pending #1593
+
+Vectors, Textures, and Normals Attributes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Both cell and point data can also store the following "special" attributes in addition to :attr:`active_scalars <pyvista.core.dataset.DataSet.active_scalars>`
+
+* :attr:`active_normals <pyvista.core.dataset.DataSet.active_normals>`
+* :attr:`active_t_coords <pyvista.core.dataset.DataSet.active_t_coords>`
+* :attr:`active_vectors <pyvista.core.dataset.DataSet.active_vectors>`
+
+
+Active Normals
+~~~~~~~~~~~~~~
+The :attr:`active_normals
+<pyvista.core.dataset.DataSet.active_normals>` array is a special
+array that is used for creating physically based rendering or
+rendering smooth shading using the phong interpolation.  If this array
+is not set when plotting with ``smooth_shading=True`` or ``pbr=True``,
+it will be computed.
+
+
+Active Texture Coordinates
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+The :attr:`active_tcoords
+<pyvista.core.dataset.DataSet.active_t_coords>` array is used for
+rendering textures.  See :ref:`ref_texture_example` for examples using
+this array.
+
+
+Active Vectors
+~~~~~~~~~~~~~~
+The :attr:`active_vectors
+<pyvista.core.dataset.DataSet.active_vectors>` is an array containing
+quantities that have magnitude and direction (specifically, three
+components).  For example, a vector field containing the wind speed at
+various coordinates.  This differs from :attr:`active_scalars
+<pyvista.core.dataset.DataSet.active_scalars>` as scalars are expected
+to be non-directional even if they contain several components (as in
+the case of RGB data).
+
+Vectors are treated differently within VTK than scalars when
+performing transformations using the :func:`transform()
+<pyvista.core.dataset.DataSet.transform>` filter.  Unlike scalar
+arrays, vector arrays will be transformed along with the geometry as
+these vectors represent quantities with direction.
+
+.. note::
+
+   VTK permits only one "active" vector.  If you have multiple vector
+   arrays that you wish to transform, set
+   ``transform_all_input_vectors=True`` in :func:`transform()
+   <pyvista.core.dataset.DataSet.transform>`.  Be aware that this will
+   transform any array with three components, so multi-component
+   scalar arrays like RGB arrays will have to be discarded after
+   transformation.
 
 
 .. _vtkDataArray: https://vtk.org/doc/nightly/html/classvtkDataArray.html
