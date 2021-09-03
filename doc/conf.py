@@ -64,11 +64,40 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
     "sphinx.ext.extlinks",
-    "sphinx.ext.coverage",
     "jupyter_sphinx",
     "sphinx_panels",
     "pyvista.ext.plot_directive",
+    "pyvista.ext.coverage",
     "numpydoc"
+]
+
+# Configuration of sphinx.ext.coverage
+coverage_show_missing_items = True
+coverage_additional_modules = [
+    'pyvista',
+    'pyvista.plotting',
+
+    'pyvista.core.common_data',
+    'pyvista.core.common_data',
+    'pyvista.core.composite',
+    'pyvista.core.dataobject',
+    'pyvista.core.datasetattributes',
+    'pyvista.core.dataset',
+    'pyvista.core.errors',
+    'pyvista.core.grid',
+    'pyvista.core.imaging',
+    'pyvista.core.objects',
+    'pyvista.core.pointset',
+    'pyvista.core.pyvista_ndarray',
+
+    'pyvista.core.filters.composite',
+    'pyvista.core.filters.data_set',
+    'pyvista.core.filters.poly_data',
+    'pyvista.core.filters.structured_grid',
+    'pyvista.core.filters.uniform_grid',
+    'pyvista.core.filters.unstructured_grid',
+
+
 ]
 
 # See https://numpydoc.readthedocs.io/en/latest/install.html
