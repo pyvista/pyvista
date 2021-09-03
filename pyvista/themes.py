@@ -1828,7 +1828,7 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Enable or antialiasing.
+        Enable antialiasing.
 
         >>> import pyvista
         >>> pyvista.global_theme.antialiasing = True
