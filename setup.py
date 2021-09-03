@@ -22,6 +22,7 @@ install_requires = ['numpy',
                     'scooby>=0.5.1',
                     'meshio>=4.0.3, <5.0',
                     'vtk',
+                    'dataclasses;python_version=="3.6"',
                     ]
 
 readme_file = os.path.join(filepath, 'README.rst')
