@@ -2111,6 +2111,10 @@ class PolyDataFilters(DataSetFilters):
                     inplace=False, edge_source=None, progress_bar=False):
         """Apply a 2D Delaunay filter along the best fitting plane.
 
+        This filter can be used to generate a 2d surface from a set of
+        points on a plane.  If you want to create a surface from a
+        point cloud, see :func:`pyvista.DataSetFilters.reconstruct_surface`.
+
         Parameters
         ----------
         tol : float, optional

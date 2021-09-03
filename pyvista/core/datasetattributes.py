@@ -939,8 +939,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         keys = []
         for i in range(self.GetNumberOfArrays()):
-            name = self.VTKObject.GetAbstractArray(i).GetName()
+            array = self.VTKObject.GetAbstractArray(i)
+            name = array.GetName()
             if name:
+                keys.append(name)
+            else:  # pragma: no cover
+                # Assign this array a name
+                name = f'Unnamed_{i}'
+                array.SetName(name)
                 keys.append(name)
         return keys
 

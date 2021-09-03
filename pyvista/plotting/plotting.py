@@ -54,7 +54,14 @@ VERY_FIRST_RENDER = True  # windows plotter helper
 # EXPERIMENTAL: permit pyvista to kill the render window
 KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
 if KILL_DISPLAY:  # pragma: no cover
-    X11 = ctypes.CDLL("libX11.so")
+    # this won't work under wayland
+    try:
+        X11 = ctypes.CDLL("libX11.so")
+        x11.XCloseDisplay.argtypes = ctypes.c_void_p
+    except:
+        warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\n'
+                      'Probably using wayland')
+        KILL_DISPLAY = False
 
 
 def close_all():
@@ -2871,6 +2878,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # grab the display id before clearing the window
         # this is an experimental feature
+        breakpoint()
         if KILL_DISPLAY:  # pragma: no cover
             disp_id = None
             if hasattr(self, 'ren_win'):
@@ -4487,9 +4495,18 @@ class Plotter(BasePlotter):
 
         if self.off_screen:
             self.ren_win.SetOffScreenRendering(1)
+            # vtkGenericRenderWindowInteractor has no event loop and
+            # allows the display client to close on Linux when
+            # off_screen.  We still want an interactor for off screen
+            # plotting since there are some widgets (like the axes
+            # widget) that need an interactor
+            interactor = _vtk.vtkGenericRenderWindowInteractor()
+        else:
+            interactor = None
 
         # Add ren win and interactor
-        self.iren = RenderWindowInteractor(self, light_follow_camera=False)
+        self.iren = RenderWindowInteractor(self, light_follow_camera=False,
+                                           interactor=interactor)
         self.iren.set_render_window(self.ren_win)
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
@@ -4784,7 +4801,6 @@ class Plotter(BasePlotter):
         # If user asked for screenshot, return as numpy array after camera
         # position
         if return_img or screenshot is True:
-
             if return_cpos:
                 return self.camera_position, self.last_image
 
@@ -4868,11 +4884,8 @@ def _kill_display(disp_id):  # pragma: no cover
         raise OSError('This method only works on Linux')
 
     if disp_id:
-        cdisp_id = ctypes.c_size_t(int(disp_id[1:].split('_')[0], 16))
-
-        # check display can be closed and then close it in the background
-        # if not X11.XEventsQueued(cdisp_id, 0):
+        cdisp_id = int(disp_id[1:].split('_')[0], 16)
 
         # this is unsafe as events might be queued, but sometimes the
-        # window fails to close without this
+        # window fails to close if we don't just try to close it
         Thread(target=X11.XCloseDisplay, args=(cdisp_id, )).start()

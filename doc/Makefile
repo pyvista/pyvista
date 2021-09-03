@@ -19,10 +19,8 @@ help:
 
 .PHONY: all
 
-# allow experimental kill display
 all:
-    echo PYVISTA_OFF_SCREEN: $$PYVISTA_OFF_SCREEN
-    export PYVISTA_KILL_DISPLAY = True
+	echo PYVISTA_OFF_SCREEN: $$PYVISTA_OFF_SCREEN
 
 clean:
 	rm -rf $(BUILDDIR)/*

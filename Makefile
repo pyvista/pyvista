@@ -4,12 +4,9 @@ CODESPELL_DIRS ?= ./
 CODESPELL_SKIP ?= "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,./doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*"
 CODESPELL_IGNORE ?= "ignore_words.txt"
 
-# doctest modules must be off screen to avoid plotting everything, and
-# we must enable killing of the display when using VTK 9+
+# doctest modules must be off screen to avoid plotting everything
 doctest-modules: export PYVISTA_OFF_SCREEN = True
-doctest-modules: export PYVISTA_KILL_DISPLAY = True
 doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
-doctest-modules-local-namespace: export PYVISTA_KILL_DISPLAY = True
 
 all: doctest
 
@@ -30,6 +27,9 @@ doctest-modules:
 doctest-modules-local-namespace:
 	@echo "Running module doctesting using docstring local namespace"
 	python tests/check_doctest_names.py
+
+example-coverage:
+	python -m ansys.tools.example_coverage -f pyvista
 
 coverage:
 	@echo "Running coverage"

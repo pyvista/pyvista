@@ -9,14 +9,14 @@ import vtk
 import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
+from pyvista._vtk import VTK9
 
 test_path = os.path.dirname(os.path.abspath(__file__))
-
-VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 # must be manually set until pytest adds parametrize with fixture feature
 HEXBEAM_CELLS_BOOL = np.ones(40, np.bool_)  # matches hexbeam.n_cells == 40
 STRUCTGRID_CELLS_BOOL = np.ones(729, np.bool_)  # struct_grid.n_cells == 729
+STRUCTGRID_POINTS_BOOL = np.ones(1000, np.bool_)  # struct_grid.n_points == 1000
 
 
 def test_volume(hexbeam):
@@ -853,13 +853,21 @@ def test_remove_cells_invalid(hexbeam):
 @pytest.mark.parametrize('ind', [range(10), np.arange(10),
                                  STRUCTGRID_CELLS_BOOL])
 def test_hide_cells(ind, struct_grid):
-    sgrid_copy = struct_grid.copy()
-    sgrid_copy.hide_cells(ind)
-    assert sgrid_copy.HasAnyBlankCells()
+    struct_grid.hide_cells(ind)
+    assert struct_grid.HasAnyBlankCells()
 
     with pytest.raises(ValueError, match='Boolean array size must match'):
-        sgrid_copy.hide_cells(np.ones(10, dtype=np.bool))
+        struct_grid.hide_cells(np.ones(10, dtype=np.bool))
 
+
+@pytest.mark.parametrize('ind', [range(10), np.arange(10),
+                                 STRUCTGRID_POINTS_BOOL])
+def test_hide_points(ind, struct_grid):
+    struct_grid.hide_points(ind)
+    assert struct_grid.HasAnyBlankPoints()
+
+    with pytest.raises(ValueError, match='Boolean array size must match'):
+        struct_grid.hide_points(np.ones(10, dtype=np.bool))
 
 
 @pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
