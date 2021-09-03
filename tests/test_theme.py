@@ -410,3 +410,6 @@ def test_antialiasing(default_theme):
     for value in [True, False]:
         default_theme.antialiasing = value
         assert default_theme.antialiasing is value
+        pl = pyvista.Plotter(theme=default_theme)
+        assert pl.renderer.GetUseFXAA() is value
+
