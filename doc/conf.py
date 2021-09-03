@@ -125,6 +125,7 @@ numpydoc_validation_exclude = {  # set of regex
 
     # classes inherit from BaseReader
     r'\.*Reader$',
+    r'\.*Reader\.*',
 
     # internal
     r'\.Renderer$',
@@ -163,7 +164,7 @@ add_module_names = False
 intersphinx_mapping = {
     'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-inv.txt')),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', (None, 'intersphinx/scipy-inv.txt')),
-    'numpy': ('https://numpy.org/devdocs', (None, 'intersphinx/numpy-inv.txt')),
+    'numpy': ('https://numpy.org/doc/stable', (None, 'intersphinx/numpy-inv.txt')),
     'matplotlib': ('https://matplotlib.org/stable', (None, 'intersphinx/matplotlib-inv.txt')),
     'imageio': ('https://imageio.readthedocs.io/en/stable', (None, 'intersphinx/imageio-inv.txt')),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable', (None, 'intersphinx/pandas-inv.txt')),

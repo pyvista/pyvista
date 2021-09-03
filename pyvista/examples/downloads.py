@@ -84,7 +84,10 @@ def _retrieve_file(retriever, filename):
     if pyvista.VTK_DATA_PATH is None:
         shutil.move(saved_file, local_path)
     else:
-        shutil.copy(saved_file, local_path)
+        if os.path.isdir(saved_file):
+            shutil.copytree(saved_file, local_path)
+        else:
+            shutil.copy(saved_file, local_path)
     if pyvista.get_ext(local_path) in ['.zip']:
         _decompress(local_path)
         local_path = local_path[:-4]
@@ -839,6 +842,44 @@ def download_cylinder_crossflow(load=True):
     if not load:
         return filename
     return pyvista.read(filename)
+
+
+def download_naca(load=True):
+    """Download NACA airfoil dataset in EnSight format."""
+    filename, _ = _download_file('EnSight/naca.bin.case')
+    _download_file('EnSight/naca.gold.bin.DENS_1')
+    _download_file('EnSight/naca.gold.bin.DENS_3')
+    _download_file('EnSight/naca.gold.bin.geo')
+    if not load:
+        return filename
+    return pyvista.read(filename)
+
+
+def download_wavy(load=True):
+    """Download PVD file of a 2D wave."""
+    folder, _ = _download_file('PVD/wavy.zip')
+    filename = os.path.join(folder, 'wavy.pvd')
+    if not load:
+        return filename
+    return pyvista.PVDReader(filename).read()
+
+
+def download_single_sphere_animation(load=True):
+    """Download PVD file for single sphere."""
+    filename, _ = _download_file('PVD/paraview/singleSphereAnimation.pvd')
+    folder, _ =_download_file('PVD/paraview/singleSphereAnimation')
+    if not load:
+        return filename
+    return pyvista.PVDReader(filename).read()
+
+
+def download_dual_sphere_animation(load=True):
+    """Download PVD file for double sphere."""
+    filename, _ = _download_file('PVD/paraview/dualSphereAnimation.pvd')
+    folder, _ =_download_file('PVD/paraview/dualSphereAnimation')
+    if not load:
+        return filename
+    return pyvista.PVDReader(filename).read()
 
 
 def download_osmnx_graph():  # pragma: no cover

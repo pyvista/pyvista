@@ -2230,7 +2230,10 @@ class DataSetFilters:
     def delaunay_3d(self, alpha=0, tol=0.001, offset=2.5, progress_bar=False):
         """Construct a 3D Delaunay triangulation of the mesh.
 
-        This helps smooth out a rugged mesh.
+        This filter can be used to generate a 3D tetrahedral mesh from
+        a surface or scattered points.  If you want to create a
+        surface from a point cloud, see
+        :func:`pyvista.DataSetFilters.reconstruct_surface`.
 
         Parameters
         ----------
@@ -4417,3 +4420,82 @@ class DataSetFilters:
         t = transformations.reflection(normal, point=point)
         return self.transform(t, transform_all_input_vectors=transform_all_input_vectors,
                                  inplace=inplace, progress_bar=progress_bar)
+
+    def reconstruct_surface(self, nbr_sz=None, sample_spacing=None,
+                            progress_bar=False):
+        """Reconstruct a surface from the points in this dataset.
+
+        This filter takes a list of points assumed to lie on the
+        surface of a solid 3D object. A signed measure of the distance
+        to the surface is computed and sampled on a regular grid. The
+        grid can then be contoured at zero to extract the surface. The
+        default values for neighborhood size and sample spacing should
+        give reasonable results for most uses but can be set if
+        desired.
+
+        This is helpful when generating surfaces from point clouds and
+        is more reliable than :func:`DataSetFilters.delaunay_3d`.
+
+        Parameters
+        ----------
+        nbr_sz : int, optional
+            Specify the number of neighbors each point has, used for
+            estimating the local surface orientation.
+
+            The default value of 20 should be fine for most
+            applications, higher values can be specified if the spread
+            of points is uneven. Values as low as 10 may yield
+            adequate results for some surfaces. Higher values cause
+            the algorithm to take longer and will cause
+            errors on sharp boundaries.
+
+        sample_spacing : float, optional
+            The spacing of the 3D sampling grid.  If not set, a
+            reasonable guess will be made.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Reconstructed surface.
+
+        Examples
+        --------
+        Create a point cloud out of a sphere and reconstruct a surface
+        from it.
+
+        >>> import pyvista as pv
+        >>> points = pv.wrap(pv.Sphere().points)
+        >>> surf = points.reconstruct_surface()
+
+        >>> pl = pv.Plotter(shape=(1,2))
+        >>> _ = pl.add_mesh(points)
+        >>> _ = pl.add_title('Point Cloud of 3D Surface')
+        >>> pl.subplot(0,1)
+        >>> _ = pl.add_mesh(surf, color=True, show_edges=True)
+        >>> _ = pl.add_title('Reconstructed Surface')
+        >>> pl.show()
+
+        See :ref:`surface_reconstruction_example` for more examples
+        using this filter.
+
+        """
+        alg = _vtk.vtkSurfaceReconstructionFilter()
+        alg.SetInputDataObject(self)
+        if nbr_sz is not None:
+            alg.SetNeighborhoodSize(nbr_sz)
+        if sample_spacing is not None:
+            alg.SetSampleSpacing(sample_spacing)
+
+        # connect using ports as this will be slightly faster
+        mc = _vtk.vtkMarchingCubes()
+        mc.SetComputeNormals(False)
+        mc.SetComputeScalars(False)
+        mc.SetComputeGradients(False)
+        mc.SetInputConnection(alg.GetOutputPort())
+        mc.SetValue(0, 0.0)
+        _update_alg(mc, progress_bar, 'Reconstructing surface')
+        surf = pyvista.wrap(mc.GetOutput())
+        return surf

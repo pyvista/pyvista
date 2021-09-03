@@ -20,7 +20,8 @@ except ImportError:  # pragma: no cover
 
 if VTK9:
 
-    from vtkmodules.vtkImagingHybrid import vtkSampleFunction
+    from vtkmodules.vtkImagingHybrid import (vtkSampleFunction,
+                                             vtkSurfaceReconstructionFilter)
     from vtkmodules.vtkInteractionWidgets import (vtkScalarBarWidget,
                                                   vtkSplineWidget,
                                                   vtkSphereWidget,

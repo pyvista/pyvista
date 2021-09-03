@@ -8,7 +8,6 @@ CODESPELL_IGNORE ?= "ignore_words.txt"
 doctest-modules: export PYVISTA_OFF_SCREEN = True
 doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
 
-
 all: doctest
 
 doctest: codespell pydocstyle
@@ -30,7 +29,7 @@ doctest-modules-local-namespace:
 	python tests/check_doctest_names.py
 
 example-coverage:
-	python tests/check_example_coverage.py
+	python -m ansys.tools.example_coverage -f pyvista
 
 coverage:
 	@echo "Running coverage"
