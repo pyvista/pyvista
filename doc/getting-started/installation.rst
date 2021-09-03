@@ -130,13 +130,13 @@ See other examples and demos:
 .. code:: python
 
     >>> from pyvista import examples
-    >>>from pyvista import demos
+    >>> from pyvista import demos
 
-    List all examples
+    List all available examples.
 
     >>> print(dir(examples))
 
-    List all demos
+    List all available demos.
 
     >>> print(dir(demos))
 

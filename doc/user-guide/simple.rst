@@ -41,19 +41,19 @@ Accessing the Wrapped Data Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now that you have a wrapped VTK data object, you can start accessing
-and modifying the dataset! Some of the most common properties to
+and modifying the dataset. Some of the most common properties to
 access include the points and point/cell data (the data attributes
 assigned to the nodes or cells of the mesh respectively).
 
 First, check out some common meta-properties:
 
-.. code-block:: python
+.. code:: python
 
-    import pyvista as pv
-    from pyvista import examples
-    import numpy as np
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> import numpy as np
 
-.. code-block:: python
+.. code:: python
 
     >>> mesh = examples.load_airplane()
 
@@ -73,18 +73,19 @@ First, check out some common meta-properties:
 
     What are the mesh bounds?
     >>> mesh.bounds
-    [139.06100463867188, 1654.9300537109375, 32.09429931640625, 1319.949951171875, -17.741199493408203, 282.1300048828125]
+    [139.061, 1654.93, 32.09, 1319.95, -17.74, 282.13]
 
     Where is the center of this mesh?
 
     >>> mesh.center
-    [896.9955291748047, 676.0221252441406, 132.19440269470215]
+    [897.0, 676.02, 132.19]
 
 
-Access the points by fetching the ``.points`` attribute on any
-PyVista mesh as a NumPy array:
+Access the points by fetching the :attr:`points
+<pyvista.core.dataset.DataSet.points>` attribute on any PyVista mesh
+as a :class:`numpy.ndarray`:
 
-.. code-block:: python
+.. code:: python
 
     >>> the_pts = mesh.points
     >>> isinstance(the_pts, np.ndarray)
@@ -116,7 +117,9 @@ access an array on that dataset, then add some more data:
 
     >>> mesh.cell_arrays['foo'] = np.random.rand(mesh.n_cells)
 
-    Don't remember if your array is point or cell data? Doesn't matter!
+    Don't remember if your array is point or cell data? You can
+    directly query the mesh object and access the array from the
+    dataset.
 
     >>> foo = mesh['foo']
     >>> isinstance(foo, np.ndarray)
@@ -135,7 +138,7 @@ intuitive and highly controllable with ``matplotlib`` similar syntax
 and keyword arguments.
 
 To get started, try out the :func:`pyvista.plot` convenience method
-that is bound to each PyVista data object:
+that is bound to each PyVista data object.
 
 
 .. pyvista-plot::
@@ -172,7 +175,7 @@ after it's closed).
 You can then use this cached camera for additional plotting without having to
 manually interact with the plotting window:
 
-.. code-block:: python
+.. code:: python
 
     # reuse the camera position from the previous plotter
     cpos = plotter.camera_position
@@ -198,7 +201,7 @@ Any PyVista mesh object can be saved to a VTK file format using
 :func:`save() <pyvista.DataObject.save>`. For example, the mesh in the
 code block above could be saved like:
 
-.. code-block:: python
+.. code:: python
 
     mesh.save("mesh.vtk")
 
