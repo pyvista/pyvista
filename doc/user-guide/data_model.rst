@@ -480,13 +480,22 @@ assigned.
 We can continue to assign cell data to our :class:`DataSet
 <pyvista.core.dataset.DataSet>` using the ``[]`` operator, but if you
 do no wish the new array to become the active array, you can add it
-using ``add_array``...
+using :func:`set_array() <pyvista.DataSet.set_array>`
 
-..
-   Show how we can add multiple cell arrays and set which ones are the
-   active "scalars".
+.. jupyter-execute::
 
-   Pending #1593
+   >>> data = np.linspace(0, 1, ugrid.n_cells)
+   >>> ugrid.cell_data.set_array(data, 'my-linspace')
+   >>> ugrid.cell_data
+
+Now, ``ugrid`` contains two arrays, one of which is the "active"
+scalars.  This set of active scalars will be the one plotted
+automatically when ``scalars`` is unset in either :func:`add_mesh()
+<pyvista.Plotter.add_mesh>` or :func:`pyvista.plot`.  This makes it
+possible to have an many cell arrays associated with a dataset and
+track which one will plotted as the active cell scalars by default.
+
+The active scalars can also be accessed or set via :attr:`active_scalars <pyvista.core.dataset.DataSet.active_scalars>`, and the name of the active scalars array can be accessed or set with :attr:`active_scalars_name <pyvista.core.dataset.DataSet.active_scalars_name>`.
 
 
 Point Data

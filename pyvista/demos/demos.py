@@ -153,7 +153,7 @@ def plot_datasets():
     Examples
     --------
     >>> from pyvista import demos
-    >>> demos.plot_datasets()  # doctest:+SKIP
+    >>> demos.plot_datasets()
 
     """
     ###########################################################################
@@ -185,7 +185,7 @@ def plot_datasets():
 
     line = pv.Line()
     line.points += np.array((2, 0, 0))
-    line.clear_arrays()
+    line.clear_data()
 
     tri = pv.Triangle()
     tri.points += np.array([0, 1, 0])
