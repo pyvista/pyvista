@@ -211,6 +211,9 @@ numpydoc_validation_exclude = {  # set of regex
     # pending refactor
     r'\.*MultiBlock.next$',
 
+    # called from inherited
+    r'\.*Table.copy_meta_from$',
+
 }
 
 

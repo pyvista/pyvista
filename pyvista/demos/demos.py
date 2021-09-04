@@ -384,6 +384,10 @@ def plot_beam(notebook=None):
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
+
+    Examples
+    --------
+    >>> from pyvista import demos
     >>> demos.plot_beam()
 
     """
@@ -413,7 +417,7 @@ def plot_beam(notebook=None):
     plotter.show()
 
 
-def plot_datasets():
+def plot_datasets(dataset_type=None):
     """Plot the pyvista dataset types.
 
     This demo plots the following PyVista dataset types:
@@ -424,12 +428,35 @@ def plot_datasets():
     * :class:`pyvista.RectilinearGrid`
     * :class:`pyvista.StructuredGrid`
 
+    Parameters
+    ----------
+    dataset_type : str, optional
+        If set, plot just that dataset.  Must be one of the following:
+
+        * ``'PolyData'``
+        * ``'UnstructuredGrid'``
+        * ``'UniformGrid'``
+        * ``'RectilinearGrid'``
+        * ``'StructuredGrid'``
+
+    Returns
+    -------
+    dict or None
+        Dictionary of the datasets if ``return_datasets`` is ``True``.
+
     Examples
     --------
     >>> from pyvista import demos
     >>> demos.plot_datasets()
 
     """
+    allowable_types = ['PolyData', 'UnstructuredGrid', 'UniformGrid',
+                       'RectilinearGrid', 'StructuredGrid']
+    if dataset_type is not None:
+        if dataset_type not in allowable_types:
+            raise ValueError(f'Invalid dataset_type {dataset_type}.  Must be one '
+                             f'of the following: {allowable_types}')
+
     ###########################################################################
     # uniform grid
     image = pv.UniformGrid((6, 6, 1))
@@ -475,42 +502,57 @@ def plot_datasets():
     cube = pv.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 
-    pl = pv.Plotter(shape='3/2')
+    if dataset_type is not None:
+        pl = pv.Plotter()
+    else:
+        pl = pv.Plotter(shape='3/2')
 
     # polydata
-    pl.subplot(0)
-    pl.add_text('4. PolyData')
-    pl.add_points(points, point_size=20)
-    pl.add_mesh(line, line_width=5)
-    pl.add_mesh(poly)
-    pl.add_mesh(poly.extract_all_edges(), line_width=2, color='k')
+    if dataset_type is None:
+        pl.subplot(0)
+        pl.add_text('4. PolyData')
+    if dataset_type in [None, 'PolyData']:
+        pl.add_points(points, point_size=20)
+        pl.add_mesh(line, line_width=5)
+        pl.add_mesh(poly)
+        pl.add_mesh(poly.extract_all_edges(), line_width=2, color='k')
 
     # unstructuredgrid
-    pl.subplot(1)
-    pl.add_text('5. UnstructuredGrid')
-    pl.add_mesh(ugrid)
-    pl.add_mesh(ugrid.extract_all_edges(), line_width=2, color='k')
+    if dataset_type is None:
+        pl.subplot(1)
+        pl.add_text('5. UnstructuredGrid')
+    if dataset_type in [None, 'UnstructuredGrid']:
+        pl.add_mesh(ugrid)
+        pl.add_mesh(ugrid.extract_all_edges(), line_width=2, color='k')
 
     # UniformGrid
-    pl.subplot(2)
-    pl.add_text('1. UniformGrid')
-    pl.add_mesh(image)
-    pl.add_mesh(image.extract_all_edges(), color='k', style='wireframe', line_width=2)
-    pl.camera_position = 'xy'
+    if dataset_type is None:
+        pl.subplot(2)
+        pl.add_text('1. UniformGrid')
+    if dataset_type in [None, 'UniformGrid']:
+        pl.add_mesh(image)
+        pl.add_mesh(image.extract_all_edges(), color='k', style='wireframe',
+                    line_width=2)
+        pl.camera_position = 'xy'
 
     # RectilinearGrid
-    pl.subplot(3)
-    pl.add_text('2. RectilinearGrid')
-    pl.add_mesh(rec_grid)
-    pl.add_mesh(rec_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
-    pl.camera_position = 'xy'
+    if dataset_type is None:
+        pl.subplot(3)
+        pl.add_text('2. RectilinearGrid')
+    if dataset_type in [None, 'RectilinearGrid']:
+        pl.add_mesh(rec_grid)
+        pl.add_mesh(rec_grid.extract_all_edges(), color='k', style='wireframe',
+                    line_width=2)
+        pl.camera_position = 'xy'
 
     # StructuredGrid
-    pl.subplot(4)
-    pl.add_text('3. StructuredGrid')
-    pl.add_mesh(struct_grid)
-    pl.add_mesh(struct_grid.extract_all_edges(), color='k', style='wireframe',
-                line_width=2)
-    pl.camera_position = 'xy'
+    if dataset_type is None:
+        pl.subplot(4)
+        pl.add_text('3. StructuredGrid')
+    if dataset_type in [None, 'StructuredGrid']:
+        pl.add_mesh(struct_grid)
+        pl.add_mesh(struct_grid.extract_all_edges(), color='k', style='wireframe',
+                    line_width=2)
+        pl.camera_position = 'xy'
 
     pl.show()

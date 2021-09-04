@@ -95,7 +95,7 @@ memory to store since they must account for every individual point and
 cell . On the other hand, since `vtkImageData`_
 (:class:`pyvista.UniformGrid`) is uniformly spaced, a few integers and
 floats can describe the shape, so it takes the least amount of memory
-to store."
+to store.
 
 This is because in :class:`pyvista.PolyData` or
 :class:`pyvista.UnstructuredGrid`, points and cells must be explicitly

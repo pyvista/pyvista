@@ -39,8 +39,7 @@ PyVista has the following mesh types:
 
    objects
    dataset
-   points
-   point-grids
+   pointsets
    grids
    composite
    filters
