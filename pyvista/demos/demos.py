@@ -404,7 +404,7 @@ def plot_beam(notebook=None):
     try:
         import matplotlib
         cmap = 'bwr'
-    except ImportError:
+    except ImportError:  # pragma: no cover
         cmap = None
 
     # plot this displaced beam

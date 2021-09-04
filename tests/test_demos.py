@@ -1,7 +1,10 @@
 import os
 import platform
-import pytest
 
+import pytest
+import numpy as np
+
+import pyvista
 from pyvista import demos
 from pyvista.plotting import system_supports_plotting
 
@@ -20,6 +23,7 @@ except:
 # These tests fail with mesa opengl on windows
 skip_windows_dev_whl = pytest.mark.skipif(os.name == 'nt' and vtk_dev,
                                           reason='Test fails on Windows with VTK dev wheels')
+
 
 @skip_no_plotting
 def test_plot_glyphs():
@@ -48,3 +52,27 @@ def test_logo_voxel():
 def test_plot_logo():
     # simply should not fail
     demos.plot_logo()
+
+
+
+@skip_no_plotting
+def test_plot_wave():
+    points = demos.plot_wave(wavetime=0.1)
+    assert isinstance(points, np.ndarray)
+
+
+@skip_no_plotting
+def test_beam_example():
+    demos.plot_beam()
+
+
+@skip_no_plotting
+def test_plot_ants_plane():
+    demos.plot_ants_plane()
+
+
+@skip_no_plotting
+def test_orientation_cube():
+    pl = demos.orientation_plotter()
+    assert isinstance(pl, pyvista.Plotter)
+    pl.show()

@@ -27,22 +27,6 @@ except KeyError:
     pass
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_plot_wave():
-    points = demos.plot_wave(wavetime=0.1)
-    assert isinstance(points, np.ndarray)
-
-
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_beam_example():
-    demos.plot_beam()
-
-
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_plot_ants_plane():
-    demos.plot_ants_plane()
-
-
 def test_load_ant():
     """ Load ply ant mesh """
     mesh = examples.load_ant()
