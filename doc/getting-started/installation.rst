@@ -122,8 +122,8 @@ You can test your installation by running an example:
 
 .. code:: python
 
-    >>> from pyvista import examples
-    >>> examples.plot_wave()
+    >>> from pyvista import demos
+    >>> demos.plot_wave()
 
 See other examples and demos:
 
@@ -138,7 +138,6 @@ See other examples and demos:
 
     List all available demos.
 
-    >>> print(dir(demos))
 
 .. note::
 

@@ -19,7 +19,7 @@ Highlights of the API include:
    plotting/index
    utilities/index
    readers/index
-
+   examples/index
 
 .. panels::
     :column: col-12 p-3

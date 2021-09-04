@@ -1,4 +1,6 @@
 """
+.. _show_edges_example:
+
 Show Edges
 ~~~~~~~~~~
 

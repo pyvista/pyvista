@@ -1,13 +1,37 @@
-"""Demos to show off the functionality of pyvista."""
+"""Demos to show off the functionality of PyVista."""
 
-from .logo import text_3d
+import time
 
-import pyvista as pv
 import numpy as np
 
+import pyvista as pv
+from pyvista import examples
+from .logo import text_3d
 
-def glyphs(grid_sz=3, **kwargs):
-    """Create several parametric supertoroids using VTK's glyph table functionality."""
+
+def glyphs(grid_sz=3):
+    """Create several parametric supertoroids using VTK's glyph table functionality.
+
+    Parameters
+    ----------
+    grid_sz : int, optional
+        Create ``grid_sz x grid_sz`` supertoroids.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh of supertoroids.
+
+    See Also
+    --------
+    plot_glyphs
+
+    Examples
+    --------
+    >>> from pyvista import demos
+    >>> mesh = demos.glyphs()
+
+    """
     n = 10
     values = np.arange(n)  # values for scalars to look up glyphs by
 
@@ -31,7 +55,28 @@ def glyphs(grid_sz=3, **kwargs):
 
 
 def plot_glyphs(grid_sz=3, **kwargs):
-    """Plot several parametric supertoroids using VTK's glyph table functionality."""
+    """Plot several parametric supertoroids using VTK's glyph table functionality.
+
+    Parameters
+    ----------
+    grid_sz : int, optional
+        Create ``grid_sz x grid_sz`` supertoroids.
+
+    **kwargs : dict, optional
+        All additional keyword arguments will be passed to
+        :func:`pyvista.Plotter.add_mesh`.
+
+    Returns
+    -------
+    various
+        See :func:`show <pyvista.Plotter.show>`.
+
+    Examples
+    --------
+    >>> from pyvista import demos
+    >>> demos.plot_glyphs()
+
+    """
     # construct the glyphs on top of the mesh; don't scale by scalars now
     mesh = glyphs(grid_sz)
 
@@ -47,6 +92,11 @@ def plot_glyphs(grid_sz=3, **kwargs):
 
 def orientation_cube():
     """Return a dictionary containing the meshes composing an orientation cube.
+
+    Returns
+    -------
+    dict
+        Dictionary containing the meshes composing an orientation cube.
 
     Examples
     --------
@@ -125,7 +175,20 @@ def orientation_cube():
 
 
 def orientation_plotter():
-    """Return a plotter containing the orientation cube."""
+    """Return a plotter containing the orientation cube.
+
+    Returns
+    -------
+    pyvista.Plotter
+        Orientation cube plotter.
+
+    Examples
+    --------
+    >>> from pyvista import demos
+    >>> plotter = demos.orientation_plotter()
+    >>> plotter.show()
+
+    """
     ocube = orientation_cube()
     pl = pv.Plotter()
     pl.add_mesh(ocube['cube'], show_edges=True)
@@ -137,6 +200,217 @@ def orientation_plotter():
     pl.add_mesh(ocube['z_n'], color='red')
     pl.show_axes()
     return pl
+
+
+def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
+              notebook=None):
+    """Plot a 3D moving wave in a render window.
+
+    Parameters
+    ----------
+    fps : int, optional
+        Maximum frames per second to display.  Defaults to 30.
+
+    frequency : float, optional
+        Wave cycles per second.  Defaults to 1 Hz.
+
+    wavetime : float, optional
+        The desired total display time in seconds.  Defaults to 3 seconds.
+
+    interactive : bool, optional
+        Allows the user to set the camera position before the start of the
+        wave movement.  Default ``False``.
+
+    notebook : bool, optional
+        When ``True``, the resulting plot is placed inline a jupyter
+        notebook.  Assumes a jupyter console is active.
+
+    Returns
+    -------
+    numpy.ndarray
+        Position of points at last frame.
+
+    Examples
+    --------
+    >>> from pyvista import demos
+    >>> out = demos.plot_wave()
+
+    """
+    # camera position
+    cpos = [(6.879481857604187, -32.143727535933195, 23.05622921691103),
+            (-0.2336056403734026, -0.6960083534590372, -0.7226721553894022),
+            (-0.008900669873416645, 0.6018246347860926, 0.7985786667826725)]
+
+    # Make data
+    X = np.arange(-10, 10, 0.25)
+    Y = np.arange(-10, 10, 0.25)
+    X, Y = np.meshgrid(X, Y)
+    R = np.sqrt(X**2 + Y**2)
+    Z = np.sin(R)
+
+    # Create and plot structured grid
+    sgrid = pv.StructuredGrid(X, Y, Z)
+
+    # Get pointer to points
+    points = sgrid.points.copy()
+    mesh = sgrid.extract_surface()
+
+    # Start a plotter object and set the scalars to the Z height
+    plotter = pv.Plotter(notebook=notebook)
+    plotter.add_mesh(mesh, scalars=Z.ravel(), show_scalar_bar=False,
+                     smooth_shading=True)
+    plotter.camera_position = cpos
+    plotter.show(title='Wave Example', window_size=[800, 600],
+                 auto_close=False, interactive_update=True)
+
+    # Update Z and display a frame for each updated position
+    tdelay = 1. / fps
+    tlast = time.time()
+    tstart = time.time()
+    while time.time() - tstart < wavetime:
+        # get phase from start
+        telap = time.time() - tstart
+        phase = telap * 2 * np.pi * frequency
+        Z = np.sin(R + phase)
+        points[:, -1] = Z.ravel()
+
+        # update plotting object, but don't automatically render
+        plotter.update_coordinates(points, render=False)
+        plotter.update_scalars(Z.ravel(), render=False)
+        mesh.compute_normals(inplace=True)
+
+        # Render and get time to render
+        plotter.update()
+
+        # time delay
+        tpast = time.time() - tlast
+        if tpast < tdelay and tpast >= 0 and not plotter.off_screen:
+            time.sleep(tdelay - tpast)
+
+        # store when rendering complete
+        tlast = time.time()
+
+    # Close movie and delete object
+    plotter.close()
+    return points
+
+
+def plot_ants_plane(notebook=None):
+    """Plot two ants and airplane.
+
+    Demonstrate how to create a plot class to plot multiple meshes while
+    adding scalars and text.
+
+    This example plots the following:
+
+    .. code:: python
+
+       >>> import pyvista
+       >>> from pyvista import examples
+
+       Load and shrink airplane
+
+       >>> airplane = examples.load_airplane()
+       >>> airplane.points /= 10
+
+       Rotate and translate ant so it is on the plane.
+
+       >>> ant = examples.load_ant()
+       >>> ant.rotate_x(90)
+       >>> ant.translate([90, 60, 15])
+
+       Make a copy and add another ant.
+
+       >>> ant_copy = ant.copy()
+       >>> ant_copy.translate([30, 0, -10])
+
+       Create plotting object.
+
+       >>> plotter = pyvista.Plotter()
+       >>> _ = plotter.add_mesh(ant, 'r')
+       >>> _ = plotter.add_mesh(ant_copy, 'b')
+
+       Add airplane mesh and make the color equal to the Y position.
+
+       >>> plane_scalars = airplane.points[:, 1]
+       >>> _ = plotter.add_mesh(airplane, scalars=plane_scalars,
+       ...                      scalar_bar_args={'title': 'Plane Y Location'})
+       >>> _ = plotter.add_text('Ants and Plane Example')
+       >>> plotter.show()
+
+    Parameters
+    ----------
+    notebook : bool, optional
+        When ``True``, the resulting plot is placed inline a jupyter
+        notebook.  Assumes a jupyter console is active.
+
+    Examples
+    --------
+    >>> from pyvista import demos
+    >>> demos.plot_ants_plane()
+
+    """
+    # load and shrink airplane
+    airplane = examples.load_airplane()
+    airplane.points /= 10
+
+    # rotate and translate ant so it is on the plane
+    ant = examples.load_ant()
+    ant.rotate_x(90)
+    ant.translate([90, 60, 15])
+
+    # Make a copy and add another ant
+    ant_copy = ant.copy()
+    ant_copy.translate([30, 0, -10])
+
+    # Create plotting object
+    plotter = pv.Plotter(notebook=notebook)
+    plotter.add_mesh(ant, 'r')
+    plotter.add_mesh(ant_copy, 'b')
+
+    # Add airplane mesh and make the color equal to the Y position
+    plane_scalars = airplane.points[:, 1]
+    plotter.add_mesh(airplane, scalars=plane_scalars,
+                     scalar_bar_args={'title': 'Plane Y\nLocation'})
+    plotter.add_text('Ants and Plane Example')
+    plotter.show()
+
+
+def plot_beam(notebook=None):
+    """Plot a beam with displacement.
+
+    Parameters
+    ----------
+    notebook : bool, optional
+        When ``True``, the resulting plot is placed inline a jupyter
+        notebook.  Assumes a jupyter console is active.
+    >>> demos.plot_beam()
+
+    """
+    # Create fiticious displacements as a function of Z location
+    grid = examples.load_hexbeam()
+    d = grid.points[:, 2]**3/250
+    grid.points[:, 1] += d
+
+    # Camera position
+    cpos = [(11.915126303095157, 6.11392754955802, 3.6124956735471914),
+            (0.0, 0.375, 2.0),
+            (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177)]
+
+    try:
+        import matplotlib
+        cmap = 'bwr'
+    except ImportError:  # pragma: no cover
+        cmap = None
+
+    # plot this displaced beam
+    plotter = pv.Plotter(notebook=notebook)
+    plotter.add_mesh(grid, scalars=d,
+                     scalar_bar_args={'title': 'Y Displacement'},
+                     rng=[-d.max(), d.max()], cmap=cmap)
+    plotter.camera_position = cpos
+    plotter.add_text('Static Beam Example')
+    plotter.show()
 
 
 def plot_datasets():
