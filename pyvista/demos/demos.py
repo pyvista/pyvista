@@ -203,7 +203,7 @@ def orientation_plotter():
 
 
 def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
-              off_screen=None, notebook=None):
+              notebook=None):
     """Plot a 3D moving wave in a render window.
 
     Parameters
@@ -220,12 +220,6 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
     interactive : bool, optional
         Allows the user to set the camera position before the start of the
         wave movement.  Default ``False``.
-
-    off_screen : bool, optional
-        Plots off screen when ``True``.  Helpful for saving screenshots
-        without a window popping up.  Defaults to active theme setting in
-        :attr:`pyvista.global_theme.full_screen
-        <pyvista.themes.DefaultTheme.full_screen`.
 
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
@@ -262,7 +256,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
     mesh = sgrid.extract_surface()
 
     # Start a plotter object and set the scalars to the Z height
-    plotter = pv.Plotter(off_screen=off_screen, notebook=notebook)
+    plotter = pv.Plotter(notebook=notebook)
     plotter.add_mesh(mesh, scalars=Z.ravel(), show_scalar_bar=False,
                      smooth_shading=True)
     plotter.camera_position = cpos
@@ -301,7 +295,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
     return points
 
 
-def plot_ants_plane(off_screen=None, notebook=None):
+def plot_ants_plane(notebook=None):
     """Plot two ants and airplane.
 
     Demonstrate how to create a plot class to plot multiple meshes while
@@ -346,12 +340,6 @@ def plot_ants_plane(off_screen=None, notebook=None):
 
     Parameters
     ----------
-    off_screen : bool, optional
-        Plots off screen when ``True``.  Helpful for saving screenshots
-        without a window popping up.  Defaults to active theme setting in
-        :attr:`pyvista.global_theme.full_screen
-        <pyvista.themes.DefaultTheme.full_screen`.
-
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
@@ -376,7 +364,7 @@ def plot_ants_plane(off_screen=None, notebook=None):
     ant_copy.translate([30, 0, -10])
 
     # Create plotting object
-    plotter = pv.Plotter(off_screen=off_screen, notebook=notebook)
+    plotter = pv.Plotter(notebook=notebook)
     plotter.add_mesh(ant, 'r')
     plotter.add_mesh(ant_copy, 'b')
 
@@ -388,17 +376,11 @@ def plot_ants_plane(off_screen=None, notebook=None):
     plotter.show()
 
 
-def plot_beam(off_screen=None, notebook=None):
+def plot_beam(notebook=None):
     """Plot a beam with displacement.
 
     Parameters
     ----------
-    off_screen : bool, optional
-        Plots off screen when ``True``.  Helpful for saving screenshots
-        without a window popping up.  Defaults to active theme setting in
-        :attr:`pyvista.global_theme.full_screen
-        <pyvista.themes.DefaultTheme.full_screen`.
-
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
@@ -426,7 +408,7 @@ def plot_beam(off_screen=None, notebook=None):
         cmap = None
 
     # plot this displaced beam
-    plotter = pv.Plotter(off_screen=off_screen, notebook=notebook)
+    plotter = pv.Plotter(notebook=notebook)
     plotter.add_mesh(grid, scalars=d,
                      scalar_bar_args={'title': 'Y Displacement'},
                      rng=[-d.max(), d.max()], cmap=cmap)
