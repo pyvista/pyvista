@@ -1,4 +1,15 @@
-"""Functions to download sample datasets from the VTK data repository."""
+"""Functions to download sample datasets from the VTK data repository.
+
+Once downloaded, these datasets are stored locally allowing for the
+rapid resuse of these datasets.
+
+Examples
+--------
+>>> from pyvista import examples
+>>> mesh = examples.download_saddle_surface()
+>>> mesh.plot()
+
+"""
 
 from functools import partial
 import os
@@ -21,7 +32,17 @@ def _check_examples_path():
 
 
 def delete_downloads():
-    """Delete all downloaded examples to free space or update the files."""
+    """Delete all downloaded examples to free space or update the files.
+
+    Examples
+    --------
+    Delete all local downloads.
+
+    >>> from pyvista import examples
+    >>> examples.delete_downloads()  # doctest:+SKIP
+    True
+
+    """
     _check_examples_path()
     shutil.rmtree(pyvista.EXAMPLES_PATH)
     os.makedirs(pyvista.EXAMPLES_PATH)
@@ -119,73 +140,348 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
 ###############################################################################
 
 def download_masonry_texture(load=True):
-    """Download masonry texture."""
+    """Download masonry texture.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_masonry_texture()  # doctest:+SKIP
+
+    See the :ref:`ref_texture_example` for an example using this
+    dataset.
+
+    """
     return _download_and_read('masonry.bmp', texture=True, load=load)
 
 
 def download_usa_texture(load=True):
-    """Download usa texture."""
+    """Download usa texture.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_usa_texture()  # doctest:+SKIP
+
+    """
     return _download_and_read('usa_image.jpg', texture=True, load=load)
 
 
 def download_puppy_texture(load=True):
-    """Download puppy texture."""
+    """Download puppy texture.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_puppy_texture()  # doctest:+SKIP
+
+    See the :ref:`ref_texture_example` for an example using this
+    dataset.
+
+    """
     return _download_and_read('puppy.jpg', texture=True, load=load)
 
 
 def download_puppy(load=True):
-    """Download puppy dataset."""
+    """Download puppy dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_puppy()  # doctest:+SKIP
+    >>> dataset  # doctest:+SKIP
+    UniformGrid (0x7fa0c15079a0)
+    N Cells:	1917201
+    N Points:	1920000
+    X Bounds:	0.000e+00, 1.599e+03
+    Y Bounds:	0.000e+00, 1.199e+03
+    Z Bounds:	0.000e+00, 0.000e+00
+    Dimensions:	1600, 1200, 1
+    Spacing:	1.000e+00, 1.000e+00, 1.000e+00
+    N Arrays:	1
+
+
+    """
     return _download_and_read('puppy.jpg', load=load)
 
 
 def download_usa(load=True):
-    """Download usa dataset."""
+    """Download usa dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_usa()  # doctest:+SKIP
+
+    """
     return _download_and_read('usa.vtk', load=load)
 
 
 def download_st_helens(load=True):
-    """Download Saint Helens dataset."""
+    """Download Saint Helens dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_st_helens()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`colormap_example`
+    * :ref:`ref_lighting_properties_example`
+
+
+    """
     return _download_and_read('SainteHelens.dem', load=load)
 
 
 def download_bunny(load=True):
-    """Download bunny dataset."""
+    """Download bunny dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_bunny()  # doctest:+SKIP
+
+    """
     return _download_and_read('bunny.ply', load=load)
 
 
 def download_bunny_coarse(load=True):
-    """Download coarse bunny dataset."""
+    """Download coarse bunny dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_bunny_coarse()  # doctest:+SKIP
+
+    """
     return _download_and_read('Bunny.vtp', load=load)
 
 
 def download_cow(load=True):
-    """Download cow dataset."""
+    """Download cow dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_cow()  # doctest:+SKIP
+
+    """
     return _download_and_read('cow.vtp', load=load)
 
 
 def download_cow_head(load=True):
-    """Download cow head dataset."""
+    """Download cow head dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_cow_head()  # doctest:+SKIP
+
+    """
     return _download_and_read('cowHead.vtp', load=load)
 
 
 def download_faults(load=True):
-    """Download faults dataset."""
+    """Download faults dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_faults()  # doctest:+SKIP
+
+    """
     return _download_and_read('faults.vtk', load=load)
 
 
 def download_tensors(load=True):
-    """Download tensors dataset."""
+    """Download tensors dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_tensors()  # doctest:+SKIP
+
+    """
     return _download_and_read('tensors.vtk', load=load)
 
 
 def download_head(load=True):
-    """Download head dataset."""
+    """Download head dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_head()  # doctest:+SKIP
+
+    """
     _download_file('HeadMRVolume.raw')
     return _download_and_read('HeadMRVolume.mhd', load=load)
 
 
 def download_bolt_nut(load=True):
-    """Download bolt nut dataset."""
+    """Download bolt nut dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_bolt_nut()  # doctest:+SKIP
+
+    """
     if not load:
         return (
             _download_and_read('bolt.slc', load=load),
@@ -198,52 +494,232 @@ def download_bolt_nut(load=True):
 
 
 def download_clown(load=True):
-    """Download clown dataset."""
+    """Download clown dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_clown()  # doctest:+SKIP
+
+    """
     return _download_and_read('clown.facet', load=load)
 
 
 def download_topo_global(load=True):
-    """Download topo dataset."""
+    """Download topo dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_topo_global()  # doctest:+SKIP
+
+    """
     return _download_and_read('EarthModels/ETOPO_10min_Ice.vtp', load=load)
 
 
 def download_topo_land(load=True):
-    """Download topo land dataset."""
+    """Download topo land dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_topo_land()  # doctest:+SKIP
+
+    """
     return _download_and_read('EarthModels/ETOPO_10min_Ice_only-land.vtp', load=load)
 
 
 def download_coastlines(load=True):
-    """Download coastlines dataset."""
+    """Download coastlines dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_coastlines()  # doctest:+SKIP
+
+    """
     return _download_and_read('EarthModels/Coastlines_Los_Alamos.vtp', load=load)
 
 
 def download_knee(load=True):
-    """Download knee dataset."""
+    """Download knee dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_knee()  # doctest:+SKIP
+
+    """
     return _download_and_read('DICOM_KNEE.dcm', load=load)
 
 
 def download_knee_full(load=True):
-    """Download full knee dataset."""
+    """Download full knee dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_knee_full()  # doctest:+SKIP
+
+    """
     return _download_and_read('vw_knee.slc', load=load)
 
 
 def download_lidar(load=True):
-    """Download lidar dataset."""
+    """Download lidar dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_lidar()  # doctest:+SKIP
+
+    """
     return _download_and_read('kafadar-lidar-interp.vtp', load=load)
 
 
 def download_exodus(load=True):
-    """Sample ExodusII data file."""
+    """Sample ExodusII data file.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_exodus()  # doctest:+SKIP
+
+    """
     return _download_and_read('mesh_fs8.exo', load=load)
 
 
 def download_nefertiti(load=True):
-    """Download mesh of Queen Nefertiti."""
+    """Download mesh of Queen Nefertiti.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_nefertiti()  # doctest:+SKIP
+
+    """
     return _download_and_read('nefertiti.ply.zip', load=load)
 
 
 def download_blood_vessels(load=True):
-    """Download data representing the bifurcation of blood vessels."""
+    """Download data representing the bifurcation of blood vessels.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_blood_vessels()  # doctest:+SKIP
+
+    """
     local_path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
     filename = os.path.join(local_path, 'T0000000500.pvtu')
     if not load:
@@ -254,22 +730,94 @@ def download_blood_vessels(load=True):
 
 
 def download_iron_protein(load=True):
-    """Download iron protein dataset."""
+    """Download iron protein dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_iron_protein()  # doctest:+SKIP
+
+    """
     return _download_and_read('ironProt.vtk', load=load)
 
 
 def download_tetrahedron(load=True):
-    """Download tetrahedron dataset."""
+    """Download tetrahedron dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_tetrahedron()  # doctest:+SKIP
+
+    """
     return _download_and_read('Tetrahedron.vtu', load=load)
 
 
 def download_saddle_surface(load=True):
-    """Download saddle surface dataset."""
+    """Download saddle surface dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_saddle_surface()  # doctest:+SKIP
+
+    """
     return _download_and_read('InterpolatingOnSTL_final.stl', load=load)
 
 
 def download_sparse_points(load=True):
-    """Download sparse points dataset.
+    """Download sparse points data.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_sparse_points()  # doctest:+SKIP
+
+    et.
 
     Used with ``download_saddle_surface``.
 
@@ -292,220 +840,976 @@ def download_sparse_points(load=True):
 
 
 def download_foot_bones(load=True):
-    """Download foot bones dataset."""
+    """Download foot bones dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_foot_bones()  # doctest:+SKIP
+
+    """
     return _download_and_read('fsu/footbones.ply', load=load)
 
 
 def download_guitar(load=True):
-    """Download guitar dataset."""
+    """Download guitar dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_guitar()  # doctest:+SKIP
+
+    """
     return _download_and_read('fsu/stratocaster.ply', load=load)
 
 
 def download_quadratic_pyramid(load=True):
-    """Download quadratic pyramid dataset."""
+    """Download quadratic pyramid dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_quadratic_pyramid()  # doctest:+SKIP
+
+    """
     return _download_and_read('QuadraticPyramid.vtu', load=load)
 
 
 def download_bird(load=True):
-    """Download bird dataset."""
+    """Download bird dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_bird()  # doctest:+SKIP
+
+    """
     return _download_and_read('Pileated.jpg', load=load)
 
 
 def download_bird_texture(load=True):
-    """Download bird texture."""
+    """Download bird texture.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_bird_texture()  # doctest:+SKIP
+
+    """
     return _download_and_read('Pileated.jpg', texture=True, load=load)
 
 
 def download_office(load=True):
-    """Download office dataset."""
+    """Download office dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_office()  # doctest:+SKIP
+
+    """
     return _download_and_read('office.binary.vtk', load=load)
 
 
 def download_horse_points(load=True):
-    """Download horse points dataset."""
+    """Download horse points dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_horse_points()  # doctest:+SKIP
+
+    """
     return _download_and_read('horsePoints.vtp', load=load)
 
 
 def download_horse(load=True):
-    """Download horse dataset."""
+    """Download horse dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_horse()  # doctest:+SKIP
+
+    """
     return _download_and_read('horse.vtp', load=load)
 
 
 def download_cake_easy(load=True):
-    """Download cake dataset."""
+    """Download cake dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_cake_easy()  # doctest:+SKIP
+
+    """
     return _download_and_read('cake_easy.jpg', load=load)
 
 
 def download_cake_easy_texture(load=True):
-    """Download cake texture."""
+    """Download cake texture.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_cake_easy_texture()  # doctest:+SKIP
+
+    """
     return _download_and_read('cake_easy.jpg', texture=True, load=load)
 
 
 def download_rectilinear_grid(load=True):
-    """Download rectilinear grid dataset."""
+    """Download rectilinear grid dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_rectilinear_grid()  # doctest:+SKIP
+
+    """
     return _download_and_read('RectilinearGrid.vtr', load=load)
 
 
 def download_gourds(zoom=False, load=True):
-    """Download gourds dataset."""
+    """Download gourds dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_gourds()  # doctest:+SKIP
+
+    """
     if zoom:
         return _download_and_read('Gourds.png', load=load)
     return _download_and_read('Gourds2.jpg', load=load)
 
 
 def download_gourds_texture(zoom=False, load=True):
-    """Download gourds texture."""
+    """Download gourds texture.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_gourds_texture()  # doctest:+SKIP
+
+    """
     if zoom:
         return _download_and_read('Gourds.png', texture=True, load=load)
     return _download_and_read('Gourds2.jpg', texture=True, load=load)
 
 
 def download_unstructured_grid(load=True):
-    """Download unstructured grid dataset."""
+    """Download unstructured grid dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_unstructured_grid()  # doctest:+SKIP
+
+    """
     return _download_and_read('uGridEx.vtk', load=load)
 
 
 def download_letter_k(load=True):
-    """Download letter k dataset."""
+    """Download letter k dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_letter_k()  # doctest:+SKIP
+
+    """
     return _download_and_read('k.vtk', load=load)
 
 
 def download_letter_a(load=True):
-    """Download letter a dataset."""
+    """Download letter a dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_letter_a()  # doctest:+SKIP
+
+    """
     return _download_and_read('a_grid.vtk', load=load)
 
 
 def download_poly_line(load=True):
-    """Download polyline dataset."""
+    """Download polyline dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_poly_line()  # doctest:+SKIP
+
+    """
     return _download_and_read('polyline.vtk', load=load)
 
 
 def download_cad_model(load=True):
-    """Download cad dataset."""
+    """Download cad dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_cad_model()  # doctest:+SKIP
+
+    """
     return _download_and_read('42400-IDGH.stl', load=load)
 
 
 def download_frog(load=True):
-    """Download frog dataset."""
+    """Download frog dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_frog()  # doctest:+SKIP
+
+    """
     # TODO: there are other files with this
     _download_file('froggy/frog.zraw')
     return _download_and_read('froggy/frog.mhd', load=load)
 
 
 def download_prostate(load=True):
-    """Download prostate dataset."""
+    """Download prostate dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_prostate()  # doctest:+SKIP
+
+    """
     return _download_and_read('prostate.img', load=load)
 
 
 def download_filled_contours(load=True):
-    """Download filled contours dataset."""
+    """Download filled contours dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_filled_contours()  # doctest:+SKIP
+
+    """
     return _download_and_read('filledContours.vtp', load=load)
 
 
 def download_doorman(load=True):
-    """Download doorman dataset."""
+    """Download doorman dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_doorman()  # doctest:+SKIP
+
+    """
     # TODO: download textures as well
     return _download_and_read('doorman/doorman.obj', load=load)
 
 
 def download_mug(load=True):
-    """Download mug dataset."""
+    """Download mug dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_mug()  # doctest:+SKIP
+
+    """
     return _download_and_read('mug.e', load=load)
 
 
 def download_oblique_cone(load=True):
-    """Download oblique cone dataset."""
+    """Download oblique cone dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_oblique_cone()  # doctest:+SKIP
+
+    """
     return _download_and_read('ObliqueCone.vtp', load=load)
 
 
 def download_emoji(load=True):
-    """Download emoji dataset."""
+    """Download emoji dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_emoji()  # doctest:+SKIP
+
+    """
     return _download_and_read('emote.jpg', load=load)
 
 
 def download_emoji_texture(load=True):
-    """Download emoji texture."""
+    """Download emoji texture.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_emoji_texture()  # doctest:+SKIP
+
+    """
     return _download_and_read('emote.jpg', texture=True, load=load)
 
 
 def download_teapot(load=True):
-    """Download teapot dataset."""
+    """Download teapot dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_teapot()  # doctest:+SKIP
+
+    """
     return _download_and_read('teapot.g', load=load)
 
 
 def download_brain(load=True):
-    """Download brain dataset."""
+    """Download brain dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_brain()  # doctest:+SKIP
+
+    """
     return _download_and_read('brain.vtk', load=load)
 
 
 def download_structured_grid(load=True):
-    """Download structured grid dataset."""
+    """Download structured grid dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_structured_grid()  # doctest:+SKIP
+
+    """
     return _download_and_read('StructuredGrid.vts', load=load)
 
 
 def download_structured_grid_two(load=True):
-    """Download structured grid two dataset."""
+    """Download structured grid two dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_structured_grid_two()  # doctest:+SKIP
+
+    """
     return _download_and_read('SampleStructGrid.vtk', load=load)
 
 
 def download_trumpet(load=True):
-    """Download trumpet dataset."""
+    """Download trumpet dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_trumpet()  # doctest:+SKIP
+
+    """
     return _download_and_read('trumpet.obj', load=load)
 
 
 def download_face(load=True):
-    """Download face dataset."""
+    """Download face dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_face()  # doctest:+SKIP
+
+    """
     # TODO: there is a texture with this
     return _download_and_read('fran_cut.vtk', load=load)
 
 
 def download_sky_box_nz(load=True):
-    """Download skybox-nz dataset."""
+    """Download skybox-nz dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_sky_box_nz()  # doctest:+SKIP
+
+    """
     return _download_and_read('skybox-nz.jpg', load=load)
 
 
 def download_sky_box_nz_texture(load=True):
-    """Download skybox-nz texture."""
+    """Download skybox-nz texture.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_sky_box_nz_texture()  # doctest:+SKIP
+
+    """
     return _download_and_read('skybox-nz.jpg', texture=True, load=load)
 
 
 def download_disc_quads(load=True):
-    """Download disc quads dataset."""
+    """Download disc quads dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_disc_quads()  # doctest:+SKIP
+
+    """
     return _download_and_read('Disc_BiQuadraticQuads_0_0.vtu', load=load)
 
 
 def download_honolulu(load=True):
-    """Download honolulu dataset."""
+    """Download honolulu dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_honolulu()  # doctest:+SKIP
+
+    """
     return _download_and_read('honolulu.vtk', load=load)
 
 
 def download_motor(load=True):
-    """Download motor dataset."""
+    """Download motor dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_motor()  # doctest:+SKIP
+
+    """
     return _download_and_read('motor.g', load=load)
 
 
 def download_tri_quadratic_hexahedron(load=True):
-    """Download tri quadratic hexahedron dataset."""
+    """Download tri quadratic hexahedron dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_tri_quadratic_hexahedron()  # doctest:+SKIP
+
+    """
     return _download_and_read('TriQuadraticHexahedron.vtu', load=load)
 
 
 def download_human(load=True):
-    """Download human dataset."""
+    """Download human dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_human()  # doctest:+SKIP
+
+    """
     return _download_and_read('Human.vtp', load=load)
 
 
 def download_vtk(load=True):
-    """Download vtk dataset."""
+    """Download vtk dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_vtk()  # doctest:+SKIP
+
+    """
     return _download_and_read('vtk.vtp', load=load)
 
 
 def download_spider(load=True):
-    """Download spider dataset."""
+    """Download spider dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_spider()  # doctest:+SKIP
+
+    """
     return _download_and_read('spider.ply', load=load)
 
 
 def download_carotid(load=True):
-    """Download carotid dataset."""
+    """Download carotid dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_carotid()  # doctest:+SKIP
+
+    """
     mesh = _download_and_read('carotid.vtk', load=load)
     if not load:
         return mesh
@@ -515,39 +1819,168 @@ def download_carotid(load=True):
 
 
 def download_blow(load=True):
-    """Download blow dataset."""
+    """Download blow dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_blow()  # doctest:+SKIP
+
+    """
     return _download_and_read('blow.vtk', load=load)
 
 
 def download_shark(load=True):
-    """Download shark dataset."""
+    """Download shark dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_shark()  # doctest:+SKIP
+
+    """
     return _download_and_read('shark.ply', load=load)
 
 
 def download_dragon(load=True):
-    """Download dragon dataset."""
+    """Download dragon dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_dragon()  # doctest:+SKIP
+
+    """
     return _download_and_read('dragon.ply', load=load)
 
 
 def download_armadillo(load=True):
-    """Download armadillo dataset."""
+    """Download armadillo dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_armadillo()  # doctest:+SKIP
+
+    """
     return _download_and_read('Armadillo.ply', load=load)
 
 
 def download_gears(load=True):
-    """Download gears dataset."""
+    """Download gears dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_gears()  # doctest:+SKIP
+
+    """
     return _download_and_read('gears.stl', load=load)
 
 
 def download_torso(load=True):
-    """Download torso dataset."""
+    """Download torso dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_torso()  # doctest:+SKIP
+
+    """
     return _download_and_read('Torso.vtp', load=load)
 
 
 def download_kitchen(split=False, load=True):
     """Download structured grid of kitchen with velocity field.
 
-    Use the ``split`` argument to extract all of the furniture in the kitchen.
+    Use the ``split`` argument to extract all of the furniture in the
+    kitchen.
+
+    Parameters
+    ----------
+    split : bool, optional
+        Optionally split the furniture and return a
+        :class:`pyvista.MultiBlock`.
+
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_kitchen()  # doctest:+SKIP
 
     """
     mesh = _download_and_read('kitchen.vtk', load=load)
@@ -591,6 +2024,16 @@ def download_tetra_dc_mesh():
     This contains a high resolution forward modeled mesh and a coarse
     inverse modeled mesh.
 
+    Returns
+    -------
+    pyvista.MultiBlock
+        DataSet.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_tetra_dc_mesh()  # doctest:+SKIP
+
     """
     local_path, _ = _download_file('dc-inversion.zip')
     filename = os.path.join(local_path, 'mesh-forward.vtu')
@@ -603,47 +2046,209 @@ def download_tetra_dc_mesh():
 
 
 def download_model_with_variance(load=True):
-    """Download model with variance dataset."""
+    """Download model with variance dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_model_with_variance()  # doctest:+SKIP
+
+    """
     return _download_and_read("model_with_variance.vtu", load=load)
 
 
 def download_thermal_probes(load=True):
-    """Download thermal probes dataset."""
+    """Download thermal probes dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_thermal_probes()  # doctest:+SKIP
+
+    """
     return _download_and_read("probes.vtp", load=load)
 
 
 def download_carburator(load=True):
-    """Download scan of a carburator."""
+    """Download scan of a carburator.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_carburator()  # doctest:+SKIP
+
+    """
     return _download_and_read("carburetor.ply", load=load)
 
 
 def download_turbine_blade(load=True):
-    """Download scan of a turbine blade."""
+    """Download scan of a turbine blade.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_turbine_blade()  # doctest:+SKIP
+
+    """
     return _download_and_read('turbineblade.ply', load=load)
 
 
 def download_pine_roots(load=True):
-    """Download pine roots dataset."""
+    """Download pine roots dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_pine_roots()  # doctest:+SKIP
+
+    """
     return _download_and_read('pine_root.tri', load=load)
 
 
 def download_crater_topo(load=True):
-    """Download crater dataset."""
+    """Download crater dataset.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_crater_topo()  # doctest:+SKIP
+
+    """
     return _download_and_read('Ruapehu_mag_dem_15m_NZTM.vtk', load=load)
 
 
 def download_crater_imagery(load=True):
-    """Download crater texture."""
+    """Download crater texture.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_crater_imagery()  # doctest:+SKIP
+
+    """
     return _download_and_read('BJ34_GeoTifv1-04_crater_clip.tif', texture=True, load=load)
 
 
 def download_dolfin(load=True):
-    """Download dolfin mesh."""
+    """Download dolfin mesh.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_dolfin()  # doctest:+SKIP
+
+    """
     return _download_and_read('dolfin_fine.xml', file_format="dolfin-xml", load=load)
 
 
 def download_damavand_volcano(load=True):
-    """Download damavand volcano model."""
+    """Download damavand volcano model.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_damavand_volcano()  # doctest:+SKIP
+
+    """
     volume = _download_and_read("damavand-volcano.vtk", load=load)
     if not load:
         return volume
@@ -652,17 +2257,71 @@ def download_damavand_volcano(load=True):
 
 
 def download_delaunay_example(load=True):
-    """Download a pointset for the Delaunay example."""
+    """Download a pointset for the Delaunay example.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_delaunay_example()  # doctest:+SKIP
+
+    """
     return _download_and_read('250.vtk', load=load)
 
 
 def download_embryo(load=True):
-    """Download a volume of an embryo."""
+    """Download a volume of an embryo.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_embryo()  # doctest:+SKIP
+
+    """
     return _download_and_read('embryo.slc', load=load)
 
 
 def download_antarctica_velocity(load=True):
-    """Download the antarctica velocity simulation results."""
+    """Download the antarctica velocity simulation results.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_antarctica_velocity()  # doctest:+SKIP
+
+    """
     return _download_and_read("antarctica_velocity.vtp", load=load)
 
 
@@ -672,28 +2331,113 @@ def download_room_surface_mesh(load=True):
     This mesh is for demonstrating the difference that depth peeling can
     provide whenn rendering translucent geometries.
 
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Notes
+    -----
     This mesh is courtesy of `Sam Potter <https://github.com/sampotter>`_.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_room_surface_mesh()  # doctest:+SKIP
+
     """
     return _download_and_read("room_surface_mesh.obj", load=load)
 
 
 def download_beach(load=True):
-    """Download the beach NRRD image."""
+    """Download the beach NRRD image.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_beach()  # doctest:+SKIP
+
+    """
     return _download_and_read("beach.nrrd", load=load)
 
 
 def download_rgba_texture(load=True):
-    """Download a texture with an alpha channel."""
+    """Download a texture with an alpha channel.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_rgba_texture()  # doctest:+SKIP
+
+    """
     return _download_and_read("alphachannel.png", texture=True, load=load)
 
 
 def download_vtk_logo(load=True):
-    """Download a texture of the VTK logo."""
+    """Download a texture of the VTK logo.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_vtk_logo()  # doctest:+SKIP
+
+    """
     return _download_and_read("vtk.png", texture=True, load=load)
 
 
 def download_sky_box_cube_map():
-    """Download a skybox cube map texture."""
+    """Download a skybox cube map texture.
+
+    Returns
+    -------
+    pyvista.Texture
+        Texture
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_sky_box_cube_map()  # doctest:+SKIP
+
+    """
     prefix = 'skybox2-'
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
     images = [prefix + suffix + '.jpg' for suffix in sets]
@@ -704,7 +2448,25 @@ def download_sky_box_cube_map():
 
 
 def download_backward_facing_step(load=True):
-    """Download an ensight gold case of a fluid simulation."""
+    """Download an ensight gold case of a fluid simulation.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_backward_facing_step()  # doctest:+SKIP
+
+    """
     folder, _ = _download_file('EnSight.zip')
     filename = os.path.join(folder, "foam_case_0_0_0_0.case")
     if not load:
@@ -713,7 +2475,25 @@ def download_backward_facing_step(load=True):
 
 
 def download_gpr_data_array(load=True):
-    """Download GPR example data array."""
+    """Download GPR example data array.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_gpr_data_array()  # doctest:+SKIP
+
+    """
     saved_file, _ = _download_file("gpr-example/data.npy")
     if not load:
         return saved_file
@@ -721,7 +2501,25 @@ def download_gpr_data_array(load=True):
 
 
 def download_gpr_path(load=True):
-    """Download GPR example path."""
+    """Download GPR example path.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_gpr_path()  # doctest:+SKIP
+
+    """
     saved_file, _ = _download_file("gpr-example/path.txt")
     if not load:
         return saved_file
@@ -732,7 +2530,25 @@ def download_gpr_path(load=True):
 def download_woman(load=True):
     """Download scan of a woman.
 
-    https://www.laserdesign.com/sample-files/full-body-scan-with-texture/
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Notes
+    -----
+    Originally obtained from https://www.laserdesign.com/sample-files/full-body-scan-with-texture/
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_woman()  # doctest:+SKIP
 
     """
     return _download_and_read('woman.stl', load=load)
@@ -741,7 +2557,25 @@ def download_woman(load=True):
 def download_lobster(load=True):
     """Download scan of a lobster.
 
-    https://www.laserdesign.com/lobster-scan-data
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Notes
+    -----
+    Originally obtained from https://www.laserdesign.com/lobster-scan-data
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_lobster()  # doctest:+SKIP
 
     """
     return _download_and_read('lobster.ply', load=load)
@@ -750,7 +2584,25 @@ def download_lobster(load=True):
 def download_face2(load=True):
     """Download scan of a man's face.
 
-    https://www.laserdesign.com/sample-files/mans-face/
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Notes
+    -----
+    Originally obtained from https://www.laserdesign.com/sample-files/mans-face/
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_face2()  # doctest:+SKIP
 
     """
     return _download_and_read('man_face.stl', load=load)
@@ -759,7 +2611,25 @@ def download_face2(load=True):
 def download_urn(load=True):
     """Download scan of a burial urn.
 
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Notes
+    -----
     https://www.laserdesign.com/sample-files/burial-urn/
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_urn()  # doctest:+SKIP
 
     """
     return _download_and_read('urn.stl', load=load)
@@ -768,7 +2638,25 @@ def download_urn(load=True):
 def download_pepper(load=True):
     """Download scan of a pepper (capsicum).
 
-    https://www.laserdesign.com/sample-files/hot-red-pepper/
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Notes
+    -----
+    Originally obtained from https://www.laserdesign.com/sample-files/hot-red-pepper/
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_pepper()  # doctest:+SKIP
 
     """
     return _download_and_read('pepper.ply', load=load)
@@ -777,7 +2665,25 @@ def download_pepper(load=True):
 def download_drill(load=True):
     """Download scan of a power drill.
 
-    https://www.laserdesign.com/drill-scan-data
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Notes
+    -----
+    Originally obtained from https://www.laserdesign.com/drill-scan-data
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_drill()  # doctest:+SKIP
 
     """
     return _download_and_read('drill.obj', load=load)
@@ -786,35 +2692,111 @@ def download_drill(load=True):
 def download_action_figure(load=True):
     """Download scan of an action figure.
 
-    https://www.laserdesign.com/sample-files/action-figure/
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Notes
+    -----
+    Originally obtained from https://www.laserdesign.com/sample-files/action-figure/
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_action_figure()  # doctest:+SKIP
 
     """
     return _download_and_read('tigerfighter.obj', load=load)
 
 
 def download_mars_jpg():
-    """Download and return the path of ``'mars.jpg'``."""
+    """Download and return the path of ``'mars.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_mars_jpg()  # doctest:+SKIP
+
+    """
     return _download_file('mars.jpg')[0]
 
 
 def download_stars_jpg():
-    """Download and return the path of ``'stars.jpg'``."""
+    """Download and return the path of ``'stars.jpg'``.
+
+    Returns
+    -------
+    str
+        Filename of the JPEG.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_stars_jpg()  # doctest:+SKIP
+
+    """
     return _download_file('stars.jpg')[0]
 
 
 def download_notch_stress(load=True):
     """Download the FEA stress result from a notched beam.
 
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
     Notes
     -----
     This file may have issues being read in on VTK 8.1.2
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_notch_stress()  # doctest:+SKIP
 
     """
     return _download_and_read('notch_stress.vtk', load=load)
 
 
 def download_notch_displacement(load=True):
-    """Download the FEA displacement result from a notched beam."""
+    """Download the FEA displacement result from a notched beam.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_notch_displacement()  # doctest:+SKIP
+
+    """
     return _download_and_read('notch_disp.vtu', load=load)
 
 
@@ -825,15 +2807,50 @@ def download_louis_louvre(load=True):
     copy in plomb of the original statue in Versailles, made by
     Bernini and Girardon.
 
-    Credit goes to
-    https://sketchfab.com/3d-models/louis-xiv-de-france-louvre-paris-a0cc0e7eee384c99838dff2857b8158c
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Notes
+    -----
+    Originally downloaded from `sketchfab <https://sketchfab.com/3d-models/louis-xiv-de-france-louvre-paris-a0cc0e7eee384c99838dff2857b8158c>`_
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_louis_louvre()  # doctest:+SKIP
 
     """
     return _download_and_read('louis.ply', load=load)
 
 
 def download_cylinder_crossflow(load=True):
-    """Download CFD result for cylinder in cross flow at Re=35."""
+    """Download CFD result for cylinder in cross flow at Re=35.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_cylinder_crossflow()  # doctest:+SKIP
+
+    """
     filename, _ = _download_file('EnSight/CylinderCrossflow/cylinder_Re35.case')
     _download_file('EnSight/CylinderCrossflow/cylinder_Re35.geo')
     _download_file('EnSight/CylinderCrossflow/cylinder_Re35.scl1')
@@ -845,7 +2862,25 @@ def download_cylinder_crossflow(load=True):
 
 
 def download_naca(load=True):
-    """Download NACA airfoil dataset in EnSight format."""
+    """Download NACA airfoil dataset in EnSight format.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_naca()  # doctest:+SKIP
+
+    """
     filename, _ = _download_file('EnSight/naca.bin.case')
     _download_file('EnSight/naca.gold.bin.DENS_1')
     _download_file('EnSight/naca.gold.bin.DENS_3')
@@ -856,7 +2891,25 @@ def download_naca(load=True):
 
 
 def download_wavy(load=True):
-    """Download PVD file of a 2D wave."""
+    """Download PVD file of a 2D wave.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_wavy()  # doctest:+SKIP
+
+    """
     folder, _ = _download_file('PVD/wavy.zip')
     filename = os.path.join(folder, 'wavy.pvd')
     if not load:
@@ -865,7 +2918,25 @@ def download_wavy(load=True):
 
 
 def download_single_sphere_animation(load=True):
-    """Download PVD file for single sphere."""
+    """Download PVD file for single sphere.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_single_sphere_animation()  # doctest:+SKIP
+
+    """
     filename, _ = _download_file('PVD/paraview/singleSphereAnimation.pvd')
     folder, _ =_download_file('PVD/paraview/singleSphereAnimation')
     if not load:
@@ -874,7 +2945,25 @@ def download_single_sphere_animation(load=True):
 
 
 def download_dual_sphere_animation(load=True):
-    """Download PVD file for double sphere."""
+    """Download PVD file for double sphere.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.DataSet or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_dual_sphere_animation()  # doctest:+SKIP
+
+    """
     filename, _ = _download_file('PVD/paraview/dualSphereAnimation.pvd')
     folder, _ =_download_file('PVD/paraview/dualSphereAnimation')
     if not load:
@@ -889,10 +2978,10 @@ def download_osmnx_graph():  # pragma: no cover
 
     .. code:: python
 
-        >>> import osmnx as ox  # doctest: +SKIP
-        >>> address = 'Holzgerlingen DE'  # doctest: +SKIP
-        >>> graph = ox.graph_from_address(address, dist=500, network_type='drive')  # doctest: +SKIP
-        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))  # doctest: +SKIP
+        >>> import osmnx as ox  # doctest:+SKIP
+        >>> address = 'Holzgerlingen DE'  # doctest:+SKIP
+        >>> graph = ox.graph_from_address(address, dist=500, network_type='drive')  # doctest:+SKIP
+        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))  # doctest:+SKIP
 
     Returns
     -------
@@ -901,7 +2990,7 @@ def download_osmnx_graph():  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> graph = examples.download_osmnx_graph()  # doctest: +SKIP
+    >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
     
     See :ref:`open_street_map_example` for a full example using this dataset.
 
