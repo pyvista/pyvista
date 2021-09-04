@@ -774,6 +774,7 @@ class DataSet(DataSetFilters, DataObject):
                     return self.cell_data[name]
             except KeyError:
                 return None
+        return None
 
     def get_data_range(self,
                        arr_var: Optional[Union[str, np.ndarray]] = None,
