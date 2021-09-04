@@ -239,6 +239,7 @@ source_suffix = ".rst"
 # The main toctree document.
 master_doc = "index"
 
+
 # General information about the project.
 project = "PyVista"
 year = datetime.date.today().year

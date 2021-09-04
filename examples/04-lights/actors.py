@@ -1,4 +1,6 @@
 """
+.. _light_actors_example:
+
 Light Actors
 ~~~~~~~~~~~~
 

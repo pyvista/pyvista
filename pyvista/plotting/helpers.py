@@ -23,16 +23,15 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
         VTK object or ``numpy`` array to be plotted.
 
     off_screen : bool, optional
-        Plots off screen when ``True``.  Helpful for saving screenshots
-        without a window popping up.  Defaults to active theme setting in
-        :attr:`pyvista.global_theme.full_screen
-        <pyvista.themes.DefaultTheme.full_screen`.
+        Plots off screen when ``True``.  Helpful for saving
+        screenshots without a window popping up.  Defaults to the
+        global setting ``pyvista.OFF_SCREEN``.
 
     full_screen : bool, optional
         Opens window in full screen.  When enabled, ignores
         ``window_size``.  Defaults to active theme setting in
         :attr:`pyvista.global_theme.full_screen
-        <pyvista.themes.DefaultTheme.full_screen`.
+        <pyvista.themes.DefaultTheme.full_screen>`.
 
     screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:

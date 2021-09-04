@@ -136,8 +136,14 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """
         # apply reduction of min and max over each block
         all_bounds = [block.bounds for block in self if block]
-        minima = np.minimum.reduce(all_bounds)[::2]
-        maxima = np.maximum.reduce(all_bounds)[1::2]
+        # edge case where block has no bounds
+        if not all_bounds:  # pragma: no cover
+            minima = np.array([0, 0, 0])
+            maxima = np.array([0, 0, 0])
+        else:
+            minima = np.minimum.reduce(all_bounds)[::2]
+            maxima = np.maximum.reduce(all_bounds)[1::2]
+
         # interleave minima and maxima for bounds
         return np.stack([minima, maxima]).ravel('F').tolist()
 

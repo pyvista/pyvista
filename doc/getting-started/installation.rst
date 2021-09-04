@@ -119,23 +119,25 @@ Test Installation
 
 You can test your installation by running an example:
 
-.. testcode:: python
+.. code:: python
 
-    from pyvista import examples
-    examples.plot_wave()
+    >>> from pyvista import demos
+    >>> demos.plot_wave()
 
 See other examples and demos:
 
 .. code:: python
 
-    from pyvista import examples
-    from pyvista import demos
+    >>> from pyvista import examples
+    >>> from pyvista import demos
 
-    # list all examples
-    print(dir(examples))
+    List all examples
 
-    # list all demos
-    print(dir(demos))
+    >>> print(dir(examples))
+
+    List all demos
+
+    >>> print(dir(demos))
 
 .. note::
 

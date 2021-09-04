@@ -1,4 +1,6 @@
 """
+.. _light_shadows_example:
+
 Shadows
 ~~~~~~~
 
