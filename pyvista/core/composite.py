@@ -24,32 +24,39 @@ log.setLevel('CRITICAL')
 class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
     """A composite class to hold many data sets which can be iterated over.
 
-    This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so that we can
-    easily plot these data sets and use the composite in a Pythonic manner.
+    This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so
+    that we can easily plot these data sets and use the composite in a
+    Pythonic manner.
 
-    You can think of ``MultiBlock`` like lists or dictionaries as we can
-    iterate over this data structure by index and we can also access blocks
-    by their string name.
+    You can think of ``MultiBlock`` like lists or dictionaries as we
+    can iterate over this data structure by index and we can also
+    access blocks by their string name.
 
     Examples
     --------
     >>> import pyvista as pv
 
-    >>> # Create empty composite dataset
+    Create empty composite dataset
+
     >>> blocks = pv.MultiBlock()
-    >>> # Add a dataset to the collection
+
+    Add a dataset to the collection.
+
     >>> sphere = pv.Sphere()
     >>> blocks.append(sphere)
-    >>> # Or add a named block
+
+    Add a named block.
+
     >>> blocks["cube"] = pv.Cube()
 
-    Instantiate from a list of objects
+    Instantiate from a list of objects.
 
-    >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()]
+    >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), 
+    ...         pv.Cone()]
     >>> blocks = pv.MultiBlock(data)
     >>> blocks.plot()
 
-    Instantiate from a dictionary
+    Instantiate from a dictionary.
 
     >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere(center=(2, 2, 0))}
     >>> blocks = pv.MultiBlock(data)
@@ -614,7 +621,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         pass
 
     def copy(self, deep=True):
-        """Return a copy of the object.
+        """Return a copy of the multiblock.
 
         Parameters
         ----------
@@ -623,8 +630,8 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         Returns
         -------
-        pyvista.DataSet
-           Deep or shallow copy of the input.  Type matches input.
+        pyvista.MultiBlock
+           Deep or shallow copy of the ``MultiBlock``.
 
         Examples
         --------

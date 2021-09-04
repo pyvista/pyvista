@@ -1,12 +1,165 @@
-Point-Based Grids
-=================
+.. _point_sets_api:
 
-Structured and unstructured grids are designed to manage cells whereas polydata
-objects manage surfaces.  The ``pyvista.UnstructuredGrid`` is a derived class
-from ``vtk.vtkUnstructuredGrid`` designed to make creation, array access, and
-plotting more straightforward than using the VTK object.  The same applies to a
-``pyvista.StructuredGrid``.
+Point Sets
+==========
 
+PyVista point sets are datasets with explicit geometry where the point
+and cell topology are specified and not inferred.  PyVista point sets
+are modeled after the same data model as VTK's point sets while being
+designed to make creation, array access, and plotting more
+straightforward than their VTK counterparts.
+
+The :class:`pyvista.UnstructuredGrid` class is used for arbitrary
+combinations of all possible cell types:
+
+.. pyvista-plot::
+   :include-source: False
+
+   from pyvista import demos
+   demos.plot_datasets('UnstructuredGrid')
+
+
+The :class:`pyvista.PolyData`, is used for datasets consisting of surface
+geometry (e.g. vertices, lines, and polygons):
+
+.. pyvista-plot::
+   :include-source: False
+
+   from pyvista import demos
+   demos.plot_datasets('PolyData')
+
+
+The :class:`pyvista.StructuredGrid` is used for topologically regular arrays of
+data.
+
+.. pyvista-plot::
+   :include-source: False
+
+   from pyvista import demos
+   demos.plot_datasets('StructuredGrid')
+
+
+**Class Descriptions**
+
+The following table describes PyVista's point set classes.  These
+classes inherit all methods from their corresponding VTK
+`vtkPolyData`_, `vtkUnstructuredGrid`_, `vtkStructuredGrid`_, and
+`vtkExplicitStructuredGrid`_ superclasses.
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-class-template.rst
+
+   pyvista.PolyData
+   pyvista.UnstructuredGrid
+   pyvista.StructuredGrid
+   pyvista.ExplicitStructuredGrid
+
+.. _vtkPolyData: https://www.vtk.org/doc/nightly/html/classvtkPolyData.html
+.. _vtkUnstructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
+.. _vtkStructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html
+.. _vtkExplicitStructuredGrid: https://vtk.org/doc/nightly/html/classvtkExplicitStructuredGrid.html
+
+
+PolyData Creation
+-----------------
+
+See :ref:`ref_create_poly` for an example on creating a
+:class:`pyvista.PolyData` object from NumPy arrays.
+
+
+Empty Object
+~~~~~~~~~~~~
+A polydata object can be initialized with:
+
+.. jupyter-execute::
+
+    import pyvista
+    grid = pyvista.PolyData()
+
+This creates an empty grid, and is not useful until points and cells
+are added to it.  VTK points and cells can be added with ``SetPoints``
+and ``SetCells``, but the inputs to these need to be
+``vtk.vtkCellArray`` and ``vtk.vtkPoints`` objects, which need to be
+populated with values.  Grid creation is simplified by initializing
+the grid directly from NumPy arrays as in the following section.
+
+
+Initialize from a File
+~~~~~~~~~~~~~~~~~~~~~~
+Both binary and ASCII .ply, .stl, and .vtk files can be read using
+PyVista.  For example, the PyVista package contains example meshes and
+these can be loaded with:
+
+.. jupyter-execute::
+
+    import pyvista
+    from pyvista import examples
+
+    # Load mesh
+    mesh = pyvista.PolyData(examples.planefile)
+    mesh
+
+This mesh can then be written to a vtk file using:
+
+.. code:: python
+
+    mesh.save('plane.vtk')
+
+These meshes are identical.
+
+.. code:: python
+
+    import numpy as np
+
+    mesh_from_vtk = pyvista.PolyData('plane.vtk')
+    print(np.allclose(mesh_from_vtk.points, mesh.points))
+
+
+Mesh Manipulation and Plotting
+------------------------------
+Meshes can be directly manipulated using NumPy or with the built-in
+translation and rotation routines.  This example loads two meshes and
+moves, scales, copies them, and finally plots them.
+
+To plot more than one mesh a plotting class must be created to manage
+the plotting.  The following code creates the class and plots the
+meshes with various colors.
+
+
+.. pyvista-plot::
+    :context:
+
+    import pyvista
+    from pyvista import examples
+
+    # load and shrink airplane
+    airplane = pyvista.PolyData(examples.planefile)
+    airplane.points /= 10 # shrink by 10x
+
+    # rotate and translate ant so it is on the plane
+    ant = pyvista.PolyData(examples.antfile)
+    ant.rotate_x(90)
+    ant.translate([90, 60, 15])
+
+    # Make a copy and add another ant
+    ant_copy = ant.copy()
+    ant_copy.translate([30, 0, -10])
+
+    # Create plotting object
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(ant, 'r')
+    plotter.add_mesh(ant_copy, 'b')
+
+    # Add airplane mesh and make the color equal to the Y position.  Add a
+    # scalar bar associated with this mesh
+    plane_scalars = airplane.points[:, 1]
+    plotter.add_mesh(airplane, scalars=plane_scalars,
+                     scalar_bar_args={'title': 'Airplane Y\nLocation'})
+
+    # Add annotation text
+    plotter.add_text('Ants and Plane Example')
+    plotter.show()
 
 Unstructured Grid Creation
 --------------------------
@@ -263,90 +416,3 @@ scalar bar to show the exact value of certain points.
 
     plotter.view_vector((-6, -3, -4), (0.,-1., 0.))
     plotter.show()
-
-
-pv.UnstructuredGrid Class Methods
----------------------------------
-The following is a description of the methods available to a
-``pv.UnstructuredGrid`` object.  It inherits all methods from the original
-``vtk`` object, `vtk.vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_.
-
-.. rubric:: Attributes
-
-.. autoautosummary:: pyvista.UnstructuredGrid
-   :attributes:
-
-.. rubric:: Methods
-
-.. autoautosummary:: pyvista.UnstructuredGrid
-   :methods:
-
-
-.. autoclass:: pyvista.UnstructuredGrid
-   :show-inheritance:
-   :members:
-   :undoc-members:
-
-
-Explicit Structured Grid
-------------------------
-
-.. rubric:: Attributes
-.. autoautosummary:: pyvista.ExplicitStructuredGrid
-   :attributes:
-
-.. rubric:: Methods
-.. autoautosummary:: pyvista.ExplicitStructuredGrid
-   :methods:
-
-.. autoclass:: pyvista.ExplicitStructuredGrid
-   :show-inheritance:
-   :members:
-   :undoc-members:
-
-
-pv.StructuredGrid Class Methods
--------------------------------
-The following is a description of the methods available to a
-``pv.StructuredGrid`` object.  It inherits all methods from the original
-``vtk`` object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html>`_.
-
-
-
-.. rubric:: Attributes
-
-.. autoautosummary:: pyvista.StructuredGrid
-   :attributes:
-
-.. rubric:: Methods
-
-.. autoautosummary:: pyvista.StructuredGrid
-   :methods:
-
-.. autoclass:: pyvista.StructuredGrid
-   :show-inheritance:
-   :members:
-   :undoc-members:
-
-
-Methods in Common with Structured and Unstructured Grids
---------------------------------------------------------
-These methods are common to both ``pv.StructuredGrid`` and
-``pv.UnstructuredGrid`` objects.
-
-
-
-.. rubric:: Attributes
-
-.. autoautosummary:: pyvista.PointGrid
-   :attributes:
-
-.. rubric:: Methods
-
-.. autoautosummary:: pyvista.PointGrid
-   :methods:
-
-.. autoclass:: pyvista.PointGrid
-   :show-inheritance:
-   :members:
-   :undoc-members:

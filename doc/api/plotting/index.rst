@@ -1,7 +1,7 @@
 Plotting
 ========
 
-* Intuitive plotting routines with ``matplotlib`` similar syntax (see :ref:`plotting_ref`).
+* Intuitive plotting routines with `matplotlib`_ like syntax (see :ref:`plotting_ref`).
 * Plotting tools built for interactivity (see :ref:`widgets`).
 
 .. toctree::
@@ -10,6 +10,8 @@ Plotting
    plotting
    qt_plotting
    theme
+
+.. _matplotlib: https://matplotlib.org/
 
 
 Plotting API Reference
@@ -29,7 +31,7 @@ all plotting functionality in PyVista.
 
 Widget API
 ----------
-The :class:`pyvista.BasePlotter` class inherits all of the widget methods in
+The :class:`pyvista.Plotter` class inherits all of the widget methods in
 :class:`pyvista.WidgetHelper`, so all of the following methods
 are available from any PyVista plotter.
 

@@ -19,7 +19,7 @@ PyVista is built on top of the Visualization Toolkit (VTK) and NumPy - as such,
 the following projects are required dependencies of PyVista:
 
 * `vtk <https://pypi.org/project/vtk/>`_ - PyVista directly inherits types from the VTK library.
-* `numpy <https://pypi.org/project/numpy/>`_ - NumPy arrays provide a core foundation for PyVista's data array access.
+* `NumPy <https://pypi.org/project/numpy/>`_ - NumPy arrays provide a core foundation for PyVista's data array access.
 * `imageio <https://pypi.org/project/imageio/>`_ - This library is used for saving screenshots.
 * `appdirs <https://pypi.org/project/appdirs/>`_ - Data management for our example datasets so users can download tutorials on the fly.
 * `meshio <https://pypi.org/project/meshio/>`_ - Input/Output for many mesh formats.
@@ -65,8 +65,9 @@ Alternatively, you can clone the repository with git and install it with pip.
    cd pyvista
    pip install . -e
 
-Note the development flag ``-e``.  This allows you to change pyvista in-place without
-having to reinstall it for each change.
+Note the development flag ``-e``.  This allows you to change pyvista
+in-place without having to reinstall it for each change.
+
 
 Optional Dependencies
 ~~~~~~~~~~~~~~~~~~~~~
@@ -131,13 +132,12 @@ See other examples and demos:
     >>> from pyvista import examples
     >>> from pyvista import demos
 
-    List all examples
+    List all available examples.
 
     >>> print(dir(examples))
 
-    List all demos
+    List all available demos.
 
-    >>> print(dir(demos))
 
 .. note::
 
@@ -151,8 +151,6 @@ See other examples and demos:
 
 Running on CI Services
 ~~~~~~~~~~~~~~~~~~~~~~
-
-
 Please head over to `pyvista/gl-ci-hepers`_ for details on setting up CI
 services like Travis and Azure Pipelines to run PyVista.
 
@@ -161,7 +159,6 @@ services like Travis and Azure Pipelines to run PyVista.
 
 Running on MyBinder
 ~~~~~~~~~~~~~~~~~~~
-
 This section is for advanced users that would like to install and use PyVista
 with headless displays on notebook hosting services like MyBinder_.
 
@@ -207,7 +204,6 @@ a look at `this repository`_ that is currently using PyVista on MyBinder.
 
 Running on Remote Servers
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Using PyVista on remote servers requires similar setup steps as in the above
 Docker case. As an example, here are the complete steps to use PyVista on AWS
 EC2 Ubuntu 18.04 LTS (``ami-0a313d6098716f372`` in ``us-east-1``).
@@ -254,7 +250,6 @@ Visit ``localhost:8888`` in the web browser.
 
 Running with Sphinx-Gallery
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 In your ``conf.py``, add the following:
 
 

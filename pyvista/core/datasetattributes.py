@@ -1,6 +1,5 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
-import weakref
 import warnings
 from collections.abc import Iterable
 
@@ -142,12 +141,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 vtk_arr = array.VTKObject
                 try:
                     arr_type = attr_type[self.IsArrayAnAttribute(i)]
-                except (IndexError, TypeError):  # pragma: no cover
+                except (IndexError, TypeError, AttributeError):  # pragma: no cover
                     arr_type = ''
 
                 # special treatment for vector data
-                if name == self.active_vectors_name:
-                    arr_type = 'VECTORS'
+                if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
+                    if name == self.active_vectors_name:
+                        arr_type = 'VECTORS'
 
                 line = f'{name[:23]:<24}{str(array.dtype):<9}{str(array.shape):<20} {arr_type}'.strip()
                 lines.append(line)
@@ -758,7 +758,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if data.ndim == 3:
             # Array of matrices. We need to make sure the order in
             # memory is right.  If row major (C/C++),
-            # transpose. VTK wants row major (FORTRAN order). The deep
+            # transpose. VTK wants column major (FORTRAN order). The deep
             # copy later will make sure that the array is contiguous.
             # If column order but not contiguous, transpose so that the
             # deep copy below does not happen.
@@ -802,11 +802,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         warnings.warn(
-            "\n\n`DataSetAttributes.append` is deprecated.\n\n"                                          
-            "Use one of the following instead:\n"                                                        
-            "  - `DataSetAttributes.set_array`\n"                                                        
-            "  - `DataSetAttributes.set_scalars`\n"                                                      
-            "  - `DataSetAttributes.set_vectors`\n"                                                      
+            "\n\n`DataSetAttributes.append` is deprecated.\n\n"
+            "Use one of the following instead:\n"
+            "  - `DataSetAttributes.set_array`\n"
+            "  - `DataSetAttributes.set_scalars`\n"
+            "  - `DataSetAttributes.set_vectors`\n"
             "  - The [] operator",
             PyvistaDeprecationWarning
         )

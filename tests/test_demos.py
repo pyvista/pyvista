@@ -54,6 +54,11 @@ def test_plot_logo():
     demos.plot_logo()
 
 
+@skip_no_plotting
+def test_plot_datasets():
+    # simply should not fail
+    demos.plot_datasets()
+
 
 @skip_no_plotting
 def test_plot_wave():

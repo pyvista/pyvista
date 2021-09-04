@@ -136,7 +136,7 @@ def test_field_data(grid):
     assert isinstance(grid.field_data['foo'], np.ndarray)
     assert np.allclose(grid.field_data['foo'], foo)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         grid.set_active_scalars('foo')
 
 
