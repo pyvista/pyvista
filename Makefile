@@ -18,7 +18,7 @@ codespell:
 
 pydocstyle:
 	@echo "Running pydocstyle"
-	@pydocstyle pyvista
+	@pydocstyle pyvista --match='(?!coverage).*.py'
 
 doctest-modules:
 	@echo "Runnnig module doctesting"
