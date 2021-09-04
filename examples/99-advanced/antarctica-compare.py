@@ -1,4 +1,6 @@
 """
+.. _antarctica_example:
+
 Compare Field Across Mesh Regions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

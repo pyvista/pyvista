@@ -1,7 +1,7 @@
-"""Functions to download sample datasets from the VTK data repository.
+"""Downloadable datasets collected from various sources.
 
 Once downloaded, these datasets are stored locally allowing for the
-rapid resuse of these datasets.
+rapid reuse of these datasets.
 
 Examples
 --------
@@ -33,6 +33,11 @@ def _check_examples_path():
 
 def delete_downloads():
     """Delete all downloaded examples to free space or update the files.
+
+    Returns
+    -------
+    bool
+        Returns ``True``.
 
     Examples
     --------
@@ -158,7 +163,7 @@ def download_masonry_texture(load=True):
     >>> from pyvista import examples
     >>> dataset = examples.download_masonry_texture()  # doctest:+SKIP
 
-    See the :ref:`ref_texture_example` for an example using this
+    See :ref:`ref_texture_example` for an example using this
     dataset.
 
     """
@@ -207,7 +212,7 @@ def download_puppy_texture(load=True):
     >>> from pyvista import examples
     >>> dataset = examples.download_puppy_texture()  # doctest:+SKIP
 
-    See the :ref:`ref_texture_example` for an example using this
+    See :ref:`ref_texture_example` for an example using this
     dataset.
 
     """
@@ -282,7 +287,7 @@ def download_st_helens(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -294,7 +299,11 @@ def download_st_helens(load=True):
 
     * :ref:`colormap_example`
     * :ref:`ref_lighting_properties_example`
-
+    * :ref:`plot_opacity_example`
+    * :ref:`orbiting_example`
+    * :ref:`plot_over_line_example`
+    * :ref:`plotter_lighting_example`
+    * :ref:`themes_example`
 
     """
     return _download_and_read('SainteHelens.dem', load=load)
@@ -311,13 +320,26 @@ def download_bunny(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
+
+    See Also
+    --------
+    download_bunny_coarse
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_bunny()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`read_file_example`
+    * :ref:`clip_with_surface_example`
+    * :ref:`extract_edges_example`
+    * :ref:`subdivide_example`
+    * :ref:`silhouette_example`
+    * :ref:`light_types_example`
 
     """
     return _download_and_read('bunny.ply', load=load)
@@ -334,13 +356,21 @@ def download_bunny_coarse(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
+
+    See Also
+    --------
+    download_bunny
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_bunny_coarse()  # doctest:+SKIP
+
+    * :ref:`read_file_example`
+    * :ref:`clip_with_surface_example`
+    * :ref:`subdivide_example`
 
     """
     return _download_and_read('Bunny.vtp', load=load)
@@ -357,13 +387,21 @@ def download_cow(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_cow()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`extract_edges_example`
+    * :ref:`mesh_quality_example`
+    * :ref:`rotate_example`
+    * :ref:`linked_views_example`
+    * :ref:`light_actors_example`
 
     """
     return _download_and_read('cow.vtp', load=load)
@@ -380,7 +418,7 @@ def download_cow_head(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -403,7 +441,7 @@ def download_faults(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -426,7 +464,7 @@ def download_tensors(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -449,13 +487,16 @@ def download_head(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_head()  # doctest:+SKIP
+
+    See :ref:`volume_rendering_example` for an example using this
+    dataset.
 
     """
     _download_file('HeadMRVolume.raw')
@@ -473,13 +514,16 @@ def download_bolt_nut(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_bolt_nut()  # doctest:+SKIP
+
+    See :ref:`volume_rendering_example` for an example using this
+    dataset.
 
     """
     if not load:
@@ -504,7 +548,7 @@ def download_clown(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -527,13 +571,18 @@ def download_topo_global(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_topo_global()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`surface_normal_example`
+    * :ref:`background_image_example`
 
     """
     return _download_and_read('EarthModels/ETOPO_10min_Ice.vtp', load=load)
@@ -550,13 +599,18 @@ def download_topo_land(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_topo_land()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`geodesic_example`
+    * :ref:`background_image_example`
 
     """
     return _download_and_read('EarthModels/ETOPO_10min_Ice_only-land.vtp', load=load)
@@ -573,7 +627,7 @@ def download_coastlines(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -596,13 +650,19 @@ def download_knee(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_knee()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`plot_opacity_example`
+    * :ref:`volume_rendering_example`
+    * :ref:`slider_bar_widget_example`
 
     """
     return _download_and_read('DICOM_KNEE.dcm', load=load)
@@ -619,13 +679,18 @@ def download_knee_full(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_knee_full()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`volume_rendering_example`
+    * :ref:`slider_bar_widget_example`
 
     """
     return _download_and_read('vw_knee.slc', load=load)
@@ -642,13 +707,18 @@ def download_lidar(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_lidar()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`create_point_cloud`
+    * :ref:`ref_edl`
 
     """
     return _download_and_read('kafadar-lidar-interp.vtp', load=load)
@@ -665,7 +735,7 @@ def download_exodus(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -688,13 +758,22 @@ def download_nefertiti(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_nefertiti()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`surface_normal_example`
+    * :ref:`extract_edges_example`
+    * :ref:`show_edges_example`
+    * :ref:`ref_edl`
+    * :ref:`pbr_example`
+    * :ref:`box_widget_example`
 
     """
     return _download_and_read('nefertiti.ply.zip', load=load)
@@ -711,13 +790,18 @@ def download_blood_vessels(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_blood_vessels()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`read_parallel_example`
+    * :ref:`streamlines_example`
 
     """
     local_path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
@@ -740,7 +824,7 @@ def download_iron_protein(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -763,7 +847,7 @@ def download_tetrahedron(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -786,7 +870,7 @@ def download_saddle_surface(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -794,12 +878,17 @@ def download_saddle_surface(load=True):
     >>> from pyvista import examples
     >>> dataset = examples.download_saddle_surface()  # doctest:+SKIP
 
+    See :ref:`interpolate_example` for an example using this
+    dataset.
+
     """
     return _download_and_read('InterpolatingOnSTL_final.stl', load=load)
 
 
 def download_sparse_points(load=True):
     """Download sparse points data.
+
+    Used with :func:`download_saddle_surface`.
 
     Parameters
     ----------
@@ -809,7 +898,7 @@ def download_sparse_points(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -817,9 +906,8 @@ def download_sparse_points(load=True):
     >>> from pyvista import examples
     >>> dataset = examples.download_sparse_points()  # doctest:+SKIP
 
-    et.
-
-    Used with ``download_saddle_surface``.
+    See :ref:`interpolate_example` for an example using this
+    dataset.
 
     """
     saved_file, _ = _download_file('sparsePoints.txt')
@@ -850,13 +938,16 @@ def download_foot_bones(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_foot_bones()  # doctest:+SKIP
+
+    See :ref:`voxelize_surface_mesh_example` for an example using this
+    dataset.
 
     """
     return _download_and_read('fsu/footbones.ply', load=load)
@@ -873,7 +964,7 @@ def download_guitar(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData} or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -896,7 +987,7 @@ def download_quadratic_pyramid(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -919,7 +1010,7 @@ def download_bird(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -942,7 +1033,7 @@ def download_bird_texture(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.Texture or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -965,13 +1056,16 @@ def download_office(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.StructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_office()  # doctest:+SKIP
+
+    See :ref:`clip_with_plane_box_example` for an example using this
+    dataset.
 
     """
     return _download_and_read('office.binary.vtk', load=load)
@@ -988,7 +1082,7 @@ def download_horse_points(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1019,6 +1113,9 @@ def download_horse(load=True):
     >>> from pyvista import examples
     >>> dataset = examples.download_horse()  # doctest:+SKIP
 
+    See :ref:`disabling_mesh_lighting_example` for an example using
+    this dataset.
+
     """
     return _download_and_read('horse.vtp', load=load)
 
@@ -1034,7 +1131,7 @@ def download_cake_easy(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1057,7 +1154,7 @@ def download_cake_easy_texture(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.Texture or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1080,7 +1177,7 @@ def download_rectilinear_grid(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.RectilinearGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1097,19 +1194,25 @@ def download_gourds(zoom=False, load=True):
 
     Parameters
     ----------
+    zoom : bool, optional
+        When ``True``, return the zoomed picture of the gourds.
+
     load : bool, optional
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_gourds()  # doctest:+SKIP
+
+    See :ref:`gaussian_smoothing_example` for an example using
+    this dataset.
 
     """
     if zoom:
@@ -1122,6 +1225,9 @@ def download_gourds_texture(zoom=False, load=True):
 
     Parameters
     ----------
+    zoom : bool, optional
+        When ``True``, return the zoomed picture of the gourds.
+
     load : bool, optional
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
@@ -1153,7 +1259,7 @@ def download_unstructured_grid(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1176,7 +1282,7 @@ def download_letter_k(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1199,13 +1305,16 @@ def download_letter_a(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_letter_a()  # doctest:+SKIP
+
+    See :ref:`cell_centers_example` for an example using
+    this dataset.
 
     """
     return _download_and_read('a_grid.vtk', load=load)
@@ -1222,7 +1331,7 @@ def download_poly_line(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1245,13 +1354,16 @@ def download_cad_model(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_cad_model()  # doctest:+SKIP
+
+    See :ref:`read_file_example` for an example using
+    this dataset.
 
     """
     return _download_and_read('42400-IDGH.stl', load=load)
@@ -1268,13 +1380,16 @@ def download_frog(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_frog()  # doctest:+SKIP
+
+    See :ref:`volume_rendering_example` for an example using
+    this dataset.
 
     """
     # TODO: there are other files with this
@@ -1293,7 +1408,7 @@ def download_prostate(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1316,7 +1431,7 @@ def download_filled_contours(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1339,13 +1454,16 @@ def download_doorman(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_doorman()  # doctest:+SKIP
+
+    See :ref:`read_file_example` for an example using
+    this dataset.
 
     """
     # TODO: download textures as well
@@ -1363,7 +1481,7 @@ def download_mug(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1386,7 +1504,7 @@ def download_oblique_cone(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1409,7 +1527,7 @@ def download_emoji(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1432,7 +1550,7 @@ def download_emoji_texture(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.Texture or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1455,13 +1573,18 @@ def download_teapot(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_teapot()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`read_file_example`
+    * :ref:`cell_centers_example`
 
     """
     return _download_and_read('teapot.g', load=load)
@@ -1478,13 +1601,21 @@ def download_brain(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_brain()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`gaussian_smoothing_example`
+    * :ref:`slice_example`
+    * :ref:`depth_peeling_example`
+    * :ref:`moving_isovalue_example`
+    * :ref:`plane_widget_example`
 
     """
     return _download_and_read('brain.vtk', load=load)
@@ -1501,7 +1632,7 @@ def download_structured_grid(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.StructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1524,7 +1655,7 @@ def download_structured_grid_two(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.StructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1547,7 +1678,7 @@ def download_trumpet(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1570,13 +1701,17 @@ def download_face(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_face()  # doctest:+SKIP
+
+    See :ref:`decimate_example` for an example using
+    this dataset.
+
 
     """
     # TODO: there is a texture with this
@@ -1594,7 +1729,7 @@ def download_sky_box_nz(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1617,7 +1752,7 @@ def download_sky_box_nz_texture(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.Texture or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1640,7 +1775,7 @@ def download_disc_quads(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1663,7 +1798,7 @@ def download_honolulu(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1686,7 +1821,7 @@ def download_motor(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1709,7 +1844,7 @@ def download_tri_quadratic_hexahedron(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1732,7 +1867,7 @@ def download_human(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1755,7 +1890,7 @@ def download_vtk(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1778,7 +1913,7 @@ def download_spider(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1801,13 +1936,20 @@ def download_carotid(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_carotid()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`glyph_example`
+    * :ref:`gradients_example`
+    * :ref:`streamlines_example`
+    * :ref:`plane_widget_example`
 
     """
     mesh = _download_and_read('carotid.vtk', load=load)
@@ -1829,7 +1971,7 @@ def download_blow(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1852,7 +1994,7 @@ def download_shark(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1875,13 +2017,20 @@ def download_dragon(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_dragon()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`floors_example`
+    * :ref:`orbiting_example`
+    * :ref:`silhouette_example`
+    * :ref:`light_shadows_example`
 
     """
     return _download_and_read('dragon.ply', load=load)
@@ -1898,7 +2047,7 @@ def download_armadillo(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1921,7 +2070,7 @@ def download_gears(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1944,7 +2093,7 @@ def download_torso(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1974,13 +2123,18 @@ def download_kitchen(split=False, load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.StructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_kitchen()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`plot_over_line_example`
+    * :ref:`line_widget_example`
 
     """
     mesh = _download_and_read('kitchen.vtk', load=load)
@@ -2056,13 +2210,15 @@ def download_model_with_variance(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_model_with_variance()  # doctest:+SKIP
+
+    See :ref:`plot_opacity_example` for an example using this dataset.
 
     """
     return _download_and_read("model_with_variance.vtu", load=load)
@@ -2079,13 +2235,15 @@ def download_thermal_probes(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_thermal_probes()  # doctest:+SKIP
+
+    See :ref:`interpolate_example` for an example using this dataset.
 
     """
     return _download_and_read("probes.vtp", load=load)
@@ -2102,7 +2260,7 @@ def download_carburator(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2125,7 +2283,7 @@ def download_turbine_blade(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2148,13 +2306,15 @@ def download_pine_roots(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_pine_roots()  # doctest:+SKIP
+
+    See :ref:`connectivity_example` for an example using this dataset.
 
     """
     return _download_and_read('pine_root.tri', load=load)
@@ -2171,13 +2331,18 @@ def download_crater_topo(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_crater_topo()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`terrain_following_mesh_example`
+    * :ref:`ref_topo_map_example`
 
     """
     return _download_and_read('Ruapehu_mag_dem_15m_NZTM.vtk', load=load)
@@ -2194,13 +2359,15 @@ def download_crater_imagery(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.Texture or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_crater_imagery()  # doctest:+SKIP
+
+    See :ref:`ref_topo_map_example` for an example using this dataset.
 
     """
     return _download_and_read('BJ34_GeoTifv1-04_crater_clip.tif', texture=True, load=load)
@@ -2217,7 +2384,7 @@ def download_dolfin(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2240,13 +2407,15 @@ def download_damavand_volcano(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_damavand_volcano()  # doctest:+SKIP
+
+    See :ref:`volume_rendering_example` for an example using this dataset.
 
     """
     volume = _download_and_read("damavand-volcano.vtk", load=load)
@@ -2267,7 +2436,7 @@ def download_delaunay_example(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2290,13 +2459,19 @@ def download_embryo(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_embryo()  # doctest:+SKIP
+
+    This dataset is used in the following examples:
+
+    * :ref:`contouring_example`
+    * :ref:`resampling_example`
+    * :ref:`orthogonal_slices_example`
 
     """
     return _download_and_read('embryo.slc', load=load)
@@ -2313,13 +2488,15 @@ def download_antarctica_velocity(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_antarctica_velocity()  # doctest:+SKIP
+
+    See :ref:`antarctica_example` for an example using this dataset.
 
     """
     return _download_and_read("antarctica_velocity.vtp", load=load)
@@ -2331,6 +2508,8 @@ def download_room_surface_mesh(load=True):
     This mesh is for demonstrating the difference that depth peeling can
     provide whenn rendering translucent geometries.
 
+    This mesh is courtesy of `Sam Potter <https://github.com/sampotter>`_.
+
     Parameters
     ----------
     load : bool, optional
@@ -2339,17 +2518,15 @@ def download_room_surface_mesh(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
-
-    Notes
-    -----
-    This mesh is courtesy of `Sam Potter <https://github.com/sampotter>`_.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_room_surface_mesh()  # doctest:+SKIP
+
+    See :ref:`depth_peeling_example` for an example using this dataset.
 
     """
     return _download_and_read("room_surface_mesh.obj", load=load)
@@ -2366,7 +2543,7 @@ def download_beach(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UniformGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2389,13 +2566,15 @@ def download_rgba_texture(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.Texture or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_rgba_texture()  # doctest:+SKIP
+
+    See :ref:`ref_texture_example` for an example using this dataset.
 
     """
     return _download_and_read("alphachannel.png", texture=True, load=load)
@@ -2412,7 +2591,7 @@ def download_vtk_logo(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.Texture or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2430,12 +2609,14 @@ def download_sky_box_cube_map():
     Returns
     -------
     pyvista.Texture
-        Texture
+        Texture containing a skybox.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_sky_box_cube_map()  # doctest:+SKIP
+
+    See :ref:`pbr_example` for an example using this dataset.
 
     """
     prefix = 'skybox2-'
@@ -2458,7 +2639,7 @@ def download_backward_facing_step(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2485,13 +2666,15 @@ def download_gpr_data_array(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
-        DataSet or filename depending on ``load``.
+    numpy.ndarray or str
+        Array or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_gpr_data_array()  # doctest:+SKIP
+
+    See :ref:`create_draped_surf_example` for an example using this dataset.
 
     """
     saved_file, _ = _download_file("gpr-example/data.npy")
@@ -2511,13 +2694,15 @@ def download_gpr_path(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_gpr_path()  # doctest:+SKIP
+
+    See :ref:`create_draped_surf_example` for an example using this dataset.
 
     """
     saved_file, _ = _download_file("gpr-example/path.txt")
@@ -2530,6 +2715,8 @@ def download_gpr_path(load=True):
 def download_woman(load=True):
     """Download scan of a woman.
 
+    Originally obtained from Laser Design.
+
     Parameters
     ----------
     load : bool, optional
@@ -2538,12 +2725,8 @@ def download_woman(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
-
-    Notes
-    -----
-    Originally obtained from https://www.laserdesign.com/sample-files/full-body-scan-with-texture/
 
     Examples
     --------
@@ -2557,6 +2740,8 @@ def download_woman(load=True):
 def download_lobster(load=True):
     """Download scan of a lobster.
 
+    Originally obtained from Laser Design.
+
     Parameters
     ----------
     load : bool, optional
@@ -2565,12 +2750,8 @@ def download_lobster(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
-
-    Notes
-    -----
-    Originally obtained from https://www.laserdesign.com/lobster-scan-data
 
     Examples
     --------
@@ -2584,6 +2765,8 @@ def download_lobster(load=True):
 def download_face2(load=True):
     """Download scan of a man's face.
 
+    Originally obtained from Laser Design.
+
     Parameters
     ----------
     load : bool, optional
@@ -2592,12 +2775,8 @@ def download_face2(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
-
-    Notes
-    -----
-    Originally obtained from https://www.laserdesign.com/sample-files/mans-face/
 
     Examples
     --------
@@ -2611,6 +2790,8 @@ def download_face2(load=True):
 def download_urn(load=True):
     """Download scan of a burial urn.
 
+    Originally obtained from Laser Design.
+
     Parameters
     ----------
     load : bool, optional
@@ -2619,12 +2800,8 @@ def download_urn(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
-
-    Notes
-    -----
-    https://www.laserdesign.com/sample-files/burial-urn/
 
     Examples
     --------
@@ -2638,6 +2815,8 @@ def download_urn(load=True):
 def download_pepper(load=True):
     """Download scan of a pepper (capsicum).
 
+    Originally obtained from Laser Design.
+
     Parameters
     ----------
     load : bool, optional
@@ -2646,12 +2825,8 @@ def download_pepper(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
-
-    Notes
-    -----
-    Originally obtained from https://www.laserdesign.com/sample-files/hot-red-pepper/
 
     Examples
     --------
@@ -2665,6 +2840,8 @@ def download_pepper(load=True):
 def download_drill(load=True):
     """Download scan of a power drill.
 
+    Originally obtained from Laser Design.
+
     Parameters
     ----------
     load : bool, optional
@@ -2673,12 +2850,8 @@ def download_drill(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
-
-    Notes
-    -----
-    Originally obtained from https://www.laserdesign.com/drill-scan-data
 
     Examples
     --------
@@ -2692,6 +2865,8 @@ def download_drill(load=True):
 def download_action_figure(load=True):
     """Download scan of an action figure.
 
+    Originally obtained from Laser Design.
+
     Parameters
     ----------
     load : bool, optional
@@ -2700,12 +2875,8 @@ def download_action_figure(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
-
-    Notes
-    -----
-    Originally obtained from https://www.laserdesign.com/sample-files/action-figure/
 
     Examples
     --------
@@ -2761,7 +2932,7 @@ def download_notch_stress(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Notes
@@ -2788,7 +2959,7 @@ def download_notch_displacement(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2807,6 +2978,8 @@ def download_louis_louvre(load=True):
     copy in plomb of the original statue in Versailles, made by
     Bernini and Girardon.
 
+    Originally downloaded from `sketchfab <https://sketchfab.com/3d-models/louis-xiv-de-france-louvre-paris-a0cc0e7eee384c99838dff2857b8158c>`_
+
     Parameters
     ----------
     load : bool, optional
@@ -2815,17 +2988,15 @@ def download_louis_louvre(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.PolyData or str
         DataSet or filename depending on ``load``.
-
-    Notes
-    -----
-    Originally downloaded from `sketchfab <https://sketchfab.com/3d-models/louis-xiv-de-france-louvre-paris-a0cc0e7eee384c99838dff2857b8158c>`_
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_louis_louvre()  # doctest:+SKIP
+
+    See :ref:`pbr_example` for an example using this dataset.
 
     """
     return _download_and_read('louis.ply', load=load)
@@ -2842,13 +3013,15 @@ def download_cylinder_crossflow(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_cylinder_crossflow()  # doctest:+SKIP
+
+    See :ref:`2d_streamlines_example` for an example using this dataset.
 
     """
     filename, _ = _download_file('EnSight/CylinderCrossflow/cylinder_Re35.case')
@@ -2872,13 +3045,15 @@ def download_naca(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_naca()  # doctest:+SKIP
+
+    See :ref:`reader_example` for an example using this dataset.
 
     """
     filename, _ = _download_file('EnSight/naca.bin.case')
@@ -2901,13 +3076,15 @@ def download_wavy(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_wavy()  # doctest:+SKIP
+
+    See :ref:`reader_example` for an example using this dataset.
 
     """
     folder, _ = _download_file('PVD/wavy.zip')
@@ -2928,7 +3105,7 @@ def download_single_sphere_animation(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2955,7 +3132,7 @@ def download_dual_sphere_animation(load=True):
 
     Returns
     -------
-    pyvista.DataSet or str
+    pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2986,6 +3163,7 @@ def download_osmnx_graph():  # pragma: no cover
     Returns
     -------
     networkx.classes.multidigraph.MultiDiGraph
+        An osmnx graph of the streets of Holzgerlingen, Germany.
 
     Examples
     --------

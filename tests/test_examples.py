@@ -5,7 +5,7 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista import examples
+from pyvista import examples, demos
 from pyvista.plotting import system_supports_plotting
 
 ffmpeg_failed = False
@@ -29,18 +29,18 @@ except KeyError:
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plot_wave():
-    points = examples.plot_wave(wavetime=0.1, off_screen=True)
+    points = demos.plot_wave(wavetime=0.1)
     assert isinstance(points, np.ndarray)
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_beam_example():
-    examples.beam_example(off_screen=True)
+    demos.plot_beam()
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plot_ants_plane():
-    examples.plot_ants_plane(off_screen=True)
+    demos.plot_ants_plane()
 
 
 def test_load_ant():
