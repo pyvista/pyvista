@@ -4,7 +4,7 @@ Why PyVista?
 .. jupyter-execute::
    :hide-code:
 
-   # jupyterlab boiler plate setup
+   # jupyterlab boilerplate setup
    import pyvista
    pyvista.set_plot_theme('document')
 
@@ -36,7 +36,7 @@ requires a few lines of code.
    ...               (-0.15446, 0.939031, -0.3071841)]
 
 +-------------------------------------------+-------------------------------------+
-| Read and plot stl file using `vtk`_       | Read a stl file using PyVista       |
+| Read and plot STL file using `vtk`_       | Read an STL file using PyVista      |
 +===========================================+=====================================+
 | .. code:: python                          | .. code:: python                    |
 |                                           |                                     |
@@ -68,10 +68,10 @@ by exposing a simplified, but functional, interface to VTK's classes.
 In :func:`pyvista.read`, PyVista automatically determines the correct
 file reader based on the file extension and returns a DataSet object.
 This dataset object contains all the methods that are available to a
-:class:`pyvista.PolyData` class, including the :func:`pyvista.plot`
-method, allowing you to instantly generate a plot of the mesh.
-Garbage collection is taken care of automatically and the renderer is
-cleaned up after the user closes the plotting window.
+:class:`pyvista.PolyData` class, including the :func:`plot
+<pyvista.plot>` method, allowing you to instantly generate a plot of
+the mesh.  Garbage collection is taken care of automatically and the
+renderer is cleaned up after the user closes the plotting window.
 
 For more details comparing the two APIs, please see
 :ref:`pyvista_data_model` and :ref:`pyvista_to_vtk_docs`.
@@ -80,8 +80,8 @@ PyVista API
 ~~~~~~~~~~~
 For example, triangular surface meshes in VTK can be subdivided but
 every other object in VTK cannot.  It then makes sense that a
-subdivided method be added to the existing triangular surface mesh.
-That way, subdivision can be performed with:
+:func:`subdivide` method be added to the existing triangular surface
+mesh.  That way, subdivision can be performed with:
 
 .. jupyter-execute::
 
@@ -98,7 +98,7 @@ to a description of how to use those methods:
 .. figure:: ../images/gifs/documentation.gif
 
 
-Interfacing with other Libraries
+Interfacing With Other Libraries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PyVista is heavily dependent on `numpy <https://numpy.org/>`_ and uses
 it to represent point, cell, field, and other data from the VTK
@@ -142,8 +142,8 @@ field of arrows using :func:`numpy.meshgrid`:
     pl.show()
 
 PyVista has connections to several other libraries, such as `meshio
-<https://github.com/nschloe/meshio>`_, `matplotlib
+<https://github.com/nschloe/meshio>`_ and `matplotlib
 <https://matplotlib.org/>`_, allowing PyVista to extend VTK with
-functionality from the python ecosystem.
+functionality from the Python ecosystem.
 
 .. _vtk: https://vtk.org/
