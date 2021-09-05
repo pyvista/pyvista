@@ -57,12 +57,12 @@ def Spline(points, n_points=None):
 
 
 def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=None):
-    """Create a kochanek spline from points.
+    """Create a Kochanek spline from points.
 
     Parameters
     ----------
     points : sequence
-        Array of points to build a kochanek spline out of.  Array must
+        Array of points to build a Kochanek spline out of.  Array must
         be 3D and directionally ordered.
 
     tension : sequence, optional
@@ -88,7 +88,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
 
     Examples
     --------
-    Construct a kochanek spline
+    Construct a Kochanek spline.
 
     >>> import numpy as np
     >>> import pyvista as pv
@@ -127,7 +127,7 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     spline_function = _vtk.vtkParametricSpline()
     spline_function.SetPoints(pyvista.vtk_points(points, False))
 
-    # set kochanek spline for each direction
+    # set Kochanek spline for each direction
     xspline = _vtk.vtkKochanekSpline()
     yspline = _vtk.vtkKochanekSpline()
     zspline = _vtk.vtkKochanekSpline()
