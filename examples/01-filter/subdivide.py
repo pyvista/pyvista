@@ -1,4 +1,6 @@
 """
+.. _subdivide_example:
+
 Subdivide Cells
 ~~~~~~~~~~~~~~~
 

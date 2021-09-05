@@ -611,21 +611,27 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        name : str
-            Name of the scalars array to assign as active.
+        name : str or None
+            Name of the scalars array to assign as active.  If
+            ``None``, deactivates active scalars for both point and
+            cell data.
 
         preference : str, optional
             If there are two arrays of the same name associated with
-            points, cells, or field data, it will prioritize an array
-            matching this type.  Can be either ``'cell'``,
-            ``'field'``, or ``'point'``.
+            points or cells, it will prioritize an array matching this
+            type.  Can be either ``'cell'``, or ``'point'``.
 
         """
+        if preference not in ['point', 'cell', FieldAssociation.CELL,
+                              FieldAssociation.POINT]:
+            raise ValueError('``preference`` must be either "point" or "cell"')
         if name is None:
             self.GetCellData().SetActiveScalars(None)
             self.GetPointData().SetActiveScalars(None)
             return
         field = get_array_association(self, name, preference=preference)
+        if field == FieldAssociation.NONE:
+            raise KeyError(f'Data field {name} does not exist')
         self._last_active_scalars_name = self.active_scalars_info.name
         if field == FieldAssociation.POINT:
             ret = self.GetPointData().SetActiveScalars(name)
@@ -753,7 +759,7 @@ class DataSet(DataSetFilters, DataObject):
             self.field_data[new_name] = self.field_data.pop(old_name)
         else:
             raise KeyError(f'Array with name {old_name} not found.')
-        if was_active:
+        if was_active and field != FieldAssociation.NONE:
             self.set_active_scalars(new_name, preference=field)
 
     @property

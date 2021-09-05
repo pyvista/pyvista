@@ -1835,11 +1835,11 @@ class DefaultTheme(_ThemeConfig):
 
     @property
     def antialiasing(self) -> bool:
-        """Enable or disable antialiasing.
+        """Enable or disable anti-aliasing.
 
         Examples
         --------
-        Enable or antialiasing.
+        Enable anti-aliasing in the global theme.
 
         >>> import pyvista
         >>> pyvista.global_theme.antialiasing = True

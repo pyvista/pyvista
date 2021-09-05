@@ -1,4 +1,6 @@
 """
+.. _read_file_example:
+
 Load and Plot from a File
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

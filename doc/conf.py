@@ -64,12 +64,68 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
     "sphinx.ext.extlinks",
-    "sphinx.ext.coverage",
     "jupyter_sphinx",
     "sphinx_panels",
     "pyvista.ext.plot_directive",
+    "pyvista.ext.coverage",
     "numpydoc"
 ]
+
+# Configuration of pyvista.ext.coverage
+coverage_additional_modules = [
+    'pyvista',
+    'pyvista.themes',
+
+    'pyvista.plotting.axes',
+    'pyvista.plotting.camera',
+    'pyvista.plotting.helpers',
+    'pyvista.plotting.lights',
+    'pyvista.plotting.picking',
+    'pyvista.plotting.plotting',
+    'pyvista.plotting.renderer',
+    'pyvista.plotting.renderers',
+    'pyvista.plotting.scalar_bars',
+    'pyvista.plotting.theme',
+    'pyvista.plotting.tools',
+    'pyvista.plotting.widgets',
+
+    'pyvista.core.common_data',
+    'pyvista.core.common_data',
+    'pyvista.core.composite',
+    'pyvista.core.dataobject',
+    'pyvista.core.datasetattributes',
+    'pyvista.core.dataset',
+    'pyvista.core.errors',
+    'pyvista.core.grid',
+    'pyvista.core.imaging',
+    'pyvista.core.objects',
+    'pyvista.core.pointset',
+    'pyvista.core.pyvista_ndarray',
+
+    'pyvista.core.filters.composite',
+    'pyvista.core.filters.data_set',
+    'pyvista.core.filters.poly_data',
+    'pyvista.core.filters.structured_grid',
+    'pyvista.core.filters.uniform_grid',
+    'pyvista.core.filters.unstructured_grid',
+
+    'pyvista.demos',
+    'pyvista.examples.examples',
+
+    'pyvista.utilities.features',
+    'pyvista.utilities.fileio',
+    'pyvista.utilities.geometric_objects',
+    'pyvista.utilities.parametric_objects',
+    'pyvista.utilities.reader',
+    'pyvista.utilities.xvfb',
+    'pyvista.utilities.transformations',
+    'pyvista.utilities.regression',
+
+]
+coverage_ignore_modules = [
+    r'\.plot_directive$',  # Issue with class parameter documentation
+]
+
 
 # See https://numpydoc.readthedocs.io/en/latest/install.html
 numpydoc_use_plots = True
@@ -155,6 +211,9 @@ numpydoc_validation_exclude = {  # set of regex
     # pending refactor
     r'\.*MultiBlock.next$',
 
+    # called from inherited
+    r'\.*Table.copy_meta_from$',
+
 }
 
 
@@ -182,6 +241,7 @@ source_suffix = ".rst"
 
 # The main toctree document.
 master_doc = "index"
+
 
 # General information about the project.
 project = "PyVista"

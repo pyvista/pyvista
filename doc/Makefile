@@ -17,11 +17,6 @@ help:
 
 .PHONY: help Makefile
 
-.PHONY: all
-
-all:
-	echo PYVISTA_OFF_SCREEN: $$PYVISTA_OFF_SCREEN
-
 clean:
 	rm -rf $(BUILDDIR)/*
 	rm -rf examples/

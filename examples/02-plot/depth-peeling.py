@@ -1,9 +1,10 @@
 """
+.. _depth_peeling_example:
+
 Depth Peeling
 ~~~~~~~~~~~~~
-
 Depth peeling is a technique to correctly render translucent geometry.
-This is not enabled by default in ``pyvista.global_theme`` as some
+This is not enabled by default in :attr:`pyvista.global_theme` as some
 operating systems and versions of VTK have issues with this routine.
 
 For this example, we will showcase the difference that depth peeling

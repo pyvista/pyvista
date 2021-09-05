@@ -60,8 +60,6 @@ def test_setitem(hexbeam_point_attributes):
     with raises(TypeError, match='Only strings'):
         hexbeam_point_attributes[0]
 
-
-
 def test_repr(hexbeam_point_attributes):
     repr_str = str(hexbeam_point_attributes)
     assert 'POINT' in repr_str
@@ -159,6 +157,13 @@ def test_add_matrix(hexbeam):
     hexbeam.point_data.set_array(mat, 'mat')
     matout = hexbeam.point_data['mat'].reshape(mat_shape)
     assert np.allclose(mat, matout)
+
+
+def test_set_active_scalars_fail(hexbeam):
+    with raises(ValueError):
+        hexbeam.set_active_scalars('foo', preference='field')
+    with raises(KeyError):
+        hexbeam.set_active_scalars('foo')
 
 
 def test_set_active_vectors(hexbeam):

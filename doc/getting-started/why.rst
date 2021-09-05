@@ -6,12 +6,15 @@ Why PyVista?
 
    # jupyterlab boiler plate setup
    import pyvista
+
    pyvista.set_jupyter_backend('pythreejs')
    pyvista.global_theme.background = 'white'
    pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
    pyvista.global_theme.antialiasing = True
    pyvista.global_theme.show_scalar_bar = False
+
+
 
 
 VTK is an excellent visualization toolkit, and with Python bindings it
@@ -28,49 +31,42 @@ Plotting a Mesh using Python's VTK
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Using this `example
 <https://kitware.github.io/vtk-examples/site/Python/IO/ReadSTL/>`_ as
-a baseline example, loading and plotting an STL file requires a lot of
-code when using only the ``vtk`` module.
+a baseline, loading and plotting an STL file requires a lot of code
+when using only the `vtk`_ library.  PyVista on the other hand only
+requires a few lines of code.
 
-+----------------------------------------------+-------------------------------------------+
-| Read a stl file using ``vtk``                | Read a stl file using ``pyvista``         |
-+==============================================+===========================================+
-| .. code:: python                             | .. code:: python                          |
-|                                              |                                           |
-|     import vtk                               |     import pyvista                        |
-|                                              |                                           |
-|     # create reader                          |     mesh = pyvista.read('myfile.stl')     |
-|     reader = vtk.vtkSTLReader()              |     mesh.plot()                           |
-|     reader.SetFileName("myfile.stl")         |                                           |
-|                                              |                                           |
-|     mapper = vtk.vtkPolyDataMapper()         |                                           |
-|     output_port = reader.GetOutputPort()     |                                           |
-|     mapper.SetInputConnection(output_port)   |                                           |
-|                                              |                                           |
-|     # create actor                           |                                           |
-|     actor = vtk.vtkActor()                   |                                           |
-|     actor.SetMapper(mapper)                  |                                           |
-|                                              |                                           |
-|     # Create a rendering window and renderer |                                           |
-|     ren = vtk.vtkRenderer()                  |                                           |
-|     renWin = vtk.vtkRenderWindow()           |                                           |
-|     renWin.AddRenderer(ren)                  |                                           |
-|                                              |                                           |
-|     # Create a renderwindowinteractor        |                                           |
-|     iren = vtk.vtkRenderWindowInteractor()   |                                           |
-|     iren.SetRenderWindow(renWin)             |                                           |
-|                                              |                                           |
-|     # Assign actor to the renderer           |                                           |
-|     ren.AddActor(actor)                      |                                           |
-|                                              |                                           |
-|     # Enable user interface interactor       |                                           |
-|     iren.Initialize()                        |                                           |
-|     renWin.Render()                          |                                           |
-|     iren.Start()                             |                                           |
-|                                              |                                           |
-|     # clean up objects                       |                                           |
-|     del iren                                 |                                           |
-|     del renWin                               |                                           |
-+----------------------------------------------+-------------------------------------------+
+.. pyvista-plot::
+   :include-source: False
+   :context:
+
+   >>> bunny_cpos = [( 0.14826, 0.275729,  0.4215911),
+   ...               (-0.01684, 0.110154, -0.0015369),
+   ...               (-0.15446, 0.939031, -0.3071841)]
+
++-------------------------------------------+-------------------------------------+
+| Read and plot stl file using `vtk`_       | Read a stl file using PyVista       |
++===========================================+=====================================+
+| .. code:: python                          | .. code:: python                    |
+|                                           |                                     |
+|    import vtk                             |    import pyvista                   |
+|    reader = vtk.vtkSTLReader()            |    mesh = pyvista.read('bunny.stl') |
+|    reader.SetFileName("bunny.stl")        |    mesh.plot()                      |
+|    mapper = vtk.vtkPolyDataMapper()       |                                     |
+|    output_port = reader.GetOutputPort()   | .. pyvista-plot::                   |
+|    mapper.SetInputConnection(output_port) |    :include-source: False           |
+|    actor = vtk.vtkActor()                 |    :context:                        |
+|    actor.SetMapper(mapper)                |                                     |
+|    ren = vtk.vtkRenderer()                |    from pyvista import examples     |
+|    renWin = vtk.vtkRenderWindow()         |    mesh = examples.download_bunny() |
+|    renWin.AddRenderer(ren)                |    mesh.plot(cpos=bunny_cpos)       |
+|    iren = vtk.vtkRenderWindowInteractor() |                                     |
+|    iren.SetRenderWindow(renWin)           |                                     |
+|    ren.AddActor(actor)                    |                                     |
+|    iren.Initialize()                      |                                     |
+|    renWin.Render()                        |                                     |
+|    iren.Start()                           |                                     |
+|    del iren, renWin                       |                                     |
++-------------------------------------------+-------------------------------------+
 
 The PyVista data model and API allows you to rapidly load meshes and
 handles much of the "grunt work" of setting up plots, connecting
@@ -84,6 +80,9 @@ This dataset object contains all the methods that are available to a
 method, allowing you to instantly generate a plot of the mesh.
 Garbage collection is taken care of automatically and the renderer is
 cleaned up after the user closes the plotting window.
+
+For more details comparing the two APIs, please see
+:ref:`pyvista_data_model` and :ref:`pyvista_to_vtk_docs`.
 
 
 PyVista API
@@ -106,69 +105,6 @@ use sophisticated processing routines on the fly with immediate access
 to a description of how to use those methods:
 
 .. figure:: ../images/gifs/documentation.gif
-
-
-Tradeoffs
-~~~~~~~~~
-While most features can, not everything can be simplified without
-losing functionality or performance.
-
-In the :class:`collision <pyvista.PolyDataFilters.collision>` filter,
-we demonstrate how to calculate the collision between two meshes.  For
-example:
-
-.. jupyter-execute::
-
-   import pyvista
-
-   # create a default sphere and a shifted sphere
-   mesh_a = pyvista.Sphere()
-   mesh_b = pyvista.Sphere(center=(-0.4, 0, 0))
-   out, n_coll = mesh_a.collision(mesh_b, generate_scalars=True, contact_mode=2)
-
-   pl = pyvista.Plotter()
-   pl.add_mesh(out)
-   pl.add_mesh(mesh_b, style='wireframe', color='k')
-   pl.camera_position = 'xy'
-   pl.show()
-
-Under the hood, the collision filter detects mesh collisions using a
-oriented bounding box (OBB) trees.  For a single collision, this filter
-is as performant as the vtk counterpart, but when computing multiple
-collisions with the same meshes, as in the :ref:`collision_example`
-example, it is more efficient (though less convienent) to use the VTK
-underlying `vtkCollisionDetectionFilter
-<https://vtk.org/doc/nightly/html/classvtkCollisionDetectionFilter.html>`_,
-as the OBB tree is computed once for each mesh.  In most cases, pure
-PyVista is sufficient for most data science, but there are times when
-you may want to use VTK classes directly.
-
-Note that nothing stops you from using VTK classes and then wrapping
-the output with PyVista.  For example:
-
-.. jupyter-execute::
-   
-   import vtk
-   import pyvista
-
-   # Create a circle using vtk
-   polygonSource = vtk.vtkRegularPolygonSource()
-   polygonSource.GeneratePolygonOff()
-   polygonSource.SetNumberOfSides(50)
-   polygonSource.SetRadius(5.0)
-   polygonSource.SetCenter(0.0, 0.0, 0.0)
-   polygonSource.Update()
-
-   # wrap and plot using pyvista
-   mesh = pyvista.wrap(polygonSource.GetOutput())
-   mesh.plot(line_width=3, cpos='xy', color='k')
-
-In this manner, you can get the "best of both worlds" should you need
-the flexibility of PyVista and the functionality of VTK.
-
-.. note::
-   You can use :func:`pyvista.Circle` for a one line replacement of
-   the above VTK code.
 
 
 Interfacing with other Libraries
@@ -218,3 +154,5 @@ PyVista has connections to several other libraries, such as `meshio
 <https://github.com/nschloe/meshio>`_, `matplotlib
 <https://matplotlib.org/>`_, allowing PyVista to extend VTK with
 functionality from the python ecosystem.
+
+.. _vtk: https://vtk.org/

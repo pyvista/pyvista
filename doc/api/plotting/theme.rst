@@ -6,6 +6,9 @@ PyVista plotting parameters can be controlled on a plot by plot basis
 or through a global theme, making it possible to control mesh colors
 and styles through one global configuration.
 
+See :ref:`themes_example` for an example on how to use themes within
+PyVista.
+
 .. currentmodule:: pyvista
 
 .. autosummary::

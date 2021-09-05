@@ -1,4 +1,6 @@
 """
+.. _box_widget_example:
+
 Box Widget
 ~~~~~~~~~~
 

@@ -61,7 +61,19 @@ class PointSet(DataSet):
         return np.array(alg.GetCenter())
 
     def shallow_copy(self, to_copy):
-        """Create a shallow copy the pointset."""
+        """Create a shallow copy from different dataset into this dataset.
+
+        Parameters
+        ----------
+        to_copy : pyvista.DataSet
+            Data object to perform a shallow copy from.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Same return type as the input ``to_copy`` dataset.
+
+        """
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(_vtk.vtkPoints())
@@ -78,6 +90,12 @@ class PointSet(DataSet):
 
         inplace : bool, optional
             Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Same type as the input, but with the specified cells
+            removed.
 
         Examples
         --------
@@ -107,7 +125,7 @@ class PointSet(DataSet):
 
 
 class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
-    """Extend the functionality of a ``vtk.vtkPolyData`` object.
+    """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
 
     Can be initialized in several ways:
 
@@ -844,8 +862,7 @@ class PointGrid(PointSet):
 
 
 class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
-    """
-    Extends the functionality of a vtk.vtkUnstructuredGrid object.
+    """Dataset used for arbitrary combinations of all possible cell types.
 
     Can be initialized by the following:
 
@@ -1332,7 +1349,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
 
 class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
-    """Extend the functionality of a vtk.vtkStructuredGrid object.
+    """Dataset used for topologically regular arrays of data.
 
     Can be initialized in several ways:
 
