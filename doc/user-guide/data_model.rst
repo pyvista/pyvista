@@ -711,7 +711,6 @@ these vectors represent quantities with direction.
 .. _vtkFieldData: https://vtk.org/doc/nightly/html/classvtkFieldData.html
 .. _vtkDataObject: https://vtk.org/doc/nightly/html/classvtkDataObject.html
 .. _vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
-.. _vtk.vtkMultiBlockDataSet: https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html
 
 .. |PolyData| replace:: :class:`PolyData <pyvista.PolyData>`
 .. |UnstructuredGrid| replace:: :class:`UnstructuredGrid <pyvista.UnstructuredGrid>`
