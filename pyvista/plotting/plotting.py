@@ -2978,6 +2978,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         vtk.vtkTextActor
             Text actor added to plot.
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_text('Sample Text', position='upper_right', color='blue', 
+                                shadow=True)
+        >>> pl.show()
+        
         """
         if font is None:
             font = self._theme.font.family
