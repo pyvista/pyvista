@@ -111,7 +111,7 @@ of a circle from pyvista can be accessed with:
    circle = pyvista.Circle()
    circle.points[:10]
 
-And these points can be operated on as if it was a ``numpy`` array,
+And these points can be operated on as if it was a NumPy array,
 all without losing connection to the underlying VTK data array.
 
 At the same time, a variety of PyVista objects can be generated

@@ -371,8 +371,7 @@ Data Arrays
 Each :class:`DataSet <pyvista.DataSet>` contains
 attributes that allow you to access the underlying numeric data.  This
 numerical data may be associated with the :attr:`points
-<pyvista.DataSet.points>`, :attr:`cells
-<pyvista.DataSet.cells>`, or not associated with points
+<pyvista.DataSet.points>`, cells, or not associated with points
 or cells and attached to the mesh in general.
 
 To illustrate data arrays within PyVista, let's first construct a
@@ -437,7 +436,7 @@ Continuing with our example above, let's assign each cell a single
 integer.  We can do this using a Python :class:`list` and making it
 the same length as the number of cells in the
 |UnstructuredGrid|. Or as an even simpler example, using a
-:func:`range` of the appropriate length.  Here we create the range, add
+:class:`range` of the appropriate length.  Here we create the range, add
 it to the :attr:`cell_data <pyvista.DataSet.cell_data>`, and then access
 it using the ``[]`` operator.
 
@@ -486,7 +485,7 @@ assigned.
 We can continue to assign cell data to our :class:`DataSet
 <pyvista.DataSet>` using the ``[]`` operator, but if you
 do not wish the new array to become the active array, you can add it
-using :func:`set_array <pyvista.DataSet.set_array>`
+using :func:`set_array() <pyvista.DataSetAttributes.set_array>`
 
 .. jupyter-execute::
 
@@ -561,8 +560,8 @@ lowest value at ``Point 0`` to the highest value at ``Point 8``.
    >>> pl.show()
 
 As in :ref:`pyvista_data_model_cell_data`, we can assign multiple
-arrays to :attr:`point_data <pyvista.dataset.DataSet.point_data>`
-using :func:`set_array <pyvista.DataSet.set_array>`.
+arrays to :attr:`point_data <pyvista.DataSet.point_data>`
+using :func:`set_array() <pyvista.DataSetAttributes.set_array>`.
 
 .. jupyter-execute::
 
