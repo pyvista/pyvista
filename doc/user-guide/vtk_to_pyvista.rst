@@ -1,4 +1,4 @@
-.. _pyvista_to_vtk_docs:
+.. _vtk_to_pyvista_docs:
 
 
 Transitioning from VTK to PyVista
@@ -229,7 +229,7 @@ access it (or change it) from the :attr:`faces
    >>> poly_data = pyvista.PolyData(np_points, faces)
    >>> poly_data.faces
 
-.. _pyvista_vs_vtk_object_repr:
+.. _vtk_vs_pyvista_object_repr:
 
 Object Representation
 ---------------------

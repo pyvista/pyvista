@@ -74,7 +74,7 @@ the mesh.  Garbage collection is taken care of automatically and the
 renderer is cleaned up after the user closes the plotting window.
 
 For more details comparing the two APIs, please see
-:ref:`pyvista_data_model` and :ref:`pyvista_to_vtk_docs`.
+:ref:`pyvista_data_model` and :ref:`vtk_to_pyvista_docs`.
 
 PyVista API
 ~~~~~~~~~~~

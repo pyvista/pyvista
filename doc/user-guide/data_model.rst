@@ -13,7 +13,7 @@ place data within datasets.
    not require that you have knowledge of VTK.  For those who wish to
    see a detailed comparison to VTK or translate code written for the
    Python bindings of VTK to PyVista, please see
-   :ref:`pyvista_to_vtk_docs`.
+   :ref:`vtk_to_pyvista_docs`.
 
 For a more general description of our API, see :ref:`what_is_a_mesh`.
 
@@ -347,7 +347,7 @@ In this representation we see:
 * Number of data arrays :attr:`n_arrays <pyvista.DataSet.n_arrays>`
 
 This is vastly different from the output from VTK.  See
-:ref:`pyvista_vs_vtk_object_repr` for the comparison between the two
+:ref:`vtk_vs_pyvista_object_repr` for the comparison between the two
 representations.
 
 This mesh contains no data arrays as it consists only of geometry. This
