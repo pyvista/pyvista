@@ -55,7 +55,7 @@ and attributes describing that geometry in the form of point, cell, or
 field arrays.
 
 Geometry in PyVista is represented as points and cells.  For example,
-consider a single cell within a `PolyData`_:
+consider a single cell within a |PolyData|:
 
 .. jupyter-execute::
    :hide-code:
@@ -89,22 +89,22 @@ shapes. The most important dataset classes are shown below:
 
 Here, the above datasets are ordered from most (5) to least complex
 (1). That is, every dataset can be represented as an
-`UnstructuredGrid`_, but the
-`UnstructuredGrid`_ class takes the most amount of
+|UnstructuredGrid|, but the
+|UnstructuredGrid| class takes the most amount of
 memory to store since they must account for every individual point and
 cell . On the other hand, since `vtkImageData`_
-(`UniformGrid`_) is uniformly spaced, a few integers and
+(|UniformGrid|) is uniformly spaced, a few integers and
 floats can describe the shape, so it takes the least amount of memory
 to store.
 
-This is because in `PolyData`_ or
-`UnstructuredGrid`_, points and cells must be explicitly
-defined.  In other data types, such as `UniformGrid`_,
+This is because in |PolyData| or
+|UnstructuredGrid|, points and cells must be explicitly
+defined.  In other data types, such as |UniformGrid|,
 the cells (and even points) are defined as an emergent property based
 on the dimensionality of the grid.
 
 To see this in practice, let's create the simplest surface represented
-as a `PolyData`_. First, we need to define our points.
+as a |PolyData|. First, we need to define our points.
 
 
 Points and Arrays Within PyVista
@@ -210,7 +210,7 @@ of lists via:
    ...           [1, 0, 0],
    ...           [0.5, 0.667, 0]]
 
-When used in the context of `PolyData`_ to create the
+When used in the context of |PolyData| to create the
 mesh, this list will automatically be wrapped using NumPy and then
 passed to VTK. This avoids any looping overhead and while still
 allowing you to use native python classes.
@@ -275,16 +275,16 @@ in the same order as we defined earlier.
 
 .. note::
    Observe how we had to insert a leading ``3`` to tell VTK that our
-   face will contain three points. In our `PolyData`_ VTK
+   face will contain three points. In our |PolyData| VTK
    doesn't assume that faces always contain three points, so we have
    to define that. This actually gives us the flexibility to define
    as many (or as few as one) points per cell as we wish.
 
 
 Now we have all the necessary pieces to assemble an instance of
-`PolyData`_ that contains a single triangle. To do
+|PolyData| that contains a single triangle. To do
 this, we simply provide the ``points`` and ``cells`` to the
-constructor of a `PolyData`_. We can see from the
+constructor of a |PolyData|. We can see from the
 representation that this geometry contains three points and one cell
 
 .. jupyter-execute::
@@ -378,8 +378,9 @@ or cells and attached to the mesh in general.
 To illustrate data arrays within PyVista, let's first construct a
 slightly more complex mesh than our previous example.  Here, we create
 a simple mesh containing four isometric cells by starting with a
-`UniformGrid`_ and then casting it to an `UnstructuredGrid`_ with
-`cast_to_unstructured_grid`_.
+|UniformGrid| and then casting it to an |UnstructuredGrid| with
+:func:`cast_to_unstructured_grid
+<pyvista.DataSet.cast_to_unstructured_grid>`.
 
 .. jupyter-execute::
 
@@ -435,7 +436,7 @@ The easiest way to add scalar data to a :class:`DataSet
 Continuing with our example above, let's assign each cell a single
 integer.  We can do this using a Python :class:`list` and making it
 the same length as the number of cells in the
-`UnstructuredGrid`_. Or as an even simpler example, using a
+|UnstructuredGrid|. Or as an even simpler example, using a
 :func:`range` of the appropriate length.  Here we create the range, add
 it to the :attr:`cell_data <pyvista.DataSet.cell_data>`, and then access
 it using the ``[]`` operator.
@@ -713,7 +714,6 @@ these vectors represent quantities with direction.
 .. _vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
 .. _vtk.vtkMultiBlockDataSet: https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html
 
-.. _PolyData: :class:`PolyData <pyvista.PolyData>`
-.. _UnstructuredGrid: :class:`UnstructuredGrid <pyvista.UnstructuredGrid>`
-.. _UniformGrid: :class:`UniformGrid <pyvista.UniformGrid>`
-.. _cast_to_unstructured_grid: :func:`cast_to_unstructured_grid <pyvista.DataSet.cast_to_unstructured_grid>`
+.. |PolyData| replace:: :class:`PolyData <pyvista.PolyData>`
+.. |UnstructuredGrid| replace:: :class:`UnstructuredGrid <pyvista.UnstructuredGrid>`
+.. |UniformGrid| replace:: :class:`UniformGrid <pyvista.UniformGrid>`
