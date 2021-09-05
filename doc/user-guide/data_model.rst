@@ -55,7 +55,7 @@ and attributes describing that geometry in the form of point, cell, or
 field arrays.
 
 Geometry in PyVista is represented as points and cells.  For example,
-consider a single cell within a :class:`pyvista.PolyData`:
+consider a single cell within a `PolyData`_:
 
 .. jupyter-execute::
    :hide-code:
@@ -89,22 +89,22 @@ shapes. The most important dataset classes are shown below:
 
 Here, the above datasets are ordered from most (5) to least complex
 (1). That is, every dataset can be represented as an
-:class:`pyvista.UnstructuredGrid`, but the
-:class:`pyvista.UnstructuredGrid` class takes the most amount of
+`UnstructuredGrid`_, but the
+`UnstructuredGrid`_ class takes the most amount of
 memory to store since they must account for every individual point and
 cell . On the other hand, since `vtkImageData`_
-(:class:`pyvista.UniformGrid`) is uniformly spaced, a few integers and
+(`UniformGrid`_) is uniformly spaced, a few integers and
 floats can describe the shape, so it takes the least amount of memory
 to store.
 
-This is because in :class:`pyvista.PolyData` or
-:class:`pyvista.UnstructuredGrid`, points and cells must be explicitly
-defined.  In other data types, such as :class:`pyvista.UniformGrid`,
+This is because in `PolyData`_ or
+`UnstructuredGrid`_, points and cells must be explicitly
+defined.  In other data types, such as `UniformGrid`_,
 the cells (and even points) are defined as a emergent property based
 on the dimensionality of the grid.
 
 To see this in practice, let's create the simplest surface represented
-as a :class:`pyvista.PolyData`. First, we need to define our points.
+as a `PolyData`_. First, we need to define our points.
 
 
 Points and Arrays within in PyVista
@@ -211,7 +211,7 @@ of lists via:
    ...           [1, 0, 0],
    ...           [0.5, 0.667, 0]]
 
-When used in the context of :class:`pyvista.PolyData` to create the
+When used in the context of `PolyData`_ to create the
 mesh, this list will automatically be wrapped using numpy and then
 passed to VTK. This avoids any looping overhead and while still
 allowing you to use native python classes.
@@ -276,16 +276,16 @@ in the same order as we defined earlier.
 
 .. note::
    Observe how we had insert a leading ``3`` to tell VTK that our face
-   will contain three points. In our :class:`pyvista.PolyData` VTK
+   will contain three points. In our `PolyData`_ VTK
    doesn't assume that faces always contain three points, so we have
    to define that. This actually gives us the flexibility to define
    as many (or as few as one) points per cell as we wish.
 
 
 Now we have all the necessary pieces to assemble an instance of
-:class:`pyvista.PolyData` that contains a single triangle. To do
+`PolyData`_ that contains a single triangle. To do
 this, we simply provide the ``points`` and ``cells`` to the
-constructor of a :class:`pyvista.PolyData`. We can see from the
+constructor of a `PolyData`_. We can see from the
 representation that this geometry contains three points and one cell
 
 .. jupyter-execute::
@@ -320,7 +320,7 @@ connectivity of the points.
 This instance has several attributes to access the underlying data of
 the mesh. For example, if you wish to access or modify the points of
 the mesh, you can simply access the points attribute with
-:attr:`points <pyvista.core.dataset.DataSet.points>`.
+:attr:`points <pyvista.DataSet.points>`.
 
 .. jupyter-execute::
 
@@ -341,10 +341,10 @@ Or we could simply get the representation of the mesh with:
 
 In this representation we see:
 
-* Number of points :attr:`n_points <pyvista.core.dataset.DataSet.n_points>`
-* Number of cells :attr:`n_points <pyvista.core.dataset.DataSet.n_cells>`
-* Bounds of the mesh :attr:`bounds <pyvista.core.dataset.DataSet.bounds>`
-* Number of data arrays :attr:`n_arrays <pyvista.core.dataset.DataSet.n_arrays>`
+* Number of cells :attr:`n_cells <pyvista.DataSet.n_cells>`
+* Number of points :attr:`n_points <pyvista.DataSet.n_points>`
+* Bounds of the mesh :attr:`bounds <pyvista.DataSet.bounds>`
+* Number of data arrays :attr:`n_arrays <pyvista.DataSet.n_arrays>`
 
 This is vastly different from the output from VTK.  See
 :ref:`pyvista_vs_vtk_object_repr` for the comparison between the two
@@ -368,18 +368,18 @@ geometry.
 
 Data Arrays
 -----------
-Each :class:`pyvista.DataSet <pyvista.core.dataset.DataSet>` contains
+Each :class:`DataSet <pyvista.DataSet>` contains
 attributes that allow you to access the underlying numeric data.  This
 numerical data may be associated with the :attr:`points
-<pyvista.core.dataset.DataSet.points>`, :attr:`cells
-<pyvista.core.dataset.DataSet.cells>`, or not associated with points
+<pyvista.DataSet.points>`, :attr:`cells
+<pyvista.DataSet.cells>`, or not associated with points
 or cells and attached to the mesh in general.
 
 To illustrate data arrays within PyVista, let's first construct a
 slightly more complex mesh than our previous example.  Here, we create
 a simple mesh containing four equal cells by starting with a
-:class:`pyvista.UniformGrid` and then casting it to a
-:class:`pyvista.UnstructuredGrid` with with :func:`cast_to_unstructured_grid <pyvista.core.dataset.DataSet.cast_to_unstructured_grid`.
+`UniformGrid`_ and then casting it to an
+`UnstructuredGrid`_ with `cast_to_unstructured_grid`_.
 
 .. jupyter-execute::
 
@@ -430,11 +430,11 @@ attribute of our mesh.
 Cell Data
 ~~~~~~~~~
 The easiest way to add scalar data to a :class:`DataSet
-<pyvista.core.dataset.DataSet>` is to use the ``[]`` operator.
+<pyvista.DataSet>` is to use the ``[]`` operator.
 Continuing with our example above, let's assign each cell a single
 integer.  We can do this using a python :class:`list` and making it
 the same length as the number of cells in the
-:class:`pyvista.UnstructuredGrid`.  Here we create the list, add it to
+`UnstructuredGrid`_.  Here we create the list, add it to
 the `attr:`cell_data <pyvista.DataSet.cell_data>`, and then access
 it using the ``[]`` operator.
 
@@ -478,9 +478,9 @@ assigned.
    >>> pl.show()
 
 We can continue to assign cell data to our :class:`DataSet
-<pyvista.core.dataset.DataSet>` using the ``[]`` operator, but if you
+<pyvista.DataSet>` using the ``[]`` operator, but if you
 do no wish the new array to become the active array, you can add it
-using :func:`set_array() <pyvista.DataSet.set_array>`
+using :func:`set_array <pyvista.DataSet.set_array>`
 
 .. jupyter-execute::
 
@@ -496,10 +496,10 @@ possible to have an many cell arrays associated with a dataset and
 track which one will plotted as the active cell scalars by default.
 
 The active scalars can also be accessed or set via
-:attr:`active_scalars <pyvista.core.dataset.DataSet.active_scalars>`,
+:attr:`active_scalars <pyvista.DataSet.active_scalars>`,
 and the name of the active scalars array can be accessed or set with
 :attr:`active_scalars_name
-<pyvista.core.dataset.DataSet.active_scalars_name>`.
+<pyvista.DataSet.active_scalars_name>`.
 
 .. jupyter-execute::
 
@@ -513,7 +513,7 @@ Data can be associated to points in the same manner as in
 :ref:`pyvista_data_model_cell_data`.  The :attr:`point_data
 <pyvista.DataSet.point_data>` attribute allows you to associate point
 data to the points of a :class:`DataSet
-<pyvista.core.dataset.DataSet>`.  Here, we will associate a simple
+<pyvista.DataSet>`.  Here, we will associate a simple
 list to the points using the ``[]`` operator.
 
 .. jupyter-execute::
@@ -567,10 +567,10 @@ using :func:`set_array() <pyvista.DataSet.set_array>`.
 Again, here there are now two arrays associated to the point data, and
 only one is the "active" scalars.  Like as in the cell data, can set
 or retrieve this with :attr:`active_scalars
-<pyvista.core.dataset.DataSet.active_scalars>`, and the name of the
+<pyvista.DataSet.active_scalars>`, and the name of the
 active scalars array can be accessed or set with
 :attr:`active_scalars_name
-<pyvista.core.dataset.DataSet.active_scalars_name>`.
+<pyvista.DataSet.active_scalars_name>`.
 
 .. jupyter-execute::
 
@@ -595,7 +595,7 @@ There are active scalars in both point and cell data, but only one
 type of scalars can be "active" at the dataset level.  The reason for
 this is only one scalar type (be it point or cell) can be plotted at
 once, and this data can be obtained from :attr:`active_scalars_info
-<pyvista.core.dataset.DataSet.active_scalars_info>`:
+<pyvista.DataSet.active_scalars_info>`:
 
 .. jupyter-execute::
 
@@ -604,7 +604,7 @@ once, and this data can be obtained from :attr:`active_scalars_info
 Note that the active scalars are by default the point scalars.  You
 can change this by setting the active scalars with
 :func:`set_active_scalars
-<pyvista.core.dataset.DataSet.set_active_scalars>`.  Note that if you
+<pyvista.DataSet.set_active_scalars>`.  Note that if you
 want to set the active scalars and both the point and cell data have
 an array of the same name, you must specify the ``preference``:
 
@@ -623,7 +623,7 @@ Field Data
 Field arrays are different from :attr:`point_data
 <pyvista.DataSet.point_data>` and :attr:`cell_data
 <pyvista.DataSet.cell_data>` in that they are not associated with
-the geometry of the :class:`DataSet <pyvista.core.dataset.DataSet>`.
+the geometry of the :class:`DataSet <pyvista.DataSet>`.
 This means that while it's not possible to designate the field data as
 active scalars or vectors, you can use it to "attach" arrays of any
 row and columns.  You can even add string arrays in the field data:
@@ -649,17 +649,17 @@ number of cells or points.  As such, it also cannot be plotted.
 
 Vectors, Textures, and Normals Attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Both cell and point data can also store the following "special" attributes in addition to :attr:`active_scalars <pyvista.core.dataset.DataSet.active_scalars>`
+Both cell and point data can also store the following "special" attributes in addition to :attr:`active_scalars <pyvista.DataSet.active_scalars>`
 
-* :attr:`active_normals <pyvista.core.dataset.DataSet.active_normals>`
-* :attr:`active_t_coords <pyvista.core.dataset.DataSet.active_t_coords>`
-* :attr:`active_vectors <pyvista.core.dataset.DataSet.active_vectors>`
+* :attr:`active_normals <pyvista.DataSet.active_normals>`
+* :attr:`active_t_coords <pyvista.DataSet.active_t_coords>`
+* :attr:`active_vectors <pyvista.DataSet.active_vectors>`
 
 
 Active Normals
 ~~~~~~~~~~~~~~
 The :attr:`active_normals
-<pyvista.core.dataset.DataSet.active_normals>` array is a special
+<pyvista.DataSet.active_normals>` array is a special
 array that is used for creating physically based rendering or
 rendering smooth shading using the phong interpolation.  If this array
 is not set when plotting with ``smooth_shading=True`` or ``pbr=True``,
@@ -669,7 +669,7 @@ it will be computed.
 Active Texture Coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 The :attr:`active_tcoords
-<pyvista.core.dataset.DataSet.active_t_coords>` array is used for
+<pyvista.DataSet.active_t_coords>` array is used for
 rendering textures.  See :ref:`ref_texture_example` for examples using
 this array.
 
@@ -677,17 +677,17 @@ this array.
 Active Vectors
 ~~~~~~~~~~~~~~
 The :attr:`active_vectors
-<pyvista.core.dataset.DataSet.active_vectors>` is an array containing
+<pyvista.DataSet.active_vectors>` is an array containing
 quantities that have magnitude and direction (specifically, three
 components).  For example, a vector field containing the wind speed at
 various coordinates.  This differs from :attr:`active_scalars
-<pyvista.core.dataset.DataSet.active_scalars>` as scalars are expected
+<pyvista.DataSet.active_scalars>` as scalars are expected
 to be non-directional even if they contain several components (as in
 the case of RGB data).
 
 Vectors are treated differently within VTK than scalars when
-performing transformations using the :func:`transform()
-<pyvista.core.dataset.DataSet.transform>` filter.  Unlike scalar
+performing transformations using the :func:`transform
+<pyvista.DataSet.transform>` filter.  Unlike scalar
 arrays, vector arrays will be transformed along with the geometry as
 these vectors represent quantities with direction.
 
@@ -695,22 +695,20 @@ these vectors represent quantities with direction.
 
    VTK permits only one "active" vector.  If you have multiple vector
    arrays that you wish to transform, set
-   ``transform_all_input_vectors=True`` in :func:`transform()
-   <pyvista.core.dataset.DataSet.transform>`.  Be aware that this will
+   ``transform_all_input_vectors=True`` in :func:`transform
+   <pyvista.DataSet.transform>`.  Be aware that this will
    transform any array with three components, so multi-component
    scalar arrays like RGB arrays will have to be discarded after
    transformation.
-
 
 .. _vtkDataArray: https://vtk.org/doc/nightly/html/classvtkDataArray.html
 .. _vtkDataSet: https://vtk.org/doc/nightly/html/classvtkDataSet.html
 .. _vtkFieldData: https://vtk.org/doc/nightly/html/classvtkFieldData.html
 .. _vtkDataObject: https://vtk.org/doc/nightly/html/classvtkDataObject.html
-.. _vtk.vtkPolyData: https://vtk.org/doc/nightly/html/classvtkPolyData.html
-.. _vtk.UnstructuredGrid: https://vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
-.. _vtk.vtkStructuredGrid: https://vtk.org/doc/nightly/html/classvtkStructuredGrid.html
-.. _vtk.vtkRectilinearGrid: https://vtk.org/doc/nightly/html/classvtkRectilinearGrid.html
 .. _vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
 .. _vtk.vtkMultiBlockDataSet: https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html
 
-.. _cast_to_unstructured_grid: :func:`cast_to_unstructured_grid <pyvista.core.dataset.DataSet.cast_to_unstructured_grid>`
+.. _PolyData: :class:`PolyData <pyvista.PolyData>`
+.. _UnstructuredGrid: :class:`UnstructuredGrid <pyvista.UnstructuredGrid>`
+.. _UniformGrid: :class:`UniformGrid <pyvista.UniformGrid>`
+.. _cast_to_unstructured_grid: :func:`cast_to_unstructured_grid <pyvista.DataSet.cast_to_unstructured_grid>`
