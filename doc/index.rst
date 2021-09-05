@@ -141,10 +141,7 @@ Generate a spline from an array of NumPy points.
     points = np.column_stack((x, y, z))
 
     spline = pyvista.Spline(points, 500).tube(radius=0.1)
-
-    # done here to get it to render online
-    line = spline.cast_to_unstructured_grid().extract_surface()
-    line.plot(show_scalar_bar=False, smooth_shading=True)
+    spline.plot()
 
 
 Boolean Operations on Meshes

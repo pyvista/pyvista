@@ -2305,3 +2305,33 @@ class Renderer(_vtk.vtkRenderer):
     @layer.setter
     def layer(self, layer):
         self.SetLayer(layer)
+
+    @property
+    def viewport(self):
+        """Viewport of the renderer.
+
+        Viewport describes the ``(xstart, ystart, xend, yend)`` square
+        of the renderer relative to the main renderer window.
+
+        For example, a renderer taking up the entire window will have
+        a viewport of ``(0.0, 0.0, 1.0, 1.0)``, while the viewport of
+        a renderer on the left-hand side of a horzontally split window
+        would be ``(0.0, 0.0, 0.5, 1.0)``.
+
+        Returns
+        -------
+        tuple
+            Viewport in the form ``(xstart, ystart, xend, yend)``.
+
+        Examples
+        --------
+        Show the viewport of a renderer taking up half the render
+        window.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.renderers[0].viewport
+        (0.0, 0.0, 0.5, 1.0)
+
+        """
+        return self.GetViewport()

@@ -366,8 +366,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def to_pythreejs(self):
         """Convert this plotting scene to a pythreejs renderer."""
-        from pyvista.jupyter.pv_pythreejs import renderer_from_plotter
-        return renderer_from_plotter(self)
+        from pyvista.jupyter.pv_pythreejs import convert_plotter
+        return convert_plotter(self)
 
     def export_gltf(self, filename, inline_data=True, rotate_scene=True,
                     save_normals=True):

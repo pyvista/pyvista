@@ -32,8 +32,8 @@ def segment_poly_cells(mesh):
 
 def buffer_normals(trimesh):
     """Extract surface normals and return a buffer attribute."""
-    if 'Normals' in trimesh.point_arrays:
-        normals = trimesh.point_arrays['Normals']
+    if 'Normals' in trimesh.point_data:
+        normals = trimesh.point_data['Normals']
     else:
         normals = trimesh.point_normals
     normals = normals.astype(np.float32, copy=False)
@@ -46,11 +46,11 @@ def get_coloring(mapper, dataset):
     """Return the three.js coloring type for a given actor."""
     coloring = 'NoColors'
     if mapper.GetScalarModeAsString() == 'UsePointData':
-        scalars = dataset.point_arrays.active_scalars
+        scalars = dataset.point_data.active_scalars
         if scalars is not None:
             coloring = 'VertexColors'
     elif mapper.GetScalarModeAsString() == 'UseCellData':
-        scalars = dataset.cell_arrays.active_scalars
+        scalars = dataset.cell_data.active_scalars
         if scalars is not None:
             coloring = 'FaceColors'
     return coloring
@@ -186,16 +186,16 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
     # extract point/cell scalars for coloring
     colors = None
     if mapper.GetScalarModeAsString() == 'UsePointData':
-        scalars = trimesh.point_arrays.active_scalars
+        scalars = trimesh.point_data.active_scalars
         colors = get_colors(scalars, mapper.cmap).astype(np.float32, copy=False)
     elif mapper.GetScalarModeAsString() == 'UseCellData':
         # special handling for RGBA
         if mapper.GetColorMode() == 2:
-            scalars = trimesh.cell_arrays.active_scalars.repeat(3, axis=0)
+            scalars = trimesh.cell_data.active_scalars.repeat(3, axis=0)
             scalars = scalars.astype(np.float32, copy=False)
             colors = scalars[:, :3]/255  # ignore alpha
         else:
-            scalars = trimesh.cell_arrays.active_scalars.repeat(3)
+            scalars = trimesh.cell_data.active_scalars.repeat(3)
             colors = get_colors(scalars, mapper.cmap).astype(np.float32, copy=False)
         position = array_to_float_buffer(trimesh.points[face_ind])
         attr = {'position': position}
@@ -252,7 +252,7 @@ def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
     coloring = get_coloring(mapper, surf)
     if coloring != 'NoColors' and not use_edge_coloring:
         if mapper.GetScalarModeAsString() == 'UsePointData':
-            edge_scalars = edges_mesh.point_arrays.active_scalars
+            edge_scalars = edges_mesh.point_data.active_scalars
 
         edge_colors = get_colors(edge_scalars, mapper.cmap)
         attr['color'] = array_to_float_buffer(edge_colors)
@@ -284,7 +284,7 @@ def to_tjs_points(dataset, mapper, prop, as_circles=True):
 
     coloring = get_coloring(mapper, dataset)
     if coloring != 'NoColors':
-        colors = get_colors(dataset.point_arrays.active_scalars, mapper.cmap)
+        colors = get_colors(dataset.point_data.active_scalars, mapper.cmap)
         attr['color'] = array_to_float_buffer(colors)
 
     geo = tjs.BufferGeometry(attributes=attr)
@@ -340,9 +340,9 @@ def pvlight_to_threejs_light(pvlight):
                                     )
 
 
-def extract_lights_from_plotter(pl):
+def extract_lights_from_renderer(renderer):
     """Extract and convert all pyvista lights to pythreejs compatible lights."""
-    return [pvlight_to_threejs_light(pvlight) for pvlight in pl.renderer.lights]
+    return [pvlight_to_threejs_light(pvlight) for pvlight in renderer.lights]
 
 
 def actor_to_mesh(actor, focal_point):
@@ -408,28 +408,25 @@ def meshes_from_actors(actors, focal_point):
     return meshes
 
 
-def renderer_from_plotter(pl):
-    """Convert a pyvista Plotter to a pythreejs renderer."""
+def convert_renderer(pv_renderer, width, height):
+    """Convert a pyvista renderer to a pythreejs renderer."""
     # verify plotter hasn't been closed
-    if not hasattr(pl, 'ren_win'):
-        raise AttributeError('This plotter is closed and unable to export to html.\n'
-                             'Please run this before showing or closing the plotter.')
 
-    children = meshes_from_actors(pl.renderer.actors.values(),
-                                  pl.camera.focal_point)
-    lights = extract_lights_from_plotter(pl)
+    pv_camera = pv_renderer.camera
+    children = meshes_from_actors(pv_renderer.actors.values(),
+                                  pv_camera.focal_point)
+    lights = extract_lights_from_renderer(pv_renderer)
 
-    width, height = pl.window_size
     aspect = width/height
-    camera = pvcamera_to_threejs_camera(pl.camera, lights, aspect)
+    camera = pvcamera_to_threejs_camera(pv_camera, lights, aspect)
 
     children.append(camera)
 
-    if pl.renderer.axes_enabled:
+    if pv_renderer.axes_enabled:
         children.append(tjs.AxesHelper(0.1))
 
     scene = tjs.Scene(children=children,
-                      background=color_to_hex(pl.background_color)
+                      background=color_to_hex(pv_renderer.background_color)
     )
 
     renderer = tjs.Renderer(camera=camera,
@@ -439,7 +436,7 @@ def renderer_from_plotter(pl):
                             controls=[tjs.OrbitControls(controlling=camera)],
                             width=width,
                             height=height,
-                            antialias=pl.renderer.GetUseFXAA(),
+                            antialias=pv_renderer.GetUseFXAA(),
     )
 
     # for now, we can't dynamically size the render windows.  If
@@ -449,3 +446,16 @@ def renderer_from_plotter(pl):
     renderer.layout.height = f'{height}px'
 
     return renderer
+
+
+def convert_plotter(pl):
+    if not hasattr(pl, 'ren_win'):
+        raise AttributeError('This plotter is closed and unable to export to html.\n'
+                             'Please run this before showing or closing the plotter.')
+
+    pl_width, pl_height = pl.window_size
+    # if len(pl.renderers) == 1:
+    return convert_renderer(pl.renderer, pl_width, pl_height)
+
+    # otherwise, get size of each renderers
+    

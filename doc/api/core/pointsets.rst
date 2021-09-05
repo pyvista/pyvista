@@ -299,14 +299,13 @@ A more complex plot can be created using:
                      rng=[-d.max(), d.max()])
     plotter.add_axes()
     plotter.camera_position = cpos
-
     plotter.show()
 
 You can animate the motion of the beam by updating the positions and
 scalars of the grid copied to the plotting object.  Here is a full example:
 
 .. pyvista-plot::
-   :context:
+    :context:
 
     # Load module and example file
     import pyvista as pv
@@ -375,14 +374,15 @@ You can also render the beam as as a wire-frame object:
 
 Adding Labels to a Plot
 -----------------------
-Labels can be added to a plot using the ``add_point_labels`` function
-within the ``Plotter`` object.  The following example loads the
-included example beam, generates a plotting class, and sub-selects
-points along the y-z plane and labels their coordinates.
-``add_point_labels`` requires that the number of labels matches the
-number of points, and that labels is a list containing one entry per
-point.  The code automatically converts each item in the list to a
-string.
+Labels can be added to a plot using :func:`add_point_labels()
+<pyvista.BasePlotter.add_point_labels>` within the :class:`Plotter <pyvista.BasePlotter>`.
+The following example loads the included example beam, generates a
+plotting class, and sub-selects points along the y-z plane and labels
+their coordinates.  :func:`add_point_labels()
+<pyvista.BasePlotter.add_point_labels>` requires that the number of
+labels matches the number of points, and that labels is a list
+containing one entry per point.  The code automatically converts each
+item in the list to a string.
 
 ..
    here we use pyvista plot since labels do not show in interactive backends
