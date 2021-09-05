@@ -86,7 +86,7 @@ class PointSet(DataSet):
             boolean array of the same size as the number of cells.
 
         inplace : bool, optional
-            Updates mesh in-place.
+            Whether to update the mesh in-place.
 
         Returns
         -------

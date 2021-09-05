@@ -619,7 +619,7 @@ class DataSet(DataSetFilters, DataObject):
         preference : str, optional
             If there are two arrays of the same name associated with
             points or cells, it will prioritize an array matching this
-            type.  Can be either ``'cell'``, or ``'point'``.
+            type.  Can be either ``'cell'`` or ``'point'``.
 
         """
         if preference not in ['point', 'cell', FieldAssociation.CELL,
