@@ -61,23 +61,20 @@ class PointSet(DataSet):
         return np.array(alg.GetCenter())
 
     def shallow_copy(self, to_copy):
-        """Create a shallow copy from different dataset into this dataset.
+        """Create a shallow copy from a different dataset into this one.
+
+        This method mutates this dataset and returns ``None``.
 
         Parameters
         ----------
         to_copy : pyvista.DataSet
-            Data object to perform a shallow copy from.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Same return type as the input ``to_copy`` dataset.
+            Data object to perform the shallow copy from.
 
         """
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(_vtk.vtkPoints())
-        return DataSet.shallow_copy(self, to_copy)
+        DataSet.shallow_copy(self, to_copy)
 
     def remove_cells(self, ind, inplace=True):
         """Remove cells.
