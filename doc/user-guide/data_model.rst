@@ -378,7 +378,7 @@ To illustrate data arrays within PyVista, let's first construct a
 slightly more complex mesh than our previous example.  Here, we create
 a simple mesh containing four isometric cells by starting with a
 |UniformGrid| and then casting it to an |UnstructuredGrid| with
-:func:`cast_to_unstructured_grid
+:func:`cast_to_unstructured_grid()
 <pyvista.DataSet.cast_to_unstructured_grid>`.
 
 .. jupyter-execute::
@@ -608,7 +608,7 @@ at once, and this data can be obtained from :attr:`active_scalars_info
 
 Note that the active scalars are by default the point scalars.  You
 can change this by setting the active scalars with
-:func:`set_active_scalars
+:func:`set_active_scalars()
 <pyvista.DataSet.set_active_scalars>`.  Note that if you
 want to set the active scalars and both the point and cell data have
 an array of the same name, you must specify the ``preference``:
@@ -691,7 +691,7 @@ to be non-directional even if they contain several components (as in
 the case of RGB data).
 
 Vectors are treated differently within VTK than scalars when
-performing transformations using the :func:`transform
+performing transformations using the :func:`transform()
 <pyvista.DataSet.transform>` filter.  Unlike scalar
 arrays, vector arrays will be transformed along with the geometry as
 these vectors represent quantities with direction.
@@ -700,7 +700,7 @@ these vectors represent quantities with direction.
 
    VTK permits only one "active" vector.  If you have multiple vector
    arrays that you wish to transform, set
-   ``transform_all_input_vectors=True`` in :func:`transform
+   ``transform_all_input_vectors=True`` in :func:`transform()
    <pyvista.DataSet.transform>`.  Be aware that this will
    transform any array with three components, so multi-component
    scalar arrays like RGB arrays will have to be discarded after
