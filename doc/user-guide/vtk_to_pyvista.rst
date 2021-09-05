@@ -57,7 +57,7 @@ equivalent code in pyvista is:
    >>> x, y = np.meshgrid(xi, xi)
    >>> values = 127.5 + (1.0 + np.sin(x/25.0)*np.cos(y/25.0))
 
-   Create the grid.  Note how the values must use FORTRAN ordering.
+   Create the grid.  Note how the values must use Fortran ordering.
 
    >>> grid = pyvista.UniformGrid((300, 300, 1))
    >>> grid.point_data["values"] = values.flatten(order="F")
@@ -94,7 +94,7 @@ Here, PyVista has done several things for us:
 #. The name for the :attr:`point_array <pyvista.point_array>` is given
    directly in dictionary-style fashion. Also, since VTK stores data
    on the heap (linear segments of RAM; a C++ concept), the
-   data must be flattened and put in FORTRAN ordering (which controls
+   data must be flattened and put in Fortran ordering (which controls
    how multidimensional data is laid out in physically 1d memory; numpy
    uses "C"-style memory layout by default). This is why in our earlier
    example, the first argument to ``SetValue()`` was written as
