@@ -460,6 +460,7 @@ def plot_datasets(dataset_type=None):
     ###########################################################################
     # uniform grid
     image = pv.UniformGrid((6, 6, 1))
+    image.spacing = (3, 2, 1)
 
     ###########################################################################
     # RectilinearGrid
