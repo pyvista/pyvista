@@ -19,7 +19,7 @@ combinations of all possible cell types:
    demos.plot_datasets('UnstructuredGrid')
 
 
-The :class:`pyvista.PolyData`, is used for datasets consisting of surface
+The :class:`pyvista.PolyData` is used for datasets consisting of surface
 geometry (e.g. vertices, lines, and polygons):
 
 .. pyvista-plot::
@@ -30,7 +30,7 @@ geometry (e.g. vertices, lines, and polygons):
 
 
 The :class:`pyvista.StructuredGrid` is used for topologically regular arrays of
-data.
+data:
 
 .. pyvista-plot::
    :include-source: False
@@ -100,7 +100,7 @@ these can be loaded with:
     mesh = pyvista.PolyData(examples.planefile)
     mesh
 
-This mesh can then be written to a vtk file using:
+This mesh can then be written to a .vtk file using:
 
 .. code:: python
 
@@ -122,9 +122,9 @@ Meshes can be directly manipulated using NumPy or with the built-in
 translation and rotation routines.  This example loads two meshes and
 moves, scales, copies them, and finally plots them.
 
-To plot more than one mesh a plotting class must be created to manage
-the plotting.  The following code creates the class and plots the
-meshes with various colors.
+To plot more than one mesh a :class:`pyvista.Plotter` instance must be
+created to manage the plotting.  The following code creates a plotter
+and plots the meshes with various colors.
 
 
 .. pyvista-plot::
@@ -146,7 +146,7 @@ meshes with various colors.
     ant_copy = ant.copy()
     ant_copy.translate([30, 0, -10])
 
-    # Create plotting object
+    # Create plotter object
     plotter = pyvista.Plotter()
     plotter.add_mesh(ant, 'r')
     plotter.add_mesh(ant_copy, 'b')
