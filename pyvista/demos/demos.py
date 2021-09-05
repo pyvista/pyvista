@@ -439,11 +439,6 @@ def plot_datasets(dataset_type=None):
         * ``'RectilinearGrid'``
         * ``'StructuredGrid'``
 
-    Returns
-    -------
-    dict or None
-        Dictionary of the datasets if ``return_datasets`` is ``True``.
-
     Examples
     --------
     >>> from pyvista import demos
