@@ -631,7 +631,7 @@ class DataSet(DataSetFilters, DataObject):
             return
         field = get_array_association(self, name, preference=preference)
         if field == FieldAssociation.NONE:
-            raise KeyError(f'Data field {name} does not exist')
+            raise KeyError(f'Data named "{name}" is a field array which cannot be active.')
         self._last_active_scalars_name = self.active_scalars_info.name
         if field == FieldAssociation.POINT:
             ret = self.GetPointData().SetActiveScalars(name)
@@ -1569,16 +1569,18 @@ class DataSet(DataSetFilters, DataObject):
             raise RuntimeError  # this should never be reached with err=True
         return arr
 
-    def get_array_association(self, name: str, preference: Literal['cell', 'point', 'field']='cell') -> FieldAssociation:
+    def get_array_association(self, name: str,
+                              preference: Literal['cell', 'point', 'field'] = 'cell') -> FieldAssociation:
         """Get the association of an array.
 
         Parameters
         ----------
         name : str
             Name of the array.
+
         preference : str, optional
-            When scalars is specified, this is the preferred array
-            type to search for in the dataset.  Must be either
+            When ``name`` is specified, this is the preferred array
+            association to search for in the dataset.  Must be either
             ``'point'``, ``'cell'``, or ``'field'``.
 
         Returns
