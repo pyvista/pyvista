@@ -439,11 +439,6 @@ def plot_datasets(dataset_type=None):
         * ``'RectilinearGrid'``
         * ``'StructuredGrid'``
 
-    Returns
-    -------
-    dict or None
-        Dictionary of the datasets if ``return_datasets`` is ``True``.
-
     Examples
     --------
     >>> from pyvista import demos
@@ -460,6 +455,7 @@ def plot_datasets(dataset_type=None):
     ###########################################################################
     # uniform grid
     image = pv.UniformGrid((6, 6, 1))
+    image.spacing = (3, 2, 1)
 
     ###########################################################################
     # RectilinearGrid

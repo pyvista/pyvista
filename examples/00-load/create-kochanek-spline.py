@@ -4,7 +4,7 @@
 Create a Kochanek Spline
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a kochanek spline/polyline from a numpy array of XYZ vertices.
+Create a Kochanek spline/polyline from a numpy array of XYZ vertices.
 """
 
 import pyvista as pv
@@ -29,9 +29,9 @@ points = make_points()
 points[0:5, :]
 
 ###############################################################################
-# Interpolate those points onto a parametric kochanek spline
+# Interpolate those points onto a parametric Kochanek spline
 
-# Create kochanek spline with 6 interpolation points
+# Create Kochanek spline with 6 interpolation points
 p = pv.Plotter(shape=(3, 5))
 
 c = [-1.0, -0.5, 0.0, 0.5, 1.0]

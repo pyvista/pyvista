@@ -1,3 +1,5 @@
+# TODO: This file really should be named test_dataset.py
+
 import pickle
 import numpy as np
 import pytest
@@ -1119,3 +1121,12 @@ def test_flip_normal():
     flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
     flip_normal6.flip_z()
     assert np.allclose(flip_normal5.points, flip_normal6.points)
+
+
+def test_active_normals(sphere):
+    # both cell and point normals
+    mesh = sphere.compute_normals()
+    assert mesh.active_normals.shape[0] == mesh.n_points
+
+    mesh = sphere.compute_normals(point_normals=False)
+    assert mesh.active_normals.shape[0] == mesh.n_cells

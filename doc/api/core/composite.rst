@@ -1,7 +1,7 @@
 Composite Datasets
 ==================
 
-The :class:`pyvista.MultiBlock` class is composite class to hold many
+The :class:`pyvista.MultiBlock` class is a composite class to hold many
 data sets which can be iterated over.
 
 You can think of MultiBlock like lists or dictionaries as we can

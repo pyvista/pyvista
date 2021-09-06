@@ -758,7 +758,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if data.ndim == 3:
             # Array of matrices. We need to make sure the order in
             # memory is right.  If row major (C/C++),
-            # transpose. VTK wants column major (FORTRAN order). The deep
+            # transpose. VTK wants column major (Fortran order). The deep
             # copy later will make sure that the array is contiguous.
             # If column order but not contiguous, transpose so that the
             # deep copy below does not happen.
@@ -1112,7 +1112,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Returns
         -------
         pyvista_ndarray
-            Normals of this dataset attributes.  ``None`` if no
+            Normals of this dataset attribute.  ``None`` if no
             normals have been set.
 
         Examples
