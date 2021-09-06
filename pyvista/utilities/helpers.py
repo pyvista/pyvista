@@ -404,27 +404,27 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
             raise KeyError(f'Data array ({name}) not present in this dataset.')
         return FieldAssociation.ROW
 
-    # with multiple arrays, return the array preference
+    # with multiple arrays, return the array preference if possible
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
     farr = field_array(mesh, name)
+    arrays = [parr, carr, farr]
+    preferences = [FieldAssociation.POINT, FieldAssociation.CELL, FieldAssociation.NONE]
     preference = parse_field_choice(preference)
-    if sum([array is not None for array in (parr, carr, farr)]) > 1:
-        if preference in [FieldAssociation.CELL, FieldAssociation.POINT,
-                          FieldAssociation.NONE]:
-            return preference
-        else:
-            raise ValueError(f'Data field ({preference}) not supported.')
+    if preference not in preferences:
+        raise ValueError(f'Data field ({preference}) not supported.')
 
-    if parr is not None:
-        return FieldAssociation.POINT
-    elif carr is not None:
-        return FieldAssociation.CELL
-    elif farr is not None:
+    matches = [pref for pref, array in zip(preferences, arrays) if array is not None]
+    # optionally raise if no match
+    if not matches:
+        if err:
+            raise KeyError(f'Data array ({name}) not present in this dataset.')
         return FieldAssociation.NONE
-    elif err:
-        raise KeyError(f'Data array ({name}) not present in this dataset.')
-    return FieldAssociation.NONE
+    # use preference if it applies
+    if preference in matches:
+        return preference
+    # otherwise return first in order of point -> cell -> field
+    return matches[0]
 
 
 def vtk_points(points, deep=True):
