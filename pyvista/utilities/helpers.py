@@ -390,12 +390,14 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
         ``'cell'``, or ``'field'``.
 
     err : bool, optional
-        Boolean to control whether to throw an error if array is not present.
+        Boolean to control whether to throw an error if array is not
+        present.
 
     Returns
     -------
     pyvista.FieldAssociation
-        Association of the array
+        Association of the array. If array is not present and ``err`` is
+        ``False``, ``FieldAssociation.NONE`` is returned.
 
     """
     if isinstance(mesh, _vtk.vtkTable):
