@@ -180,4 +180,4 @@ def test_array_association():
     assert assoc == FieldAssociation.NONE
 
     with pytest.raises(ValueError, match='not supported.'):
-        mesh.get_array_association('name', preference='invalid')
+        mesh.get_array_association('name', preference='row')
