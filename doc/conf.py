@@ -228,6 +228,7 @@ intersphinx_mapping = {
     'imageio': ('https://imageio.readthedocs.io/en/stable', (None, 'intersphinx/imageio-inv.txt')),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable', (None, 'intersphinx/pandas-inv.txt')),
     'pytest': ('https://docs.pytest.org/en/stable', (None, 'intersphinx/pytest-inv.txt')),
+    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, 'intersphinx/pyvistaqt-inv.txt')),
 }
 
 linkcheck_retries = 3
