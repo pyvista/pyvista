@@ -150,7 +150,7 @@ class, but there's a better, and more pythonic alternative by using
 
 Using NumPy with PyVista
 ~~~~~~~~~~~~~~~~~~~~~~~~
-You could create a `NumPy <https://numpy.org/>`_ points array with:
+You can create a `NumPy <https://numpy.org/>`_ points array with:
 
 .. jupyter-execute::
 
@@ -619,7 +619,8 @@ an array of the same name, you must specify the ``preference``:
    >>> ugrid.active_scalars_info
 
 This can also be set when plotting using the ``preference``
-parameter in :func:`add_mesh() <pyvista.Plotter.add_mesh>`.
+parameter in :func:`add_mesh() <pyvista.Plotter.add_mesh>` or
+:func:`pyvista.plot`.
 
 
 Field Data
