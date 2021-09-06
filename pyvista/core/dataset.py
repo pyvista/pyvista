@@ -793,8 +793,8 @@ class DataSet(DataSetFilters, DataObject):
         Examples
         --------
         Compute normals on an example sphere mesh and return the
-        active normals for the dataset.  Show that this is the same as
-        the number of points.
+        active normals for the dataset.  Show that this is the same size
+        as the number of points.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
@@ -803,7 +803,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> normals.shape
         (842, 3)
         >>> mesh.n_points
-
+        842
         """
         if self.point_data.active_normals is not None:
             return self.point_data.active_normals
