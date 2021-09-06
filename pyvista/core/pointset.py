@@ -1152,20 +1152,20 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Converts the following cell types to their linear equivalents.
 
-        - VTK_QUADRATIC_TETRA      --> VTK_TETRA
-        - VTK_QUADRATIC_PYRAMID    --> VTK_PYRAMID
-        - VTK_QUADRATIC_WEDGE      --> VTK_WEDGE
-        - VTK_QUADRATIC_HEXAHEDRON --> VTK_HEXAHEDRON
+        - ``VTK_QUADRATIC_TETRA``      --> ``VTK_TETRA``
+        - ``VTK_QUADRATIC_PYRAMID``    --> ``VTK_PYRAMID``
+        - ``VTK_QUADRATIC_WEDGE``      --> ``VTK_WEDGE``
+        - ``VTK_QUADRATIC_HEXAHEDRON`` --> ``VTK_HEXAHEDRON``
 
         Parameters
         ----------
         deep : bool
-            When True, makes a copy of the points array.  Default
-            False.  Cells and cell types are always copied.
+            When ``True``, makes a copy of the points array.  Default
+            ``False``.  Cells and cell types are always copied.
 
         Returns
         -------
-        grid : pyvista.UnstructuredGrid
+        pyvista.UnstructuredGrid
             UnstructuredGrid containing only linear cells.
 
         """

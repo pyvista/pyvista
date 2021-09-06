@@ -148,7 +148,7 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None,
 
     plotter.add_mesh(i_grid.extract_surface(),
                      style='points', color='r',
-                     render_points_as_spheres=True, point_size=8)
+                     render_points_as_spheres=True, point_size=14)
     plotter.add_mesh(i_grid, style='wireframe', color='k', line_width=4)
 
     # letter 's'

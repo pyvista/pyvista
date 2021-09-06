@@ -8,6 +8,8 @@ try:
 except ImportError:
     raise ImportError('Please install pythreejs to use this feature')
 
+from ipywidgets import HBox, VBox, GridspecLayout
+
 import pyvista as pv
 
 
@@ -187,7 +189,15 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
     colors = None
     if mapper.GetScalarModeAsString() == 'UsePointData':
         scalars = trimesh.point_data.active_scalars
-        colors = get_colors(scalars, mapper.cmap).astype(np.float32, copy=False)
+        # colors = get_colors(scalars, mapper.cmap).astype(np.float32, copy=False)
+
+        # Use VTK_COLOR_MODE_DIRECT_SCALARS
+        table = mapper.GetLookupTable()
+        # table.SetSaturationRange(0, 1)
+        colors = pv.wrap(table.MapScalars(scalars.VTKObject, 0, 0))[:, :3]/255
+        # there's something going on with the color mapping
+        # colors = colors.T
+
     elif mapper.GetScalarModeAsString() == 'UseCellData':
         # special handling for RGBA
         if mapper.GetColorMode() == 2:
@@ -205,13 +215,15 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
 
     surf_geo = tjs.BufferGeometry(attributes=attr)
 
-    shared_attr = {'color': color_to_hex(prop.GetColor()),
+    shared_attr = {
                    'vertexColors': get_coloring(mapper, trimesh),
                    'wireframe': prop.GetRepresentation() == 1,
                    'opacity': prop.GetOpacity(),
                    'wireframeLinewidth': prop.GetLineWidth(),
                    # 'side': 'DoubleSide'
                    }
+    if colors is None:
+        shared_attr['color'] = color_to_hex(prop.GetColor())
 
     if prop.GetInterpolation() == 3:  # using physically based rendering
         material = tjs.MeshPhysicalMaterial(flatShading=False,
@@ -294,15 +306,15 @@ def to_tjs_points(dataset, mapper, prop, as_circles=True):
               'vertexColors': coloring,
               }
 
-    if as_circles:
-        m_attr['size'] *= 5
-        tex = tjs.DataTexture(data=gen_circle(128, 128),
-                              format="RGBAFormat",
-                              type="FloatType")
+    # if as_circles:
+    #     m_attr['size'] *= 5
+    #     tex = tjs.DataTexture(data=gen_circle(128, 128),
+    #                           format="RGBAFormat",
+    #                           type="FloatType")
 
-        m_attr["map"] = tex
-        m_attr["alphaTest"] = 0.5
-        m_attr["transparency"] = True
+    #     m_attr["map"] = tex
+    #     m_attr["alphaTest"] = 0.5
+    #     m_attr["transparency"] = True
 
     point_mat = tjs.PointsMaterial(**m_attr)
     return tjs.Points(geo, point_mat)
@@ -323,10 +335,20 @@ def pvcamera_to_threejs_camera(pv_camera, lights, aspect):
                                  )
 
 
-def color_to_hex(color):
-    """Convert a 0 - 1 RGB color tuple to a HTML hex color."""
-    color = tuple((np.array(color)*255).astype(np.uint8))
-    return '#%02x%02x%02x' % color
+def color_to_hex(color, linear_to_srgb=False):
+    """Convert a 0 - 1 RGB color tuple to a HTML hex color.
+
+    Optionally convert linear colors to sRGB.
+
+    """
+    color = np.array(color)
+    if linear_to_srgb:
+        mask = color < 0.0031308
+        color[mask] *= 12.92
+        color[~mask] = 1.055*color[~mask]**(1/2.4) - 0.055
+
+    color = tuple((color*255).astype(np.uint8))
+    return '#%02x%02x%02x' % tuple(color)
 
 
 def pvlight_to_threejs_light(pvlight):
@@ -334,15 +356,16 @@ def pvlight_to_threejs_light(pvlight):
     if pvlight.is_camera_light or pvlight.is_headlight:
         # extend the position of the light to make "near infinite"
         position = np.array(pvlight.position)*100000
-        return tjs.DirectionalLight(color=color_to_hex(pvlight.diffuse_color),
+        return tjs.DirectionalLight(color=color_to_hex(pvlight.diffuse_color, True),
                                     position=position.tolist(),
-                                    intensity=pvlight.intensity*0.8,
+                                    intensity=pvlight.intensity,
                                     )
 
 
 def extract_lights_from_renderer(renderer):
     """Extract and convert all pyvista lights to pythreejs compatible lights."""
     return [pvlight_to_threejs_light(pvlight) for pvlight in renderer.lights]
+    # return [tjs.AmbientLight(color='#FFFFFF')]
 
 
 def actor_to_mesh(actor, focal_point):
@@ -408,10 +431,11 @@ def meshes_from_actors(actors, focal_point):
     return meshes
 
 
-def convert_renderer(pv_renderer, width, height):
+def convert_renderer(pv_renderer):
     """Convert a pyvista renderer to a pythreejs renderer."""
     # verify plotter hasn't been closed
 
+    width, height = pv_renderer.width, pv_renderer.height
     pv_camera = pv_renderer.camera
     children = meshes_from_actors(pv_renderer.actors.values(),
                                   pv_camera.focal_point)
@@ -439,23 +463,46 @@ def convert_renderer(pv_renderer, width, height):
                             antialias=pv_renderer.GetUseFXAA(),
     )
 
+    if pv_renderer.has_border:
+        bdr_color = color_to_hex(pv_renderer.border_color)
+        renderer.layout.border = f'solid {pv_renderer.border_width}px {bdr_color}'
+
     # for now, we can't dynamically size the render windows.  If
     # unset, the renderer widget will attempt to resize and the
     # threejs renderer will not resize.
-    renderer.layout.width = f'{width}px'
-    renderer.layout.height = f'{height}px'
-
+    # renderer.layout.width = f'{width}px'
+    # renderer.layout.height = f'{height}px'
     return renderer
 
 
 def convert_plotter(pl):
+    """Convert a pyvista plotter to a pythreejs widget."""
     if not hasattr(pl, 'ren_win'):
         raise AttributeError('This plotter is closed and unable to export to html.\n'
                              'Please run this before showing or closing the plotter.')
 
-    pl_width, pl_height = pl.window_size
-    # if len(pl.renderers) == 1:
-    return convert_renderer(pl.renderer, pl_width, pl_height)
+    if len(pl.renderers) == 1:
+        # return HBox(children=(convert_renderer(pl.renderers[0]),))
+        return convert_renderer(pl.renderers[0])
 
-    # otherwise, get size of each renderers
-    
+    # otherwise, determine if we can use a grid layout
+    if len(pl.shape) == 2:
+        n_row = pl.shape[0]
+        n_col = pl.shape[1]
+        grid = GridspecLayout(int(n_row), int(n_col))
+        width, height = 0, 0
+        for i in range(n_row):
+            for j in range(n_col):
+                pv_ren = pl.renderers[i + n_row*j]
+                if j == 0:
+                    height += pv_ren.height + pv_ren.border_width*2
+                if i == 0:
+                    width += pv_ren.width + pv_ren.border_width*2
+                grid[i, j] = convert_renderer(pv_ren)
+
+        # this is important when building the gallery
+        if not pv.BUILDING_GALLERY:
+            grid.layout.width = f'{width}px'
+            grid.layout.height = f'{height+4}px'
+
+    return grid

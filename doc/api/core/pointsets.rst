@@ -12,8 +12,20 @@ straightforward than their VTK counterparts.
 The :class:`pyvista.UnstructuredGrid` class is used for arbitrary
 combinations of all possible cell types:
 
-.. pyvista-plot::
-   :include-source: False
+.. jupyter-execute::
+   :hide-code:
+
+   # jupyterlab boiler plate setup
+   import pyvista
+   pyvista.set_plot_theme('document')
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.show_scalar_bar = False
+
+.. jupyter-execute::
+   :hide-code:
 
    from pyvista import demos
    demos.plot_datasets('UnstructuredGrid')
@@ -22,8 +34,8 @@ combinations of all possible cell types:
 The :class:`pyvista.PolyData`, is used for datasets consisting of surface
 geometry (e.g. vertices, lines, and polygons):
 
-.. pyvista-plot::
-   :include-source: False
+.. jupyter-execute::
+   :hide-code:
 
    from pyvista import demos
    demos.plot_datasets('PolyData')
@@ -32,11 +44,12 @@ geometry (e.g. vertices, lines, and polygons):
 The :class:`pyvista.StructuredGrid` is used for topologically regular arrays of
 data.
 
-.. pyvista-plot::
-   :include-source: False
+.. jupyter-execute::
+   :hide-code:
 
    from pyvista import demos
    demos.plot_datasets('StructuredGrid')
+
 
 
 **Class Descriptions**
@@ -127,8 +140,7 @@ the plotting.  The following code creates the class and plots the
 meshes with various colors.
 
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
     import pyvista
     from pyvista import examples
@@ -168,8 +180,8 @@ See :ref:`ref_create_unstructured` for an example on how to create an
 unstructured grid from NumPy arrays.
 
 
-Empty Object
-~~~~~~~~~~~~
+Create
+~~~~~~
 An unstructured grid can be initialized with:
 
 .. jupyter-execute::
@@ -177,11 +189,47 @@ An unstructured grid can be initialized with:
     import pyvista as pv
     grid = pv.UnstructuredGrid()
 
-This creates an empty grid, and is not useful until points and cells are added
-to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``,
-but the inputs to these need to be ``vtk.vtkCellArray`` and ``vtk.vtkPoints``
-objects, which need to be populated with values.  Grid creation is simplified
-by initializing the grid directly from numpy arrays as in the following section.
+This creates an empty grid, and is not useful until points and cells
+are added to it. Points and cells can be added later with
+:attr:`points <pyvista.Dataset.points>` and :attr:`cells
+<pyvista.UnstructuredGrid.cells>` :attr:`cellstypes
+<pyvista.UnstructuredGrid.celltypes>` .
+
+Alternatively, you can add cells and cell types directly when
+initializing.
+
+.. jupyter-execute::
+
+   >>> import numpy as np
+   >>> import vtk
+   >>> import pyvista
+   >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
+   >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
+   >>> cell1 = np.array([[0, 0, 0],
+   ...                   [1, 0, 0],
+   ...                   [1, 1, 0],
+   ...                   [0, 1, 0],
+   ...                   [0, 0, 1],
+   ...                   [1, 0, 1],
+   ...                   [1, 1, 1],
+   ...                   [0, 1, 1]])
+   >>> cell2 = np.array([[0, 0, 2],
+   ...                   [1, 0, 2],
+   ...                   [1, 1, 2],
+   ...                   [0, 1, 2],
+   ...                   [0, 0, 3],
+   ...                   [1, 0, 3],
+   ...                   [1, 1, 3],
+   ...                   [0, 1, 3]])
+   >>> points = np.vstack((cell1, cell2))
+   >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+   >>> grid
+
+We can plot this with colors with:
+
+.. jupyter-execute::
+
+   >>> grid.plot(scalars=[0, 1], cmap='plasma')
 
 
 Loading from File
@@ -221,26 +269,19 @@ when creating a grid from scratch or copying it from another format.
 Also see :ref:`ref_create_structured` for an example on creating a structured
 grid from NumPy arrays.
 
-.. jupyter-execute::
-    :hide-code:
-
-    import pyvista
-    pv.OFF_SCREEN = True
-    pyvista.set_jupyter_backend('pythreejs')
-    pyvista.set_plot_theme('document')
 
 .. jupyter-execute::
 
     import pyvista as pv
     import numpy as np
 
-    x = np.arange(-10, 10, 0.25)
-    y = np.arange(-10, 10, 0.25)
-    z = np.arange(-10, 10, 0.25)
+    x = np.arange(-10, 10, 1)
+    y = np.arange(-10, 10, 1)
+    z = np.arange(-10, 10, 2)
     x, y, z = np.meshgrid(x, y, z)
 
     # create the unstructured grid directly from the numpy arrays and plot
-    grid = pv.StructuredGrid(x, y, z)
+    grid = pv.StructuredGrid(x[::-1], y[::-1], z[::-1])
     grid.plot(show_edges=True)
 
 
@@ -258,7 +299,8 @@ Plotting Grids
 This example shows how you can load an unstructured grid from a ``vtk`` file and
 create a plot and gif movie by updating the plotting object.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     # Load module and example file
     import pyvista as pv
@@ -277,20 +319,21 @@ create a plot and gif movie by updating the plotting object.
 
 A simple plot can be created by using:
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
-    grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'})
+    # Camera position.
+    # it's hard-coded in this example
+    cpos = [(11.9151, 6.1139, 3.61249),
+            (0.0, 0.375, 2.0),
+            (-0.4254, 0.9024, -0.0678)]
+
+    grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'}, cpos=cpos)
 
 A more complex plot can be created using:
 
-.. jupyter-execute::
-
-    # Store Camera position.  This can be obtained manually by getting the
-    # output of grid.plot
-    # it's hard-coded in this example
-    cpos = [(11.915126303095157, 6.11392754955802, 3.6124956735471914),
-            (0.0, 0.375, 2.0),
-            (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177)]
+.. pyvista-plot::
+    :context:
 
     # plot this displaced beam
     plotter = pv.Plotter()
@@ -300,6 +343,7 @@ A more complex plot can be created using:
     plotter.add_axes()
     plotter.camera_position = cpos
     plotter.show()
+
 
 You can animate the motion of the beam by updating the positions and
 scalars of the grid copied to the plotting object.  Here is a full example:

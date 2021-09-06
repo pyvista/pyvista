@@ -9,6 +9,17 @@ Plot with ``pyvista`` interactively within a `Juptyer
 Demo Using ``pythreejs``
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. jupyter-execute::
+
+   import pyvista as pv
+   from pyvista import examples
+
+   # download an example and display it using physically based rendering.
+   mesh = examples.download_lucy()
+   mesh.decimate(0.5, inplace=True)
+   mesh.plot(window_size=(600, 600), background='w', color='lightgrey',
+             pbr=True, metallic=0.2, jupyter_backend='pythreejs')
+
 
 Demo Using ``ipygany``
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -32,6 +43,9 @@ Demo Using ``ipygany``
 
 Demo Using ``panel``
 ~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+   If nothing comes up, this may be broken
 
 .. jupyter-execute::
 

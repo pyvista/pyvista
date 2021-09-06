@@ -25,7 +25,7 @@ PyVista Wrapping
 Plotting scenes from pyvista are automatically serialized to a
 three.js scene when using the ``pythreejs`` backend.  This can be
 enabled globally with :func:`pyvista.set_jupyter_backend` or by
-setting it in `:func:`pyvista.Plotter.plot`.  
+setting it in :func:`pyvista.Plotter.plot`.  
 
 .. jupyter-execute::
    :hide-code:
@@ -195,4 +195,59 @@ Note that here we enable physically based rendering using ``pbr=True``.
    # physically based rendering and give the mesh a metallic look.
    mesh.plot(window_size=(600, 600), background='w', color='lightgrey',
              pbr=True, metallic=0.5)
+
+
+Use in Interactive Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All the documentation on this page was generated using a combination
+of ``pythreejs``, ``pyvista`` and ``jupyter_sphinx``.
+
+For example, in a sample ``*.rst`` file, add the following::
+
+  .. jupyter-execute::
+
+     import pyvista as pv
+     from pyvista import examples
+     pv.set_jupyter_backend('pythreejs')
+     mesh = pv.Cube()
+     mesh.plot(show_edges=True)
+
+To generate:
+
+.. jupyter-execute::
+   :hide-code:
+
+   import pyvista as pv
+   from pyvista import examples
+   pv.set_jupyter_backend('pythreejs')
+   
+   mesh = pv.Cube()
+   mesh.plot(show_edges=True)
+
+You can also use the ``:hide-code:`` option to hide the code and only
+display the plot.
+
+You should also consider changing the global theme when plotting to improve the look of your plots:
+
+.. code:: python
+
+   import pyvista
+   pyvista.global_theme.background = 'white'
+   pyvista.global_theme.window_size = [600, 600]
+   pyvista.global_theme.antialiasing = True
+
+You will need the following packages:
+
+* ``pyvista``
+* ``pythreejs``
+* ``jupyter_sphinx``
+
+In your ``conf.py``, add the following:
+
+.. code:: python
+
+   extensions = [
+       "jupyter_sphinx",
+       # all your other extensions
+   ]
 

@@ -342,14 +342,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str
             Path to export the html file to.
 
-        Examples
-        --------
-        >>> import pyvista
-
         Notes
         -----
         You will need ``ipywidgets`` and ``pythreejs`` installed for
         this feature.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> mesh = examples.load_uniform()
+        >>> pl = pyvista.Plotter(shape=(1,2))
+        >>> _ = pl.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
+        >>> pl.subplot(0,1)
+        >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
+        >>> pl.export_html('pyvista.html')  # doctest:+SKIP
 
         """
         pythreejs_renderer = self.to_pythreejs()
@@ -365,7 +372,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         embed_minimal_html(filename, views=[pythreejs_renderer], title=self.title)
 
     def to_pythreejs(self):
-        """Convert this plotting scene to a pythreejs renderer."""
+        """Convert this plotting scene to a pythreejs renderer.
+
+        Returns
+        -------
+        ipywidgets.Widget
+            Widget containing pythreejs renderer.
+
+        """
+        self._on_first_render_request()  # setup camera
         from pyvista.jupyter.pv_pythreejs import convert_plotter
         return convert_plotter(self)
 
@@ -766,7 +781,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(Renderer.enable_anti_aliasing)
     def enable_anti_aliasing(self, *args, **kwargs):
         """Wrap ``Renderer.enable_anti_aliasing``."""
-        self.renderer.enable_anti_aliasing(*args, **kwargs)
+        for renderer in self.renderers:
+            renderer.enable_anti_aliasing(*args, **kwargs)
 
     @wraps(Renderer.disable_anti_aliasing)
     def disable_anti_aliasing(self, *args, **kwargs):
@@ -2159,9 +2175,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     table.SetHueRange(0.0, 0.66667)
                 else:
                     table.SetHueRange(0.66667, 0.0)
+
         else:
             self.mapper.SetScalarModeToUseFieldData()
-
         # Set actor properties ================================================
 
         # select view style
@@ -4099,7 +4115,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...                                       shift=0.0, viewup=viewup)
         >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, 
         ...                       step=0.02)
-        >>> plotter.close()
 
         See :ref:`orbiting_example` for a full example using this method.
 

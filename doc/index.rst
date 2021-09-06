@@ -141,7 +141,7 @@ Generate a spline from an array of NumPy points.
     points = np.column_stack((x, y, z))
 
     spline = pyvista.Spline(points, 500).tube(radius=0.1)
-    spline.plot()
+    spline.plot(scalars='arc_length', show_scalar_bar=False)
 
 
 Boolean Operations on Meshes
@@ -262,3 +262,5 @@ Project Index
 *************
 
 * :ref:`genindex`
+
+  

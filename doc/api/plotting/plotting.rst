@@ -70,8 +70,10 @@ documentation online.
 
 .. jupyter-execute::
 
-    plotter = pv.Plotter(notebook=True)
-    plotter.add_mesh(sphere)
+    plotter = pv.Plotter(window_size=(600, 400))
+    plotter.background_color = 'w'
+    plotter.enable_anti_aliasing()
+    plotter.add_mesh(sphere, color='tan', show_edges=True)
     plotter.show(jupyter_backend='pythreejs')
 
 For more details, see the section on :ref:`jupyter_plotting`.
@@ -97,9 +99,7 @@ manipulation or export tasks. To get started, try instantiating the
     dataset = examples.load_hexbeam()
 
     p = pvqt.BackgroundPlotter()
-
     p.add_mesh(dataset)
-
     p.show_bounds(grid=True, location='back')
 
 

@@ -274,6 +274,16 @@ we demonstrate how to calculate the collision between two meshes.  For
 example:
 
 .. jupyter-execute::
+   :hide-code:
+
+   # must have this here as our global backend may not be static
+   import pyvista
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.antialiasing = True
+
+
+.. jupyter-execute::
 
    import pyvista
 
