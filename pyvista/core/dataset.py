@@ -776,6 +776,39 @@ class DataSet(DataSetFilters, DataObject):
                 return None
         return None
 
+    @property
+    def active_normals(self) -> Optional[pyvista_ndarray]:
+        """Return the active normals as an array.
+
+        Returns
+        -------
+        pyvista_ndarray
+            Active normals of this dataset.
+
+        Notes
+        -----
+        If both point and cell normals exist, this returns point
+        normals by default.
+
+        Examples
+        --------
+        Compute normals on an example sphere mesh and return the
+        active normals for the dataset.  Show that this is the same as
+        the number of points.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh = mesh.compute_normals()
+        >>> normals = mesh.active_normals
+        >>> normals.shape
+        (842, 3)
+        >>> mesh.n_points
+
+        """
+        if self.point_data.active_normals is not None:
+            return self.point_data.active_normals
+        return self.cell_data.active_normals
+
     def get_data_range(self,
                        arr_var: Optional[Union[str, np.ndarray]] = None,
                        preference='cell') -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:

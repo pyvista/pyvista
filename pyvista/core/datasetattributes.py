@@ -1112,7 +1112,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Returns
         -------
         pyvista_ndarray
-            Normals of this dataset attributes.  ``None`` if no
+            Normals of this dataset attribute.  ``None`` if no
             normals have been set.
 
         Examples
