@@ -8,6 +8,7 @@ Plot with ``pyvista`` interactively within a `Juptyer
 
 Demo Using ``pythreejs``
 ~~~~~~~~~~~~~~~~~~~~~~~~
+Create interactive physically based rendering using `pythreejs`_.
 
 .. jupyter-execute::
 
@@ -16,9 +17,8 @@ Demo Using ``pythreejs``
 
    # download an example and display it using physically based rendering.
    mesh = examples.download_lucy()
-   mesh.decimate(0.5, inplace=True)
-   mesh.plot(window_size=(600, 600), background='w', color='lightgrey',
-             pbr=True, metallic=0.2, jupyter_backend='pythreejs')
+   mesh.plot(window_size=(600, 600), background='w', color='lightgrey', pbr=True,
+             metallic=0.2, anti_aliasing=True, jupyter_backend='pythreejs')
 
 
 Demo Using ``ipygany``
@@ -60,7 +60,7 @@ a jupyter notebook:
 
 * Server-side rendering with PyVista streaming to the notebook through
   `ipyvtklink <https://github.com/Kitware/ipyvtklink/>`_
-* Client-side rendering with `pythreejs <https://github.com/jupyter-widgets/pythreejs>`_ using ``threejs``.
+* Client-side rendering with `pythreejs`_ using ``threejs``.
 * Client-side rendering with `ipygany <https://github.com/QuantStack/ipygany>`_ using ``threejs``.
 * Client-side rendering using `panel <https://github.com/holoviz/panel>`_ using ``vtk.js``.
 * Client-side rendering with `itkwidgets <https://github.com/InsightSoftwareConsortium/itkwidgets>`_ using ``itk.js`` and ``vtk.js``.
@@ -150,3 +150,6 @@ globally with the ``pyvista.set_jupyter_backend`` function.  For
 further details:
 
 .. autofunction:: pyvista.set_jupyter_backend
+
+
+.. _pythreejs: https://github.com/jupyter-widgets/pythreejs

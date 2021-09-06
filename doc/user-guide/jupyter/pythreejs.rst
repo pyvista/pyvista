@@ -171,6 +171,19 @@ while giving the scalars random values.
    pc.plot(jupyter_backend='pythreejs', style='points', point_size=10, cmap='jet')
 
 
+Textures
+~~~~~~~~
+The ``pythreejs`` backend also supports :attr:`textures <pyvista.DataSet.textures>`.
+
+.. jupyter-execute::
+
+   import pyvista
+   globe = examples.load_globe()
+   globe.plot(jupyter_backend='pythreejs', smooth_shading=True)
+
+See the :ref:`ref_texture_example` example for more details regarding textures.
+
+
 Large Models and Physically Based Rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example shows a large mesh and demonstrates how even fairly large
@@ -197,7 +210,7 @@ Note that here we enable physically based rendering using ``pbr=True``.
              pbr=True, metallic=0.5)
 
 
-Use in Interactive Documentation
+Create Interactive Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 All the documentation on this page was generated using a combination
 of ``pythreejs``, ``pyvista`` and ``jupyter_sphinx``.

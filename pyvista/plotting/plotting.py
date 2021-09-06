@@ -330,6 +330,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.ren_win)
         importer.Update()
 
+        # register last actor in actors
+        actor = self.renderer.GetActors().GetLastItem()
+        name = actor.GetAddressAsString("")
+        self.renderer._actors[name] = actor
+
         # set camera position to a three.js viewing perspective
         if set_camera:
             self.camera_position = 'xy'

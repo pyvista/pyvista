@@ -14,7 +14,7 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
          return_viewer=False, return_cpos=False, jupyter_kwargs={},
-         theme=None, hidden_line_removal=None, **kwargs):
+         theme=None, hidden_line_removal=None, anti_aliasing=None, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -121,6 +121,11 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
         theme setting :attr:`pyvista.global_theme.hidden_line_removal
         <pyvista.themes.DefaultTheme.hidden_line_removal>`.
 
+    anti_aliasing : bool, optional
+        Enable or disable anti-aliasing.  Defaults to the theme
+        setting :attr:`pyvista.global_theme.anti_aliasing
+        <pyvista.themes.DefaultTheme.anti_aliasing>`.
+
     **kwargs : optional keyword arguments
         See :func:`pyvista.Plotter.add_mesh` for additional options.
 
@@ -171,6 +176,11 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
     if notebook:
         off_screen = notebook
     plotter = Plotter(off_screen=off_screen, notebook=notebook, theme=theme)
+
+    if anti_aliasing:
+        plotter.enable_anti_aliasing()
+    else:
+        plotter.disable_anti_aliasing()
 
     if show_axes is None:
         show_axes = theme.axes.show

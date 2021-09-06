@@ -144,7 +144,7 @@ def cast_to_min_size(ind, max_index):
     return tjs.BufferAttribute(array=ind, normalized=False)
 
 
-def to_surf_mesh(surf, mapper, prop, add_attr={}):
+def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
     """Convert a pyvista surface to a buffer geometry.
 
     General Notes
@@ -187,18 +187,19 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
 
     # extract point/cell scalars for coloring
     colors = None
-    if mapper.GetScalarModeAsString() == 'UsePointData':
+    scalar_mode = mapper.GetScalarModeAsString()
+    if scalar_mode == 'Default':
+        # unsigned char scalars are treated as colors
+        pass
+    if scalar_mode == 'UsePointData':
         scalars = trimesh.point_data.active_scalars
         # colors = get_colors(scalars, mapper.cmap).astype(np.float32, copy=False)
 
         # Use VTK_COLOR_MODE_DIRECT_SCALARS
         table = mapper.GetLookupTable()
-        # table.SetSaturationRange(0, 1)
         colors = pv.wrap(table.MapScalars(scalars.VTKObject, 0, 0))[:, :3]/255
-        # there's something going on with the color mapping
-        # colors = colors.T
 
-    elif mapper.GetScalarModeAsString() == 'UseCellData':
+    elif scalar_mode == 'UseCellData':
         # special handling for RGBA
         if mapper.GetColorMode() == 2:
             scalars = trimesh.cell_data.active_scalars.repeat(3, axis=0)
@@ -213,17 +214,54 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
     if colors is not None:
         attr['color'] = array_to_float_buffer(colors)
 
+    t_coords = trimesh.active_t_coords
+    if t_coords is not None:
+        attr['uv'] = array_to_float_buffer(t_coords)
+
     surf_geo = tjs.BufferGeometry(attributes=attr)
 
+    # TODO: Convert PBR textures
+    # base_color_texture = prop.GetTexture("albedoTex")
+    # orm_texture = prop.GetTexture("materialTex")
+    # anisotropy_texture = prop.GetTexture("anisotropyTex")
+    # normal_texture = prop.GetTexture("normalTex")
+    # emissive_texture = prop.GetTexture("emissiveTex")
+    # coatnormal_texture = prop.GetTexture("coatNormalTex")
+
+    if prop.GetNumberOfTextures():
+        warnings.warn('pythreejs converter does not support PBR textures (yet).')
+
+    texture = actor.GetTexture()
+    tjs_texture = None
+    if texture is not None:
+        wrapped_tex = pv.wrap(texture.GetInput())
+        data = wrapped_tex.active_scalars
+        dim = (wrapped_tex.dimensions[0],
+               wrapped_tex.dimensions[1],
+               data.shape[1])
+        data = data.reshape(dim)
+        fmt = "RGBFormat" if data.shape[1] == 3 else "RGBAFormat"
+
+        # Create data texture and catch invalid warning
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="Given trait value dtype")
+            tjs_texture = tjs.DataTexture(data=data,
+                                          format="RGBFormat",
+                                          type="UnsignedByteType")
+
     shared_attr = {
-                   'vertexColors': get_coloring(mapper, trimesh),
-                   'wireframe': prop.GetRepresentation() == 1,
-                   'opacity': prop.GetOpacity(),
-                   'wireframeLinewidth': prop.GetLineWidth(),
-                   # 'side': 'DoubleSide'
-                   }
+        'vertexColors': get_coloring(mapper, trimesh),
+        'wireframe': prop.GetRepresentation() == 1,
+        'opacity': prop.GetOpacity(),
+        'wireframeLinewidth': prop.GetLineWidth(),
+        # 'side': 'DoubleSide'
+    }
+
     if colors is None:
         shared_attr['color'] = color_to_hex(prop.GetColor())
+
+    if tjs_texture is not None:
+        shared_attr['map'] = tjs_texture
 
     if prop.GetInterpolation() == 3:  # using physically based rendering
         material = tjs.MeshPhysicalMaterial(flatShading=False,
@@ -232,9 +270,10 @@ def to_surf_mesh(surf, mapper, prop, add_attr={}):
                                             reflectivity=0,
                                             **shared_attr, **add_attr)
     elif prop.GetLighting():
+        # specular disabled to fix lighting issues
         material = tjs.MeshPhongMaterial(shininess=0,
                                          flatShading=prop.GetInterpolation() == 0,
-                                         specular=color_to_hex(prop.GetSpecularColor()),
+                                         specular=color_to_hex((0, 0, 0)),
                                          reflectivity=0,
                                          **shared_attr,
                                          **add_attr)
@@ -324,15 +363,16 @@ def pvcamera_to_threejs_camera(pv_camera, lights, aspect):
     """Return an ipygany camera dict from a ``pyvista.Plotter`` object."""
     # scene will be centered at focal_point, so adjust the position
     position = np.array(pv_camera.position) - np.array(pv_camera.focal_point)
-    far = np.linalg.norm(position)*2
+    far = np.linalg.norm(position)*100000
 
-    return tjs.PerspectiveCamera(up=pv_camera.up,
-                                 children=lights,
-                                 position=position.tolist(),
-                                 fov=pv_camera.view_angle,
-                                 aspect=aspect,
-                                 far=far,
-                                 )
+    return tjs.PerspectiveCamera(
+        up=pv_camera.up,
+        children=lights,
+        position=position.tolist(),
+        fov=pv_camera.view_angle,
+        aspect=aspect,
+        far=far,
+    )
 
 
 def color_to_hex(color, linear_to_srgb=False):
@@ -365,7 +405,6 @@ def pvlight_to_threejs_light(pvlight):
 def extract_lights_from_renderer(renderer):
     """Extract and convert all pyvista lights to pythreejs compatible lights."""
     return [pvlight_to_threejs_light(pvlight) for pvlight in renderer.lights]
-    # return [tjs.AmbientLight(color='#FFFFFF')]
 
 
 def actor_to_mesh(actor, focal_point):
@@ -394,7 +433,7 @@ def actor_to_mesh(actor, focal_point):
 
             meshes.append(to_edge_mesh(surf, mapper, prop, use_edge_coloring=True))
 
-        meshes.append(to_surf_mesh(surf, mapper, prop, add_attr))
+        meshes.append(to_surf_mesh(actor, surf, mapper, prop, add_attr))
 
     elif rep_type == 'Points':
         meshes.append(to_tjs_points(dataset, mapper, prop))
