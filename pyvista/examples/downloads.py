@@ -2469,7 +2469,15 @@ def download_embryo(load=True):  # pragma: no cover
     * :ref:`orthogonal_slices_example`
 
     """
-    return _download_and_read('embryo.slc', load=load)
+    filename = _download_and_read('embryo.slc', load=False)
+    if load:
+        # cleanup artifact
+        dataset = pyvista.read(filename)
+        mask = dataset['SLCImage'] == 255
+        dataset['SLCImage'][mask] = 0
+        return dataset
+    else:
+        return filename
 
 
 def download_antarctica_velocity(load=True):  # pragma: no cover

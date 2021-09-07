@@ -211,7 +211,7 @@ within :func:`add_mesh() <pyvista.Plotting.add_mesh>`.
 
    pl = pyvista.Plotter(window_size=(600, 600))
    pl.add_mesh(mesh, scalars=rgba_sphere, rgba=True, smooth_shading=True)
-   pl.add_mesh(edges, rgba=True)
+   pl.add_mesh(edges, rgba=True, smooth_shading=True)
    pl.show(jupyter_backend='pythreejs')
 
 
@@ -295,3 +295,34 @@ In your ``conf.py``, add the following:
        # all your other extensions
    ]
 
+
+Export to HTML
+~~~~~~~~~~~~~~
+
+Using ``pythreejs``, you can export most scenes completely to HTML.  For example
+
+.. code:: python
+
+   >>> import pyvista
+   >>> from pyvista import examples
+   >>> mesh = examples.load_uniform()
+   >>> pl = pyvista.Plotter(shape=(1,2))
+   >>> _ = pl.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
+   >>> pl.subplot(0,1)
+   >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
+   >>> pl.export_html('pyvista.html')
+
+With this approach, you can export a fully self contained scene and
+
+.. note::
+   Not all PyVista features are currently supported, and future ones
+   can be added by request by opening a feature request at `PyVista
+   Issues <https://github.com/pyvista/pyvista/issues>`_.
+
+   Missing features include:
+
+   * Scalar bars
+   * Physically based rendering textures (e.g. from gLTF files).
+   * Plotting points as spheres or lines as tubes.  Use :func:`glyph()
+     <pyvista.DataSet.glyph>` or :func:`tube()
+     <pyvista.PolyData.tube>` to convert to surfaces first and then plot.

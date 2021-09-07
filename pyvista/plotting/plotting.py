@@ -2183,6 +2183,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         else:
             self.mapper.SetScalarModeToUseFieldData()
+
         # Set actor properties ================================================
 
         # select view style

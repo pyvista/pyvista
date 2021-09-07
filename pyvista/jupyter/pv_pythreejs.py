@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 try:
     import pythreejs as tjs
-except ImportError:
+except ImportError:  # pragma: no cover
     raise ImportError('Please install pythreejs to use this feature')
 
 from ipywidgets import HBox, VBox, GridspecLayout
@@ -15,14 +15,14 @@ import pyvista as pv
 
 def segment_poly_cells(mesh):
     """Segment lines from a mesh into line segments."""
-    if not pv.is_pyvista_dataset(mesh):
+    if not pv.is_pyvista_dataset(mesh):  # pragma: no cover
         mesh = pv.wrap(mesh)
     polylines = []
     i, offset = 0, 0
     cc = mesh.lines  # fetch up front
     while i < mesh.n_cells:
         nn = cc[offset]
-        polylines.append(cc[offset+1:offset+1+nn])
+        polylines.append(cc[offset + 1:offset + 1 + nn])
         offset += nn + 1
         i += 1
 
@@ -73,7 +73,7 @@ def extract_surface_mesh(obj):
         Surface mesh
 
     """
-        # attempt to wrap non-pyvista objects
+    # attempt to wrap non-pyvista objects
     if not pv.is_pyvista_dataset(obj):  # pragma: no cover
         mesh = pv.wrap(obj)
         if not pv.is_pyvista_dataset(mesh):
@@ -91,32 +91,30 @@ def extract_surface_mesh(obj):
     return mesh
 
 
-def get_colors(inp, colormap="viridis", normalize=True, vmin=None, vmax=None):
-    """Map scalars to a RGB array."""
-    from matplotlib.pyplot import cm, Normalize
-    colormap = cm.get_cmap(colormap)
-    if normalize:
-        vmin = np.min(inp)
-        vmax = np.max(inp)
+def map_scalars(mapper, scalars):
+    """Map scalars to a RGB array.
 
-    norm = Normalize(vmin, vmax)
-    return colormap(norm(inp))[:, :3]
+    Parameters
+    ----------
+    mapper : vtk.vtkMapper
+        Mapper containing lookup table.
+    scalars : vtk array, numpy.ndarray, or pyvista.pyvista_ndarray
+        Scalars to map
 
-
-def gen_circle(width=256, height=256):
-    """Generate a binary map of a circle.
-
-    Used for plotting circles within threejs instead of squares.
+    Returns
+    -------
+    pyvista.pyvista_ndarray
+        Array of mapped scalars.
 
     """
-    xx, yy = np.mgrid[:width, :height]
-    circle = (xx - width/2 + 0.5) ** 2 + (yy - height/2 + 0.5) ** 2
-    array = np.ones((width, height, 4), dtype=np.float32)
-    array[:, :, 0] = (circle <= width)
-    array[:, :, 1] = (circle <= width)
-    array[:, :, 2] = (circle <= width)
-    array[:, :, 3] = circle <= width
-    return array
+    if isinstance(scalars, np.ndarray):
+        if hasattr(scalars, 'VTKObject') and scalars.VTKObject is not None:
+            scalars = scalars.VTKObject
+        else:
+            scalars = pv._vtk.numpy_to_vtk(scalars)
+
+    table = mapper.GetLookupTable()
+    return pv.wrap(table.MapScalars(scalars, 0, 0))[:, :3]/255
 
 
 def array_to_float_buffer(points):
@@ -136,11 +134,12 @@ def cast_to_min_size(ind, max_index):
     """Return a buffered attribute of the minimum index size."""
     ind = ind.ravel()
     if max_index < np.iinfo(np.uint16).max:
-        ind = ind.astype(np.uint16)
+        ind = ind.astype(np.uint16, copy=False)
     elif max_index < np.iinfo(np.uint32).max:
-        ind = ind.astype(np.uint32)
+        ind = ind.astype(np.uint32, copy=False)
     else:
-        ind = ind.astype(np.uint64)
+        raise ValueError('pythreejs does not support a maximum index more than '
+                         f'{np.iinfo(np.uint32).max}')
     return tjs.BufferAttribute(array=ind, normalized=False)
 
 
@@ -188,17 +187,8 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
     # extract point/cell scalars for coloring
     colors = None
     scalar_mode = mapper.GetScalarModeAsString()
-    if scalar_mode == 'Default':
-        # unsigned char scalars are treated as colors
-        pass
     if scalar_mode == 'UsePointData':
-        scalars = trimesh.point_data.active_scalars
-        # colors = get_colors(scalars, mapper.cmap).astype(np.float32, copy=False)
-
-        # Use VTK_COLOR_MODE_DIRECT_SCALARS
-        table = mapper.GetLookupTable()
-        colors = pv.wrap(table.MapScalars(scalars.VTKObject, 0, 0))[:, :3]/255
-
+        colors = map_scalars(mapper, trimesh.point_data.active_scalars)
     elif scalar_mode == 'UseCellData':
         # special handling for RGBA
         if mapper.GetColorMode() == 2:
@@ -206,19 +196,21 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
             scalars = scalars.astype(np.float32, copy=False)
             colors = scalars[:, :3]/255  # ignore alpha
         else:
+            # must repeat for each triangle
             scalars = trimesh.cell_data.active_scalars.repeat(3)
-            colors = get_colors(scalars, mapper.cmap).astype(np.float32, copy=False)
+            colors = map_scalars(mapper, scalars)
+
         position = array_to_float_buffer(trimesh.points[face_ind])
         attr = {'position': position}
 
+    # add colors to the buffer geometry attributes
     if colors is not None:
         attr['color'] = array_to_float_buffer(colors)
 
+    # texture coordinates
     t_coords = trimesh.active_t_coords
     if t_coords is not None:
         attr['uv'] = array_to_float_buffer(t_coords)
-
-    surf_geo = tjs.BufferGeometry(attributes=attr)
 
     # TODO: Convert PBR textures
     # base_color_texture = prop.GetTexture("albedoTex")
@@ -227,10 +219,13 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
     # normal_texture = prop.GetTexture("normalTex")
     # emissive_texture = prop.GetTexture("emissiveTex")
     # coatnormal_texture = prop.GetTexture("coatNormalTex")
-
-    if prop.GetNumberOfTextures():
+    if prop.GetNumberOfTextures():  # pragma: no cover
         warnings.warn('pythreejs converter does not support PBR textures (yet).')
 
+    # create base buffer geometry
+    surf_geo = tjs.BufferGeometry(attributes=attr)
+
+    # add texture to the surface buffer if available
     texture = actor.GetTexture()
     tjs_texture = None
     if texture is not None:
@@ -249,6 +244,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
                                           format="RGBFormat",
                                           type="UnsignedByteType")
 
+    # these attributes are always used regardless of the material
     shared_attr = {
         'vertexColors': get_coloring(mapper, trimesh),
         'wireframe': prop.GetRepresentation() == 1,
@@ -283,7 +279,6 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
     return tjs.Mesh(geometry=surf_geo, material=material)
 
 
-
 def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
     """Convert a pyvista surface to a three.js edge mesh."""
     # extract all edges from the surface.  Should not use triangular
@@ -304,9 +299,8 @@ def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
     if coloring != 'NoColors' and not use_edge_coloring:
         if mapper.GetScalarModeAsString() == 'UsePointData':
             edge_scalars = edges_mesh.point_data.active_scalars
-
-        edge_colors = get_colors(edge_scalars, mapper.cmap)
-        attr['color'] = array_to_float_buffer(edge_colors)
+            edge_colors = map_scalars(mapper, edge_scalars)
+            attr['color'] = array_to_float_buffer(edge_colors)
 
     edge_geo = tjs.BufferGeometry(attributes=attr)
 
@@ -327,33 +321,24 @@ def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
     return tjs.LineSegments(edge_geo, edge_mat)
 
 
-def to_tjs_points(dataset, mapper, prop, as_circles=True):
+def to_tjs_points(dataset, mapper, prop):
     """Extract the points from a dataset and return a buffered geometry."""
     attr = {
         'position': array_to_float_buffer(dataset.points),
     }
 
     coloring = get_coloring(mapper, dataset)
-    if coloring != 'NoColors':
-        colors = get_colors(dataset.point_data.active_scalars, mapper.cmap)
+    if coloring == 'VertexColors':
+        colors = map_scalars(mapper, dataset.point_data.active_scalars)
         attr['color'] = array_to_float_buffer(colors)
 
     geo = tjs.BufferGeometry(attributes=attr)
 
-    m_attr = {'color': color_to_hex(prop.GetColor()),
-              'size': prop.GetPointSize()/100,
-              'vertexColors': coloring,
-              }
-
-    # if as_circles:
-    #     m_attr['size'] *= 5
-    #     tex = tjs.DataTexture(data=gen_circle(128, 128),
-    #                           format="RGBAFormat",
-    #                           type="FloatType")
-
-    #     m_attr["map"] = tex
-    #     m_attr["alphaTest"] = 0.5
-    #     m_attr["transparency"] = True
+    m_attr = {
+        'color': color_to_hex(prop.GetColor()),
+        'size': prop.GetPointSize()/100,
+        'vertexColors': coloring,
+    }
 
     point_mat = tjs.PointsMaterial(**m_attr)
     return tjs.Points(geo, point_mat)
@@ -444,8 +429,8 @@ def actor_to_mesh(actor, focal_point):
         elif np.any(dataset.lines):
             mesh = to_edge_mesh(dataset, mapper, prop, use_edge_coloring=False,
                                 use_lines=True)
-        else:  # empty mesh
-            return
+        else:  # pragma: no cover
+            warning.warn(f'Empty or unsupported dataset attached to actor')
 
         meshes.append(mesh)
 
