@@ -184,6 +184,37 @@ The ``pythreejs`` backend also supports :attr:`textures <pyvista.DataSet.texture
 See the :ref:`ref_texture_example` example for more details regarding textures.
 
 
+RGB and RGBA Coloring
+~~~~~~~~~~~~~~~~~~~~~
+The ``pythreejs`` supports rgba plotting.  See the ``rgba`` parameter
+within :func:`add_mesh() <pyvista.Plotting.add_mesh>`.
+
+.. jupyter-execute::
+
+   import numpy as np
+   import pyvista
+
+   mesh = pyvista.Sphere()
+
+   # treat the points as RGB coordinates to make a colorful mesh
+   pts = mesh.points.copy()
+   pts -= pts.min()
+   rgba_sphere = (255*pts).astype(np.uint8)
+
+   # plot the corners for fun
+   corners = mesh.outline_corners()
+   pts = corners.points.copy()
+   pts -= pts.min()
+   pts = 255*(pts/pts.max())
+   corners['rgba_values'] = pts.astype(np.uint8)
+   edges = corners.tube(radius=0.01).triangulate()
+
+   pl = pyvista.Plotter(window_size=(600, 600))
+   pl.add_mesh(mesh, scalars=rgba_sphere, rgba=True, smooth_shading=True)
+   pl.add_mesh(edges, rgba=True)
+   pl.show(jupyter_backend='pythreejs')
+
+
 Large Models and Physically Based Rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example shows a large mesh and demonstrates how even fairly large
