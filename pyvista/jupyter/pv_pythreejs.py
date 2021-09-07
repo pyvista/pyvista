@@ -12,6 +12,21 @@ from ipywidgets import HBox, VBox, GridspecLayout
 
 import pyvista as pv
 
+# TODO: Consider adding sprites for point labels
+# def add_sprite():
+#     text = tjs.TextTexture('hi', size=60, color='black')
+#     sprite = tjs.Sprite(tjs.SpriteMaterial(map=text,
+#                                            sizeAttenuation=False,
+#                                            transparent=False,
+#                                            # depthWrite=False,
+#                                            # depthTest=False
+#                                            useScreenCoordinates=True,
+#                                            ),
+#                         scale=(.1,.1,.1),
+#                         center=(0.0, 0.0)
+#                         )
+#     children.append(sprite)
+
 
 def segment_poly_cells(mesh):
     """Segment lines from a mesh into line segments."""
@@ -357,6 +372,7 @@ def pvcamera_to_threejs_camera(pv_camera, lights, aspect):
         fov=pv_camera.view_angle,
         aspect=aspect,
         far=far,
+        near=0.01,
     )
 
 
@@ -463,8 +479,8 @@ def convert_renderer(pv_renderer):
     pv_camera = pv_renderer.camera
     children = meshes_from_actors(pv_renderer.actors.values(),
                                   pv_camera.focal_point)
-    lights = extract_lights_from_renderer(pv_renderer)
 
+    lights = extract_lights_from_renderer(pv_renderer)
     aspect = width/height
     camera = pvcamera_to_threejs_camera(pv_camera, lights, aspect)
 

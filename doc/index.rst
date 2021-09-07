@@ -262,5 +262,3 @@ Project Index
 *************
 
 * :ref:`genindex`
-
-  
