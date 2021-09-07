@@ -220,15 +220,17 @@ numpydoc_validation_exclude = {  # set of regex
 add_module_names = False
 
 # Intersphinx mapping
+# NOTE: if these are changed, then .github/workflows/intersphinx-update-pull-request.yml
+#       must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-inv.txt')),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference', (None, 'intersphinx/scipy-inv.txt')),
-    'numpy': ('https://numpy.org/doc/stable', (None, 'intersphinx/numpy-inv.txt')),
-    'matplotlib': ('https://matplotlib.org/stable', (None, 'intersphinx/matplotlib-inv.txt')),
-    'imageio': ('https://imageio.readthedocs.io/en/stable', (None, 'intersphinx/imageio-inv.txt')),
-    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', (None, 'intersphinx/pandas-inv.txt')),
-    'pytest': ('https://docs.pytest.org/en/stable', (None, 'intersphinx/pytest-inv.txt')),
-    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, 'intersphinx/pyvistaqt-inv.txt')),
+    'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', (None, 'intersphinx/scipy-objects.inv')),
+    'numpy': ('https://numpy.org/doc/stable', (None, 'intersphinx/numpy-objects.inv')),
+    'matplotlib': ('https://matplotlib.org/stable', (None, 'intersphinx/matplotlib-objects.inv')),
+    'imageio': ('https://imageio.readthedocs.io/en/stable', (None, 'intersphinx/imageio-objects.inv')),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', (None, 'intersphinx/pandas-objects.inv')),
+    'pytest': ('https://docs.pytest.org/en/stable', (None, 'intersphinx/pytest-objects.inv')),
+    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, 'intersphinx/pyvistaqt-objects.inv')),
 }
 
 linkcheck_retries = 3

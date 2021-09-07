@@ -13,19 +13,21 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: python
-      run: curl https://docs.python.org/dev/objects.inv > doc/intersphinx/python-inv.txt
+      run: curl https://docs.python.org/dev/objects.inv > doc/intersphinx/python-objects.inv
     - name: scipy
-      run: curl https://docs.scipy.org/doc/scipy/reference/objects.inv > doc/intersphinx/scipy-inv.txt
+      run: curl https://docs.scipy.org/doc/scipy/reference/objects.inv > doc/intersphinx/scipy-objects.inv
     - name: numpy
-      run: curl https://numpy.org/doc/stable/objects.inv > doc/intersphinx/numpy-inv.txt
+      run: curl https://numpy.org/doc/stable/objects.inv > doc/intersphinx/numpy-objects.inv
     - name: matplotlib
-      run: curl https://matplotlib.org/stable/objects.inv > doc/intersphinx/matplotlib-inv.txt
+      run: curl https://matplotlib.org/stable/objects.inv > doc/intersphinx/matplotlib-objects.inv
     - name: imageio
-      run: curl https://imageio.readthedocs.io/en/stable/objects.inv > doc/intersphinx/imageio-inv.txt
+      run: curl https://imageio.readthedocs.io/en/stable/objects.inv > doc/intersphinx/imageio-objects.inv
     - name: pandas
-      run: curl https://pandas.pydata.org/pandas-docs/stable/objects.inv > doc/intersphinx/pandas-inv.txt
+      run: curl https://pandas.pydata.org/pandas-docs/stable/objects.inv > doc/intersphinx/pandas-objects.inv
     - name: pytest
-      run: curl https://docs.pytest.org/en/stable/objects.inv > doc/intersphinx/pytest-inv.txt
+      run: curl https://docs.pytest.org/en/stable/objects.inv > doc/intersphinx/pytest-objects.inv
+    - name: pyvistaqt
+      run: curl https://qtdocs.pyvista.org/objects.inv > doc/intersphinx/pyvistaqt-objects.inv
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v3
