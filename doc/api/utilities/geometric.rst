@@ -23,7 +23,9 @@ additional details see :ref:`ref_geometric_example` example.
    Plane
    Polygon
    Pyramid
+   Rectangle
    Sphere
    Spline
    Text3D
+   Triangle
    Wavelet

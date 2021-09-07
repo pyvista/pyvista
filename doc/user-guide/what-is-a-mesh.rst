@@ -6,14 +6,14 @@ In PyVista, a mesh is any spatially referenced information and usually
 consists of geometrical representations of a surface or volume in 3D
 space.  We commonly refer to any spatially referenced dataset as a
 mesh, so often the distinction between a mesh, a grid, and a volume
-can get fuzzy - but that does not matter in PyVista. If you have a
+can get fuzzy – but that does not matter in PyVista. If you have a
 dataset that is a surface mesh with 2D geometries like triangles, we
-call it a mesh and if you have a dataset with 3D geometries like
-voxels, tetrahedrals, hexahedrons, etc., then we also call that a
+call it a mesh, and if you have a dataset with 3D geometries like
+voxels, tetrahedra, hexahedra, etc., then we also call that a
 mesh! Why? Because it is simple that way.
 
 In all spatially referenced datasets, there lies an underlying mesh structure
-- the connectivity or geometry between nodes to define cells. Whether those
+– the connectivity or geometry between nodes to define cells. Whether those
 cells are 2D or 3D is not always of importance and we've worked hard to make
 PyVista work for datasets of either or mixed geometries so that you as a user
 do not have to get bogged down in the nuances.
@@ -26,16 +26,16 @@ do not have to get bogged down in the nuances.
 
 What is a point?
 ----------------
-Points are the vertices of the mesh - the Cartesian coordinates of the
+Points are the vertices of the mesh – the Cartesian coordinates of the
 underlying structure. All PyVista datasets (meshes!) have points and
-sometimes, you can have a mesh that only has points - like a point
+sometimes, you can have a mesh that only has points – like a point
 cloud.
 
 For example, you can create a point cloud mesh using the
 :class:`pyvista.PolyData` class which is built for meshes that have 1D
 and 2D cell types (we'll get into what a cell is briefly).
 
-Let's start with a point cloud - this is a mesh type that only has vertices.
+Let's start with a point cloud – this is a mesh type that only has vertices.
 You can create one by defining a 2D array of Cartesian coordinates like so:
 
 
@@ -61,7 +61,7 @@ You can create one by defining a 2D array of Cartesian coordinates like so:
     mesh = pv.PolyData(points)
     mesh.plot(point_size=10, style='points')
 
-But it's import to note that most meshes have some sort of
+But it's important to note that most meshes have some sort of
 connectivity between points such as this gridded mesh:
 
 .. jupyter-execute::
@@ -102,7 +102,7 @@ What is a Cell?
 A cell is the geometry between points that defines the connectivity or
 topology of a mesh. In the examples above, cells are defined by the
 lines (edges colored in black) connecting points (colored in red).
-For example, a cell in the beam example is a a voxel defined by region
+For example, a cell in the beam example is a voxel defined by the region
 between eight points in that mesh:
 
 .. jupyter-execute::
@@ -138,15 +138,15 @@ attributes can be accessed in a dictionary-like attribute attached to
 any PyVista mesh accessible as one of the following:
 
 * :attr:`point_data <pyvista.core.dataset.DataSet.point_data>`
-* :attr:`cell_data <pyvista.core.dataset.DataSet.cell_data>`.
-* :attr:`field_data <pyvista.core.dataset.DataSet.field_data>`.
+* :attr:`cell_data <pyvista.core.dataset.DataSet.cell_data>`
+* :attr:`field_data <pyvista.core.dataset.DataSet.field_data>`
 
 Point Data
 ~~~~~~~~~~
 Point data refers to arrays of values (scalars, vectors, etc.) that
-live on each point of the mesh.  Each element in an attribute array must
-correspond to a point or cell in the mesh.  Let's create some point
-data for the beam mesh.  When plotting the values between points are
+live on each point of the mesh.  Each element in an attribute array
+corresponds to a point in the mesh.  Let's create some point
+data for the beam mesh.  When plotting, the values between points are
 interpolated across the cells.
 
 .. jupyter-execute::
@@ -188,8 +188,8 @@ data which has a single value across the cell's domain:
 Field Data
 ~~~~~~~~~~
 Field data is not directly associated with either the points or cells
-but still should be attached the mesh.  This may be a string array
-storing notes, or even an of indices of a collision.
+but still should be attached to the mesh.  This may be a string array
+storing notes, or even indices of a :ref:`collision_example`.
 
 
 Assigning Scalars to a Mesh

@@ -56,7 +56,7 @@ User Guide Contents
    what-is-a-mesh
    simple
    data_model
-   pyvista_to_vtk
+   vtk_to_pyvista
    themes
    jupyter/index
    optional_features

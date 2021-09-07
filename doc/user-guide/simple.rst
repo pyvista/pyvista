@@ -181,15 +181,15 @@ code after calling ``show``.
     plotter.show()            # show the rendering window
 
 
-Note that by default :func:`show() <pyvista.Plotter.show>` will return
+Optionally :func:`show() <pyvista.Plotter.show>` can return
 the last used camera position of the rendering window in case you want
 to choose a camera position and use it again later. The camera
 position is also available as the :attr:`camera_position
 <pyvista.Plotter.camera_position>` attribute of the plotter (even
 after it's closed).
 
-You can then use this cached camera for additional plotting without having to
-manually interact with the plotting window:
+You can then use this cached camera position for additional plotting
+without having to manually interact with the plotting window:
 
 .. code:: python
 
@@ -201,10 +201,14 @@ manually interact with the plotting window:
     plotter.show(screenshot='airplane.png')
 
 
-Be sure to check out all the available plotters for your use case:
+Be sure to check out all the available plotters and their options for
+your use case:
 
-* :class:`pyvista.Plotter`: The standard plotter that pauses the code until closed
-* :class:`pyvistaqt.BackgroundPlotter`: Creates a rendering window that is interactive and does not pause the code execution (for more information see the `pyvistaqt`_ package)
+* :class:`pyvista.Plotter`: The standard plotter that pauses the code
+  until closed
+* :class:`pyvistaqt.BackgroundPlotter`: Creates a rendering window that
+  is interactive and does not pause the code execution (for more
+  information see the `pyvistaqt`_ package)
 
 .. _pyvistaqt: https://qtdocs.pyvista.org/
 

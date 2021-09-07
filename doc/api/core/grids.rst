@@ -27,7 +27,7 @@ classes.  These classes inherit from the `vtkRectilinearGrid`_ and
 volumetric data.
 
 A :class:`pyvista.RectilinearGrid` is used for modeling datasets with
-regular variable spacing in the three coordinate directions.
+variable spacing in the three coordinate directions.
 
 .. jupyter-execute::
    :hide-code:
@@ -37,7 +37,7 @@ regular variable spacing in the three coordinate directions.
 
 
 A :class:`pyvista.UniformGrid` is used for modeling datasets with
-regular uniform spacing in the three coordinate directions.
+uniform spacing in the three coordinate directions.
 
 .. jupyter-execute::
    :hide-code:

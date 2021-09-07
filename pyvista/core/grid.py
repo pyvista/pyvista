@@ -47,7 +47,7 @@ class Grid(DataSet):
 
 
 class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
-    """Dataset with regular variable spacing in the three coordinate directions.
+    """Dataset with variable spacing in the three coordinate directions.
 
     Can be initialized in several ways:
 
@@ -248,7 +248,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
 
 
 class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
-    """Models datasets with regular uniform spacing in the three coordinate directions.
+    """Models datasets with uniform spacing in the three coordinate directions.
 
     Can be initialized in several ways:
 
