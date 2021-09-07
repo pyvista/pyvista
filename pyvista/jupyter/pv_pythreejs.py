@@ -250,7 +250,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
         'wireframe': prop.GetRepresentation() == 1,
         'opacity': prop.GetOpacity(),
         'wireframeLinewidth': prop.GetLineWidth(),
-        # 'side': 'DoubleSide'
+        # 'side': 'DoubleSide'  # enabling seems to mess with textures
     }
 
     if colors is None:
@@ -517,16 +517,19 @@ def convert_plotter(pl):
         width, height = 0, 0
         for i in range(n_row):
             for j in range(n_col):
-                pv_ren = pl.renderers[i + n_row*j]
+                pv_ren = pl.renderers[j + n_row*i]
                 if j == 0:
                     height += pv_ren.height + pv_ren.border_width*2
                 if i == 0:
                     width += pv_ren.width + pv_ren.border_width*2
                 grid[i, j] = convert_renderer(pv_ren)
 
-        # this is important when building the gallery
+        # this is important to ignore when building the gallery
         if not pv.BUILDING_GALLERY:
             grid.layout.width = f'{width}px'
             grid.layout.height = f'{height+4}px'
 
-    return grid
+        return grid
+
+    raise RuntimeError('Unsupported plotter shape.  The ``pythreejs`` backend only '
+                       'supports single or regular grids of plots')

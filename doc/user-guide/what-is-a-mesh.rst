@@ -192,6 +192,8 @@ but still should be attached to the mesh.  This may be a string array
 storing notes, or even indices of a :ref:`collision_example`.
 
 
+.. _assigning_scalars:
+
 Assigning Scalars to a Mesh
 ---------------------------
 

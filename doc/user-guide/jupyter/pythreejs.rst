@@ -25,7 +25,7 @@ PyVista Wrapping
 Plotting scenes from pyvista are automatically serialized to a
 three.js scene when using the ``pythreejs`` backend.  This can be
 enabled globally with :func:`pyvista.set_jupyter_backend` or by
-setting it in :func:`pyvista.Plotter.plot`.  
+setting it in :func:`pyvista.Plotter.show`.
 
 .. jupyter-execute::
    :hide-code:
@@ -43,7 +43,7 @@ setting it in :func:`pyvista.Plotter.plot`.
 
     mesh = examples.download_bunny()
     mesh.flip_normals()
-    
+
     pl = pv.Plotter()
     pl.add_mesh(mesh, color='lightgrey')
     pl.camera_position = 'xy'
@@ -121,6 +121,8 @@ points for point, wireframe, and surface representations.
 
 .. jupyter-execute::
 
+   import pyvista
+   pyvista.global_theme.show_scalar_bar = False
    import numpy as np
 
    def make_cube(center=(0, 0, 0), resolution=1):
@@ -131,32 +133,26 @@ points for point, wireframe, and surface representations.
 
    # test face scalars with no lighting
    mesh = make_cube(center=(-1, 0, -1))
-   pl.add_mesh(mesh, lighting=False, cmap='jet',
-               scalars=np.arange(mesh.n_faces),
-               show_edges=True)
+   mesh['scalars_a'] = np.arange(mesh.n_faces)
+   pl.add_mesh(mesh, lighting=False, cmap='jet', show_edges=True)
 
    # test point scalars on a surface mesh
    mesh = make_cube(center=(1, 0, 1))
-   pl.add_mesh(mesh,
-               lighting=True,
-               scalars=mesh.points[:, 2]*mesh.points[:, 0], cmap='bwr',
-               line_width=1)
+   mesh['scalars_b'] = mesh.points[:, 2]*mesh.points[:, 0]
+   pl.add_mesh(mesh, cmap='bwr', line_width=1)
 
    mesh = make_cube(center=(-1, 0, 1))
-   pl.add_mesh(mesh, style='points',
-               scalars=mesh.points[:, 2],
-               point_size=30)
+   mesh['scalars_c'] = mesh.points[:, 2]
+   pl.add_mesh(mesh, style='points', point_size=30)
 
    # test wireframe
    mesh = make_cube(center=(1, 0, -1))
-   pl.add_mesh(mesh, lighting=True, show_edges=False,
-               scalars=mesh.points[:, 2],
-               line_width=3, style='wireframe',
-               cmap='inferno')
+   mesh['scalars_d'] = mesh.points[:, 2]
+   pl.add_mesh(mesh, show_edges=False, line_width=3,
+               style='wireframe', cmap='inferno')
 
    pl.camera_position = 'xz'
    pl.show()
-
 
 
 Point Cloud Example
@@ -205,7 +201,7 @@ within :func:`add_mesh() <pyvista.Plotting.add_mesh>`.
    corners = mesh.outline_corners()
    pts = corners.points.copy()
    pts -= pts.min()
-   pts = 255*(pts/pts.max())
+   pts = 255*(pts/pts.max())  # Make 0-255 RGBA values
    corners['rgba_values'] = pts.astype(np.uint8)
    edges = corners.tube(radius=0.01).triangulate()
 
@@ -213,6 +209,14 @@ within :func:`add_mesh() <pyvista.Plotting.add_mesh>`.
    pl.add_mesh(mesh, scalars=rgba_sphere, rgba=True, smooth_shading=True)
    pl.add_mesh(edges, rgba=True, smooth_shading=True)
    pl.show(jupyter_backend='pythreejs')
+
+
+Multiple Render Windows
+~~~~~~~~~~~~~~~~~~~~~~~
+You can plot multiple render windows within a single ``pythreejs``
+just like how you would with PyVista.
+
+See :ref:`assigning_scalars` for an example.
 
 
 Large Models and Physically Based Rendering
@@ -264,7 +268,7 @@ To generate:
    import pyvista as pv
    from pyvista import examples
    pv.set_jupyter_backend('pythreejs')
-   
+
    mesh = pv.Cube()
    mesh.plot(show_edges=True)
 

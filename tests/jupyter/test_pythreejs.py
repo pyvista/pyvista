@@ -193,3 +193,9 @@ def test_export_after_show():
 
     with pytest.raises(AttributeError):
         pv_pythreejs.convert_plotter(pl)
+
+
+def test_non_standard_shape():
+    pl = pyvista.Plotter(shape='2|3')
+    with pytest.raises(RuntimeError, match='Unsupported plotter shape'):
+        pv_pythreejs.convert_plotter(pl)
