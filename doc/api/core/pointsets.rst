@@ -377,7 +377,7 @@ scalars of the grid copied to the plotting object.  Here is a full example:
     plotter.add_axes()
     plotter.camera_position = cpos
 
-    # open movie file.  A mp4 file can be written instead.  Requires moviepy
+    # open movie file.  A mp4 file can be written instead.  Requires ``moviepy``
     plotter.open_gif('beam.gif')  # or beam.mp4
 
     # Modify position of the beam cyclically
@@ -388,7 +388,7 @@ scalars of the grid copied to the plotting object.  Here is a full example:
         plotter.write_frame()
 
     # close the plotter when complete
-    # plotter.close()
+    plotter.close()
 
 
 You can also render the beam as as a wire-frame object:
@@ -414,7 +414,7 @@ You can also render the beam as as a wire-frame object:
        plotter.write_frame()
 
    # close the plotter when complete
-   # plotter.close()
+   plotter.close()
 
 
 Adding Labels to a Plot

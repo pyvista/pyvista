@@ -66,7 +66,7 @@ might want to use PyVista:
 .. jupyter-execute::
    :hide-code:
 
-   # must have this here as our global backend may not be static
+   # Configure for pythreejs
    import pyvista
    pyvista.set_jupyter_backend('pythreejs')
    pyvista.global_theme.background = 'white'
