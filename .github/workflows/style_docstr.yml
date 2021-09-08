@@ -34,7 +34,7 @@ jobs:
 
       - name: Install style requirements
         run: |
-          pip install -r requirements_style.txt --disable-pip-version-check
+          pip install -r requirements_static.txt --disable-pip-version-check
 
       - name: Static code check
         run: |
