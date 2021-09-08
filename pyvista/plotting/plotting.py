@@ -3255,6 +3255,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         vtk.vtkActor
             Lines actor.
 
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()       
+        >>> points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2,0,0]])
+        >>> pl.add_lines(points, color='yellow', width=3)
+        >>> pl.camera_position='xy'
+        >>> pl.show()
+        
         """
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
@@ -3399,6 +3409,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         vtk.vtkActor2D
             VTK label actor.  Can be used to change properties of the labels.
 
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> points = np.array([[0,0,0],
+        ...                    [1,1,0],
+        ...                    [2,0,0]])
+        >>> labels = ['Point A', 'Point B', 'Point C']
+        >>> actor = pl.add_point_labels(points, labels, italic=True, font_size=20,
+        ...                             point_color='red', point_size=20, render_points_as_spheres=True,
+        ...                             always_visible=True, shadow=True)
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
+        
         """
         if font_family is None:
             font_family = self._theme.font.family
