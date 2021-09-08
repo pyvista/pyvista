@@ -220,8 +220,8 @@ numpydoc_validation_exclude = {  # set of regex
 add_module_names = False
 
 # Intersphinx mapping
-# NOTE: if these are changed, then .github/workflows/intersphinx-update-pull-request.yml
-#       must be changed accordingly to keep auto-updated mappings working
+# NOTE: if these are changed, then doc/intersphinx/update.sh
+# must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
     'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', (None, 'intersphinx/scipy-objects.inv')),
