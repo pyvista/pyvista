@@ -11,14 +11,22 @@ Demo Using ``pythreejs``
 Create interactive physically based rendering using `pythreejs`_.
 
 .. jupyter-execute::
+   :hide-code:
+
+   import pyvista
+   pyvista.global_theme.background = 'white'
+   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.window_size = [600, 600]
+
+.. jupyter-execute::
 
    import pyvista as pv
    from pyvista import examples
 
    # download an example and display it using physically based rendering.
    mesh = examples.download_lucy()
-   mesh.plot(window_size=(600, 600), background='w', color='lightgrey', pbr=True,
-             metallic=0.2, anti_aliasing=True, jupyter_backend='pythreejs')
+   mesh.plot(color='lightgrey', pbr=True, metallic=0.2,
+             jupyter_backend='pythreejs')
 
 
 Demo Using ``ipygany``
@@ -37,20 +45,16 @@ Demo Using ``ipygany``
    mesh += text
    mesh['Example Scalars'] = mesh.points[:, 0]
 
-   mesh.plot(cpos='xy', jupyter_backend='ipygany', background='white',
-             show_scalar_bar=True)
+   mesh.plot(cpos='xy', jupyter_backend='ipygany', show_scalar_bar=True)
 
 
 Demo Using ``panel``
 ~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-   If nothing comes up, this may be broken
-
 .. jupyter-execute::
 
    from pyvista import demos
-   demos.plot_logo(background='white', jupyter_backend='panel')
+   demos.plot_logo(jupyter_backend='panel')
 
 
 Supported Modules
@@ -129,7 +133,7 @@ At the moment, ``itkwidgets`` and ``ipyvtklink`` are incompatible with
 Jupyterlab 3, and will result in a "Error displaying widget: model not
 found" message from juptyer.  Additionally, all the modules other than
 ``ipygany`` and ``pythreejs`` require a framebuffer, which can be
-setup on a headless environment with ``pyvista.start_xvfb()``.
+setup on a headless environment with :func:`pyvista.start_xvfb`.
 However, on Google Colab, where it's not possible to install system
 packages, you should stick with a module like ``threejs``, which does
 not require any server side rendering or framebuffer.
@@ -144,10 +148,10 @@ installation instructions for the other packages for more details.
 Usage with PyVista
 ~~~~~~~~~~~~~~~~~~
 There are two ways to set the jupyter plotting backend.  First, it can
-be done on a plot by plot basis by setting the ``jupyter_backend`` in
-either ``mesh.plot()`` or ``plotter.show()``.  You can also set it
-globally with the ``pyvista.set_jupyter_backend`` function.  For
-further details:
+be done on a plot by plot basis by setting the ``jupyter_backend`` parameter in
+either :func:`Plotter.show() <pyvista.Plotter.show>` or :func:`dataset.plot()
+<pyvista.DataSet.plot>`.  You can also set it globally with the
+:func:`pyvista.set_jupyter_backend`.  For further details:
 
 .. autofunction:: pyvista.set_jupyter_backend
 

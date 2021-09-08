@@ -29,7 +29,8 @@ Getting Started
     Authors & Citation
     ^^^^^^^^^^^^^^^^^^
 
-    Using PyVista in your research? Please consider citing or acknowledging us.
+    Using PyVista in your research? Please consider citing or
+    acknowledging us.  We have a publication!
 
     .. link-button:: authors
         :type: ref
@@ -117,23 +118,32 @@ PyVista is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
 Here are a few open-source projects that leverage PyVista:
 
-* itkwidgets_: Interactive Jupyter widgets to visualize images, point sets, and meshes in 2D and 3D. Supports all PyVista mesh types.
-* pyansys_: Pythonic interface to ANSYS result, full, and archive files
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
-* omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
 * discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return PyVista versions of their data types for `creating compelling visualizations`_.
-* pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix software.
+* gemgis_: Spatial data processing for geomodeling.
+* gimly_: Geophysical inversion and modeling library.
+* itkwidgets_: Interactive Jupyter widgets to visualize images, point sets, and meshes in 2D and 3D. Supports all PyVista mesh types.
+* mne-python_: MNE: Magnetoencephalography (MEG) and Electroencephalography (EEG) in Python.
+* omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
+* pyleecan_: Electrical engineering open-source software providing a user-friendly, unified, flexible simulation framework for the multiphysic design and optimization of electrical machines and drives
+* pymapdl_: Pythonic interface to Ansys MAPDL.
+* pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix_ software.
+* pyprocar_: A Python library for electronic structure pre/post-processing.
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
-
-.. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
-.. _pyansys: https://github.com/akaszynski/pyansys
-.. _PVGeo: https://github.com/OpenGeoVis/PVGeo
-.. _omfvista: https://github.com/OpenGeoVis/omfvista
-.. _discretize: https://discretize.simpeg.xyz/en/master/
-.. _creating compelling visualizations: https://discretize.simpeg.xyz/en/master/api/generated/discretize.mixins.vtk_mod.InterfaceVTK.html
-.. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
+.. _PVGeo: https://github.com/OpenGeoVis/PVGeo
+.. _creating compelling visualizations: https://discretize.simpeg.xyz/en/main/api/generated/discretize.mixins.vtk_mod.InterfaceVTK.html
+.. _discretize: https://discretize.simpeg.xyz/en/main/
+.. _gemgis: https://github.com/cgre-aachen/gemgis
+.. _gimly: https://github.com/gimli-org/gimli
+.. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
+.. _mne-python: https://github.com/mne-tools/mne-python
+.. _omfvista: https://github.com/OpenGeoVis/omfvista
+.. _pyleecan: https://github.com/Eomys/pyleecan
+.. _pymapdl: https://github.com/pyansys/pymapdl
+.. _pymeshfix: https://github.com/pyvista/pymeshfix
+.. _pyprocar: https://github.com/romerogroup/pyprocar
 .. _tetgen: https://github.com/pyvista/tetgen
 
 

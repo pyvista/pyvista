@@ -24,7 +24,13 @@ def start_xvfb(wait=3, window_size=None):
 
     window_size : list, optional
         Window size of the virtual frame buffer.  Defaults to
-        ``pyvista.global_theme.window_size``.
+        :attr:`pyvista.global_theme.window_size
+        <pyvista.themes.DefaultTheme.window_size>`.
+
+    Notes
+    -----
+    Only available on Linux.  Be sure to install ``libgl1-mesa-glx
+    xvfb`` in your package manager.
 
     Examples
     --------

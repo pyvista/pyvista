@@ -369,7 +369,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # import after converting as we check for pythreejs import first
         try:
             from ipywidgets.embed import embed_minimal_html
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError('Please install ipywidgets with:\n'
                               '\n\tpip install ipywidgets')
 
@@ -2180,7 +2180,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     table.SetHueRange(0.0, 0.66667)
                 else:
                     table.SetHueRange(0.66667, 0.0)
-
         else:
             self.mapper.SetScalarModeToUseFieldData()
 
@@ -4738,11 +4737,11 @@ class Plotter(BasePlotter):
         >>> pl.show(auto_close=False)  # doctest:+SKIP
         >>> pl.show(screenshot='my_image.png')  # doctest:+SKIP
 
-        Display an ``pythreejs`` scene within a jupyter notebook
+        Display a ``pythreejs`` scene within a jupyter notebook
 
         >>> pl.show(jupyter_backend='pythreejs')  # doctest:+SKIP
 
-        Return an ``pythreejs`` scene.
+        Return a ``pythreejs`` scene.
 
         >>> pl.show(jupyter_backend='pythreejs', return_viewer=True)  # doctest:+SKIP
 

@@ -8,12 +8,14 @@ get started is with PyVista's :func:`pyvista.wrap` and :func:`pyvista.read`
 functions to either wrap a VTK data object in memory or read a VTK or
 VTK-friendly file format.
 
+
 Wrapping a VTK Data Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The wrapping function is under the :mod:`pyvista.utilities` module which is
-usable from the top level of PyVista. This allows users to quickly wrap any
-VTK dataset they have as a PyVista object:
+The wrapping function :func:`pyvista.wrap` is under the
+:mod:`pyvista.utilities` module, which is usable from the top level of
+PyVista. This allows users to quickly wrap any VTK dataset they have
+as a PyVista object:
 
 .. code:: python
 
@@ -136,8 +138,6 @@ Plotting
 PyVista includes numerous plotting routines that are intended to be intuitive
 and highly controllable with ``matplotlib`` similar syntax and keyword
 arguments.
-To get started, try out the :func:`pyvista.plot` convenience method that is binded
-to each PyVista data object:
 
 To get started, try out the :func:`pyvista.plot` convenience method
 that is bound to each PyVista data object.
@@ -165,11 +165,11 @@ that is bound to each PyVista data object.
     mesh.plot()
 
 
-You can also create the plotter to highly control the scene. First,
+You can also create a plotter object to fine tune the scene. First,
 instantiate a plotter such as :class:`pyvista.Plotter` or
 :class:`pyvistaqt.BackgroundPlotter`.  The :class:`pyvista.Plotter`
 will create a rendering window that will pause the execution of the
-code after calling ``show``.
+code after calling :func:`show() <pyvista.Plotter.show>`.
 
 .. jupyter-execute::
 
@@ -205,10 +205,10 @@ Be sure to check out all the available plotters and their options for
 your use case:
 
 * :class:`pyvista.Plotter`: The standard plotter that pauses the code
-  until closed
+  until closed.
 * :class:`pyvistaqt.BackgroundPlotter`: Creates a rendering window that
   is interactive and does not pause the code execution (for more
-  information see the `pyvistaqt`_ package)
+  information see the `pyvistaqt`_ library)
 
 .. _pyvistaqt: https://qtdocs.pyvista.org/
 

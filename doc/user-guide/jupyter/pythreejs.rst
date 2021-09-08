@@ -2,22 +2,29 @@
 
 Using ``pythreejs`` with PyVista
 --------------------------------
-The `pythreejs <https://github.com/jupyter-widgets/pythreejs>`_ jupyterlab
-plotting backend is a powerful module that enables pure plotting that
-leverages `threejs <https://threejs.org/>`_.  It allows
-for embedded html documentation (as shown here).
+The `pythreejs <https://github.com/jupyter-widgets/pythreejs>`_
+jupyterlab plotting backend is a powerful library that enables
+web-based visualization leveraging `threejs <https://threejs.org/>`_.
+It allows for embedded html documentation (as shown here).
 
-The biggest advantage to using the ``pythreejs`` backend is it
-accurately recreates the VTK scene into a ``threejs`` scene including:
+The biggest advantage to using the ``pythreejs`` backend compared to
+the other backends is that it accurately recreates the VTK scene into
+a ``threejs`` scene including:
 
 * Mesh edges
 * Lighting
 * Physically based rendering
 * Face and point scalars
+* Textures
+
+You can use this backend to display PyVista scenes directly within a
+jupyter notebook, create interactive web documentation, or even export
+to standalone HTML pages.
 
 .. note::
    This backend has better support and features than the ``ipygany``
-   backend, but is still missing support for vtk widgets and textures.
+   backend, but is still missing support for vtk widgets and some
+   features (like scalar bars and labels).  See :ref:`pythreejs_caveats`.
 
 
 PyVista Wrapping
@@ -66,10 +73,9 @@ returning the "viewer" with:
     >>> pl.add_mesh(mesh, color='lightgrey')
     >>> pl.background_color = 'white'
     >>> pl.camera_position = 'xy'
-    >>> renderer = pl.show(jupyter_backend='pythreejs', return_viewer=True)
-    >>> type(scene)
+    >>> widget = pl.show(jupyter_backend='pythreejs', return_viewer=True)
+    >>> type(widget)
     pythreejs.core.Renderer.Renderer
-
 
 This renderer can then be added to any number of jupyterlab widgets and
 then shown as a complete widget.  For example, you could even display
@@ -78,7 +84,7 @@ two side by side using ``ipywidgets.AppLayout``.
 
 Plotting Representation and Materials
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The pyvista plotting scenes are faithfully serialized the same plotting
+The PyVista plotting scenes are faithfully serialized to same plotting
 scene within three.js using the same lighting, camera projection, and
 materials.
 
@@ -158,7 +164,7 @@ points for point, wireframe, and surface representations.
 Point Cloud Example
 ~~~~~~~~~~~~~~~~~~~
 Plot a sample point cloud with pyvista using the ``pythreejs`` backend
-while giving the scalars random values.
+while assigning the points scalars random values.
 
 .. jupyter-execute::
 
@@ -182,8 +188,8 @@ See the :ref:`ref_texture_example` example for more details regarding textures.
 
 RGB and RGBA Coloring
 ~~~~~~~~~~~~~~~~~~~~~
-The ``pythreejs`` supports rgba plotting.  See the ``rgba`` parameter
-within :func:`add_mesh() <pyvista.Plotting.add_mesh>`.
+The ``pythreejs`` supports RGBA plotting.  See the ``rgba`` parameter
+within :func:`add_mesh() <pyvista.Plotting.add_mesh>` for more details.
 
 .. jupyter-execute::
 
@@ -302,8 +308,8 @@ In your ``conf.py``, add the following:
 
 Export to HTML
 ~~~~~~~~~~~~~~
-
-Using ``pythreejs``, you can export most scenes completely to HTML.  For example
+Using ``pythreejs``, you can export most scenes completely to a
+standalone HTML file.  For example:
 
 .. code:: python
 
@@ -316,17 +322,22 @@ Using ``pythreejs``, you can export most scenes completely to HTML.  For example
    >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
    >>> pl.export_html('pyvista.html')
 
-With this approach, you can export a fully self contained scene and
+.. _pythreejs_caveats:
 
-.. note::
-   Not all PyVista features are currently supported, and future ones
-   can be added by request by opening a feature request at `PyVista
-   Issues <https://github.com/pyvista/pyvista/issues>`_.
+Caveats
+~~~~~~~
 
-   Missing features include:
+Not all PyVista features are currently supported with the
+``pythreejs`` plotting backend. Future ones can be added opening a
+feature request at `PyVista Issues
+<https://github.com/pyvista/pyvista/issues>`_.
 
-   * Scalar bars
-   * Physically based rendering textures (e.g. from gLTF files).
-   * Plotting points as spheres or lines as tubes.  Use :func:`glyph()
-     <pyvista.DataSet.glyph>` or :func:`tube()
-     <pyvista.PolyData.tube>` to convert to surfaces first and then plot.
+Missing features include:
+
+* Scalar bars
+* Physically based rendering textures (e.g. from gLTF files).
+* Plotting points as spheres or lines as tubes.  Use :func:`glyph()
+  <pyvista.DataSet.glyph>` or :func:`tube()
+  <pyvista.PolyData.tube>` to convert to surfaces first and then plot.
+* Point labels
+* 2D text actors

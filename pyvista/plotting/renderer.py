@@ -418,8 +418,6 @@ class Renderer(_vtk.vtkRenderer):
         self.AddViewProp(actor)
         self.Modified()
 
-        self._has_border = True
-        self._border_width = width
         self._border_actor = actor
         return actor
 
@@ -431,18 +429,16 @@ class Renderer(_vtk.vtkRenderer):
     @property
     def border_width(self):
         """Return the border width."""
-        if self._border_actor is None:
-            return 0
-        else:
+        if self.has_border:
             return self._border_actor.GetProperty().GetLineWidth()
+        return 0
 
     @property
     def border_color(self):
         """Return the border color."""
-        if self._border_actor is None:
-            return None
-        else:
+        if self.has_border:
             return self._border_actor.GetProperty().GetColor()
+        return None
 
     @property
     def actors(self):

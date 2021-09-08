@@ -77,25 +77,29 @@ classes inherit all methods from their corresponding VTK
 PolyData Creation
 -----------------
 
-See :ref:`ref_create_poly` for an example on creating a
-:class:`pyvista.PolyData` object from NumPy arrays.
-
-
 Empty Object
 ~~~~~~~~~~~~
-A polydata object can be initialized with:
+A :class:`pyvista.PolyData` object can be initialized with:
 
 .. jupyter-execute::
 
     import pyvista
-    grid = pyvista.PolyData()
+    mesh = pyvista.PolyData()
 
-This creates an empty grid, and is not useful until points and cells
-are added to it.  VTK points and cells can be added with ``SetPoints``
-and ``SetCells``, but the inputs to these need to be
-``vtk.vtkCellArray`` and ``vtk.vtkPoints`` objects, which need to be
-populated with values.  Grid creation is simplified by initializing
-the grid directly from NumPy arrays as in the following section.
+This creates an mesh, which you can then add
+
+* Points with :attr:`points <pyvista.Dataset.points>`
+* Vertices with :attr:`verts <pyvista.Dataset.verts>`
+* Lines with :attr:`lines <pyvista.PolyData.lines>`
+* Faces with :attr:`faces <pyvista.PolyData.faces>`
+
+Note that unlike :class:`pyvista.UnstructuredGrid`, you do not specify
+cell types.  All faces are assumed to be polygons, hence the name
+"Poly" data.
+
+Click on the attributes above to see examples of how to add geometric
+features to an empty.  See :ref:`ref_create_poly` for an example on
+creating a :class:`pyvista.PolyData` object from NumPy arrays.
 
 
 Initialize from a File
@@ -189,13 +193,13 @@ An unstructured grid can be initialized with:
     import pyvista as pv
     grid = pv.UnstructuredGrid()
 
-This creates an empty grid, and is not useful until points and cells
-are added to it. Points and cells can be added later with
-:attr:`points <pyvista.Dataset.points>` and :attr:`cells
-<pyvista.UnstructuredGrid.cells>` :attr:`cellstypes
+This creates an empty grid, and is it not useful until points and
+cells are added to it. Points and cells can be added later with
+:attr:`points <pyvista.Dataset.points>`, :attr:`cells
+<pyvista.UnstructuredGrid.cells>`, and :attr:`celltypes
 <pyvista.UnstructuredGrid.celltypes>` .
 
-Alternatively, you can add cells and cell types directly when
+Alternatively, you can add points and cells directly when
 initializing.
 
 .. jupyter-execute::
@@ -256,9 +260,6 @@ A structured grid can be initialized with:
 
     import pyvista as pv
     grid = pv.StructuredGrid()
-
-This creates an empty grid, and is not useful until points are added
-to it.
 
 
 Creating from Numpy Arrays

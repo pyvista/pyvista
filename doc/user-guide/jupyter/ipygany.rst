@@ -4,8 +4,8 @@ Using ``ipygany`` with PyVista
 ------------------------------
 .. warning::
    Currently, this backend has inferior support and features than the
-   ``pythreejs``.  If you see accurate recreations of VTK scenes in
-   three.js, please see :ref:`pythreejs_ref`.
+   ``pythreejs``.  If you would like accurate recreations of VTK
+   scenes in three.js, please see :ref:`pythreejs_ref`.
 
 The `ipygany <https://github.com/QuantStack/ipygany>`_ jupyterlab
 plotting backend is a powerful module that enables pure plotting that

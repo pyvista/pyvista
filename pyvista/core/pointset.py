@@ -565,6 +565,13 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
         Alias for ``n_cells``.
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> plane = pyvista.Plane(i_resolution=2, j_resolution=2)
+        >>> plane.n_faces
+        4
+
         """
         return self.n_cells
 
@@ -677,8 +684,15 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
         Returns
         -------
-        area : float
+        float
             Total area of the mesh.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> sphere.area
+        3.126
 
         """
         areas = self.compute_cell_sizes(length=False, area=True, volume=False,)["Area"]
@@ -688,12 +702,19 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     def volume(self):
         """Return the mesh volume.
 
-        This will throw a VTK error/warning if not a closed surface
+        This will throw a VTK error/warning if not a closed surface.
 
         Returns
         -------
-        volume : float
+        float
             Total volume of the mesh.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> sphere.volume
+        0.5183
 
         """
         mprop = _vtk.vtkMassProperties()
@@ -799,7 +820,21 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def n_open_edges(self):
-        """Return the number of open edges on this mesh."""
+        """Return the number of open edges on this mesh.
+
+        Examples
+        --------
+        Return the number of open edges on a sphere.
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> sphere.n_open_edges
+        0
+        Return the number of open edges on a plane.
+        >>> plane = pyvista.Plane(i_resolution=1, j_resolution=1)
+        >>> plane.n_open_edges
+        4
+
+        """
         alg = _vtk.vtkFeatureEdges()
         alg.FeatureEdgesOff()
         alg.BoundaryEdgesOn()
@@ -828,12 +863,11 @@ class PointGrid(PointSet):
         Parameters
         ----------
         curv_type : str, optional
-            One of the following strings indicating curvature types
-
-            - mean
-            - gaussian
-            - maximum
-            - minimum
+            One of the following strings indicating curvature types.
+            - ``'mean'``
+            - ``'gaussian'``
+            - ``'maximum'``
+            - ``'minimum'``
 
         **kwargs : dict, optional
             Optional keyword arguments.  See :func:`pyvista.plot`.
@@ -852,7 +886,8 @@ class PointGrid(PointSet):
     def volume(self):
         """Compute the volume of the point grid.
 
-        This extracts the external surface and computes the interior volume
+        This extracts the external surface and computes the interior
+        volume.
         """
         surf = self.extract_surface().triangulate()
         return surf.volume
@@ -1101,8 +1136,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     def cells_dict(self):
         """Return a dictionary that contains all cells mapped from cell types.
 
-        This function returns a np.ndarray for each cell type in an ordered fashion.
-        Note that this function only works with element types of fixed sizes
+        This function returns a :class:`numpy.ndarray` for each cell
+        type in an ordered fashion.  Note that this function only
+        works with element types of fixed sizes.
 
         Returns
         -------
@@ -1137,7 +1173,29 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     @property
     def cell_connectivity(self):
-        """Return a the vtk cell connectivity as a numpy array."""
+        """Return a the vtk cell connectivity as a numpy array.
+
+        This is effecively :attr:`UnstructuredGrid.cells` without the
+        padding.
+
+        .. note::
+           This is only available in ``vtk>=9.0.0``.
+
+        Returns
+        -------
+        numpy.ndarray
+            Connectivity array.
+
+        Examples
+        --------
+        Return the cell connectivity for the first two cells.
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> hex_beam.cell_connectivity[:16]
+        array([ 0,  2,  8,  7, 27, 36, 90, 81,  2,  1,  4,  8, 36, 18, 54, 90])
+
+        """
         carr = self.GetCells()
         if _vtk.VTK9:
             return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
@@ -1149,10 +1207,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         Converts the following cell types to their linear equivalents.
 
-        - ``VTK_QUADRATIC_TETRA``      --> ``VTK_TETRA``
-        - ``VTK_QUADRATIC_PYRAMID``    --> ``VTK_PYRAMID``
-        - ``VTK_QUADRATIC_WEDGE``      --> ``VTK_WEDGE``
-        - ``VTK_QUADRATIC_HEXAHEDRON`` --> ``VTK_HEXAHEDRON``
+        - ``VTK_QUADRATIC_TETRA      --> VTK_TETRA``
+        - ``VTK_QUADRATIC_PYRAMID    --> VTK_PYRAMID``
+        - ``VTK_QUADRATIC_WEDGE      --> VTK_WEDGE``
+        - ``VTK_QUADRATIC_HEXAHEDRON --> VTK_HEXAHEDRON``
 
         Parameters
         ----------
@@ -1163,7 +1221,8 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Returns
         -------
         pyvista.UnstructuredGrid
-            UnstructuredGrid containing only linear cells.
+            UnstructuredGrid containing only linear cells when
+            ``deep=False``.
 
         """
         lgrid = self.copy(deep)
@@ -1286,7 +1345,33 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     @property
     def offset(self):
-        """Get cell locations Array."""
+        """Return the cell locations array.
+
+        In VTK 9, this is the location of the start of each cell in
+        :attr:`cell_connectivity`, and in VTK < 9, this is the
+        location of the start of each cell in :attr:`cells`.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of cell offsets indicating the start of each cell.
+
+        Examples
+        --------
+        Return the cell offset array within ``vtk==9``.  Since this
+        mesh is composed of all hexahedral cells, note how each cell
+        starts at 8 greater than the prior cell.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> hex_beam = pyvista.read(examples.hexbeamfile)
+        >>> hex_beam.offset
+        array([  0,   8,  16,  24,  32,  40,  48,  56,  64,  72,  80,  88,  96,
+               104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200,
+               208, 216, 224, 232, 240, 248, 256, 264, 272, 280, 288, 296, 304,
+               312, 320])
+
+        """
         carr = self.GetCells()
         if _vtk.VTK9:
             # This will be the number of cells + 1.
@@ -1297,9 +1382,12 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     def cast_to_explicit_structured_grid(self):
         """Cast to an explicit structured grid.
 
+        .. note::
+           This feature is only available in ``vtk>=9.0.0``
+
         Returns
         -------
-        ExplicitStructuredGrid
+        pyvista.ExplicitStructuredGrid
             An explicit structured grid.
 
         Raises
@@ -1315,17 +1403,17 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Examples
         --------
         >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid = examples.load_explicit_structured()
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
-        >>> grid.hide_cells(range(80, 120))  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> _ = grid.hide_cells(range(80, 120))
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
-        >>> grid = grid.cast_to_unstructured_grid()  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid = grid.cast_to_unstructured_grid()
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
-        >>> grid = grid.cast_to_explicit_structured_grid()  # doctest: +SKIP
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest: +SKIP
+        >>> grid = grid.cast_to_explicit_structured_grid()
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         """
         if not _vtk.VTK9:
@@ -1348,7 +1436,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     """Dataset used for topologically regular arrays of data.
 
-    Can be initialized in several ways:
+    Can be initialized in one of the following several ways:
 
     - Create empty grid
     - Initialize from a vtk.vtkStructuredGrid object
