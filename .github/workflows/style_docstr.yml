@@ -1,0 +1,74 @@
+# check spelling, codestyle
+name: Style and Docstring Check
+
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  stylecheck:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install style requirements
+        run: |
+          pip install -r requirements_style.txt --disable-pip-version-check
+
+      - name: Code and Spelling Check
+        run: |
+          make stylecheck
+
+  staticcheck:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install style requirements
+        run: |
+          pip install -r requirements_style.txt --disable-pip-version-check
+
+      - name: Static code check
+        run: |
+          make mypy
+
+  docstringcheck:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install PyVista
+        run: |
+          pip install .
+
+      - name: Install Doctest Dependencies
+        run: |
+          sudo apt-get install libgl1-mesa-glx xvfb python-tk -y
+          pip install -r requirements_test.txt
+
+      - name: Software Report
+        run: |
+          xvfb-run python -c "import pyvista; print(pyvista.Report())"
+          which python
+          pip list
+
+      - name: Test Package Docstrings
+        run: |
+          xvfb-run pytest -v --doctest-modules pyvista
+
+      - name: Test Package Docstrings with Local Namespace
+        run: |
+          xvfb-run make doctest-modules-local-namespace
