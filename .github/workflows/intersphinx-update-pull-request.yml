@@ -12,20 +12,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: python
-      run: curl https://docs.python.org/dev/objects.inv > doc/intersphinx/python-inv.txt
-    - name: scipy
-      run: curl https://docs.scipy.org/doc/scipy/reference/objects.inv > doc/intersphinx/scipy-inv.txt
-    - name: numpy
-      run: curl https://numpy.org/doc/stable/objects.inv > doc/intersphinx/numpy-inv.txt
-    - name: matplotlib
-      run: curl https://matplotlib.org/stable/objects.inv > doc/intersphinx/matplotlib-inv.txt
-    - name: imageio
-      run: curl https://imageio.readthedocs.io/en/stable/objects.inv > doc/intersphinx/imageio-inv.txt
-    - name: pandas
-      run: curl https://pandas.pydata.org/pandas-docs/stable/objects.inv > doc/intersphinx/pandas-inv.txt
-    - name: pytest
-      run: curl https://docs.pytest.org/en/stable/objects.inv > doc/intersphinx/pytest-inv.txt
+    - name: Update intersphinx objects
+      run: make -C doc update-intersphinx
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v3

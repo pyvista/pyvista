@@ -56,3 +56,6 @@ deploy:
 	cd _build/html && git remote add origin https://github.com/pyvista/pyvista-docs
 	cd _build/html && git push -u origin gh-pages --force
 	rm -rf _build/html/.git
+
+update-intersphinx:
+	cd intersphinx && ./update.sh

@@ -137,3 +137,47 @@ def test_skybox(tmpdir):
 
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
         pyvista.cubemap('')
+
+
+def test_array_association():
+    # TODO: cover vtkTable/ROW association case
+    mesh = pyvista.PolyData()
+    FieldAssociation = pyvista.FieldAssociation
+
+    # single match cases
+    mesh.point_data['p'] = []
+    mesh.cell_data['c'] = []
+    mesh.field_data['f'] = ['foo']
+    for preference in 'point', 'cell', 'field':
+        assoc = mesh.get_array_association('p', preference=preference)
+        assert assoc == FieldAssociation.POINT
+        assoc = mesh.get_array_association('c', preference=preference)
+        assert assoc == FieldAssociation.CELL
+        assoc = mesh.get_array_association('f', preference=preference)
+        assert assoc == FieldAssociation.NONE
+
+    # multiple match case
+    mesh.point_data['common'] = []
+    mesh.cell_data['common'] = []
+    mesh.field_data['common'] = ['foo']
+    assoc = mesh.get_array_association('common', preference='point')
+    assert assoc == FieldAssociation.POINT
+    assoc = mesh.get_array_association('common', preference='cell')
+    assert assoc == FieldAssociation.CELL
+    assoc = mesh.get_array_association('common', preference='field')
+    assert assoc == FieldAssociation.NONE
+
+    # regression test against overly suggestive preference
+    mesh.clear_cell_data()  # point and field left
+    assoc = mesh.get_array_association('common', 'cell')
+    assert assoc != FieldAssociation.CELL
+
+    # missing cases
+    mesh.clear_data()
+    with pytest.raises(KeyError, match='not present in this dataset.'):
+        assoc = mesh.get_array_association('missing')
+    assoc = pyvista.get_array_association(mesh, 'missing', err=False)
+    assert assoc == FieldAssociation.NONE
+
+    with pytest.raises(ValueError, match='not supported.'):
+        mesh.get_array_association('name', preference='row')
