@@ -145,7 +145,7 @@ jobs:
       - name: Test Core API
         run: |
           pip install pytest-azurepipelines
-          pytest -v --cov pyvista --cov-report html
+          xvfb-run pytest -v --cov pyvista --cov-report html
 
       - name: Upload coverage to codecov.io
         if: ${{ matrix.python-version }} == "3.9"
