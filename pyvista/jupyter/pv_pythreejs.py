@@ -493,11 +493,23 @@ def convert_renderer(pv_renderer):
                       background=color_to_hex(pv_renderer.background_color)
     )
 
+    # replace inf with a real value here due to changes in
+    # ipywidges==6.4.0 see
+    # https://github.com/ipython/ipykernel/issues/771
+    inf = 1E9
+    orbit_controls = tjs.OrbitControls(
+        controlling=camera,
+        maxAzimuthAngle=inf,
+        maxDistance=inf,
+        maxZoom=inf,
+        minAzimuthAngle=-inf,
+    )
+
     renderer = tjs.Renderer(camera=camera,
                             scene=scene,
                             alpha=True,
                             clearOpacity=0,
-                            controls=[tjs.OrbitControls(controlling=camera)],
+                            controls=[orbit_controls],
                             width=width,
                             height=height,
                             antialias=pv_renderer.GetUseFXAA(),
