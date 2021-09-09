@@ -130,7 +130,7 @@ jobs:
     displayName: Build pyvista doc examples cache
 
   - script: |
-      make -C doc html SPHINXOPTS="-j auto -w build_errors.txt -N"
+      make -C doc html SPHINXOPTS="-w build_errors.txt -N"
     displayName: 'Build documentation'
 
   # Verify that sphinx generates no warnings
