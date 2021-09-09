@@ -32,7 +32,7 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/Library/Caches/pip
-          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}-${{ runner.os }}
+          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}-${{ runner.os }}-${{ matrix.python-version }}
 
       - name: Install PyVista
         run: |
@@ -129,7 +129,7 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}-${{ runner.os }}
+          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}-${{ runner.os }}-${{ matrix.python-version }}
 
       - name: Build wheel and install pyvista
         run: |
@@ -169,5 +169,5 @@ jobs:
           twine upload --skip-existing dist/pyvista*
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: $(PYPI_TOKEN)
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
           TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
