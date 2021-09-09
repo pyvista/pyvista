@@ -8,7 +8,7 @@ CODESPELL_IGNORE ?= "ignore_words.txt"
 doctest-modules: export PYVISTA_OFF_SCREEN = True
 doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
 
-doctest: codespell pydocstyle
+stylecheck: codespell pydocstyle
 
 codespell:
 	@echo "Running codespell"

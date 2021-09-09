@@ -41,6 +41,7 @@ setup(
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=io_open(readme_file, encoding="utf-8").read(),
+    long_description_content_type='text/x-rst',
     author='PyVista Developers',
     author_email='info@pyvista.org',
     license='MIT',
@@ -55,6 +56,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
 
     url='https://github.com/pyvista/pyvista',
