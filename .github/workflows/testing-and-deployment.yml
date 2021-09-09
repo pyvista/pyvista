@@ -148,7 +148,7 @@ jobs:
           pytest -v --cov pyvista --cov-report html
 
       - name: Upload coverage to codecov.io
-        if "${{ matrix.python-version }}" == "3.9"
+        if: ${{ matrix.python-version }} == "3.9"
         run: bash <(curl -s https://codecov.io/bash)
 
       - name: Check package
@@ -158,7 +158,7 @@ jobs:
           twine check dist/*
 
       - name: Upload to PyPi
-        if "${{ matrix.python-version }}" == "3.9" && startsWith(github.ref, 'refs/tags')
+        if: ${{ matrix.python-version }} == "3.9" && startsWith(github.ref, 'refs/tags')
         run: |
           twine upload --skip-existing dist/pyvista*
         env:
