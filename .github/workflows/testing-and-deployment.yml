@@ -31,8 +31,8 @@ jobs:
 
       - uses: actions/cache@v2
         with:
-          path: ~/.cache/pip
-          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
+          path: ~/Library/Caches/pip
+          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}-${{ runner.os }}
 
       - name: Install PyVista
         run: |
@@ -73,6 +73,7 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --add channels conda-forge
+          conda config --set channel_priority strict
           sed -i -e 's/- vtk$/- vtk= ${{ env.VTK_VERSION }} /' environment.yml
           conda env create --quiet -n ${{ env.conda_env }} --file environment.yml
           conda activate ${{ env.conda_env }}
@@ -128,7 +129,7 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
+          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}-${{ runner.os }}
 
       - name: Build wheel and install pyvista
         run: |
@@ -148,7 +149,7 @@ jobs:
           which python
           pip list
 
-      - name: Test Core API
+      - name: Unit Testing
         run: |
           xvfb-run pytest -v --cov pyvista --cov-report html -n auto
 

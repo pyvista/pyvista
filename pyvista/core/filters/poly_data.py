@@ -9,7 +9,8 @@ from pyvista import (
     abstract_class, _vtk, NORMALS, generate_plane, assert_empty_kwargs,
     vtk_id_list_to_array, get_array, get_array_association
 )
-from pyvista.core.errors import NotAllTrianglesError, DeprecationError
+from pyvista.core.errors import (NotAllTrianglesError,
+                                 DeprecationError, VTKVersionError)
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 
@@ -2749,6 +2750,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`collision_example` for more examples using this filter.
 
         """
+        if not pyvista._vtk.VTK9:  # pragma: no cover
+            raise VTKVersionError('The collision filter requires VTK 9 or newer')
+
         # other mesh must be a polydata
         if not isinstance(other_mesh, pyvista.PolyData):
             other_mesh = other_mesh.extract_surface()

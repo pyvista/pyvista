@@ -1954,6 +1954,7 @@ def test_scalar_cell_priorities():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+@skip_not_vtk9
 def test_collision_plot():
     """Verify rgba arrays automatically plot"""
     sphere0 = pyvista.Sphere()
