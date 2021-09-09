@@ -32,7 +32,9 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/Library/Caches/pip
-          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}-${{ runner.os }}-${{ matrix.python-version }}
+          key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
+          restore-keys: |
+            Python-${{ runner.os }}-${{ matrix.python-version }}
 
       - name: Install PyVista
         run: |
@@ -68,6 +70,14 @@ jobs:
       - name: Install headless display
         run: |
           .ci/setup_headless_display.sh
+
+      - name: Cache Conda
+        uses: actions/cache@v1
+        with:
+          path: ~/anaconda3/pkgs
+          key: Conda-${{ runner.os }}-${{ hashFiles('environment.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-conda-
 
       - name: Create Anaconda environment
         run: |
@@ -129,7 +139,9 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}-${{ runner.os }}-${{ matrix.python-version }}
+          key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
+          restore-keys: |
+            Python-${{ runner.os }}-${{ matrix.python-version }}
 
       - name: Build wheel and install pyvista
         run: |
