@@ -163,7 +163,7 @@ jobs:
 
       - name: Unit Testing
         run: |
-          xvfb-run pytest -v --cov pyvista --cov-report html -n auto
+          xvfb-run pytest -v --cov pyvista --cov-report html
 
       - name: Upload coverage to codecov.io
         if: matrix.python-version == '3.9'
