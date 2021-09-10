@@ -6,7 +6,15 @@ Why PyVista?
 
    # jupyterlab boilerplate setup
    import pyvista
-   pyvista.set_plot_theme('document')
+
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.background = 'white'
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.show_scalar_bar = False
+
+
 
 
 VTK is an excellent visualization toolkit, and with Python bindings it
@@ -75,6 +83,7 @@ renderer is cleaned up after the user closes the plotting window.
 
 For more details comparing the two APIs, please see
 :ref:`pyvista_data_model` and :ref:`vtk_to_pyvista_docs`.
+
 
 PyVista API
 ~~~~~~~~~~~

@@ -39,26 +39,33 @@ Let's start with a point cloud – this is a mesh type that only has vertices.
 You can create one by defining a 2D array of Cartesian coordinates like so:
 
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
+   :hide-code:
+
+   # must have this here as our global backend may not be static
+   import pyvista
+   pyvista.set_plot_theme('document')
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.show_scalar_bar = False
+
+
+.. jupyter-execute::
 
     import numpy as np
     import pyvista as pv
 
     points = np.random.rand(100, 3)
     mesh = pv.PolyData(points)
-    mesh.plot(point_size=30, render_points_as_spheres=True)
-
+    mesh.plot(point_size=10, style='points')
 
 But it's important to note that most meshes have some sort of
 connectivity between points such as this gridded mesh:
 
+.. jupyter-execute::
 
-.. pyvista-plot::
-    :context:
-
-    import pyvista as pv
-    import numpy as np
     from pyvista import examples
 
     mesh = examples.load_hexbeam()
@@ -68,24 +75,21 @@ connectivity between points such as this gridded mesh:
 
     pl = pv.Plotter()
     pl.add_mesh(mesh, show_edges=True, color='white')
-    pl.add_mesh(pv.PolyData(mesh.points), color='red',
-           point_size=10, render_points_as_spheres=True)
+    pl.add_points(mesh.points, color='red',
+                  point_size=20)
     pl.camera_position = cpos
     pl.show()
 
 Or this triangulated surface:
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
-    import pyvista as pv
-    from pyvista import examples
     mesh = examples.download_bunny_coarse()
 
     pl = pv.Plotter()
     pl.add_mesh(mesh, show_edges=True, color='white')
-    pl.add_mesh(pv.PolyData(mesh.points), color='red',
-                point_size=10, render_points_as_spheres=True)
+    pl.add_points(mesh.points, color='red',
+                  point_size=2)
     pl.camera_position = [(0.02, 0.30, 0.73),
                           (0.02, 0.03, -0.022),
                           (-0.03, 0.94, -0.34)]
@@ -101,18 +105,17 @@ lines (edges colored in black) connecting points (colored in red).
 For example, a cell in the beam example is a voxel defined by the region
 between eight points in that mesh:
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
     mesh = examples.load_hexbeam()
 
     pl = pv.Plotter()
     pl.add_mesh(mesh, show_edges=True, color='white')
-    pl.add_mesh(pv.PolyData(mesh.points), color='red',
-                point_size=20, render_points_as_spheres=True)
+    pl.add_points(mesh.points, color='red', point_size=20)
 
-    pl.add_mesh(mesh.extract_cells(mesh.n_cells - 1), style='wireframe',
-                color='blue', line_width=30, show_edges=True)
+    single_cell = mesh.extract_cells(mesh.n_cells - 1)
+    pl.add_mesh(single_cell, color='pink', edge_color='blue',
+                line_width=5, show_edges=True)
 
     pl.camera_position = [(6.20, 3.00, 7.50),
                           (0.16, 0.13, 2.65),
@@ -134,9 +137,9 @@ that live either on all points or on all cells of a mesh. These
 attributes can be accessed in a dictionary-like attribute attached to
 any PyVista mesh accessible as one of the following:
 
-* :attr:`point_data <pyvista.core.dataset.DataSet.point_data>`
-* :attr:`cell_data <pyvista.core.dataset.DataSet.cell_data>`
-* :attr:`field_data <pyvista.core.dataset.DataSet.field_data>`
+* :attr:`point_data <pyvista.DataSet.point_data>`
+* :attr:`cell_data <pyvista.DataSet.cell_data>`
+* :attr:`field_data <pyvista.DataSet.field_data>`
 
 Point Data
 ~~~~~~~~~~
@@ -146,8 +149,7 @@ corresponds to a point in the mesh.  Let's create some point
 data for the beam mesh.  When plotting, the values between points are
 interpolated across the cells.
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
     mesh.point_data['my point values'] = np.arange(mesh.n_points)
     mesh.plot(scalars='my point values', cpos=cpos, show_edges=True)
@@ -158,8 +160,7 @@ Cell data refers to arrays of values (scalars, vectors, etc.) that
 live throughout each cell of the mesh.  That is the entire cell (2D
 face or 3D volume) is assigned the value of that attribute.
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
     mesh.cell_data['my cell values'] = np.arange(mesh.n_cells)
     mesh.plot(scalars='my cell values', cpos=cpos, show_edges=True)
@@ -168,16 +169,20 @@ Here's a comparison of point data versus cell data and how point data
 is interpolated across cells when mapping colors. This is unlike cell
 data which has a single value across the cell's domain:
 
+..
+   Making this dynamic breaks the plots on this page.
+
 .. pyvista-plot::
-    :context:
 
-    mesh = examples.load_uniform()
+   import pyvista as pv
+   from pyvista import examples
+   uni = examples.load_uniform()
 
-    pl = pv.Plotter(shape=(1,2))
-    pl.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
-    pl.subplot(0,1)
-    pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
-    pl.show()
+   pl = pv.Plotter(shape=(1, 2), border=False)
+   pl.add_mesh(uni, scalars='Spatial Point Data', show_edges=True)
+   pl.subplot(0, 1)
+   pl.add_mesh(uni, scalars='Spatial Cell Data', show_edges=True)
+   pl.show()
 
 
 Field Data
@@ -187,6 +192,8 @@ but still should be attached to the mesh.  This may be a string array
 storing notes, or even indices of a :ref:`collision_example`.
 
 
+.. _assigning_scalars:
+
 Assigning Scalars to a Mesh
 ---------------------------
 
@@ -194,23 +201,23 @@ Here's how we assign values to cell attributes and plot it.  Here, we
 generate cube containing 6 faces and assign each face an integer from
 ``range(6)`` and then have it plotted.
 
-.. pyvista-plot::
-    :context:
-
-    cube = pv.Cube()
-    cube.cell_data['myscalars'] = range(6)
-    cube.plot(cmap='bwr')
-
 Note how this varies from assigning scalars to each point
+
+.. jupyter-execute::
+
+   cube = pv.Cube().clean()
+   cube.cell_data['myscalars'] = range(6)
+
+   other_cube = cube.copy()
+   other_cube.point_data['myscalars'] = range(8)
+
+   pl = pv.Plotter(shape=(1, 2), border_width=1)
+   pl.add_mesh(cube, cmap='coolwarm')
+   pl.subplot(0, 1)
+   pl.add_mesh(other_cube, cmap='coolwarm')
+   pl.show()
 
 .. note::
    We use :func:`pyvista.PolyDataFilters.clean` to merge the faces of
-   the cube since, by default the cube is created with unmerged faces
+   the cube since, by default, the cube is created with unmerged faces
    and duplicate points.
-
-.. pyvista-plot::
-    :context:
-
-    cube = pv.Cube().clean()
-    cube.point_data['myscalars'] = range(8)
-    cube.plot(cmap='bwr')

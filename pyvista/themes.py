@@ -1301,6 +1301,12 @@ class DefaultTheme(_ThemeConfig):
           this is the only method that does not require a virtual
           framebuffer.  Must have ``ipygany`` installed.
 
+        * ``'pythreejs'`` : Convert all the meshes into ``pythreejs``
+          meshes and streams those to be rendered on the client side.
+          Aside from ``ipygany``, this is the only method that does
+          not require a virtual framebuffer.  Must have ``pythreejs``
+          installed.
+
         * ``'static'`` : Display a single static image within the
           JupyterLab environment.  Still requires that a virtual
           framebuffer be setup when displaying on a headless server,
@@ -1313,6 +1319,11 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
+        Enable the pythreejs backend.
+
+        >>> import pyvista as pv
+        >>> pv.set_jupyter_backend('pythreejs')  # doctest:+SKIP
+
         Enable the ipygany backend.
 
         >>> import pyvista as pv
@@ -1846,7 +1857,7 @@ class DefaultTheme(_ThemeConfig):
     def multi_samples(self) -> int:
         """Return or set the default ``multi_samples`` parameter.
 
-        Set the number of multisamples to enable hardware antialiasing.
+        Set the number of multisamples to used with hardware antialiasing.
 
         Examples
         --------

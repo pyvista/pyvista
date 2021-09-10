@@ -366,8 +366,10 @@ def download_bunny_coarse(load=True):  # pragma: no cover
     * :ref:`subdivide_example`
 
     """
-    return _download_and_read('Bunny.vtp', load=load)
-
+    result = _download_and_read('Bunny.vtp', load=load)
+    if load:
+        result.verts = np.array([], dtype=np.int32)
+    return result
 
 def download_cow(load=True):  # pragma: no cover
     """Download cow dataset.
@@ -2467,7 +2469,15 @@ def download_embryo(load=True):  # pragma: no cover
     * :ref:`orthogonal_slices_example`
 
     """
-    return _download_and_read('embryo.slc', load=load)
+    filename = _download_and_read('embryo.slc', load=False)
+    if load:
+        # cleanup artifact
+        dataset = pyvista.read(filename)
+        mask = dataset['SLCImage'] == 255
+        dataset['SLCImage'][mask] = 0
+        return dataset
+    else:
+        return filename
 
 
 def download_antarctica_velocity(load=True):  # pragma: no cover
@@ -3175,3 +3185,32 @@ def download_osmnx_graph():  # pragma: no cover
 
     filename, _ = _download_file('osmnx_graph.p')
     return pickle.load(open(filename, 'rb'))
+
+
+def download_lucy(load=True):  # pragma: no cover
+    """Download the lucy angel mesh.
+
+    Original downloaded from the `The Stanford 3D Scanning Repository
+    <http://graphics.stanford.edu/data/3Dscanrep/>`_ and decimated to
+    approximately 100k triangle.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_lucy()  # doctest:+SKIP
+
+    See :ref:`jupyter_plotting` for an example using this dataset.
+
+    """
+    return _download_and_read('lucy.ply', load=load)

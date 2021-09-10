@@ -129,7 +129,7 @@ class Renderer(_vtk.vtkRenderer):
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
-        self.parent = parent
+        self.parent = parent  # the plotter
         self._theme = parent.theme
         self.camera_set = False
         self.bounding_box_actor = None
@@ -150,6 +150,7 @@ class Renderer(_vtk.vtkRenderer):
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
 
+        self._border_actor = None
         if border:
             self.add_border(border_color, border_width)
 
@@ -416,7 +417,28 @@ class Renderer(_vtk.vtkRenderer):
 
         self.AddViewProp(actor)
         self.Modified()
+
+        self._border_actor = actor
         return actor
+
+    @property
+    def has_border(self):
+        """Return if the renderer has a border."""
+        return self._border_actor is not None
+
+    @property
+    def border_width(self):
+        """Return the border width."""
+        if self.has_border:
+            return self._border_actor.GetProperty().GetLineWidth()
+        return 0
+
+    @property
+    def border_color(self):
+        """Return the border color."""
+        if self.has_border:
+            return self._border_actor.GetProperty().GetColor()
+        return None
 
     @property
     def actors(self):
@@ -2305,3 +2327,45 @@ class Renderer(_vtk.vtkRenderer):
     @layer.setter
     def layer(self, layer):
         self.SetLayer(layer)
+
+    @property
+    def viewport(self):
+        """Viewport of the renderer.
+
+        Viewport describes the ``(xstart, ystart, xend, yend)`` square
+        of the renderer relative to the main renderer window.
+
+        For example, a renderer taking up the entire window will have
+        a viewport of ``(0.0, 0.0, 1.0, 1.0)``, while the viewport of
+        a renderer on the left-hand side of a horizontally split window
+        would be ``(0.0, 0.0, 0.5, 1.0)``.
+
+        Returns
+        -------
+        tuple
+            Viewport in the form ``(xstart, ystart, xend, yend)``.
+
+        Examples
+        --------
+        Show the viewport of a renderer taking up half the render
+        window.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.renderers[0].viewport
+        (0.0, 0.0, 0.5, 1.0)
+
+        """
+        return self.GetViewport()
+
+    @property
+    def width(self):
+        """Width of the renderer."""
+        xmin, _, xmax, _ = self.viewport
+        return self.parent.window_size[0]*(xmax - xmin)
+
+    @property
+    def height(self):
+        """Height of the renderer."""
+        _, ymin, _, ymax = self.viewport
+        return self.parent.window_size[1]*(ymax - ymin)

@@ -1976,3 +1976,9 @@ def test_add_remove_background(sphere):
     plotter.add_background_image(examples.mapfile, as_global=False)
     plotter.remove_background_image()
     plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_plot_zoom(sphere):
+    # it's difficult to verify that zoom actually worked since we
+    # can't get the output with cpos or verify the image cache matches
+    sphere.plot(zoom=2, before_close_callback=verify_cache_image)

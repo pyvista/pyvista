@@ -8,12 +8,14 @@ get started is with PyVista's :func:`pyvista.wrap` and :func:`pyvista.read`
 functions to either wrap a VTK data object in memory or read a VTK or
 VTK-friendly file format.
 
+
 Wrapping a VTK Data Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The wrapping function is under the :mod:`pyvista.utilities` module which is
-usable from the top level of PyVista. This allows users to quickly wrap any
-VTK dataset they have as a PyVista object:
+The wrapping function :func:`pyvista.wrap` is under the
+:mod:`pyvista.utilities` module, which is usable from the top level of
+PyVista. This allows users to quickly wrap any VTK dataset they have
+as a PyVista object:
 
 .. code:: python
 
@@ -133,16 +135,28 @@ access an array on that dataset, then add some more data:
 Plotting
 ~~~~~~~~
 
-PyVista includes numerous plotting routines that are intended to be
-intuitive and highly controllable with ``matplotlib`` similar syntax
-and keyword arguments.
+PyVista includes numerous plotting routines that are intended to be intuitive
+and highly controllable with ``matplotlib`` similar syntax and keyword
+arguments.
 
 To get started, try out the :func:`pyvista.plot` convenience method
 that is bound to each PyVista data object.
 
+.. jupyter-execute::
+   :hide-code:
 
-.. pyvista-plot::
-    :context:
+   # must have this here as our global backend may not be static
+   import pyvista
+   pyvista.set_plot_theme('document')
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.smooth_shading = True
+   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.show_scalar_bar = False
+
+
+.. jupyter-execute::
 
     import pyvista as pv
     from pyvista import examples
@@ -151,17 +165,19 @@ that is bound to each PyVista data object.
     mesh.plot()
 
 
-You can also create the plotter to highly control the scene. First,
-instantiate a plotter using :class:`pyvista.Plotter`.  The code block
-below creates rendering window that will pause the execution of the
+You can also create a plotter object to fine tune the scene. First,
+instantiate a plotter such as :class:`pyvista.Plotter` or
+:class:`pyvistaqt.BackgroundPlotter`.  The :class:`pyvista.Plotter`
+will create a rendering window that will pause the execution of the
 code after calling :func:`show() <pyvista.Plotter.show>`.
 
-.. code:: python
+.. jupyter-execute::
 
     mesh = examples.load_airplane()
 
     plotter = pv.Plotter()    # instantiate the plotter
     plotter.add_mesh(mesh)    # add a mesh to the scene
+    plotter.camera.zoom(2)    # Note how we can now access underlying attributes
     plotter.show()            # show the rendering window
 
 
@@ -189,10 +205,10 @@ Be sure to check out all the available plotters and their options for
 your use case:
 
 * :class:`pyvista.Plotter`: The standard plotter that pauses the code
-  until closed
+  until closed.
 * :class:`pyvistaqt.BackgroundPlotter`: Creates a rendering window that
   is interactive and does not pause the code execution (for more
-  information see the `pyvistaqt`_ package)
+  information see the `pyvistaqt`_ library)
 
 .. _pyvistaqt: https://qtdocs.pyvista.org/
 
@@ -209,11 +225,10 @@ code block above could be saved like:
 
     mesh.save("mesh.vtk")
 
-Or since that mesh is :class:`pyvista.PolyData`, we could use the
-``.vtp``, ``.stl``, or ``.ply`` formats as well.  For more details on
-which formats are supported in the :func:`save()
-<pyvista.DataObject.save>` method, please refer to the docs for that
-method on each mesh type.
+Or since that mesh is :class:`pyvista.PolyData`, we could use the ``.vtp``,
+``.stl``, or ``.ply`` formats as well.
+For more details on which formats are supported in the ``.save()`` method,
+please refer to the docs for that method on each mesh type.
 
 Also note that we can export any PyVista mesh to any file format supported by
 `meshio <https://github.com/nschloe/meshio>`_. Meshio supports many formats

@@ -474,7 +474,7 @@ def plot_datasets(dataset_type=None):
     x = r*np.sin(ang)
     y = r*np.cos(ang)
 
-    struct_grid = pv.StructuredGrid(x, y, z)
+    struct_grid = pv.StructuredGrid(x[::-1], y[::-1], z[::-1])
 
     ###########################################################################
     # polydata

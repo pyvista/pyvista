@@ -81,8 +81,8 @@ class ScalarBars():
         """
         if title is None:
             if len(self) > 1:
-                titles = ', '.join('"{key}"' for key in self._scalar_bar_actors)
-                raise ValueError('Multiple scalar bars.  Specify the title of the'
+                titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
+                raise ValueError('Multiple scalar bars found.  Pick title of the'
                                  f'scalar bar from one of the following:\n{titles}')
             else:
                 title = list(self._scalar_bar_actors.keys())[0]

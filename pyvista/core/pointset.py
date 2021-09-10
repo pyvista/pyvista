@@ -702,7 +702,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     def volume(self):
         """Return the mesh volume.
 
-        This will throw a VTK error/warning if not a closed surface
+        This will throw a VTK error/warning if not a closed surface.
 
         Returns
         -------
@@ -867,7 +867,6 @@ class PointGrid(PointSet):
         ----------
         curv_type : str, optional
             One of the following strings indicating curvature types.
-
             - ``'mean'``
             - ``'gaussian'``
             - ``'maximum'``
@@ -892,7 +891,6 @@ class PointGrid(PointSet):
 
         This extracts the external surface and computes the interior
         volume.
-
         """
         surf = self.extract_surface().triangulate()
         return surf.volume
@@ -1141,9 +1139,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     def cells_dict(self):
         """Return a dictionary that contains all cells mapped from cell types.
 
-        This function returns a ``numpy.ndarray`` for each cell type in an
-        ordered fashion.  Note that this function only works with
-        element types of fixed sizes.
+        This function returns a :class:`numpy.ndarray` for each cell
+        type in an ordered fashion.  Note that this function only
+        works with element types of fixed sizes.
 
         Returns
         -------
@@ -1194,7 +1192,6 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Examples
         --------
         Return the cell connectivity for the first two cells.
-
         >>> import pyvista
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
@@ -1442,7 +1439,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     """Dataset used for topologically regular arrays of data.
 
-    Can be initialized in one of the following ways:
+    Can be initialized in one of the following several ways:
 
     - Create empty grid
     - Initialize from a vtk.vtkStructuredGrid object
@@ -1473,7 +1470,6 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     >>> zrng = np.arange(-10, 10, 2)
     >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
     >>> grid = pyvista.StructuredGrid(x, y, z)
-    >>> grid.plot(show_edges=True, line_width=3)
 
     """
 
@@ -1546,7 +1542,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         Returns
         -------
         tuple
-           Grid dimensions.
+            Grid dimensions.
 
         Examples
         --------

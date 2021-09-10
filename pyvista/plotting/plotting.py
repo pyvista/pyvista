@@ -330,9 +330,64 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.ren_win)
         importer.Update()
 
+        # register last actor in actors
+        actor = self.renderer.GetActors().GetLastItem()
+        name = actor.GetAddressAsString("")
+        self.renderer._actors[name] = actor
+
         # set camera position to a three.js viewing perspective
         if set_camera:
             self.camera_position = 'xy'
+
+    def export_html(self, filename):
+        """Export this plotter as an interactive scene to a HTML file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to export the html file to.
+
+        Notes
+        -----
+        You will need ``ipywidgets`` and ``pythreejs`` installed for
+        this feature.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> mesh = examples.load_uniform()
+        >>> pl = pyvista.Plotter(shape=(1,2))
+        >>> _ = pl.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
+        >>> pl.subplot(0,1)
+        >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
+        >>> pl.export_html('pyvista.html')  # doctest:+SKIP
+
+        """
+        pythreejs_renderer = self.to_pythreejs()
+
+        # import after converting as we check for pythreejs import first
+        try:
+            from ipywidgets.embed import embed_minimal_html
+        except ImportError:  # pragma: no cover
+            raise ImportError('Please install ipywidgets with:\n'
+                              '\n\tpip install ipywidgets')
+
+        # convert and write to file
+        embed_minimal_html(filename, views=[pythreejs_renderer], title=self.title)
+
+    def to_pythreejs(self):
+        """Convert this plotting scene to a pythreejs renderer.
+
+        Returns
+        -------
+        ipywidgets.Widget
+            Widget containing pythreejs renderer.
+
+        """
+        self._on_first_render_request()  # setup camera
+        from pyvista.jupyter.pv_pythreejs import convert_plotter
+        return convert_plotter(self)
 
     def export_gltf(self, filename, inline_data=True, rotate_scene=True,
                     save_normals=True):
@@ -731,7 +786,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(Renderer.enable_anti_aliasing)
     def enable_anti_aliasing(self, *args, **kwargs):
         """Wrap ``Renderer.enable_anti_aliasing``."""
-        self.renderer.enable_anti_aliasing(*args, **kwargs)
+        for renderer in self.renderers:
+            renderer.enable_anti_aliasing(*args, **kwargs)
 
     @wraps(Renderer.disable_anti_aliasing)
     def disable_anti_aliasing(self, *args, **kwargs):
@@ -1059,7 +1115,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def window_size(self):
-        """Return the render window size."""
+        """Return the render window size in ``(width, height)``.
+
+        Examples
+        --------
+        Change the window size from ``200 x 200`` to ``400 x 400``.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(window_size=[200, 200])
+        >>> pl.window_size
+        [200, 200]
+        >>> pl.window_size = [400, 400]
+        >>> pl.window_size
+        [400, 400]
+
+        """
         return list(self.ren_win.GetSize())
 
     @window_size.setter
@@ -4083,7 +4153,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...                                       shift=0.0, viewup=viewup)
         >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, 
         ...                       step=0.02)
-        >>> plotter.close()
 
         See :ref:`orbiting_example` for a full example using this method.
 
@@ -4626,6 +4695,7 @@ class Plotter(BasePlotter):
             following:
 
             * ``'none'`` : Do not display in the notebook.
+            * ``'pythreejs'`` : Show a ``pythreejs`` widget
             * ``'static'`` : Display a static figure.
             * ``'ipygany'`` : Show a ``ipygany`` widget
             * ``'panel'`` : Show a ``panel`` widget.
@@ -4692,13 +4762,13 @@ class Plotter(BasePlotter):
         >>> pl.show(auto_close=False)  # doctest:+SKIP
         >>> pl.show(screenshot='my_image.png')  # doctest:+SKIP
 
-        Display an ``ipygany`` scene within a jupyter notebook
+        Display a ``pythreejs`` scene within a jupyter notebook
 
-        >>> pl.show(jupyter_backend='ipygany')  # doctest:+SKIP
+        >>> pl.show(jupyter_backend='pythreejs')  # doctest:+SKIP
 
-        Return an ``ipygany`` scene.
+        Return a ``pythreejs`` scene.
 
-        >>> pl.show(jupyter_backend='ipygany', return_viewer=True)  # doctest:+SKIP
+        >>> pl.show(jupyter_backend='pythreejs', return_viewer=True)  # doctest:+SKIP
 
         Obtain the camera position when using ``show``.
 

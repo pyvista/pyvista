@@ -1,3 +1,16 @@
+.. jupyter-execute::
+   :hide-code:
+
+   # jupyterlab boiler plate setup
+   import pyvista
+   pyvista.set_plot_theme('document')
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.show_scalar_bar = False
+
+
 Gridded Data
 ============
 
@@ -16,8 +29,8 @@ volumetric data.
 A :class:`pyvista.RectilinearGrid` is used for modeling datasets with
 variable spacing in the three coordinate directions.
 
-.. pyvista-plot::
-   :include-source: False
+.. jupyter-execute::
+   :hide-code:
 
    from pyvista import demos
    demos.plot_datasets('RectilinearGrid')
@@ -26,8 +39,8 @@ variable spacing in the three coordinate directions.
 A :class:`pyvista.UniformGrid` is used for modeling datasets with
 uniform spacing in the three coordinate directions.
 
-.. pyvista-plot::
-   :include-source: False
+.. jupyter-execute::
+   :hide-code:
 
    from pyvista import demos
    demos.plot_datasets('UniformGrid')

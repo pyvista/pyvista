@@ -20,6 +20,11 @@ def set_mpl():
 
 
 @fixture()
+def cube():
+    return pyvista.Cube().clean()
+
+
+@fixture()
 def airplane():
     return examples.load_airplane()
 

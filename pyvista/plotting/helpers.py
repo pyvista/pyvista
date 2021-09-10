@@ -14,7 +14,8 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
          return_viewer=False, return_cpos=False, jupyter_kwargs={},
-         theme=None, hidden_line_removal=None, **kwargs):
+         theme=None, hidden_line_removal=None, anti_aliasing=None,
+         zoom=None, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -121,6 +122,15 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
         theme setting :attr:`pyvista.global_theme.hidden_line_removal
         <pyvista.themes.DefaultTheme.hidden_line_removal>`.
 
+    anti_aliasing : bool, optional
+        Enable or disable anti-aliasing.  Defaults to the theme
+        setting :attr:`pyvista.global_theme.antialiasing
+        <pyvista.themes.DefaultTheme.antialiasing>`.
+
+    zoom : float, optional
+        Camera zoom.  A value greater than 1 is a zoom-in, a value
+        less than 1 is a zoom-out.  Must be greater than 0.
+
     **kwargs : optional keyword arguments
         See :func:`pyvista.Plotter.add_mesh` for additional options.
 
@@ -160,6 +170,9 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
 
     if theme is None:
         theme = pyvista.global_theme
+
+    if anti_aliasing is not None:
+        theme.antialiasing = anti_aliasing
 
     # undocumented kwarg used within pytest to run a function before closing
     before_close_callback = kwargs.pop('before_close_callback', None)
@@ -217,6 +230,9 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
         plotter.camera_set = False
     else:
         plotter.camera_position = cpos
+
+    if zoom is not None:
+        plotter.camera.zoom(zoom)
 
     if eye_dome_lighting:
         plotter.enable_eye_dome_lighting()

@@ -12,8 +12,20 @@ straightforward than their VTK counterparts.
 The :class:`pyvista.UnstructuredGrid` class is used for arbitrary
 combinations of all possible cell types:
 
-.. pyvista-plot::
-   :include-source: False
+.. jupyter-execute::
+   :hide-code:
+
+   # jupyterlab boiler plate setup
+   import pyvista
+   pyvista.set_plot_theme('document')
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.show_scalar_bar = False
+
+.. jupyter-execute::
+   :hide-code:
 
    from pyvista import demos
    demos.plot_datasets('UnstructuredGrid')
@@ -22,8 +34,8 @@ combinations of all possible cell types:
 The :class:`pyvista.PolyData` is used for datasets consisting of surface
 geometry (e.g. vertices, lines, and polygons):
 
-.. pyvista-plot::
-   :include-source: False
+.. jupyter-execute::
+   :hide-code:
 
    from pyvista import demos
    demos.plot_datasets('PolyData')
@@ -32,11 +44,12 @@ geometry (e.g. vertices, lines, and polygons):
 The :class:`pyvista.StructuredGrid` is used for topologically regular arrays of
 data:
 
-.. pyvista-plot::
-   :include-source: False
+.. jupyter-execute::
+   :hide-code:
 
    from pyvista import demos
    demos.plot_datasets('StructuredGrid')
+
 
 
 **Class Descriptions**
@@ -64,25 +77,29 @@ classes inherit all methods from their corresponding VTK
 PolyData Creation
 -----------------
 
-See :ref:`ref_create_poly` for an example on creating a
-:class:`pyvista.PolyData` object from NumPy arrays.
-
-
 Empty Object
 ~~~~~~~~~~~~
-A polydata object can be initialized with:
+A :class:`pyvista.PolyData` object can be initialized with:
 
 .. jupyter-execute::
 
     import pyvista
-    grid = pyvista.PolyData()
+    mesh = pyvista.PolyData()
 
-This creates an empty grid, and is not useful until points and cells
-are added to it.  VTK points and cells can be added with ``SetPoints``
-and ``SetCells``, but the inputs to these need to be
-``vtk.vtkCellArray`` and ``vtk.vtkPoints`` objects, which need to be
-populated with values.  Grid creation is simplified by initializing
-the grid directly from NumPy arrays as in the following section.
+This creates an mesh, which you can then add
+
+* Points with :attr:`points <pyvista.Dataset.points>`
+* Vertices with :attr:`verts <pyvista.Dataset.verts>`
+* Lines with :attr:`lines <pyvista.PolyData.lines>`
+* Faces with :attr:`faces <pyvista.PolyData.faces>`
+
+Note that unlike :class:`pyvista.UnstructuredGrid`, you do not specify
+cell types.  All faces are assumed to be polygons, hence the name
+"Poly" data.
+
+Click on the attributes above to see examples of how to add geometric
+features to an empty.  See :ref:`ref_create_poly` for an example on
+creating a :class:`pyvista.PolyData` object from NumPy arrays.
 
 
 Initialize from a File
@@ -127,8 +144,7 @@ created to manage the plotting.  The following code creates a plotter
 and plots the meshes with various colors.
 
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
     import pyvista
     from pyvista import examples
@@ -168,21 +184,56 @@ See :ref:`ref_create_unstructured` for an example on how to create an
 unstructured grid from NumPy arrays.
 
 
-Empty Object
-~~~~~~~~~~~~
+Create
+~~~~~~
 An unstructured grid can be initialized with:
 
-.. code:: python
+.. jupyter-execute::
 
     import pyvista as pv
     grid = pv.UnstructuredGrid()
 
-This creates an empty grid, and is not useful until points and cells are added
-to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``,
-but the inputs to these need to be ``vtk.vtkCellArray`` and ``vtk.vtkPoints``
-objects, which need to be populated with values.  With PyVista, grid
-creation is simplified by initializing the grid directly from numpy
-arrays, as demonstrated in the following section.
+This creates an empty grid, and is it not useful until points and
+cells are added to it. Points and cells can be added later with
+:attr:`points <pyvista.Dataset.points>`, :attr:`cells
+<pyvista.UnstructuredGrid.cells>`, and :attr:`celltypes
+<pyvista.UnstructuredGrid.celltypes>` .
+
+Alternatively, you can add points and cells directly when
+initializing.
+
+.. jupyter-execute::
+
+   >>> import numpy as np
+   >>> import vtk
+   >>> import pyvista
+   >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
+   >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
+   >>> cell1 = np.array([[0, 0, 0],
+   ...                   [1, 0, 0],
+   ...                   [1, 1, 0],
+   ...                   [0, 1, 0],
+   ...                   [0, 0, 1],
+   ...                   [1, 0, 1],
+   ...                   [1, 1, 1],
+   ...                   [0, 1, 1]])
+   >>> cell2 = np.array([[0, 0, 2],
+   ...                   [1, 0, 2],
+   ...                   [1, 1, 2],
+   ...                   [0, 1, 2],
+   ...                   [0, 0, 3],
+   ...                   [1, 0, 3],
+   ...                   [1, 1, 3],
+   ...                   [0, 1, 3]])
+   >>> points = np.vstack((cell1, cell2))
+   >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+   >>> grid
+
+We can plot this with colors with:
+
+.. jupyter-execute::
+
+   >>> grid.plot(scalars=[0, 1], cmap='plasma')
 
 
 Loading from File
@@ -205,13 +256,10 @@ Empty Object
 ~~~~~~~~~~~~
 A structured grid can be initialized with:
 
-.. code:: python
+.. jupyter-execute::
 
     import pyvista as pv
     grid = pv.StructuredGrid()
-
-This creates an empty grid, and is not useful until points are added
-to it.
 
 
 Creating from Numpy Arrays
@@ -223,19 +271,18 @@ Also see :ref:`ref_create_structured` for an example on creating a structured
 grid from NumPy arrays.
 
 
-.. pyvista-plot::
-    :context:
+.. jupyter-execute::
 
     import pyvista as pv
     import numpy as np
 
-    x = np.arange(-10, 10, 0.25)
-    y = np.arange(-10, 10, 0.25)
-    z = np.arange(-10, 10, 0.25)
+    x = np.arange(-10, 10, 1)
+    y = np.arange(-10, 10, 1)
+    z = np.arange(-10, 10, 2)
     x, y, z = np.meshgrid(x, y, z)
 
     # create the unstructured grid directly from the numpy arrays and plot
-    grid = pv.StructuredGrid(x, y, z)
+    grid = pv.StructuredGrid(x[::-1], y[::-1], z[::-1])
     grid.plot(show_edges=True)
 
 
@@ -271,24 +318,23 @@ create a plot and gif movie by updating the plotting object.
     # Displace original grid
     grid.points += d
 
-A simple plot can be created with:
+A simple plot can be created by using:
 
 .. pyvista-plot::
     :context:
 
-    grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'}, cpos='zy', show_edges=True)
-
-A more complex plot can be created with:
-
-.. pyvista-plot::
-    :context:
-
-    # Store Camera position.  This can be obtained manually by getting the
-    # output of grid.plot
+    # Camera position.
     # it's hard-coded in this example
-    cpos = [(11.915126303095157, 6.11392754955802, 3.6124956735471914),
+    cpos = [(11.9151, 6.1139, 3.61249),
             (0.0, 0.375, 2.0),
-            (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177)]
+            (-0.4254, 0.9024, -0.0678)]
+
+    grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'}, cpos=cpos)
+
+A more complex plot can be created using:
+
+.. pyvista-plot::
+    :context:
 
     # plot this displaced beam
     plotter = pv.Plotter()
@@ -301,16 +347,33 @@ A more complex plot can be created with:
 
 
 You can animate the motion of the beam by updating the positions and
-scalars of the grid copied to the plotting object.
-
+scalars of the grid copied to the plotting object.  Here is a full example:
 
 .. pyvista-plot::
     :context:
 
+    # Load module and example file
+    import pyvista as pv
+    from pyvista import examples
+    import numpy as np
+
+    # Load example beam grid
+    grid = pv.UnstructuredGrid(examples.hexbeamfile)
+
+    # Create fictitious displacements as a function of Z location
+    d = np.zeros_like(grid.points)
+    d[:, 1] = grid.points[:, 2]**3/250
+
+    # use hardcoded camera position
+    cpos = [(11.915, 6.114, 3.612),
+            (0.0, 0.375, 2.0),
+            (-0.425, 0.902, -0.0679)]       
+
     plotter = pv.Plotter(window_size=(800, 600))
     plotter.add_mesh(grid, scalars=d[:, 1],
-                     show_scalar_bar=False,
-                     show_edges=True, rng=[-d.max(), d.max()])
+                     scalar_bar_args={'title': 'Y Displacement'},
+                     show_edges=True, rng=[-d.max(), d.max()],
+                     interpolate_before_map=True)
     plotter.add_axes()
     plotter.camera_position = cpos
 
@@ -324,32 +387,34 @@ scalars of the grid copied to the plotting object.
         plotter.update_scalars(d[:, 1]*np.cos(phase))
         plotter.write_frame()
 
-    # Close the movie and plot
+    # close the plotter when complete
     plotter.close()
 
 
 You can also render the beam as as a wire-frame object:
 
 .. pyvista-plot::
-    :context:
+   :context:
 
-    # Animate plot as a wire-frame
-    plotter = pv.Plotter(window_size=(800, 600))
-    plotter.add_mesh(grid, scalars=d[:, 1],
-                     show_scalar_bar=False,
-                     rng=[-d.max(), d.max()], style='wireframe')
-    plotter.add_axes()
-    plotter.camera_position = cpos
+   # Animate plot as a wire-frame
+   plotter = pv.Plotter(window_size=(800, 600))
+   plotter.add_mesh(grid, scalars=d[:, 1],
+                    scalar_bar_args={'title': 'Y Displacement'},
+                    show_edges=True,
+                    rng=[-d.max(), d.max()], interpolate_before_map=True,
+                    style='wireframe')
+   plotter.add_axes()
+   plotter.camera_position = cpos
 
-    #plotter.OpenMovie('beam_wireframe.mp4')
-    plotter.open_gif('beam_wireframe.gif')
-    for phase in np.linspace(0, 2*np.pi, 20):
-        plotter.update_coordinates(grid.points + d*np.cos(phase), render=False)
-        plotter.update_scalars(d[:, 1]*np.cos(phase), render=False)
-        plotter.render()
-        plotter.write_frame()
+   plotter.open_gif('beam_wireframe.gif')
+   for phase in np.linspace(0, 2*np.pi, 20):
+       plotter.update_coordinates(grid.points + d*np.cos(phase), render=False)
+       plotter.update_scalars(d[:, 1]*np.cos(phase), render=False)
+       plotter.render()
+       plotter.write_frame()
 
-    plotter.close()
+   # close the plotter when complete
+   plotter.close()
 
 
 Adding Labels to a Plot
@@ -363,6 +428,9 @@ their coordinates.  :func:`add_point_labels()
 labels matches the number of points, and that labels is a list
 containing one entry per point.  The code automatically converts each
 item in the list to a string.
+
+..
+   here we use pyvista plot since labels do not show in interactive backends
 
 .. pyvista-plot::
     :context:
