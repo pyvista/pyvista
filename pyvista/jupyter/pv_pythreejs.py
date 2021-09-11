@@ -496,7 +496,7 @@ def convert_renderer(pv_renderer):
     # replace inf with a real value here due to changes in
     # ipywidges==6.4.0 see
     # https://github.com/ipython/ipykernel/issues/771
-    inf = 1E9
+    inf = 1E20
     orbit_controls = tjs.OrbitControls(
         controlling=camera,
         maxAzimuthAngle=inf,
