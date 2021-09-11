@@ -2,7 +2,6 @@
 Installation file for python pyvista module
 """
 import os
-# import sys
 from io import open as io_open
 from setuptools import setup
 
@@ -14,7 +13,6 @@ version_file = os.path.join(filepath, package_name, '_version.py')
 with io_open(version_file, mode='r') as fd:
     exec(fd.read())
 
-# pre-compiled vtk available for python3
 install_requires = ['numpy',
                     'imageio',
                     'pillow',
@@ -23,6 +21,7 @@ install_requires = ['numpy',
                     'meshio>=4.0.3, <5.0',
                     'vtk',
                     'dataclasses;python_version=="3.6"',
+                    'typing_extensions',
                     ]
 
 readme_file = os.path.join(filepath, 'README.rst')
