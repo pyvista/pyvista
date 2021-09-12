@@ -2983,8 +2983,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         if getattr(self, 'mesh', None) is not None:
-            self.mesh.point_data = None
-            self.mesh.cell_data = None
+            self.mesh.point_data.clear()
+            self.mesh.cell_data.clear()
         self.mesh = None
         if getattr(self, 'mapper', None) is not None:
             self.mapper.lookup_table = None
