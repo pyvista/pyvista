@@ -13,8 +13,8 @@ to slice along the Z-Axis of the dataset.
 
 import numpy as np
 import pyvista as pv
-pv.set_plot_theme('document')
 from pyvista import examples
+
 
 ###############################################################################
 # Create the plotter and load the dataset
