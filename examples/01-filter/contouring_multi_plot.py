@@ -4,9 +4,10 @@
 Contouring Along Axis
 ~~~~~~~~~~~~~~~~~~~~~
 
-Generate contour lines along an axis for the random hills dataset.
+Generate contour lines along an axis for the random hills dataset and
+compute data averages within each connected contour line.
 
-This uses :func:`slice_along_axis() <pyvista.DataSet.slice_along_axis>
+This uses :func:`slice_along_axis() <pyvista.DataSet.slice_along_axis>`
 to slice along the Z-Axis of the dataset.
 
 """
@@ -27,19 +28,19 @@ mesh_random = mesh_linear.copy()
 ###############################################################################
 # Generate the data
 
-# Linear Data
+# Linear data
 mesh_linear.point_data["DataLinear"] = np.linspace(
     0, 10, mesh_linear.points.shape[0]
 )
 
-# Random Data
+# Random data
 rng = np.random.default_rng(seed=12345)
 mesh_random.point_data["DataRandom"] = rng.integers(
     low=0, high=10, size=mesh_random.points.shape[0]
 )
 
 ###############################################################################
-# Add Plots
+# Add plots of the raw datasets
 pl.subplot(0, 1)
 mesh_linear.set_active_scalars("DataLinear")
 pl.add_mesh(mesh_linear)
@@ -49,57 +50,41 @@ mesh_random.set_active_scalars("DataRandom")
 pl.add_mesh(mesh_random)
 
 ###############################################################################
-# Create Averaged Data Arrays
-mesh_linear.point_data["DataLinearContourAverages"] = np.zeros_like(
-    mesh_linear["DataLinear"]
-)
-mesh_random.point_data["DataRandomContourAverages"] = np.zeros_like(
-    mesh_random["DataRandom"]
-)
+# Average data for each connected component.  For this we first generate
+# contours as separate blocks in a :class:`MultiBlock <pyvista.MultiBlock>`,
+# then for each contour dataset we find connected components and average the
+# scalars within each connected component.  We do all these for both datasets.
 
-# Slice Data Along Z-Azis
 n_slices = 10
 
-mesh_linear.set_active_scalars("Elevation")
-mesh_random.set_active_scalars("Elevation")
+meshes = mesh_linear, mesh_random
+data_names = "DataLinear", "DataRandom"
 
-contours_linear = mesh_linear.slice_along_axis(n=n_slices, axis="z")
-contours_random = mesh_random.slice_along_axis(n=n_slices, axis="z")
+for subplot_ind, (mesh, data_name) in enumerate(zip(meshes, data_names)):
+    mesh.set_active_scalars("Elevation")
+    contours = mesh.slice_along_axis(n=n_slices, axis="z")
+    # contours is a MultiBlock with n_slices blocks
 
-###############################################################################
-# Average Linear Data for Connected Component in Contour and Plot
-for ndx, contour in enumerate(contours_linear):
-    connectivity = contour.connectivity(largest=False)
+    for level_ind, contour in enumerate(contours):
+        connectivity = contour.connectivity()
+        # connectivity is annotated with "RegionId" that identifies components
+        labels = connectivity.point_data["RegionId"]
+        num_labels = np.unique(labels).size
 
-    labels = connectivity.point_data["RegionId"]
-    num_labels = len(np.unique(connectivity.point_data["RegionId"]))
+        contour_data_name = data_name + "ContourAverages"
+        connectivity.point_data[contour_data_name] = np.zeros_like(
+            mesh.point_data[data_name], shape=labels.shape
+        )
 
-    for id_ in range(num_labels):
-        data = connectivity["DataLinear"][labels == id_]
-        connectivity["DataLinearContourAverages"][labels == id_] = np.mean(data)
+        for id_ in range(num_labels):
+            data = connectivity[data_name][labels == id_]
+            connectivity[contour_data_name][labels == id_] = np.mean(data)
 
-    pl.subplot(0, 0)
-    connectivity.set_active_scalars("DataLinearContourAverages")
-    pl.add_mesh(connectivity)
+        pl.subplot(subplot_ind, 0)
+        connectivity.set_active_scalars(contour_data_name)
+        pl.add_mesh(connectivity)
 
-###############################################################################
-# Average Random Data for Connected Component in Contour and Plot
-for ndx, contour in enumerate(contours_random):
-    connectivity = contour.connectivity(largest=False)
-
-    labels = connectivity.point_data["RegionId"]
-    num_labels = len(np.unique(connectivity.point_data["RegionId"]))
-
-    for id_ in range(num_labels):
-        data = connectivity["DataRandom"][labels == id_]
-        connectivity["DataRandomContourAverages"][labels == id_] = np.mean(data)
-
-    pl.subplot(1, 0)
-    connectivity.set_active_scalars("DataRandomContourAverages")
-    pl.add_mesh(connectivity)
-
-mesh_linear.set_active_scalars("DataLinear")
-mesh_random.set_active_scalars("DataRandom")
+    mesh.set_active_scalars(data_name)
 
 ###############################################################################
 # Show the plot
