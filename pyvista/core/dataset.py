@@ -3,10 +3,11 @@
 import warnings
 import collections.abc
 import logging
+import sys
 from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
-try:
+if sys.version_info >= (3, 8):
     from typing import Literal
-except ImportError:
+else:
     # Python <=3.7
     from typing_extensions import Literal
 
