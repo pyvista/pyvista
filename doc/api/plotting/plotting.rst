@@ -64,14 +64,17 @@ It is possible to use the ``Plotter`` class as well.
     plotter.show(jupyter_backend='static')
 
 Additionally, you can generate interactive plots by leveraging a
-jupyter plotting backend like ``panel`` or ``ipygany``.  You can even
-use it to create interactive documentations online.
+jupyter plotting backend like ``panel``, ``ipygany``, or
+``pythreejs``.  You can even use it to create interactive
+documentation online.
 
 .. jupyter-execute::
 
-    plotter = pv.Plotter(notebook=True)
-    plotter.add_mesh(sphere)
-    plotter.show(jupyter_backend='ipygany')
+    plotter = pv.Plotter(window_size=(600, 400))
+    plotter.background_color = 'w'
+    plotter.enable_anti_aliasing()
+    plotter.add_mesh(sphere, color='tan', show_edges=True)
+    plotter.show(jupyter_backend='pythreejs')
 
 For more details, see the section on :ref:`jupyter_plotting`.
 
@@ -96,9 +99,7 @@ manipulation or export tasks. To get started, try instantiating the
     dataset = examples.load_hexbeam()
 
     p = pvqt.BackgroundPlotter()
-
     p.add_mesh(dataset)
-
     p.show_bounds(grid=True, location='back')
 
 
@@ -121,7 +122,7 @@ values change through time:
 
 
     globe = examples.load_globe()
-    globe.point_arrays['scalars'] = np.random.rand(globe.n_points)
+    globe.point_data['scalars'] = np.random.rand(globe.n_points)
     globe.set_active_scalars('scalars')
 
 
@@ -134,7 +135,7 @@ values change through time:
         for i in range(50):
             globe.points *= 0.95
             # Update scalars
-            globe.point_arrays['scalars'] = np.random.rand(globe.n_points)
+            globe.point_data['scalars'] = np.random.rand(globe.n_points)
             time.sleep(0.5)
 
     thread = Thread(target=shrink)

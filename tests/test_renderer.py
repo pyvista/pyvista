@@ -33,3 +33,22 @@ def test_layer():
     assert plotter.renderer.layer == 1
     plotter.renderer.layer = 0
     assert plotter.renderer.layer == 0
+
+
+@pytest.mark.parametrize('has_border', (True, False))
+def test_border(has_border):
+    border_color = (1, 1, 1)
+    border_width = 1
+    plotter = pyvista.Plotter(border=has_border, border_color=border_color,
+                              border_width=border_width)
+    assert plotter.renderer.has_border is has_border
+
+    if has_border:
+        assert plotter.renderer.border_color == border_color
+    else:
+        assert plotter.renderer.border_color is None
+
+    if has_border:
+        assert plotter.renderer.border_width == border_width
+    else:
+        assert plotter.renderer.border_width == 0

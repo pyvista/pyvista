@@ -65,3 +65,11 @@ Image Comparison and Regression
    :toctree: _autosummary
 
    compare_images
+
+
+Miscellaneous
+~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: _autosummary
+
+   start_xvfb

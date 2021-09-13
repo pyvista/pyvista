@@ -1,4 +1,6 @@
 """
+.. _antarctica_example:
+
 Compare Field Across Mesh Regions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -76,9 +78,9 @@ pl.show()
 # Compare directions. Normalize them so we can get a reasonable direction
 # comparison.
 
-flow_a = a.point_arrays['ssavelocity'].copy()
+flow_a = a.point_data['ssavelocity'].copy()
 flow_a /= np.linalg.norm(flow_a, axis=1).reshape(-1, 1)
-flow_b = b.point_arrays['ssavelocity'].copy()
+flow_b = b.point_data['ssavelocity'].copy()
 flow_b /= np.linalg.norm(flow_b, axis=1).reshape(-1, 1)
 
 

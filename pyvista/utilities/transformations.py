@@ -227,7 +227,7 @@ def apply_transformation_to_points(transformation, points, inplace=False):
 
     Returns
     -------
-    new_points : np.ndarray
+    numpy.ndarray
         Transformed points.
 
     Examples

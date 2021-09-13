@@ -4,7 +4,7 @@
 Slicing
 ~~~~~~~
 
-Extract thin planar slices from a volume
+Extract thin planar slices from a volume.
 """
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv

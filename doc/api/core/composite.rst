@@ -1,24 +1,49 @@
 Composite Datasets
 ==================
 
-.. automodule:: pyvista.core.composite
-   :show-inheritance:
+The :class:`pyvista.MultiBlock` class is a composite class to hold many
+data sets which can be iterated over.
 
-MultiBlock Datasets
--------------------
+You can think of MultiBlock like lists or dictionaries as we can
+iterate over this data structure by index and we can also access
+blocks by their string name.
 
-.. rubric:: Attributes
+.. pyvista-plot::
 
-.. autoautosummary:: pyvista.MultiBlock
-   :attributes:
+   Create empty composite dataset
 
-.. rubric:: Methods
+   >>> import pyvista
+   >>> blocks = pyvista.MultiBlock()
 
-.. autoautosummary:: pyvista.MultiBlock
-   :methods:
+   Add a dataset to the collection
+
+   >>> blocks.append(pyvista.Sphere())
+
+   Or add a named block
+
+   >>> blocks["cube"] = pyvista.Cube(center=(0, 0, -1))
+
+   Plotting the MultiBlock plots all the meshes contained by it.
+
+   >>> blocks.plot(smooth_shading=True)
+
+Examples using this class:
+
+* :ref:`slice_example`
+* :ref:`volumetric_example`
+* :ref:`depth_peeling_example`
 
 
-.. autoclass:: pyvista.MultiBlock
-   :show-inheritance:
-   :members:
-   :undoc-members:
+MultiBlock API Reference
+------------------------
+The :class:`pyvista.MultiBlock` class holds attributes that
+are *common* to all spatially referenced datasets in PyVista.  This
+base class is analogous to VTK's `vtk.vtkMultiBlockDataSet`_ class.
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-class-template.rst
+
+   pyvista.MultiBlock
+
+.. _vtk.vtkMultiBlockDataSet: https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html

@@ -149,7 +149,14 @@ class _ThemeConfig():
         return inst
 
     def to_dict(self) -> dict:
-        """Return theme config parameters as a dictionary."""
+        """Return theme config parameters as a dictionary.
+
+        Returns
+        -------
+        dict
+            This theme parameter represented as a dictionary.
+
+        """
         # remove the first underscore in each entry
         dict_ = {}
         for key in self.__slots__:
@@ -1143,6 +1150,7 @@ class DefaultTheme(_ThemeConfig):
                  '_slider_styles',
                  '_return_cpos',
                  '_hidden_line_removal',
+                 '_antialiasing',
     ]
 
     def __init__(self):
@@ -1206,6 +1214,7 @@ class DefaultTheme(_ThemeConfig):
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
+        self._antialiasing = False
 
     @property
     def hidden_line_removal(self) -> bool:
@@ -1216,7 +1225,7 @@ class DefaultTheme(_ThemeConfig):
 
         See Also
         --------
-        :func:`Plotter.enable_hidden_line_removal <BasePlotter.enable_hidden_line_removal>`
+        pyvista.BasePlotter.enable_hidden_line_removal
 
         Examples
         --------
@@ -1226,6 +1235,7 @@ class DefaultTheme(_ThemeConfig):
         >>> pyvista.global_theme.hidden_line_removal = True
         >>> pyvista.global_theme.hidden_line_removal
         True
+
         """
         return self._hidden_line_removal
 
@@ -1291,6 +1301,12 @@ class DefaultTheme(_ThemeConfig):
           this is the only method that does not require a virtual
           framebuffer.  Must have ``ipygany`` installed.
 
+        * ``'pythreejs'`` : Convert all the meshes into ``pythreejs``
+          meshes and streams those to be rendered on the client side.
+          Aside from ``ipygany``, this is the only method that does
+          not require a virtual framebuffer.  Must have ``pythreejs``
+          installed.
+
         * ``'static'`` : Display a single static image within the
           JupyterLab environment.  Still requires that a virtual
           framebuffer be setup when displaying on a headless server,
@@ -1303,6 +1319,11 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
+        Enable the pythreejs backend.
+
+        >>> import pyvista as pv
+        >>> pv.set_jupyter_backend('pythreejs')  # doctest:+SKIP
+
         Enable the ipygany backend.
 
         >>> import pyvista as pv
@@ -1813,10 +1834,30 @@ class DefaultTheme(_ThemeConfig):
         self._title = title
 
     @property
+    def antialiasing(self) -> bool:
+        """Enable or disable anti-aliasing.
+
+        Examples
+        --------
+        Enable anti-aliasing in the global theme.
+
+        >>> import pyvista
+        >>> pyvista.global_theme.antialiasing = True
+        >>> pyvista.global_theme.antialiasing
+        True
+
+        """
+        return self._antialiasing
+
+    @antialiasing.setter
+    def antialiasing(self, antialiasing: bool):
+        self._antialiasing = antialiasing
+
+    @property
     def multi_samples(self) -> int:
         """Return or set the default ``multi_samples`` parameter.
 
-        Set the number of multisamples to enable hardware antialiasing.
+        Set the number of multisamples to used with hardware antialiasing.
 
         Examples
         --------
@@ -2034,6 +2075,7 @@ class DefaultTheme(_ThemeConfig):
             'Slider Styles': 'slider_styles',
             'Return Camera Position': 'return_cpos',
             'Hidden Line Removal': 'hidden_line_removal',
+            'Anti-Aliasing': '_antialiasing',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
@@ -2052,6 +2094,11 @@ class DefaultTheme(_ThemeConfig):
 
     def load_theme(self, theme):
         """Overwrite the current theme with a theme.
+
+        Parameters
+        ----------
+        theme : pyvista.DefaultTheme
+            Theme to use to overwrite this theme.
 
         Examples
         --------
@@ -2092,6 +2139,11 @@ class DefaultTheme(_ThemeConfig):
 
     def save(self, filename):
         """Serialize this theme to a json file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to save the theme to.  Should end in ``'.json'``.
 
         Examples
         --------

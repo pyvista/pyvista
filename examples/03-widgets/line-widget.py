@@ -1,4 +1,6 @@
 """
+.. _line_widget_example:
+
 Line Widget
 ~~~~~~~~~~~
 

@@ -11,17 +11,23 @@ Simple Interactive Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 This basic example demonstrates three key features of PyVista:
 
-- Simple ``numpy`` and ``matplotlib`` like interface
+- Simple `numpy`_ and `matplotlib`_ like interface
 - Variety of built-in examples
 - Intuitive plotting with keyword arguments.
 
+.. _numpy: https://numpy.org/
+.. _matplotlib: https://matplotlib.org/
 
 .. jupyter-execute::
    :hide-code:
 
-   # using ipyvtk as panel appears to be broken...
    import pyvista
-   pyvista.set_jupyter_backend('ipygany')
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.background = 'white'
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.smooth_shading = True
+   pyvista.global_theme.antialiasing = True
 
 
 Here, we download the `Stanford dragon mesh
@@ -31,11 +37,14 @@ identically locally.
 
 .. jupyter-execute::
 
-    from pyvista import examples
+    >>> from pyvista import examples
+    >>> mesh = examples.download_dragon()
+    >>> mesh['scalars'] = mesh.points[:, 1]
+    >>> mesh.plot(cpos='xy', cmap='plasma', pbr=True, metallic=1.0, roughness=0.6,
+    ...           zoom=1.7)
 
-    mesh = examples.download_dragon()
-    mesh['scalars'] = mesh.points[:, 1]
-    mesh.plot(background='white', cpos='xy', cmap='plasma', show_scalar_bar=False)
+.. note::
+   This example (and many others) is interactive!
 
 With just a few lines of code we downloaded a sample mesh from the
 web, added scalars to it based on the points of the mesh, and plotted
@@ -53,9 +62,11 @@ User Guide Contents
 
    what-is-a-mesh
    simple
+   data_model
+   vtk_to_pyvista
+   themes
    jupyter/index
    optional_features
-   themes
 
 Videos
 ======

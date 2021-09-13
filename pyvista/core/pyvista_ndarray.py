@@ -19,6 +19,9 @@ class pyvista_ndarray(np.ndarray):
         elif isinstance(array, _vtk.vtkAbstractArray):
             obj = convert_array(array).view(cls)
             obj.VTKObject = array
+        else:
+            raise TypeError(f'pyvista_ndarray got an invalid type {type(array)}.  '
+                            'Expected an Iterable or vtk.vtkAbstractArray')
 
         obj.association = association
         obj.dataset = _vtk.vtkWeakReference()

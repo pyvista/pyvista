@@ -2,7 +2,6 @@
 Installation file for python pyvista module
 """
 import os
-# import sys
 from io import open as io_open
 from setuptools import setup
 
@@ -14,7 +13,6 @@ version_file = os.path.join(filepath, package_name, '_version.py')
 with io_open(version_file, mode='r') as fd:
     exec(fd.read())
 
-# pre-compiled vtk available for python3
 install_requires = ['numpy',
                     'imageio',
                     'pillow',
@@ -22,6 +20,8 @@ install_requires = ['numpy',
                     'scooby>=0.5.1',
                     'meshio>=4.0.3, <5.0',
                     'vtk',
+                    'dataclasses;python_version=="3.6"',
+                    'typing_extensions',
                     ]
 
 readme_file = os.path.join(filepath, 'README.rst')
@@ -40,6 +40,7 @@ setup(
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=io_open(readme_file, encoding="utf-8").read(),
+    long_description_content_type='text/x-rst',
     author='PyVista Developers',
     author_email='info@pyvista.org',
     license='MIT',
@@ -54,6 +55,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
 
     url='https://github.com/pyvista/pyvista',

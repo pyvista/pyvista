@@ -58,33 +58,179 @@ sys.path.append(os.path.abspath("./_ext"))
 extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
     "sphinx.ext.doctest",
     "sphinx.ext.autosummary",
     "notfound.extension",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
     "sphinx.ext.extlinks",
-    "sphinx.ext.coverage",
     "jupyter_sphinx",
     "sphinx_panels",
     "pyvista.ext.plot_directive",
+    "pyvista.ext.coverage",
+    "numpydoc"
 ]
 
-# return type inline with the description.
-napoleon_use_rtype = False
+# Configuration of pyvista.ext.coverage
+coverage_additional_modules = [
+    'pyvista',
+    'pyvista.themes',
+
+    'pyvista.plotting.axes',
+    'pyvista.plotting.camera',
+    'pyvista.plotting.helpers',
+    'pyvista.plotting.lights',
+    'pyvista.plotting.picking',
+    'pyvista.plotting.plotting',
+    'pyvista.plotting.renderer',
+    'pyvista.plotting.renderers',
+    'pyvista.plotting.scalar_bars',
+    'pyvista.plotting.theme',
+    'pyvista.plotting.tools',
+    'pyvista.plotting.widgets',
+
+    'pyvista.core.common_data',
+    'pyvista.core.common_data',
+    'pyvista.core.composite',
+    'pyvista.core.dataobject',
+    'pyvista.core.datasetattributes',
+    'pyvista.core.dataset',
+    'pyvista.core.errors',
+    'pyvista.core.grid',
+    'pyvista.core.imaging',
+    'pyvista.core.objects',
+    'pyvista.core.pointset',
+    'pyvista.core.pyvista_ndarray',
+
+    'pyvista.core.filters.composite',
+    'pyvista.core.filters.data_set',
+    'pyvista.core.filters.poly_data',
+    'pyvista.core.filters.structured_grid',
+    'pyvista.core.filters.uniform_grid',
+    'pyvista.core.filters.unstructured_grid',
+
+    'pyvista.demos',
+    'pyvista.examples.examples',
+
+    'pyvista.utilities.features',
+    'pyvista.utilities.fileio',
+    'pyvista.utilities.geometric_objects',
+    'pyvista.utilities.parametric_objects',
+    'pyvista.utilities.reader',
+    'pyvista.utilities.xvfb',
+    'pyvista.utilities.transformations',
+    'pyvista.utilities.regression',
+
+]
+coverage_ignore_modules = [
+    r'\.plot_directive$',  # Issue with class parameter documentation
+]
+
+
+# See https://numpydoc.readthedocs.io/en/latest/install.html
+numpydoc_use_plots = True
+numpydoc_show_class_members = False
+numpydoc_xref_param_type = True
+
+# see https://github.com/pyvista/pyvista/pull/1612
+numpydoc_validate = True
+numpydoc_validation_checks = {
+    "all",  # all but the following:
+    "GL01",  # Contradicts numpydoc examples
+    "GL02",  # Permit a blank line after the end of our docstring
+    "GL03",  # Considering enforcing
+    "SA01",  # Not all docstrings need a see also
+    "SA04",  # See also section does not need descriptions
+    "SS05",  # Appears to be broken.
+    "ES01",  # Not all docstrings need an extend summary.
+    "EX01",  # Examples: Will eventually enforce
+    "YD01",  # Yields: No plan to enforce
+}
+numpydoc_validation_exclude = {  # set of regex
+    r'\.Plotter$',  # Issue with class parameter documentation
+
+    r'\.from_dict$',
+    r'\.__init__$',
+
+    # parm of abstract classes
+    r'\.CompositeFilters$',
+    r'\.PolyDataFilters$',
+    r'\.CompositeFilters$',
+    r'\.PolyDataFilters$',
+    r'\.UniformGridFilters$',
+    r'\.DataSetFilters$',
+    r'\.UnstructuredGridFilters$',
+    r'\.MultiBlock$',
+    r'\.DataSet$',
+    r'\.DataSetFilters$',
+    r'\.PolyDataFilters$',
+    r'\.UnstructuredGridFilters$',
+    r'\.UniformGridFilters$',
+    r'\.CompositeFilters$',
+    r'\.Grid$',
+    r'\.RectilinearGrid$',
+    r'\.UniformGrid$',
+    r'\.DataObject$',
+    r'\.Table.save$',
+    r'\.Table$',
+    r'\.Table.save$',
+    r'\.UnstructuredGrid$',
+    r'\.ExplicitStructuredGrid$',
+    r'\.StructuredGrid$',
+    r'\.PointGrid$',
+
+    # classes inherit from BaseReader
+    r'\.*Reader$',
+    r'\.*Reader\.*',
+
+    # internal
+    r'\.Renderer$',
+
+    # deprecated
+    r'\.*boolean_add$',
+    r'\.*boolean_cut$',
+    r'\.*add_field_array$',
+    r'\.*add_field_array$',
+
+    # methods we probably should make private
+    r'\.store_click_position$',
+    r'\.store_mouse_position$',
+    r'\.*fly_to_mouse_position$',
+    r'\.*key_press_event$',
+    r'\.*left_button_down$',
+
+    # MISC
+    r'\.*PlotterITK$',
+    r'\.*MultiBlock.copy_meta_from$',
+    r'\.DataObject.copy_meta_from$',
+
+    # wraps
+    r'\.*Plotter.enable_depth_peeling$',
+    r'\.*add_scalar_bar$',
+
+    # pending refactor
+    r'\.*MultiBlock.next$',
+
+    # called from inherited
+    r'\.*Table.copy_meta_from$',
+
+}
+
 
 add_module_names = False
 
 # Intersphinx mapping
+# NOTE: if these are changed, then doc/intersphinx/update.sh
+# must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/dev', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'numpy': ('https://numpy.org/devdocs', None),
-    'matplotlib': ('https://matplotlib.org/stable', None),
-    'imageio': ('https://imageio.readthedocs.io/en/stable', None),
-    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
-    'pytest': ('https://docs.pytest.org/en/stable', None),
+    'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', (None, 'intersphinx/scipy-objects.inv')),
+    'numpy': ('https://numpy.org/doc/stable', (None, 'intersphinx/numpy-objects.inv')),
+    'matplotlib': ('https://matplotlib.org/stable', (None, 'intersphinx/matplotlib-objects.inv')),
+    'imageio': ('https://imageio.readthedocs.io/en/stable', (None, 'intersphinx/imageio-objects.inv')),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', (None, 'intersphinx/pandas-objects.inv')),
+    'pytest': ('https://docs.pytest.org/en/stable', (None, 'intersphinx/pytest-objects.inv')),
+    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, 'intersphinx/pyvistaqt-objects.inv')),
 }
 
 linkcheck_retries = 3
@@ -98,6 +244,7 @@ source_suffix = ".rst"
 
 # The main toctree document.
 master_doc = "index"
+
 
 # General information about the project.
 project = "PyVista"
@@ -158,50 +305,42 @@ sphinx_gallery_conf = {
         "%matplotlib inline\n"
         "from pyvista import set_plot_theme\n"
         "set_plot_theme('document')\n"
+        # Reset all values of wrapping `vtkPolyData` in examples
+        "pyvista._wrappers['vtkPolyData'] = pyvista.PolyData\n"
     ),
 }
 
+# -- .. pyvista-plot:: directive ----------------------------------------------
+from numpydoc.docscrape_sphinx import SphinxDocString
+import re
 
-# -- Options for HTML output ----------------------------------------------
-from sphinx.ext.napoleon import GoogleDocstring
-from sphinx.locale import _, __
-# rebind examples section to automate placement with our custom
-# .. pyvista-plot:: directive by mangling docstrings
+IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
+IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
-def _custom_parse_generic_section(self, section, use_admonition):
-    lines = self._strip_empty(self._consume_to_next_section())
-    lines = self._dedent(lines)
-    if use_admonition:
-        header = '.. admonition:: %s' % section
-        lines = self._indent(lines, 3)
+
+def _str_examples(self):
+    examples_str = "\n".join(self['Examples'])
+
+    if (self.use_plots and re.search(IMPORT_MATPLOTLIB_RE, examples_str)
+            and 'plot::' not in examples_str):
+        out = []
+        out += self._str_header('Examples')
+        out += ['.. plot::', '']
+        out += self._str_indent(self['Examples'])
+        out += ['']
+        return out
+    elif (re.search(IMPORT_PYVISTA_RE, examples_str)
+          and 'plot-pyvista::' not in examples_str):
+        out = []
+        out += self._str_header('Examples')
+        out += ['.. pyvista-plot::', '']
+        out += self._str_indent(self['Examples'])
+        out += ['']
+        return out
     else:
-        header = '.. rubric:: %s' % section
+        return self._str_section('Examples')
 
-    # check if section contains any mention of pyvista
-    has_plotting = False
-    has_pyvista = any(['pyvista' in line for line in lines])
-    if has_pyvista:
-        for line in lines:
-            if 'plot' in line or 'show' in line:
-                has_plotting = True
-    
-    # add directive and indent to entire section
-    if has_plotting:
-        old_lines = lines
-        lines = ['.. pyvista-plot::', '']
-        for line in old_lines:
-            if line:
-                lines.append(f'   {line}')
-            else:
-                lines.append(line)
-
-    if lines:
-        return [header, ''] + lines + ['']
-    else:
-        return [header, '']
-
-# override method
-GoogleDocstring._parse_generic_section = _custom_parse_generic_section
+SphinxDocString._str_examples = _str_examples
 
 
 # -- Options for HTML output ----------------------------------------------
