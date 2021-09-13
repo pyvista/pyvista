@@ -8,7 +8,6 @@ from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
-    # Python <=3.7
     from typing_extensions import Literal
 
 import numpy as np
