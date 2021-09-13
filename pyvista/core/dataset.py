@@ -4,7 +4,11 @@ import warnings
 import collections.abc
 import logging
 from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
-from typing_extensions import Literal # for python versions <3.8
+try:
+    from typing import Literal
+except ImportError:
+    # Python <=3.7
+    from typing_extensions import Literal
 
 import numpy as np
 
