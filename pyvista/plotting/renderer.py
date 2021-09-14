@@ -2344,6 +2344,7 @@ class Renderer(_vtk.vtkRenderer):
         self._camera = None
         self._bounding_box = None
         self._marker_actor = None
+        self._border_actor = None
         # remove reference to parent last
         self.parent = None
 

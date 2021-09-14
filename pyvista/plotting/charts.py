@@ -856,7 +856,7 @@ class _Chart(object):
         return self._scene.GetRenderer()
 
     def _render_event(self, *args, **kwargs):
-        # Called before every render
+        """Called before every render."""
         self._resize()
 
     def _resize(self):
@@ -891,7 +891,22 @@ class _Chart(object):
 
     @property
     def size(self):
-        """Return or set the chart size in normalized coordinates."""
+        """Return or set the chart size in normalized coordinates.
+        A size of ``(1, 1)`` occupies the whole renderer.
+
+        Examples
+        --------
+        Create a half-sized 2D chart centered in the middle of the
+        renderer.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.size = (0.5, 0.5)
+        >>> chart.loc = (0.25, 0.25)
+        >>> chart.show()
+
+        """
         return self._size
 
     @size.setter
@@ -901,7 +916,22 @@ class _Chart(object):
 
     @property
     def loc(self):
-        """Chart position w.r.t. the bottom left corner in normalized coordinates."""
+        """Return or set the chart position in normalized coordinates.
+        This denotes the location of the chart's bottom left corner.
+
+        Examples
+        --------
+        Create a half-sized 2D chart centered in the middle of the
+        renderer.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.size = (0.5, 0.5)
+        >>> chart.loc = (0.25, 0.25)
+        >>> chart.show()
+
+        """
         return self._loc
 
     @loc.setter
@@ -911,6 +941,22 @@ class _Chart(object):
 
     @property
     def border_color(self):
+        """Return or set the chart's border color.
+
+        Examples
+        --------
+        Create a half-sized 2D chart centered in the middle of the
+        renderer with a thick, dashed red border .
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.25, 0.25))
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.border_color = 'r'
+        >>> chart.border_width = 5
+        >>> chart.border_style = '--'
+        >>> chart.show()
+
+        """
         return self._background.BorderPen.color
 
     @border_color.setter
@@ -919,6 +965,22 @@ class _Chart(object):
 
     @property
     def border_width(self):
+        """Return or set the chart's border width.
+
+        Examples
+        --------
+        Create a half-sized 2D chart centered in the middle of the
+        renderer with a thick, dashed red border.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.25, 0.25))
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.border_color = 'r'
+        >>> chart.border_width = 5
+        >>> chart.border_style = '--'
+        >>> chart.show()
+
+        """
         return self._background.BorderPen.width
 
     @border_width.setter
@@ -927,6 +989,22 @@ class _Chart(object):
 
     @property
     def border_style(self):
+        """Return or set the chart's border style.
+
+        Examples
+        --------
+        Create a half-sized 2D chart centered in the middle of the
+        renderer with a thick, dashed red border.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.25, 0.25))
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.border_color = 'r'
+        >>> chart.border_width = 5
+        >>> chart.border_style = '--'
+        >>> chart.show()
+
+        """
         return self._background.BorderPen.style
 
     @border_style.setter
@@ -935,6 +1013,19 @@ class _Chart(object):
 
     @property
     def background_color(self):
+        """Return or set the chart's background color.
+
+        Examples
+        --------
+        Create a 2D chart with a green background.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.background_color = (0.5, 0.9, 0.5)
+        >>> chart.show()
+
+        """
         # return self.GetBackgroundBrush().GetColor()
         return self._background.BackgroundBrush.color
 
@@ -945,6 +1036,25 @@ class _Chart(object):
 
     @property
     def background_texture(self):
+        """Return or set the chart's background texture.
+
+        Examples
+        --------
+        Create a 2D chart plotting an approximate satellite
+        trajectory.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> chart = pyvista.Chart2D()
+        >>> x = np.linspace(0, 1, 100)
+        >>> y = np.sin(6.5*x-1)
+        >>> _ = chart.line(x, y, "y", 4)
+        >>> chart.background_texture = examples.load_globe_texture()
+        >>> chart.hide_axes()
+        >>> chart.show()
+
+        """
         return self._background.BackgroundBrush.texture
 
     @background_texture.setter
@@ -953,6 +1063,23 @@ class _Chart(object):
 
     @property
     def visible(self):
+        """Return or set the chart's visibility.
+
+        Examples
+        --------
+        Create a 2D chart.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        Hide it.
+
+        >>> chart.visible = False
+        >>> chart.show()
+
+        """
         return self.GetVisible()
 
     @visible.setter
@@ -960,10 +1087,40 @@ class _Chart(object):
         self.SetVisible(val)
 
     def toggle(self):
+        """Toggle the chart's visibility.
+
+        Examples
+        --------
+        Create a 2D chart.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        Hide it.
+
+        >>> chart.toggle()
+        >>> chart.show()
+
+        """
         self.visible = not self.visible
 
     @property
     def title(self):
+        """Return or set the chart's title.
+
+        Examples
+        --------
+        Create a 2D chart with title 'My Chart'.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.title = 'My Chart'
+        >>> chart.show()
+
+        """
         return self.GetTitle()
 
     @title.setter
@@ -972,6 +1129,24 @@ class _Chart(object):
 
     @property
     def legend_visible(self):
+        """Return or set the visibility of the chart's legend.
+
+        Examples
+        --------
+        Create a pie chart with custom labels.
+
+        >>> import pyvista
+        >>> chart = pyvista.ChartPie([1, 2, 3])
+        >>> chart.plot.labels = ["A", "B", "C"]
+        >>> chart.show()
+
+        Hide the legend.
+
+        >>> chart.background_color = (1, 1, 1)  # TODO: necessary until VTK bug is fixed
+        >>> chart.legend_visible = False
+        >>> chart.show()
+
+        """
         return self.GetShowLegend()
 
     @legend_visible.setter
@@ -1291,7 +1466,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         self.SetInputData(self._table, "x", "y")
         self.update(x, y)
         self.color = color
-        self.width = width
+        self.line_width = width
         self.line_style = style
         self.label = label
 
@@ -1698,6 +1873,28 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.x_axis.grid = val
         self.y_axis.grid = val
 
+    def hide_axes(self):
+        """Hide the x- and y-axis of this chart, including all
+        labels, ticks and the grid.
+
+        Examples
+        --------
+        Create a 2D plot and hide the axes.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.hide_axes()
+        >>> chart.show()
+
+        """
+        for axis in (self.x_axis, self.y_axis):
+            axis.visible = False
+            axis.label_visible = False
+            axis.ticks_visible = False
+            axis.tick_labels_visible = False
+            axis.grid = False
+
 
 class BoxPlot(_vtk.vtkPlotBox, _Plot, _MultiCompPlot):
 
@@ -1830,7 +2027,7 @@ class _LinePlot3D(_vtk.vtkPlotLine3D, _Plot):
         # self.SetInputData(self._table, "x", "y", "z")
         self.update(x, y, z)
         self.color = color
-        self.width = width
+        self.line_width = width
         self.line_style = style
 
     def update(self, x, y, z):
