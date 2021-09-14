@@ -448,7 +448,7 @@ def actor_to_mesh(actor, focal_point):
                                 use_lines=True)
             meshes.append(mesh)
         else:  # pragma: no cover
-            warnings.warn(f'Empty or unsupported dataset attached to actor')
+            warnings.warn('Empty or unsupported dataset attached to actor')
 
     # the camera in three.js has no concept of a "focal point".  In
     # three.js, the scene is always centered at the origin, which
