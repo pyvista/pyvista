@@ -18,29 +18,33 @@ from pyvista import examples
 
 
 ###############################################################################
-# Create the plotter and load the dataset
-# 
-pl = pv.Plotter(shape=(2, 2))
-
+# Load the dataset
 mesh_linear = examples.load_random_hills()
 mesh_random = mesh_linear.copy()
 
 ###############################################################################
 # Generate the data
 
-# Linear data
+# linear data
 mesh_linear.point_data["DataLinear"] = np.linspace(
     0, 10, mesh_linear.points.shape[0]
 )
 
-# Random data
+# random data
 rng = np.random.default_rng(seed=12345)
 mesh_random.point_data["DataRandom"] = rng.integers(
     low=0, high=10, size=mesh_random.points.shape[0]
 )
 
 ###############################################################################
-# Add plots of the raw datasets
+# Average data for each connected component.  For this we first generate
+# contours as separate blocks in a :class:`MultiBlock <pyvista.MultiBlock>`,
+# then for each contour dataset we find connected components and average the
+# scalars within each connected component.  We do all these for both datasets.
+
+# plot raw datasets side by side
+pl = pv.Plotter(shape=(2, 2))
+
 pl.subplot(0, 1)
 mesh_linear.set_active_scalars("DataLinear")
 pl.add_mesh(mesh_linear)
@@ -49,17 +53,12 @@ pl.subplot(1, 1)
 mesh_random.set_active_scalars("DataRandom")
 pl.add_mesh(mesh_random)
 
-###############################################################################
-# Average data for each connected component.  For this we first generate
-# contours as separate blocks in a :class:`MultiBlock <pyvista.MultiBlock>`,
-# then for each contour dataset we find connected components and average the
-# scalars within each connected component.  We do all these for both datasets.
-
 n_slices = 10
 
 meshes = mesh_linear, mesh_random
 data_names = "DataLinear", "DataRandom"
 
+# plot averaged contours on the fly
 for subplot_ind, (mesh, data_name) in enumerate(zip(meshes, data_names)):
     mesh.set_active_scalars("Elevation")
     contours = mesh.slice_along_axis(n=n_slices, axis="z")
@@ -86,7 +85,7 @@ for subplot_ind, (mesh, data_name) in enumerate(zip(meshes, data_names)):
 
     mesh.set_active_scalars(data_name)
 
-###############################################################################
-# Show the plot
-
+# show the plot
+pl.link_views()
+pl.view_isometric()
 pl.show()
