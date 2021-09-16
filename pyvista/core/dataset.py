@@ -3,8 +3,12 @@
 import warnings
 import collections.abc
 import logging
+import sys
 from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
-from typing_extensions import Literal # for python versions <3.8
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 import numpy as np
 
