@@ -78,19 +78,19 @@ def draw_pixels(plotter, pixels, center, color):
 
 # Display INVADERS
 p = pv.Plotter()
-p = draw_pixels(p, alien, [-22.0,  20.0], "green")
-p = draw_pixels(p, alien, [  0.0,  20.0], "green")
-p = draw_pixels(p, alien, [ 22.0,  20.0], "green")
+p = draw_pixels(p, alien, [-22.0,  22.0], "green")
+p = draw_pixels(p, alien, [  0.0,  22.0], "green")
+p = draw_pixels(p, alien, [ 22.0,  22.0], "green")
 p = draw_pixels(p, alien, [-22.0,   0.0], "blue" )
 p = draw_pixels(p, alien, [  0.0,   0.0], "blue" )
 p = draw_pixels(p, alien, [ 22.0,   0.0], "blue" )
-p = draw_pixels(p, alien, [-22.0, -20.0], "red"  )
-p = draw_pixels(p, alien, [  0.0, -20.0], "red"  )
-p = draw_pixels(p, alien, [ 22.0, -20.0], "red"  )
+p = draw_pixels(p, alien, [-22.0, -22.0], "red"  )
+p = draw_pixels(p, alien, [  0.0, -22.0], "red"  )
+p = draw_pixels(p, alien, [ 22.0, -22.0], "red"  )
 
 text = logo.text_3d("ALIEN MONSTERS", depth=10.0)
 text.points *= 4.0
-text.translate([-20.0, 20.0, 0.0])
+text.translate([-20.0, 24.0, 0.0])
 
 p.add_mesh(text, color="yellow")
 p.show(cpos="xy")
