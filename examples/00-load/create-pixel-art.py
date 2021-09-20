@@ -1,23 +1,21 @@
 """
-.._ref_geometric_example:
+.. _pixel_art_example:
 
 Pixel Art of ALIEN MONSTERS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here we use :func:`pyvista.Box` to make pixel art.
-https://en.wikipedia.org/wiki/Pixel_art
-Source of characters:
-https://commons.wikimedia.org/wiki/File:Noto_Emoji_Pie_1f47e.svg
-License:
-https://github.com/googlefonts/noto-emoji#license
+Here we use :func:`pyvista.Box` to make `pixel art <https://en.wikipedia.org/wiki/Pixel_art>`_.
+Pixel string `source <https://commons.wikimedia.org/wiki/File:Noto_Emoji_Pie_1f47e.svg>`_
+and `license <https://github.com/googlefonts/noto-emoji#license>`_.
+
 """
 import pyvista as pv
 from pyvista.demos import logo
 
 ###############################################################################
-# Generate Piexls of each characters
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# You can define the pixel of INVADERS
+# Convert pixel art to an array
+# ~~~~~~~~~~~~~~~~~~~~~
+
 
 alien_str = """
     %         %
@@ -45,7 +43,7 @@ for line in alien_str.splitlines()[1:]:  # skip first linebreak
 ###############################################################################
 # Define function to draw pixels
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Define a helper - function to add pixel boxes to plotter
+# Define a helper function to add pixel boxes to plotter.
 
 
 def draw_pixels(plotter, pixels, center, color):
@@ -72,9 +70,9 @@ def draw_pixels(plotter, pixels, center, color):
 
 
 ###############################################################################
-# Now that you can plot a pixel art of ALIEN MONSTERS.
+# Now you can plot a pixel art of ALIEN MONSTERS.
 
-# Display INVADERS
+# Display MONSTERS
 p = pv.Plotter()
 p = draw_pixels(p, alien, [-22.0,  22.0], "green")
 p = draw_pixels(p, alien, [  0.0,  22.0], "green")
