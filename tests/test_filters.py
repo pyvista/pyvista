@@ -1161,7 +1161,7 @@ def test_select_enclosed_points(uniform, hexbeam):
     assert result.n_arrays == uniform.n_arrays + 1
 
     # Now check non-closed surface
-    mesh = pyvista.ParametricEllipsoid(0.2, 0.7, 0.7, )
+    mesh = pyvista.Sphere(end_theta=270)
     surf = mesh.copy()
     surf.rotate_x(90)
     result = mesh.select_enclosed_points(surf, check_surface=False, progress_bar=True)
