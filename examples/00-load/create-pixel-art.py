@@ -94,7 +94,7 @@ octopus = [
 ###############################################################################
 # Define function to draw pixels
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Define a helper - function to add pixel boxs to plotter
+# Define a helper - function to add pixel boxes to plotter
 
 
 def draw_pixels(plotter, pixels, center, color):
