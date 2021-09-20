@@ -7,8 +7,7 @@ Pixel Art of SPACE INVADERS
 Here we use :func:`pyvista.Box` to make pixel art.
 https://en.wikipedia.org/wiki/Pixel_art
 Source of characters:
-https://ja.wikipedia.org/wiki/スペースインベーダー#キャラクター
-
+https://en.wikipedia.org/wiki/Space_Invaders
 """
 import pyvista as pv
 from pyvista.demos import logo
