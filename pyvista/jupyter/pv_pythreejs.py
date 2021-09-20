@@ -166,7 +166,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
 
     * THREE.BufferGeometry expects position and index attributes
       representing a triangulated mesh points and face indices or just
-      a position array representing individual faces of a mesh. 
+      a position array representing individual faces of a mesh.
     * The normals attribute is needed for physically based rendering,
       but not for the other mesh types.
     * Colors must be a RGB array with one value per point.
@@ -442,13 +442,13 @@ def actor_to_mesh(actor, focal_point):
         if has_faces:
             surf = extract_surface_mesh(dataset)
             mesh = to_edge_mesh(surf, mapper, prop, use_edge_coloring=False)
+            meshes.append(mesh)
         elif np.any(dataset.lines):
             mesh = to_edge_mesh(dataset, mapper, prop, use_edge_coloring=False,
                                 use_lines=True)
+            meshes.append(mesh)
         else:  # pragma: no cover
-            warning.warn(f'Empty or unsupported dataset attached to actor')
-
-        meshes.append(mesh)
+            warnings.warn('Empty or unsupported dataset attached to actor')
 
     # the camera in three.js has no concept of a "focal point".  In
     # three.js, the scene is always centered at the origin, which
