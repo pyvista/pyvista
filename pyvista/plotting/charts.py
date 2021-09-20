@@ -832,6 +832,10 @@ class _ChartBackground(_CustomContextItem):
             painter.ApplyBrush(self.BackgroundBrush)
             l, b, w, h = self._chart._geometry
             painter.DrawRect(l, b, w, h)
+            # TODO: following 'patch' is necessary until vtkPlotPie is fixed. Otherwise Pie plots will use the same
+            #  opacity as the chart's background when their legend is hidden. As the default background is transparent,
+            #  this will cause Pie charts to completely disappear.
+            painter.GetBrush().SetOpacity(255)
         return True
 
 
@@ -1142,7 +1146,6 @@ class _Chart(object):
 
         Hide the legend.
 
-        >>> chart.background_color = (1, 1, 1)  # TODO: necessary until VTK bug is fixed
         >>> chart.legend_visible = False
         >>> chart.show()
 
@@ -1219,7 +1222,7 @@ class _Chart(object):
 
 
 class _Plot(object):
-    """Pythonic interface for vtkPlot and vtkPlot3D instances."""
+    """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
 
     MARKER_STYLES = {
         "": _vtk.vtkPlotPoints.NONE,
@@ -1234,6 +1237,7 @@ class _Plot(object):
         super().__init__()
         self._pen = Pen()
         self._brush = Brush()
+        self._label = ""
         if hasattr(self, "SetPen"):
             self.SetPen(self._pen)
         if hasattr(self, "SetBrush"):
@@ -1241,7 +1245,33 @@ class _Plot(object):
 
     @classmethod
     def parse_format(cls, fmt):
-        """Parse format string."""
+        """Parse a format string and separate it into a marker style, line style and color.
+
+        Parameters
+        ----------
+        fmt : str
+            Format string to parse. A format string consists of any combination of a valid marker
+            style, a valid line style and parsable color. The specific order does not matter. See
+            :attr:`pyvista.ScatterPlot2D.MARKER_STYLES` for a list of valid marker styles,
+            :attr:`pyvista.Pen.LINE_STYLES` for a list of valid line styles and
+            :func:`pyvista.parse_color` for an overview of parsable colors.
+
+        Returns
+        -------
+        marker_style : str
+            Extracted marker style (empty string if no marker style was present in the format string).
+
+        line_style : str
+            Extracted line style (empty string if no line style was present in the format string).
+
+        color : str
+            Extracted color string (defaults to ``"b"`` if no color was present in the format string).
+
+        Examples
+        --------
+        >>> m, l, c = pyvista._Plot.parse_format("x--b")
+
+        """
         # TODO: add tests for different combinations/positions of marker, line and color
         marker_style = ""
         line_style = ""
@@ -1278,6 +1308,23 @@ class _Plot(object):
 
     @property
     def color(self):
+        """Return or set the plot's color. This is the color used
+        by the plot's pen and brush to draw lines and shapes.
+
+        Examples
+        --------
+        Set the line plot's color to red and the area plot's color
+        to cyan.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> area_plot = chart.area([0, 1, 2], [2, 1, 3])
+        >>> line_plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> line_plot.color = 'r'
+        >>> area_plot.color = 'c'
+        >>> chart.show()
+
+        """
         return self.pen.color
 
     @color.setter
@@ -1290,23 +1337,62 @@ class _Plot(object):
         """Pen object controlling how lines in this plot are drawn.
 
         Returns
-        --------
+        -------
         pyvista.charts.Pen
             `Pen` object controlling how lines in this plot are drawn.
 
         Examples
-        ---------
+        --------
+        Increase the line width of the line plot's pen object.
+
         >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> plot.pen.width = 10
+        >>> chart.show()
+
         """
         return self._pen
 
     @property
     def brush(self):
-        """Return the vtkBrush object controlling how shapes in this plot are filled."""
+        """Brush object controlling how shapes in this plot are filled.
+
+        Returns
+        -------
+        pyvista.charts.Brush
+            `Brush` object controlling how shapes in this plot are filled.
+
+        Examples
+        --------
+        Use a custom texture for the area plot's brush object.
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
+        >>> plot.brush.texture = examples.download_puppy_texture()
+        >>> chart.show()
+
+        """
         return self._brush
 
     @property
     def line_width(self):
+        """Return or set the line width of all lines drawn in this plot.
+        This is equivalent to accessing/modifying the width of this plot's pen.
+
+        Examples
+        --------
+        Set the line width to 10
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> plot.line_width = 10
+        >>> chart.show()
+
+        """
         return self.pen.width
 
     @line_width.setter
@@ -1315,6 +1401,18 @@ class _Plot(object):
 
     @property
     def line_style(self):
+        """Return or set the line style of all lines drawn in this plot.
+        This is equivalent to accessing/modifying the style of this plot's pen.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> plot.line_style = '-.'
+        >>> chart.show()
+
+        """
         return self.pen.style
 
     @line_style.setter
@@ -1323,15 +1421,51 @@ class _Plot(object):
 
     @property
     def label(self):
+        """Return or set the this plot's label, as shown in the chart's legend.
+
+        Examples
+        --------
+        Create a line plot with custom label.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> x = np.linspace(0, 10, 100)
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.line(x, np.sin(x), label="Sine")
+        >>> chart.show()
+
+        Modify the label.
+
+        >>> plot.label = "y = sin(x)"
+        >>> chart.show()
+
+        """
         return self._label
 
     @label.setter
     def label(self, val):
-        self._label = val
+        self._label = "" if val is None else val
         self.SetLabel(self._label)
 
     @property
     def visible(self):
+        """Return or set the this plot's visibility.
+
+        Examples
+        --------
+        Create a line and scatter plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
+        >>> chart.show()
+
+        Hide the scatter plot.
+
+        >>> scatter_plot.visible = False
+        >>> chart.show()
+
+        """
         return self.GetVisible()
 
     @visible.setter
@@ -1339,11 +1473,29 @@ class _Plot(object):
         self.SetVisible(val)
 
     def toggle(self):
+        """Toggle the plot's visibility.
+
+        Examples
+        --------
+        Create a line and scatter plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
+        >>> chart.show()
+
+        Hide the scatter plot.
+
+        >>> scatter_plot.toggle()
+        >>> chart.show()
+
+        """
         self.visible = not self.visible
 
 
-class _MultiCompPlot(object):
-    """ Pythonic interface for vtkPlot instances with multiple components (e.g. BoxPlot, PiePlot, StackedBarPlot) """
+class _MultiCompPlot(_Plot):
+    """Common pythonic interface for vtkPlot instances with multiple components, such as BoxPlot, PiePlot, BarPlot and
+    StackPlot."""
 
     COLOR_SCHEMES = {
         "spectrum": _vtk.vtkColorSeries.SPECTRUM,
@@ -1421,18 +1573,59 @@ class _MultiCompPlot(object):
         self.SetLabels(self._labels)
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
+    @staticmethod
+    def _from_c3ub(c3ub):
+        """Convert vtkColor3ub to an RGB color tuple (with values in range [0;1])."""
+        return tuple(float(c) / 255 for c in c3ub)
+
+    @staticmethod
+    def _to_c3ub(color):
+        """Convert an RGB(A) color tuple/sequence to a vtkColor3ub object (with values in range [0;255])."""
+        return _vtk.vtkColor3ub(*[int(255 * c + 0.5) for c in color[:3]])
+
     @property
     def color_scheme(self):
+        """Return or set the plot's color scheme. This scheme
+        defines the colors of the different components drawn
+        by this plot.
+        See ``pyvista._MultiCompPlot.COLOR_SCHEMES`` for the
+        available color schemes.
+
+        Examples
+        --------
+        Set the pie plot's color scheme to warm.
+
+        >>> import pyvista
+        >>> chart = pyvista.ChartPie([6,5,4,3,2,1])
+        >>> chart.plot.color_scheme = "warm"
+        >>> chart.show()
+
+        """
         return self._SCHEME_NAMES.get(self._color_series.GetColorScheme(), "custom")
 
     @color_scheme.setter
     def color_scheme(self, val):
         self._color_series.SetColorScheme(self.COLOR_SCHEMES.get(val, _vtk.vtkColorSeries.CUSTOM))
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
+        self.brush.color = self.colors[0]
 
     @property
     def colors(self):
-        return [self._color_series.GetColor(i) for i in range(self._color_series.GetNumberOfColors())]
+        """Return or set the plot's colors. These are the
+        colors used for the different components drawn by
+        this plot.
+
+        Examples
+        --------
+        Set the pie plot's colors manually.
+
+        >>> import pyvista
+        >>> chart = pyvista.ChartPie([6,5,4,3,2,1])
+        >>> chart.plot.colors = ["b", "g", "r", "c", "m", "y"]
+        >>> chart.show()
+
+        """
+        return [self._from_c3ub(self._color_series.GetColor(i)) for i in range(self._color_series.GetNumberOfColors())]
 
     @colors.setter
     def colors(self, val):
@@ -1443,11 +1636,53 @@ class _MultiCompPlot(object):
         else:
             self._color_series.SetNumberOfColors(len(val))
             for i, color in enumerate(val):
-                self._color_series.SetColor(i, parse_color(color)[:3])
+                self._color_series.SetColor(i, self._to_c3ub(parse_color(color)))
             self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
+        self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
+
+    @property
+    def color(self):
+        """Return or set the plot's color. This is the color used
+        by the plot's brush to draw the different components.
+
+        Examples
+        --------
+        Set the bar plot's color to red.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.bar([0, 1, 2], [2, 1, 3])
+        >>> plot.color = 'r'
+        >>> chart.show()
+
+        """
+        return self.brush.color
+
+    @color.setter
+    def color(self, val):
+        # Override default _Plot behaviour. This makes sure the plot's "color_scheme", "colors" and "color" properties
+        # (and their internal representations through color series, lookup tables and brushes) stay synchronized.
+        self.colors = [val]
 
     @property
     def labels(self):
+        """Return or set the this plot's labels, as shown in the chart's legend.
+
+        Examples
+        --------
+        Create a stacked plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [0, 2, 1]])
+        >>> chart.show()
+
+        Modify the labels.
+
+        >>> plot.labels = ["A", "B"]
+        >>> chart.show()
+
+        """
         return [self._labels.GetValue(i) for i in range(self._labels.GetNumberOfValues())]
 
     @labels.setter
@@ -1456,6 +1691,35 @@ class _MultiCompPlot(object):
         if val is not None:
             for label in val:
                 self._labels.InsertNextValue(label)
+
+    @property
+    def label(self):
+        """Return or set the this plot's label, as shown in the chart's legend.
+
+        Examples
+        --------
+        Create a box plot with custom label.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
+        >>> normal_data = rng.normal(size=50)
+        >>> chart = pyvista.ChartBox({"Normal distribution": normal_data})
+        >>> chart.show()
+
+        Modify the label.
+
+        >>> chart.plot.label = "x ~ N(0,1)"
+        >>> chart.show()
+
+        """
+        return self.labels[0] if self._labels.GetNumberOfValues() > 0 else ""
+
+    @label.setter
+    def label(self, val):
+        # Override default _Plot behaviour. This makes sure the plot's "labels" and "label" properties (and their
+        # internal representations) stay synchronized.
+        self.labels = None if val is None else [val]
 
 
 class LinePlot2D(_vtk.vtkPlotLine, _Plot):
@@ -1522,7 +1786,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
 class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
-    def __init__(self, x, y1, y2, color="b", label=""):
+    def __init__(self, x, y1, y2=None, color="b", label=""):
         super().__init__()
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y1": np.empty(0, np.float32), "y2": np.empty(0, np.float32)})
         self.SetInputData(self._table)
@@ -1533,15 +1797,17 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         self.color = color
         self.label = label
 
-    def update(self, x, y1, y2):
+    def update(self, x, y1, y2=None):
         if len(x) > 0:
+            if y2 is None:
+                y2 = np.zeros_like(x)
             self._table.update({"x": np.array(x, copy=False), "y1": np.array(y1, copy=False), "y2": np.array(y2, copy=False)})
             self.visible = True
         else:
             self.visible = False
 
 
-class BarPlot(_vtk.vtkPlotBar, _Plot, _MultiCompPlot):
+class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
     ORIENTATIONS = {
         "H": _vtk.vtkPlotBar.HORIZONTAL,
@@ -1556,7 +1822,7 @@ class BarPlot(_vtk.vtkPlotBar, _Plot, _MultiCompPlot):
         self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
         self.SetInputData(self._table, "x", "y0")
         for i in range(1, len(y)):
-            self.SetInputArray(i, f"y{i}")
+            self.SetInputArray(i+1, f"y{i}")
         self.update(x, y)
 
         if len(y) > 1:
@@ -1564,8 +1830,8 @@ class BarPlot(_vtk.vtkPlotBar, _Plot, _MultiCompPlot):
             self.colors = color  # None will use default scheme
             self.labels = label
         else:
-            self.brush.color = "b" if color is None else color
-            self.label = "" if label is None else label
+            self.color = "b" if color is None else color  # Use blue bars by default in single component mode
+            self.label = label
         self.offset = offset
         self.orientation = orientation
 
@@ -1601,7 +1867,7 @@ class BarPlot(_vtk.vtkPlotBar, _Plot, _MultiCompPlot):
             raise ValueError(f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"")
 
 
-class StackPlot(_vtk.vtkPlotStacked, _Plot, _MultiCompPlot):
+class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
     def __init__(self, x, ys, colors=None, labels=None):
         super().__init__()
@@ -1611,13 +1877,17 @@ class StackPlot(_vtk.vtkPlotStacked, _Plot, _MultiCompPlot):
         self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
         self.SetInputData(self._table, "x", "y0")
         for i in range(1, len(ys)):
-            self.SetInputArray(i, f"y{i}")
+            self.SetInputArray(i+1, f"y{i}")
         self.update(x, ys)
 
-        self.SetColorSeries(self._color_series)
-        self.colors = colors  # None will use default scheme
+        if len(ys) > 1:
+            self.SetColorSeries(self._color_series)
+            self.colors = colors  # None will use default scheme
+            self.labels = labels
+        else:
+            self.color = "b" if colors is None else colors
+            self.label = labels
         self.pen.style = None  # Hide lines by default
-        self.labels = labels
 
     def update(self, x, ys):
         if len(x) > 0:
@@ -1779,7 +2049,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     def line(self, x, y, color="b", width=1.0, style="-", label=""):
         return self._add_plot("line", x, y, color=color, width=width, style=style, label=label)
 
-    def area(self, x, y1, y2, color="b", label=""):
+    def area(self, x, y1, y2=None, color="b", label=""):
         return self._add_plot("area", x, y1, y2, color=color, label=label)
 
     def bar(self, x, y, color=None, label=None, offset=5, orientation="V"):
@@ -1896,7 +2166,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             axis.grid = False
 
 
-class BoxPlot(_vtk.vtkPlotBox, _Plot, _MultiCompPlot):
+class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
     def __init__(self, data, colors=None):
         super().__init__()
@@ -1955,7 +2225,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         raise ValueError("Cannot set ChartBox geometry, it fills up the entire viewport by default.")
 
 
-class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _Plot, _MultiCompPlot):
+class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
     def __init__(self, data, labels=None, colors=None):
         super().__init__()

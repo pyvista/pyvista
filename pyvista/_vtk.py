@@ -134,6 +134,7 @@ if VTK9:
                                                vtkSelectionNode,
                                                vtkSelection,
                                                vtkPerlinNoise,
+                                               vtkColor3ub,
                                                VTK_HEXAHEDRON,
                                                VTK_PYRAMID,
                                                VTK_QUAD,
