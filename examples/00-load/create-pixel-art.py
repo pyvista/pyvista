@@ -1,7 +1,7 @@
 """
 .._ref_geometric_example:
 
-Pixel Art of SPACE INVADERS
+Pixel Art of ALIEN MONSTERS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here we use :func:`pyvista.Box` to make pixel art.
@@ -121,7 +121,7 @@ def draw_pixels(plotter, pixels, center, color):
 
 
 ###############################################################################
-# Now that you can plot a pixel art of SPACE INVADERS.
+# Now that you can plot a pixel art of ALIEN MONSTERS.
 
 # Display INVADERS
 p = pv.Plotter()
@@ -135,7 +135,7 @@ p = draw_pixels(p, octopus, [-22.0, -20.0], "red"  )
 p = draw_pixels(p, octopus, [  0.0, -20.0], "red"  )
 p = draw_pixels(p, octopus, [ 22.0, -20.0], "red"  )
 
-text = logo.text_3d("SPACE INVADERS", depth=10.0)
+text = logo.text_3d("ALIEN MONSTERS", depth=10.0)
 text.points *= 4.0
 text.translate([-20.0, 20.0, 0.0])
 
