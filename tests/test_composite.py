@@ -23,7 +23,7 @@ def pyvista_multi():
 
 def multi_from_datasets(*datasets):
     """Return pyvista multiblock composed of any number of datasets."""
-    return MultiBlock([*datasets])
+    return MultiBlock(datasets)
 
 
 def test_multi_block_init_vtk():
@@ -358,7 +358,8 @@ def test_multi_block_list_index(ant, sphere, uniform, airplane, globe):
 
 def test_multi_block_volume(ant, airplane, sphere, uniform):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
-    assert multi.volume
+    vols = ant.volume + sphere.volume + uniform.volume + airplane.volume
+    assert multi.volume == pytest.approx(vols)
 
 
 def test_multi_block_length(ant, sphere, uniform, airplane):
@@ -395,16 +396,16 @@ def test_multi_block_save_lines(tmpdir):
 
 def test_multi_block_data_range():
     volume = pyvista.Wavelet()
-    a = volume.slice_along_axis(5,'x')
-    with pytest.raises(ValueError):
+    a = volume.slice_along_axis(5, 'x')
+    with pytest.raises(KeyError):
         a.get_data_range('foo')
     mi, ma = a.get_data_range(volume.active_scalars_name)
     assert mi is not None
     assert ma is not None
     # Test on a nested MultiBlock
     b = volume.slice_along_axis(5,'y')
-    slices = pyvista.MultiBlock([a,b])
-    with pytest.raises(ValueError):
+    slices = pyvista.MultiBlock([a, b])
+    with pytest.raises(KeyError):
         slices.get_data_range('foo')
     mi, ma = slices.get_data_range(volume.active_scalars_name)
     assert mi is not None

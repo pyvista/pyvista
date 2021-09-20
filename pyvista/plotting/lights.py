@@ -44,11 +44,11 @@ class Light(vtkLight):
         has a transformation matrix.  See also the
         :py:attr:`focal_point` property.
 
-    color : string or 3-length sequence, optional
+    color : str or 3-length sequence, optional
         The color of the light. The ambient, diffuse and specular
         colors will all be set to this color on creation.
 
-    light_type : string or int, optional
+    light_type : str or int, optional
         The type of the light. If a string, one of ``'headlight'``,
         ``'camera light'`` or ``'scene light'``. If an int, one of 1,
         2 or 3, respectively. The class constants ``Light.HEADLIGHT``,
@@ -226,7 +226,7 @@ class Light(vtkLight):
 
     @property
     def shadow_attenuation(self):
-        """Return the value of shadow attenuation.
+        """Return or set the value of shadow attenuation.
 
         By default a light will be completely blocked when in shadow.
         By setting this value to less than 1.0 you can control how
@@ -254,7 +254,7 @@ class Light(vtkLight):
 
     @property
     def ambient_color(self):
-        """Return the ambient color of the light.
+        """Return or set the ambient color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
         For example:
@@ -268,9 +268,11 @@ class Light(vtkLight):
         --------
         Create a light and set its ambient color to red.
 
-        >>> import pyvista as pv
-        >>> light = pv.Light()
+        >>> import pyvista
+        >>> light = pyvista.Light()
         >>> light.ambient_color = 'red'
+        >>> light.ambient_color
+        (1.0, 0.0, 0.0)
 
         """
         return self.GetAmbientColor()
@@ -282,7 +284,7 @@ class Light(vtkLight):
 
     @property
     def diffuse_color(self):
-        """Return the diffuse color of the light.
+        """Return or set the diffuse color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
         For example:
@@ -299,6 +301,8 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> light = pv.Light()
         >>> light.diffuse_color = (0, 0, 1)
+        >>> light.diffuse_color
+        (0.0, 0.0, 1.0)
 
         """
         return self.GetDiffuseColor()
@@ -310,7 +314,7 @@ class Light(vtkLight):
 
     @property
     def specular_color(self):
-        """Return the specular color of the light.
+        """Return or set the specular color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
         For example:
@@ -327,6 +331,8 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> light = pv.Light()
         >>> light.specular_color = '#00FF00'
+        >>> light.specular_color
+        (0.0, 1.0, 0.0)
 
         """
         return self.GetSpecularColor()
@@ -340,15 +346,16 @@ class Light(vtkLight):
     def position(self):
         """Return the position of the light.
 
-        Note: the position is defined in the coordinate space indicated
-        by the light's transformation matrix (if it exists). To get the
-        light's world space position, use the (read-only) :py:attr:`world_position`
-        property.
+        Note: the position is defined in the coordinate space
+        indicated by the light's transformation matrix (if it
+        exists). To get the light's world space position, use the
+        (read-only) :py:attr:`world_position` property.
 
         Examples
         --------
-        Create a light positioned at (10, 10, 10) after initialization, and note
-        how the position is unaffected by a non-trivial transform matrix.
+        Create a light positioned at ``(10, 10, 10)`` after
+        initialization, and note how the position is unaffected by a
+        non-trivial transform matrix.
 
         >>> import numpy as np
         >>> import pyvista as pv
@@ -472,7 +479,7 @@ class Light(vtkLight):
         ...     light.positional = True
         ...     plotter.add_light(light)
         ...
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         return self.GetIntensity()
@@ -605,7 +612,7 @@ class Light(vtkLight):
         ...     plotter.add_light(light)
         ...
         >>> plotter.view_xy()
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         return self.GetExponent()
@@ -649,7 +656,7 @@ class Light(vtkLight):
         ...     plotter.add_light(light)
         ...
         >>> plotter.view_xy()
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         return self.GetConeAngle()
@@ -701,7 +708,7 @@ class Light(vtkLight):
         ...     plotter.add_light(light)
         ...
         >>> plotter.view_vector((-1, -1, 1))
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         return self.GetAttenuationValues()
@@ -961,16 +968,21 @@ class Light(vtkLight):
     def copy(self, deep=True):
         """Return a shallow or a deep copy of the light.
 
-        The only mutable attribute of ``Light`` objects is the
+        The only mutable attribute of :class:`pyvista.Light` is the
         transformation matrix (if it exists). Thus asking for a
         shallow copy merely implies that the returned light and the
         original share the transformation matrix instance.
 
         Parameters
         ----------
-        deep : bool
+        deep : bool, optional
             Whether to return a deep copy rather than a shallow
             one. Default ``True``.
+
+        Returns
+        -------
+        pyvista.Light
+            Copied light.
 
         Examples
         --------
@@ -979,7 +991,8 @@ class Light(vtkLight):
 
         >>> import pyvista as pv
         >>> light = pv.Light()
-        >>> light.transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+        >>> light.transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], 
+        ...                           [0, 0, 0, 1]]
         >>> shallow_copied = light.copy(deep=False)
         >>> shallow_copied == light
         True
@@ -1026,6 +1039,14 @@ class Light(vtkLight):
         focal point of the camera. Calling this method will reset the
         light's transformation matrix.
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> light = pyvista.Light()
+        >>> light.set_headlight()
+        >>> light.light_type
+        <LightType.HEADLIGHT: 1>
+
         """
         self.SetLightTypeToHeadlight()
 
@@ -1040,6 +1061,14 @@ class Light(vtkLight):
         matrix to establish this space.  Calling this method will
         reset the light's transformation matrix.
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> light = pyvista.Light()
+        >>> light.set_camera_light()
+        >>> light.light_type
+        <LightType.CAMERA_LIGHT: 2>
+
         """
         self.SetLightTypeToCameraLight()
 
@@ -1049,6 +1078,14 @@ class Light(vtkLight):
         Scene lights are stationary with respect to the scene.
         Calling this method will reset the light's transformation
         matrix.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> light = pyvista.Light()
+        >>> light.set_scene_light()
+        >>> light.light_type
+        <LightType.SCENE_LIGHT: 3>
 
         """
         self.SetLightTypeToSceneLight()
@@ -1113,7 +1150,7 @@ class Light(vtkLight):
         >>> spotlight.exponent = 40
         >>> spotlight.show_actor()
         >>> plotter.add_light(spotlight)
-        >>> cpos = plotter.show()
+        >>> plotter.show()
 
         """
         if not self.positional or self.cone_angle >= 90:
@@ -1124,6 +1161,12 @@ class Light(vtkLight):
         """Hide the actor for a positional light that depicts the geometry of the beam.
 
         For a directional light the function doesn't do anything.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> light = pyvista.Light()
+        >>> light.hide_actor()
 
         """
         if not self.positional:
@@ -1136,7 +1179,14 @@ class Light(vtkLight):
         return self._renderers
 
     def add_renderer(self, renderer):
-        """Attach a renderer to this light."""
+        """Attach a renderer to this light.
+
+        Parameters
+        ----------
+        renderer : vtk.vtkRenderer
+            Renderer.
+
+        """
         # quick check to avoid adding twice
         if renderer not in self.renderers:
             self.renderers.append(renderer)

@@ -36,7 +36,7 @@ def test_createvectorpolydata_1D():
     vec = np.random.random(3)
     vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
-    assert np.any(vdata.point_arrays['vectors'])
+    assert np.any(vdata.point_data['vectors'])
 
 
 def test_createvectorpolydata():
@@ -44,7 +44,7 @@ def test_createvectorpolydata():
     vec = np.random.random((100, 3))
     vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
-    assert np.any(vdata.point_arrays['vectors'])
+    assert np.any(vdata.point_data['vectors'])
 
 
 @pytest.mark.parametrize('use_pathlib', [True, False])
@@ -189,14 +189,14 @@ def test_get_array():
     grid = pyvista.UnstructuredGrid(ex.hexbeamfile)
     # add array to both point/cell data with same name
     carr = np.random.rand(grid.n_cells)
-    grid.cell_arrays.append(carr, 'test_data')
+    grid.cell_data.set_array(carr, 'test_data')
     parr = np.random.rand(grid.n_points)
-    grid.point_arrays.append(parr, 'test_data')
+    grid.point_data.set_array(parr, 'test_data')
     # add other data
     oarr = np.random.rand(grid.n_points)
-    grid.point_arrays.append(oarr, 'other')
+    grid.point_data.set_array(oarr, 'other')
     farr = np.random.rand(grid.n_points * grid.n_cells)
-    grid.field_arrays.append(farr, 'field_data')
+    grid.field_data.set_array(farr, 'field_data')
     assert np.allclose(carr, helpers.get_array(grid, 'test_data', preference='cell'))
     assert np.allclose(parr, helpers.get_array(grid, 'test_data', preference='point'))
     assert np.allclose(oarr, helpers.get_array(grid, 'other'))
@@ -515,3 +515,74 @@ def test_vtk_error_catcher():
     error_catcher = pyvista.utilities.errors.VtkErrorCatcher(raise_errors=True)
     with error_catcher:
         pass
+
+
+def test_axis_angle_rotation():
+    # rotate cube corners around body diagonal
+    points = np.array([
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+    ])
+    axis = [1, 1, 1]
+
+    # no-op case
+    angle = 360
+    trans = transformations.axis_angle_rotation(axis, angle)
+    actual = transformations.apply_transformation_to_points(trans, points)
+    assert np.array_equal(actual, points)
+
+    # default origin
+    angle = np.radians(120)
+    expected = points[[1, 2, 0], :]
+    trans = transformations.axis_angle_rotation(axis, angle, deg=False)
+    actual = transformations.apply_transformation_to_points(trans, points)
+    assert np.allclose(actual, expected)
+
+    # non-default origin
+    p0 = [-2, -3, 4]
+    points += p0
+    expected += p0
+    trans = transformations.axis_angle_rotation(axis, angle, point=p0, deg=False)
+    actual = transformations.apply_transformation_to_points(trans, points)
+    assert np.allclose(actual, expected)
+
+    # invalid cases
+    with pytest.raises(ValueError):
+        transformations.axis_angle_rotation([1, 0, 0, 0], angle)
+    with pytest.raises(ValueError):
+        transformations.axis_angle_rotation(axis, angle, point=[1, 0, 0, 0])
+    with pytest.raises(ValueError):
+        transformations.axis_angle_rotation([0, 0, 0], angle)
+
+
+def test_reflection():
+    # reflect points of a square across a diagonal
+    points = np.array([
+        [ 1,  1, 0],
+        [-1,  1, 0],
+        [-1, -1, 0],
+        [ 1, -1, 0],
+    ])
+    normal = [1, 1, 0]
+
+    # default origin
+    expected = points[[2, 1, 0, 3], :]
+    trans = transformations.reflection(normal)
+    actual = transformations.apply_transformation_to_points(trans, points)
+    assert np.allclose(actual, expected)
+
+    # non-default origin
+    p0 = [1, 1, 0]
+    expected += 2 * np.array(p0)
+    trans = transformations.reflection(normal, point=p0)
+    actual = transformations.apply_transformation_to_points(trans, points)
+    assert np.allclose(actual, expected)
+
+    # invalid cases
+    with pytest.raises(ValueError):
+        transformations.reflection([1, 0, 0, 0])
+    with pytest.raises(ValueError):
+        transformations.reflection(normal, point=[1, 0, 0, 0])
+    with pytest.raises(ValueError):
+        transformations.reflection([0, 0, 0])

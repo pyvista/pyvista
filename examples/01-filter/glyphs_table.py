@@ -46,7 +46,7 @@ mesh = pv.StructuredGrid(x, y, z)
 # rng_int = rng.integers(0, N, size=x.size)
 rng_int = np.array([4, 1, 2, 0, 4, 0, 1, 4, 3, 1, 1, 3, 3, 4, 3, 4, 4,
                     3, 3, 2, 2, 1, 1, 1, 2, 0, 3])
-mesh.point_arrays['scalars'] = rng_int
+mesh.point_data['scalars'] = rng_int
 
 # construct the glyphs on top of the mesh; don't scale by scalars now
 glyphs = mesh.glyph(geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, N-1))

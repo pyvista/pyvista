@@ -64,7 +64,7 @@ def pyvista_polydata_to_polymesh(obj):
         surf = mesh
 
     # convert to an all-triangular surface
-    if surf.is_all_triangles():
+    if surf.is_all_triangles:
         trimesh = surf
     else:
         trimesh = surf.triangulate()
@@ -82,9 +82,12 @@ def pyvista_polydata_to_polymesh(obj):
         components = [ipygany.Component('X1', arr)]
         data = [ipygany.Data(trimesh.active_scalars_name, components)]
 
+    # convert to float32 for speed.  Also, ints are not supported for plotting
+    points = trimesh.points.astype(np.float32, copy=False)
+
     # for speed, only convert the active scalars later
     return PolyMesh(
-        vertices=trimesh.points,
+        vertices=points,
         triangle_indices=triangle_indices,
         data=data
     )
@@ -115,7 +118,7 @@ def check_colormap(cmap):
 
     if cmap not in colormaps:
         allowed = ', '.join([f"'{clmp}'" for clmp in colormaps.keys()])
-        raise ValueError(f'``cmap`` "{cmap} is not supported by ``ipygany``\n'
+        raise ValueError(f'``cmap`` "{cmap}" is not supported by ``ipygany``\n'
                          'Pick from one of the following:\n'
                          + allowed)
     return cmap

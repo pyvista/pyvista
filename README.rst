@@ -2,7 +2,7 @@
 PyVista
 #######
 
-.. image:: https://github.com/pyvista/pyvista/raw/master/doc/_static/pyvista_banner_small.png
+.. image:: https://github.com/pyvista/pyvista/raw/main/doc/_static/pyvista_banner_small.png
    :target: https://docs.pyvista.org/examples/index.html
    :alt: pyvista
 
@@ -19,13 +19,13 @@ PyVista
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
-.. |azure| image:: https://dev.azure.com/pyvista/PyVista/_apis/build/status/pyvista.pyvista?branchName=master
-   :target: https://dev.azure.com/pyvista/PyVista/_build/latest?definitionId=3&branchName=master
+.. |azure| image:: https://dev.azure.com/pyvista/PyVista/_apis/build/status/pyvista.pyvista?branchName=main
+   :target: https://dev.azure.com/pyvista/PyVista/_build/latest?definitionId=3&branchName=main
 
 .. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
    :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
 
-.. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/master/graph/badge.svg
+.. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/pyvista/pyvista
 
 .. |codacy| image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
@@ -198,6 +198,12 @@ to learn more about the developers of PyVista.
 Contributing
 ============
 
+.. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
+   :target: https://www.codetriage.com/pyvista/pyvista
+   :alt: Code Triage
+
+|codetriage|
+
 We absolutely welcome contributions and we hope that our `Contributing Guide`_
 will facilitate your ability to make PyVista better. PyVista is mostly
 maintained on a volunteer basis and thus we need to foster a community that can
@@ -206,8 +212,8 @@ tool for all users while encouraging every member of the commutinity to share
 their ideas. To learn more about contributing to PyVista, please see the
 `Contributing Guide`_ and our `Code of Conduct`_.
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md
-.. _Code of Conduct: https://github.com/pyvista/pyvista/blob/master/CODE_OF_CONDUCT.md
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md
+.. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
 
 
 Citing PyVista

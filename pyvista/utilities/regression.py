@@ -34,7 +34,7 @@ def wrap_image_array(arr):
     img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
     wrap_img = pyvista.wrap(img)
-    wrap_img.point_arrays['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
+    wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
     return wrap_img
 
 
@@ -56,20 +56,20 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
 
     Parameters
     ----------
-    im1 : filename, np.ndarray, vtkRenderWindow, or vtkImageData
+    im1 : filename, numpy.ndarray, vtkRenderWindow, or vtkImageData
         Render window, numpy array representing the output of a render
-        window, or ``vtkImageData``
+        window, or ``vtkImageData``.
 
-    im2 : filename, np.ndarray, vtkRenderWindow, or vtkImageData
+    im2 : filename, numpy.ndarray, vtkRenderWindow, or vtkImageData
         Render window, numpy array representing the output of a render
-        window, or ``vtkImageData``
+        window, or ``vtkImageData``.
 
-    threshold : int
+    threshold : int, optional
         Threshold tolerance for pixel differences.  This should be
         greater than 0, otherwise it will always return an error, even
         on identical images.
 
-    use_vtk : bool
+    use_vtk : bool, optional
         When disabled, computes the mean pixel error over the entire
         image using numpy.  The difference between pixel is calculated
         for each RGB channel, summed, and then divided by the number
@@ -78,7 +78,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
 
     Returns
     -------
-    error : float
+    float
         Total error between the images if using ``use_vtk=True``, and
         the mean pixel error when ``use_vtk=False``.
 
@@ -138,5 +138,5 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         return img_diff.GetError()
 
     # otherwise, simply compute the mean pixel difference
-    diff = np.abs(im1.point_arrays[0] - im2.point_arrays[0])
-    return np.sum(diff) / im1.point_arrays[0].shape[0]
+    diff = np.abs(im1.point_data[0] - im2.point_data[0])
+    return np.sum(diff) / im1.point_data[0].shape[0]

@@ -1,11 +1,10 @@
 .. _ref_dataset:
 
-Datasets
-========
-
+Data Sets
+=========
 Datasets are any spatially referenced information and usually consist of
 geometrical representations of a surface or volume in 3D space.
-In VTK, this superclass is represented by the ``vtk.vtkDataSet`` abstract class.
+In VTK, this superclass is represented by the `vtk.vtkDataSet`_ abstract class.
 
 In VTK, datasets consist of geometry, topology, and attributes to which PyVista
 provides direct access:
@@ -18,27 +17,21 @@ All of the following data types are listed subclasses of a dataset and share a
 set of common functionality which we wrap into the base class
 :class:`pyvista.DataSet`.
 
-
-The DataSet Model
------------------
-
-The :class:`pyvista.DataSet` class holds attributes that are *common* to all
-spatially referenced datasets in PyVista.
-This base class is analogous to VTK's ``vtk.vtkDataSet`` class.
+For additional details regarding PyVista's data model, please see
+:ref:`pyvista_data_model`.
 
 
-.. rubric:: Attributes
+Dataset API Reference
+---------------------
+The :class:`pyvista.DataSet` class holds attributes that
+are *common* to all spatially referenced datasets in PyVista.  This
+base class is analogous to VTK's `vtk.vtkDataSet`_ class.
 
-.. autoautosummary:: pyvista.DataSet
-   :attributes:
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-class-template.rst
 
-.. rubric:: Methods
-
-.. autoautosummary:: pyvista.DataSet
-   :methods:
+   pyvista.DataSet
 
 
-.. autoclass:: pyvista.DataSet
-   :show-inheritance:
-   :members:
-   :undoc-members:
+.. _vtk.vtkDataSet: https://vtk.org/doc/nightly/html/classvtkDataSet.html

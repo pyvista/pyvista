@@ -1,4 +1,12 @@
-"""Module managing examples and toy datasets."""
+"""Built-in examples that ship with PyVista and do not need to be downloaded.
+
+Examples
+--------
+>>> from pyvista import examples
+>>> mesh = examples.load_ant()
+>>> mesh.plot()
+
+"""
 
 import os
 import time
@@ -24,36 +32,128 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def load_ant():
-    """Load ply ant mesh."""
+    """Load ply ant mesh.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Dataset.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_ant()
+    >>> dataset.plot()
+
+    """
     return pyvista.PolyData(antfile)
 
 
 def load_airplane():
-    """Load ply airplane mesh."""
+    """Load ply airplane mesh.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Dataset.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_airplane()
+    >>> dataset.plot()
+
+    """
     return pyvista.PolyData(planefile)
 
 
 def load_sphere():
-    """Load sphere ply mesh."""
+    """Load sphere ply mesh.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Dataset.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_sphere()
+    >>> dataset.plot()
+
+    """
     return pyvista.PolyData(spherefile)
 
 
 def load_uniform():
-    """Load a sample uniform grid."""
+    """Load a sample uniform grid.
+
+    Returns
+    -------
+    pyvista.UniformGrid
+        Dataset.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_uniform()
+    >>> dataset.plot()
+
+    """
     return pyvista.UniformGrid(uniformfile)
 
 
 def load_rectilinear():
-    """Load a sample uniform grid."""
+    """Load a sample uniform grid.
+
+    Returns
+    -------
+    pyvista.RectilinearGrid
+        Dataset.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_rectilinear()
+    >>> dataset.plot()
+
+    """
     return pyvista.RectilinearGrid(rectfile)
 
+
 def load_hexbeam():
-    """Load a sample UnstructuredGrid."""
+    """Load a sample UnstructuredGrid.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        Dataset.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_hexbeam()
+    >>> dataset.plot()
+
+    """
     return pyvista.UnstructuredGrid(hexbeamfile)
 
 
 def load_structured():
-    """Load a simple StructuredGrid."""
+    """Load a simple StructuredGrid.
+
+    Returns
+    -------
+    pyvista.StructuredGrid
+        Dataset.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_structured()
+    >>> dataset.plot()
+
+    """
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
     x, y = np.meshgrid(x, y)
@@ -61,182 +161,90 @@ def load_structured():
     z = np.sin(r)
     return pyvista.StructuredGrid(x, y, z)
 
+
 def load_globe():
-    """Load a globe source."""
+    """Load a globe source.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Globe dataset with earth texture.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_globe()
+    >>> dataset.plot()
+
+    """
     globe = pyvista.PolyData(globefile)
     globe.textures['2k_earth_daymap'] = load_globe_texture()
     return globe
 
+
 def load_globe_texture():
-    """Load a vtk.vtkTexture that can be applied to the globe source."""
+    """Load a vtk.vtkTexture that can be applied to the globe source.
+
+    Returns
+    -------
+    pyvista.Texture
+        Dataset.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_globe_texture()
+    >>> dataset.plot()
+
+    """
     return pyvista.read_texture(mapfile)
 
 
 def load_channels():
-    """Load a uniform grid of fluvial channels in the subsurface."""
-    return pyvista.read(channelsfile)
-
-def plot_ants_plane(off_screen=None, notebook=None):
-    """Plot two ants and airplane.
-
-    Demonstrate how to create a plot class to plot multiple meshes while
-    adding scalars and text.
-
-    """
-    # load and shrink airplane
-    airplane = pyvista.PolyData(planefile)
-    airplane.points /= 10
-    # pts = airplane.points # gets pointer to array
-    # pts /= 10  # shrink
-
-    # rotate and translate ant so it is on the plane
-    ant = pyvista.PolyData(antfile)
-    ant.rotate_x(90)
-    ant.translate([90, 60, 15])
-
-    # Make a copy and add another ant
-    ant_copy = ant.copy()
-    ant_copy.translate([30, 0, -10])
-
-    # Create plotting object
-    plotter = pyvista.Plotter(off_screen=off_screen, notebook=notebook)
-    plotter.add_mesh(ant, 'r')
-    plotter.add_mesh(ant_copy, 'b')
-
-    # Add airplane mesh and make the color equal to the Y position
-    plane_scalars = airplane.points[:, 1]
-    plotter.add_mesh(airplane, scalars=plane_scalars,
-                     scalar_bar_args={'title': 'Plane Y\nLocation'})
-    plotter.add_text('Ants and Plane Example')
-    plotter.show()
-
-
-def beam_example(off_screen=None, notebook=None):
-    """Create the beam example."""
-    # Load module and example file
-    hexfile = hexbeamfile
-
-    # Load Grid
-    grid = pyvista.UnstructuredGrid(hexfile)
-
-    # Create fiticious displacements as a function of Z location
-    d = grid.points[:, 2]**3/250
-    grid.points[:, 1] += d
-
-    # Camera position
-    cpos = [(11.915126303095157, 6.11392754955802, 3.6124956735471914),
-            (0.0, 0.375, 2.0),
-            (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177)]
-
-    try:
-        import matplotlib
-        cmap = 'bwr'
-    except ImportError:
-        cmap = None
-
-    # plot this displaced beam
-    plotter = pyvista.Plotter(off_screen=off_screen, notebook=notebook)
-    plotter.add_mesh(grid, scalars=d,
-                     scalar_bar_args={'title': 'Y Displacement'},
-                     rng=[-d.max(), d.max()], cmap=cmap)
-    plotter.camera_position = cpos
-    plotter.add_text('Static Beam Example')
-    cpos = plotter.show()  # store camera position
-
-
-def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
-              off_screen=None, notebook=None):
-    """Plot a 3D moving wave in a render window.
-
-    Parameters
-    ----------
-    fps : int, optional
-        Maximum frames per second to display.  Defaults to 30.
-
-    frequency: float, optional
-        Wave cycles per second.  Defaults to 1
-
-    wavetime : float, optional
-        The desired total display time in seconds.  Defaults to 3 seconds.
-
-    interactive: bool, optional
-        Allows the user to set the camera position before the start of the
-        wave movement.  Default False.
-
-    off_screen : bool, optional
-        Enables off screen rendering when True.  Used for automated testing.
-        Disabled by default.
+    """Load a uniform grid of fluvial channels in the subsurface.
 
     Returns
     -------
-    points : np.ndarray
-        Position of points at last frame.
+    pyvista.UniformGrid
+        Dataset.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.load_channels()
+    >>> dataset.plot()
 
     """
-    # camera position
-    cpos = [(6.879481857604187, -32.143727535933195, 23.05622921691103),
-            (-0.2336056403734026, -0.6960083534590372, -0.7226721553894022),
-            (-0.008900669873416645, 0.6018246347860926, 0.7985786667826725)]
-
-    # Make data
-    X = np.arange(-10, 10, 0.25)
-    Y = np.arange(-10, 10, 0.25)
-    X, Y = np.meshgrid(X, Y)
-    R = np.sqrt(X**2 + Y**2)
-    Z = np.sin(R)
-
-    # Create and plot structured grid
-    sgrid = pyvista.StructuredGrid(X, Y, Z)
-
-    # Get pointer to points
-    points = sgrid.points.copy()
-
-    # Start a plotter object and set the scalars to the Z height
-    plotter = pyvista.Plotter(off_screen=off_screen, notebook=notebook)
-    plotter.add_mesh(sgrid, scalars=Z.ravel())
-    plotter.camera_position = cpos
-    plotter.show(title='Wave Example', window_size=[800, 600],
-                 auto_close=False, interactive_update=True)
-
-    # Update Z and display a frame for each updated position
-    tdelay = 1. / fps
-    tlast = time.time()
-    tstart = time.time()
-    while time.time() - tstart < wavetime:
-        # get phase from start
-        telap = time.time() - tstart
-        phase = telap * 2 * np.pi * frequency
-        Z = np.sin(R + phase)
-        points[:, -1] = Z.ravel()
-
-        # update plotting object, but don't automatically render
-        plotter.update_coordinates(points, render=False)
-        plotter.update_scalars(Z.ravel(), render=False)
-
-        # Render and get time to render
-        #rstart = time.time()
-        plotter.update()
-        # plotter.render()
-        #rstop = time.time()
-
-        # time delay
-        tpast = time.time() - tlast
-        if tpast < tdelay and tpast >= 0:
-            time.sleep(tdelay - tpast)
-
-        # get render time and actual FPS
-        # rtime = rstop - rstart
-        # act_fps = 1 / (time.time() - tlast + 1E-10)
-        tlast = time.time()
-
-    # Close movie and delete object
-    plotter.close()
-
-    return points
+    return pyvista.read(channelsfile)
 
 
 def load_spline():
-    """Load an example spline mesh."""
+    """Load an example spline mesh.
+
+    This example data was created with:
+
+    .. code:: python
+
+       >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
+       >>> z = np.linspace(-2, 2, 100)
+       >>> r = z**2 + 1
+       >>> x = r * np.sin(theta)
+       >>> y = r * np.cos(theta)
+       >>> points = np.column_stack((x, y, z))
+       >>> mesh = pyvista.Spline(points, 1000)
+
+    Returns
+    -------
+    pyvista.PolyData
+        Spline mesh.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> spline = examples.load_spline()
+    >>> spline.plot()
+
+    """
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     z = np.linspace(-2, 2, 100)
     r = z**2 + 1
@@ -251,13 +259,54 @@ def load_random_hills():
 
     Uses the parametric random hill function to create hills oriented
     like topography and adds an elevation array.
+
+    This example dataset was created with:
+
+    .. code:: python
+
+       >>> mesh = pyvista.ParametricRandomHills()
+       >>> mesh = mesh.elevation()
+
+    Returns
+    -------
+    pyvista.PolyData
+        Random hills mesh.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.load_random_hills()
+    >>> mesh.plot()
+
     """
     mesh = pyvista.ParametricRandomHills()
     return mesh.elevation()
 
 
 def load_sphere_vectors():
-    """Create example sphere with a swirly vector field defined on nodes."""
+    """Create example sphere with a swirly vector field defined on nodes.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh containing vectors.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.load_sphere_vectors()
+    >>> mesh.point_data
+    pyvista DataSetAttributes
+    Association     : POINT
+    Active Scalars  : vectors
+    Active Vectors  : vectors
+    Active Texture  : None
+    Active Normals  : Normals
+    Contains arrays :
+        Normals                 float32  (842, 3)             NORMALS
+        vectors                 float32  (842, 3)             VECTORS
+
+    """
     sphere = pyvista.Sphere(radius=3.14)
 
     # make cool swirly pattern
@@ -270,7 +319,8 @@ def load_sphere_vectors():
     ).T
 
     # add and scale
-    sphere.vectors = vectors * 0.3
+    sphere["vectors"] = vectors * 0.3
+    sphere.set_active_vectors("vectors")
     return sphere
 
 
@@ -286,14 +336,14 @@ def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
 
     Returns
     -------
-    grid : pyvista.ExplicitStructuredGrid
+    pyvista.ExplicitStructuredGrid
         An explicit structured grid.
 
     Examples
     --------
     >>> from pyvista import examples
-    >>> grid = examples.load_explicit_structured()  # doctest: +SKIP
-    >>> grid.plot(show_edges=True)  # doctest: +SKIP
+    >>> grid = examples.load_explicit_structured()
+    >>> grid.plot(show_edges=True)
 
     """
     ni, nj, nk = np.asarray(dims)-1

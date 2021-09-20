@@ -11,3 +11,12 @@ from .sphinx_gallery import Scraper, _get_sg_image_scraper
 from .regression import compare_images
 from . import transformations
 from .xvfb import start_xvfb
+from .reader import (get_reader, BaseReader, PointCellDataSelection,
+                     XMLImageDataReader, XMLPImageDataReader,
+                     XMLRectilinearGridReader, XMLPRectilinearGridReader,
+                     XMLUnstructuredGridReader, XMLPUnstructuredGridReader,
+                     XMLPolyDataReader, XMLStructuredGridReader,
+                     XMLMultiBlockDataReader, EnSightReader, OpenFOAMReader,
+                     PLYReader, OBJReader, STLReader, VTKDataSetReader,
+                     VTKPDataSetReader, BYUReader, FacetReader, Plot3DMetaReader,
+                     BinaryMarchingCubesReader, PVDDataSet, PVDReader, TimeReader)

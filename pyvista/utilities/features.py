@@ -1,10 +1,11 @@
 """Module containing geometry helper functions."""
 
-import ctypes
+import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 def voxelize(mesh, density=None, check_surface=True):
@@ -25,24 +26,24 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Returns
     -------
-    vox : pyvista.core.pointset.UnstructuredGrid
-        voxelized unstructured grid for original mesh
+    pyvista.UnstructuredGrid
+        Voxelized unstructured grid of the original mesh.
 
     Examples
     --------
-    This example creates an equal density voxelized mesh.
+    Create an equal density voxelized mesh.
 
     >>> import pyvista as pv
-    >>> import pyvista.examples as ex
-    >>> mesh = pv.PolyData(ex.load_uniform().points)
+    >>> from pyvista import examples
+    >>> mesh = pv.PolyData(examples.load_uniform().points)
     >>> vox = pv.voxelize(mesh, density=0.5)
+    >>> vox.plot()
 
-    This example creates a voxelized mesh using unequal density dimensions
+    Create a voxelized mesh using unequal density dimensions.
 
-    >>> import pyvista as pv
-    >>> import pyvista.examples as ex
-    >>> mesh = pv.PolyData(ex.load_uniform().points)
+    >>> mesh = pv.PolyData(examples.load_uniform().points)
     >>> vox = pv.voxelize(mesh, density=[0.5, 0.9, 1.4])
+    >>> vox.plot()
 
     """
     if not pyvista.is_pyvista_dataset(mesh):
@@ -68,7 +69,7 @@ def voxelize(mesh, density=None, check_surface=True):
     selection = ugrid.select_enclosed_points(mesh.extract_surface(),
                                              tolerance=0.0,
                                              check_surface=check_surface)
-    mask = selection.point_arrays['SelectedPoints'].view(np.bool_)
+    mask = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
     vox = ugrid.extract_points(mask)
@@ -98,12 +99,17 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     return image
 
 
-def single_triangle():
+def single_triangle():  # pragma: no cover
     """Create a single PolyData triangle."""
+    warnings.warn(
+        "Use of `single_triangle` is deprecated. "
+        "Use `pyvista.Triangle` instead.",
+        PyvistaDeprecationWarning
+    )
     points = np.zeros((3, 3))
     points[1] = [1, 0, 0]
     points[2] = [0.5, 0.707, 0]
-    cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
+    cells = np.array([[3, 0, 1, 2]])
     return pyvista.PolyData(points, cells)
 
 
@@ -113,15 +119,16 @@ def grid_from_sph_coords(theta, phi, r):
     Parameters
     ----------
     theta: array-like
-        Azimuthal angle in degrees [0, 360)
+        Azimuthal angle in degrees ``[0, 360]``.
     phi: array-like
-        Polar (zenith) angle in degrees [0, 180]
+        Polar (zenith) angle in degrees ``[0, 180]``.
     r: array-like
-        Distance (radius) from the point of origin
+        Distance (radius) from the point of origin.
 
     Returns
     -------
     pyvista.StructuredGrid
+        Structured grid.
 
     """
     x, y, z = np.meshgrid(np.radians(theta), np.radians(phi), r)
@@ -140,22 +147,22 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
 
     Parameters
     ----------
-    theta: array-like
-        Azimuthal angle in degrees [0, 360) of shape (M,)
-    phi: array-like
-        Polar (zenith) angle in degrees [0, 180] of shape (N,)
-    r: array-like
+    theta : sequence
+        Azimuthal angle in degrees ``[0, 360]`` of shape (M,)
+    phi : sequence
+        Polar (zenith) angle in degrees ``[0, 180]`` of shape (N,)
+    r : sequence
         Distance (radius) from the point of origin of shape (P,)
-    u: array-like
+    u : sequence
         X-component of the vector of shape (P, N, M)
-    v: array-like
+    v : sequence
         Y-component of the vector of shape (P, N, M)
-    w: array-like
+    w : sequence
         Z-component of the vector of shape (P, N, M)
 
     Returns
     -------
-    u_t, v_t, w_t: array-like
+    u_t, v_t, w_t : :class:`numpy.ndarray`
         Arrays of transformed x-, y-, z-components, respectively.
 
     """

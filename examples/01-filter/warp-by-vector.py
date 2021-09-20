@@ -1,4 +1,6 @@
 """
+.. _warp_by_vectors_example:
+
 Warping by Vectors
 ~~~~~~~~~~~~~~~~~~
 

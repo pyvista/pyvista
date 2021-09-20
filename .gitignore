@@ -21,14 +21,16 @@ build/
 dist/
 
 # MISC
-# *.sh
+.mypy_cache
+
 
 # doc generated
+tests/tinypages/_build
 doc/_build
 wiki/
 **/beam.gif
 **/beam_wireframe.gif
-
+doc/build_errors.txt
 
 # testing coverage and cache
 .pytest_cache/
@@ -61,6 +63,7 @@ doc/images/auto-generated
 api-autogen/
 _autosummary/
 doc/getting-started/external_examples.rst
+**/grid.vtu
 
 # hypothesis
 .hypothesis

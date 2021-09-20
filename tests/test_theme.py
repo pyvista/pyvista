@@ -313,6 +313,12 @@ def test_volume_mapper(default_theme):
         default_theme.volume_mapper = 'invalid'
 
 
+def test_set_hidden_line_removal(default_theme):
+    default_theme.hidden_line_removal = True
+    assert default_theme.hidden_line_removal is True
+    default_theme.hidden_line_removal = False
+    assert default_theme.hidden_line_removal is False
+
 
 @pytest.mark.parametrize('parm', [('background', (0.1, 0.2, 0.3)),
                                   ('auto_close', False),
@@ -398,3 +404,12 @@ def test_load_theme(tmpdir, default_theme):
 
     default_theme.load_theme(filename)
     assert default_theme == pyvista.themes.DarkTheme()
+
+
+def test_antialiasing(default_theme):
+    for value in [True, False]:
+        default_theme.antialiasing = value
+        assert default_theme.antialiasing is value
+        pl = pyvista.Plotter(theme=default_theme)
+        assert pl.renderer.GetUseFXAA() is value
+

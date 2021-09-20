@@ -3,7 +3,7 @@
 import pyvista
 from .itkplotter import PlotterITK
 
-ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'none']
+ALLOWED_BACKENDS = ['ipyvtklink', 'panel', 'ipygany', 'static', 'pythreejs', 'none']
 
 
 def _validate_jupyter_backend(backend):
@@ -37,10 +37,16 @@ def _validate_jupyter_backend(backend):
                          f'Use one of the following:\n{backend_list_str}')
 
     # verify required packages are installed
+    if backend == 'pythreejs':
+        try:
+            import pythreejs
+        except ImportError:  # pragma: no cover
+            raise ImportError('Please install `pythreejs` to use this feature.')
+
     if backend == 'ipyvtklink':
         try:
             import ipyvtklink
-        except ImportError:    # pragma: no cover
+        except ImportError:  # pragma: no cover
             raise ImportError('Please install `ipyvtklink` to use this feature.')
 
     if backend == 'panel':
@@ -85,6 +91,12 @@ def set_jupyter_backend(backend):
           this is the only method that does not require a virtual
           framebuffer.  Must have ``ipygany`` installed.
 
+        * ``'pythreejs'`` : Convert all the meshes into ``pythreejs``
+          meshes and streams those to be rendered on the client side.
+          Aside from ``ipygany``, this is the only method that does
+          not require a virtual framebuffer.  Must have ``pythreejs``
+          installed.
+
         * ``'static'`` : Display a single static image within the
           Jupyterlab environment.  Still requires that a virtual
           framebuffer be setup when displaying on a headless server,
@@ -97,22 +109,27 @@ def set_jupyter_backend(backend):
 
     Examples
     --------
+    Enable the pythreejs backend.
+
+    >>> import pyvista as pv
+    >>> pv.set_jupyter_backend('pythreejs')  # doctest:+SKIP
+
     Enable the ipygany backend.
 
     >>> import pyvista as pv
-    >>> pv.set_jupyter_backend('ipygany')
+    >>> pv.set_jupyter_backend('ipygany')  # doctest:+SKIP
 
     Enable the panel backend.
 
-    >>> pv.set_jupyter_backend('panel')
+    >>> pv.set_jupyter_backend('panel')  # doctest:+SKIP
 
     Enable the ipyvtklink backend.
 
-    >>> pv.set_jupyter_backend('ipyvtklink')
+    >>> pv.set_jupyter_backend('ipyvtklink')  # doctest:+SKIP
 
     Just show static images.
 
-    >>> pv.set_jupyter_backend('static')
+    >>> pv.set_jupyter_backend('static')  # doctest:+SKIP
 
     Disable all plotting within JupyterLab and display using a
     standard desktop VTK render window.

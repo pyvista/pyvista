@@ -16,7 +16,21 @@ import collections
 
 
 def set_error_output_file(filename):
-    """Set a file to write out the VTK errors."""
+    """Set a file to write out the VTK errors.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the file to write VTK errors to.
+
+    Returns
+    -------
+    vtkFileOutputWindow
+        VTK file output window.
+    vtkOutputWindow
+        VTK output window.
+
+    """
     filename = os.path.abspath(os.path.expanduser(filename))
     fileOutputWindow = _vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)
@@ -31,10 +45,12 @@ class VtkErrorCatcher:
     Parameters
     ----------
     raise_errors : bool, optional
-        Raise a ``RuntimeError`` when a VTK error is encountered.  Defaults to ``False``.
+        Raise a ``RuntimeError`` when a VTK error is encountered.
+        Defaults to ``False``.
 
     send_to_logging : bool, optional
-        Determine whether VTK errors raised within the context should also be sent to logging.  Defaults to ``True``.
+        Determine whether VTK errors raised within the context should
+        also be sent to logging.  Defaults to ``True``.
 
     Examples
     --------

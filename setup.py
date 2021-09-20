@@ -2,7 +2,6 @@
 Installation file for python pyvista module
 """
 import os
-# import sys
 from io import open as io_open
 from setuptools import setup
 
@@ -14,26 +13,6 @@ version_file = os.path.join(filepath, package_name, '_version.py')
 with io_open(version_file, mode='r') as fd:
     exec(fd.read())
 
-# leaving this out for conda compatibility...
-# python3_9_linux_wheel = 'https://github.com/pyvista/pyvista/releases/download/0.27.0/vtk-9.0.1-cp39-cp39-manylinux2010_x86_64.whl'
-
-# # Python 3.9 isn't supported at the moment
-# if sys.version_info.minor == 9:
-#     # but, the user might have installed vtk from a non-pypi wheel.
-#     try:
-#         import vtk
-#     except ImportError:
-#         note = ''
-#         if os.name == 'linux':
-#             note = '\n\nHowever there is an unofficial Linux wheel build by the ``pyvista`` team at ' + python3_9_linux_wheel
-
-#         raise RuntimeError('There are no official Python 3.9 wheels for VTK on yet.  '
-#                            'Please use Python 3.6 through 3.8, or build and install '
-#                            'VTK from source with a wheel.  Please see:\n'
-#                            'https://docs.pyvista.org/building_vtk.html' + note)
-
-
-# pre-compiled vtk available for python3
 install_requires = ['numpy',
                     'imageio',
                     'pillow',
@@ -41,7 +20,8 @@ install_requires = ['numpy',
                     'scooby>=0.5.1',
                     'meshio>=4.0.3, <5.0',
                     'vtk',
-                    'transforms3d==0.3.1'
+                    'dataclasses;python_version=="3.6"',
+                    'typing_extensions;python_version<="3.7"',
                     ]
 
 readme_file = os.path.join(filepath, 'README.rst')
@@ -55,10 +35,12 @@ setup(
               'pyvista.demos',
               'pyvista.jupyter',
               'pyvista.plotting',
-              'pyvista.utilities'],
+              'pyvista.utilities',
+              'pyvista.ext'],
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=io_open(readme_file, encoding="utf-8").read(),
+    long_description_content_type='text/x-rst',
     author='PyVista Developers',
     author_email='info@pyvista.org',
     license='MIT',
@@ -73,6 +55,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
 
     url='https://github.com/pyvista/pyvista',

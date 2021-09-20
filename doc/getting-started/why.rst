@@ -1,6 +1,22 @@
 Why PyVista?
 ============
 
+.. jupyter-execute::
+   :hide-code:
+
+   # jupyterlab boilerplate setup
+   import pyvista
+
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.background = 'white'
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.show_scalar_bar = False
+
+
+
+
 VTK is an excellent visualization toolkit, and with Python bindings it
 should be able to combine the speed of C++ with the rapid prototyping
 of Python.  However, despite this VTK code programmed in Python
@@ -13,78 +29,103 @@ file:
 
 Plotting a Mesh using Python's VTK
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Using this `example <http://www.vtk.org/Wiki/VTK/Examples/Python/STLReader>`_,
-loading and plotting an STL file requires a lot of code when using only the
-``vtk`` module.
+Using this `example
+<https://kitware.github.io/vtk-examples/site/Python/IO/ReadSTL/>`_ as
+a baseline, loading and plotting an STL file requires a lot of code
+when using only the `vtk`_ library.  PyVista on the other hand only
+requires a few lines of code.
 
-.. code:: python
+.. pyvista-plot::
+   :include-source: False
+   :context:
 
-    import vtk
+   >>> bunny_cpos = [( 0.14826, 0.275729,  0.4215911),
+   ...               (-0.01684, 0.110154, -0.0015369),
+   ...               (-0.15446, 0.939031, -0.3071841)]
 
-    # create reader
-    reader = vtk.vtkSTLReader()
-    reader.SetFileName("myfile.stl")
++-------------------------------------------+-------------------------------------+
+| Read and plot STL file using `vtk`_       | Read an STL file using PyVista      |
++===========================================+=====================================+
+| .. code:: python                          | .. code:: python                    |
+|                                           |                                     |
+|    import vtk                             |    import pyvista                   |
+|    reader = vtk.vtkSTLReader()            |    mesh = pyvista.read('bunny.stl') |
+|    reader.SetFileName("bunny.stl")        |    mesh.plot()                      |
+|    mapper = vtk.vtkPolyDataMapper()       |                                     |
+|    output_port = reader.GetOutputPort()   | .. pyvista-plot::                   |
+|    mapper.SetInputConnection(output_port) |    :include-source: False           |
+|    actor = vtk.vtkActor()                 |    :context:                        |
+|    actor.SetMapper(mapper)                |                                     |
+|    ren = vtk.vtkRenderer()                |    from pyvista import examples     |
+|    renWin = vtk.vtkRenderWindow()         |    mesh = examples.download_bunny() |
+|    renWin.AddRenderer(ren)                |    mesh.plot(cpos=bunny_cpos)       |
+|    iren = vtk.vtkRenderWindowInteractor() |                                     |
+|    iren.SetRenderWindow(renWin)           |                                     |
+|    ren.AddActor(actor)                    |                                     |
+|    iren.Initialize()                      |                                     |
+|    renWin.Render()                        |                                     |
+|    iren.Start()                           |                                     |
+|    del iren, renWin                       |                                     |
++-------------------------------------------+-------------------------------------+
 
-    mapper = vtk.vtkPolyDataMapper()
-    if vtk.VTK_MAJOR_VERSION <= 5:
-        mapper.SetInput(reader.GetOutput())
-    else:
-        mapper.SetInputConnection(reader.GetOutputPort())
+The PyVista data model and API allows you to rapidly load meshes and
+handles much of the "grunt work" of setting up plots, connecting
+classes and pipelines, and cleaning up plotting windows.  It does this
+by exposing a simplified, but functional, interface to VTK's classes.
 
-    # create actor
-    actor = vtk.vtkActor()
-    actor.SetMapper(mapper)
+In :func:`pyvista.read`, PyVista automatically determines the correct
+file reader based on the file extension and returns a DataSet object.
+This dataset object contains all the methods that are available to a
+:class:`pyvista.PolyData` class, including the :func:`plot
+<pyvista.plot>` method, allowing you to instantly generate a plot of
+the mesh.  Garbage collection is taken care of automatically and the
+renderer is cleaned up after the user closes the plotting window.
 
-    # Create a rendering window and renderer
-    ren = vtk.vtkRenderer()
-    renWin = vtk.vtkRenderWindow()
-    renWin.AddRenderer(ren)
-
-    # Create a renderwindowinteractor
-    iren = vtk.vtkRenderWindowInteractor()
-    iren.SetRenderWindow(renWin)
-
-    # Assign actor to the renderer
-    ren.AddActor(actor)
-
-    # Enable user interface interactor
-    iren.Initialize()
-    renWin.Render()
-    iren.Start()
-
-    # clean up objects
-    del iren
-    del renWin
-
-
-Plot a Mesh using PyVista
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The same stl can be loaded and plotted using pyvista with:
-
-.. code:: python
-
-    import pyvista
-
-    mesh = pyvista.PolyData('myfile.stl')
-    mesh.plot()
-
-The mesh object is more pythonic and the code is much more straightforward.
-Garbage collection is taken care of automatically and the renderer is cleaned up
-after the user closes the VTK plotting window.
+For more details comparing the two APIs, please see
+:ref:`pyvista_data_model` and :ref:`vtk_to_pyvista_docs`.
 
 
-Advanced Plotting with Numpy
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When combined with numpy, you can make some truly spectacular plots:
+PyVista API
+~~~~~~~~~~~
+For example, triangular surface meshes in VTK can be subdivided but
+every other object in VTK cannot.  It then makes sense that a
+:func:`subdivide` method be added to the existing triangular surface
+mesh.  That way, subdivision can be performed with:
 
 .. jupyter-execute::
-    :hide-code:
 
     import pyvista
-    pyvista.set_jupyter_backend('ipygany')
-    pyvista.set_plot_theme('document')
+    mesh = pyvista.Plane().triangulate()
+    submesh = mesh.subdivide(2, 'linear')
+    submesh.plot(show_edges=True)
+
+Additionally, the docstrings for all methods in PyVista are intended
+to be used within interactive coding sessions. This allows users to
+use sophisticated processing routines on the fly with immediate access
+to a description of how to use those methods:
+
+.. figure:: ../images/gifs/documentation.gif
+
+
+Interfacing With Other Libraries
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PyVista is heavily dependent on `numpy <https://numpy.org/>`_ and uses
+it to represent point, cell, field, and other data from the VTK
+meshes.  This data can be easily accessed from the dataset attributes
+like :attr:`pyvista.DataSet.points`.  For example the first 10 points
+of a circle from pyvista can be accessed with:
+
+.. jupyter-execute::
+
+   circle = pyvista.Circle()
+   circle.points[:10]
+
+And these points can be operated on as if it was a NumPy array,
+all without losing connection to the underlying VTK data array.
+
+At the same time, a variety of PyVista objects can be generated
+directly from numpy arrays.  For example, below we generate a vector
+field of arrows using :func:`numpy.meshgrid`:
 
 .. jupyter-execute::
 
@@ -109,23 +150,9 @@ When combined with numpy, you can make some truly spectacular plots:
     pl.add_arrows(points, direction, 0.5)
     pl.show()
 
+PyVista has connections to several other libraries, such as `meshio
+<https://github.com/nschloe/meshio>`_ and `matplotlib
+<https://matplotlib.org/>`_, allowing PyVista to extend VTK with
+functionality from the Python ecosystem.
 
-While not everything can be simplified without losing functionality,
-many of the objects can.  For example, triangular surface meshes in
-VTK can be subdivided but every other object in VTK cannot.  It then
-makes sense that a subdivided method be added to the existing
-triangular surface mesh.  That way, subdivision can be performed with:
-
-
-.. code:: python
-
-    from pyvista import examples
-    mesh = examples.load_ant()
-    submesh = mesh.subdivide(3, 'linear')
-
-Additionally, the docstrings for all methods in PyVista are intended
-to be used within interactive coding sessions. This allows users to
-use sophisticated processing routines on the fly with immediate access
-to a description of how to use those methods:
-
-.. figure:: ../images/gifs/documentation.gif
+.. _vtk: https://vtk.org/

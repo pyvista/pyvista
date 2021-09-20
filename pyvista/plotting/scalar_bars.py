@@ -35,16 +35,24 @@ class ScalarBars():
         return '\n'.join(lines)
 
     def _remove_mapper_from_plotter(self, actor, reset_camera=False, render=False):
-        """Remove an actor's mapper from the given plotter's _scalar_bar_mappers."""
+        """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
+
+        This ensures that when actors are removed, their corresponding
+        scalar bars are removed.
+
+        """
         try:
             mapper = actor.GetMapper()
         except AttributeError:
             return
+
+        # NOTE: keys to list to prevent iterator changing during loop
         for name in list(self._scalar_bar_mappers):
             try:
                 self._scalar_bar_mappers[name].remove(mapper)
             except ValueError:
                 pass
+
             if not self._scalar_bar_mappers[name]:
                 slot = self._plotter._scalar_bar_slot_lookup.pop(name, None)
                 if slot is not None:
@@ -73,20 +81,25 @@ class ScalarBars():
         """
         if title is None:
             if len(self) > 1:
-                titles = ', '.join('"{key}"' for key in self._scalar_bar_actors)
-                raise ValueError('Multiple scalar bars.  Specify the title of the'
+                titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
+                raise ValueError('Multiple scalar bars found.  Pick title of the'
                                  f'scalar bar from one of the following:\n{titles}')
             else:
                 title = list(self._scalar_bar_actors.keys())[0]
 
+        actor = self._scalar_bar_actors.pop(title)
+        self._plotter.remove_actor(actor, render=render)
         self._scalar_bar_ranges.pop(title)
         self._scalar_bar_mappers.pop(title)
+
+        # add back in the scalar bar slot
+        slot = self._plotter._scalar_bar_slot_lookup.pop(title, None)
+        if slot is not None:
+            self._plotter._scalar_bar_slots.add(slot)
+
         widget = self._scalar_bar_widgets.pop(title, None)
         if widget is not None:
             widget.SetEnabled(0)
-
-        actor = self._scalar_bar_actors.pop(title)
-        self._plotter.remove_actor(actor, render=render)
 
     def __len__(self):
         """Return the number of scalar bar actors."""
@@ -121,12 +134,12 @@ class ScalarBars():
                        use_opacity=True, outline=False,
                        nan_annotation=False, below_label=None,
                        above_label=None, background_color=None,
-                       n_colors=None, fill=False, render=False):
+                       n_colors=None, fill=False, render=False, theme=None):
         """Create scalar bar using the ranges as set by the last input mesh.
 
         Parameters
         ----------
-        title : string, optional
+        title : str, optional
             Title of the scalar bar.  Default ``''`` which is
             rendered as an empty title.
 
@@ -138,22 +151,23 @@ class ScalarBars():
             Number of labels to use for the scalar bar.
 
         italic : bool, optional
-            Italicises title and bar labels.  Default False.
+            Italicises title and bar labels.  Default ``False``.
 
         bold  : bool, optional
-            Bolds title and bar labels.  Default True
+            Bolds title and bar labels.  Default ``True``.
 
         title_font_size : float, optional
             Sets the size of the title font.  Defaults to ``None`` and is sized
-            according to ``pyvista.global_theme``.
+            according to :attr:`pyvista.themes.DefaultTheme.font`.
 
         label_font_size : float, optional
             Sets the size of the title font.  Defaults to ``None`` and is sized
-            according to ``pyvista.global_theme``.
+            according to :attr:`pyvista.themes.DefaultTheme.font`.
 
-        color : string or 3 item list, optional
-            Either a string, rgb list, or hex color string.  Defaults to white.
-            For example:
+        color : str or 3 item list, optional
+            Either a string, rgb list, or hex color string.  Default
+            set by :attr:`pyvista.themes.DefaultTheme.font`.  Can be
+            in one of the following formats:
 
             * ``color='white'``
             * ``color='w'``
@@ -161,40 +175,53 @@ class ScalarBars():
             * ``color='#FFFFFF'``
 
         font_family : {'courier', 'times', 'arial'}
-            Font family.  Default is set by ``pyvista.global_theme``.
+            Font family.  Default is set by
+            :attr:`pyvista.themes.DefaultTheme.font`.
 
         shadow : bool, optional
             Adds a black shadow to the text.  Defaults to ``False``.
 
         width : float, optional
             The percentage (0 to 1) width of the window for the colorbar.
-            Default set by ``pyvista.global_theme``.
+            Default set by
+            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
+            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            depending on the value of ``vertical``.
 
         height : float, optional
-            The percentage (0 to 1) height of the window for the colorbar.
-            Default set by ``pyvista.global_theme``.
+            The percentage (0 to 1) height of the window for the
+            colorbar.  Default set by
+            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
+            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            depending on the value of ``vertical``.
 
         position_x : float, optional
             The percentage (0 to 1) along the windows's horizontal
             direction to place the bottom left corner of the colorbar.
-            Default is automatic placement.
+            Default set by
+            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
+            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            depending on the value of ``vertical``.
 
         position_y : float, optional
             The percentage (0 to 1) along the windows's vertical
             direction to place the bottom left corner of the colorbar.
-            Default is automatic placement.
+            Default set by
+            :attr:`pyvista.themes.DefaultTheme.colorbar_vertical` or
+            :attr:`pyvista.themes.DefaultTheme.colorbar_horizontal`
+            depending on the value of ``vertical``.
 
         vertical : bool, optional
-            Use vertical or horizontal scalar bar.
-            Default set by ``pyvista.global_theme``.
+            Use vertical or horizontal scalar bar.  Default set by
+            :attr:`pyvista.themes.DefaultTheme.colorbar_orientation`.
 
         interactive : bool, optional
             Use a widget to control the size and location of the scalar bar.
-            Default set by ``pyvista.global_theme``.
+            Default set by :attr:`pyvista.themes.DefaultTheme.interactive`.
 
         fmt : str, optional
             ``printf`` format for labels.
-            Default set by ``pyvista.global_theme``.
+            Default set by :attr:`pyvista.themes.DefaultTheme.font`.
 
         use_opacity : bool, optional
             Optionally display the opacity mapping on the scalar bar.
@@ -225,6 +252,21 @@ class ScalarBars():
         render : bool, optional
             Force a render when True.  Default ``True``.
 
+        theme : pyvista.themes.DefaultTheme, optional
+            Plot-specific theme.  By default, calling from the
+            ``Plotter``, will use the plotter theme.  Setting to
+            ``None`` will use the global theme.
+
+        Returns
+        -------
+        vtk.vtkScalarBarActor
+            Scalar bar actor.
+
+        Notes
+        -----
+        Setting ``title_font_size``, or ``label_font_size`` disables
+        automatic font sizing for both the title and label.
+
         Examples
         --------
         Add a custom interactive scalar bar that is horizontal, has an
@@ -236,44 +278,45 @@ class ScalarBars():
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
         >>> _ = plotter.add_scalar_bar('Data', interactive=True, vertical=False,
+        ...                            title_font_size=35,
+        ...                            label_font_size=30,
         ...                            outline=True, fmt='%10.5f')
-
-        Notes
-        -----
-        Setting title_font_size, or label_font_size disables automatic font
-        sizing for both the title and label.
+        >>> plotter.show()
 
         """
         if mapper is None:
             raise ValueError('Mapper cannot be ``None`` when creating a scalar bar')
 
+        if theme is None:
+            theme = pyvista.global_theme
+
         if interactive is None:
-            interactive = pyvista.global_theme.interactive
+            interactive = theme.interactive
         if font_family is None:
-            font_family = pyvista.global_theme.font.family
+            font_family = theme.font.family
         if label_font_size is None:
-            label_font_size = pyvista.global_theme.font.label_size
+            label_font_size = theme.font.label_size
         if title_font_size is None:
-            title_font_size = pyvista.global_theme.font.title_size
+            title_font_size = theme.font.title_size
         if color is None:
-            color = pyvista.global_theme.font.color
+            color = theme.font.color
         if fmt is None:
-            fmt = pyvista.global_theme.font.fmt
+            fmt = theme.font.fmt
         if vertical is None:
-            if pyvista.global_theme.colorbar_orientation.lower() == 'vertical':
+            if theme.colorbar_orientation.lower() == 'vertical':
                 vertical = True
 
         # Automatically choose size if not specified
         if width is None:
             if vertical:
-                width = pyvista.global_theme.colorbar_vertical.width
+                width = theme.colorbar_vertical.width
             else:
-                width = pyvista.global_theme.colorbar_horizontal.width
+                width = theme.colorbar_horizontal.width
         if height is None:
             if vertical:
-                height = pyvista.global_theme.colorbar_vertical.height
+                height = theme.colorbar_vertical.height
             else:
-                height = pyvista.global_theme.colorbar_horizontal.height
+                height = theme.colorbar_horizontal.height
 
         # Check that this data hasn't already been plotted
         if title in list(self._scalar_bar_ranges.keys()):
@@ -304,16 +347,16 @@ class ScalarBars():
                 raise RuntimeError('Maximum number of color bars reached.')
             if position_x is None:
                 if vertical:
-                    position_x = pyvista.global_theme.colorbar_vertical.position_x
+                    position_x = theme.colorbar_vertical.position_x
                     position_x -= slot * (width + 0.2 * width)
                 else:
-                    position_x = pyvista.global_theme.colorbar_horizontal.position_x
+                    position_x = theme.colorbar_horizontal.position_x
 
             if position_y is None:
                 if vertical:
-                    position_y = pyvista.global_theme.colorbar_vertical.position_y
+                    position_y = theme.colorbar_vertical.position_y
                 else:
-                    position_y = pyvista.global_theme.colorbar_horizontal.position_y
+                    position_y = theme.colorbar_horizontal.position_y
                     position_y += slot * height
 
         # parse color
@@ -419,7 +462,6 @@ class ScalarBars():
         title_text.SetColor(color)
 
         self._scalar_bar_actors[title] = scalar_bar
-
         if interactive:
             scalar_widget = _vtk.vtkScalarBarWidget()
             scalar_widget.SetScalarBarActor(scalar_bar)
@@ -451,4 +493,5 @@ class ScalarBars():
         # finally, add to the actor and return the scalar bar
         self._plotter.add_actor(scalar_bar, reset_camera=False,
                                 pickable=False, render=render)
+
         return scalar_bar

@@ -1,4 +1,6 @@
 """
+.. _contouring_example:
+
 Contouring
 ~~~~~~~~~~
 

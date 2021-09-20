@@ -5,6 +5,8 @@ Includes:
 
 * ``ipyvtklink``
 * ``panel``
+* ``pythreejs``
+* ``ipygany``
 
 """
 import warnings
@@ -45,6 +47,8 @@ def handle_plotter(plotter, backend=None, screenshot=None,
         screenshot = None
 
     try:
+        if backend == 'pythreejs':
+            return show_pythreejs(plotter, return_viewer, **kwargs)
         if backend == 'ipyvtklink':
             return show_ipyvtk(plotter, return_viewer)
         if backend == 'panel':
@@ -165,3 +169,13 @@ def build_panel_bounds(actor):
     bounds['fontsize'] = actor.GetLabelTextProperty(0).GetFontSize()
 
     return bounds
+
+
+def show_pythreejs(plotter, return_viewer, **kwargs):
+    """Show a pyvista plotting scene using pythreejs."""
+    from .pv_pythreejs import convert_plotter
+    renderer = convert_plotter(plotter)
+    if return_viewer:
+        return renderer
+    display.display_html(renderer)
+

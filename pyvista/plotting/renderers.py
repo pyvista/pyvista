@@ -305,6 +305,7 @@ class Renderers():
             appear in one window.
 
         Returns
+        -------
         pyvista.BackgroundRenderer
             Newly created background renderer.
 
@@ -312,14 +313,14 @@ class Renderers():
         # verify no render exists
         if as_global:
             for renderer in self:
-                renderer.SetLayer(2)
+                renderer.layer = 2
             view_port = None
         else:
-            self.active_renderer.SetLayer(2)
+            self.active_renderer.layer = 2
             view_port = self.active_renderer.GetViewport()
 
         renderer = BackgroundRenderer(self._plotter, image_path, scale, view_port)
-        renderer.SetLayer(1)
+        renderer.layer = 1
         self._background_renderers[self.active_index] = renderer
         return renderer
 
@@ -367,22 +368,23 @@ class Renderers():
 
         Parameters
         ----------
-        color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.  For example:
+        color : str or 3 item sequence, optional
+            Either a string, rgb list, or hex color string.  Defaults
+            to current theme parameters.  For example:
 
             * ``color='white'``
             * ``color='w'``
             * ``color=[1, 1, 1]``
             * ``color='#FFFFFF'``
 
-        top : string or 3 item list, optional, defaults to None
+        top : str or 3 item sequence, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in ``top``
             will be the color at the top of the renderer.
 
         all_renderers : bool
-            If True, applies to all renderers in subplots. If False, then
-            only applies to the active renderer.
+            If ``True``, applies to all renderers in subplots. If ``False``,
+            then only applies to the active renderer.
 
         Examples
         --------
@@ -394,13 +396,14 @@ class Renderers():
         >>> plotter.background_color
         (0.0, 0.0, 0.0)
 
-        Set the background color to white.
+        Set the background color at the bottom to black and white at
+        the top.  Display a cone as well.
 
         >>> import pyvista
-        >>> plotter = pyvista.Plotter()
-        >>> plotter.set_background('white')
-        >>> plotter.background_color
-        (1.0, 1.0, 1.0)
+        >>> pl = pyvista.Plotter()
+        >>> actor = pl.add_mesh(pyvista.Cone())
+        >>> pl.set_background('black', top='white')
+        >>> pl.show()
 
         """
         if all_renderers:

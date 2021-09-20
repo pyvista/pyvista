@@ -8,54 +8,80 @@ from pyvista.utilities import is_pyvista_dataset
 from .plotting import Plotter
 
 
-def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
+def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=None, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, volume=False,
          parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
-         return_viewer=False, jupyter_kwargs={}, theme=None, **kwargs):
+         return_viewer=False, return_cpos=False, jupyter_kwargs={},
+         theme=None, hidden_line_removal=None, anti_aliasing=None,
+         zoom=None, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
     ----------
-    item : vtk or numpy object
+    var_item : pyvista.DataSet, vtk, or numpy object
         VTK object or ``numpy`` array to be plotted.
 
-    off_screen : bool
-        Plots off screen when ``True``.  Helpful for saving screenshots
-        without a window popping up.
+    off_screen : bool, optional
+        Plots off screen when ``True``.  Helpful for saving
+        screenshots without a window popping up.  Defaults to the
+        global setting ``pyvista.OFF_SCREEN``.
 
     full_screen : bool, optional
         Opens window in full screen.  When enabled, ignores
-        ``window_size``.  Default ``False``.
+        ``window_size``.  Defaults to active theme setting in
+        :attr:`pyvista.global_theme.full_screen
+        <pyvista.themes.DefaultTheme.full_screen>`.
 
     screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
-        ``help(pyvista.Plotter.screenshot)``.  Default ``False``.
+        :func:`Plotter.screenshot() <pyvista.Plotter.screenshot>`.
+        Default ``False``.
 
         When ``True``, takes screenshot and returns ``numpy`` array of
         image.
 
+    interactive : bool, optional
+        Allows user to pan and move figure.  Defaults to
+        :attr:`pyvista.global_theme.interactive <pyvista.themes.DefaultTheme.interactive>`.
+
+    cpos : list, optional
+        List of camera position, focal point, and view up.
+
     window_size : list, optional
-        Window size in pixels.  Defaults to ``[1024, 768]``
+        Window size in pixels.  Defaults to global theme
+        :attr:`pyvista.global_theme.window_size <pyvista.themes.DefaultTheme.window_size>`.
 
     show_bounds : bool, optional
-        Shows mesh bounds when ``True``.  Default ``False``. Alias
-        ``show_grid`` also accepted.
+        Shows mesh bounds when ``True``.  Default ``False``.
+
+    show_axes : bool, optional
+        Shows a vtk axes widget.  If ``None``, enabled according to
+        :attr:`pyvista.global_theme.axes.show <pyvista.themes._AxesConfig.show>`.
 
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
-    show_axes : bool, optional
-        Shows a vtk axes widget.  If ``None``, enabled according to
-        ``pyvista.global_theme.axes.show``.
+    background : str or sequence, optional
+        Color of the background.
 
     text : str, optional
         Adds text at the bottom of the plot.
 
+    return_img : bool, optional
+        Returns numpy array of the last image rendered.
+
+    eye_dome_lighting : bool, optional
+        Enables eye dome lighting.
+
     volume : bool, optional
-        Use the ``add_volume`` method for volume rendering.
+        Use the :func:`Plotter.add_volume()
+        <pyvista.Plotter.add_volume>` method for volume rendering.
+
+    parallel_projection : bool, optional
+        Enable parallel projection.
 
     use_ipyvtk : bool, optional
         Deprecated.  Instead, set the backend either globally with
@@ -72,7 +98,15 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         * ``'panel'`` : Show a ``panel`` widget.
 
         This can also be set globally with
-        ``pyvista.set_jupyter_backend``
+        :func:`pyvista.set_jupyter_backend`.
+
+    return_viewer : bool, optional
+        Return the jupyterlab viewer, scene, or display object
+        when plotting with jupyter notebook.
+
+    return_cpos : bool, optional
+        Return the last camera position from the render window
+        when enabled.  Defaults to value in theme settings.
 
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
@@ -80,24 +114,47 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     theme : pyvista.themes.DefaultTheme, optional
         Plot-specific theme.
 
+    hidden_line_removal : bool, optional
+        Wireframe geometry will be drawn using hidden line removal if
+        the rendering engine supports it.  See
+        :func:`Plotter.enable_hidden_line_removal
+        <Plotter.enable_hidden_line_removal>`.  Defaults to the
+        theme setting :attr:`pyvista.global_theme.hidden_line_removal
+        <pyvista.themes.DefaultTheme.hidden_line_removal>`.
+
+    anti_aliasing : bool, optional
+        Enable or disable anti-aliasing.  Defaults to the theme
+        setting :attr:`pyvista.global_theme.antialiasing
+        <pyvista.themes.DefaultTheme.antialiasing>`.
+
+    zoom : float, optional
+        Camera zoom.  A value greater than 1 is a zoom-in, a value
+        less than 1 is a zoom-out.  Must be greater than 0.
+
     **kwargs : optional keyword arguments
-        See ``help(pyvista.Plotter.add_mesh)`` for additional options.
+        See :func:`pyvista.Plotter.add_mesh` for additional options.
 
     Returns
     -------
     cpos : list
         List of camera position, focal point, and view up.
+        Returned only when ``return_cpos=True`` or set in the
+        default global or plot theme.  Not returned when in a
+        jupyter notebook and ``return_viewer=True``.
 
-    img : numpy.ndarray
-        Array containing pixel RGB and optionally alpha values.
-        Sized:
+    image : np.ndarray
+        Numpy array of the last image when either ``return_img=True``
+        or ``screenshot=True`` is set. Not returned when in a
+        jupyter notebook with ``return_viewer=True``. Optionally
+        contains alpha values. Sized:
 
         * [Window height x Window width x 3] if the theme sets
           ``transparent_background=False``.
         * [Window height x Window width x 4] if the theme sets
           ``transparent_background=True``.
 
-        Returned only when ``screenshot=True``.
+    widget
+        IPython widget when ``return_viewer=True``.
 
     Examples
     --------
@@ -105,7 +162,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     >>> import pyvista
     >>> mesh = pyvista.Sphere()
-    >>> mesh.plot(show_edges=True)  # doctest:+SKIP
+    >>> mesh.plot(show_edges=True)
 
     """
     if notebook is None:
@@ -113,6 +170,9 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     if theme is None:
         theme = pyvista.global_theme
+
+    if anti_aliasing is not None:
+        theme.antialiasing = anti_aliasing
 
     # undocumented kwarg used within pytest to run a function before closing
     before_close_callback = kwargs.pop('before_close_callback', None)
@@ -171,47 +231,51 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     else:
         plotter.camera_position = cpos
 
+    if zoom is not None:
+        plotter.camera.zoom(zoom)
+
     if eye_dome_lighting:
         plotter.enable_eye_dome_lighting()
 
     if parallel_projection:
         plotter.enable_parallel_projection()
 
-    result = plotter.show(window_size=window_size,
-                          auto_close=auto_close,
-                          interactive=interactive,
-                          full_screen=full_screen,
-                          screenshot=screenshot,
-                          return_img=return_img,
-                          use_ipyvtk=use_ipyvtk,
-                          jupyter_backend=jupyter_backend,
-                          before_close_callback=before_close_callback,
-                          jupyter_kwargs=jupyter_kwargs,
-                          return_viewer=return_viewer)
-
-    # Result will be handled by plotter.show(): cpos or [cpos, img] or
-    # the jupyterlab scene when return_viewer is True
-    return result
-
+    return plotter.show(window_size=window_size,
+                        auto_close=auto_close,
+                        interactive=interactive,
+                        full_screen=full_screen,
+                        screenshot=screenshot,
+                        return_img=return_img,
+                        use_ipyvtk=use_ipyvtk,
+                        jupyter_backend=jupyter_backend,
+                        before_close_callback=before_close_callback,
+                        jupyter_kwargs=jupyter_kwargs,
+                        return_viewer=return_viewer,
+                        return_cpos=return_cpos)
 
 def plot_arrows(cent, direction, **kwargs):
     """Plot arrows as vectors.
 
     Parameters
     ----------
-    cent : np.ndarray
+    cent : numpy.ndarray
         Accepts a single 3d point or array of 3d points.
 
-    directions : np.ndarray
+    direction : numpy.ndarray
         Accepts a single 3d point or array of 3d vectors.
-        Must contain the same number of items as cent.
+        Must contain the same number of items as ``cent``.
 
-    **kwargs : additional arguments, optional
-        See ``help(pyvista.plot)``.
+    **kwargs : dict, optional
+        See :func:`pyvista.plot`.
 
     Returns
     -------
-    Same as ``pyvista.plot``.  See ``help(pyvista.plot)``.
+    tuple
+        See the returns of :func:`pyvista.plot`.
+
+    See Also
+    --------
+    :func:`pyvista.plot`
 
     Examples
     --------
@@ -221,7 +285,7 @@ def plot_arrows(cent, direction, **kwargs):
     >>> import pyvista
     >>> cent = np.random.random(3)
     >>> direction = np.random.random(3)
-    >>> cpos = pyvista.plot_arrows(cent, direction)
+    >>> pyvista.plot_arrows(cent, direction)
 
     Plot 100 random arrows.
 
@@ -229,7 +293,7 @@ def plot_arrows(cent, direction, **kwargs):
     >>> import pyvista
     >>> cent = np.random.random((100, 3))
     >>> direction = np.random.random((100, 3))
-    >>> cpos = pyvista.plot_arrows(cent, direction)
+    >>> pyvista.plot_arrows(cent, direction)
 
     """
     return plot([cent, direction], **kwargs)
@@ -291,7 +355,7 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
         :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
         points.
 
-    color : string or 3 item list, optional, defaults to white
+    color : str or 3 item list, optional, defaults to white
         Use to make the entire mesh have a single solid color.  Either
         a string, RGB list, or hex color string.  For example:
         ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
@@ -317,7 +381,7 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
 
     Returns
     --------
-    plotter : itkwidgets.Viewer
+    itkwidgets.Viewer
         ITKwidgets viewer.
     """
     pl = pyvista.PlotterITK()
