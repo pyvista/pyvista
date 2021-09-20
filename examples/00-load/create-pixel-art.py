@@ -7,7 +7,9 @@ Pixel Art of ALIEN MONSTERS
 Here we use :func:`pyvista.Box` to make pixel art.
 https://en.wikipedia.org/wiki/Pixel_art
 Source of characters:
-https://en.wikipedia.org/wiki/Space_Invaders
+https://commons.wikimedia.org/wiki/File:Noto_Emoji_Pie_1f47e.svg
+License:
+https://github.com/googlefonts/noto-emoji#license
 """
 import pyvista as pv
 from pyvista.demos import logo
@@ -17,32 +19,6 @@ from pyvista.demos import logo
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can define the pixel of INVADERS
 
-# SQUID
-#
-#           % %
-#         % % % %
-#       % % % % % %
-#     % %   % %   % %
-#     % % % % % % % %
-#         %     %
-#       %   % %   %
-#     %   %     %   %
-#
-squid = [
-    [False, False, False, False, False, False, False, False, False, False],
-    [False, False, False, False, True , True , False, False, False, False],
-    [False, False, False, True , True , True , True , False, False, False],
-    [False, False, True , True , True , True , True , True , False, False],
-    [False, True , True , False, True , True , False, True , True , False],
-    [False, True , True , True , True , True , True , True , True , False],
-    [False, False, False, True , False, False, True , False, False, False],
-    [False, False, True , False, True , True , False, True , False, False],
-    [False, True , False, True , False, False, True , False, True , False],
-    [False, False, False, False, False, False, False, False, False, False],
-]
-
-# CLAB
-#
 #       %         %
 #         %     %
 #       % % % % % %
@@ -50,11 +26,12 @@ squid = [
 #   % % % % % % % % % %
 #   %   % % % % % %   %
 #   %   %         %   %
+#   %   % %     % %   %
 #         %     %
+#       %         %
 
 
-clab = [
-    [False, False, False, False, False, False, False, False, False, False],
+alien = [
     [False, False, True , False, False, False, False, True , False, False],
     [False, False, False, True , False, False, True , False, False, False],
     [False, False, True , True , True , True , True , True , False, False],
@@ -62,34 +39,10 @@ clab = [
     [True , True , True , True , True , True , True , True , True , True ],
     [True , False, True , True , True , True , True , True , False, True ],
     [True , False, True , False, False, False, False, True , False, True ],
+    [True , False, True , True , False, False, True , True , False, True ],
     [False, False, False, True , False, False, True , False, False, False],
-    [False, False, False, False, False, False, False, False, False, False],
+    [False, False, True , False, False, False, False, True , False, False],
 ]
-
-# OCTOPUS
-#
-#         % % % %
-#     % % % % % % % %
-#   % % % % % % % % % %
-#   % %     % %     % %
-#   % % % % % % % % % %
-#       % %     % %
-#     %   % % % %   %
-#   %                 %
-
-octopus = [
-    [False, False, False, False, False, False, False, False, False, False],
-    [False, False, False, True , True , True , True , False, False, False],
-    [False, True , True , True , True , True , True , True , True , False],
-    [True , True , True , True , True , True , True , True , True , True ],
-    [True , True , False, False, True , True , False, False, True , True ],
-    [True , True , True , True , True , True , True , True , True , True ],
-    [False, False, True , True , False, False, True , True , False, False],
-    [False, True , False, True , True , True , True , False, True , False],
-    [True , False, False, False, False, False, False, False, False, True ],
-    [False, False, False, False, False, False, False, False, False, False],
-]
-
 
 ###############################################################################
 # Define function to draw pixels
@@ -125,15 +78,15 @@ def draw_pixels(plotter, pixels, center, color):
 
 # Display INVADERS
 p = pv.Plotter()
-p = draw_pixels(p, squid  , [-22.0,  20.0], "green")
-p = draw_pixels(p, squid  , [  0.0,  20.0], "green")
-p = draw_pixels(p, squid  , [ 22.0,  20.0], "green")
-p = draw_pixels(p, clab   , [-22.0,   0.0], "blue" )
-p = draw_pixels(p, clab   , [  0.0,   0.0], "blue" )
-p = draw_pixels(p, clab   , [ 22.0,   0.0], "blue" )
-p = draw_pixels(p, octopus, [-22.0, -20.0], "red"  )
-p = draw_pixels(p, octopus, [  0.0, -20.0], "red"  )
-p = draw_pixels(p, octopus, [ 22.0, -20.0], "red"  )
+p = draw_pixels(p, alien, [-22.0,  20.0], "green")
+p = draw_pixels(p, alien, [  0.0,  20.0], "green")
+p = draw_pixels(p, alien, [ 22.0,  20.0], "green")
+p = draw_pixels(p, alien, [-22.0,   0.0], "blue" )
+p = draw_pixels(p, alien, [  0.0,   0.0], "blue" )
+p = draw_pixels(p, alien, [ 22.0,   0.0], "blue" )
+p = draw_pixels(p, alien, [-22.0, -20.0], "red"  )
+p = draw_pixels(p, alien, [  0.0, -20.0], "red"  )
+p = draw_pixels(p, alien, [ 22.0, -20.0], "red"  )
 
 text = logo.text_3d("ALIEN MONSTERS", depth=10.0)
 text.points *= 4.0
