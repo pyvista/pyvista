@@ -2,7 +2,6 @@
 
 from math import pi
 
-
 import pyvista
 from pyvista import _vtk
 from .geometric_objects import translate
@@ -1057,7 +1056,7 @@ def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
 
 
 def surface_from_para(parametric_function, u_res=100, v_res=100,
-                      w_res=100):
+                      w_res=100, clean=True):
     """Construct a mesh from a parametric function.
 
     Parameters
@@ -1074,6 +1073,10 @@ def surface_from_para(parametric_function, u_res=100, v_res=100,
     w_res : int, optional
         Resolution in the w direction.
 
+    clean : bool, optional
+        Clean and merge duplicate points to avoid "creases" when
+        plotting with smooth shading.
+
     """
     # convert to a mesh
     para_source = _vtk.vtkParametricFunctionSource()
@@ -1082,4 +1085,7 @@ def surface_from_para(parametric_function, u_res=100, v_res=100,
     para_source.SetVResolution(v_res)
     para_source.SetWResolution(w_res)
     para_source.Update()
-    return pyvista.wrap(para_source.GetOutput())
+    surf = pyvista.wrap(para_source.GetOutput())
+    if clean:
+        surf = surf.clean(tolerance=1E-9)
+    return surf
