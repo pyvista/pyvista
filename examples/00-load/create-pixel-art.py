@@ -19,30 +19,28 @@ from pyvista.demos import logo
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can define the pixel of INVADERS
 
-#       %         %
-#         %     %
-#       % % % % % %
-#     % %   % %   % %
-#   % % % % % % % % % %
-#   %   % % % % % %   %
-#   %   %         %   %
-#   %   % %     % %   %
-#         %     %
-#       %         %
+alien_str = """
+    %         %
+      %     %
+    % % % % % %
+  % %   % %   % %
+% % % % % % % % % %
+%   % % % % % %   %
+%   %         %   %
+%   % %     % %   %
+      %     %
+    %         %
+"""
 
 
-alien = [
-    [False, False, True , False, False, False, False, True , False, False],
-    [False, False, False, True , False, False, True , False, False, False],
-    [False, False, True , True , True , True , True , True , False, False],
-    [False, True , True , False, True , True , False, True , True , False],
-    [True , True , True , True , True , True , True , True , True , True ],
-    [True , False, True , True , True , True , True , True , False, True ],
-    [True , False, True , False, False, False, False, True , False, True ],
-    [True , False, True , True , False, False, True , True , False, True ],
-    [False, False, False, True , False, False, True , False, False, False],
-    [False, False, True , False, False, False, False, True , False, False],
-]
+alien = []
+for line in alien_str.splitlines()[1:]:  # skip first linebreak
+    if not line:
+        continue
+    if len(line) < 20:
+        line += (20 - len(line))*' '
+    alien.append([line[i:i + 2] == '% ' for i in range(0, len(line), 2)])
+
 
 ###############################################################################
 # Define function to draw pixels
