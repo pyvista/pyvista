@@ -686,6 +686,12 @@ class STLReader(BaseReader):
 class VTKDataSetReader(BaseReader):
     """VTK Data Set Reader for .vtk files.
     
+    Notes
+    -----
+    This reader calls `ReadAllScalarsOn`, `ReadAllColorScalarsOn`,
+    `ReadAllNormalsOn`, `ReadAllTCoordsOn`, `ReadAllVectorsOn`,
+    and `ReadAllFieldsOn` on the underlying `vtkDataSetReader`.
+
     Examples
     --------
     >>> import pyvista
@@ -701,6 +707,18 @@ class VTKDataSetReader(BaseReader):
     """
 
     _class_reader = _vtk.vtkDataSetReader
+
+    def __init__(self, filename):
+        """Initialize VTKDataSetReader with filename."""
+        super().__init__(filename)
+        # Provide consistency with defaults in pyvista.read
+        self.reader.ReadAllScalarsOn()
+        self.reader.ReadAllColorScalarsOn()
+        self.reader.ReadAllNormalsOn()
+        self.reader.ReadAllTCoordsOn()
+        self.reader.ReadAllVectorsOn()
+        self.reader.ReadAllFieldsOn()
+        self.reader.ReadAllTensorsOn()
 
 
 class VTKPDataSetReader(BaseReader):
