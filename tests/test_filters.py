@@ -1657,3 +1657,8 @@ def test_reconstruct_surface(sphere):
     pc = pyvista.wrap(sphere.points)
     surf = pc.reconstruct_surface(nbr_sz=10, sample_spacing=50)
     assert surf.is_all_triangles
+
+
+def test_is_manifold(sphere, plane):
+    assert sphere.is_manifold
+    assert not plane.is_manifold
