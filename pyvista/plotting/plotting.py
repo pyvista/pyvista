@@ -1416,7 +1416,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  reset_camera=None, scalar_bar_args=None, show_scalar_bar=None,
                  multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=None, render_lines_as_tubes=False,
-                 smooth_shading=None, ambient=0.0, diffuse=1.0, specular=0.0,
+                 smooth_shading=None, split_sharp_edges=False,
+                 ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
                  culling=None, rgb=None, categories=False, silhouette=False,
                  use_transparency=False, below_color=None, above_color=None,
@@ -1562,10 +1563,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the width with ``line_width``.
 
         smooth_shading : bool, optional
-            Enable smooth shading when ``True`` using either the 
+            Enable smooth shading when ``True`` using either the
             Gouraud or Phong shading algorithm.  When ``False``, use
-            flat shading.
-            Automatically enabled when ``pbr=True``.
+            flat shading.  Automatically enabled when ``pbr=True``.
+            See :ref:`shading_example`.
+
+        split_sharp_edges : bool, optional
+            Split sharp edges exceeding 30 degrees when plotting with
+            smooth shading.  Control the angle with the optional
+            keyword argument ``feature_angle``.  By default this is
+            ``False``.  Note that enabling this will create a copy of
+            the input mesh within the plotter.  See
+            :ref:`shading_example`.
 
         ambient : float, optional
             When lighting is enabled, this is the amount of light in
@@ -1789,6 +1798,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling = 'backface'
 
         rgb = kwargs.pop('rgba', rgb)
+        feature_angle = kwargs.pop('feature_angle', 30)
 
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
@@ -1907,13 +1917,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not isinstance(mesh, pyvista.PolyData):
                 grid = mesh
                 mesh = grid.extract_surface()
-                ind = mesh.point_data['vtkOriginalPointIds']
                 # remap scalars
-                if isinstance(scalars, np.ndarray):
-                    scalars = scalars[ind]
+                if scalars is not None:
+                    ind = mesh.point_data['vtkOriginalPointIds']
+                    scalars = np.asarray(scalars[ind])
             if texture:
                 _tcoords = mesh.active_t_coords
-            mesh.compute_normals(cell_normals=False, inplace=True)
+
+            if split_sharp_edges:
+                mesh = mesh.compute_normals(
+                    cell_normals=False,
+                    split_vertices=True,
+                    feature_angle=feature_angle,
+                )
+                if scalars is not None:
+                    ind = mesh.point_data['vtkOriginalPointIds']
+                    scalars = np.asarray(scalars)[ind]
+            else:
+                mesh.compute_normals(cell_normals=False, inplace=True)
+
             if texture:
                 mesh.active_t_coords = _tcoords
 

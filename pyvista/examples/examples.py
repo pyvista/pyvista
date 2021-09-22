@@ -9,7 +9,6 @@ Examples
 """
 
 import os
-import time
 
 import numpy as np
 
@@ -371,3 +370,23 @@ def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
 
     grid = pyvista.ExplicitStructuredGrid(dims, corners)
     return grid
+
+
+def load_nut():
+    """Load an example nut mesh.
+
+    Returns
+    -------
+    pyvista.PolyData
+        A sample nut surface dataset.
+
+    Examples
+    --------
+    Load an example nut and plot with smooth shading.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.load_nut()
+    >>> mesh.plot(smooth_shading=True, split_sharp_edges=True)
+
+    """
+    return pyvista.read(os.path.join(dir_path, 'nut.ply'))
