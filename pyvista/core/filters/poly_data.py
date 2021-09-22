@@ -2789,24 +2789,3 @@ class PolyDataFilters(DataSetFilters):
             output.cell_data.GetAbstractArray(0).SetName('collision_rgba')
 
         return output, alg.GetNumberOfContacts()
-
-    @property
-    def is_manifold(self) -> bool:
-        """Return if the mesh is manifold (no open edges).
-
-        Examples
-        --------
-        Show a sphere is manifold.
-
-        >>> import pyvista
-        >>> pyvista.Sphere().is_manifold
-        True
-
-        Show a plane is not manifold.
-
-        >>> pyvista.Plane().is_manifold
-        False
-
-        """
-        out = self.extract_feature_edges(manifold_edges=False, feature_edges=False)
-        return out.n_cells == 0

@@ -846,6 +846,26 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         alg.Update()
         return alg.GetOutput().GetNumberOfCells()
 
+    @property
+    def is_manifold(self) -> bool:
+        """Return if the mesh is manifold (no open edges).
+
+        Examples
+        --------
+        Show a sphere is manifold.
+
+        >>> import pyvista
+        >>> pyvista.Sphere().is_manifold
+        True
+
+        Show a plane is not manifold.
+
+        >>> pyvista.Plane().is_manifold
+        False
+
+        """
+        return self.n_open_edges == 0
+
     def __del__(self):
         """Delete the object."""
         if hasattr(self, '_obbTree'):
