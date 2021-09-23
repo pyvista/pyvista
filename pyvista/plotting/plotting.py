@@ -1875,31 +1875,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         ##### Plot a single PyVista mesh #####
 
-        silhouette_params = self._theme.silhouette.to_dict()
-        if isinstance(silhouette, dict):
-            silhouette_params.update(silhouette)
-            silhouette = True
         if silhouette:
-            if not isinstance(mesh, pyvista.PolyData):
-                raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
-            if isinstance(silhouette_params["decimate"], float):
-                silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
-            else:
-                silhouette_mesh = mesh
-            alg = _vtk.vtkPolyDataSilhouette()
-            alg.SetInputData(silhouette_mesh)
-            alg.SetCamera(self.renderer.camera)
-            if silhouette_params["feature_angle"] is not None:
-                alg.SetEnableFeatureAngle(True)
-                alg.SetFeatureAngle(silhouette_params["feature_angle"])
-            else:
-                alg.SetEnableFeatureAngle(False)
-            mapper = make_mapper(_vtk.vtkDataSetMapper)
-            mapper.SetInputConnection(alg.GetOutputPort())
-            _, prop = self.add_actor(mapper)
-            prop.SetColor(parse_color(silhouette_params["color"]))
-            prop.SetOpacity(silhouette_params["opacity"])
-            prop.SetLineWidth(silhouette_params["line_width"])
+            self.add_silhouette(mesh, silhouette)
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2691,6 +2668,35 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.add_scalar_bar(**scalar_bar_args)
 
         self.renderer.Modified()
+
+        return actor
+
+    def add_silhouette(self, mesh, silhouette_dict=dict()):
+        silhouette_params = self._theme.silhouette.to_dict()
+        # silhouette can also be True/False from add_mesh
+        if isinstance(silhouette_dict, dict):
+            silhouette_params.update(silhouette_dict)
+
+        if not isinstance(mesh, pyvista.PolyData):
+            raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
+        if isinstance(silhouette_params["decimate"], float):
+            silhouette_mesh = mesh.decimate(silhouette_params["decimate"])
+        else:
+            silhouette_mesh = mesh
+        alg = _vtk.vtkPolyDataSilhouette()
+        alg.SetInputData(silhouette_mesh)
+        alg.SetCamera(self.renderer.camera)
+        if silhouette_params["feature_angle"] is not None:
+            alg.SetEnableFeatureAngle(True)
+            alg.SetFeatureAngle(silhouette_params["feature_angle"])
+        else:
+            alg.SetEnableFeatureAngle(False)
+        mapper = make_mapper(_vtk.vtkDataSetMapper)
+        mapper.SetInputConnection(alg.GetOutputPort())
+        actor, prop = self.add_actor(mapper)
+        prop.SetColor(parse_color(silhouette_params["color"]))
+        prop.SetOpacity(silhouette_params["opacity"])
+        prop.SetLineWidth(silhouette_params["line_width"])
 
         return actor
 
