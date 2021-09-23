@@ -2693,6 +2693,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                   exceeding that angle in degrees.
                 * ``decimate``: ``float`` between 0 and 1, level of decimation
 
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the silhouette.
+
         Examples
         --------
         >>> import pyvista
