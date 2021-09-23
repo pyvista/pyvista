@@ -12,14 +12,6 @@ from .colors import get_cmap_safe
 from ._plotting import _has_matplotlib
 
 
-def _has_matplotlib():
-    try:
-        import matplotlib
-        return True
-    except ImportError:  # pragma: no cover
-        return False
-
-
 def make_mapper(mapper_class):
     """Wrap a mapper.
 
