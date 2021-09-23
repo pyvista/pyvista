@@ -1876,7 +1876,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ##### Plot a single PyVista mesh #####
 
         if silhouette:
-            self.add_silhouette(mesh, silhouette)
+            if isinstance(silhouette, dict):
+                self.add_silhouette(mesh, silhouette)
+            else:
+                self.add_silhouette(mesh)
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -2679,6 +2682,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mesh : pyvista.PolyData
 
         params : dict, optional
+                * If not supplied, the default theme values will be used.
                 * ``color``: ``str`` or 3-item ``list``, color of the silhouette
                 * ``line_width``: ``float``, edge width
                 * ``opacity``: ``float`` between 0 and 1, edge transparency
@@ -2705,8 +2709,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         silhouette_params = self._theme.silhouette.to_dict()
-        # silhouette can also be True/False from add_mesh
-        if isinstance(params, dict):
+        if params:
             silhouette_params.update(params)
 
         if not is_pyvista_dataset(mesh):
