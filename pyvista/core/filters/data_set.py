@@ -4377,6 +4377,19 @@ class DataSetFilters:
         if inplace:
             self.overwrite(res)
             return self
+
+        # The output from the transform filter contains a shallow copy
+        # of the cell array.  We need to perform a deep copy so the
+        # transformed array is a deep copy
+        carr = _vtk.vtkCellArray()
+        if hasattr(self, 'GetPolys'):
+            carr.DeepCopy(self.GetPolys())
+            res.SetPolys(carr)
+        elif hasattr(self, 'GetCells'):
+            carr.DeepCopy(self.GetCells())
+            celltypes = _vtk.numpy_to_vtk(self.celltypes, deep=True)
+            res.SetCells(celltypes, carr)
+
         return res
 
     def reflect(self, normal, point=None, inplace=False,

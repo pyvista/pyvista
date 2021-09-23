@@ -21,7 +21,7 @@ from .dataset import DataSet
 from .filters import (PolyDataFilters, UnstructuredGridFilters,
                       StructuredGridFilters, _get_output)
 from ..utilities.fileio import get_ext
-from .errors import DeprecationError
+from .errors import DeprecationError, VTKVersionError
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
