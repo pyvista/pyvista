@@ -4295,7 +4295,9 @@ class DataSetFilters:
         Returns
         -------
         pyvista.DataSet
-            Transformed dataset.  Return type matches input.
+            Transformed dataset.  Return type matches input unless
+            input dataset is a :class:`pyvista.UniformGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         Examples
         --------
@@ -4317,6 +4319,9 @@ class DataSetFilters:
         >>> transformed.plot(show_edges=True)
 
         """
+        if inplace and isinstance(self, pyvista.Grid):
+            raise TypeError(f'Cannot transform a {self.__class__} inplace')
+
         if isinstance(trans, _vtk.vtkMatrix4x4):
             m = trans
             t = _vtk.vtkTransform()
@@ -4357,8 +4362,10 @@ class DataSetFilters:
         if hasattr(f, 'SetTransformAllInputVectors'):
             f.SetTransformAllInputVectors(transform_all_input_vectors)
         else:
-            # In VTK 8.1.2 and earlier, vtkTransformFilter does not support the transformation of all input vectors.
-            # Raise an error if the user requested for input vectors to be transformed and it is not supported
+            # In VTK 8.1.2 and earlier, vtkTransformFilter does not
+            # support the transformation of all input vectors.
+            # Raise an error if the user requested for input vectors
+            # to be transformed and it is not supported
             if transform_all_input_vectors:
                 raise VTKVersionError('The installed version of VTK does not support '
                                       'transformation of all input vectors.')
@@ -4379,18 +4386,14 @@ class DataSetFilters:
             return self
 
         # The output from the transform filter contains a shallow copy
-        # of the cell array.  We need to perform a deep copy so the
-        # transformed array is a deep copy
-        carr = _vtk.vtkCellArray()
-        if hasattr(self, 'GetPolys'):
-            carr.DeepCopy(self.GetPolys())
-            res.SetPolys(carr)
-        elif hasattr(self, 'GetCells'):
-            carr.DeepCopy(self.GetCells())
-            celltypes = _vtk.numpy_to_vtk(self.celltypes, deep=True)
-            res.SetCells(celltypes, carr)
-
-        return res
+        # of the original dataset except for the point arrays.  Here
+        # we perform a copy so the two are completely unlinked.
+        if isinstance(self, pyvista.Grid):
+            output = pyvista.StructuredGrid()
+        else:
+            output = self.__class__()
+        output.overwrite(res)
+        return output
 
     def reflect(self, normal, point=None, inplace=False,
                 transform_all_input_vectors=False, progress_bar=False):
