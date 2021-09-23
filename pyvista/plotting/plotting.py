@@ -2677,6 +2677,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_silhouette(self, mesh, params=None):
         """Add a silhouette of a PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
+        A silhouette can also be generated directly in
+        :func:`pyvista.BasePlotter.add_mesh`.  See also :ref:`silhouette_example`.
+
         Parameters
         ----------
         mesh : pyvista.PolyData
@@ -2701,11 +2704,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     params={'color': 'red', 'line_width': 8.0})
         >>> plotter.view_xy()
         >>> plotter.show()
-
-        See Also
-        --------
-        A silhouette can also be generated directly in
-        :func:`pyvista.BasePlotter.add_mesh`.  See :ref:`silhouette_example`
 
         """
         silhouette_params = self._theme.silhouette.to_dict()
