@@ -2700,7 +2700,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         See Also
         --------
-        A silhouette can also be generated direclty in
+        A silhouette can also be generated directly in
         :func:`pyvista.BasePlotter.add_mesh`.  See :ref:`silhouette_example`
 
         """
