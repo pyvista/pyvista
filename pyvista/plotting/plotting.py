@@ -2671,11 +2671,43 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return actor
 
-    def add_silhouette(self, mesh, silhouette_dict=dict()):
+    def add_silhouette(self, mesh, params=None):
+        """Add a silhouette of a PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
+
+        Parameters
+        ----------
+        mesh : pyvista.PolyData
+
+        params : dict, optional
+                * ``color``: ``str`` or 3-item ``list``, color of the silhouette
+                * ``line_width``: ``float``, edge width
+                * ``opacity``: ``float`` between 0 and 1, edge transparency
+                * ``feature_angle``: If a ``float``, display sharp edges
+                  exceeding that angle in degrees.
+                * ``decimate``: ``float`` between 0 and 1, level of decimation
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> bunny = examples.download_bunny()
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(bunny, color='tan')
+        >>> _ = plotter.add_silhouette(bunny, 
+        ...     params={'color': 'red', 'line_width': 8.0})
+        >>> plotter.view_xy()
+        >>> plotter.show()
+
+        See Also
+        --------
+        A silhouette can also be generated direclty in
+        :func:`pyvista.BasePlotter.add_mesh`.  See :ref:`silhouette_example`
+
+        """
         silhouette_params = self._theme.silhouette.to_dict()
         # silhouette can also be True/False from add_mesh
-        if isinstance(silhouette_dict, dict):
-            silhouette_params.update(silhouette_dict)
+        if isinstance(params, dict):
+            silhouette_params.update(params)
 
         if not isinstance(mesh, pyvista.PolyData):
             raise TypeError(f"Expected type is `PolyData` but {type(mesh)} was given.")
