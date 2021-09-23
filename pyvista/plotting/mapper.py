@@ -68,7 +68,6 @@ def make_mapper(mapper_class):
                         flip_scalars, opacity, categories, n_colors,
                         clim, theme, show_scalar_bar):
             """Set the scalars on this mapper."""
-
             if cmap is None:  # Set default map if matplotlib is available
                 if _has_matplotlib():
                     cmap = theme.cmap

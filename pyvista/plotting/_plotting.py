@@ -78,6 +78,39 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
 
 
 def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparency):
+    """Process opacity.
+
+    This function accepts an opacity string or array and always
+    returns an array that can be applied to a dataset for plotting.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Dataset to process the opacity for.
+    opacity : str, numpy.ndarray
+        String or array.  If string, must be a cell or point data array.
+        preference : str, optional
+            When ``mesh.n_points == mesh.n_cells``, this parameter
+            sets how the scalars will be mapped to the mesh.  Default
+            ``'points'``, causes the scalars will be associated with
+            the mesh points.  Can be either ``'points'`` or
+            ``'cells'``.
+    n_colors : int, optional
+        Number of colors to use when displaying the opacity.
+    scalars : numpy.ndarray, optional
+        Dataset scalars.
+    use_transparency : bool, optional
+        Invert the opacity mappings and make the values correspond
+        to transparency.
+
+    Returns
+    -------
+    _custom_opac : bool
+        If using custom opacity.
+    opacity : numpy.ndarray
+        Array containing the opacity.
+
+    """
     _custom_opac = False
     if isinstance(opacity, str):
         try:
