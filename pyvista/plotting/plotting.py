@@ -2683,6 +2683,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         mesh : pyvista.PolyData
+            Mesh for generating silhouette to plot.
 
         params : dict, optional
                 * If not supplied, the default theme values will be used.
