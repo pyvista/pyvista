@@ -1925,7 +1925,7 @@ class PolyDataFilters(DataSetFilters):
         return plotter.show()
 
     def plot_normals(self, show_mesh=True, mag=1.0, flip=False,
-                     use_every=1, color=None, **kwargs):
+                     use_every=1, faces=False, color=None, **kwargs):
         """Plot the point normals of a mesh.
 
         Parameters
@@ -1945,6 +1945,9 @@ class PolyDataFilters(DataSetFilters):
             displayed.  Display every 10th normal by setting this
             parameter to 10.
 
+        faces : bool, optional
+            Plot face normals instead of the default point normals.
+
         color : str, optional
             Color of the arrows.  Defaults to
             :attr:`pyvista.themes.DefaultTheme.edge_color`.
@@ -1961,11 +1964,17 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Plot the normals of a sphere.
+        Plot the point normals of a sphere.
 
         >>> import pyvista as pv
-        >>> sphere = pv.Sphere()
-        >>> sphere.plot_normals(mag=0.1)
+        >>> sphere = pv.Sphere(phi_resolution=10, theta_resolution=10)
+        >>> sphere.plot_normals(mag=0.1, show_edges=True)
+
+        Plot the face normals of a sphere.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(phi_resolution=10, theta_resolution=10)
+        >>> sphere.plot_normals(mag=0.1, faces=True, show_edges=True)
 
         """
         plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', None),
@@ -1976,11 +1985,19 @@ class PolyDataFilters(DataSetFilters):
         if color is None:
             color = pyvista.global_theme.edge_color
 
-        normals = self.point_normals
+        if faces:
+            centers = self.cell_centers().points[::use_every]
+            normals = self.cell_normals
+        else:
+            centers = self.points[::use_every]
+            normals = self.point_normals
+
         if flip:
             normals *= -1
-        plotter.add_arrows(self.points[::use_every], normals[::use_every],
+
+        plotter.add_arrows(centers, normals[::use_every],
                            mag=mag, color=color, show_scalar_bar=False)
+
         return plotter.show()
 
     def remove_points(self, remove, mode='any', keep_scalars=True, inplace=False):

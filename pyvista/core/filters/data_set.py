@@ -4418,8 +4418,10 @@ class DataSetFilters:
 
         """
         t = transformations.reflection(normal, point=point)
-        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors,
-                                 inplace=inplace, progress_bar=progress_bar)
+        return self.transform(
+            t, transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace, progress_bar=progress_bar
+        )
 
     def reconstruct_surface(self, nbr_sz=None, sample_spacing=None,
                             progress_bar=False):
