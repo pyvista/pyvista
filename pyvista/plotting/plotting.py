@@ -1734,6 +1734,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.camera_position='xy'
         >>> plotter.show()
 
+        Plot a plane with a constant color and vary its opacity by point.
+
+        >>> plane = pyvista.Plane()
+        >>> plane.plot(color='b', opacity=np.linspace(0, 1, plane.n_points),
+        ...            show_edges=True)
+
         """
         self.mapper = make_mapper(_vtk.vtkDataSetMapper)
 
@@ -1980,7 +1986,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mesh.set_active_scalars(None)
 
         # Handle making opacity array
-        _custom_opac, opacity = process_opacity(
+        custom_opac, opacity = process_opacity(
             mesh, opacity, preference, n_colors, scalars, use_transparency
         )
 
@@ -1989,9 +1995,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             show_scalar_bar, n_colors, clim = self.mapper.set_scalars(
                 mesh, scalars, scalar_bar_args, rgb,
                 component, preference, interpolate_before_map,
-                _custom_opac, annotations, log_scale, nan_color, above_color,
+                custom_opac, annotations, log_scale, nan_color, above_color,
                 below_color, cmap, flip_scalars, opacity, categories, n_colors,
                 clim, self._theme, show_scalar_bar,
+            )
+        elif custom_opac:  # no scalars but custom opacity
+            self.mapper.set_custom_opacity(
+                opacity, color, mesh, n_colors, preference,
+                interpolate_before_map, rgb, self._theme,
             )
         else:
             self.mapper.SetScalarModeToUseFieldData()

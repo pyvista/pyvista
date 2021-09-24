@@ -1483,6 +1483,14 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     p.show(before_close_callback=verify_cache_image)
 
 
+def test_opacity_by_array_direct(plane):
+    # test with opacity parm as an array
+    pl = pyvista.Plotter()
+    pl.add_mesh(plane, color='b', opacity=np.linspace(0, 1, plane.n_points),
+                show_edges=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_opacity_by_array(uniform):
     # Test with opacity array
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -1989,4 +1997,3 @@ def test_splitting():
     # feature angle of 50 will smooth the outer edges of the nut but not the inner.
     nut.plot(smooth_shading=True, split_sharp_edges=True, feature_angle=50,
              before_close_callback=verify_cache_image)
-

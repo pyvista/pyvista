@@ -45,34 +45,44 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         Always a surface as we need to compute point normals.
 
     """
-    # extract surface if mesh is exterior
-    if not isinstance(mesh, pyvista.PolyData):
-        grid = mesh
-        mesh = grid.extract_surface()
-        # remap scalars
-        if scalars is not None:
-            ind = mesh.point_data['vtkOriginalPointIds']
-            scalars = np.asarray(scalars[ind])
+    is_polydata = isinstance(mesh, pyvista.PolyData)
+    indices_array = None
+
+    # extract surface if not already a surface
+    if not is_polydata:
+        mesh = mesh.extract_surface()
+        indices_array = 'vtkOriginalPointIds'
+
     if texture:
-        _tcoords = mesh.active_t_coords
+        tcoords = mesh.active_t_coords
 
     if split_sharp_edges:
-        # we must track the original IDs
-        indices = np.arange(mesh.n_points, dtype=np.int32)
-        mesh.point_data['__orig_ids__'] = indices
+        if is_polydata:
+            # we must track the original IDs with our own array
+            indices_array = '__orig_ids__'
+            mesh.point_data[indices_array] = np.arange(mesh.n_points, dtype=np.int32)
         mesh = mesh.compute_normals(
             cell_normals=False,
             split_vertices=True,
             feature_angle=feature_angle,
         )
-        if scalars is not None:
-            ind = mesh.point_data['__orig_ids__']
-            scalars = np.asarray(scalars)[ind]
     else:
+        # if mesh.point_data.active_normals is None:
         mesh.compute_normals(cell_normals=False, inplace=True)
 
+    if scalars is not None and indices_array is not None:
+        ind = mesh.point_data[indices_array]
+        scalars = np.asarray(scalars)[ind]
+
     if texture:
-        mesh.active_t_coords = _tcoords
+        if indices_array is not None:
+            ind = mesh.point_data[indices_array]
+            tcoords = tcoords[ind]
+        mesh.active_t_coords = tcoords
+
+    # remove temporary indices array
+    if indices_array == '__orig_ids__':
+        del mesh.point_data['__orig_ids__']
 
     return mesh, scalars
 
@@ -133,7 +143,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
                 )
     elif isinstance(opacity, (np.ndarray, list, tuple)):
         opacity = np.array(opacity)
-        if scalars.shape[0] == opacity.shape[0]:
+        if opacity.shape[0] in [mesh.n_cells, mesh.n_points]:
             # User could pass an array of opacities for every point/cell
             _custom_opac = True
         else:
