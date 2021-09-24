@@ -2675,10 +2675,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return actor
 
     def add_silhouette(self, mesh, params=None):
-        """Add a silhouette of a PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
+        """Add a silhouette of a PyVista or VTK dataset to the scene.
 
         A silhouette can also be generated directly in
-        :func:`pyvista.BasePlotter.add_mesh`.  See also :ref:`silhouette_example`.
+        :func:`add_mesh <pyvista.Plotter.add_mesh>`. See also
+        :ref:`silhouette_example`.
 
         Parameters
         ----------
@@ -2686,13 +2687,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Mesh for generating silhouette to plot.
 
         params : dict, optional
-                * If not supplied, the default theme values will be used.
-                * ``color``: ``str`` or 3-item ``list``, color of the silhouette
-                * ``line_width``: ``float``, edge width
-                * ``opacity``: ``float`` between 0 and 1, edge transparency
-                * ``feature_angle``: If a ``float``, display sharp edges
-                  exceeding that angle in degrees.
-                * ``decimate``: ``float`` between 0 and 1, level of decimation
+
+            * If not supplied, the default theme values will be used.
+            * ``color``: ``str`` or 3-item ``list``, color of the silhouette
+            * ``line_width``: ``float``, edge width
+            * ``opacity``: ``float`` between 0 and 1, edge transparency
+            * ``feature_angle``: If a ``float``, display sharp edges
+              exceeding that angle in degrees.
+            * ``decimate``: ``float`` between 0 and 1, level of decimation
 
         Returns
         -------
@@ -2706,7 +2708,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> bunny = examples.download_bunny()
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(bunny, color='tan')
-        >>> _ = plotter.add_silhouette(bunny, 
+        >>> _ = plotter.add_silhouette(bunny,
         ...     params={'color': 'red', 'line_width': 8.0})
         >>> plotter.view_xy()
         >>> plotter.show()
