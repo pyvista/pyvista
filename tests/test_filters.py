@@ -1444,10 +1444,10 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
         tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
-            dataset.cell_data['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+            dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
 
         for i in range(num_point_data):
-            dataset.point_data['P%d' % i] = np.random.rand(dataset.n_points, 3)
+            dataset.point_data[f'P{i}'] = np.random.rand(dataset.n_points, 3)
 
         # deactivate any active vectors!
         # even if transform_all_input_vectors is False, vtkTransformfilter will
@@ -1466,6 +1466,18 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
 
         for name, array in dataset.cell_data.items():
             assert transformed.cell_data[name] == pytest.approx(array)
+
+        # verify that the cell connectivity is a deep copy
+        if hasattr(dataset, '_connectivity_array') and VTK9:
+            transformed._connectivity_array[0] += 1
+            assert not np.array_equal(
+                dataset._connectivity_array, transformed._connectivity_array
+            )
+        if hasattr(dataset, 'cell_connectivity') and VTK9:
+            transformed.cell_connectivity[0] += 1
+            assert not np.array_equal(
+                dataset.cell_connectivity, transformed.cell_connectivity
+            )
 
 
 @pytest.mark.parametrize('num_cell_arrays,num_point_data',
