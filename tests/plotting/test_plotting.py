@@ -569,6 +569,25 @@ def test_plot_silhouette(tri_cylinder):
     plotter.show(before_close_callback=verify_cache_image)
 
 
+def test_plot_silhouette_method(tri_cylinder):
+    plotter = pyvista.Plotter()
+
+    plotter.add_mesh(tri_cylinder)
+    actors = list(plotter.renderer.GetActors())
+    assert len(actors) == 1  # cylinder
+
+    plotter.add_silhouette(tri_cylinder)
+    actors = list(plotter.renderer.GetActors())
+    assert len(actors) == 2 # cylinder + silhouette
+
+    actor = actors[1]  # get silhouette actor
+    props = actor.GetProperty()
+    assert props.GetColor() == pyvista.parse_color(pyvista.global_theme.silhouette.color)
+    assert props.GetOpacity() == pyvista.global_theme.silhouette.opacity
+    assert props.GetLineWidth() == pyvista.global_theme.silhouette.line_width
+    plotter.show(before_close_callback=verify_cache_image)
+
+
 def test_plot_silhouette_options(tri_cylinder):
     # cover other properties
     plotter = pyvista.Plotter()
