@@ -38,9 +38,11 @@ jobs:
           restore-keys: |
             Python-${{ runner.os }}-${{ matrix.python-version }}
 
+      - name: Install OS packages
+        run: sudo apt-get install libosmesa6-dev libgl1-mesa-dev libgl1-mesa-glx
+
       - name: Install OSMesa VTK
         run: |
-          sudo apt-get install libosmesa6-dev libgl1-mesa-dev
           wget -O vtk-osmesa-9.0.1-cp38-cp38-linux_x86_64.whl https://github.com/pyvista/pyvista-wheels/blob/main/vtk-osmesa-9.0.1-cp38-cp38-linux_x86_64.whl?raw=true
           pip install vtk-osmesa*.whl
 
@@ -49,22 +51,21 @@ jobs:
           pip install wheel
           python setup.py bdist_wheel
           pip install dist/pyvista*.whl
+          python -c "import pyvista; print(pyvista.Report())" 
 
       - name: Install Testing Requirements
         run: |
-          sudo apt-get install libgl1-mesa-glx xvfb python-tk -y
           pip install -r requirements_test.txt
           pip install pytest-azurepipelines
 
       - name: Software Report
         run: |
-          xvfb-run python -c "import pyvista; print(pyvista.Report())"
           which python
           pip list
 
       - name: Unit Testing
         run: |
-          xvfb-run pytest -v --cov pyvista --cov-report html
+          pytest -v --cov pyvista --cov-report html
 
       - name: Upload coverage to codecov.io
         if: matrix.python-version == '3.9'
