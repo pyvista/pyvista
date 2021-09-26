@@ -1472,6 +1472,7 @@ def test_plot_compare_four():
                               show_kwargs={'before_close_callback': verify_cache_image})
 
 
+@pytest.mark.skipif(pyvista.OSMESA, reason="No testing on OSMESA with depth peeling")
 def test_plot_depth_peeling():
     mesh = examples.load_airplane()
     p = pyvista.Plotter()
