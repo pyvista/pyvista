@@ -12,6 +12,9 @@ vtkConeSource
 vtkDiskSource
 vtkRegularPolygonSource
 vtkPyramid
+vtkPlatonicSolidSource
+
+as well as some pure-python helpers.
 
 """
 import numpy as np
@@ -1128,3 +1131,192 @@ def Circle(radius=0.5, resolution=100):
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
     return pyvista.wrap(pyvista.PolyData(points, cells))
+
+
+def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
+    """Create a Platonic solid of a given size.
+
+    Parameters
+    ----------
+    kind : str or int, optional
+        The kind of Platonic solid to create. Either the name of the
+        polyhedron or an integer index:
+
+            * ``'tetrahedron'`` or ``0``
+            * ``'cube'`` or ``1``
+            * ``'octahedron'`` or ``2``
+            * ``'icosahedron'`` or ``3``
+            * ``'dodecahedron'`` or ``4``
+
+    radius : float, optional
+        The radius of the circumscribed sphere for the solid to create.
+
+    center : sequence, optional
+        Three-length sequence defining the center of the solid to create.
+
+    Returns
+    -------
+    pyvista.PolyData
+        One of the five Platonic solids. Cell scalars are defined that
+        assign integer labels to each face (with array name
+        ``"FaceIndex"``).
+
+    Examples
+    --------
+    Create and plot a dodecahedron
+    >>> import pyvista
+    >>> dodeca = pyvista.PlatonicSolid('dodecahedron')
+    >>> dodeca.plot(categories=True)
+
+    """
+    kinds = {
+        'tetrahedron': 0,
+        'cube': 1,
+        'octahedron': 2,
+        'icosahedron': 3,
+        'dodecahedron': 4,
+    }
+    if isinstance(kind, str):
+        if kind not in kinds:
+            raise ValueError(f'Invalid Platonic solid kind "{kind}".')
+        kind = kinds[kind]
+    elif isinstance(kind, int) and kind not in range(5):
+        raise ValueError(f'Invalid Platonic solid index "{kind}".')
+    elif not isinstance(kind, int):
+        raise ValueError('Invalid Platonic solid index type '
+                         f'"{type(kind).__name__}".')
+    check_valid_vector(center, 'center')
+
+    solid = _vtk.vtkPlatonicSolidSource()
+    solid.SetSolidType(kind)
+    solid.Update()
+    solid = pyvista.wrap(solid.GetOutput())
+    solid.scale(radius)
+    solid.points += np.asanyarray(center) - solid.center
+    # rename and activate cell scalars
+    cell_data = solid.get_array(0)
+    solid.clear_data()
+    solid.cell_data['FaceIndex'] = cell_data
+    return solid
+
+
+def Tetrahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
+    """Create a tetrahedron of a given size.
+
+    A tetrahedron is composed of four congruent equilateral triangles.
+
+    Parameters
+    ----------
+    radius : float, optional
+        The radius of the circumscribed sphere for the tetrahedron.
+
+    center : sequence, optional
+        Three-length sequence defining the center of the tetrahedron.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh for the tetrahedron. Cell scalars are defined that assign
+        integer labels to each face (with array name ``"FaceIndex"``).
+
+    Examples
+    --------
+    Create and plot a tetrahedron
+    >>> import pyvista
+    >>> tetra = pyvista.Tetrahedron()
+    >>> tetra.plot(categories=True)
+
+    """
+    return PlatonicSolid(kind='tetrahedron', radius=radius, center=center)
+
+
+def Octahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
+    """Create an octahedron of a given size.
+
+    An octahedron is composed of eight congruent equilateral
+    triangles.
+
+    Parameters
+    ----------
+    radius : float, optional
+        The radius of the circumscribed sphere for the octahedron.
+
+    center : sequence, optional
+        Three-length sequence defining the center of the octahedron.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh for the octahedron. Cell scalars are defined that assign
+        integer labels to each face (with array name ``"FaceIndex"``).
+
+    Examples
+    --------
+    Create and plot an octahedron
+    >>> import pyvista
+    >>> tetra = pyvista.Octahedron()
+    >>> tetra.plot(categories=True)
+
+    """
+    return PlatonicSolid(kind='octahedron', radius=radius, center=center)
+
+
+def Dodecahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
+    """Create a dodecahedron of a given size.
+
+    A dodecahedron is composed of twelve congruent regular pentagons.
+
+    Parameters
+    ----------
+    radius : float, optional
+        The radius of the circumscribed sphere for the dodecahedron.
+
+    center : sequence, optional
+        Three-length sequence defining the center of the dodecahedron.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh for the dodecahedron. Cell scalars are defined that assign
+        integer labels to each face (with array name ``"FaceIndex"``).
+
+    Examples
+    --------
+    Create and plot a dodecahedron
+    >>> import pyvista
+    >>> tetra = pyvista.Dodecahedron()
+    >>> tetra.plot(categories=True)
+
+    """
+    return PlatonicSolid(kind='dodecahedron', radius=radius, center=center)
+
+
+def Icosahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
+    """Create an icosahedron of a given size.
+
+    An icosahedron is composed of twenty congruent equilateral
+    triangles.
+
+    Parameters
+    ----------
+    radius : float, optional
+        The radius of the circumscribed sphere for the icosahedron.
+
+    center : sequence, optional
+        Three-length sequence defining the center of the icosahedron.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh for the icosahedron. Cell scalars are defined that assign
+        integer labels to each face (with array name ``"FaceIndex"``).
+
+    Examples
+    --------
+    Create and plot an icosahedron
+    >>> import pyvista
+    >>> tetra = pyvista.Icosahedron()
+    >>> tetra.plot(categories=True)
+
+    """
+    return PlatonicSolid(kind='icosahedron', radius=radius, center=center)

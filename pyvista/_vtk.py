@@ -309,6 +309,7 @@ if VTK9:
                                               vtkDiskSource,
                                               vtkRegularPolygonSource,
                                               vtkPointSource,
+                                              vtkPlatonicSolidSource,
                                               vtkFrustumSource)
     from vtkmodules.vtkFiltersGeometry import (vtkGeometryFilter,
                                                vtkStructuredGridGeometryFilter,
