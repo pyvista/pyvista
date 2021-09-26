@@ -183,7 +183,6 @@ def get_gpu_info():
     """Get all information about the GPU."""
     # an OpenGL context MUST be opened before trying to do this.
     plotter = pyvista.Plotter(notebook=False, off_screen=True)
-    breakpoint()
     plotter.add_mesh(pyvista.Sphere())
     plotter.show(auto_close=False)
     gpu_info = plotter.ren_win.ReportCapabilities()
