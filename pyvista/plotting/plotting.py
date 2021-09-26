@@ -4651,7 +4651,11 @@ class Plotter(BasePlotter):
         self.renderers.shadow_renderer.SetLayer(current_layer + 1)
         self.renderers.shadow_renderer.SetInteractive(False)  # never needs to capture
 
-        if self.off_screen or pyvista.OSMESA:
+        # do not permit off screen rendering when using OSMESA
+        if pyvista.OSMESA:
+            self.ren_win.SetOffScreenRendering(0)
+            interactor = _vtk.vtkGenericRenderWindowInteractor()
+        elif self.off_screen:
             self.ren_win.SetOffScreenRendering(1)
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
