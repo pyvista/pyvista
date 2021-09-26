@@ -3917,7 +3917,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Plotter hasn't been rendered or was improperly closed
             raise RuntimeError('This plotter is closed and unable to save a screenshot.')
 
-        if self._first_time and not self.off_screen:
+        if self._first_time and not (self.off_screen or pyvista.OSMESA):
             raise RuntimeError("Nothing to screenshot - call .show first or "
                                "use the off_screen argument")
 
@@ -4602,7 +4602,7 @@ class Plotter(BasePlotter):
                 self.iren.terminate_app()
 
         # override when using OSMesa
-        if pyvista.OS_MESA:
+        if pyvista.OSMESA:
             off_screen = False
         elif off_screen is None:
             off_screen = pyvista.OFF_SCREEN
@@ -4614,7 +4614,7 @@ class Plotter(BasePlotter):
                 notebook = scooby.in_ipykernel()
 
         self.notebook = notebook
-        if self.notebook and not pyvista.OS_MESA:
+        if self.notebook and not pyvista.OSMESA:
             off_screen = True
         self.off_screen = off_screen
 
@@ -4651,7 +4651,7 @@ class Plotter(BasePlotter):
         self.renderers.shadow_renderer.SetLayer(current_layer + 1)
         self.renderers.shadow_renderer.SetInteractive(False)  # never needs to capture
 
-        if self.off_screen or pyvista.OS_MESA:
+        if self.off_screen or pyvista.OSMESA:
             self.ren_win.SetOffScreenRendering(1)
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when

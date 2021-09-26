@@ -956,11 +956,12 @@ def test_screenshot(tmpdir):
                              window_size=(w, h))
     assert img.shape == (h, w, 4)
 
-    # check error before first render
-    plotter = pyvista.Plotter(off_screen=False)
-    plotter.add_mesh(pyvista.Sphere())
-    with pytest.raises(RuntimeError):
-        plotter.screenshot()
+    # check error before first render if not OSMESA
+    if not pyvista.OSMESA:
+        plotter = pyvista.Plotter(off_screen=False)
+        plotter.add_mesh(pyvista.Sphere())
+        with pytest.raises(RuntimeError):
+            plotter.screenshot()
 
 
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)

@@ -44,6 +44,9 @@ def _system_supports_plotting():
         ``True`` when system supports plotting.
 
     """
+    if pyvista.OSMESA:
+        return True
+
     if os.environ.get('ALLOW_PLOTTING', '').lower() == 'true':
         return True
 

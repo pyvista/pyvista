@@ -12,7 +12,7 @@ from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
-from pyvista.utilities.misc import _get_vtk_id_type, _detect_os_mesa
+from pyvista.utilities.misc import _get_vtk_id_type, _detect_osmesa
 from pyvista import _vtk
 from pyvista.jupyter import set_jupyter_backend, PlotterITK
 from pyvista.themes import set_plot_theme, load_theme, _rcParams
@@ -105,4 +105,4 @@ send_errors_to_logging()
 FLOAT_FORMAT = "{:.3e}"
 
 # determine if VTK compiled with OSMesa
-OS_MESA = _detect_os_mesa()
+OSMESA = _detect_osmesa()

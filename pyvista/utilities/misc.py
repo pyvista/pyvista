@@ -19,7 +19,7 @@ class PyvistaDeprecationWarning(Warning):
     pass
 
 
-def _detect_os_mesa() -> bool:
+def _detect_osmesa() -> bool:
     """Determine VTK compiled with OSMesa.
 
     Returns
@@ -28,9 +28,9 @@ def _detect_os_mesa() -> bool:
         ``True`` when VTK compiled with OSMesa.
 
     """
-    from pyvista import Plotter
+    ren_win = _vtk.vtkRenderWindow()
     try:
         # expect vtkOSOpenGLRenderWindow
-        return 'vtkOSOpenGL' in Plotter().ren_win.__class__.__name__
+        return 'vtkOSOpenGL' in ren_win.__class__.__name__
     except:
         return False
