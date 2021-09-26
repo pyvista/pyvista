@@ -4654,6 +4654,7 @@ class Plotter(BasePlotter):
         # do not permit off screen rendering when using OSMESA
         if pyvista.OSMESA:
             self.ren_win.SetOffScreenRendering(0)
+            self.ren_win.SetShowWindow(False)
             interactor = _vtk.vtkGenericRenderWindowInteractor()
         elif self.off_screen:
             self.ren_win.SetOffScreenRendering(1)
