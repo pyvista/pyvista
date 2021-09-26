@@ -51,7 +51,7 @@ jobs:
           pip install wheel
           python setup.py bdist_wheel
           pip install dist/pyvista*.whl
-          python -c "import pyvista; print(pyvista.Report())" 
+          python -c "import pyvista; print(pyvista.Report(gpu=False))"
 
       - name: Install Testing Requirements
         run: |
