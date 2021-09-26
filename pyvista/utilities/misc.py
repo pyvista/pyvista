@@ -17,3 +17,20 @@ class PyvistaDeprecationWarning(Warning):
     """Non-supressed Depreciation Warning."""
 
     pass
+
+
+def _detect_os_mesa() -> bool:
+    """Determine VTK compiled with OSMesa.
+
+    Returns
+    -------
+    bool
+        ``True`` when VTK compiled with OSMesa.
+
+    """
+    from pyvista import Plotter
+    try:
+        # expect vtkOSOpenGLRenderWindow
+        return 'vtkOSOpenGL' in Plotter().ren_win.__class__.__name__
+    except:
+        return False

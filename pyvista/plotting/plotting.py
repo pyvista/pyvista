@@ -4601,7 +4601,10 @@ class Plotter(BasePlotter):
             if event_id == 'TimerEvent':
                 self.iren.terminate_app()
 
-        if off_screen is None:
+        # override when using OSMesa
+        if pyvista.OS_MESA:
+            off_screen = False
+        elif off_screen is None:
             off_screen = pyvista.OFF_SCREEN
 
         if notebook is None:
@@ -4611,7 +4614,7 @@ class Plotter(BasePlotter):
                 notebook = scooby.in_ipykernel()
 
         self.notebook = notebook
-        if self.notebook:
+        if self.notebook and not pyvista.OS_MESA:
             off_screen = True
         self.off_screen = off_screen
 
@@ -4648,7 +4651,7 @@ class Plotter(BasePlotter):
         self.renderers.shadow_renderer.SetLayer(current_layer + 1)
         self.renderers.shadow_renderer.SetInteractive(False)  # never needs to capture
 
-        if self.off_screen:
+        if self.off_screen or pyvista.OS_MESA:
             self.ren_win.SetOffScreenRendering(1)
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
