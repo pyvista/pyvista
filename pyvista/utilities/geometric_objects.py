@@ -1169,6 +1169,8 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     >>> dodeca = pyvista.PlatonicSolid('dodecahedron')
     >>> dodeca.plot(categories=True)
 
+    See :ref:`platonic_example` for more examples using this filter.
+
     """
     kinds = {
         'tetrahedron': 0,
@@ -1228,6 +1230,8 @@ def Tetrahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     >>> tetra = pyvista.Tetrahedron()
     >>> tetra.plot(categories=True)
 
+    See :ref:`platonic_example` for more examples using this filter.
+
     """
     return PlatonicSolid(kind='tetrahedron', radius=radius, center=center)
 
@@ -1260,6 +1264,8 @@ def Octahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     >>> tetra = pyvista.Octahedron()
     >>> tetra.plot(categories=True)
 
+    See :ref:`platonic_example` for more examples using this filter.
+
     """
     return PlatonicSolid(kind='octahedron', radius=radius, center=center)
 
@@ -1290,6 +1296,8 @@ def Dodecahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     >>> import pyvista
     >>> tetra = pyvista.Dodecahedron()
     >>> tetra.plot(categories=True)
+
+    See :ref:`platonic_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='dodecahedron', radius=radius, center=center)
@@ -1322,6 +1330,8 @@ def Icosahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     >>> import pyvista
     >>> tetra = pyvista.Icosahedron()
     >>> tetra.plot(categories=True)
+
+    See :ref:`platonic_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='icosahedron', radius=radius, center=center)

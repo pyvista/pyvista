@@ -4,7 +4,7 @@
 Platonic Solids
 ~~~~~~~~~~~~~~~
 
-PyVista wraps the ``vtk.vtkPlatonicSolid`` filter as
+PyVista wraps the ``vtk.vtkPlatonicSolidSource`` filter as
 :func:`pyvista.PlatonicSolid`.
 """
 import numpy as np
@@ -23,7 +23,7 @@ from pyvista import examples
 #
 # (:func:`PlatonicSolid() <pyvista.PlatonicSolid>` can also return a cube, but
 # PyVista's existing :func:`pyvista.Cube` helper isn't based on the
-# ``vtkPlatonicSolid`` filter.)
+# ``vtkPlatonicSolidSource`` filter.)
 #
 # Let's generate all the Platonic solids, along with the :func:`teapotahedron
 # <pyvista.examples.downloads.download_teapot>`.
