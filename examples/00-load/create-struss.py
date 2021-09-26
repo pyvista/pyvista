@@ -1,5 +1,5 @@
 """
-.. _ref_create_explicit_structured_grid:
+.. _create_truss:
 
 Plot Truss-like FEA Solution with Cylinders
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
