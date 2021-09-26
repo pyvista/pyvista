@@ -31,7 +31,7 @@ from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .renderer import Renderer, Camera
-from .tools import (opacity_transfer_function, parse_color,
+from .tools import (opacity_transfer_function, parse_color, normalize,
                     parse_font_family, FONTS)
 from .widgets import WidgetHelper
 from .scalar_bars import ScalarBars
@@ -1925,7 +1925,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Compute surface normals if using smooth shading
         if smooth_shading:
             mesh, scalars = prepare_smooth_shading(
-                mesh, scalars, texture, split_sharp_edges, feature_angle
+                mesh, scalars, texture, split_sharp_edges, feature_angle, preference
             )
 
         if mesh.n_points < 1:

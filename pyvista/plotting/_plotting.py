@@ -16,7 +16,8 @@ def _has_matplotlib():
         return False
 
 
-def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle):
+def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle,
+                           preference):
     """Prepare a dataset for smooth shading.
 
     VTK requires datasets with prong shading to have active normals.
@@ -38,6 +39,8 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         :ref:`shading_example`.
     feature_angle : float, optional
         Angle to consider an edge a sharp edge.
+    preference : str, optional
+        If the number of points is identical to the number of cells
 
     Returns
     -------
@@ -48,30 +51,49 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     is_polydata = isinstance(mesh, pyvista.PolyData)
     indices_array = None
 
+    has_scalars = scalars is not None
+    if has_scalars:
+        if (scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells):
+            use_points = preference == 'point'
+        else:
+            use_points = scalars.shape[0] == mesh.n_points
+
     # extract surface if not already a surface
     if not is_polydata:
-        mesh = mesh.extract_surface()
-        indices_array = 'vtkOriginalPointIds'
+        mesh = mesh.extract_surface(
+            pass_pointid=use_points or texture is not None,
+            pass_cellid=not use_points,
+        )
+        if use_points:
+            indices_array = 'vtkOriginalPointIds'
+        else:
+            indices_array = 'vtkOriginalCellIds'
 
     if texture:
         tcoords = mesh.active_t_coords
 
     if split_sharp_edges:
         if is_polydata:
-            # we must track the original IDs with our own array
-            indices_array = '__orig_ids__'
-            mesh.point_data[indices_array] = np.arange(mesh.n_points, dtype=np.int32)
+            if has_scalars:
+                # we must track the original IDs with our own array
+                indices_array = '__orig_ids__'
+                if use_points:
+                    arr_sz = mesh.n_points
+                else:
+                    arr_sz = mesh.n_cells
+                mesh.point_data[indices_array] = np.arange(arr_sz, dtype=np.int32)
         mesh = mesh.compute_normals(
             cell_normals=False,
             split_vertices=True,
             feature_angle=feature_angle,
         )
     else:
+        # consider checking if mesh contains active normals
         # if mesh.point_data.active_normals is None:
         mesh.compute_normals(cell_normals=False, inplace=True)
 
-    if scalars is not None and indices_array is not None:
-        ind = mesh.point_data[indices_array]
+    if has_scalars and indices_array is not None:
+        ind = mesh[indices_array]
         scalars = np.asarray(scalars)[ind]
 
     if texture:
