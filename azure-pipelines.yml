@@ -78,10 +78,6 @@ jobs:
   pool:
     vmImage: 'ubuntu-20.04'
 
-  variables:
-    DISPLAY: ':99.0'
-    PYVISTA_OFF_SCREEN: 'True'
-
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -98,13 +94,13 @@ jobs:
       GH_EMAIL: $(gh.email)
 
   - script: |
+      wget -O vtk-osmesa-9.0.1-cp38-cp38-linux_x86_64.whl https://github.com/pyvista/pyvista-wheels/blob/main/vtk-osmesa-9.0.1-cp38-cp38-linux_x86_64.whl?raw=true
+      pip install vtk-osmesa*.whl
+    displayName: Install OSMesa VTK
+
+  - script: |
       pip install -e .
     displayName: Install pyvista
-
-  - script: |      
-      .ci/setup_headless_display.sh
-      # python .ci/pyvista_test.py  # for debug
-    displayName: Install headless display
 
   - script: |
       sudo apt-get install python3-tk pandoc
