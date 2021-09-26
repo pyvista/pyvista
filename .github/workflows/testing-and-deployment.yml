@@ -11,122 +11,15 @@ on:
     branches:
       - main
 
+# python-version: ['3.6', '3.7', '3.8', '3.9']
 jobs:
-  macOS:
-    runs-on: macos-latest
-    name: Mac OS Unit Testing
-    strategy:
-      matrix:
-        python-version: ['3.7', '3.8']
-
-    env:
-      ALLOW_PLOTTING: true
-      SHELLOPTS: 'errexit:pipefail'
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - uses: actions/cache@v2
-        with:
-          path: ~/Library/Caches/pip
-          key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
-          restore-keys: |
-            Python-${{ runner.os }}-${{ matrix.python-version }}
-
-      - name: Install PyVista
-        run: |
-          pip install wheel
-          pip install -e .
-          python -c "import pyvista; print(pyvista.Report(gpu=False))"
-
-      - name: Install test dependencies
-        run: |
-          pip install -r requirements_test.txt
-
-      - name: Test Core API
-        run: |
-          pytest -v --ignore=tests/plotting
-
-      - name: Test Plotting
-        run: |
-          pytest -v tests/plotting
-
-
-  LinuxConda:
-    runs-on: ubuntu-latest
-    env:
-      CONDA_ALWAYS_YES: 1
-      VTK_VERSION: 8.2
-      conda_env: pyvista-vtk8.2
-      DISPLAY: ':99.0'
-      PYVISTA_OFF_SCREEN: True
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Install headless display
-        run: |
-          .ci/setup_headless_display.sh
-
-      - name: Cache Conda
-        uses: actions/cache@v1
-        with:
-          path: ~/anaconda3/pkgs
-          key: Conda-${{ runner.os }}-${{ hashFiles('environment.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-conda-
-
-      - name: Create Anaconda environment
-        run: |
-          source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda config --add channels conda-forge
-          conda config --set channel_priority strict
-          sed -i -e 's/- vtk$/- vtk= ${{ env.VTK_VERSION }} /' environment.yml
-          conda env create --quiet -n ${{ env.conda_env }} --file environment.yml
-          conda activate ${{ env.conda_env }}
-          conda list
-
-      - name: Install PyVista
-        run: |
-          source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
-          pip install -e .
-          which python
-          python -c "import pyvista; print(pyvista.Report(gpu=False))"
-
-      - name: Test Core API
-        continue-on-error: true
-        run: |
-          source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
-          pip install -r requirements_test.txt
-          pytest -v --ignore=tests/plotting
-
-      - name: Test Core Plotting
-        continue-on-error: true
-        run: |
-          source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
-          pytest -v tests/plotting --cov-report html
-
-      - name: Test Package Docstrings
-        continue-on-error: true
-        run: |
-          source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
-          pytest -v --doctest-modules pyvista
 
   Linux:
     name: Linux Unit Testing
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9']
+        python-version: ['3.8']
     env:
       SHELLOPTS: 'errexit:pipefail'
 
@@ -144,6 +37,11 @@ jobs:
           key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
           restore-keys: |
             Python-${{ runner.os }}-${{ matrix.python-version }}
+
+      - name: Install OSMesa Wheel
+        run: |
+          wget https://github.com/pyvista/pyvista-wheels/blob/main/vtk-osmesa-9.0.1-cp38-cp38-linux_x86_64.whl?raw=true
+          pip install vtk-osmesa*.whl
 
       - name: Build wheel and install pyvista
         run: |
