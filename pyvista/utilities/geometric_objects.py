@@ -1164,6 +1164,7 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     Examples
     --------
     Create and plot a dodecahedron
+
     >>> import pyvista
     >>> dodeca = pyvista.PlatonicSolid('dodecahedron')
     >>> dodeca.plot(categories=True)
@@ -1222,6 +1223,7 @@ def Tetrahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     Examples
     --------
     Create and plot a tetrahedron
+
     >>> import pyvista
     >>> tetra = pyvista.Tetrahedron()
     >>> tetra.plot(categories=True)
@@ -1253,6 +1255,7 @@ def Octahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     Examples
     --------
     Create and plot an octahedron
+
     >>> import pyvista
     >>> tetra = pyvista.Octahedron()
     >>> tetra.plot(categories=True)
@@ -1283,6 +1286,7 @@ def Dodecahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     Examples
     --------
     Create and plot a dodecahedron
+
     >>> import pyvista
     >>> tetra = pyvista.Dodecahedron()
     >>> tetra.plot(categories=True)
@@ -1314,6 +1318,7 @@ def Icosahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     Examples
     --------
     Create and plot an icosahedron
+
     >>> import pyvista
     >>> tetra = pyvista.Icosahedron()
     >>> tetra.plot(categories=True)
