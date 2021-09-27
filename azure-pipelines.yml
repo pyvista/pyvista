@@ -119,13 +119,13 @@ jobs:
 
   - task: Cache@2
     inputs:
-      key: 'PYVISTA_EXAMPLES_CACHE_OSMESA "$(PYVISTA_VERSION)"'
+      key: 'PYVISTA_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
       path: $(EXAMPLES_PATH)
     displayName: Build pyvista examples directory cache
 
   - task: Cache@2
     inputs:
-      key: 'PYVISTA_DOC_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
+      key: 'PYVISTA_DOC_EXAMPLES_CACHE_OMEGA | "$(PYVISTA_VERSION)"'
       path: '$(Build.SourcesDirectory)/doc/examples'
     displayName: Build pyvista doc examples cache
 
