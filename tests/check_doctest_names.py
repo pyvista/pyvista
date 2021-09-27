@@ -83,9 +83,9 @@ def discover_modules(entry=pyvista, recurse=True):
                 attr = getattr(entry, attr_short_name)
                 if not isinstance(attr, ModuleType):
                     continue
-        
+
                 module_name = attr.__name__
-        
+
                 if module_name.startswith(entry_name):
                     next_modules[module_name] = attr
 
