@@ -7,14 +7,14 @@ from pyvista import examples
 pyvista.OFF_SCREEN = True
 
 
-def validate_osmesa_behavior():
-    """Ensure that VTK with OSMESA ignores offscreen."""
-    assert pyvista.Plotter().ren_win.GetOffScreenRendering() == 0
+# def validate_osmesa_behavior():
+#     """Ensure that VTK with OSMESA ignores offscreen."""
+#     assert pyvista.Plotter().ren_win.GetOffScreenRendering() == 0
 
 
-# ensure that VTK with OSMESA ignores offscreen
-if pyvista.OSMESA:
-    validate_osmesa_behavior()
+# # ensure that VTK with OSMESA ignores offscreen
+# if pyvista.OSMESA:
+#     validate_osmesa_behavior()
 
 
 @fixture(scope='session')
