@@ -130,6 +130,24 @@ jobs:
     displayName: Build pyvista doc examples cache
 
   - script: |
+      python examples/01-filter/distance-between-surfaces.py
+      python -c "print('done with distance-between-surfaces.py')"
+      python examples/01-filter/extract-cells-inside-surface.py
+      python -c "print('done with extract-cells-inside-surface.py')"
+      python examples/01-filter/extract-edges.py
+      python -c "print('done with extract-edges.py')"
+      python examples/01-filter/extract-surface.py
+      python -c "print('done with extract-surface.py')"
+      python examples/01-filter/extrude-rotate.py
+      python -c "print('done with extrude-rotate.py')"
+      python examples/01-filter/gaussian-smoothing.py
+      python -c "print('done with gaussian-smoothing.py')"
+      python examples/01-filter/geodesic.py
+      python -c "print('done with geodesic.py')"
+      python examples/01-filter/glyphs.py
+      python -c "print('done with glyphs.py')"
+
+  - script: |
       make -C doc html SPHINXOPTS="-w build_errors.txt -N"
     displayName: 'Build documentation'
 
