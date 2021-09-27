@@ -95,7 +95,7 @@ jobs:
 
   - script: |
       sudo apt-get install libosmesa6-dev libgl1-mesa-dev libgl1-mesa-glx
-      wget -O vtk-osmesa-9.0.20210926.dev0-cp38-cp38-linux_x86_64.whl https://github.com/pyvista/pyvista-wheels/blob/main/vtk-osmesa-9.0.20210926.dev0-cp38-cp38-linux_x86_64.whl?raw=true
+      wget -O vtk-osmesa-9.0.1-cp38-cp38-linux_x86_64.whl https://github.com/pyvista/pyvista-wheels/blob/main/vtk-osmesa-9.0.1-cp38-cp38-linux_x86_64.whl?raw=true
       pip install vtk-osmesa*.whl
     displayName: Install OSMesa VTK
 
