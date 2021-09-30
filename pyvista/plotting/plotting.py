@@ -5016,8 +5016,36 @@ class Plotter(BasePlotter):
                              font_size=font_size, color=color, font=font,
                              shadow=shadow, name='title', viewport=False)
 
-    def add_cursor(self):
+    def add_cursor(
+        self,
+        bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+        focal_point=(0.0, 0.0, 0.0),
+        color=None,
+    ):
         """Add a cursor of a PyVista of VTK dataset to the scene.
+
+        Parameters
+        ----------
+        bounds : length 6 sequence
+            Specify the bounds in the format of:
+
+            - ``(xmin, xmax, ymin, ymax, zmin, zmax)``
+
+            Defaults to ``(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)``.
+
+        focal_point : list or tuple, optional
+            The focal point of the cursor.
+
+            Defaults to ``(0.0, 0.0, 0.0)``.
+
+        color : str or sequence, optional
+            Either a string, RGB sequence, or hex color string.  For one
+            of the following.
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         Returns
         -------
@@ -5035,13 +5063,13 @@ class Plotter(BasePlotter):
 
         """
         alg = _vtk.vtkCursor3D()
-        alg.SetModelBounds(-1, 1, -1, 1, -1, 1)
-        alg.SetFocalPoint(0, 0, 0)
+        alg.SetModelBounds(bounds)
+        alg.SetFocalPoint(focal_point)
         alg.AllOn()
         mapper = make_mapper(_vtk.vtkDataSetMapper)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop.SetColor(parse_color("White"))
+        prop.SetColor(parse_color(color))
 
         return actor
 
