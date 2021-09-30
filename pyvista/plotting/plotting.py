@@ -5016,6 +5016,34 @@ class Plotter(BasePlotter):
                              font_size=font_size, color=color, font=font,
                              shadow=shadow, name='title', viewport=False)
 
+    def add_cursor(self):
+        """Add a cursor of a PyVista of VTK dataset to the scene.
+
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the 2D cursor.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(sphere)
+        >>> _ = plotter.add_cursor()
+        >>> plotter.show()
+
+        """
+        alg = _vtk.vtkCursor3D()
+        alg.SetModelBounds(-1, 1, -1, 1, -1, 1)
+        alg.SetFocalPoint(0, 0, 0)
+        alg.AllOn()
+        mapper = make_mapper(_vtk.vtkDataSetMapper)
+        mapper.SetInputConnection(alg.GetOutputPort())
+        actor, prop = self.add_actor(mapper)
+        prop.SetColor(parse_color("White"))
+
+        return actor
 
 
 # Tracks created plotters.  At the end of the file as we need to
