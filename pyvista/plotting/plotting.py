@@ -5022,7 +5022,7 @@ class Plotter(BasePlotter):
         focal_point=(0.0, 0.0, 0.0),
         color=None,
     ):
-        """Add a cursor of a PyVista of VTK dataset to the scene.
+        """Add a cursor of a PyVista or VTK dataset to the scene.
 
         Parameters
         ----------

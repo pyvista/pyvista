@@ -2002,6 +2002,7 @@ def test_plot_zoom(sphere):
     # can't get the output with cpos or verify the image cache matches
     sphere.plot(zoom=2, before_close_callback=verify_cache_image)
 
+
 def test_add_cursor():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter()
