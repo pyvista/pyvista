@@ -206,6 +206,9 @@ def read_legacy(filename):
     reader.ReadAllNormalsOn()
     reader.ReadAllTCoordsOn()
     reader.ReadAllVectorsOn()
+    reader.ReadAllFieldsOn()
+    reader.ReadAllTensorsOn()
+
     # Perform the read
     output = standard_reader_routine(reader, None)
     if output is None:

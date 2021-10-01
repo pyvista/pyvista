@@ -573,6 +573,25 @@ def test_plot_silhouette(tri_cylinder):
     plotter.show(before_close_callback=verify_cache_image)
 
 
+def test_plot_silhouette_method(tri_cylinder):
+    plotter = pyvista.Plotter()
+
+    plotter.add_mesh(tri_cylinder)
+    actors = list(plotter.renderer.GetActors())
+    assert len(actors) == 1  # cylinder
+
+    plotter.add_silhouette(tri_cylinder)
+    actors = list(plotter.renderer.GetActors())
+    assert len(actors) == 2 # cylinder + silhouette
+
+    actor = actors[1]  # get silhouette actor
+    props = actor.GetProperty()
+    assert props.GetColor() == pyvista.parse_color(pyvista.global_theme.silhouette.color)
+    assert props.GetOpacity() == pyvista.global_theme.silhouette.opacity
+    assert props.GetLineWidth() == pyvista.global_theme.silhouette.line_width
+    plotter.show(before_close_callback=verify_cache_image)
+
+
 def test_plot_silhouette_options(tri_cylinder):
     # cover other properties
     plotter = pyvista.Plotter()
@@ -2025,3 +2044,11 @@ def test_plot_zoom(sphere):
     # it's difficult to verify that zoom actually worked since we
     # can't get the output with cpos or verify the image cache matches
     sphere.plot(zoom=2, before_close_callback=verify_cache_image)
+
+
+def test_add_cursor():
+    sphere = pyvista.Sphere()
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_cursor()
+    plotter.show(before_close_callback=verify_cache_image)

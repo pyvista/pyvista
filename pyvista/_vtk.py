@@ -274,6 +274,7 @@ if VTK9:
                                               vtkClipClosedSurface,
                                               vtkIntersectionPolyDataFilter,
                                               vtkCurvatures,
+                                              vtkCursor3D,
                                               vtkBoxClipDataSet,
                                               vtkWarpScalar,
                                               vtkWarpVector,
