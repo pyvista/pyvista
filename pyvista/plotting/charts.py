@@ -432,8 +432,9 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         Revert to automatic axis scaling.
 
         >>> chart.x_axis.behavior = "auto"
-        >>> print(chart.x_axis.range)
         >>> chart.show()
+        >>> print(chart.x_axis.range)
+        [0.0, 2.0]
 
         """
         return self._behavior
@@ -474,7 +475,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     def margin(self, val):
         # Second margin doesn't seem to have any effect? So we only expose the first entry as 'the margin'.
         m = self.GetMargins()
-        self.SetMargins(val, m)
+        self.SetMargins(val, m[1])
 
     @property
     def log_scale(self):
@@ -496,8 +497,9 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         Try to enable the log scale on the y-axis.
 
         >>> chart.y_axis.log_scale = True
-        >>> print(f"Enabling log scale {'succeeded' if chart.y_axis.log_scale else 'failed'}.")
         >>> chart.show()
+        >>> print(f"Enabling log scale {'succeeded' if chart.y_axis.log_scale else 'failed'}.")
+        Enabling log scale succeeded.
 
         """
         return self.GetLogScaleActive()
@@ -860,7 +862,7 @@ class _Chart(object):
         return self._scene.GetRenderer()
 
     def _render_event(self, *args, **kwargs):
-        """Called before every render."""
+        """This method will be called before every render."""
         self._resize()
 
     def _resize(self):
@@ -896,6 +898,7 @@ class _Chart(object):
     @property
     def size(self):
         """Return or set the chart size in normalized coordinates.
+
         A size of ``(1, 1)`` occupies the whole renderer.
 
         Examples
@@ -921,6 +924,7 @@ class _Chart(object):
     @property
     def loc(self):
         """Return or set the chart position in normalized coordinates.
+
         This denotes the location of the chart's bottom left corner.
 
         Examples
@@ -1224,15 +1228,6 @@ class _Chart(object):
 class _Plot(object):
     """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
 
-    MARKER_STYLES = {
-        "": _vtk.vtkPlotPoints.NONE,
-        "x": _vtk.vtkPlotPoints.CROSS,
-        "+": _vtk.vtkPlotPoints.PLUS,
-        "s": _vtk.vtkPlotPoints.SQUARE,
-        "o": _vtk.vtkPlotPoints.CIRCLE,
-        "d": _vtk.vtkPlotPoints.DIAMOND
-    }
-
     def __init__(self):
         super().__init__()
         self._pen = Pen()
@@ -1243,73 +1238,11 @@ class _Plot(object):
         if hasattr(self, "SetBrush"):
             self.SetBrush(self._brush)
 
-    @classmethod
-    def parse_format(cls, fmt):
-        """Parse a format string and separate it into a marker style, line style and color.
-
-        Parameters
-        ----------
-        fmt : str
-            Format string to parse. A format string consists of any combination of a valid marker
-            style, a valid line style and parsable color. The specific order does not matter. See
-            :attr:`pyvista.ScatterPlot2D.MARKER_STYLES` for a list of valid marker styles,
-            :attr:`pyvista.Pen.LINE_STYLES` for a list of valid line styles and
-            :func:`pyvista.parse_color` for an overview of parsable colors.
-
-        Returns
-        -------
-        marker_style : str
-            Extracted marker style (empty string if no marker style was present in the format string).
-
-        line_style : str
-            Extracted line style (empty string if no line style was present in the format string).
-
-        color : str
-            Extracted color string (defaults to ``"b"`` if no color was present in the format string).
-
-        Examples
-        --------
-        >>> m, l, c = pyvista._Plot.parse_format("x--b")
-
-        """
-        # TODO: add tests for different combinations/positions of marker, line and color
-        marker_style = ""
-        line_style = ""
-        color = None
-        last_fmt = None
-        while fmt != "" and last_fmt != fmt and (marker_style == "" or line_style == "" or color is None):
-            last_fmt = fmt
-            if marker_style == "":
-                # Marker style is not yet set, so look for it at the start of the format string
-                for style in cls.MARKER_STYLES.keys():
-                    if style != "" and fmt.startswith(style):
-                        # Loop over all styles such that - and -- can both be checked
-                        marker_style = style
-                fmt = fmt[len(marker_style):]  # Remove marker_style from format string
-            if line_style == "":
-                # Line style is not yet set, so look for it at the start of the format string
-                for style in Pen.LINE_STYLES.keys():
-                    if style != "" and fmt.startswith(style):
-                        line_style = style
-                fmt = fmt[len(line_style):]  # Remove line_style from format string
-            if color is None:
-                # Color is not yet set, so look for it in the remaining format string
-                for i in range(len(fmt), 0, -1):
-                    try:
-                        parse_color(fmt[:i])
-                        color = fmt[:i]
-                        fmt = fmt[i:]
-                        break
-                    except ValueError:
-                        pass
-        if color is None:
-            color = "b"
-        return marker_style, line_style, color
-
     @property
     def color(self):
-        """Return or set the plot's color. This is the color used
-        by the plot's pen and brush to draw lines and shapes.
+        """Return or set the plot's color.
+
+        This is the color used by the plot's pen and brush to draw lines and shapes.
 
         Examples
         --------
@@ -1380,6 +1313,7 @@ class _Plot(object):
     @property
     def line_width(self):
         """Return or set the line width of all lines drawn in this plot.
+
         This is equivalent to accessing/modifying the width of this plot's pen.
 
         Examples
@@ -1402,6 +1336,7 @@ class _Plot(object):
     @property
     def line_style(self):
         """Return or set the line style of all lines drawn in this plot.
+
         This is equivalent to accessing/modifying the style of this plot's pen.
 
         Examples
@@ -1494,8 +1429,10 @@ class _Plot(object):
 
 
 class _MultiCompPlot(_Plot):
-    """Common pythonic interface for vtkPlot instances with multiple components, such as BoxPlot, PiePlot, BarPlot and
-    StackPlot."""
+    """Common pythonic interface for vtkPlot instances with multiple components.
+
+    Example subclasses are BoxPlot, PiePlot, BarPlot and StackPlot.
+    """
 
     COLOR_SCHEMES = {
         "spectrum": _vtk.vtkColorSeries.SPECTRUM,
@@ -1585,9 +1522,10 @@ class _MultiCompPlot(_Plot):
 
     @property
     def color_scheme(self):
-        """Return or set the plot's color scheme. This scheme
-        defines the colors of the different components drawn
-        by this plot.
+        """Return or set the plot's color scheme.
+
+        This scheme defines the colors of the different
+        components drawn by this plot.
         See ``pyvista._MultiCompPlot.COLOR_SCHEMES`` for the
         available color schemes.
 
@@ -1611,9 +1549,10 @@ class _MultiCompPlot(_Plot):
 
     @property
     def colors(self):
-        """Return or set the plot's colors. These are the
-        colors used for the different components drawn by
-        this plot.
+        """Return or set the plot's colors.
+
+        These are the colors used for the different
+        components drawn by this plot.
 
         Examples
         --------
@@ -1642,8 +1581,10 @@ class _MultiCompPlot(_Plot):
 
     @property
     def color(self):
-        """Return or set the plot's color. This is the color used
-        by the plot's brush to draw the different components.
+        """Return or set the plot's color.
+
+        This is the color used by the plot's brush
+        to draw the different components.
 
         Examples
         --------
@@ -1723,8 +1664,36 @@ class _MultiCompPlot(_Plot):
 
 
 class LinePlot2D(_vtk.vtkPlotLine, _Plot):
+    """Class representing a 2D line plot.
+
+    Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
+
+    Parameters
+    ----------
+    x : sequence
+        X coordinates of the points through which a line should be drawn.
+
+    y : sequence
+        Y coordinates of the points through which a line should be drawn.
+
+    color : str or sequence, optional
+        Color of the line drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+        to ``"b"``.
+
+    width : float, optional
+        Width of the line drawn in this plot. Defaults to ``1``.
+
+    style : str, optional
+        Style of the line drawn in this plot. See ``Pen.LINE_STYLES`` for a list of allowed line styles. Defaults
+        to ``"-"``.
+
+    label : str, optional
+        Label of this plot, as shown in the chart's legend. Defaults to ``""``.
+
+    """
 
     def __init__(self, x, y, color="b", width=1.0, style="-", label=""):
+        """Initialize a new 2D line plot instance."""
         super().__init__()
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
         self.SetInputData(self._table, "x", "y")
@@ -1735,6 +1704,31 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         self.label = label
 
     def update(self, x, y):
+        """Update this plot's points, through which a line is drawn.
+
+        Parameters
+        ----------
+        x : sequence
+            The new x coordinates of the points through which a line should be drawn.
+
+        y : sequence
+            The new y coordinates of the points through which a line should be drawn.
+
+        Examples
+        --------
+        Create a line plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        Update the line's y coordinates.
+
+        >>> plot.update([0, 1, 2], [3, 1, 2])
+        >>> chart.show()
+
+        """
         if len(x) > 1:
             self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
             self.visible = True
@@ -1744,8 +1738,45 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
 
 
 class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
+    """Class representing a 2D scatter plot.
+
+    Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
+
+    Parameters
+    ----------
+    x : sequence
+        X coordinates of the points to draw.
+
+    y : sequence
+        Y coordinates of the points to draw.
+
+    color : str or sequence, optional
+        Color of the points drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+        to ``"b"``.
+
+    size : float, optional
+        Size of the point markers drawn in this plot. Defaults to ``10``.
+
+    style : str, optional
+        Style of the point markers drawn in this plot. See ``pyvista.ScatterPlot2D.MARKER_STYLES`` for a list of
+        allowed marker styles. Defaults to ``"o"``.
+
+    label : str, optional
+        Label of this plot, as shown in the chart's legend. Defaults to ``""``.
+
+    """
+
+    MARKER_STYLES = {
+        "": _vtk.vtkPlotPoints.NONE,
+        "x": _vtk.vtkPlotPoints.CROSS,
+        "+": _vtk.vtkPlotPoints.PLUS,
+        "s": _vtk.vtkPlotPoints.SQUARE,
+        "o": _vtk.vtkPlotPoints.CIRCLE,
+        "d": _vtk.vtkPlotPoints.DIAMOND
+    }
 
     def __init__(self, x, y, color="b", size=10, style="o", label=""):
+        """Initialize a new 2D scatter plot instance."""
         super().__init__()
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32)})
         self.SetInputData(self._table, "x", "y")
@@ -1756,6 +1787,31 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         self.label = label
 
     def update(self, x, y):
+        """Update this plot's points.
+
+        Parameters
+        ----------
+        x : sequence
+            The new x coordinates of the points to draw.
+
+        y : sequence
+            The new y coordinates of the points to draw.
+
+        Examples
+        --------
+        Create a scatter plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        Update the marker locations.
+
+        >>> plot.update([0, 1, 2], [3, 1, 2])
+        >>> chart.show()
+
+        """
         if len(x) > 0:
             self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
             self.visible = True
@@ -1764,6 +1820,23 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
     @property
     def marker_size(self):
+        """Return or set the plot's marker size.
+
+        Examples
+        --------
+        Create a 2D scatter plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        Increase the marker size.
+
+        >>> plot.marker_size = 30
+        >>> chart.show()
+
+        """
         return self.GetMarkerSize()
 
     @marker_size.setter
@@ -1772,6 +1845,23 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
     @property
     def marker_style(self):
+        """Return or set the plot's marker style.
+
+        Examples
+        --------
+        Create a 2D scatter plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        Change the marker style.
+
+        >>> plot.marker_style = "d"
+        >>> chart.show()
+
+        """
         return self._marker_style
 
     @marker_style.setter
@@ -1785,8 +1875,32 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
 
 class AreaPlot(_vtk.vtkPlotArea, _Plot):
+    """Class representing a 2D area plot.
+
+    Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
+
+    Parameters
+    ----------
+    x : sequence
+        X coordinates of the points outlining the area to draw.
+
+    y1 : sequence
+        Y coordinates of the points on the first outline of the area to draw.
+
+    y2: sequence, optional
+        Y coordinates of the points on the second outline of the area to draw. Defaults to a sequence of zeros.
+
+    color : str or sequence, optional
+        Color of the area drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+        to ``"b"``.
+
+    label : str, optional
+        Label of this plot, as shown in the chart's legend. Defaults to ``""``.
+
+    """
 
     def __init__(self, x, y1, y2=None, color="b", label=""):
+        """Initialize a new 2D area plot instance."""
         super().__init__()
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y1": np.empty(0, np.float32), "y2": np.empty(0, np.float32)})
         self.SetInputData(self._table)
@@ -1798,6 +1912,34 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         self.label = label
 
     def update(self, x, y1, y2=None):
+        """Update this plot's points, outlining the area to draw.
+
+        Parameters
+        ----------
+        x : sequence
+            The new x coordinates of the points outlining the area.
+
+        y1 : sequence
+            The new y coordinates of the points on the first outline of the area.
+
+        y2 : sequence, optional
+            The new y coordinates of the points on the second outline of the area. Defaults to a sequence of zeros.
+
+        Examples
+        --------
+        Create an area plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.area([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        Update the points on the second outline of the area.
+
+        >>> plot.update([0, 1, 2], [2, 1, 3], [1, 2, 0])
+        >>> chart.show()
+
+        """
         if len(x) > 0:
             if y2 is None:
                 y2 = np.zeros_like(x)
@@ -1808,13 +1950,42 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
 
 class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
+    """Class representing a 2D bar plot.
+
+    Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
+
+    Parameters
+    ----------
+    x : sequence
+        Positions (along the x-axis for a vertical orientation, along the y-axis for
+        a horizontal orientation) of the bars to draw.
+
+    y : sequence
+        Size of the bars to draw. Multiple bars can be stacked by passing a sequence of sequences.
+
+    color : str or sequence, optional
+        Color of the bars drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+        to ``"b"``.
+
+    offset : float, optional
+        Offset between the bars drawn in this plot. Defaults to ``5``.
+
+    orientation : str, optional
+        Orientation of the bars drawn in this plot. Either ``"H"`` for an horizontal orientation or ``"V"`` for a
+        vertical orientation. Defaults to ``"V"``.
+
+    label : str, optional
+        Label of this plot, as shown in the chart's legend. Defaults to ``""``.
+
+    """
 
     ORIENTATIONS = {
         "H": _vtk.vtkPlotBar.HORIZONTAL,
         "V": _vtk.vtkPlotBar.VERTICAL
     }
 
-    def __init__(self, x, y, color=None, label=None, offset=5, orientation="V"):
+    def __init__(self, x, y, color=None, offset=5, orientation="V", label=None):
+        """Initialize a new 2D bar plot instance."""
         super().__init__()
         if not isinstance(y[0], (Sequence, np.ndarray)):
             y = (y,)
@@ -1836,6 +2007,31 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         self.orientation = orientation
 
     def update(self, x, y):
+        """Update the positions and/or size of the bars in this plot.
+
+        Parameters
+        ----------
+        x : sequence
+            The new positions of the bars to draw.
+
+        y : sequence
+            The new sizes of the bars to draw.
+
+        Examples
+        --------
+        Create a bar plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.bar([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        Update the bar sizes.
+
+        >>> plot.update([0, 1, 2], [3, 1, 2])
+        >>> chart.show()
+
+        """
         if len(x) > 0:
             if not isinstance(y[0], (Sequence, np.ndarray)):
                 y = (y,)
@@ -1847,6 +2043,23 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
     @property
     def offset(self):
+        """Return or set the offset between bars in this plot.
+
+        Examples
+        --------
+        Create a bar plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.bar([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        Increase the offset.
+
+        >>> plot.offset = 15
+        >>> chart.show()
+
+        """
         return self.GetOffset()
 
     @offset.setter
@@ -1855,6 +2068,23 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
     @property
     def orientation(self):
+        """Return or set the orientation of the bars in this plot.
+
+        Examples
+        --------
+        Create a bar plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.bar([0, 1, 2], [[2, 1, 3], [1, 3, 2]])
+        >>> chart.show()
+
+        Change the orientation to horizontal.
+
+        >>> plot.orientation = "H"
+        >>> chart.show()
+
+        """
         return self._orientation
 
     @orientation.setter
@@ -1868,8 +2098,30 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
 
 class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
+    """Class representing a 2D stack plot.
+
+    Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
+
+    Parameters
+    ----------
+    x : sequence
+        X coordinates of the points outlining the stacks (areas) to draw.
+
+    ys : sequence[sequence]
+        Size of the stacks (areas) to draw at the corresponding X coordinates. Each sequence defines the sizes of
+        one stack (area), which are stacked on top of each other.
+
+    colors : sequence[str or sequence], optional
+        Color of the stacks (areas) drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
+        Defaults to ``None``.
+
+    labels : sequence[str], optional
+        Label for each stack (area) drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
+
+    """
 
     def __init__(self, x, ys, colors=None, labels=None):
+        """Initialize a new 2D stack plot instance."""
         super().__init__()
         if not isinstance(ys[0], (Sequence, np.ndarray)):
             ys = (ys,)
@@ -1890,6 +2142,31 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         self.pen.style = None  # Hide lines by default
 
     def update(self, x, ys):
+        """Update the locations and/or size of the stacks (areas) in this plot.
+
+        Parameters
+        ----------
+        x : sequence
+            The new x coordinates of the stacks (areas) to draw.
+
+        ys : sequence
+            The new sizes of the stacks (areas) to draw.
+
+        Examples
+        --------
+        Create a stack plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.stack([0, 1, 2], [[2, 1, 3],[1, 2, 1]])
+        >>> chart.show()
+
+        Update the stack sizes.
+
+        >>> plot.update([0, 1, 2], [[3, 1, 2], [0, 3, 1]])
+        >>> chart.show()
+
+        """
         if len(x) > 0:
             if not isinstance(ys[0], (Sequence, np.ndarray)):
                 ys = (ys,)
@@ -1906,10 +2183,12 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     Parameters
     ----------
     size : list or tuple, optional
-        TODO:
+        Size of the chart in normalized coordinates. A size of ``(0, 0)`` is invisible, a size of ``(1, 1)`` occupies
+        the whole renderer's width and height.
 
     loc : list or tuple, optional
-        TODO:
+        Location of the chart (its bottom left corner) in normalized coordinates. A location of ``(0, 0)`` corresponds
+        to the renderer's bottom left corner, a location of ``(1, 1)`` corresponds to the renderer's top right corner.
 
     x_label : str, optional
         Label along the x-axis.  Defaults to ``'x'``
@@ -1962,6 +2241,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     }
 
     def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):
+        """Initialize the chart."""
         super().__init__()
         self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
         self.SetAutoSize(False)  # We manually set the appropriate size
@@ -1985,6 +2265,69 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.AddPlot(plot)
         self._plots[plot_type].append(plot)
         return plot
+
+    @classmethod
+    def parse_format(cls, fmt):
+        """Parse a format string and separate it into a marker style, line style and color.
+
+        Parameters
+        ----------
+        fmt : str
+            Format string to parse. A format string consists of any combination of a valid marker
+            style, a valid line style and parsable color. The specific order does not matter. See
+            :attr:`pyvista.ScatterPlot2D.MARKER_STYLES` for a list of valid marker styles,
+            :attr:`pyvista.Pen.LINE_STYLES` for a list of valid line styles and
+            :func:`pyvista.parse_color` for an overview of parsable colors.
+
+        Returns
+        -------
+        marker_style : str
+            Extracted marker style (empty string if no marker style was present in the format string).
+
+        line_style : str
+            Extracted line style (empty string if no line style was present in the format string).
+
+        color : str
+            Extracted color string (defaults to ``"b"`` if no color was present in the format string).
+
+        Examples
+        --------
+        >>> m, l, c = pyvista.Chart2D.parse_format("x--b")
+
+        """
+        # TODO: add tests for different combinations/positions of marker, line and color
+        marker_style = ""
+        line_style = ""
+        color = None
+        last_fmt = None
+        while fmt != "" and last_fmt != fmt and (marker_style == "" or line_style == "" or color is None):
+            last_fmt = fmt
+            if marker_style == "":
+                # Marker style is not yet set, so look for it at the start of the format string
+                for style in ScatterPlot2D.MARKER_STYLES.keys():
+                    if style != "" and fmt.startswith(style):
+                        # Loop over all styles such that - and -- can both be checked
+                        marker_style = style
+                fmt = fmt[len(marker_style):]  # Remove marker_style from format string
+            if line_style == "":
+                # Line style is not yet set, so look for it at the start of the format string
+                for style in Pen.LINE_STYLES.keys():
+                    if style != "" and fmt.startswith(style):
+                        line_style = style
+                fmt = fmt[len(line_style):]  # Remove line_style from format string
+            if color is None:
+                # Color is not yet set, so look for it in the remaining format string
+                for i in range(len(fmt), 0, -1):
+                    try:
+                        parse_color(fmt[:i])
+                        color = fmt[:i]
+                        fmt = fmt[i:]
+                        break
+                    except ValueError:
+                        pass
+        if color is None:
+            color = "b"
+        return marker_style, line_style, color
 
     def plot(self, x, y, fmt='-'):
         """Matplotlib like plot method.
@@ -2023,7 +2366,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         """
         # TODO: make x and fmt optional, allow multiple ([x], y, [fmt]) entries
-        marker_style, line_style, color = _Plot.parse_format(fmt)
+        marker_style, line_style, color = self.parse_format(fmt)
         scatter_plot, line_plot = None, None
         if marker_style != "":
             scatter_plot = self.scatter(x, y, color, style=marker_style)
@@ -2034,31 +2377,112 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     def scatter(self, x, y, color="b", size=10, style="o", label=""):
         """Add a scatter plot to this chart.
 
+        See ``pyvista.ScatterPlot2D`` for an overview of the possible parameters.
+
         Examples
         --------
-
         Generate a scatter plot.
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> scatter_plot = chart.scatter(range(10), range(10))
+        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
 
         """
         return self._add_plot("scatter", x, y, color=color, size=size, style=style, label=label)
 
     def line(self, x, y, color="b", width=1.0, style="-", label=""):
+        """Add a line plot to this chart.
+
+        See ``pyvista.LinePlot2D`` for an overview of the possible parameters.
+
+        Examples
+        --------
+        Generate a line plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        """
         return self._add_plot("line", x, y, color=color, width=width, style=style, label=label)
 
     def area(self, x, y1, y2=None, color="b", label=""):
+        """Add an area plot to this chart.
+
+        See ``pyvista.AreaPlot`` for an overview of the possible parameters.
+
+        Examples
+        --------
+        Generate an area plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.area([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        """
         return self._add_plot("area", x, y1, y2, color=color, label=label)
 
-    def bar(self, x, y, color=None, label=None, offset=5, orientation="V"):
-        return self._add_plot("bar", x, y, color=color, label=label, offset=offset, orientation=orientation)
+    def bar(self, x, y, color=None, offset=5, orientation="V", label=None):
+        """Add a bar plot to this chart.
+
+        See ``pyvista.BarPlot`` for an overview of the possible parameters.
+
+        Examples
+        --------
+        Generate a bar plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.bar([0, 1, 2], [2, 1, 3])
+        >>> chart.show()
+
+        """
+        return self._add_plot("bar", x, y, color=color, offset=offset, orientation=orientation, label=label)
 
     def stack(self, x, ys, colors=None, labels=None):
+        """Add a stack plot to this chart.
+
+        See ``pyvista.StackPlot`` for an overview of the possible parameters.
+
+        Examples
+        --------
+        Generate a stack plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.stack([0, 1, 2], [[2, 1, 3],[1, 2, 1]])
+        >>> chart.show()
+
+        """
         return self._add_plot("stack", x, ys, colors=colors, labels=labels)
 
     def plots(self, plot_type=None):
+        """Return all plots (of the specified type) in this chart.
+
+        Examples
+        --------
+        Create a 2D chart with a line and scatter plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
+
+        Retrieve all plots in the chart.
+
+        >>> plots = [*chart.plots()]
+        >>> scatter_plot in plots and line_plot in plots
+        True
+
+        Retrieve all line plots in the chart.
+
+        >>> line_plots = [*chart.plots("line")]
+        >>> line_plot == line_plots[0]
+        True
+
+        """
         if plot_type is None:
             for plots in self._plots.values():
                 for plot in plots:
@@ -2069,14 +2493,54 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def x_axis(self):
+        """Return this chart's horizontal (x) axis.
+
+        Examples
+        --------
+        Create a 2D plot and hide the x axis.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_axis.toggle()
+        >>> chart.show()
+
+        """
         return self._x_axis
 
     @property
     def y_axis(self):
+        """Return this chart's vertical (y) axis.
+
+        Examples
+        --------
+        Create a 2D plot and hide the y axis.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.y_axis.toggle()
+        >>> chart.show()
+
+        """
         return self._y_axis
 
     @property
     def x_label(self):
+        """Return or set the label of this chart's x axis.
+
+        Examples
+        --------
+        Create a 2D plot and set custom axis labels.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_label = "Horizontal axis"
+        >>> chart.y_label = "Vertical axis"
+        >>> chart.show()
+
+        """
         return self.x_axis.label
 
     @x_label.setter
@@ -2085,6 +2549,20 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def y_label(self):
+        """Return or set the label of this chart's y axis.
+
+        Examples
+        --------
+        Create a 2D plot and set custom axis labels.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_label = "Horizontal axis"
+        >>> chart.y_label = "Vertical axis"
+        >>> chart.show()
+
+        """
         return self.y_axis.label
 
     @y_label.setter
@@ -2093,6 +2571,20 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def x_range(self):
+        """Return or set the range of this chart's x axis.
+
+        Examples
+        --------
+        Create a 2D plot and set custom axis ranges.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_range = [-2, 2]
+        >>> chart.y_range = [0, 5]
+        >>> chart.show()
+
+        """
         return self.x_axis.range
 
     @x_range.setter
@@ -2101,6 +2593,20 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def y_range(self):
+        """Return or set the range of this chart's y axis.
+
+        Examples
+        --------
+        Create a 2D plot and set custom axis ranges.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_range = [-2, 2]
+        >>> chart.y_range = [0, 5]
+        >>> chart.show()
+
+        """
         return self.y_axis.range
 
     @y_range.setter
@@ -2144,8 +2650,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.y_axis.grid = val
 
     def hide_axes(self):
-        """Hide the x- and y-axis of this chart, including all
-        labels, ticks and the grid.
+        """Hide the x- and y-axis of this chart.
+
+        This includes all labels, ticks and the grid.
 
         Examples
         --------
@@ -2167,8 +2674,23 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
 
 class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
+    """Class representing a box plot.
+
+    Users should typically not directly create new plot instances, but use the dedicated ``ChartBox`` class.
+
+    Parameters
+    ----------
+    data : sequence
+        Dataset(s) from which the relevant statistics will be calculated used to draw the box plot.
+
+    colors : sequence[str or sequence], optional
+        Color of the boxes drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
+        Defaults to ``None``.
+
+    """
 
     def __init__(self, data, colors=None):
+        """Initialize a new box plot instance."""
         super().__init__()
         self._table = pyvista.Table(data)
         self._quartiles = _vtk.vtkComputeQuartiles()
@@ -2179,13 +2701,45 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         self.colors = colors
 
     def update(self, data):
+        """Update the plot's underlying dataset(s).
+
+        Parameters
+        ----------
+        data : sequence
+            The new dataset(s) used in this box plot.
+
+        Examples
+        --------
+        Create a box plot from a standard Gaussian dataset.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(1)  # Seeded random number generator for data generation
+        >>> chart = pyvista.ChartBox([rng.normal(size=100)])
+        >>> chart.show()
+
+        Update the box plot (shift the standard Gaussian distribution).
+
+        >>> chart.plot.update([rng.normal(loc=2, size=100)])
+        >>> chart.show()
+
+        """
         self._table.update(data)
         self._quartiles.Update()
 
 
 class ChartBox(_vtk.vtkChartBox, _Chart):
+    """Dedicated chart for drawing box plots.
+
+    Parameters
+    ----------
+    data : sequence
+        Dataset(s) from which the relevant statistics will be calculated used to draw the box plot.
+
+    """
 
     def __init__(self, data):
+        """Initialize a new chart containing box plots."""
         super().__init__()
         self._plot = BoxPlot(data)
         self.SetPlot(self._plot)
@@ -2206,10 +2760,33 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
     @property
     def plot(self):
+        """Return the BoxPlot instance associated with this chart.
+
+        Examples
+        --------
+        Create a box plot from a standard Gaussian dataset.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(1)  # Seeded random number generator for data generation
+        >>> chart = pyvista.ChartBox([rng.normal(size=100)])
+        >>> chart.show()
+
+        Update the box plot (shift the standard Gaussian distribution).
+
+        >>> chart.plot.update([rng.normal(loc=2, size=100)])
+        >>> chart.show()
+
+        """
         return self._plot
 
     @property
     def size(self):
+        """Return or set the chart size in normalized coordinates.
+
+        A size of ``(1, 1)`` occupies the whole renderer.
+        Note: The size of a ChartBox instance cannot be modified, it fills up the entire viewport by default.
+        """
         return (1, 1)
 
     @size.setter
@@ -2218,6 +2795,11 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
     @property
     def loc(self):
+        """Return or set the chart position in normalized coordinates.
+
+        This denotes the location of the chart's bottom left corner.
+        Note: The location of a ChartBox instance cannot be modified, it fills up the entire viewport by default.
+        """
         return (0, 0)
 
     @loc.setter
@@ -2226,8 +2808,26 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
 
 class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
+    """Class representing a pie plot.
+
+    Users should typically not directly create new plot instances, but use the dedicated ``ChartPie`` class.
+
+    Parameters
+    ----------
+    data : sequence
+        Relative size of each pie segment.
+
+    labels : sequence, optional
+        Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
+
+    colors : sequence[str or sequence], optional
+        Color of the segments drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
+        Defaults to ``None``.
+
+    """
 
     def __init__(self, data, labels=None, colors=None):
+        """Initialize a new pie plot instance."""
         super().__init__()
         self._table = pyvista.Table(data)
         self.SetInputData(self._table)
@@ -2240,12 +2840,42 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         self.colors = colors
 
     def update(self, data):
+        """Update the size of the pie segments.
+
+        Parameters
+        ----------
+        data : sequence
+            The new relative size of each pie segment.
+
+        Examples
+        --------
+        Create a pie plot with segments of increasing size.
+
+        >>> import pyvista
+        >>> chart = pyvista.ChartPie([1, 2, 3, 4, 5])
+        >>> chart.show()
+
+        Update the pie plot (segments of equal size).
+
+        >>> chart.plot.update([1, 1, 1, 1, 1])
+        >>> chart.show()
+
+        """
         self._table.update(data)
 
 
 class ChartPie(_vtk.vtkChartPie, _Chart):
+    """Dedicated chart for drawing pie plots.
+
+    Parameters
+    ----------
+    data : sequence
+        Relative size of each pie segment.
+
+    """
 
     def __init__(self, data, labels=None):
+        """Initialize a new chart containing a pie plot."""
         super().__init__()
         self.AddPlot(0)  # We can't manually set a wrapped vtkPlotPie instance...
         self._plot = PiePlot(data, labels, _wrap=self.GetPlot(0))  # So we have to wrap the existing one
@@ -2265,10 +2895,31 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
     @property
     def plot(self):
+        """Return the BoxPlot instance associated with this chart.
+
+        Examples
+        --------
+        Create a pie plot with segments of increasing size.
+
+        >>> import pyvista
+        >>> chart = pyvista.ChartPie([1, 2, 3, 4, 5])
+        >>> chart.show()
+
+        Update the pie plot (segments of equal size).
+
+        >>> chart.plot.update([1, 1, 1, 1, 1])
+        >>> chart.show()
+
+        """
         return self._plot
 
     @property
     def size(self):
+        """Return or set the chart size in normalized coordinates.
+
+        A size of ``(1, 1)`` occupies the whole renderer.
+        Note: The size of a ChartPie instance cannot be modified, it fills up the entire viewport by default.
+        """
         return (1, 1)
 
     @size.setter
@@ -2277,6 +2928,11 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
     @property
     def loc(self):
+        """Return or set the chart position in normalized coordinates.
+
+        This denotes the location of the chart's bottom left corner.
+        Note: The location of a ChartPie instance cannot be modified, it fills up the entire viewport by default.
+        """
         return (0, 0)
 
     @loc.setter
@@ -2393,7 +3049,7 @@ class _Chart3D(_vtk.vtkChartXYZ, _Chart):
         return plot
 
     def plot(self, x, y, z, fmt):
-        """Matplotlib like plot method
+        """Matplotlib like plot method.
 
         Examples
         --------
@@ -2429,7 +3085,8 @@ class _Chart3D(_vtk.vtkChartXYZ, _Chart):
         return self._add_plot("line", x, y, z, color=color, width=width, style=style)
 
     def surface(self, x, y, z):
-        """
+        """See example below.
+
         Examples
         --------
         ###############################################################################
@@ -2529,13 +3186,13 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     figure : matplotlib.figure.Figure
         The matplotlib figure to draw.
 
-    size : tuple, optional
-        The normalized size of the chart (values between 0 and
-        1). None to completely fill the renderer and autoresize
+    size : list or tuple, optional
+        Size of the chart in normalized coordinates. A size of ``(0, 0)`` is invisible, a size of ``(1, 1)`` occupies
+        the whole renderer's width and height.
 
-    loc : tuple, optional
-        The normalized location of the chart (values between 0 and
-        1). Set to ``None`` to manually set the position (in pixels)
+    loc : list or tuple, optional
+        Location of the chart (its bottom left corner) in normalized coordinates. A location of ``(0, 0)`` corresponds
+        to the renderer's bottom left corner, a location of ``(1, 1)`` corresponds to the renderer's top right corner.
 
     """
 
@@ -2550,7 +3207,11 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         super().__init__()
         self._fig = figure
         self._canvas = FigureCanvasAgg(self._fig)  # Switch backends and store reference to figure's canvas
-        self._canvas.mpl_connect('draw_event', self.redraw)  # Attach 'draw_event' callback
+        # Make figure and axes fully transparent, as the background is already dealt with by self._background.
+        self._fig.patch.set_alpha(0)  # Make figure and axes fully transparent (background is dealt with
+        for ax in self._fig.axes:
+            ax.patch.set_alpha(0)
+        self._canvas.mpl_connect('draw_event', self._redraw)  # Attach 'draw_event' callback
 
         self.size = size
         self.loc = loc
@@ -2569,17 +3230,19 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             self._fig.set_size_inches(f_w, f_h)
             self.position = (self._loc[0]*r_w, self._loc[1]*r_h)
 
-    def redraw(self, event=None):
-        if event is None:
-            # Manual call, so make sure canvas is redrawn first (which will callback here with a proper event defined)
-            self._canvas.draw()
-        else:
-            # Called from draw_event callback
-            img = np.frombuffer(self._canvas.buffer_rgba(), dtype=np.uint8)  # Store figure data in numpy array
-            w, h = self._canvas.get_width_height()
-            img_arr = img.reshape([h, w, 4])
-            img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
-            self.SetImage(img_data)
+    def redraw(self):
+        """Redraw the chart after manually updating the matplotlib figure."""
+        # TODO: not sure whether this is still needed, as calling plotter.update() seems to do the trick already.
+        # Manual call, so make sure canvas is redrawn first (which will callback to _redraw with a proper event defined)
+        self._canvas.draw()
+
+    def _redraw(self, event):
+        # Called from draw_event callback
+        img = np.frombuffer(self._canvas.buffer_rgba(), dtype=np.uint8)  # Store figure data in numpy array
+        w, h = self._canvas.get_width_height()
+        img_arr = img.reshape([h, w, 4])
+        img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
+        self.SetImage(img_data)
 
     def _render_event(self, *args, **kwargs):
         self._resize()  # Update figure dimensions if needed
@@ -2596,19 +3259,20 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     def _geometry(self, value):
         raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
 
-    @property
-    def background_color(self):
-        return self._bg_color
-
-    @background_color.setter
-    def background_color(self, val):
-        color = parse_color(val) if val is not None else [1, 1, 1, 1]
-        opacity = color[3] if len(color) == 4 else 1
-        self._bg_color = color
-        self._fig.patch.set_color(color[:3])
-        self._fig.patch.set_alpha(opacity)
-        for ax in self._fig.axes:
-            ax.patch.set_alpha(0 if opacity < 1 else 1)  # Make axes fully transparent if opacity is lower than 1
+    # Below code can be used to customize the chart's background without a _ChartBackground instance
+    # @property
+    # def background_color(self):
+    #     return self._bg_color
+    #
+    # @background_color.setter
+    # def background_color(self, val):
+    #     color = parse_color(val) if val is not None else [1, 1, 1, 1]
+    #     opacity = color[3] if len(color) == 4 else 1
+    #     self._bg_color = color
+    #     self._fig.patch.set_color(color[:3])
+    #     self._fig.patch.set_alpha(opacity)
+    #     for ax in self._fig.axes:
+    #         ax.patch.set_alpha(0 if opacity < 1 else 1)  # Make axes fully transparent if opacity is lower than 1
 
     @property
     def position(self):
@@ -2622,18 +3286,24 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
 
 class Charts:
+    """Collection of charts for a renderer."""
 
     def __init__(self, renderer):
+        """Create a new collection of charts for the given renderer.
+
+        Users should typically not directly create new instances of this class, but use the dedicated
+        ``Plotter.add_chart`` method.
+        """
         self._charts = []
 
         # Postpone creation of scene and actor objects until they are
-        # needed. Otherwise they are not properly cleaned up in case
-        # the Plotter's initialization fails.
+        # needed.
         self._scene = None
         self._actor = None
         self._renderer = renderer
 
-    def setup_scene(self):
+    def _setup_scene(self):
+        """Setup a new context scene and actor for these charts."""
         self._scene = _vtk.vtkContextScene()
         self._actor = _vtk.vtkContextActor()
 
@@ -2654,14 +3324,16 @@ class Charts:
         self._actor = None
 
     def add_chart(self, chart):
+        """Add a chart to the collection."""
         if self._scene is None:
-            self.setup_scene()
+            self._setup_scene()
         self._charts.append(chart)
         self._scene.AddItem(chart._background)
         self._scene.AddItem(chart)
         chart.SetInteractive(False)  # Charts are not interactive by default
 
     def remove_chart(self, chart_or_index):
+        """Remove a chart from the collection."""
         chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
         assert chart in self._charts
         self._charts.remove(chart)
@@ -2669,6 +3341,10 @@ class Charts:
         self._scene.RemoveItem(chart._background)
 
     def toggle_interaction(self, mouse_pos):
+        """Disable interaction with all charts, except the one indicated by the mouse position.
+
+        Returns the scene if one of the charts got activated, None otherwise.
+        """
         # Mouse_pos is either False (to disable interaction with all charts) or a tuple containing the mouse position
         # (to disable interaction with all charts, except the one indicated by the mouse, if any)
         enable = False

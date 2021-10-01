@@ -462,7 +462,7 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
-        chart : pyvista.plotting.charts.Chart2D
+        chart : Chart2D, ChartBox, ChartPie or ChartMPL
             Chart to add to renderer.
 
         Examples
@@ -475,6 +475,41 @@ class Renderer(_vtk.vtkRenderer):
 
         """
         self._charts.add_chart(chart)
+
+    def remove_chart(self, chart_or_index):
+        """Remove a chart from this renderer.
+
+        Parameters
+        ----------
+        chart_or_index : Chart2D, ChartBox, ChartPie, ChartMPL or int
+            Either the chart to remove from this renderer or its index in the collection of charts.
+
+        Examples
+        --------
+        First add two charts to a renderer.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> chart_left = pyvista.Chart2D(size=(0.5, 1))
+        >>> _ = chart_left.plot([0, 1, 2], [2, 1, 3])
+        >>> pl.add_chart(chart_left)
+        >>> chart_right = pyvista.Chart2D(size=(0.5, 1), loc=(0.5, 0))
+        >>> _ = chart_right.plot([0, 1, 2], [3, 1, 2])
+        >>> pl.add_chart(chart_right)
+        >>> pl.show(auto_close=False)
+
+        Now remove the right chart by index.
+
+        >>> pl.remove_chart(1)
+        >>> pl.show(auto_close=False)
+
+        Finally, remove the left chart by reference.
+
+        >>> pl.remove_chart(chart_left)
+        >>> pl.show()
+
+        """
+        self._charts.remove_chart(chart_or_index)
 
     @property
     def actors(self):
