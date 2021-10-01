@@ -2292,6 +2292,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Examples
         --------
+        >>> import pyvista
         >>> m, l, c = pyvista.Chart2D.parse_format("x--b")
 
         """
@@ -3303,7 +3304,7 @@ class Charts:
         self._renderer = renderer
 
     def _setup_scene(self):
-        """Setup a new context scene and actor for these charts."""
+        """Set up a new context scene and actor for these charts."""
         self._scene = _vtk.vtkContextScene()
         self._actor = _vtk.vtkContextActor()
 
