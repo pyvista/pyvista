@@ -163,7 +163,7 @@ class Renderer(_vtk.vtkRenderer):
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self.__charts is None:
             self.__charts = Charts(self)
-            self.AddObserver("StartEvent", partial(try_callback, self.render_event))
+            self.AddObserver("StartEvent", partial(try_callback, self._render_event))
         return self.__charts
 
     @property
@@ -309,7 +309,7 @@ class Renderer(_vtk.vtkRenderer):
         self.set_background(color)
         self.Modified()
 
-    def render_event(self, *args, **kwargs):
+    def _render_event(self, *args, **kwargs):
         """Notify all charts about render event."""
         for chart in self._charts:
             chart._render_event(*args, **kwargs)
@@ -490,18 +490,19 @@ class Renderer(_vtk.vtkRenderer):
 
         >>> import pyvista
         >>> pl = pyvista.Plotter()
+        >>> pl.background_color = 'w'
         >>> chart_left = pyvista.Chart2D(size=(0.5, 1))
         >>> _ = chart_left.plot([0, 1, 2], [2, 1, 3])
         >>> pl.add_chart(chart_left)
         >>> chart_right = pyvista.Chart2D(size=(0.5, 1), loc=(0.5, 0))
         >>> _ = chart_right.plot([0, 1, 2], [3, 1, 2])
         >>> pl.add_chart(chart_right)
-        >>> pl.show(auto_close=False)
+        >>> pl.show(interactive_update=True)
 
         Now remove the right chart by index.
 
         >>> pl.remove_chart(1)
-        >>> pl.show(auto_close=False)
+        >>> pl.show(interactive_update=True)
 
         Finally, remove the left chart by reference.
 

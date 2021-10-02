@@ -1170,13 +1170,13 @@ class _Chart(object):
             Plots off screen when ``True``.  Helpful for saving screenshots
             without a window popping up.  Defaults to active theme setting in
             :attr:`pyvista.global_theme.full_screen
-            <pyvista.themes.DefaultTheme.full_screen`
+            <pyvista.themes.DefaultTheme.full_screen`.
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
             ``window_size``.  Defaults to active theme setting in
             :attr:`pyvista.global_theme.full_screen
-            <pyvista.themes.DefaultTheme.full_screen`
+            <pyvista.themes.DefaultTheme.full_screen`.
 
         screenshot : str or bool, optional
             Saves screenshot to file when enabled.  See:
@@ -1189,13 +1189,13 @@ class _Chart(object):
         window_size : list, optional
             Window size in pixels.  Defaults to global theme
             :attr:`pyvista.global_theme.window_size
-            <pyvista.themes.DefaultTheme.window_size>`
+            <pyvista.themes.DefaultTheme.window_size>`.
 
         notebook : bool, optional
             When ``True``, the resulting plot is placed inline a
             jupyter notebook.  Assumes a jupyter console is active.
 
-        background : string or 3 item list, optional
+        background : str or 3 item list, optional
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
@@ -1213,6 +1213,17 @@ class _Chart(object):
         >>> _ = chart.scatter(x, y)
         >>> _ = chart.line(x, y, 'r')
         >>> chart.show()
+
+        Returns
+        -------
+        image : np.ndarray
+            Numpy array of the last image when ``screenshot=True``
+            is set. Optionally contains alpha values. Sized:
+
+            * [Window height x Window width x 3] if the theme sets
+              ``transparent_background=False``.
+            * [Window height x Window width x 4] if the theme sets
+              ``transparent_background=True``.
 
         """
         pl = pyvista.Plotter(window_size=window_size,
@@ -2191,10 +2202,10 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         to the renderer's bottom left corner, a location of ``(1, 1)`` corresponds to the renderer's top right corner.
 
     x_label : str, optional
-        Label along the x-axis.  Defaults to ``'x'``
+        Label along the x-axis.  Defaults to ``'x'``.
 
     y_label : str, optional
-        Label along the y-axis.  Defaults to ``'y'``
+        Label along the y-axis.  Defaults to ``'y'``.
 
     grid : bool, optional
         Show the background grid in the plot.  Default ``True``.
@@ -2345,6 +2356,24 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             A format string, e.g. 'ro' for red circles. See the Notes
             section for a full description of the format strings.
 
+        Returns
+        -------
+        scatter_plot : pyvista.ScatterPlot2D, optional
+            The created scatter plot when a valid marker style
+            was present in the format string, ``None`` otherwise.
+
+        line_plot : pyvista.LinePlot2D, optional
+            The created line plot when a valid line style was
+            present in the format string, ``None`` otherwise.
+
+        Notes
+        -----
+        This plot method shares many of the same plotting features as
+        the `matplotlib.pyplot.plot
+        <https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html>`_.
+        Please reference the documentation there for a full
+        description of the allowable format strings.
+
         Examples
         --------
         Generate a line plot.
@@ -2356,14 +2385,6 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         Generate a line and scatter plot.
 
         >>> scatter_plot, line_plot = chart.plot(range(10), range(10), fmt='o-')
-
-        Notes
-        -----
-        This plot method shares many of the same plotting features as
-        the `matplotlib.pyplot.plot
-        <https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html>`_.
-        Please reference the documentation there for a full
-        description of the allowable format strings.
 
         """
         # TODO: make x and fmt optional, allow multiple ([x], y, [fmt]) entries
@@ -2378,7 +2399,32 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     def scatter(self, x, y, color="b", size=10, style="o", label=""):
         """Add a scatter plot to this chart.
 
-        See ``pyvista.ScatterPlot2D`` for an overview of the possible parameters.
+        Parameters
+        ----------
+        x : sequence
+            X coordinates of the points to draw.
+
+        y : sequence
+            Y coordinates of the points to draw.
+
+        color : str or sequence, optional
+            Color of the points drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+            to ``"b"``.
+
+        size : float, optional
+            Size of the point markers drawn in this plot. Defaults to ``10``.
+
+        style : str, optional
+            Style of the point markers drawn in this plot. See ``pyvista.ScatterPlot2D.MARKER_STYLES`` for a list of
+            allowed marker styles. Defaults to ``"o"``.
+
+        label : str, optional
+            Label of this plot, as shown in the chart's legend. Defaults to ``""``.
+
+        Returns
+        -------
+        scatter_plot : pyvista.ScatterPlot2D
+            The created scatter plot.
 
         Examples
         --------
@@ -2395,7 +2441,32 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     def line(self, x, y, color="b", width=1.0, style="-", label=""):
         """Add a line plot to this chart.
 
-        See ``pyvista.LinePlot2D`` for an overview of the possible parameters.
+        Parameters
+        ----------
+        x : sequence
+            X coordinates of the points through which a line should be drawn.
+
+        y : sequence
+            Y coordinates of the points through which a line should be drawn.
+
+        color : str or sequence, optional
+            Color of the line drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+            to ``"b"``.
+
+        width : float, optional
+            Width of the line drawn in this plot. Defaults to ``1``.
+
+        style : str, optional
+            Style of the line drawn in this plot. See ``Pen.LINE_STYLES`` for a list of allowed line styles. Defaults
+            to ``"-"``.
+
+        label : str, optional
+            Label of this plot, as shown in the chart's legend. Defaults to ``""``.
+
+        Returns
+        -------
+        line_plot : pyvista.LinePlot2D
+            The created line plot.
 
         Examples
         --------
@@ -2412,7 +2483,28 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     def area(self, x, y1, y2=None, color="b", label=""):
         """Add an area plot to this chart.
 
-        See ``pyvista.AreaPlot`` for an overview of the possible parameters.
+        Parameters
+        ----------
+        x : sequence
+            X coordinates of the points outlining the area to draw.
+
+        y1 : sequence
+            Y coordinates of the points on the first outline of the area to draw.
+
+        y2: sequence, optional
+            Y coordinates of the points on the second outline of the area to draw. Defaults to a sequence of zeros.
+
+        color : str or sequence, optional
+            Color of the area drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+            to ``"b"``.
+
+        label : str, optional
+            Label of this plot, as shown in the chart's legend. Defaults to ``""``.
+
+        Returns
+        -------
+        area_plot : pyvista.AreaPlot
+            The created area plot.
 
         Examples
         --------
@@ -2429,7 +2521,33 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     def bar(self, x, y, color=None, offset=5, orientation="V", label=None):
         """Add a bar plot to this chart.
 
-        See ``pyvista.BarPlot`` for an overview of the possible parameters.
+        Parameters
+        ----------
+        x : sequence
+            Positions (along the x-axis for a vertical orientation, along the y-axis for
+            a horizontal orientation) of the bars to draw.
+
+        y : sequence
+            Size of the bars to draw. Multiple bars can be stacked by passing a sequence of sequences.
+
+        color : str or sequence, optional
+            Color of the bars drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+            to ``"b"``.
+
+        offset : float, optional
+            Offset between the bars drawn in this plot. Defaults to ``5``.
+
+        orientation : str, optional
+            Orientation of the bars drawn in this plot. Either ``"H"`` for an horizontal orientation or ``"V"`` for a
+            vertical orientation. Defaults to ``"V"``.
+
+        label : str, optional
+            Label of this plot, as shown in the chart's legend. Defaults to ``""``.
+
+        Returns
+        -------
+        bar_plot : pyvista.BarPlot
+            The created bar plot.
 
         Examples
         --------
@@ -2446,7 +2564,26 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     def stack(self, x, ys, colors=None, labels=None):
         """Add a stack plot to this chart.
 
-        See ``pyvista.StackPlot`` for an overview of the possible parameters.
+        Parameters
+        ----------
+        x : sequence
+            X coordinates of the points outlining the stacks (areas) to draw.
+
+        ys : sequence[sequence]
+            Size of the stacks (areas) to draw at the corresponding X coordinates. Each sequence defines the sizes of
+            one stack (area), which are stacked on top of each other.
+
+        colors : sequence[str or sequence], optional
+            Color of the stacks (areas) drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
+            Defaults to ``None``.
+
+        labels : sequence[str], optional
+            Label for each stack (area) drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
+
+        Returns
+        -------
+        stack_plot : pyvista.StackPlot
+            The created stack plot.
 
         Examples
         --------
