@@ -51,7 +51,7 @@ p.add_chart(v_chart)
 p.add_mesh(pv.Sphere(1), name="sphere", render=False)
 p.show(auto_close=False, interactive=True, interactive_update=True)
 
-###############################################################################
+
 # Method and slider to update all visuals based on the time selection
 
 def update_time(time):

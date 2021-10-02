@@ -862,7 +862,7 @@ class _Chart(object):
         return self._scene.GetRenderer()
 
     def _render_event(self, *args, **kwargs):
-        """This method will be called before every render."""
+        """Update the chart right before it will be rendered."""
         self._resize()
 
     def _resize(self):
@@ -2460,7 +2460,16 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         return self._add_plot("stack", x, ys, colors=colors, labels=labels)
 
     def plots(self, plot_type=None):
-        """Return all plots (of the specified type) in this chart.
+        """Return all plots of the specified type in this chart.
+
+        Parameters
+        ----------
+        plot_type : str, optional
+            The type of plots to return. Allowed types are
+            ``"scatter"``, ``"line"``, ``"area"``, ``"bar"``
+            and ``"stack"``.
+            Defaults to ``None``, which will return all plots,
+            regardless of their type.
 
         Examples
         --------
