@@ -2,6 +2,7 @@
 
 import collections.abc
 from weakref import proxy
+from typing import Sequence
 
 import numpy as np
 
@@ -135,6 +136,8 @@ class Renderer(_vtk.vtkRenderer):
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
+        self._labels = {}  # tracks labeled actors
+        self._legend = None
         self._floor = None
         self._floors = []
         self._floor_kwargs = []
@@ -1754,6 +1757,9 @@ class Renderer(_vtk.vtkRenderer):
         if actor is None:
             return False
 
+        # remove any labels associated with the actor
+        self._labels.pop(actor.GetAddressAsString(""), None)
+
         # ensure any scalar bars associated with this actor are removed
         self.parent.scalar_bars._remove_mapper_from_plotter(actor)
         self.RemoveActor(actor)
@@ -2369,3 +2375,189 @@ class Renderer(_vtk.vtkRenderer):
         """Height of the renderer."""
         _, ymin, _, ymax = self.viewport
         return self.parent.window_size[1]*(ymax - ymin)
+
+    def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
+                   size=None, name=None, origin=None, face='triangle'):
+        """Add a legend to render window.
+
+        Entries must be a list containing one string and color entry for each
+        item.
+
+        Parameters
+        ----------
+        labels : list, optional
+            When set to ``None``, uses existing labels as specified by
+
+            - :func:`add_mesh <BasePlotter.add_mesh>`
+            - :func:`add_lines <BasePlotter.add_lines>`
+            - :func:`add_points <BasePlotter.add_points>`
+
+            List containing one entry for each item to be added to the
+            legend.  Each entry must contain two strings, [label,
+            color], where label is the name of the item to add, and
+            color is the color of the label to add.
+
+        bcolor : list or str, optional
+            Background color, either a three item 0 to 1 RGB color
+            list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
+            for a white color).  If None, legend background is
+            disabled.
+
+        border : bool, optional
+            Controls if there will be a border around the legend.
+            Default False.
+
+        size : list, optional
+            Two float list, each float between 0 and 1.  For example
+            ``[0.1, 0.1]`` would make the legend 10% the size of the
+            entire figure window.
+
+        name : str, optional
+            The name for the added actor so that it can be easily
+            updated.  If an actor of this name already exists in the
+            rendering window, it will be replaced by the new actor.
+
+        origin : list, optional
+            If used, specifies the x and y position of the lower left corner
+            of the legend.
+
+        face : str, optional
+            Face shape of legend face. Accepted options:
+
+            * ``'triangle'``
+            * ``'circle'``
+            * ``'rectangle'``
+            * ``None``
+
+            Default is ``'triangle'``.  Passing ``None`` removes the
+            legend face.
+
+        Returns
+        -------
+        vtk.vtkLegendBoxActor
+            Actor for the legend.
+
+        Examples
+        --------
+        Create a legend by labeling the meshes when using ``add_mesh``
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> sphere = pyvista.Sphere(center=(0, 0, 1))
+        >>> cube = pyvista.Cube()
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True, label='Sphere')
+        >>> _ = plotter.add_mesh(cube, 'r', label='Cube')
+        >>> _ = plotter.add_legend(bcolor='w', face=None)
+        >>> plotter.show()
+
+        Alternatively provide labels in the plotter.
+
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
+        >>> _ = plotter.add_mesh(cube, 'r')
+        >>> _ = plotter.add_legend(bcolor='w', face=None)
+        >>> legend_entries = []
+        >>> legend_entries.append(['My Mesh', 'w'])
+        >>> legend_entries.append(['My Other Mesh', 'k'])
+        >>> _ = plotter.add_legend(legend_entries)
+        >>> plotter.show()
+
+        """
+        if self.legend is not None:
+            self.remove_legend()
+        self._legend = _vtk.vtkLegendBoxActor()
+
+        if labels is None:
+            # use existing labels
+            if not self._labels:
+                raise ValueError('No labels input.\n\n'
+                                 'Add labels to individual items when adding them to'
+                                 'the plotting object with the "label=" parameter.  '
+                                 'or enter them as the "labels" parameter.')
+
+            self._legend.SetNumberOfEntries(len(self._labels))
+            for i, (vtk_object, text, color) in enumerate(self._labels.values()):
+
+                if face is None:
+                    # dummy vtk object
+                    vtk_object = pyvista.PolyData([0, 0, 0])
+
+                self._legend.SetEntry(i, vtk_object, text, parse_color(color))
+
+        else:
+            self._legend.SetNumberOfEntries(len(labels))
+
+            if face is None:
+                legendface = pyvista.PolyData([0, 0, 0])
+            if face == "triangle":
+                legendface = pyvista.Triangle()
+            elif face == "circle":
+                legendface = pyvista.Circle()
+            elif face == "rectangle":
+                legendface = pyvista.Rectangle()
+            else:
+                raise ValueError(f'Invalid face "{face}".  Must be one of the following:\n'
+                                 '\t"triangle"\n'
+                                 '\t"circle"\n'
+                                 '\t"rectangle"\n')
+
+            for i, (text, color) in enumerate(labels):
+                self._legend.SetEntry(i, legendface, text, parse_color(color))
+
+        if origin is not None:
+            if not isinstance(origin, Sequence) or len(origin) != 2:
+                raise ValueError(
+                    '`origin` must be a list of length 2. Passed value is {}'
+                    .format(origin)
+                )
+            self._legend.SetPosition(origin[0], origin[1])
+
+        if size is not None:
+            if not isinstance(size, Sequence) or len(size) != 2:
+                raise ValueError(
+                    '`size` must be a list of length 2. Passed value is {}'
+                    .format(size)
+                )
+            self._legend.SetPosition2(size[0], size[1])
+
+        if bcolor is None:
+            self._legend.UseBackgroundOff()
+        else:
+            self._legend.UseBackgroundOn()
+            self._legend.SetBackgroundColor(parse_color(bcolor))
+
+        self._legend.SetBorder(border)
+
+        # Add to renderer
+        self.add_actor(self._legend, reset_camera=False, name=name, pickable=False)
+        return self._legend
+
+    def remove_legend(self, render=True):
+        """Remove the legend actor.
+
+        Parameters
+        ----------
+        render : bool, optional
+            Render upon actor removal.  Set this to ``False`` to stop
+            the render window from rendering when a the legend is removed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(mesh, label='sphere')
+        >>> _ = pl.add_legend()
+        >>> pl.remove_legend()
+
+        """
+        if self.legend is not None:
+            self.remove_actor(self.legend, reset_camera=False, render=render)
+            self._legend = None
+            self.render()
+
+    @property
+    def legend(self):
+        """Legend actor."""
+        return self._legend
