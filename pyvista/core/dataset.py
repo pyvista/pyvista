@@ -1935,6 +1935,49 @@ class DataSet(DataSetFilters, DataObject):
         closest_cells = np.array([locator.FindCell(node) for node in point])
         return int(closest_cells[0]) if len(closest_cells) == 1 else closest_cells
 
+    def find_cells_along_line(
+        self,
+        pointa: Union[int, np.ndarray],
+        pointb: Union[int, np.ndarray],
+        tolerance=0.0,
+    ) -> Union[int, np.ndarray]:
+        """Find index of cells  in this mesh along pointa to pointb line.
+
+        Parameters
+        ----------
+        pointa : iterable(float) or np.ndarray
+            Length 3 coordinate of the pointa
+
+        pointb : iterable(float) or np.ndarray
+            Length 3 coordinate of the pointb
+
+        tolerance : float, optional
+            The absolute tolerance to use to find cells along line.
+
+        Returns
+        -------
+        int or numpy.ndarray
+            Index or indices of the cell in this mesh that is closest
+            to the given point.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> index = mesh.find_cells_along_line([0, 0, 0], [0, 0, 1.0])
+
+        """
+        if np.array(pointa).size != 3:
+            raise TypeError("Point A must be a length three tuple of floats.")
+        if np.array(pointb).size != 3:
+            raise TypeError("Point B must be a length three tuple of floats.")
+        locator = _vtk.vtkCellLocator()
+        locator.SetDataSet(self)
+        locator.BuildLocator()
+        id_list = _vtk.vtkIdList()
+        locator.FindCellsAlongLine(pointa, pointb, tolerance, id_list)
+        return vtk_id_list_to_array(id_list)
+
     def cell_n_points(self, ind: int) -> int:
         """Return the number of points in a cell.
 
