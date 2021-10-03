@@ -1941,15 +1941,17 @@ class DataSet(DataSetFilters, DataObject):
         pointb: Iterable[float],
         tolerance=0.0,
     ) -> Union[int, np.ndarray]:
-        """Find index of cells  in this mesh along pointa to pointb line.
+        """Find the index of cells in this mesh along a line.
+
+        Line is defined from ``pointa`` to ``pointb``.
 
         Parameters
         ----------
         pointa : iterable(float)
-            Length 3 coordinate of the pointa to query.
+            Length 3 coordinate of the start of the line.
 
         pointb : iterable(float)
-            Length 3 coordinate of the pointb to query.
+            Length 3 coordinate of the end of the line.
 
         tolerance : float, optional
             The absolute tolerance to use to find cells along line.
@@ -1957,7 +1959,7 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         int or numpy.ndarray
-            Index or indices of the cell in this mesh that is closest
+            Index or indices of the cell in this mesh that are closest
             to the given point.
 
         Examples
