@@ -1937,19 +1937,19 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_cells_along_line(
         self,
-        pointa: Union[int, np.ndarray],
-        pointb: Union[int, np.ndarray],
+        pointa: Iterable[float],
+        pointb: Iterable[float],
         tolerance=0.0,
     ) -> Union[int, np.ndarray]:
         """Find index of cells  in this mesh along pointa to pointb line.
 
         Parameters
         ----------
-        pointa : iterable(float) or np.ndarray
-            Length 3 coordinate of the pointa
+        pointa : iterable(float)
+            Length 3 coordinate of the pointa to query.
 
-        pointb : iterable(float) or np.ndarray
-            Length 3 coordinate of the pointb
+        pointb : iterable(float)
+            Length 3 coordinate of the pointb to query.
 
         tolerance : float, optional
             The absolute tolerance to use to find cells along line.
