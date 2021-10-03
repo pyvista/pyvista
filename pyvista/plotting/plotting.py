@@ -3930,7 +3930,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._save_image(self.image, filename, return_img)
 
     def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
-                   size=None, name=None, origin=None, face=None):
+                   size=None, name=None, origin=None, face='triangle'):
         """Add a legend to render window.
 
         Entries must be a list containing one string and color entry for each
@@ -3939,7 +3939,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         labels : list, optional
-            When set to None, uses existing labels as specified by
+            When set to ``None``, uses existing labels as specified by
 
             - :func:`add_mesh <BasePlotter.add_mesh>`
             - :func:`add_lines <BasePlotter.add_lines>`
@@ -3952,7 +3952,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         bcolor : list or str, optional
             Background color, either a three item 0 to 1 RGB color
-            list, or a matplotlib color string (e.g. 'w' or 'white'
+            list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
             for a white color).  If None, legend background is
             disabled.
 
@@ -3962,7 +3962,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         size : list, optional
             Two float list, each float between 0 and 1.  For example
-            [0.1, 0.1] would make the legend 10% the size of the
+            ``[0.1, 0.1]`` would make the legend 10% the size of the
             entire figure window.
 
         name : str, optional
@@ -3975,14 +3975,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             of the legend.
 
         face : str, optional
-            Face shape of legend face.
-            Accepted options:
+            Face shape of legend face. Accepted options:
 
             * ``'triangle'``
             * ``'circle'``
             * ``'rectangle'``
+            * ``None``
 
-            Default is ``'triangle'``.
+            Default is ``'triangle'``.  Passing ``None`` removes the legend face.
 
         Returns
         -------
@@ -3991,28 +3991,27 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Examples
         --------
+        Create a legend by labeling the meshes when using ``add_mesh``
+
         >>> import pyvista
         >>> from pyvista import examples
-        >>> mesh = examples.load_hexbeam()
-        >>> othermesh = examples.load_uniform()
+        >>> sphere = pyvista.Sphere(center=(0, 0, 1))
+        >>> cube = pyvista.Cube()
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(mesh, label='My Mesh')
-        >>> _ = plotter.add_mesh(othermesh, 'k', label='My Other Mesh')
-        >>> _ = plotter.add_legend()
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True, label='Sphere')
+        >>> _ = plotter.add_mesh(cube, 'r', label='Cube')
+        >>> _ = plotter.add_legend(bcolor='w', face=None)
         >>> plotter.show()
 
-        Alternative manual example
+        Alternatively provide labels in the plotter.
 
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> mesh = examples.load_hexbeam()
-        >>> othermesh = examples.load_uniform()
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
+        >>> _ = plotter.add_mesh(cube, 'r')
+        >>> _ = plotter.add_legend(bcolor='w', face=None)
         >>> legend_entries = []
         >>> legend_entries.append(['My Mesh', 'w'])
         >>> legend_entries.append(['My Other Mesh', 'k'])
-        >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(mesh)
-        >>> _ = plotter.add_mesh(othermesh, 'k')
         >>> _ = plotter.add_legend(legend_entries)
         >>> plotter.show()
 
@@ -4029,12 +4028,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             self.legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels):
+
+                # dummy vtk object
+                if face is None:
+                    vtk_object = pyvista.PolyData([0, 0, 0])
+
                 self.legend.SetEntry(i, vtk_object, text, parse_color(color))
 
         else:
             self.legend.SetNumberOfEntries(len(labels))
 
-            if face is None or face == "triangle":
+            if face is None:
+                legendface = pyvista.PolyData([0, 0, 0])
+            if face == "triangle":
                 legendface = pyvista.Triangle()
             elif face == "circle":
                 legendface = pyvista.Circle()
@@ -4069,12 +4075,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.legend.UseBackgroundOff()
         else:
             self.legend.UseBackgroundOn()
-            self.legend.SetBackgroundColor(bcolor)
+            self.legend.SetBackgroundColor(parse_color(bcolor))
 
-        if border:
-            self.legend.BorderOn()
-        else:
-            self.legend.BorderOff()
+        self.legend.SetBorder(border)
 
         # Add to renderer
         self.add_actor(self.legend, reset_camera=False, name=name, pickable=False)
