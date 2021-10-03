@@ -2456,7 +2456,6 @@ class Renderer(_vtk.vtkRenderer):
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
         >>> _ = plotter.add_mesh(cube, 'r')
-        >>> _ = plotter.add_legend(bcolor='w', face=None)
         >>> legend_entries = []
         >>> legend_entries.append(['My Mesh', 'w'])
         >>> legend_entries.append(['My Other Mesh', 'k'])
@@ -2490,17 +2489,22 @@ class Renderer(_vtk.vtkRenderer):
 
             if face is None:
                 legendface = pyvista.PolyData([0, 0, 0])
-            if face == "triangle":
+            elif face in ['-', 'line']:
+                legendface = _line_for_legend()
+            elif face == "triangle":
                 legendface = pyvista.Triangle()
             elif face == "circle":
                 legendface = pyvista.Circle()
             elif face == "rectangle":
                 legendface = pyvista.Rectangle()
+            elif isinstance(face, pyvista.PolyData):
+                legendface = face
             else:
                 raise ValueError(f'Invalid face "{face}".  Must be one of the following:\n'
                                  '\t"triangle"\n'
                                  '\t"circle"\n'
-                                 '\t"rectangle"\n')
+                                 '\t"rectangle"\n'
+                                 '\tNone')
 
             for i, (text, color) in enumerate(labels):
                 self._legend.SetEntry(i, legendface, text, parse_color(color))
@@ -2555,9 +2559,23 @@ class Renderer(_vtk.vtkRenderer):
         if self.legend is not None:
             self.remove_actor(self.legend, reset_camera=False, render=render)
             self._legend = None
-            self.render()
 
     @property
     def legend(self):
         """Legend actor."""
         return self._legend
+
+
+def _line_for_legend():
+    """Create a simple line-like rectangle for the legend."""
+    points = [
+        [0, 0, 0],
+        [0.4, 0, 0],
+        [0.4, 0.07, 0],
+        [0, 0.07, 0],
+        [0.5, 0, 0],
+    ]
+    legendface = pyvista.PolyData()
+    legendface.points = np.array(points)
+    legendface.faces = [4, 0, 1, 2, 3]
+    return legendface
