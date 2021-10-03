@@ -689,7 +689,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.remove_legend(*args, **kwargs)
 
     @property
-    def legend(self, *args, **kwargs):
+    def legend(self):
         """Legend actor.
 
         There can only be one legend actor per renderer.  If
