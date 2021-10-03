@@ -43,7 +43,33 @@ class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
 #endregion
 
 class Pen(_vtkWrapper, _vtk.vtkPen):
-    """Pythonic wrapper for a VTK Pen, used to draw lines."""
+    """Pen(color="k", width=1, style="-")
+
+    Pythonic wrapper for a VTK Pen, used to draw lines.
+
+    Parameters
+    ----------
+    color : color, optional
+        Color of the lines drawn using this pen. Any color parsable by :func:`pyvista.parse_color` is allowed. Defaults
+        to ``"k"``.
+
+    width : float, optional
+        Width of the lines drawn using this pen. Defaults to ``1``.
+
+    style : str, optional
+        Style of the lines drawn using this pen. See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed line styles. Defaults
+        to ``"-"``.
+
+    Notes
+    -----
+    .. _pen_line_styles:
+
+    LINE_STYLES : dict
+        Dictionary containing all allowed line styles as its keys.
+
+        .. include:: ../pen_line_styles.rst
+
+    """
 
     LINE_STYLES = {
         "": _vtk.vtkPen.NO_PEN,
@@ -55,22 +81,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     }
 
     def __init__(self, color="k", width=1, style="-"):
-        """Initialize a new Pen instance.
-
-        Parameters
-        ----------
-        color : str or sequence, optional
-            Color of the lines drawn using this pen. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
-            to ``"k"``.
-
-        width : float, optional
-            Width of the lines drawn using this pen. Defaults to ``1``.
-
-        style : str, optional
-            Style of the lines drawn using this pen. See ``Pen.LINE_STYLES`` for a list of allowed line styles. Defaults
-            to ``"-"``.
-
-        """
+        """Initialize a new Pen instance."""
         super().__init__()
         self.color = color
         self.width = width
@@ -123,6 +134,8 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     def style(self):
         """Return or set the pen's line style.
 
+        See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed line styles.
+
         Examples
         --------
         >>> import pyvista
@@ -138,33 +151,35 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     def style(self, val):
         if val is None:
             val = ""
-        if val in self.LINE_STYLES:
-            self._line_style = val
+        try:
             self.SetLineType(self.LINE_STYLES[val])
-        else:
+            self._line_style = val
+        except KeyError:
             formatted_styles = "\", \"".join(self.LINE_STYLES.keys())
             raise ValueError(f"Invalid line style. Allowed line styles: \"{formatted_styles}\"")
 
 
 class Brush(_vtkWrapper, _vtk.vtkBrush):
-    """Pythonic wrapper for a VTK Brush, used to fill shapes."""
+    """Brush(color="k", texture=None)
+
+    Pythonic wrapper for a VTK Brush, used to fill shapes.
+
+    Parameters
+    ----------
+    color : color, optional
+        Fill color of the shapes drawn using this brush. Any color
+        parsable by :func:`pyvista.parse_color` is allowed.  Defaults
+        to ``"k"``.
+
+    texture : `pyvista.Texture`, optional
+        Texture used to fill shapes drawn using this brush. Any
+        object convertible to a :class:`pyvista.Texture` is
+        allowed. Defaults to ``None``.
+
+    """
 
     def __init__(self, color="k", texture=None):
-        """Initialize a new Pen instance.
-
-        Parameters
-        ----------
-        color : str or sequence, optional
-            Fill color of the shapes drawn using this brush. Any color
-            parsable by ``pyvista.parse_color`` is allowed.  Defaults
-            to ``"k"``.
-
-        texture : ``pyvista.Texture``, optional
-            Texture used to fill shapes drawn using this brush. Any
-            object convertible to a ``pyvista.Texture`` is
-            allowed. Defaults to ``None``.
-
-        """
+        """Initialize a new Pen instance."""
         super().__init__()
         self.color = color
         self.texture = texture
@@ -224,7 +239,10 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
     def texture_interpolate(self):
         """Set texture interpolation mode.
 
-        NEAREST is ``False``, LINEAR is ``True``.
+        There are two modes:
+
+        * ``False`` - NEAREST
+        * ``True`` - LINEAR
 
         Examples
         --------
@@ -1201,6 +1219,17 @@ class _Chart(object):
             ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
             ``color='#FFFFFF'``.  Defaults to ``'w'``.
 
+        Returns
+        -------
+        image : np.ndarray
+            Numpy array of the last image when ``screenshot=True``
+            is set. Optionally contains alpha values. Sized:
+
+            * [Window height x Window width x 3] if the theme sets
+              ``transparent_background=False``.
+            * [Window height x Window width x 4] if the theme sets
+              ``transparent_background=True``.
+
         Examples
         --------
         Plot a simple sine wave as a scatter and line plot.
@@ -1213,17 +1242,6 @@ class _Chart(object):
         >>> _ = chart.scatter(x, y)
         >>> _ = chart.line(x, y, 'r')
         >>> chart.show()
-
-        Returns
-        -------
-        image : np.ndarray
-            Numpy array of the last image when ``screenshot=True``
-            is set. Optionally contains alpha values. Sized:
-
-            * [Window height x Window width x 3] if the theme sets
-              ``transparent_background=False``.
-            * [Window height x Window width x 4] if the theme sets
-              ``transparent_background=True``.
 
         """
         pl = pyvista.Plotter(window_size=window_size,
@@ -1282,8 +1300,8 @@ class _Plot(object):
 
         Returns
         -------
-        pyvista.charts.Pen
-            `Pen` object controlling how lines in this plot are drawn.
+        `pyvista.charts.Pen <pyvista.plotting.charts.Pen>`
+            Pen object controlling how lines in this plot are drawn.
 
         Examples
         --------
@@ -1304,8 +1322,8 @@ class _Plot(object):
 
         Returns
         -------
-        pyvista.charts.Brush
-            `Brush` object controlling how shapes in this plot are filled.
+        `pyvista.charts.Brush <pyvista.plotting.charts.Brush>`
+            Brush object controlling how shapes in this plot are filled.
 
         Examples
         --------
@@ -1898,7 +1916,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
     y1 : sequence
         Y coordinates of the points on the first outline of the area to draw.
 
-    y2: sequence, optional
+    y2 : sequence, optional
         Y coordinates of the points on the second outline of the area to draw. Defaults to a sequence of zeros.
 
     color : str or sequence, optional
@@ -2118,15 +2136,15 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
     x : sequence
         X coordinates of the points outlining the stacks (areas) to draw.
 
-    ys : sequence[sequence]
+    ys : sequence of sequence
         Size of the stacks (areas) to draw at the corresponding X coordinates. Each sequence defines the sizes of
         one stack (area), which are stacked on top of each other.
 
-    colors : sequence[str or sequence], optional
+    colors : sequence of color, optional
         Color of the stacks (areas) drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
         Defaults to ``None``.
 
-    labels : sequence[str], optional
+    labels : sequence of str, optional
         Label for each stack (area) drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
     """
@@ -2443,30 +2461,30 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Parameters
         ----------
-        x : sequence
+        x : array_like
             X coordinates of the points through which a line should be drawn.
 
-        y : sequence
+        y : array_like
             Y coordinates of the points through which a line should be drawn.
 
-        color : str or sequence, optional
-            Color of the line drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+        color : color, optional
+            Color of the line drawn in this plot. Any color parsable by :func:`pyvista.parse_color` is allowed. Defaults
             to ``"b"``.
 
         width : float, optional
             Width of the line drawn in this plot. Defaults to ``1``.
 
         style : str, optional
-            Style of the line drawn in this plot. See ``Pen.LINE_STYLES`` for a list of allowed line styles. Defaults
-            to ``"-"``.
+            Style of the line drawn in this plot. See :attr:`Pen.LINE_STYLES` for a list of allowed line styles.
+            Defaults to ``"-"``.
 
         label : str, optional
             Label of this plot, as shown in the chart's legend. Defaults to ``""``.
 
         Returns
         -------
-        line_plot : pyvista.LinePlot2D
-            The created line plot.
+        line_plot : :class:`LinePlot2D <pyvista.plotting.charts.LinePlot2D>`
+            The created line plot. Test ref `pyvista.plotting.charts.LinePlot2D`.
 
         Examples
         --------
@@ -2491,7 +2509,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         y1 : sequence
             Y coordinates of the points on the first outline of the area to draw.
 
-        y2: sequence, optional
+        y2 : sequence, optional
             Y coordinates of the points on the second outline of the area to draw. Defaults to a sequence of zeros.
 
         color : str or sequence, optional
@@ -2569,15 +2587,15 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         x : sequence
             X coordinates of the points outlining the stacks (areas) to draw.
 
-        ys : sequence[sequence]
+        ys : sequence of sequence
             Size of the stacks (areas) to draw at the corresponding X coordinates. Each sequence defines the sizes of
             one stack (area), which are stacked on top of each other.
 
-        colors : sequence[str or sequence], optional
+        colors : sequence of color, optional
             Color of the stacks (areas) drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
             Defaults to ``None``.
 
-        labels : sequence[str], optional
+        labels : sequence of str, optional
             Label for each stack (area) drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
         Returns
@@ -2608,6 +2626,11 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             and ``"stack"``.
             Defaults to ``None``, which will return all plots,
             regardless of their type.
+
+        Yields
+        ------
+        plot : ScatterPlot2D, LinePlot2D, AreaPlot, BarPlot or StackPlot
+            One of the plots (of the specified type) in this chart.
 
         Examples
         --------
@@ -2830,7 +2853,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
     data : sequence
         Dataset(s) from which the relevant statistics will be calculated used to draw the box plot.
 
-    colors : sequence[str or sequence], optional
+    colors : sequence of color, optional
         Color of the boxes drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
         Defaults to ``None``.
 
@@ -2967,7 +2990,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
     labels : sequence, optional
         Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
-    colors : sequence[str or sequence], optional
+    colors : sequence of color, optional
         Color of the segments drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
         Defaults to ``None``.
 
@@ -3018,6 +3041,9 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     ----------
     data : sequence
         Relative size of each pie segment.
+
+    labels : sequence, optional
+        Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
     """
 

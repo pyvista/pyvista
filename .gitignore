@@ -63,6 +63,7 @@ doc/images/auto-generated
 api-autogen/
 _autosummary/
 doc/getting-started/external_examples.rst
+doc/api/plotting/pen_line_styles.rst
 **/grid.vtu
 
 # hypothesis

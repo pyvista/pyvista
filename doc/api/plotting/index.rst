@@ -27,7 +27,25 @@ all plotting functionality in PyVista.
 
    Plotter
    Renderer
+
+Charts API
+----------
+Charts API reference. These dedicated classes can be used to embed
+charts in plotting windows.
+
+.. currentmodule:: pyvista
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-class-template.rst
+
+   plotting.charts.Pen
+   plotting.charts.Brush
+   plotting.charts.LinePlot2D
    Chart2D
+   ChartBox
+   ChartPie
+   ChartMPL
 
 
 Widget API
