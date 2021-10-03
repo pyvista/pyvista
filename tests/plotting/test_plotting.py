@@ -676,6 +676,8 @@ def test_make_movie(sphere):
 
 def test_add_legend(sphere):
     plotter = pyvista.Plotter()
+    with pytest.raises(TypeError):
+        plotter.add_mesh(sphere, label=2)
     plotter.add_mesh(sphere)
     with pytest.raises(ValueError):
         plotter.add_legend()
