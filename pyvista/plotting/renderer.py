@@ -13,6 +13,68 @@ from .tools import (create_axes_orientation_box, create_axes_marker,
                     parse_color, parse_font_family)
 from .camera import Camera
 
+ACTOR_LOC_MAP = [
+    'upper right',
+    'upper left',
+    'lower left',
+    'lower right',
+    'center left',
+    'center right',
+    'lower center',
+    'upper center',
+    'center',
+]
+
+
+def map_loc_to_pos(loc, size, border=0.05):
+    """Map location and size to a VTK position and position2.
+
+    Attempt to place 2d actor in a sensible position.
+
+    """
+    if not isinstance(size, Sequence) or len(size) != 2:
+        raise ValueError(
+            f'`size` must be a list of length 2. Passed value is {size}'
+        )
+
+    if 'right' in loc:
+        x = 1 - size[1] - border
+    elif 'left' in loc:
+        x = border
+    else:
+        x = 0.5 - size[1]/2
+
+    if 'upper' in loc:
+        y = 1 - size[1] - border
+    elif 'lower' in loc:
+        y = border
+    else:
+        y = 0.5 - size[1]/2
+
+    return x, y, size
+
+
+def make_legend_face(face):
+    """Create the legend face."""
+    if face is None:
+        legendface = pyvista.PolyData([0, 0, 0])
+    elif face in ["-", "line"]:
+        legendface = _line_for_legend()
+    elif face in ["^", "triangle"]:
+        legendface = pyvista.Triangle()
+    elif face in ["o", "circle"]:
+        legendface = pyvista.Circle()
+    elif face in ["r", "rectangle"]:
+        legendface = pyvista.Rectangle()
+    elif isinstance(face, pyvista.PolyData):
+        legendface = face
+    else:
+        raise ValueError(f'Invalid face "{face}".  Must be one of the following:\n'
+                         '\t"triangle"\n'
+                         '\t"circle"\n'
+                         '\t"rectangle"\n'
+                         '\tNone')
+    return legendface
 
 def scale_point(camera, point, invert=False):
     """Scale a point using the camera's transform matrix.
@@ -2376,8 +2438,9 @@ class Renderer(_vtk.vtkRenderer):
         _, ymin, _, ymax = self.viewport
         return self.parent.window_size[1]*(ymax - ymin)
 
-    def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
-                   size=None, name=None, origin=None, face='triangle'):
+    def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5),
+                   border=False, size=(0.2, 0.2), name=None,
+                   loc='upper right', face='triangle'):
         """Add a legend to render window.
 
         Entries must be a list containing one string and color entry for each
@@ -2407,9 +2470,9 @@ class Renderer(_vtk.vtkRenderer):
             Controls if there will be a border around the legend.
             Default False.
 
-        size : list, optional
-            Two float list, each float between 0 and 1.  For example
-            ``[0.1, 0.1]`` would make the legend 10% the size of the
+        size : sequence, optional
+            Two float sequence, each float between 0 and 1.  For example
+            ``(0.1, 0.1)`` would make the legend 10% the size of the
             entire figure window.
 
         name : str, optional
@@ -2417,20 +2480,33 @@ class Renderer(_vtk.vtkRenderer):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        origin : list, optional
-            If used, specifies the x and y position of the lower left corner
-            of the legend.
+        loc : str, optional
+            Location string.  One of the following:
 
-        face : str, optional
-            Face shape of legend face. Accepted options:
+            * ``'upper right'``
+            * ``'upper left'``
+            * ``'lower left'``
+            * ``'lower right'``
+            * ``'center left'``
+            * ``'center right'``
+            * ``'lower center'``
+            * ``'upper center'``
+            * ``'center'``
 
-            * ``'triangle'``
-            * ``'circle'``
-            * ``'rectangle'``
-            * ``None``
+        face : str or pyvista.PolyData, optional
+            Face shape of legend face.  One of the following:
+
+            * None: ``None``
+            * Line: ``"-"`` or ``"line"``
+            * Triangle: ``"^"`` or ``'triangle'``
+            * Circle: ``"o"`` or ``'circle'``
+            * Rectangle: ``"r"`` or ``'rectangle'``
+            * Custom: :class:`pyvista.PolyData`
 
             Default is ``'triangle'``.  Passing ``None`` removes the
-            legend face.
+            legend face.  A custom face can be created using
+            :class:`pyvista.PolyData`.  This will be rendered from the
+            XY plane.
 
         Returns
         -------
@@ -2487,42 +2563,18 @@ class Renderer(_vtk.vtkRenderer):
         else:
             self._legend.SetNumberOfEntries(len(labels))
 
-            if face is None:
-                legendface = pyvista.PolyData([0, 0, 0])
-            elif face in ["-", "line"]:
-                legendface = _line_for_legend()
-            elif face in ["^", "triangle"]:
-                legendface = pyvista.Triangle()
-            elif face in ["o", "circle"]:
-                legendface = pyvista.Circle()
-            elif face in ["r", "rectangle"]:
-                legendface = pyvista.Rectangle()
-            elif isinstance(face, pyvista.PolyData):
-                legendface = face
-            else:
-                raise ValueError(f'Invalid face "{face}".  Must be one of the following:\n'
-                                 '\t"triangle"\n'
-                                 '\t"circle"\n'
-                                 '\t"rectangle"\n'
-                                 '\tNone')
-
+            legend_face = make_legend_face(face)
             for i, (text, color) in enumerate(labels):
-                self._legend.SetEntry(i, legendface, text, parse_color(color))
+                self._legend.SetEntry(i, legend_face, text, parse_color(color))
 
-        if origin is not None:
-            if not isinstance(origin, Sequence) or len(origin) != 2:
+        if loc is not None:
+            if loc not in ACTOR_LOC_MAP:
+                allowed = '\n'.join([f'\t * "{item}"' for item in ACTOR_LOC_MAP])
                 raise ValueError(
-                    '`origin` must be a list of length 2. Passed value is {}'
-                    .format(origin)
+                    f'Invalid loc "{loc}".  Expected one of the following:\n{allowed}'
                 )
-            self._legend.SetPosition(origin[0], origin[1])
-
-        if size is not None:
-            if not isinstance(size, Sequence) or len(size) != 2:
-                raise ValueError(
-                    '`size` must be a list of length 2. Passed value is {}'
-                    .format(size)
-                )
+            x, y, size = map_loc_to_pos(loc, size, border=0.05)
+            self._legend.SetPosition(x, y)
             self._legend.SetPosition2(size[0], size[1])
 
         if bcolor is None:
@@ -2533,7 +2585,6 @@ class Renderer(_vtk.vtkRenderer):
 
         self._legend.SetBorder(border)
 
-        # Add to renderer
         self.add_actor(self._legend, reset_camera=False, name=name, pickable=False)
         return self._legend
 

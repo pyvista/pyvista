@@ -687,34 +687,6 @@ def test_add_legend(sphere):
     plotter.show(before_close_callback=verify_cache_image)
 
 
-def test_legend_origin(sphere):
-    """Ensure the origin parameter of `add_legend` affects origin position."""
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    origin = [0, 0]
-    legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
-                                size=[0.1, 0.1], origin=origin)
-    assert list(origin) == list(legend.GetPosition())
-
-
-def test_bad_legend_origin_and_size(sphere):
-    """Ensure bad parameters to origin/size raise ValueErrors."""
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    # test incorrect lengths
-    with pytest.raises(ValueError, match='origin'):
-        plotter.add_legend(labels=legend_labels, origin=(1, 2, 3))
-    with pytest.raises(ValueError, match='size'):
-        plotter.add_legend(labels=legend_labels, size=[])
-    # test non-sequences also raise
-    with pytest.raises(ValueError, match='origin'):
-        plotter.add_legend(labels=legend_labels, origin=len)
-    with pytest.raises(ValueError, match='size'):
-        plotter.add_legend(labels=legend_labels, size=type)
-
-
 def test_legend_circle_face(sphere):
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)

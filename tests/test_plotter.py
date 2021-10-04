@@ -34,20 +34,3 @@ def test_disable_hidden_line_removal():
 
     plotter.disable_hidden_line_removal(True)
     assert not plotter.renderers[1].GetUseHiddenLineRemoval()
-
-
-def test_add_legend_no_face(sphere):
-    pl = pyvista.Plotter()
-    pl.add_mesh(sphere, label='sphere')
-    pl.add_legend(face=None)
-
-    pl = pyvista.Plotter()
-    pl.add_mesh(sphere)
-    pl.add_legend(labels=[['sphere', 'k']], face=None)
-
-
-def test_add_remove_legend(sphere):
-    pl = pyvista.Plotter()
-    pl.add_mesh(sphere, label='sphere')
-    pl.add_legend()
-    pl.remove_legend()
