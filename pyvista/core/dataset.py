@@ -1958,7 +1958,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        int or numpy.ndarray
+        numpy.ndarray
             Index or indices of the cell in this mesh that are closest
             to the given point.
 
