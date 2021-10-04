@@ -2489,13 +2489,13 @@ class Renderer(_vtk.vtkRenderer):
 
             if face is None:
                 legendface = pyvista.PolyData([0, 0, 0])
-            elif face in ['-', 'line']:
+            elif face in ["-", "line"]:
                 legendface = _line_for_legend()
-            elif face == "triangle":
+            elif face in ["^", "triangle"]:
                 legendface = pyvista.Triangle()
-            elif face == "circle":
+            elif face in ["o", "circle"]:
                 legendface = pyvista.Circle()
-            elif face == "rectangle":
+            elif face in ["r", "rectangle"]:
                 legendface = pyvista.Rectangle()
             elif isinstance(face, pyvista.PolyData):
                 legendface = face
