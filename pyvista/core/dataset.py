@@ -1940,7 +1940,7 @@ class DataSet(DataSetFilters, DataObject):
         pointa: Iterable[float],
         pointb: Iterable[float],
         tolerance=0.0,
-    ) -> Union[int, np.ndarray]:
+    ) -> np.ndarray:
         """Find the index of cells in this mesh along a line.
 
         Line is defined from ``pointa`` to ``pointb``.
