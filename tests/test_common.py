@@ -897,6 +897,12 @@ def test_find_closest_cells():
     assert np.allclose(indices[~mask], np.arange(mesh.n_faces)[~mask])
 
 
+def test_find_cells_along_line():
+    mesh = pyvista.Cube()
+    indices = mesh.find_cells_along_line([0, 0, -1], [0, 0, 1])
+    assert len(indices) == 2
+
+
 def test_setting_points_from_self(grid):
     grid_copy = grid.copy()
     grid.points = grid_copy.points
