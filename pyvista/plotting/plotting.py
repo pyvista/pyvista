@@ -2403,7 +2403,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         -------
         vtk.vtkActor
             VTK actor of the volume.
-
+        
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> bolt_nut = examples.download_bolt_nut()
+        >>> 
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(bolt_nut, cmap="coolwarm")
+        >>> pl.show()
+        
         """
         # Handle default arguments
 
