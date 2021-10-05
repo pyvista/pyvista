@@ -2001,3 +2001,11 @@ def test_plot_zoom(sphere):
     # it's difficult to verify that zoom actually worked since we
     # can't get the output with cpos or verify the image cache matches
     sphere.plot(zoom=2, before_close_callback=verify_cache_image)
+
+
+def test_add_cursor():
+    sphere = pyvista.Sphere()
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_cursor()
+    plotter.show(before_close_callback=verify_cache_image)
