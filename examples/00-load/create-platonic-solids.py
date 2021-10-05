@@ -20,10 +20,7 @@ from pyvista import examples
 #     * :func:`pyvista.Octahedron`
 #     * :func:`pyvista.Dodecahedron`
 #     * :func:`pyvista.Icosahedron`
-#
-# (:func:`PlatonicSolid() <pyvista.PlatonicSolid>` can also return a cube, but
-# PyVista's existing :func:`pyvista.Cube` helper isn't based on the
-# ``vtkPlatonicSolidSource`` filter.)
+#     * :func:`pyvista.Cube` (implemented via a different filter)
 #
 # Let's generate all the Platonic solids, along with the :func:`teapotahedron
 # <pyvista.examples.downloads.download_teapot>`.
@@ -70,5 +67,5 @@ p.add_floor('-z', lighting=True, color='navy', pad=1.0)
 p.show()
 
 ###############################################################################
-# The conventional Platonic solids come with cell scalars that index each face
-# of the solids (unlike the output of :func:`pyvista.Cube`).
+# The Platonic solids come with cell scalars that index each face of the
+# solids.
