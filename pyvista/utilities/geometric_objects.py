@@ -436,13 +436,22 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
     return line
 
 
-def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
-         z_length=1.0, bounds=None):
+def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0,
+         z_length=1.0, bounds=None, clean=True):
     """Create a cube.
 
     It's possible to specify either the center and side lengths or
     just the bounds of the cube. If ``bounds`` are given, all other
     arguments are ignored.
+
+    .. versionchanged:: 0.33.0
+        The cube is created using ``vtk.vtkCubeSource``. For
+        compatibility with :func:`pyvista.PlatonicSolid`, face indices
+        are also added as cell data. For full compatibility with
+        :ref:`PlatonicSolid() <pyvista.PlatonicSolid>`, one has to
+        use ``x_length = y_length = z_length = 2 * radius / 3**0.5``.
+        The cube points are also cleaned by default now, leaving only
+        the 8 corners and a watertight (manifold) mesh.
 
     Parameters
     ----------
@@ -459,8 +468,16 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
         Length of the cube in the z-direction.
 
     bounds : sequence, optional
-        Specify the bounding box of the cube. If given, all other arguments are
-        ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        Specify the bounding box of the cube. If given, all other size
+        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    clean : bool, optional
+        Whether to clean the raw points of the mesh, making the cube
+        manifold. Note that this will degrade the texture coordinates
+        that come with the mesh, so if you plan to map a texture on
+        the cube, consider setting this to ``False``.
+
+        .. versionadded:: 0.33.0
 
     Returns
     -------
@@ -487,7 +504,17 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
         src.SetYLength(y_length)
         src.SetZLength(z_length)
     src.Update()
-    return pyvista.wrap(src.GetOutput())
+    cube = pyvista.wrap(src.GetOutput())
+
+    # add face index data for compatibility with PlatonicSolid
+    # but make it inactive for backwards compatibility
+    cube.cell_data.set_array([1, 4, 0, 3, 5, 2],['FaceIndex'])
+
+    # clean duplicate points
+    if clean:
+        cube.clean(inplace=True)
+
+    return cube
 
 
 def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
