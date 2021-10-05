@@ -314,6 +314,19 @@ class PolyDataFilters(DataSetFilters):
         """Merge these two meshes."""
         return self.merge(dataset)
 
+    def __iadd__(self, dataset):
+        """Merge another mesh into this one if possible.
+
+        "If possible" means that ``dataset`` is also a :class:`PolyData`.
+        Otherwise we have to return a :class:`pyvista.UnstructuredGrid`.
+
+        """
+        try:
+            merged = self.merge(dataset, inplace=True)
+        except TypeError:
+            merged = self.merge(dataset)
+        return merged
+
     def merge(self, dataset, merge_points=True, inplace=False,
               main_has_priority=True, progress_bar=False):
         """Merge this mesh with one or more datasets.
