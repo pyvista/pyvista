@@ -40,7 +40,7 @@ class PolyDataFilters(DataSetFilters):
         Plot the mask of points that exceed 45 degrees.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().triangulate().subdivide(4).clean()
+        >>> mesh = pyvista.Cube().triangulate().subdivide(4)
         >>> mask = mesh.edge_mask(45)
         >>> mask  # doctest:+SKIP
         array([ True,  True,  True, ..., False, False, False])
@@ -664,7 +664,7 @@ class PolyDataFilters(DataSetFilters):
         Smooth the edges of an all triangular cube
 
         >>> import pyvista as pv
-        >>> cube = pv.Cube().triangulate().subdivide(5).clean()
+        >>> cube = pv.Cube().triangulate().subdivide(5)
         >>> smooth_cube = cube.smooth(1000, feature_smoothing=False)
         >>> n_edge_cells = cube.extract_feature_edges().n_cells
         >>> n_smooth_cells = smooth_cube.extract_feature_edges().n_cells

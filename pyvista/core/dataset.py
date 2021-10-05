@@ -333,7 +333,7 @@ class DataSet(DataSetFilters, DataObject):
         array.
 
         >>> import pyvista
-        >>> cube = pyvista.Cube().clean()
+        >>> cube = pyvista.Cube()
         >>> points = cube.points
         >>> points
         pyvista_ndarray([[-0.5, -0.5, -0.5],
@@ -424,7 +424,7 @@ class DataSet(DataSetFilters, DataObject):
         plot the active vectors.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh_w_normals = mesh.compute_normals()
         >>> mesh_w_normals.active_vectors_name = 'Normals'
         >>> arrows = mesh_w_normals.arrows
@@ -743,7 +743,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> cube = pyvista.Cube().clean()
+        >>> cube = pyvista.Cube()
         >>> cube['my_array'] = range(cube.n_points)
         >>> cube.rename_array('my_array', 'my_renamed_array')
         >>> cube['my_renamed_array']
@@ -1210,7 +1210,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.point_data['my_array'] = np.random.random(mesh.n_points)
         >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
@@ -1350,7 +1350,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.cell_data['my_array'] = np.random.random(mesh.n_cells)
         >>> mesh.cell_data['my_other_array'] = np.arange(mesh.n_cells)
@@ -1389,7 +1389,7 @@ class DataSet(DataSetFilters, DataObject):
         mesh.
 
         >>> import pyvista
-        >>> cube = pyvista.Cube().clean()
+        >>> cube = pyvista.Cube()
         >>> cube.n_points
         8
 
@@ -1411,7 +1411,7 @@ class DataSet(DataSetFilters, DataObject):
         mesh.
 
         >>> import pyvista
-        >>> cube = pyvista.Cube().clean()
+        >>> cube = pyvista.Cube()
         >>> cube.n_cells
         6
 
@@ -1439,7 +1439,7 @@ class DataSet(DataSetFilters, DataObject):
         Create a cube and return the bounds of the mesh.
 
         >>> import pyvista
-        >>> cube = pyvista.Cube().clean()
+        >>> cube = pyvista.Cube()
         >>> cube.bounds
         [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
 
@@ -1544,7 +1544,7 @@ class DataSet(DataSetFilters, DataObject):
         Create a DataSet with a variety of arrays.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.point_data['point-data'] = range(mesh.n_points)
         >>> mesh.cell_data['cell-data'] = range(mesh.n_cells)
@@ -1597,7 +1597,7 @@ class DataSet(DataSetFilters, DataObject):
         Create a DataSet with a variety of arrays.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.point_data['point-data'] = range(mesh.n_points)
         >>> mesh.cell_data['cell-data'] = range(mesh.n_cells)
@@ -1783,7 +1783,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> mesh_a = pyvista.Sphere()
-        >>> mesh_b = pyvista.Cube().clean()
+        >>> mesh_b = pyvista.Cube()
         >>> mesh_a.overwrite(mesh_b)
         >>> mesh_a == mesh_b
         True
