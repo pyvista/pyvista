@@ -14,7 +14,7 @@ from pyvista import examples
 ###############################################################################
 # We can either use the generic :func:`PlatonicSolid() <pyvista.PlatonicSolid>`
 # and specify the different kinds of solids to generate, or we can use the thin
-# wrappers
+# wrappers:
 #
 #     * :func:`pyvista.Tetrahedron`
 #     * :func:`pyvista.Octahedron`
