@@ -55,15 +55,23 @@ solids.append(teapot)
 
 ###############################################################################
 # Now let's plot them all.
+#
+# .. note::
+#    VTK has known issues when rendering shadows on certain window
+#    sizes.  Be prepared to experiment with the ``window_size``
+#    parameter.  An initial window size of ``(1000, 1000)`` seems to
+#    work well, which can be manually resized without issue.
 
-p = pv.Plotter()
+
+p = pv.Plotter(window_size=[1000, 1000])
 for ind, solid in enumerate(solids):
     # only use smooth shading for the teapot
     smooth_shading = ind == len(solids) - 1
     p.add_mesh(solid, color='silver', smooth_shading=smooth_shading,
                specular=1.0, specular_power=10)
 p.view_vector((5.0, 2, 3))
-p.add_floor('-z', lighting=True, color='navy', pad=1.0)
+p.add_floor('-z', lighting=True, color='tan', pad=1.0)
+p.enable_shadows()
 p.show()
 
 ###############################################################################
