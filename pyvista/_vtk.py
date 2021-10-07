@@ -282,7 +282,8 @@ if VTK9:
                                               vtkShrinkFilter,
                                               vtkBooleanOperationPolyDataFilter,
                                               vtkTransformFilter,
-                                              vtkAxes)
+                                              vtkAxes,
+                                              vtkCellTreeLocator)
     from vtkmodules.vtkFiltersModeling import (vtkOutlineFilter,
                                                vtkRibbonFilter,
                                                vtkLinearExtrusionFilter,

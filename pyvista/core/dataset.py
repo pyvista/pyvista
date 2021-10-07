@@ -1980,6 +1980,36 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsAlongLine(pointa, pointb, tolerance, id_list)
         return vtk_id_list_to_array(id_list)
 
+    def find_cells_within_bounds(self, bounds) -> np.ndarray:
+        """Find the index of cells in this mesh within bounds.
+
+        Parameters
+        ----------
+        bounds :
+            Bounding box. The form is: ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+
+        Returns
+        -------
+        numpy.ndarray
+            Index or indices of the cell in this mesh that are closest
+            to the given point.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> index = mesh.find_cells_within_bounds([-2.0, 2.0, -2.0, 2.0, -2.0, 2.0])
+
+        """
+        if np.array(bounds).size != 6:
+            raise TypeError("Bounds must be a length three tuple of floats.")
+        locator = _vtk.vtkCellTreeLocator()
+        locator.SetDataSet(self)
+        locator.BuildLocator()
+        id_list = _vtk.vtkIdList()
+        locator.FindCellsWithinBounds(list(bounds), id_list)
+        return vtk_id_list_to_array(id_list)
+
     def cell_n_points(self, ind: int) -> int:
         """Return the number of points in a cell.
 
