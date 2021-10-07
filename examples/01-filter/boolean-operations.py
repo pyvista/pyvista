@@ -126,7 +126,7 @@ pl.show()
 # Boolean difference with both cube and sphere normals pointed
 # outward.  This is the "normal" behavior.
 
-cube = pv.Cube().clean().triangulate().subdivide(3).clean()
+cube = pv.Cube().triangulate().subdivide(3)
 sphere = pv.Sphere(radius=0.6)
 result = cube.boolean_difference(sphere)
 result.plot(color='tan')
@@ -135,7 +135,7 @@ result.plot(color='tan')
 ###############################################################################
 # Boolean difference with cube normals outward, sphere inward.
 
-cube = pv.Cube().triangulate().subdivide(3).clean()
+cube = pv.Cube().triangulate().subdivide(3)
 sphere = pv.Sphere(radius=0.6)
 sphere.flip_normals()
 result = cube.boolean_difference(sphere)
@@ -145,7 +145,7 @@ result.plot(color='tan')
 ###############################################################################
 # Boolean difference with cube normals inward, sphere outward.
 
-cube = pv.Cube().triangulate().subdivide(3).clean()
+cube = pv.Cube().triangulate().subdivide(3)
 cube.flip_normals()
 sphere = pv.Sphere(radius=0.6)
 result = cube.boolean_difference(sphere)
@@ -155,7 +155,7 @@ result.plot(color='tan')
 ###############################################################################
 # Both cube and sphere normals inward.
 
-cube = pv.Cube().triangulate().subdivide(3).clean()
+cube = pv.Cube().triangulate().subdivide(3)
 cube.flip_normals()
 sphere = pv.Sphere(radius=0.6)
 sphere.flip_normals()
