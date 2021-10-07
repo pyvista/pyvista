@@ -1980,7 +1980,7 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsAlongLine(pointa, pointb, tolerance, id_list)
         return vtk_id_list_to_array(id_list)
 
-    def find_cells_within_bounds(self, bounds) -> np.ndarray:
+    def find_cells_within_bounds(self, bounds: Iterable[float]) -> np.ndarray:
         """Find the index of cells in this mesh within bounds.
 
         Parameters
