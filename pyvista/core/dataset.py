@@ -1985,7 +1985,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        bounds :
+        bounds : iterable(float)
             Bounding box. The form is: ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         Returns
