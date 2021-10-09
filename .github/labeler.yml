@@ -1,0 +1,4 @@
+documentation:
+- doc/*
+- examples/*
+- examples_flask/*
