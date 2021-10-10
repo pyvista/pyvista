@@ -14,3 +14,6 @@ changelog:
     - title: Documentation
       labels:
         - documentation
+    - title: Maintenance
+      labels:
+        - maintenance
