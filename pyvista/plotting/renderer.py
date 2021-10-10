@@ -1113,6 +1113,14 @@ class Renderer(_vtk.vtkRenderer):
         -------
         vtk.vtkAxesActor
             Bounds actor.
+            
+         Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(examples.download_guitar())
+        >>> _ = pl.show_grid()
+        >>> pl.show()
 
         """
         kwargs.setdefault('grid', 'back')
@@ -1445,7 +1453,21 @@ class Renderer(_vtk.vtkRenderer):
             self._floor_kwargs.clear()
 
     def remove_bounds_axes(self):
-        """Remove bounds axes."""
+        """Remove bounds axes.
+         Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.show_bounds(grid='front', location='outer')
+        >>> pl.subplot(0, 1)
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.show_bounds(grid='front', location='outer')
+        >>> actor = pl.remove_bounds_axes()
+        >>> pl.show()
+        """
+        
         if hasattr(self, 'cube_axes_actor'):
             self.remove_actor(self.cube_axes_actor)
             self.Modified()

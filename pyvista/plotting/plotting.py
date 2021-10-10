@@ -3840,6 +3840,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rendering, that is, a rendering at a fixed depth where
             primitives are drawn from the bottom up.
 
+        Examples
+        --------
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(examples.load_airplane(), smooth_shading=True)
+        >>> _ = pl.add_background_image(examples.mapfile)
+        >>> pl.save_graphic("img.svg")  # doctest:+SKIP
+
         """
         if not hasattr(self, 'ren_win'):
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
@@ -4277,6 +4287,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         compress_arrays : bool, optional
             Enable array compression.
+            
+        Examples
+        --------
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(examples.load_hexbeam())
+        >>> pl.export_vtkjs("sample")  # doctest:+SKIP
+
         """
         if not hasattr(self, 'ren_win'):
             raise RuntimeError('Export must be called before showing/closing the scene.')
@@ -4381,6 +4401,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def remove_background_image(self):
         """Remove the background image from the current subplot."""
+        """
+        
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))        
+        >>> pl.subplot(0, 0)                          
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> pl.add_background_image(examples.mapfile, as_global=False)
+        >>> pl.subplot(0, 1)
+        >>> actor = pl.add_mesh(pyvista.Cube())
+        >>> pl.add_background_image(examples.mapfile, as_global=False)
+        >>> pl.remove_background_image()              
+        >>> pl.show()
+
+        """
         self.renderers.remove_background_image()
 
         # return the active renderer to the top, otherwise flat background
