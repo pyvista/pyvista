@@ -3842,7 +3842,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Examples
         --------
-
         >>> import pyvista
         >>> from pyvista import examples
         >>> pl = pyvista.Plotter()
@@ -4290,7 +4289,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             
         Examples
         --------
-
         >>> import pyvista
         >>> from pyvista import examples
         >>> pl = pyvista.Plotter()

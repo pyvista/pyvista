@@ -1454,7 +1454,8 @@ class Renderer(_vtk.vtkRenderer):
 
     def remove_bounds_axes(self):
         """Remove bounds axes.
-         Examples
+        
+        Examples
         --------
         >>> import pyvista
         >>> pl = pyvista.Plotter(shape=(1, 2))
@@ -1466,8 +1467,8 @@ class Renderer(_vtk.vtkRenderer):
         >>> actor = pl.show_bounds(grid='front', location='outer')
         >>> actor = pl.remove_bounds_axes()
         >>> pl.show()
-        """
         
+        """
         if hasattr(self, 'cube_axes_actor'):
             self.remove_actor(self.cube_axes_actor)
             self.Modified()
