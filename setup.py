@@ -20,7 +20,6 @@ install_requires = ['numpy',
                     'scooby>=0.5.1',
                     'meshio>=4.0.3, <5.0',
                     'vtk',
-                    'dataclasses;python_version=="3.6"',
                     'typing_extensions;python_version<="3.7"',
                     ]
 
@@ -52,7 +51,6 @@ setup(
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
         'Operating System :: MacOS',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
@@ -66,7 +64,7 @@ setup(
                                        'globe.vtk', '2k_earth_daymap.jpg'],
     },
 
-    python_requires='>=3.6.*',
+    python_requires='>=3.7.*',
     install_requires=install_requires,
     extras_require={
         'colormaps': ['matplotlib', 'colorcet', 'cmocean']
