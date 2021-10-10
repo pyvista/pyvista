@@ -2052,6 +2052,18 @@ class Renderer(_vtk.vtkRenderer):
         negative : bool, optional
             View from the opposite direction.
 
+        Examples
+        --------
+        View the XY plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_xy()
+        >>> pl.show()
+
         """
         vec = np.array([0,0,1])
         viewup = np.array([0,1,0])
@@ -2067,6 +2079,18 @@ class Renderer(_vtk.vtkRenderer):
         negative : bool, optional
             View from the opposite direction.
 
+        Examples
+        --------
+        View the YX plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_yx()
+        >>> pl.show()
+        
         """
         vec = np.array([0,0,-1])
         viewup = np.array([1,0,0])
@@ -2081,6 +2105,18 @@ class Renderer(_vtk.vtkRenderer):
         ----------
         negative : bool, optional
             View from the opposite direction.
+
+        Examples
+        --------
+        View the XZ plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_xz()
+        >>> pl.show()
 
         """
         vec = np.array([0,-1,0])
@@ -2097,6 +2133,18 @@ class Renderer(_vtk.vtkRenderer):
         negative : bool, optional
             View from the opposite direction.
 
+        Examples
+        --------
+        View the ZX plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_zx()
+        >>> pl.show()
+
         """
         vec = np.array([0,1,0])
         viewup = np.array([1,0,0])
@@ -2112,6 +2160,18 @@ class Renderer(_vtk.vtkRenderer):
         negative : bool, optional
             View from the opposite direction.
 
+        Examples
+        --------
+        View the YZ plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_yz()
+        >>> pl.show()
+
         """
         vec = np.array([1,0,0])
         viewup = np.array([0,0,1])
@@ -2126,6 +2186,18 @@ class Renderer(_vtk.vtkRenderer):
         ----------
         negative : bool, optional
             View from the opposite direction.
+
+        Examples
+        --------
+        View the ZY plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_zy()
+        >>> pl.show()
 
         """
         vec = np.array([-1,0,0])

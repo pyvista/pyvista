@@ -21,7 +21,7 @@ def set_mpl():
 
 @fixture()
 def cube():
-    return pyvista.Cube().clean()
+    return pyvista.Cube()
 
 
 @fixture()

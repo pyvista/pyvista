@@ -74,7 +74,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     Store data with point association in a DataSet.
 
     >>> import pyvista
-    >>> mesh = pyvista.Cube().clean()
+    >>> mesh = pyvista.Cube()
     >>> mesh.point_data['my_data'] = range(mesh.n_points)
     >>> data = mesh.point_data['my_data']
     >>> data
@@ -187,7 +187,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         ``None``.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.point_data['my_data'] = range(mesh.n_points)
         >>> mesh.point_data.get('my-other-data')
 
@@ -264,7 +264,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.point_data['data0'] = np.arange(mesh.n_points)
         >>> mesh.point_data.active_scalars
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
@@ -305,7 +305,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> vectors = np.random.random((mesh.n_points, 3))
         >>> mesh.point_data.set_vectors(vectors, 'my-vectors')
         >>> vectors_out = mesh.point_data.active_vectors
@@ -343,7 +343,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         for field data.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.n_points, mesh.n_cells
         (8, 6)
         >>> mesh.point_data.valid_array_len
@@ -397,7 +397,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Examples
         --------
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.point_data.active_t_coords
         pyvista_ndarray([[ 0.,  0.],
                          [ 1.,  0.],
@@ -501,7 +501,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Store data with point association in a DataSet.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.point_data['my_data'] = range(mesh.n_points)
 
@@ -567,7 +567,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Add a point array to a mesh.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> data = range(mesh.n_points)
         >>> mesh.point_data.set_array(data, 'my-data')
         >>> mesh.point_data['my-data']
@@ -630,7 +630,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Examples
         --------
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> scalars = range(mesh.n_points)
         >>> mesh.point_data.set_scalars(scalars, 'my-scalars')
@@ -681,7 +681,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> vectors = np.random.random((mesh.n_points, 3))
         >>> mesh.point_data.set_vectors(vectors, 'my-vectors')
@@ -830,7 +830,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Add a point data array to a DataSet and then remove it.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.point_data['my_data'] = range(mesh.n_points)
         >>> mesh.point_data.remove('my_data')
 
@@ -879,7 +879,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Add a point data array to a DataSet and then remove it.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.point_data['my_data'] = range(mesh.n_points)
         >>> mesh.point_data.pop('my_data')
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
@@ -913,7 +913,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Examples
         --------
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
         >>> mesh.cell_data['data1'] = range(mesh.n_cells)
@@ -956,7 +956,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Examples
         --------
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.cell_data['data0'] = [0]*mesh.n_cells
         >>> mesh.cell_data['data1'] = range(mesh.n_cells)
@@ -980,7 +980,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         point_data.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.point_data['my_data'] = range(mesh.n_points)
         >>> len(mesh.point_data)
