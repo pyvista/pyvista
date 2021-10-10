@@ -2,6 +2,7 @@
 
 import numpy as np
 from typing import Tuple, Sequence, Union, Optional
+import inspect
 
 import pyvista
 from pyvista import _vtk
@@ -10,6 +11,16 @@ from .tools import parse_color
 
 #region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):
+
+    def __init__(cls, clsname, bases, attrs):
+        # Restore the signature of classes inheriting from _vtkWrapper
+        # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
+        sig = inspect.signature(cls.__init__)
+        params = list(sig.parameters.values())
+        params.insert(len(params)-1 if params[-1].kind == inspect.Parameter.VAR_KEYWORD else len(params),
+                      inspect.Parameter("_wrap", inspect.Parameter.KEYWORD_ONLY, default=None))
+        cls.__signature__ = sig.replace(parameters=params[1:])
+        super().__init__(clsname, bases, attrs)
 
     def __call__(cls, *args, _wrap=None, **kwargs):
         # if _wrap is None:
@@ -43,9 +54,7 @@ class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
 #endregion
 
 class Pen(_vtkWrapper, _vtk.vtkPen):
-    """Pen(color="k", width=1, style="-")
-
-    Pythonic wrapper for a VTK Pen, used to draw lines.
+    """Pythonic wrapper for a VTK Pen, used to draw lines.
 
     Parameters
     ----------
@@ -60,6 +69,11 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         Style of the lines drawn using this pen. See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed line styles. Defaults
         to ``"-"``.
 
+    Other Parameters
+    ----------------
+    _wrap : vtk.vtkPen, optional
+        Wrap an existing VTK Pen instance. Defaults to ``None`` (no wrapping).
+
     Notes
     -----
     .. _pen_line_styles:
@@ -71,13 +85,13 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
     """
 
-    LINE_STYLES = {
-        "": _vtk.vtkPen.NO_PEN,
-        "-": _vtk.vtkPen.SOLID_LINE,
-        "--": _vtk.vtkPen.DASH_LINE,
-        ":": _vtk.vtkPen.DOT_LINE,
-        "-.": _vtk.vtkPen.DASH_DOT_LINE,
-        "-..": _vtk.vtkPen.DASH_DOT_DOT_LINE
+    LINE_STYLES = {  # descr is used in the documentation, set to None to hide it from the docs.
+        "": {"id": _vtk.vtkPen.NO_PEN, "descr": "Hidden"},
+        "-": {"id": _vtk.vtkPen.SOLID_LINE, "descr": "Solid"},
+        "--": {"id": _vtk.vtkPen.DASH_LINE, "descr": "Dashed"},
+        ":": {"id": _vtk.vtkPen.DOT_LINE, "descr": "Dotted"},
+        "-.": {"id": _vtk.vtkPen.DASH_DOT_LINE, "descr": "Dash-dot"},
+        "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"}
     }
 
     def __init__(self, color="k", width=1, style="-"):
@@ -152,7 +166,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         if val is None:
             val = ""
         try:
-            self.SetLineType(self.LINE_STYLES[val])
+            self.SetLineType(self.LINE_STYLES[val]["id"])
             self._line_style = val
         except KeyError:
             formatted_styles = "\", \"".join(self.LINE_STYLES.keys())
@@ -160,9 +174,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
 
 class Brush(_vtkWrapper, _vtk.vtkBrush):
-    """Brush(color="k", texture=None)
-
-    Pythonic wrapper for a VTK Brush, used to fill shapes.
+    """Pythonic wrapper for a VTK Brush, used to fill shapes.
 
     Parameters
     ----------
@@ -175,6 +187,11 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         Texture used to fill shapes drawn using this brush. Any
         object convertible to a :class:`pyvista.Texture` is
         allowed. Defaults to ``None``.
+
+    Other Parameters
+    ----------------
+    _wrap : `vtk.vtkBrush`, optional
+        Wrap an existing VTK Brush instance. Defaults to ``None`` (no wrapping).
 
     """
 
@@ -1464,71 +1481,71 @@ class _MultiCompPlot(_Plot):
     """
 
     COLOR_SCHEMES = {
-        "spectrum": _vtk.vtkColorSeries.SPECTRUM,
-        "warm": _vtk.vtkColorSeries.WARM,
-        "cool": _vtk.vtkColorSeries.COOL,
-        "blues": _vtk.vtkColorSeries.BLUES,
-        "wild_flower": _vtk.vtkColorSeries.WILD_FLOWER,
-        "citrus": _vtk.vtkColorSeries.CITRUS,
-        "div_purple_orange11": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11,
-        "div_purple_orange10": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_10,
-        "div_purple_orange9": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_9,
-        "div_purple_orange8": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_8,
-        "div_purple_orange7": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_7,
-        "div_purple_orange6": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_6,
-        "div_purple_orange5": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_5,
-        "div_purple_orange4": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_4,
-        "div_purple_orange3": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_3,
-        "div_spectral11": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_11,
-        "div_spectral10": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_10,
-        "div_spectral9": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_9,
-        "div_spectral8": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_8,
-        "div_spectral7": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_7,
-        "div_spectral6": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_6,
-        "div_spectral5": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_5,
-        "div_spectral4": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_4,
-        "div_spectral3": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_3,
-        "div_brown_blue_green11": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_11,
-        "div_brown_blue_green10": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_10,
-        "div_brown_blue_green9": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_9,
-        "div_brown_blue_green8": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_8,
-        "div_brown_blue_green7": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_7,
-        "div_brown_blue_green6": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_6,
-        "div_brown_blue_green5": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_5,
-        "div_brown_blue_green4": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_4,
-        "div_brown_blue_green3": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_3,
-        "seq_blue_green9": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_9,
-        "seq_blue_green8": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_8,
-        "seq_blue_green7": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_7,
-        "seq_blue_green6": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_6,
-        "seq_blue_green5": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_5,
-        "seq_blue_green4": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_4,
-        "seq_blue_green3": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_3,
-        "seq_yellow_orange_brown9": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_9,
-        "seq_yellow_orange_brown8": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_8,
-        "seq_yellow_orange_brown7": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_7,
-        "seq_yellow_orange_brown6": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_6,
-        "seq_yellow_orange_brown5": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_5,
-        "seq_yellow_orange_brown4": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_4,
-        "seq_yellow_orange_brown3": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_3,
-        "seq_blue_purple9": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_9,
-        "seq_blue_purple8": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_8,
-        "seq_blue_purple7": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_7,
-        "seq_blue_purple6": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_6,
-        "seq_blue_purple5": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_5,
-        "seq_blue_purple4": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_4,
-        "seq_blue_purple3": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_3,
-        "qual_accent": _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT,
-        "qual_dark2": _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2,
-        "qual_set3": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3,
-        "qual_set2": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2,
-        "qual_set1": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET1,
-        "qual_pastel2": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL2,
-        "qual_pastel1": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL1,
-        "qual_paired": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED,
-        "custom": _vtk.vtkColorSeries.CUSTOM
+        "spectrum": {"id": _vtk.vtkColorSeries.SPECTRUM, "descr": "black, red, blue, green, purple, orange, brown"},
+        "warm": {"id": _vtk.vtkColorSeries.WARM, "descr": "dark red → yellow"},
+        "cool": {"id": _vtk.vtkColorSeries.COOL, "descr": "green → blue → purple"},
+        "blues": {"id": _vtk.vtkColorSeries.BLUES, "descr": "Different shades of blue"},
+        "wild_flower": {"id": _vtk.vtkColorSeries.WILD_FLOWER, "descr": "blue → purple → pink"},
+        "citrus": {"id": _vtk.vtkColorSeries.CITRUS, "descr": "green → yellow → orange"},
+        "div_purple_orange11": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11, "descr": "dark brown → white → dark purple"},
+        "div_purple_orange10": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_10, "descr": "dark brown → white → dark purple"},
+        "div_purple_orange9": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_9, "descr": "brown → white → purple"},
+        "div_purple_orange8": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_8, "descr": "brown → white → purple"},
+        "div_purple_orange7": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_7, "descr": "brown → white → purple"},
+        "div_purple_orange6": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_6, "descr": "brown → white → purple"},
+        "div_purple_orange5": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_5, "descr": "orange → white → purple"},
+        "div_purple_orange4": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_4, "descr": "orange → white → purple"},
+        "div_purple_orange3": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_3, "descr": "orange → white → purple"},
+        "div_spectral11": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_11, "descr": "dark red → light yellow → dark blue"},
+        "div_spectral10": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_10, "descr": "dark red → light yellow → dark blue"},
+        "div_spectral9": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_9, "descr": "red → light yellow → blue"},
+        "div_spectral8": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_8, "descr": "red → light yellow → blue"},
+        "div_spectral7": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_7, "descr": "red → light yellow → blue"},
+        "div_spectral6": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_6, "descr": "red → light yellow → blue"},
+        "div_spectral5": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_5, "descr": "red → light yellow → blue"},
+        "div_spectral4": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_4, "descr": "red → light yellow → blue"},
+        "div_spectral3": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_3, "descr": "orange → light yellow → green"},
+        "div_brown_blue_green11": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_11, "descr": "dark brown → white → dark blue-green"},
+        "div_brown_blue_green10": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_10, "descr": "dark brown → white → dark blue-green"},
+        "div_brown_blue_green9": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_9, "descr": "brown → white → blue-green"},
+        "div_brown_blue_green8": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_8, "descr": "brown → white → blue-green"},
+        "div_brown_blue_green7": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_7, "descr": "brown → white → blue-green"},
+        "div_brown_blue_green6": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_6, "descr": "brown → white → blue-green"},
+        "div_brown_blue_green5": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_5, "descr": "brown → white → blue-green"},
+        "div_brown_blue_green4": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_4, "descr": "brown → white → blue-green"},
+        "div_brown_blue_green3": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_3, "descr": "brown → white → blue-green"},
+        "seq_blue_green9": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_9, "descr": "light blue → dark green"},
+        "seq_blue_green8": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_8, "descr": "light blue → dark green"},
+        "seq_blue_green7": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_7, "descr": "light blue → dark green"},
+        "seq_blue_green6": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_6, "descr": "light blue → green"},
+        "seq_blue_green5": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_5, "descr": "light blue → green"},
+        "seq_blue_green4": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_4, "descr": "light blue → green"},
+        "seq_blue_green3": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_3, "descr": "light blue → green"},
+        "seq_yellow_orange_brown9": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_9, "descr": "light yellow → orange → dark brown"},
+        "seq_yellow_orange_brown8": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_8, "descr": "light yellow → orange → brown"},
+        "seq_yellow_orange_brown7": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_7, "descr": "light yellow → orange → brown"},
+        "seq_yellow_orange_brown6": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_6, "descr": "light yellow → orange → brown"},
+        "seq_yellow_orange_brown5": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_5, "descr": "light yellow → orange → brown"},
+        "seq_yellow_orange_brown4": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_4, "descr": "light yellow → orange"},
+        "seq_yellow_orange_brown3": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_3, "descr": "light yellow → orange"},
+        "seq_blue_purple9": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_9, "descr": "light blue → dark purple"},
+        "seq_blue_purple8": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_8, "descr": "light blue → purple"},
+        "seq_blue_purple7": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_7, "descr": "light blue → purple"},
+        "seq_blue_purple6": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_6, "descr": "light blue → purple"},
+        "seq_blue_purple5": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_5, "descr": "light blue → purple"},
+        "seq_blue_purple4": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_4, "descr": "light blue → purple"},
+        "seq_blue_purple3": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_3, "descr": "light blue → purple"},
+        "qual_accent": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT, "descr": "pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, brown, gray"},
+        "qual_dark2": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2, "descr": "darker shade of qual_set2"},
+        "qual_set3": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3, "descr": "pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, pink, gray, purple, light green, yellow"},
+        "qual_set2": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2, "descr": "blue green, orange, purple, pink, green, yellow, brown, gray"},
+        "qual_set1": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET1, "descr": "red, blue, green, purple, orange, yellow, brown, pink, gray"},
+        "qual_pastel2": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL2, "descr": "pastel shade of qual_set2"},
+        "qual_pastel1": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL1, "descr": "pastel shade of qual_set1"},
+        "qual_paired": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED, "descr": "light blue, blue, light green, green, light red, red, light orange, orange, light purple, purple, light yellow"},
+        "custom": {"id": _vtk.vtkColorSeries.CUSTOM, "descr": None}
     }
-    _SCHEME_NAMES = {scheme_id: scheme_name for scheme_name, scheme_id in COLOR_SCHEMES.items()}
+    _SCHEME_NAMES = {scheme_info["id"]: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()}
     DEFAULT_COLOR_SCHEME = "qual_accent"
 
     def __init__(self):
@@ -1555,8 +1572,16 @@ class _MultiCompPlot(_Plot):
 
         This scheme defines the colors of the different
         components drawn by this plot.
-        See ``pyvista._MultiCompPlot.COLOR_SCHEMES`` for the
-        available color schemes.
+        See the table below for the available color
+        schemes.
+
+        Notes
+        -----
+        .. _plot_color_schemes:
+
+        Overview of all available color schemes.
+
+        .. include:: ../plot_color_schemes.rst
 
         Examples
         --------
@@ -1572,7 +1597,7 @@ class _MultiCompPlot(_Plot):
 
     @color_scheme.setter
     def color_scheme(self, val):
-        self._color_series.SetColorScheme(self.COLOR_SCHEMES.get(val, _vtk.vtkColorSeries.CUSTOM))
+        self._color_series.SetColorScheme(self.COLOR_SCHEMES.get(val, self.COLOR_SCHEMES["custom"])["id"])
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
         self.brush.color = self.colors[0]
 
@@ -1787,21 +1812,30 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         Size of the point markers drawn in this plot. Defaults to ``10``.
 
     style : str, optional
-        Style of the point markers drawn in this plot. See ``pyvista.ScatterPlot2D.MARKER_STYLES`` for a list of
-        allowed marker styles. Defaults to ``"o"``.
+        Style of the point markers drawn in this plot. See :ref:`ScatterPlot2D.MARKER_STYLES <scatter_marker_styles>`
+        for a list of allowed marker styles. Defaults to ``"o"``.
 
     label : str, optional
         Label of this plot, as shown in the chart's legend. Defaults to ``""``.
 
+    Notes
+    -----
+    .. _scatter_marker_styles:
+
+    MARKER_STYLES : dict
+        Dictionary containing all allowed marker styles as its keys.
+
+        .. include:: ../scatter_marker_styles.rst
+
     """
 
-    MARKER_STYLES = {
-        "": _vtk.vtkPlotPoints.NONE,
-        "x": _vtk.vtkPlotPoints.CROSS,
-        "+": _vtk.vtkPlotPoints.PLUS,
-        "s": _vtk.vtkPlotPoints.SQUARE,
-        "o": _vtk.vtkPlotPoints.CIRCLE,
-        "d": _vtk.vtkPlotPoints.DIAMOND
+    MARKER_STYLES = {  # descr is used in the documentation, set to None to hide it from the docs.
+        "": {"id": _vtk.vtkPlotPoints.NONE, "descr": "Hidden"},
+        "x": {"id": _vtk.vtkPlotPoints.CROSS, "descr": "Cross"},
+        "+": {"id": _vtk.vtkPlotPoints.PLUS, "descr": "Plus"},
+        "s": {"id": _vtk.vtkPlotPoints.SQUARE, "descr": "Square"},
+        "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
+        "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"}
     }
 
     def __init__(self, x, y, color="b", size=10, style="o", label=""):
@@ -1895,10 +1929,12 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
     @marker_style.setter
     def marker_style(self, val):
-        if val in self.MARKER_STYLES:
+        if val is None:
+            val = ""
+        try:
+            self.SetMarkerStyle(self.MARKER_STYLES[val]["id"])
             self._marker_style = val
-            self.SetMarkerStyle(self.MARKER_STYLES[val])
-        else:
+        except KeyError:
             formatted_styles = "\", \"".join(self.MARKER_STYLES.keys())
             raise ValueError(f"Invalid marker style. Allowed marker styles: \"{formatted_styles}\"")
 
@@ -2268,6 +2304,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         "bar": BarPlot,
         "stack": StackPlot
     }
+    _PLOT_CLASSES = {plot_class: plot_type for (plot_type, plot_class) in PLOT_TYPES.items()}
 
     def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):
         """Initialize the chart."""
@@ -2660,6 +2697,36 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         else:
             for plot in self._plots[plot_type]:
                 yield plot
+
+    def remove_plot(self, plot):
+        """Remove the given plot from this chart.
+
+        Parameters
+        ----------
+        plot : ScatterPlot2D, LinePlot2D, AreaPlot, BarPlot or StackPlot
+            The plot to remove.
+
+        Examples
+        --------
+        Create a 2D chart with a line and scatter plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
+        >>> chart.show()
+
+        Remove the scatter plot from the chart.
+
+        >>> chart.remove_plot(scatter_plot)
+        >>> chart.show()
+
+        """
+        try:
+            plot_type = self._PLOT_CLASSES[type(plot)]
+            self._plots[plot_type].remove(plot)
+            self.RemovePlotInstance(plot)
+        except (KeyError, ValueError):
+            raise ValueError("The given plot is not part of this chart.")
 
     @property
     def x_axis(self):

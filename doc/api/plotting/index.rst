@@ -39,9 +39,11 @@ charts in plotting windows.
    :toctree: _autosummary
    :template: custom-class-template.rst
 
-   plotting.charts.Pen
+   charts.Pen
    plotting.charts.Brush
    plotting.charts.LinePlot2D
+   plotting.charts.ScatterPlot2D
+   plotting.charts.BarPlot
    Chart2D
    ChartBox
    ChartPie

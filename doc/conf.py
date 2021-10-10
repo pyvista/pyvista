@@ -84,6 +84,7 @@ coverage_additional_modules = [
 
     'pyvista.plotting.axes',
     'pyvista.plotting.camera',
+    'pyvista.plotting.charts',
     'pyvista.plotting.helpers',
     'pyvista.plotting.lights',
     'pyvista.plotting.picking',
