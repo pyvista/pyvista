@@ -436,6 +436,65 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
     return line
 
 
+def Tube(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1, radius=1.0, number_of_sides=3):
+    """Create a tube.
+
+    Parameters
+    ----------
+    pointa : np.ndarray or list, optional
+        Location in ``[x, y, z]``.
+
+    pointb : np.ndarray or list, optional
+        Location in ``[x, y, z]``.
+
+    resolution : int, optional
+        Number of pieces to divide tube into.
+
+    radius : float, optional
+        Minimum tube radius (minimum because the tube radius may vary).
+
+    number_of_sides : int, optional
+        Number of sides for the tube.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Tube mesh.
+
+    Examples
+    --------
+    Create a tube between ``(0, 0, 0)`` and ``(0, 0, 1)``.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Tube((0, 0, 0), (0, 0, 1))
+    >>> mesh.plot()
+
+    """
+
+    if resolution <= 0:
+        raise ValueError('Resolution must be positive')
+    if np.array(pointa).size != 3:
+        raise TypeError('Point A must be a length three tuple of floats.')
+    if np.array(pointb).size != 3:
+        raise TypeError('Point B must be a length three tuple of floats.')
+    line_src = _vtk.vtkLineSource()
+    line_src.SetPoint1(*pointa)
+    line_src.SetPoint2(*pointb)
+    line_src.SetResolution(resolution)
+    line_src.Update()
+
+    if number_of_sides < 3:
+        raise ValueError('Number of sides must be >= 3')
+    tube_filter = _vtk.vtkTubeFilter()
+    tube_filter.SetInputConnection(line_src.GetOutputPort())
+    tube_filter.SetRadius(radius)
+    tube_filter.SetNumberOfSides(number_of_sides)
+    tube_filter.Update()
+
+    return pyvista.wrap(tube_filter.GetOutput())
+
+
+
 def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0,
          z_length=1.0, bounds=None, clean=True):
     """Create a cube.
