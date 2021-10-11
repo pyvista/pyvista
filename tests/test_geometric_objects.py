@@ -62,7 +62,7 @@ def test_tube():
     pointa = (0, 0, 0)
     pointb = (10, 1., 3)
 
-    tube = pyvista.Tube()
+    tube = pyvista.Tube(n_sides=3)
     assert tube.n_points == 6
     assert tube.n_cells == 3
     tube = pyvista.Tube(pointa, pointb, 10)
