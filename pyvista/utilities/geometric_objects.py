@@ -453,7 +453,7 @@ def Tube(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1, radius=1.0, 
     radius : float, optional
         Minimum tube radius (minimum because the tube radius may vary).
 
-    number_of_sides : int, optional
+    n_sides : int, optional
         Number of sides for the tube.
 
     Returns
