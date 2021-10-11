@@ -77,24 +77,18 @@ def test_add_legend_loc(loc):
 
     # note: this is only valid with the defaults:
     # border=0.05 and size=(0.2, 0.2)
-    if loc == 'upper right':
-        assert legend.GetPosition() == (0.75, 0.75)
-    elif loc == 'upper left':
-        assert legend.GetPosition() == (0.05, 0.75)
-    elif loc == 'lower left':
-        assert legend.GetPosition() == (0.05, 0.05)
-    elif loc == 'lower right':
-        assert legend.GetPosition() == (0.75, 0.05)
-    elif loc == 'center left':
-        assert legend.GetPosition() == (0.05, 0.4)
-    elif loc == 'center right':
-        assert legend.GetPosition() == (0.75, 0.4)
-    elif loc == 'lower center':
-        assert legend.GetPosition() == (0.4, 0.05)
-    elif loc == 'upper center':
-        assert legend.GetPosition() == (0.4, 0.75)
-    elif loc == 'center':
-        assert legend.GetPosition() == (0.4, 0.4)
+    positions = {
+        'upper right': (0.75, 0.75),
+        'upper left': (0.05, 0.75),
+        'lower left': (0.05, 0.05),
+        'lower right': (0.75, 0.05),
+        'center left': (0.05, 0.4),
+        'center right': (0.75, 0.4),
+        'lower center': (0.4, 0.05),
+        'upper center': (0.4, 0.75),
+        'center': (0.4, 0.4),
+    }
+    assert legend.GetPosition() == positions[loc]
 
 
 def test_add_legend_no_face(sphere):

@@ -73,7 +73,8 @@ def make_legend_face(face):
                          '\t"triangle"\n'
                          '\t"circle"\n'
                          '\t"rectangle"\n'
-                         '\tNone')
+                         '\tNone'
+                         '\tpyvista.PolyData')
     return legendface
 
 def scale_point(camera, point, invert=False):
@@ -2624,7 +2625,7 @@ def _line_for_legend():
         [0.4, 0, 0],
         [0.4, 0.07, 0],
         [0, 0.07, 0],
-        [0.5, 0, 0],
+        [0.5, 0, 0],  # last point needed to expand the bounds of the PolyData to be rendered smaller
     ]
     legendface = pyvista.PolyData()
     legendface.points = np.array(points)
