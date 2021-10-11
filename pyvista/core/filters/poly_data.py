@@ -388,8 +388,8 @@ class PolyDataFilters(DataSetFilters):
                                   strips_to_polys=False)
 
         if inplace:
-            dataset.deep_copy(merged)
-            return dataset
+            self.deep_copy(merged)
+            return self
 
         return merged
 
