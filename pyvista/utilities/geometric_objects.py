@@ -438,7 +438,6 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
 
 def Tube(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1, radius=1.0, number_of_sides=3):
     """Create a tube.
-
     Parameters
     ----------
     pointa : np.ndarray or list, optional
