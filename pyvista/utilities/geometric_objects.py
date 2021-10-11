@@ -436,7 +436,7 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
     return line
 
 
-def Tube(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1, radius=1.0, number_of_sides=3):
+def Tube(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1, radius=1.0, n_sides=15):
     """Create a tube.
 
     Parameters
