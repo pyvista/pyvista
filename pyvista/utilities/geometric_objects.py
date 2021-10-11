@@ -482,8 +482,8 @@ def Tube(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1, radius=1.0, 
     line_src.SetResolution(resolution)
     line_src.Update()
 
-    if number_of_sides < 3:
-        raise ValueError('Number of sides must be >= 3')
+    if n_sides < 3:
+        raise ValueError('Number of sides `n_sides` must be >= 3')
     tube_filter = _vtk.vtkTubeFilter()
     tube_filter.SetInputConnection(line_src.GetOutputPort())
     tube_filter.SetRadius(radius)
