@@ -183,14 +183,14 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         parsable by :func:`pyvista.parse_color` is allowed.  Defaults
         to ``"k"``.
 
-    texture : `pyvista.Texture`, optional
+    texture : pyvista.Texture, optional
         Texture used to fill shapes drawn using this brush. Any
         object convertible to a :class:`pyvista.Texture` is
         allowed. Defaults to ``None``.
 
     Other Parameters
     ----------------
-    _wrap : `vtk.vtkBrush`, optional
+    _wrap : vtk.vtkBrush, optional
         Wrap an existing VTK Brush instance. Defaults to ``None`` (no wrapping).
 
     """
@@ -325,7 +325,31 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
 
 class Axis(_vtkWrapper, _vtk.vtkAxis):
-    """Pythonic interface for a VTK Axis, used by 2D charts."""
+    """Pythonic interface for a VTK Axis, used by 2D charts.
+
+    Parameters
+    ----------
+    label : str, optional
+        Axis label. Defaults to the empty string ``""`` (no visible label).
+
+    range : list or tuple of float, optional
+        Axis range, denoting the minimum and maximum values
+        displayed on this axis. Setting this to any valid value
+        other than ``None`` will change this axis behavior to
+        ``'fixed'``. Setting it to ``None`` will change the axis
+        behavior to ``'auto'``. Defaults to ``None``
+        (automatically scale axis).
+
+    behavior : str, optional
+        Scaling behavior of this axis. Either ``'auto'`` to
+        automatically rescale the axis to fit all visible
+        datapoints in the plot or ``'fixed'`` to use the user
+        defined range. Defaults to ``"auto"``.
+
+    grid : bool, optional
+        Flag to toggle grid lines visibility for this axis. Defaults to ``True``.
+
+    """
 
     BEHAVIORS = {
         "auto": _vtk.vtkAxis.AUTO,
@@ -333,31 +357,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     }
 
     def __init__(self, label="", range=None, behavior="auto", grid=True):
-        """Initialize a new Axis instance.
-
-        Parameters
-        ----------
-        label : str, optional
-            Axis label. Defaults to the empty string ``""`` (no visible label).
-
-        range : sequence, optional
-            Axis range, denoting the minimum and maximum values
-            displayed on this axis. Setting this to any valid value
-            other than ``None`` will change this axis behavior to
-            ``'fixed'``. Setting it to ``None`` will change the axis
-            behavior to ``'auto'``. Defaults to ``None``
-            (automatically scale axis).
-
-        behavior : str, optional
-            Scaling behavior of this axis. Either ``'auto'`` to
-            automatically rescale the axis to fit all visible
-            datapoints in the plot or ``'fixed'`` to use the user
-            defined range. Defaults to ``"auto"``.
-
-        grid : bool, optional
-            Flag to toggle grid lines visibility for this axis. Defaults to ``True``.
-
-        """
+        """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
         self._tick_labels = _vtk.vtkStringArray()
@@ -1317,7 +1317,7 @@ class _Plot(object):
 
         Returns
         -------
-        `pyvista.charts.Pen <pyvista.plotting.charts.Pen>`
+        pyvista.charts.Pen
             Pen object controlling how lines in this plot are drawn.
 
         Examples
@@ -1339,7 +1339,7 @@ class _Plot(object):
 
         Returns
         -------
-        `pyvista.charts.Brush <pyvista.plotting.charts.Brush>`
+        pyvista.charts.Brush
             Brush object controlling how shapes in this plot are filled.
 
         Examples
@@ -1724,13 +1724,13 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
 
     Parameters
     ----------
-    x : sequence
+    x : array_like
         X coordinates of the points through which a line should be drawn.
 
-    y : sequence
+    y : array_like
         Y coordinates of the points through which a line should be drawn.
 
-    color : str or sequence, optional
+    color : color, optional
         Color of the line drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
         to ``"b"``.
 
@@ -1738,8 +1738,8 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         Width of the line drawn in this plot. Defaults to ``1``.
 
     style : str, optional
-        Style of the line drawn in this plot. See ``Pen.LINE_STYLES`` for a list of allowed line styles. Defaults
-        to ``"-"``.
+        Style of the line drawn in this plot. See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed line
+        styles. Defaults to ``"-"``.
 
     label : str, optional
         Label of this plot, as shown in the chart's legend. Defaults to ``""``.
@@ -1762,10 +1762,10 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
 
         Parameters
         ----------
-        x : sequence
+        x : array_like
             The new x coordinates of the points through which a line should be drawn.
 
-        y : sequence
+        y : array_like
             The new y coordinates of the points through which a line should be drawn.
 
         Examples
@@ -1798,13 +1798,13 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
     Parameters
     ----------
-    x : sequence
+    x : array_like
         X coordinates of the points to draw.
 
-    y : sequence
+    y : array_like
         Y coordinates of the points to draw.
 
-    color : str or sequence, optional
+    color : color, optional
         Color of the points drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
         to ``"b"``.
 
@@ -1854,10 +1854,10 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
         Parameters
         ----------
-        x : sequence
+        x : array_like
             The new x coordinates of the points to draw.
 
-        y : sequence
+        y : array_like
             The new y coordinates of the points to draw.
 
         Examples
@@ -1946,16 +1946,16 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
     Parameters
     ----------
-    x : sequence
+    x : array_like
         X coordinates of the points outlining the area to draw.
 
-    y1 : sequence
+    y1 : array_like
         Y coordinates of the points on the first outline of the area to draw.
 
-    y2 : sequence, optional
+    y2 : array_like, optional
         Y coordinates of the points on the second outline of the area to draw. Defaults to a sequence of zeros.
 
-    color : str or sequence, optional
+    color : color, optional
         Color of the area drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
         to ``"b"``.
 
@@ -1981,13 +1981,13 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
         Parameters
         ----------
-        x : sequence
+        x : array_like
             The new x coordinates of the points outlining the area.
 
-        y1 : sequence
+        y1 : array_like
             The new y coordinates of the points on the first outline of the area.
 
-        y2 : sequence, optional
+        y2 : array_like, optional
             The new y coordinates of the points on the second outline of the area. Defaults to a sequence of zeros.
 
         Examples
@@ -2021,14 +2021,14 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
     Parameters
     ----------
-    x : sequence
+    x : array_like
         Positions (along the x-axis for a vertical orientation, along the y-axis for
         a horizontal orientation) of the bars to draw.
 
-    y : sequence
+    y : array_like
         Size of the bars to draw. Multiple bars can be stacked by passing a sequence of sequences.
 
-    color : str or sequence, optional
+    color : color, optional
         Color of the bars drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
         to ``"b"``.
 
@@ -2076,10 +2076,10 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
         Parameters
         ----------
-        x : sequence
+        x : array_like
             The new positions of the bars to draw.
 
-        y : sequence
+        y : array_like
             The new sizes of the bars to draw.
 
         Examples
@@ -2169,18 +2169,18 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
     Parameters
     ----------
-    x : sequence
+    x : array_like
         X coordinates of the points outlining the stacks (areas) to draw.
 
-    ys : sequence of sequence
+    ys : list or tuple of array_like
         Size of the stacks (areas) to draw at the corresponding X coordinates. Each sequence defines the sizes of
         one stack (area), which are stacked on top of each other.
 
-    colors : sequence of color, optional
+    colors : list or tuple of color, optional
         Color of the stacks (areas) drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
         Defaults to ``None``.
 
-    labels : sequence of str, optional
+    labels : list or tuple of str, optional
         Label for each stack (area) drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
     """
@@ -2211,10 +2211,10 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
         Parameters
         ----------
-        x : sequence
+        x : array_like
             The new x coordinates of the stacks (areas) to draw.
 
-        ys : sequence
+        ys : list or tuple of array_like
             The new sizes of the stacks (areas) to draw.
 
         Examples
@@ -2401,10 +2401,10 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Parameters
         ----------
-        x : sequence
+        x : array_like
             Values to plot on the X-axis.
 
-        y : sequence
+        y : array_like
             Values to plot on the Y-axis.
 
         fmt : str, optional
@@ -2456,13 +2456,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Parameters
         ----------
-        x : sequence
+        x : array_like
             X coordinates of the points to draw.
 
-        y : sequence
+        y : array_like
             Y coordinates of the points to draw.
 
-        color : str or sequence, optional
+        color : color, optional
             Color of the points drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
             to ``"b"``.
 
@@ -2521,7 +2521,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         Returns
         -------
         line_plot : :class:`LinePlot2D <pyvista.plotting.charts.LinePlot2D>`
-            The created line plot. Test ref `pyvista.plotting.charts.LinePlot2D`.
+            The created line plot.
 
         Examples
         --------
@@ -2540,16 +2540,16 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Parameters
         ----------
-        x : sequence
+        x : array_like
             X coordinates of the points outlining the area to draw.
 
-        y1 : sequence
+        y1 : array_like
             Y coordinates of the points on the first outline of the area to draw.
 
-        y2 : sequence, optional
+        y2 : array_like, optional
             Y coordinates of the points on the second outline of the area to draw. Defaults to a sequence of zeros.
 
-        color : str or sequence, optional
+        color : color, optional
             Color of the area drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
             to ``"b"``.
 
@@ -2578,14 +2578,14 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Parameters
         ----------
-        x : sequence
+        x : array_like
             Positions (along the x-axis for a vertical orientation, along the y-axis for
             a horizontal orientation) of the bars to draw.
 
-        y : sequence
+        y : array_like
             Size of the bars to draw. Multiple bars can be stacked by passing a sequence of sequences.
 
-        color : str or sequence, optional
+        color : color, optional
             Color of the bars drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
             to ``"b"``.
 
@@ -2621,18 +2621,18 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Parameters
         ----------
-        x : sequence
+        x : array_like
             X coordinates of the points outlining the stacks (areas) to draw.
 
-        ys : sequence of sequence
+        ys : list or tuple of array_like
             Size of the stacks (areas) to draw at the corresponding X coordinates. Each sequence defines the sizes of
             one stack (area), which are stacked on top of each other.
 
-        colors : sequence of color, optional
+        colors : list or tuple of color, optional
             Color of the stacks (areas) drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
             Defaults to ``None``.
 
-        labels : sequence of str, optional
+        labels : list or tuple of str, optional
             Label for each stack (area) drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
         Returns
@@ -2917,10 +2917,10 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
     Parameters
     ----------
-    data : sequence
+    data : list or tuple of array_like
         Dataset(s) from which the relevant statistics will be calculated used to draw the box plot.
 
-    colors : sequence of color, optional
+    colors : list or tuple of color, optional
         Color of the boxes drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
         Defaults to ``None``.
 
@@ -2942,7 +2942,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
         Parameters
         ----------
-        data : sequence
+        data : list or tuple of array_like
             The new dataset(s) used in this box plot.
 
         Examples
@@ -2970,7 +2970,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
     Parameters
     ----------
-    data : sequence
+    data : list or tuple of array_like
         Dataset(s) from which the relevant statistics will be calculated used to draw the box plot.
 
     """
@@ -3051,13 +3051,13 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
     Parameters
     ----------
-    data : sequence
+    data : array_like
         Relative size of each pie segment.
 
-    labels : sequence, optional
+    labels : list or tuple of str, optional
         Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
-    colors : sequence of color, optional
+    colors : list or tuple of color, optional
         Color of the segments drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
         Defaults to ``None``.
 
@@ -3081,7 +3081,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
         Parameters
         ----------
-        data : sequence
+        data : array_like
             The new relative size of each pie segment.
 
         Examples
@@ -3106,10 +3106,10 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
     Parameters
     ----------
-    data : sequence
+    data : array_like
         Relative size of each pie segment.
 
-    labels : sequence, optional
+    labels : list or tuple of str, optional
         Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
     """
@@ -3526,14 +3526,15 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
 
 class Charts:
-    """Collection of charts for a renderer."""
+    """Collection of charts for a renderer.
+
+    Users should typically not directly create new instances of this class, but use the dedicated
+    ``Plotter.add_chart`` method.
+
+    """
 
     def __init__(self, renderer):
-        """Create a new collection of charts for the given renderer.
-
-        Users should typically not directly create new instances of this class, but use the dedicated
-        ``Plotter.add_chart`` method.
-        """
+        """Create a new collection of charts for the given renderer."""
         self._charts = []
 
         # Postpone creation of scene and actor objects until they are
