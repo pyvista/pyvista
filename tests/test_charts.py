@@ -39,7 +39,7 @@ def test_pen():
 
     pen.style = s_dot
     assert pen.style == s_dot
-    assert pen.GetLineType() == charts.Pen.LINE_STYLES[s_dot]
+    assert pen.GetLineType() == charts.Pen.LINE_STYLES[s_dot]["id"]
     with pytest.raises(ValueError):
         pen.style = s_inv
 
