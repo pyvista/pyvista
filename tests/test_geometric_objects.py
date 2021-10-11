@@ -67,7 +67,7 @@ def test_tube():
     assert tube.n_cells == 3
     tube = pyvista.Tube(pointa, pointb, 10)
     assert tube.n_points == 165
-    assert tube.n_cells == 3
+    assert tube.n_cells == 15
 
     with pytest.raises(ValueError):
         pyvista.Tube(pointa, pointb, -1)
