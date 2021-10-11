@@ -335,6 +335,11 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     assert isinstance(merged, pyvista.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
 
+    # test in-place merge
+    mesh = sphere
+    merged = mesh.merge(sphere_shifted, inplace=True)
+    assert merged is mesh
+
 
 def test_add(sphere, sphere_shifted):
     merged = sphere + sphere_shifted
