@@ -487,7 +487,7 @@ def Tube(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1, radius=1.0, 
     tube_filter = _vtk.vtkTubeFilter()
     tube_filter.SetInputConnection(line_src.GetOutputPort())
     tube_filter.SetRadius(radius)
-    tube_filter.SetNumberOfSides(number_of_sides)
+    tube_filter.SetNumberOfSides(n_sides)
     tube_filter.Update()
 
     return pyvista.wrap(tube_filter.GetOutput())
