@@ -334,7 +334,9 @@ class PolyDataFilters(DataSetFilters):
 
         inplace : bool, optional
             Updates grid inplace when ``True`` if the input type is a
-            :class:`pyvista.UnstructuredGrid`.
+            :class:`pyvista.PolyData`. For other input meshes the
+            result is a :class:`pyvista.UnstructuredGrid` which makes
+            in-place operation impossible.
 
         main_has_priority : bool, optional
             When this parameter is ``True`` and ``merge_points=True``,
@@ -370,6 +372,7 @@ class PolyDataFilters(DataSetFilters):
         if not_pd:
             return DataSetFilters.merge(self, dataset,
                                         merge_points=merge_points,
+                                        main_has_priority=main_has_priority,
                                         inplace=inplace)
 
         append_filter = pyvista._vtk.vtkAppendPolyData()
