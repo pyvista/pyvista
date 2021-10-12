@@ -13,6 +13,17 @@ skip_mac = pytest.mark.skipif(platform.system() == 'Darwin',
                               reason='MacOS CI fails when downloading examples')
 
 
+def vtk_array_to_tuple(arr):
+    return tuple(arr.GetValue(i) for i in range(arr.GetNumberOfValues()))
+
+
+def to_vtk_scientific(val):
+    parts = val.split('e')
+    sign, exp = parts[1][0], parts[1][1:]
+    exp = exp.lstrip("0")  # Remove leading zeros of exponent
+    return parts[0] + "e" + sign + exp if exp != "" else parts[0]  # Remove exponent altogether if it is 0
+
+
 def test_pen():
     c_red, c_blue = (1, 0, 0, 1), (0, 0, 1, 1)
     w_thin, w_thick = 2, 10
@@ -89,3 +100,136 @@ def test_brush():
     assert brush.texture_repeat
     REPEAT = 0x08
     assert brush.GetTextureProperties() & REPEAT
+
+
+def test_axis():
+    l = "Y axis"
+    r_fix, r_auto = [2, 5], None
+    m = 50
+    tc = 10
+    tlabels = ["Foo", "Blub", "Spam"]
+    tlocs, tlocs_large = [1, 5.5, 8], [5.2, 340, 9999.999]
+    ts = 5
+    tlo = 10
+
+    # Test constructor arguments
+    axis = charts.Axis(label=l, range=r_fix, grid=True)
+    assert axis.label == l
+    assert np.allclose(axis.range, r_fix) and axis.behavior == "fixed"
+    assert axis.grid
+
+    # Test properties, using the y axis of a 2D chart
+    chart = pyvista.Chart2D()
+    chart.line([0, 1], [1, 10])
+    chart.show()
+    axis = chart.y_axis
+
+    axis.label = l
+    assert axis.label == l
+    assert axis.GetTitle() == l
+
+    axis.label_visible = False
+    assert not axis.label_visible
+    assert not axis.GetTitleVisible()
+
+    axis.range = r_auto
+    assert axis.behavior == "auto"
+    axis.range = r_fix
+    r = [0.0, 0.0]
+    axis.GetRange(r)
+    assert np.allclose(axis.range, r_fix)
+    assert np.allclose(r, r_fix)
+    assert axis.behavior == "fixed"
+
+    assert axis.GetBehavior() == charts.Axis.BEHAVIORS["fixed"]
+    axis.behavior = "auto"
+    assert axis.behavior == "auto"
+    assert axis.GetBehavior() == charts.Axis.BEHAVIORS["auto"]
+    with pytest.raises(ValueError):
+        axis.behavior = "invalid"
+
+    axis.margin = m
+    assert axis.margin == m
+    assert axis.GetMargins()[0] == m
+
+    axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
+    chart.show()  # TODO: find alternative to update all chart properties without plotting (not sure if possible though)
+    assert axis.log_scale
+    assert axis.GetLogScaleActive()
+    axis.log_scale = False
+    chart.show()
+    assert not axis.log_scale
+    assert not axis.GetLogScaleActive()
+    chart.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
+    axis.log_scale = True
+    chart.show()
+    assert not axis.log_scale
+    assert not axis.GetLogScaleActive()
+
+    axis.grid = False
+    assert not axis.grid
+    assert not axis.GetGridVisible()
+
+    axis.visible = False
+    assert not axis.visible
+    assert not axis.GetAxisVisible()
+    axis.toggle()
+    assert axis.visible
+    assert axis.GetAxisVisible()
+
+    tc0 = axis.tick_count
+    axis.tick_count = tc
+    assert axis.tick_count == tc
+    assert axis.GetNumberOfTicks() == tc
+    axis.tick_count = None
+    assert axis.tick_count == tc0
+    assert axis.GetNumberOfTicks() == tc0
+    axis.tick_count = -1
+    assert axis.tick_count == tc0
+    assert axis.GetNumberOfTicks() == tc0
+
+    tlocs0 = axis.tick_locations
+    tlabels0 = axis.tick_labels
+    axis.tick_locations = tlocs
+    axis.tick_labels = tlabels
+    assert np.allclose(axis.tick_locations, tlocs)
+    assert np.allclose(axis.GetTickPositions(), tlocs)
+    assert tuple(axis.tick_labels) == tuple(tlabels)
+    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(tlabels)
+    axis.tick_labels = "2f"
+    chart.show()
+    assert tuple(axis.tick_labels) == tuple(f"{loc:.2f}" for loc in tlocs)
+    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(f"{loc:.2f}" for loc in tlocs)
+    assert axis.GetNotation() == pyvista._vtk.vtkAxis.FIXED_NOTATION
+    assert axis.GetPrecision() == 2
+    axis.tick_labels = "4e"
+    axis.tick_locations = tlocs_large  # Add some more variety to labels
+    chart.show()
+    assert tuple(axis.tick_labels) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
+    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
+    assert axis.GetNotation() == pyvista._vtk.vtkAxis.SCIENTIFIC_NOTATION
+    assert axis.GetPrecision() == 4
+    axis.tick_locations = None
+    axis.tick_labels = None
+    chart.show()
+    assert np.allclose(axis.tick_locations, tlocs0)
+    assert np.allclose(axis.GetTickPositions(), tlocs0)
+    assert tuple(axis.tick_labels) == tuple(tlabels0)
+    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(tlabels0)
+
+    axis.tick_size = ts
+    assert axis.tick_size == ts
+    assert axis.GetTickLength() == ts
+
+    axis.tick_labels_offset = tlo
+    assert axis.tick_labels_offset == tlo
+    assert axis.GetLabelOffset() == tlo
+
+    axis.tick_labels_visible = False
+    assert not axis.tick_labels_visible
+    assert not axis.GetLabelsVisible()
+    assert not axis.GetRangeLabelsVisible()
+
+    axis.ticks_visible = False
+    assert not axis.ticks_visible
+    assert not axis.GetTicksVisible()

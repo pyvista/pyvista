@@ -340,12 +340,6 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         behavior to ``'auto'``. Defaults to ``None``
         (automatically scale axis).
 
-    behavior : str, optional
-        Scaling behavior of this axis. Either ``'auto'`` to
-        automatically rescale the axis to fit all visible
-        datapoints in the plot or ``'fixed'`` to use the user
-        defined range. Defaults to ``"auto"``.
-
     grid : bool, optional
         Flag to toggle grid lines visibility for this axis. Defaults to ``True``.
 
@@ -356,7 +350,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         "fixed": _vtk.vtkAxis.FIXED
     }
 
-    def __init__(self, label="", range=None, behavior="auto", grid=True):
+    def __init__(self, label="", range=None, grid=True):
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
@@ -364,8 +358,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())
         self.grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())
         self.label = label
+        self._behavior = None  # Will be set by specifying the range below
         self.range = range
-        self.behavior = behavior
         self.grid = grid
 
     @property
@@ -476,10 +470,10 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     @behavior.setter
     def behavior(self, val):
-        if val in self.BEHAVIORS:
-            self._behavior = val
+        try:
             self.SetBehavior(self.BEHAVIORS[val])
-        else:
+            self._behavior = val
+        except KeyError:
             formatted_behaviors = "\", \"".join(self.BEHAVIORS.keys())
             raise ValueError(f"Invalid behavior. Allowed behaviors: \"{formatted_behaviors}\"")
 
@@ -2727,6 +2721,42 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             self.RemovePlotInstance(plot)
         except (KeyError, ValueError):
             raise ValueError("The given plot is not part of this chart.")
+
+    def clear(self, plot_type=None):
+        """Remove all plots of the specified type from this chart.
+
+        Parameters
+        ----------
+        plot_type : str, optional
+            The type of the plots to remove. Allowed types are
+            ``"scatter"``, ``"line"``, ``"area"``, ``"bar"``
+            and ``"stack"``.
+            Defaults to ``None``, which will remove all plots,
+            regardless of their type.
+
+        Examples
+        --------
+        Create a 2D chart with multiple line and scatter plot.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> chart.plot([0, 1, 2], [2, 1, 3], "o-b")
+        >>> chart.plot([-2, -1, 0], [3, 1, 2], "d-r")
+        >>> chart.show()
+
+        Remove all scatter plots from the chart.
+
+        >>> chart.clear("scatter")
+        >>> chart.show()
+
+        """
+        if plot_type is None:
+            for plots in self._plots.values():
+                for plot in plots:
+                    self.remove_plot(plot)
+        else:
+            for plot in self._plots[plot_type]:
+                self.remove_plot(plot)
 
     @property
     def x_axis(self):
