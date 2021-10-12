@@ -376,13 +376,18 @@ class PolyDataFilters(DataSetFilters):
                                         inplace=inplace)
 
         append_filter = pyvista._vtk.vtkAppendPolyData()
-        append_filter.AddInputData(self)
+
+        if not main_has_priority:
+            append_filter.AddInputData(self)
 
         if isinstance(dataset, pyvista.DataSet):
             append_filter.AddInputData(dataset)
         else:
             for data in dataset:
                 append_filter.AddInputData(data)
+
+        if main_has_priority:
+            append_filter.AddInputData(self)
 
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
