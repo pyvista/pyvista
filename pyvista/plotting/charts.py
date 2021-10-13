@@ -873,12 +873,16 @@ class _ChartBackground(_CustomContextItem):
 class _Chart(object):
     """Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances."""
 
-    def __init__(self):
+    def __init__(self, size=(1, 1), loc=(0, 0)):
         super().__init__()
         self._background = _ChartBackground(self)
         self._x_axis = Axis()  # Not actually used for now (see note in Chart2D), but still present for the
         self._y_axis = Axis()  # Charts.toggle_interaction code
         self._z_axis = Axis()
+        if size is not None:
+            self.size = size
+        if loc is not None:
+            self.loc = loc
 
     @property
     def _scene(self):
@@ -1751,6 +1755,42 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         self.line_style = style
         self.label = label
 
+    @property
+    def x(self):
+        """Retrieve the X coordinates of the points through which a line is drawn.
+
+        Examples
+        --------
+        Create a line plot and display the x coordinates.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> plot.x
+        pyvista_ndarray([0, 1, 2])
+        >>> chart.show()
+
+        """
+        return self._table["x"]
+
+    @property
+    def y(self):
+        """Retrieve the Y coordinates of the points through which a line is drawn.
+
+        Examples
+        --------
+        Create a line plot and display the y coordinates.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> plot.y
+        pyvista_ndarray([2, 1, 3])
+        >>> chart.show()
+
+        """
+        return self._table["y"]
+
     def update(self, x, y):
         """Update this plot's points, through which a line is drawn.
 
@@ -1842,6 +1882,42 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         self.marker_size = size
         self.marker_style = style
         self.label = label
+
+    @property
+    def x(self):
+        """Retrieve the X coordinates of this plot's points.
+
+        Examples
+        --------
+        Create a scatter plot and display the x coordinates.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+        >>> plot.x
+        pyvista_ndarray([0, 1, 2])
+        >>> chart.show()
+
+        """
+        return self._table["x"]
+
+    @property
+    def y(self):
+        """Retrieve the Y coordinates of this plot's points.
+
+        Examples
+        --------
+        Create a scatter plot and display the y coordinates.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+        >>> plot.y
+        pyvista_ndarray([2, 1, 3])
+        >>> chart.show()
+
+        """
+        return self._table["y"]
 
     def update(self, x, y):
         """Update this plot's points.
@@ -1970,6 +2046,60 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         self.color = color
         self.label = label
 
+    @property
+    def x(self):
+        """Retrieve the X coordinates of the points outlining the drawn area.
+
+        Examples
+        --------
+        Create an area plot and display the x coordinates.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
+        >>> plot.x
+        pyvista_ndarray([0, 1, 2])
+        >>> chart.show()
+
+        """
+        return self._table["x"]
+
+    @property
+    def y1(self):
+        """Retrieve the Y coordinates of the points on the first outline of the drawn area.
+
+        Examples
+        --------
+        Create an area plot and display the y1 coordinates.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
+        >>> plot.y1
+        pyvista_ndarray([2, 1, 3])
+        >>> chart.show()
+
+        """
+        return self._table["y1"]
+
+    @property
+    def y2(self):
+        """Retrieve the Y coordinates of the points on the second outline of the drawn area.
+
+        Examples
+        --------
+        Create an area plot and display the y2 coordinates.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
+        >>> plot.y2
+        pyvista_ndarray([0, 2, 0])
+        >>> chart.show()
+
+        """
+        return self._table["y2"]
+
     def update(self, x, y1, y2=None):
         """Update this plot's points, outlining the area to draw.
 
@@ -2064,6 +2194,42 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
             self.label = label
         self.offset = offset
         self.orientation = orientation
+
+    @property
+    def x(self):
+        """Retrieve the positions of the drawn bars.
+
+        Examples
+        --------
+        Create a bar plot and display the positions.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.bar([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+        >>> plot.x
+        pyvista_ndarray([0, 1, 2])
+        >>> chart.show()
+
+        """
+        return self._table["x"]
+
+    @property
+    def y(self):
+        """Retrieve the sizes of the drawn bars.
+
+        Examples
+        --------
+        Create a bar plot and display the sizes.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.bar([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+        >>> plot.y
+        (pyvista_ndarray([2, 1, 3]), pyvista_ndarray([1, 2, 0]))
+        >>> chart.show()
+
+        """
+        return tuple(self._table[f"y{i}"] for i in range(self._table.n_arrays - 1))
 
     def update(self, x, y):
         """Update the positions and/or size of the bars in this plot.
@@ -2200,6 +2366,42 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
             self.label = labels
         self.pen.style = None  # Hide lines by default
 
+    @property
+    def x(self):
+        """Retrieve the X coordinates of the drawn stacks.
+
+        Examples
+        --------
+        Create a stack plot and display the x coordinates.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+        >>> plot.x
+        pyvista_ndarray([0, 1, 2])
+        >>> chart.show()
+
+        """
+        return self._table["x"]
+
+    @property
+    def ys(self):
+        """Retrieve the sizes of the drawn stacks.
+
+        Examples
+        --------
+        Create a stack plot and display the sizes.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+        >>> plot.ys
+        (pyvista_ndarray([2, 1, 3]), pyvista_ndarray([1, 2, 0]))
+        >>> chart.show()
+
+        """
+        return tuple(self._table[f"y{i}"] for i in range(self._table.n_arrays - 1))
+
     def update(self, x, ys):
         """Update the locations and/or size of the stacks (areas) in this plot.
 
@@ -2302,11 +2504,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):
         """Initialize the chart."""
-        super().__init__()
+        super().__init__(size, loc)
         self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
         self.SetAutoSize(False)  # We manually set the appropriate size
-        self.size = size
-        self.loc = loc
         # self.SetAxis(_vtk.vtkAxis.BOTTOM, self._x_axis)  # Disabled for now and replaced by a wrapper object, as for
         # self.SetAxis(_vtk.vtkAxis.LEFT, self._y_axis)  # some reason vtkChartXY.SetAxis(...) causes a crash at the end
         self._x_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.BOTTOM))  # of the script's execution (nonzero exit code)
@@ -2740,8 +2940,8 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> chart.plot([0, 1, 2], [2, 1, 3], "o-b")
-        >>> chart.plot([-2, -1, 0], [3, 1, 2], "d-r")
+        >>> _ = chart.plot([0, 1, 2], [2, 1, 3], "o-b")
+        >>> _ = chart.plot([-2, -1, 0], [3, 1, 2], "d-r")
         >>> chart.show()
 
         Remove all scatter plots from the chart.
@@ -2967,6 +3167,8 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         self.SetLookupTable(self._lookup_table)
         self.colors = colors
 
+    # TODO: property to retrieve original datasets? And a property to retrieve calculated quartile statistics?
+
     def update(self, data):
         """Update the plot's underlying dataset(s).
 
@@ -3007,7 +3209,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
     def __init__(self, data):
         """Initialize a new chart containing box plots."""
-        super().__init__()
+        super().__init__(None, None)
         self._plot = BoxPlot(data)
         self.SetPlot(self._plot)
         self.SetColumnVisibilityAll(True)
@@ -3106,6 +3308,23 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         self.SetColorSeries(self._color_series)
         self.colors = colors
 
+    @property
+    def data(self):
+        """Retrieve the sizes of the drawn segments.
+
+        Examples
+        --------
+        Create a pie plot and display the sizes.
+
+        >>> import pyvista
+        >>> chart = pyvista.ChartPie([1, 2, 3])
+        >>> chart.plot.data
+        pyvista_ndarray([1, 2, 3])
+        >>> chart.show()
+
+        """
+        return self._table[0]
+
     def update(self, data):
         """Update the size of the pie segments.
 
@@ -3146,7 +3365,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
     def __init__(self, data, labels=None):
         """Initialize a new chart containing a pie plot."""
-        super().__init__()
+        super().__init__(None, None)
         self.AddPlot(0)  # We can't manually set a wrapped vtkPlotPie instance...
         self._plot = PiePlot(data, labels, _wrap=self.GetPlot(0))  # So we have to wrap the existing one
         self.legend_visible = True
@@ -3283,13 +3502,11 @@ class _Chart3D(_vtk.vtkChartXYZ, _Chart):
     }
 
     def __init__(self, size=(0.8, 0.8), loc=(0.1, 0.1), x_label="x", y_label="y", z_label="z"):
-        super().__init__()
+        super().__init__(size, loc)
         self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
         self.background_color = None  # Transparent background and no border, as the 3D plots do not respect the
         self.border_style = None  # geometry bounds
         self.SetFitToScene(True)  # Some more room for axis labels
-        self.size = size
-        self.loc = loc
         self._geom = (0, 0, 0, 0)  # Will be properly set on first render_event
         self._x_axis = Axis(_wrap=self.GetAxis(0))
         self._y_axis = Axis(_wrap=self.GetAxis(1))
@@ -3474,7 +3691,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         except ModuleNotFoundError:
             raise ImportError("ChartMPL requires matplotlib")
 
-        super().__init__()
+        super().__init__(size, loc)
         self._fig = figure
         self._canvas = FigureCanvasAgg(self._fig)  # Switch backends and store reference to figure's canvas
         # Make figure and axes fully transparent, as the background is already dealt with by self._background.
@@ -3483,8 +3700,6 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             ax.patch.set_alpha(0)
         self._canvas.mpl_connect('draw_event', self._redraw)  # Attach 'draw_event' callback
 
-        self.size = size
-        self.loc = loc
         self.redraw()
 
     def _resize(self):
