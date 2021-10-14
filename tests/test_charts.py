@@ -4,6 +4,7 @@ import platform
 
 import pytest
 import numpy as np
+import matplotlib.pyplot as plt
 
 import pyvista
 from pyvista.plotting import charts
@@ -22,6 +23,37 @@ def to_vtk_scientific(val):
     sign, exp = parts[1][0], parts[1][1:]
     exp = exp.lstrip("0")  # Remove leading zeros of exponent
     return parts[0] + "e" + sign + exp if exp != "" else parts[0]  # Remove exponent altogether if it is 0
+
+
+@pytest.fixture
+def pl():
+    p = pyvista.Plotter()
+    p.background_color = 'w'
+    return p
+
+
+@pytest.fixture
+def chart2D():
+    chart = pyvista.Chart2D()
+    chart.plot([0, 1, 2], [3, 1, 2])
+    return chart
+
+
+@pytest.fixture
+def chartBox():
+    return pyvista.ChartBox([1, 2, 3])
+
+
+@pytest.fixture
+def chartPie():
+    return pyvista.ChartPie([1, 2, 3])
+
+
+@pytest.fixture
+def chartMPL():
+    f, ax = plt.subplots()
+    ax.plot([0, 1, 2], [3, 1, 2])
+    return pyvista.ChartMPL(f)
 
 
 def test_pen():
@@ -160,11 +192,12 @@ def test_axis():
     chart.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
-    chart.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
-    axis.log_scale = True
-    chart.show()
-    assert not axis.log_scale
-    assert not axis.GetLogScaleActive()
+    # TODO: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed
+    # chart.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
+    # axis.log_scale = True
+    # chart.show()
+    # assert not axis.log_scale
+    # assert not axis.GetLogScaleActive()
 
     axis.grid = False
     assert not axis.grid
@@ -233,3 +266,68 @@ def test_axis():
     axis.ticks_visible = False
     assert not axis.ticks_visible
     assert not axis.GetTicksVisible()
+
+
+@pytest.mark.parametrize("chart_f", ("chart2D", "chartBox", "chartPie", "chartMPL"))
+def test_chart_common(pl, chart_f, request):
+    # Test the common chart functionalities
+    chart = request.getfixturevalue(chart_f)
+    title = "Chart title"
+
+    # Check scene and renderer properties
+    assert chart._scene is None
+    assert chart._renderer is None
+    pl.add_chart(chart)
+    assert chart._scene is pl.renderer._charts._scene
+    assert chart._renderer is pl.renderer and chart._renderer is pl.renderer._charts._renderer
+
+    # TODO: check size and loc properties in dedicated tests
+    with pytest.raises((AssertionError, ValueError)):
+        chart.size = (-1, 1)
+    with pytest.raises((AssertionError, ValueError)):
+        chart.loc = (-1, 1)
+    try:  # Try block for now as not all charts support a custom size and loc
+        chart.size = (0.5, 0.5)
+        chart.loc = (0.25, 0.25)
+        assert chart.size == (0.5, 0.5)
+        assert chart.loc == (0.25, 0.25)
+    except ValueError:
+        pass
+
+    # Check geometry and resizing
+    w, h = pl.window_size
+    chart._render_event()
+    assert chart._geometry == (chart.loc[0]*w, chart.loc[1]*h, chart.size[0]*w, chart.size[1]*h)
+    w, h = pl.window_size = [200, 200]
+    chart._render_event()
+    assert chart._geometry == (chart.loc[0]*w, chart.loc[1]*h, chart.size[0]*w, chart.size[1]*h)
+
+    # Check is_within
+    assert chart._is_within(((chart.loc[0]+chart.size[0]/2)*w, (chart.loc[1]+chart.size[1]/2)*h))
+    assert not chart._is_within(((chart.loc[0]+chart.size[0]/2)*w, chart.loc[1]*h-5))
+    assert not chart._is_within((chart.loc[0]*w-5, (chart.loc[1]+chart.size[1]/2)*h))
+    assert not chart._is_within((chart.loc[0]*w-5, chart.loc[1]*h-5))
+
+    # TODO: check chart background properties and title/legend_visible properties using image cache
+
+    # Check remaining properties and methods
+    chart.visible = False
+    assert not chart.visible
+    assert not chart.GetVisible()
+    chart.toggle()
+    assert chart.visible
+    assert chart.GetVisible()
+    chart.title = title
+    assert chart.title == title
+    chart.legend_visible = False
+    assert not chart.legend_visible
+
+
+def test_plot_common():
+    # Test the common plot functionalities
+    pass
+
+
+def test_multicomp_plot_common():
+    # Test the common multicomp plot functionalities
+    pass

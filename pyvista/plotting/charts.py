@@ -892,7 +892,7 @@ class _Chart(object):
     @property
     def _renderer(self):
         """Get a reference to the vtkRenderer in which this chart is drawn."""
-        return self._scene.GetRenderer()
+        return self._scene.GetRenderer() if self._scene is not None else None
 
     def _render_event(self, *args, **kwargs):
         """Update the chart right before it will be rendered."""
@@ -916,7 +916,7 @@ class _Chart(object):
     @property
     def _geometry(self):
         """Chart geometry (x and y position of bottom left corner and width and height in pixels)."""
-        return self.GetSize()
+        return tuple(self.GetSize())
 
     @_geometry.setter
     def _geometry(self, val):
@@ -3695,7 +3695,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         self._fig = figure
         self._canvas = FigureCanvasAgg(self._fig)  # Switch backends and store reference to figure's canvas
         # Make figure and axes fully transparent, as the background is already dealt with by self._background.
-        self._fig.patch.set_alpha(0)  # Make figure and axes fully transparent (background is dealt with
+        self._fig.patch.set_alpha(0)
         for ax in self._fig.axes:
             ax.patch.set_alpha(0)
         self._canvas.mpl_connect('draw_event', self._redraw)  # Attach 'draw_event' callback
@@ -3768,6 +3768,66 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     def position(self, val):
         assert len(val) == 2
         self.SetPosition(*val)
+
+    @property
+    def title(self):
+        """Return or set the chart's title.
+
+        Examples
+        --------
+        Create a matplotlib chart with title 'My Chart'.
+
+        .. pyvista-plot::
+
+        >>> import pyvista
+        >>> import matplotlib.pyplot as plt
+        >>> f, ax = plt.subplots()
+        >>> _ = ax.plot([0, 1, 2], [2, 1, 3])
+        >>> chart = pyvista.ChartMPL(f)
+        >>> chart.title = 'My Chart'
+        >>> chart.show()
+
+        """
+        return self._fig._suptitle.get_text()
+
+    @title.setter
+    def title(self, val):
+        self._fig.suptitle(val)
+
+    @property
+    def legend_visible(self):
+        """Return or set the visibility of the chart's legend.
+
+        Examples
+        --------
+        Create a matplotlib chart with custom labels and show the legend.
+
+        .. pyvista-plot::
+
+        >>> import pyvista
+        >>> import matplotlib.pyplot as plt
+        >>> f, ax = plt.subplots()
+        >>> _ = ax.plot([0, 1, 2], [2, 1, 3], label="Line")
+        >>> _ = ax.scatter([0, 1, 2], [3, 2, 1], label="Points")
+        >>> chart = pyvista.ChartMPL(f)
+        >>> chart.legend_visible = True
+        >>> chart.show()
+
+        Hide the legend.
+
+        >>> chart.legend_visible = False
+        >>> chart.show()
+
+        """
+        legend = self._fig.axes[0].get_legend()
+        return False if legend is None else legend.get_visible()
+
+    @legend_visible.setter
+    def legend_visible(self, val):
+        legend = self._fig.axes[0].get_legend()
+        if legend is None:
+            legend = self._fig.axes[0].legend()
+        legend.set_visible(val)
 
 
 class Charts:
