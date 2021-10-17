@@ -2012,14 +2012,15 @@ def test_add_cursor():
 
 def test_enable_stereo_render():
     pl = pyvista.Plotter()
-    _ = pl.add_mesh(pyvista.Cube())
-    pl.enable_stereo_render()
+    pl.add_mesh(pyvista.Cube())
     pl.camera.distance = 0.1
+    pl.enable_stereo_render()
     pl.show(before_close_callback=verify_cache_image)
 
 def test_disable_stereo_render():
     pl = pyvista.Plotter()
-    _ = pl.add_mesh(pyvista.Cube())
+    pl.add_mesh(pyvista.Cube())
+    pl.camera.distance = 0.1
     pl.enable_stereo_render()
     pl.disable_stereo_render()
     pl.show(before_close_callback=verify_cache_image)
