@@ -1999,3 +1999,18 @@ def test_add_cursor():
     plotter.add_mesh(sphere)
     plotter.add_cursor()
     plotter.show(before_close_callback=verify_cache_image)
+
+def test_enable_stereo_render():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    pl.camera.distance = 0.1
+    pl.enable_stereo_render()
+    pl.show(before_close_callback=verify_cache_image)
+
+def test_disable_stereo_render():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    pl.camera.distance = 0.1
+    pl.enable_stereo_render()
+    pl.disable_stereo_render()
+    pl.show(before_close_callback=verify_cache_image)

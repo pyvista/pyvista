@@ -1378,6 +1378,48 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
         self.iren.enable_rubber_band_2d_style()
 
+    def enable_stereo_render(self):
+        """Enable stereo rendering.
+
+        Disable this with :func:`disable_stereo_render
+        <BasePlotter.disable_stereo_render>`
+
+        Examples
+        --------
+        Enable stereo rendering to show a cube as an anaglyph image.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.enable_stereo_render()
+        >>> pl.show()
+
+        """
+        if hasattr(self, 'ren_win'):
+            self.ren_win.StereoRenderOn()
+            self.ren_win.SetStereoTypeToAnaglyph()
+
+    def disable_stereo_render(self):
+        """Disable stereo rendering.
+
+        Enable again with :func:`enable_stereo_render
+        <BasePlotter.enable_stereo_render>`
+
+        Examples
+        --------
+        Enable and then disable stereo rendering. It should show a simple cube.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.enable_stereo_render()
+        >>> pl.disable_stereo_render()
+        >>> pl.show()
+
+        """
+        if hasattr(self, 'ren_win'):
+            self.ren_win.StereoRenderOff()
+
     def hide_axes_all(self):
         """Hide the axes orientation widget in all renderers."""
         for renderer in self.renderers:
