@@ -35,7 +35,6 @@ def pl():
 @pytest.fixture
 def chart2D():
     chart = pyvista.Chart2D()
-    chart.plot([0, 1, 2], [3, 1, 2])
     return chart
 
 
@@ -54,6 +53,46 @@ def chartMPL():
     f, ax = plt.subplots()
     ax.plot([0, 1, 2], [3, 1, 2])
     return pyvista.ChartMPL(f)
+
+
+@pytest.fixture
+def linePlot2D(chart2D):
+    plot = chart2D.line([0, 1, 2], [3, 1, 2])
+    return plot
+
+
+@pytest.fixture
+def scatterPlot2D(chart2D):
+    plot = chart2D.scatter([0, 1, 2], [3, 1, 2])
+    return plot
+
+
+@pytest.fixture
+def areaPlot(chart2D):
+    plot = chart2D.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
+    return plot
+
+
+@pytest.fixture
+def barPlot(chart2D):
+    plot = chart2D.bar([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+    return plot
+
+
+@pytest.fixture
+def stackPlot(chart2D):
+    plot = chart2D.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+    return plot
+
+
+@pytest.fixture
+def boxPlot(chartBox):
+    return chartBox.plot
+
+
+@pytest.fixture
+def piePlot(chartPie):
+    return chartPie.plot
 
 
 def test_pen():
@@ -134,7 +173,7 @@ def test_brush():
     assert brush.GetTextureProperties() & REPEAT
 
 
-def test_axis():
+def test_axis(chart2D):
     l = "Y axis"
     r_fix, r_auto = [2, 5], None
     m = 50
@@ -151,10 +190,9 @@ def test_axis():
     assert axis.grid
 
     # Test properties, using the y axis of a 2D chart
-    chart = pyvista.Chart2D()
-    chart.line([0, 1], [1, 10])
-    chart.show()
-    axis = chart.y_axis
+    chart2D.line([0, 1], [1, 10])
+    chart2D.show()
+    axis = chart2D.y_axis
 
     axis.label = l
     assert axis.label == l
@@ -185,19 +223,27 @@ def test_axis():
     assert axis.GetMargins()[0] == m
 
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
-    chart.show()  # TODO: find alternative to update all chart properties without plotting (not sure if possible though)
+    chart2D.show()  # TODO: find alternative to update all chart properties without plotting (not sure if possible though)
     assert axis.log_scale
     assert axis.GetLogScaleActive()
     axis.log_scale = False
-    chart.show()
+    chart2D.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
     # TODO: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed
-    # chart.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
-    # axis.log_scale = True
-    # chart.show()
-    # assert not axis.log_scale
-    # assert not axis.GetLogScaleActive()
+    #  probably a vtk issue. Minimum code to reproduce:
+    #   chart = pyvista.Chart2D()
+    #   chart.line([0, 1], [-10, 10])
+    #   axis = chart.y_axis
+    #   axis.range = [2, 5]
+    #   axis.behavior = "auto"
+    #   axis.log_scale = True
+    #   chart.show()
+    chart2D.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
+    axis.log_scale = True
+    chart2D.show()
+    assert not axis.log_scale
+    assert not axis.GetLogScaleActive()
 
     axis.grid = False
     assert not axis.grid
@@ -230,21 +276,21 @@ def test_axis():
     assert tuple(axis.tick_labels) == tuple(tlabels)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(tlabels)
     axis.tick_labels = "2f"
-    chart.show()
+    chart2D.show()
     assert tuple(axis.tick_labels) == tuple(f"{loc:.2f}" for loc in tlocs)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(f"{loc:.2f}" for loc in tlocs)
     assert axis.GetNotation() == pyvista._vtk.vtkAxis.FIXED_NOTATION
     assert axis.GetPrecision() == 2
     axis.tick_labels = "4e"
     axis.tick_locations = tlocs_large  # Add some more variety to labels
-    chart.show()
+    chart2D.show()
     assert tuple(axis.tick_labels) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
     assert axis.GetNotation() == pyvista._vtk.vtkAxis.SCIENTIFIC_NOTATION
     assert axis.GetPrecision() == 4
     axis.tick_locations = None
     axis.tick_labels = None
-    chart.show()
+    chart2D.show()
     assert np.allclose(axis.tick_locations, tlocs0)
     assert np.allclose(axis.GetTickPositions(), tlocs0)
     assert tuple(axis.tick_labels) == tuple(tlabels0)
@@ -323,11 +369,93 @@ def test_chart_common(pl, chart_f, request):
     assert not chart.legend_visible
 
 
-def test_plot_common():
+@pytest.mark.parametrize("plot_f", ("linePlot2D", "scatterPlot2D", "areaPlot", "barPlot", "stackPlot", "boxPlot", "piePlot"))
+def test_plot_common(plot_f, request):
     # Test the common plot functionalities
-    pass
+    plot = request.getfixturevalue(plot_f)
+    c = (1, 0, 1, 1)
+    w = 5
+    s = "-."
+    l = "Label"
+
+    plot.color = c
+    assert np.allclose(plot.color, c)
+    assert np.allclose(plot.brush.color, c)
+
+    if hasattr(plot, "GetPen"):
+        assert plot.pen.__this__ == plot.GetPen().__this__
+    if hasattr(plot, "GetBrush"):
+        assert plot.brush.__this__ == plot.GetBrush().__this__
+
+    plot.line_width = w
+    assert plot.pen.width == w
+    plot.line_style = s
+    assert plot.pen.style == s
+
+    plot.label = l
+    assert plot.label == l
+    assert plot.GetLabel() == l
+
+    plot.visible = False
+    assert not plot.visible
+    assert not plot.GetVisible()
+    plot.toggle()
+    assert plot.visible
+    assert plot.GetVisible()
 
 
-def test_multicomp_plot_common():
+@pytest.mark.parametrize("plot_f", ("barPlot", "stackPlot", "boxPlot", "piePlot"))
+def test_multicomp_plot_common(plot_f, request):
     # Test the common multicomp plot functionalities
-    pass
+    plot = request.getfixturevalue(plot_f)
+    cs = "spectrum"
+    cs_colors = [(0.0, 0.0, 0.0, 1.0),
+                 (0.8941176470588236, 0.10196078431372549, 0.10980392156862745, 1.0),
+                 (0.21568627450980393, 0.49411764705882355, 0.7215686274509804, 1.0),
+                 (0.30196078431372547, 0.6862745098039216, 0.2901960784313726, 1.0),
+                 (0.596078431372549, 0.3058823529411765, 0.6392156862745098, 1.0),
+                 (1.0, 0.4980392156862745, 0.0, 1.0),
+                 (0.6509803921568628, 0.33725490196078434, 0.1568627450980392, 1.0)]
+    colors = [(1, 0, 1, 1), (0, 1, 1, 1), (1, 1, 0, 1)]
+    labels = ["Foo", "Spam", "Bla"]
+
+    plot.color_scheme = cs
+    assert plot.color_scheme == cs
+    assert plot._color_series.GetColorScheme() == plot.COLOR_SCHEMES[cs]["id"]
+    assert np.allclose(plot.colors, cs_colors)
+    series_colors = [plot._from_c3ub(plot._color_series.GetColor(i)) for i in range(len(cs_colors))]
+    assert np.allclose(series_colors, cs_colors)
+    lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(cs_colors))]
+    assert np.allclose(lookup_colors, cs_colors)
+    assert np.allclose(plot.brush.color, cs_colors[0])
+
+    plot.colors = None
+    assert plot.color_scheme == plot.DEFAULT_COLOR_SCHEME
+    plot.colors = cs
+    assert plot.color_scheme == cs
+    plot.colors = colors
+    assert np.allclose(plot.colors, colors)
+    series_colors = [plot._from_c3ub(plot._color_series.GetColor(i)) for i in range(len(colors))]
+    assert np.allclose(series_colors, colors)
+    lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(colors))]
+    assert np.allclose(lookup_colors, colors)
+    assert np.allclose(plot.brush.color, colors[0])
+
+    plot.color = colors[1]
+    assert np.allclose(plot.color, colors[1])
+    assert np.allclose(plot.colors, [colors[1]])
+    assert np.allclose(plot.brush.color, colors[1])
+
+    plot.labels = labels
+    assert tuple(plot.labels) == tuple(labels)
+    assert plot.label == labels[0]
+    plot.labels = None
+    assert plot.labels == []
+    assert plot.label == ""
+
+    plot.label = labels[1]
+    assert tuple(plot.labels) == (labels[1],)
+    assert plot.label == labels[1]
+    plot.label = None
+    assert plot.labels == []
+    assert plot.label == ""

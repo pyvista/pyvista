@@ -343,6 +343,14 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     grid : bool, optional
         Flag to toggle grid lines visibility for this axis. Defaults to ``True``.
 
+    Attributes
+    ----------
+    pen : Pen
+        Pen used to draw the axis.
+
+    grid_pen : Pen
+        Pen used to draw the grid lines.
+
     """
 
     BEHAVIORS = {
@@ -1556,8 +1564,8 @@ class _MultiCompPlot(_Plot):
 
     @staticmethod
     def _from_c3ub(c3ub):
-        """Convert vtkColor3ub to an RGB color tuple (with values in range [0;1])."""
-        return tuple(float(c) / 255 for c in c3ub)
+        """Convert vtkColor3ub to an RGBA color tuple (with values in range [0;1])."""
+        return tuple([float(c) / 255 for c in c3ub] + [1.0])
 
     @staticmethod
     def _to_c3ub(color):
