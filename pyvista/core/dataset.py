@@ -1893,6 +1893,11 @@ class DataSet(DataSetFilters, DataObject):
             Index or indices of the cell in this mesh that is closest
             to the given point.
 
+        Warnings
+        --------
+        This method may still return a valid cell index even if the point
+        contains a value like ``numpy.inf`` or ``numpy.nan``.
+
         Examples
         --------
         Find nearest cell to a point on a sphere, centered on the
