@@ -1885,7 +1885,7 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         point : iterable(float) or np.ndarray
             Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
-            points with shape ``nx3``.
+            points with shape ``(n, 3)``.
 
         Returns
         -------
