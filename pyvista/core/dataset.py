@@ -1925,6 +1925,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> avg_pos = cell_center_mesh.points[indices, :].mean(axis=0)
         >>> np.linalg.norm(avg_pos) < 0.02
         True
+
         """
         if isinstance(point, collections.abc.Sequence):
             point = np.array(point)
