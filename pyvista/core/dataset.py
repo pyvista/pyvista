@@ -1884,8 +1884,8 @@ class DataSet(DataSetFilters, DataObject):
         Parameters
         ----------
         point : iterable(float) or np.ndarray
-            Length 3 coordinate of the point to query or a ``numpy`` array
-            of coordinates.
+            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
+            points (size ``n``x3)
 
         Returns
         -------
@@ -1895,23 +1895,31 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Find nearest cell to a point on a sphere
+        Find nearest cell to a point on a sphere, centered on the
+        origin.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> index = mesh.find_closest_cell([0, 0, 0.5])
         >>> index
-        59
+        30
 
-        Find the nearest cells to several random points.  Note that
-        ``-1`` indicates that the locator was not able to find a
-        reasonably close cell.
+        Find the nearest cells to several random points that
+        are centered on the origin.
 
         >>> import numpy as np
-        >>> points = np.random.random((1000, 3))
+        >>> points = 2 * np.random.random((5000, 3)) - 1
         >>> indices = mesh.find_closest_cell(points)
         >>> indices.shape
-        (1000,)
+        (5000,)
+
+        The average position of all the randomly found cell centers should
+        be reasonably close to the origin.
+
+        >>> cell_center_mesh = mesh.cell_centers()
+        >>> avg_pos = cell_center_mesh.points[indices, :].mean(axis=0)
+        >>> np.linalg.norm(avg_pos) < 0.02
+        True
         """
         if isinstance(point, collections.abc.Sequence):
             point = np.array(point)
@@ -1932,8 +1940,18 @@ class DataSet(DataSetFilters, DataObject):
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
-        closest_cells = np.array([locator.FindCell(node) for node in point])
-        return int(closest_cells[0]) if len(closest_cells) == 1 else closest_cells
+
+        cell = _vtk.vtkGenericCell()
+        closest_point = [0, 0, 0]
+        cellId = _vtk.mutable(0)
+        subld = _vtk.mutable(0)
+        dist2 = _vtk.mutable(0.0)
+
+        closest_cells = []
+        for node in point:
+            locator.FindClosestPoint(node, closest_point, cell, cellId, subld, dist2)
+            closest_cells.append(int(cellId))
+        return closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
 
     def find_cells_along_line(
         self,
