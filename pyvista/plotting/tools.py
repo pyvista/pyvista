@@ -488,7 +488,7 @@ def parse_color(color, opacity=None, default_color=None):
 
     Returns
     -------
-    list
+    tuple
         Either a length 3 RGB sequence if opacity is unset, or RGBA
         sequence when ``opacity`` is set.
 
@@ -505,7 +505,7 @@ def parse_color(color, opacity=None, default_color=None):
     (1.0, 1.0, 1.0)
 
     >>> pyvista.parse_color((0.4, 0.3, 0.4, 1))
-    [0.4, 0.3, 0.4, 1]
+    (0.4, 0.3, 0.4, 1)
 
     """
     if color is None:
@@ -515,11 +515,10 @@ def parse_color(color, opacity=None, default_color=None):
             color = default_color
     if isinstance(color, str):
         color = string_to_rgb(color)
-    elif len(color) == 3:
-        pass
-    elif len(color) == 4:
-        opacity = color[3]
-        color = color[:3]
+    elif isinstance(color, (list, tuple)) and len(color) in (3, 4) and np.all([isinstance(c, (int, float)) and 0 <= c <= 1 for c in color]):
+        if len(color) == 4:
+            opacity = color[3]
+            color = color[:3]
     else:
         raise ValueError(f"""
     Invalid color input: ({color})
@@ -530,7 +529,7 @@ def parse_color(color, opacity=None, default_color=None):
         color='#FFFFFF'""")
     if opacity is not None and isinstance(opacity, (float, int)):
         color = [color[0], color[1], color[2], opacity]
-    return color
+    return tuple(color)
 
 
 def parse_font_family(font_family):

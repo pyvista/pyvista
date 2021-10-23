@@ -5,6 +5,7 @@ import platform
 import pytest
 import numpy as np
 import matplotlib.pyplot as plt
+import itertools
 
 import pyvista
 from pyvista.plotting import charts
@@ -27,7 +28,7 @@ def to_vtk_scientific(val):
 
 @pytest.fixture
 def pl():
-    p = pyvista.Plotter()
+    p = pyvista.Plotter(window_size=(600, 600))
     p.background_color = 'w'
     return p
 
@@ -173,6 +174,7 @@ def test_brush():
     assert brush.GetTextureProperties() & REPEAT
 
 
+@pytest.mark.skip  # TODO: test hangs from time to time?
 def test_axis(chart2D):
     l = "Y axis"
     r_fix, r_auto = [2, 5], None
@@ -459,3 +461,326 @@ def test_multicomp_plot_common(plot_f, request):
     plot.label = None
     assert plot.labels == []
     assert plot.label == ""
+
+
+def test_lineplot2d(linePlot2D):
+    x = [-2, -1, 0, 1, 2]
+    y = [4, 1, 0, -1, -4]
+    c = (1, 0, 1, 1)
+    w = 5
+    s = "-."
+    l = "Line"
+
+    # Test constructor
+    plot = charts.LinePlot2D(x, y, c, w, s, l)
+    assert np.allclose(plot.x, x)
+    assert np.allclose(plot.y, y)
+    assert np.allclose(plot.color, c)
+    assert plot.line_width == w
+    assert plot.line_style == s
+    assert plot.label == l
+
+    # Test remaining properties
+    linePlot2D.update(x, y)
+    assert np.allclose(linePlot2D.x, x)
+    assert np.allclose(linePlot2D.y, y)
+
+
+def test_scatterplot2d(scatterPlot2D):
+    x = [-2, -1, 0, 1, 2]
+    y = [4, 1, 0, -1, -4]
+    c = (1, 0, 1, 1)
+    sz = 5
+    st, st_inv = "o", "^"
+    l = "Scatter"
+    assert st_inv not in charts.ScatterPlot2D.MARKER_STYLES, "New marker styles added? Change this test."
+
+    # Test constructor
+    plot = charts.ScatterPlot2D(x, y, c, sz, st, l)
+    assert np.allclose(plot.x, x)
+    assert np.allclose(plot.y, y)
+    assert np.allclose(plot.color, c)
+    assert plot.marker_size == sz
+    assert plot.marker_style == st
+    assert plot.label == l
+
+    # Test remaining properties
+    scatterPlot2D.update(x, y)
+    assert np.allclose(scatterPlot2D.x, x)
+    assert np.allclose(scatterPlot2D.y, y)
+
+    scatterPlot2D.marker_size = sz
+    assert scatterPlot2D.marker_size == sz
+    assert scatterPlot2D.GetMarkerSize() == sz
+
+    scatterPlot2D.marker_style = None
+    assert scatterPlot2D.marker_style == ""
+    scatterPlot2D.marker_style = st
+    assert scatterPlot2D.marker_style == st
+    assert scatterPlot2D.GetMarkerStyle() == scatterPlot2D.MARKER_STYLES[st]["id"]
+    with pytest.raises(ValueError):
+        scatterPlot2D.marker_style = st_inv
+
+
+def test_areaplot(areaPlot):
+    x = [-2, -1, 0, 1, 2]
+    y1 = [4, 1, 0, -1, -4]
+    y2 = [-4, -2, 0, 2, 4]
+    c = (1, 0, 1, 1)
+    l = "Line"
+
+    # Test constructor
+    plot = charts.AreaPlot(x, y1, y2, c, l)
+    assert np.allclose(plot.x, x)
+    assert np.allclose(plot.y1, y1)
+    assert np.allclose(plot.y2, y2)
+    assert np.allclose(plot.color, c)
+    assert plot.label == l
+
+    # Test remaining properties
+    areaPlot.update(x, y1, y2)
+    assert np.allclose(areaPlot.x, x)
+    assert np.allclose(areaPlot.y1, y1)
+    assert np.allclose(areaPlot.y2, y2)
+
+
+def test_barplot(barPlot):
+    x = [0, 1, 2]
+    y = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
+    c = [(1, 0, 1, 1), (1, 1, 0, 1), (0, 1, 1, 1)]
+    off = 20
+    ori, ori_inv = "H", "I"
+    l = ["Foo", "Spam", "Bla"]
+    assert ori_inv not in charts.BarPlot.ORIENTATIONS, "New orientations added? Change this test."
+
+    # Test multi comp constructor
+    plot = charts.BarPlot(x, y, c, off, ori, l)
+    assert np.allclose(plot.x, x)
+    assert np.allclose(plot.y, y)
+    assert np.allclose(plot.colors, c)
+    assert plot.offset == off
+    assert plot.orientation == ori
+    assert plot.labels == l
+
+    # Test single comp constructor
+    plot = charts.BarPlot(x, y[0], c[0], off, ori, l[0])
+    assert np.allclose(plot.x, x)
+    assert np.allclose(plot.y, y[0])
+    assert np.allclose(plot.color, c[0])
+    assert plot.offset == off
+    assert plot.orientation == ori
+    assert plot.label == l[0]
+
+    # Test multi and single comp constructors with inconsistent arguments
+    with pytest.raises(ValueError):
+        charts.BarPlot(x, y, c[0], off, ori, l)
+    # charts.BarPlot(x, y, c, off, ori, l[0])  # This one is valid
+    with pytest.raises(ValueError):
+        charts.BarPlot(x, y[0], c, off, ori, l[0])
+    with pytest.raises(ValueError):
+        charts.BarPlot(x, y[0], c[0], off, ori, l)
+
+    # Test remaining properties
+    barPlot.update(x, y)
+    assert np.allclose(barPlot.x, x)
+    assert np.allclose(barPlot.y, y)
+
+    barPlot.offset = off
+    assert barPlot.offset == off
+    assert barPlot.GetOffset() == off
+
+    barPlot.orientation = ori
+    assert barPlot.orientation == ori
+    assert barPlot.GetOrientation() == barPlot.ORIENTATIONS[ori]
+    with pytest.raises(ValueError):
+        barPlot.orientation = ori_inv
+
+
+def test_stackplot(stackPlot):
+    x = [0, 1, 2]
+    ys = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
+    c = [(1, 0, 1, 1), (1, 1, 0, 1), (0, 1, 1, 1)]
+    l = ["Foo", "Spam", "Bla"]
+
+    # Test multi comp constructor
+    plot = charts.StackPlot(x, ys, c, l)
+    assert np.allclose(plot.x, x)
+    assert np.allclose(plot.ys, ys)
+    assert np.allclose(plot.colors, c)
+    assert plot.labels == l
+
+    # Test single comp constructor
+    plot = charts.StackPlot(x, ys[0], c[0], l[0])
+    assert np.allclose(plot.x, x)
+    assert np.allclose(plot.ys, ys[0])
+    assert np.allclose(plot.color, c[0])
+    assert plot.label == l[0]
+
+    # Test multi and single comp constructors with inconsistent arguments
+    with pytest.raises(ValueError):
+        charts.StackPlot(x, ys, c[0], l)
+    # charts.StackPlot(x, ys, c, l[0])  # This one is valid
+    with pytest.raises(ValueError):
+        charts.StackPlot(x, ys[0], c, l[0])
+    with pytest.raises(ValueError):
+        charts.StackPlot(x, ys[0], c[0], l)
+
+    # Test remaining properties
+    stackPlot.update(x, ys)
+    assert np.allclose(stackPlot.x, x)
+    assert np.allclose(stackPlot.ys, ys)
+
+
+def test_chart2D(pl, chart2D):
+    size = (0.5, 0.5)
+    loc = (0.25, 0.25)
+    lx = "X label"
+    ly = "Y label"
+    rx = [0, 5]
+    ry = [0, 1]
+    x = np.arange(11)-5
+    y = x**2
+    ys = [np.sin(x), np.cos(x), np.tanh(x)]
+    col = (1, 0, 1, 1)
+    cs = "citrus"
+    sz = 5
+    ms = "d"
+    w = 10
+    ls = "-."
+    off = 12
+    ori = "V"
+
+    # Test constructor
+    chart = pyvista.Chart2D(size, loc, lx, ly, False)
+    assert chart.size == size
+    assert chart.loc == loc
+    assert chart.x_label == lx
+    assert chart.y_label == ly
+    assert not chart.grid
+
+    # Test geometry and resizing
+    pl.add_chart(chart)
+    r_w, r_h = chart._renderer.GetSize()
+    pl.show(auto_close=False)
+    assert np.allclose(chart._geometry, (loc[0]*r_w, loc[1]*r_h, size[0]*r_w, size[1]*r_h))
+    pl.window_size = (int(pl.window_size[0]/2), int(pl.window_size[1]/2))
+    pl.show()  # This will also call chart._resize
+    assert np.allclose(chart._geometry, (loc[0]*r_w/2, loc[1]*r_h/2, size[0]*r_w/2, size[1]*r_h/2))
+
+    # Test parse_format
+    colors = itertools.chain(pyvista.hexcolors, pyvista.color_char_to_word, ["#fa09b6", ""])
+    for m in charts.ScatterPlot2D.MARKER_STYLES:
+        for l in charts.Pen.LINE_STYLES:
+            for c in colors:
+                cp = "b" if c == "" else c
+                assert (m, l, cp) == chart2D._parse_format(m + l + c)
+                assert (m, l, cp) == chart2D._parse_format(m + c + l)
+                assert (m, l, cp) == chart2D._parse_format(l + m + c)
+                assert (m, l, cp) == chart2D._parse_format(l + c + m)
+                assert (m, l, cp) == chart2D._parse_format(c + m + l)
+                assert (m, l, cp) == chart2D._parse_format(c + l + m)
+
+    # Test plotting methods
+    s, l = chart2D.plot(x, y, "")
+    assert s is None and l is None
+    assert len([*chart2D.plots()]) == 0
+    s, l = chart2D.plot(y, "-")
+    assert s is None and l is not None
+    assert l in chart2D.plots("line")
+    chart2D.remove_plot(l)
+    assert len([*chart2D.plots()]) == 0
+    s, l = chart2D.plot(y, "x")
+    assert s is not None and l is None
+    assert s in chart2D.plots("scatter")
+    chart2D.clear("scatter")
+    assert len([*chart2D.plots()]) == 0
+    s, l = chart2D.plot(x, y, "x-")
+    assert s is not None and l is not None
+    assert s in chart2D.plots("scatter") and l in chart2D.plots("line")
+    chart2D.plot(x, y, "x-")  # Check clearing of multiple plots (of the same type)
+    chart2D.clear()
+    assert len([*chart2D.plots()]) == 0
+
+    s = chart2D.scatter(x, y, col, sz, ms, lx)
+    assert np.allclose(s.x, x)
+    assert np.allclose(s.y, y)
+    assert np.allclose(s.color, col)
+    assert s.marker_size == sz
+    assert s.marker_style == ms
+    assert s.label == lx
+    assert s in chart2D.plots("scatter")
+    assert chart2D.GetPlotIndex(s) >= 0
+
+    l = chart2D.line(x, y, col, w, ls, lx)
+    assert np.allclose(l.x, x)
+    assert np.allclose(l.y, y)
+    assert np.allclose(l.color, col)
+    assert l.line_width == w
+    assert l.line_style == ls
+    assert l.label == lx
+    assert l in chart2D.plots("line")
+    assert chart2D.GetPlotIndex(l) >= 0
+
+    a = chart2D.area(x, -y, y, col, lx)
+    assert np.allclose(a.x, x)
+    assert np.allclose(a.y1, -y)
+    assert np.allclose(a.y2, y)
+    assert np.allclose(a.color, col)
+    assert a.label == lx
+    assert a in chart2D.plots("area")
+    assert chart2D.GetPlotIndex(a) >= 0
+
+    b = chart2D.bar(x, -y, col, off, ori, lx)
+    assert np.allclose(b.x, x)
+    assert np.allclose(b.y, -y)
+    assert np.allclose(b.color, col)
+    assert b.offset == off
+    assert b.orientation == ori
+    assert b.label == lx
+    assert b in chart2D.plots("bar")
+    assert chart2D.GetPlotIndex(b) >= 0
+
+    s = chart2D.stack(x, ys, cs, [lx, ly])
+    assert np.allclose(s.x, x)
+    assert np.allclose(s.ys, ys)
+    assert s.color_scheme == cs
+    assert tuple(s.labels) == (lx, ly)
+    assert s in chart2D.plots("stack")
+    assert chart2D.GetPlotIndex(s) >= 0
+
+    inv_type = "blub"
+    with pytest.raises(KeyError):
+        next(chart2D.plots(inv_type))
+    with pytest.raises(KeyError):
+        chart2D.clear(inv_type)
+    assert len([*chart2D.plots()]) == 5
+    chart2D.clear()
+    assert len([*chart2D.plots()]) == 0
+    with pytest.raises(ValueError):
+        chart2D.remove_plot(s)
+
+    # Check remaining properties
+    assert chart2D.x_axis.__this__ == chart2D.GetAxis(charts.Axis.BOTTOM).__this__
+    assert chart2D.y_axis.__this__ == chart2D.GetAxis(charts.Axis.LEFT).__this__
+
+    chart2D.x_label = lx
+    assert chart2D.x_label == lx
+    assert chart2D.x_axis.label == lx
+    chart2D.y_label = ly
+    assert chart2D.y_label == ly
+    assert chart2D.y_axis.label == ly
+
+    chart2D.x_range = rx
+    assert np.allclose(chart2D.x_range, rx)
+    assert np.allclose(chart2D.x_axis.range, rx)
+    chart2D.y_range = ry
+    assert np.allclose(chart2D.y_range, ry)
+    assert np.allclose(chart2D.y_axis.range, ry)
+
+    chart2D.grid = True
+    assert chart2D.grid
+    assert chart2D.x_axis.grid and chart2D.y_axis.grid
+
+    chart2D.hide_axes()
+    for axis in (chart2D.x_axis, chart2D.y_axis):
+        assert not (axis.visible or axis.label_visible or axis.ticks_visible or axis.tick_labels_visible or axis.grid)

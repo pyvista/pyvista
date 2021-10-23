@@ -1,8 +1,10 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
 
 import numpy as np
-from typing import Tuple, Sequence, Union, Optional
+from typing import Sequence
+import re
 import inspect
+import itertools
 
 import pyvista
 from pyvista import _vtk
@@ -1630,14 +1632,20 @@ class _MultiCompPlot(_Plot):
     def colors(self, val):
         if val is None:
             self.color_scheme = self.DEFAULT_COLOR_SCHEME
+            # Setting color_scheme already sets brush.color
         elif isinstance(val, str):
             self.color_scheme = val
+            # Setting color_scheme already sets brush.color
         else:
-            self._color_series.SetNumberOfColors(len(val))
-            for i, color in enumerate(val):
-                self._color_series.SetColor(i, self._to_c3ub(parse_color(color)))
-            self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
-        self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
+            try:
+                self._color_series.SetNumberOfColors(len(val))
+                for i, color in enumerate(val):
+                    self._color_series.SetColor(i, self._to_c3ub(parse_color(color)))
+                self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
+                self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
+            except ValueError as e:
+                self.color_scheme = self.DEFAULT_COLOR_SCHEME
+                raise ValueError("Invalid colors specified, falling back to default color scheme.") from e
 
     @property
     def color(self):
@@ -1689,9 +1697,14 @@ class _MultiCompPlot(_Plot):
     @labels.setter
     def labels(self, val):
         self._labels.Reset()
-        if val is not None:
-            for label in val:
-                self._labels.InsertNextValue(label)
+        if isinstance(val, str):
+            val = [val]
+        try:
+            if val is not None:
+                for label in val:
+                    self._labels.InsertNextValue(label)
+        except TypeError:
+            raise ValueError("Invalid labels specified.")
 
     @property
     def label(self):
@@ -2322,10 +2335,10 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
     @orientation.setter
     def orientation(self, val):
-        if val in self.ORIENTATIONS:
-            self._orientation = val
+        try:
             self.SetOrientation(self.ORIENTATIONS[val])
-        else:
+            self._orientation = val
+        except KeyError:
             formatted_orientations = "\", \"".join(self.ORIENTATIONS.keys())
             raise ValueError(f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"")
 
@@ -2529,13 +2542,14 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         super()._render_event(*args, **kwargs)
 
     def _add_plot(self, plot_type, *args, **kwargs):
+        """Add a plot of the given type to this chart."""
         plot = self.PLOT_TYPES[plot_type](*args, **kwargs)
         self.AddPlot(plot)
         self._plots[plot_type].append(plot)
         return plot
 
     @classmethod
-    def parse_format(cls, fmt):
+    def _parse_format(cls, fmt):
         """Parse a format string and separate it into a marker style, line style and color.
 
         Parameters
@@ -2561,56 +2575,59 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         Examples
         --------
         >>> import pyvista
-        >>> m, l, c = pyvista.Chart2D.parse_format("x--b")
+        >>> m, l, c = pyvista.Chart2D._parse_format("x--b")
 
         """
-        # TODO: add tests for different combinations/positions of marker, line and color
         marker_style = ""
         line_style = ""
         color = None
-        last_fmt = None
-        while fmt != "" and last_fmt != fmt and (marker_style == "" or line_style == "" or color is None):
-            last_fmt = fmt
-            if marker_style == "":
-                # Marker style is not yet set, so look for it at the start of the format string
-                for style in ScatterPlot2D.MARKER_STYLES.keys():
-                    if style != "" and fmt.startswith(style):
-                        # Loop over all styles such that - and -- can both be checked
-                        marker_style = style
-                fmt = fmt[len(marker_style):]  # Remove marker_style from format string
-            if line_style == "":
-                # Line style is not yet set, so look for it at the start of the format string
-                for style in Pen.LINE_STYLES.keys():
-                    if style != "" and fmt.startswith(style):
-                        line_style = style
-                fmt = fmt[len(line_style):]  # Remove line_style from format string
-            if color is None:
-                # Color is not yet set, so look for it in the remaining format string
-                for i in range(len(fmt), 0, -1):
-                    try:
-                        parse_color(fmt[:i])
-                        color = fmt[:i]
-                        fmt = fmt[i:]
-                        break
-                    except ValueError:
-                        pass
-        if color is None:
+        # Note: All colors, marker styles and line styles are sorted in decreasing order of length to be able to find
+        # the largest match first (e.g. find 'darkred' and '--' first instead of 'red' and '-')
+        colors = sorted(itertools.chain(pyvista.hexcolors.keys(), pyvista.color_char_to_word.keys()), key=len, reverse=True)
+        marker_styles = sorted(ScatterPlot2D.MARKER_STYLES.keys(), key=len, reverse=True)
+        line_styles = sorted(Pen.LINE_STYLES.keys(), key=len, reverse=True)
+        hex_pattern = "#[A-Fa-f0-9]{6}"
+        # Extract color from format string
+        match = re.search(hex_pattern, fmt)  # Start with matching hex strings
+        if match is not None:
+            color = match.group()
+        else:  # Proceed with matching color strings
+            for c in colors:
+                if c in fmt:
+                    color = c
+                    break
+        if color is not None:
+            fmt = fmt.replace(color, "", 1)  # Remove found color from format string
+        else:
             color = "b"
+        # Extract marker style from format string
+        for style in marker_styles[:-1]:  # Last style is empty string
+            if style in fmt:
+                marker_style = style
+                fmt = fmt.replace(marker_style, "", 1)  # Remove found marker_style from format string
+                break
+        # Extract line style from format string
+        for style in line_styles[:-1]:  # Last style is empty string
+            if style in fmt:
+                line_style = style
+                fmt = fmt.replace(line_style, "", 1)  # Remove found line_style from format string
+                break
         return marker_style, line_style, color
 
-    def plot(self, x, y, fmt='-'):
+    def plot(self, x, y=None, fmt='-'):
         """Matplotlib like plot method.
 
         Parameters
         ----------
         x : array_like
-            Values to plot on the X-axis.
+            Values to plot on the X-axis. In case ``y`` is ``None``, these are the values to plot
+            on the Y-axis instead.
 
-        y : array_like
+        y : array_like, optional
             Values to plot on the Y-axis.
 
         fmt : str, optional
-            A format string, e.g. 'ro' for red circles. See the Notes
+            A format string, e.g. ``'ro'`` for red circles. See the Notes
             section for a full description of the format strings.
 
         Returns
@@ -2641,11 +2658,17 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Generate a line and scatter plot.
 
-        >>> scatter_plot, line_plot = chart.plot(range(10), range(10), fmt='o-')
+        >>> scatter_plot, line_plot = chart.plot(range(10), fmt='o-')
 
         """
-        # TODO: make x and fmt optional, allow multiple ([x], y, [fmt]) entries
-        marker_style, line_style, color = self.parse_format(fmt)
+        if y is None:
+            y = x
+            x = np.arange(len(y))
+        elif isinstance(y, str):
+            fmt = y
+            y = x
+            x = np.arange(len(y))
+        marker_style, line_style, color = self._parse_format(fmt)
         scatter_plot, line_plot = None, None
         if marker_style != "":
             scatter_plot = self.scatter(x, y, color, style=marker_style)
@@ -2892,11 +2915,8 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         True
 
         """
-        if plot_type is None:
-            for plots in self._plots.values():
-                for plot in plots:
-                    yield plot
-        else:
+        plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
+        for plot_type in plot_types:
             for plot in self._plots[plot_type]:
                 yield plot
 
@@ -2958,12 +2978,10 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         >>> chart.show()
 
         """
-        if plot_type is None:
-            for plots in self._plots.values():
-                for plot in plots:
-                    self.remove_plot(plot)
-        else:
-            for plot in self._plots[plot_type]:
+        plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
+        for plot_type in plot_types:
+            plots = [*self._plots[plot_type]]  # Make a copy, as this list will be modified by remove_plot
+            for plot in plots:
                 self.remove_plot(plot)
 
     @property
