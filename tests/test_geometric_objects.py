@@ -58,6 +58,24 @@ def test_line():
         pyvista.Line(pointa, pointb, 0.1) # from vtk
 
 
+def test_tube():
+    pointa = (0, 0, 0)
+    pointb = (10, 1., 3)
+
+    tube = pyvista.Tube(n_sides=3)
+    assert tube.n_points == 6
+    assert tube.n_cells == 3
+    tube = pyvista.Tube(pointa, pointb, 10)
+    assert tube.n_points == 165
+    assert tube.n_cells == 15
+
+    with pytest.raises(ValueError):
+        pyvista.Tube(pointa, pointb, -1)
+
+    with pytest.raises(TypeError):
+        pyvista.Tube(pointa, pointb, 0.1) # from vtk
+
+
 def test_cube():
     cube = pyvista.Cube()
     assert np.any(cube.points)

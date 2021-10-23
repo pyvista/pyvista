@@ -2,6 +2,7 @@ import pytest
 
 import pyvista
 from pyvista.plotting import system_supports_plotting
+from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
@@ -52,3 +53,65 @@ def test_border(has_border):
         assert plotter.renderer.border_width == border_width
     else:
         assert plotter.renderer.border_width == 0
+
+
+def test_bad_legend_origin_and_size(sphere):
+    """Ensure bad parameters to origin/size raise ValueErrors."""
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    with pytest.raises(ValueError, match='Invalid loc'):
+        plotter.add_legend(labels=legend_labels, loc='bar')
+    with pytest.raises(ValueError, match='size'):
+        plotter.add_legend(labels=legend_labels, size=[])
+    # test non-sequences also raise
+    with pytest.raises(ValueError, match='size'):
+        plotter.add_legend(labels=legend_labels, size=type)
+
+
+@pytest.mark.parametrize('loc', ACTOR_LOC_MAP)
+def test_add_legend_loc(loc):
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.PolyData([0, 0, 0]), label='foo')
+    legend = pl.add_legend(loc=loc)
+
+    # note: this is only valid with the defaults:
+    # border=0.05 and size=(0.2, 0.2)
+    positions = {
+        'upper right': (0.75, 0.75),
+        'upper left': (0.05, 0.75),
+        'lower left': (0.05, 0.05),
+        'lower right': (0.75, 0.05),
+        'center left': (0.05, 0.4),
+        'center right': (0.75, 0.4),
+        'lower center': (0.4, 0.05),
+        'upper center': (0.4, 0.75),
+        'center': (0.4, 0.4),
+    }
+    assert legend.GetPosition() == positions[loc]
+
+
+def test_add_legend_no_face(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, label='sphere')
+    pl.add_legend(face=None)
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.add_legend(labels=[['sphere', 'k']], face=None)
+
+
+def test_add_remove_legend(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, label='sphere')
+    pl.add_legend()
+    pl.remove_legend()
+
+
+@pytest.mark.parametrize(
+    'face', ['-', '^', 'o', 'r', None, pyvista.PolyData([0, 0, 0])]
+)
+def test_legend_face(sphere, face):
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, label='sphere')
+    pl.add_legend(face=face)
