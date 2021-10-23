@@ -3180,20 +3180,57 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         Color of the boxes drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
         Defaults to ``None``.
 
+    labels : list or tuple of str, optional
+        Label for each box drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
+
     """
 
-    def __init__(self, data, colors=None):
+    def __init__(self, data, colors=None, labels=None):
         """Initialize a new box plot instance."""
         super().__init__()
-        self._table = pyvista.Table(data)
+        self._table = pyvista.Table({f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)})
         self._quartiles = _vtk.vtkComputeQuartiles()
         self._quartiles.SetInputData(self._table)
         self.SetInputData(self._quartiles.GetOutput())
         self.update(data)
         self.SetLookupTable(self._lookup_table)
         self.colors = colors
+        self.labels = labels
 
-    # TODO: property to retrieve original datasets? And a property to retrieve calculated quartile statistics?
+    @property
+    def data(self):
+        """Retrieve the datasets of which the boxplots are drawn.
+
+        Examples
+        --------
+        Create a box plot and display the datasets.
+
+        >>> import pyvista
+        >>> chart = pyvista.ChartBox([[0, 1, 1, 2, 3, 3, 4]])
+        >>> chart.plot.data
+        (pyvista_ndarray([0, 1, 1, 2, 3, 3, 4]),)
+        >>> chart.show()
+
+        """
+        return tuple(self._table[f"data_{i}"] for i in range(self._table.n_arrays))
+
+    @property
+    def stats(self):
+        """Retrieve the statistics (quartiles and extremum values) of the datasets of which the boxplots are drawn.
+
+        Examples
+        --------
+        Create a box plot and display the statistics.
+
+        >>> import pyvista
+        >>> chart = pyvista.ChartBox([[0, 1, 1, 2, 3, 3, 4]])
+        >>> chart.plot.stats
+        (pyvista_ndarray([0., 1., 2., 3., 4.]),)
+        >>> chart.show()
+
+        """
+        stats_table = pyvista.Table(self._quartiles.GetOutput())
+        return tuple(stats_table[f"data_{i}"] for i in range(stats_table.n_arrays))
 
     def update(self, data):
         """Update the plot's underlying dataset(s).
@@ -3219,7 +3256,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         >>> chart.show()
 
         """
-        self._table.update(data)
+        self._table.update({f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)})
         self._quartiles.Update()
 
 
@@ -3231,12 +3268,18 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
     data : list or tuple of array_like
         Dataset(s) from which the relevant statistics will be calculated used to draw the box plot.
 
+    colors : list or tuple of color, optional
+        Color used for each drawn boxplot. Defaults to ``None``, which uses the default color scheme.
+
+    labels : list or tuple of str, optional
+        Label for each drawn boxplot, as shown in the chart's legend. Defaults to ``[]``.
+
     """
 
-    def __init__(self, data):
+    def __init__(self, data, colors=None, labels=None):
         """Initialize a new chart containing box plots."""
         super().__init__(None, None)
-        self._plot = BoxPlot(data)
+        self._plot = BoxPlot(data, colors, labels)
         self.SetPlot(self._plot)
         self.SetColumnVisibilityAll(True)
         self.legend_visible = True
@@ -3312,16 +3355,16 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
     data : array_like
         Relative size of each pie segment.
 
-    labels : list or tuple of str, optional
-        Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
-
     colors : list or tuple of color, optional
         Color of the segments drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
         Defaults to ``None``.
 
+    labels : list or tuple of str, optional
+        Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
+
     """
 
-    def __init__(self, data, labels=None, colors=None):
+    def __init__(self, data, colors=None, labels=None):
         """Initialize a new pie plot instance."""
         super().__init__()
         self._table = pyvista.Table(data)
@@ -3384,16 +3427,19 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     data : array_like
         Relative size of each pie segment.
 
+    colors : list or tuple of color, optional
+        Color used for each pie segment drawn in this plot. Defaults to ``None``, which uses the default color scheme.
+
     labels : list or tuple of str, optional
         Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
     """
 
-    def __init__(self, data, labels=None):
+    def __init__(self, data, colors=None, labels=None):
         """Initialize a new chart containing a pie plot."""
         super().__init__(None, None)
         self.AddPlot(0)  # We can't manually set a wrapped vtkPlotPie instance...
-        self._plot = PiePlot(data, labels, _wrap=self.GetPlot(0))  # So we have to wrap the existing one
+        self._plot = PiePlot(data, colors, labels, _wrap=self.GetPlot(0))  # So we have to wrap the existing one
         self.legend_visible = True
 
     def _render_event(self, *args, **kwargs):

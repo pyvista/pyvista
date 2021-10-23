@@ -41,7 +41,7 @@ def chart2D():
 
 @pytest.fixture
 def chartBox():
-    return pyvista.ChartBox([1, 2, 3])
+    return pyvista.ChartBox([[1, 2, 3]])
 
 
 @pytest.fixture
@@ -281,14 +281,14 @@ def test_axis(chart2D):
     chart2D.show()
     assert tuple(axis.tick_labels) == tuple(f"{loc:.2f}" for loc in tlocs)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(f"{loc:.2f}" for loc in tlocs)
-    assert axis.GetNotation() == pyvista._vtk.vtkAxis.FIXED_NOTATION
+    assert axis.GetNotation() == charts.Axis.FIXED_NOTATION
     assert axis.GetPrecision() == 2
     axis.tick_labels = "4e"
     axis.tick_locations = tlocs_large  # Add some more variety to labels
     chart2D.show()
     assert tuple(axis.tick_labels) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
-    assert axis.GetNotation() == pyvista._vtk.vtkAxis.SCIENTIFIC_NOTATION
+    assert axis.GetNotation() == charts.Axis.SCIENTIFIC_NOTATION
     assert axis.GetPrecision() == 4
     axis.tick_locations = None
     axis.tick_labels = None
@@ -784,3 +784,63 @@ def test_chart2D(pl, chart2D):
     chart2D.hide_axes()
     for axis in (chart2D.x_axis, chart2D.y_axis):
         assert not (axis.visible or axis.label_visible or axis.ticks_visible or axis.tick_labels_visible or axis.grid)
+
+
+def test_chartBox(pl, chartBox, boxPlot):
+    data = [[0, 1, 1, 1, 2, 2, 3, 4, 4, 5, 5, 5, 6]]
+    stats = [np.quantile(d, [0.0, 0.25, 0.5, 0.75, 1.0]) for d in data]
+    cs = "wild_flower"
+    ls = ["Datalabel"]
+
+    # Test constructor
+    chart = pyvista.ChartBox(data, cs, ls)
+    assert np.allclose(chart.plot.data, data)
+    assert chart.plot.color_scheme == cs
+    assert tuple(chart.plot.labels) == tuple(ls)
+
+    # Test geometry and resizing
+    pl.add_chart(chart)
+    r_w, r_h = chart._renderer.GetSize()
+    pl.show(auto_close=False)
+    assert np.allclose(chart._geometry, (0, 0, r_w, r_h))
+    pl.window_size = (int(pl.window_size[0]/2), int(pl.window_size[1]/2))
+    pl.show()  # This will also call chart._resize
+    assert np.allclose(chart._geometry, (0, 0, r_w/2, r_h/2))
+
+    # Test remaining properties
+    assert chartBox.loc == (0, 0)
+    assert chartBox.size == (1, 1)
+    assert chartBox.plot.__this__ == chartBox.GetPlot(0).__this__
+
+    boxPlot.update(data)
+    assert np.allclose(boxPlot.data, data)
+    assert np.allclose(boxPlot.stats, stats)
+
+
+def test_chartPie(pl, chartPie, piePlot):
+    data = [3, 4, 5]
+    cs = "wild_flower"
+    ls = ["Tic", "Tac", "Toe"]
+
+    # Test constructor
+    chart = pyvista.ChartPie(data, cs, ls)
+    assert np.allclose(chart.plot.data, data)
+    assert chart.plot.color_scheme == cs
+    assert tuple(chart.plot.labels) == tuple(ls)
+
+    # Test geometry and resizing
+    pl.add_chart(chart)
+    r_w, r_h = chart._renderer.GetSize()
+    pl.show(auto_close=False)
+    assert np.allclose(chart._geometry, (0, 0, r_w, r_h))
+    pl.window_size = (int(pl.window_size[0]/2), int(pl.window_size[1]/2))
+    pl.show()  # This will also call chart._resize
+    assert np.allclose(chart._geometry, (0, 0, r_w/2, r_h/2))
+
+    # Test remaining properties
+    assert chartPie.loc == (0, 0)
+    assert chartPie.size == (1, 1)
+    assert chartPie.plot.__this__ == chartPie.GetPlot(0).__this__
+
+    piePlot.update(data)
+    assert np.allclose(piePlot.data, data)

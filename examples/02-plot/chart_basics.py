@@ -116,8 +116,9 @@ chart.show()
 ###############################################################################
 # To summarize statistics of datasets, you can easily create a boxplot.
 
-data = {f"Experiment {i}": rng.poisson(lam, 20) for i, lam in enumerate(range(2, 12, 2))}
+data = [rng.poisson(lam, 20) for lam in range(2, 12, 2)]
 chart = pv.ChartBox(data)
+chart.plot.labels = [f"Experiment {i}" for i in range(len(data))]
 chart.show()
 
 ###############################################################################
@@ -143,5 +144,6 @@ ax.set_title("$B(\\alpha, \\beta)$")
 # Next, embed the figure into a pyvista plotting window
 p = pv.Plotter()
 chart = pv.ChartMPL(f)
+chart.background_color = 'w'
 p.add_chart(chart)
 p.show()
