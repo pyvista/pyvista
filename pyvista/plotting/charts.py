@@ -3772,7 +3772,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             ax.patch.set_alpha(0)
         self._canvas.mpl_connect('draw_event', self._redraw)  # Attach 'draw_event' callback
 
-        self.redraw()
+        self._redraw()
 
     def _resize(self):
         r_w, r_h = self._renderer.GetSize()
@@ -3787,23 +3787,22 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             self._fig.set_size_inches(f_w, f_h)
             self.position = (self._loc[0]*r_w, self._loc[1]*r_h)
 
-    def redraw(self):
-        """Redraw the chart after manually updating the matplotlib figure."""
-        # TODO: not sure whether this is still needed, as calling plotter.update() seems to do the trick already.
-        # Manual call, so make sure canvas is redrawn first (which will callback to _redraw with a proper event defined)
-        self._canvas.draw()
-
-    def _redraw(self, event):
-        # Called from draw_event callback
-        img = np.frombuffer(self._canvas.buffer_rgba(), dtype=np.uint8)  # Store figure data in numpy array
-        w, h = self._canvas.get_width_height()
-        img_arr = img.reshape([h, w, 4])
-        img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
-        self.SetImage(img_data)
+    def _redraw(self, event=None):
+        """Redraw the chart."""
+        if event is None:
+            # Manual call, so make sure canvas is redrawn first (which will callback to _redraw with a proper event defined)
+            self._canvas.draw()
+        else:
+            # Called from draw_event callback
+            img = np.frombuffer(self._canvas.buffer_rgba(), dtype=np.uint8)  # Store figure data in numpy array
+            w, h = self._canvas.get_width_height()
+            img_arr = img.reshape([h, w, 4])
+            img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
+            self.SetImage(img_data)
 
     def _render_event(self, *args, **kwargs):
         self._resize()  # Update figure dimensions if needed
-        self.redraw()  # Redraw figure
+        self._redraw()  # Redraw figure
 
     @property
     def _geometry(self):

@@ -321,6 +321,9 @@ def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
     chart = request.getfixturevalue(chart_f)
     title = "Chart title"
+    c_red, c_blue = (1, 0, 0, 1), (0, 0, 1, 1)
+    bw = 10
+    bs = "--"
 
     # Check scene and renderer properties
     assert chart._scene is None
@@ -329,7 +332,6 @@ def test_chart_common(pl, chart_f, request):
     assert chart._scene is pl.renderer._charts._scene
     assert chart._renderer is pl.renderer and chart._renderer is pl.renderer._charts._renderer
 
-    # TODO: check size and loc properties in dedicated tests
     with pytest.raises((AssertionError, ValueError)):
         chart.size = (-1, 1)
     with pytest.raises((AssertionError, ValueError)):
@@ -357,6 +359,14 @@ def test_chart_common(pl, chart_f, request):
     assert not chart._is_within((chart.loc[0]*w-5, chart.loc[1]*h-5))
 
     # TODO: check chart background properties and title/legend_visible properties using image cache
+    chart.border_color = c_red
+    assert np.allclose(chart.border_color, c_red)
+    chart.border_width = bw
+    assert chart.border_width == bw
+    chart.border_style = bs
+    assert chart.border_style == bs
+    chart.background_color = c_blue
+    assert np.allclose(chart.background_color, c_blue)
 
     # Check remaining properties and methods
     chart.visible = False
@@ -844,3 +854,27 @@ def test_chartPie(pl, chartPie, piePlot):
 
     piePlot.update(data)
     assert np.allclose(piePlot.data, data)
+
+
+def test_chartMPL(pl, chartMPL):
+    size = (0.5, 0.5)
+    loc = (0.25, 0.25)
+
+    # Test constructor
+    f, ax = plt.subplots()
+    chart = pyvista.ChartMPL(f, size, loc)
+    assert chart.size == size
+    assert chart.loc == loc
+
+    # Test geometry and resizing
+    pl.add_chart(chart)
+    r_w, r_h = chart._renderer.GetSize()
+    pl.show(auto_close=False)
+    assert np.allclose(chart._geometry, (loc[0]*r_w, loc[1]*r_h, size[0]*r_w, size[1]*r_h))
+    assert np.allclose(chart.position, (loc[0]*r_w, loc[1]*r_h))
+    assert np.allclose(chart._canvas.get_width_height(), (size[0]*r_w, size[1]*r_h))
+    pl.window_size = (int(pl.window_size[0]/2), int(pl.window_size[1]/2))
+    pl.show()  # This will also call chart._resize
+    assert np.allclose(chart._geometry, (loc[0]*r_w/2, loc[1]*r_h/2, size[0]*r_w/2, size[1]*r_h/2))
+    assert np.allclose(chart.position, (loc[0]*r_w/2, loc[1]*r_h/2))
+    assert np.allclose(chart._canvas.get_width_height(), (size[0]*r_w/2, size[1]*r_h/2))
