@@ -2540,6 +2540,7 @@ class Renderer(_vtk.vtkRenderer):
             self.__charts.deep_clean()
 
         self.remove_floors(render=render)
+        self.remove_legend(render=render)
         self.RemoveAllViewProps()
         self._actors = {}
         self._camera = None
