@@ -2180,9 +2180,6 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         Color of the bars drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
         to ``"b"``.
 
-    offset : float, optional
-        Offset between the bars drawn in this plot. Defaults to ``5``.
-
     orientation : str, optional
         Orientation of the bars drawn in this plot. Either ``"H"`` for an horizontal orientation or ``"V"`` for a
         vertical orientation. Defaults to ``"V"``.
@@ -2197,7 +2194,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         "V": _vtk.vtkPlotBar.VERTICAL
     }
 
-    def __init__(self, x, y, color=None, offset=5, orientation="V", label=None):
+    def __init__(self, x, y, color=None, orientation="V", label=None):
         """Initialize a new 2D bar plot instance."""
         super().__init__()
         if not isinstance(y[0], (Sequence, np.ndarray)):
@@ -2216,7 +2213,6 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         else:
             self.color = "b" if color is None else color  # Use blue bars by default in single component mode
             self.label = label
-        self.offset = offset
         self.orientation = orientation
 
     @property
@@ -2289,31 +2285,6 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
             self.visible = True
         else:
             self.visible = False
-
-    @property
-    def offset(self):
-        """Return or set the offset between bars in this plot.
-
-        Examples
-        --------
-        Create a bar plot.
-
-        >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> plot = chart.bar([0, 1, 2], [2, 1, 3])
-        >>> chart.show()
-
-        Increase the offset.
-
-        >>> plot.offset = 15
-        >>> chart.show()
-
-        """
-        return self.GetOffset()
-
-    @offset.setter
-    def offset(self, val):
-        self.SetOffset(val)
 
     @property
     def orientation(self):
@@ -2801,7 +2772,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         """
         return self._add_plot("area", x, y1, y2, color=color, label=label)
 
-    def bar(self, x, y, color=None, offset=5, orientation="V", label=None):
+    def bar(self, x, y, color=None, orientation="V", label=None):
         """Add a bar plot to this chart.
 
         Parameters
@@ -2816,9 +2787,6 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         color : color, optional
             Color of the bars drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
             to ``"b"``.
-
-        offset : float, optional
-            Offset between the bars drawn in this plot. Defaults to ``5``.
 
         orientation : str, optional
             Orientation of the bars drawn in this plot. Either ``"H"`` for an horizontal orientation or ``"V"`` for a
@@ -2842,7 +2810,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         >>> chart.show()
 
         """
-        return self._add_plot("bar", x, y, color=color, offset=offset, orientation=orientation, label=label)
+        return self._add_plot("bar", x, y, color=color, orientation=orientation, label=label)
 
     def stack(self, x, ys, colors=None, labels=None):
         """Add a stack plot to this chart.

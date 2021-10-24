@@ -556,46 +556,39 @@ def test_barplot(barPlot):
     x = [0, 1, 2]
     y = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
     c = [(1, 0, 1, 1), (1, 1, 0, 1), (0, 1, 1, 1)]
-    off = 20
     ori, ori_inv = "H", "I"
     l = ["Foo", "Spam", "Bla"]
     assert ori_inv not in charts.BarPlot.ORIENTATIONS, "New orientations added? Change this test."
 
     # Test multi comp constructor
-    plot = charts.BarPlot(x, y, c, off, ori, l)
+    plot = charts.BarPlot(x, y, c, ori, l)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
     assert np.allclose(plot.colors, c)
-    assert plot.offset == off
     assert plot.orientation == ori
     assert plot.labels == l
 
     # Test single comp constructor
-    plot = charts.BarPlot(x, y[0], c[0], off, ori, l[0])
+    plot = charts.BarPlot(x, y[0], c[0], ori, l[0])
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y[0])
     assert np.allclose(plot.color, c[0])
-    assert plot.offset == off
     assert plot.orientation == ori
     assert plot.label == l[0]
 
     # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(ValueError):
-        charts.BarPlot(x, y, c[0], off, ori, l)
+        charts.BarPlot(x, y, c[0], ori, l)
     # charts.BarPlot(x, y, c, off, ori, l[0])  # This one is valid
     with pytest.raises(ValueError):
-        charts.BarPlot(x, y[0], c, off, ori, l[0])
+        charts.BarPlot(x, y[0], c, ori, l[0])
     with pytest.raises(ValueError):
-        charts.BarPlot(x, y[0], c[0], off, ori, l)
+        charts.BarPlot(x, y[0], c[0], ori, l)
 
     # Test remaining properties
     barPlot.update(x, y)
     assert np.allclose(barPlot.x, x)
     assert np.allclose(barPlot.y, y)
-
-    barPlot.offset = off
-    assert barPlot.offset == off
-    assert barPlot.GetOffset() == off
 
     barPlot.orientation = ori
     assert barPlot.orientation == ori
@@ -655,7 +648,6 @@ def test_chart2D(pl, chart2D):
     ms = "d"
     w = 10
     ls = "-."
-    off = 12
     ori = "V"
 
     # Test constructor
@@ -738,11 +730,10 @@ def test_chart2D(pl, chart2D):
     assert a in chart2D.plots("area")
     assert chart2D.GetPlotIndex(a) >= 0
 
-    b = chart2D.bar(x, -y, col, off, ori, lx)
+    b = chart2D.bar(x, -y, col, ori, lx)
     assert np.allclose(b.x, x)
     assert np.allclose(b.y, -y)
     assert np.allclose(b.color, col)
-    assert b.offset == off
     assert b.orientation == ori
     assert b.label == lx
     assert b in chart2D.plots("bar")

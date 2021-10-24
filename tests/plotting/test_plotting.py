@@ -2001,7 +2001,7 @@ def test_chart_plot():
     y = np.cos(x)*(-1)**np.arange(len(x))
     hidden_plot = chart_bl.line(x, y, color="k", width=40)
     hidden_plot.visible = False  # Make sure plot visibility works
-    chart_bl.bar(x, y, color="#33ff33", offset=10)
+    chart_bl.bar(x, y, color="#33ff33")
 
     # Chart 2 (bottom right)
     chart_br = pyvista.Chart2D(size=(0.4, 0.4), loc=(0.55, 0.05))
