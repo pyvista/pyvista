@@ -3,7 +3,7 @@ import numpy as np
 
 import pyvista
 from pyvista import abstract_class, _vtk
-from pyvista.core.filters import _get_output
+from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 
 

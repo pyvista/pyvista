@@ -1239,7 +1239,7 @@ class DataSetFilters:
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
-        scalars : str, optional
+        scalars : str, iterable, optional
             Name of scalars to threshold on. Defaults to currently
             active scalars.
 
@@ -1284,7 +1284,41 @@ class DataSetFilters:
         >>> contours = hills.contour()
         >>> contours.plot(line_width=5)
 
-        See :ref:`common_filter_example` for more examples using this filter.
+        Generate the surface of a mobius strip using flying edges.
+
+        >>> import pyvista as pv
+        >>> a = 0.4
+        >>> b = 0.1
+        >>> def f(x, y, z):
+        ...     xx = x*x
+        ...     yy = y*y
+        ...     zz = z*z
+        ...     xyz = x*y*z
+        ...     xx_yy = xx + yy
+        ...     a_xx = a*xx
+        ...     b_yy = b*yy
+        ...     return (
+        ...         (xx_yy + 1) * (a_xx + b_yy)
+        ...         + zz * (b * xx + a * yy) - 2 * (a - b) * xyz
+        ...         - a * b * xx_yy
+        ...     )**2 - 4 * (xx + yy) * (a_xx + b_yy - xyz * (a - b))**2
+        >>> n = 100
+        >>> x_min, y_min, z_min = -1.4, -1.2, -0.34
+        >>> grid = pv.UniformGrid(
+        ...     (n, n, n),
+        ...     (abs(x_min)/n*2, abs(y_min)/n*2, abs(z_min)/n*2),
+        ...     (x_min, y_min, z_min),
+        ... )
+        >>> x, y, z = grid.points.T
+        >>> values = f(x, y, z)
+        >>> out = grid.contour(
+        ...     1, scalars=values, rng=[0, 0], method='flying_edges'
+        ... )
+        >>> out.plot(color='tan', smooth_shading=True)
+
+        See :ref:`common_filter_example` or
+        :ref:`marching_cubes_example` for more examples using this
+        filter.
 
         """
         if method is None or method == 'contour':
@@ -1295,9 +1329,18 @@ class DataSetFilters:
             alg = _vtk.vtkFlyingEdges3D()
         else:
             raise ValueError(f"Method '{method}' is not supported")
+
+        if isinstance(scalars, np.ndarray):
+            scalars_name = 'Contour Input'
+            self[scalars_name] = scalars
+            scalars = scalars_name
+
         # Make sure the input has scalars to contour on
         if self.n_arrays < 1:
-            raise ValueError('Input dataset for the contour filter must have scalar data.')
+            raise ValueError(
+                'Input dataset for the contour filter must have scalar.'
+            )
+
         alg.SetInputDataObject(self)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)

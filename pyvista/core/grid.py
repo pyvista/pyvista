@@ -256,31 +256,53 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     - Initialize from a vtk.vtkImageData object
     - Initialize directly from the point arrays
 
-    See ``_from_specs`` in the documentation for more details on initializing
-    from point arrays
+    See ``_from_specs`` in the documentation for more details on
+    initializing from point arrays.
+
+    Parameters
+    ----------
+    uinput : str, vtk.DataSet, or pyvista.DataSet, optional
+        Filename or dataset to initialize the uniform grid from.  If
+        set, remainder of parameters are ignored.
+
+    dims : iterable, optional
+        Dimensions of the uniform grid.
+
+    spacing : iterable, optional
+        Spacing of the uniform in each dimension.  Defaults to
+        ``(1.0, 1.0, 1.0)``
+
+    origin : iterable, optional
+        Origin of the uniform grid.  Defaults to ``(0.0, 0.0, 0.0)``
 
     Examples
     --------
-    >>> import pyvista
-    >>> import vtk
-    >>> import numpy as np
+    Create an empty grid.
 
-    >>> # Create empty grid
+    >>> import pyvista
     >>> grid = pyvista.UniformGrid()
 
-    >>> # Initialize from a vtk.vtkImageData object
+    Initialize from a vtk.vtkImageData object.
+
+    >>> import vtk
     >>> vtkgrid = vtk.vtkImageData()
     >>> grid = pyvista.UniformGrid(vtkgrid)
 
-    >>> # Using just the grid dimensions
+    Initialize using using just the grid dimensions.
+
     >>> dims = (10, 10, 10)
     >>> grid = pyvista.UniformGrid(dims)
 
-    >>> # Using dimensions and spacing
+    Initialize using dimensions and spacing.
+
+    >>> dims = (10, 10, 10)
     >>> spacing = (2, 1, 5)
     >>> grid = pyvista.UniformGrid(dims, spacing)
 
-    >>> # Using dimensions, spacing, and an origin
+    Initialize using dimensions, spacing, and an origin.
+
+    >>> dims = (10, 10, 10)
+    >>> spacing = (2, 1, 5)
     >>> origin = (10, 35, 50)
     >>> grid = pyvista.UniformGrid(dims, spacing, origin)
 
@@ -364,7 +386,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
         y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
         z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
-        xx, yy, zz = np.meshgrid(x,y,z, indexing='ij')
+        xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
