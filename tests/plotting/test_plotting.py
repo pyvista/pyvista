@@ -2044,12 +2044,7 @@ def test_chart_plot():
 
     pl = pyvista.Plotter(window_size=(1000, 1000))
     pl.background_color = 'w'
-    pl.add_chart(chart_bl)
-    pl.add_chart(chart_br)
-    pl.add_chart(chart_tl)
-    pl.add_chart(chart_tr)
-    pl.add_chart(hidden_chart)
-    pl.add_chart(removed_chart)
+    pl.add_chart(chart_bl, chart_br, chart_tl, chart_tr, hidden_chart, removed_chart)
     pl.remove_chart(removed_chart)
     pl.show(before_close_callback=verify_cache_image)
 

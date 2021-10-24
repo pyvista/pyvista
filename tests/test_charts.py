@@ -901,8 +901,7 @@ def test_charts(pl):
     assert len(pl.renderers[0]._charts) == 0
 
     # Test deep_clean
-    pl.add_chart(top_left)
-    pl.add_chart(bottom_right)
+    pl.add_chart(top_left, bottom_right)
     pl.deep_clean()
     assert len(pl.renderers[0]._charts) == 0
     assert pl.renderers[0]._charts._scene is None

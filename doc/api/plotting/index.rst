@@ -39,7 +39,7 @@ charts in plotting windows.
    :toctree: _autosummary
    :template: custom-class-template.rst
 
-   charts.Pen
+   plotting.charts.Pen
    plotting.charts.Brush
    plotting.charts.Axis
    plotting.charts.LinePlot2D

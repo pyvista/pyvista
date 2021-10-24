@@ -1721,7 +1721,7 @@ class _MultiCompPlot(_Plot):
         >>> import numpy as np
         >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
         >>> normal_data = rng.normal(size=50)
-        >>> chart = pyvista.ChartBox({"Normal distribution": normal_data})
+        >>> chart = pyvista.ChartBox([normal_data], labels=["Normal distribution"])
         >>> chart.show()
 
         Modify the label.
@@ -3909,14 +3909,15 @@ class Charts:
         self._scene = None
         self._actor = None
 
-    def add_chart(self, chart):
-        """Add a chart to the collection."""
+    def add_chart(self, *charts):
+        """Add charts to the collection."""
         if self._scene is None:
             self._setup_scene()
-        self._charts.append(chart)
-        self._scene.AddItem(chart._background)
-        self._scene.AddItem(chart)
-        chart.SetInteractive(False)  # Charts are not interactive by default
+        for chart in charts:
+            self._charts.append(chart)
+            self._scene.AddItem(chart._background)
+            self._scene.AddItem(chart)
+            chart.SetInteractive(False)  # Charts are not interactive by default
 
     def remove_chart(self, chart_or_index):
         """Remove a chart from the collection."""

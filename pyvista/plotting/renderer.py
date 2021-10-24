@@ -523,13 +523,16 @@ class Renderer(_vtk.vtkRenderer):
             return self._border_actor.GetProperty().GetColor()
         return None
 
-    def add_chart(self, chart):
+    def add_chart(self, chart, *charts):
         """Add a chart to this renderer.
 
         Parameters
         ----------
         chart : Chart2D, ChartBox, ChartPie or ChartMPL
             Chart to add to renderer.
+
+        *charts : Chart2D, ChartBox, ChartPie or ChartMPL
+            Charts to add to renderer.
 
         Examples
         --------
@@ -540,7 +543,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.add_chart(chart)
 
         """
-        self._charts.add_chart(chart)
+        self._charts.add_chart(chart, *charts)
 
     def remove_chart(self, chart_or_index):
         """Remove a chart from this renderer.
