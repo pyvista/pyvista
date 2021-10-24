@@ -5,6 +5,7 @@ from typing import Sequence
 import re
 import inspect
 import itertools
+import weakref
 
 import pyvista
 from pyvista import _vtk
@@ -862,16 +863,18 @@ class _ChartBackground(_CustomContextItem):
 
     def __init__(self, chart):
         super().__init__()
-        self._chart = chart  # Chart to draw the background for
+        # Note: This SHOULD be a weakref, as otherwise the garbage collector will not clean up unused charts
+        # (because of the cyclic references between charts and their background).
+        self._chart = weakref.ref(chart)  # Weak reference to the chart to draw the background for
         # Default background is translucent with black border line
         self.BorderPen = Pen(color=(0, 0, 0))
         self.BackgroundBrush = Brush(color=(0, 0, 0, 0))
 
     def paint(self, painter):
-        if self._chart.visible:
+        if self._chart().visible:
             painter.ApplyPen(self.BorderPen)
             painter.ApplyBrush(self.BackgroundBrush)
-            l, b, w, h = self._chart._geometry
+            l, b, w, h = self._chart()._geometry
             painter.DrawRect(l, b, w, h)
             # TODO: following 'patch' is necessary until vtkPlotPie is fixed. Otherwise Pie plots will use the same
             #  opacity as the chart's background when their legend is hidden. As the default background is transparent,
@@ -3931,10 +3934,8 @@ class Charts:
     def deep_clean(self):
         """Remove all references to the chart objects and internal objects."""
         if self._scene is not None:
-            for chart in self._charts:
-                chart._x_axis = None
-                chart._y_axis = None
-                chart._z_axis = None
+            charts = [*self._charts]  # Make a copy, as this list will be modified by remove_plot
+            for chart in charts:
                 self.remove_chart(chart)
             self._renderer.RemoveActor(self._actor)
         self._scene = None

@@ -174,7 +174,6 @@ def test_brush():
     assert brush.GetTextureProperties() & REPEAT
 
 
-@pytest.mark.skip  # TODO: test hangs from time to time?
 def test_axis(chart2D):
     l = "Y axis"
     r_fix, r_auto = [2, 5], None
@@ -358,7 +357,6 @@ def test_chart_common(pl, chart_f, request):
     assert not chart._is_within((chart.loc[0]*w-5, (chart.loc[1]+chart.size[1]/2)*h))
     assert not chart._is_within((chart.loc[0]*w-5, chart.loc[1]*h-5))
 
-    # TODO: check chart background properties and title/legend_visible properties using image cache
     chart.border_color = c_red
     assert np.allclose(chart.border_color, c_red)
     chart.border_width = bw
@@ -878,3 +876,65 @@ def test_chartMPL(pl, chartMPL):
     assert np.allclose(chart._geometry, (loc[0]*r_w/2, loc[1]*r_h/2, size[0]*r_w/2, size[1]*r_h/2))
     assert np.allclose(chart.position, (loc[0]*r_w/2, loc[1]*r_h/2))
     assert np.allclose(chart._canvas.get_width_height(), (size[0]*r_w/2, size[1]*r_h/2))
+
+
+def test_charts(pl):
+    win_size = pl.window_size
+    top_left = pyvista.Chart2D(size=(0.5, 0.5), loc=(0, 0.5))
+    bottom_right = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.5, 0))
+
+    # Test add_chart
+    pl.add_chart(top_left)
+    assert pl.renderers[0].__this__ == top_left._renderer.__this__
+    assert pl.renderers[0]._charts._scene.__this__ == top_left._scene.__this__
+    pl.add_chart(bottom_right)
+    assert len(pl.renderers[0]._charts) == 2
+
+    # Test toggle_interaction
+    pl.show(auto_close=False)  # We need to plot once to let the charts compute their true geometry
+    assert not top_left.GetInteractive()
+    assert not bottom_right.GetInteractive()
+    assert pl.renderers[0]._charts.toggle_interaction((0.75*win_size[0], 0.25*win_size[1])) is bottom_right._scene
+    assert not top_left.GetInteractive()
+    assert bottom_right.GetInteractive()
+    assert pl.renderers[0]._charts.toggle_interaction((0, 0)) is None
+    assert not top_left.GetInteractive()
+    assert not bottom_right.GetInteractive()
+
+    # Test remove_chart
+    pl.remove_chart(1)
+    assert len(pl.renderers[0]._charts) == 1
+    assert pl.renderers[0]._charts[0] == top_left
+    assert top_left in pl.renderers[0]._charts
+    pl.remove_chart(top_left)
+    assert len(pl.renderers[0]._charts) == 0
+
+    # Test deep_clean
+    pl.add_chart(top_left)
+    pl.add_chart(bottom_right)
+    pl.deep_clean()
+    assert len(pl.renderers[0]._charts) == 0
+    assert pl.renderers[0]._charts._scene is None
+
+
+def test_iren_context_style(pl):
+    chart = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.5, 0.5))
+    win_size = pl.window_size
+    pl.add_chart(chart)
+    pl.show(auto_close=False)  # We need to plot once to let the charts compute their true geometry
+    style = pl.iren._style
+    style_class = pl.iren._style_class
+
+    # Simulate right click on the chart:
+    pl.iren._mouse_right_button_press(int(0.75*win_size[0]), int(0.75*win_size[1]))
+    assert chart.GetInteractive()
+    assert pl.iren._style == "Context"
+    assert pl.iren._style_class == pl.iren._context_style
+    assert pl.iren._context_style.GetScene().__this__ == chart._scene.__this__
+
+    # Simulate right click outside the chart:
+    pl.iren._mouse_right_button_press(0, 0)
+    assert not chart.GetInteractive()
+    assert pl.iren._style == style
+    assert pl.iren._style_class == style_class
+    assert pl.iren._context_style.GetScene() is None
