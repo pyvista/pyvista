@@ -274,6 +274,8 @@ class DataObject:
                     return False
 
         return True
+    
+    __hash__ = super(object).__hash__
 
     def add_field_array(self, scalars: np.ndarray, name: str,
                         deep=True):  # pragma: no cover
