@@ -33,7 +33,8 @@ def test_struct_example():
 
 def test_init_from_polydata(sphere):
     unstruct_grid = pyvista.UnstructuredGrid(sphere)
-    assert unstruct_grid.points.shape == sphere.points.shape
+    assert unstruct_grid.n_points == sphere.n_points
+    assert unstruct_grid.n_cells == sphere.n_cells
     assert np.all(unstruct_grid.celltypes == 5)
 
 
