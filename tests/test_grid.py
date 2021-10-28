@@ -31,6 +31,12 @@ def test_struct_example():
     grid.plot_curvature(off_screen=True)
 
 
+def test_init_from_polydata(sphere):
+    unstruct_grid = pyvista.UnstructuredGrid(sphere)
+    assert unstruct_grid.points.shape == sphere.points.shape
+    assert np.all(unstruct_grid.celltypes == 5)
+
+
 def test_init_from_structured(struct_grid):
     unstruct_grid = pyvista.UnstructuredGrid(struct_grid)
     assert unstruct_grid.points.shape[0] == struct_grid.x.size
