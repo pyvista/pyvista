@@ -4183,6 +4183,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 sleep_time = step - (time.time() - tstart)
                 if sleep_time > 0:
                     time.sleep(sleep_time)
+            if write_frames:
+                self.mwriter.close()
 
         if threaded:
             thread = Thread(target=orbit)
