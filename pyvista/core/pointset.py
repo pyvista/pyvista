@@ -902,7 +902,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     Can be initialized by the following:
 
     - Creating an empty grid
-    - From a vtk.vtkPolyData or vtk.vtkStructuredGrid object
+    - From a ``vtk.vtkPolyData`` or ``vtk.vtkStructuredGrid`` object
     - From cell, offset, and node arrays
     - From a file
 
