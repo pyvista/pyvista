@@ -1334,6 +1334,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     Examples
     --------
     Rotate a set of points by 90 degrees about the x-axis in-place.
+
     >>> import numpy as np
     >>> import pyvista
     >>> from pyvista import examples
