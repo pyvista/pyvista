@@ -30,6 +30,7 @@ def glyphs(grid_sz=3):
     --------
     >>> from pyvista import demos
     >>> mesh = demos.glyphs()
+    >>> mesh.plot()
 
     """
     n = 10
