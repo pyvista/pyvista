@@ -885,16 +885,12 @@ def test_find_closest_cells():
     with pytest.raises(ValueError):
         mesh.find_closest_cell(np.empty((4, 4)))
 
-    # simply get the face centers
+    # simply get the face centers, ordered by cell Id
     fcent = mesh.points[mesh.faces.reshape(-1, 4)[:, 1:]].mean(1)
     indices = mesh.find_closest_cell(fcent)
 
-    # this will miss a few...
-    mask = indices == -1
-    assert mask.sum() < 10
-
     # Make sure we match the face centers
-    assert np.allclose(indices[~mask], np.arange(mesh.n_faces)[~mask])
+    assert np.allclose(indices, np.arange(mesh.n_faces))
 
 
 def test_find_cells_along_line():
