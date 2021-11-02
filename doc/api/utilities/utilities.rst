@@ -8,6 +8,7 @@ General Utilities
    utilities.VtkErrorCatcher
    utilities.set_error_output_file
    utilities.is_inside_bounds
+   utilities.axis_rotation
 
 
 Object Conversions

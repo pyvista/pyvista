@@ -13,6 +13,9 @@ see additional examples, see :ref:`ref_parametric_example`.
    ParametricBour
    ParametricBoy
    ParametricDini
+   ParametricCatalanMinimal
+   ParametricConicSpiral
+   ParametricCrossCap
    ParametricEllipsoid
    ParametricEnneper
    ParametricFigure8Klein
