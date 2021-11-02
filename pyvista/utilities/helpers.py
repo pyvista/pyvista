@@ -1305,12 +1305,12 @@ def abstract_class(cls_):
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
-    """Rotate points angle (in deg) about an axis.
+    """Rotate points by angle about an axis.
 
     Parameters
     ----------
     points : numpy.ndarray
-        Array of points with shape ``(N, 3)``
+        Array of points with shape ``(N, 3)``.
 
     angle : float
         Rotation angle.
@@ -1319,8 +1319,8 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
         Updates points in-place while returning nothing.
 
     deg : bool, optional
-        If `True`, the angle is interpreted as degrees instead of
-        radians. Default is `True`.
+        If ``True``, the angle is interpreted as degrees instead of
+        radians. Default is ``True``.
 
     axis : str, optional
         Name of axis to rotate about. Valid options are ``'x'``, ``'y'``,
