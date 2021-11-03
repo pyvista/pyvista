@@ -492,9 +492,9 @@ class DataObject:
         writer = _vtk.vtkDataSetWriter()
         writer.SetInputDataObject(self)
         writer.SetWriteToOutputString(True)
-        writer.SetFileTypeToASCII()
+        writer.SetFileTypeToBinary()
         writer.Write()
-        to_serialize = writer.GetOutputString()
+        to_serialize = writer.GetOutputStdString()
         state['vtk_serialized'] = to_serialize
         return state
 
@@ -502,10 +502,9 @@ class DataObject:
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         self.__dict__.update(state)
-
         reader = _vtk.vtkDataSetReader()
         reader.ReadFromInputStringOn()
-        reader.SetInputString(vtk_serialized)
+        reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
         reader.Update()
         mesh = pyvista.wrap(reader.GetOutput())
 
