@@ -2298,7 +2298,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
     >>> y_t = [2, 2.5, 3, 2, 2, 2, 1]
     >>> labels = ["Sleep", "Household", "Work", "Relax", "Transport"]
     >>> chart = pyvista.Chart2D()
-    >>> chart.bar(x, [y_s, y_h, y_w, y_r, y_t], label=labels)
+    >>> _ = chart.bar(x, [y_s, y_h, y_w, y_r, y_t], label=labels)
     >>> chart.x_axis.tick_locations = x
     >>> chart.x_axis.tick_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     >>> chart.x_label = "Day of week"
@@ -4002,8 +4002,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     >>> f, ax = plt.subplots()
     >>> strm = ax.streamplot(X, Y, U, V, color=U, linewidth=2, cmap='autumn')
-    >>> f.colorbar(strm.lines)
-    >>> ax.set_title('Streamplot with varying Color')
+    >>> _ = f.colorbar(strm.lines)
+    >>> _ = ax.set_title('Streamplot with varying Color')
     >>> plt.tight_layout()
 
     >>> chart = pyvista.ChartMPL(f)
@@ -4246,6 +4246,7 @@ class Charts:
 
     def toggle_interaction(self, mouse_pos):
         """Disable interaction with all charts, except the one indicated by the mouse position.
+        In case the indicated chart was already interactive, interaction is disabled again.
 
         Returns the scene if one of the charts got activated, None otherwise.
         """
@@ -4254,12 +4255,13 @@ class Charts:
         enable = False
         for chart in self._charts:
             if chart.visible and (mouse_pos is not False and chart._is_within(mouse_pos)):
-                chart.SetInteractive(True)
+                enable = not chart.GetInteractive()
+                chart.SetInteractive(enable)
+                # Change the chart's axis behaviour to fixed, such that the user can properly interact with the chart.
                 if chart._x_axis is not None:
-                    chart._x_axis.behavior = "fixed"  # Change the chart's axis behaviour to fixed, such that the user
+                    chart._x_axis.behavior = "fixed"
                 if chart._y_axis is not None:
-                    chart._y_axis.behavior = "fixed"  # can properly interact with the chart
-                enable = True
+                    chart._y_axis.behavior = "fixed"
             else:
                 chart.SetInteractive(False)
 

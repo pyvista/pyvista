@@ -9,7 +9,7 @@ the same renderer. For an overview of the different chart types you
 can use, please refer to :ref:`chart_basics_example`. Interaction with
 a chart can be enabled by right clicking on top of it. Note that this
 will disable interaction with the 3D scene. To stop interacting with
-the chart, right click outside of it. This will either enable
+the chart, perform another right click. This will either enable
 interaction with another chart (if clicked on top of it) or re-enable
 interaction with the 3D scene.
 
