@@ -541,6 +541,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> _ = chart.plot(range(10), range(10))
         >>> pl = pyvista.Plotter()
         >>> pl.add_chart(chart)
+        >>> pl.show()
 
         """
         self._charts.add_chart(chart, *charts)
@@ -555,26 +556,32 @@ class Renderer(_vtk.vtkRenderer):
 
         Examples
         --------
-        First add two charts to a renderer.
+        First define a function to add two charts to a renderer.
 
         >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> pl.background_color = 'w'
-        >>> chart_left = pyvista.Chart2D(size=(0.5, 1))
-        >>> _ = chart_left.plot([0, 1, 2], [2, 1, 3])
-        >>> pl.add_chart(chart_left)
-        >>> chart_right = pyvista.Chart2D(size=(0.5, 1), loc=(0.5, 0))
-        >>> _ = chart_right.plot([0, 1, 2], [3, 1, 2])
-        >>> pl.add_chart(chart_right)
-        >>> pl.show(interactive_update=True)
+        >>> def plotter_with_charts():
+        ...     pl = pyvista.Plotter()
+        ...     pl.background_color = 'w'
+        ...     chart_left = pyvista.Chart2D(size=(0.5, 1))
+        ...     _ = chart_left.line([0, 1, 2], [2, 1, 3])
+        ...     pl.add_chart(chart_left)
+        ...     chart_right = pyvista.Chart2D(size=(0.5, 1), loc=(0.5, 0))
+        ...     _ = chart_right.line([0, 1, 2], [3, 1, 2])
+        ...     pl.add_chart(chart_right)
+        ...     return pl, chart_left, chart_right
+        ...
+        >>> pl, *_ = plotter_with_charts()
+        >>> pl.show()
 
-        Now remove the right chart by index.
+        Now reconstruct the same plotter but remove the right chart by index.
 
+        >>> pl, *_ = plotter_with_charts()
         >>> pl.remove_chart(1)
-        >>> pl.show(interactive_update=True)
+        >>> pl.show()
 
         Finally, remove the left chart by reference.
 
+        >>> pl, chart_left, chart_right = plotter_with_charts()
         >>> pl.remove_chart(chart_left)
         >>> pl.show()
 

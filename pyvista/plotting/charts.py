@@ -6,6 +6,7 @@ import re
 import inspect
 import itertools
 import weakref
+from functools import wraps
 
 import pyvista
 from pyvista import _vtk
@@ -54,6 +55,51 @@ class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
             return super().__str__()
         else:
             return "Wrapped: " + self._wrapped.__str__()
+#endregion
+
+#region Documentation substitution
+class DocSubs:
+    """Helper class to easily substitute the docstrings of the listed member functions or properties."""
+    _DOC_SUBS = {}  # The substitutions to use for this (sub)class
+    _DOC_MEMS = []  # The member functions/properties for which the docstrings should be substituted in subsequent subclasses.
+    _DOC_STORE = {}  # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
+
+    def __init_subclass__(cls, **kwargs):
+        if cls._DOC_SUBS is not None:
+            subs = {**cls._DOC_SUBS}
+            if "cls" not in subs:
+                subs["cls"] = cls.__name__
+            for member_name, (m, d) in cls._DOC_STORE.items():
+                if member_name not in cls.__dict__:
+                    # If the member is not part of the subclass' __dict__, we have to generate a wrapping
+                    # function or property and add it to the subclass' __dict__. Otherwise, the docstring
+                    # of the superclass would be used for the substitutions.
+                    mem_sub = cls._wrap_member(m)
+                    mem_sub.__doc__ = d
+                    setattr(cls, member_name, mem_sub)
+                # Get the member function/property and substitute its docstring.
+                member = getattr(cls, member_name)
+                member.__doc__ = member.__doc__.format(**subs)
+        if "_DOC_MEMS" in cls.__dict__ and cls._DOC_MEMS:
+            # New methods/properties to register in this class (denoting their docstrings should be substituted in their
+            # child classes).
+            setattr(cls, "_DOC_STORE", {**cls._DOC_STORE})  # Create copy of registered members so far
+            for member_name in cls._DOC_MEMS:
+                member = getattr(cls, member_name)
+                cls._DOC_STORE[member_name] = (member, member.__doc__)  # And store new registered members
+                member.__doc__ = """Docstring to be specialized in subclasses."""  # Overwrite original docstring to prevent doctest issues
+
+    @staticmethod
+    def _wrap_member(member):
+        if callable(member):
+            @wraps(member)
+            def mem_sub(*args, **kwargs):
+                return member(*args, **kwargs)
+        elif isinstance(member, property):
+            mem_sub = property(member.fget, member.fset, member.fdel)
+        else:
+            raise NotImplementedError("Members other than methods and properties are currently not supported.")
+        return mem_sub
 #endregion
 
 class Pen(_vtkWrapper, _vtk.vtkPen):
@@ -186,9 +232,9 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         parsable by :func:`pyvista.parse_color` is allowed.  Defaults
         to ``"k"``.
 
-    texture : pyvista.Texture, optional
+    texture : Texture, optional
         Texture used to fill shapes drawn using this brush. Any
-        object convertible to a :class:`pyvista.Texture` is
+        object convertible to a :class:`Texture` is
         allowed. Defaults to ``None``.
 
     Other Parameters
@@ -498,6 +544,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
+        >>> chart.background_color = 'c'
         >>> _ = chart.line([0, 1, 2], [2, 1, 3])
         >>> chart.show()
 
@@ -707,7 +754,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         >>> _ = chart.line([0, 1, 2], [2, 1, 3])
         >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
         >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small",
-        ...                             "Small?", "Not large", "Large?", "Very large"]
+        ...                             "Small?", "Not large", "Large?",
+        ...                             "Very large"]
         >>> chart.show()
 
         Revert back to automatic tick placement.
@@ -880,11 +928,16 @@ class _ChartBackground(_CustomContextItem):
             #  opacity as the chart's background when their legend is hidden. As the default background is transparent,
             #  this will cause Pie charts to completely disappear.
             painter.GetBrush().SetOpacity(255)
+            painter.GetBrush().SetTexture(None)
         return True
 
 
-class _Chart(object):
+class _Chart(DocSubs):
     """Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances."""
+
+    _DOC_SUBS = None  # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
+    _DOC_MEMS = ["size", "loc", "border_color", "border_width", "border_style", "background_color", "background_texture",
+                 "visible", "toggle", "title", "legend_visible", "show"]
 
     def __init__(self, size=(1, 1), loc=(0, 0)):
         super().__init__()
@@ -949,12 +1002,11 @@ class _Chart(object):
 
         Examples
         --------
-        Create a half-sized 2D chart centered in the middle of the
+        Create a half-sized {chart_name} centered in the middle of the
         renderer.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.size = (0.5, 0.5)
         >>> chart.loc = (0.25, 0.25)
         >>> chart.show()
@@ -975,12 +1027,11 @@ class _Chart(object):
 
         Examples
         --------
-        Create a half-sized 2D chart centered in the middle of the
+        Create a half-sized {chart_name} centered in the middle of the
         renderer.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.size = (0.5, 0.5)
         >>> chart.loc = (0.25, 0.25)
         >>> chart.show()
@@ -999,12 +1050,10 @@ class _Chart(object):
 
         Examples
         --------
-        Create a half-sized 2D chart centered in the middle of the
-        renderer with a thick, dashed red border .
+        Create a {chart_name} with a thick, dashed red border.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.25, 0.25))
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.border_color = 'r'
         >>> chart.border_width = 5
         >>> chart.border_style = '--'
@@ -1023,12 +1072,10 @@ class _Chart(object):
 
         Examples
         --------
-        Create a half-sized 2D chart centered in the middle of the
-        renderer with a thick, dashed red border.
+        Create a {chart_name} with a thick, dashed red border.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.25, 0.25))
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.border_color = 'r'
         >>> chart.border_width = 5
         >>> chart.border_style = '--'
@@ -1047,12 +1094,10 @@ class _Chart(object):
 
         Examples
         --------
-        Create a half-sized 2D chart centered in the middle of the
-        renderer with a thick, dashed red border.
+        Create a {chart_name} with a thick, dashed red border.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.25, 0.25))
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.border_color = 'r'
         >>> chart.border_width = 5
         >>> chart.border_style = '--'
@@ -1071,11 +1116,10 @@ class _Chart(object):
 
         Examples
         --------
-        Create a 2D chart with a green background.
+        Create a {chart_name} with a green background.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.background_color = (0.5, 0.9, 0.5)
         >>> chart.show()
 
@@ -1094,18 +1138,12 @@ class _Chart(object):
 
         Examples
         --------
-        Create a 2D chart plotting an approximate satellite
-        trajectory.
+        Create a {chart_name} with an emoji as its background.
 
         >>> import pyvista
         >>> from pyvista import examples
-        >>> import numpy as np
-        >>> chart = pyvista.Chart2D()
-        >>> x = np.linspace(0, 1, 100)
-        >>> y = np.sin(6.5*x-1)
-        >>> _ = chart.line(x, y, "y", 4)
-        >>> chart.background_texture = examples.load_globe_texture()
-        >>> chart.hide_axes()
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
+        >>> chart.background_texture = examples.download_emoji_texture()
         >>> chart.show()
 
         """
@@ -1121,11 +1159,10 @@ class _Chart(object):
 
         Examples
         --------
-        Create a 2D chart.
+        Create a {chart_name}.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.show()
 
         Hide it.
@@ -1145,11 +1182,10 @@ class _Chart(object):
 
         Examples
         --------
-        Create a 2D chart.
+        Create a {chart_name}.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.show()
 
         Hide it.
@@ -1166,11 +1202,10 @@ class _Chart(object):
 
         Examples
         --------
-        Create a 2D chart with title 'My Chart'.
+        Create a {chart_name} with title 'My Chart'.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.title = 'My Chart'
         >>> chart.show()
 
@@ -1190,8 +1225,8 @@ class _Chart(object):
         Create a pie chart with custom labels.
 
         >>> import pyvista
-        >>> chart = pyvista.ChartPie([1, 2, 3])
-        >>> chart.plot.labels = ["A", "B", "C"]
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
+        >>> {chart_set_labels}
         >>> chart.show()
 
         Hide the legend.
@@ -1216,13 +1251,13 @@ class _Chart(object):
             Plots off screen when ``True``.  Helpful for saving screenshots
             without a window popping up.  Defaults to active theme setting in
             :attr:`pyvista.global_theme.full_screen
-            <pyvista.themes.DefaultTheme.full_screen`.
+            <pyvista.themes.DefaultTheme.full_screen>`.
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
             ``window_size``.  Defaults to active theme setting in
             :attr:`pyvista.global_theme.full_screen
-            <pyvista.themes.DefaultTheme.full_screen`.
+            <pyvista.themes.DefaultTheme.full_screen>`.
 
         screenshot : str or bool, optional
             Saves screenshot to file when enabled.  See:
@@ -1249,7 +1284,7 @@ class _Chart(object):
 
         Returns
         -------
-        image : np.ndarray
+        np.ndarray
             Numpy array of the last image when ``screenshot=True``
             is set. Optionally contains alpha values. Sized:
 
@@ -1260,15 +1295,10 @@ class _Chart(object):
 
         Examples
         --------
-        Plot a simple sine wave as a scatter and line plot.
+        Create a simple {chart_name} and show it.
 
         >>> import pyvista
-        >>> import numpy as np
-        >>> x = np.linspace(0, 2*np.pi, 20)
-        >>> y = np.sin(x)
-        >>> chart = pyvista.Chart2D()
-        >>> _ = chart.scatter(x, y)
-        >>> _ = chart.line(x, y, 'r')
+        >>> chart = pyvista.{cls}({chart_args}){chart_init}
         >>> chart.show()
 
         """
@@ -1282,8 +1312,11 @@ class _Chart(object):
         )
 
 
-class _Plot(object):
+class _Plot(DocSubs):
     """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
+
+    _DOC_SUBS = None  # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
+    _DOC_MEMS = ["color", "pen", "brush", "line_width", "line_style", "label", "visible", "toggle"]
 
     def __init__(self):
         super().__init__()
@@ -1303,15 +1336,12 @@ class _Plot(object):
 
         Examples
         --------
-        Set the line plot's color to red and the area plot's color
-        to cyan.
+        Set the {plot_name}'s color to red.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> area_plot = chart.area([0, 1, 2], [2, 1, 3])
-        >>> line_plot = chart.line([0, 1, 2], [2, 1, 3])
-        >>> line_plot.color = 'r'
-        >>> area_plot.color = 'c'
+        >>> chart = {chart_init}
+        >>> plot = {plot_init}
+        >>> plot.color = 'r'
         >>> chart.show()
 
         """
@@ -1328,16 +1358,17 @@ class _Plot(object):
 
         Returns
         -------
-        pyvista.charts.Pen
+        Pen
             Pen object controlling how lines in this plot are drawn.
 
         Examples
         --------
-        Increase the line width of the line plot's pen object.
+        Increase the line width of the {plot_name}'s pen object.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = {chart_init}
+        >>> plot = {plot_init}
+        >>> plot.line_style = '-'  # Make sure all lines are visible
         >>> plot.pen.width = 10
         >>> chart.show()
 
@@ -1350,17 +1381,17 @@ class _Plot(object):
 
         Returns
         -------
-        pyvista.charts.Brush
+        Brush
             Brush object controlling how shapes in this plot are filled.
 
         Examples
         --------
-        Use a custom texture for the area plot's brush object.
+        Use a custom texture for the {plot_name}'s brush object.
 
         >>> import pyvista
         >>> from pyvista import examples
-        >>> chart = pyvista.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
+        >>> chart = {chart_init}
+        >>> plot = {plot_init}
         >>> plot.brush.texture = examples.download_puppy_texture()
         >>> chart.show()
 
@@ -1378,8 +1409,9 @@ class _Plot(object):
         Set the line width to 10
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = {chart_init}
+        >>> plot = {plot_init}
+        >>> plot.line_style = '-'  # Make sure all lines are visible
         >>> plot.line_width = 10
         >>> chart.show()
 
@@ -1398,9 +1430,11 @@ class _Plot(object):
 
         Examples
         --------
+        Set a custom line style.
+
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart = {chart_init}
+        >>> plot = {plot_init}
         >>> plot.line_style = '-.'
         >>> chart.show()
 
@@ -1417,18 +1451,12 @@ class _Plot(object):
 
         Examples
         --------
-        Create a line plot with custom label.
+        Create a {plot_name} with custom label.
 
         >>> import pyvista
-        >>> import numpy as np
-        >>> x = np.linspace(0, 10, 100)
-        >>> chart = pyvista.Chart2D()
-        >>> plot = chart.line(x, np.sin(x), label="Sine")
-        >>> chart.show()
-
-        Modify the label.
-
-        >>> plot.label = "y = sin(x)"
+        >>> chart = {chart_init}
+        >>> plot = {plot_init}
+        >>> plot.label = "My awesome plot"
         >>> chart.show()
 
         """
@@ -1445,16 +1473,16 @@ class _Plot(object):
 
         Examples
         --------
-        Create a line and scatter plot.
+        Create a {plot_name}.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
+        >>> chart = {chart_init}
+        >>> plot = {plot_init}
         >>> chart.show()
 
-        Hide the scatter plot.
+        Hide it.
 
-        >>> scatter_plot.visible = False
+        >>> plot.visible = False
         >>> chart.show()
 
         """
@@ -1469,16 +1497,16 @@ class _Plot(object):
 
         Examples
         --------
-        Create a line and scatter plot.
+        Create a {plot_name}.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
+        >>> chart = {chart_init}
+        >>> plot = {plot_init}
         >>> chart.show()
 
-        Hide the scatter plot.
+        Hide it.
 
-        >>> scatter_plot.toggle()
+        >>> plot.toggle()
         >>> chart.show()
 
         """
@@ -1559,6 +1587,9 @@ class _MultiCompPlot(_Plot):
     _SCHEME_NAMES = {scheme_info["id"]: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()}
     DEFAULT_COLOR_SCHEME = "qual_accent"
 
+    _DOC_SUBS = None  # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
+    _DOC_MEMS = ["color_scheme", "colors", "color", "labels", "label"]
+
     def __init__(self):
         super().__init__()
         self._color_series = _vtk.vtkColorSeries()
@@ -1596,11 +1627,12 @@ class _MultiCompPlot(_Plot):
 
         Examples
         --------
-        Set the pie plot's color scheme to warm.
+        Set the {plot_name}'s color scheme to warm.
 
         >>> import pyvista
-        >>> chart = pyvista.ChartPie([6,5,4,3,2,1])
-        >>> chart.plot.color_scheme = "warm"
+        >>> chart = {multichart_init}
+        >>> plot = {multiplot_init}
+        >>> plot.color_scheme = "warm"
         >>> chart.show()
 
         """
@@ -1621,11 +1653,12 @@ class _MultiCompPlot(_Plot):
 
         Examples
         --------
-        Set the pie plot's colors manually.
+        Set the {plot_name}'s colors manually.
 
         >>> import pyvista
-        >>> chart = pyvista.ChartPie([6,5,4,3,2,1])
-        >>> chart.plot.colors = ["b", "g", "r", "c", "m", "y"]
+        >>> chart = {multichart_init}
+        >>> plot = {multiplot_init}
+        >>> plot.colors = ["b", "g", "r", "c"]
         >>> chart.show()
 
         """
@@ -1659,11 +1692,11 @@ class _MultiCompPlot(_Plot):
 
         Examples
         --------
-        Set the bar plot's color to red.
+        Set the {plot_name}'s color to red.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> plot = chart.bar([0, 1, 2], [2, 1, 3])
+        >>> chart = {chart_init}
+        >>> plot = {plot_init}
         >>> plot.color = 'r'
         >>> chart.show()
 
@@ -1682,16 +1715,16 @@ class _MultiCompPlot(_Plot):
 
         Examples
         --------
-        Create a stacked plot.
+        Create a {plot_name}.
 
         >>> import pyvista
-        >>> chart = pyvista.Chart2D()
-        >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [0, 2, 1]])
+        >>> chart = {multichart_init}
+        >>> plot = {multiplot_init}
         >>> chart.show()
 
         Modify the labels.
 
-        >>> plot.labels = ["A", "B"]
+        >>> plot.labels = ["A", "B", "C", "D"]
         >>> chart.show()
 
         """
@@ -1715,18 +1748,17 @@ class _MultiCompPlot(_Plot):
 
         Examples
         --------
-        Create a box plot with custom label.
+        Create a {plot_name} with custom label.
 
         >>> import pyvista
         >>> import numpy as np
-        >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
-        >>> normal_data = rng.normal(size=50)
-        >>> chart = pyvista.ChartBox([normal_data], labels=["Normal distribution"])
+        >>> chart = {chart_init}
+        >>> plot = {plot_init}
         >>> chart.show()
 
         Modify the label.
 
-        >>> chart.plot.label = "x ~ N(0,1)"
+        >>> plot.label = "My awesome plot"
         >>> chart.show()
 
         """
@@ -1766,7 +1798,29 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
     label : str, optional
         Label of this plot, as shown in the chart's legend. Defaults to ``""``.
 
+    Examples
+    --------
+    Create a 2D chart plotting an approximate satellite
+    trajectory.
+
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> import numpy as np
+    >>> chart = pyvista.Chart2D()
+    >>> x = np.linspace(0, 1, 100)
+    >>> y = np.sin(6.5*x-1)
+    >>> _ = chart.line(x, y, "y", 4)
+    >>> chart.background_texture = examples.load_globe_texture()
+    >>> chart.hide_axes()
+    >>> chart.show()
+
     """
+
+    _DOC_SUBS = {
+        "plot_name": "2D line plot",
+        "chart_init": "pyvista.Chart2D()",
+        "plot_init": "chart.line([0, 1, 2], [2, 1, 3])"
+    }
 
     def __init__(self, x, y, color="b", width=1.0, style="-", label=""):
         """Initialize a new 2D line plot instance."""
@@ -1885,6 +1939,18 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
         .. include:: ../scatter_marker_styles.rst
 
+    Examples
+    --------
+    Plot a simple sine wave as a scatter plot.
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> x = np.linspace(0, 2*np.pi, 20)
+    >>> y = np.sin(x)
+    >>> chart = pyvista.Chart2D()
+    >>> _ = chart.scatter(x, y)
+    >>> chart.show()
+
     """
 
     MARKER_STYLES = {  # descr is used in the documentation, set to None to hide it from the docs.
@@ -1894,6 +1960,11 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         "s": {"id": _vtk.vtkPlotPoints.SQUARE, "descr": "Square"},
         "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
         "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"}
+    }
+    _DOC_SUBS = {
+        "plot_name": "2D scatter plot",
+        "chart_init": "pyvista.Chart2D()",
+        "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])"
     }
 
     def __init__(self, x, y, color="b", size=10, style="o", label=""):
@@ -1917,9 +1988,9 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+        >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
         >>> plot.x
-        pyvista_ndarray([0, 1, 2])
+        pyvista_ndarray([0, 1, 2, 3, 4])
         >>> chart.show()
 
         """
@@ -1935,9 +2006,9 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+        >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
         >>> plot.y
-        pyvista_ndarray([2, 1, 3])
+        pyvista_ndarray([2, 1, 3, 4, 2])
         >>> chart.show()
 
         """
@@ -1960,12 +2031,12 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+        >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
         >>> chart.show()
 
         Update the marker locations.
 
-        >>> plot.update([0, 1, 2], [3, 1, 2])
+        >>> plot.update([0, 1, 2, 3, 4], [3, 2, 4, 2, 1])
         >>> chart.show()
 
         """
@@ -1985,7 +2056,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+        >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
         >>> chart.show()
 
         Increase the marker size.
@@ -2010,7 +2081,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+        >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
         >>> chart.show()
 
         Change the marker style.
@@ -2056,7 +2127,32 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
     label : str, optional
         Label of this plot, as shown in the chart's legend. Defaults to ``""``.
 
+    Examples
+    --------
+    Create an area plot showing the minimum and maximum precipitation observed in each month.
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> x = np.arange(12)
+    >>> p_min = [11, 0, 16, 2, 23, 18, 25, 17, 9, 12, 14, 21]
+    >>> p_max = [87, 64, 92, 73, 91, 94, 107, 101, 84, 88, 95, 103]
+    >>> chart = pyvista.Chart2D()
+    >>> _ = chart.area(x, p_min, p_max)
+    >>> chart.x_axis.tick_locations = x
+    >>> chart.x_axis.tick_labels = ["Jan", "Feb", "Mar", "Apr", "May",
+    ...                             "Jun", "Jul", "Aug", "Sep", "Oct",
+    ...                             "Nov", "Dec"]
+    >>> chart.x_axis.label = "Month"
+    >>> chart.y_axis.label = "Precipitation [mm]"
+    >>> chart.show()
+
     """
+
+    _DOC_SUBS = {
+        "plot_name": "area plot",
+        "chart_init": "pyvista.Chart2D()",
+        "plot_init": "chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])"
+    }
 
     def __init__(self, x, y1, y2=None, color="b", label=""):
         """Initialize a new 2D area plot instance."""
@@ -2080,7 +2176,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
+        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [1, 0, 1])
         >>> plot.x
         pyvista_ndarray([0, 1, 2])
         >>> chart.show()
@@ -2098,7 +2194,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
+        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [1, 0, 1])
         >>> plot.y1
         pyvista_ndarray([2, 1, 3])
         >>> chart.show()
@@ -2116,9 +2212,9 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
+        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [1, 0, 1])
         >>> plot.y2
-        pyvista_ndarray([0, 2, 0])
+        pyvista_ndarray([1, 0, 1])
         >>> chart.show()
 
         """
@@ -2149,7 +2245,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
         Update the points on the second outline of the area.
 
-        >>> plot.update([0, 1, 2], [2, 1, 3], [1, 2, 0])
+        >>> plot.update([0, 1, 2], [2, 1, 3], [1, 0, 1])
         >>> chart.show()
 
         """
@@ -2187,11 +2283,41 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
     label : str, optional
         Label of this plot, as shown in the chart's legend. Defaults to ``""``.
 
+    Examples
+    --------
+    Create a stacked bar chart showing the average time spent on activities
+    throughout the week.
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> x = np.arange(1, 8)
+    >>> y_s = [7, 8, 7.5, 8, 7.5, 9, 10]
+    >>> y_h = [2, 3, 2, 2.5, 1.5, 4, 6.5]
+    >>> y_w = [8, 8, 7, 8, 7, 0, 0]
+    >>> y_r = [5, 2.5, 4.5, 3.5, 6, 9, 6.5]
+    >>> y_t = [2, 2.5, 3, 2, 2, 2, 1]
+    >>> labels = ["Sleep", "Household", "Work", "Relax", "Transport"]
+    >>> chart = pyvista.Chart2D()
+    >>> chart.bar(x, [y_s, y_h, y_w, y_r, y_t], label=labels)
+    >>> chart.x_axis.tick_locations = x
+    >>> chart.x_axis.tick_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    >>> chart.x_label = "Day of week"
+    >>> chart.y_label = "Average time spent"
+    >>> chart.grid = False  # Disable the grid lines
+    >>> chart.show()
+
     """
 
     ORIENTATIONS = {
         "H": _vtk.vtkPlotBar.HORIZONTAL,
         "V": _vtk.vtkPlotBar.VERTICAL
+    }
+    _DOC_SUBS = {
+        "plot_name": "bar plot",
+        "chart_init": "pyvista.Chart2D()",
+        "plot_init": "chart.bar([1, 2, 3], [2, 1, 3])",
+        "multichart_init": "pyvista.Chart2D()",
+        "multiplot_init": "chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])"
     }
 
     def __init__(self, x, y, color=None, orientation="V", label=None):
@@ -2225,9 +2351,9 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.bar([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+        >>> plot = chart.bar([1, 2, 3], [[2, 1, 3], [1, 2, 0]])
         >>> plot.x
-        pyvista_ndarray([0, 1, 2])
+        pyvista_ndarray([1, 2, 3])
         >>> chart.show()
 
         """
@@ -2243,7 +2369,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.bar([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+        >>> plot = chart.bar([1, 2, 3], [[2, 1, 3], [1, 2, 0]])
         >>> plot.y
         (pyvista_ndarray([2, 1, 3]), pyvista_ndarray([1, 2, 0]))
         >>> chart.show()
@@ -2268,12 +2394,12 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.bar([0, 1, 2], [2, 1, 3])
+        >>> plot = chart.bar([1, 2, 3], [2, 1, 3])
         >>> chart.show()
 
         Update the bar sizes.
 
-        >>> plot.update([0, 1, 2], [3, 1, 2])
+        >>> plot.update([1, 2, 3], [3, 1, 2])
         >>> chart.show()
 
         """
@@ -2296,7 +2422,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
-        >>> plot = chart.bar([0, 1, 2], [[2, 1, 3], [1, 3, 2]])
+        >>> plot = chart.bar([1, 2, 3], [[2, 1, 3], [1, 3, 2]])
         >>> chart.show()
 
         Change the orientation to horizontal.
@@ -2338,7 +2464,38 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
     labels : list or tuple of str, optional
         Label for each stack (area) drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
+    Examples
+    --------
+    Create a stack plot showing the amount of vehicles sold per type.
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> year = [f"y" for y in np.arange(2011, 2021)]
+    >>> x = np.arange(len(year))
+    >>> n_e = [1739, 4925, 9515, 21727, 31452, 29926, 40648,
+    ...        57761, 76370, 93702]
+    >>> n_h = [5563, 7642, 11937, 13905, 22807, 46700, 60875,
+    ...        53689, 46650, 50321]
+    >>> n_f = [166556, 157249, 151552, 138183, 129669,
+    ...        113985, 92965, 73683, 57097, 29499]
+    >>> chart = pyvista.Chart2D()
+    >>> plot = chart.stack(x, [n_e, n_h, n_f])
+    >>> plot.labels = ["Electric", "Hybrid", "Fossil"]
+    >>> chart.x_axis.label = "Year"
+    >>> chart.x_axis.tick_locations = x
+    >>> chart.x_axis.tick_labels = year
+    >>> chart.y_axis.label = "New car sales"
+    >>> chart.show()
+
     """
+
+    _DOC_SUBS = {
+        "plot_name": "stack plot",
+        "chart_init": "pyvista.Chart2D()",
+        "plot_init": "chart.stack([0, 1, 2], [2, 1, 3])",
+        "multichart_init": "pyvista.Chart2D()",
+        "multiplot_init": "chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])"
+    }
 
     def __init__(self, x, ys, colors=None, labels=None):
         """Initialize a new 2D stack plot instance."""
@@ -2468,22 +2625,22 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     >>> _ = chart.line(x, y, 'r')
     >>> chart.show()
 
-    Create a bar plot.
+    Combine multiple types of plots in the same chart.
 
     >>> rng = np.random.default_rng(1)
-    >>> x = np.arange(1, 13)
-    >>> y1 = rng.integers(1e2, 1e4, 12)
-    >>> y2 = rng.integers(1e2, 1e4, 12)
+    >>> x = np.arange(1, 8)
+    >>> y = rng.integers(5, 15, 7)
+    >>> e = np.abs(rng.normal(scale=2, size=7))
+    >>> z = rng.integers(0, 5, 7)
     >>> chart = pyvista.Chart2D()
-    >>> chart.background_color = 'w'
-    >>> _ = chart.bar(x, y1, color="b", label="2020")
-    >>> _ = chart.bar(x, y2, color="r", label="2021")
+    >>> _ = chart.area(x, y-e, y+e, color=(0.12, 0.46, 0.71, 0.2))
+    >>> _ = chart.line(x, y, color="tab:blue", style="--", label="Scores")
+    >>> _ = chart.scatter(x, y, color="tab:blue", style="d")
+    >>> _ = chart.bar(x, z, color="tab:orange", label="Violations")
     >>> chart.x_axis.tick_locations = x
-    >>> chart.x_axis.tick_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-    ...                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    >>> chart.x_label = "Month"
-    >>> chart.y_axis.tick_labels = "2e"
-    >>> chart.y_label = "# incidents"
+    >>> chart.x_axis.tick_labels = ["Mon", "Tue", "Wed", "Thu", "Fri",
+    ...                             "Sat", "Sun"]
+    >>> chart.x_label = "Day of week"
     >>> chart.show()
 
     """
@@ -2496,6 +2653,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         "stack": StackPlot
     }
     _PLOT_CLASSES = {plot_class: plot_type for (plot_type, plot_class) in PLOT_TYPES.items()}
+    _DOC_SUBS = {
+        "chart_name": "2D chart",
+        "chart_args": "",
+        "chart_init": """
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])""",
+        "chart_set_labels": 'plot.label = "My awesome plot"'
+    }
 
     def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):
         """Initialize the chart."""
@@ -2606,11 +2770,11 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Returns
         -------
-        scatter_plot : pyvista.ScatterPlot2D, optional
+        scatter_plot : plotting.charts.ScatterPlot2D, optional
             The created scatter plot when a valid marker style
             was present in the format string, ``None`` otherwise.
 
-        line_plot : pyvista.LinePlot2D, optional
+        line_plot : plotting.charts.LinePlot2D, optional
             The created line plot when a valid line style was
             present in the format string, ``None`` otherwise.
 
@@ -2629,10 +2793,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
         >>> _, line_plot = chart.plot(range(10), range(10))
+        >>> chart.show()
 
         Generate a line and scatter plot.
 
+        >>> chart = pyvista.Chart2D()
         >>> scatter_plot, line_plot = chart.plot(range(10), fmt='o-')
+        >>> chart.show()
 
         """
         if y is None:
@@ -2669,15 +2836,15 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             Size of the point markers drawn in this plot. Defaults to ``10``.
 
         style : str, optional
-            Style of the point markers drawn in this plot. See ``pyvista.ScatterPlot2D.MARKER_STYLES`` for a list of
-            allowed marker styles. Defaults to ``"o"``.
+            Style of the point markers drawn in this plot. See :ref:`ScatterPlot2D.MARKER_STYLES <scatter_marker_styles>`
+            for a list of allowed marker styles. Defaults to ``"o"``.
 
         label : str, optional
             Label of this plot, as shown in the chart's legend. Defaults to ``""``.
 
         Returns
         -------
-        scatter_plot : pyvista.ScatterPlot2D
+        plotting.charts.ScatterPlot2D
             The created scatter plot.
 
         Examples
@@ -2711,15 +2878,15 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             Width of the line drawn in this plot. Defaults to ``1``.
 
         style : str, optional
-            Style of the line drawn in this plot. See :attr:`Pen.LINE_STYLES` for a list of allowed line styles.
-            Defaults to ``"-"``.
+            Style of the line drawn in this plot. See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed
+            line styles. Defaults to ``"-"``.
 
         label : str, optional
             Label of this plot, as shown in the chart's legend. Defaults to ``""``.
 
         Returns
         -------
-        line_plot : :class:`LinePlot2D <pyvista.plotting.charts.LinePlot2D>`
+        plotting.charts.LinePlot2D
             The created line plot.
 
         Examples
@@ -2757,7 +2924,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Returns
         -------
-        area_plot : pyvista.AreaPlot
+        plotting.charts.AreaPlot
             The created area plot.
 
         Examples
@@ -2797,7 +2964,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Returns
         -------
-        bar_plot : pyvista.BarPlot
+        plotting.charts.BarPlot
             The created bar plot.
 
         Examples
@@ -2833,7 +3000,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Returns
         -------
-        stack_plot : pyvista.StackPlot
+        plotting.charts.StackPlot
             The created stack plot.
 
         Examples
@@ -2862,7 +3029,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Yields
         ------
-        plot : ScatterPlot2D, LinePlot2D, AreaPlot, BarPlot or StackPlot
+        plot : plotting.charts.ScatterPlot2D, plotting.charts.LinePlot2D, plotting.charts.AreaPlot, plotting.charts.BarPlot or plotting.charts.StackPlot
             One of the plots (of the specified type) in this chart.
 
         Examples
@@ -2872,6 +3039,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
         >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
+        >>> chart.show()
 
         Retrieve all plots in the chart.
 
@@ -2896,7 +3064,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Parameters
         ----------
-        plot : ScatterPlot2D, LinePlot2D, AreaPlot, BarPlot or StackPlot
+        plot : plotting.charts.ScatterPlot2D, plotting.charts.LinePlot2D, plotting.charts.AreaPlot, plotting.charts.BarPlot or plotting.charts.StackPlot
             The plot to remove.
 
         Examples
@@ -3083,7 +3251,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Examples
         --------
-        Disable the grid.
+        Create a 2D chart with the grid disabled.
 
         >>> import pyvista
         >>> import numpy as np
@@ -3096,12 +3264,6 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Enable the grid
 
-        >>> import pyvista
-        >>> import numpy as np
-        >>> x = np.linspace(0, 2*np.pi, 20)
-        >>> y = np.sin(x)
-        >>> chart = pyvista.Chart2D()
-        >>> _ = chart.line(x, y, 'r')
         >>> chart.grid = True
         >>> chart.show()
 
@@ -3154,7 +3316,26 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
     labels : list or tuple of str, optional
         Label for each box drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
+    Examples
+    --------
+    Create boxplots for datasets sampled from shifted normal distributions.
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
+    >>> normal_data = [rng.normal(i, size=50) for i in range(5)]
+    >>> chart = pyvista.ChartBox(normal_data, labels=[f"x ~ N({i},1)" for i in range(5)])
+    >>> chart.show()
+
     """
+
+    _DOC_SUBS = {
+        "plot_name": "box plot",
+        "chart_init": "pyvista.ChartBox([[0, 1, 1, 2, 3, 3, 4]])",
+        "plot_init": "chart.plot",
+        "multichart_init": "pyvista.ChartBox([[0, 1, 1, 2, 3, 4, 5], [0, 1, 2, 2, 3, 4, 5], [0, 1, 2, 3, 3, 4, 5], [0, 1, 2, 3, 4, 4, 5]])",
+        "multiplot_init": "chart.plot"
+    }
 
     def __init__(self, data, colors=None, labels=None):
         """Initialize a new box plot instance."""
@@ -3245,7 +3426,25 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
     labels : list or tuple of str, optional
         Label for each drawn boxplot, as shown in the chart's legend. Defaults to ``[]``.
 
+    Examples
+    --------
+    Create boxplots for datasets sampled from shifted normal distributions.
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
+    >>> normal_data = [rng.normal(i, size=50) for i in range(5)]
+    >>> chart = pyvista.ChartBox(normal_data, labels=[f"x ~ N({i},1)" for i in range(5)])
+    >>> chart.show()
+
     """
+
+    _DOC_SUBS = {
+        "chart_name": "boxplot chart",
+        "chart_args": "[[0, 1, 1, 2, 3, 3, 4]]",
+        "chart_init": "",
+        "chart_set_labels": 'chart.plot.label = "Data label"'
+    }
 
     def __init__(self, data, colors=None, labels=None):
         """Initialize a new chart containing box plots."""
@@ -3319,7 +3518,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
     """Class representing a pie plot.
 
-    Users should typically not directly create new plot instances, but use the dedicated ``ChartPie`` class.
+    Users should typically not directly create new plot instances, but use the dedicated :class:`ChartPie` class.
 
     Parameters
     ----------
@@ -3333,7 +3532,25 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
     labels : list or tuple of str, optional
         Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
+    Examples
+    --------
+    Create a pie plot showing the usage of tax money.
+
+    >>> import pyvista
+    >>> x = [128.3, 32.9, 31.8, 29.3, 21.2]
+    >>> l = ["Social benefits", "Governance", "Economic policy", "Education", "Other"]
+    >>> chart = pyvista.ChartPie(x, labels=l)
+    >>> chart.show()
+
     """
+
+    _DOC_SUBS = {
+        "plot_name": "pie plot",
+        "chart_init": "pyvista.ChartPie([4, 3, 2, 1])",
+        "plot_init": "chart.plot",
+        "multichart_init": "pyvista.ChartPie([4, 3, 2, 1])",
+        "multiplot_init": "chart.plot"
+    }
 
     def __init__(self, data, colors=None, labels=None):
         """Initialize a new pie plot instance."""
@@ -3404,7 +3621,24 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     labels : list or tuple of str, optional
         Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
 
+    Examples
+    --------
+    Create a pie plot showing the usage of tax money.
+
+    >>> import pyvista
+    >>> x = [128.3, 32.9, 31.8, 29.3, 21.2]
+    >>> l = ["Social benefits", "Governance", "Economic policy", "Education", "Other"]
+    >>> chart = pyvista.ChartPie(x, labels=l)
+    >>> chart.show()
+
     """
+
+    _DOC_SUBS = {
+        "chart_name": "pie chart",
+        "chart_args": "[5, 4, 3, 2, 1]",
+        "chart_init": "",
+        "chart_set_labels": 'chart.plot.labels = ["A", "B", "C", "D", "E"]'
+    }
 
     def __init__(self, data, colors=None, labels=None):
         """Initialize a new chart containing a pie plot."""
@@ -3479,6 +3713,12 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 # publicly exposed in pyvista.
 class _LinePlot3D(_vtk.vtkPlotLine3D, _Plot):
 
+    _DOC_SUBS = {
+        "plot_name": "3D line plot",
+        "chart_init": "pyvista.Chart2D()",
+        "plot_init": "chart.line([0, 1, 2], [2, 1, 3])"
+    }
+
     def __init__(self, x, y, z, color="b", width=1.0, style="-"):
         super().__init__()
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32), "z": np.empty(0, np.float32)})
@@ -3500,6 +3740,12 @@ class _LinePlot3D(_vtk.vtkPlotLine3D, _Plot):
 
 class _ScatterPlot3D(_vtk.vtkPlotPoints3D, _Plot):
 
+    _DOC_SUBS = {
+        "plot_name": "3D scatter plot",
+        "chart_init": "pyvista.Chart2D()",
+        "plot_init": "chart.scatter([0, 1, 2], [2, 1, 3])"
+    }
+
     def __init__(self, x, y, z, color="b"):
         super().__init__()
         self._table = pyvista.Table({"x": np.empty(0, np.float32), "y": np.empty(0, np.float32), "z": np.empty(0, np.float32)})
@@ -3517,6 +3763,12 @@ class _ScatterPlot3D(_vtk.vtkPlotPoints3D, _Plot):
 
 
 class _SurfacePlot(_vtk.vtkPlotSurface, _Plot):
+
+    _DOC_SUBS = {
+        "plot_name": "surface plot",
+        "chart_init": "pyvista.Chart2D()",
+        "plot_init": "chart.line([0, 1, 2], [2, 1, 3])"
+    }
 
     def __init__(self, x, y, z):
         super().__init__()
@@ -3542,6 +3794,14 @@ class _Chart3D(_vtk.vtkChartXYZ, _Chart):
         "scatter": _ScatterPlot3D,
         "line": _LinePlot3D,
         "surface": _SurfacePlot
+    }
+    _DOC_SUBS = {
+        "cls": "Chart2D",
+        "chart_name": "3D chart",
+        "chart_args": "",
+        "chart_init": """
+        >>> plot = chart.line([0, 1, 2], [2, 1, 3])""",
+        "chart_set_labels": 'plot.label = "My awesome plot"'
     }
 
     def __init__(self, size=(0.8, 0.8), loc=(0.1, 0.1), x_label="x", y_label="y", z_label="z"):
@@ -3724,17 +3984,53 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         Location of the chart (its bottom left corner) in normalized coordinates. A location of ``(0, 0)`` corresponds
         to the renderer's bottom left corner, a location of ``(1, 1)`` corresponds to the renderer's top right corner.
 
+    Examples
+    --------
+    Plot streamlines of a vector field with varying colors (based on `this example <https://matplotlib.org/stable/gallery/images_contours_and_fields/plot_streamplot.html>`_).
+
+    .. pyvista-plot::
+
+    >>> import pyvista
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+
+    >>> w = 3
+    >>> Y, X = np.mgrid[-w:w:100j, -w:w:100j]
+    >>> U = -1 - X**2 + Y
+    >>> V = 1 + X - Y**2
+    >>> speed = np.sqrt(U**2 + V**2)
+
+    >>> f, ax = plt.subplots()
+    >>> strm = ax.streamplot(X, Y, U, V, color=U, linewidth=2, cmap='autumn')
+    >>> f.colorbar(strm.lines)
+    >>> ax.set_title('Streamplot with varying Color')
+    >>> plt.tight_layout()
+
+    >>> chart = pyvista.ChartMPL(f)
+    >>> chart.show()
+
     """
 
-    def __init__(self, figure, size=(1, 1), loc=(0, 0)):
+    _DOC_SUBS = {
+        "chart_name": "matplotlib chart",
+        "chart_args": "",
+        "chart_init": """
+        >>> plots = chart.figure.axes[0].plot([0, 1, 2], [2, 1, 3])""",
+        "chart_set_labels": 'plots[0].label = "My awesome plot"'
+    }
+
+    def __init__(self, figure=None, size=(1, 1), loc=(0, 0)):
         """Initialize chart."""
         try:
             import matplotlib.figure
+            import matplotlib.pyplot as plt
             from matplotlib.backends.backend_agg import FigureCanvasAgg
         except ModuleNotFoundError:
             raise ImportError("ChartMPL requires matplotlib")
 
         super().__init__(size, loc)
+        if figure is None:
+            figure, _ = plt.subplots()
         self._fig = figure
         self._canvas = FigureCanvasAgg(self._fig)  # Switch backends and store reference to figure's canvas
         # Make figure and axes fully transparent, as the background is already dealt with by self._background.
@@ -3744,6 +4040,27 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         self._canvas.mpl_connect('draw_event', self._redraw)  # Attach 'draw_event' callback
 
         self._redraw()
+
+    @property
+    def figure(self):
+        """Retrieve the matplotlib figure associated with this chart.
+
+        Examples
+        --------
+        Create a matplotlib chart from an existing figure.
+
+        .. pyvista-plot::
+
+        >>> import pyvista
+        >>> import matplotlib.pyplot as plt
+        >>> f, ax = plt.subplots()
+        >>> _ = ax.plot([0, 1, 2], [2, 1, 3])
+        >>> chart = pyvista.ChartMPL(f)
+        >>> chart.figure is f
+        True
+        >>> chart.show()
+        """
+        return self._fig
 
     def _resize(self):
         r_w, r_h = self._renderer.GetSize()
