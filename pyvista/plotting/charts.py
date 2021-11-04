@@ -1,7 +1,7 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
 
 import numpy as np
-from typing import Sequence
+from typing import Sequence, List, Dict, Optional
 import re
 import inspect
 import itertools
@@ -60,11 +60,13 @@ class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
 #region Documentation substitution
 class DocSubs:
     """Helper class to easily substitute the docstrings of the listed member functions or properties."""
-    _DOC_SUBS = {}  # The substitutions to use for this (sub)class
-    _DOC_MEMS = []  # The member functions/properties for which the docstrings should be substituted in subsequent subclasses.
-    _DOC_STORE = {}  # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
+
+    _DOC_SUBS: Optional[Dict] = {}  # The substitutions to use for this (sub)class
+    _DOC_MEMS: Optional[List] = []  # The member functions/properties for which the docstrings should be substituted in subsequent subclasses.
+    _DOC_STORE: Dict = {}  # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
 
     def __init_subclass__(cls, **kwargs):
+        """Initialize subclasses."""
         if cls._DOC_SUBS is not None:
             subs = {**cls._DOC_SUBS}
             if "cls" not in subs:
@@ -4245,13 +4247,24 @@ class Charts:
         self._scene.RemoveItem(chart._background)
 
     def toggle_interaction(self, mouse_pos):
-        """Disable interaction with all charts, except the one indicated by the mouse position.
+        """Toggle interaction of the charts based on the given mouse position.
+
+        Disables interaction with all charts, except the one indicated by the mouse position.
         In case the indicated chart was already interactive, interaction is disabled again.
 
-        Returns the scene if one of the charts got activated, None otherwise.
+        Parameters
+        ----------
+        mouse_pos : tuple of float or bool
+            This parameter should be either False, to disable interaction with all charts; or a tuple
+            containing the mouse position, to disable interaction with all charts, except the one
+            indicated by the mouse, if any.
+
+        Returns
+        -------
+        vtk.vtkContextScene, optional
+            Returns the scene if one of the charts got activated, None otherwise.
+
         """
-        # Mouse_pos is either False (to disable interaction with all charts) or a tuple containing the mouse position
-        # (to disable interaction with all charts, except the one indicated by the mouse, if any)
         enable = False
         for chart in self._charts:
             if chart.visible and (mouse_pos is not False and chart._is_within(mouse_pos)):
