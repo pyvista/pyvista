@@ -121,6 +121,7 @@ if VTK9:
                                                vtkPlaneCollection,
                                                vtkDataSet,
                                                vtkPointLocator,
+                                               vtkGenericCell,
                                                vtkCellLocator,
                                                vtkStaticCellLocator,
                                                vtkMultiBlockDataSet,
@@ -229,7 +230,8 @@ if VTK9:
                                           vtkLookupTable,
                                           VTK_UNSIGNED_CHAR,
                                           vtkAbstractArray,
-                                          vtkDoubleArray)
+                                          vtkDoubleArray,
+                                          mutable)
     from vtkmodules.vtkCommonMath import (vtkMatrix4x4,
                                           vtkMatrix3x3)
     from vtkmodules.vtkCommonTransforms import vtkTransform
