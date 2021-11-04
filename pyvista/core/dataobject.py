@@ -504,7 +504,10 @@ class DataObject:
         self.__dict__.update(state)
         reader = _vtk.vtkDataSetReader()
         reader.ReadFromInputStringOn()
-        reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
+        if isinstance(vtk_serialized, bytes):
+            reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
+        elif isinstance(vtk_serialized, str):
+            reader.SetInputString(vtk_serialized)
         reader.Update()
         mesh = pyvista.wrap(reader.GetOutput())
 
