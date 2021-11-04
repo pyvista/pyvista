@@ -1,7 +1,7 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
 
 import numpy as np
-from typing import Sequence, List, Dict, Optional
+from typing import Sequence
 import re
 import inspect
 import itertools
@@ -11,7 +11,7 @@ from functools import wraps
 import pyvista
 from pyvista import _vtk
 from .tools import parse_color
-    
+
 
 #region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):
@@ -61,9 +61,9 @@ class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
 class DocSubs:
     """Helper class to easily substitute the docstrings of the listed member functions or properties."""
 
-    _DOC_SUBS: Optional[Dict] = {}  # The substitutions to use for this (sub)class
-    _DOC_MEMS: Optional[List] = []  # The member functions/properties for which the docstrings should be substituted in subsequent subclasses.
-    _DOC_STORE: Dict = {}  # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
+    _DOC_SUBS = {}  # The substitutions to use for this (sub)class
+    _DOC_MEMS = []  # The member functions/properties for which the docstrings should be substituted in subsequent subclasses.
+    _DOC_STORE = {}  # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
 
     def __init_subclass__(cls, **kwargs):
         """Initialize subclasses."""
