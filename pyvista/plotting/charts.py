@@ -405,6 +405,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     grid_pen : Pen
         Pen used to draw the grid lines.
 
+    Other Parameters
+    ----------------
+    _wrap : vtk.vtkAxis, optional
+        Wrap an existing VTK Axis instance. Defaults to ``None`` (no wrapping).
+
     """
 
     BEHAVIORS = {
@@ -3539,6 +3544,11 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
     labels : list or tuple of str, optional
         Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
+
+    Other Parameters
+    ----------------
+    _wrap : vtk.vtkPlotPie, optional
+        Wrap an existing VTK PlotPie instance. Defaults to ``None`` (no wrapping).
 
     Examples
     --------
