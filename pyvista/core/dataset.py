@@ -541,8 +541,8 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> from pyvista import examples
         >>> globe = examples.load_globe()
-        >>> globe.textures
-        {'2k_earth_daymap': (Texture)...}
+        >>> globe.textures  # doctest:+SKIP
+        {'2k_earth_daymap': <Texture(...) at ...}
 
         """
         return self._textures
@@ -556,8 +556,8 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> from pyvista import examples
         >>> globe = examples.load_globe()
-        >>> globe.textures
-        {'2k_earth_daymap': (Texture)...}
+        >>> globe.textures  # doctest:+SKIP
+        {'2k_earth_daymap': <Texture(...) at ...}
         >>> globe.clear_textures()
         >>> globe.textures
         {}
