@@ -885,16 +885,44 @@ def test_find_closest_cells():
     with pytest.raises(ValueError):
         mesh.find_closest_cell(np.empty((4, 4)))
 
-    # simply get the face centers
+    # simply get the face centers, ordered by cell Id
     fcent = mesh.points[mesh.faces.reshape(-1, 4)[:, 1:]].mean(1)
     indices = mesh.find_closest_cell(fcent)
 
-    # this will miss a few...
-    mask = indices == -1
-    assert mask.sum() < 10
-
     # Make sure we match the face centers
-    assert np.allclose(indices[~mask], np.arange(mesh.n_faces)[~mask])
+    assert np.allclose(indices, np.arange(mesh.n_faces))
+
+
+def test_find_cells_along_line():
+    mesh = pyvista.Cube()
+    indices = mesh.find_cells_along_line([0, 0, -1], [0, 0, 1])
+    assert len(indices) == 2
+
+
+def test_find_cells_within_bounds():
+    mesh = pyvista.Cube()
+
+    bounds = [
+        mesh.bounds[0] * 2.0,
+        mesh.bounds[1] * 2.0,
+        mesh.bounds[2] * 2.0,
+        mesh.bounds[3] * 2.0,
+        mesh.bounds[4] * 2.0,
+        mesh.bounds[5] * 2.0,
+    ]
+    indices = mesh.find_cells_within_bounds(bounds)
+    assert len(indices) == mesh.n_cells
+
+    bounds = [
+        mesh.bounds[0] * 0.5,
+        mesh.bounds[1] * 0.5,
+        mesh.bounds[2] * 0.5,
+        mesh.bounds[3] * 0.5,
+        mesh.bounds[4] * 0.5,
+        mesh.bounds[5] * 0.5,
+    ]
+    indices = mesh.find_cells_within_bounds(bounds)
+    assert len(indices) == 0
 
 
 def test_setting_points_from_self(grid):

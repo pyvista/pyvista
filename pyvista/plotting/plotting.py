@@ -215,7 +215,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # track if the camera has been setup
         self._first_time = True
         # Keep track of the scale
-        self._labels = []
 
         # track if render window has ever been rendered
         self._rendered = False
@@ -671,6 +670,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         self.renderers.set_active_renderer(index_row, index_column)
+
+    @wraps(Renderer.add_legend)
+    def add_legend(self, *args, **kwargs):
+        """Wrap ``Renderer.add_legend``."""
+        return self.renderer.add_legend(*args, **kwargs)
+
+    @wraps(Renderer.remove_legend)
+    def remove_legend(self, *args, **kwargs):
+        """Wrap ``Renderer.remove_legend``."""
+        return self.renderer.remove_legend(*args, **kwargs)
+
+    @property
+    def legend(self):
+        """Legend actor.
+
+        There can only be one legend actor per renderer.  If
+        ``legend`` is ``None``, there is no legend actor.
+
+        """
+        return self.renderer.legend
 
     @wraps(Renderer.add_floor)
     def add_floor(self, *args, **kwargs):
@@ -1351,6 +1370,48 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def enable_rubber_band_2d_style(self):
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
         self.iren.enable_rubber_band_2d_style()
+
+    def enable_stereo_render(self):
+        """Enable stereo rendering.
+
+        Disable this with :func:`disable_stereo_render
+        <BasePlotter.disable_stereo_render>`
+
+        Examples
+        --------
+        Enable stereo rendering to show a cube as an anaglyph image.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.enable_stereo_render()
+        >>> pl.show()
+
+        """
+        if hasattr(self, 'ren_win'):
+            self.ren_win.StereoRenderOn()
+            self.ren_win.SetStereoTypeToAnaglyph()
+
+    def disable_stereo_render(self):
+        """Disable stereo rendering.
+
+        Enable again with :func:`enable_stereo_render
+        <BasePlotter.enable_stereo_render>`
+
+        Examples
+        --------
+        Enable and then disable stereo rendering. It should show a simple cube.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.enable_stereo_render()
+        >>> pl.disable_stereo_render()
+        >>> pl.show()
+
+        """
+        if hasattr(self, 'ren_win'):
+            self.ren_win.StereoRenderOff()
 
     def hide_axes_all(self):
         """Hide the axes orientation widget in all renderers."""
@@ -2048,7 +2109,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 geom = pyvista.Box()
                 rgb_color = parse_color('black')
             geom.points -= geom.center
-            self._labels.append([geom, label, rgb_color])
+            addr = actor.GetAddressAsString("")
+            self.renderer._labels[addr] = [geom, label, rgb_color]
 
         # lighting display style
         if not lighting:
@@ -2227,7 +2289,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         -------
         vtk.vtkActor
             VTK actor of the volume.
-
+        
+        Examples
+        --------
+        Show a built-in volume example with the coolwarm colormap.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> bolt_nut = examples.download_bolt_nut()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(bolt_nut, cmap="coolwarm")
+        >>> pl.show()
+        
         """
         # Handle default arguments
 
@@ -3221,12 +3294,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         rgb_color = parse_color(color)
 
-        # legend label
-        if label:
-            if not isinstance(label, str):
-                raise TypeError('Label must be a string')
-            self._labels.append([lines, label, rgb_color])
-
         # Create actor
         actor = _vtk.vtkActor()
         actor.SetMapper(mapper)
@@ -3235,6 +3302,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         actor.GetProperty().SetEdgeColor(rgb_color)
         actor.GetProperty().SetColor(rgb_color)
         actor.GetProperty().LightingOff()
+
+        # legend label
+        if label:
+            if not isinstance(label, str):
+                raise TypeError('Label must be a string')
+            addr = actor.GetAddressAsString("")
+            self.renderer._labels[addr] = [lines, label, rgb_color]
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)
@@ -3653,6 +3727,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             rendering, that is, a rendering at a fixed depth where
             primitives are drawn from the bottom up.
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(examples.load_airplane(), smooth_shading=True)
+        >>> _ = pl.add_background_image(examples.mapfile)
+        >>> pl.save_graphic("img.svg")  # doctest:+SKIP
+
         """
         if not hasattr(self, 'ren_win'):
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
@@ -3753,167 +3836,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return self._save_image(self.image, filename, return_img)
 
-    def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
-                   size=None, name=None, origin=None, face=None):
-        """Add a legend to render window.
-
-        Entries must be a list containing one string and color entry for each
-        item.
-
-        Parameters
-        ----------
-        labels : list, optional
-            When set to None, uses existing labels as specified by
-
-            - :func:`add_mesh <BasePlotter.add_mesh>`
-            - :func:`add_lines <BasePlotter.add_lines>`
-            - :func:`add_points <BasePlotter.add_points>`
-
-            List containing one entry for each item to be added to the
-            legend.  Each entry must contain two strings, [label,
-            color], where label is the name of the item to add, and
-            color is the color of the label to add.
-
-        bcolor : list or str, optional
-            Background color, either a three item 0 to 1 RGB color
-            list, or a matplotlib color string (e.g. 'w' or 'white'
-            for a white color).  If None, legend background is
-            disabled.
-
-        border : bool, optional
-            Controls if there will be a border around the legend.
-            Default False.
-
-        size : list, optional
-            Two float list, each float between 0 and 1.  For example
-            [0.1, 0.1] would make the legend 10% the size of the
-            entire figure window.
-
-        name : str, optional
-            The name for the added actor so that it can be easily
-            updated.  If an actor of this name already exists in the
-            rendering window, it will be replaced by the new actor.
-
-        origin : list, optional
-            If used, specifies the x and y position of the lower left corner
-            of the legend.
-
-        face : str, optional
-            Face shape of legend face.
-            Accepted options:
-
-            * ``'triangle'``
-            * ``'circle'``
-            * ``'rectangle'``
-
-            Default is ``'triangle'``.
-
-        Returns
-        -------
-        vtk.vtkLegendBoxActor
-            Actor for the legend.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> mesh = examples.load_hexbeam()
-        >>> othermesh = examples.load_uniform()
-        >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(mesh, label='My Mesh')
-        >>> _ = plotter.add_mesh(othermesh, 'k', label='My Other Mesh')
-        >>> _ = plotter.add_legend()
-        >>> plotter.show()
-
-        Alternative manual example
-
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> mesh = examples.load_hexbeam()
-        >>> othermesh = examples.load_uniform()
-        >>> legend_entries = []
-        >>> legend_entries.append(['My Mesh', 'w'])
-        >>> legend_entries.append(['My Other Mesh', 'k'])
-        >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(mesh)
-        >>> _ = plotter.add_mesh(othermesh, 'k')
-        >>> _ = plotter.add_legend(legend_entries)
-        >>> plotter.show()
-
-        """
-        self.legend = _vtk.vtkLegendBoxActor()
-
-        if labels is None:
-            # use existing labels
-            if not self._labels:
-                raise ValueError('No labels input.\n\n'
-                                 'Add labels to individual items when adding them to'
-                                 'the plotting object with the "label=" parameter.  '
-                                 'or enter them as the "labels" parameter.')
-
-            self.legend.SetNumberOfEntries(len(self._labels))
-            for i, (vtk_object, text, color) in enumerate(self._labels):
-                self.legend.SetEntry(i, vtk_object, text, parse_color(color))
-
-        else:
-            self.legend.SetNumberOfEntries(len(labels))
-
-            if face is None or face == "triangle":
-                legendface = pyvista.Triangle()
-            elif face == "circle":
-                legendface = pyvista.Circle()
-            elif face == "rectangle":
-                legendface = pyvista.Rectangle()
-            else:
-                raise ValueError(f'Invalid face "{face}".  Must be one of the following:\n'
-                                 '\t"triangle"\n'
-                                 '\t"circle"\n'
-                                 '\t"rectangle"\n')
-
-            for i, (text, color) in enumerate(labels):
-                self.legend.SetEntry(i, legendface, text, parse_color(color))
-
-        if origin is not None:
-            if not isinstance(origin, Sequence) or len(origin) != 2:
-                raise ValueError(
-                    '`origin` must be a list of length 2. Passed value is {}'
-                    .format(origin)
-                )
-            self.legend.SetPosition(origin[0], origin[1])
-
-        if size is not None:
-            if not isinstance(size, Sequence) or len(size) != 2:
-                raise ValueError(
-                    '`size` must be a list of length 2. Passed value is {}'
-                    .format(size)
-                )
-            self.legend.SetPosition2(size[0], size[1])
-
-        if bcolor is None:
-            self.legend.UseBackgroundOff()
-        else:
-            self.legend.UseBackgroundOn()
-            self.legend.SetBackgroundColor(bcolor)
-
-        if border:
-            self.legend.BorderOn()
-        else:
-            self.legend.BorderOff()
-
-        # Add to renderer
-        self.add_actor(self.legend, reset_camera=False, name=name, pickable=False)
-        return self.legend
 
     @wraps(Renderers.set_background)
     def set_background(self, *args, **kwargs):
         """Wrap ``Renderers.set_background``."""
         self.renderers.set_background(*args, **kwargs)
-
-    def remove_legend(self):
-        """Remove the legend actor."""
-        if hasattr(self, 'legend'):
-            self.remove_actor(self.legend, reset_camera=False)
-            self.render()
 
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
         """Generate an orbital path around the data scene.
@@ -4090,6 +4017,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         compress_arrays : bool, optional
             Enable array compression.
+            
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(examples.load_hexbeam())
+        >>> pl.export_vtkjs("sample")  # doctest:+SKIP
+
         """
         if not hasattr(self, 'ren_win'):
             raise RuntimeError('Export must be called before showing/closing the scene.')
@@ -4192,8 +4128,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if auto_resize:  # pragma: no cover
             self.iren.add_observer('ModifiedEvent', renderer.resize)
 
+    @wraps(Renderers.remove_background_image)
     def remove_background_image(self):
-        """Remove the background image from the current subplot."""
+        """Wrap ``Renderers.remove_background_image``."""
         self.renderers.remove_background_image()
 
         # return the active renderer to the top, otherwise flat background
@@ -4840,6 +4777,62 @@ class Plotter(BasePlotter):
                              font_size=font_size, color=color, font=font,
                              shadow=shadow, name='title', viewport=False)
 
+    def add_cursor(
+        self,
+        bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+        focal_point=(0.0, 0.0, 0.0),
+        color=None,
+    ):
+        """Add a cursor of a PyVista or VTK dataset to the scene.
+
+        Parameters
+        ----------
+        bounds : length 6 sequence
+            Specify the bounds in the format of:
+
+            - ``(xmin, xmax, ymin, ymax, zmin, zmax)``
+
+            Defaults to ``(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)``.
+
+        focal_point : list or tuple, optional
+            The focal point of the cursor.
+
+            Defaults to ``(0.0, 0.0, 0.0)``.
+
+        color : str or sequence, optional
+            Either a string, RGB sequence, or hex color string.  For one
+            of the following.
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
+
+        Returns
+        -------
+        vtk.vtkActor
+            VTK actor of the 2D cursor.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(sphere)
+        >>> _ = plotter.add_cursor()
+        >>> plotter.show()
+
+        """
+        alg = _vtk.vtkCursor3D()
+        alg.SetModelBounds(bounds)
+        alg.SetFocalPoint(focal_point)
+        alg.AllOn()
+        mapper = make_mapper(_vtk.vtkDataSetMapper)
+        mapper.SetInputConnection(alg.GetOutputPort())
+        actor, prop = self.add_actor(mapper)
+        prop.SetColor(parse_color(color))
+
+        return actor
 
 
 # Tracks created plotters.  At the end of the file as we need to

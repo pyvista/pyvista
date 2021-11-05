@@ -2,6 +2,7 @@
 
 import collections.abc
 from weakref import proxy
+from typing import Sequence
 
 import numpy as np
 
@@ -12,6 +13,69 @@ from .tools import (create_axes_orientation_box, create_axes_marker,
                     parse_color, parse_font_family)
 from .camera import Camera
 
+ACTOR_LOC_MAP = [
+    'upper right',
+    'upper left',
+    'lower left',
+    'lower right',
+    'center left',
+    'center right',
+    'lower center',
+    'upper center',
+    'center',
+]
+
+
+def map_loc_to_pos(loc, size, border=0.05):
+    """Map location and size to a VTK position and position2.
+
+    Attempt to place 2d actor in a sensible position.
+
+    """
+    if not isinstance(size, Sequence) or len(size) != 2:
+        raise ValueError(
+            f'`size` must be a list of length 2. Passed value is {size}'
+        )
+
+    if 'right' in loc:
+        x = 1 - size[1] - border
+    elif 'left' in loc:
+        x = border
+    else:
+        x = 0.5 - size[1]/2
+
+    if 'upper' in loc:
+        y = 1 - size[1] - border
+    elif 'lower' in loc:
+        y = border
+    else:
+        y = 0.5 - size[1]/2
+
+    return x, y, size
+
+
+def make_legend_face(face):
+    """Create the legend face."""
+    if face is None:
+        legendface = pyvista.PolyData([0, 0, 0])
+    elif face in ["-", "line"]:
+        legendface = _line_for_legend()
+    elif face in ["^", "triangle"]:
+        legendface = pyvista.Triangle()
+    elif face in ["o", "circle"]:
+        legendface = pyvista.Circle()
+    elif face in ["r", "rectangle"]:
+        legendface = pyvista.Rectangle()
+    elif isinstance(face, pyvista.PolyData):
+        legendface = face
+    else:
+        raise ValueError(f'Invalid face "{face}".  Must be one of the following:\n'
+                         '\t"triangle"\n'
+                         '\t"circle"\n'
+                         '\t"rectangle"\n'
+                         '\tNone'
+                         '\tpyvista.PolyData')
+    return legendface
 
 def scale_point(camera, point, invert=False):
     """Scale a point using the camera's transform matrix.
@@ -135,6 +199,8 @@ class Renderer(_vtk.vtkRenderer):
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
+        self._labels = {}  # tracks labeled actors
+        self._legend = None
         self._floor = None
         self._floors = []
         self._floor_kwargs = []
@@ -1113,6 +1179,15 @@ class Renderer(_vtk.vtkRenderer):
         -------
         vtk.vtkAxesActor
             Bounds actor.
+            
+         Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(examples.download_guitar())
+        >>> _ = pl.show_grid()
+        >>> pl.show()
 
         """
         kwargs.setdefault('grid', 'back')
@@ -1445,7 +1520,22 @@ class Renderer(_vtk.vtkRenderer):
             self._floor_kwargs.clear()
 
     def remove_bounds_axes(self):
-        """Remove bounds axes."""
+        """Remove bounds axes.
+        
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.show_bounds(grid='front', location='outer')
+        >>> pl.subplot(0, 1)
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.show_bounds(grid='front', location='outer')
+        >>> actor = pl.remove_bounds_axes()
+        >>> pl.show()
+        
+        """
         if hasattr(self, 'cube_axes_actor'):
             self.remove_actor(self.cube_axes_actor)
             self.Modified()
@@ -1754,6 +1844,9 @@ class Renderer(_vtk.vtkRenderer):
         if actor is None:
             return False
 
+        # remove any labels associated with the actor
+        self._labels.pop(actor.GetAddressAsString(""), None)
+
         # ensure any scalar bars associated with this actor are removed
         self.parent.scalar_bars._remove_mapper_from_plotter(actor)
         self.RemoveActor(actor)
@@ -1980,6 +2073,18 @@ class Renderer(_vtk.vtkRenderer):
         negative : bool, optional
             View from the opposite direction.
 
+        Examples
+        --------
+        View the XY plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_xy()
+        >>> pl.show()
+
         """
         vec = np.array([0,0,1])
         viewup = np.array([0,1,0])
@@ -1995,6 +2100,18 @@ class Renderer(_vtk.vtkRenderer):
         negative : bool, optional
             View from the opposite direction.
 
+        Examples
+        --------
+        View the YX plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_yx()
+        >>> pl.show()
+        
         """
         vec = np.array([0,0,-1])
         viewup = np.array([1,0,0])
@@ -2009,6 +2126,18 @@ class Renderer(_vtk.vtkRenderer):
         ----------
         negative : bool, optional
             View from the opposite direction.
+
+        Examples
+        --------
+        View the XZ plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_xz()
+        >>> pl.show()
 
         """
         vec = np.array([0,-1,0])
@@ -2025,6 +2154,18 @@ class Renderer(_vtk.vtkRenderer):
         negative : bool, optional
             View from the opposite direction.
 
+        Examples
+        --------
+        View the ZX plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_zx()
+        >>> pl.show()
+
         """
         vec = np.array([0,1,0])
         viewup = np.array([1,0,0])
@@ -2040,6 +2181,18 @@ class Renderer(_vtk.vtkRenderer):
         negative : bool, optional
             View from the opposite direction.
 
+        Examples
+        --------
+        View the YZ plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_yz()
+        >>> pl.show()
+
         """
         vec = np.array([1,0,0])
         viewup = np.array([0,0,1])
@@ -2054,6 +2207,18 @@ class Renderer(_vtk.vtkRenderer):
         ----------
         negative : bool, optional
             View from the opposite direction.
+
+        Examples
+        --------
+        View the ZY plane of a built-in mesh example.
+        
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_zy()
+        >>> pl.show()
 
         """
         vec = np.array([-1,0,0])
@@ -2369,3 +2534,196 @@ class Renderer(_vtk.vtkRenderer):
         """Height of the renderer."""
         _, ymin, _, ymax = self.viewport
         return self.parent.window_size[1]*(ymax - ymin)
+
+    def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5),
+                   border=False, size=(0.2, 0.2), name=None,
+                   loc='upper right', face='triangle'):
+        """Add a legend to render window.
+
+        Entries must be a list containing one string and color entry for each
+        item.
+
+        Parameters
+        ----------
+        labels : list, optional
+            When set to ``None``, uses existing labels as specified by
+
+            - :func:`add_mesh <BasePlotter.add_mesh>`
+            - :func:`add_lines <BasePlotter.add_lines>`
+            - :func:`add_points <BasePlotter.add_points>`
+
+            List containing one entry for each item to be added to the
+            legend.  Each entry must contain two strings, [label,
+            color], where label is the name of the item to add, and
+            color is the color of the label to add.
+
+        bcolor : list or str, optional
+            Background color, either a three item 0 to 1 RGB color
+            list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
+            for a white color).  If None, legend background is
+            disabled.
+
+        border : bool, optional
+            Controls if there will be a border around the legend.
+            Default False.
+
+        size : sequence, optional
+            Two float sequence, each float between 0 and 1.  For example
+            ``(0.1, 0.1)`` would make the legend 10% the size of the
+            entire figure window.
+
+        name : str, optional
+            The name for the added actor so that it can be easily
+            updated.  If an actor of this name already exists in the
+            rendering window, it will be replaced by the new actor.
+
+        loc : str, optional
+            Location string.  One of the following:
+
+            * ``'upper right'``
+            * ``'upper left'``
+            * ``'lower left'``
+            * ``'lower right'``
+            * ``'center left'``
+            * ``'center right'``
+            * ``'lower center'``
+            * ``'upper center'``
+            * ``'center'``
+
+        face : str or pyvista.PolyData, optional
+            Face shape of legend face.  One of the following:
+
+            * None: ``None``
+            * Line: ``"-"`` or ``"line"``
+            * Triangle: ``"^"`` or ``'triangle'``
+            * Circle: ``"o"`` or ``'circle'``
+            * Rectangle: ``"r"`` or ``'rectangle'``
+            * Custom: :class:`pyvista.PolyData`
+
+            Default is ``'triangle'``.  Passing ``None`` removes the
+            legend face.  A custom face can be created using
+            :class:`pyvista.PolyData`.  This will be rendered from the
+            XY plane.
+
+        Returns
+        -------
+        vtk.vtkLegendBoxActor
+            Actor for the legend.
+
+        Examples
+        --------
+        Create a legend by labeling the meshes when using ``add_mesh``
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> sphere = pyvista.Sphere(center=(0, 0, 1))
+        >>> cube = pyvista.Cube()
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True, label='Sphere')
+        >>> _ = plotter.add_mesh(cube, 'r', label='Cube')
+        >>> _ = plotter.add_legend(bcolor='w', face=None)
+        >>> plotter.show()
+
+        Alternatively provide labels in the plotter.
+
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
+        >>> _ = plotter.add_mesh(cube, 'r')
+        >>> legend_entries = []
+        >>> legend_entries.append(['My Mesh', 'w'])
+        >>> legend_entries.append(['My Other Mesh', 'k'])
+        >>> _ = plotter.add_legend(legend_entries)
+        >>> plotter.show()
+
+        """
+        if self.legend is not None:
+            self.remove_legend()
+        self._legend = _vtk.vtkLegendBoxActor()
+
+        if labels is None:
+            # use existing labels
+            if not self._labels:
+                raise ValueError('No labels input.\n\n'
+                                 'Add labels to individual items when adding them to'
+                                 'the plotting object with the "label=" parameter.  '
+                                 'or enter them as the "labels" parameter.')
+
+            self._legend.SetNumberOfEntries(len(self._labels))
+            for i, (vtk_object, text, color) in enumerate(self._labels.values()):
+
+                if face is None:
+                    # dummy vtk object
+                    vtk_object = pyvista.PolyData([0, 0, 0])
+
+                self._legend.SetEntry(i, vtk_object, text, parse_color(color))
+
+        else:
+            self._legend.SetNumberOfEntries(len(labels))
+
+            legend_face = make_legend_face(face)
+            for i, (text, color) in enumerate(labels):
+                self._legend.SetEntry(i, legend_face, text, parse_color(color))
+
+        if loc is not None:
+            if loc not in ACTOR_LOC_MAP:
+                allowed = '\n'.join([f'\t * "{item}"' for item in ACTOR_LOC_MAP])
+                raise ValueError(
+                    f'Invalid loc "{loc}".  Expected one of the following:\n{allowed}'
+                )
+            x, y, size = map_loc_to_pos(loc, size, border=0.05)
+            self._legend.SetPosition(x, y)
+            self._legend.SetPosition2(size[0], size[1])
+
+        if bcolor is None:
+            self._legend.UseBackgroundOff()
+        else:
+            self._legend.UseBackgroundOn()
+            self._legend.SetBackgroundColor(parse_color(bcolor))
+
+        self._legend.SetBorder(border)
+
+        self.add_actor(self._legend, reset_camera=False, name=name, pickable=False)
+        return self._legend
+
+    def remove_legend(self, render=True):
+        """Remove the legend actor.
+
+        Parameters
+        ----------
+        render : bool, optional
+            Render upon actor removal.  Set this to ``False`` to stop
+            the render window from rendering when a the legend is removed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(mesh, label='sphere')
+        >>> _ = pl.add_legend()
+        >>> pl.remove_legend()
+
+        """
+        if self.legend is not None:
+            self.remove_actor(self.legend, reset_camera=False, render=render)
+            self._legend = None
+
+    @property
+    def legend(self):
+        """Legend actor."""
+        return self._legend
+
+
+def _line_for_legend():
+    """Create a simple line-like rectangle for the legend."""
+    points = [
+        [0, 0, 0],
+        [0.4, 0, 0],
+        [0.4, 0.07, 0],
+        [0, 0.07, 0],
+        [0.5, 0, 0],  # last point needed to expand the bounds of the PolyData to be rendered smaller
+    ]
+    legendface = pyvista.PolyData()
+    legendface.points = np.array(points)
+    legendface.faces = [4, 0, 1, 2, 3]
+    return legendface

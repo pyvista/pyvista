@@ -414,7 +414,23 @@ class Renderers():
             self.active_renderer.set_background(color, top=top)
 
     def remove_background_image(self):
-        """Remove the background image at the current renderer."""
+        """Remove the background image at the current renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> pl.add_background_image(examples.mapfile, as_global=False)
+        >>> pl.subplot(0, 1)
+        >>> actor = pl.add_mesh(pyvista.Cube())
+        >>> pl.add_background_image(examples.mapfile, as_global=False)
+        >>> pl.remove_background_image()
+        >>> pl.show()
+
+        """
         renderer = self._background_renderers[self.active_index]
         if renderer is None:
             raise RuntimeError('No background image to remove at this subplot')

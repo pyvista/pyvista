@@ -333,7 +333,7 @@ class DataSet(DataSetFilters, DataObject):
         array.
 
         >>> import pyvista
-        >>> cube = pyvista.Cube().clean()
+        >>> cube = pyvista.Cube()
         >>> points = cube.points
         >>> points
         pyvista_ndarray([[-0.5, -0.5, -0.5],
@@ -424,7 +424,7 @@ class DataSet(DataSetFilters, DataObject):
         plot the active vectors.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh_w_normals = mesh.compute_normals()
         >>> mesh_w_normals.active_vectors_name = 'Normals'
         >>> arrows = mesh_w_normals.arrows
@@ -743,7 +743,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> cube = pyvista.Cube().clean()
+        >>> cube = pyvista.Cube()
         >>> cube['my_array'] = range(cube.n_points)
         >>> cube.rename_array('my_array', 'my_renamed_array')
         >>> cube['my_renamed_array']
@@ -1210,7 +1210,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.point_data['my_array'] = np.random.random(mesh.n_points)
         >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
@@ -1350,7 +1350,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> import numpy as np
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.cell_data['my_array'] = np.random.random(mesh.n_cells)
         >>> mesh.cell_data['my_other_array'] = np.arange(mesh.n_cells)
@@ -1389,7 +1389,7 @@ class DataSet(DataSetFilters, DataObject):
         mesh.
 
         >>> import pyvista
-        >>> cube = pyvista.Cube().clean()
+        >>> cube = pyvista.Cube()
         >>> cube.n_points
         8
 
@@ -1411,7 +1411,7 @@ class DataSet(DataSetFilters, DataObject):
         mesh.
 
         >>> import pyvista
-        >>> cube = pyvista.Cube().clean()
+        >>> cube = pyvista.Cube()
         >>> cube.n_cells
         6
 
@@ -1439,7 +1439,7 @@ class DataSet(DataSetFilters, DataObject):
         Create a cube and return the bounds of the mesh.
 
         >>> import pyvista
-        >>> cube = pyvista.Cube().clean()
+        >>> cube = pyvista.Cube()
         >>> cube.bounds
         [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
 
@@ -1544,7 +1544,7 @@ class DataSet(DataSetFilters, DataObject):
         Create a DataSet with a variety of arrays.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.point_data['point-data'] = range(mesh.n_points)
         >>> mesh.cell_data['cell-data'] = range(mesh.n_cells)
@@ -1597,7 +1597,7 @@ class DataSet(DataSetFilters, DataObject):
         Create a DataSet with a variety of arrays.
 
         >>> import pyvista
-        >>> mesh = pyvista.Cube().clean()
+        >>> mesh = pyvista.Cube()
         >>> mesh.clear_data()
         >>> mesh.point_data['point-data'] = range(mesh.n_points)
         >>> mesh.cell_data['cell-data'] = range(mesh.n_cells)
@@ -1783,7 +1783,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> mesh_a = pyvista.Sphere()
-        >>> mesh_b = pyvista.Cube().clean()
+        >>> mesh_b = pyvista.Cube()
         >>> mesh_a.overwrite(mesh_b)
         >>> mesh_a == mesh_b
         True
@@ -1884,8 +1884,8 @@ class DataSet(DataSetFilters, DataObject):
         Parameters
         ----------
         point : iterable(float) or np.ndarray
-            Length 3 coordinate of the point to query or a ``numpy`` array
-            of coordinates.
+            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
+            points with shape ``(n, 3)``.
 
         Returns
         -------
@@ -1893,25 +1893,39 @@ class DataSet(DataSetFilters, DataObject):
             Index or indices of the cell in this mesh that is closest
             to the given point.
 
+        Warnings
+        --------
+        This method may still return a valid cell index even if the point
+        contains a value like ``numpy.inf`` or ``numpy.nan``.
+
         Examples
         --------
-        Find nearest cell to a point on a sphere
+        Find nearest cell to a point on a sphere, centered on the
+        origin.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
         >>> index = mesh.find_closest_cell([0, 0, 0.5])
         >>> index
-        59
+        30
 
-        Find the nearest cells to several random points.  Note that
-        ``-1`` indicates that the locator was not able to find a
-        reasonably close cell.
+        Find the nearest cells to several random points that
+        are centered on the origin.
 
         >>> import numpy as np
-        >>> points = np.random.random((1000, 3))
+        >>> points = 2 * np.random.random((5000, 3)) - 1
         >>> indices = mesh.find_closest_cell(points)
         >>> indices.shape
-        (1000,)
+        (5000,)
+
+        The average position of all the randomly found cell centers should
+        be reasonably close to the origin.
+
+        >>> cell_center_mesh = mesh.cell_centers()
+        >>> avg_pos = cell_center_mesh.points[indices, :].mean(axis=0)
+        >>> np.linalg.norm(avg_pos) < 0.02
+        True
+
         """
         if isinstance(point, collections.abc.Sequence):
             point = np.array(point)
@@ -1932,8 +1946,93 @@ class DataSet(DataSetFilters, DataObject):
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
-        closest_cells = np.array([locator.FindCell(node) for node in point])
-        return int(closest_cells[0]) if len(closest_cells) == 1 else closest_cells
+
+        cell = _vtk.vtkGenericCell()
+        closest_point = [0, 0, 0]
+        cellId = _vtk.mutable(0)
+        subld = _vtk.mutable(0)
+        dist2 = _vtk.mutable(0.0)
+
+        closest_cells = []
+        for node in point:
+            locator.FindClosestPoint(node, closest_point, cell, cellId, subld, dist2)
+            closest_cells.append(int(cellId))
+        return closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
+
+    def find_cells_along_line(
+        self,
+        pointa: Iterable[float],
+        pointb: Iterable[float],
+        tolerance=0.0,
+    ) -> np.ndarray:
+        """Find the index of cells in this mesh along a line.
+
+        Line is defined from ``pointa`` to ``pointb``.
+
+        Parameters
+        ----------
+        pointa : iterable(float)
+            Length 3 coordinate of the start of the line.
+
+        pointb : iterable(float)
+            Length 3 coordinate of the end of the line.
+
+        tolerance : float, optional
+            The absolute tolerance to use to find cells along line.
+
+        Returns
+        -------
+        numpy.ndarray
+            Index or indices of the cell in this mesh that are closest
+            to the given point.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> index = mesh.find_cells_along_line([0, 0, 0], [0, 0, 1.0])
+
+        """
+        if np.array(pointa).size != 3:
+            raise TypeError("Point A must be a length three tuple of floats.")
+        if np.array(pointb).size != 3:
+            raise TypeError("Point B must be a length three tuple of floats.")
+        locator = _vtk.vtkCellLocator()
+        locator.SetDataSet(self)
+        locator.BuildLocator()
+        id_list = _vtk.vtkIdList()
+        locator.FindCellsAlongLine(pointa, pointb, tolerance, id_list)
+        return vtk_id_list_to_array(id_list)
+
+    def find_cells_within_bounds(self, bounds: Iterable[float]) -> np.ndarray:
+        """Find the index of cells in this mesh within bounds.
+
+        Parameters
+        ----------
+        bounds : iterable(float)
+            Bounding box. The form is: ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+
+        Returns
+        -------
+        numpy.ndarray
+            Index or indices of the cell in this mesh that are closest
+            to the given point.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> index = mesh.find_cells_within_bounds([-2.0, 2.0, -2.0, 2.0, -2.0, 2.0])
+
+        """
+        if np.array(bounds).size != 6:
+            raise TypeError("Bounds must be a length three tuple of floats.")
+        locator = _vtk.vtkCellTreeLocator()
+        locator.SetDataSet(self)
+        locator.BuildLocator()
+        id_list = _vtk.vtkIdList()
+        locator.FindCellsWithinBounds(list(bounds), id_list)
+        return vtk_id_list_to_array(id_list)
 
     def cell_n_points(self, ind: int) -> int:
         """Return the number of points in a cell.

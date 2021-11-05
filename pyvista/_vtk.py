@@ -121,6 +121,7 @@ if VTK9:
                                                vtkPlaneCollection,
                                                vtkDataSet,
                                                vtkPointLocator,
+                                               vtkGenericCell,
                                                vtkCellLocator,
                                                vtkStaticCellLocator,
                                                vtkMultiBlockDataSet,
@@ -228,7 +229,8 @@ if VTK9:
                                           vtkLookupTable,
                                           VTK_UNSIGNED_CHAR,
                                           vtkAbstractArray,
-                                          vtkDoubleArray)
+                                          vtkDoubleArray,
+                                          mutable)
     from vtkmodules.vtkCommonMath import (vtkMatrix4x4,
                                           vtkMatrix3x3)
     from vtkmodules.vtkCommonTransforms import vtkTransform
@@ -273,6 +275,7 @@ if VTK9:
                                               vtkClipClosedSurface,
                                               vtkIntersectionPolyDataFilter,
                                               vtkCurvatures,
+                                              vtkCursor3D,
                                               vtkBoxClipDataSet,
                                               vtkWarpScalar,
                                               vtkWarpVector,
@@ -281,7 +284,8 @@ if VTK9:
                                               vtkShrinkFilter,
                                               vtkBooleanOperationPolyDataFilter,
                                               vtkTransformFilter,
-                                              vtkAxes)
+                                              vtkAxes,
+                                              vtkCellTreeLocator)
     from vtkmodules.vtkFiltersModeling import (vtkOutlineFilter,
                                                vtkRibbonFilter,
                                                vtkLinearExtrusionFilter,
@@ -309,6 +313,7 @@ if VTK9:
                                               vtkDiskSource,
                                               vtkRegularPolygonSource,
                                               vtkPointSource,
+                                              vtkPlatonicSolidSource,
                                               vtkFrustumSource)
     from vtkmodules.vtkFiltersGeometry import (vtkGeometryFilter,
                                                vtkStructuredGridGeometryFilter,
