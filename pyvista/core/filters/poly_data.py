@@ -377,7 +377,9 @@ class PolyDataFilters(DataSetFilters):
 
         append_filter = pyvista._vtk.vtkAppendPolyData()
 
-        if not main_has_priority:
+        # note: unlike DataSetFilters.merge, we must put the
+        # "to be preserved" dataset last due to the call to clean()
+        if main_has_priority:
             append_filter.AddInputData(self)
 
         if isinstance(dataset, pyvista.DataSet):
@@ -386,7 +388,7 @@ class PolyDataFilters(DataSetFilters):
             for data in dataset:
                 append_filter.AddInputData(data)
 
-        if main_has_priority:
+        if not main_has_priority:
             append_filter.AddInputData(self)
 
         _update_alg(append_filter, progress_bar, 'Merging')

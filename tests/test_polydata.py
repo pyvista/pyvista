@@ -342,15 +342,23 @@ def test_merge(sphere, sphere_shifted, hexbeam):
 
     # test main_has_priority
     mesh = sphere.copy()
-    data_main = np.arange(float(mesh.n_points))
+    data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
     other = mesh.copy()
-    data_other = np.zeros(mesh.n_points)
+    data_other = - data_main
     other.point_data['present_in_both'] = data_other
     merged = mesh.merge(other, main_has_priority=True)
-    assert np.array_equal(merged.point_data['present_in_both'], data_main)
+    # note: order of points can change after point merging
+    def matching_point_data(this, that, scalars_name):
+        """Return True if scalars on two meshes only differ by point order."""
+        return all(
+            new_val == this.point_data[scalars_name][j]
+            for point, new_val in zip(that.points, that.point_data[scalars_name])
+            for j in (this.points == point).all(-1).nonzero()
+        )
+    assert matching_point_data(merged, mesh, 'present_in_both')
     merged = mesh.merge(other, main_has_priority=False)
-    assert np.array_equal(merged.point_data['present_in_both'], data_other)
+    assert matching_point_data(merged, other, 'present_in_both')
 
 
 def test_add(sphere, sphere_shifted):
