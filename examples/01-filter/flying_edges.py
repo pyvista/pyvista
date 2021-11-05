@@ -7,8 +7,6 @@ Marching Cubes
 Generate a surface from a scalar field using the flying edges and
 marching cubes algorithms.
 
-Special thanks to <contribitor> for developing the scalar functions.
-
 """
 import pyvista as pv
 import numpy as np
@@ -65,7 +63,7 @@ def barth_sextic(x, y, z):
     y2 = y * y
     z2 = z * z
     arr = (
-        3.75 * (phi2 * x2 - y2) * (phi2 * y2 - z2) * (phi2 * z2 - x2)
+        3 * (phi2 * x2 - y2) * (phi2 * y2 - z2) * (phi2 * z2 - x2)
         - (1 + 2 * phi) * (x2 + y2 + z2 - 1)**2
     )
     nan_mask = x2 + y2 + z2 > 3.1
@@ -100,21 +98,21 @@ mesh.plot(
 # function.
 
 def angle_to_range(angle):
-    return 0.9 - 2*np.sin(angle)
+    return -2*np.sin(angle)
 
 mesh = grid.contour(
     1, values, method='marching_cubes', rng=[angle_to_range(0), 0]
 )
 dist = np.linalg.norm(mesh.points, axis=1)
 
-pl = pv.Plotter(off_screen=True)
+pl = pv.Plotter()
 pl.add_mesh(
     mesh, scalars=dist, smooth_shading=True, specular=5, rng=[0.5, 1.5],
     cmap="plasma", show_scalar_bar=False,
 )
-pl.open_gif('/tmp/tmp.gif')
+pl.open_gif('barth_sextic.gif')
 
-for angle in np.linspace(0, np.pi, 15)[:-1]:
+for angle in np.linspace(0, 2*np.pi, 15)[:-1]:
     new_mesh = grid.contour(
         1, values, method='marching_cubes', rng=[angle_to_range(angle), 0]
     )
