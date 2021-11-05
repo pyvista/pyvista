@@ -5,7 +5,11 @@ Marching Cubes
 ~~~~~~~~~~~~~~
 
 Generate a surface from a scalar field using the flying edges and
-marching cubes algorithms.
+marching cubes filters as provided by the `contour
+<pyvista.core.filters.data_set.DataSetFilters.contour>` filter.
+
+Special thanks to GitHub user `stla <https://gist.github.com/stla>`
+for providing examples.
 
 """
 import pyvista as pv
@@ -112,7 +116,7 @@ pl.add_mesh(
 )
 pl.open_gif('barth_sextic.gif')
 
-for angle in np.linspace(0, 2*np.pi, 15)[:-1]:
+for angle in np.linspace(0, np.pi, 15)[:-1]:
     new_mesh = grid.contour(
         1, values, method='marching_cubes', rng=[angle_to_range(angle), 0]
     )

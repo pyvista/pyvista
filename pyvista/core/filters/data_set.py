@@ -1303,7 +1303,7 @@ class DataSetFilters:
         ...         - a * b * xx_yy
         ...     )**2 - 4 * (xx + yy) * (a_xx + b_yy - xyz * (a - b))**2
         >>> n = 100
-        >>> x_min, y_min, z_min = -1.4, -1.2, -0.34
+        >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
         >>> grid = pv.UniformGrid(
         ...     (n, n, n),
         ...     (abs(x_min)/n*2, abs(y_min)/n*2, abs(z_min)/n*2),
