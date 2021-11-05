@@ -336,9 +336,21 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
 
     # test in-place merge
-    mesh = sphere
+    mesh = sphere.copy()
     merged = mesh.merge(sphere_shifted, inplace=True)
     assert merged is mesh
+
+    # test main_has_priority
+    mesh = sphere.copy()
+    data_main = np.arange(float(mesh.n_points))
+    mesh.point_data['present_in_both'] = data_main
+    other = mesh.copy()
+    data_other = np.zeros(mesh.n_points)
+    other.point_data['present_in_both'] = data_other
+    merged = mesh.merge(other, main_has_priority=True)
+    assert np.array_equal(merged.point_data['present_in_both'], data_main)
+    merged = mesh.merge(other, main_has_priority=False)
+    assert np.array_equal(merged.point_data['present_in_both'], data_other)
 
 
 def test_add(sphere, sphere_shifted):
