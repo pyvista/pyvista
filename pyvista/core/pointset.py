@@ -902,7 +902,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     Can be initialized by the following:
 
     - Creating an empty grid
-    - From a vtk.vtkPolyData object
+    - From a ``vtk.vtkPolyData`` or ``vtk.vtkStructuredGrid`` object
     - From cell, offset, and node arrays
     - From a file
 
@@ -953,7 +953,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
 
-            elif isinstance(args[0], _vtk.vtkStructuredGrid):
+            elif isinstance(args[0], (_vtk.vtkStructuredGrid, _vtk.vtkPolyData)):
                 vtkappend = _vtk.vtkAppendFilter()
                 vtkappend.AddInputData(args[0])
                 vtkappend.Update()
@@ -1192,6 +1192,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Examples
         --------
         Return the cell connectivity for the first two cells.
+
         >>> import pyvista
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)

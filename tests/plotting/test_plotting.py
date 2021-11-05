@@ -676,6 +676,8 @@ def test_make_movie(sphere):
 
 def test_add_legend(sphere):
     plotter = pyvista.Plotter()
+    with pytest.raises(TypeError):
+        plotter.add_mesh(sphere, label=2)
     plotter.add_mesh(sphere)
     with pytest.raises(ValueError):
         plotter.add_legend()
@@ -683,34 +685,6 @@ def test_add_legend(sphere):
     plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
                        size=[0.1, 0.1])
     plotter.show(before_close_callback=verify_cache_image)
-
-
-def test_legend_origin(sphere):
-    """Ensure the origin parameter of `add_legend` affects origin position."""
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    origin = [0, 0]
-    legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
-                                size=[0.1, 0.1], origin=origin)
-    assert list(origin) == list(legend.GetPosition())
-
-
-def test_bad_legend_origin_and_size(sphere):
-    """Ensure bad parameters to origin/size raise ValueErrors."""
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    # test incorrect lengths
-    with pytest.raises(ValueError, match='origin'):
-        plotter.add_legend(labels=legend_labels, origin=(1, 2, 3))
-    with pytest.raises(ValueError, match='size'):
-        plotter.add_legend(labels=legend_labels, size=[])
-    # test non-sequences also raise
-    with pytest.raises(ValueError, match='origin'):
-        plotter.add_legend(labels=legend_labels, origin=len)
-    with pytest.raises(ValueError, match='size'):
-        plotter.add_legend(labels=legend_labels, size=type)
 
 
 def test_legend_circle_face(sphere):
@@ -741,6 +715,22 @@ def test_legend_invalid_face(sphere):
     with pytest.raises(ValueError):
         legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
                                     size=[0.1, 0.1], face=face)
+
+
+def test_legend_subplots(sphere, cube):
+    plotter = pyvista.Plotter(shape=(1, 2))
+    plotter.add_mesh(sphere, 'blue', smooth_shading=True, label='Sphere')
+    assert plotter.legend is None
+    plotter.add_legend(bcolor='w')
+    assert isinstance(plotter.legend, vtk.vtkActor2D)
+
+    plotter.subplot(0, 1)
+    plotter.add_mesh(cube, 'r', label='Cube')
+    assert plotter.legend is None
+    plotter.add_legend(bcolor='w')
+    assert isinstance(plotter.legend, vtk.vtkActor2D)
+
+    plotter.show(before_close_callback=verify_cache_image)
 
 
 def test_add_axes_twice():
@@ -2009,3 +1999,18 @@ def test_add_cursor():
     plotter.add_mesh(sphere)
     plotter.add_cursor()
     plotter.show(before_close_callback=verify_cache_image)
+
+def test_enable_stereo_render():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    pl.camera.distance = 0.1
+    pl.enable_stereo_render()
+    pl.show(before_close_callback=verify_cache_image)
+
+def test_disable_stereo_render():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    pl.camera.distance = 0.1
+    pl.enable_stereo_render()
+    pl.disable_stereo_render()
+    pl.show(before_close_callback=verify_cache_image)

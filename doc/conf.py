@@ -283,6 +283,16 @@ todo_include_todos = False
 # -- Sphinx Gallery Options
 from sphinx_gallery.sorting import FileNameSortKey
 
+
+def reset_pyvista(gallery_conf, fname):
+    """Reset pyvista module to default settings
+
+    If default documentation settings are modified in any example, reset here.
+    """
+    import pyvista
+    pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+
+
 sphinx_gallery_conf = {
     # convert rst to md for ipynb
     "pypandoc": True,
@@ -305,9 +315,8 @@ sphinx_gallery_conf = {
         "%matplotlib inline\n"
         "from pyvista import set_plot_theme\n"
         "set_plot_theme('document')\n"
-        # Reset all values of wrapping `vtkPolyData` in examples
-        "pyvista._wrappers['vtkPolyData'] = pyvista.PolyData\n"
     ),
+    "reset_modules": (reset_pyvista, ),
 }
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
