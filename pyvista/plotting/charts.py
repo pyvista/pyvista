@@ -61,9 +61,12 @@ class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
 class DocSubs:
     """Helper class to easily substitute the docstrings of the listed member functions or properties."""
 
-    _DOC_SUBS = {}  # The substitutions to use for this (sub)class
-    _DOC_MEMS = []  # The member functions/properties for which the docstrings should be substituted in subsequent subclasses.
-    _DOC_STORE = {}  # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
+    # The substitutions to use for this (sub)class
+    _DOC_SUBS = {}  # type: ignore
+    # The member functions/properties for which the docstrings should be substituted in subsequent subclasses.
+    _DOC_MEMS = []  # type: ignore
+    # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
+    _DOC_STORE = {}  # type: ignore
 
     def __init_subclass__(cls, **kwargs):
         """Initialize subclasses."""
@@ -937,7 +940,8 @@ class _ChartBackground(_CustomContextItem):
 class _Chart(DocSubs):
     """Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances."""
 
-    _DOC_SUBS = None  # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
+    # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
+    _DOC_SUBS = None  # type: ignore
     _DOC_MEMS = ["size", "loc", "border_color", "border_width", "border_style", "background_color", "background_texture",
                  "visible", "toggle", "title", "legend_visible", "show"]
 
@@ -1317,7 +1321,8 @@ class _Chart(DocSubs):
 class _Plot(DocSubs):
     """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
 
-    _DOC_SUBS = None  # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
+    # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
+    _DOC_SUBS = None  # type: ignore
     _DOC_MEMS = ["color", "pen", "brush", "line_width", "line_style", "label", "visible", "toggle"]
 
     def __init__(self):
@@ -1589,7 +1594,8 @@ class _MultiCompPlot(_Plot):
     _SCHEME_NAMES = {scheme_info["id"]: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()}
     DEFAULT_COLOR_SCHEME = "qual_accent"
 
-    _DOC_SUBS = None  # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
+    # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
+    _DOC_SUBS = None  # type: ignore
     _DOC_MEMS = ["color_scheme", "colors", "color", "labels", "label"]
 
     def __init__(self):
