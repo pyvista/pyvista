@@ -39,15 +39,8 @@ try:
 except:
     ffmpeg_failed = True
 
-try:
-    from vtkmodules.vtkCommonCore import vtkVersion
-    vtk_dev = len(str(vtkVersion().GetVTKBuildVersion())) > 2
-except:
-    vtk_dev = False
-
 # These tests fail with mesa opengl on windows
-skip_windows_dev_whl = pytest.mark.skipif(os.name == 'nt' and vtk_dev,
-                                          reason='Test fails on Windows with VTK dev wheels')
+skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 
 # Reset image cache with new images
@@ -183,7 +176,7 @@ def test_export_gltf(tmpdir, sphere, airplane):
 
 
 @skip_not_vtk9
-@skip_windows_dev_whl
+@skip_windows
 @pytest.mark.skipif(AZURE_CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere):
     """Test PBR rendering"""
@@ -1324,7 +1317,7 @@ def test_subplot_groups_fail():
         pyvista.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
 
-@skip_windows_dev_whl
+@skip_windows
 def test_link_views(sphere):
     plotter = pyvista.Plotter(shape=(1, 4))
     plotter.subplot(0, 0)
