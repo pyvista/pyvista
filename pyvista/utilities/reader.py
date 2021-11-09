@@ -1,8 +1,9 @@
 """Fine-grained control of reading data files."""
+import functools
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-import os
-from typing import Any, List
+from typing import Any
 from xml.etree import ElementTree
 
 import pyvista
@@ -164,7 +165,6 @@ class BaseReader:
         """Set filename and update reader."""
         # Private method since changing file type requires a
         # different subclass.
-        self.filename = filename
         self.reader.SetFileName(filename)
         self._update_information()
 
@@ -565,6 +565,8 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
+
+
 class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     """EnSight Reader for .case files.
 
@@ -1447,7 +1449,8 @@ class PVDReader(BaseReader, TimeReader):
                 )
             )
         self._datasets = sorted(datasets)
-        self._time_values = sorted(list(set([dataset.time for dataset in self.datasets])))
+        self._time_values = sorted(
+            list(set([dataset.time for dataset in self.datasets])))
 
         self.set_active_time_value(self.time_values[0])
 
@@ -1478,29 +1481,57 @@ class PVDReader(BaseReader, TimeReader):
         self.set_active_time_value(self.time_values[time_point])
 
 
+class DICOMReader(BaseReader):
+    """DICOM Reader for reading .dcm files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> filename = examples.download_pancreas(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+    """
+
+    _class_reader = _vtk.vtkDICOMImageReader
+
+    def _set_filename(self, filename):
+        """Set filename and update reader."""
+        # Private method since changing file type requires a
+        # different subclass.
+        self.filename = filename
+
+        if os.path.isfile(filename):
+            self.reader.SetFileName(filename)
+        elif os.path.isdir(filename):
+            self.reader.SetDirectoryName(filename)
+
+        self._update_information()
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.cgns': CGNSReader,
-    '.vti': XMLImageDataReader,
+    '.case': EnSightReader,
+    '.facet': FacetReader,
+    '.foam': OpenFOAMReader,
+    '.g': BYUReader,
+    '.obj': OBJReader,
+    '.p3d': Plot3DMetaReader,
+    '.ply': PLYReader,
+    '.pvd': PVDReader,
     '.pvti': XMLPImageDataReader,
-    '.vtr': XMLRectilinearGridReader,
+    '.pvtk': VTKPDataSetReader,
     '.pvtr': XMLPRectilinearGridReader,
-    '.vtu': XMLUnstructuredGridReader,
     '.pvtu': XMLPUnstructuredGridReader,
-    '.vtp': XMLPolyDataReader,
-    '.vts': XMLStructuredGridReader,
+    '.stl': STLReader,
+    '.tri': BinaryMarchingCubesReader,
+    '.vti': XMLImageDataReader,
+    '.vtk': VTKDataSetReader,
     '.vtm': XMLMultiBlockDataReader,
     '.vtmb': XMLMultiBlockDataReader,
-    '.case': EnSightReader,
-    '.foam': OpenFOAMReader,
-    '.ply': PLYReader,
-    '.obj': OBJReader,
-    '.stl': STLReader,
-    '.vtk': VTKDataSetReader,
-    '.pvtk': VTKPDataSetReader,
-    '.g': BYUReader,
-    '.facet': FacetReader,
-    '.p3d': Plot3DMetaReader,
-    '.tri': BinaryMarchingCubesReader,
-    '.pvd': PVDReader,
+    '.vtp': XMLPolyDataReader,
+    '.vtr': XMLRectilinearGridReader,
+    '.vts': XMLStructuredGridReader,
+    '.vtu': XMLUnstructuredGridReader,
 }

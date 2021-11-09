@@ -16,9 +16,11 @@ import os
 import shutil
 from urllib.request import urlretrieve
 import zipfile
+from functools import partial
+from typing import Union
+from urllib.request import urlretrieve
 
 import numpy as np
-
 import pyvista
 from pyvista import _vtk
 
@@ -90,7 +92,8 @@ def _retrieve_file(retriever, filename):
     """
     _check_examples_path()
     # First check if file has already been downloaded
-    local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
+    local_path = os.path.join(pyvista.EXAMPLES_PATH,
+                              os.path.basename(filename))
     local_path_no_zip = local_path.replace('.zip', '')
     if os.path.isfile(local_path_no_zip) or os.path.isdir(local_path_no_zip):
         return local_path_no_zip, None
@@ -3346,7 +3349,8 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
     See :ref:`2d_streamlines_example` for an example using this dataset.
 
     """
-    filename, _ = _download_file('EnSight/CylinderCrossflow/cylinder_Re35.case')
+    filename, _ = _download_file(
+        'EnSight/CylinderCrossflow/cylinder_Re35.case')
     _download_file('EnSight/CylinderCrossflow/cylinder_Re35.geo')
     _download_file('EnSight/CylinderCrossflow/cylinder_Re35.scl1')
     _download_file('EnSight/CylinderCrossflow/cylinder_Re35.scl2')
@@ -3706,3 +3710,59 @@ def download_cgns_multi(load=True):  # pragma: no cover
     if not load:
         return filename
     return pyvista.get_reader(filename).read()
+
+def download_pancreas(load: bool = True) -> Union[pyvista.UniformGrid, str]:  # pragma: no cover
+    """Download TCIA pancreas volume.
+
+    Original download from the `The Cancer Imaging Archive (TCIA)
+    <https://www.cancerimagingarchive.net/>`_. This is part of the
+    Pancreatic-CT-CBCT-SEG collection.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UniformGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_pancreas()  # doctest:+SKIP
+
+    Citations
+    ---------
+    [1] Hong, J., Reyngold, M., Crane, C., Cuaron, J., Hajj, C., Mann, J., Zinovoy, M.,
+          Yorke, E., LoCastro, E., Apte, A. P., & Mageras, G. (2021). Breath-hold CT and
+          cone-beam CT images with expert manual organ-at-risk segmentations from
+          radiation treatments of locally advanced pancreatic cancer [Data set].
+          The Cancer Imaging Archive. https://doi.org/10.7937/TCIA.ESHQ-4D90
+
+    [2] Han, X., Hong, J., Reyngold, M., Crane, C., Cuaron, J., Hajj, C., Mann, J.,
+          Zinovoy, M., Greer, H., Yorke, E., Mageras, G., & Niethammer, M. (2021).
+          Deep‐learning‐based image registration and automatic segmentation of
+          organs‐at‐risk in cone‐beam CT scans from high‐dose radiation treatment of
+          pancreatic cancer. Medical Physics, 48(6), 3084–3095.
+          https://doi.org/10.1002/mp.14906
+
+    [3] Clark K, Vendt B, Smith K, Freymann J, Kirby J, Koppel P, Moore S, Phillips S,
+          Maffitt D, Pringle M, Tarbox L, Prior F. The Cancer Imaging Archive (TCIA):
+          Maintaining and Operating a Public Information Repository, Journal of Digital
+          Imaging, Volume 26, Number 6, December, 2013, pp 1045-1057.
+          https://doi.org/10.1007/s10278-013-9622-7
+    """
+    # Until `pyvista/vtk-data` PR #5 added
+    retriever = partial(
+        _repo_file_request,
+        os.path.expanduser(r'~\Code\external\vtk-data'),
+        'DICOM_Stack',
+    )
+    folder, _ = _retrieve_file(retriever, 'DICOM_Stack')
+    if not load:
+        return folder
+    return pyvista.DICOMReader(folder).read()
+    # return _download_and_read('pancreas')

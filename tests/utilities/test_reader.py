@@ -17,6 +17,7 @@ def test_get_reader_fail():
         pyvista.get_reader("not_a_supported_file.no_data")
 
 
+
 def test_xmlimagedatareader(tmpdir):
     tmpfile = tmpdir.join("temp.vti")
     mesh = pyvista.UniformGrid()
@@ -123,7 +124,8 @@ def test_reader_cell_point_data(tmpdir):
     assert reader.cell_array_status('id') is False
 
     reader.disable_all_point_arrays()
-    assert reader.all_point_arrays_status == {'Normals': False, 'height': False}
+    assert reader.all_point_arrays_status == {
+        'Normals': False, 'height': False}
 
     reader.enable_all_cell_arrays()
     assert reader.cell_array_status('id') is True
@@ -231,6 +233,16 @@ def test_ensightreader_timepoints():
 
     reader.set_active_time_point(0)
     assert reader.active_time_value == 1.0
+
+
+def test_dcmreader():
+    filename = examples.download_pancreas(load=False)
+    reader = pyvista.get_reader(filename)
+    assert isinstance(reader, pyvista.DICOMReader)
+    assert reader.filename == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
 
 
 def test_plyreader():
@@ -358,7 +370,8 @@ def test_pvdreader():
 
 
 def test_pvdreader_no_time_group():
-    examples.download_dual_sphere_animation(load=False)  # download all the files
+    examples.download_dual_sphere_animation(
+        load=False)  # download all the files
     # Use a pvd file that has no timestep or group and two parts.
     filename, _ = _download_file('PVD/paraview/dualSphereNoTime.pvd')
     reader = pyvista.PVDReader(filename)
