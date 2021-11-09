@@ -236,13 +236,9 @@ def test_ensightreader_timepoints():
 
 
 def test_dcmreader():
-    filename = examples.download_pancreas(load=False)
-    reader = pyvista.get_reader(filename)
-    assert isinstance(reader, pyvista.DICOMReader)
-    assert reader.filename == filename
+    pancreas = examples.download_pancreas()
 
-    mesh = reader.read()
-    assert all([mesh.n_points, mesh.n_cells])
+    assert all([pancreas.n_points, pancreas.n_cells])
 
 
 def test_plyreader():
