@@ -2873,7 +2873,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        views : int | tuple or list
+        views : int | Plotter | tuple or list of ints | tuple or list of Plotters
             If ``views`` is int, link the views to the given view
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
@@ -2883,13 +2883,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 renderer.camera = self.renderers[views].camera
             return
+        elif issubclass(views.__class__, pyvista.plotting.BasePlotter):
+            for renderer in views.renderers:
+                renderer.camera = self.renderers[0].camera
+            return
+
         views = np.asarray(views)
         if np.issubdtype(views.dtype, np.integer):
             for view_index in views:
                 self.renderers[view_index].camera = \
                     self.renderers[views[0]].camera
+        elif all([issubclass(view.__class__, pyvista.plotting.BasePlotter) for view in views]):
+            for plotter in views:
+                for renderer in plotter.renderers:
+                    renderer.camera = self.renderers[0].camera
         else:
-            raise TypeError('Expected type is int, list or tuple:'
+            raise TypeError('Expected type is int, Plotter, or list or tuple of ints or Plotters:'
                             f'{type(views)} is given')
 
     def unlink_views(self, views=None):
