@@ -79,16 +79,11 @@ if 'PYVISTA_USERDATA_PATH' in os.environ:
 else:
     # Set up data directory
     USER_DATA_PATH = appdirs.user_data_dir('pyvista')
-    if not os.path.exists(USER_DATA_PATH):
-        os.makedirs(USER_DATA_PATH)
+    os.makedirs(USER_DATA_PATH, exist_ok=True)
 
 try:
     EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
-    if not os.path.exists(EXAMPLES_PATH):
-        try:
-            os.makedirs(EXAMPLES_PATH)
-        except FileExistsError:  # Edge case due to IO race conditions
-            pass
+    os.makedirs(EXAMPLES_PATH, exist_ok=True)
 except Exception as e:
     warnings.warn(f'Unable to create `EXAMPLES_PATH` at "{EXAMPLES_PATH}"\n'
                   f'Error: {e}\n\n'
