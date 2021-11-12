@@ -77,9 +77,9 @@ if 'PYVISTA_USERDATA_PATH' in os.environ:
         raise FileNotFoundError(f'Invalid PYVISTA_USERDATA_PATH at {USER_DATA_PATH}')
 
 else:
+    USER_DATA_PATH = appdirs.user_data_dir('pyvista')
     try:
         # Set up data directory
-        USER_DATA_PATH = appdirs.user_data_dir('pyvista')
         os.makedirs(USER_DATA_PATH, exist_ok=True)
     except Exception as e:
         warnings.warn(f'Unable to create `PYVISTA_USERDATA_PATH` at "{USER_DATA_PATH}"\n'
@@ -88,8 +88,8 @@ else:
                       '`PYVISTA_USERDATA_PATH` to a writable path.')
         USER_DATA_PATH = ''
 
+EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
 try:
-    EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
     os.makedirs(EXAMPLES_PATH, exist_ok=True)
 except Exception as e:
     warnings.warn(f'Unable to create `EXAMPLES_PATH` at "{EXAMPLES_PATH}"\n'
