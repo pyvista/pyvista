@@ -77,18 +77,20 @@ if 'PYVISTA_USERDATA_PATH' in os.environ:
         raise FileNotFoundError(f'Invalid PYVISTA_USERDATA_PATH at {USER_DATA_PATH}')
 
 else:
-    # Set up data directory
     USER_DATA_PATH = appdirs.user_data_dir('pyvista')
-    if not os.path.exists(USER_DATA_PATH):
-        os.makedirs(USER_DATA_PATH)
+    try:
+        # Set up data directory
+        os.makedirs(USER_DATA_PATH, exist_ok=True)
+    except Exception as e:
+        warnings.warn(f'Unable to create `PYVISTA_USERDATA_PATH` at "{USER_DATA_PATH}"\n'
+                      f'Error: {e}\n\n'
+                      'Override the default path by setting the environmental variable '
+                      '`PYVISTA_USERDATA_PATH` to a writable path.')
+        USER_DATA_PATH = ''
 
+EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
 try:
-    EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
-    if not os.path.exists(EXAMPLES_PATH):
-        try:
-            os.makedirs(EXAMPLES_PATH)
-        except FileExistsError:  # Edge case due to IO race conditions
-            pass
+    os.makedirs(EXAMPLES_PATH, exist_ok=True)
 except Exception as e:
     warnings.warn(f'Unable to create `EXAMPLES_PATH` at "{EXAMPLES_PATH}"\n'
                   f'Error: {e}\n\n'
