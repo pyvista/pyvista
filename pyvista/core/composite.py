@@ -80,7 +80,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)
-        self.refs: Any = []
 
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkMultiBlockDataSet):
@@ -100,9 +99,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
                     idx += 1
             else:
                 raise TypeError(f'Type {type(args[0])} is not supported by pyvista.MultiBlock')
-
-            # keep a reference of the args
-            self.refs.append(args)
         elif len(args) > 1:
             raise ValueError('Invalid number of arguments:\n``pyvista.MultiBlock``'
                              'supports 0 or 1 arguments.')
@@ -465,7 +461,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if name is None:
             name = f'Block-{i:02}'
         self.set_block_name(i, name) # Note that this calls self.Modified()
-        self.refs.append(data)
 
     def __delitem__(self, index: Union[int, str]):
         """Remove a block at the specified index."""
