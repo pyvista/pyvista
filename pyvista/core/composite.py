@@ -310,8 +310,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             return data
         if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
-        if data not in self.refs:
-            self.refs.append(data)
         return data
 
     def append(self, dataset: DataSet):
@@ -334,7 +332,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """
         index = self.n_blocks  # note off by one so use as index
         self[index] = dataset
-        self.refs.append(dataset)
 
     def get(self, index: Union[int, str]) -> Optional['MultiBlock']:
         """Get a block by its index or name.
@@ -468,8 +465,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if name is None:
             name = f'Block-{i:02}'
         self.set_block_name(i, name) # Note that this calls self.Modified()
-        if data not in self.refs:
-            self.refs.append(data)
+        self.refs.append(data)
 
     def __delitem__(self, index: Union[int, str]):
         """Remove a block at the specified index."""
