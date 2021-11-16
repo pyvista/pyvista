@@ -2681,6 +2681,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         self.SetAutoSize(False)  # We manually set the appropriate size
         # self.SetAxis(_vtk.vtkAxis.BOTTOM, self._x_axis)  # Disabled for now and replaced by a wrapper object, as for
         # self.SetAxis(_vtk.vtkAxis.LEFT, self._y_axis)  # some reason vtkChartXY.SetAxis(...) causes a crash at the end
+        # TODO: fix for above issue, once the VTK PR (!8618) is merged:
+        #  self.Register(self._x_axis)
+        #  self.Register(self._y_axis)
         self._x_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.BOTTOM))  # of the script's execution (nonzero exit code)
         self._y_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.LEFT))
         self.x_label = x_label
@@ -3842,7 +3845,7 @@ class _Chart3D(_vtk.vtkChartXYZ, _Chart):
 
     @property
     def _geometry(self):
-        # TODO: replace by self.GetGeometry() once properly supported by vtk
+        # Can probably be replaced/tested by (self.GetMarginLeft(), self.GetMarginBottom(), self.GetPlotWidth(), self.GetPlotHeight())
         return self._geom
 
     @_geometry.setter

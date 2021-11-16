@@ -224,22 +224,15 @@ def test_axis(chart2D):
     assert axis.GetMargins()[0] == m
 
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
-    chart2D.show()  # TODO: find alternative to update all chart properties without plotting (not sure if possible though)
+    chart2D.show()  # We have to call show to update all chart properties (calls Update and Paint methods of chart/plot objects).
     assert axis.log_scale
     assert axis.GetLogScaleActive()
     axis.log_scale = False
     chart2D.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
-    # TODO: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed
-    #  probably a vtk issue. Minimum code to reproduce:
-    #   chart = pyvista.Chart2D()
-    #   chart.line([0, 1], [-10, 10])
-    #   axis = chart.y_axis
-    #   axis.range = [2, 5]
-    #   axis.behavior = "auto"
-    #   axis.log_scale = True
-    #   chart.show()
+    # TODO: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
+    #  This is a VTK issue that will be fixed once PR (!8618) is merged.
     chart2D.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
     axis.log_scale = True
     chart2D.show()
