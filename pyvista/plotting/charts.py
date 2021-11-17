@@ -472,6 +472,29 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetTitleVisible(bool(val))
 
     @property
+    def label_size(self):
+        """Return or set the size of the axis label font.
+
+        Examples
+        --------
+        Set the x-axis label font size of a 2D chart to 20
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_axis.label_size = 20
+        >>> chart.x_axis.label_size
+        20
+        >>> chart.show()
+
+        """
+        return self.GetLabelProperties().GetFontSize()
+
+    @label_size.setter
+    def label_size(self, size):
+        self.GetLabelProperties().SetFontSize(size)
+
+    @property
     def range(self):
         """Return or set the axis range.
 
@@ -529,7 +552,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
         >>> chart.x_axis.behavior = "auto"
         >>> chart.show()
-        >>> print(chart.x_axis.range)
+        >>> chart.x_axis.range
         [0.0, 2.0]
 
         """
@@ -595,8 +618,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
         >>> chart.y_axis.log_scale = True
         >>> chart.show()
-        >>> print(f"Enabling log scale {'succeeded' if chart.y_axis.log_scale else 'failed'}.")
-        Enabling log scale succeeded.
+        >>> chart.y_axis.log_scale
+        True
 
         """
         return self.GetLogScaleActive()

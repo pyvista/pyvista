@@ -34,66 +34,60 @@ def pl():
 
 
 @pytest.fixture
-def chart2D():
-    chart = pyvista.Chart2D()
-    return chart
+def chart_2d():
+    return pyvista.Chart2D()
 
 
 @pytest.fixture
-def chartBox():
+def chart_box():
     return pyvista.ChartBox([[1, 2, 3]])
 
 
 @pytest.fixture
-def chartPie():
+def chart_pie():
     return pyvista.ChartPie([1, 2, 3])
 
 
 @pytest.fixture
-def chartMPL():
+def chart_mpl():
     f, ax = plt.subplots()
     ax.plot([0, 1, 2], [3, 1, 2])
     return pyvista.ChartMPL(f)
 
 
 @pytest.fixture
-def linePlot2D(chart2D):
-    plot = chart2D.line([0, 1, 2], [3, 1, 2])
-    return plot
+def line_plot_2d(chart_2d):
+    return chart_2d.line([0, 1, 2], [3, 1, 2])
 
 
 @pytest.fixture
-def scatterPlot2D(chart2D):
-    plot = chart2D.scatter([0, 1, 2], [3, 1, 2])
-    return plot
+def scatter_plot_2d(chart_2d):
+    return chart_2d.scatter([0, 1, 2], [3, 1, 2])
 
 
 @pytest.fixture
-def areaPlot(chart2D):
-    plot = chart2D.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
-    return plot
+def area_plot(chart_2d):
+    return chart_2d.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
 
 
 @pytest.fixture
-def barPlot(chart2D):
-    plot = chart2D.bar([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
-    return plot
+def bar_plot(chart_2d):
+    return chart_2d.bar([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
 
 
 @pytest.fixture
-def stackPlot(chart2D):
-    plot = chart2D.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
-    return plot
+def stack_plot(chart_2d):
+    return chart_2d.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
 
 
 @pytest.fixture
-def boxPlot(chartBox):
-    return chartBox.plot
+def box_plot(chart_box):
+    return chart_box.plot
 
 
 @pytest.fixture
-def piePlot(chartPie):
-    return chartPie.plot
+def pie_plot(chart_pie):
+    return chart_pie.plot
 
 
 def test_pen():
@@ -174,7 +168,7 @@ def test_brush():
     assert brush.GetTextureProperties() & REPEAT
 
 
-def test_axis(chart2D):
+def test_axis(chart_2d):
     l = "Y axis"
     r_fix, r_auto = [2, 5], None
     m = 50
@@ -191,9 +185,9 @@ def test_axis(chart2D):
     assert axis.grid
 
     # Test properties, using the y axis of a 2D chart
-    chart2D.line([0, 1], [1, 10])
-    chart2D.show()
-    axis = chart2D.y_axis
+    chart_2d.line([0, 1], [1, 10])
+    chart_2d.show()
+    axis = chart_2d.y_axis
 
     axis.label = l
     assert axis.label == l
@@ -224,18 +218,18 @@ def test_axis(chart2D):
     assert axis.GetMargins()[0] == m
 
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
-    chart2D.show()  # We have to call show to update all chart properties (calls Update and Paint methods of chart/plot objects).
+    chart_2d.show()  # We have to call show to update all chart properties (calls Update and Paint methods of chart/plot objects).
     assert axis.log_scale
     assert axis.GetLogScaleActive()
     axis.log_scale = False
-    chart2D.show()
+    chart_2d.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
     # TODO: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
     #  This is a VTK issue that will be fixed once PR (!8618) is merged.
-    chart2D.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
+    chart_2d.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
     axis.log_scale = True
-    chart2D.show()
+    chart_2d.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
 
@@ -270,21 +264,21 @@ def test_axis(chart2D):
     assert tuple(axis.tick_labels) == tuple(tlabels)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(tlabels)
     axis.tick_labels = "2f"
-    chart2D.show()
+    chart_2d.show()
     assert tuple(axis.tick_labels) == tuple(f"{loc:.2f}" for loc in tlocs)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(f"{loc:.2f}" for loc in tlocs)
     assert axis.GetNotation() == charts.Axis.FIXED_NOTATION
     assert axis.GetPrecision() == 2
     axis.tick_labels = "4e"
     axis.tick_locations = tlocs_large  # Add some more variety to labels
-    chart2D.show()
+    chart_2d.show()
     assert tuple(axis.tick_labels) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
     assert axis.GetNotation() == charts.Axis.SCIENTIFIC_NOTATION
     assert axis.GetPrecision() == 4
     axis.tick_locations = None
     axis.tick_labels = None
-    chart2D.show()
+    chart_2d.show()
     assert np.allclose(axis.tick_locations, tlocs0)
     assert np.allclose(axis.GetTickPositions(), tlocs0)
     assert tuple(axis.tick_labels) == tuple(tlabels0)
@@ -308,7 +302,14 @@ def test_axis(chart2D):
     assert not axis.GetTicksVisible()
 
 
-@pytest.mark.parametrize("chart_f", ("chart2D", "chartBox", "chartPie", "chartMPL"))
+def test_label_font_size(chart_2d):
+    _ = chart_2d.line([0, 1, 2], [2, 1, 3])
+    font_size = 20
+    chart_2d.x_axis.label_size = font_size
+    assert chart_2d.x_axis.label_size == font_size
+
+
+@pytest.mark.parametrize("chart_f", ("chart_2d", "chart_box", "chart_pie", "chart_mpl"))
 def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
     chart = request.getfixturevalue(chart_f)
@@ -372,7 +373,7 @@ def test_chart_common(pl, chart_f, request):
     assert not chart.legend_visible
 
 
-@pytest.mark.parametrize("plot_f", ("linePlot2D", "scatterPlot2D", "areaPlot", "barPlot", "stackPlot", "boxPlot", "piePlot"))
+@pytest.mark.parametrize("plot_f", ("line_plot_2d", "scatter_plot_2d", "area_plot", "bar_plot", "stack_plot", "box_plot", "pie_plot"))
 def test_plot_common(plot_f, request):
     # Test the common plot functionalities
     plot = request.getfixturevalue(plot_f)
@@ -407,7 +408,7 @@ def test_plot_common(plot_f, request):
     assert plot.GetVisible()
 
 
-@pytest.mark.parametrize("plot_f", ("barPlot", "stackPlot", "boxPlot", "piePlot"))
+@pytest.mark.parametrize("plot_f", ("bar_plot", "stack_plot", "box_plot", "pie_plot"))
 def test_multicomp_plot_common(plot_f, request):
     # Test the common multicomp plot functionalities
     plot = request.getfixturevalue(plot_f)
@@ -464,7 +465,7 @@ def test_multicomp_plot_common(plot_f, request):
     assert plot.label == ""
 
 
-def test_lineplot2d(linePlot2D):
+def test_lineplot2d(line_plot_2d):
     x = [-2, -1, 0, 1, 2]
     y = [4, 1, 0, -1, -4]
     c = (1, 0, 1, 1)
@@ -482,12 +483,12 @@ def test_lineplot2d(linePlot2D):
     assert plot.label == l
 
     # Test remaining properties
-    linePlot2D.update(x, y)
-    assert np.allclose(linePlot2D.x, x)
-    assert np.allclose(linePlot2D.y, y)
+    line_plot_2d.update(x, y)
+    assert np.allclose(line_plot_2d.x, x)
+    assert np.allclose(line_plot_2d.y, y)
 
 
-def test_scatterplot2d(scatterPlot2D):
+def test_scatterplot2d(scatter_plot_2d):
     x = [-2, -1, 0, 1, 2]
     y = [4, 1, 0, -1, -4]
     c = (1, 0, 1, 1)
@@ -506,24 +507,24 @@ def test_scatterplot2d(scatterPlot2D):
     assert plot.label == l
 
     # Test remaining properties
-    scatterPlot2D.update(x, y)
-    assert np.allclose(scatterPlot2D.x, x)
-    assert np.allclose(scatterPlot2D.y, y)
+    scatter_plot_2d.update(x, y)
+    assert np.allclose(scatter_plot_2d.x, x)
+    assert np.allclose(scatter_plot_2d.y, y)
 
-    scatterPlot2D.marker_size = sz
-    assert scatterPlot2D.marker_size == sz
-    assert scatterPlot2D.GetMarkerSize() == sz
+    scatter_plot_2d.marker_size = sz
+    assert scatter_plot_2d.marker_size == sz
+    assert scatter_plot_2d.GetMarkerSize() == sz
 
-    scatterPlot2D.marker_style = None
-    assert scatterPlot2D.marker_style == ""
-    scatterPlot2D.marker_style = st
-    assert scatterPlot2D.marker_style == st
-    assert scatterPlot2D.GetMarkerStyle() == scatterPlot2D.MARKER_STYLES[st]["id"]
+    scatter_plot_2d.marker_style = None
+    assert scatter_plot_2d.marker_style == ""
+    scatter_plot_2d.marker_style = st
+    assert scatter_plot_2d.marker_style == st
+    assert scatter_plot_2d.GetMarkerStyle() == scatter_plot_2d.MARKER_STYLES[st]["id"]
     with pytest.raises(ValueError):
-        scatterPlot2D.marker_style = st_inv
+        scatter_plot_2d.marker_style = st_inv
 
 
-def test_areaplot(areaPlot):
+def test_areaplot(area_plot):
     x = [-2, -1, 0, 1, 2]
     y1 = [4, 1, 0, -1, -4]
     y2 = [-4, -2, 0, 2, 4]
@@ -539,13 +540,13 @@ def test_areaplot(areaPlot):
     assert plot.label == l
 
     # Test remaining properties
-    areaPlot.update(x, y1, y2)
-    assert np.allclose(areaPlot.x, x)
-    assert np.allclose(areaPlot.y1, y1)
-    assert np.allclose(areaPlot.y2, y2)
+    area_plot.update(x, y1, y2)
+    assert np.allclose(area_plot.x, x)
+    assert np.allclose(area_plot.y1, y1)
+    assert np.allclose(area_plot.y2, y2)
 
 
-def test_barplot(barPlot):
+def test_barplot(bar_plot):
     x = [0, 1, 2]
     y = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
     c = [(1, 0, 1, 1), (1, 1, 0, 1), (0, 1, 1, 1)]
@@ -579,18 +580,18 @@ def test_barplot(barPlot):
         charts.BarPlot(x, y[0], c[0], ori, l)
 
     # Test remaining properties
-    barPlot.update(x, y)
-    assert np.allclose(barPlot.x, x)
-    assert np.allclose(barPlot.y, y)
+    bar_plot.update(x, y)
+    assert np.allclose(bar_plot.x, x)
+    assert np.allclose(bar_plot.y, y)
 
-    barPlot.orientation = ori
-    assert barPlot.orientation == ori
-    assert barPlot.GetOrientation() == barPlot.ORIENTATIONS[ori]
+    bar_plot.orientation = ori
+    assert bar_plot.orientation == ori
+    assert bar_plot.GetOrientation() == bar_plot.ORIENTATIONS[ori]
     with pytest.raises(ValueError):
-        barPlot.orientation = ori_inv
+        bar_plot.orientation = ori_inv
 
 
-def test_stackplot(stackPlot):
+def test_stackplot(stack_plot):
     x = [0, 1, 2]
     ys = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
     c = [(1, 0, 1, 1), (1, 1, 0, 1), (0, 1, 1, 1)]
@@ -620,12 +621,12 @@ def test_stackplot(stackPlot):
         charts.StackPlot(x, ys[0], c[0], l)
 
     # Test remaining properties
-    stackPlot.update(x, ys)
-    assert np.allclose(stackPlot.x, x)
-    assert np.allclose(stackPlot.ys, ys)
+    stack_plot.update(x, ys)
+    assert np.allclose(stack_plot.x, x)
+    assert np.allclose(stack_plot.ys, ys)
 
 
-def test_chart2D(pl, chart2D):
+def test_chart_2d(pl, chart_2d):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
     lx = "X label"
@@ -666,119 +667,119 @@ def test_chart2D(pl, chart2D):
         for l in charts.Pen.LINE_STYLES:
             for c in colors:
                 cp = "b" if c == "" else c
-                assert (m, l, cp) == chart2D._parse_format(m + l + c)
-                assert (m, l, cp) == chart2D._parse_format(m + c + l)
-                assert (m, l, cp) == chart2D._parse_format(l + m + c)
-                assert (m, l, cp) == chart2D._parse_format(l + c + m)
-                assert (m, l, cp) == chart2D._parse_format(c + m + l)
-                assert (m, l, cp) == chart2D._parse_format(c + l + m)
+                assert (m, l, cp) == chart_2d._parse_format(m + l + c)
+                assert (m, l, cp) == chart_2d._parse_format(m + c + l)
+                assert (m, l, cp) == chart_2d._parse_format(l + m + c)
+                assert (m, l, cp) == chart_2d._parse_format(l + c + m)
+                assert (m, l, cp) == chart_2d._parse_format(c + m + l)
+                assert (m, l, cp) == chart_2d._parse_format(c + l + m)
 
     # Test plotting methods
-    s, l = chart2D.plot(x, y, "")
+    s, l = chart_2d.plot(x, y, "")
     assert s is None and l is None
-    assert len([*chart2D.plots()]) == 0
-    s, l = chart2D.plot(y, "-")
+    assert len([*chart_2d.plots()]) == 0
+    s, l = chart_2d.plot(y, "-")
     assert s is None and l is not None
-    assert l in chart2D.plots("line")
-    chart2D.remove_plot(l)
-    assert len([*chart2D.plots()]) == 0
-    s, l = chart2D.plot(y, "x")
+    assert l in chart_2d.plots("line")
+    chart_2d.remove_plot(l)
+    assert len([*chart_2d.plots()]) == 0
+    s, l = chart_2d.plot(y, "x")
     assert s is not None and l is None
-    assert s in chart2D.plots("scatter")
-    chart2D.clear("scatter")
-    assert len([*chart2D.plots()]) == 0
-    s, l = chart2D.plot(x, y, "x-")
+    assert s in chart_2d.plots("scatter")
+    chart_2d.clear("scatter")
+    assert len([*chart_2d.plots()]) == 0
+    s, l = chart_2d.plot(x, y, "x-")
     assert s is not None and l is not None
-    assert s in chart2D.plots("scatter") and l in chart2D.plots("line")
-    chart2D.plot(x, y, "x-")  # Check clearing of multiple plots (of the same type)
-    chart2D.clear()
-    assert len([*chart2D.plots()]) == 0
+    assert s in chart_2d.plots("scatter") and l in chart_2d.plots("line")
+    chart_2d.plot(x, y, "x-")  # Check clearing of multiple plots (of the same type)
+    chart_2d.clear()
+    assert len([*chart_2d.plots()]) == 0
 
-    s = chart2D.scatter(x, y, col, sz, ms, lx)
+    s = chart_2d.scatter(x, y, col, sz, ms, lx)
     assert np.allclose(s.x, x)
     assert np.allclose(s.y, y)
     assert np.allclose(s.color, col)
     assert s.marker_size == sz
     assert s.marker_style == ms
     assert s.label == lx
-    assert s in chart2D.plots("scatter")
-    assert chart2D.GetPlotIndex(s) >= 0
+    assert s in chart_2d.plots("scatter")
+    assert chart_2d.GetPlotIndex(s) >= 0
 
-    l = chart2D.line(x, y, col, w, ls, lx)
+    l = chart_2d.line(x, y, col, w, ls, lx)
     assert np.allclose(l.x, x)
     assert np.allclose(l.y, y)
     assert np.allclose(l.color, col)
     assert l.line_width == w
     assert l.line_style == ls
     assert l.label == lx
-    assert l in chart2D.plots("line")
-    assert chart2D.GetPlotIndex(l) >= 0
+    assert l in chart_2d.plots("line")
+    assert chart_2d.GetPlotIndex(l) >= 0
 
-    a = chart2D.area(x, -y, y, col, lx)
+    a = chart_2d.area(x, -y, y, col, lx)
     assert np.allclose(a.x, x)
     assert np.allclose(a.y1, -y)
     assert np.allclose(a.y2, y)
     assert np.allclose(a.color, col)
     assert a.label == lx
-    assert a in chart2D.plots("area")
-    assert chart2D.GetPlotIndex(a) >= 0
+    assert a in chart_2d.plots("area")
+    assert chart_2d.GetPlotIndex(a) >= 0
 
-    b = chart2D.bar(x, -y, col, ori, lx)
+    b = chart_2d.bar(x, -y, col, ori, lx)
     assert np.allclose(b.x, x)
     assert np.allclose(b.y, -y)
     assert np.allclose(b.color, col)
     assert b.orientation == ori
     assert b.label == lx
-    assert b in chart2D.plots("bar")
-    assert chart2D.GetPlotIndex(b) >= 0
+    assert b in chart_2d.plots("bar")
+    assert chart_2d.GetPlotIndex(b) >= 0
 
-    s = chart2D.stack(x, ys, cs, [lx, ly])
+    s = chart_2d.stack(x, ys, cs, [lx, ly])
     assert np.allclose(s.x, x)
     assert np.allclose(s.ys, ys)
     assert s.color_scheme == cs
     assert tuple(s.labels) == (lx, ly)
-    assert s in chart2D.plots("stack")
-    assert chart2D.GetPlotIndex(s) >= 0
+    assert s in chart_2d.plots("stack")
+    assert chart_2d.GetPlotIndex(s) >= 0
 
     inv_type = "blub"
     with pytest.raises(KeyError):
-        next(chart2D.plots(inv_type))
+        next(chart_2d.plots(inv_type))
     with pytest.raises(KeyError):
-        chart2D.clear(inv_type)
-    assert len([*chart2D.plots()]) == 5
-    chart2D.clear()
-    assert len([*chart2D.plots()]) == 0
+        chart_2d.clear(inv_type)
+    assert len([*chart_2d.plots()]) == 5
+    chart_2d.clear()
+    assert len([*chart_2d.plots()]) == 0
     with pytest.raises(ValueError):
-        chart2D.remove_plot(s)
+        chart_2d.remove_plot(s)
 
     # Check remaining properties
-    assert chart2D.x_axis.__this__ == chart2D.GetAxis(charts.Axis.BOTTOM).__this__
-    assert chart2D.y_axis.__this__ == chart2D.GetAxis(charts.Axis.LEFT).__this__
+    assert chart_2d.x_axis.__this__ == chart_2d.GetAxis(charts.Axis.BOTTOM).__this__
+    assert chart_2d.y_axis.__this__ == chart_2d.GetAxis(charts.Axis.LEFT).__this__
 
-    chart2D.x_label = lx
-    assert chart2D.x_label == lx
-    assert chart2D.x_axis.label == lx
-    chart2D.y_label = ly
-    assert chart2D.y_label == ly
-    assert chart2D.y_axis.label == ly
+    chart_2d.x_label = lx
+    assert chart_2d.x_label == lx
+    assert chart_2d.x_axis.label == lx
+    chart_2d.y_label = ly
+    assert chart_2d.y_label == ly
+    assert chart_2d.y_axis.label == ly
 
-    chart2D.x_range = rx
-    assert np.allclose(chart2D.x_range, rx)
-    assert np.allclose(chart2D.x_axis.range, rx)
-    chart2D.y_range = ry
-    assert np.allclose(chart2D.y_range, ry)
-    assert np.allclose(chart2D.y_axis.range, ry)
+    chart_2d.x_range = rx
+    assert np.allclose(chart_2d.x_range, rx)
+    assert np.allclose(chart_2d.x_axis.range, rx)
+    chart_2d.y_range = ry
+    assert np.allclose(chart_2d.y_range, ry)
+    assert np.allclose(chart_2d.y_axis.range, ry)
 
-    chart2D.grid = True
-    assert chart2D.grid
-    assert chart2D.x_axis.grid and chart2D.y_axis.grid
+    chart_2d.grid = True
+    assert chart_2d.grid
+    assert chart_2d.x_axis.grid and chart_2d.y_axis.grid
 
-    chart2D.hide_axes()
-    for axis in (chart2D.x_axis, chart2D.y_axis):
+    chart_2d.hide_axes()
+    for axis in (chart_2d.x_axis, chart_2d.y_axis):
         assert not (axis.visible or axis.label_visible or axis.ticks_visible or axis.tick_labels_visible or axis.grid)
 
 
-def test_chartBox(pl, chartBox, boxPlot):
+def test_chart_box(pl, chart_box, box_plot):
     data = [[0, 1, 1, 1, 2, 2, 3, 4, 4, 5, 5, 5, 6]]
     stats = [np.quantile(d, [0.0, 0.25, 0.5, 0.75, 1.0]) for d in data]
     cs = "wild_flower"
@@ -800,16 +801,16 @@ def test_chartBox(pl, chartBox, boxPlot):
     assert np.allclose(chart._geometry, (0, 0, r_w/2, r_h/2))
 
     # Test remaining properties
-    assert chartBox.loc == (0, 0)
-    assert chartBox.size == (1, 1)
-    assert chartBox.plot.__this__ == chartBox.GetPlot(0).__this__
+    assert chart_box.loc == (0, 0)
+    assert chart_box.size == (1, 1)
+    assert chart_box.plot.__this__ == chart_box.GetPlot(0).__this__
 
-    boxPlot.update(data)
-    assert np.allclose(boxPlot.data, data)
-    assert np.allclose(boxPlot.stats, stats)
+    box_plot.update(data)
+    assert np.allclose(box_plot.data, data)
+    assert np.allclose(box_plot.stats, stats)
 
 
-def test_chartPie(pl, chartPie, piePlot):
+def test_chart_pie(pl, chart_pie, pie_plot):
     data = [3, 4, 5]
     cs = "wild_flower"
     ls = ["Tic", "Tac", "Toe"]
@@ -830,15 +831,15 @@ def test_chartPie(pl, chartPie, piePlot):
     assert np.allclose(chart._geometry, (0, 0, r_w/2, r_h/2))
 
     # Test remaining properties
-    assert chartPie.loc == (0, 0)
-    assert chartPie.size == (1, 1)
-    assert chartPie.plot.__this__ == chartPie.GetPlot(0).__this__
+    assert chart_pie.loc == (0, 0)
+    assert chart_pie.size == (1, 1)
+    assert chart_pie.plot.__this__ == chart_pie.GetPlot(0).__this__
 
-    piePlot.update(data)
-    assert np.allclose(piePlot.data, data)
+    pie_plot.update(data)
+    assert np.allclose(pie_plot.data, data)
 
 
-def test_chartMPL(pl, chartMPL):
+def test_chart_mpl(pl, chart_mpl):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
 
