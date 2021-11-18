@@ -335,6 +335,8 @@ def test_multi_slice_index(ant, sphere, uniform, airplane, globe):
         assert id(sub[i]) == id(multi[j])
         assert sub.get_block_name(i) == multi.get_block_name(j)
 
+    assert multi[:] == multi[0:len(multi)]
+
 
 def test_multi_block_list_index(ant, sphere, uniform, airplane, globe):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
