@@ -1901,7 +1901,7 @@ class DataSet(DataSetFilters, DataObject):
         Examples
         --------
         Find nearest cell on a sphere centered on the
-        origin to the point [0.1, 0.2, 0.3].
+        origin to the point ``[0.1, 0.2, 0.3]``.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
@@ -1911,7 +1911,7 @@ class DataSet(DataSetFilters, DataObject):
         591
 
         Make sure that this cell indeed is the closest to
-        (0.1, 0.2, 0.3).
+        ``[0.1, 0.2, 0.3]``.
 
         >>> import numpy as np
         >>> cell_centers = mesh.cell_centers()
