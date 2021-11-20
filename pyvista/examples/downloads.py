@@ -2905,7 +2905,6 @@ def download_sky_box_cube_map():  # pragma: no cover
     >>> _ = pl.add_actor(dataset.to_skybox())
     >>> pl.set_environment_texture(dataset)
     >>> pl.show()
-    >>> pl.show()
     >>> examples.delete_downloads()
     True
 
