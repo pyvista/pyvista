@@ -3240,6 +3240,8 @@ def download_stars_jpg():  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
+    >>> import pyvsita as pv
+    >>> pl = pv.Plotter()
     >>> dataset = examples.download_stars_jpg()
     >>> dataset.plot(cpos="iso")
     >>> examples.delete_downloads()
