@@ -30,3 +30,4 @@ trimesh
 typed-ast
 typing-extensions
 pythreejs
+osmnx
