@@ -1576,18 +1576,6 @@ def test_user_annotations_scalar_bar_mesh(uniform):
     p.show(before_close_callback=verify_cache_image)
 
 
-def test_fixed_font_size_annotation_text_scaling_off():
-    p = pyvista.Plotter()
-    sargs = {
-        'title_font_size': 12,
-        'label_font_size': 10}
-    p.add_mesh(examples.load_uniform(), clim=[100, 500], cmap='viridis',
-               below_color='blue', above_color='red',
-               annotations={300.: 'yum'},
-               scalar_bar_args=sargs)
-    p.show(before_close_callback=verify_cache_image)
-
-
 def test_user_annotations_scalar_bar_volume(uniform):
     p = pyvista.Plotter()
     p.add_volume(uniform, scalars='Spatial Point Data', annotations={100.: 'yum'})
