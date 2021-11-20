@@ -3219,7 +3219,11 @@ def download_mars_jpg():  # pragma: no cover
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
     >>> dataset = examples.download_mars_jpg()
-    >>> dataset.plot(cpos="iso")
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
+    >>> dataset = examples.download_mars_jpg()
+    >>> pl.add_background_image(dataset)
+    >>> pl.show()
     >>> examples.delete_downloads()
     True
 
