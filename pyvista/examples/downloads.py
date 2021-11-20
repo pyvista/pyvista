@@ -2965,13 +2965,7 @@ def download_gpr_data_array(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> import matplotlib.pyplot as plt
-    >>> dataset = examples.download_gpr_data_array()
-    >>> plt.figure(figsize=(15,3))
-    >>> plt.pcolormesh(dataset, cmap="seismic", clim=[-1,1])
-    >>> plt.gca().invert_yaxis()
-    >>> examples.delete_downloads()
-    True
+    >>> dataset = examples.download_gpr_data_array()  # doctest:+SKIP
 
     See :ref:`create_draped_surf_example` for an example using this dataset.
 
