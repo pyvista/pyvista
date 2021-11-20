@@ -2902,7 +2902,6 @@ def download_sky_box_cube_map():  # pragma: no cover
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
     >>> dataset = examples.download_sky_box_cube_map()
-    >>> pl.add_actor(dataset.to_skybox())
     >>> _ = pl.add_actor(dataset.to_skybox())
     >>> pl.set_environment_texture(dataset)
     >>> pl.show()
