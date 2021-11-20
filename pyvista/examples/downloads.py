@@ -3033,9 +3033,6 @@ def download_stars_jpg():  # pragma: no cover
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
     >>> dataset = examples.download_stars_jpg()
-    >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> dataset = examples.download_stars_jpg()
     >>> pl.add_background_image(dataset)
     >>> pl.show()
 
