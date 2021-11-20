@@ -480,6 +480,22 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         self._iter_n = 0
         return self
 
+    def __eq__(self, other):
+        """Equality comparison."""
+        if not isinstance(other, MultiBlock):
+            return False
+
+        if self is other:
+            return True
+
+        if len(self) != len(other):
+            return False
+
+        if not all([self_mesh == other_mesh for self_mesh, other_mesh in zip(self, other)]):
+            return False
+        #check for names here too
+        return True
+
     def next(self) -> Optional['MultiBlock']:
         """Get the next block from the iterator."""
         if self._iter_n < self.n_blocks:
