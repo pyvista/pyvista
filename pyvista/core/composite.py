@@ -491,9 +491,12 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if len(self) != len(other):
             return False
 
+        if not self.keys() == other.keys():
+            return False
+
         if not all([self_mesh == other_mesh for self_mesh, other_mesh in zip(self, other)]):
             return False
-        #check for names here too
+
         return True
 
     def next(self) -> Optional['MultiBlock']:
