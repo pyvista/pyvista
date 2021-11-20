@@ -421,8 +421,6 @@ class ScalarBars():
         if label_font_size is not None or title_font_size is not None:
             scalar_bar.UnconstrainedFontSizeOn()
             scalar_bar.AnnotationTextScalingOff()
-        else:
-            scalar_bar.AnnotationTextScalingOn()
 
         label_text = scalar_bar.GetLabelTextProperty()
         anno_text = scalar_bar.GetAnnotationTextProperty()
