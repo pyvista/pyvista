@@ -3524,10 +3524,7 @@ def download_osmnx_graph():  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> graph = examples.download_osmnx_graph()
-    >>> dataset.plot(cpos="iso")
-    >>> examples.delete_downloads()
-    True
+    >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
     
     See :ref:`open_street_map_example` for a full example using this dataset.
 
