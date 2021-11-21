@@ -1,3 +1,4 @@
+import weakref
 import pathlib
 import platform
 
@@ -410,3 +411,37 @@ def test_multi_block_data_range():
     mi, ma = slices.get_data_range(volume.active_scalars_name)
     assert mi is not None
     assert ma is not None
+
+
+def test_multiblock_ref():
+    # can't use fixtures here as we need to remove all references for
+    # garbage collection
+    sphere = pyvista.Sphere()
+    cube = pyvista.Cube()
+
+    block = MultiBlock([sphere, cube])
+    block[0]["a_new_var"] = np.zeros(block[0].n_points)
+    assert "a_new_var" in block[0].array_names
+
+    assert sphere is block[0]
+    assert cube is block[1]
+
+    wref_sphere = weakref.ref(sphere)
+    wref_cube = weakref.ref(cube)
+
+    # verify reference remains
+    assert wref_sphere() is sphere
+    del sphere
+    assert wref_sphere() is not None
+
+    # verify __del__ works and removes reference
+    del block[0]
+    assert wref_sphere() is None
+
+    # verify reference remains
+    assert wref_cube() is cube
+
+    # verify the __setitem__(index, None) edge case
+    del cube
+    block[0] = None
+    assert wref_cube() is None
