@@ -1485,6 +1485,7 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     p.show(before_close_callback=verify_cache_image)
 
 
+@skip_windows
 def test_opacity_by_array_direct(plane):
     # test with opacity parm as an array
     pl = pyvista.Plotter()
