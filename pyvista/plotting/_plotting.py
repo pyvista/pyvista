@@ -30,17 +30,18 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         Dataset to prepare smooth shading for.
     texture : vtk.vtkTexture or np.ndarray or bool, optional
         A texture to apply to the mesh.
-    split_sharp_edges : bool, optional
+    split_sharp_edges : bool
         Split sharp edges exceeding 30 degrees when plotting with
         smooth shading.  Control the angle with the optional
         keyword argument ``feature_angle``.  By default this is
         ``False``.  Note that enabling this will create a copy of
         the input mesh within the plotter.  See
         :ref:`shading_example`.
-    feature_angle : float, optional
+    feature_angle : float
         Angle to consider an edge a sharp edge.
-    preference : str, optional
-        If the number of points is identical to the number of cells
+    preference : str
+        If the number of points is identical to the number of cells.
+        Either ``'point'`` or '``cell'``.
 
     Returns
     -------
@@ -53,6 +54,8 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
 
     has_scalars = scalars is not None
     if has_scalars:
+        if not isinstance(scalars, np.ndarray):
+            scalars = np.array(scalars)
         if (scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells):
             use_points = preference == 'point'
         else:
@@ -95,12 +98,6 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     if has_scalars and indices_array is not None:
         ind = mesh[indices_array]
         scalars = np.asarray(scalars)[ind]
-
-    if texture:
-        if indices_array is not None:
-            ind = mesh.point_data[indices_array]
-            tcoords = tcoords[ind]
-        mesh.active_t_coords = tcoords
 
     # remove temporary indices array
     if indices_array == '__orig_ids__':

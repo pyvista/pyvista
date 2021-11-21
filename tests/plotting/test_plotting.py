@@ -64,6 +64,7 @@ HIGH_VARIANCE_TESTS = {
     'test_pbr',
     'test_set_viewup',
     'test_add_title',
+    'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
     'test_import_gltf',  # image cache created with 9.0.20210612.dev0
     'test_export_gltf'}  # image cache created with 9.0.20210612.dev0
 VER_IMAGE_REGRESSION_ERROR = 1000
