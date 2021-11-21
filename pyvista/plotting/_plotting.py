@@ -28,6 +28,8 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     ----------
     mesh : pyvista.DataSet
         Dataset to prepare smooth shading for.
+    scalars : sequence
+        Sequence of scalars.
     texture : vtk.vtkTexture or np.ndarray or bool, optional
         A texture to apply to the mesh.
     split_sharp_edges : bool
@@ -53,6 +55,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     indices_array = None
 
     has_scalars = scalars is not None
+    use_points = False
     if has_scalars:
         if not isinstance(scalars, np.ndarray):
             scalars = np.array(scalars)
@@ -71,9 +74,6 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
             indices_array = 'vtkOriginalPointIds'
         else:
             indices_array = 'vtkOriginalCellIds'
-
-    if texture:
-        tcoords = mesh.active_t_coords
 
     if split_sharp_edges:
         if is_polydata:
@@ -116,14 +116,17 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
     ----------
     mesh : pyvista.DataSet
         Dataset to process the opacity for.
-    opacity : str, numpy.ndarray
-        String or array.  If string, must be a cell or point data array.
-        preference : str, optional
-            When ``mesh.n_points == mesh.n_cells``, this parameter
-            sets how the scalars will be mapped to the mesh.  Default
-            ``'points'``, causes the scalars will be associated with
-            the mesh points.  Can be either ``'points'`` or
-            ``'cells'``.
+    opacity : str, sequence
+        String or array.  If string, can be a ``str`` name of a
+        predefined mapping such as ``'linear'``, ``'geom'``,
+        ``'sigmoid'``, ``'sigmoid3-10'``, or the key of a cell or
+        point data array.
+    preference : str, optional
+        When ``mesh.n_points == mesh.n_cells``, this parameter
+        sets how the scalars will be mapped to the mesh.  Default
+        ``'points'``, causes the scalars will be associated with
+        the mesh points.  Can be either ``'points'`` or
+        ``'cells'``.
     n_colors : int, optional
         Number of colors to use when displaying the opacity.
     scalars : numpy.ndarray, optional
@@ -151,8 +154,8 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
             if np.any(opacity < 0):
                 warnings.warn("Opacity scalars contain values less than 0")
             _custom_opac = True
-        except:
-            # Or get opacity transfer function
+        except KeyError:
+            # Or get opacity transfer function (e.g. "linear")
             opacity = opacity_transfer_function(opacity, n_colors)
         else:
             if scalars.shape[0] != opacity.shape[0]:
@@ -168,9 +171,10 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
         else:
             opacity = opacity_transfer_function(opacity, n_colors)
 
-    if use_transparency and np.max(opacity) <= 1.0:
-        opacity = 1 - opacity
-    elif use_transparency and isinstance(opacity, np.ndarray):
-        opacity = 255 - opacity
+    if use_transparency:
+        if np.max(opacity) <= 1.0:
+            opacity = 1 - opacity
+        elif isinstance(opacity, np.ndarray):
+            opacity = 255 - opacity
 
     return _custom_opac, opacity

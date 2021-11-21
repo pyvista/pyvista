@@ -1539,12 +1539,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             applied everywhere - should be between 0 and 1. A string
             can also be specified to map the scalars range to a
             predefined opacity transfer function (options include:
-            'linear', 'linear_r', 'geom', 'geom_r').  A string could
-            also be used to map a scalars array from the mesh to the
-            opacity (must have same number of elements as the
-            ``scalars`` argument). Or you can pass a custom made
-            transfer function that is an array either ``n_colors`` in
-            length or shorter.
+            ``'linear'``, ``'linear_r'``, ``'geom'``, ``'geom_r'``).
+            A string could also be used to map a scalars array from
+            the mesh to the opacity (must have same number of elements
+            as the ``scalars`` argument). Or you can pass a custom
+            made transfer function that is an array either
+            ``n_colors`` in length or shorter.
 
         flip_scalars : bool, optional
             Flip direction of cmap. Most colormaps allow ``*_r``
