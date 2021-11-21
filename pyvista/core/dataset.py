@@ -542,7 +542,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> globe = examples.load_globe()
         >>> globe.textures
-        {'2k_earth_daymap': (Texture)...}
+        {'2k_earth_daymap': ...}
 
         """
         return self._textures
@@ -557,7 +557,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> globe = examples.load_globe()
         >>> globe.textures
-        {'2k_earth_daymap': (Texture)...}
+        {'2k_earth_daymap': ...}
         >>> globe.clear_textures()
         >>> globe.textures
         {}
@@ -1900,31 +1900,33 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Find nearest cell to a point on a sphere, centered on the
-        origin.
+        Find nearest cell on a sphere centered on the
+        origin to the point ``[0.1, 0.2, 0.3]``.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> index = mesh.find_closest_cell([0, 0, 0.5])
+        >>> point = [0.1, 0.2, 0.3]
+        >>> index = mesh.find_closest_cell(point)
         >>> index
-        30
+        591
+
+        Make sure that this cell indeed is the closest to
+        ``[0.1, 0.2, 0.3]``.
+
+        >>> import numpy as np
+        >>> cell_centers = mesh.cell_centers()
+        >>> relative_position = cell_centers.points - point
+        >>> distance = np.linalg.norm(relative_position, axis=1)
+        >>> np.argmin(distance)
+        591
 
         Find the nearest cells to several random points that
         are centered on the origin.
 
-        >>> import numpy as np
         >>> points = 2 * np.random.random((5000, 3)) - 1
         >>> indices = mesh.find_closest_cell(points)
         >>> indices.shape
         (5000,)
-
-        The average position of all the randomly found cell centers should
-        be reasonably close to the origin.
-
-        >>> cell_center_mesh = mesh.cell_centers()
-        >>> avg_pos = cell_center_mesh.points[indices, :].mean(axis=0)
-        >>> np.linalg.norm(avg_pos) < 0.02
-        True
 
         """
         if isinstance(point, collections.abc.Sequence):
