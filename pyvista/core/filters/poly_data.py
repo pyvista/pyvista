@@ -734,7 +734,7 @@ class PolyDataFilters(DataSetFilters):
             disconnected from each other. This can give superior
             results in some cases. If ``pre_split_mesh`` is set to
             ``True``, the mesh is split with the specified
-            ``split_angle.`` Otherwise mesh splitting is deferred as
+            ``split_angle``. Otherwise mesh splitting is deferred as
             long as possible.
 
         preserve_topology : bool, optional
