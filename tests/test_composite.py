@@ -196,6 +196,27 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
     assert str(multi) is not None
 
 
+def test_multi_block_eq(ant, sphere, uniform, airplane, globe):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+    other = multi.copy()
+
+    assert multi is not other
+    assert multi == other
+
+    assert pyvista.MultiBlock() == pyvista.MultiBlock()
+
+    other[0] = pyvista.Sphere()
+    assert multi != other
+
+    other = multi.copy()
+    other.set_block_name(0, "not matching")
+    assert multi != other
+
+    other = multi.copy()
+    other.append(pyvista.Sphere())
+    assert multi != other
+
+
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._WRITERS)
 @pytest.mark.parametrize('use_pathlib', [True, False])
