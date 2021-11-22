@@ -166,7 +166,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
 
     * THREE.BufferGeometry expects position and index attributes
       representing a triangulated mesh points and face indices or just
-      a position array representing individual faces of a mesh. 
+      a position array representing individual faces of a mesh.
     * The normals attribute is needed for physically based rendering,
       but not for the other mesh types.
     * Colors must be a RGB array with one value per point.
