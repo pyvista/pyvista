@@ -166,7 +166,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
 
     * THREE.BufferGeometry expects position and index attributes
       representing a triangulated mesh points and face indices or just
-      a position array representing individual faces of a mesh.
+      a position array representing individual faces of a mesh. 
     * The normals attribute is needed for physically based rendering,
       but not for the other mesh types.
     * Colors must be a RGB array with one value per point.
@@ -265,7 +265,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
         'wireframe': prop.GetRepresentation() == 1,
         'opacity': prop.GetOpacity(),
         'wireframeLinewidth': prop.GetLineWidth(),
-        # 'side': 'DoubleSide'  # enabling seems to mess with textures
+        # 'side': 'DoubleSide' # enabling seems to mess with textures
     }
 
     if colors is None:
@@ -273,6 +273,11 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
 
     if tjs_texture is not None:
         shared_attr['map'] = tjs_texture
+    else:
+        shared_attr['side'] = 'DoubleSide'
+    
+    if prop.GetOpacity() < 1.0:
+        shared_attr['transparent'] = True
 
     if prop.GetInterpolation() == 3:  # using physically based rendering
         material = tjs.MeshPhysicalMaterial(flatShading=False,
