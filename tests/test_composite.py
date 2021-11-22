@@ -343,14 +343,17 @@ def test_slice_defaults(ant, sphere, uniform, airplane, globe):
 
 def test_slice_negatives(ant, sphere, uniform, airplane, globe):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
-    reverse_multi = multi_from_datasets(globe, airplane, uniform, sphere, ant)
-    assert multi[::-1] == reverse_multi
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[::-1]})
+    assert multi[::-1] == test_multi
 
-    assert multi[-2:] == multi_from_datasets(airplane, globe)
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[-2:]})
+    assert multi[-2:] == test_multi
 
-    assert multi[:-1] == multi_from_datasets(ant, sphere, uniform, airplane)
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[:-1]})
+    assert multi[:-1] == test_multi
 
-    assert multi[-1:-4:-2] == multi_from_datasets(globe, uniform)
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[-1:-4:-2]})
+    assert multi[-1:-4:-2] == test_multi
 
 
 def test_multi_block_list_index(ant, sphere, uniform, airplane, globe):
