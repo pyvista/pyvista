@@ -320,19 +320,19 @@ def test_multi_slice_index(ant, sphere, uniform, airplane, globe):
     # Now check everything
     sub = multi[0:3]
     assert len(sub) == 3
-    for i in range(3):
-        assert id(sub[i]) == id(multi[i])
+    for i in range(len(sub)):
+        assert sub[i] is multi[i]
         assert sub.get_block_name(i) == multi.get_block_name(i)
     sub = multi[0:-1]
-    assert len(sub) + 1 == len(multi) == multi.n_blocks
-    for i in range(multi.n_blocks - 1):
-        assert id(sub[i]) == id(multi[i])
+    assert len(sub) + 1 == len(multi)
+    for i in range(len(sub)):
+        assert sub[i] is multi[i]
         assert sub.get_block_name(i) == multi.get_block_name(i)
     sub = multi[0:-1:2]
     assert len(sub) == 2
-    for i in range(2):
+    for i in range(len(sub)):
         j = i*2
-        assert id(sub[i]) == id(multi[j])
+        assert sub[i] is multi[j]
         assert sub.get_block_name(i) == multi.get_block_name(j)
 
 
