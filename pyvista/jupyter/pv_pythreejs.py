@@ -265,7 +265,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
         'wireframe': prop.GetRepresentation() == 1,
         'opacity': prop.GetOpacity(),
         'wireframeLinewidth': prop.GetLineWidth(),
-        # 'side': 'DoubleSide' # enabling seems to mess with textures
+        # 'side': 'DoubleSide'  # enabling seems to mess with textures
     }
 
     if colors is None:
