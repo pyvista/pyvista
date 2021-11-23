@@ -494,7 +494,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if not self.keys() == other.keys():
             return False
 
-        if  any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other)):
+        if any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other)):
             return False
 
         return True
