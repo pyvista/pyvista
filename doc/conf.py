@@ -68,7 +68,8 @@ extensions = [
     "sphinx_panels",
     "pyvista.ext.plot_directive",
     "pyvista.ext.coverage",
-    "numpydoc"
+    "numpydoc",
+    "sphinx_codeautolink",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -125,6 +126,11 @@ coverage_additional_modules = [
 coverage_ignore_modules = [
     r'\.plot_directive$',  # Issue with class parameter documentation
 ]
+
+# make codeautolink aware of REPL-style code blocks
+# see https://sphinx-codeautolink.readthedocs.io/en/latest/examples.html#doctest-code-blocks
+from sphinx_codeautolink import clean_pycon
+codeautolink_custom_blocks = {"python3": None, "pycon3": clean_pycon}
 
 
 # See https://numpydoc.readthedocs.io/en/latest/install.html
