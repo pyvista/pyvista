@@ -1271,7 +1271,7 @@ class Renderer(_vtk.vtkRenderer):
         Returns
         -------
         vtk.vtkActor
-            VTK actor of the floor.
+            VTK actor of the bounding box.
 
         Examples
         --------
