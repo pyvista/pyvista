@@ -12,7 +12,7 @@ the two approaches in a series of examples.
 For example, to hard-code points for a `vtk.vtkImageData`_ data
 structure using VTK Python's bindings, one would write the following:
 
-.. code:: python
+.. code:: pycon
 
    >>> import vtk
    >>> from math import cos, sin
@@ -45,7 +45,7 @@ a much cleaner syntax that is both more readable and intuitive. The
 equivalent code in pyvista is:
 
 
-.. code:: python
+.. code:: pycon
 
    >>> import pyvista
    >>> import numpy as np
@@ -86,7 +86,7 @@ Here, PyVista has done several things for us:
    and need to do something more complex, you can dive deeper. For
    example, changing the origin and spacing is as simple as:
 
-   .. code:: python
+   .. code:: pycon
 
       >>> grid.origin = (10, 20, 10)
       >>> grid.spacing = (2, 3, 5)
@@ -106,7 +106,7 @@ Finally, with PyVista, each geometry class contains methods that allow
 you to immediately plot the mesh without also setting up the plot.
 For example, in VTK you would have to do:
 
-.. code:: python
+.. code:: pycon
 
    >>> actor = vtk.vtkImageActor()
    >>> actor.GetMapper().SetInputData(image_data)

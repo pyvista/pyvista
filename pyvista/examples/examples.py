@@ -223,7 +223,7 @@ def load_spline():
 
     This example data was created with:
 
-    .. code:: python
+    .. code:: pycon
 
        >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
        >>> z = np.linspace(-2, 2, 100)
@@ -262,7 +262,7 @@ def load_random_hills():
 
     This example dataset was created with:
 
-    .. code:: python
+    .. code:: pycon
 
        >>> mesh = pyvista.ParametricRandomHills()
        >>> mesh = mesh.elevation()

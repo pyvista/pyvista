@@ -67,7 +67,7 @@ but many of these can be replaced with jupyterlab widgets.  If you
 wish to assemble your own scene, change the jupyter_backend while
 returning the "viewer" with:
 
-.. code:: python
+.. code:: pycon
 
     >>> pl = pv.Plotter()
     >>> pl.add_mesh(mesh, color='lightgrey')
@@ -311,7 +311,7 @@ Export to HTML
 Using ``pythreejs``, you can export most scenes completely to a
 standalone HTML file.  For example:
 
-.. code:: python
+.. code:: pycon
 
    >>> import pyvista
    >>> from pyvista import examples

@@ -120,14 +120,14 @@ Test Installation
 
 You can test your installation by running an example:
 
-.. code:: python
+.. code:: pycon
 
     >>> from pyvista import demos
     >>> demos.plot_wave()
 
 See other examples and demos:
 
-.. code:: python
+.. code:: pycon
 
     >>> from pyvista import examples
     >>> from pyvista import demos

@@ -304,7 +304,7 @@ def plot_ants_plane(notebook=None):
 
     This example plots the following:
 
-    .. code:: python
+    .. code:: pycon
 
        >>> import pyvista
        >>> from pyvista import examples

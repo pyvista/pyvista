@@ -3156,7 +3156,7 @@ def download_osmnx_graph():  # pragma: no cover
 
     Generated from:
 
-    .. code:: python
+    .. code:: pycon
 
         >>> import osmnx as ox  # doctest:+SKIP
         >>> address = 'Holzgerlingen DE'  # doctest:+SKIP

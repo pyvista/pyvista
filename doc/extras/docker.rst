@@ -88,7 +88,7 @@ and verify it matches the version you installed on your docker image.
 Finally, check that your render window is using NVIDIA by running
 ``ReportCapabilities``:
 
-.. code:: python
+.. code:: pycon
 
   >>> import pyvista
   >>> pl = pyvista.Plotter()

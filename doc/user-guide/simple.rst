@@ -49,13 +49,13 @@ assigned to the nodes or cells of the mesh respectively).
 
 First, check out some common meta-properties:
 
-.. code:: python
+.. code:: pycon
 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> import numpy as np
 
-.. code:: python
+.. code:: pycon
 
     >>> mesh = examples.load_airplane()
 
@@ -87,7 +87,7 @@ Access the points by fetching the :attr:`points
 <pyvista.core.dataset.DataSet.points>` attribute on any PyVista mesh
 as a :class:`numpy.ndarray`:
 
-.. code:: python
+.. code:: pycon
 
     >>> the_pts = mesh.points
     >>> isinstance(the_pts, np.ndarray)
@@ -107,7 +107,7 @@ These dictionaries of the different point and cell arrays can be directly
 accessed and modified as NumPy arrays. In the example below, we load a dataset,
 access an array on that dataset, then add some more data:
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> mesh = examples.load_uniform()
 
