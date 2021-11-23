@@ -385,8 +385,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
         available. Options are ('linear', 'nearest', 'zero', 'slinear',
         'quadratic', 'cubic', 'previous', 'next'.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import pyvista as pv
     >>> # Fetch the `sigmoid` mapping between 0 and 255
     >>> tf = pv.opacity_transfer_function("sigmoid", 256)
