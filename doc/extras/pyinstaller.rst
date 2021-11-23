@@ -25,6 +25,7 @@ When running VTK v9, you need to add several additional
                                 'vtkmodules.util.numpy_support',
                                 'vtkmodules.numpy_interface.dataset_adapter',
                                ],
+                )
 
 From there, you can freeze an application using ``pyvista`` and create
 a standalone application.
