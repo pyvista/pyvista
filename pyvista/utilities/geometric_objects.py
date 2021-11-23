@@ -13,6 +13,7 @@ vtkDiskSource
 vtkRegularPolygonSource
 vtkPyramid
 vtkPlatonicSolidSource
+vtkSuperquadricSource
 
 as well as some pure-python helpers.
 
@@ -1216,6 +1217,72 @@ def Circle(radius=0.5, resolution=100):
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
     return pyvista.wrap(pyvista.PolyData(points, cells))
+
+
+def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
+                 thetaroundness=1., phiroundness=1.,
+                 thetaresolution=16, phiresolution=16,
+                 toroidal=False, thickness=1/3):
+    """Create an arrow.
+
+    Parameters
+    ----------
+    center : iterable, optional
+        Center of the superquadric in ``[x, y, z]``.
+
+    scale : iterable, optional
+        Scale factors of the superquadric in ``[x, y, z]``.
+
+    size : float, optional
+        Superquadric isotropic size.
+
+    thetaroundness : float, optional
+        Superquadric east/west roundness.
+        Values range from 0 (rectangular) to 1 (circular) to higher orders.
+
+    phiroundness : float, optional
+        Superquadric north/south roundness.
+        Values range from 0 (rectangular) to 1 (circular) to higher orders.
+
+    thetaresolution : int, optional
+        Number of points in the longitude direction.
+        Values are rounded to nearest multiple of 4.
+
+    phiresolution : int, optional
+        Number of points in the latitude direction.
+        Values are rounded to nearest multiple of 8.
+
+    toroidal : bool, optional
+        Whether or not the superquadric is toroidal (1) or ellipsoidal (0).
+
+    thickness : float, optional
+        Superquadric ring thickness.
+        Only applies if toroidal is set to 1.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Superquadric mesh.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> superquadric = pyvista.Superquadric()
+    >>> superquadric.plot(show_edges=True)
+
+    """
+    superquadricSource = _vtk.vtkSuperquadricSource()
+    superquadricSource.SetCenter(center)
+    superquadricSource.SetScale(scale)
+    superquadricSource.SetSize(size)
+    superquadricSource.SetThetaRoundness(thetaroundness[0])
+    superquadricSource.SetPhiRoundness(phiroundness[1])
+    superquadricSource.SetThetaResolution(round(thetaresolution[0]/4)*4)
+    superquadricSource.SetPhiResolution(round(phiresolution[1]/8)*8)
+    superquadricSource.SetToroidal(toroidal)
+    superquadricSource.SetThickness(thickness)
+    superquadricSource.Update()
+    return pyvista.wrap(superquadricSource.GetOutput())
 
 
 def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
