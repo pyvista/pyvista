@@ -534,20 +534,20 @@ def parse_color(color, opacity=None, default_color=None):
     else:
         color_valid = False
     if not color_valid:
-        raise ValueError(f"""
-    Invalid color input: ({color})
-    Must be string, rgb list, or hex color string.  For example:
-        color='white'
-        color='w'
-        color=[1, 1, 1]
-        color='#FFFFFF'""")
+        raise ValueError("\n"
+                         f"\tInvalid color input: ({color})\n"
+                         "\tMust be string, rgb list, or hex color string.  For example:\n"
+                         "\t\tcolor='white'\n"
+                         "\t\tcolor='w'\n"
+                         "\t\tcolor=[1, 1, 1]\n"
+                         "\t\tcolor='#FFFFFF'")
     if opacity is not None:
         if isinstance(opacity, (float, int)) and 0 <= opacity <= 1:
             color = [color[0], color[1], color[2], float(opacity)]
         else:
-            raise ValueError(f"""
-    Invalid opacity input: {opacity}
-    Must be a scalar value between 0 and 1.""")
+            raise ValueError("\n"
+                             f"\tInvalid opacity input: {opacity}\n"
+                             "\tMust be a scalar value between 0 and 1.")
     return tuple(color)
 
 
