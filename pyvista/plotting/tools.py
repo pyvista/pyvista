@@ -5,6 +5,7 @@ from enum import Enum
 import platform
 import os
 from subprocess import PIPE, Popen
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -479,8 +480,8 @@ def parse_color(color, opacity=None, default_color=None):
             * ``'#FFFFFF'``
 
     opacity : float, optional
-        Opacity of the color.  Used when ``color`` is not a
-        length 4 RGBA sequence.
+        Default opacity of the returned color. Used when ``color`` is
+        not a length 4 RGBA sequence.
 
     default_color : str or sequence, optional
         Default color to use when ``color`` is None.  If this value is
@@ -490,8 +491,9 @@ def parse_color(color, opacity=None, default_color=None):
     Returns
     -------
     tuple
-        Either a length 3 RGB sequence if opacity is unset, or RGBA
-        sequence when ``opacity`` is set.
+        Either a length 3 RGB sequence if opacity is unset, or an RGBA
+        sequence when ``opacity`` is set or the input ``color`` is an
+        RGBA sequence.
 
     Examples
     --------
@@ -509,6 +511,7 @@ def parse_color(color, opacity=None, default_color=None):
     (0.4, 0.3, 0.4, 1)
 
     """
+    color_valid = True
     if color is None:
         if default_color is None:
             color = pyvista.global_theme.color
@@ -516,11 +519,19 @@ def parse_color(color, opacity=None, default_color=None):
             color = default_color
     if isinstance(color, str):
         color = string_to_rgb(color)
-    elif isinstance(color, (list, tuple)) and len(color) in (3, 4) and np.all([isinstance(c, (int, float)) and 0 <= c <= 1 for c in color]):
-        if len(color) == 4:
-            opacity = color[3]
-            color = color[:3]
+    elif isinstance(color, (Sequence, np.ndarray)):
+        try:
+            color = np.asarray(color, dtype=np.float64)
+            if len(color.shape) != 1 or color.shape[0] not in (3, 4) or not np.all((0 <= color) & (color <= 1)):
+                color_valid = False
+            elif len(color) == 4:
+                opacity = color[3]
+                color = color[:3]
+        except ValueError:
+            color_valid = False
     else:
+        color_valid = False
+    if not color_valid:
         raise ValueError(f"""
     Invalid color input: ({color})
     Must be string, rgb list, or hex color string.  For example:

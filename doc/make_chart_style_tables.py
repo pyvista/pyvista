@@ -29,7 +29,7 @@ def make_line_style_table():
      - {}
      - .. image:: /{}
 """
-    filename = "./api/plotting/pen_line_styles.rst"
+    filename = "./api/plotting/charts/pen_line_styles.rst"
     if os.path.exists(filename):
         os.remove(filename)
     with open(filename, "w") as f:
@@ -70,7 +70,7 @@ def make_marker_style_table():
      - {}
      - .. image:: /{}
 """
-    filename = "./api/plotting/scatter_marker_styles.rst"
+    filename = "./api/plotting/charts/scatter_marker_styles.rst"
     if os.path.exists(filename):
         os.remove(filename)
     with open(filename, "w") as f:
@@ -118,7 +118,7 @@ def make_color_scheme_table():
      - {}
      - .. image:: /{}
 """
-    filename = "./api/plotting/plot_color_schemes.rst"
+    filename = "./api/plotting/charts/plot_color_schemes.rst"
     if os.path.exists(filename):
         os.remove(filename)
     with open(filename, "w", encoding="utf-8") as f:
@@ -132,6 +132,7 @@ def make_color_scheme_table():
 
 
 def make_all():
+    os.makedirs("images/charts", exist_ok=True)
     make_line_style_table()
     make_marker_style_table()
     make_color_scheme_table()

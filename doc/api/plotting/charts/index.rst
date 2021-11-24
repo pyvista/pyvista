@@ -9,17 +9,31 @@ charts in plotting windows.
    :toctree: _autosummary
    :template: custom-class-template.rst
 
-   plotting.charts.Pen
-   plotting.charts.Brush
-   plotting.charts.Axis
-   plotting.charts.LinePlot2D
-   plotting.charts.ScatterPlot2D
-   plotting.charts.BarPlot
-   plotting.charts.AreaPlot
-   plotting.charts.StackPlot
    Chart2D
-   plotting.charts.BoxPlot
    ChartBox
-   plotting.charts.PiePlot
    ChartPie
    ChartMPL
+
+
+To customize these charts, extra plot and utility classes are
+available in the `charts` module. Note that users should
+typically not instantiate these classes themselves, but rather
+use the dedicated methods and properties from the chart
+classes above.
+
+.. currentmodule:: pyvista.plotting.charts
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-class-template.rst
+
+   Pen
+   Brush
+   Axis
+   LinePlot2D
+   ScatterPlot2D
+   BarPlot
+   AreaPlot
+   StackPlot
+   BoxPlot
+   PiePlot
