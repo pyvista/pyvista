@@ -49,7 +49,7 @@ class Table(_vtk.vtkTable, DataObject):
 
     @staticmethod
     def _prepare_arrays(arrays):
-        arrays = np.array(arrays, copy=False)
+        arrays = np.asarray(arrays)
         if arrays.ndim == 1:
             return np.reshape(arrays, (1, -1))
         elif arrays.ndim == 2:

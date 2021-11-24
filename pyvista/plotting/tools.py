@@ -459,10 +459,10 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
 
 
 def parse_color(color, opacity=None, default_color=None):
-    """Parse color into a vtk friendly rgb list.
+    """Parse color into a VTK friendly RGB(A) list.
 
-    If color is a sequence of RGBA floats, opacity will be extracted
-    from ``color`` and not the ``opacity`` parameter.
+    If ``color`` is a sequence of RGBA floats, the ``opacity`` parameter
+    is ignored.
 
     Values returned will be between 0 and 1.
 
