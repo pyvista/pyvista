@@ -471,6 +471,7 @@ def parse_color(color, opacity=None, default_color=None):
     ----------
     color : str or sequence
         Either a string, RGB sequence, RGBA sequence, or hex color string.
+        RGB(A) sequences should only contain values between 0 and 1.
         For example:
 
             * ``'white'``
@@ -481,7 +482,8 @@ def parse_color(color, opacity=None, default_color=None):
 
     opacity : float, optional
         Default opacity of the returned color. Used when ``color`` is
-        not a length 4 RGBA sequence.
+        not a length 4 RGBA sequence. Only opacities between 0 and 1
+        are allowed.
 
     default_color : str or sequence, optional
         Default color to use when ``color`` is None.  If this value is
@@ -508,7 +510,7 @@ def parse_color(color, opacity=None, default_color=None):
     (1.0, 1.0, 1.0)
 
     >>> pyvista.parse_color((0.4, 0.3, 0.4, 1))
-    (0.4, 0.3, 0.4, 1)
+    (0.4, 0.3, 0.4, 1.0)
 
     """
     color_valid = True
@@ -539,8 +541,13 @@ def parse_color(color, opacity=None, default_color=None):
         color='w'
         color=[1, 1, 1]
         color='#FFFFFF'""")
-    if opacity is not None and isinstance(opacity, (float, int)):
-        color = [color[0], color[1], color[2], opacity]
+    if opacity is not None:
+        if isinstance(opacity, (float, int)) and 0 <= opacity <= 1:
+            color = [color[0], color[1], color[2], float(opacity)]
+        else:
+            raise ValueError(f"""
+    Invalid opacity input: {opacity}
+    Must be a scalar value between 0 and 1.""")
     return tuple(color)
 
 
