@@ -1,4 +1,9 @@
-"""Module managing parametric objects."""
+"""Module managing parametric objects.
+
+These objects represent surfaces that are parametrised by a set of independent
+variables. Some of these are impossible to represent (correctly or at all)
+using implicit functions, such as the Mobius strip.
+"""
 
 from math import pi
 
