@@ -314,6 +314,7 @@ if VTK9:
                                               vtkRegularPolygonSource,
                                               vtkPointSource,
                                               vtkPlatonicSolidSource,
+                                              vtkSuperquadricSource,
                                               vtkFrustumSource)
     from vtkmodules.vtkFiltersGeometry import (vtkGeometryFilter,
                                                vtkStructuredGridGeometryFilter,
