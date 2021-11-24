@@ -1220,10 +1220,10 @@ def Circle(radius=0.5, resolution=100):
 
 
 def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
-                 thetaroundness=1., phiroundness=1.,
-                 thetaresolution=16, phiresolution=16,
+                 theta_roundness=1., phi_roundness=1.,
+                 theta_resolution=16, phi_resolution=16,
                  toroidal=False, thickness=1/3):
-    """Create an arrow.
+    """Create a superquadric.
 
     Parameters
     ----------
@@ -1236,19 +1236,19 @@ def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
     size : float, optional
         Superquadric isotropic size.
 
-    thetaroundness : float, optional
+    theta_roundness : float, optional
         Superquadric east/west roundness.
         Values range from 0 (rectangular) to 1 (circular) to higher orders.
 
-    phiroundness : float, optional
+    phi_roundness : float, optional
         Superquadric north/south roundness.
         Values range from 0 (rectangular) to 1 (circular) to higher orders.
 
-    thetaresolution : int, optional
+    theta_resolution : int, optional
         Number of points in the longitude direction.
         Values are rounded to nearest multiple of 4.
 
-    phiresolution : int, optional
+    phi_resolution : int, optional
         Number of points in the latitude direction.
         Values are rounded to nearest multiple of 8.
 
@@ -1275,10 +1275,10 @@ def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
     superquadricSource.SetCenter(center)
     superquadricSource.SetScale(scale)
     superquadricSource.SetSize(size)
-    superquadricSource.SetThetaRoundness(thetaroundness[0])
-    superquadricSource.SetPhiRoundness(phiroundness[1])
-    superquadricSource.SetThetaResolution(round(thetaresolution[0]/4)*4)
-    superquadricSource.SetPhiResolution(round(phiresolution[1]/8)*8)
+    superquadricSource.SetThetaRoundness(theta_roundness)
+    superquadricSource.SetPhiRoundness(phi_roundness)
+    superquadricSource.SetThetaResolution(round(theta_resolution/4)*4)
+    superquadricSource.SetPhiResolution(round(phi_resolution/8)*8)
     superquadricSource.SetToroidal(toroidal)
     superquadricSource.SetThickness(thickness)
     superquadricSource.Update()
