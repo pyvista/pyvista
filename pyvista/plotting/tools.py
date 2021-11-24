@@ -460,7 +460,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
 
 
 def parse_color(color, opacity=None, default_color=None):
-    """Parse color into a VTK friendly RGB(A) list.
+    """Parse color into a VTK friendly RGB(A) tuple.
 
     If ``color`` is a sequence of RGBA floats, the ``opacity`` parameter
     is ignored.
@@ -522,7 +522,7 @@ def parse_color(color, opacity=None, default_color=None):
     elif isinstance(color, (Sequence, np.ndarray)):
         try:
             color = np.asarray(color, dtype=np.float64)
-            if len(color.shape) != 1 or color.shape[0] not in (3, 4) or not np.all((0 <= color) & (color <= 1)):
+            if color.ndim != 1 or color.size not in (3, 4) or not np.all((0 <= color) & (color <= 1)):
                 color_valid = False
             elif len(color) == 4:
                 opacity = color[3]
