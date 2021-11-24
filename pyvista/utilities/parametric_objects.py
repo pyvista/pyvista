@@ -1008,6 +1008,11 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
     pyvista.PolyData
         ParametricSuperEllipsoid surface.
 
+    See Also
+    --------
+    ParametricSuperToroid : Toroidal equivalent of ParametricSuperEllipsoid.
+    pyvista.Superquadric : Geometric object with additional parameters.
+
     Examples
     --------
     Create a ParametricSuperEllipsoid surface that looks like a box
@@ -1021,11 +1026,6 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
 
     >>> mesh = pyvista.ParametricSuperEllipsoid(n1=4, n2=0.5)
     >>> mesh.plot(color='w', smooth_shading=True, cpos='xz')
-
-    See Also
-    --------
-    ParametricSuperToroid : Toroidal equivalent of ParametricSuperEllipsoid.
-    pyvista.Superquadric : Geometric object with additional parameters.
 
     """
     parametric_function = _vtk.vtkParametricSuperEllipsoid()
@@ -1100,6 +1100,11 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     pyvista.PolyData
         ParametricSuperToroid surface.
 
+    See Also
+    --------
+    ParametricSuperEllipsoid : Ellipsoidal equivalent of ParametricSuperToroid.
+    pyvista.Superquadric : Geometric object with additional parameters.
+
     Examples
     --------
     Create a ParametricSuperToroid mesh.
@@ -1107,11 +1112,6 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     >>> import pyvista
     >>> mesh = pyvista.ParametricSuperToroid(n1=2, n2=0.3)
     >>> mesh.plot(color='w', smooth_shading=True)
-
-    See Also
-    --------
-    ParametricSuperEllipsoid : Ellipsoidal equivalent of ParametricSuperToroid.
-    pyvista.Superquadric : Geometric object with additional parameters.
 
     """
     parametric_function = _vtk.vtkParametricSuperToroid()

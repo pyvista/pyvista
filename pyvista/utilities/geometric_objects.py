@@ -1264,16 +1264,16 @@ def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
     pyvista.PolyData
         Superquadric mesh.
 
+    See Also
+    --------
+    pyvista.ParametricSuperEllipse : Parametric superquadric if toroidal is 0.
+    pyvista.ParametricSuperToroid : Parametric superquadric if toroidal is 1.
+
     Examples
     --------
     >>> import pyvista
     >>> superquadric = pyvista.Superquadric()
     >>> superquadric.plot(show_edges=True)
-
-    See Also
-    --------
-    pyvista.ParametricSuperEllipse : Parametric superquadric if toroidal is 0.
-    pyvista.ParametricSuperToroid : Parametric superquadric if toroidal is 1.
 
     """
     superquadricSource = _vtk.vtkSuperquadricSource()
