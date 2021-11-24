@@ -1266,7 +1266,7 @@ def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
 
     See Also
     --------
-    pyvista.ParametricSuperEllipse : Parametric superquadric if toroidal is 0.
+    pyvista.ParametricSuperEllipsoid : Parametric superquadric if toroidal is 0.
     pyvista.ParametricSuperToroid : Parametric superquadric if toroidal is 1.
 
     Examples

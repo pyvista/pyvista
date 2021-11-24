@@ -1,9 +1,4 @@
-"""Module managing parametric objects.
-
-These objects represent surfaces that are parametrised by a set of independent
-variables. Some of these are impossible to represent (correctly or at all)
-using implicit functions, such as the Mobius strip.
-"""
+"""Module managing parametric objects."""
 
 from math import pi
 
@@ -1010,7 +1005,7 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
 
     See Also
     --------
-    ParametricSuperToroid : Toroidal equivalent of ParametricSuperEllipsoid.
+    pyvista.ParametricSuperToroid : Toroidal equivalent of ParametricSuperEllipsoid.
     pyvista.Superquadric : Geometric object with additional parameters.
 
     Examples
@@ -1102,7 +1097,7 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
 
     See Also
     --------
-    ParametricSuperEllipsoid : Ellipsoidal equivalent of ParametricSuperToroid.
+    pyvista.ParametricSuperEllipsoid : Ellipsoidal equivalent of ParametricSuperToroid.
     pyvista.Superquadric : Geometric object with additional parameters.
 
     Examples
