@@ -1229,17 +1229,49 @@ def test_extract_surface():
     assert surf_no_subdivide.n_faces == 6
 
 
-def test_merge_general():
-    mesh = examples.load_uniform()
-    thresh = mesh.threshold_percent([0.2, 0.5], progress_bar=True)  # unstructured grid
-    con = mesh.contour()  # poly data
+def test_merge_general(uniform):
+    thresh = uniform.threshold_percent([0.2, 0.5], progress_bar=True)  # unstructured grid
+    con = uniform.contour()  # poly data
     merged = thresh + con
     assert isinstance(merged, pyvista.UnstructuredGrid)
     merged = con + thresh
     assert isinstance(merged, pyvista.UnstructuredGrid)
     # Pure PolyData inputs should yield poly data output
-    merged = mesh.extract_surface() + con
+    merged = uniform.extract_surface() + con
     assert isinstance(merged, pyvista.PolyData)
+
+
+def test_iadd_general(uniform, hexbeam, sphere):
+    unstructured = hexbeam
+    sphere_shifted = sphere.copy()
+    sphere_shifted.points += [1, 1, 1]
+    # successful case: poly += poly
+    merged = sphere
+    merged += sphere_shifted
+    assert merged is sphere
+
+    # successful case: unstructured += anything
+    merged = unstructured
+    merged += uniform
+    assert merged is unstructured
+    merged += unstructured
+    assert merged is unstructured
+    merged += sphere
+    assert merged is unstructured
+
+    # failing case: poly += non-poly
+    merged = sphere
+    with pytest.raises(TypeError):
+        merged += uniform
+
+    # failing case: uniform += anything
+    merged = uniform
+    with pytest.raises(TypeError):
+        merged += uniform
+    with pytest.raises(TypeError):
+        merged += unstructured
+    with pytest.raises(TypeError):
+        merged += sphere
 
 
 def test_compute_cell_quality():

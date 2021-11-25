@@ -314,6 +314,24 @@ class PolyDataFilters(DataSetFilters):
         """Merge these two meshes."""
         return self.merge(dataset)
 
+    def __iadd__(self, dataset):
+        """Merge another mesh into this one if possible.
+
+        "If possible" means that ``dataset`` is also a :class:`PolyData`.
+        Otherwise we have to return a :class:`pyvista.UnstructuredGrid`,
+        so the in-place merge attempt will raise.
+
+        """
+        try:
+            merged = self.merge(dataset, inplace=True)
+        except TypeError:
+            raise TypeError(
+                'In-place merge only possible if the other mesh '
+                'is also a PolyData.\nPlease use `mesh + other_mesh` '
+                'instead, which returns a new UnstructuredGrid.'
+            ) from None
+        return merged
+
     def merge(self, dataset, merge_points=True, inplace=False,
               main_has_priority=True, progress_bar=False):
         """Merge this mesh with one or more datasets.
@@ -323,6 +341,12 @@ class PolyDataFilters(DataSetFilters):
            :func:`PolyDataFilters.boolean_union` filter.  This filter
            does not attempt to create a manifold mesh and will include
            internal surfaces when two meshes overlap.
+
+        .. note::
+           The ``+`` operator between two meshes uses this filter with
+           the default parameters. When the other mesh is also a
+           :class:`pyvista.PolyData`, in-place merging via ``+=`` is
+           similarly possible.
 
         Parameters
         ----------
