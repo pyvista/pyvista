@@ -74,7 +74,7 @@ p.show(cpos=camera_position)
 # The behavior immediately downstream of the cylinder is still not apparent
 # using streamlines at the inlet.
 #
-# Another method is the use
+# Another method is to use
 # :func:`pyvista.DataSetFilters.streamlines_evenly_spaced_2D`.
 # This filter only works with 2D data that lies on the xy plane. This method
 # can quickly run of memory, so particular attention must be paid to the input
