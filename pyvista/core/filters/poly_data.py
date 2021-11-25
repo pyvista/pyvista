@@ -324,8 +324,9 @@ class PolyDataFilters(DataSetFilters):
         try:
             merged = self.merge(dataset, inplace=True)
         except TypeError:
-            merged = self.merge(dataset)
-        return merged
+            return NotImplemented
+        else:
+            return merged
 
     def merge(self, dataset, merge_points=True, inplace=False,
               main_has_priority=True, progress_bar=False):

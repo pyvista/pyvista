@@ -3993,8 +3993,9 @@ class DataSetFilters:
         try:
             merged = DataSetFilters.merge(self, dataset, inplace=True)
         except TypeError:
-            merged = DataSetFilters.merge(self, dataset)
-        return merged
+            return NotImplemented
+        else:
+            return merged
 
     def compute_cell_quality(self, quality_measure='scaled_jacobian', null_value=-1.0, progress_bar=False):
         """Compute a function of (geometric) quality for each cell of a mesh.
