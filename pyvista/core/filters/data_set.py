@@ -3907,7 +3907,9 @@ class DataSetFilters:
 
         .. note::
            The ``+`` operator between two meshes uses this filter with
-           the default parameters.
+           the default parameters. When the target mesh is already a
+           :class:`pyvista.UnstructuredGrid`, in-place merging via
+           ``+=`` is similarly possible.
 
         Parameters
         ----------
@@ -3987,15 +3989,19 @@ class DataSetFilters:
         """Merge another mesh into this one if possible.
 
         "If possible" means that ``self`` is a :class:`pyvista.UnstructuredGrid`.
-        Otherwise we have to return a new object.
+        Otherwise we have to return a new object, and the attempted in-place
+        merge will raise.
 
         """
         try:
             merged = DataSetFilters.merge(self, dataset, inplace=True)
         except TypeError:
-            return NotImplemented
-        else:
-            return merged
+            raise TypeError(
+                'In-place merge only possible if the target mesh '
+                'is an UnstructuredGrid.\nPlease use `mesh + other_mesh` '
+                'instead, which returns a new UnstructuredGrid.'
+            ) from None
+        return merged
 
     def compute_cell_quality(self, quality_measure='scaled_jacobian', null_value=-1.0, progress_bar=False):
         """Compute a function of (geometric) quality for each cell of a mesh.

@@ -1261,23 +1261,17 @@ def test_iadd_general(uniform, hexbeam, sphere):
 
     # failing case: poly += non-poly
     merged = sphere
-    merged += uniform
-    assert merged is not sphere
-    assert isinstance(merged, pyvista.UnstructuredGrid)
+    with pytest.raises(TypeError):
+        merged += uniform
 
     # failing case: uniform += anything
     merged = uniform
-    merged += uniform
-    assert merged is not uniform
-    assert isinstance(merged, pyvista.UnstructuredGrid)
-    merged = uniform
-    merged += unstructured
-    assert merged is not uniform
-    assert isinstance(merged, pyvista.UnstructuredGrid)
-    merged = uniform
-    merged += sphere
-    assert merged is not uniform
-    assert isinstance(merged, pyvista.UnstructuredGrid)
+    with pytest.raises(TypeError):
+        merged += uniform
+    with pytest.raises(TypeError):
+        merged += unstructured
+    with pytest.raises(TypeError):
+        merged += sphere
 
 
 def test_compute_cell_quality():
