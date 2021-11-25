@@ -1005,8 +1005,10 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
 
     See Also
     --------
-    pyvista.ParametricSuperToroid : Toroidal equivalent of ParametricSuperEllipsoid.
-    pyvista.Superquadric : Geometric object with additional parameters.
+    pyvista.ParametricSuperToroid :
+        Toroidal equivalent of ParametricSuperEllipsoid.
+    pyvista.Superquadric :
+        Geometric object with additional parameters.
 
     Examples
     --------
@@ -1097,8 +1099,10 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
 
     See Also
     --------
-    pyvista.ParametricSuperEllipsoid : Ellipsoidal equivalent of ParametricSuperToroid.
-    pyvista.Superquadric : Geometric object with additional parameters.
+    pyvista.ParametricSuperEllipsoid :
+        Ellipsoidal equivalent of ParametricSuperToroid.
+    pyvista.Superquadric :
+        Geometric object with additional parameters.
 
     Examples
     --------

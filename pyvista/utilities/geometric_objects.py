@@ -1253,11 +1253,12 @@ def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
         Values are rounded to nearest multiple of 8.
 
     toroidal : bool, optional
-        Whether or not the superquadric is toroidal (1) or ellipsoidal (0).
+        Whether or not the superquadric is toroidal (``True``)
+        or ellipsoidal (``False``).
 
     thickness : float, optional
         Superquadric ring thickness.
-        Only applies if toroidal is set to 1.
+        Only applies if toroidal is set to ``True``.
 
     Returns
     -------
@@ -1266,8 +1267,10 @@ def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
 
     See Also
     --------
-    pyvista.ParametricSuperEllipsoid : Parametric superquadric if toroidal is 0.
-    pyvista.ParametricSuperToroid : Parametric superquadric if toroidal is 1.
+    pyvista.ParametricSuperEllipsoid :
+        Parametric superquadric if toroidal is ``False``.
+    pyvista.ParametricSuperToroid :
+        Parametric superquadric if toroidal is ``True``.
 
     Examples
     --------
