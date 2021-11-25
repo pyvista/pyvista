@@ -1272,7 +1272,9 @@ def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
     Examples
     --------
     >>> import pyvista
-    >>> superquadric = pyvista.Superquadric()
+    >>> superquadric = pyvista.Superquadric(scale=(3., 1., 0.5),
+    ...                                     phi_roundness=0.1,
+    ...                                     theta_roundness=0.5)
     >>> superquadric.plot(show_edges=True)
 
     """
