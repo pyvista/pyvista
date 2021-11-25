@@ -898,14 +898,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 raise KeyError(f'{key} not present.')
             return default
 
-        vtk_arr = self.GetArray(key)
-        if vtk_arr:
-            copy = vtk_arr.NewInstance()
-            copy.DeepCopy(vtk_arr)
-            vtk_arr = copy
+        narray = self.get_array(key)
 
         self.remove(key)
-        return pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
+        return narray
 
     def items(self) -> List[Tuple[str, pyvista_ndarray]]:
         """Return a list of (array name, array value) tuples.

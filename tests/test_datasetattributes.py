@@ -37,6 +37,14 @@ def insert_bool_array(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
+@fixture()
+def insert_string_array(hexbeam_point_attributes):
+    n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
+    sample_array = np.repeat("A", n_points)
+    hexbeam_point_attributes.set_array(sample_array, 'sample_array')
+    return hexbeam_point_attributes, sample_array
+
+
 def test_init(hexbeam):
     attributes = pyvista.DataSetAttributes(
         hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT)
@@ -283,8 +291,20 @@ def test_should_pop_array(insert_arange_narray):
     assert 'sample_array' not in dsa
 
 
-def test_pop_should_return_array(insert_arange_narray):
+def test_pop_should_return_arange_narray(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
+    other_array = dsa.pop('sample_array')
+    assert np.array_equal(other_array, sample_array)
+
+
+def test_pop_should_return_bool_array(insert_bool_array):
+    dsa, sample_array = insert_bool_array
+    other_array = dsa.pop('sample_array')
+    assert np.array_equal(other_array, sample_array)
+
+
+def test_pop_should_return_string_array(insert_string_array):
+    dsa, sample_array = insert_string_array
     other_array = dsa.pop('sample_array')
     assert np.array_equal(other_array, sample_array)
 
