@@ -36,7 +36,6 @@ filename = "isovalue.gif"
 plotter = pv.Plotter()
 # Open a movie file
 plotter.open_gif(filename)
-plotter.enable_depth_peeling()
 
 # Add initial mesh
 plotter.add_mesh(surface, opacity=0.5, clim=vol.get_data_range())
