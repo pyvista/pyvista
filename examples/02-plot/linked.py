@@ -17,7 +17,7 @@ mesh = examples.download_cow()
 
 decimated = mesh.decimate_boundary(target_reduction=0.75)
 
-p = pv.Plotter(notebook=0, shape=(1, 2), border=False)
+p = pv.Plotter(shape=(1, 2), border=False)
 p.subplot(0, 0)
 p.add_text("Original mesh", font_size=24)
 p.add_mesh(mesh, show_edges=True, color=True)
