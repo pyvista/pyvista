@@ -253,7 +253,7 @@ can see the entire process.
    ...           [1, 0, 0],
    ...           [0.5, 0.667, 0]]
    >>> mesh = pyvista.PolyData(points)
-   >>> mesh.plot(show_bounds=True, color = 'red', cpos='xy', point_size=20)
+   >>> mesh.plot(show_bounds=True, color='red', cpos='xy', point_size=20)
 
 We'll get into PyVista's data classes and attributes later, but for
 now we've shown how to create a simple geometry containing just points.
