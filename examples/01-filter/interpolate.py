@@ -79,7 +79,6 @@ interp = grid.interpolate(probes, radius=15000, sharpness=10, strategy='mask_poi
 vol_opac = [0, 0, .2, 0.2, 0.5, 0.5]
 
 p = pv.Plotter(shape=(1,2), window_size=[1024*3, 768*2])
-p.enable_depth_peeling()
 p.add_volume(interp, opacity=vol_opac, **dargs)
 p.add_mesh(probes, render_points_as_spheres=True, point_size=10, **dargs)
 p.subplot(0,1)
