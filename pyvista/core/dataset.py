@@ -952,7 +952,7 @@ class DataSet(DataSetFilters, DataObject):
         t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
         self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def translate(self, xyz: Union[list, tuple, np.ndarray]):
+    def translate(self, xyz: Union[list, tuple, np.ndarray], inplace=False):
         """Translate the mesh.
 
         Parameters
@@ -973,9 +973,11 @@ class DataSet(DataSetFilters, DataObject):
         [2.0, 1.0, 2.0]
 
         """
-        self.points += np.asarray(xyz)  # type: ignore
+        transform = _vtk.vtkTransform()
+        transform.Translate(xyz)
+        return self.transform(transform, inplace=inplace)
 
-    def scale(self, xyz: Union[list, tuple, np.ndarray]):
+    def scale(self, xyz: Union[list, tuple, np.ndarray], inplace=False):
         """Scale the mesh.
 
         Parameters
@@ -1001,7 +1003,9 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
-        self.points *= np.asarray(xyz)  # type: ignore
+        transform = _vtk.vtkTransform()
+        transform.Scale(xyz)
+        return self.transform(transform, inplace=inplace)
 
     def flip_x(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the x-axis.
