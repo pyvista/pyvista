@@ -286,10 +286,8 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         """
         if isinstance(index, slice):
-            stop = index.stop if index.stop >= 0 else self.n_blocks + index.stop + 1
-            step = index.step if isinstance(index.step, int) else 1
             multi = MultiBlock()
-            for i in range(index.start, stop, step):
+            for i in range(self.n_blocks)[index]:
                 multi[-1, self.get_block_name(i)] = self[i]
             return multi
         elif isinstance(index, (list, tuple, np.ndarray)):
@@ -481,6 +479,25 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """Return the iterator across all blocks."""
         self._iter_n = 0
         return self
+
+    def __eq__(self, other):
+        """Equality comparison."""
+        if not isinstance(other, MultiBlock):
+            return False
+
+        if self is other:
+            return True
+
+        if len(self) != len(other):
+            return False
+
+        if not self.keys() == other.keys():
+            return False
+
+        if any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other)):
+            return False
+
+        return True
 
     def next(self) -> Optional['MultiBlock']:
         """Get the next block from the iterator."""

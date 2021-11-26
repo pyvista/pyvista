@@ -254,6 +254,9 @@ class DataObject:
         if not isinstance(self, type(other)):
             return False
 
+        if self is other:
+            return True
+
         # these attrs use numpy.array_equal
         equal_attrs = ['verts',  # DataObject
                        'points',  # DataObject
