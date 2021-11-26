@@ -874,7 +874,7 @@ class DataSet(DataSetFilters, DataObject):
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
 
-    def rotate_x(self, angle: float, point=None, transform_all_input_vectors=False):
+    def rotate_x(self, angle: float, point=None, transform_all_input_vectors=False, inplace=False):
         """Rotate mesh about the x-axis.
 
         Parameters
@@ -895,9 +895,9 @@ class DataSet(DataSetFilters, DataObject):
         if len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def rotate_y(self, angle: float, point=None, transform_all_input_vectors=False):
+    def rotate_y(self, angle: float, point=None, transform_all_input_vectors=False, inplace=False):
         """Rotate mesh about the y-axis.
 
         Parameters
@@ -918,9 +918,9 @@ class DataSet(DataSetFilters, DataObject):
         if len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def rotate_z(self, angle: float, point=None, transform_all_input_vectors=False):
+    def rotate_z(self, angle: float, point=None, transform_all_input_vectors=False, inplace=False):
         """Rotate mesh about the z-axis.
 
         Parameters
@@ -941,10 +941,10 @@ class DataSet(DataSetFilters, DataObject):
         if len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inlpace)
 
     def rotate_vector(self, vector: List[float], angle, point=None,
-                      transform_all_input_vectors=False):
+                      transform_all_input_vectors=False, inplace=False):
         """Rotate mesh about a vector.
 
         Parameters
@@ -970,7 +970,7 @@ class DataSet(DataSetFilters, DataObject):
         if len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def translate(self, xyz: Union[list, tuple, np.ndarray]):
         """Translate the mesh.
@@ -1023,7 +1023,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.points *= np.asarray(xyz)  # type: ignore
 
-    def flip_x(self, point=None, transform_all_input_vectors=False):
+    def flip_x(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the x-axis.
 
         Parameters
@@ -1057,9 +1057,9 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((1, 0, 0), point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def flip_y(self, point=None, transform_all_input_vectors=False):
+    def flip_y(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the y-axis.
 
         Parameters
@@ -1093,9 +1093,9 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 1, 0), point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def flip_z(self, point=None, transform_all_input_vectors=False):
+    def flip_z(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the z-axis.
 
         Parameters
@@ -1129,9 +1129,9 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 0, 1), point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def flip_normal(self, normal: List[float], point=None, transform_all_input_vectors=False):
+    def flip_normal(self, normal: List[float], point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the normal.
 
         Parameters
@@ -1169,7 +1169,7 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(normal, 'normal')
         check_valid_vector(point, 'point')
         t = transformations.reflection(normal, point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object.
