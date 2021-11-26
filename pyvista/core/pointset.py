@@ -120,6 +120,30 @@ class PointSet(DataSet):
         target.RemoveGhostCells()
         return target
 
+    def points_to_double(self):
+        """Convert the points datatype to double precision.
+
+        Note
+        ----
+        This operates inplace
+
+        Examples
+        --------
+        Create a mesh that has points of the type ``float32`` and
+        convert the points to ``float64``.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.points.dtype
+        dtype('float32')
+        >>> mesh.points_to_double()
+        >>> mesh.points.dtype
+        dtype('float64')
+
+        """
+        if self.points.dtype != np.double:
+            self.points = self.points.astype(np.double)
+        return self
 
 class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).

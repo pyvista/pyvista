@@ -854,26 +854,6 @@ class DataSet(DataSetFilters, DataObject):
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
-    def points_to_double(self):
-        """Convert the points datatype to double precision.
-
-        Examples
-        --------
-        Create a mesh that has points of the type ``float32`` and
-        convert the points to ``float64``.
-
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> mesh.points.dtype
-        dtype('float32')
-        >>> mesh.points_to_double()
-        >>> mesh.points.dtype
-        dtype('float64')
-
-        """
-        if self.points.dtype != np.double:
-            self.points = self.points.astype(np.double)
-
     def rotate_x(self, angle: float, point=None, transform_all_input_vectors=False, inplace=False):
         """Rotate mesh about the x-axis.
 
