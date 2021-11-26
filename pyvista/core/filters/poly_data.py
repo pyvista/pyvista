@@ -200,7 +200,7 @@ class PolyDataFilters(DataSetFilters):
            meshes whereas the :func:`PolyDataFilters.intersection`
            filter returns the surface intersection between two meshes
            (which often resolves as a line).
-           
+
 
         .. note::
            Both meshes must be composed of all triangles.  Check with
@@ -423,7 +423,7 @@ class PolyDataFilters(DataSetFilters):
 
         if inplace:
             self.deep_copy(merged)
-            return self
+            return
 
         return merged
 
@@ -594,7 +594,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True, 
+        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True,
         ...                      clim=[0, 1])
 
         """
@@ -644,7 +644,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(trifilter)
         if inplace:
             self.overwrite(mesh)
-            return self
+            return
         return mesh
 
     def smooth(self, n_iter=20, relaxation_factor=0.01, convergence=0.0,
@@ -725,7 +725,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg)
         if inplace:
             self.overwrite(mesh)
-            return self
+            return
 
         return mesh
 
@@ -816,7 +816,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg)
         if inplace:
             self.overwrite(mesh)
-            return self
+            return
 
         return mesh
 
@@ -999,7 +999,7 @@ class PolyDataFilters(DataSetFilters):
         submesh = _get_output(sfilter)
         if inplace:
             self.overwrite(submesh)
-            return self
+            return
 
         return submesh
 
@@ -1094,7 +1094,7 @@ class PolyDataFilters(DataSetFilters):
 
         if inplace:
             self.overwrite(submesh)
-            return self
+            return
 
         return submesh
 
@@ -1217,7 +1217,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg)
         if inplace:
             self.overwrite(mesh)
-            return self
+            return
 
         return mesh
 
@@ -1357,7 +1357,7 @@ class PolyDataFilters(DataSetFilters):
 
         if inplace:
             self.overwrite(mesh)
-            return self
+            return
 
         return mesh
 
@@ -1449,7 +1449,7 @@ class PolyDataFilters(DataSetFilters):
 
         if inplace:
             self.overwrite(result)
-            return self
+            return
         else:
             return result
 
@@ -1506,7 +1506,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg)
         if inplace:
             self.overwrite(mesh)
-            return self
+            return
         return mesh
 
     def clean(self, point_merging=True, tolerance=None, lines_to_points=True,
@@ -1598,7 +1598,7 @@ class PolyDataFilters(DataSetFilters):
 
         if inplace:
             self.overwrite(output)
-            return self
+            return
         return output
 
     def geodesic(self, start_vertex, end_vertex, inplace=False,
@@ -1681,7 +1681,7 @@ class PolyDataFilters(DataSetFilters):
 
         if inplace:
             self.overwrite(output)
-            return self
+            return
 
         return output
 
@@ -2125,7 +2125,7 @@ class PolyDataFilters(DataSetFilters):
         # Return vtk surface and reverse indexing array
         if inplace:
             self.overwrite(newmesh)
-            return self, ridx
+            return ridx
         return newmesh, ridx
 
     def flip_normals(self):
@@ -2247,7 +2247,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(alg).triangulate()
         if inplace:
             self.overwrite(mesh)
-            return self
+            return
         return mesh
 
     def compute_arc_length(self, progress_bar=False):
@@ -2503,7 +2503,7 @@ class PolyDataFilters(DataSetFilters):
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
             self.overwrite(output)
-            return self
+            return
         return output
 
     def extrude_rotate(self, resolution=30, inplace=False,
@@ -2605,7 +2605,7 @@ class PolyDataFilters(DataSetFilters):
         output = pyvista.wrap(alg.GetOutput())
         if inplace:
             self.overwrite(output)
-            return self
+            return
         return output
 
     def strip(self, join=False, max_length=1000, pass_cell_data=False,

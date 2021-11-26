@@ -125,7 +125,7 @@ class DataSetFilters:
                 return self, result[1]
             else:
                 self.overwrite(result)
-                return self
+                return
         return result
 
     def clip_box(self, bounds=None, invert=True, factor=0.35, progress_bar=False):
@@ -246,7 +246,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> plane = pv.Plane()
-        >>> _ = sphere.compute_implicit_distance(plane, inplace=True)
+        >>> sphere.compute_implicit_distance(plane, inplace=True)
         >>> dist = sphere['implicit_distance']
         >>> type(dist)
         <class 'numpy.ndarray'>
@@ -270,7 +270,7 @@ class DataSetFilters:
         function.FunctionValue(points, dists)
         if inplace:
             self.point_data['implicit_distance'] = pyvista.convert_array(dists)
-            return self
+            return
         result = self.copy()
         result.point_data['implicit_distance'] = pyvista.convert_array(dists)
         return result
@@ -324,7 +324,7 @@ class DataSetFilters:
         >>> _below, _above = dataset.clip_scalar(scalars="sample_point_scalars", value=100, both=True)
 
         Remove the part of the mesh with "sample_point_scalars" below 100.
-        
+
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
@@ -1401,7 +1401,7 @@ class DataSetFilters:
         self.GetPointData().AddArray(t_coords)
         # CRITICAL:
         self.GetPointData().AddArray(otc) # Add old ones back at the end
-        return self
+        return
 
     def texture_map_to_sphere(self, center=None, prevent_seam=True,
                               inplace=False, name='Texture Coordinates',
@@ -1469,7 +1469,7 @@ class DataSetFilters:
         self.GetPointData().AddArray(t_coords)
         # CRITICAL:
         self.GetPointData().AddArray(otc)  # Add old ones back at the end
-        return self
+        return
 
     def compute_cell_sizes(self, length=True, area=True, volume=True,
                            progress_bar=False):
@@ -1813,7 +1813,7 @@ class DataSetFilters:
         mesh = DataSetFilters.connectivity(self, largest=True, progress_bar=False)
         if inplace:
             self.overwrite(mesh)
-            return self
+            return
         return mesh
 
     def split_bodies(self, label=False, progress_bar=False):
@@ -1942,7 +1942,7 @@ class DataSetFilters:
             if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
                 raise TypeError("This filter cannot be applied inplace for this mesh type.")
             self.overwrite(output)
-            return self
+            return
         return output
 
     def warp_by_vector(self, vectors=None, factor=1.0, inplace=False,
@@ -2015,7 +2015,7 @@ class DataSetFilters:
         warped_mesh = _get_output(alg)
         if inplace:
             self.overwrite(warped_mesh)
-            return self
+            return
         else:
             return warped_mesh
 
@@ -2224,7 +2224,6 @@ class DataSetFilters:
         mesh = _get_output(alg)
         if inplace:
             self.overwrite(mesh)
-            return self
         return mesh
 
     def delaunay_3d(self, alpha=0, tol=0.001, offset=2.5, progress_bar=False):
@@ -3976,7 +3975,7 @@ class DataSetFilters:
         if inplace:
             if type(self) == type(merged):
                 self.deep_copy(merged)
-                return self
+                return
             else:
                 raise TypeError(f"Mesh type {type(self)} cannot be overridden by output.")
         return merged
@@ -4403,7 +4402,7 @@ class DataSetFilters:
 
         if inplace:
             self.overwrite(res)
-            return self
+            return
 
         # The output from the transform filter contains a shallow copy
         # of the original dataset except for the point arrays.  Here

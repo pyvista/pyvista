@@ -111,7 +111,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Association refers to the data association (e.g. point, cell, or
         field) of the active scalars.
-        
+
         Returns
         -------
         ActiveArrayInfo
@@ -167,7 +167,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Association refers to the data association (e.g. point, cell, or
         field) of the active vectors.
-        
+
         Returns
         -------
         ActiveArrayInfo
@@ -188,7 +188,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> _ = mesh.compute_normals(inplace=True)
+        >>> mesh.compute_normals(inplace=True)
         >>> mesh.active_vectors_name = 'Normals'
         >>> mesh.active_vectors_info
         ActiveArrayInfo(association=<FieldAssociation.POINT: 0>, name='Normals')
@@ -232,7 +232,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> _ = mesh.compute_normals(inplace=True)
+        >>> mesh.compute_normals(inplace=True)
         >>> mesh.active_vectors  # doctest:+SKIP
         pyvista_ndarray([[-2.48721432e-10, -1.08815623e-09, -1.00000000e+00],
                          [-2.48721432e-10, -1.08815623e-09,  1.00000000e+00],
@@ -1346,7 +1346,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Add cell arrays to a mesh and list the available ``cell_data``. 
+        Add cell arrays to a mesh and list the available ``cell_data``.
 
         >>> import pyvista
         >>> import numpy as np
