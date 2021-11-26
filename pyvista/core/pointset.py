@@ -76,7 +76,7 @@ class PointSet(DataSet):
             to_copy.SetPoints(_vtk.vtkPoints())
         DataSet.shallow_copy(self, to_copy)
 
-    def remove_cells(self, ind, inplace=True):
+    def remove_cells(self, ind, inplace=False):
         """Remove cells.
 
         Parameters
@@ -1927,7 +1927,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         grid = self.cast_to_unstructured_grid()
         grid.save(filename, binary)
 
-    def hide_cells(self, ind, inplace=True):
+    def hide_cells(self, ind, inplace=False):
         """Hide specific cells.
 
         Hides cells by setting the ghost cell array to ``HIDDENCELL``.
@@ -1970,7 +1970,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         grid.hide_cells(ind)
         return grid
 
-    def show_cells(self, inplace=True):
+    def show_cells(self, inplace=False):
         """Show hidden cells.
 
         Shows hidden cells by setting the ghost cell array to ``0``
@@ -2291,7 +2291,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             indices.update(rel(i))
         return sorted(indices)
 
-    def compute_connectivity(self, inplace=True):
+    def compute_connectivity(self, inplace=False):
         """Compute the faces connectivity flags array.
 
         This method checks the faces connectivity of the cells with
