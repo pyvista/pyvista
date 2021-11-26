@@ -120,12 +120,8 @@ class PointSet(DataSet):
         target.RemoveGhostCells()
         return target
 
-    def points_to_double(self):
+    def points_to_double(self, inplace=False):
         """Convert the points datatype to double precision.
-
-        Note
-        ----
-        This operates inplace
 
         Examples
         --------
@@ -141,6 +137,8 @@ class PointSet(DataSet):
         dtype('float64')
 
         """
+        if not inplace:
+            return self.copy().points_to_double(inplace=True)
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
         return self
