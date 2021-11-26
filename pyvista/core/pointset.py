@@ -145,8 +145,12 @@ class PointSet(DataSet):
         return self
 
 
-    def translate(self, xyz: Union[list, tuple, np.ndarray], inplace=False):
+    def translate(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Translate the mesh.
+
+        To Do
+        -----
+        `transform_all_input_vectors` is not handled when modifying inplace
 
         Parameters
         ----------
@@ -169,11 +173,15 @@ class PointSet(DataSet):
         if inplace:
             self.points += np.asarray(xyz)  # type: ignore
             return self
-        return super().translate(xyz, inplace=False)
+        return super().translate(xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=False)
 
 
-    def scale(self, xyz: Union[list, tuple, np.ndarray], inplace=False):
+    def scale(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Scale the mesh.
+
+        To Do
+        -----
+        `transform_all_input_vectors` is not handled when modifying inplace
 
         Parameters
         ----------
@@ -201,7 +209,7 @@ class PointSet(DataSet):
         if inplace:
             self.points *= np.asarray(xyz)  # type: ignore
             return self
-        return super().scale(xyz, inplace=False)
+        return super().scale(xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=False)
 
 
 class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
