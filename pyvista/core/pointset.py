@@ -7,6 +7,7 @@ import os
 import warnings
 import numbers
 import collections
+from typing import Union
 
 import numpy as np
 
@@ -142,6 +143,66 @@ class PointSet(DataSet):
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
         return self
+
+
+    def translate(self, xyz: Union[list, tuple, np.ndarray], inplace=False):
+        """Translate the mesh.
+
+        Parameters
+        ----------
+        xyz : list or tuple or np.ndarray
+            Length 3 list, tuple or array.
+
+        Examples
+        --------
+        Create a sphere and translate it by ``(2, 1, 2)``.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.center
+        [0.0, 0.0, 0.0]
+        >>> mesh.translate((2, 1, 2))
+        >>> mesh.center
+        [2.0, 1.0, 2.0]
+
+        """
+        if inplace:
+            self.points += np.asarray(xyz)  # type: ignore
+            return self
+        return super().translate(xyz, inplace=False)
+
+
+    def scale(self, xyz: Union[list, tuple, np.ndarray], inplace=False):
+        """Scale the mesh.
+
+        Parameters
+        ----------
+        xyz : scale factor list or tuple or np.ndarray
+            Length 3 list, tuple or array.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> _ = pl.show_grid()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> _ = pl.show_grid()
+        >>> mesh2 = mesh1.copy()
+        >>> mesh2.scale([10.0, 10.0, 10.0])
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+        """
+        if inplace:
+            self.points *= np.asarray(xyz)  # type: ignore
+            return self
+        return super().scale(xyz, inplace=False)
+
 
 class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
