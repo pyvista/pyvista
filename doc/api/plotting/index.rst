@@ -32,7 +32,8 @@ all plotting functionality in PyVista.
 Charts API
 ----------
 Charts API reference. These dedicated classes can be used to embed
-charts in plotting windows.
+charts in plotting windows. Note that using charts requires a VTK version
+of at least 9.0 and in a future release will require `vtk>=9.2`.
 
 .. toctree::
    :maxdepth: 2

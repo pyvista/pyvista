@@ -3164,7 +3164,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def x_axis(self):
-        """Return this chart's horizontal (x) axis.
+        """Return this chart's horizontal (x) :class:`Axis <plotting.charts.Axis>`.
 
         Examples
         --------
@@ -3181,7 +3181,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def y_axis(self):
-        """Return this chart's vertical (y) axis.
+        """Return this chart's vertical (y) :class:`Axis <plotting.charts.Axis>`.
 
         Examples
         --------
@@ -3507,7 +3507,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
     @property
     def plot(self):
-        """Return the BoxPlot instance associated with this chart.
+        """Return the :class:`BoxPlot <plotting.charts.BoxPlot>` instance associated with this chart.
 
         Examples
         --------
@@ -3705,7 +3705,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
     @property
     def plot(self):
-        """Return the BoxPlot instance associated with this chart.
+        """Return the :class:`PiePlot <plotting.charts.PiePlot>` instance associated with this chart.
 
         Examples
         --------

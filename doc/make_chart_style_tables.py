@@ -1,6 +1,21 @@
 import os
 import pyvista as pv
 
+TABLE_DIR = "api/plotting/charts"
+IMAGE_DIR = "images/charts"
+
+
+def make_table(file_name, header, get_token_row, tokens):
+    path = f"{TABLE_DIR}/{file_name}.rst"
+    if os.path.exists(path):
+        os.remove(path)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(header)
+        for i, (token, data) in enumerate(tokens.items()):
+            if data["descr"] is not None:
+                f.write(get_token_row(i, token, data))
+    pv.close_all()
+
 
 def make_line_style_img(line_style, path):
     p = pv.Plotter(off_screen=True, window_size=[100, 50])
@@ -14,6 +29,17 @@ def make_line_style_img(line_style, path):
     p._save_image(img[18:25, 22:85, :], path, False)
 
 
+def get_line_style_row(i, token, data):
+    row_template = """
+   * - ``"{}"``
+     - {}
+     - .. image:: /{}
+"""
+    img_path = f"{IMAGE_DIR}/ls_{i}.png"
+    make_line_style_img(token, img_path)
+    return row_template.format(token, data["descr"], img_path)
+
+
 def make_line_style_table():
     header = """
 .. list-table:: Line styles
@@ -24,22 +50,7 @@ def make_line_style_table():
      - Description
      - Example
 """
-    row_template = """
-   * - ``"{}"``
-     - {}
-     - .. image:: /{}
-"""
-    filename = "./api/plotting/charts/pen_line_styles.rst"
-    if os.path.exists(filename):
-        os.remove(filename)
-    with open(filename, "w") as f:
-        f.write(header)
-        for i, (ls, li) in enumerate(pv.charts.Pen.LINE_STYLES.items()):
-            if li["descr"] is not None:
-                img_path = f"images/charts/ls_{i}.png"
-                make_line_style_img(ls, img_path)
-                f.write(row_template.format(ls, li["descr"], img_path))
-    pv.close_all()
+    make_table("pen_line_styles", header, get_line_style_row, pv.charts.Pen.LINE_STYLES)
 
 
 def make_marker_style_img(marker_style, path):
@@ -55,6 +66,17 @@ def make_marker_style_img(marker_style, path):
     p._save_image(img[40:53, 47:60, :], path, False)
 
 
+def get_marker_style_row(i, token, data):
+    row_template = """
+   * - ``"{}"``
+     - {}
+     - .. image:: /{}
+"""
+    img_path = f"{IMAGE_DIR}/ms_{i}.png"
+    make_marker_style_img(token, img_path)
+    return row_template.format(token, data["descr"], img_path)
+
+
 def make_marker_style_table():
     header = """
 .. list-table:: Marker styles
@@ -65,22 +87,7 @@ def make_marker_style_table():
      - Description
      - Example
 """
-    row_template = """
-   * - ``"{}"``
-     - {}
-     - .. image:: /{}
-"""
-    filename = "./api/plotting/charts/scatter_marker_styles.rst"
-    if os.path.exists(filename):
-        os.remove(filename)
-    with open(filename, "w") as f:
-        f.write(header)
-        for i, (ms, mi) in enumerate(pv.charts.ScatterPlot2D.MARKER_STYLES.items()):
-            if mi["descr"] is not None:
-                img_path = f"images/charts/ms_{i}.png"
-                make_marker_style_img(ms, img_path)
-                f.write(row_template.format(ms, mi["descr"], img_path))
-    pv.close_all()
+    make_table("scatter_marker_styles", header, get_marker_style_row, pv.charts.ScatterPlot2D.MARKER_STYLES)
 
 
 def make_color_scheme_img(color_scheme, path):
@@ -101,6 +108,18 @@ def make_color_scheme_img(color_scheme, path):
     return N
 
 
+def get_color_scheme_row(i, token, data):
+    row_template = """
+   * - ``"{}"``
+     - {}
+     - {}
+     - .. image:: /{}
+"""
+    img_path = f"{IMAGE_DIR}/cs_{i}.png"
+    N = make_color_scheme_img(token, img_path)
+    return row_template.format(token, data["descr"], N, img_path)
+
+
 def make_color_scheme_table():
     header = """
 .. list-table:: Color schemes
@@ -112,27 +131,11 @@ def make_color_scheme_table():
      - # colors
      - Example
 """
-    row_template = """
-   * - ``"{}"``
-     - {}
-     - {}
-     - .. image:: /{}
-"""
-    filename = "./api/plotting/charts/plot_color_schemes.rst"
-    if os.path.exists(filename):
-        os.remove(filename)
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(header)
-        for i, (cs, ci) in enumerate(pv.charts._MultiCompPlot.COLOR_SCHEMES.items()):
-            if ci["descr"] is not None:
-                img_path = f"images/charts/cs_{i}.png"
-                N = make_color_scheme_img(cs, img_path)
-                f.write(row_template.format(cs, ci["descr"], N, img_path))
-    pv.close_all()
+    make_table("plot_color_schemes", header, get_color_scheme_row, pv.charts._MultiCompPlot.COLOR_SCHEMES)
 
 
 def make_all():
-    os.makedirs("images/charts", exist_ok=True)
+    os.makedirs(IMAGE_DIR, exist_ok=True)
     make_line_style_table()
     make_marker_style_table()
     make_color_scheme_table()
