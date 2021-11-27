@@ -47,6 +47,6 @@ mypy:
 	mypy pyvista/themes.py --no-incremental
 
 lint:
-	@echo "Running linting with flake8"
+	@echo "Linting with flake8"
 	# Check for trailing whitespace
 	flake8 --select W291 pyvista tests examples
