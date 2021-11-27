@@ -200,7 +200,7 @@ class PolyDataFilters(DataSetFilters):
            meshes whereas the :func:`PolyDataFilters.intersection`
            filter returns the surface intersection between two meshes
            (which often resolves as a line).
-           
+
 
         .. note::
            Both meshes must be composed of all triangles.  Check with
@@ -594,7 +594,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True, 
+        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True,
         ...                      clim=[0, 1])
 
         """

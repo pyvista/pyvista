@@ -26,7 +26,7 @@ pv.plot(cloud, scalars=points[:, 2], render_points_as_spheres=True, point_size=5
         opacity=points[:, 0], cpos='xz')
 
 ###############################################################################
-# Wrap an instance of Trimesh 
+# Wrap an instance of Trimesh
 import trimesh
 points = [[0, 0, 0], [0, 0, 1], [0, 1, 0]]
 faces = [[0, 1, 2]]

@@ -97,7 +97,7 @@ class DataObject:
             texture array will be saved as ``'RGBA'``
 
             .. note::
-               This feature is only available when saving PLY files. 
+               This feature is only available when saving PLY files.
 
         Notes
         -----
@@ -324,7 +324,7 @@ class DataObject:
         Add field data to a UniformGrid dataset.
 
         >>> mesh = pyvista.UniformGrid((2, 2, 1))
-        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'], 
+        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'],
         ...                      'my-field-data')
         >>> mesh['my-field-data']
         array(['I could', 'write', 'notes', 'here'], dtype='<U7')

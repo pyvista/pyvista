@@ -250,7 +250,7 @@ class Light(vtkLight):
     @shadow_attenuation.setter
     def shadow_attenuation(self, value):
         """Set the shadow intensity."""
-        self.SetShadowAttenuation(value)    
+        self.SetShadowAttenuation(value)
 
     @property
     def ambient_color(self):
@@ -991,7 +991,7 @@ class Light(vtkLight):
 
         >>> import pyvista as pv
         >>> light = pv.Light()
-        >>> light.transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], 
+        >>> light.transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0],
         ...                           [0, 0, 0, 1]]
         >>> shallow_copied = light.copy(deep=False)
         >>> shallow_copied == light

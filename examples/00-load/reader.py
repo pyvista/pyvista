@@ -130,7 +130,7 @@ plotter.show()
 
 ###############################################################################
 # Reading time points or iterations can also be utilized to make a movie.
-# Compare to :ref:`gif_movie_example`, but here a set of files are read in 
+# Compare to :ref:`gif_movie_example`, but here a set of files are read in
 # through a ParaView Data format file. This file format and reader also return a
 # :class:`pyvista.MultiBlock` mesh.
 

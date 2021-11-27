@@ -188,7 +188,7 @@ def generate_cell_offsets(cells, cell_types):
 
     if (not np.issubdtype(cells.dtype, np.integer) or not np.issubdtype(cell_types.dtype, np.integer)):
         raise ValueError("The cells and cell-type arrays must have an integral data-type")
-    
+
     try:
         cell_sizes = np.array([enum_cell_type_nr_points_map[cell_t] for cell_t in cell_types], dtype=np.int32)
     except KeyError as err:
@@ -290,7 +290,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
 
         if cells_arr.ndim == 1: #Flattened array present
             cells_arr = cells_arr.reshape([-1, nr_points_per_elem])
-            
+
         nr_elems = cells_arr.shape[0]
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(np.concatenate([np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1).reshape([-1]))

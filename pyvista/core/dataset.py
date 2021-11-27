@@ -111,7 +111,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Association refers to the data association (e.g. point, cell, or
         field) of the active scalars.
-        
+
         Returns
         -------
         ActiveArrayInfo
@@ -167,7 +167,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Association refers to the data association (e.g. point, cell, or
         field) of the active vectors.
-        
+
         Returns
         -------
         ActiveArrayInfo
@@ -1346,7 +1346,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Add cell arrays to a mesh and list the available ``cell_data``. 
+        Add cell arrays to a mesh and list the available ``cell_data``.
 
         >>> import pyvista
         >>> import numpy as np

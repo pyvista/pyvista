@@ -103,7 +103,7 @@ def get_reader(filename):
 
 class BaseReader:
     """The Base Reader class.
-    
+
     The base functionality includes reading data from a file,
     and allowing access to the underlying vtk reader. See
     :func:`pyvista.get_reader` for an example using
@@ -193,13 +193,13 @@ class PointCellDataSelection:
     >>> mesh = reader.read()  # MultiBlock mesh
     >>> mesh[0].array_names
     ['U']
-    
+
     """
 
     @property
     def number_point_arrays(self):
         """Return the number of point arrays.
-        
+
         Returns
         -------
         int
@@ -210,7 +210,7 @@ class PointCellDataSelection:
     @property
     def point_array_names(self):
         """Return the list of all point array names.
-        
+
         Returns
         -------
         list[int]
@@ -271,7 +271,7 @@ class PointCellDataSelection:
     @property
     def all_point_arrays_status(self):
         """Return the status of all point arrays.
-        
+
         Returns
         -------
         dict[str, bool]
@@ -282,7 +282,7 @@ class PointCellDataSelection:
     @property
     def number_cell_arrays(self):
         """Return the number of cell arrays.
-        
+
         Returns
         -------
         int
@@ -293,7 +293,7 @@ class PointCellDataSelection:
     @property
     def cell_array_names(self):
         """Return the list of all cell array names.
-        
+
         Returns
         -------
         list[str]
@@ -354,7 +354,7 @@ class PointCellDataSelection:
     @property
     def all_cell_arrays_status(self):
         """Return the status of all cell arrays.
-        
+
         Returns
         -------
         dict[str, bool]
@@ -370,7 +370,7 @@ class TimeReader(ABC):
     @abstractmethod
     def number_time_points(self):
         """Return number of time points or iterations available to read.
-        
+
         Returns
         -------
         int
@@ -380,7 +380,7 @@ class TimeReader(ABC):
     @abstractmethod
     def time_point_value(self, time_point):
         """Value of time point or iteration by index.
-        
+
         Parameters
         ----------
         time_point: int
@@ -448,10 +448,10 @@ class XMLPImageDataReader(BaseReader, PointCellDataSelection):
 
     _class_reader = _vtk.vtkXMLPImageDataReader
 
-    
+
 class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     """XML RectilinearGrid Reader for .vtr files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -478,7 +478,7 @@ class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
 
 class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
     """XML UnstructuredGrid Reader for .vtu files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -504,7 +504,7 @@ class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
 
 class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     """XML PolyData Reader for .vtp files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -526,7 +526,7 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
 
 class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
     """XML StructuredGrid Reader for .vts files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -551,7 +551,7 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
 # skip pydocstyle D102 check since docstring is taken from TimeReader
 class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     """EnSight Reader for .case files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -561,7 +561,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     'cylinder_Re35.case'
     >>> reader = pyvista.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(scalars="velocity", component=1, clim=[-20, 20], 
+    >>> mesh.plot(scalars="velocity", component=1, clim=[-20, 20],
     ...           cpos='xy', cmap='RdBu', show_scalar_bar=False)
 
     """
@@ -628,7 +628,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
 class PLYReader(BaseReader):
     """PLY Reader for reading .ply files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -647,7 +647,7 @@ class PLYReader(BaseReader):
 
 class OBJReader(BaseReader):
     """OBJ Reader for reading .obj files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -666,7 +666,7 @@ class OBJReader(BaseReader):
 
 class STLReader(BaseReader):
     """STL Reader for .stl files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -685,7 +685,7 @@ class STLReader(BaseReader):
 
 class VTKDataSetReader(BaseReader):
     """VTK Data Set Reader for .vtk files.
-    
+
     Notes
     -----
     This reader calls `ReadAllScalarsOn`, `ReadAllColorScalarsOn`,
@@ -729,7 +729,7 @@ class VTKPDataSetReader(BaseReader):
 
 class BYUReader(BaseReader):
     """BYU Reader for .g files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -748,7 +748,7 @@ class BYUReader(BaseReader):
 
 class FacetReader(BaseReader):
     """Facet Reader for .facet files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -773,7 +773,7 @@ class Plot3DMetaReader(BaseReader):
 
 class BinaryMarchingCubesReader(BaseReader):
     """BinaryMarchingCubes Reader for .tri files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -803,7 +803,7 @@ class PVDDataSet:
 # skip pydocstyle D102 check since docstring is taken from TimeReader
 class PVDReader(BaseReader, TimeReader):
     """PVD Reader for .pvd files.
-    
+
     Examples
     --------
     >>> import pyvista
@@ -833,11 +833,11 @@ class PVDReader(BaseReader, TimeReader):
         self._time_values = []
 
         self._set_filename(filename)
-        
+
     @property
     def reader(self):
         """Return the PVDReader.
-        
+
         .. note::
             This Reader does not have an uderlying vtk Reader.
 
@@ -847,7 +847,7 @@ class PVDReader(BaseReader, TimeReader):
     @property
     def active_readers(self):
         """Return the active readers.
-        
+
         Returns
         -------
         list[pyvista.BaseReader]
@@ -858,7 +858,7 @@ class PVDReader(BaseReader, TimeReader):
     @property
     def datasets(self):
         """Return all datasets.
-        
+
         Returns
         -------
         list[pyvista.PVDDataSet]
@@ -869,7 +869,7 @@ class PVDReader(BaseReader, TimeReader):
     @property
     def active_datasets(self):
         """Return all active datasets.
-        
+
         Returns
         -------
         list[pyvista.PVDDataSet]
@@ -936,7 +936,7 @@ class PVDReader(BaseReader, TimeReader):
     @property
     def number_time_points(self):  # noqa: D102
         return len(self.time_values)
-    
+
     def time_point_value(self, time_point):  # noqa: D102
         return self.time_values[time_point]
 

@@ -178,4 +178,3 @@ def show_pythreejs(plotter, return_viewer, **kwargs):
     if return_viewer:
         return renderer
     display.display_html(renderer)
-
