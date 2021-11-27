@@ -7,6 +7,7 @@ package, which lets us only have to import from select modules and not
 the entire library.
 
 """
+# flake8: noqa: F401
 
 # Checking for VTK9 here even though 8.2 contains vtkmodules.  There
 # are enough idiosyncrasies to VTK 8.2, and supporting it would lead

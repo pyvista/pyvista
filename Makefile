@@ -48,10 +48,8 @@ mypy:
 
 lint:
 	@echo "Linting with flake8"
-	# Check for trailing whitespace
-	flake8 --select W291 pyvista tests examples
-	# Check for unused imports (needs to be seperate because of _vtk module)
-	flake8 --select F401 --exclude "**/_vtk.py,**/__init__.py" pyvista tests examples
+	# Check for codestyle
+	flake8 .
 
 isort:
 	@echo "Formatting with isort"
