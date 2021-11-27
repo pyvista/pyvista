@@ -12,9 +12,6 @@ import make_external_gallery
 
 make_external_gallery.make_example_gallery()
 
-
-import numpy as np
-
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
 
@@ -358,7 +355,7 @@ SphinxDocString._str_examples = _str_examples
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-import pydata_sphinx_theme
+import pydata_sphinx_theme  # noqa
 
 html_theme = "pydata_sphinx_theme"
 # html_theme_path = [pydata_sphinx_theme.get_html_theme_path()]

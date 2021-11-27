@@ -1873,8 +1873,8 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError
 
         try:
-            import pyembree
-            import rtree
+            import pyembree  # noqa
+            import rtree  # noqa
             import trimesh  # noqa
         except (ModuleNotFoundError, ImportError):
             raise ImportError(

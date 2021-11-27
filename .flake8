@@ -1,3 +1,3 @@
 [flake8]
-exclude = .git,__pycache__,build,dist,doc/examples,doc/_build
-select = W291,I001,I003,I004,I005
+exclude = .git,__pycache__,build,dist,doc/examples,doc/_build,pyvista/**/__init__.py,pyvista/__init__.py
+select = W291,F401,I001,I003,I004,I005
