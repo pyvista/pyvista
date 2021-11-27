@@ -91,16 +91,12 @@ The plot directive has the following configuration options:
 
 """
 
-import contextlib
 import doctest
-from io import StringIO
-import itertools
 import os
 from os.path import relpath
 from pathlib import Path
 import re
 import shutil
-import sys
 import textwrap
 import traceback
 

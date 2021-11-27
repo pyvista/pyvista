@@ -39,7 +39,6 @@ import os
 from .plotting.colors import PARAVIEW_BACKGROUND, get_cmap_safe
 from .plotting.tools import parse_color, parse_font_family
 from .utilities.misc import PyvistaDeprecationWarning
-from .core.errors import DeprecationError
 
 
 class _rcParams(dict):  # pragma: no cover

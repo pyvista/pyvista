@@ -11,11 +11,10 @@ import numpy as np
 from typing import List, Tuple, Union, Optional, Any, cast
 
 import pyvista
-from pyvista.utilities import get_array, is_pyvista_dataset, wrap
+from pyvista.utilities import is_pyvista_dataset, wrap
 from pyvista import _vtk
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
-from .._typing import Vector
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')

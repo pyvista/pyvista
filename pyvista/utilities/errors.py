@@ -11,7 +11,6 @@ import scooby
 import pyvista
 from pyvista import _vtk
 
-import contextlib
 import collections
 
 

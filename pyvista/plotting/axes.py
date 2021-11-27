@@ -1,8 +1,4 @@
 """Module containing pyvista implementation of vtkAxes."""
-
-import numpy as np
-
-import pyvista
 from pyvista import _vtk
 
 

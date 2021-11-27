@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 from pyvista import _vtk, wrap
-from .filters import _get_output, _update_alg
+from .filters import _update_alg
 
 
 def sample_function(function: _vtk.vtkImplicitFunction,

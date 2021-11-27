@@ -1,5 +1,4 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-from pathlib import Path
 from textwrap import dedent
 import pathlib
 import logging

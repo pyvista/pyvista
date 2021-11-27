@@ -14,15 +14,14 @@ except ImportError:  # pragma: no cover
     raise ImportError('Install ``ipygany`` to use this feature.')
 
 try:
-    from ipywidgets import (FloatSlider, FloatRangeSlider, Dropdown, Layout,
-                            Select, VBox, HBox, AppLayout, jslink, HTML)
+    from ipywidgets import Dropdown, VBox, AppLayout, jslink, HTML
 except ImportError:  # pragma: no cover
     raise ImportError('Install ``ipywidgets`` to use this feature.')
 
 
 from ipygany.vtk_loader import get_ugrid_data
 from ipygany.ipygany import _grid_data_to_data_widget
-from ipygany import Scene, PolyMesh, Component, IsoColor, PointCloud
+from ipygany import Scene, PolyMesh, IsoColor, PointCloud
 from ipygany.colormaps import colormaps
 
 import pyvista as pv

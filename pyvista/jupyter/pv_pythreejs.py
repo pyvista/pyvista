@@ -8,7 +8,7 @@ try:
 except ImportError:  # pragma: no cover
     raise ImportError('Please install pythreejs to use this feature')
 
-from ipywidgets import HBox, VBox, GridspecLayout
+from ipywidgets import GridspecLayout
 
 import pyvista as pv
 

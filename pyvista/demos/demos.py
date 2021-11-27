@@ -403,7 +403,7 @@ def plot_beam(notebook=None):
             (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177)]
 
     try:
-        import matplotlib
+        import matplotlib  # noqa
         cmap = 'bwr'
     except ImportError:  # pragma: no cover
         cmap = None

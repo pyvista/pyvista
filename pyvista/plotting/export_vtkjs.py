@@ -621,7 +621,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
         root_output_directory, f'{sceneName}{FILENAME_EXTENSION}')
 
     try:
-        import zlib
+        import zlib  # noqa
         compression = zipfile.ZIP_DEFLATED
     except:
         compression = zipfile.ZIP_STORED

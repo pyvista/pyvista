@@ -1,6 +1,5 @@
 """Module containing useful plotting tools."""
 
-import sys
 from enum import Enum
 import platform
 import os

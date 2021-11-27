@@ -7,7 +7,7 @@ import numpy as np
 import pyvista
 from pyvista import (
     abstract_class, _vtk, NORMALS, generate_plane, assert_empty_kwargs,
-    vtk_id_list_to_array, get_array, get_array_association
+    vtk_id_list_to_array, get_array_association
 )
 from pyvista.core.errors import (NotAllTrianglesError,
                                  DeprecationError, VTKVersionError)
@@ -1869,7 +1869,7 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError
 
         try:
-            import trimesh, rtree, pyembree
+            import trimesh, rtree, pyembree  # noqa
         except (ModuleNotFoundError, ImportError):
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"

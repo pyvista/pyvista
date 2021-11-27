@@ -5,7 +5,6 @@ import ctypes
 import sys
 import pathlib
 import collections.abc
-from typing import Sequence
 import logging
 import os
 import textwrap
@@ -42,7 +41,7 @@ from .render_window_interactor import RenderWindowInteractor
 
 def _has_matplotlib():
     try:
-        import matplotlib
+        import matplotlib  # noqa
         return True
     except ImportError:  # pragma: no cover
         return False

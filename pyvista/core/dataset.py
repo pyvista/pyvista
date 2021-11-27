@@ -18,7 +18,7 @@ from pyvista.utilities import (FieldAssociation, get_array,
                                get_array_association,
                                is_pyvista_dataset, raise_not_matching,
                                vtk_id_list_to_array, abstract_class,
-                               axis_rotation, transformations)
+                               transformations)
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 from pyvista.utilities.errors import check_valid_vector
 from .dataobject import DataObject
