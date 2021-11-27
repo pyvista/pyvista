@@ -1466,6 +1466,10 @@ def test_shrink():
     shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True)
     assert shrunk.n_cells == mesh.n_cells
     assert shrunk.area < mesh.area
+    mesh = examples.load_uniform()
+    shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True)
+    assert shrunk.n_cells == mesh.n_cells
+    assert shrunk.volume < mesh.volume
 
 
 @pytest.mark.parametrize('num_cell_arrays,num_point_data',

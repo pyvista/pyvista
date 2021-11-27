@@ -4279,6 +4279,7 @@ class DataSetFilters:
         output = pyvista.wrap(alg.GetOutput())
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface()
+        return output
 
     def transform(self: _vtk.vtkDataSet,
                   trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
