@@ -2,11 +2,10 @@
 
 import os
 from pathlib import Path
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 import sys
 
 import pytest
-
 
 pytest.importorskip('sphinx')
 

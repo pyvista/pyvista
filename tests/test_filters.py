@@ -1,17 +1,16 @@
-import os
-import sys
-import platform
 import itertools
+import os
+import platform
+import sys
 
 import numpy as np
 import pytest
 from vtk import VTK_QUADRATIC_HEXAHEDRON
 
-from pyvista._vtk import VTK9, vtkStaticCellLocator
 import pyvista
 from pyvista import examples
+from pyvista._vtk import VTK9, vtkStaticCellLocator
 from pyvista.core.errors import VTKVersionError
-
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 

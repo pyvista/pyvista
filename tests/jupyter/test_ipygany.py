@@ -1,12 +1,13 @@
-import pytest
 import numpy as np
+import pytest
 
-from pyvista import examples
 import pyvista as pv
+from pyvista import examples
 
 has_ipygany = True
 try:
     from ipygany.ipygany import Scene
+
     from pyvista.jupyter.pv_ipygany import check_colormap
 except:
     has_ipygany = False

@@ -1,16 +1,17 @@
 # TODO: This file really should be named test_dataset.py
 
 import pickle
+
+from hypothesis import HealthCheck, assume, given, settings
+from hypothesis.extra.numpy import array_shapes, arrays
+from hypothesis.strategies import composite, floats, integers, one_of
 import numpy as np
 import pytest
 import vtk
-from hypothesis import assume, given, settings, HealthCheck
-from hypothesis.extra.numpy import arrays, array_shapes
-from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista import examples, Texture
+from pyvista import Texture, examples
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
