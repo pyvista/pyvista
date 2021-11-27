@@ -17,7 +17,7 @@ classes are nearly always used for particular types of DataSets.
 
 .. note::
     This is for advanced usage only.  Automatic managing of types
-    will not work in all situations, in particular when a builtin dataset is directly 
+    will not work in all situations, in particular when a builtin dataset is directly
     instantiated.  See examples below.
 
 """
@@ -68,7 +68,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 ###############################################################################
 # However, filter operations can return different ``DataSet`` types including
 # ones that differ from the original type.  In this case, the
-# :func:`decimate <pyvista.PolyDataFilters.decimate>` method returns a 
+# :func:`decimate <pyvista.PolyDataFilters.decimate>` method returns a
 # :class:`pyvista.PolyData` object.
 
 print("\nDecimated foo sphere:")
@@ -88,9 +88,9 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 # ++++++++++++++++++++++++++++
 #
 # The default :class:`pyvista.DataSet` type can be set using ``pyvista._wrappers``.
-# In general, it is best to use this method when it is expected to primarily 
-# use the user defined class.  
-# 
+# In general, it is best to use this method when it is expected to primarily
+# use the user defined class.
+#
 # In this example, all objects that would have been created as
 # :class:`pyvista.PolyData` would now be created as a ``FooData`` object. Note,
 # that the key is the underlying vtk object.
@@ -118,7 +118,7 @@ print(f"Maximum point index: {foo_sphere.max_point}")
 print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
 
 ###############################################################################
-# Filter operations that return :class:`pyvista.PolyData` now return 
+# Filter operations that return :class:`pyvista.PolyData` now return
 # ``FooData``
 
 print("\nDecimated foo sphere:")

@@ -5,7 +5,7 @@ Collision
 ~~~~~~~~~
 Perform a collision detection between two meshes.
 
-This example use the :class:`collision <pyvista.PolyDataFilters.collision>` 
+This example use the :class:`collision <pyvista.PolyDataFilters.collision>`
 filter to detect the faces from one sphere colliding with another
 sphere.
 
@@ -35,7 +35,7 @@ pv.set_plot_theme("document")
 
 ###############################################################################
 # Create the main mesh and the secondary "moving" mesh
-# 
+#
 # Collision faces will be plotted on this sphere, and to do so we
 # initialize an initial ``"collisions"`` mask.
 sphere0 = pv.Sphere()
@@ -46,7 +46,7 @@ sphere1 = pv.Sphere(radius=0.6, center=(-1, 0, 0))
 
 ###############################################################################
 # Setup the plotter open a movie, and write a frame after moving the sphere.
-# 
+#
 
 pl = pv.Plotter()
 pl.enable_hidden_line_removal()

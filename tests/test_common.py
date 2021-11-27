@@ -512,9 +512,9 @@ def test_set_active_vectors(grid):
     grid.point_data['vector_arr'] = vector_arr
     grid.active_vectors_name = 'vector_arr'
     active_component_consistency_check(grid, "vectors", "point")
-    assert grid.active_vectors_name == 'vector_arr'  
+    assert grid.active_vectors_name == 'vector_arr'
     assert np.allclose(grid.active_vectors, vector_arr)
-    
+
     grid.active_vectors_name = None
     assert grid.active_vectors_name is None
     active_component_consistency_check(grid, "vectors", "point")

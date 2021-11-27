@@ -613,7 +613,7 @@ class WidgetHelper:
         ----------
         mesh : pyvista.DataSet
             The input dataset to add to the scene and threshold.
-        
+
         generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.

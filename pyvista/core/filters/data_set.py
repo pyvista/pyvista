@@ -324,7 +324,7 @@ class DataSetFilters:
         >>> _below, _above = dataset.clip_scalar(scalars="sample_point_scalars", value=100, both=True)
 
         Remove the part of the mesh with "sample_point_scalars" below 100.
-        
+
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()

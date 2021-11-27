@@ -869,7 +869,7 @@ def Wavelet(extent=(-10, 10, -10, 10, -10, 10), center=(0, 0, 0), maximum=255,
     --------
     >>> import pyvista
     >>> wavelet = pyvista.Wavelet(extent=(0, 50, 0, 50, 0, 10), x_freq=20,
-    ...                           y_freq=10, z_freq=1, x_mag=100, y_mag=100, 
+    ...                           y_freq=10, z_freq=1, x_mag=100, y_mag=100,
     ...                           z_mag=1000)
     >>> wavelet.plot(show_scalar_bar=False)
 

@@ -3172,7 +3172,7 @@ def download_osmnx_graph():  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
-    
+
     See :ref:`open_street_map_example` for a full example using this dataset.
 
     """

@@ -1623,7 +1623,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the width with ``line_width``.
 
         smooth_shading : bool, optional
-            Enable smooth shading when ``True`` using either the 
+            Enable smooth shading when ``True`` using either the
             Gouraud or Phong shading algorithm.  When ``False``, use
             flat shading.
             Automatically enabled when ``pbr=True``.
@@ -2465,18 +2465,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         -------
         vtk.vtkActor
             VTK actor of the volume.
-        
+
         Examples
         --------
         Show a built-in volume example with the coolwarm colormap.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> bolt_nut = examples.download_bolt_nut()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_volume(bolt_nut, cmap="coolwarm")
         >>> pl.show()
-        
+
         """
         # Handle default arguments
 
@@ -3178,7 +3178,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> actor = pl.add_text('Sample Text', position='upper_right', color='blue',
         ...                     shadow=True, font_size=26)
         >>> pl.show()
-        
+
         """
         if font is None:
             font = self._theme.font.family
@@ -3452,12 +3452,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import numpy as np
         >>> import pyvista
-        >>> pl = pyvista.Plotter()       
+        >>> pl = pyvista.Plotter()
         >>> points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
         >>> actor = pl.add_lines(points, color='yellow', width=3)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
-        
+
         """
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
@@ -3617,7 +3617,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...                             always_visible=True, shadow=True)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
-        
+
         """
         if font_family is None:
             font_family = self._theme.font.family
@@ -3777,7 +3777,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista
         >>> points = np.random.random((10, 3))
         >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_points(points, render_points_as_spheres=True, 
+        >>> actor = pl.add_points(points, render_points_as_spheres=True,
         ...                       point_size=100.0)
         >>> pl.show()
 
@@ -3879,7 +3879,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         This can be helpful for publication documents.
 
-        The supported formats are: 
+        The supported formats are:
 
         * ``'.svg'``
         * ``'.eps'``
@@ -4128,7 +4128,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> viewup = [0, 0, 1]
         >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=24,
         ...                                       shift=0.0, viewup=viewup)
-        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, 
+        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup,
         ...                       step=0.02)
 
         See :ref:`orbiting_example` for a full example using this method.
@@ -4193,7 +4193,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         compress_arrays : bool, optional
             Enable array compression.
-            
+
         Examples
         --------
         >>> import pyvista
@@ -4738,7 +4738,7 @@ class Plotter(BasePlotter):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.show()
- 
+
         Take a screenshot interactively.  Screenshot will be of the
         first image shown, so use the first call with
         ``auto_close=False`` to set the scene before taking the
@@ -4916,7 +4916,7 @@ class Plotter(BasePlotter):
             Sets the size of the title font.  Defaults to 16 or the
             value of the global theme if set.
 
-        color : str or 3 item list, optional, 
+        color : str or 3 item list, optional,
             Either a string, rgb list, or hex color string.  Defaults
             to white or the value of the global theme if set.  For
             example:
@@ -4942,7 +4942,7 @@ class Plotter(BasePlotter):
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> pl.background_color = 'grey'
-        >>> actor = pl.add_title('Plot Title', font='courier', color='k', 
+        >>> actor = pl.add_title('Plot Title', font='courier', color='k',
         ...                      font_size=40)
         >>> pl.show()
 

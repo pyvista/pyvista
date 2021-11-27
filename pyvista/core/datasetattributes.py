@@ -52,7 +52,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     :func:`DataSetAttributes.set_scalars`.
 
     .. versionchanged:: 0.32.0
-        The ``[]`` operator no longer allows integers.  Use 
+        The ``[]`` operator no longer allows integers.  Use
         :func:`DataSetAttributes.get_array` to retrieve an array
         using an index.
 
@@ -113,11 +113,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     Notes
     -----
-    When printing out the point arrays, you can see which arrays are                                     
+    When printing out the point arrays, you can see which arrays are
     the active scalars, vectors, normals, and texture coordinates.
-    In the arrays list, ``SCALARS`` denotes that these are the active                                    
-    scalars, ``VECTORS`` denotes that these arrays are tagged as the                                     
-    active vectors data (i.e. data with magnitude and direction) and                                     
+    In the arrays list, ``SCALARS`` denotes that these are the active
+    scalars, ``VECTORS`` denotes that these arrays are tagged as the
+    active vectors data (i.e. data with magnitude and direction) and
     so on.
 
     """

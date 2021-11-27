@@ -569,7 +569,7 @@ def test_glyph_cell_point_data(sphere):
     sphere['vectors_points'] = np.ones([sphere.n_points,3])
     sphere['arr_cell'] = np.ones(sphere.n_cells)
     sphere['arr_points'] = np.ones(sphere.n_points)
-    
+
     assert sphere.glyph(orient='vectors_cell', scale='arr_cell', progress_bar=True)
     assert sphere.glyph(orient='vectors_points', scale='arr_points', progress_bar=True)
     with pytest.raises(ValueError):
@@ -880,8 +880,8 @@ def test_streamlines_evenly_spaced_2D_errors():
         streams = mesh.streamlines_evenly_spaced_2D(integrator_type=45)
 
     with pytest.raises(ValueError):
-        streams = mesh.streamlines_evenly_spaced_2D(interpolator_type="not valid")        
-    
+        streams = mesh.streamlines_evenly_spaced_2D(interpolator_type="not valid")
+
     with pytest.raises(ValueError):
         streams = mesh.streamlines_evenly_spaced_2D(step_unit="not valid")
 
@@ -1631,7 +1631,7 @@ def test_transform_inplace_bad_types_2(dataset):
 def test_extrude_rotate():
     resolution = 4
     line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
-    
+
     with pytest.raises(ValueError):
         line.extrude_rotate(resolution=0)
 

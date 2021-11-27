@@ -24,7 +24,7 @@ from pyvista import examples
 mesh = examples.download_carotid()
 
 ###############################################################################
-# Run the stream line filtering algorithm using random seed points inside a 
+# Run the stream line filtering algorithm using random seed points inside a
 # sphere with radius of 2.0.
 
 streamlines, src = mesh.streamlines(
@@ -75,8 +75,8 @@ p.show()
 
 
 ###############################################################################
-# A source mesh can also be provided using the 
-# :func:`pyvista.DataSetFilters.streamlines_from_source` 
+# A source mesh can also be provided using the
+# :func:`pyvista.DataSetFilters.streamlines_from_source`
 # filter, for example if an inlet surface is available.  In this example, the
 # inlet surface is extracted just inside the domain for use as the seed for
 # the streamlines.
