@@ -8,9 +8,10 @@ flask_example
 
 """
 import os
-import pyvista
+
 from flask import Flask, render_template, request
 
+import pyvista
 
 static_image_path = os.path.join('static', 'images')
 if not os.path.isdir(static_image_path):
