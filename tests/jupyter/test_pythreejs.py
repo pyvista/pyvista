@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 
 try:
-    import pythreejs
+    import pythreejs  # noqa
 except:
     pytestmark = pytest.mark.skip
 

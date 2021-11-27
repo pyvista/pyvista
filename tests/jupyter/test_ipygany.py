@@ -6,7 +6,7 @@ import pyvista as pv
 
 has_ipygany = True
 try:
-    from ipygany.ipygany import Scene, IsoColor
+    from ipygany.ipygany import Scene
     from pyvista.jupyter.pv_ipygany import check_colormap
 except:
     has_ipygany = False

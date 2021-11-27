@@ -9,7 +9,7 @@ from vtk import VTK_QUADRATIC_HEXAHEDRON
 
 from pyvista._vtk import VTK9, vtkStaticCellLocator
 import pyvista
-from pyvista import examples, Sphere
+from pyvista import examples
 from pyvista.core.errors import VTKVersionError
 
 

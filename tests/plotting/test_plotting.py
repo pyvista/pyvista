@@ -7,7 +7,6 @@ import warnings
 import inspect
 import pathlib
 import os
-from weakref import proxy
 from pathlib import Path
 
 from PIL import Image

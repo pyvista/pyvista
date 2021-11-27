@@ -1,6 +1,5 @@
 """Tests for tinypages build using sphinx extensions."""
 
-import filecmp
 import os
 from pathlib import Path
 from subprocess import Popen, PIPE
