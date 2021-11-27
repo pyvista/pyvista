@@ -51,4 +51,4 @@ lint:
 	# Check for trailing whitespace
 	flake8 --select W291 pyvista tests examples
 	# Check for unused imports (needs to be seperate because of _vtk module)
-	flake8 --select F401 --exclude **/_vtk.py pyvista tests examples
+	flake8 --select F401 --exclude "**/_vtk.py,**/__init__.py" pyvista tests examples
