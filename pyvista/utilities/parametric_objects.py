@@ -1003,6 +1003,13 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
     pyvista.PolyData
         ParametricSuperEllipsoid surface.
 
+    See Also
+    --------
+    pyvista.ParametricSuperToroid :
+        Toroidal equivalent of ParametricSuperEllipsoid.
+    pyvista.Superquadric :
+        Geometric object with additional parameters.
+
     Examples
     --------
     Create a ParametricSuperEllipsoid surface that looks like a box
@@ -1089,6 +1096,13 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     -------
     pyvista.PolyData
         ParametricSuperToroid surface.
+
+    See Also
+    --------
+    pyvista.ParametricSuperEllipsoid :
+        Ellipsoidal equivalent of ParametricSuperToroid.
+    pyvista.Superquadric :
+        Geometric object with additional parameters.
 
     Examples
     --------
