@@ -8,7 +8,7 @@ CODESPELL_IGNORE ?= "ignore_words.txt"
 doctest-modules: export PYVISTA_OFF_SCREEN = True
 doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
 
-stylecheck: codespell pydocstyle
+stylecheck: codespell pydocstyle lint
 
 codespell:
 	@echo "Running codespell"
@@ -45,3 +45,8 @@ mypy:
 	@echo "Running mypy static type checking"
 	mypy pyvista/core/ --no-incremental
 	mypy pyvista/themes.py --no-incremental
+
+lint:
+	@echo "Running linting with flake8"
+	# Check for trailing whitespace
+	flake8 --select W291 pyvista tests examples
