@@ -1,5 +1,6 @@
 """Module managing errors."""
 
+import collections
 import logging
 import os
 import re
@@ -10,8 +11,6 @@ import scooby
 
 import pyvista
 from pyvista import _vtk
-
-import collections
 
 
 def set_error_output_file(filename):

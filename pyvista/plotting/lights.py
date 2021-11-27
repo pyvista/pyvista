@@ -6,13 +6,13 @@ import numpy as np
 
 # imports here rather than in _vtk to avoid circular imports
 try:
-    from vtkmodules.vtkRenderingCore import vtkLight, vtkLightActor
     from vtkmodules.vtkCommonMath import vtkMatrix4x4
+    from vtkmodules.vtkRenderingCore import vtkLight, vtkLightActor
 except ImportError:  # pragma: no cover
     from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
 
-from .tools import parse_color
 from ..utilities.helpers import vtkmatrix_from_array
+from .tools import parse_color
 
 
 class LightType(IntEnum):

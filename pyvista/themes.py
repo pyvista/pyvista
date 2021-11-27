@@ -30,11 +30,11 @@ pyvista.
 
 """
 
-import json
-from typing import Union, List
-import warnings
 from enum import Enum
+import json
 import os
+from typing import List, Union
+import warnings
 
 from .plotting.colors import PARAVIEW_BACKGROUND, get_cmap_safe
 from .plotting.tools import parse_color, parse_font_family

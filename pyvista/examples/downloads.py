@@ -11,10 +11,10 @@ Examples
 
 """
 
-from urllib.request import urlretrieve
 from functools import partial
 import os
 import shutil
+from urllib.request import urlretrieve
 import zipfile
 
 import numpy as np

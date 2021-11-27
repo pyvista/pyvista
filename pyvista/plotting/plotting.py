@@ -1,43 +1,50 @@
 """PyVista plotting module."""
 
-import platform
-import ctypes
-import sys
-import pathlib
 import collections.abc
+import ctypes
+from functools import wraps
 import logging
 import os
+import pathlib
+import platform
+import sys
 import textwrap
+from threading import Thread
 import time
+from typing import Dict
 import warnings
 import weakref
-from functools import wraps
-from threading import Thread
-from typing import Dict
 
 import numpy as np
 import scooby
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import (assert_empty_kwargs, convert_array,
-                               convert_string_array, get_array,
-                               is_pyvista_dataset, abstract_class,
-                               numpy_to_texture, raise_not_matching,
-                               wrap)
-from ..utilities.regression import image_from_window
+from pyvista.utilities import (
+    abstract_class,
+    assert_empty_kwargs,
+    convert_array,
+    convert_string_array,
+    get_array,
+    is_pyvista_dataset,
+    numpy_to_texture,
+    raise_not_matching,
+    wrap,
+)
+
 from ..utilities.misc import PyvistaDeprecationWarning
+from ..utilities.regression import image_from_window
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
-from .renderer import Renderer, Camera
-from .tools import (normalize, opacity_transfer_function, parse_color,
-                    parse_font_family, FONTS)
-from .widgets import WidgetHelper
-from .scalar_bars import ScalarBars
-from .renderers import Renderers
 from .render_window_interactor import RenderWindowInteractor
+from .renderer import Camera, Renderer
+from .renderers import Renderers
+from .scalar_bars import ScalarBars
+from .tools import FONTS, normalize, opacity_transfer_function, parse_color, parse_font_family
+from .widgets import WidgetHelper
+
 
 def _has_matplotlib():
     try:
@@ -1884,8 +1891,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if multi_colors:
                 # Compute unique colors for each index of the block
                 if _has_matplotlib():
-                    import matplotlib
                     from itertools import cycle
+
+                    import matplotlib
                     cycler = matplotlib.rcParams['axes.prop_cycle']
                     colors = cycle(cycler)
                 else:

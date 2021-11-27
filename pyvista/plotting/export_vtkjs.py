@@ -52,7 +52,6 @@ import sys
 import time
 import zipfile
 
-
 FILENAME_EXTENSION = '.vtkjs'
 
 arrayTypesMapping = '  bBhHiIlLfdL'  # last one is idtype

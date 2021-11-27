@@ -1,19 +1,20 @@
 """Attributes common to PolyData and Grid Objects."""
 
-import warnings
+from abc import abstractmethod
 import collections.abc
 import logging
-from abc import abstractmethod
 from pathlib import Path
-from typing import Union, Any, Dict, DefaultDict, Type
+from typing import Any, DefaultDict, Dict, Type, Union
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import (FieldAssociation, fileio, abstract_class)
-from .datasetattributes import DataSetAttributes
+from pyvista.utilities import FieldAssociation, abstract_class, fileio
 from pyvista.utilities.misc import PyvistaDeprecationWarning
+
+from .datasetattributes import DataSetAttributes
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -183,7 +184,7 @@ class DataObject:
             fmt += "</table>\n"
             fmt += "\n"
             if display:
-                from IPython.display import display as _display, HTML
+                from IPython.display import HTML, display as _display
                 _display(HTML(fmt))
                 return
             return fmt

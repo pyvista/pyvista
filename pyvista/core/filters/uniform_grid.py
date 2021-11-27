@@ -2,8 +2,8 @@
 import collections.abc
 
 import pyvista
-from pyvista import abstract_class, _vtk
-from pyvista.core.filters import _update_alg, _get_output
+from pyvista import _vtk, abstract_class
+from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 
 

@@ -1,12 +1,11 @@
 """Wrap vtk.vtkRenderWindowInteractor."""
-import weakref
-import logging
 import collections.abc
 from functools import partial
-
-from pyvista.utilities import try_callback
+import logging
+import weakref
 
 from pyvista import _vtk
+from pyvista.utilities import try_callback
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')

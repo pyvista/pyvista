@@ -1,6 +1,6 @@
 """Module containing pyvista implementation of vtkCamera."""
-from weakref import proxy
 import warnings
+from weakref import proxy
 
 import numpy as np
 

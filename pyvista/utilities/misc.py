@@ -3,6 +3,7 @@ import numpy as np
 
 from pyvista import _vtk
 
+
 def _get_vtk_id_type():
     """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``."""
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()

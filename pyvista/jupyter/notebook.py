@@ -9,8 +9,8 @@ Includes:
 * ``ipygany``
 
 """
-import warnings
 import os
+import warnings
 
 import numpy as np
 

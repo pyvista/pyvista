@@ -3,16 +3,17 @@
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
-import pathlib
 import collections.abc
 import logging
+import pathlib
+from typing import Any, List, Optional, Tuple, Union, cast
 
 import numpy as np
-from typing import List, Tuple, Union, Optional, Any, cast
 
 import pyvista
-from pyvista.utilities import is_pyvista_dataset, wrap
 from pyvista import _vtk
+from pyvista.utilities import is_pyvista_dataset, wrap
+
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
 

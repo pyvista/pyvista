@@ -1,26 +1,29 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-from textwrap import dedent
-import pathlib
-import logging
-import os
-import warnings
-import numbers
 import collections
+import logging
+import numbers
+import os
+import pathlib
+from textwrap import dedent
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import abstract_class
-from pyvista.utilities.cells import (CellArray, numpy_to_idarr,
-                                     generate_cell_offsets,
-                                     create_mixed_cells,
-                                     get_mixed_cells)
-from .dataset import DataSet
-from .filters import (PolyDataFilters, UnstructuredGridFilters,
-                      StructuredGridFilters, _get_output)
+from pyvista.utilities.cells import (
+    CellArray,
+    create_mixed_cells,
+    generate_cell_offsets,
+    get_mixed_cells,
+    numpy_to_idarr,
+)
+
 from ..utilities.fileio import get_ext
+from .dataset import DataSet
 from .errors import DeprecationError, VTKVersionError
+from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')

@@ -1,11 +1,12 @@
 """Contains PyVista mappings from vtkmodules.vtkImagingHybrid."""
-from typing import Sequence
-import sys
 import os
+import sys
+from typing import Sequence
 
 import numpy as np
 
 from pyvista import _vtk, wrap
+
 from .filters import _update_alg
 
 

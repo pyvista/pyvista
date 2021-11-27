@@ -1,14 +1,15 @@
 """Module containing useful plotting tools."""
 
 from enum import Enum
-import platform
 import os
+import platform
 from subprocess import PIPE, Popen
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
+
 from .colors import string_to_rgb
 
 

@@ -3,6 +3,7 @@
 import warnings
 
 import numpy as np
+
 try:
     import pythreejs as tjs
 except ImportError:  # pragma: no cover
