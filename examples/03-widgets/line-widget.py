@@ -15,9 +15,10 @@ the :func:`pyvista.DataSetFilters.streamlines` filter. Again note the use of
 the ``name`` argument in ``add_mesh``.
 """
 
+import numpy as np
+
 import pyvista as pv
 from pyvista import examples
-import numpy as np
 
 pv.set_plot_theme('document')
 

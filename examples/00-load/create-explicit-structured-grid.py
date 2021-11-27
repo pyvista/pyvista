@@ -11,6 +11,7 @@ Note this feature is only available for ``vtk>=9``.
 """
 
 import numpy as np
+
 import pyvista as pv
 
 ni, nj, nk = 4, 5, 6

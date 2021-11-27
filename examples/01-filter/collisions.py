@@ -29,7 +29,9 @@ sphere.
 """
 
 import numpy as np
+
 import pyvista as pv
+
 pv.set_plot_theme("document")
 
 
