@@ -950,9 +950,9 @@ def test_screenshot(tmpdir):
 def test_screenshot_bytes():
     # Test screenshot to bytes object
     buffer = io.BytesIO()
-    plotter = pyvista.Plotter(off_screen=False)
+    plotter = pyvista.Plotter(off_screen=True)
     plotter.add_mesh(pyvista.Sphere())
-    plotter.screenshot(filename=buffer)
+    plotter.show(screenshot=buffer)
     buffer.seek(0)
     im = Image.open(buffer)
     assert im.format == 'PNG'
