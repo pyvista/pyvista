@@ -380,7 +380,7 @@ Merge that pull request.
 
 #### Patch Release Steps
 
-Patch releases are for critical and important bugfixes that can not or should not wait until a minor release.  The steps for a patch release
+Patch releases are for critical and important bugfixes that can not or should not wait until a minor release. The steps for a patch release
 
 1. Push the necessary bugfix(es) to the applicable release branch.  This will generally be the latest release branch (e.g. `release/0.25`).
 
