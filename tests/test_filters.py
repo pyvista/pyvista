@@ -384,10 +384,11 @@ def test_wireframe_composite(composite):
     assert output.n_blocks == composite.n_blocks
 
 
-def test_delaunay_2d(datasets):
-    mesh = datasets[2].delaunay_2d(progress_bar=True)  # UnstructuredGrid
+def test_delaunay_2d_unstructured(datasets):
+    mesh = examples.load_hexbeam().delaunay_2d(progress_bar=True)  # UnstructuredGrid
     assert isinstance(mesh, pyvista.PolyData)
     assert mesh.n_points
+    assert len(mesh.point_data.keys()) > 0
 
 
 @pytest.mark.parametrize('method', ['contour', 'marching_cubes',
@@ -1701,7 +1702,13 @@ def test_collision_solid_non_triangle(hexbeam):
     assert output.is_all_triangles
 
 
-def test_reconstruct_surface(sphere):
+def test_reconstruct_surface_poly(sphere):
     pc = pyvista.wrap(sphere.points)
     surf = pc.reconstruct_surface(nbr_sz=10, sample_spacing=50)
     assert surf.is_all_triangles
+
+
+def test_reconstruct_surface_unstructured(datasets):
+    mesh = examples.load_hexbeam().reconstruct_surface()
+    assert isinstance(mesh, pyvista.PolyData)
+    assert mesh.n_points
