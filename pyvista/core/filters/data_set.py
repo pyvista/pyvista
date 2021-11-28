@@ -1577,10 +1577,12 @@ class DataSetFilters:
         orient : bool or str, optional
             If ``True``, use the active vectors array to orient the glyphs.
             If string, the vector array to use to orient the glyphs.
+            If ``False``, orient of the glyphs is off.
 
         scale : bool, str or sequence, optional
             If ``True``, use the active scalars to scale the glyphs.
             If string, the scalar array to use to scale the glyphs.
+            If ``False``, scale of the glyphs is off.
 
         factor : float, optional
             Scale factor applied to scaling array.
