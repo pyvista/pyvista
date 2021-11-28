@@ -578,6 +578,28 @@ def test_glyph_cell_point_data(sphere):
         sphere.glyph(orient='vectors_points', scale='arr_cell', progress_bar=True)
 
 
+def test_glyph_orient_and_scale():
+    grid = pyvista.UniformGrid((1, 1, 1))
+    geom = pyvista.Line()
+    scale = 10.0
+    orient = np.array([[0.0, 0.0, 1.0]])
+    grid["z_axis"] = orient * scale
+    glyph1 = grid.glyph(geom=geom, orient="z_axis", scale="z_axis")
+    glyph2 = grid.glyph(geom=geom, orient=False, scale="z_axis")
+    glyph3 = grid.glyph(geom=geom, orient="z_axis", scale=False)
+    glyph4 = grid.glyph(geom=geom, orient=False, scale=False)
+    assert (
+        glyph1.bounds[4] == geom.bounds[0] * scale
+        and glyph1.bounds[5] == geom.bounds[1] * scale
+    )
+    assert (
+        glyph2.bounds[0] == geom.bounds[0] * scale
+        and glyph2.bounds[1] == geom.bounds[1] * scale
+    )
+    assert glyph3.bounds[4] == geom.bounds[0] and glyph3.bounds[5] == geom.bounds[1]
+    assert glyph4.bounds[0] == geom.bounds[0] and glyph4.bounds[1] == geom.bounds[1]
+
+
 def test_split_and_connectivity():
     # Load a simple example mesh
     dataset = examples.load_uniform()
