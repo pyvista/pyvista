@@ -1,6 +1,7 @@
 """
 See the image regression notes in doc/extras/developer_notes.rst
 """
+import io
 import time
 import platform
 import warnings
@@ -944,6 +945,17 @@ def test_screenshot(tmpdir):
     plotter.add_mesh(pyvista.Sphere())
     with pytest.raises(RuntimeError):
         plotter.screenshot()
+
+
+def test_screenshot_bytes():
+    # Test screenshot to bytes object
+    buffer = io.BytesIO()
+    plotter = pyvista.Plotter(off_screen=False)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.screenshot(filename=buffer)
+    buffer.seek(0)
+    im = Image.open(buffer)
+    assert im.format == 'PNG'
 
 
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)

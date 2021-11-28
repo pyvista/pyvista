@@ -1,5 +1,5 @@
 """PyVista plotting module."""
-
+import io
 import platform
 import ctypes
 import sys
@@ -3857,18 +3857,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not image.size:
             raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file if requested
-        if isinstance(filename, (str, pathlib.Path)):
+        if isinstance(filename, (str, pathlib.Path, io.BytesIO)):
             from PIL import Image
-            filename = pathlib.Path(filename)
-            if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
-                filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
-            if not filename.suffix:
-                filename = filename.with_suffix('.png')
-            elif filename.suffix not in SUPPORTED_FORMATS:
-                raise ValueError(f'Unsupported extension {filename.suffix}\n' +
-                                 f'Must be one of the following: {SUPPORTED_FORMATS}')
-            image_path = os.path.abspath(os.path.expanduser(str(filename)))
-            Image.fromarray(image).save(image_path)
+
+            if isinstance(filename, (str, pathlib.Path)):
+                filename = pathlib.Path(filename)
+                if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
+                    filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
+                if not filename.suffix:
+                    filename = filename.with_suffix('.png')
+                elif filename.suffix not in SUPPORTED_FORMATS:
+                    raise ValueError(f'Unsupported extension {filename.suffix}\n' +
+                                     f'Must be one of the following: {SUPPORTED_FORMATS}')
+                filename = os.path.abspath(os.path.expanduser(str(filename)))
+                Image.fromarray(image).save(filename)
+            else:
+                Image.fromarray(image).save(filename, format="PNG")
         # return image array if requested
         if return_img:
             return image
@@ -3947,7 +3951,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str, optional
+        filename : str, pathlib.Path, BytesIO, optional
             Location to write image to.  If ``None``, no image is written.
 
         transparent_background : bool, optional
@@ -4654,7 +4658,7 @@ class Plotter(BasePlotter):
             ``window_size``.  Defaults to
             :attr:`pyvista.global_theme.full_screen <pyvista.themes.DefaultTheme.full_screen>`.
 
-        screenshot : str or bool, optional
+        screenshot : str, pathlib.Path, BytesIO or bool, optional
             Take a screenshot of the initial state of the plot.
             If a string, it specifies the path to which the screenshot
             is saved. If ``True``, the screenshot is returned as an
