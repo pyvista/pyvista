@@ -1400,7 +1400,9 @@ class DataSetFilters:
         self.GetPointData().SetTCoords(t_coords)
         self.GetPointData().AddArray(t_coords)
         # CRITICAL:
-        self.GetPointData().AddArray(otc) # Add old ones back at the end
+        if otc and otc.GetName() != name:
+            # Add old ones back at the end if different name
+            self.GetPointData().AddArray(otc)
         return self
 
     def texture_map_to_sphere(self, center=None, prevent_seam=True,
@@ -1468,7 +1470,9 @@ class DataSetFilters:
         self.GetPointData().SetTCoords(t_coords)
         self.GetPointData().AddArray(t_coords)
         # CRITICAL:
-        self.GetPointData().AddArray(otc)  # Add old ones back at the end
+        if otc and otc.GetName() != name:
+            # Add old ones back at the end if different name
+            self.GetPointData().AddArray(otc)
         return self
 
     def compute_cell_sizes(self, length=True, area=True, volume=True,

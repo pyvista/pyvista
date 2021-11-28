@@ -431,7 +431,7 @@ def test_texture():
     assert len(mesh.textures) == 0
 
 
-def test_texture_airplane():
+def test_multiple_texture_coordinates():
     mesh = examples.load_airplane()
     mesh.texture_map_to_plane(inplace=True, name="tex_a", use_bounds=False)
     mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
@@ -449,6 +449,14 @@ def test_texture_airplane():
     assert len(cmesh.textures) == 2
     assert "tex_a" in cmesh.textures
     assert "tex_b" in cmesh.textures
+
+
+def test_inplace_no_overwrite_texture_coordinates():
+    mesh = pyvista.Box()
+    truth = mesh.texture_map_to_plane(inplace=False)
+    mesh.texture_map_to_sphere(inplace=True)
+    test = mesh.texture_map_to_plane(inplace=True)
+    assert np.allclose(truth.active_t_coords, test.active_t_coords)
 
 
 def test_invalid_vector(grid):
