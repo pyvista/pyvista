@@ -1,12 +1,10 @@
 import os
 
 import numpy as np
-import pytest
 import vtk
 
 import pyvista
-from pyvista import examples, demos
-from pyvista.plotting import system_supports_plotting
+from pyvista import examples
 
 ffmpeg_failed = False
 try:

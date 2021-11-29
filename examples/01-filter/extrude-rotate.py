@@ -11,8 +11,9 @@ swept surface. For example, sweeping a line results in a
 cylindrical shell, and sweeping a circle creates a torus.
 
 """
-import pyvista
 import numpy as np
+
+import pyvista
 
 # create a line and rotate it about the Z-axis
 resolution = 10

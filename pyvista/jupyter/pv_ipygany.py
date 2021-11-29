@@ -3,9 +3,8 @@
 from array import array
 import warnings
 
-import numpy as np
 from IPython import display
-
+import numpy as np
 
 # not to be imported at the init level
 try:
@@ -14,16 +13,15 @@ except ImportError:  # pragma: no cover
     raise ImportError('Install ``ipygany`` to use this feature.')
 
 try:
-    from ipywidgets import (FloatSlider, FloatRangeSlider, Dropdown, Layout,
-                            Select, VBox, HBox, AppLayout, jslink, HTML)
+    from ipywidgets import HTML, AppLayout, Dropdown, VBox, jslink
 except ImportError:  # pragma: no cover
     raise ImportError('Install ``ipywidgets`` to use this feature.')
 
 
-from ipygany.vtk_loader import get_ugrid_data
-from ipygany.ipygany import _grid_data_to_data_widget
-from ipygany import Scene, PolyMesh, Component, IsoColor, PointCloud
+from ipygany import IsoColor, PointCloud, PolyMesh, Scene
 from ipygany.colormaps import colormaps
+from ipygany.ipygany import _grid_data_to_data_widget
+from ipygany.vtk_loader import get_ugrid_data
 
 import pyvista as pv
 

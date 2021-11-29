@@ -2,10 +2,12 @@
 
 from math import pi
 
+import numpy as np
+
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities.errors import check_valid_vector
-import numpy as np
+
 from .geometric_objects import translate
 
 

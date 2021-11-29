@@ -48,5 +48,10 @@ mypy:
 
 lint:
 	@echo "Linting with flake8"
+	# Check for codestyle
+	flake8 .
+
+isort:
+	@echo "Formatting with isort"
 	# Check for trailing whitespace
-	flake8 --select W291 pyvista tests examples
+	isort .

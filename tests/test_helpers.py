@@ -1,12 +1,14 @@
 import os
+
+from PIL import Image
+import numpy as np
 import pytest
 import trimesh
-import numpy as np
-from PIL import Image
 import vtk
 
 import pyvista
 from pyvista import _vtk
+
 
 def test_wrap_none():
     # check against the "None" edge case

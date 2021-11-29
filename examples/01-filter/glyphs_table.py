@@ -8,9 +8,9 @@ Table of Glyphs
 up. This example demonstrates this functionality.
 """
 
-import pyvista as pv
 import numpy as np
 
+import pyvista as pv
 
 ###############################################################################
 #

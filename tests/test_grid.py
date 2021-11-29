@@ -1,5 +1,5 @@
-import pathlib
 import os
+import pathlib
 import weakref
 
 import numpy as np
@@ -8,8 +8,8 @@ import vtk
 
 import pyvista
 from pyvista import examples
-from pyvista.plotting import system_supports_plotting
 from pyvista._vtk import VTK9
+from pyvista.plotting import system_supports_plotting
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 

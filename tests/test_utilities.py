@@ -1,26 +1,25 @@
 """ test pyvista.utilities """
-import warnings
-import pathlib
 import os
+import pathlib
 import shutil
+import unittest.mock as mock
+import warnings
 
 import numpy as np
 import pytest
-import unittest.mock as mock
-
 import vtk
 
 import pyvista
 from pyvista import examples as ex
 from pyvista.utilities import (
+    GPUInfo,
+    Observer,
+    cells,
     check_valid_vector,
     errors,
     fileio,
-    GPUInfo,
     helpers,
-    Observer,
-    cells,
-    transformations
+    transformations,
 )
 
 

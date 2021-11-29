@@ -5,14 +5,19 @@ from typing import Union
 import numpy as np
 
 import pyvista
-from pyvista import _vtk, FieldAssociation
-from pyvista.utilities import (
-    NORMALS, assert_empty_kwargs, generate_plane, get_array, wrap,
-    abstract_class, get_array_association
-)
+from pyvista import FieldAssociation, _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
-from pyvista.utilities import transformations
+from pyvista.utilities import (
+    NORMALS,
+    abstract_class,
+    assert_empty_kwargs,
+    generate_plane,
+    get_array,
+    get_array_association,
+    transformations,
+    wrap,
+)
 from pyvista.utilities.cells import numpy_to_idarr
 
 

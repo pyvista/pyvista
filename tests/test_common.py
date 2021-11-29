@@ -1,16 +1,17 @@
 # TODO: This file really should be named test_dataset.py
 
 import pickle
+
+from hypothesis import HealthCheck, assume, given, settings
+from hypothesis.extra.numpy import array_shapes, arrays
+from hypothesis.strategies import composite, floats, integers, one_of
 import numpy as np
 import pytest
 import vtk
-from hypothesis import assume, given, settings, HealthCheck
-from hypothesis.extra.numpy import arrays, array_shapes
-from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista import examples, Texture
+from pyvista import Texture, examples
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -714,12 +715,12 @@ def test_set_cell_vectors(grid):
 
 def test_axis_rotation_invalid():
     with pytest.raises(ValueError):
-        pyvista.core.dataset.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pyvista.utilities.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pyvista.core.dataset.axis_rotation(p, 1, False, axis='x')
+    p_out = pyvista.utilities.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
 
 

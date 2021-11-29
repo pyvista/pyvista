@@ -1,8 +1,9 @@
 """
 Installation file for python pyvista module
 """
-import os
 from io import open as io_open
+import os
+
 from setuptools import setup
 
 package_name = 'pyvista'

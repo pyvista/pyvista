@@ -11,11 +11,10 @@ Examples
 
 """
 
-from urllib.request import urlretrieve
 from functools import partial
 import os
 import shutil
-import sys
+from urllib.request import urlretrieve
 import zipfile
 
 import numpy as np
@@ -3179,7 +3178,7 @@ def download_osmnx_graph():  # pragma: no cover
     import pickle
 
     try:
-        import osmnx
+        import osmnx  # noqa
     except ImportError:
         raise ImportError('Install `osmnx` to use this example')
 
