@@ -625,6 +625,48 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_point(self, time_point):  # noqa: D102
         self.reader.SetTimeValue(self.time_point_value(time_point))
 
+    @property
+    def cell_to_point_creation(self):
+        if self.reader.GetCreateCellToPoint():
+            return True
+        return False
+
+    @cell_to_point_creation.setter
+    def cell_to_point_creation(self, value):
+        if value:
+            self.reader.CreateCellToPointOn()
+        else:
+            self.reader.CreateCellToPointOff()
+
+    @property
+    def number_patch_arrays(self):
+        return self.reader.GetNumberOfPatchArrays()
+
+    @property
+    def patch_array_names(self):
+        return [self.reader.GetPatchArrayName(i) for i in range(self.number_patch_arrays)]
+
+    def enable_patch_array(self, name):
+        self.reader.SetPatchArrayStatus(name, 1)
+
+    def disable_patch_array(self, name):
+        self.reader.SetPatchArrayStatus(name, 0)
+
+    def patch_array_status(self, name):
+        if self.reader.GetPatchArrayStatus(name):
+            return True
+        return False
+
+    def enable_all_patch_arrays(self):
+        self.reader.EnableAllPatchArrays()
+    
+    def disable_all_patch_arrays(self):
+        self.reader.DisableAllPatchArrays()
+
+    @property
+    def all_patch_arrays_status(self):
+        return {name: self.patch_array_status(name) for name in self.patch_array_names}
+
 
 class PLYReader(BaseReader):
     """PLY Reader for reading .ply files.

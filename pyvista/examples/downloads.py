@@ -3187,6 +3187,38 @@ def download_osmnx_graph():  # pragma: no cover
     return pickle.load(open(filename, 'rb'))
 
 
+def download_cavity(load=True):
+    """Download cavity OpenFOAM example.
+
+    Retrieved from 
+    `Kitware VTK Data <https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183>`_.
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_cavity()  # doctest:+SKIP
+
+    See :ref:`openfoam_example` for a full example using this dataset.
+    
+    """
+    folder, _ = _download_file('OpenFOAM/cavity')
+    filename = os.path.join(folder, 'case.foam')
+    if not load:
+        return filename
+    return pyvista.OpenFOAMReader(filename).read()
+
+
 def download_lucy(load=True):  # pragma: no cover
     """Download the lucy angel mesh.
 

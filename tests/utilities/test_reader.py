@@ -341,3 +341,67 @@ def test_pvdreader_no_time_group():
         assert dataset.time == 0.0
         assert dataset.group == None
         assert dataset.part == i
+
+
+def get_cavity_reader():
+    filename = examples.download_cavity(load=False)
+    return pyvista.get_reader(filename)
+
+
+def test_openfoamreader_arrays_time():
+    reader = get_cavity_reader()
+    assert isinstance(reader, pyvista.OpenFOAMReader)
+
+    assert reader.number_point_arrays == 0
+    assert reader.number_cell_arrays == 2
+
+    assert reader.number_time_points == 6
+    assert reader.time_values == [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
+
+    # OpenFoamReader currently does not support inspecting active time
+    # Test that read data conforms to time setting
+    mesh = reader.read()
+    assert np.isclose(np.max(mesh[0]['p']), 0.0)
+
+    reader = get_cavity_reader()
+    reader.set_active_time_point(1)
+    mesh = reader.read()
+    assert not np.isclose(np.max(mesh[0]['p']), 0.0)
+
+
+def test_openfoam_cell_to_point_default():
+    reader = get_cavity_reader()
+    mesh = reader.read()
+    assert mesh[0].n_arrays == 4
+
+    reader = get_cavity_reader()
+    reader.cell_to_point_creation = False
+    mesh = reader.read()
+    assert mesh[0].n_arrays == 2
+
+
+def test_openfoam_patch_arrays():
+    reader = get_cavity_reader()
+    assert reader.number_patch_arrays == 4
+    assert reader.patch_array_names == ['internalMesh', 'patch/movingWall', 'patch/fixedWalls', 'patch/frontAndBack']
+    assert reader.all_patch_arrays_status == {
+        'internalMesh': True, 'patch/movingWall': False, 'patch/fixedWalls': False, 'patch/frontAndBack': False
+    }
+    mesh = reader.read()
+    assert mesh.n_blocks == 1
+    assert 'boundary' not in mesh.keys()
+
+    reader = get_cavity_reader()
+    reader.enable_patch_array('patch/fixedWalls')
+    mesh = reader.read()
+    assert mesh.n_blocks == 2
+    assert 'boundary' in mesh.keys()
+    assert mesh['boundary'].keys() == ['fixedWalls']
+
+    reader = get_cavity_reader()
+    reader.enable_all_patch_arrays()
+    reader.disable_patch_array('internalMesh')
+    mesh = reader.read()
+    assert mesh.n_blocks == 1
+    assert 'boundary' in mesh.keys()  
+    assert mesh['boundary'].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']
