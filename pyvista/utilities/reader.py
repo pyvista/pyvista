@@ -661,7 +661,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @property
     def number_patch_arrays(self):
-        """Number of patch arrays in dataset.
+        """Return number of patch arrays in dataset.
         
         Returns
         -------
