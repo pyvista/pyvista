@@ -1,5 +1,6 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
 import collections
+from functools import wraps
 import logging
 import numbers
 import os
@@ -28,6 +29,10 @@ from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFil
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
+DEFAULT_INPLACE_WARNING = 'You did not specify a value for `inplace` and the ' \
+    'defualt for value will be changing to `False` in future versions for ' \
+    'point-based meshes (e.g., `PolyData`). Please make sure you are not ' \
+    'assuming this to be an inplace operation.'
 
 
 class PointSet(DataSet):
@@ -148,7 +153,7 @@ class PointSet(DataSet):
             self.points = self.points.astype(np.double)
         return self
 
-    def translate(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
+    def translate(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=None):
         """Translate the mesh.
 
         To Do
@@ -173,12 +178,16 @@ class PointSet(DataSet):
         [2.0, 1.0, 2.0]
 
         """
+        if inplace is None:
+            # Raise a warning about inplace changing
+            warnings.warn(DEFAULT_INPLACE_WARNING)
+            inplace = True
         if inplace:
             self.points += np.asarray(xyz)  # type: ignore
             return self
         return super().translate(xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def scale(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
+    def scale(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=None):
         """Scale the mesh.
 
         To Do
@@ -208,10 +217,86 @@ class PointSet(DataSet):
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
+        if inplace is None:
+            # Raise a warning about inplace changing
+            warnings.warn(DEFAULT_INPLACE_WARNING)
+            inplace = True
         if inplace:
             self.points *= np.asarray(xyz)  # type: ignore
             return self
         return super().scale(xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+
+    @wraps(DataSet.flip_x)
+    def flip_x(self, *args, **kwargs):
+        """Wrap ``DataSet.flip_x``."""
+        if kwargs.get('inplace', None) is None:
+            # Raise a warning about inplace changing
+            warnings.warn(DEFAULT_INPLACE_WARNING)
+            kwargs.setdefault('inplace', True)
+        return super().flip_x(*args, **kwargs)
+
+    @wraps(DataSet.flip_y)
+    def flip_y(self, *args, **kwargs):
+        """Wrap ``DataSet.flip_y``."""
+        if kwargs.get('inplace', None) is None:
+            # Raise a warning about inplace changing
+            warnings.warn(DEFAULT_INPLACE_WARNING)
+            kwargs.setdefault('inplace', True)
+        return super().flip_y(*args, **kwargs)
+
+    @wraps(DataSet.flip_z)
+    def flip_z(self, *args, **kwargs):
+        """Wrap ``DataSet.flip_z``."""
+        if kwargs.get('inplace', None) is None:
+            # Raise a warning about inplace changing
+            warnings.warn(DEFAULT_INPLACE_WARNING)
+            kwargs.setdefault('inplace', True)
+        return super().flip_z(*args, **kwargs)
+
+    @wraps(DataSet.flip_normal)
+    def flip_normal(self, *args, **kwargs):
+        """Wrap ``DataSet.flip_normal``."""
+        if kwargs.get('inplace', None) is None:
+            # Raise a warning about inplace changing
+            warnings.warn(DEFAULT_INPLACE_WARNING)
+            kwargs.setdefault('inplace', True)
+        return super().flip_normal(*args, **kwargs)
+
+    @wraps(DataSet.rotate_x)
+    def rotate_x(self, *args, **kwargs):
+        """Wrap ``DataSet.rotate_x``."""
+        if kwargs.get('inplace', None) is None:
+            # Raise a warning about inplace changing
+            warnings.warn(DEFAULT_INPLACE_WARNING)
+            kwargs.setdefault('inplace', True)
+        return super().rotate_x(*args, **kwargs)
+
+    @wraps(DataSet.rotate_y)
+    def rotate_y(self, *args, **kwargs):
+        """Wrap ``DataSet.rotate_y``."""
+        if kwargs.get('inplace', None) is None:
+            # Raise a warning about inplace changing
+            warnings.warn(DEFAULT_INPLACE_WARNING)
+            kwargs.setdefault('inplace', True)
+        return super().rotate_y(*args, **kwargs)
+
+    @wraps(DataSet.rotate_z)
+    def rotate_z(self, *args, **kwargs):
+        """Wrap ``DataSet.rotate_z``."""
+        if kwargs.get('inplace', None) is None:
+            # Raise a warning about inplace changing
+            warnings.warn(DEFAULT_INPLACE_WARNING)
+            kwargs.setdefault('inplace', True)
+        return super().rotate_z(*args, **kwargs)
+
+    @wraps(DataSet.rotate_vector)
+    def rotate_vector(self, *args, **kwargs):
+        """Wrap ``DataSet.rotate_vector``."""
+        if kwargs.get('inplace', None) is None:
+            # Raise a warning about inplace changing
+            warnings.warn(DEFAULT_INPLACE_WARNING)
+            kwargs.setdefault('inplace', True)
+        return super().rotate_vector(*args, **kwargs)
 
 
 class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
