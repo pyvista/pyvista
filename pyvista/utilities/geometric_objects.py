@@ -22,7 +22,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import assert_empty_kwargs, check_valid_vector
+from pyvista.utilities import check_valid_vector
 
 NORMALS = {
     'x': [1, 0, 0],

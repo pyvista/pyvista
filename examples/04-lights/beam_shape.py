@@ -13,6 +13,7 @@ Consider two hemispheres:
 """
 # sphinx_gallery_thumbnail_number = 5
 import pyvista as pv
+
 plotter = pv.Plotter()
 
 hemi = pv.Sphere().clip()

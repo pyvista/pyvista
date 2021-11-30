@@ -1,22 +1,23 @@
 """Supporting functions for polydata and grid objects."""
 
-import os
 import collections.abc
 import enum
 import logging
+import os
 import signal
 import sys
-from threading import Thread
 import threading
+from threading import Thread
 import traceback
 from typing import Optional
 
 import numpy as np
 
-from pyvista import _vtk
 import pyvista
-from .fileio import from_meshio
+from pyvista import _vtk
+
 from . import transformations
+from .fileio import from_meshio
 
 
 class FieldAssociation(enum.Enum):
@@ -1234,7 +1235,7 @@ class ProgressMonitor():
     def __init__(self, algorithm, message="", scaling=100):
         """Initialize observer."""
         try:
-            from tqdm import tqdm
+            from tqdm import tqdm  # noqa
         except ImportError:
             raise ImportError("Please install `tqdm` to monitor algorithms.")
         self.event_type = _vtk.vtkCommand.ProgressEvent

@@ -1,10 +1,11 @@
 """Attributes common to PolyData and Grid Objects."""
 
-import warnings
 import collections.abc
 import logging
 import sys
-from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+import warnings
+
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
@@ -14,18 +15,24 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import (FieldAssociation, get_array,
-                               get_array_association,
-                               is_pyvista_dataset, raise_not_matching,
-                               vtk_id_list_to_array, abstract_class,
-                               axis_rotation, transformations)
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities import (
+    FieldAssociation,
+    abstract_class,
+    get_array,
+    get_array_association,
+    is_pyvista_dataset,
+    raise_not_matching,
+    transformations,
+    vtk_id_list_to_array,
+)
 from pyvista.utilities.errors import check_valid_vector
+from pyvista.utilities.misc import PyvistaDeprecationWarning
+
+from .._typing import Vector
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
-from .._typing import Vector
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')

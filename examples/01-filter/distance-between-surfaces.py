@@ -15,8 +15,10 @@ distance along the surface normals. Second, we will use a KDTree to compute
 the distance from every point in the bottom mesh to it's closest point in
 the top mesh.
 """
-import pyvista as pv
 import numpy as np
+
+import pyvista as pv
+
 
 # A helper to make a random surface
 def hill(seed):

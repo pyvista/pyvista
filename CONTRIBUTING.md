@@ -136,7 +136,7 @@ your change is complex.  Also, be sure to test often.  See the
 [Testing Section](#testing) below for automating testing.
 
 When you are ready to submit your code, create a pull request by
-following the steps in the 
+following the steps in the
 [Creating a New Pull Request section](#creating-a-new-pull-request).
 
 
@@ -162,6 +162,22 @@ Outside of PEP 8, when coding please consider [PEP 20 -- The Zen of Python](http
 
 ```python
 import this
+```
+
+Please also use the linting and format checks through the `Makefile` to make
+sure your code adheres to our standards regarding trailing white space,
+unused imports, and sorting of imports.
+
+To test the format locally, run:
+
+```bash
+make stylecheck
+```
+
+To automatically sort Python imports, run:
+
+```bash
+make isort
 ```
 
 #### Branch Naming Conventions
@@ -267,7 +283,7 @@ is a `fix/` branch.
 ### Branching Model
 
 This project has a branching model that enables rapid development of
-features without sacrificing stability, and closely follows the 
+features without sacrificing stability, and closely follows the
 [Trunk Based Development](https://trunkbaseddevelopment.com/) approach.
 
 The main features of our branching model are:
@@ -307,7 +323,7 @@ created the following will occur:
 1.  Create a new branch from the `main` branch with name
     `release/MAJOR.MINOR` (e.g. `release/0.25`).
 
-2. Locally run all tests as outlined in the [Testing Section](#testing) 
+2. Locally run all tests as outlined in the [Testing Section](#testing)
 and ensure all are passing.
 
 3. Locally test and build the documentation with link checking to make sure
@@ -364,7 +380,7 @@ Merge that pull request.
 
 #### Patch Release Steps
 
-Patch releases are for critical and important bugfixes that can not or should not wait until a minor release.  The steps for a patch release 
+Patch releases are for critical and important bugfixes that can not or should not wait until a minor release. The steps for a patch release
 
 1. Push the necessary bugfix(es) to the applicable release branch.  This will generally be the latest release branch (e.g. `release/0.25`).
 

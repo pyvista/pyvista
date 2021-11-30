@@ -1,13 +1,13 @@
 """pyvista wrapping of vtkCellArray."""
 
-import sys
 from collections import deque
-from itertools import islice, count
+from itertools import count, islice
+import sys
 
 import numpy as np
 
-from pyvista import _vtk
 import pyvista
+from pyvista import _vtk
 
 
 def ncells_from_cells_py36(cells):  # pragma: no cover

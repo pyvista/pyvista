@@ -4,8 +4,14 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import (NORMALS, generate_plane, get_array,
-                               try_callback, get_array_association)
+from pyvista.utilities import (
+    NORMALS,
+    generate_plane,
+    get_array,
+    get_array_association,
+    try_callback,
+)
+
 from .tools import parse_color
 
 

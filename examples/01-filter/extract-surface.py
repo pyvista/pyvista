@@ -11,8 +11,9 @@ using the ``extract_surface`` filter.
 # sphinx_gallery_thumbnail_number = 2
 
 import numpy as np
-import pyvista as pv
 from vtk import VTK_QUADRATIC_HEXAHEDRON
+
+import pyvista as pv
 
 ###############################################################################
 # Create a quadratic cell and extract its surface

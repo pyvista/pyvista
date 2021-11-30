@@ -1,15 +1,13 @@
 """Fine-grained control of reading data files."""
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-import functools
 import os
+from typing import Any
 from xml.etree import ElementTree
 
-from typing import Any
-
 import pyvista
-from pyvista.utilities import wrap, get_ext
 from pyvista import _vtk
+from pyvista.utilities import get_ext, wrap
 
 
 def get_reader(filename):

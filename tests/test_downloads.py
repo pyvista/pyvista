@@ -1,5 +1,5 @@
-from zipfile import ZipFile
 import os
+from zipfile import ZipFile
 
 import pytest
 

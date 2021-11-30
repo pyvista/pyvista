@@ -1,17 +1,17 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
-from weakref import proxy
 from typing import Sequence
+from weakref import proxy
 
 import numpy as np
 
 import pyvista
-from pyvista import _vtk, MAX_N_COLOR_BARS
-from pyvista.utilities import wrap, check_depth_peeling
-from .tools import (create_axes_orientation_box, create_axes_marker,
-                    parse_color, parse_font_family)
+from pyvista import MAX_N_COLOR_BARS, _vtk
+from pyvista.utilities import check_depth_peeling, wrap
+
 from .camera import Camera
+from .tools import create_axes_marker, create_axes_orientation_box, parse_color, parse_font_family
 
 ACTOR_LOC_MAP = [
     'upper right',

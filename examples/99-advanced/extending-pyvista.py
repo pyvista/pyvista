@@ -22,9 +22,10 @@ classes are nearly always used for particular types of DataSets.
 
 """
 
-import pyvista
 import numpy as np
 import vtk
+
+import pyvista
 
 pyvista.set_plot_theme("document")
 

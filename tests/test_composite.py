@@ -6,8 +6,14 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista import PolyData, RectilinearGrid, UniformGrid, StructuredGrid, MultiBlock
-from pyvista import examples as ex
+from pyvista import (
+    MultiBlock,
+    PolyData,
+    RectilinearGrid,
+    StructuredGrid,
+    UniformGrid,
+    examples as ex,
+)
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 

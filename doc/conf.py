@@ -1,6 +1,6 @@
+import datetime
 import os
 import sys
-import datetime
 
 if sys.version_info >= (3, 0):
     import faulthandler
@@ -12,10 +12,8 @@ import make_external_gallery
 
 make_external_gallery.make_example_gallery()
 
-
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
-import numpy as np
 
 # Manage errors
 pyvista.set_error_output_file("errors.txt")
@@ -319,9 +317,10 @@ sphinx_gallery_conf = {
     "reset_modules": (reset_pyvista, ),
 }
 
+import re
+
 # -- .. pyvista-plot:: directive ----------------------------------------------
 from numpydoc.docscrape_sphinx import SphinxDocString
-import re
 
 IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
@@ -356,7 +355,7 @@ SphinxDocString._str_examples = _str_examples
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-import pydata_sphinx_theme
+import pydata_sphinx_theme  # noqa
 
 html_theme = "pydata_sphinx_theme"
 # html_theme_path = [pydata_sphinx_theme.get_html_theme_path()]
@@ -482,10 +481,10 @@ copybutton_prompt_text = r'>>> ?|\.\.\. '
 copybutton_prompt_is_regexp = True
 
 
-# -- Autosummary options
-from sphinx.ext.autosummary import Autosummary
-from sphinx.ext.autosummary import get_documenter
 from docutils.parsers.rst import directives
+
+# -- Autosummary options
+from sphinx.ext.autosummary import Autosummary, get_documenter
 from sphinx.util.inspect import safe_getattr
 
 
