@@ -323,8 +323,7 @@ def plot_ants_plane(notebook=None):
 
        Make a copy and add another ant.
 
-       >>> ant_copy = ant.copy()
-       >>> ant_copy.translate([30, 0, -10], inplace=True)
+       >>> ant_copy = ant.translate([30, 0, -10], inplace=False)
 
        Create plotting object.
 
