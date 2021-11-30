@@ -1048,7 +1048,7 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((1, 0, 0), point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def flip_y(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the y-axis.
@@ -1084,7 +1084,7 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 1, 0), point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def flip_z(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the z-axis.
@@ -1120,7 +1120,7 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 0, 1), point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def flip_normal(self, normal: List[float], point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the normal.
@@ -1160,7 +1160,7 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(normal, 'normal')
         check_valid_vector(point, 'point')
         t = transformations.reflection(normal, point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object.
