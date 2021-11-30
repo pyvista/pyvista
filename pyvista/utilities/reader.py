@@ -625,6 +625,29 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @property
     def cell_to_point_creation(self):
+        """Whether cell data is translated to point data when read.
+
+        Returns
+        -------
+        bool
+            If ``True``, translate cell data to point data.
+
+        Warnings
+        --------
+        When ``True``, cell and point data arrays will have
+        duplicate names.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.cell_to_point_creation = False
+        >>> reader.cell_to_point_creation
+        False
+
+        """
         if self.reader.GetCreateCellToPoint():
             return True
         return False
@@ -638,31 +661,161 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @property
     def number_patch_arrays(self):
+        """Number of patch arrays in dataset.
+        
+        Returns
+        -------
+        int
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.number_patch_arrays
+        4
+        
+        """
         return self.reader.GetNumberOfPatchArrays()
 
     @property
     def patch_array_names(self):
+        """Names of patch arrays in a list.
+        
+        Returns
+        -------
+        list[str]
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.patch_array_names
+        ['internalMesh', 'patch/movingWall', 'patch/fixedWalls', 'patch/frontAndBack']
+
+        """
         return [self.reader.GetPatchArrayName(i) for i in range(self.number_patch_arrays)]
 
     def enable_patch_array(self, name):
+        """Enable reading of patch array.
+
+        Parameters
+        ----------
+        name : str
+            Which patch array to enable.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.enable_patch_array("patch/movingWall")
+        >>> reader.patch_array_status("patch/movingWall")
+        True
+
+        """
         self.reader.SetPatchArrayStatus(name, 1)
 
     def disable_patch_array(self, name):
+        """Disable reading of patch array.
+
+        Parameters
+        ----------
+        name : str
+            Which patch array to disable.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.disable_patch_array("internalMesh")
+        >>> reader.patch_array_status("internalMesh")
+        False
+
+        """
         self.reader.SetPatchArrayStatus(name, 0)
 
     def patch_array_status(self, name):
+        """Return status of reading patch array.
+
+        Parameters
+        ----------
+        name : str
+            Which patch array to report status.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.enable_patch_array("patch/movingWall")
+        >>> reader.patch_array_status("patch/movingWall")
+        True
+
+        """
         if self.reader.GetPatchArrayStatus(name):
             return True
         return False
 
     def enable_all_patch_arrays(self):
+        """Enable reading of all patch arrays.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.enable_all_patch_arrays()
+        >>> assert reader.patch_array_status("patch/movingWall")
+        >>> assert reader.patch_array_status("patch/fixedWalls")
+
+        """
         self.reader.EnableAllPatchArrays()
     
     def disable_all_patch_arrays(self):
+        """Disable reading of all patch arrays.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.disable_all_patch_arrays()
+        >>> assert not reader.patch_array_status("patch.movingWall")
+        >>> assert not reader.patch_array_status("internalMesh")
+
+        """
         self.reader.DisableAllPatchArrays()
 
     @property
     def all_patch_arrays_status(self):
+        """Status of reading all patch arrays.
+
+        Returns
+        -------
+        dict[str, bool]
+            dict key is the patch name and the value is whether it will be read.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> filename = examples.download_cavity(load=False)
+        >>> reader = pyvista.OpenFOAMReader(filename)
+        >>> reader.all_patch_arrays_status  #doctest: +NORMALIZE_WHITESPACE
+        {'internalMesh': True, 'patch/movingWall': False, 'patch/fixedWalls': False,
+         'patch/frontAndBack': False}
+
+        """
         return {name: self.patch_array_status(name) for name in self.patch_array_names}
 
 
