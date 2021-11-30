@@ -144,7 +144,7 @@ class PointSet(DataSet):
         >>> mesh = pyvista.Sphere()
         >>> mesh.points.dtype
         dtype('float32')
-        >>> mesh.points_to_double()
+        >>> _ = mesh.points_to_double()
         >>> mesh.points.dtype
         dtype('float64')
 
@@ -173,8 +173,8 @@ class PointSet(DataSet):
         >>> mesh = pyvista.Sphere()
         >>> mesh.center
         [0.0, 0.0, 0.0]
-        >>> mesh.translate((2, 1, 2), inplace=True)
-        >>> mesh.center
+        >>> trans = mesh.translate((2, 1, 2), inplace=True)
+        >>> trans.center
         [2.0, 1.0, 2.0]
 
         """

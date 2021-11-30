@@ -318,8 +318,8 @@ def plot_ants_plane(notebook=None):
        Rotate and translate ant so it is on the plane.
 
        >>> ant = examples.load_ant()
-       >>> ant.rotate_x(90, inplace=True)
-       >>> ant.translate([90, 60, 15], inplace=True)
+       >>> _ = ant.rotate_x(90, inplace=True)
+       >>> _ = ant.translate([90, 60, 15], inplace=True)
 
        Make a copy and add another ant.
 
