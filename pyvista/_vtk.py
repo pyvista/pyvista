@@ -451,3 +451,15 @@ else:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
             raise VTKVersionError('vtkGLTFReader requires VTK v9 or newer')
+
+
+# Get the VTK version. The API here is consistent since 4.0.0
+try:
+    _ver = vtkVersion()
+    vtk_version = (
+        _ver.GetVTKMajorVersion(),
+        _ver.GetVTKMinorVersion(),
+        _ver.GetVTKBuildVersion()
+    )
+except:
+    (4, 0, 0)

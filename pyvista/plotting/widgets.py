@@ -1745,6 +1745,11 @@ class WidgetHelper:
         n_frames : int, optional
             The number of frames to animate the jump-to-axis-viewpoint feature.
 
+        Returns
+        -------
+        vtkCameraOrientationWidget
+            Camera orientation widget.
+
         Examples
         --------
         Add a camera orientation widget to the scene.
@@ -1752,7 +1757,7 @@ class WidgetHelper:
         >>> import pyvista
         >>> mesh = pyvista.Cube()
         >>> plotter = pyvista.Plotter()
-        >>> plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
+        >>> _ = plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
         >>> plotter.add_camera_orientation_widget()
         >>> plotter.show()
 
@@ -1768,6 +1773,7 @@ class WidgetHelper:
         widget.SetAnimatorTotalFrames(n_frames)
         widget.On()
         self._camera_widgets.append(widget)
+        return widget
 
     def clear_camera_widgets(self):
         """Disable all of the camera widgets."""

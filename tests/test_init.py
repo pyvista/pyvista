@@ -43,3 +43,8 @@ def test_lazy_loads(cls_):
 
     # can't use isinstance here because these are classes
     assert type(lazy_class) == type(actual_class)
+
+
+def test_version():
+    ver = vtk.vtkVersion()
+    assert '.'.join(pyvista.vtk_version) == ver.GetVTKVersion()
