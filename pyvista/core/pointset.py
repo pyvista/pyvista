@@ -29,10 +29,12 @@ from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFil
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
-DEFAULT_INPLACE_WARNING = 'You did not specify a value for `inplace` and the ' \
-    'defualt for value will be changing to `False` in future versions for ' \
-    'point-based meshes (e.g., `PolyData`). Please make sure you are not ' \
+DEFAULT_INPLACE_WARNING = (
+    'You did not specify a value for `inplace` and the '
+    'default for value will be changing to `False` in future versions for '
+    'point-based meshes (e.g., `PolyData`). Please make sure you are not '
     'assuming this to be an inplace operation.'
+)
 
 
 class PointSet(DataSet):
