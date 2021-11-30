@@ -148,7 +148,6 @@ class PointSet(DataSet):
             self.points = self.points.astype(np.double)
         return self
 
-
     def translate(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Translate the mesh.
 
@@ -178,7 +177,6 @@ class PointSet(DataSet):
             self.points += np.asarray(xyz)  # type: ignore
             return self
         return super().translate(xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=False)
-
 
     def scale(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Scale the mesh.
