@@ -882,7 +882,7 @@ class DataSet(DataSetFilters, DataObject):
         if len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def rotate_y(self, angle: float, point=None, transform_all_input_vectors=False, inplace=False):
         """Rotate mesh about the y-axis.
@@ -905,7 +905,7 @@ class DataSet(DataSetFilters, DataObject):
         if len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def rotate_z(self, angle: float, point=None, transform_all_input_vectors=False, inplace=False):
         """Rotate mesh about the z-axis.
@@ -928,7 +928,7 @@ class DataSet(DataSetFilters, DataObject):
         if len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def rotate_vector(self, vector: List[float], angle, point=None,
                       transform_all_input_vectors=False, inplace=False):
@@ -957,7 +957,7 @@ class DataSet(DataSetFilters, DataObject):
         if len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def translate(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Translate the mesh.
