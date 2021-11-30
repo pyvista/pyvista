@@ -5,14 +5,19 @@ from typing import Union
 import numpy as np
 
 import pyvista
-from pyvista import _vtk, FieldAssociation
-from pyvista.utilities import (
-    NORMALS, assert_empty_kwargs, generate_plane, get_array, wrap,
-    abstract_class, get_array_association
-)
+from pyvista import FieldAssociation, _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
-from pyvista.utilities import transformations
+from pyvista.utilities import (
+    NORMALS,
+    abstract_class,
+    assert_empty_kwargs,
+    generate_plane,
+    get_array,
+    get_array_association,
+    transformations,
+    wrap,
+)
 from pyvista.utilities.cells import numpy_to_idarr
 
 
@@ -1400,7 +1405,9 @@ class DataSetFilters:
         self.GetPointData().SetTCoords(t_coords)
         self.GetPointData().AddArray(t_coords)
         # CRITICAL:
-        self.GetPointData().AddArray(otc) # Add old ones back at the end
+        if otc and otc.GetName() != name:
+            # Add old ones back at the end if different name
+            self.GetPointData().AddArray(otc)
         return self
 
     def texture_map_to_sphere(self, center=None, prevent_seam=True,
@@ -1468,7 +1475,9 @@ class DataSetFilters:
         self.GetPointData().SetTCoords(t_coords)
         self.GetPointData().AddArray(t_coords)
         # CRITICAL:
-        self.GetPointData().AddArray(otc)  # Add old ones back at the end
+        if otc and otc.GetName() != name:
+            # Add old ones back at the end if different name
+            self.GetPointData().AddArray(otc)
         return self
 
     def compute_cell_sizes(self, length=True, area=True, volume=True,
@@ -1577,10 +1586,12 @@ class DataSetFilters:
         orient : bool or str, optional
             If ``True``, use the active vectors array to orient the glyphs.
             If string, the vector array to use to orient the glyphs.
+            If ``False``, the glyphs will not be orientated.
 
         scale : bool, str or sequence, optional
             If ``True``, use the active scalars to scale the glyphs.
             If string, the scalar array to use to scale the glyphs.
+            If ``False``, the glyphs will not be scaled.
 
         factor : float, optional
             Scale factor applied to scaling array.

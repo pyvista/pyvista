@@ -9,15 +9,15 @@ Includes:
 * ``ipygany``
 
 """
-import warnings
 import os
+import warnings
 
 import numpy as np
 
 # This module should not be imported at the __init__ level, only as a
 # lazy import when trying to plot using jupyter notebooks
 try:
-    import IPython
+    import IPython  # noqa
     from IPython import display
 except ImportError:  # pragma: no cover
     raise ImportError('Install IPython to display an image in a notebook')

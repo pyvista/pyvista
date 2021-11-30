@@ -7,10 +7,11 @@ Parallel Files
 The VTK library supports parallel file formats. Reading meshes broken up into
 several files is natively supported by VTK and PyVista.
 """
+import os
+
 # sphinx_gallery_thumbnail_number = 1
 import pyvista as pv
 from pyvista import examples
-import os
 
 ###############################################################################
 # Let's go ahead and download the sample dataset containing an

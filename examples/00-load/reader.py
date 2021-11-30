@@ -11,10 +11,12 @@ Load data using a Reader
 # files.  See :func:`pyvista.get_reader` for a list of file types supported.
 
 
+from tempfile import NamedTemporaryFile
+
+import numpy as np
+
 import pyvista
 from pyvista import examples
-import numpy as np
-from tempfile import NamedTemporaryFile
 
 ###############################################################################
 # An XML PolyData file in ``.vtp`` format is created.  It will be saved in a

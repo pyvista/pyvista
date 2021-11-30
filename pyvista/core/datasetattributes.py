@@ -1,18 +1,18 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
-import warnings
 from collections.abc import Iterable
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
+import warnings
 
 import numpy as np
-from typing import Union, Iterator, Optional, List, Tuple, Dict, Sequence, Any
 
 from pyvista import _vtk
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
 from pyvista.utilities.misc import PyvistaDeprecationWarning
-from .pyvista_ndarray import pyvista_ndarray
 
 from .._typing import Number
+from .pyvista_ndarray import pyvista_ndarray
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
 attr_type = [

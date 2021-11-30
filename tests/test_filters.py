@@ -1,17 +1,16 @@
-import os
-import sys
-import platform
 import itertools
+import os
+import platform
+import sys
 
 import numpy as np
 import pytest
 from vtk import VTK_QUADRATIC_HEXAHEDRON
 
-from pyvista._vtk import VTK9, vtkStaticCellLocator
 import pyvista
-from pyvista import examples, Sphere
+from pyvista import examples
+from pyvista._vtk import VTK9, vtkStaticCellLocator
 from pyvista.core.errors import VTKVersionError
-
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -576,6 +575,28 @@ def test_glyph_cell_point_data(sphere):
         sphere.glyph(orient='vectors_cell', scale='arr_points', progress_bar=True)
     with pytest.raises(ValueError):
         sphere.glyph(orient='vectors_points', scale='arr_cell', progress_bar=True)
+
+
+def test_glyph_orient_and_scale():
+    grid = pyvista.UniformGrid((1, 1, 1))
+    geom = pyvista.Line()
+    scale = 10.0
+    orient = np.array([[0.0, 0.0, 1.0]])
+    grid["z_axis"] = orient * scale
+    glyph1 = grid.glyph(geom=geom, orient="z_axis", scale="z_axis")
+    glyph2 = grid.glyph(geom=geom, orient=False, scale="z_axis")
+    glyph3 = grid.glyph(geom=geom, orient="z_axis", scale=False)
+    glyph4 = grid.glyph(geom=geom, orient=False, scale=False)
+    assert (
+        glyph1.bounds[4] == geom.bounds[0] * scale
+        and glyph1.bounds[5] == geom.bounds[1] * scale
+    )
+    assert (
+        glyph2.bounds[0] == geom.bounds[0] * scale
+        and glyph2.bounds[1] == geom.bounds[1] * scale
+    )
+    assert glyph3.bounds[4] == geom.bounds[0] and glyph3.bounds[5] == geom.bounds[1]
+    assert glyph4.bounds[0] == geom.bounds[0] and glyph4.bounds[1] == geom.bounds[1]
 
 
 def test_split_and_connectivity():

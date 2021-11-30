@@ -14,8 +14,9 @@ path. To do this, we have added a convenient helper method which leverages the
 :func:`pyvista.DataSetFilters.slice_along_line` filter named
 :func:`pyvista.WidgetHelper.add_mesh_slice_spline`.
 """
-import pyvista as pv
 import numpy as np
+
+import pyvista as pv
 
 ##############################################################################
 
