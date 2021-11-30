@@ -928,7 +928,7 @@ class DataSet(DataSetFilters, DataObject):
         if len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inlpace)
+        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def rotate_vector(self, vector: List[float], angle, point=None,
                       transform_all_input_vectors=False, inplace=False):
