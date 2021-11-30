@@ -1101,6 +1101,34 @@ def test_rotations_should_match_by_a_360_degree_difference():
     assert np.allclose(rot1.points, rot2.points)
 
 
+def test_rotate_x():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_x(30)
+    assert isinstance(out, pyvista.StructuredGrid)
+
+
+def test_rotate_y():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_y(30)
+    assert isinstance(out, pyvista.StructuredGrid)
+
+
+def test_rotate_z():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_z(30)
+    assert isinstance(out, pyvista.StructuredGrid)
+
+
+def test_rotate_vector():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_vector([1, 1, 1], 33)
+    assert isinstance(out, pyvista.StructuredGrid)
+
+
 def test_scale():
     mesh = examples.load_airplane()
 
@@ -1110,6 +1138,10 @@ def test_scale():
     scale1.scale(xyz)
     scale2.points *= xyz
     assert np.allclose(scale1.points, scale2.points)
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.scale(xyz)
+    assert isinstance(out, pyvista.StructuredGrid)
 
 
 def test_flip_x():
@@ -1119,6 +1151,10 @@ def test_flip_x():
     flip_x1.flip_x(point=(0, 0, 0))
     flip_x2.points[:, 0] *= -1.0
     assert np.allclose(flip_x1.points, flip_x2.points)
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_x()
+    assert isinstance(out, pyvista.StructuredGrid)
 
 
 def test_flip_y():
@@ -1128,6 +1164,10 @@ def test_flip_y():
     flip_y1.flip_y(point=(0, 0, 0))
     flip_y2.points[:, 1] *= -1.0
     assert np.allclose(flip_y1.points, flip_y2.points)
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_y()
+    assert isinstance(out, pyvista.StructuredGrid)
 
 
 def test_flip_z():
@@ -1137,6 +1177,10 @@ def test_flip_z():
     flip_z1.flip_z(point=(0, 0, 0))
     flip_z2.points[:, 2] *= -1.0
     assert np.allclose(flip_z1.points, flip_z2.points)
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_z()
+    assert isinstance(out, pyvista.StructuredGrid)
 
 
 def test_flip_normal():
@@ -1158,6 +1202,11 @@ def test_flip_normal():
     flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
     flip_normal6.flip_z()
     assert np.allclose(flip_normal5.points, flip_normal6.points)
+
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
+    assert isinstance(out, pyvista.StructuredGrid)
 
 
 def test_active_normals(sphere):
