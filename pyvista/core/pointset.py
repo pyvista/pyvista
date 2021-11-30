@@ -176,7 +176,7 @@ class PointSet(DataSet):
         if inplace:
             self.points += np.asarray(xyz)  # type: ignore
             return self
-        return super().translate(xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=False)
+        return super().translate(xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def scale(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Scale the mesh.
@@ -211,7 +211,7 @@ class PointSet(DataSet):
         if inplace:
             self.points *= np.asarray(xyz)  # type: ignore
             return self
-        return super().scale(xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=False)
+        return super().scale(xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
 
 class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
