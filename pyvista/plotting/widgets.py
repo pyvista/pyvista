@@ -16,6 +16,8 @@ class WidgetHelper:
 
     """
 
+    _camera_widgets = []
+
     def add_box_widget(self, callback, bounds=None, factor=1.25,
                        rotation_enabled=True, color=None, use_planes=False,
                        outline_translation=True, pass_widget=False):
@@ -1730,6 +1732,49 @@ class WidgetHelper:
         self.button_widgets.append(button_widget)
         return button_widget
 
+    def add_camera_orientation_widget(self, animate=True, n_frames=20):
+        """Add a camera orientation widget to the active renderer.
+
+        .. note::
+           This widget requires ``vtk>=9.1.0``.
+
+        Parameters
+        ----------
+        animate : bool, optional
+            Enable or disable jump-to-axis-view animation.
+        n_frames : int, optional
+            The number of frames to animate the jump-to-axis-viewpoint feature.
+
+        Examples
+        --------
+        Add a camera orientation widget to the scene.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> plotter = pyvista.Plotter()
+        >>> plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
+        >>> plotter.add_camera_orientation_widget()
+        >>> plotter.show()
+
+        """
+        try:
+            from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
+        except ImportError:  # pragma: no cover
+            raise ImportError('Please install vtk>=9.1.0')
+
+        widget = vtkCameraOrientationWidget()
+        widget.SetParentRenderer(self.renderer)
+        widget.SetAnimate(animate)
+        widget.SetAnimatorTotalFrames(n_frames)
+        widget.On()
+        self._camera_widgets.append(widget)
+
+    def clear_camera_widgets(self):
+        """Disable all of the camera widgets."""
+        for widget in self._camera_widgets:
+            widget.Off()
+        self._camera_widgets = []
+
     def clear_button_widgets(self):
         """Disable all of the button widgets."""
         if hasattr(self, 'button_widgets'):
@@ -1746,3 +1791,4 @@ class WidgetHelper:
         self.clear_sphere_widgets()
         self.clear_spline_widgets()
         self.clear_button_widgets()
+        self.clear_camera_widgets()
