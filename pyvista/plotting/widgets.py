@@ -1762,12 +1762,7 @@ class WidgetHelper:
         >>> plotter.show()
 
         """
-        try:
-            from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
-        except ImportError:  # pragma: no cover
-            raise ImportError('Please install vtk>=9.1.0')
-
-        widget = vtkCameraOrientationWidget()
+        widget = _vtk.lazy_vtkCameraOrientationWidget()
         widget.SetParentRenderer(self.renderer)
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)

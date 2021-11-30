@@ -4603,6 +4603,11 @@ class Plotter(BasePlotter):
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
 
+        # Set camera widget based on theme. This requires that an
+        # interactor be present.
+        if self.theme._enable_camera_orientation_widget:
+            self.add_camera_orientation_widget()
+
         # Set background
         self.set_background(self._theme.background)
 
