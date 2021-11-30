@@ -463,7 +463,7 @@ def lazy_vtkCameraOrientationWidget():
     return vtkCameraOrientationWidget()
 
 
-# Get the VTK version. The API here is consistent since 4.0.0
+# Get the VTK version. The API here is consistent since at least VTK v4.0.0
 try:
     _ver = vtkVersion()
     vtk_version = (
