@@ -1,17 +1,17 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
-from weakref import proxy
 from typing import Sequence
+from weakref import proxy
 
 import numpy as np
 
 import pyvista
-from pyvista import _vtk, MAX_N_COLOR_BARS
-from pyvista.utilities import wrap, check_depth_peeling
-from .tools import (create_axes_orientation_box, create_axes_marker,
-                    parse_color, parse_font_family)
+from pyvista import MAX_N_COLOR_BARS, _vtk
+from pyvista.utilities import check_depth_peeling, wrap
+
 from .camera import Camera
+from .tools import create_axes_marker, create_axes_orientation_box, parse_color, parse_font_family
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -1001,7 +1001,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> mesh = pyvista.Sphere()
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(mesh)
-        >>> actor = plotter.show_bounds(grid='front', location='outer', 
+        >>> actor = plotter.show_bounds(grid='front', location='outer',
         ...                             all_edges=True)
         >>> plotter.show()
 
@@ -1179,7 +1179,7 @@ class Renderer(_vtk.vtkRenderer):
         -------
         vtk.vtkAxesActor
             Bounds actor.
-            
+
          Examples
         --------
         >>> import pyvista
@@ -1521,7 +1521,7 @@ class Renderer(_vtk.vtkRenderer):
 
     def remove_bounds_axes(self):
         """Remove bounds axes.
-        
+
         Examples
         --------
         >>> import pyvista
@@ -1534,7 +1534,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> actor = pl.show_bounds(grid='front', location='outer')
         >>> actor = pl.remove_bounds_axes()
         >>> pl.show()
-        
+
         """
         if hasattr(self, 'cube_axes_actor'):
             self.remove_actor(self.cube_axes_actor)
@@ -2076,7 +2076,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the XY plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()
@@ -2103,7 +2103,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the YX plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()
@@ -2111,7 +2111,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> _ = pl.add_mesh(airplane)
         >>> pl.view_yx()
         >>> pl.show()
-        
+
         """
         vec = np.array([0,0,-1])
         viewup = np.array([1,0,0])
@@ -2130,7 +2130,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the XZ plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()
@@ -2157,7 +2157,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the ZX plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()
@@ -2184,7 +2184,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the YZ plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()
@@ -2211,7 +2211,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the ZY plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()

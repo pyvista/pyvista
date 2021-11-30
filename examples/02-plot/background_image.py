@@ -10,7 +10,6 @@ Add a background image with :func:`pyvista.Plotter.add_background_image`.
 import pyvista as pv
 from pyvista import examples
 
-
 ###############################################################################
 # Plot an airplane with the map of the earth in the background
 earth_alt = examples.download_topo_global()

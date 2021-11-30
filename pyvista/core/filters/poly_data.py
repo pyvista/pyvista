@@ -6,11 +6,15 @@ import numpy as np
 
 import pyvista
 from pyvista import (
-    abstract_class, _vtk, NORMALS, generate_plane, assert_empty_kwargs,
-    vtk_id_list_to_array, get_array, get_array_association
+    NORMALS,
+    _vtk,
+    abstract_class,
+    assert_empty_kwargs,
+    generate_plane,
+    get_array_association,
+    vtk_id_list_to_array,
 )
-from pyvista.core.errors import (NotAllTrianglesError,
-                                 DeprecationError, VTKVersionError)
+from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 
@@ -200,7 +204,7 @@ class PolyDataFilters(DataSetFilters):
            meshes whereas the :func:`PolyDataFilters.intersection`
            filter returns the surface intersection between two meshes
            (which often resolves as a line).
-           
+
 
         .. note::
            Both meshes must be composed of all triangles.  Check with
@@ -594,7 +598,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True, 
+        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True,
         ...                      clim=[0, 1])
 
         """
@@ -1869,7 +1873,9 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError
 
         try:
-            import trimesh, rtree, pyembree
+            import pyembree  # noqa
+            import rtree  # noqa
+            import trimesh  # noqa
         except (ModuleNotFoundError, ImportError):
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"

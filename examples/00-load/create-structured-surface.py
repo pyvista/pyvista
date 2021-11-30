@@ -7,11 +7,11 @@ Creating a Structured Surface
 Create a StructuredGrid surface from NumPy arrays
 """
 
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
-import numpy as np
-
 
 ###############################################################################
 # From NumPy Meshgrid

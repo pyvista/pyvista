@@ -10,7 +10,7 @@ def _download_file(end_url):  # pragma: no cover
     basename = end_url.split('/')[-1]
     filename, _ = _retrieve_file(GLTF_SAMPLES_ROOT_URL + end_url, basename)
     return filename
-    
+
 
 def download_damaged_helmet():  # pragma: no cover
     """Download the damaged helmet example.
@@ -129,4 +129,3 @@ def download_milk_truck():  # pragma: no cover
 
     """
     return _download_file('CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb')
-

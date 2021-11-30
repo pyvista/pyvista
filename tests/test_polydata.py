@@ -1,14 +1,14 @@
-import pathlib
-import os
 from math import pi
+import os
+import pathlib
 
 import numpy as np
 import pytest
 
 import pyvista
 from pyvista import examples
-from pyvista.plotting import system_supports_plotting
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.plotting import system_supports_plotting
 
 radius = 0.5
 

@@ -3,19 +3,19 @@
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
-import pathlib
 import collections.abc
 import logging
+import pathlib
+from typing import Any, List, Optional, Tuple, Union, cast
 
 import numpy as np
-from typing import List, Tuple, Union, Optional, Any, cast
 
 import pyvista
-from pyvista.utilities import get_array, is_pyvista_dataset, wrap
 from pyvista import _vtk
+from pyvista.utilities import is_pyvista_dataset, wrap
+
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
-from .._typing import Vector
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -51,7 +51,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     Instantiate from a list of objects.
 
-    >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), 
+    >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)),
     ...         pv.Cone()]
     >>> blocks = pv.MultiBlock(data)
     >>> blocks.plot()

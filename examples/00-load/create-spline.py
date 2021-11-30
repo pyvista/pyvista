@@ -7,10 +7,10 @@ Creating a Spline
 Create a spline/polyline from a numpy array of XYZ vertices
 """
 
-# sphinx_gallery_thumbnail_number = 2
-import pyvista as pv
 import numpy as np
 
+# sphinx_gallery_thumbnail_number = 2
+import pyvista as pv
 
 ###############################################################################
 # Create a dataset to plot
