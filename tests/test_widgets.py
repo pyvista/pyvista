@@ -11,6 +11,10 @@ mesh = examples.load_uniform()
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip
 
+AT_LEAST_VTK_9_1_0 = False
+if pyvista._vtk.VTK9:
+    AT_LEAST_VTK_9_1_0 = pyvista._vtk.vtkVersion().GetVTKMinorVersion() >= 1
+
 
 def test_widget_box():
     p = pyvista.Plotter()
@@ -221,6 +225,7 @@ def test_widget_checkbox_button():
     p.close()
 
 
+@pytest.mark.skipif(not AT_LEAST_VTK_9_1_0, reason="Requires vtk>=9.1.0")
 def test_add_camera_orientation_widget():
     p = pyvista.Plotter()
     p.add_camera_orientation_widget()
