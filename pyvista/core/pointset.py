@@ -173,7 +173,7 @@ class PointSet(DataSet):
         >>> mesh = pyvista.Sphere()
         >>> mesh.center
         [0.0, 0.0, 0.0]
-        >>> mesh.translate((2, 1, 2))
+        >>> mesh.translate((2, 1, 2), inplace=True)
         >>> mesh.center
         [2.0, 1.0, 2.0]
 
@@ -212,8 +212,7 @@ class PointSet(DataSet):
         >>> pl.subplot(0, 1)
         >>> pl.show_axes()
         >>> _ = pl.show_grid()
-        >>> mesh2 = mesh1.copy()
-        >>> mesh2.scale([10.0, 10.0, 10.0])
+        >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """

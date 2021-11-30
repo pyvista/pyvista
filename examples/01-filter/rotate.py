@@ -58,8 +58,7 @@ p.add_actor(axes.actor)
 p.camera = camera
 
 for i in range(6):
-    rot = mesh.copy()
-    rot.rotate_x(60*i, point=axes.origin)
+    rot = mesh.rotate_x(60*i, point=axes.origin, inplace=False)
     p.add_mesh(rot)
 
 p.show()
@@ -78,8 +77,7 @@ p.camera = camera
 p.add_actor(axes.actor)
 
 for i in range(6):
-    rot = mesh.copy()
-    rot.rotate_y(60*i, point=axes.origin)
+    rot = mesh.rotate_y(60*i, point=axes.origin, inplace=False)
     p.add_mesh(rot)
 
 p.show()
@@ -98,8 +96,7 @@ p.camera = camera
 p.add_actor(axes.actor)
 
 for i in range(6):
-    rot = mesh.copy()
-    rot.rotate_z(60*i, point=axes.origin)
+    rot = mesh.rotate_z(60*i, point=axes.origin, inplace=False)
     p.add_mesh(rot)
 
 p.show()

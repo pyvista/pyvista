@@ -155,12 +155,12 @@ and plots the meshes with various colors.
 
     # rotate and translate ant so it is on the plane
     ant = pyvista.PolyData(examples.antfile)
-    ant.rotate_x(90)
-    ant.translate([90, 60, 15])
+    ant.rotate_x(90, inplace=True)
+    ant.translate([90, 60, 15], inplace=True)
 
     # Make a copy and add another ant
     ant_copy = ant.copy()
-    ant_copy.translate([30, 0, -10])
+    ant_copy.translate([30, 0, -10], inplace=True)
 
     # Create plotter object
     plotter = pyvista.Plotter()
@@ -367,7 +367,7 @@ scalars of the grid copied to the plotting object.  Here is a full example:
     # use hardcoded camera position
     cpos = [(11.915, 6.114, 3.612),
             (0.0, 0.375, 2.0),
-            (-0.425, 0.902, -0.0679)]       
+            (-0.425, 0.902, -0.0679)]
 
     plotter = pv.Plotter(window_size=(800, 600))
     plotter.add_mesh(grid, scalars=d[:, 1],

@@ -64,7 +64,7 @@ pl.open_gif("collision_movie.gif")
 
 delta_x = 0.05
 for i in range(int(2/delta_x)):
-    sphere1.translate([delta_x, 0, 0])
+    sphere1.translate([delta_x, 0, 0], inplace=True)
     col, n_contacts = sphere0.collision(sphere1)
 
     collision_mask = np.zeros(sphere0.n_cells, dtype=bool)
