@@ -2511,7 +2511,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             return self
         else:
             grid = self.copy()
-            grid.compute_connectivity()
+            grid.compute_connectivity(inplace=False)
             return grid
 
     def compute_connections(self, inplace=True):
