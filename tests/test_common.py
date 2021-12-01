@@ -1153,7 +1153,9 @@ def test_scale():
     scale2 = mesh.copy()
     scale1.scale(xyz, inplace=True)
     scale2.points *= xyz
+    scale3 = scale1.scale(xyz, inplace=False)
     assert np.allclose(scale1.points, scale2.points)
+    assert np.allclose(scale3.points, scale2.points)
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
