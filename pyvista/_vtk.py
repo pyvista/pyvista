@@ -472,4 +472,4 @@ try:
         _ver.GetVTKBuildVersion()
     )
 except:
-    (4, 0, 0)
+    vtk_version = (4, 0, 0)
