@@ -230,7 +230,7 @@ class PickingHelper:
     def enable_point_picking(self, callback=None, show_message=True,
                              font_size=18, color='pink', point_size=10,
                              use_mesh=False, show_point=True, tolerance=0.025,
-                             **kwargs):
+                             pickable_window=False, **kwargs):
         """Enable picking at points.
 
         Enable picking a point at the mouse location in the render
@@ -276,6 +276,9 @@ class PickingHelper:
             is specified as fraction of rendering window
             size. Rendering window size is measured across diagonal.
 
+        pickable_window : bool, optional
+            When True, points in the 3D window are pickable. Default to True.
+
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked point is interactively displayed.
@@ -283,9 +286,14 @@ class PickingHelper:
         """
 
         def _end_pick_event(picker, event):
+
+            picked_point_id = picker.GetPointId()
+            if not pickable_window and not picked_point_id >= 0:
+                return
+
             self.picked_point = np.array(picker.GetPickPosition())
             self.picked_mesh = picker.GetDataSet()
-            self.picked_point_id = picker.GetPointId()
+            self.picked_point_id = picked_point_id
             if show_point:
                 self.add_mesh(self.picked_point, color=color,
                               point_size=point_size, name='_picked_point',
