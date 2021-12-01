@@ -1,6 +1,7 @@
 """Module dedicated to widgets."""
 
 from typing import List
+
 import numpy as np
 
 import pyvista
@@ -1759,7 +1760,7 @@ class WidgetHelper:
         >>> mesh = pyvista.Cube()
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
-        >>> plotter.add_camera_orientation_widget()
+        >>> _ = plotter.add_camera_orientation_widget()
         >>> plotter.show()
 
         """
