@@ -14,6 +14,7 @@ from .tools import parse_color
 
 
 #region Some metaclass wrapping magic
+# Note: these classes can be removed once VTK 9.2 is released.
 class _vtkWrapperMeta(type):
 
     def __init__(cls, clsname, bases, attrs):
@@ -62,14 +63,15 @@ class DocSubs:
     """Helper class to easily substitute the docstrings of the listed member functions or properties."""
 
     # The substitutions to use for this (sub)class
-    _DOC_SUBS = {}  # type: ignore
-    # The member functions/properties for which the docstrings should be substituted in subsequent subclasses.
-    _DOC_MEMS = []  # type: ignore
+    _DOC_SUBS = None  # type: ignore
     # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
     _DOC_STORE = {}  # type: ignore
+    # Tag used to mark members that require docstring substitutions.
+    _DOC_TAG = ":DOC_SUBS:"
 
     def __init_subclass__(cls, **kwargs):
         """Initialize subclasses."""
+        # First substitute all members for this class (marked in a super class)
         if cls._DOC_SUBS is not None:
             subs = {**cls._DOC_SUBS}
             if "cls" not in subs:
@@ -85,14 +87,16 @@ class DocSubs:
                 # Get the member function/property and substitute its docstring.
                 member = getattr(cls, member_name)
                 member.__doc__ = member.__doc__.format(**subs)
-        if "_DOC_MEMS" in cls.__dict__ and cls._DOC_MEMS:
-            # New methods/properties to register in this class (denoting their docstrings should be substituted in their
-            # child classes).
-            setattr(cls, "_DOC_STORE", {**cls._DOC_STORE})  # Create copy of registered members so far
-            for member_name in cls._DOC_MEMS:
-                member = getattr(cls, member_name)
-                cls._DOC_STORE[member_name] = (member, member.__doc__)  # And store new registered members
-                member.__doc__ = """Docstring to be specialized in subclasses."""  # Overwrite original docstring to prevent doctest issues
+
+        # Secondly, register all members of this class that require substitutions in subclasses
+        setattr(cls, "_DOC_STORE", {**cls._DOC_STORE})  # Create copy of registered members so far
+        for member_name, member in cls.__dict__.items():
+            if member.__doc__ and member.__doc__.startswith(cls._DOC_TAG):
+                # New method/property to register in this class (denoting their docstring should be
+                # substituted in subsequent child classes).
+                cls._DOC_STORE[member_name] = (member, member.__doc__[len(cls._DOC_TAG):])
+                # Overwrite original docstring to prevent doctest issues
+                member.__doc__ = """Docstring to be specialized in subclasses."""
 
     @staticmethod
     def _wrap_member(member):
@@ -105,6 +109,19 @@ class DocSubs:
         else:
             raise NotImplementedError("Members other than methods and properties are currently not supported.")
         return mem_sub
+
+
+def doc_subs(member):
+    # Only common attribute between methods and properties that we can
+    # modify is __doc__, so use that to mark members that need doc
+    # substitutions.
+    # Still, only methods can be marked for doc substitution (as for
+    # properties the docstring seems to be overwritten when specifying
+    # setters or deleters), hence this decorator should be applied
+    # before the property decorator.
+    assert callable(member)  # Ensure we are operating on a method
+    member.__doc__ = DocSubs._DOC_TAG + member.__doc__
+    return member
 #endregion
 
 class Pen(_vtkWrapper, _vtk.vtkPen):
@@ -970,8 +987,6 @@ class _Chart(DocSubs):
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
     _DOC_SUBS = None  # type: ignore
-    _DOC_MEMS = ["size", "loc", "border_color", "border_width", "border_style", "background_color", "background_texture",
-                 "visible", "toggle", "title", "legend_visible", "show"]
 
     def __init__(self, size=(1, 1), loc=(0, 0)):
         super().__init__()
@@ -1029,6 +1044,7 @@ class _Chart(DocSubs):
         return l <= pos[0] <= l+w and b <= pos[1] <= b+h
 
     @property
+    @doc_subs
     def size(self):
         """Return or set the chart size in normalized coordinates.
 
@@ -1054,6 +1070,7 @@ class _Chart(DocSubs):
         self._size = val
 
     @property
+    @doc_subs
     def loc(self):
         """Return or set the chart position in normalized coordinates.
 
@@ -1079,6 +1096,7 @@ class _Chart(DocSubs):
         self._loc = val
 
     @property
+    @doc_subs
     def border_color(self):
         """Return or set the chart's border color.
 
@@ -1101,6 +1119,7 @@ class _Chart(DocSubs):
         self._background.BorderPen.color = val
 
     @property
+    @doc_subs
     def border_width(self):
         """Return or set the chart's border width.
 
@@ -1123,6 +1142,7 @@ class _Chart(DocSubs):
         self._background.BorderPen.width = val
 
     @property
+    @doc_subs
     def border_style(self):
         """Return or set the chart's border style.
 
@@ -1145,6 +1165,7 @@ class _Chart(DocSubs):
         self._background.BorderPen.style = val
 
     @property
+    @doc_subs
     def background_color(self):
         """Return or set the chart's background color.
 
@@ -1167,6 +1188,7 @@ class _Chart(DocSubs):
         self._background.BackgroundBrush.color = val
 
     @property
+    @doc_subs
     def background_texture(self):
         """Return or set the chart's background texture.
 
@@ -1188,6 +1210,7 @@ class _Chart(DocSubs):
         self._background.BackgroundBrush.texture = val
 
     @property
+    @doc_subs
     def visible(self):
         """Return or set the chart's visibility.
 
@@ -1211,6 +1234,7 @@ class _Chart(DocSubs):
     def visible(self, val):
         self.SetVisible(val)
 
+    @doc_subs
     def toggle(self):
         """Toggle the chart's visibility.
 
@@ -1231,6 +1255,7 @@ class _Chart(DocSubs):
         self.visible = not self.visible
 
     @property
+    @doc_subs
     def title(self):
         """Return or set the chart's title.
 
@@ -1251,12 +1276,13 @@ class _Chart(DocSubs):
         self.SetTitle(val)
 
     @property
+    @doc_subs
     def legend_visible(self):
         """Return or set the visibility of the chart's legend.
 
         Examples
         --------
-        Create a pie chart with custom labels.
+        Create a {chart_name} with custom labels.
 
         >>> import pyvista
         >>> chart = pyvista.{cls}({chart_args}){chart_init}
@@ -1275,6 +1301,7 @@ class _Chart(DocSubs):
     def legend_visible(self, val):
         self.SetShowLegend(val)
 
+    @doc_subs
     def show(self, off_screen=None, full_screen=None, screenshot=None,
              window_size=None, notebook=None, background='w'):
         """Show this chart in a self contained plotter.
@@ -1351,7 +1378,6 @@ class _Plot(DocSubs):
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
     _DOC_SUBS = None  # type: ignore
-    _DOC_MEMS = ["color", "pen", "brush", "line_width", "line_style", "label", "visible", "toggle"]
 
     def __init__(self):
         super().__init__()
@@ -1364,6 +1390,7 @@ class _Plot(DocSubs):
             self.SetBrush(self._brush)
 
     @property
+    @doc_subs
     def color(self):
         """Return or set the plot's color.
 
@@ -1388,6 +1415,7 @@ class _Plot(DocSubs):
         self.brush.color = val
 
     @property
+    @doc_subs
     def pen(self):
         """Pen object controlling how lines in this plot are drawn.
 
@@ -1411,6 +1439,7 @@ class _Plot(DocSubs):
         return self._pen
 
     @property
+    @doc_subs
     def brush(self):
         """Brush object controlling how shapes in this plot are filled.
 
@@ -1434,6 +1463,7 @@ class _Plot(DocSubs):
         return self._brush
 
     @property
+    @doc_subs
     def line_width(self):
         """Return or set the line width of all lines drawn in this plot.
 
@@ -1458,6 +1488,7 @@ class _Plot(DocSubs):
         self.pen.width = val
 
     @property
+    @doc_subs
     def line_style(self):
         """Return or set the line style of all lines drawn in this plot.
 
@@ -1481,6 +1512,7 @@ class _Plot(DocSubs):
         self.pen.style = val
 
     @property
+    @doc_subs
     def label(self):
         """Return or set the this plot's label, as shown in the chart's legend.
 
@@ -1503,6 +1535,7 @@ class _Plot(DocSubs):
         self.SetLabel(self._label)
 
     @property
+    @doc_subs
     def visible(self):
         """Return or set the this plot's visibility.
 
@@ -1527,6 +1560,7 @@ class _Plot(DocSubs):
     def visible(self, val):
         self.SetVisible(val)
 
+    @doc_subs
     def toggle(self):
         """Toggle the plot's visibility.
 
@@ -1624,7 +1658,6 @@ class _MultiCompPlot(_Plot):
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
     _DOC_SUBS = None  # type: ignore
-    _DOC_MEMS = ["color_scheme", "colors", "color", "labels", "label"]
 
     def __init__(self):
         super().__init__()
@@ -1645,6 +1678,7 @@ class _MultiCompPlot(_Plot):
         return _vtk.vtkColor3ub(*[int(255 * c + 0.5) for c in color[:3]])
 
     @property
+    @doc_subs
     def color_scheme(self):
         """Return or set the plot's color scheme.
 
@@ -1681,6 +1715,7 @@ class _MultiCompPlot(_Plot):
         self.brush.color = self.colors[0]
 
     @property
+    @doc_subs
     def colors(self):
         """Return or set the plot's colors.
 
@@ -1720,6 +1755,7 @@ class _MultiCompPlot(_Plot):
                 raise ValueError("Invalid colors specified, falling back to default color scheme.") from e
 
     @property
+    @doc_subs
     def color(self):
         """Return or set the plot's color.
 
@@ -1746,6 +1782,7 @@ class _MultiCompPlot(_Plot):
         self.colors = [val]
 
     @property
+    @doc_subs
     def labels(self):
         """Return or set the this plot's labels, as shown in the chart's legend.
 
@@ -1779,6 +1816,7 @@ class _MultiCompPlot(_Plot):
             raise ValueError("Invalid labels specified.")
 
     @property
+    @doc_subs
     def label(self):
         """Return or set the this plot's label, as shown in the chart's legend.
 
@@ -2506,7 +2544,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
     >>> import pyvista
     >>> import numpy as np
-    >>> year = [f"y" for y in np.arange(2011, 2021)]
+    >>> year = [f"{y}" for y in np.arange(2011, 2021)]
     >>> x = np.arange(len(year))
     >>> n_e = [1739, 4925, 9515, 21727, 31452, 29926, 40648,
     ...        57761, 76370, 93702]
