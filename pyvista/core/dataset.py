@@ -876,6 +876,10 @@ class DataSet(DataSetFilters, DataObject):
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
+
+        inplace : bool, optional
+            Updates mesh in-place.
+
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
@@ -899,6 +903,10 @@ class DataSet(DataSetFilters, DataObject):
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
+
+        inplace : bool, optional
+            Updates mesh in-place.
+
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
@@ -922,6 +930,10 @@ class DataSet(DataSetFilters, DataObject):
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
+
+        inplace : bool, optional
+            Updates mesh in-place.
+
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
@@ -949,6 +961,10 @@ class DataSet(DataSetFilters, DataObject):
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
+
+        inplace : bool, optional
+            Updates mesh in-place.
+
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
@@ -966,6 +982,9 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         xyz : list or tuple or np.ndarray
             Length 3 list, tuple or array.
+
+        inplace : bool, optional
+            Updates mesh in-place.
 
         Examples
         --------
@@ -991,6 +1010,9 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         xyz : scale factor list or tuple or np.ndarray
             Length 3 list, tuple or array.
+
+        inplace : bool, optional
+            Updates mesh in-place.
 
         Examples
         --------
@@ -1027,6 +1049,9 @@ class DataSet(DataSetFilters, DataObject):
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
+        inplace : bool, optional
+            Updates mesh in-place.
+
         Examples
         --------
         >>> import pyvista
@@ -1062,6 +1087,9 @@ class DataSet(DataSetFilters, DataObject):
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
+        inplace : bool, optional
+            Updates mesh in-place.
+
         Examples
         --------
         >>> import pyvista
@@ -1096,6 +1124,9 @@ class DataSet(DataSetFilters, DataObject):
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
+
+        inplace : bool, optional
+            Updates mesh in-place.s
 
         Examples
         --------
@@ -1134,6 +1165,9 @@ class DataSet(DataSetFilters, DataObject):
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
+
+        inplace : bool, optional
+            Updates mesh in-place.
 
         Examples
         --------

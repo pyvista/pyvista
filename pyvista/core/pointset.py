@@ -167,6 +167,15 @@ class PointSet(DataSet):
         xyz : list or tuple or np.ndarray
             Length 3 list, tuple or array.
 
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed. This is only valid when not
+            updating in place.
+
+        inplace : bool, optional
+            Updates mesh in-place.
+
         Examples
         --------
         Create a sphere and translate it by ``(2, 1, 2)``.
@@ -200,6 +209,15 @@ class PointSet(DataSet):
         ----------
         xyz : scale factor list or tuple or np.ndarray
             Length 3 list, tuple or array.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed. This is only valid when not
+            updating in place.
+
+        inplace : bool, optional
+            Updates mesh in-place.
 
         Examples
         --------
