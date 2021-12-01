@@ -1,4 +1,6 @@
 """Miscellaneous pyvista functions."""
+import warnings
+
 import numpy as np
 
 from pyvista import _vtk
@@ -59,6 +61,7 @@ class VTKVersionInfo():
             self._minor = ver.GetVTKMinorVersion()
             self._micro = ver.GetVTKBuildVersion()
         except:  # pragma: no cover
+            warnings.warn("Unable to detect VTK version. Defaulting to v4.0.0")
             self._major, self._minor, self._micro = (4, 0, 0)
 
     @property
