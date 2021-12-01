@@ -13,7 +13,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import abstract_class, PyvistaDeprecationWarning
+from pyvista.utilities import PyvistaDeprecationWarning, abstract_class
 from pyvista.utilities.cells import (
     CellArray,
     create_mixed_cells,
