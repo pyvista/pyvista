@@ -181,7 +181,7 @@ class PointSet(DataSet):
 
         """
         if inplace is None:
-            # Raise a warning about inplace changing
+            # Deprecated on v0.32.0, estimated removal on v0.35.0
             warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
             inplace = True
         if inplace:
@@ -219,7 +219,7 @@ class PointSet(DataSet):
         >>> pl.show(cpos="xy")
         """
         if inplace is None:
-            # Raise a warning about inplace changing
+            # Deprecated on v0.32.0, estimated removal on v0.35.0
             warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
             inplace = True
         if inplace:
@@ -231,7 +231,7 @@ class PointSet(DataSet):
     def flip_x(self, *args, **kwargs):
         """Wrap ``DataSet.flip_x``."""
         if kwargs.get('inplace') is None:
-            # Raise a warning about inplace changing
+            # Deprecated on v0.32.0, estimated removal on v0.35.0
             warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_x(*args, **kwargs)
@@ -240,7 +240,7 @@ class PointSet(DataSet):
     def flip_y(self, *args, **kwargs):
         """Wrap ``DataSet.flip_y``."""
         if kwargs.get('inplace') is None:
-            # Raise a warning about inplace changing
+            # Deprecated on v0.32.0, estimated removal on v0.35.0
             warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_y(*args, **kwargs)
@@ -249,7 +249,7 @@ class PointSet(DataSet):
     def flip_z(self, *args, **kwargs):
         """Wrap ``DataSet.flip_z``."""
         if kwargs.get('inplace') is None:
-            # Raise a warning about inplace changing
+            # Deprecated on v0.32.0, estimated removal on v0.35.0
             warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_z(*args, **kwargs)
@@ -258,7 +258,7 @@ class PointSet(DataSet):
     def flip_normal(self, *args, **kwargs):
         """Wrap ``DataSet.flip_normal``."""
         if kwargs.get('inplace') is None:
-            # Raise a warning about inplace changing
+            # Deprecated on v0.32.0, estimated removal on v0.35.0
             warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().flip_normal(*args, **kwargs)
@@ -267,7 +267,7 @@ class PointSet(DataSet):
     def rotate_x(self, *args, **kwargs):
         """Wrap ``DataSet.rotate_x``."""
         if kwargs.get('inplace') is None:
-            # Raise a warning about inplace changing
+            # Deprecated on v0.32.0, estimated removal on v0.35.0
             warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_x(*args, **kwargs)
@@ -276,7 +276,7 @@ class PointSet(DataSet):
     def rotate_y(self, *args, **kwargs):
         """Wrap ``DataSet.rotate_y``."""
         if kwargs.get('inplace') is None:
-            # Raise a warning about inplace changing
+            # Deprecated on v0.32.0, estimated removal on v0.35.0
             warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_y(*args, **kwargs)
@@ -285,7 +285,7 @@ class PointSet(DataSet):
     def rotate_z(self, *args, **kwargs):
         """Wrap ``DataSet.rotate_z``."""
         if kwargs.get('inplace') is None:
-            # Raise a warning about inplace changing
+            # Deprecated on v0.32.0, estimated removal on v0.35.0
             warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_z(*args, **kwargs)
@@ -294,7 +294,7 @@ class PointSet(DataSet):
     def rotate_vector(self, *args, **kwargs):
         """Wrap ``DataSet.rotate_vector``."""
         if kwargs.get('inplace') is None:
-            # Raise a warning about inplace changing
+            # Deprecated on v0.32.0, estimated removal on v0.35.0
             warnings.warn(DEFAULT_INPLACE_WARNING, PyvistaDeprecationWarning)
             kwargs['inplace'] = True
         return super().rotate_vector(*args, **kwargs)
