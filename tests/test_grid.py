@@ -862,6 +862,10 @@ def test_hide_cells(ind, struct_grid):
     struct_grid.hide_cells(ind, inplace=True)
     assert struct_grid.HasAnyBlankCells()
 
+    out = struct_grid.hide_cells(ind, inplace=False)
+    assert id(out) != id(struct_grid)
+    assert out.HasAnyBlankCells()
+
     with pytest.raises(ValueError, match='Boolean array size must match'):
         struct_grid.hide_cells(np.ones(10, dtype=np.bool), inplace=True)
 
