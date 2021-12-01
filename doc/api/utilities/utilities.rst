@@ -74,3 +74,9 @@ Miscellaneous
    :toctree: _autosummary
 
    start_xvfb
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-class-template.rst
+
+   utilities.misc.VTKVersionInfo

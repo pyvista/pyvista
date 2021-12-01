@@ -461,15 +461,3 @@ def lazy_vtkCameraOrientationWidget():
     except ImportError:  # pragma: no cover
         raise ImportError('vtkCameraOrientationWidget requires vtk>=9.1.0')
     return vtkCameraOrientationWidget()
-
-
-# Get the VTK version. The API here is consistent since at least VTK v4.0.0
-try:
-    _ver = vtkVersion()
-    vtk_version = (
-        _ver.GetVTKMajorVersion(),
-        _ver.GetVTKMinorVersion(),
-        _ver.GetVTKBuildVersion()
-    )
-except:
-    vtk_version = (4, 0, 0)

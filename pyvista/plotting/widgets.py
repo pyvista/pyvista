@@ -1,5 +1,6 @@
 """Module dedicated to widgets."""
 
+from typing import List
 import numpy as np
 
 import pyvista
@@ -16,7 +17,7 @@ class WidgetHelper:
 
     """
 
-    _camera_widgets = []
+    _camera_widgets: List[object] = []
 
     def add_box_widget(self, callback, bounds=None, factor=1.25,
                        rotation_enabled=True, color=None, use_planes=False,
