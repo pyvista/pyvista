@@ -879,7 +879,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
-        if len(point) != 3:
+        if not isinstance(point, Iterable) or len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
         return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
@@ -902,7 +902,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
-        if len(point) != 3:
+        if not isinstance(point, Iterable) or len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
         return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
@@ -925,7 +925,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
-        if len(point) != 3:
+        if not isinstance(point, Iterable) or len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
         return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
@@ -952,9 +952,9 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = (0.0, 0.0, 0.0)
-        if len(vector) != 3:
+        if not isinstance(vector, Iterable) or len(vector) != 3:
             raise ValueError('Vector must be a vector of 3 values.')
-        if len(point) != 3:
+        if not isinstance(point, Iterable) or len(point) != 3:
             raise ValueError('Point must be a vector of 3 values.')
         t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
         return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)

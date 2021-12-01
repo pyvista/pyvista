@@ -1106,6 +1106,10 @@ def test_rotate_x():
     mesh = examples.load_uniform()
     out = mesh.rotate_x(30)
     assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_x(30, point=5)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_x(30, point=[1, 3])
 
 
 def test_rotate_y():
@@ -1113,6 +1117,10 @@ def test_rotate_y():
     mesh = examples.load_uniform()
     out = mesh.rotate_y(30)
     assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_y(30, point=5)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_y(30, point=[1, 3])
 
 
 def test_rotate_z():
@@ -1120,6 +1128,10 @@ def test_rotate_z():
     mesh = examples.load_uniform()
     out = mesh.rotate_z(30)
     assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_z(30, point=5)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_z(30, point=[1, 3])
 
 
 def test_rotate_vector():
@@ -1127,6 +1139,10 @@ def test_rotate_vector():
     mesh = examples.load_uniform()
     out = mesh.rotate_vector([1, 1, 1], 33)
     assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_vector([1, 1], 33)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_vector(30, 33)
 
 
 def test_scale():
