@@ -233,7 +233,7 @@ class PointSet(DataSet):
         if kwargs.get('inplace', None) is None:
             # Raise a warning about inplace changing
             warnings.warn(DEFAULT_INPLACE_WARNING)
-            kwargs.setdefault('inplace', True)
+            kwargs['inplace'] = True
         return super().flip_x(*args, **kwargs)
 
     @wraps(DataSet.flip_y)
@@ -242,7 +242,7 @@ class PointSet(DataSet):
         if kwargs.get('inplace', None) is None:
             # Raise a warning about inplace changing
             warnings.warn(DEFAULT_INPLACE_WARNING)
-            kwargs.setdefault('inplace', True)
+            kwargs['inplace'] = True
         return super().flip_y(*args, **kwargs)
 
     @wraps(DataSet.flip_z)
@@ -251,7 +251,7 @@ class PointSet(DataSet):
         if kwargs.get('inplace', None) is None:
             # Raise a warning about inplace changing
             warnings.warn(DEFAULT_INPLACE_WARNING)
-            kwargs.setdefault('inplace', True)
+            kwargs['inplace'] = True
         return super().flip_z(*args, **kwargs)
 
     @wraps(DataSet.flip_normal)
@@ -260,7 +260,7 @@ class PointSet(DataSet):
         if kwargs.get('inplace', None) is None:
             # Raise a warning about inplace changing
             warnings.warn(DEFAULT_INPLACE_WARNING)
-            kwargs.setdefault('inplace', True)
+            kwargs['inplace'] = True
         return super().flip_normal(*args, **kwargs)
 
     @wraps(DataSet.rotate_x)
@@ -269,7 +269,7 @@ class PointSet(DataSet):
         if kwargs.get('inplace', None) is None:
             # Raise a warning about inplace changing
             warnings.warn(DEFAULT_INPLACE_WARNING)
-            kwargs.setdefault('inplace', True)
+            kwargs['inplace'] = True
         return super().rotate_x(*args, **kwargs)
 
     @wraps(DataSet.rotate_y)
@@ -278,7 +278,7 @@ class PointSet(DataSet):
         if kwargs.get('inplace', None) is None:
             # Raise a warning about inplace changing
             warnings.warn(DEFAULT_INPLACE_WARNING)
-            kwargs.setdefault('inplace', True)
+            kwargs['inplace'] = True
         return super().rotate_y(*args, **kwargs)
 
     @wraps(DataSet.rotate_z)
@@ -287,7 +287,7 @@ class PointSet(DataSet):
         if kwargs.get('inplace', None) is None:
             # Raise a warning about inplace changing
             warnings.warn(DEFAULT_INPLACE_WARNING)
-            kwargs.setdefault('inplace', True)
+            kwargs['inplace'] = True
         return super().rotate_z(*args, **kwargs)
 
     @wraps(DataSet.rotate_vector)
@@ -296,7 +296,7 @@ class PointSet(DataSet):
         if kwargs.get('inplace', None) is None:
             # Raise a warning about inplace changing
             warnings.warn(DEFAULT_INPLACE_WARNING)
-            kwargs.setdefault('inplace', True)
+            kwargs['inplace'] = True
         return super().rotate_vector(*args, **kwargs)
 
 
