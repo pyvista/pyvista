@@ -316,6 +316,7 @@ sphinx_gallery_conf = {
         "set_plot_theme('document')\n"
     ),
     "reset_modules": (reset_pyvista, ),
+    "reset_modules_order": "both",
 }
 
 import re
