@@ -101,7 +101,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     >>> pyvista.compare_images(img1, img2)  # doctest:+SKIP
 
     """
-    from pyvista import wrap, UniformGrid, read, Plotter
+    from pyvista import Plotter, UniformGrid, read, wrap
 
     def to_img(img):
         if isinstance(img, UniformGrid):  # pragma: no cover

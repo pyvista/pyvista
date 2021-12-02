@@ -2,10 +2,12 @@
 
 from math import pi
 
+import numpy as np
+
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities.errors import check_valid_vector
-import numpy as np
+
 from .geometric_objects import translate
 
 
@@ -1003,6 +1005,13 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
     pyvista.PolyData
         ParametricSuperEllipsoid surface.
 
+    See Also
+    --------
+    pyvista.ParametricSuperToroid :
+        Toroidal equivalent of ParametricSuperEllipsoid.
+    pyvista.Superquadric :
+        Geometric object with additional parameters.
+
     Examples
     --------
     Create a ParametricSuperEllipsoid surface that looks like a box
@@ -1089,6 +1098,13 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     -------
     pyvista.PolyData
         ParametricSuperToroid surface.
+
+    See Also
+    --------
+    pyvista.ParametricSuperEllipsoid :
+        Ellipsoidal equivalent of ParametricSuperToroid.
+    pyvista.Superquadric :
+        Geometric object with additional parameters.
 
     Examples
     --------

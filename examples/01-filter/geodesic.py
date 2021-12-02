@@ -27,7 +27,7 @@ c = land.geodesic(cape_town, rome)
 ###############################################################################
 # Render the path along the land surface
 
-p = pv.Plotter(notebook=0)
+p = pv.Plotter()
 p.add_mesh(a+b+c, line_width=10, color="red", label="Geodesic Path")
 p.add_mesh(land, show_edges=True)
 p.add_legend()

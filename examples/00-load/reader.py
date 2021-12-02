@@ -11,10 +11,12 @@ Load data using a Reader
 # files.  See :func:`pyvista.get_reader` for a list of file types supported.
 
 
+from tempfile import NamedTemporaryFile
+
+import numpy as np
+
 import pyvista
 from pyvista import examples
-import numpy as np
-from tempfile import NamedTemporaryFile
 
 ###############################################################################
 # An XML PolyData file in ``.vtp`` format is created.  It will be saved in a
@@ -130,7 +132,7 @@ plotter.show()
 
 ###############################################################################
 # Reading time points or iterations can also be utilized to make a movie.
-# Compare to :ref:`gif_movie_example`, but here a set of files are read in 
+# Compare to :ref:`gif_movie_example`, but here a set of files are read in
 # through a ParaView Data format file. This file format and reader also return a
 # :class:`pyvista.MultiBlock` mesh.
 

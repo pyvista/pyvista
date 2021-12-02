@@ -155,7 +155,7 @@ def test_positioning():
     elev, azim = (30, 60)
     expected_position = (
         np.sqrt(3)/2 * 1/2,
-        np.sqrt(3)/2 * np.sqrt(3)/2,                
+        np.sqrt(3)/2 * np.sqrt(3)/2,
         1/2
     )
     light.positional = True

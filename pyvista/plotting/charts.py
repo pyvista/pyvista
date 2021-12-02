@@ -1,15 +1,17 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
 
-import numpy as np
-from typing import Sequence
-import re
+from functools import wraps
 import inspect
 import itertools
+import re
+from typing import Sequence
 import weakref
-from functools import wraps
+
+import numpy as np
 
 import pyvista
 from pyvista import _vtk
+
 from .tools import parse_color
 
 
@@ -757,7 +759,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         >>> _ = chart.line([0, 1, 2], [2, 1, 3])
         >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
         >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small",
-        ...                             "Small?", "Not large", "Large?", 
+        ...                             "Small?", "Not large", "Large?",
         ...                             "Very large"]
         >>> chart.show()
 
@@ -792,7 +794,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
         Allowed notations:
 
-        * ``"f"`` for fixed notation 
+        * ``"f"`` for fixed notation
         * ``"e"`` for scientific notation.
 
         Examples
@@ -4104,9 +4106,9 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     def __init__(self, figure=None, size=(1, 1), loc=(0, 0)):
         """Initialize chart."""
         try:
-            import matplotlib.figure
-            import matplotlib.pyplot as plt
             from matplotlib.backends.backend_agg import FigureCanvasAgg
+            import matplotlib.figure  # noqa
+            import matplotlib.pyplot as plt
         except ModuleNotFoundError:
             raise ImportError("ChartMPL requires matplotlib")
 

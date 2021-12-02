@@ -1,4 +1,5 @@
 import os
+
 import pyvista as pv
 
 TABLE_DIR = "api/plotting/charts"

@@ -30,16 +30,15 @@ pyvista.
 
 """
 
-import json
-from typing import Union, List
-import warnings
 from enum import Enum
+import json
 import os
+from typing import List, Union
+import warnings
 
 from .plotting.colors import PARAVIEW_BACKGROUND, get_cmap_safe
 from .plotting.tools import parse_color, parse_font_family
 from .utilities.misc import PyvistaDeprecationWarning
-from .core.errors import DeprecationError
 
 
 class _rcParams(dict):  # pragma: no cover
@@ -1249,7 +1248,7 @@ class DefaultTheme(_ThemeConfig):
 
         Examples
         --------
-        Disable returning camera position by ``show`` and `plot`` methods.
+        Disable returning camera position by ``show`` and ``plot`` methods.
 
         >>> import pyvista
         >>> pyvista.global_theme.return_cpos = False  # doctest:+SKIP

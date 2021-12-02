@@ -10,9 +10,9 @@ scalar arrays for those points.
 """
 
 import numpy as np
+
 import pyvista as pv
 from pyvista import examples
-
 
 ###############################################################################
 # Point clouds are generally constructed in the :class:`pyvista.PolyData` class

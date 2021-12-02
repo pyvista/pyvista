@@ -1,16 +1,16 @@
 """Module containing useful plotting tools."""
 
-import sys
-from enum import Enum
-import platform
-import os
-from subprocess import PIPE, Popen
 from collections.abc import Sequence
+from enum import Enum
+import os
+import platform
+from subprocess import PIPE, Popen
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
+
 from .colors import string_to_rgb
 
 
@@ -386,8 +386,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
         available. Options are ('linear', 'nearest', 'zero', 'slinear',
         'quadratic', 'cubic', 'previous', 'next'.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import pyvista as pv
     >>> # Fetch the `sigmoid` mapping between 0 and 255
     >>> tf = pv.opacity_transfer_function("sigmoid", 256)

@@ -8,8 +8,10 @@ This example shows how different types of charts can be added to the scene. A mo
 combine multiple charts as overlays in the same renderer, is given in :ref:`chart_overlays_example`.
 """
 
-import pyvista as pv
 import numpy as np
+
+import pyvista as pv
+
 rng = np.random.default_rng(1)  # Seeded random number generator for consistent data generation
 
 ###############################################################################

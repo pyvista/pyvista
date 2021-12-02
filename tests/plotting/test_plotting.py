@@ -4,29 +4,27 @@ This test module tests any functionality that requires plotting.
 See the image regression notes in doc/extras/developer_notes.rst
 
 """
-import time
-import platform
-import warnings
 import inspect
-import pathlib
 import os
-from weakref import proxy
+import pathlib
 from pathlib import Path
+import platform
+import time
+import warnings
 
 from PIL import Image
 import imageio
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import vtk
-import matplotlib.pyplot as plt
 
 import pyvista
-from pyvista._vtk import VTK9
 from pyvista import examples
+from pyvista._vtk import VTK9
+from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
-from pyvista.core.errors import DeprecationError
-
 
 # skip all tests if unable to render
 if not system_supports_plotting():

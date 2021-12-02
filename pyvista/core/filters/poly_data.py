@@ -6,11 +6,15 @@ import numpy as np
 
 import pyvista
 from pyvista import (
-    abstract_class, _vtk, NORMALS, generate_plane, assert_empty_kwargs,
-    vtk_id_list_to_array, get_array, get_array_association
+    NORMALS,
+    _vtk,
+    abstract_class,
+    assert_empty_kwargs,
+    generate_plane,
+    get_array_association,
+    vtk_id_list_to_array,
 )
-from pyvista.core.errors import (NotAllTrianglesError,
-                                 DeprecationError, VTKVersionError)
+from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 
@@ -200,7 +204,7 @@ class PolyDataFilters(DataSetFilters):
            meshes whereas the :func:`PolyDataFilters.intersection`
            filter returns the surface intersection between two meshes
            (which often resolves as a line).
-           
+
 
         .. note::
            Both meshes must be composed of all triangles.  Check with
@@ -314,6 +318,24 @@ class PolyDataFilters(DataSetFilters):
         """Merge these two meshes."""
         return self.merge(dataset)
 
+    def __iadd__(self, dataset):
+        """Merge another mesh into this one if possible.
+
+        "If possible" means that ``dataset`` is also a :class:`PolyData`.
+        Otherwise we have to return a :class:`pyvista.UnstructuredGrid`,
+        so the in-place merge attempt will raise.
+
+        """
+        try:
+            merged = self.merge(dataset, inplace=True)
+        except TypeError:
+            raise TypeError(
+                'In-place merge only possible if the other mesh '
+                'is also a PolyData.\nPlease use `mesh + other_mesh` '
+                'instead, which returns a new UnstructuredGrid.'
+            ) from None
+        return merged
+
     def merge(self, dataset, merge_points=True, inplace=False,
               main_has_priority=True, progress_bar=False):
         """Merge this mesh with one or more datasets.
@@ -323,6 +345,12 @@ class PolyDataFilters(DataSetFilters):
            :func:`PolyDataFilters.boolean_union` filter.  This filter
            does not attempt to create a manifold mesh and will include
            internal surfaces when two meshes overlap.
+
+        .. note::
+           The ``+`` operator between two meshes uses this filter with
+           the default parameters. When the other mesh is also a
+           :class:`pyvista.PolyData`, in-place merging via ``+=`` is
+           similarly possible.
 
         Parameters
         ----------
@@ -334,7 +362,9 @@ class PolyDataFilters(DataSetFilters):
 
         inplace : bool, optional
             Updates grid inplace when ``True`` if the input type is a
-            :class:`pyvista.UnstructuredGrid`.
+            :class:`pyvista.PolyData`. For other input meshes the
+            result is a :class:`pyvista.UnstructuredGrid` which makes
+            in-place operation impossible.
 
         main_has_priority : bool, optional
             When this parameter is ``True`` and ``merge_points=True``,
@@ -370,16 +400,24 @@ class PolyDataFilters(DataSetFilters):
         if not_pd:
             return DataSetFilters.merge(self, dataset,
                                         merge_points=merge_points,
+                                        main_has_priority=main_has_priority,
                                         inplace=inplace)
 
         append_filter = pyvista._vtk.vtkAppendPolyData()
-        append_filter.AddInputData(self)
+
+        # note: unlike DataSetFilters.merge, we must put the
+        # "to be preserved" dataset last due to the call to clean()
+        if main_has_priority:
+            append_filter.AddInputData(self)
 
         if isinstance(dataset, pyvista.DataSet):
             append_filter.AddInputData(dataset)
         else:
             for data in dataset:
                 append_filter.AddInputData(data)
+
+        if not main_has_priority:
+            append_filter.AddInputData(self)
 
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
@@ -388,8 +426,8 @@ class PolyDataFilters(DataSetFilters):
                                   strips_to_polys=False)
 
         if inplace:
-            dataset.deep_copy(merged)
-            return dataset
+            self.deep_copy(merged)
+            return self
 
         return merged
 
@@ -560,7 +598,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True, 
+        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True,
         ...                      clim=[0, 1])
 
         """
@@ -734,7 +772,7 @@ class PolyDataFilters(DataSetFilters):
             disconnected from each other. This can give superior
             results in some cases. If ``pre_split_mesh`` is set to
             ``True``, the mesh is split with the specified
-            ``split_angle.`` Otherwise mesh splitting is deferred as
+            ``split_angle``. Otherwise mesh splitting is deferred as
             long as possible.
 
         preserve_topology : bool, optional
@@ -1835,7 +1873,9 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError
 
         try:
-            import trimesh, rtree, pyembree
+            import pyembree  # noqa
+            import rtree  # noqa
+            import trimesh  # noqa
         except (ModuleNotFoundError, ImportError):
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"

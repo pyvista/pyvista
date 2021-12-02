@@ -18,9 +18,10 @@ that the given digital elevation model (DEM) is structured (gridded and not
 triangulated): this is common for DEMs.
 """
 
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
-import numpy as np
 from pyvista import examples
 
 ###############################################################################

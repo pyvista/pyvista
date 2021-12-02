@@ -15,10 +15,10 @@ interaction with the 3D scene.
 
 """
 
-import pyvista as pv
 import matplotlib.pyplot as plt
 import numpy as np
 
+import pyvista as pv
 
 ###############################################################################
 # Data to display

@@ -1,15 +1,15 @@
 """Test charting functionality"""
 
+import itertools
 import platform
 
-import pytest
-import numpy as np
 import matplotlib.pyplot as plt
-import itertools
+import numpy as np
+import pytest
 
 import pyvista
-from pyvista.plotting import charts
 from pyvista import examples
+from pyvista.plotting import charts
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin',
                               reason='MacOS CI fails when downloading examples')

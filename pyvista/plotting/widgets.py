@@ -4,8 +4,14 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import (NORMALS, generate_plane, get_array,
-                               try_callback, get_array_association)
+from pyvista.utilities import (
+    NORMALS,
+    generate_plane,
+    get_array,
+    get_array_association,
+    try_callback,
+)
+
 from .tools import parse_color
 
 
@@ -613,7 +619,7 @@ class WidgetHelper:
         ----------
         mesh : pyvista.DataSet
             The input dataset to add to the scene and threshold.
-        
+
         generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
