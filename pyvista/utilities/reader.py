@@ -602,6 +602,18 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     _class_reader = _vtk.vtkOpenFOAMReader
 
+    def __init__(self, filename):
+        """Initialize OpenFOAMReader.
+
+        By default, pyvista sets ``cell_to_point_creation`` to ``False``,
+        and enables all patch arrays.  These are deviations from vtk
+        defaults.
+
+        """
+        super().__init__(filename)
+        self.cell_to_point_creation = False
+        self.enable_all_patch_arrays()
+
     @property
     def number_time_points(self):  # noqa: D102
         return self.reader.GetTimeValues().GetNumberOfValues()

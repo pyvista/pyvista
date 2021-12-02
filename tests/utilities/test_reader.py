@@ -370,12 +370,12 @@ def test_openfoamreader_arrays_time():
 def test_openfoam_cell_to_point_default():
     reader = get_cavity_reader()
     mesh = reader.read()
-    assert mesh[0].n_arrays == 4
+    assert mesh[0].n_arrays == 2
 
     reader = get_cavity_reader()
-    reader.cell_to_point_creation = False
+    reader.cell_to_point_creation = True
     mesh = reader.read()
-    assert mesh[0].n_arrays == 2
+    assert mesh[0].n_arrays == 4
 
 
 def test_openfoam_patch_arrays():
@@ -383,21 +383,31 @@ def test_openfoam_patch_arrays():
     assert reader.number_patch_arrays == 4
     assert reader.patch_array_names == ['internalMesh', 'patch/movingWall', 'patch/fixedWalls', 'patch/frontAndBack']
     assert reader.all_patch_arrays_status == {
+        'internalMesh': True, 'patch/movingWall': True, 'patch/fixedWalls': True, 'patch/frontAndBack': True
+    }
+
+    #first only read in 'internalMesh'
+    for patch_array in reader.patch_array_names[1:]:
+        reader.disable_patch_array(patch_array)
+    assert reader.all_patch_arrays_status == {
         'internalMesh': True, 'patch/movingWall': False, 'patch/fixedWalls': False, 'patch/frontAndBack': False
     }
     mesh = reader.read()
     assert mesh.n_blocks == 1
     assert 'boundary' not in mesh.keys()
 
+    # now read in one more patch
     reader = get_cavity_reader()
+    reader.disable_all_patch_arrays()
+    reader.enable_patch_array('internalMesh')
     reader.enable_patch_array('patch/fixedWalls')
     mesh = reader.read()
     assert mesh.n_blocks == 2
     assert 'boundary' in mesh.keys()
     assert mesh['boundary'].keys() == ['fixedWalls']
 
+    # check multiple patch arrays without 'internalMesh'
     reader = get_cavity_reader()
-    reader.enable_all_patch_arrays()
     reader.disable_patch_array('internalMesh')
     mesh = reader.read()
     assert mesh.n_blocks == 1
