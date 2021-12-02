@@ -1,0 +1,68 @@
+name: Build Documentation
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  doc:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    env:
+      DISPLAY: ':99.0'
+      PYVISTA_OFF_SCREEN: 'True'
+      ALLOW_PLOTTING: true
+      SHELLOPTS: 'errexit:pipefail'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: Setup Headless Display
+        run: |
+          .ci/setup_headless_display.sh
+          # python .ci/pyvista_test.py  # for debug
+      - name: Install PyVista
+        run: pip install -e .
+      - name: Install Dependencies and PyVista
+        run: |
+          sudo apt-get install python3-tk pandoc
+          pip install -r requirements_docs.txt
+      - name: PyVista Report
+        run: python -c "import pyvista;print(pyvista.Report())"
+      - name: Build Documentation
+        run: make -C doc html SPHINXOPTS="-w build_errors.txt -N"
+      - name: Check for Warnings
+        run: python doc/print_errors.py
+      - uses: actions/upload-artifact@v2
+        with:
+          name: docs-build
+          path: doc/_build/
+      - uses: actions/upload-artifact@v2
+        with:
+          name: examples
+          path: doc/examples/
+      # - name: Get Notebooks
+      #   run: |
+      #     mkdir _notebooks
+      #     cp doc/examples/**/*.ipynb _notebooks/
+      # - uses: actions/upload-artifact@v2
+      #   with:
+      #     name: pyvista-notebooks
+      #     path: _notebooks
+  # deploy:
+  #   name: Publish Documentation
+  #   runs-on: ubuntu-latest
+  #   needs: doc
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         name: docs-build
+  #         path: site/_build/html
+  #     - name: Deploy
+  #       uses: JamesIves/github-pages-deploy-action@4.1.1
+  #       with:
+  #         branch: gh-pages
+  #         folder: site/_build/html
