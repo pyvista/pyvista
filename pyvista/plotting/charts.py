@@ -114,17 +114,21 @@ class DocSubs:
 
 
 def doc_subs(member):
-    # Only common attribute between methods and properties that we can
-    # modify is __doc__, so use that to mark members that need doc
-    # substitutions.
-    # Still, only methods can be marked for doc substitution (as for
-    # properties the docstring seems to be overwritten when specifying
-    # setters or deleters), hence this decorator should be applied
-    # before the property decorator.
+    """Doc subs wrapper.
+
+    Only common attribute between methods and properties that we can
+    modify is __doc__, so use that to mark members that need doc
+    substitutions.
+    Still, only methods can be marked for doc substitution (as for
+    properties the docstring seems to be overwritten when specifying
+    setters or deleters), hence this decorator should be applied
+    before the property decorator.
+    """
     assert callable(member)  # Ensure we are operating on a method
     member.__doc__ = DocSubs._DOC_TAG + member.__doc__
     return member
 #endregion
+
 
 class Pen(_vtkWrapper, _vtk.vtkPen):
     """Pythonic wrapper for a VTK Pen, used to draw lines.
