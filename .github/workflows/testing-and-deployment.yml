@@ -82,6 +82,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-conda-
 
+      - uses: actions/cache@v2
+        with:
+          path: ~/.local/share/pyvista/examples
+          key: Examples-${{ hashFiles('*') }}
+          restore-keys: |
+            Examples-${{ hashFiles('*') }}
+
       - name: Create Anaconda environment
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
@@ -146,6 +153,13 @@ jobs:
           key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
           restore-keys: |
             Python-${{ runner.os }}-${{ matrix.python-version }}
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.local/share/pyvista/examples
+          key: Examples-${{ hashFiles('*') }}
+          restore-keys: |
+            Examples-${{ hashFiles('*') }}
 
       - name: Build wheel and install pyvista
         run: |
