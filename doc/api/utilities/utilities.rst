@@ -81,7 +81,7 @@ VTK Version Information
 The PyVista library is heavily dependent on VTK and provides an easy
 way of getting the version of VTK in your environment.
 
-.. python::
+.. code:: python
 
    Output the version of VTK.
 
