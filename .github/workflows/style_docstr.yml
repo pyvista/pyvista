@@ -68,6 +68,7 @@ jobs:
       - name: Software Report
         run: |
           xvfb-run python -c "import pyvista; print(pyvista.Report())"
+          xvfb-run python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
           which python
           pip list
 
