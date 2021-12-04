@@ -3821,7 +3821,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
 #region 3D charts
 # A basic implementation of 3D line, scatter and volume plots, to be used in a 3D chart was provided in this section
-# but removed in commit 42899d610268a7f477d0e7b0a6cd64acb2f92d78 of PR #1432. Unfortunately, these charts are much less
+# but removed in commit 8ef8daea5d105e85f256d4e9af584aeea3c85040 of PR #1432. Unfortunately, these charts are much less
 # customisable than their 2D counterparts and they do not respect the enforced size/geometry constraints once you start
 # interacting with them.
 #endregion
