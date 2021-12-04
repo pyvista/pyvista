@@ -502,7 +502,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
         Examples
         --------
-        Set the x-axis label font size of a 2D chart to 20
+        Set the x-axis label font size of a 2D chart to 20.
 
         >>> import pyvista
         >>> chart = pyvista.Chart2D()
@@ -513,11 +513,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         >>> chart.show()
 
         """
-        return self.GetLabelProperties().GetFontSize()
+        return self.GetTitleProperties().GetFontSize()
 
     @label_size.setter
     def label_size(self, size):
-        self.GetLabelProperties().SetFontSize(size)
+        self.GetTitleProperties().SetFontSize(size)
 
     @property
     def range(self):
@@ -848,6 +848,29 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
             for label in val:
                 self._tick_labels.InsertNextValue(label)
         self._update_ticks()
+
+    @property
+    def tick_label_size(self):
+        """Return or set the size of the axis tick label font.
+
+        Examples
+        --------
+        Set the x-axis tick label font size of a 2D chart to 20.
+
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+        >>> chart.x_axis.tick_label_size = 20
+        >>> chart.x_axis.tick_label_size
+        20
+        >>> chart.show()
+
+        """
+        return self.GetLabelProperties().GetFontSize()
+
+    @tick_label_size.setter
+    def tick_label_size(self, size):
+        self.GetLabelProperties().SetFontSize(size)
 
     @property
     def tick_size(self):

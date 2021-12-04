@@ -302,11 +302,18 @@ def test_axis(chart_2d):
     assert not axis.GetTicksVisible()
 
 
-def test_label_font_size(chart_2d):
+def test_axis_label_font_size(chart_2d):
     _ = chart_2d.line([0, 1, 2], [2, 1, 3])
+    axis = chart_2d.x_axis
     font_size = 20
-    chart_2d.x_axis.label_size = font_size
-    assert chart_2d.x_axis.label_size == font_size
+
+    axis.label_size = font_size
+    assert axis.label_size == font_size
+    assert axis.GetTitleProperties().GetFontSize() == font_size
+
+    axis.tick_label_size = font_size
+    assert axis.tick_label_size == font_size
+    assert axis.GetLabelProperties().GetFontSize() == font_size
 
 
 @pytest.mark.parametrize("chart_f", ("chart_2d", "chart_box", "chart_pie", "chart_mpl"))
