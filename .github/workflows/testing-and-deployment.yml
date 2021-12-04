@@ -159,7 +159,7 @@ jobs:
           path: ~/.local/share/pyvista/examples
           key: Examples-${{ hashFiles('*') }}
           restore-keys: |
-            Examples-${{ hashFiles('*') }}
+            Examples-
 
       - name: Build wheel and install pyvista
         run: |
