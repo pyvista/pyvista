@@ -43,6 +43,7 @@ jobs:
           pip install wheel
           pip install -e .
           python -c "import pyvista; print(pyvista.Report(gpu=False))"
+          python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
 
       - name: Install test dependencies
         run: |
