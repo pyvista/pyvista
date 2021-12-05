@@ -296,6 +296,7 @@ def reset_pyvista(gallery_conf, fname):
     """
     import pyvista
     pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+    pyvista.set_plot_theme('document')
 
 
 sphinx_gallery_conf = {
@@ -322,6 +323,7 @@ sphinx_gallery_conf = {
         "set_plot_theme('document')\n"
     ),
     "reset_modules": (reset_pyvista, ),
+    "reset_modules_order": "both",
 }
 
 import re
