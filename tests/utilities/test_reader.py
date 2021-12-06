@@ -379,37 +379,51 @@ def test_openfoam_cell_to_point_default():
 
 
 def test_openfoam_patch_arrays():
+    # vtk version 9.1.0 changed the way patch names are handled.
+    vtk_version = pyvista.vtk_version_info
+    if vtk_version >= (9, 1, 0):
+        patch_array_key = 'boundary'
+        reader_patch_prefix = 'patch/'
+    else:
+        patch_array_key = 'Patches'
+        reader_patch_prefix = ''
+
     reader = get_cavity_reader()
     assert reader.number_patch_arrays == 4
-    assert reader.patch_array_names == ['internalMesh', 'patch/movingWall', 'patch/fixedWalls', 'patch/frontAndBack']
+    assert reader.patch_array_names == [
+        'internalMesh', f'{reader_patch_prefix}movingWall',
+        f'{reader_patch_prefix}fixedWalls', f'{reader_patch_prefix}frontAndBack'
+    ]
     assert reader.all_patch_arrays_status == {
-        'internalMesh': True, 'patch/movingWall': True, 'patch/fixedWalls': True, 'patch/frontAndBack': True
+        'internalMesh': True, f'{reader_patch_prefix}movingWall': True,
+        f'{reader_patch_prefix}fixedWalls': True, f'{reader_patch_prefix}frontAndBack': True
     }
 
     #first only read in 'internalMesh'
     for patch_array in reader.patch_array_names[1:]:
         reader.disable_patch_array(patch_array)
     assert reader.all_patch_arrays_status == {
-        'internalMesh': True, 'patch/movingWall': False, 'patch/fixedWalls': False, 'patch/frontAndBack': False
+        'internalMesh': True, f'{reader_patch_prefix}movingWall': False,
+        f'{reader_patch_prefix}fixedWalls': False, f'{reader_patch_prefix}frontAndBack': False
     }
     mesh = reader.read()
     assert mesh.n_blocks == 1
-    assert 'boundary' not in mesh.keys()
+    assert patch_array_key not in mesh.keys()
 
     # now read in one more patch
     reader = get_cavity_reader()
     reader.disable_all_patch_arrays()
     reader.enable_patch_array('internalMesh')
-    reader.enable_patch_array('patch/fixedWalls')
+    reader.enable_patch_array(f'{reader_patch_prefix}fixedWalls')
     mesh = reader.read()
     assert mesh.n_blocks == 2
-    assert 'boundary' in mesh.keys()
-    assert mesh['boundary'].keys() == ['fixedWalls']
+    assert patch_array_key in mesh.keys()
+    assert mesh[patch_array_key].keys() == ['fixedWalls']
 
     # check multiple patch arrays without 'internalMesh'
     reader = get_cavity_reader()
     reader.disable_patch_array('internalMesh')
     mesh = reader.read()
     assert mesh.n_blocks == 1
-    assert 'boundary' in mesh.keys()  
-    assert mesh['boundary'].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']
+    assert patch_array_key in mesh.keys()  
+    assert mesh[patch_array_key].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']
