@@ -23,3 +23,5 @@ considered "The PyVista Developers":
 - Phil Chiu, (`@whophil <https://github.com/whophil>`_)
 - Thomas G., (`@thomgrand <https://github.com/thomgrand>`_)
 - Eric Larson, (`@larsoner <https://github.com/larsoner>`_)
+- Matthew Flamm, (`@MatthewFlamm <https://github.com/MatthewFlamm>`_)
+- Darik Gamble, (`@darikg <https://github.com/darikg>`_)

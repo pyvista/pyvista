@@ -21,7 +21,7 @@ scipy
 Sphinx>=4.0.0
 sphinx-autobuild
 sphinx-copybutton
-sphinx-gallery>=0.8.1
+sphinx-gallery>=0.10.1
 sphinx-notfound-page>=0.3.0
 sphinx-panels
 sphinxcontrib-napoleon
