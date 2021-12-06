@@ -14,6 +14,10 @@ from pyvista import examples
 # use :class:`pyvista.OpenFOAMReader` for reading OpenFOAM files for more
 # control over reading data.  The OpenFOAMReader in pyvista must be recreated
 # each time a new mesh is read in, otherwise the same mesh is always returned.
+#
+# This example will only run correctly in versions of vtk>=9.1.0.  The names
+# of the patch arrays and resulting keys in the read mesh will be different
+# in prior versions.
 
 
 from pyvista import examples
