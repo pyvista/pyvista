@@ -425,5 +425,5 @@ def test_openfoam_patch_arrays():
     reader.disable_patch_array('internalMesh')
     mesh = reader.read()
     assert mesh.n_blocks == 1
-    assert patch_array_key in mesh.keys()  
+    assert patch_array_key in mesh.keys()
     assert mesh[patch_array_key].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']

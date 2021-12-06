@@ -19,8 +19,6 @@ from pyvista import examples
 # of the patch arrays and resulting keys in the read mesh will be different
 # in prior versions.
 
-
-from pyvista import examples
 filename = examples.download_cavity(load=False)
 reader = pyvista.OpenFOAMReader(filename)
 
@@ -106,7 +104,7 @@ for slice_boundary in slice_boundaries:
     slice_boundary.translate((0, 0, -slice_boundary.center[-1]))
 
 streamlines = slice_internal_mesh.streamlines_evenly_spaced_2D(
-    vectors='U', start_position=(0.05, 0.05, 0), separating_distance=1, 
+    vectors='U', start_position=(0.05, 0.05, 0), separating_distance=1,
     separating_distance_ratio=0.1
 )
 plotter = pyvista.Plotter()

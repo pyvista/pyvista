@@ -3189,7 +3189,7 @@ def download_osmnx_graph():  # pragma: no cover
 def download_cavity(load=True):
     """Download cavity OpenFOAM example.
 
-    Retrieved from 
+    Retrieved from
     `Kitware VTK Data <https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183>`_.
 
     Parameters
