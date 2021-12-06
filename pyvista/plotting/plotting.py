@@ -3130,7 +3130,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.lookup_table = None
         self.mapper = None
         self.volume = None
-        self.textactor = None
+        self.textActor = None
 
     def add_text(self, text, position='upper_left', font_size=18, color=None,
                  font=None, shadow=False, name=None, viewport=False):
