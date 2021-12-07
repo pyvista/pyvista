@@ -1,6 +1,6 @@
-import weakref
 import pathlib
 import platform
+import weakref
 
 import numpy as np
 import pytest
