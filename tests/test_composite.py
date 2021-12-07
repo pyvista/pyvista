@@ -434,7 +434,7 @@ def test_multiblock_ref():
     del sphere
     assert wref_sphere() is not None
 
-    # verify __del__ works and removes reference
+    # verify __delitem__ works and removes reference
     del block[0]
     assert wref_sphere() is None
 
