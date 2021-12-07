@@ -1,22 +1,23 @@
 """Supporting functions for polydata and grid objects."""
 
-import os
 import collections.abc
 import enum
 import logging
+import os
 import signal
 import sys
-from threading import Thread
 import threading
+from threading import Thread
 import traceback
 from typing import Optional
 
 import numpy as np
 
-from pyvista import _vtk
 import pyvista
-from .fileio import from_meshio
+from pyvista import _vtk
+
 from . import transformations
+from .fileio import from_meshio
 
 
 class FieldAssociation(enum.Enum):
@@ -1031,7 +1032,7 @@ def fit_plane_to_points(points, return_meta=False):
 
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_mesh(plane, color='tan', style='wireframe', line_width=4)
-    >>> _ = pl.add_points(cloud, render_points_as_spheres=True, 
+    >>> _ = pl.add_points(cloud, render_points_as_spheres=True,
     ...                   color='r', point_size=30)
     >>> pl.show()
 
@@ -1234,7 +1235,7 @@ class ProgressMonitor():
     def __init__(self, algorithm, message="", scaling=100):
         """Initialize observer."""
         try:
-            from tqdm import tqdm
+            from tqdm import tqdm  # noqa
         except ImportError:
             raise ImportError("Please install `tqdm` to monitor algorithms.")
         self.event_type = _vtk.vtkCommand.ProgressEvent

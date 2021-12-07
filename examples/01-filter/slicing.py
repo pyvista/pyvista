@@ -6,11 +6,12 @@ Slicing
 
 Extract thin planar slices from a volume.
 """
+import matplotlib.pyplot as plt
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
-import matplotlib.pyplot as plt
-import numpy as np
 
 ###############################################################################
 # PyVista meshes have several slicing filters bound directly to all datasets.

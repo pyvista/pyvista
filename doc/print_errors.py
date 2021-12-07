@@ -1,7 +1,7 @@
 """Read errors output from a sphinx build and remove duplicate groups"""
-import sys
 import os
 import pathlib
+import sys
 
 sys.tracebacklimit = 0
 my_path = pathlib.Path(__file__).parent.resolve()

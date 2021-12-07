@@ -13,11 +13,11 @@ an input array {u, v, w}.
 Showing the :func:`pyvista.DataSetFilters.compute_derivative` filter.
 """
 
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 1
 import pyvista as pv
 from pyvista import examples
-import numpy as np
-
 
 # A vtkStructuredGrid - but could be any mesh type
 mesh = examples.download_carotid()

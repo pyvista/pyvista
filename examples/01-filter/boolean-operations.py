@@ -43,7 +43,6 @@ must be all triangle meshes, which you can check with
 
 # sphinx_gallery_thumbnail_number = 6
 import pyvista as pv
-import numpy as np
 
 sphere_a = pv.Sphere()
 sphere_b = pv.Sphere(center=(0.5, 0, 0))
@@ -161,4 +160,3 @@ sphere = pv.Sphere(radius=0.6)
 sphere.flip_normals()
 result = cube.boolean_difference(sphere)
 result.plot(color='tan')
-

@@ -16,10 +16,11 @@ software.
 
 """
 
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
-import numpy as np
 
 # Load the sample data
 mesh = examples.download_antarctica_velocity()

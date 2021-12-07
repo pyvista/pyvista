@@ -1,27 +1,41 @@
 """ test pyvista.utilities """
-import warnings
-import pathlib
 import os
+import pathlib
 import shutil
+import unittest.mock as mock
+import warnings
 
 import numpy as np
 import pytest
-import unittest.mock as mock
-
 import vtk
 
 import pyvista
 from pyvista import examples as ex
 from pyvista.utilities import (
+    GPUInfo,
+    Observer,
+    cells,
     check_valid_vector,
     errors,
     fileio,
-    GPUInfo,
     helpers,
-    Observer,
-    cells,
-    transformations
+    transformations,
 )
+
+
+def test_version():
+    assert "major" in str(pyvista.vtk_version_info)
+    ver = vtk.vtkVersion()
+    assert ver.GetVTKMajorVersion() == pyvista.vtk_version_info.major
+    assert ver.GetVTKMinorVersion() == pyvista.vtk_version_info.minor
+    assert ver.GetVTKBuildVersion() == pyvista.vtk_version_info.micro
+    ver_tup = (
+        ver.GetVTKMajorVersion(),
+        ver.GetVTKMinorVersion(),
+        ver.GetVTKBuildVersion(),
+    )
+    assert ver_tup == pyvista.vtk_version_info
+    assert pyvista.vtk_version_info >= (0, 0, 0)
 
 
 def test_createvectorpolydata_error():

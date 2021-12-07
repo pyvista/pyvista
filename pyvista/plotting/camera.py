@@ -1,6 +1,6 @@
 """Module containing pyvista implementation of vtkCamera."""
-from weakref import proxy
 import warnings
+from weakref import proxy
 
 import numpy as np
 
@@ -170,7 +170,7 @@ class Camera(_vtk.vtkCamera):
         ...                                              [0., 1., 0., 0.],
         ...                                              [0., 0., 1., 0.],
         ...                                              [0., 0., 0., 0.5]])
-        >>> 
+        >>>
         array([[1., 0., 0., 0.],
                [0., 1., 0., 0.],
                [0., 0., 1., 0.],
@@ -384,7 +384,7 @@ class Camera(_vtk.vtkCamera):
 
         Clipping planes are the the near and far clipping planes along
         the direction of projection.
-        
+
         Examples
         --------
         >>> import pyvista

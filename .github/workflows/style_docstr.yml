@@ -18,7 +18,7 @@ jobs:
         run: |
           pip install -r requirements_style.txt --disable-pip-version-check
 
-      - name: Code and Spelling Check
+      - name: Code Linting and Spelling Check
         run: |
           make stylecheck
 

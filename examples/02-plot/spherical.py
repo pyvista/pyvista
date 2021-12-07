@@ -5,8 +5,9 @@ Plot data in spherical coordinates
 Generate and visualize meshes from data in longitude-latitude coordinates.
 """
 
-import pyvista as pv
 import numpy as np
+
+import pyvista as pv
 
 
 def _cell_bounds(points, bound_position=0.5):

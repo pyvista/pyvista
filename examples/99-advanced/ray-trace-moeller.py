@@ -15,8 +15,9 @@ For additional details, please reference the following:
 First, define the ray triangle intersection method.
 """
 
-import pyvista as pv
 import numpy as np
+
+import pyvista as pv
 
 
 def ray_triangle_intersection(ray_start, ray_vec, triangle):
