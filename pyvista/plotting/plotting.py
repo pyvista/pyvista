@@ -1270,6 +1270,41 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Stop tracking the click position."""
         self.iren.untrack_click_position()
 
+    @property
+    def pickable_actors(self):
+        """Return the pickable actors."""
+        pickable = []
+        for renderer in self.renderers:
+            for actor in renderer.actors.values():
+                if actor.GetPickable():
+                    pickable.append(actor)
+
+        return np.asarray(pickable)
+
+    @pickable_actors.setter
+    def pickable_actors(self, actors):
+        """Set the pickable actors.
+
+        Parameters
+        ----------
+            actors : vtkActor of list of vtkActors
+                List of vtk actors to make pickable. All actors not in the list will be made unpickable.
+        """
+
+        actors = np.asarray([actors]) if isinstance(actors, _vtk.vtkActor) else np.asarray(actors)
+
+        if not all([isinstance(actor, _vtk.vtkActor) for actor in actors]):
+            raise TypeError(f'Expected vtkActor instance of list of vtkActors, got '
+                            f'{[type(actor) for actor in actors]} instead.'
+                            )
+
+        for renderer in self.renderers:
+            for actor in renderer.actors.values():
+                if actor in actors:
+                    actor.SetPickable(True)
+                else:
+                    actor.SetPickable(False)
+
     def _prep_for_close(self):
         """Make sure a screenshot is acquired before closing.
 
