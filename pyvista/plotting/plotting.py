@@ -1282,19 +1282,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return np.asarray(pickable)
 
     @pickable_actors.setter
-    def pickable_actors(self, actors):
+    def pickable_actors(self, actors=None):
         """Set the pickable actors.
 
         Parameters
         ----------
-            actors : vtkActor of list of vtkActors
-                List of vtk actors to make pickable. All actors not in the list will be made unpickable.
+        actors : vtkActor of list of vtkActors, optional
+            List of vtk actors to make pickable. All actors not in the list will be made unpickable.
+            If `actors` is None, all actors will be made unpickable.
         """
-
+        actors = [] if actors is None else actors
         actors = np.asarray([actors]) if isinstance(actors, _vtk.vtkActor) else np.asarray(actors)
 
         if not all([isinstance(actor, _vtk.vtkActor) for actor in actors]):
-            raise TypeError(f'Expected vtkActor instance of list of vtkActors, got '
+            raise TypeError(f'Expected a vtkActor instance or a list of vtkActors, got '
                             f'{[type(actor) for actor in actors]} instead.'
                             )
 
