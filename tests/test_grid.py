@@ -721,6 +721,17 @@ def test_cast_uniform_to_rectilinear():
     assert rectilinear.bounds == grid.bounds
 
 
+def test_fft_and_rfft():
+    grid = examples.download_puppy()
+    fft = grid.fft()
+    assert fft.n_points == grid.n_points
+    assert fft.n_arrays == grid.n_arrays
+    rfft = fft.rfft()
+    assert rfft.n_points == grid.n_points
+    assert rfft.n_arrays == grid.n_arrays
+    assert np.allclose(rfft['JPEGImage'].real, grid['JPEGImage'])
+
+
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.vtk', '.vtr'])
 def test_save_rectilinear(extension, binary, tmpdir):

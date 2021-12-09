@@ -32,3 +32,20 @@ image.plot(rgb=True, cpos="xy")
 
 # Mapped image colors
 image.plot(cpos="xy")
+
+###############################################################################
+# It is also possible to apply filters to images.
+
+fft = image.fft()
+rfft = image.rfft()
+pl = pv.Plotter(1, 3)
+pl.subplot(0, 0)
+pl.add_title("Original")
+pl.add_mesh(image)
+pl.subplot(0, 1)
+pl.add_title("FFT")
+pl.add_mesh(fft)
+pl.subplot(0, 2)
+pl.add_title("rFFT")
+pl.add_mesh(rfft)
+pl.show(cpos="xy")
