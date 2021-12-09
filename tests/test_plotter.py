@@ -4,9 +4,7 @@ All other tests requiring rendering should to in
 ./plotting/test_plotting.py
 
 """
-import re
 import pytest
-
 import pyvista
 
 
@@ -63,6 +61,6 @@ def test_pickable_actors():
     assert sphere not in pickable
     assert cube not in pickable
 
-    match = r"Expected a vtkActor instance or a list of vtkActors, got [<class 'numpy.int64'>, <class 'numpy.int64'>] instead."
-    with pytest.raises(TypeError, match=re.escape(match)):
+    match = r"Expected a vtkActor instance or a list of vtkActors, got \[<class 'numpy.int64'>, <class 'numpy.int64'>\] instead."
+    with pytest.raises(TypeError, match=match):
         plotter.pickable_actors = [0, 10]
