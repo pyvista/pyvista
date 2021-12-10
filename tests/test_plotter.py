@@ -61,6 +61,5 @@ def test_pickable_actors():
     assert sphere not in pickable
     assert cube not in pickable
 
-    match = "Expected a vtkActor instance or a list of vtkActors, got \\[<class 'numpy.int64'>, <class 'numpy.int64'>\\] instead."
-    with pytest.raises(TypeError, match=match):
+    with pytest.raises(TypeError, match="Expected a vtkActor instance or "):
         plotter.pickable_actors = [0, 10]
