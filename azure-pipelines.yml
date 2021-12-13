@@ -102,7 +102,8 @@ jobs:
     displayName: Install pyvista
 
   - script: |
-      sudo apt-get install python3-tk pandoc
+      sudo apt-get update
+      sudo apt-get install python3-tk pandoc libosmesa6
       pip install -r requirements_docs.txt
     displayName: 'Install dependencies'
 
@@ -130,7 +131,6 @@ jobs:
   # note: built this wheel using Ubuntu 20.04.3 with OSMESA
   - script: |
       pip install https://github.com/pyvista/pyvista-wheels/raw/add_v9_1_0/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
-      sudo apt install libosmesa6
     displayName: "Install VTK build with osmesa 9.1.0"
 
   - script: |
