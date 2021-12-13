@@ -101,11 +101,6 @@ jobs:
       pip install -e .
     displayName: Install pyvista
 
-  - script: |      
-      .ci/setup_headless_display.sh
-      # python .ci/pyvista_test.py  # for debug
-    displayName: Install headless display
-
   - script: |
       sudo apt-get install python3-tk pandoc
       pip install -r requirements_docs.txt
