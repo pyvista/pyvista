@@ -22,7 +22,7 @@ from pyvista import examples
 # The :func:`pyvista.PolyDataFilters.extract_feature_edges` filter
 # will extract those edges given a feature angle and return a dataset
 # with lines that represent the edges of the original mesh.
-# 
+#
 # To demonstrate, we will first extract the edges around a sample CAD model:
 
 # Download the example CAD model and extract all feature edges above 45 degrees
