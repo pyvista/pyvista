@@ -200,7 +200,11 @@ class Camera(_vtk.vtkCamera):
 
     @property
     def distance(self):
-        """Return or set the distance from the camera position to the focal point.
+        """Return or set the distance of the focal point from the camera.
+        
+        Notes
+        -----
+        Setting the distance keeps the camera fixed and moves the focal point.
 
         Examples
         --------
