@@ -106,7 +106,7 @@ jobs:
       sudo apt-get install python3-tk pandoc libosmesa6
       pip install -r requirements_docs.txt
     displayName: 'Install dependencies'
-
+ 
   - script: |
       EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
       mkdir -p EXAMPLES_PATH
