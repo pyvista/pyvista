@@ -4,7 +4,7 @@
 Extract Edges
 ~~~~~~~~~~~~~
 
-Extracts edges from a surface.
+Extract edges from a surface.
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -19,30 +19,29 @@ from pyvista import examples
 # 3. feature edges (edges used by two triangles and whose dihedral angle > feature_angle)
 # 4. manifold edges (edges used by exactly two polygons).
 #
-# This filter will extract those edges given a feature angle and return a dataset
+# The :func:`extract_feature_edges() <pyvista.PolyDataFilters.extract_feature_edges>`
+# filter will extract those edges given a feature angle and return a dataset
 # with lines that represent the edges of the original mesh.
-# To demonstrate, we will first extract the edges around Queen Nefertiti's eyes:
+#
+# To demonstrate, we will first extract the edges around a sample CAD model:
 
-# Load Queen Nefertiti mesh
-mesh = examples.download_nefertiti()
+# Download the example CAD model and extract all feature edges above 45 degrees
+mesh = examples.download_cad_model()
+edges = mesh.extract_feature_edges(45)
 
-# Extract the edges above a 12 degree feature angle
-edges = mesh.extract_feature_edges(12)
-
-# Render the edge lines on top of the original mesh
+# Render the edge lines on top of the original mesh.  Zoom in to provide a better figure.
 p = pv.Plotter()
 p.add_mesh(mesh, color=True)
 p.add_mesh(edges, color="red", line_width=5)
-# Define a camera position that will zoom to her eye
-p.camera_position = [(96.0, -197.0, 45.0), (7.0, -109.0, 22.0), (0, 0, 1)]
+p.camera.zoom(1.5)
 p.show()
+
 
 ###############################################################################
 # We can do this analysis for any :class:`pyvista.PolyData` object. Let's try
 # the cow mesh example:
 
 mesh = examples.download_cow()
-
 edges = mesh.extract_feature_edges(20)
 
 p = pv.Plotter()
@@ -59,6 +58,7 @@ p.show()
 
 # Download a sample surface mesh with visible open edges
 mesh = examples.download_bunny()
+mesh
 
 ###############################################################################
 # We can get a count of the open edges with:

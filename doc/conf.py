@@ -292,9 +292,10 @@ def reset_pyvista(gallery_conf, fname):
     pyvista.set_plot_theme('document')
 
 
+# skip building the osmnx example if osmnx is not installed
 has_osmnx = False
 try:
-    import osmnx, fiona
+    import osmnx, fiona  # noqa: F401 isort: skip
     has_osmnx = True
 except:
     pass
