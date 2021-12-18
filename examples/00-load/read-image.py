@@ -5,6 +5,7 @@ Read Image Files
 Read and plot image files (JPEG, TIFF, PNG, etc).
 
 """
+import pyvista as pv
 from pyvista import examples
 
 ###############################################################################
@@ -34,18 +35,27 @@ image.plot(rgb=True, cpos="xy")
 image.plot(cpos="xy")
 
 ###############################################################################
-# It is also possible to apply filters to images.
+# Convert rgb to grayscale.
+# https://en.wikipedia.org/wiki/Grayscale#Luma_coding_in_video_systems
 
-fft = image.fft()
-rfft = image.rfft()
-pl = pv.Plotter(1, 3)
-pl.subplot(0, 0)
-pl.add_title("Original")
-pl.add_mesh(image)
-pl.subplot(0, 1)
-pl.add_title("FFT")
-pl.add_mesh(fft)
-pl.subplot(0, 2)
-pl.add_title("rFFT")
-pl.add_mesh(rfft)
-pl.show(cpos="xy")
+r = image["JPEGImage"][:, 0]
+g = image["JPEGImage"][:, 1]
+b = image["JPEGImage"][:, 2]
+image.clear_data()
+image["GrayScale"] = 0.299 * r + 0.587 * g + 0.114 * b
+pv.global_theme.cmap = "gray"
+image.copy().plot(cpos="xy")
+
+###############################################################################
+# It is also possible to apply filters to images. The following is the Fast
+# Fourier Transformed image data.
+
+fft = image.image_fft()
+fft.copy().plot(cpos="xy", log_scale=True)
+
+###############################################################################
+# Once Fast Fourier Transformed, images can also Reverse Fast Fourier
+# Transformed.
+
+rfft = fft.image_rfft()
+rfft.copy().plot(cpos="xy")

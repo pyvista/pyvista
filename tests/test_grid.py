@@ -723,13 +723,21 @@ def test_cast_uniform_to_rectilinear():
 
 def test_fft_and_rfft():
     grid = examples.download_puppy()
-    fft = grid.fft()
+    # Convert rgb to grayscale.
+    # https://en.wikipedia.org/wiki/Grayscale#Luma_coding_in_video_systems
+    r = grid['JPEGImage'][:, 0]
+    g = grid['JPEGImage'][:, 1]
+    b = grid['JPEGImage'][:, 2]
+    grid.clear_data()
+    grid['GrayScale'] = 0.299 * r + 0.587 * g + 0.114 * b
+    fft = grid.image_fft()
     assert fft.n_points == grid.n_points
     assert fft.n_arrays == grid.n_arrays
-    rfft = fft.rfft()
+    rfft = fft.image_rfft()
     assert rfft.n_points == grid.n_points
     assert rfft.n_arrays == grid.n_arrays
-    assert np.allclose(rfft['JPEGImage'].real, grid['JPEGImage'])
+    assert np.allclose(rfft['GrayScale'][:, 0], grid['GrayScale'])
+    assert np.allclose(rfft['GrayScale'][:, 1], 0.0)
 
 
 @pytest.mark.parametrize('binary', [True, False])

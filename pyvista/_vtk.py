@@ -386,6 +386,10 @@ if VTK9:
         vtkOpenGLGPUVolumeRayCastMapper,
         vtkSmartVolumeMapper,
     )
+    from vtkmodules.vtkImagingFourier import (
+        vtkImageFFT,
+        vtkImageRFFT,
+    )
 
     # lazy import for some of the less used readers
     def lazy_vtkGL2PSExporter():

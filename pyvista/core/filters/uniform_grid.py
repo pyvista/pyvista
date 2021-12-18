@@ -116,3 +116,57 @@ class UniformGridFilters(DataSetFilters):
         fixed.field_data.update(result.field_data)
         fixed.copy_meta_from(result)
         return fixed
+
+    def image_fft(self, progress_bar=False):
+        """Fast Fourier Transform.
+
+        The input can have real or complex data in any components and data types,
+        but the output is always complex doubles with real values in component0,
+        and imaginary values in component1. The filter is fastest for images
+        that have power of two sizes. The filter uses a butterfly diagram for
+        each prime factor of the dimension. This makes images with prime number
+        dimensions (i.e. 17x17) much slower to compute. Multi dimensional
+        (i.e volumes) FFT's are decomposed so that each axis executes serially.
+
+        Parameters
+        ----------
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            UniformGrid subset.
+        """
+        alg = _vtk.vtkImageFFT()
+        alg.SetInputDataObject(self)
+        _update_alg(alg, progress_bar, 'Fast Fourier Transform.')
+        result = _get_output(alg)
+        return result
+
+    def image_rfft(self, progress_bar=False):
+        """Reverse Fast Fourier Transform.
+
+        The input can have real or complex data in any components and data types,
+        but the output is always complex doubles with real values in component0,
+        and imaginary values in component1. The filter is fastest for images that
+        have power of two sizes. The filter uses a butterfly diagram for each prime
+        factor of the dimension. This makes images with prime number dimensions
+        (i.e. 17x17) much slower to compute. Multi dimensional (i.e volumes)
+        FFT's are decomposed so that each axis executes serially.
+
+        Parameters
+        ----------
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            UniformGrid subset.
+        """
+        alg = _vtk.vtkImageRFFT()
+        alg.SetInputDataObject(self)
+        _update_alg(alg, progress_bar, 'Reverse Fast Fourier Transform.')
+        result = _get_output(alg)
+        return result
