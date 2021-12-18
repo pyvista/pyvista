@@ -4,7 +4,7 @@
 Extract Edges
 ~~~~~~~~~~~~~
 
-Extracts edges from a surface.
+Extract edges from a surface.
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -19,8 +19,8 @@ from pyvista import examples
 # 3. feature edges (edges used by two triangles and whose dihedral angle > feature_angle)
 # 4. manifold edges (edges used by exactly two polygons).
 #
-# The :func:`pyvista.PolyDataFilters.extract_feature_edges` filter
-# will extract those edges given a feature angle and return a dataset
+# The :func:`extract_feature_edges() <pyvista.PolyDataFilters.extract_feature_edges>`
+# filter will extract those edges given a feature angle and return a dataset
 # with lines that represent the edges of the original mesh.
 #
 # To demonstrate, we will first extract the edges around a sample CAD model:

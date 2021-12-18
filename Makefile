@@ -48,10 +48,8 @@ mypy:
 
 lint:
 	@echo "Linting with flake8"
-	# Check for codestyle
-	flake8 .
+	@flake8 .
 
 isort:
 	@echo "Formatting with isort"
-	# Check for trailing whitespace
 	isort .
