@@ -2,6 +2,7 @@
 See the image regression notes in doc/extras/developer_notes.rst
 """
 import inspect
+import io
 import os
 import pathlib
 from pathlib import Path
@@ -942,6 +943,17 @@ def test_screenshot(tmpdir):
     plotter.add_mesh(pyvista.Sphere())
     with pytest.raises(RuntimeError):
         plotter.screenshot()
+
+
+def test_screenshot_bytes():
+    # Test screenshot to bytes object
+    buffer = io.BytesIO()
+    plotter = pyvista.Plotter(off_screen=True)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.show(screenshot=buffer)
+    buffer.seek(0)
+    im = Image.open(buffer)
+    assert im.format == 'PNG'
 
 
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
