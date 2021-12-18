@@ -1,10 +1,10 @@
 """Test optional pythreejs functionality"""
 
-import pytest
 import numpy as np
+import pytest
 
 try:
-    import pythreejs
+    import pythreejs  # noqa
 except:
     pytestmark = pytest.mark.skip
 

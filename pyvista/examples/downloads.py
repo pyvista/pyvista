@@ -11,11 +11,10 @@ Examples
 
 """
 
-from urllib.request import urlretrieve
 from functools import partial
 import os
 import shutil
-import sys
+from urllib.request import urlretrieve
 import zipfile
 
 import numpy as np
@@ -3296,14 +3295,14 @@ def download_osmnx_graph():  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
-    
+
     See :ref:`open_street_map_example` for a full example using this dataset.
 
     """
     import pickle
 
     try:
-        import osmnx
+        import osmnx  # noqa
     except ImportError:
         raise ImportError('Install `osmnx` to use this example')
 

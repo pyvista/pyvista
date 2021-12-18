@@ -1,48 +1,54 @@
 """PyVista plotting module."""
-
-import platform
-import ctypes
-import sys
-import pathlib
 import collections.abc
-from typing import Sequence
+import ctypes
+from functools import wraps
+import io
 import logging
 import os
+import pathlib
+import platform
+import sys
 import textwrap
+from threading import Thread
 import time
+from typing import Dict
 import warnings
 import weakref
-from functools import wraps
-from threading import Thread
-from typing import Dict
 
 import numpy as np
 import scooby
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import (assert_empty_kwargs, convert_array,
-                               convert_string_array, get_array,
-                               is_pyvista_dataset, abstract_class,
-                               numpy_to_texture, raise_not_matching,
-                               wrap)
-from ..utilities.regression import image_from_window
+from pyvista.utilities import (
+    abstract_class,
+    assert_empty_kwargs,
+    convert_array,
+    convert_string_array,
+    get_array,
+    is_pyvista_dataset,
+    numpy_to_texture,
+    raise_not_matching,
+    wrap,
+)
+
 from ..utilities.misc import PyvistaDeprecationWarning
+from ..utilities.regression import image_from_window
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
-from .renderer import Renderer, Camera
-from .tools import (normalize, opacity_transfer_function, parse_color,
-                    parse_font_family, FONTS)
-from .widgets import WidgetHelper
-from .scalar_bars import ScalarBars
-from .renderers import Renderers
 from .render_window_interactor import RenderWindowInteractor
+from .renderer import Camera, Renderer
+from .renderers import Renderers
+from .scalar_bars import ScalarBars
+from .tools import FONTS, normalize, opacity_transfer_function, parse_color, parse_font_family
+from .widgets import WidgetHelper
+
 
 def _has_matplotlib():
     try:
-        import matplotlib
+        import matplotlib  # noqa
         return True
     except ImportError:  # pragma: no cover
         return False
@@ -108,7 +114,7 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # finally, check if using a backend that doesn't require an xserver
-        if pyvista.global_theme.jupyter_backend in ['ipygany']:
+        if pyvista.global_theme.jupyter_backend in ['ipygany', 'pythreejs']:
             return
 
         # Check if VTK has EGL support
@@ -1623,7 +1629,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the width with ``line_width``.
 
         smooth_shading : bool, optional
-            Enable smooth shading when ``True`` using either the 
+            Enable smooth shading when ``True`` using either the
             Gouraud or Phong shading algorithm.  When ``False``, use
             flat shading.
             Automatically enabled when ``pbr=True``.
@@ -1885,8 +1891,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if multi_colors:
                 # Compute unique colors for each index of the block
                 if _has_matplotlib():
-                    import matplotlib
                     from itertools import cycle
+
+                    import matplotlib
                     cycler = matplotlib.rcParams['axes.prop_cycle']
                     colors = cycle(cycler)
                 else:
@@ -2465,18 +2472,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         -------
         vtk.vtkActor
             VTK actor of the volume.
-        
+
         Examples
         --------
         Show a built-in volume example with the coolwarm colormap.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> bolt_nut = examples.download_bolt_nut()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_volume(bolt_nut, cmap="coolwarm")
         >>> pl.show()
-        
+
         """
         # Handle default arguments
 
@@ -3178,7 +3185,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> actor = pl.add_text('Sample Text', position='upper_right', color='blue',
         ...                     shadow=True, font_size=26)
         >>> pl.show()
-        
+
         """
         if font is None:
             font = self._theme.font.family
@@ -3452,12 +3459,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import numpy as np
         >>> import pyvista
-        >>> pl = pyvista.Plotter()       
+        >>> pl = pyvista.Plotter()
         >>> points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
         >>> actor = pl.add_lines(points, color='yellow', width=3)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
-        
+
         """
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
@@ -3617,7 +3624,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...                             always_visible=True, shadow=True)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
-        
+
         """
         if font_family is None:
             font_family = self._theme.font.family
@@ -3777,7 +3784,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista
         >>> points = np.random.random((10, 3))
         >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_points(points, render_points_as_spheres=True, 
+        >>> actor = pl.add_points(points, render_points_as_spheres=True,
         ...                       point_size=100.0)
         >>> pl.show()
 
@@ -3857,18 +3864,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not image.size:
             raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file if requested
-        if isinstance(filename, (str, pathlib.Path)):
+        if isinstance(filename, (str, pathlib.Path, io.BytesIO)):
             from PIL import Image
-            filename = pathlib.Path(filename)
-            if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
-                filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
-            if not filename.suffix:
-                filename = filename.with_suffix('.png')
-            elif filename.suffix not in SUPPORTED_FORMATS:
-                raise ValueError(f'Unsupported extension {filename.suffix}\n' +
-                                 f'Must be one of the following: {SUPPORTED_FORMATS}')
-            image_path = os.path.abspath(os.path.expanduser(str(filename)))
-            Image.fromarray(image).save(image_path)
+
+            if isinstance(filename, (str, pathlib.Path)):
+                filename = pathlib.Path(filename)
+                if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
+                    filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
+                if not filename.suffix:
+                    filename = filename.with_suffix('.png')
+                elif filename.suffix not in SUPPORTED_FORMATS:
+                    raise ValueError(f'Unsupported extension {filename.suffix}\n' +
+                                     f'Must be one of the following: {SUPPORTED_FORMATS}')
+                filename = os.path.abspath(os.path.expanduser(str(filename)))
+                Image.fromarray(image).save(filename)
+            else:
+                Image.fromarray(image).save(filename, format="PNG")
         # return image array if requested
         if return_img:
             return image
@@ -3879,7 +3890,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         This can be helpful for publication documents.
 
-        The supported formats are: 
+        The supported formats are:
 
         * ``'.svg'``
         * ``'.eps'``
@@ -3947,7 +3958,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str, optional
+        filename : str, pathlib.Path, BytesIO, optional
             Location to write image to.  If ``None``, no image is written.
 
         transparent_background : bool, optional
@@ -4128,7 +4139,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> viewup = [0, 0, 1]
         >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=24,
         ...                                       shift=0.0, viewup=viewup)
-        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, 
+        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup,
         ...                       step=0.02)
 
         See :ref:`orbiting_example` for a full example using this method.
@@ -4193,7 +4204,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         compress_arrays : bool, optional
             Enable array compression.
-            
+
         Examples
         --------
         >>> import pyvista
@@ -4603,6 +4614,11 @@ class Plotter(BasePlotter):
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
 
+        # Set camera widget based on theme. This requires that an
+        # interactor be present.
+        if self.theme._enable_camera_orientation_widget:
+            self.add_camera_orientation_widget()
+
         # Set background
         self.set_background(self._theme.background)
 
@@ -4654,7 +4670,7 @@ class Plotter(BasePlotter):
             ``window_size``.  Defaults to
             :attr:`pyvista.global_theme.full_screen <pyvista.themes.DefaultTheme.full_screen>`.
 
-        screenshot : str or bool, optional
+        screenshot : str, pathlib.Path, BytesIO or bool, optional
             Take a screenshot of the initial state of the plot.
             If a string, it specifies the path to which the screenshot
             is saved. If ``True``, the screenshot is returned as an
@@ -4738,7 +4754,7 @@ class Plotter(BasePlotter):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.show()
- 
+
         Take a screenshot interactively.  Screenshot will be of the
         first image shown, so use the first call with
         ``auto_close=False`` to set the scene before taking the
@@ -4916,7 +4932,7 @@ class Plotter(BasePlotter):
             Sets the size of the title font.  Defaults to 16 or the
             value of the global theme if set.
 
-        color : str or 3 item list, optional, 
+        color : str or 3 item list, optional,
             Either a string, rgb list, or hex color string.  Defaults
             to white or the value of the global theme if set.  For
             example:
@@ -4942,7 +4958,7 @@ class Plotter(BasePlotter):
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> pl.background_color = 'grey'
-        >>> actor = pl.add_title('Plot Title', font='courier', color='k', 
+        >>> actor = pl.add_title('Plot Title', font='courier', color='k',
         ...                      font_size=40)
         >>> pl.show()
 

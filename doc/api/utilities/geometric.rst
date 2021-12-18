@@ -31,6 +31,7 @@ additional details see :ref:`ref_geometric_example` example.
    Rectangle
    Sphere
    Spline
+   Superquadric
    Tetrahedron
    Text3D
    Triangle

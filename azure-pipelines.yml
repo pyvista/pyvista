@@ -101,16 +101,12 @@ jobs:
       pip install -e .
     displayName: Install pyvista
 
-  - script: |      
-      .ci/setup_headless_display.sh
-      # python .ci/pyvista_test.py  # for debug
-    displayName: Install headless display
-
   - script: |
-      sudo apt-get install python3-tk pandoc
+      sudo apt-get update
+      sudo apt-get install python3-tk pandoc libosmesa6
       pip install -r requirements_docs.txt
     displayName: 'Install dependencies'
-
+ 
   - script: |
       EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
       mkdir -p EXAMPLES_PATH
@@ -132,6 +128,10 @@ jobs:
       path: '$(Build.SourcesDirectory)/doc/examples'
     displayName: Build pyvista doc examples cache
 
+  # note: built this wheel using Ubuntu 20.04.3 with OSMESA
+  - script: |
+      pip install https://github.com/pyvista/pyvista-wheels/raw/add_v9_1_0/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
+    displayName: "Install VTK build with osmesa 9.1.0"
   - script: |
       make -C doc html SPHINXOPTS="-w build_errors.txt -N"
     displayName: 'Build documentation'

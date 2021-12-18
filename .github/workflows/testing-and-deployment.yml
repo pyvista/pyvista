@@ -136,6 +136,10 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.6', '3.7', '3.8', '3.9']
+        vtk-version: ['latest']
+        include:
+          - python-version: '3.9'
+            vtk-version: '9.0.3'
     env:
       SHELLOPTS: 'errexit:pipefail'
 
@@ -150,7 +154,7 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
+          key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.vtk-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
           restore-keys: |
             Python-${{ runner.os }}-${{ matrix.python-version }}
 
@@ -166,6 +170,10 @@ jobs:
           pip install wheel
           python setup.py bdist_wheel
           pip install dist/pyvista*.whl
+
+      - name: Setup vtk
+        if: ${{ matrix.vtk-version != 'latest' }}
+        run: pip install vtk==${{ matrix.vtk-version }}
 
       - name: Install Testing Requirements
         run: |

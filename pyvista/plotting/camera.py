@@ -1,6 +1,6 @@
 """Module containing pyvista implementation of vtkCamera."""
-from weakref import proxy
 import warnings
+from weakref import proxy
 
 import numpy as np
 
@@ -170,7 +170,7 @@ class Camera(_vtk.vtkCamera):
         ...                                              [0., 1., 0., 0.],
         ...                                              [0., 0., 1., 0.],
         ...                                              [0., 0., 0., 0.5]])
-        >>> 
+        >>>
         array([[1., 0., 0., 0.],
                [0., 1., 0., 0.],
                [0., 0., 1., 0.],
@@ -200,7 +200,11 @@ class Camera(_vtk.vtkCamera):
 
     @property
     def distance(self):
-        """Return or set the distance from the camera position to the focal point.
+        """Return or set the distance of the focal point from the camera.
+        
+        Notes
+        -----
+        Setting the distance keeps the camera fixed and moves the focal point.
 
         Examples
         --------
@@ -384,7 +388,7 @@ class Camera(_vtk.vtkCamera):
 
         Clipping planes are the the near and far clipping planes along
         the direction of projection.
-        
+
         Examples
         --------
         >>> import pyvista

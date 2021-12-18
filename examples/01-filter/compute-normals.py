@@ -8,9 +8,10 @@ Computing Surface Normals
 Compute normals on a surface.
 """
 
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 2
 from pyvista import examples
-import numpy as np
 
 ###############################################################################
 # Computing the normals of a surface is quite easy using

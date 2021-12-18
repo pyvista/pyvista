@@ -46,11 +46,11 @@ mesh = pv.create_grid(data_to_probe, dimensions=(75, 75, 75))
 result = mesh.sample(data_to_probe)
 
 ###############################################################################
-threshold = lambda m: m.threshold(15.0)
+threshold = lambda m: m.threshold(75.0, scalars='SLCImage')
 cpos = [(468.9075585873713, -152.8280322856109, 152.13046602188035),
     (121.65121514580106, 140.29327609542105, 112.28137570357188),
     (-0.10881224951051659, 0.006229357618166009, 0.9940428006178236)]
-dargs = dict(clim=data_to_probe.get_data_range(), cmap='rainbow')
+dargs = dict(clim=[0, 200], cmap='rainbow')
 
 p = pv.Plotter(shape=(1,2))
 p.add_mesh(threshold(data_to_probe), **dargs)

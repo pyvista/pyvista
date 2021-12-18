@@ -7,9 +7,9 @@ Create a Kochanek Spline
 Create a Kochanek spline/polyline from a numpy array of XYZ vertices.
 """
 
-import pyvista as pv
 import numpy as np
 
+import pyvista as pv
 
 ###############################################################################
 # Create a dataset to plot

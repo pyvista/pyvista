@@ -2,10 +2,11 @@
 Saving Screenshots
 ~~~~~~~~~~~~~~~~~~
 """
+import matplotlib.pyplot as plt
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
-import matplotlib.pyplot as plt
 
 # Get a sample file
 filename = examples.planefile

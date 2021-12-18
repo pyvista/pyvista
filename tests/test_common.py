@@ -1,16 +1,17 @@
 # TODO: This file really should be named test_dataset.py
 
 import pickle
+
+from hypothesis import HealthCheck, assume, given, settings
+from hypothesis.extra.numpy import array_shapes, arrays
+from hypothesis.strategies import composite, floats, integers, one_of
 import numpy as np
 import pytest
 import vtk
-from hypothesis import assume, given, settings, HealthCheck
-from hypothesis.extra.numpy import arrays, array_shapes
-from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista import examples, Texture
+from pyvista import Texture, examples
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -431,7 +432,7 @@ def test_texture():
     assert len(mesh.textures) == 0
 
 
-def test_texture_airplane():
+def test_multiple_texture_coordinates():
     mesh = examples.load_airplane()
     mesh.texture_map_to_plane(inplace=True, name="tex_a", use_bounds=False)
     mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
@@ -449,6 +450,14 @@ def test_texture_airplane():
     assert len(cmesh.textures) == 2
     assert "tex_a" in cmesh.textures
     assert "tex_b" in cmesh.textures
+
+
+def test_inplace_no_overwrite_texture_coordinates():
+    mesh = pyvista.Box()
+    truth = mesh.texture_map_to_plane(inplace=False)
+    mesh.texture_map_to_sphere(inplace=True)
+    test = mesh.texture_map_to_plane(inplace=True)
+    assert np.allclose(truth.active_t_coords, test.active_t_coords)
 
 
 def test_invalid_vector(grid):
@@ -512,9 +521,9 @@ def test_set_active_vectors(grid):
     grid.point_data['vector_arr'] = vector_arr
     grid.active_vectors_name = 'vector_arr'
     active_component_consistency_check(grid, "vectors", "point")
-    assert grid.active_vectors_name == 'vector_arr'  
+    assert grid.active_vectors_name == 'vector_arr'
     assert np.allclose(grid.active_vectors, vector_arr)
-    
+
     grid.active_vectors_name = None
     assert grid.active_vectors_name is None
     active_component_consistency_check(grid, "vectors", "point")
@@ -706,12 +715,12 @@ def test_set_cell_vectors(grid):
 
 def test_axis_rotation_invalid():
     with pytest.raises(ValueError):
-        pyvista.core.dataset.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pyvista.utilities.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pyvista.core.dataset.axis_rotation(p, 1, False, axis='x')
+    p_out = pyvista.utilities.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
 
 

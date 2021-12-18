@@ -25,7 +25,7 @@ class PlotterITK():
     def __init__(self, **kwargs):
         """Initialize the itkwidgets plotter."""
         try:
-            import itkwidgets
+            import itkwidgets  # noqa
         except ImportError:  # pragma: no cover
             raise ImportError("Please install `itkwidgets>=0.25.2`")
 
