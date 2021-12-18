@@ -132,7 +132,6 @@ jobs:
   - script: |
       pip install https://github.com/pyvista/pyvista-wheels/raw/add_v9_1_0/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
     displayName: "Install VTK build with osmesa 9.1.0"
- 
   - script: |
       make -C doc html SPHINXOPTS="-w build_errors.txt -N"
     displayName: 'Build documentation'
