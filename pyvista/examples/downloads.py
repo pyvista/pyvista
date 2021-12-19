@@ -2119,9 +2119,16 @@ def download_armadillo(load=True):  # pragma: no cover
 
     Examples
     --------
+    Plot the armadillo dataset. Use a custom camera position.
+
     >>> from pyvista import examples
+    >>> cpos = [
+    ...     (161.5, 82.1, -330.2),
+    ...     (-4.3, 24.5, -1.6),
+    ...     (-0.1, 1, 0.12)
+    ... ]
     >>> dataset = examples.download_armadillo()
-    >>> dataset.plot()
+    >>> dataset.plot(cpos=cpos)
 
     """
     return _download_and_read('Armadillo.ply', load=load)
@@ -2586,7 +2593,7 @@ def download_antarctica_velocity(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_antarctica_velocity()
-    >>> dataset.plot()
+    >>> dataset.plot(cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
 
     See :ref:`antarctica_example` for an example using this dataset.
 
@@ -2775,6 +2782,14 @@ def download_gpr_data_array(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_gpr_data_array()  # doctest:+SKIP
+    >>> dataset  # doctest:+SKIP
+    array([[nan, nan, nan, ..., nan, nan, nan],
+           [nan, nan, nan, ..., nan, nan, nan],
+           [nan, nan, nan, ..., nan, nan, nan],
+           ...,
+           [ 0.,  0.,  0., ...,  0.,  0.,  0.],
+           [ 0.,  0.,  0., ...,  0.,  0.,  0.],
+           [ 0.,  0.,  0., ...,  0.,  0.,  0.]])
 
     See :ref:`create_draped_surf_example` for an example using this dataset.
 
@@ -2835,7 +2850,12 @@ def download_woman(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_woman()
-    >>> dataset.plot()
+    >>> cpos = [
+    ...     (-2600.0, 1970.6, 1836.9),
+    ...     (48.5, -20.3, 843.9),
+    ...     (0.23, -0.168, 0.958)
+    ... ]
+    >>> dataset.plot(cpos=cpos)
 
     """
     return _download_and_read('woman.stl', load=load)
@@ -2989,9 +3009,24 @@ def download_action_figure(load=True):  # pragma: no cover
 
     Examples
     --------
+    Show the action figure example. This also demonstrates how to use
+    physically based rendering and lighting to make a good looking
+    plot.
+
+    >>> import pyvista
     >>> from pyvista import examples
     >>> dataset = examples.download_action_figure()
-    >>> dataset.plot()
+    >>> dataset.clean(inplace=True)
+    >>> pl = pyvista.Plotter(lighting=None)
+    >>> pl.add_light(pyvista.Light((30, 10, 10)))
+    >>> pl.add_mesh(dataset, color='w', smooth_shading=True,
+    ...             pbr=True, metallic=0.3, roughness=0.5)
+    >>> pl.camera_position = [
+    ...     (32.3, 116.3, 220.6),
+    ...     (-0.05, 3.8, 33.8),
+    ...     (-0.017, 0.86, -0.51)
+    ... ]
+    >>> pl.show()
 
     """
     return _download_and_read('tigerfighter.obj', load=load)
