@@ -3016,11 +3016,11 @@ def download_action_figure(load=True):  # pragma: no cover
     >>> import pyvista
     >>> from pyvista import examples
     >>> dataset = examples.download_action_figure()
-    >>> dataset.clean(inplace=True)
+    >>> _ = dataset.clean(inplace=True)
     >>> pl = pyvista.Plotter(lighting=None)
     >>> pl.add_light(pyvista.Light((30, 10, 10)))
-    >>> pl.add_mesh(dataset, color='w', smooth_shading=True,
-    ...             pbr=True, metallic=0.3, roughness=0.5)
+    >>> _ = pl.add_mesh(dataset, color='w', smooth_shading=True,
+    ...                 pbr=True, metallic=0.3, roughness=0.5)
     >>> pl.camera_position = [
     ...     (32.3, 116.3, 220.6),
     ...     (-0.05, 3.8, 33.8),
@@ -3042,11 +3042,44 @@ def download_mars_jpg():  # pragma: no cover
 
     Examples
     --------
+    Download the Mars JPEG and map it to spherical coordinates on a sphere.
+
+    >>> import math
+    >>> import numpy
+    >>> import numpy as np
     >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> dataset = examples.download_mars_jpg()
-    >>> pl.add_background_image(dataset)
+    >>> import pyvista
+
+    Download the JPEGs and convert the Mars JPEG to a texture.
+
+    >>> mars_jpg = examples.download_mars_jpg()
+    >>> mars_tex = pyvista.read_texture(mars_jpg)
+    >>> stars_jpg = examples.download_stars_jpg()
+
+    Create a sphere mesh and compute the texture coordinates.
+
+    >>> sphere = pyvista.Sphere(radius=1, theta_resolution=120, phi_resolution=120,
+    ...                         start_theta=270.001, end_theta=270)
+    >>> sphere.active_t_coords = numpy.zeros((sphere.points.shape[0], 2))
+    >>> sphere.active_t_coords[:, 0] = 0.5 + np.arctan2(-sphere.points[:, 0],
+    ...                                                 sphere.points[:, 1])/(2 * math.pi)
+    >>> sphere.active_t_coords[:, 1] = 0.5 + np.arcsin(sphere.points[:, 2]) / math.pi
+    >>> sphere.point_data
+    pyvista DataSetAttributes
+    Association     : POINT
+    Active Scalars  : None
+    Active Vectors  : None
+    Active Texture  : Texture Coordinates
+    Active Normals  : Normals
+    Contains arrays :
+        Normals                 float32  (14280, 3)           NORMALS
+        Texture Coordinates     float64  (14280, 2)           TCOORDS
+
+    Plot with stars in the background.
+
+    >>> pl = pyvista.Plotter()
+    >>> pl.add_background_image(stars_jpg)
+    >>> _ = pl.add_mesh(sphere, texture=mars_tex)
     >>> pl.show()
 
     """
@@ -3069,6 +3102,8 @@ def download_stars_jpg():  # pragma: no cover
     >>> dataset = examples.download_stars_jpg()
     >>> pl.add_background_image(dataset)
     >>> pl.show()
+
+    See :func:`download_mars_jpg` for another example using this dataset.
 
     """
     return _download_file('stars.jpg')[0]
@@ -3096,7 +3131,7 @@ def download_notch_stress(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_notch_stress()
-    >>> dataset.plot()
+    >>> dataset.plot(cmap='bwr')
 
     """
     return _download_and_read('notch_stress.vtk', load=load)
@@ -3120,7 +3155,7 @@ def download_notch_displacement(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_notch_displacement()
-    >>> dataset.plot()
+    >>> dataset.plot(cmap='bwr')
 
     """
     return _download_and_read('notch_disp.vtu', load=load)
@@ -3148,9 +3183,20 @@ def download_louis_louvre(load=True):  # pragma: no cover
 
     Examples
     --------
+    Plot the Louis XIV statue with custom lighting and camera angle.
+
     >>> from pyvista import examples
+    >>> import pyvista
     >>> dataset = examples.download_louis_louvre()
-    >>> dataset.plot()
+    >>> pl = pyvista.Plotter(lighting=None)
+    >>> _ = pl.add_mesh(dataset, smooth_shading=True)
+    >>> pl.add_light(pyvista.Light((10, -10, 10)))
+    >>> pl.camera_position = [
+    ...     [ -6.71, -14.55,  15.17],
+    ...     [  1.44,   2.54,   9.84],
+    ...     [  0.16,   0.22,   0.96]
+    ... ]
+    >>> pl.show()
 
     See :ref:`pbr_example` for an example using this dataset.
 
@@ -3176,7 +3222,7 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_cylinder_crossflow()
-    >>> dataset.plot()
+    >>> dataset.plot(cpos='xy', cmap='blues', rng=[-200, 500])
 
     See :ref:`2d_streamlines_example` for an example using this dataset.
 
@@ -3207,9 +3253,17 @@ def download_naca(load=True):  # pragma: no cover
 
     Examples
     --------
+    Plot the density of the air surrounding the NACA airfoil using the
+    ``"jet"`` color map.
+
     >>> from pyvista import examples
+    >>> cpos = [
+    ...     [-0.22,  0.  ,  2.52],
+    ...     [ 0.43,  0.  ,  0.  ],
+    ...     [ 0.  ,  1.  ,  0.  ]
+    ... ]
     >>> dataset = examples.download_naca()
-    >>> dataset.plot()
+    >>> dataset.plot(cpos=cpos, cmap="jet")
 
     See :ref:`reader_example` for an example using this dataset.
 
@@ -3267,12 +3321,6 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
-    Examples
-    --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_single_sphere_animation()
-    >>> dataset.plot()
-
     """
     filename, _ = _download_file('PVD/paraview/singleSphereAnimation.pvd')
     folder, _ =_download_file('PVD/paraview/singleSphereAnimation')
@@ -3294,12 +3342,6 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     -------
     pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
-
-    Examples
-    --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_dual_sphere_animation()
-    >>> dataset.plot()
 
     """
     filename, _ = _download_file('PVD/paraview/dualSphereAnimation.pvd')
@@ -3365,11 +3407,35 @@ def download_lucy(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_lucy()
-    >>> dataset.plot()
+    Plot the Lucy Angel dataset with custom lighting.
 
-    See :ref:`jupyter_plotting` for an example using this dataset.
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_lucy()
+
+    Create a light at the "flame"
+
+    >>> flame_light = pyvista.Light(
+    ...     color=[0.886, 0.345, 0.133],
+    ...     position=[550,  140, 950],
+    ...     intensity=1.5,
+    ...     positional=True,
+    ...     cone_angle=90,
+    ...     attenuation_values=(0.001, 0.005, 0)
+    ... )
+
+    Create a scene light
+
+    >>> scene_light = pyvista.Light(intensity=0.2)
+
+    >>> pl = pyvista.Plotter(lighting=None)
+    >>> _ = pl.add_mesh(dataset, smooth_shading=True)
+    >>> pl.add_light(flame_light)
+    >>> pl.add_light(scene_light)
+    >>> pl.background_color = 'k'
+    >>> pl.show()
+
+    See :ref:`jupyter_plotting` for another example using this dataset.
 
     """
     return _download_and_read('lucy.ply', load=load)
