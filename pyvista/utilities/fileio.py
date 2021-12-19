@@ -282,7 +282,9 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
        * ``'.foam'``
 
     .. note::
-       See https://github.com/nschloe/meshio for formats supported by ``meshio``.
+       See https://github.com/nschloe/meshio for formats supported by
+       ``meshio``. Be sure to install ``meshio`` with ``pip install
+       meshio`` if you wish to use it.
 
     Parameters
     ----------
@@ -635,7 +637,13 @@ def from_meshio(mesh):
 
 def read_meshio(filename, file_format=None):
     """Read any mesh file using meshio."""
-    import meshio
+    try:
+        import meshio
+    except ImportError:  # pragma: no cover
+        raise ImportError(
+            "To use this feature install meshio with:\n\n"
+            "pip install meshio"
+        )
 
     # Make sure relative paths will work
     filename = os.path.abspath(os.path.expanduser(str(filename)))
@@ -673,7 +681,14 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     >>> pyvista.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
 
     """
-    import meshio
+    try:
+        import meshio
+    except ImportError:  # pragma: no cover
+        raise ImportError(
+            "To use this feature install meshio with:\n\n"
+            "pip install meshio"
+        )
+
     from meshio.vtk._vtk import vtk_to_meshio_type
 
     # Make sure relative paths will work

@@ -281,12 +281,14 @@ class Report(scooby.Report):
 
         """
         # Mandatory packages.
-        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby',
-                'meshio']
+        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
 
         # Optional packages.
-        optional = ['matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'ipyvtklink', 'scipy', 'itkwidgets', 'tqdm']
+        optional = [
+            'matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
+            'cmocean', 'ipyvtklink', 'scipy', 'itkwidgets', 'tqdm',
+            'meshio',
+        ]
 
         # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.
