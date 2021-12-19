@@ -1,10 +1,9 @@
 """Filters module with a class to manage filters/algorithms for unstructured grid datasets."""
 from functools import wraps
 
-import pyvista
 from pyvista import abstract_class
-from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.filters.poly_data import PolyDataFilters
 
 
 @abstract_class
