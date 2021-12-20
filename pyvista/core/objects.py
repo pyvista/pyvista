@@ -452,6 +452,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def plot(self, *args, **kwargs):
         """Plot the texture as image data by itself."""
+        kwargs.setdefault("rgba", True)
         return self.to_image().plot(*args, **kwargs)
 
     @property
