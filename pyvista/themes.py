@@ -1150,6 +1150,7 @@ class DefaultTheme(_ThemeConfig):
                  '_return_cpos',
                  '_hidden_line_removal',
                  '_antialiasing',
+                 '_enable_camera_orientation_widget',
     ]
 
     def __init__(self):
@@ -1214,6 +1215,7 @@ class DefaultTheme(_ThemeConfig):
         self._return_cpos = True
         self._hidden_line_removal = False
         self._antialiasing = False
+        self._enable_camera_orientation_widget = False
 
     @property
     def hidden_line_removal(self) -> bool:
@@ -1388,6 +1390,24 @@ class DefaultTheme(_ThemeConfig):
     @full_screen.setter
     def full_screen(self, value: bool):
         self._full_screen = value
+
+    @property
+    def enable_camera_orientation_widget(self) -> bool:
+        """Enable the camera orientation widget in all plotters.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pyvista.global_theme.enable_camera_orientation_widget = True
+        >>> pyvista.global_theme.enable_camera_orientation_widget
+        True
+
+        """
+        return self._enable_camera_orientation_widget
+
+    @enable_camera_orientation_widget.setter
+    def enable_camera_orientation_widget(self, value: bool):
+        self._enable_camera_orientation_widget = value
 
     @property
     def camera(self):

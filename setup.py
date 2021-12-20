@@ -19,7 +19,6 @@ install_requires = ['numpy',
                     'pillow',
                     'appdirs',
                     'scooby>=0.5.1',
-                    'meshio>=4.0.3, <5.0',
                     'vtk',
                     'dataclasses;python_version=="3.6"',
                     'typing_extensions;python_version<="3.7"',
@@ -70,6 +69,8 @@ setup(
     python_requires='>=3.6.*',
     install_requires=install_requires,
     extras_require={
-        'colormaps': ['matplotlib', 'colorcet', 'cmocean']
+        'all': ['matplotlib', 'colorcet', 'cmocean', 'meshio'],
+        'colormaps': ['matplotlib', 'colorcet', 'cmocean'],
+        'io': ['meshio>=4.0.3, <5.0'],
     },
 )
