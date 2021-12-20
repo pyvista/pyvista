@@ -8,6 +8,7 @@ jupyter_sphinx==0.3.2
 jupyterlab>=3.0.12
 lxml
 matplotlib
+meshio
 mypy
 mypy-extensions
 osmnx==1.1.1
