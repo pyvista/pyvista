@@ -12,7 +12,7 @@ from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
-from pyvista.utilities.misc import _get_vtk_id_type
+from pyvista.utilities.misc import _get_vtk_id_type, vtk_version_info
 from pyvista import _vtk
 from pyvista.jupyter import set_jupyter_backend, PlotterITK
 from pyvista.themes import set_plot_theme, load_theme, _rcParams
@@ -33,8 +33,8 @@ if 'PYVISTA_PLOT_THEME' in os.environ:
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
 
-# determine if using vtk > 5
-if _vtk.vtkVersion().GetVTKMajorVersion() <= 5:
+# determine if using at least vtk 5.0.0
+if vtk_version_info.major < 5:
     raise RuntimeError('VTK version must be 5.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
@@ -77,18 +77,20 @@ if 'PYVISTA_USERDATA_PATH' in os.environ:
         raise FileNotFoundError(f'Invalid PYVISTA_USERDATA_PATH at {USER_DATA_PATH}')
 
 else:
-    # Set up data directory
     USER_DATA_PATH = appdirs.user_data_dir('pyvista')
-    if not os.path.exists(USER_DATA_PATH):
-        os.makedirs(USER_DATA_PATH)
+    try:
+        # Set up data directory
+        os.makedirs(USER_DATA_PATH, exist_ok=True)
+    except Exception as e:
+        warnings.warn(f'Unable to create `PYVISTA_USERDATA_PATH` at "{USER_DATA_PATH}"\n'
+                      f'Error: {e}\n\n'
+                      'Override the default path by setting the environmental variable '
+                      '`PYVISTA_USERDATA_PATH` to a writable path.')
+        USER_DATA_PATH = ''
 
+EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
 try:
-    EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
-    if not os.path.exists(EXAMPLES_PATH):
-        try:
-            os.makedirs(EXAMPLES_PATH)
-        except FileExistsError:  # Edge case due to IO race conditions
-            pass
+    os.makedirs(EXAMPLES_PATH, exist_ok=True)
 except Exception as e:
     warnings.warn(f'Unable to create `EXAMPLES_PATH` at "{EXAMPLES_PATH}"\n'
                   f'Error: {e}\n\n'

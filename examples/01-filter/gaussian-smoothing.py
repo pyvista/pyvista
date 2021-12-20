@@ -65,7 +65,7 @@ dargs = dict(clim=smoothed_data.get_data_range(),
 
 n = [100, 150, 200, 245, 255]
 
-p = pv.Plotter(shape=(1, 2), notebook=0)
+p = pv.Plotter(shape=(1, 2))
 p.subplot(0, 0)
 p.add_text("Original Image", font_size=24)
 # p.add_mesh(data.contour(n), **dargs)

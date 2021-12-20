@@ -5,14 +5,19 @@ from typing import Union
 import numpy as np
 
 import pyvista
-from pyvista import _vtk, FieldAssociation
-from pyvista.utilities import (
-    NORMALS, assert_empty_kwargs, generate_plane, get_array, wrap,
-    abstract_class, get_array_association
-)
+from pyvista import FieldAssociation, _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
-from pyvista.utilities import transformations
+from pyvista.utilities import (
+    NORMALS,
+    abstract_class,
+    assert_empty_kwargs,
+    generate_plane,
+    get_array,
+    get_array_association,
+    transformations,
+    wrap,
+)
 from pyvista.utilities.cells import numpy_to_idarr
 
 
@@ -324,7 +329,7 @@ class DataSetFilters:
         >>> _below, _above = dataset.clip_scalar(scalars="sample_point_scalars", value=100, both=True)
 
         Remove the part of the mesh with "sample_point_scalars" below 100.
-        
+
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
@@ -1443,7 +1448,9 @@ class DataSetFilters:
         self.GetPointData().SetTCoords(t_coords)
         self.GetPointData().AddArray(t_coords)
         # CRITICAL:
-        self.GetPointData().AddArray(otc) # Add old ones back at the end
+        if otc and otc.GetName() != name:
+            # Add old ones back at the end if different name
+            self.GetPointData().AddArray(otc)
         return self
 
     def texture_map_to_sphere(self, center=None, prevent_seam=True,
@@ -1511,7 +1518,9 @@ class DataSetFilters:
         self.GetPointData().SetTCoords(t_coords)
         self.GetPointData().AddArray(t_coords)
         # CRITICAL:
-        self.GetPointData().AddArray(otc)  # Add old ones back at the end
+        if otc and otc.GetName() != name:
+            # Add old ones back at the end if different name
+            self.GetPointData().AddArray(otc)
         return self
 
     def compute_cell_sizes(self, length=True, area=True, volume=True,
@@ -1620,10 +1629,12 @@ class DataSetFilters:
         orient : bool or str, optional
             If ``True``, use the active vectors array to orient the glyphs.
             If string, the vector array to use to orient the glyphs.
+            If ``False``, the glyphs will not be orientated.
 
         scale : bool, str or sequence, optional
             If ``True``, use the active scalars to scale the glyphs.
             If string, the scalar array to use to scale the glyphs.
+            If ``False``, the glyphs will not be scaled.
 
         factor : float, optional
             Scale factor applied to scaling array.
@@ -2276,7 +2287,7 @@ class DataSetFilters:
         This filter can be used to generate a 3D tetrahedral mesh from
         a surface or scattered points.  If you want to create a
         surface from a point cloud, see
-        :func:`pyvista.DataSetFilters.reconstruct_surface`.
+        :func:`pyvista.PolyDataFilters.reconstruct_surface`.
 
         Parameters
         ----------
@@ -3950,7 +3961,9 @@ class DataSetFilters:
 
         .. note::
            The ``+`` operator between two meshes uses this filter with
-           the default parameters.
+           the default parameters. When the target mesh is already a
+           :class:`pyvista.UnstructuredGrid`, in-place merging via
+           ``+=`` is similarly possible.
 
         Parameters
         ----------
@@ -4022,9 +4035,27 @@ class DataSetFilters:
                 raise TypeError(f"Mesh type {type(self)} cannot be overridden by output.")
         return merged
 
-    def __add__(self, grid):
-        """Combine this mesh with another into an :class:`pyvista.UnstructuredGrid`."""
-        return DataSetFilters.merge(self, grid)
+    def __add__(self, dataset):
+        """Combine this mesh with another into a :class:`pyvista.UnstructuredGrid`."""
+        return DataSetFilters.merge(self, dataset)
+
+    def __iadd__(self, dataset):
+        """Merge another mesh into this one if possible.
+
+        "If possible" means that ``self`` is a :class:`pyvista.UnstructuredGrid`.
+        Otherwise we have to return a new object, and the attempted in-place
+        merge will raise.
+
+        """
+        try:
+            merged = DataSetFilters.merge(self, dataset, inplace=True)
+        except TypeError:
+            raise TypeError(
+                'In-place merge only possible if the target mesh '
+                'is an UnstructuredGrid.\nPlease use `mesh + other_mesh` '
+                'instead, which returns a new UnstructuredGrid.'
+            ) from None
+        return merged
 
     def compute_cell_quality(self, quality_measure='scaled_jacobian', null_value=-1.0, progress_bar=False):
         """Compute a function of (geometric) quality for each cell of a mesh.
@@ -4302,6 +4333,7 @@ class DataSetFilters:
         output = pyvista.wrap(alg.GetOutput())
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface()
+        return output
 
     def transform(self: _vtk.vtkDataSet,
                   trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
@@ -4481,82 +4513,3 @@ class DataSetFilters:
             t, transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace, progress_bar=progress_bar
         )
-
-    def reconstruct_surface(self, nbr_sz=None, sample_spacing=None,
-                            progress_bar=False):
-        """Reconstruct a surface from the points in this dataset.
-
-        This filter takes a list of points assumed to lie on the
-        surface of a solid 3D object. A signed measure of the distance
-        to the surface is computed and sampled on a regular grid. The
-        grid can then be contoured at zero to extract the surface. The
-        default values for neighborhood size and sample spacing should
-        give reasonable results for most uses but can be set if
-        desired.
-
-        This is helpful when generating surfaces from point clouds and
-        is more reliable than :func:`DataSetFilters.delaunay_3d`.
-
-        Parameters
-        ----------
-        nbr_sz : int, optional
-            Specify the number of neighbors each point has, used for
-            estimating the local surface orientation.
-
-            The default value of 20 should be fine for most
-            applications, higher values can be specified if the spread
-            of points is uneven. Values as low as 10 may yield
-            adequate results for some surfaces. Higher values cause
-            the algorithm to take longer and will cause
-            errors on sharp boundaries.
-
-        sample_spacing : float, optional
-            The spacing of the 3D sampling grid.  If not set, a
-            reasonable guess will be made.
-
-        progress_bar : bool, optional
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.PolyData
-            Reconstructed surface.
-
-        Examples
-        --------
-        Create a point cloud out of a sphere and reconstruct a surface
-        from it.
-
-        >>> import pyvista as pv
-        >>> points = pv.wrap(pv.Sphere().points)
-        >>> surf = points.reconstruct_surface()
-
-        >>> pl = pv.Plotter(shape=(1,2))
-        >>> _ = pl.add_mesh(points)
-        >>> _ = pl.add_title('Point Cloud of 3D Surface')
-        >>> pl.subplot(0,1)
-        >>> _ = pl.add_mesh(surf, color=True, show_edges=True)
-        >>> _ = pl.add_title('Reconstructed Surface')
-        >>> pl.show()
-
-        See :ref:`surface_reconstruction_example` for more examples
-        using this filter.
-
-        """
-        alg = _vtk.vtkSurfaceReconstructionFilter()
-        alg.SetInputDataObject(self)
-        if nbr_sz is not None:
-            alg.SetNeighborhoodSize(nbr_sz)
-        if sample_spacing is not None:
-            alg.SetSampleSpacing(sample_spacing)
-
-        # connect using ports as this will be slightly faster
-        mc = _vtk.vtkMarchingCubes()
-        mc.SetComputeNormals(False)
-        mc.SetComputeScalars(False)
-        mc.SetComputeGradients(False)
-        mc.SetInputConnection(alg.GetOutputPort())
-        mc.SetValue(0, 0.0)
-        _update_alg(mc, progress_bar, 'Reconstructing surface')
-        surf = pyvista.wrap(mc.GetOutput())
-        return surf

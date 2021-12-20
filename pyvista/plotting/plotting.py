@@ -1,48 +1,54 @@
 """PyVista plotting module."""
-
-import platform
-import ctypes
-import sys
-import pathlib
 import collections.abc
-from typing import Sequence
+import ctypes
+from functools import wraps
+import io
 import logging
 import os
+import pathlib
+import platform
+import sys
 import textwrap
+from threading import Thread
 import time
+from typing import Dict
 import warnings
 import weakref
-from functools import wraps
-from threading import Thread
-from typing import Dict
 
 import numpy as np
 import scooby
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import (assert_empty_kwargs, convert_array,
-                               convert_string_array, get_array,
-                               is_pyvista_dataset, abstract_class,
-                               numpy_to_texture, raise_not_matching,
-                               wrap)
-from ..utilities.regression import image_from_window
+from pyvista.utilities import (
+    abstract_class,
+    assert_empty_kwargs,
+    convert_array,
+    convert_string_array,
+    get_array,
+    is_pyvista_dataset,
+    numpy_to_texture,
+    raise_not_matching,
+    wrap,
+)
+
 from ..utilities.misc import PyvistaDeprecationWarning
+from ..utilities.regression import image_from_window
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
-from .renderer import Renderer, Camera
-from .tools import (normalize, opacity_transfer_function, parse_color,
-                    parse_font_family, FONTS)
-from .widgets import WidgetHelper
-from .scalar_bars import ScalarBars
-from .renderers import Renderers
 from .render_window_interactor import RenderWindowInteractor
+from .renderer import Camera, Renderer
+from .renderers import Renderers
+from .scalar_bars import ScalarBars
+from .tools import FONTS, normalize, opacity_transfer_function, parse_color, parse_font_family
+from .widgets import WidgetHelper
+
 
 def _has_matplotlib():
     try:
-        import matplotlib
+        import matplotlib  # noqa
         return True
     except ImportError:  # pragma: no cover
         return False
@@ -108,7 +114,7 @@ def _warn_xserver():  # pragma: no cover
             return
 
         # finally, check if using a backend that doesn't require an xserver
-        if pyvista.global_theme.jupyter_backend in ['ipygany']:
+        if pyvista.global_theme.jupyter_backend in ['ipygany', 'pythreejs']:
             return
 
         # Check if VTK has EGL support
@@ -222,7 +228,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # track if the camera has been setup
         self._first_time = True
         # Keep track of the scale
-        self._labels = []
 
         # track if render window has ever been rendered
         self._rendered = False
@@ -678,6 +683,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         self.renderers.set_active_renderer(index_row, index_column)
+
+    @wraps(Renderer.add_legend)
+    def add_legend(self, *args, **kwargs):
+        """Wrap ``Renderer.add_legend``."""
+        return self.renderer.add_legend(*args, **kwargs)
+
+    @wraps(Renderer.remove_legend)
+    def remove_legend(self, *args, **kwargs):
+        """Wrap ``Renderer.remove_legend``."""
+        return self.renderer.remove_legend(*args, **kwargs)
+
+    @property
+    def legend(self):
+        """Legend actor.
+
+        There can only be one legend actor per renderer.  If
+        ``legend`` is ``None``, there is no legend actor.
+
+        """
+        return self.renderer.legend
 
     @wraps(Renderer.add_floor)
     def add_floor(self, *args, **kwargs):
@@ -1359,6 +1384,48 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
         self.iren.enable_rubber_band_2d_style()
 
+    def enable_stereo_render(self):
+        """Enable stereo rendering.
+
+        Disable this with :func:`disable_stereo_render
+        <BasePlotter.disable_stereo_render>`
+
+        Examples
+        --------
+        Enable stereo rendering to show a cube as an anaglyph image.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.enable_stereo_render()
+        >>> pl.show()
+
+        """
+        if hasattr(self, 'ren_win'):
+            self.ren_win.StereoRenderOn()
+            self.ren_win.SetStereoTypeToAnaglyph()
+
+    def disable_stereo_render(self):
+        """Disable stereo rendering.
+
+        Enable again with :func:`enable_stereo_render
+        <BasePlotter.enable_stereo_render>`
+
+        Examples
+        --------
+        Enable and then disable stereo rendering. It should show a simple cube.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.enable_stereo_render()
+        >>> pl.disable_stereo_render()
+        >>> pl.show()
+
+        """
+        if hasattr(self, 'ren_win'):
+            self.ren_win.StereoRenderOff()
+
     def hide_axes_all(self):
         """Hide the axes orientation widget in all renderers."""
         for renderer in self.renderers:
@@ -1562,7 +1629,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the width with ``line_width``.
 
         smooth_shading : bool, optional
-            Enable smooth shading when ``True`` using either the 
+            Enable smooth shading when ``True`` using either the
             Gouraud or Phong shading algorithm.  When ``False``, use
             flat shading.
             Automatically enabled when ``pbr=True``.
@@ -1824,8 +1891,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if multi_colors:
                 # Compute unique colors for each index of the block
                 if _has_matplotlib():
-                    import matplotlib
                     from itertools import cycle
+
+                    import matplotlib
                     cycler = matplotlib.rcParams['axes.prop_cycle']
                     colors = cycle(cycler)
                 else:
@@ -2224,7 +2292,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 geom = pyvista.Box()
                 rgb_color = parse_color('black')
             geom.points -= geom.center
-            self._labels.append([geom, label, rgb_color])
+            addr = actor.GetAddressAsString("")
+            self.renderer._labels[addr] = [geom, label, rgb_color]
 
         # lighting display style
         if not lighting:
@@ -2403,18 +2472,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         -------
         vtk.vtkActor
             VTK actor of the volume.
-        
+
         Examples
         --------
         Show a built-in volume example with the coolwarm colormap.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> bolt_nut = examples.download_bolt_nut()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_volume(bolt_nut, cmap="coolwarm")
         >>> pl.show()
-        
+
         """
         # Handle default arguments
 
@@ -3116,7 +3185,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> actor = pl.add_text('Sample Text', position='upper_right', color='blue',
         ...                     shadow=True, font_size=26)
         >>> pl.show()
-        
+
         """
         if font is None:
             font = self._theme.font.family
@@ -3390,12 +3459,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import numpy as np
         >>> import pyvista
-        >>> pl = pyvista.Plotter()       
+        >>> pl = pyvista.Plotter()
         >>> points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
         >>> actor = pl.add_lines(points, color='yellow', width=3)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
-        
+
         """
         if not isinstance(lines, np.ndarray):
             raise TypeError('Input should be an array of point segments')
@@ -3408,12 +3477,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         rgb_color = parse_color(color)
 
-        # legend label
-        if label:
-            if not isinstance(label, str):
-                raise TypeError('Label must be a string')
-            self._labels.append([lines, label, rgb_color])
-
         # Create actor
         actor = _vtk.vtkActor()
         actor.SetMapper(mapper)
@@ -3422,6 +3485,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         actor.GetProperty().SetEdgeColor(rgb_color)
         actor.GetProperty().SetColor(rgb_color)
         actor.GetProperty().LightingOff()
+
+        # legend label
+        if label:
+            if not isinstance(label, str):
+                raise TypeError('Label must be a string')
+            addr = actor.GetAddressAsString("")
+            self.renderer._labels[addr] = [lines, label, rgb_color]
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)
@@ -3554,7 +3624,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...                             always_visible=True, shadow=True)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
-        
+
         """
         if font_family is None:
             font_family = self._theme.font.family
@@ -3714,7 +3784,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista
         >>> points = np.random.random((10, 3))
         >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_points(points, render_points_as_spheres=True, 
+        >>> actor = pl.add_points(points, render_points_as_spheres=True,
         ...                       point_size=100.0)
         >>> pl.show()
 
@@ -3794,18 +3864,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not image.size:
             raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file if requested
-        if isinstance(filename, (str, pathlib.Path)):
+        if isinstance(filename, (str, pathlib.Path, io.BytesIO)):
             from PIL import Image
-            filename = pathlib.Path(filename)
-            if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
-                filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
-            if not filename.suffix:
-                filename = filename.with_suffix('.png')
-            elif filename.suffix not in SUPPORTED_FORMATS:
-                raise ValueError(f'Unsupported extension {filename.suffix}\n' +
-                                 f'Must be one of the following: {SUPPORTED_FORMATS}')
-            image_path = os.path.abspath(os.path.expanduser(str(filename)))
-            Image.fromarray(image).save(image_path)
+
+            if isinstance(filename, (str, pathlib.Path)):
+                filename = pathlib.Path(filename)
+                if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
+                    filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
+                if not filename.suffix:
+                    filename = filename.with_suffix('.png')
+                elif filename.suffix not in SUPPORTED_FORMATS:
+                    raise ValueError(f'Unsupported extension {filename.suffix}\n' +
+                                     f'Must be one of the following: {SUPPORTED_FORMATS}')
+                filename = os.path.abspath(os.path.expanduser(str(filename)))
+                Image.fromarray(image).save(filename)
+            else:
+                Image.fromarray(image).save(filename, format="PNG")
         # return image array if requested
         if return_img:
             return image
@@ -3816,7 +3890,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         This can be helpful for publication documents.
 
-        The supported formats are: 
+        The supported formats are:
 
         * ``'.svg'``
         * ``'.eps'``
@@ -3884,7 +3958,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str, optional
+        filename : str, pathlib.Path, BytesIO, optional
             Location to write image to.  If ``None``, no image is written.
 
         transparent_background : bool, optional
@@ -3949,167 +4023,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return self._save_image(self.image, filename, return_img)
 
-    def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
-                   size=None, name=None, origin=None, face=None):
-        """Add a legend to render window.
-
-        Entries must be a list containing one string and color entry for each
-        item.
-
-        Parameters
-        ----------
-        labels : list, optional
-            When set to None, uses existing labels as specified by
-
-            - :func:`add_mesh <BasePlotter.add_mesh>`
-            - :func:`add_lines <BasePlotter.add_lines>`
-            - :func:`add_points <BasePlotter.add_points>`
-
-            List containing one entry for each item to be added to the
-            legend.  Each entry must contain two strings, [label,
-            color], where label is the name of the item to add, and
-            color is the color of the label to add.
-
-        bcolor : list or str, optional
-            Background color, either a three item 0 to 1 RGB color
-            list, or a matplotlib color string (e.g. 'w' or 'white'
-            for a white color).  If None, legend background is
-            disabled.
-
-        border : bool, optional
-            Controls if there will be a border around the legend.
-            Default False.
-
-        size : list, optional
-            Two float list, each float between 0 and 1.  For example
-            [0.1, 0.1] would make the legend 10% the size of the
-            entire figure window.
-
-        name : str, optional
-            The name for the added actor so that it can be easily
-            updated.  If an actor of this name already exists in the
-            rendering window, it will be replaced by the new actor.
-
-        origin : list, optional
-            If used, specifies the x and y position of the lower left corner
-            of the legend.
-
-        face : str, optional
-            Face shape of legend face.
-            Accepted options:
-
-            * ``'triangle'``
-            * ``'circle'``
-            * ``'rectangle'``
-
-            Default is ``'triangle'``.
-
-        Returns
-        -------
-        vtk.vtkLegendBoxActor
-            Actor for the legend.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> mesh = examples.load_hexbeam()
-        >>> othermesh = examples.load_uniform()
-        >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(mesh, label='My Mesh')
-        >>> _ = plotter.add_mesh(othermesh, 'k', label='My Other Mesh')
-        >>> _ = plotter.add_legend()
-        >>> plotter.show()
-
-        Alternative manual example
-
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> mesh = examples.load_hexbeam()
-        >>> othermesh = examples.load_uniform()
-        >>> legend_entries = []
-        >>> legend_entries.append(['My Mesh', 'w'])
-        >>> legend_entries.append(['My Other Mesh', 'k'])
-        >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(mesh)
-        >>> _ = plotter.add_mesh(othermesh, 'k')
-        >>> _ = plotter.add_legend(legend_entries)
-        >>> plotter.show()
-
-        """
-        self.legend = _vtk.vtkLegendBoxActor()
-
-        if labels is None:
-            # use existing labels
-            if not self._labels:
-                raise ValueError('No labels input.\n\n'
-                                 'Add labels to individual items when adding them to'
-                                 'the plotting object with the "label=" parameter.  '
-                                 'or enter them as the "labels" parameter.')
-
-            self.legend.SetNumberOfEntries(len(self._labels))
-            for i, (vtk_object, text, color) in enumerate(self._labels):
-                self.legend.SetEntry(i, vtk_object, text, parse_color(color))
-
-        else:
-            self.legend.SetNumberOfEntries(len(labels))
-
-            if face is None or face == "triangle":
-                legendface = pyvista.Triangle()
-            elif face == "circle":
-                legendface = pyvista.Circle()
-            elif face == "rectangle":
-                legendface = pyvista.Rectangle()
-            else:
-                raise ValueError(f'Invalid face "{face}".  Must be one of the following:\n'
-                                 '\t"triangle"\n'
-                                 '\t"circle"\n'
-                                 '\t"rectangle"\n')
-
-            for i, (text, color) in enumerate(labels):
-                self.legend.SetEntry(i, legendface, text, parse_color(color))
-
-        if origin is not None:
-            if not isinstance(origin, Sequence) or len(origin) != 2:
-                raise ValueError(
-                    '`origin` must be a list of length 2. Passed value is {}'
-                    .format(origin)
-                )
-            self.legend.SetPosition(origin[0], origin[1])
-
-        if size is not None:
-            if not isinstance(size, Sequence) or len(size) != 2:
-                raise ValueError(
-                    '`size` must be a list of length 2. Passed value is {}'
-                    .format(size)
-                )
-            self.legend.SetPosition2(size[0], size[1])
-
-        if bcolor is None:
-            self.legend.UseBackgroundOff()
-        else:
-            self.legend.UseBackgroundOn()
-            self.legend.SetBackgroundColor(bcolor)
-
-        if border:
-            self.legend.BorderOn()
-        else:
-            self.legend.BorderOff()
-
-        # Add to renderer
-        self.add_actor(self.legend, reset_camera=False, name=name, pickable=False)
-        return self.legend
 
     @wraps(Renderers.set_background)
     def set_background(self, *args, **kwargs):
         """Wrap ``Renderers.set_background``."""
         self.renderers.set_background(*args, **kwargs)
-
-    def remove_legend(self):
-        """Remove the legend actor."""
-        if hasattr(self, 'legend'):
-            self.remove_actor(self.legend, reset_camera=False)
-            self.render()
 
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
         """Generate an orbital path around the data scene.
@@ -4221,7 +4139,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> viewup = [0, 0, 1]
         >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=24,
         ...                                       shift=0.0, viewup=viewup)
-        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, 
+        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup,
         ...                       step=0.02)
 
         See :ref:`orbiting_example` for a full example using this method.
@@ -4286,7 +4204,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         compress_arrays : bool, optional
             Enable array compression.
-            
+
         Examples
         --------
         >>> import pyvista
@@ -4696,6 +4614,11 @@ class Plotter(BasePlotter):
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
 
+        # Set camera widget based on theme. This requires that an
+        # interactor be present.
+        if self.theme._enable_camera_orientation_widget:
+            self.add_camera_orientation_widget()
+
         # Set background
         self.set_background(self._theme.background)
 
@@ -4747,7 +4670,7 @@ class Plotter(BasePlotter):
             ``window_size``.  Defaults to
             :attr:`pyvista.global_theme.full_screen <pyvista.themes.DefaultTheme.full_screen>`.
 
-        screenshot : str or bool, optional
+        screenshot : str, pathlib.Path, BytesIO or bool, optional
             Take a screenshot of the initial state of the plot.
             If a string, it specifies the path to which the screenshot
             is saved. If ``True``, the screenshot is returned as an
@@ -4831,7 +4754,7 @@ class Plotter(BasePlotter):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.show()
- 
+
         Take a screenshot interactively.  Screenshot will be of the
         first image shown, so use the first call with
         ``auto_close=False`` to set the scene before taking the
@@ -5009,7 +4932,7 @@ class Plotter(BasePlotter):
             Sets the size of the title font.  Defaults to 16 or the
             value of the global theme if set.
 
-        color : str or 3 item list, optional, 
+        color : str or 3 item list, optional,
             Either a string, rgb list, or hex color string.  Defaults
             to white or the value of the global theme if set.  For
             example:
@@ -5035,7 +4958,7 @@ class Plotter(BasePlotter):
         >>> import pyvista
         >>> pl = pyvista.Plotter()
         >>> pl.background_color = 'grey'
-        >>> actor = pl.add_title('Plot Title', font='courier', color='k', 
+        >>> actor = pl.add_title('Plot Title', font='courier', color='k',
         ...                      font_size=40)
         >>> pl.show()
 

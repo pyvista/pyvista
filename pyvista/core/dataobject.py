@@ -1,19 +1,20 @@
 """Attributes common to PolyData and Grid Objects."""
 
-import warnings
+from abc import abstractmethod
 import collections.abc
 import logging
-from abc import abstractmethod
 from pathlib import Path
-from typing import Union, Any, Dict, DefaultDict, Type
+from typing import Any, DefaultDict, Dict, Type, Union
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import (FieldAssociation, fileio, abstract_class)
-from .datasetattributes import DataSetAttributes
+from pyvista.utilities import FieldAssociation, abstract_class, fileio
 from pyvista.utilities.misc import PyvistaDeprecationWarning
+
+from .datasetattributes import DataSetAttributes
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -97,7 +98,7 @@ class DataObject:
             texture array will be saved as ``'RGBA'``
 
             .. note::
-               This feature is only available when saving PLY files. 
+               This feature is only available when saving PLY files.
 
         Notes
         -----
@@ -183,7 +184,7 @@ class DataObject:
             fmt += "</table>\n"
             fmt += "\n"
             if display:
-                from IPython.display import display as _display, HTML
+                from IPython.display import HTML, display as _display
                 _display(HTML(fmt))
                 return
             return fmt
@@ -254,6 +255,9 @@ class DataObject:
         if not isinstance(self, type(other)):
             return False
 
+        if self is other:
+            return True
+
         # these attrs use numpy.array_equal
         equal_attrs = ['verts',  # DataObject
                        'points',  # DataObject
@@ -321,7 +325,7 @@ class DataObject:
         Add field data to a UniformGrid dataset.
 
         >>> mesh = pyvista.UniformGrid((2, 2, 1))
-        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'], 
+        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'],
         ...                      'my-field-data')
         >>> mesh['my-field-data']
         array(['I could', 'write', 'notes', 'here'], dtype='<U7')
@@ -492,9 +496,9 @@ class DataObject:
         writer = _vtk.vtkDataSetWriter()
         writer.SetInputDataObject(self)
         writer.SetWriteToOutputString(True)
-        writer.SetFileTypeToASCII()
+        writer.SetFileTypeToBinary()
         writer.Write()
-        to_serialize = writer.GetOutputString()
+        to_serialize = writer.GetOutputStdString()
         state['vtk_serialized'] = to_serialize
         return state
 
@@ -502,10 +506,12 @@ class DataObject:
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         self.__dict__.update(state)
-
         reader = _vtk.vtkDataSetReader()
         reader.ReadFromInputStringOn()
-        reader.SetInputString(vtk_serialized)
+        if isinstance(vtk_serialized, bytes):
+            reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
+        elif isinstance(vtk_serialized, str):
+            reader.SetInputString(vtk_serialized)
         reader.Update()
         mesh = pyvista.wrap(reader.GetOutput())
 

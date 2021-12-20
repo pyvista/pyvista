@@ -10,10 +10,12 @@ This example also demonstrates how to compute an implicit distance from a
 bounding :class:`pyvista.PolyData` surface.
 
 """
+import numpy as np
+
+import pyvista as pv
+
 # sphinx_gallery_thumbnail_number = 2
 from pyvista import examples
-import pyvista as pv
-import numpy as np
 
 # Load a surface to voxelize
 surface = examples.download_foot_bones()

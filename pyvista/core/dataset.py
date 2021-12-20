@@ -1,10 +1,11 @@
 """Attributes common to PolyData and Grid Objects."""
 
-import warnings
 import collections.abc
 import logging
 import sys
-from typing import Optional, List, Tuple, Iterable, Union, Any, Dict
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+import warnings
+
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
@@ -14,18 +15,24 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import (FieldAssociation, get_array,
-                               get_array_association,
-                               is_pyvista_dataset, raise_not_matching,
-                               vtk_id_list_to_array, abstract_class,
-                               axis_rotation, transformations)
-from pyvista.utilities.misc import PyvistaDeprecationWarning
+from pyvista.utilities import (
+    FieldAssociation,
+    abstract_class,
+    get_array,
+    get_array_association,
+    is_pyvista_dataset,
+    raise_not_matching,
+    transformations,
+    vtk_id_list_to_array,
+)
 from pyvista.utilities.errors import check_valid_vector
+from pyvista.utilities.misc import PyvistaDeprecationWarning
+
+from .._typing import Vector
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
 from .pyvista_ndarray import pyvista_ndarray
-from .._typing import Vector
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -111,7 +118,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Association refers to the data association (e.g. point, cell, or
         field) of the active scalars.
-        
+
         Returns
         -------
         ActiveArrayInfo
@@ -167,7 +174,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Association refers to the data association (e.g. point, cell, or
         field) of the active vectors.
-        
+
         Returns
         -------
         ActiveArrayInfo
@@ -1346,7 +1353,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Add cell arrays to a mesh and list the available ``cell_data``. 
+        Add cell arrays to a mesh and list the available ``cell_data``.
 
         >>> import pyvista
         >>> import numpy as np
@@ -1884,8 +1891,8 @@ class DataSet(DataSetFilters, DataObject):
         Parameters
         ----------
         point : iterable(float) or np.ndarray
-            Length 3 coordinate of the point to query or a ``numpy`` array
-            of coordinates.
+            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
+            points with shape ``(n, 3)``.
 
         Returns
         -------
@@ -1893,25 +1900,41 @@ class DataSet(DataSetFilters, DataObject):
             Index or indices of the cell in this mesh that is closest
             to the given point.
 
+        Warnings
+        --------
+        This method may still return a valid cell index even if the point
+        contains a value like ``numpy.inf`` or ``numpy.nan``.
+
         Examples
         --------
-        Find nearest cell to a point on a sphere
+        Find nearest cell on a sphere centered on the
+        origin to the point ``[0.1, 0.2, 0.3]``.
 
         >>> import pyvista
         >>> mesh = pyvista.Sphere()
-        >>> index = mesh.find_closest_cell([0, 0, 0.5])
+        >>> point = [0.1, 0.2, 0.3]
+        >>> index = mesh.find_closest_cell(point)
         >>> index
-        59
+        591
 
-        Find the nearest cells to several random points.  Note that
-        ``-1`` indicates that the locator was not able to find a
-        reasonably close cell.
+        Make sure that this cell indeed is the closest to
+        ``[0.1, 0.2, 0.3]``.
 
         >>> import numpy as np
-        >>> points = np.random.random((1000, 3))
+        >>> cell_centers = mesh.cell_centers()
+        >>> relative_position = cell_centers.points - point
+        >>> distance = np.linalg.norm(relative_position, axis=1)
+        >>> np.argmin(distance)
+        591
+
+        Find the nearest cells to several random points that
+        are centered on the origin.
+
+        >>> points = 2 * np.random.random((5000, 3)) - 1
         >>> indices = mesh.find_closest_cell(points)
         >>> indices.shape
-        (1000,)
+        (5000,)
+
         """
         if isinstance(point, collections.abc.Sequence):
             point = np.array(point)
@@ -1932,8 +1955,18 @@ class DataSet(DataSetFilters, DataObject):
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
-        closest_cells = np.array([locator.FindCell(node) for node in point])
-        return int(closest_cells[0]) if len(closest_cells) == 1 else closest_cells
+
+        cell = _vtk.vtkGenericCell()
+        closest_point = [0, 0, 0]
+        cellId = _vtk.mutable(0)
+        subld = _vtk.mutable(0)
+        dist2 = _vtk.mutable(0.0)
+
+        closest_cells = []
+        for node in point:
+            locator.FindClosestPoint(node, closest_point, cell, cellId, subld, dist2)
+            closest_cells.append(int(cellId))
+        return closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
 
     def find_cells_along_line(
         self,

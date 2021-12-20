@@ -44,3 +44,11 @@ demonstrate features.
    examples.examples
    examples.downloads
    demos.demos
+
+.. warning::
+   As you browse this repository and think about how you might use our 3D models and range datasets, please remember that several of these artifacts have religious or cultural significance.
+   Aside from the buddha, which is a religious symbol revered by hundreds of millions of people, the dragon is a symbol of Chinese culture, the Thai statue contains elements of religious significance to Hindus, and Lucy is a Christian angel; statues like her are commonly seen in Italian churches.
+   Keep your renderings and other uses of these particular models in good taste.
+   Don't animate or morph them, don't apply Boolean operators to them, and don't simulate nasty things happening to them (like breaking, exploding, melting, etc.).
+   Choose another model for these sorts of experiments.
+   (You can do anything you want to the Stanford bunny or the armadillo.)

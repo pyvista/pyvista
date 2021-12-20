@@ -3,12 +3,13 @@
 import warnings
 
 import numpy as np
+
 try:
     import pythreejs as tjs
 except ImportError:  # pragma: no cover
     raise ImportError('Please install pythreejs to use this feature')
 
-from ipywidgets import HBox, VBox, GridspecLayout
+from ipywidgets import GridspecLayout
 
 import pyvista as pv
 
@@ -273,6 +274,11 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
 
     if tjs_texture is not None:
         shared_attr['map'] = tjs_texture
+    else:
+        shared_attr['side'] = 'DoubleSide'
+
+    if prop.GetOpacity() < 1.0:
+        shared_attr['transparent'] = True
 
     if prop.GetInterpolation() == 3:  # using physically based rendering
         material = tjs.MeshPhysicalMaterial(flatShading=False,

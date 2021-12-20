@@ -1,6 +1,6 @@
 """Start xvfb from Python."""
-import time
 import os
+import time
 
 XVFB_INSTALL_NOTES = """Please install Xvfb with:
 

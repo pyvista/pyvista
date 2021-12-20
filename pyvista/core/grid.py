@@ -1,15 +1,15 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
-import pathlib
 import logging
+import pathlib
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import abstract_class
-from .dataset import DataSet
-from .filters import _get_output, UniformGridFilters
 
+from .dataset import DataSet
+from .filters import UniformGridFilters, _get_output
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')

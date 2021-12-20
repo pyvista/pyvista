@@ -1,8 +1,8 @@
 import os
 import platform
 
-import pytest
 import numpy as np
+import pytest
 
 import pyvista
 from pyvista import demos

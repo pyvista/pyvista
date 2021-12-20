@@ -12,9 +12,9 @@ Special thanks to GitHub user `stla <https://gist.github.com/stla>`
 for providing examples.
 
 """
-import pyvista as pv
 import numpy as np
 
+import pyvista as pv
 
 ###############################################################################
 # Spider Cage

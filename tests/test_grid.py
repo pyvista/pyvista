@@ -1,5 +1,5 @@
-import pathlib
 import os
+import pathlib
 import weakref
 
 import numpy as np
@@ -8,8 +8,8 @@ import vtk
 
 import pyvista
 from pyvista import examples
-from pyvista.plotting import system_supports_plotting
 from pyvista._vtk import VTK9
+from pyvista.plotting import system_supports_plotting
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -29,6 +29,13 @@ def test_struct_example():
     grid = examples.load_structured()
     grid.plot(off_screen=True)  # basic plot
     grid.plot_curvature(off_screen=True)
+
+
+def test_init_from_polydata(sphere):
+    unstruct_grid = pyvista.UnstructuredGrid(sphere)
+    assert unstruct_grid.n_points == sphere.n_points
+    assert unstruct_grid.n_cells == sphere.n_cells
+    assert np.all(unstruct_grid.celltypes == 5)
 
 
 def test_init_from_structured(struct_grid):

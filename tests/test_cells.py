@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
