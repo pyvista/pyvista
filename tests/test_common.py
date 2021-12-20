@@ -12,6 +12,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista import Texture, examples
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -1160,7 +1161,8 @@ def test_scale():
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
     assert isinstance(out, pyvista.StructuredGrid)
-
+    with pytest.warns(PyvistaDeprecationWarning):
+        scale1.scale(xyz)
 
 def test_flip_x():
     mesh = examples.load_airplane()
@@ -1173,6 +1175,8 @@ def test_flip_x():
     mesh = examples.load_uniform()
     out = mesh.flip_x()
     assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.warns(PyvistaDeprecationWarning):
+        flip_x1.flip_x(point=(0, 0, 0))
 
 
 def test_flip_y():
@@ -1186,6 +1190,8 @@ def test_flip_y():
     mesh = examples.load_uniform()
     out = mesh.flip_y()
     assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.warns(PyvistaDeprecationWarning):
+        flip_y1.flip_y(point=(0, 0, 0))
 
 
 def test_flip_z():
@@ -1199,6 +1205,8 @@ def test_flip_z():
     mesh = examples.load_uniform()
     out = mesh.flip_z()
     assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.warns(PyvistaDeprecationWarning):
+        flip_z1.flip_z(point=(0, 0, 0))
 
 
 def test_flip_normal():
@@ -1220,6 +1228,9 @@ def test_flip_normal():
     flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0], inplace=True)
     flip_normal6.flip_z(inplace=True)
     assert np.allclose(flip_normal5.points, flip_normal6.points)
+
+    with pytest.warns(PyvistaDeprecationWarning):
+        flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
 
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
