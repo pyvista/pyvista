@@ -1310,7 +1310,7 @@ class DataSetFilters:
         >>> n = 100
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
         >>> grid = pv.UniformGrid(
-        ...     dim=(n, n, n),
+        ...     dims=(n, n, n),
         ...     spacing=(abs(x_min)/n*2, abs(y_min)/n*2, abs(z_min)/n*2),
         ...     origin=(x_min, y_min, z_min),
         ... )
