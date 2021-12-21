@@ -10,7 +10,6 @@ Comparison of default, flat shading vs. smooth shading.
 import pyvista
 from pyvista import examples
 
-
 ###############################################################################
 # PyVista supports two types of shading: flat and smooth shading that uses
 # VTK's Phong shading algorithm.

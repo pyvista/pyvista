@@ -1,15 +1,15 @@
 """An internal module for wrapping the use of mappers."""
-import sys
 import logging
+import sys
 
 import numpy as np
 
 from pyvista import _vtk
-from pyvista.utilities import (convert_array, raise_not_matching,
-                               convert_string_array)
-from .tools import normalize, parse_color
-from .colors import get_cmap_safe
+from pyvista.utilities import convert_array, convert_string_array, raise_not_matching
+
 from ._plotting import _has_matplotlib
+from .colors import get_cmap_safe
+from .tools import normalize, parse_color
 
 
 def make_mapper(mapper_class):

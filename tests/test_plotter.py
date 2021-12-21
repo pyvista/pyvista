@@ -4,11 +4,10 @@ All other tests requiring rendering should to in
 ./plotting/test_plotting.py
 
 """
+import numpy as np
 import pytest
 
 import pyvista
-import numpy as np
-
 from pyvista.plotting import _plotting
 
 

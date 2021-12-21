@@ -2,15 +2,16 @@
 import warnings
 
 import numpy as np
-import pyvista
 
-from pyvista.utilities import get_array, is_pyvista_dataset
+import pyvista
+from pyvista.utilities import get_array
+
 from .tools import opacity_transfer_function
 
 
 def _has_matplotlib():
     try:
-        import matplotlib
+        import matplotlib  # noqa
         return True
     except ImportError:  # pragma: no cover
         return False

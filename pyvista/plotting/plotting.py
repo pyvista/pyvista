@@ -7,7 +7,6 @@ import logging
 import os
 import pathlib
 import platform
-import sys
 import textwrap
 from threading import Thread
 import time
@@ -24,7 +23,6 @@ from pyvista.utilities import (
     abstract_class,
     assert_empty_kwargs,
     convert_array,
-    convert_string_array,
     get_array,
     is_pyvista_dataset,
     numpy_to_texture,
@@ -34,25 +32,17 @@ from pyvista.utilities import (
 
 from ..utilities.misc import PyvistaDeprecationWarning
 from ..utilities.regression import image_from_window
+from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
-from ._plotting import prepare_smooth_shading, _has_matplotlib, process_opacity
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
-from .tools import FONTS, normalize, opacity_transfer_function, parse_color, parse_font_family
+from .tools import FONTS, opacity_transfer_function, parse_color, parse_font_family
 from .widgets import WidgetHelper
-
-
-def _has_matplotlib():
-    try:
-        import matplotlib  # noqa
-        return True
-    except ImportError:  # pragma: no cover
-        return False
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 VERY_FIRST_RENDER = True  # windows plotter helper
