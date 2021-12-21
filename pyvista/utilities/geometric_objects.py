@@ -13,6 +13,7 @@ vtkDiskSource
 vtkRegularPolygonSource
 vtkPyramid
 vtkPlatonicSolidSource
+vtkSuperquadricSource
 
 as well as some pure-python helpers.
 
@@ -21,7 +22,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import assert_empty_kwargs, check_valid_vector
+from pyvista.utilities import check_valid_vector
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -869,7 +870,7 @@ def Wavelet(extent=(-10, 10, -10, 10, -10, 10), center=(0, 0, 0), maximum=255,
     --------
     >>> import pyvista
     >>> wavelet = pyvista.Wavelet(extent=(0, 50, 0, 50, 0, 10), x_freq=20,
-    ...                           y_freq=10, z_freq=1, x_mag=100, y_mag=100, 
+    ...                           y_freq=10, z_freq=1, x_mag=100, y_mag=100,
     ...                           z_mag=1000)
     >>> wavelet.plot(show_scalar_bar=False)
 
@@ -1216,6 +1217,82 @@ def Circle(radius=0.5, resolution=100):
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
     return pyvista.wrap(pyvista.PolyData(points, cells))
+
+
+def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
+                 theta_roundness=1., phi_roundness=1.,
+                 theta_resolution=16, phi_resolution=16,
+                 toroidal=False, thickness=1/3):
+    """Create a superquadric.
+
+    Parameters
+    ----------
+    center : iterable, optional
+        Center of the superquadric in ``[x, y, z]``.
+
+    scale : iterable, optional
+        Scale factors of the superquadric in ``[x, y, z]``.
+
+    size : float, optional
+        Superquadric isotropic size.
+
+    theta_roundness : float, optional
+        Superquadric east/west roundness.
+        Values range from 0 (rectangular) to 1 (circular) to higher orders.
+
+    phi_roundness : float, optional
+        Superquadric north/south roundness.
+        Values range from 0 (rectangular) to 1 (circular) to higher orders.
+
+    theta_resolution : int, optional
+        Number of points in the longitude direction.
+        Values are rounded to nearest multiple of 4.
+
+    phi_resolution : int, optional
+        Number of points in the latitude direction.
+        Values are rounded to nearest multiple of 8.
+
+    toroidal : bool, optional
+        Whether or not the superquadric is toroidal (``True``)
+        or ellipsoidal (``False``).
+
+    thickness : float, optional
+        Superquadric ring thickness.
+        Only applies if toroidal is set to ``True``.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Superquadric mesh.
+
+    See Also
+    --------
+    pyvista.ParametricSuperEllipsoid :
+        Parametric superquadric if toroidal is ``False``.
+    pyvista.ParametricSuperToroid :
+        Parametric superquadric if toroidal is ``True``.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> superquadric = pyvista.Superquadric(scale=(3., 1., 0.5),
+    ...                                     phi_roundness=0.1,
+    ...                                     theta_roundness=0.5)
+    >>> superquadric.plot(show_edges=True)
+
+    """
+    superquadricSource = _vtk.vtkSuperquadricSource()
+    superquadricSource.SetCenter(center)
+    superquadricSource.SetScale(scale)
+    superquadricSource.SetSize(size)
+    superquadricSource.SetThetaRoundness(theta_roundness)
+    superquadricSource.SetPhiRoundness(phi_roundness)
+    superquadricSource.SetThetaResolution(round(theta_resolution/4)*4)
+    superquadricSource.SetPhiResolution(round(phi_resolution/8)*8)
+    superquadricSource.SetToroidal(toroidal)
+    superquadricSource.SetThickness(thickness)
+    superquadricSource.Update()
+    return pyvista.wrap(superquadricSource.GetOutput())
 
 
 def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):

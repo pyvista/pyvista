@@ -76,6 +76,7 @@ opacity = [0, 0.2, 0.9, 0.6, 0.3]
 tf = pv.opacity_transfer_function(opacity, 256).astype(float) / 255.
 
 import matplotlib.pyplot as plt
+
 plt.plot(tf)
 plt.title('My Interpolated Opacity Transfer Function')
 plt.ylabel('Opacity')

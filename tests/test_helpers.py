@@ -1,12 +1,14 @@
 import os
+
+from PIL import Image
+import numpy as np
 import pytest
 import trimesh
-import numpy as np
-from PIL import Image
 import vtk
 
 import pyvista
 from pyvista import _vtk
+
 
 def test_wrap_none():
     # check against the "None" edge case
@@ -119,7 +121,7 @@ def test_inheritance_no_wrappers():
 
     # without using _wrappers, we need to explicitly handle inheritance
     mesh = Foo(pyvista.Sphere())
-    new_mesh = mesh.decimate(0.5)  
+    new_mesh = mesh.decimate(0.5)
     assert isinstance(new_mesh, pyvista.PolyData)
     foo_new_mesh = Foo(new_mesh)
     assert isinstance(foo_new_mesh, Foo)

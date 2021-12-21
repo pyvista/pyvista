@@ -6,7 +6,6 @@ import vtk
 import pyvista
 from pyvista import examples
 
-
 ffmpeg_failed = False
 try:
     try:

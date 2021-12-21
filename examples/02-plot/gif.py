@@ -7,8 +7,9 @@ Create a GIF Movie
 Generate a moving gif from an active plotter
 """
 
-import pyvista as pv
 import numpy as np
+
+import pyvista as pv
 
 x = np.arange(-10, 10, 0.25)
 y = np.arange(-10, 10, 0.25)

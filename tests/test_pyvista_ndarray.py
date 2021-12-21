@@ -1,10 +1,11 @@
+from unittest import mock
+
 import numpy as np
 import pytest
 import vtk as _vtk
 
-from pyvista import pyvista_ndarray
-from pyvista import examples
-from unittest import mock
+from pyvista import examples, pyvista_ndarray
+
 
 def test_slices_are_associated():
     dataset = examples.load_structured()

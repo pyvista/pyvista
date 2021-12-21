@@ -29,11 +29,12 @@ have are technically shifted up and we have some NaN filler above the surface
 profile in 2D with the coordinates associated to the top of each column in your
 2D array.
 """
+import matplotlib.pyplot as plt
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
 from pyvista import examples
-import numpy as np
-import matplotlib.pyplot as plt
 
 # Extract the data archive and load these files
 # 2D array of XYZ coordinates

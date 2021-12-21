@@ -91,26 +91,23 @@ The plot directive has the following configuration options:
 
 """
 
-import contextlib
 import doctest
-from io import StringIO
-import itertools
 import os
 from os.path import relpath
 from pathlib import Path
 import re
 import shutil
-import sys
 import textwrap
 import traceback
 
-from docutils.parsers.rst import directives, Directive
+from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
 
 # must enable BUILDING_GALLERY to to keep windows active
 # enable offscreen to hide figures when generating them
 import pyvista
+
 pyvista.BUILDING_GALLERY = True
 pyvista.OFF_SCREEN = True
 

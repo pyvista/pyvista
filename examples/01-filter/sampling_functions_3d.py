@@ -18,7 +18,7 @@ import pyvista as pv
 # the "caves".  For example, lowering the frequency will make the
 # caves larger and more expansive, while a higher frequency in any
 # direction will make the caves appear more "vein-like" and less open.
-# 
+#
 # Change the threshold to reduce or increase the percent of the
 # terrain that is open or closed
 

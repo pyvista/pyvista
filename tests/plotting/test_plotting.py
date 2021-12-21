@@ -1,13 +1,13 @@
 """
 See the image regression notes in doc/extras/developer_notes.rst
 """
-import time
-import platform
-import warnings
 import inspect
-import pathlib
+import io
 import os
-from pathlib import Path
+import pathlib
+import platform
+import time
+import warnings
 
 from PIL import Image
 import imageio
@@ -16,12 +16,11 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista._vtk import VTK9
 from pyvista import examples
+from pyvista._vtk import VTK9
+from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
-from pyvista.core.errors import DeprecationError
-
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -44,7 +43,7 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 
 # Reset image cache with new images
 glb_reset_image_cache = False
-THIS_PATH = Path(__file__).parent.absolute()
+THIS_PATH = pathlib.Path(__file__).parent.absolute()
 IMAGE_CACHE_DIR = os.path.join(THIS_PATH, 'image_cache')
 if not os.path.isdir(IMAGE_CACHE_DIR):
     os.mkdir(IMAGE_CACHE_DIR)
@@ -946,6 +945,17 @@ def test_screenshot(tmpdir):
         plotter.screenshot()
 
 
+def test_screenshot_bytes():
+    # Test screenshot to bytes object
+    buffer = io.BytesIO()
+    plotter = pyvista.Plotter(off_screen=True)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.show(screenshot=buffer)
+    buffer.seek(0)
+    im = Image.open(buffer)
+    assert im.format == 'PNG'
+
+
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
 def test_save_screenshot(tmpdir, sphere, ext):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp' + ext))
@@ -953,7 +963,7 @@ def test_save_screenshot(tmpdir, sphere, ext):
     plotter.add_mesh(sphere)
     plotter.screenshot(filename)
     assert os.path.isfile(filename)
-    assert Path(filename).stat().st_size
+    assert pathlib.Path(filename).stat().st_size
 
 
 def test_scalars_by_name():

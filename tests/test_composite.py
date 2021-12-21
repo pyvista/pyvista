@@ -1,13 +1,20 @@
 import pathlib
 import platform
+import weakref
 
 import numpy as np
 import pytest
 import vtk
 
 import pyvista
-from pyvista import PolyData, RectilinearGrid, UniformGrid, StructuredGrid, MultiBlock
-from pyvista import examples as ex
+from pyvista import (
+    MultiBlock,
+    PolyData,
+    RectilinearGrid,
+    StructuredGrid,
+    UniformGrid,
+    examples as ex,
+)
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
@@ -196,6 +203,27 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
     assert str(multi) is not None
 
 
+def test_multi_block_eq(ant, sphere, uniform, airplane, globe):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+    other = multi.copy()
+
+    assert multi is not other
+    assert multi == other
+
+    assert pyvista.MultiBlock() == pyvista.MultiBlock()
+
+    other[0] = pyvista.Sphere()
+    assert multi != other
+
+    other = multi.copy()
+    other.set_block_name(0, "not matching")
+    assert multi != other
+
+    other = multi.copy()
+    other.append(pyvista.Sphere())
+    assert multi != other
+
+
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._WRITERS)
 @pytest.mark.parametrize('use_pathlib', [True, False])
@@ -320,20 +348,40 @@ def test_multi_slice_index(ant, sphere, uniform, airplane, globe):
     # Now check everything
     sub = multi[0:3]
     assert len(sub) == 3
-    for i in range(3):
-        assert id(sub[i]) == id(multi[i])
+    for i in range(len(sub)):
+        assert sub[i] is multi[i]
         assert sub.get_block_name(i) == multi.get_block_name(i)
     sub = multi[0:-1]
-    assert len(sub) == len(multi) == multi.n_blocks
-    for i in range(multi.n_blocks):
-        assert id(sub[i]) == id(multi[i])
+    assert len(sub) + 1 == len(multi)
+    for i in range(len(sub)):
+        assert sub[i] is multi[i]
         assert sub.get_block_name(i) == multi.get_block_name(i)
     sub = multi[0:-1:2]
-    assert len(sub) == 3
-    for i in range(3):
+    assert len(sub) == 2
+    for i in range(len(sub)):
         j = i*2
-        assert id(sub[i]) == id(multi[j])
+        assert sub[i] is multi[j]
         assert sub.get_block_name(i) == multi.get_block_name(j)
+
+
+def test_slice_defaults(ant, sphere, uniform, airplane, globe):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+    assert multi[:] == multi[0:len(multi)]
+
+
+def test_slice_negatives(ant, sphere, uniform, airplane, globe):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[::-1]})
+    assert multi[::-1] == test_multi
+
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[-2:]})
+    assert multi[-2:] == test_multi
+
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[:-1]})
+    assert multi[:-1] == test_multi
+
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[-1:-4:-2]})
+    assert multi[-1:-4:-2] == test_multi
 
 
 def test_multi_block_list_index(ant, sphere, uniform, airplane, globe):
@@ -410,3 +458,37 @@ def test_multi_block_data_range():
     mi, ma = slices.get_data_range(volume.active_scalars_name)
     assert mi is not None
     assert ma is not None
+
+
+def test_multiblock_ref():
+    # can't use fixtures here as we need to remove all references for
+    # garbage collection
+    sphere = pyvista.Sphere()
+    cube = pyvista.Cube()
+
+    block = MultiBlock([sphere, cube])
+    block[0]["a_new_var"] = np.zeros(block[0].n_points)
+    assert "a_new_var" in block[0].array_names
+
+    assert sphere is block[0]
+    assert cube is block[1]
+
+    wref_sphere = weakref.ref(sphere)
+    wref_cube = weakref.ref(cube)
+
+    # verify reference remains
+    assert wref_sphere() is sphere
+    del sphere
+    assert wref_sphere() is not None
+
+    # verify __delitem__ works and removes reference
+    del block[0]
+    assert wref_sphere() is None
+
+    # verify reference remains
+    assert wref_cube() is cube
+
+    # verify the __setitem__(index, None) edge case
+    del cube
+    block[0] = None
+    assert wref_cube() is None
