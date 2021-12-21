@@ -10,12 +10,43 @@ Picking points on a mesh
 import pyvista as pv
 
 ###############################################################################
-
+# Pick points on a sphere
+# +++++++++++++++++++++++
+#
 sphere = pv.Sphere()
 
 p = pv.Plotter()
-sphere_actor = p.add_mesh(sphere, pickable=False)
+p.add_mesh(sphere, pickable=True)
+p.enable_point_picking()
+p.show()
 
+###############################################################################
+# Ignore the 3D window
+# ++++++++++++++++++++
+#
+# In the above example, both points on the mesh and points in the 3d window can be
+# selected. It is possible instead pick only points on the mesh.
+sphere = pv.Sphere()
+
+p = pv.Plotter()  # Make the 3D window unpickable
+p.add_mesh(sphere, pickable=True)
 p.enable_point_picking(pickable_window=False)
-sphere_actor.SetPickable(True)
+p.show()
+
+###############################################################################
+# Modify which actors are pickable
+# ++++++++++++++++++++++++++++++++
+#
+# After enabling point picking, we can modify which actors are pickable.
+sphere = pv.Sphere()
+cube = pv.Cube()
+cube.translate([10, 10, 0])
+
+p = pv.Plotter(pickable_window=False)
+sphere_actor = p.add_mesh(sphere, pickable=True)  # initially pickable
+cube_actor = p.add_mesh(cube, pickable=False)  # initially unpickable
+p.enable_point_picking(pickable_window=False)
+
+p.pickable_actors = [sphere_actor, cube_actor]  # now both are pickable
+p.view_xy()
 p.show()
