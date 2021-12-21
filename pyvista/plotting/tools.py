@@ -474,11 +474,11 @@ def parse_color(color, opacity=None, default_color=None):
         RGB(A) sequences should only contain values between 0 and 1.
         For example:
 
-            * ``'white'``
-            * ``'w'``
-            * ``[1, 1, 1]``
-            * ``[0.5, 1, 0.7, 1]``
-            * ``'#FFFFFF'``
+        * ``'white'``
+        * ``'w'``
+        * ``[1, 1, 1]``
+        * ``[0.5, 1, 0.7, 1]``
+        * ``'#FFFFFF'``
 
     opacity : float, optional
         Default opacity of the returned color. Used when ``color`` is

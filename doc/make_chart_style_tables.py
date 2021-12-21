@@ -96,17 +96,17 @@ def make_color_scheme_img(color_scheme, path):
     p.background_color = 'w'
     chart = pv.Chart2D()
     tmp_plot = chart.bar([0], [[1]]*2, color=color_scheme, orientation="H")
-    N = len(tmp_plot.colors)  # Use a temporary plot to determine the total number of colors in this scheme
-    plot = chart.bar([0], [[1]]*N, color=color_scheme, orientation="H")
+    n_colors = len(tmp_plot.colors)  # Use a temporary plot to determine the total number of colors in this scheme
+    plot = chart.bar([0], [[1]]*n_colors, color=color_scheme, orientation="H")
     chart.remove_plot(tmp_plot)
     plot.pen.color = 'w'
-    chart.x_range = [0, N]
+    chart.x_range = [0, n_colors]
     chart.hide_axes()
     p.add_chart(chart)
     _, img = p.show(screenshot=True, return_cpos=True)
     # Crop the image and save it
     p._save_image(img[34:78, 22:225, :], path, False)
-    return N
+    return n_colors
 
 
 def get_color_scheme_row(i, token, data):
@@ -117,8 +117,8 @@ def get_color_scheme_row(i, token, data):
      - .. image:: /{}
 """
     img_path = f"{IMAGE_DIR}/cs_{i}.png"
-    N = make_color_scheme_img(token, img_path)
-    return row_template.format(token, data["descr"], N, img_path)
+    n_colors = make_color_scheme_img(token, img_path)
+    return row_template.format(token, data["descr"], n_colors, img_path)
 
 
 def make_color_scheme_table():

@@ -3,7 +3,7 @@ Charts
 Charts API reference. These dedicated classes can be used to embed
 charts in plotting windows. Note that using charts requires a VTK
 version of at least 9.0 and in a future release will require
-`vtk>=9.2`.
+``vtk>=9.2``.
 
 .. currentmodule:: pyvista
 
@@ -18,7 +18,7 @@ version of at least 9.0 and in a future release will require
 
 
 To customize these charts, extra plot and utility classes are
-available in the `charts` module. Note that users should
+available in the ``charts`` module. Note that users should
 typically not instantiate these classes themselves, but rather
 use the dedicated methods and properties from the chart
 classes above.

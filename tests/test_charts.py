@@ -9,11 +9,15 @@ import pytest
 
 import pyvista
 from pyvista import examples
-from pyvista.plotting import charts
+from pyvista.plotting import charts, system_supports_plotting
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin',
                               reason='MacOS CI fails when downloading examples')
 
+skip_no_plotting = pytest.mark.skipif(
+    not system_supports_plotting(),
+    reason="Test requires system to support plotting"
+)
 
 def vtk_array_to_tuple(arr):
     return tuple(arr.GetValue(i) for i in range(arr.GetNumberOfValues()))
@@ -168,6 +172,7 @@ def test_brush():
     assert brush.GetTextureProperties() & REPEAT
 
 
+@skip_no_plotting
 def test_axis(chart_2d):
     l = "Y axis"
     r_fix, r_auto = [2, 5], None
@@ -316,6 +321,7 @@ def test_axis_label_font_size(chart_2d):
     assert axis.GetLabelProperties().GetFontSize() == font_size
 
 
+@skip_no_plotting
 @pytest.mark.parametrize("chart_f", ("chart_2d", "chart_box", "chart_pie", "chart_mpl"))
 def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
@@ -633,6 +639,7 @@ def test_stackplot(stack_plot):
     assert np.allclose(stack_plot.ys, ys)
 
 
+@skip_no_plotting
 def test_chart_2d(pl, chart_2d):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -786,6 +793,7 @@ def test_chart_2d(pl, chart_2d):
         assert not (axis.visible or axis.label_visible or axis.ticks_visible or axis.tick_labels_visible or axis.grid)
 
 
+@skip_no_plotting
 def test_chart_box(pl, chart_box, box_plot):
     data = [[0, 1, 1, 1, 2, 2, 3, 4, 4, 5, 5, 5, 6]]
     stats = [np.quantile(d, [0.0, 0.25, 0.5, 0.75, 1.0]) for d in data]
@@ -817,6 +825,7 @@ def test_chart_box(pl, chart_box, box_plot):
     assert np.allclose(box_plot.stats, stats)
 
 
+@skip_no_plotting
 def test_chart_pie(pl, chart_pie, pie_plot):
     data = [3, 4, 5]
     cs = "wild_flower"
@@ -846,6 +855,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     assert np.allclose(pie_plot.data, data)
 
 
+@skip_no_plotting
 def test_chart_mpl(pl, chart_mpl):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -870,6 +880,7 @@ def test_chart_mpl(pl, chart_mpl):
     assert np.allclose(chart._canvas.get_width_height(), (size[0]*r_w/2, size[1]*r_h/2))
 
 
+@skip_no_plotting
 def test_charts(pl):
     win_size = pl.window_size
     top_left = pyvista.Chart2D(size=(0.5, 0.5), loc=(0, 0.5))
@@ -908,6 +919,7 @@ def test_charts(pl):
     assert pl.renderers[0]._charts._scene is None
 
 
+@skip_no_plotting
 def test_iren_context_style(pl):
     chart = pyvista.Chart2D(size=(0.5, 0.5), loc=(0.5, 0.5))
     win_size = pl.window_size
@@ -929,3 +941,10 @@ def test_iren_context_style(pl):
     assert pl.iren._style == style
     assert pl.iren._style_class == style_class
     assert pl.iren._context_style.GetScene() is None
+
+
+def test_get_background_texture(chart_2d):
+    t_puppy = examples.download_puppy_texture()
+    chart_2d
+    chart_2d.background_texture = t_puppy
+    assert chart_2d.background_texture == t_puppy

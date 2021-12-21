@@ -138,15 +138,16 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     Parameters
     ----------
     color : color, optional
-        Color of the lines drawn using this pen. Any color parsable by :func:`pyvista.parse_color` is allowed. Defaults
-        to ``"k"``.
+        Color of the lines drawn using this pen. Any color parsable by
+        :func:`pyvista.parse_color` is allowed. Defaults to ``"k"``.
 
     width : float, optional
         Width of the lines drawn using this pen. Defaults to ``1``.
 
     style : str, optional
-        Style of the lines drawn using this pen. See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed line styles. Defaults
-        to ``"-"``.
+        Style of the lines drawn using this pen. See
+        :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed
+        line styles. Defaults to ``"-"``.
 
     Other Parameters
     ----------------
@@ -259,13 +260,13 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
     ----------
     color : color, optional
         Fill color of the shapes drawn using this brush. Any color
-        parsable by :func:`pyvista.parse_color` is allowed.  Defaults
-        to ``"k"``.
+        parsable by :func:`pyvista.parse_color` is allowed.  Defaults to
+        ``"k"``.
 
     texture : Texture, optional
-        Texture used to fill shapes drawn using this brush. Any
-        object convertible to a :class:`Texture` is
-        allowed. Defaults to ``None``.
+        Texture used to fill shapes drawn using this brush. Any object
+        convertible to a :class:`Texture` is allowed. Defaults to
+        ``None``.
 
     Other Parameters
     ----------------
@@ -2559,15 +2560,18 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         X coordinates of the points outlining the stacks (areas) to draw.
 
     ys : list or tuple of array_like
-        Size of the stacks (areas) to draw at the corresponding X coordinates. Each sequence defines the sizes of
-        one stack (area), which are stacked on top of each other.
+        Size of the stacks (areas) to draw at the corresponding X
+        coordinates. Each sequence defines the sizes of one stack
+        (area), which are stacked on top of each other.
 
     colors : list or tuple of color, optional
-        Color of the stacks (areas) drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
-        Defaults to ``None``.
+        Color of the stacks (areas) drawn in this plot. Any color
+        parsable by ``pyvista.parse_color`` is allowed.  Defaults to
+        ``None``.
 
     labels : list or tuple of str, optional
-        Label for each stack (area) drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
+        Label for each stack (area) drawn in this plot, as shown in
+        the chart's legend. Defaults to ``[]``.
 
     Examples
     --------
@@ -2701,12 +2705,15 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     Parameters
     ----------
     size : list or tuple, optional
-        Size of the chart in normalized coordinates. A size of ``(0, 0)`` is invisible, a size of ``(1, 1)`` occupies
-        the whole renderer's width and height.
+        Size of the chart in normalized coordinates. A size of ``(0,
+        0)`` is invisible, a size of ``(1, 1)`` occupies the whole
+        renderer's width and height.
 
     loc : list or tuple, optional
-        Location of the chart (its bottom left corner) in normalized coordinates. A location of ``(0, 0)`` corresponds
-        to the renderer's bottom left corner, a location of ``(1, 1)`` corresponds to the renderer's top right corner.
+        Location of the chart (its bottom left corner) in normalized
+        coordinates. A location of ``(0, 0)`` corresponds to the
+        renderer's bottom left corner, a location of ``(1, 1)``
+        corresponds to the renderer's top right corner.
 
     x_label : str, optional
         Label along the x-axis.  Defaults to ``'x'``.
@@ -2801,22 +2808,28 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         Parameters
         ----------
         fmt : str
-            Format string to parse. A format string consists of any combination of a valid marker
-            style, a valid line style and parsable color. The specific order does not matter. See
-            :attr:`pyvista.ScatterPlot2D.MARKER_STYLES` for a list of valid marker styles,
-            :attr:`pyvista.Pen.LINE_STYLES` for a list of valid line styles and
-            :func:`pyvista.parse_color` for an overview of parsable colors.
+            Format string to parse. A format string consists of any
+            combination of a valid marker style, a valid line style
+            and parsable color. The specific order does not
+            matter. See :attr:`pyvista.ScatterPlot2D.MARKER_STYLES`
+            for a list of valid marker styles,
+            :attr:`pyvista.Pen.LINE_STYLES` for a list of valid line
+            styles and :func:`pyvista.parse_color` for an overview of
+            parsable colors.
 
         Returns
         -------
         marker_style : str
-            Extracted marker style (empty string if no marker style was present in the format string).
+            Extracted marker style (empty string if no marker style
+            was present in the format string).
 
         line_style : str
-            Extracted line style (empty string if no line style was present in the format string).
+            Extracted line style (empty string if no line style was
+            present in the format string).
 
         color : str
-            Extracted color string (defaults to ``"b"`` if no color was present in the format string).
+            Extracted color string (defaults to ``"b"`` if no color
+            was present in the format string).
 
         Examples
         --------
@@ -2866,8 +2879,8 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         Parameters
         ----------
         x : array_like
-            Values to plot on the X-axis. In case ``y`` is ``None``, these are the values to plot
-            on the Y-axis instead.
+            Values to plot on the X-axis. In case ``y`` is ``None``,
+            these are the values to plot on the Y-axis instead.
 
         y : array_like, optional
             Values to plot on the Y-axis.
@@ -2937,14 +2950,16 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             Y coordinates of the points to draw.
 
         color : color, optional
-            Color of the points drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
-            to ``"b"``.
+            Color of the points drawn in this plot. Any color parsable
+            by ``pyvista.parse_color`` is allowed. Defaults to
+            ``"b"``.
 
         size : float, optional
             Size of the point markers drawn in this plot. Defaults to ``10``.
 
         style : str, optional
-            Style of the point markers drawn in this plot. See :ref:`ScatterPlot2D.MARKER_STYLES <scatter_marker_styles>`
+            Style of the point markers drawn in this plot. See
+            :ref:`ScatterPlot2D.MARKER_STYLES <scatter_marker_styles>`
             for a list of allowed marker styles. Defaults to ``"o"``.
 
         label : str, optional
@@ -2979,15 +2994,17 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             Y coordinates of the points through which a line should be drawn.
 
         color : color, optional
-            Color of the line drawn in this plot. Any color parsable by :func:`pyvista.parse_color` is allowed. Defaults
-            to ``"b"``.
+            Color of the line drawn in this plot. Any color parsable
+            by :func:`pyvista.parse_color` is allowed. Defaults to
+            ``"b"``.
 
         width : float, optional
             Width of the line drawn in this plot. Defaults to ``1``.
 
         style : str, optional
-            Style of the line drawn in this plot. See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed
-            line styles. Defaults to ``"-"``.
+            Style of the line drawn in this plot. See
+            :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of
+            allowed line styles. Defaults to ``"-"``.
 
         label : str, optional
             Label of this plot, as shown in the chart's legend. Defaults to ``""``.
@@ -3021,11 +3038,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             Y coordinates of the points on the first outline of the area to draw.
 
         y2 : array_like, optional
-            Y coordinates of the points on the second outline of the area to draw. Defaults to a sequence of zeros.
+            Y coordinates of the points on the second outline of the
+            area to draw. Defaults to a sequence of zeros.
 
         color : color, optional
-            Color of the area drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
-            to ``"b"``.
+            Color of the area drawn in this plot. Any color parsable
+            by ``pyvista.parse_color`` is allowed. Defaults to
+            ``"b"``.
 
         label : str, optional
             Label of this plot, as shown in the chart's legend. Defaults to ``""``.
@@ -3053,19 +3072,23 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         Parameters
         ----------
         x : array_like
-            Positions (along the x-axis for a vertical orientation, along the y-axis for
-            a horizontal orientation) of the bars to draw.
+            Positions (along the x-axis for a vertical orientation,
+            along the y-axis for a horizontal orientation) of the bars
+            to draw.
 
         y : array_like
-            Size of the bars to draw. Multiple bars can be stacked by passing a sequence of sequences.
+            Size of the bars to draw. Multiple bars can be stacked by
+            passing a sequence of sequences.
 
         color : color, optional
-            Color of the bars drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
-            to ``"b"``.
+            Color of the bars drawn in this plot. Any color parsable
+            by ``pyvista.parse_color`` is allowed. Defaults to
+            ``"b"``.
 
         orientation : str, optional
-            Orientation of the bars drawn in this plot. Either ``"H"`` for an horizontal orientation or ``"V"`` for a
-            vertical orientation. Defaults to ``"V"``.
+            Orientation of the bars drawn in this plot. Either ``"H"``
+            for an horizontal orientation or ``"V"`` for a vertical
+            orientation. Defaults to ``"V"``.
 
         label : str, optional
             Label of this plot, as shown in the chart's legend. Defaults to ``""``.
@@ -3096,15 +3119,18 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             X coordinates of the points outlining the stacks (areas) to draw.
 
         ys : list or tuple of array_like
-            Size of the stacks (areas) to draw at the corresponding X coordinates. Each sequence defines the sizes of
-            one stack (area), which are stacked on top of each other.
+            Size of the stacks (areas) to draw at the corresponding X
+            coordinates. Each sequence defines the sizes of one stack
+            (area), which are stacked on top of each other.
 
         colors : list or tuple of color, optional
-            Color of the stacks (areas) drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
-            Defaults to ``None``.
+            Color of the stacks (areas) drawn in this plot. Any color
+            parsable by ``pyvista.parse_color`` is allowed.  Defaults
+            to ``None``.
 
         labels : list or tuple of str, optional
-            Label for each stack (area) drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
+            Label for each stack (area) drawn in this plot, as shown
+            in the chart's legend. Defaults to ``[]``.
 
         Returns
         -------
@@ -3410,19 +3436,22 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
     """Class representing a box plot.
 
-    Users should typically not directly create new plot instances, but use the dedicated ``ChartBox`` class.
+    Users should typically not directly create new plot instances, but
+    use the dedicated ``ChartBox`` class.
 
     Parameters
     ----------
     data : list or tuple of array_like
-        Dataset(s) from which the relevant statistics will be calculated used to draw the box plot.
+        Dataset(s) from which the relevant statistics will be
+        calculated used to draw the box plot.
 
     colors : list or tuple of color, optional
-        Color of the boxes drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
-        Defaults to ``None``.
+        Color of the boxes drawn in this plot. Any color parsable by
+        ``pyvista.parse_color`` is allowed.  Defaults to ``None``.
 
     labels : list or tuple of str, optional
-        Label for each box drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
+        Label for each box drawn in this plot, as shown in the chart's
+        legend. Defaults to ``[]``.
 
     Examples
     --------
@@ -3526,13 +3555,16 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
     Parameters
     ----------
     data : list or tuple of array_like
-        Dataset(s) from which the relevant statistics will be calculated used to draw the box plot.
+        Dataset(s) from which the relevant statistics will be
+        calculated used to draw the box plot.
 
     colors : list or tuple of color, optional
-        Color used for each drawn boxplot. Defaults to ``None``, which uses the default color scheme.
+        Color used for each drawn boxplot. Defaults to ``None``, which
+        uses the default color scheme.
 
     labels : list or tuple of str, optional
-        Label for each drawn boxplot, as shown in the chart's legend. Defaults to ``[]``.
+        Label for each drawn boxplot, as shown in the chart's
+        legend. Defaults to ``[]``.
 
     Examples
     --------
@@ -3563,7 +3595,9 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         self.legend_visible = True
 
     def _render_event(self, *args, **kwargs):
-        pass  # ChartBox fills entire scene by default, so no resizing is needed (nor possible at this moment)
+        # ChartBox fills entire scene by default, so no resizing is
+        # needed (nor possible at this moment)
+        pass
 
     @property
     def _geometry(self):
@@ -3601,7 +3635,11 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
-        Note: The size of a ChartBox instance cannot be modified, it fills up the entire viewport by default.
+
+        Notes
+        -----
+        The size of a ChartBox instance cannot be modified, it fills
+        up the entire viewport by default.
         """
         return (1, 1)
 
@@ -3614,7 +3652,11 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
-        Note: The location of a ChartBox instance cannot be modified, it fills up the entire viewport by default.
+
+        Notes
+        -----
+        The location of a ChartBox instance cannot be modified, it
+        fills up the entire viewport by default.
         """
         return (0, 0)
 
@@ -3626,7 +3668,8 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
     """Class representing a pie plot.
 
-    Users should typically not directly create new plot instances, but use the dedicated :class:`ChartPie` class.
+    Users should typically not directly create new plot instances, but
+    use the dedicated :class:`ChartPie` class.
 
     Parameters
     ----------
@@ -3634,11 +3677,12 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         Relative size of each pie segment.
 
     colors : list or tuple of color, optional
-        Color of the segments drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed.
-        Defaults to ``None``.
+        Color of the segments drawn in this plot. Any color parsable
+        by ``pyvista.parse_color`` is allowed.  Defaults to ``None``.
 
     labels : list or tuple of str, optional
-        Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
+        Label for each pie segment drawn in this plot, as shown in the
+        chart's legend. Defaults to ``[]``.
 
     Other Parameters
     ----------------
@@ -3729,10 +3773,12 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         Relative size of each pie segment.
 
     colors : list or tuple of color, optional
-        Color used for each pie segment drawn in this plot. Defaults to ``None``, which uses the default color scheme.
+        Color used for each pie segment drawn in this plot. Defaults
+        to ``None``, which uses the default color scheme.
 
     labels : list or tuple of str, optional
-        Label for each pie segment drawn in this plot, as shown in the chart's legend. Defaults to ``[]``.
+        Label for each pie segment drawn in this plot, as shown in the
+        chart's legend. Defaults to ``[]``.
 
     Examples
     --------
@@ -3797,7 +3843,11 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
-        Note: The size of a ChartPie instance cannot be modified, it fills up the entire viewport by default.
+
+        Notes
+        -----
+        The size of a ChartPie instance cannot be modified, it fills
+        up the entire viewport by default.
         """
         return (1, 1)
 
@@ -3810,7 +3860,11 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
-        Note: The location of a ChartPie instance cannot be modified, it fills up the entire viewport by default.
+
+        Notes
+        -----
+        The location of a ChartPie instance cannot be modified, it
+        fills up the entire viewport by default.
         """
         return (0, 0)
 
@@ -3836,12 +3890,15 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         The matplotlib figure to draw.
 
     size : list or tuple, optional
-        Size of the chart in normalized coordinates. A size of ``(0, 0)`` is invisible, a size of ``(1, 1)`` occupies
-        the whole renderer's width and height.
+        Size of the chart in normalized coordinates. A size of ``(0,
+        0)`` is invisible, a size of ``(1, 1)`` occupies the whole
+        renderer's width and height.
 
     loc : list or tuple, optional
-        Location of the chart (its bottom left corner) in normalized coordinates. A location of ``(0, 0)`` corresponds
-        to the renderer's bottom left corner, a location of ``(1, 1)`` corresponds to the renderer's top right corner.
+        Location of the chart (its bottom left corner) in normalized
+        coordinates. A location of ``(0, 0)`` corresponds to the
+        renderer's bottom left corner, a location of ``(1, 1)``
+        corresponds to the renderer's top right corner.
 
     Examples
     --------
@@ -4051,8 +4108,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 class Charts:
     """Collection of charts for a renderer.
 
-    Users should typically not directly create new instances of this class, but use the dedicated
-    ``Plotter.add_chart`` method.
+    Users should typically not directly create new instances of this
+    class, but use the dedicated ``Plotter.add_chart`` method.
 
     """
 
@@ -4106,15 +4163,17 @@ class Charts:
     def toggle_interaction(self, mouse_pos):
         """Toggle interaction of the charts based on the given mouse position.
 
-        Disables interaction with all charts, except the one indicated by the mouse position.
-        In case the indicated chart was already interactive, interaction is disabled again.
+        Disables interaction with all charts, except the one indicated
+        by the mouse position.  In case the indicated chart was
+        already interactive, interaction is disabled again.
 
         Parameters
         ----------
         mouse_pos : tuple of float or bool
-            This parameter should be either False, to disable interaction with all charts; or a tuple
-            containing the mouse position, to disable interaction with all charts, except the one
-            indicated by the mouse, if any.
+            This parameter should be either False, to disable
+            interaction with all charts; or a tuple containing the
+            mouse position, to disable interaction with all charts,
+            except the one indicated by the mouse, if any.
 
         Returns
         -------
