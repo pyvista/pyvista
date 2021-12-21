@@ -8,6 +8,7 @@ jupyter_sphinx==0.3.2
 jupyterlab>=3.0.12
 lxml
 matplotlib
+meshio
 mypy
 mypy-extensions
 osmnx==1.1.1
@@ -21,7 +22,7 @@ scipy
 Sphinx>=4.0.0
 sphinx-autobuild
 sphinx-copybutton
-sphinx-gallery>=0.8.1
+sphinx-gallery>=0.10.1
 sphinx-notfound-page>=0.3.0
 sphinx-panels
 sphinxcontrib-napoleon

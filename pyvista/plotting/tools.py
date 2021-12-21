@@ -1,15 +1,15 @@
 """Module containing useful plotting tools."""
 
-import sys
 from enum import Enum
-import platform
 import os
+import platform
 from subprocess import PIPE, Popen
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
+
 from .colors import string_to_rgb
 
 
@@ -246,6 +246,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     Examples
     --------
     Create and plot an orientation box
+
     >>> import pyvista
     >>> actor = pyvista.create_axes_orientation_box(
     ...    line_width=1, text_scale=0.53,
@@ -256,7 +257,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     ...    labels_off=False, opacity=1.0)
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_actor(actor)
-    >>> pl.show()  # doctest:+SKIP
+    >>> pl.show()
 
     """
     if x_color is None:
@@ -384,8 +385,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
         available. Options are ('linear', 'nearest', 'zero', 'slinear',
         'quadratic', 'cubic', 'previous', 'next'.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import pyvista as pv
     >>> # Fetch the `sigmoid` mapping between 0 and 255
     >>> tf = pv.opacity_transfer_function("sigmoid", 256)

@@ -54,7 +54,7 @@ def voxelize(mesh, density=None, check_surface=True):
         density_x, density_y, density_z = [density] * 3
     if isinstance(density, (list, set, tuple)):
         density_x, density_y, density_z = density
-        
+
     x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
     x = np.arange(x_min, x_max, density_x)
     y = np.arange(y_min, y_max, density_y)

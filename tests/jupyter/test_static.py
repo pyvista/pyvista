@@ -1,12 +1,10 @@
 import pytest
-import numpy as np
 
-from pyvista import examples
 import pyvista as pv
 
 has_ipython = True
 try:
-    import IPython
+    import IPython  # noqa
     from PIL.Image import Image
 except:
     has_ipython = False

@@ -5,10 +5,10 @@ The data objects does not have any sort of spatial reference.
 """
 import numpy as np
 
-from pyvista import _vtk
 import pyvista
-from pyvista.utilities import (FieldAssociation, assert_empty_kwargs, get_array,
-                               row_array)
+from pyvista import _vtk
+from pyvista.utilities import FieldAssociation, get_array, row_array
+
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
 
@@ -452,6 +452,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def plot(self, *args, **kwargs):
         """Plot the texture as image data by itself."""
+        kwargs.setdefault("rgba", True)
         return self.to_image().plot(*args, **kwargs)
 
     @property

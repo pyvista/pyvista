@@ -6,6 +6,7 @@ Single line segment ray tracing for PolyData objects.
 """
 
 import pyvista as pv
+
 # Create source to ray trace
 sphere = pv.Sphere(radius=0.85)
 

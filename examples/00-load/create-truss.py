@@ -10,6 +10,7 @@ Plot connections between points in 3D as cylinders, colored by scalars.
 """
 
 import numpy as np
+
 import pyvista
 
 ###############################################################################

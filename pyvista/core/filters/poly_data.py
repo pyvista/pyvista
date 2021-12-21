@@ -6,11 +6,15 @@ import numpy as np
 
 import pyvista
 from pyvista import (
-    abstract_class, _vtk, NORMALS, generate_plane, assert_empty_kwargs,
-    vtk_id_list_to_array, get_array, get_array_association
+    NORMALS,
+    _vtk,
+    abstract_class,
+    assert_empty_kwargs,
+    generate_plane,
+    get_array_association,
+    vtk_id_list_to_array,
 )
-from pyvista.core.errors import (NotAllTrianglesError,
-                                 DeprecationError, VTKVersionError)
+from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 
@@ -200,7 +204,7 @@ class PolyDataFilters(DataSetFilters):
            meshes whereas the :func:`PolyDataFilters.intersection`
            filter returns the surface intersection between two meshes
            (which often resolves as a line).
-           
+
 
         .. note::
            Both meshes must be composed of all triangles.  Check with
@@ -314,6 +318,24 @@ class PolyDataFilters(DataSetFilters):
         """Merge these two meshes."""
         return self.merge(dataset)
 
+    def __iadd__(self, dataset):
+        """Merge another mesh into this one if possible.
+
+        "If possible" means that ``dataset`` is also a :class:`PolyData`.
+        Otherwise we have to return a :class:`pyvista.UnstructuredGrid`,
+        so the in-place merge attempt will raise.
+
+        """
+        try:
+            merged = self.merge(dataset, inplace=True)
+        except TypeError:
+            raise TypeError(
+                'In-place merge only possible if the other mesh '
+                'is also a PolyData.\nPlease use `mesh + other_mesh` '
+                'instead, which returns a new UnstructuredGrid.'
+            ) from None
+        return merged
+
     def merge(self, dataset, merge_points=True, inplace=False,
               main_has_priority=True, progress_bar=False):
         """Merge this mesh with one or more datasets.
@@ -323,6 +345,12 @@ class PolyDataFilters(DataSetFilters):
            :func:`PolyDataFilters.boolean_union` filter.  This filter
            does not attempt to create a manifold mesh and will include
            internal surfaces when two meshes overlap.
+
+        .. note::
+           The ``+`` operator between two meshes uses this filter with
+           the default parameters. When the other mesh is also a
+           :class:`pyvista.PolyData`, in-place merging via ``+=`` is
+           similarly possible.
 
         Parameters
         ----------
@@ -334,7 +362,9 @@ class PolyDataFilters(DataSetFilters):
 
         inplace : bool, optional
             Updates grid inplace when ``True`` if the input type is a
-            :class:`pyvista.UnstructuredGrid`.
+            :class:`pyvista.PolyData`. For other input meshes the
+            result is a :class:`pyvista.UnstructuredGrid` which makes
+            in-place operation impossible.
 
         main_has_priority : bool, optional
             When this parameter is ``True`` and ``merge_points=True``,
@@ -370,16 +400,24 @@ class PolyDataFilters(DataSetFilters):
         if not_pd:
             return DataSetFilters.merge(self, dataset,
                                         merge_points=merge_points,
+                                        main_has_priority=main_has_priority,
                                         inplace=inplace)
 
         append_filter = pyvista._vtk.vtkAppendPolyData()
-        append_filter.AddInputData(self)
+
+        # note: unlike DataSetFilters.merge, we must put the
+        # "to be preserved" dataset last due to the call to clean()
+        if main_has_priority:
+            append_filter.AddInputData(self)
 
         if isinstance(dataset, pyvista.DataSet):
             append_filter.AddInputData(dataset)
         else:
             for data in dataset:
                 append_filter.AddInputData(data)
+
+        if not main_has_priority:
+            append_filter.AddInputData(self)
 
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
@@ -388,8 +426,8 @@ class PolyDataFilters(DataSetFilters):
                                   strips_to_polys=False)
 
         if inplace:
-            dataset.deep_copy(merged)
-            return dataset
+            self.deep_copy(merged)
+            return self
 
         return merged
 
@@ -560,7 +598,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True, 
+        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True,
         ...                      clim=[0, 1])
 
         """
@@ -734,7 +772,7 @@ class PolyDataFilters(DataSetFilters):
             disconnected from each other. This can give superior
             results in some cases. If ``pre_split_mesh`` is set to
             ``True``, the mesh is split with the specified
-            ``split_angle.`` Otherwise mesh splitting is deferred as
+            ``split_angle``. Otherwise mesh splitting is deferred as
             long as possible.
 
         preserve_topology : bool, optional
@@ -1835,7 +1873,9 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError
 
         try:
-            import trimesh, rtree, pyembree
+            import pyembree  # noqa
+            import rtree  # noqa
+            import trimesh  # noqa
         except (ModuleNotFoundError, ImportError):
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
@@ -2131,7 +2171,7 @@ class PolyDataFilters(DataSetFilters):
 
         This filter can be used to generate a 2d surface from a set of
         points on a plane.  If you want to create a surface from a
-        point cloud, see :func:`pyvista.DataSetFilters.reconstruct_surface`.
+        point cloud, see :func:`pyvista.PolyDataFilters.reconstruct_surface`.
 
         Parameters
         ----------
@@ -2806,3 +2846,82 @@ class PolyDataFilters(DataSetFilters):
             output.cell_data.GetAbstractArray(0).SetName('collision_rgba')
 
         return output, alg.GetNumberOfContacts()
+
+    def reconstruct_surface(self, nbr_sz=None, sample_spacing=None,
+                            progress_bar=False):
+        """Reconstruct a surface from the points in this dataset.
+
+        This filter takes a list of points assumed to lie on the
+        surface of a solid 3D object. A signed measure of the distance
+        to the surface is computed and sampled on a regular grid. The
+        grid can then be contoured at zero to extract the surface. The
+        default values for neighborhood size and sample spacing should
+        give reasonable results for most uses but can be set if
+        desired.
+
+        This is helpful when generating surfaces from point clouds and
+        is more reliable than :func:`DataSetFilters.delaunay_3d`.
+
+        Parameters
+        ----------
+        nbr_sz : int, optional
+            Specify the number of neighbors each point has, used for
+            estimating the local surface orientation.
+
+            The default value of 20 should be fine for most
+            applications, higher values can be specified if the spread
+            of points is uneven. Values as low as 10 may yield
+            adequate results for some surfaces. Higher values cause
+            the algorithm to take longer and will cause
+            errors on sharp boundaries.
+
+        sample_spacing : float, optional
+            The spacing of the 3D sampling grid.  If not set, a
+            reasonable guess will be made.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Reconstructed surface.
+
+        Examples
+        --------
+        Create a point cloud out of a sphere and reconstruct a surface
+        from it.
+
+        >>> import pyvista as pv
+        >>> points = pv.wrap(pv.Sphere().points)
+        >>> surf = points.reconstruct_surface()
+
+        >>> pl = pv.Plotter(shape=(1,2))
+        >>> _ = pl.add_mesh(points)
+        >>> _ = pl.add_title('Point Cloud of 3D Surface')
+        >>> pl.subplot(0,1)
+        >>> _ = pl.add_mesh(surf, color=True, show_edges=True)
+        >>> _ = pl.add_title('Reconstructed Surface')
+        >>> pl.show()
+
+        See :ref:`surface_reconstruction_example` for more examples
+        using this filter.
+
+        """
+        alg = _vtk.vtkSurfaceReconstructionFilter()
+        alg.SetInputDataObject(self)
+        if nbr_sz is not None:
+            alg.SetNeighborhoodSize(nbr_sz)
+        if sample_spacing is not None:
+            alg.SetSampleSpacing(sample_spacing)
+
+        # connect using ports as this will be slightly faster
+        mc = _vtk.vtkMarchingCubes()
+        mc.SetComputeNormals(False)
+        mc.SetComputeScalars(False)
+        mc.SetComputeGradients(False)
+        mc.SetInputConnection(alg.GetOutputPort())
+        mc.SetValue(0, 0.0)
+        _update_alg(mc, progress_bar, 'Reconstructing surface')
+        surf = pyvista.wrap(mc.GetOutput())
+        return surf

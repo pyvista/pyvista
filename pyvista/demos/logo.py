@@ -14,11 +14,11 @@ plot_logo(screenshot='pyvista_logo_sm_sq.png', window_size=(960, 960), cpos=cpos
 
 """
 import os
-from pyvista import examples
-import pyvista
-from pyvista import _vtk
 
 import numpy as np
+
+import pyvista
+from pyvista import _vtk, examples
 
 THIS_PATH = os.path.dirname(os.path.realpath(__file__))
 

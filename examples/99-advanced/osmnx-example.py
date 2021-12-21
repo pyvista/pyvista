@@ -12,10 +12,13 @@ Start by generating a graph from an address.
 
 """
 
-import osmnx as ox
 import numpy as np
+import osmnx as ox
 
 import pyvista as pv
+
+# Alternatively, use the pickeled graph included in our examples.
+from pyvista import examples
 
 ###############################################################################
 # Read in the graph directly from the Open Street Map server.
@@ -24,8 +27,6 @@ import pyvista as pv
 # graph = ox.graph_from_address(address, dist=500, network_type='drive')
 # pickle.dump(graph, open('/tmp/tmp.p', 'wb'))
 
-# Alternatively, use the pickeled graph included in our examples.
-from pyvista import examples
 graph = examples.download_osmnx_graph()
 
 

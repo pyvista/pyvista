@@ -14,6 +14,7 @@ functionality of which can be enabled for spotlights:
 """
 # sphinx_gallery_thumbnail_number = 1
 import numpy as np
+
 import pyvista as pv
 from pyvista import examples
 

@@ -11,7 +11,6 @@ We can plot individual components of multi-component arrays with the
 import pyvista as pv
 from pyvista import examples
 
-
 ###############################################################################
 # Download an example notched beam stress
 mesh = examples.download_notch_displacement()

@@ -2,6 +2,7 @@ import pytest
 
 import pyvista as pv
 
+
 def test_compare_images_two_plotters_same(sphere, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
     pl1 = pv.Plotter()

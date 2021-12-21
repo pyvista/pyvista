@@ -1,6 +1,6 @@
 """Type aliases for type hints."""
 
-from typing import Union, List, Tuple, Sequence
+from typing import List, Sequence, Tuple, Union
 
 import numpy as np
 

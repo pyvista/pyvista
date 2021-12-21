@@ -4,7 +4,6 @@ import pytest
 
 import pyvista as pv
 
-
 has_ipyvtklink = True
 try:
     from ipyvtklink.viewer import ViewInteractiveWidget

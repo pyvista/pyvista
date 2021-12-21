@@ -1,14 +1,14 @@
 """
 See the image regression notes in doc/extras/developer_notes.rst
 """
-import time
-import platform
-import warnings
 import inspect
-import pathlib
+import io
 import os
-from weakref import proxy
+import pathlib
 from pathlib import Path
+import platform
+import time
+import warnings
 
 from PIL import Image
 import imageio
@@ -17,12 +17,11 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista._vtk import VTK9
 from pyvista import examples
+from pyvista._vtk import VTK9
+from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
-from pyvista.core.errors import DeprecationError
-
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -39,15 +38,8 @@ try:
 except:
     ffmpeg_failed = True
 
-try:
-    from vtkmodules.vtkCommonCore import vtkVersion
-    vtk_dev = len(str(vtkVersion().GetVTKBuildVersion())) > 2
-except:
-    vtk_dev = False
-
 # These tests fail with mesa opengl on windows
-skip_windows_dev_whl = pytest.mark.skipif(os.name == 'nt' and vtk_dev,
-                                          reason='Test fails on Windows with VTK dev wheels')
+skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 
 # Reset image cache with new images
@@ -183,7 +175,7 @@ def test_export_gltf(tmpdir, sphere, airplane):
 
 
 @skip_not_vtk9
-@skip_windows_dev_whl
+@skip_windows
 @pytest.mark.skipif(AZURE_CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere):
     """Test PBR rendering"""
@@ -953,6 +945,17 @@ def test_screenshot(tmpdir):
         plotter.screenshot()
 
 
+def test_screenshot_bytes():
+    # Test screenshot to bytes object
+    buffer = io.BytesIO()
+    plotter = pyvista.Plotter(off_screen=True)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.show(screenshot=buffer)
+    buffer.seek(0)
+    im = Image.open(buffer)
+    assert im.format == 'PNG'
+
+
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
 def test_save_screenshot(tmpdir, sphere, ext):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp' + ext))
@@ -1324,7 +1327,7 @@ def test_subplot_groups_fail():
         pyvista.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
 
-@skip_windows_dev_whl
+@skip_windows
 def test_link_views(sphere):
     plotter = pyvista.Plotter(shape=(1, 4))
     plotter.subplot(0, 0)
@@ -1999,3 +2002,18 @@ def test_add_cursor():
     plotter.add_mesh(sphere)
     plotter.add_cursor()
     plotter.show(before_close_callback=verify_cache_image)
+
+def test_enable_stereo_render():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    pl.camera.distance = 0.1
+    pl.enable_stereo_render()
+    pl.show(before_close_callback=verify_cache_image)
+
+def test_disable_stereo_render():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    pl.camera.distance = 0.1
+    pl.enable_stereo_render()
+    pl.disable_stereo_render()
+    pl.show(before_close_callback=verify_cache_image)
