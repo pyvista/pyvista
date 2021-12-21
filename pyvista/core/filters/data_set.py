@@ -1244,9 +1244,9 @@ class DataSetFilters:
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
-        scalars : str, iterable, optional
-            Name of scalars to threshold on. Defaults to currently
-            active scalars.
+        scalars : str, numpy.ndarray, optional
+            Name or array of scalars to threshold on. Defaults to
+            currently active scalars.
 
         compute_normals : bool, optional
             Compute normals for the dataset.
@@ -1310,9 +1310,9 @@ class DataSetFilters:
         >>> n = 100
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
         >>> grid = pv.UniformGrid(
-        ...     (n, n, n),
-        ...     (abs(x_min)/n*2, abs(y_min)/n*2, abs(z_min)/n*2),
-        ...     (x_min, y_min, z_min),
+        ...     dim=(n, n, n),
+        ...     spacing=(abs(x_min)/n*2, abs(y_min)/n*2, abs(z_min)/n*2),
+        ...     origin=(x_min, y_min, z_min),
         ... )
         >>> x, y, z = grid.points.T
         >>> values = f(x, y, z)

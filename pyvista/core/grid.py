@@ -1,12 +1,15 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
+from collections import Sequence
 import logging
 import pathlib
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import abstract_class
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 from .dataset import DataSet
 from .filters import UniformGridFilters, _get_output
@@ -250,92 +253,109 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
 class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     """Models datasets with uniform spacing in the three coordinate directions.
 
-    Can be initialized in several ways:
+    Can be initialized in one of several ways:
 
     - Create empty grid
     - Initialize from a vtk.vtkImageData object
-    - Initialize directly from the point arrays
+    - Initialize based on dimensions, cell spacing, and origin.
 
-    See ``_from_specs`` in the documentation for more details on
-    initializing from point arrays.
+    .. versionchanged:: 0.33.0
+        First argument must now be either a path or
+        ``vtk.vtkImageData``. Use keyword arguments to specify the
+        dimensions, spacing, and origin of the uniform grid.
 
     Parameters
     ----------
-    uinput : str, vtk.DataSet, or pyvista.DataSet, optional
+    uinput : str, vtk.vtkImageData, pyvista.UniformGrid, optional
         Filename or dataset to initialize the uniform grid from.  If
-        set, remainder of parameters are ignored.
+        set, remainder of arguments are ignored.
 
     dims : iterable, optional
         Dimensions of the uniform grid.
 
     spacing : iterable, optional
         Spacing of the uniform in each dimension.  Defaults to
-        ``(1.0, 1.0, 1.0)``
+        ``(1.0, 1.0, 1.0)``.
 
     origin : iterable, optional
-        Origin of the uniform grid.  Defaults to ``(0.0, 0.0, 0.0)``
+        Origin of the uniform grid.  Defaults to ``(0.0, 0.0, 0.0)``.
 
     Examples
     --------
-    Create an empty grid.
+    Create an empty UniformGrid.
 
     >>> import pyvista
     >>> grid = pyvista.UniformGrid()
 
-    Initialize from a vtk.vtkImageData object.
+    Initialize from a ``vtk.vtkImageData`` object.
 
     >>> import vtk
     >>> vtkgrid = vtk.vtkImageData()
     >>> grid = pyvista.UniformGrid(vtkgrid)
 
-    Initialize using using just the grid dimensions.
+    Initialize using using just the grid dimensions and default
+    spacing and origin.
 
-    >>> dims = (10, 10, 10)
-    >>> grid = pyvista.UniformGrid(dims)
+    >>> grid = pyvista.UniformGrid(dims=(10, 10, 10))
 
     Initialize using dimensions and spacing.
 
-    >>> dims = (10, 10, 10)
-    >>> spacing = (2, 1, 5)
-    >>> grid = pyvista.UniformGrid(dims, spacing)
+    >>> grid = pyvista.UniformGrid(
+    ...     dims=(10, 10, 10),
+    ...     spacing=(2, 1, 5),
+    ... )
 
     Initialize using dimensions, spacing, and an origin.
 
-    >>> dims = (10, 10, 10)
-    >>> spacing = (2, 1, 5)
-    >>> origin = (10, 35, 50)
-    >>> grid = pyvista.UniformGrid(dims, spacing, origin)
+    >>> grid = pyvista.UniformGrid(
+    ...     dims=(10, 10, 10),
+    ...     spacing=(2, 1, 5),
+    ...     origin=(10, 35, 50),
+    ... )
 
     """
 
     _WRITERS = {'.vtk': _vtk.vtkDataSetWriter, '.vti': _vtk.vtkXMLImageDataWriter}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            uinput=None,
+            dims=None,
+            spacing=(1.0, 1.0, 1.0),
+            origin=(0.0, 0.0, 0.0)
+    ):
         """Initialize the uniform grid."""
         super().__init__()
 
-        if len(args) == 1:
-            if isinstance(args[0], _vtk.vtkImageData):
-                self.deep_copy(args[0])
-            elif isinstance(args[0], (str, pathlib.Path)):
-                self._from_file(args[0])
+        # permit old behavior
+        if isinstance(uinput, Sequence) and not isinstance(uinput, str):
+            warnings.warn(
+                "Behavior of pyvista.UniformGrid has changed. First argument must be "
+                "either a ``vtk.vtkImageData`` or path.",
+                PyvistaDeprecationWarning
+            )
+            dims = uinput
+            uinput = None
+
+        # first argument must be either vtkImageData or a path
+        if uinput is not None:
+            if isinstance(uinput, _vtk.vtkImageData):
+                self.deep_copy(uinput)
+            elif isinstance(uinput, (str, pathlib.Path)):
+                self._from_file(uinput)
             else:
-                arg0_is_valid = len(args[0]) == 3
-                self._from_specs(args[0])
-
-        elif len(args) > 1 and len(args) < 4:
-            arg0_is_valid = len(args[0]) == 3
-            arg1_is_valid = False
-            if len(args) > 1:
-                arg1_is_valid = len(args[1]) == 3
-            arg2_is_valid = False
-            if len(args) > 2:
-                arg2_is_valid = len(args[2]) == 3
-
-            if all([arg0_is_valid, arg1_is_valid, arg2_is_valid]):
-                self._from_specs(args[0], args[1], args[2])
-            elif all([arg0_is_valid, arg1_is_valid]):
-                self._from_specs(args[0], args[1])
+                raise TypeError(
+                    "First argument, ``uinput`` must be either ``vtk.vtkImageData`` "
+                    f"or a path, not {type(uinput)}.  Use keyword arguments to "
+                    "specify dimensions, spacing, and origin. For example:\n\n"
+                    "    >>> grid = pyvista.UniformGrid(\n"
+                    "    ...     dims=(10, 10, 10),\n"
+                    "    ...     spacing=(2, 1, 5),\n"
+                    "    ...     origin=(10, 35, 50),\n"
+                    "    ... )\n"
+                )
+        elif dims is not None:
+            self._from_specs(dims, spacing, origin)
 
     def __repr__(self):
         """Return the default representation."""
@@ -355,13 +375,13 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         Parameters
         ----------
         dims : tuple(int)
-            Length 3 tuple of ints specifying how many nodes along each axis
+            Length 3 tuple of ints specifying how many nodes along each axis.
 
         spacing : tuple(float)
-            Length 3 tuple of floats/ints specifying the node spacings for each axis
+            Length 3 tuple of floats/ints specifying the node spacings for each axis.
 
         origin : tuple(float)
-            Length 3 tuple of floats/ints specifying minimum value for each axis
+            Length 3 tuple of floats/ints specifying minimum value for each axis.
 
         """
         xn, yn, zn = dims[0], dims[1], dims[2]

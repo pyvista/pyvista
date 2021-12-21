@@ -48,7 +48,11 @@ def grid():
 def uniform_vec():
     nx, ny, nz = 20, 15, 5
     origin = (-(nx - 1)*0.1/2, -(ny - 1)*0.1/2, -(nz - 1)*0.1/2)
-    mesh = pyvista.UniformGrid((nx, ny, nz), (.1, .1, .1), origin)
+    mesh = pyvista.UniformGrid(
+        dims=(nx, ny, nz),
+        spacing=(.1, .1, .1),
+        origin=origin
+    )
     mesh['vectors'] = mesh.points
     return mesh
 
@@ -497,7 +501,7 @@ def test_compute_cell_sizes(datasets):
         assert 'Area' in result.array_names
         assert 'Volume' in result.array_names
     # Test the volume property
-    grid = pyvista.UniformGrid((10,10,10))
+    grid = pyvista.UniformGrid(dims=(10, 10, 10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
     assert np.allclose(grid.volume, volume)
 
@@ -820,7 +824,11 @@ def test_streamlines_from_source(uniform_vec):
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
-    source = pyvista.UniformGrid([5, 5, 5], [0.1, 0.1, 0.1], [0, 0, 0])
+    source = pyvista.UniformGrid(
+        dims=[5, 5, 5],
+        spacing=[0.1, 0.1, 0.1],
+        origin=[0, 0, 0]
+    )
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
