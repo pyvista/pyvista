@@ -288,8 +288,8 @@ class PickingHelper:
         def _end_pick_event(picker, event):
 
             picked_point_id = picker.GetPointId()
-            if not pickable_window and not picked_point_id >= 0:
-                return
+            if (not pickable_window) and (picked_point_id < 0):
+                return None
 
             self.picked_point = np.array(picker.GetPickPosition())
             self.picked_mesh = picker.GetDataSet()
