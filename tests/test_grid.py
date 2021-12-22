@@ -646,6 +646,9 @@ def test_cast_rectilinear_grid():
 
 
 def test_create_uniform_grid_from_specs():
+    # empty
+    grid = pyvista.UniformGrid()
+
     # create UniformGrid
     dims = [10, 10, 10]
     grid = pyvista.UniformGrid(dims=dims) # Using default spacing and origin
@@ -667,6 +670,33 @@ def test_create_uniform_grid_from_specs():
     assert grid.dimensions == dims
     assert grid.origin == origin
     assert grid.spacing == spacing
+
+    # all args (deprecated)
+    with pytest.warns(
+            PyvistaDeprecationWarning,
+            match="Behavior of pyvista.UniformGrid has changed"
+    ):
+        grid = pyvista.UniformGrid(dims, origin, spacing)
+        assert grid.dimensions == dims
+        assert grid.origin == origin
+        assert grid.spacing == spacing
+
+    # just dims (deprecated)
+    with pytest.warns(
+            PyvistaDeprecationWarning,
+            match="Behavior of pyvista.UniformGrid has changed"
+    ):
+        grid = pyvista.UniformGrid(dims)
+        assert grid.dimensions == dims
+
+    # uniform grid from a uniform grid
+    grid = pyvista.UniformGrid(dims=dims, spacing=spacing, origin=origin)
+    grid_from_grid = pyvista.UniformGrid(grid)
+    assert grid == grid_from_grid
+
+    # and is a copy
+    grid.origin = [0, 0, 0]
+    assert grid != grid_from_grid
 
 
 def test_uniform_grid_invald_args():

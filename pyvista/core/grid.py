@@ -294,7 +294,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     >>> grid = pyvista.UniformGrid(vtkgrid)
 
     Initialize using using just the grid dimensions and default
-    spacing and origin.
+    spacing and origin. These must be keyword arguments.
 
     >>> grid = pyvista.UniformGrid(dims=(10, 10, 10))
 
@@ -313,19 +313,34 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     ...     origin=(10, 35, 50),
     ... )
 
+    Initialize from another UniformGrid.
+
+    >>> grid = pyvista.UniformGrid(
+    ...     dims=(10, 10, 10),
+    ...     spacing=(2, 1, 5),
+    ...     origin=(10, 35, 50),
+    ... )
+    >>> grid_from_grid = pyvista.UniformGrid(grid)
+    >>> grid_from_grid == grid
+    True
+
     """
 
     _WRITERS = {'.vtk': _vtk.vtkDataSetWriter, '.vti': _vtk.vtkXMLImageDataWriter}
 
     def __init__(
             self,
-            uinput=None,
+            *args,
             dims=None,
             spacing=(1.0, 1.0, 1.0),
             origin=(0.0, 0.0, 0.0)
     ):
         """Initialize the uniform grid."""
         super().__init__()
+
+        uinput = None
+        if args:
+            uinput = args[0]
 
         # permit old behavior
         if isinstance(uinput, Sequence) and not isinstance(uinput, str):
@@ -336,6 +351,26 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
             )
             dims = uinput
             uinput = None
+
+        if len(args) > 1:
+            warnings.warn(
+                "Behavior of pyvista.UniformGrid has changed. Use keyword arguments to "
+                "specify dimensions, spacing, and origin. For example:\n\n"
+                "    >>> grid = pyvista.UniformGrid(\n"
+                "    ...     dims=(10, 10, 10),\n"
+                "    ...     spacing=(2, 1, 5),\n"
+                "    ...     origin=(10, 35, 50),\n"
+                "    ... )\n",
+                PyvistaDeprecationWarning
+            )
+            origin = args[1]
+            if len(args) > 2:
+                spacing = args[2]
+            if len(args) > 3:
+                raise ValueError(
+                    "Too many arguments specified for UniformGrid. Accepts at most "
+                    f"3, and {len(args)} have been input."
+                )
 
         # first argument must be either vtkImageData or a path
         if uinput is not None:
