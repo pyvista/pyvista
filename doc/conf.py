@@ -1,6 +1,10 @@
 import datetime
+import locale
 import os
 import sys
+
+# Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
+locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 if sys.version_info >= (3, 0):
     import faulthandler
@@ -8,9 +12,11 @@ if sys.version_info >= (3, 0):
     faulthandler.enable()
 
 sys.path.insert(0, os.path.abspath("."))
+import make_chart_style_tables
 import make_external_gallery
 
 make_external_gallery.make_example_gallery()
+make_chart_style_tables.make_all()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
@@ -76,6 +82,7 @@ coverage_additional_modules = [
 
     'pyvista.plotting.axes',
     'pyvista.plotting.camera',
+    'pyvista.plotting.charts',
     'pyvista.plotting.helpers',
     'pyvista.plotting.lights',
     'pyvista.plotting.picking',
@@ -292,6 +299,15 @@ def reset_pyvista(gallery_conf, fname):
     pyvista.set_plot_theme('document')
 
 
+# skip building the osmnx example if osmnx is not installed
+has_osmnx = False
+try:
+    import osmnx, fiona  # noqa: F401 isort: skip
+    has_osmnx = True
+except:
+    pass
+
+
 sphinx_gallery_conf = {
     # convert rst to md for ipynb
     "pypandoc": True,
@@ -300,7 +316,7 @@ sphinx_gallery_conf = {
     # path where to save gallery generated examples
     "gallery_dirs": ["examples"],
     # Patter to search for example files
-    "filename_pattern": r"\.py",
+    "filename_pattern": r"\.py" if has_osmnx else r"(?!osmnx-example)\.py",
     # Remove the "Download all examples" button from the top level gallery
     "download_all_examples": False,
     # Sort gallery example by file name instead of number of lines (default)

@@ -324,7 +324,7 @@ class DataObject:
 
         Add field data to a UniformGrid dataset.
 
-        >>> mesh = pyvista.UniformGrid((2, 2, 1))
+        >>> mesh = pyvista.UniformGrid(dims=(2, 2, 1))
         >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'],
         ...                      'my-field-data')
         >>> mesh['my-field-data']
@@ -462,7 +462,7 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid((10, 10, 5))
+        >>> source = pv.UniformGrid(dims=(10, 10, 5))
         >>> target = pv.UniformGrid()
         >>> target.copy_structure(source)
         >>> target.plot(show_edges=True)
@@ -481,9 +481,9 @@ class DataObject:
         Examples
         --------
         >>> import pyvista as pv
-        >>> source = pv.UniformGrid((10, 10, 5))
+        >>> source = pv.UniformGrid(dims=(10, 10, 5))
         >>> source = source.compute_cell_sizes()
-        >>> target = pv.UniformGrid((10, 10, 5))
+        >>> target = pv.UniformGrid(dims=(10, 10, 5))
         >>> target.copy_attributes(source)
         >>> target.plot(scalars='Volume', show_edges=True)
 

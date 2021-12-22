@@ -886,7 +886,7 @@ def wrap(dataset):
         if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
             return pyvista.PolyData(dataset)
         elif dataset.ndim == 3:
-            mesh = pyvista.UniformGrid(dataset.shape)
+            mesh = pyvista.UniformGrid(dims=dataset.shape)
             mesh['values'] = dataset.ravel(order='F')
             mesh.active_scalars_name = 'values'
             return mesh

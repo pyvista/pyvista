@@ -10,6 +10,7 @@ import pyvista
 from pyvista import examples
 from pyvista._vtk import VTK9
 from pyvista.plotting import system_supports_plotting
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -645,24 +646,68 @@ def test_cast_rectilinear_grid():
 
 
 def test_create_uniform_grid_from_specs():
+    # empty
+    grid = pyvista.UniformGrid()
+
     # create UniformGrid
     dims = [10, 10, 10]
-    grid = pyvista.UniformGrid(dims) # Using default spacing and origin
-    assert grid.dimensions == [10, 10, 10]
+    grid = pyvista.UniformGrid(dims=dims) # Using default spacing and origin
+    assert grid.dimensions == dims
     assert grid.extent == [0, 9, 0, 9, 0, 9]
     assert grid.origin == [0.0, 0.0, 0.0]
     assert grid.spacing == [1.0, 1.0, 1.0]
+
+    # Using default origin
     spacing = [2, 1, 5]
-    grid = pyvista.UniformGrid(dims, spacing) # Using default origin
-    assert grid.dimensions == [10, 10, 10]
+    grid = pyvista.UniformGrid(dims=dims, spacing=spacing)
+    assert grid.dimensions == dims
     assert grid.origin == [0.0, 0.0, 0.0]
-    assert grid.spacing == [2.0, 1.0, 5.0]
+    assert grid.spacing == spacing
     origin = [10, 35, 50]
-    grid = pyvista.UniformGrid(dims, spacing, origin) # Everything is specified
-    assert grid.dimensions == [10, 10, 10]
-    assert grid.origin == [10.0, 35.0, 50.0]
-    assert grid.spacing == [2.0, 1.0, 5.0]
-    assert grid.dimensions == [10, 10, 10]
+
+    # Everything is specified
+    grid = pyvista.UniformGrid(dims=dims, spacing=spacing, origin=origin)
+    assert grid.dimensions == dims
+    assert grid.origin == origin
+    assert grid.spacing == spacing
+
+    # all args (deprecated)
+    with pytest.warns(
+            PyvistaDeprecationWarning,
+            match="Behavior of pyvista.UniformGrid has changed"
+    ):
+        grid = pyvista.UniformGrid(dims, origin, spacing)
+        assert grid.dimensions == dims
+        assert grid.origin == origin
+        assert grid.spacing == spacing
+
+    # just dims (deprecated)
+    with pytest.warns(
+            PyvistaDeprecationWarning,
+            match="Behavior of pyvista.UniformGrid has changed"
+    ):
+        grid = pyvista.UniformGrid(dims)
+        assert grid.dimensions == dims
+
+    # uniform grid from a uniform grid
+    grid = pyvista.UniformGrid(dims=dims, spacing=spacing, origin=origin)
+    grid_from_grid = pyvista.UniformGrid(grid)
+    assert grid == grid_from_grid
+
+    # and is a copy
+    grid.origin = [0, 0, 0]
+    assert grid != grid_from_grid
+
+
+def test_uniform_grid_invald_args():
+    with pytest.warns(
+            PyvistaDeprecationWarning,
+            match="Behavior of pyvista.UniformGrid has changed"
+    ):
+        pyvista.UniformGrid((1, 1, 1))
+
+    with pytest.raises(TypeError):
+        pyvista.UniformGrid(1)
 
 
 def test_uniform_setters():
