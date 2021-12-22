@@ -1,6 +1,10 @@
 import datetime
+import locale
 import os
 import sys
+
+# Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
+locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 if sys.version_info >= (3, 0):
     import faulthandler
@@ -8,9 +12,11 @@ if sys.version_info >= (3, 0):
     faulthandler.enable()
 
 sys.path.insert(0, os.path.abspath("."))
+import make_chart_style_tables
 import make_external_gallery
 
 make_external_gallery.make_example_gallery()
+make_chart_style_tables.make_all()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
@@ -76,6 +82,7 @@ coverage_additional_modules = [
 
     'pyvista.plotting.axes',
     'pyvista.plotting.camera',
+    'pyvista.plotting.charts',
     'pyvista.plotting.helpers',
     'pyvista.plotting.lights',
     'pyvista.plotting.picking',

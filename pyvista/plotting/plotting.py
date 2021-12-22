@@ -863,6 +863,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.update_bounds_axes``."""
         return self.renderer.update_bounds_axes(*args, **kwargs)
 
+    @wraps(Renderer.add_chart)
+    def add_chart(self, *args, **kwargs):
+        """Wrap ``Renderer.add_chart``."""
+        return self.renderer.add_chart(*args, **kwargs)
+
+    @wraps(Renderer.remove_chart)
+    def remove_chart(self, *args, **kwargs):
+        """Wrap ``Renderer.remove_chart``."""
+        return self.renderer.remove_chart(*args, **kwargs)
+
     @wraps(Renderer.add_actor)
     def add_actor(self, *args, **kwargs):
         """Wrap ``Renderer.add_actor``."""
@@ -1844,8 +1854,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if nan_color is None:
             nan_color = self._theme.nan_color
-        nan_color = list(parse_color(nan_color))
-        nan_color.append(nan_opacity)
+        nan_color = parse_color(nan_color, opacity=nan_opacity)
+
         if color is True:
             color = self._theme.color
 
@@ -3120,7 +3130,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.lookup_table = None
         self.mapper = None
         self.volume = None
-        self.textactor = None
+        self.textActor = None
 
     def add_text(self, text, position='upper_left', font_size=18, color=None,
                  font=None, shadow=False, name=None, viewport=False):
@@ -4184,6 +4194,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 sleep_time = step - (time.time() - tstart)
                 if sleep_time > 0:
                     time.sleep(sleep_time)
+            if write_frames:
+                self.mwriter.close()
 
         if threaded:
             thread = Thread(target=orbit)
@@ -4546,7 +4558,7 @@ class Plotter(BasePlotter):
 
         def on_timer(iren, event_id):
             """Exit application if interactive renderer stops."""
-            if event_id == 'TimerEvent':
+            if event_id == 'TimerEvent' and self.iren._style != "Context":
                 self.iren.terminate_app()
 
         if off_screen is None:
