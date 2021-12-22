@@ -583,7 +583,7 @@ def test_glyph_cell_point_data(sphere):
 
 
 def test_glyph_orient_and_scale():
-    grid = pyvista.UniformGrid((1, 1, 1))
+    grid = pyvista.UniformGrid(dims=(1, 1, 1))
     geom = pyvista.Line()
     scale = 10.0
     orient = np.array([[0.0, 0.0, 1.0]])
