@@ -8,7 +8,6 @@ import inspect
 import io
 import os
 import pathlib
-from pathlib import Path
 import platform
 import time
 import warnings
@@ -48,7 +47,7 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 
 # Reset image cache with new images
 glb_reset_image_cache = False
-THIS_PATH = Path(__file__).parent.absolute()
+THIS_PATH = pathlib.Path(__file__).parent.absolute()
 IMAGE_CACHE_DIR = os.path.join(THIS_PATH, 'image_cache')
 if not os.path.isdir(IMAGE_CACHE_DIR):
     os.mkdir(IMAGE_CACHE_DIR)
@@ -71,6 +70,7 @@ HIGH_VARIANCE_TESTS = {
     'test_pbr',
     'test_set_viewup',
     'test_add_title',
+    'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
     'test_import_gltf',  # image cache created with 9.0.20210612.dev0
     'test_export_gltf'}  # image cache created with 9.0.20210612.dev0
 VER_IMAGE_REGRESSION_ERROR = 1000
@@ -970,7 +970,7 @@ def test_save_screenshot(tmpdir, sphere, ext):
     plotter.add_mesh(sphere)
     plotter.screenshot(filename)
     assert os.path.isfile(filename)
-    assert Path(filename).stat().st_size
+    assert pathlib.Path(filename).stat().st_size
 
 
 def test_scalars_by_name():
@@ -1500,6 +1500,15 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     p.enable_eye_dome_lighting()
     p.disable_eye_dome_lighting()
     p.show(before_close_callback=verify_cache_image)
+
+
+@skip_windows
+def test_opacity_by_array_direct(plane):
+    # test with opacity parm as an array
+    pl = pyvista.Plotter()
+    pl.add_mesh(plane, color='b', opacity=np.linspace(0, 1, plane.n_points),
+                show_edges=True)
+    pl.show(before_close_callback=verify_cache_image)
 
 
 def test_opacity_by_array(uniform):
@@ -2093,6 +2102,13 @@ def test_plot_zoom(sphere):
     sphere.plot(zoom=2, before_close_callback=verify_cache_image)
 
 
+def test_splitting():
+    nut = examples.load_nut()
+    # feature angle of 50 will smooth the outer edges of the nut but not the inner.
+    nut.plot(smooth_shading=True, split_sharp_edges=True, feature_angle=50,
+             before_close_callback=verify_cache_image)
+
+
 def test_add_cursor():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter()
@@ -2100,12 +2116,14 @@ def test_add_cursor():
     plotter.add_cursor()
     plotter.show(before_close_callback=verify_cache_image)
 
+
 def test_enable_stereo_render():
     pl = pyvista.Plotter()
     pl.add_mesh(pyvista.Cube())
     pl.camera.distance = 0.1
     pl.enable_stereo_render()
     pl.show(before_close_callback=verify_cache_image)
+
 
 def test_disable_stereo_render():
     pl = pyvista.Plotter()

@@ -3748,12 +3748,14 @@ class DataSetFilters:
         Parameters
         ----------
         pass_pointid : bool, optional
-            Adds a point array "vtkOriginalPointIds" that idenfities which
-            original points these surface points correspond to.
+            Adds a point array ``"vtkOriginalPointIds"`` that
+            idenfities which original points these surface points
+            correspond to.
 
         pass_cellid : bool, optional
-            Adds a cell array "vtkOriginalPointIds" that idenfities which
-            original cells these surface cells correspond to.
+            Adds a cell array ``"vtkOriginalPointIds"`` that
+            idenfities which original cells these surface cells
+            correspond to.
 
         nonlinear_subdivision : int, optional
             If the input is an unstructured grid with nonlinear faces,
@@ -3794,10 +3796,8 @@ class DataSetFilters:
         """
         surf_filter = _vtk.vtkDataSetSurfaceFilter()
         surf_filter.SetInputData(self)
-        if pass_pointid:
-            surf_filter.PassThroughCellIdsOn()
-        if pass_cellid:
-            surf_filter.PassThroughPointIdsOn()
+        surf_filter.SetPassThroughPointIds(pass_pointid)
+        surf_filter.SetPassThroughCellIds(pass_cellid)
 
         if nonlinear_subdivision != 1:
             surf_filter.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
