@@ -73,6 +73,7 @@ Miscellaneous
 .. autosummary::
    :toctree: _autosummary
 
+   parse_color
    start_xvfb
 
 

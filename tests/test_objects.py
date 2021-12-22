@@ -31,10 +31,15 @@ def test_table_init(tmpdir):
         assert np.allclose(arrays[:,i], table[i])
 
     with pytest.raises(ValueError):
-        pyvista.Table(np.random.rand(100))
-
-    with pytest.raises(ValueError):
         pyvista.Table(np.random.rand(100, 2, 3))
+
+    # Create from 1D array
+    table = pyvista.Table(arrays[:, 0])
+    assert table.n_rows == nr
+    assert table.n_columns == 1
+
+    assert len(table.row_arrays) == 1
+    assert np.allclose(arrays[:,0], table[0])
 
     # create from dictionary
     array_dict = {}

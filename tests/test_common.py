@@ -672,8 +672,7 @@ def test_set_extent_expect_error(grid):
 
 
 def test_set_extent():
-    dims = [10, 10, 10]
-    uni_grid = pyvista.UniformGrid(dims)
+    uni_grid = pyvista.UniformGrid(dims=[10, 10, 10])
     with pytest.raises(ValueError):
         uni_grid.extent = [0, 1]
 
@@ -750,7 +749,7 @@ def test_string_arrays():
 
 def test_clear_data():
     # First try on an empty mesh
-    grid = pyvista.UniformGrid((10, 10, 10))
+    grid = pyvista.UniformGrid(dims=(10, 10, 10))
     # Now try something more complicated
     grid.clear_data()
     grid['foo-p'] = np.random.rand(grid.n_points)

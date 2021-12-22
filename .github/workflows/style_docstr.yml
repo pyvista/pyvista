@@ -55,6 +55,13 @@ jobs:
           path: ~/.cache/pip
           key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
 
+      - uses: actions/cache@v2
+        with:
+          path: ~/.local/share/pyvista/examples
+          key: Examples-${{ hashFiles('*') }}
+          restore-keys: |
+            Examples-
+
       - name: Install PyVista
         run: |
           pip install .
@@ -68,6 +75,7 @@ jobs:
       - name: Software Report
         run: |
           xvfb-run python -c "import pyvista; print(pyvista.Report())"
+          xvfb-run python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
           which python
           pip list
 
