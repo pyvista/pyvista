@@ -623,7 +623,12 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @property
     def active_time_value(self):  # noqa: D102
-        raise NotImplementedError("vtkOpenFOAMReader does not yet support this")
+        try:
+            value = self.reader.GetTimeValue()
+        except AttributeError as err:
+            raise AttributeError("Inspecting active time value only supported "
+                      "for vtk versions >9.1.0") from err
+        return value
 
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:

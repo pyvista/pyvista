@@ -356,15 +356,18 @@ def test_openfoamreader_arrays_time():
     assert reader.number_time_points == 6
     assert reader.time_values == [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
 
-    # OpenFoamReader currently does not support inspecting active time
-    # Test that read data conforms to time setting
-    mesh = reader.read()
-    assert np.isclose(np.max(mesh[0]['p']), 0.0)
+
+def test_openfoamreader_active_time():
+    # vtk < 9.1.0 does not support
+    if pyvista.vtk_version_info < (9, 1, 0):
+        pytest.xfail("OpenFOAMReader GetTimeValue missing on vtk<9.1.0")
 
     reader = get_cavity_reader()
+    mesh = reader.active_time_value == 0.0
     reader.set_active_time_point(1)
-    mesh = reader.read()
-    assert not np.isclose(np.max(mesh[0]['p']), 0.0)
+    mesh = reader.active_time_value == 0.5
+    reader.set_active_time_value(1.0)
+    mesh = reader.active_time_value == 1.0
 
 
 def test_openfoam_cell_to_point_default():
