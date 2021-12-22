@@ -25,6 +25,11 @@ except KeyError:
     pass
 
 
+def test_load_nut():
+    mesh = examples.load_nut()
+    assert mesh.n_points
+
+
 def test_load_ant():
     """ Load ply ant mesh """
     mesh = examples.load_ant()

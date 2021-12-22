@@ -41,6 +41,11 @@ coverage-html:
 	@echo "Reporting HTML coverage"
 	@pytest -v --cov pyvista --cov-report html
 
+coverage-docs:
+	@echo "Reporting documentation coverage"
+	@make -C doc html SPHINXOPTS="-Q" -b coverage
+	@cat doc/_build/coverage/python.txt
+
 mypy:
 	@echo "Running mypy static type checking"
 	mypy pyvista/core/ --no-incremental
@@ -48,10 +53,8 @@ mypy:
 
 lint:
 	@echo "Linting with flake8"
-	# Check for codestyle
-	flake8 .
+	@flake8 .
 
 isort:
 	@echo "Formatting with isort"
-	# Check for trailing whitespace
 	isort .
