@@ -39,6 +39,35 @@ def test_disable_hidden_line_removal():
     assert not plotter.renderers[1].GetUseHiddenLineRemoval()
 
 
+def test_pickable_actors():
+
+    plotter = pyvista.Plotter()
+    sphere = plotter.add_mesh(pyvista.Sphere(), pickable=True)
+    cube = plotter.add_mesh(pyvista.Cube(), pickable=False)
+
+    pickable = plotter.pickable_actors
+    assert sphere in pickable
+    assert cube not in pickable
+
+    plotter.pickable_actors = cube
+    pickable = plotter.pickable_actors
+    assert sphere not in pickable
+    assert cube in pickable
+
+    plotter.pickable_actors = [sphere, cube]
+    pickable = plotter.pickable_actors
+    assert sphere in pickable
+    assert cube in pickable
+
+    plotter.pickable_actors = None
+    pickable = plotter.pickable_actors
+    assert sphere not in pickable
+    assert cube not in pickable
+
+    with pytest.raises(TypeError, match="Expected a vtkActor instance or "):
+        plotter.pickable_actors = [0, 10]
+
+
 def test_prepare_smooth_shading_texture(globe):
     """Test edge cases for smooth shading"""
     mesh, scalars = _plotting.prepare_smooth_shading(
