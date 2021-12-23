@@ -46,7 +46,7 @@ from .tools import (  # noqa
     normalize,
     opacity_transfer_function,
     parse_color,
-    parse_font_family
+    parse_font_family,
 )
 from .widgets import WidgetHelper
 
