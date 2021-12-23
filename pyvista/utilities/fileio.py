@@ -583,7 +583,8 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
 
 def from_meshio(mesh):
     """Convert a ``meshio`` mesh instance to a PyVista mesh."""
-    from meshio.vtk._vtk import meshio_to_vtk_type, vtk_type_to_numnodes
+    from meshio._vtk_common import meshio_to_vtk_type
+    from meshio.vtk._vtk_42 import vtk_type_to_numnodes
 
     # Extract cells from meshio.Mesh object
     offset = []
@@ -689,7 +690,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
             "pip install meshio"
         )
 
-    from meshio.vtk._vtk import vtk_to_meshio_type
+    from meshio._vtk_common import vtk_to_meshio_type
 
     # Make sure relative paths will work
     filename = os.path.abspath(os.path.expanduser(str(filename)))
