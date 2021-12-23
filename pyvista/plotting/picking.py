@@ -277,11 +277,23 @@ class PickingHelper:
             size. Rendering window size is measured across diagonal.
 
         pickable_window : bool, optional
-            When True, points in the 3D window are pickable. Default to True.
+            When True, points in the 3D window are pickable. Default to ``True``.
 
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked point is interactively displayed.
+
+        Examples
+        --------
+        Enable point picking with a custom message.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> _ = pl.add_mesh(pv.Cube(), pickable=False)
+        >>> pl.enable_point_picking(show_message="Press P to pick")
+
+        See :ref:`point_picking_example` for a full example using this method.
 
         """
 
