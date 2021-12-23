@@ -1,12 +1,10 @@
 import os
 
 import numpy as np
-import pytest
 import vtk
 
 import pyvista
-from pyvista import examples, demos
-from pyvista.plotting import system_supports_plotting
+from pyvista import examples
 
 ffmpeg_failed = False
 try:
@@ -25,6 +23,11 @@ try:
         TEST_DOWNLOADS = True
 except KeyError:
     pass
+
+
+def test_load_nut():
+    mesh = examples.load_nut()
+    assert mesh.n_points
 
 
 def test_load_ant():

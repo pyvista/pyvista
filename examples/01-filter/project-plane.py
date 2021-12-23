@@ -10,7 +10,6 @@ plane defined by a normal and origin
 import pyvista as pv
 from pyvista import examples
 
-
 poly = examples.load_random_hills()
 poly.plot()
 

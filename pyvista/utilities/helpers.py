@@ -1,22 +1,23 @@
 """Supporting functions for polydata and grid objects."""
 
-import os
 import collections.abc
 import enum
 import logging
+import os
 import signal
 import sys
-from threading import Thread
 import threading
+from threading import Thread
 import traceback
 from typing import Optional
 
 import numpy as np
 
-from pyvista import _vtk
 import pyvista
-from .fileio import from_meshio
+from pyvista import _vtk
+
 from . import transformations
+from .fileio import from_meshio
 
 
 class FieldAssociation(enum.Enum):
@@ -885,7 +886,7 @@ def wrap(dataset):
         if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
             return pyvista.PolyData(dataset)
         elif dataset.ndim == 3:
-            mesh = pyvista.UniformGrid(dataset.shape)
+            mesh = pyvista.UniformGrid(dims=dataset.shape)
             mesh['values'] = dataset.ravel(order='F')
             mesh.active_scalars_name = 'values'
             return mesh
@@ -1031,7 +1032,7 @@ def fit_plane_to_points(points, return_meta=False):
 
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_mesh(plane, color='tan', style='wireframe', line_width=4)
-    >>> _ = pl.add_points(cloud, render_points_as_spheres=True, 
+    >>> _ = pl.add_points(cloud, render_points_as_spheres=True,
     ...                   color='r', point_size=30)
     >>> pl.show()
 
@@ -1234,7 +1235,7 @@ class ProgressMonitor():
     def __init__(self, algorithm, message="", scaling=100):
         """Initialize observer."""
         try:
-            from tqdm import tqdm
+            from tqdm import tqdm  # noqa
         except ImportError:
             raise ImportError("Please install `tqdm` to monitor algorithms.")
         self.event_type = _vtk.vtkCommand.ProgressEvent
@@ -1305,12 +1306,12 @@ def abstract_class(cls_):
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
-    """Rotate points angle (in deg) about an axis.
+    """Rotate points by angle about an axis.
 
     Parameters
     ----------
     points : numpy.ndarray
-        Array of points with shape ``(N, 3)``
+        Array of points with shape ``(N, 3)``.
 
     angle : float
         Rotation angle.
@@ -1319,8 +1320,8 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
         Updates points in-place while returning nothing.
 
     deg : bool, optional
-        If `True`, the angle is interpreted as degrees instead of
-        radians. Default is `True`.
+        If ``True``, the angle is interpreted as degrees instead of
+        radians. Default is ``True``.
 
     axis : str, optional
         Name of axis to rotate about. Valid options are ``'x'``, ``'y'``,
@@ -1334,6 +1335,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     Examples
     --------
     Rotate a set of points by 90 degrees about the x-axis in-place.
+
     >>> import numpy as np
     >>> import pyvista
     >>> from pyvista import examples

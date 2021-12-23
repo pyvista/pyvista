@@ -1,15 +1,16 @@
 """Module containing useful plotting tools."""
 
-import sys
+from collections.abc import Sequence
 from enum import Enum
-import platform
 import os
+import platform
 from subprocess import PIPE, Popen
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
+
 from .colors import string_to_rgb
 
 
@@ -246,6 +247,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     Examples
     --------
     Create and plot an orientation box
+
     >>> import pyvista
     >>> actor = pyvista.create_axes_orientation_box(
     ...    line_width=1, text_scale=0.53,
@@ -256,7 +258,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     ...    labels_off=False, opacity=1.0)
     >>> pl = pyvista.Plotter()
     >>> _ = pl.add_actor(actor)
-    >>> pl.show()  # doctest:+SKIP
+    >>> pl.show()
 
     """
     if x_color is None:
@@ -384,8 +386,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
         available. Options are ('linear', 'nearest', 'zero', 'slinear',
         'quadratic', 'cubic', 'previous', 'next'.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import pyvista as pv
     >>> # Fetch the `sigmoid` mapping between 0 and 255
     >>> tf = pv.opacity_transfer_function("sigmoid", 256)
@@ -401,16 +403,15 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
         'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
         'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
         'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
-        'sigmoid': sigmoid(np.linspace(-10.,10., n_colors)),
-        'sigmoid_3': sigmoid(np.linspace(-3.,3., n_colors)),
-        'sigmoid_4': sigmoid(np.linspace(-4.,4., n_colors)),
-        'sigmoid_5': sigmoid(np.linspace(-5.,5., n_colors)),
-        'sigmoid_6': sigmoid(np.linspace(-6.,6., n_colors)),
-        'sigmoid_7': sigmoid(np.linspace(-7.,7., n_colors)),
-        'sigmoid_8': sigmoid(np.linspace(-8.,8., n_colors)),
-        'sigmoid_9': sigmoid(np.linspace(-9.,9., n_colors)),
-        'sigmoid_10': sigmoid(np.linspace(-10.,10., n_colors)),
-
+        'sigmoid': sigmoid(np.linspace(-10., 10., n_colors)),
+        'sigmoid_3': sigmoid(np.linspace(-3., 3., n_colors)),
+        'sigmoid_4': sigmoid(np.linspace(-4., 4., n_colors)),
+        'sigmoid_5': sigmoid(np.linspace(-5., 5., n_colors)),
+        'sigmoid_6': sigmoid(np.linspace(-6., 6., n_colors)),
+        'sigmoid_7': sigmoid(np.linspace(-7., 7., n_colors)),
+        'sigmoid_8': sigmoid(np.linspace(-8., 8., n_colors)),
+        'sigmoid_9': sigmoid(np.linspace(-9., 9., n_colors)),
+        'sigmoid_10': sigmoid(np.linspace(-10., 10., n_colors)),
     }
     transfer_func['linear_r'] = transfer_func['linear'][::-1]
     transfer_func['sigmoid_r'] = transfer_func['sigmoid'][::-1]
@@ -458,11 +459,60 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
 
 
 def parse_color(color, opacity=None, default_color=None):
-    """Parse color into a vtk friendly rgb list.
+    """Parse color into a VTK friendly RGB(A) tuple.
+
+    If ``color`` is a sequence of RGBA floats, the ``opacity`` parameter
+    is ignored.
 
     Values returned will be between 0 and 1.
 
+    Parameters
+    ----------
+    color : str or sequence
+        Either a string, RGB sequence, RGBA sequence, or hex color string.
+        RGB(A) sequences should only contain values between 0 and 1.
+        For example:
+
+        * ``'white'``
+        * ``'w'``
+        * ``[1, 1, 1]``
+        * ``[0.5, 1, 0.7, 1]``
+        * ``'#FFFFFF'``
+
+    opacity : float, optional
+        Default opacity of the returned color. Used when ``color`` is
+        not a length 4 RGBA sequence. Only opacities between 0 and 1
+        are allowed.
+
+    default_color : str or sequence, optional
+        Default color to use when ``color`` is None.  If this value is
+        ``None``, then defaults to the global theme color.  Format is
+        identical to ``color``.
+
+    Returns
+    -------
+    tuple
+        Either a length 3 RGB sequence if opacity is unset, or an RGBA
+        sequence when ``opacity`` is set or the input ``color`` is an
+        RGBA sequence.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pyvista.parse_color('blue')
+    (0.0, 0.0, 1.0)
+
+    >>> pyvista.parse_color('k')
+    (0.0, 0.0, 0.0)
+
+    >>> pyvista.parse_color('#FFFFFF')
+    (1.0, 1.0, 1.0)
+
+    >>> pyvista.parse_color((0.4, 0.3, 0.4, 1))
+    (0.4, 0.3, 0.4, 1.0)
+
     """
+    color_valid = True
     if color is None:
         if default_color is None:
             color = pyvista.global_theme.color
@@ -470,21 +520,34 @@ def parse_color(color, opacity=None, default_color=None):
             color = default_color
     if isinstance(color, str):
         color = string_to_rgb(color)
-    elif len(color) == 3:
-        pass
-    elif len(color) == 4:
-        color = color[:3]
+    elif isinstance(color, (Sequence, np.ndarray)):
+        try:
+            color = np.asarray(color, dtype=np.float64)
+            if color.ndim != 1 or color.size not in (3, 4) or not np.all((0 <= color) & (color <= 1)):
+                color_valid = False
+            elif len(color) == 4:
+                opacity = color[3]
+                color = color[:3]
+        except ValueError:
+            color_valid = False
     else:
-        raise ValueError(f"""
-    Invalid color input: ({color})
-    Must be string, rgb list, or hex color string.  For example:
-        color='white'
-        color='w'
-        color=[1, 1, 1]
-        color='#FFFFFF'""")
-    if opacity is not None and isinstance(opacity, (float, int)):
-        color = [color[0], color[1], color[2], opacity]
-    return color
+        color_valid = False
+    if not color_valid:
+        raise ValueError("\n"
+                         f"\tInvalid color input: ({color})\n"
+                         "\tMust be string, rgb list, or hex color string.  For example:\n"
+                         "\t\tcolor='white'\n"
+                         "\t\tcolor='w'\n"
+                         "\t\tcolor=[1, 1, 1]\n"
+                         "\t\tcolor='#FFFFFF'")
+    if opacity is not None:
+        if isinstance(opacity, (float, int)) and 0 <= opacity <= 1:
+            color = [color[0], color[1], color[2], float(opacity)]
+        else:
+            raise ValueError("\n"
+                             f"\tInvalid opacity input: {opacity}\n"
+                             "\tMust be a scalar value between 0 and 1.")
+    return tuple(color)
 
 
 def parse_font_family(font_family):

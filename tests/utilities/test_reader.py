@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import pytest
 
@@ -55,7 +53,7 @@ def test_xmlpolydatareader(tmpdir):
     tmpfile = tmpdir.join("temp.vtp")
     mesh = pyvista.Sphere()
     mesh.save(tmpfile.strpath)
-      
+
     reader = pyvista.get_reader(tmpfile.strpath)
     assert reader.filename == tmpfile.strpath
     new_mesh = reader.read()
@@ -104,7 +102,7 @@ def test_reader_cell_point_data(tmpdir):
 
     assert reader.number_cell_arrays == 1
     assert reader.number_point_arrays == 2
-    
+
     assert reader.cell_array_names == ['id']
     assert reader.point_array_names == ['Normals', 'height']
 
@@ -113,7 +111,7 @@ def test_reader_cell_point_data(tmpdir):
 
     assert reader.cell_array_status('id') is True
     assert reader.point_array_status('Normals') is True
-    
+
     reader.disable_all_cell_arrays()
     assert reader.cell_array_status('id') is False
 
@@ -146,8 +144,8 @@ def test_ensightreader_arrays():
     assert reader.filename == filename
     assert reader.number_cell_arrays == 9
     assert reader.number_point_arrays == 0
-    
-    assert reader.cell_array_names == ['v2', 'nut', 'k', 'nuTilda', 'p', 
+
+    assert reader.cell_array_names == ['v2', 'nut', 'k', 'nuTilda', 'p',
                                        'omega', 'f', 'epsilon', 'U']
     assert reader.point_array_names == []
 
@@ -155,7 +153,7 @@ def test_ensightreader_arrays():
     reader.enable_cell_array('k')
 
     assert reader.all_cell_arrays_status == {
-        'v2': False, 'nut': False, 'k': True, 'nuTilda': False, 'p': False, 
+        'v2': False, 'nut': False, 'k': True, 'nuTilda': False, 'p': False,
         'omega':False, 'f':False, 'epsilon':False, 'U':False
     }
 
@@ -174,7 +172,7 @@ def test_ensightreader_arrays():
 
     for i in range(all_mesh.n_blocks):
         assert all([all_mesh[i].n_points, all_mesh[i].n_cells])
-        assert all_mesh[i].array_names == ['v2', 'nut', 'k', 'nuTilda', 'p', 
+        assert all_mesh[i].array_names == ['v2', 'nut', 'k', 'nuTilda', 'p',
                                            'omega', 'f', 'epsilon', 'U']
 
 
@@ -188,7 +186,7 @@ def test_ensightreader_timepoints():
     assert reader.time_values == [1.0, 3.0]
     assert reader.time_point_value(0) == 1.0
     assert reader.time_point_value(1) == 3.0
-    
+
     assert reader.active_time_value == 1.0
     mesh_1 = reader.read()
 

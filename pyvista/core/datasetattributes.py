@@ -1,18 +1,18 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
-import warnings
 from collections.abc import Iterable
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
+import warnings
 
 import numpy as np
-from typing import Union, Iterator, Optional, List, Tuple, Dict, Sequence, Any
 
 from pyvista import _vtk
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
 from pyvista.utilities.misc import PyvistaDeprecationWarning
-from .pyvista_ndarray import pyvista_ndarray
 
 from .._typing import Number
+from .pyvista_ndarray import pyvista_ndarray
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
 attr_type = [
@@ -52,7 +52,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     :func:`DataSetAttributes.set_scalars`.
 
     .. versionchanged:: 0.32.0
-        The ``[]`` operator no longer allows integers.  Use 
+        The ``[]`` operator no longer allows integers.  Use
         :func:`DataSetAttributes.get_array` to retrieve an array
         using an index.
 
@@ -113,11 +113,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     Notes
     -----
-    When printing out the point arrays, you can see which arrays are                                     
+    When printing out the point arrays, you can see which arrays are
     the active scalars, vectors, normals, and texture coordinates.
-    In the arrays list, ``SCALARS`` denotes that these are the active                                    
-    scalars, ``VECTORS`` denotes that these arrays are tagged as the                                     
-    active vectors data (i.e. data with magnitude and direction) and                                     
+    In the arrays list, ``SCALARS`` denotes that these are the active
+    scalars, ``VECTORS`` denotes that these arrays are tagged as the
+    active vectors data (i.e. data with magnitude and direction) and
     so on.
 
     """
@@ -898,14 +898,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 raise KeyError(f'{key} not present.')
             return default
 
-        vtk_arr = self.GetArray(key)
-        if vtk_arr:
-            copy = vtk_arr.NewInstance()
-            copy.DeepCopy(vtk_arr)
-            vtk_arr = copy
+        narray = self.get_array(key)
 
         self.remove(key)
-        return pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
+        return narray
 
     def items(self) -> List[Tuple[str, pyvista_ndarray]]:
         """Return a list of (array name, array value) tuples.

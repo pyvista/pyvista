@@ -1,17 +1,19 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
-from weakref import proxy
+from functools import partial
 from typing import Sequence
+from weakref import proxy
 
 import numpy as np
 
 import pyvista
-from pyvista import _vtk, MAX_N_COLOR_BARS
-from pyvista.utilities import wrap, check_depth_peeling
-from .tools import (create_axes_orientation_box, create_axes_marker,
-                    parse_color, parse_font_family)
+from pyvista import MAX_N_COLOR_BARS, _vtk
+from pyvista.utilities import check_depth_peeling, try_callback, wrap
+
 from .camera import Camera
+from .charts import Charts
+from .tools import create_axes_marker, create_axes_orientation_box, parse_color, parse_font_family
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -215,10 +217,20 @@ class Renderer(_vtk.vtkRenderer):
         # This allows us to keep adding colorbars without overlapping
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
+        self.__charts = None
 
         self._border_actor = None
         if border:
             self.add_border(border_color, border_width)
+
+    @property
+    def _charts(self):
+        """Return the charts collection."""
+        # lazy instantiation here to avoid creating the charts object unless needed.
+        if self.__charts is None:
+            self.__charts = Charts(self)
+            self.AddObserver("StartEvent", partial(try_callback, self._render_event))
+        return self.__charts
 
     @property
     def camera_position(self):
@@ -363,6 +375,11 @@ class Renderer(_vtk.vtkRenderer):
         self.set_background(color)
         self.Modified()
 
+    def _render_event(self, *args, **kwargs):
+        """Notify all charts about render event."""
+        for chart in self._charts:
+            chart._render_event(*args, **kwargs)
+
     def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=None):
         """Enable depth peeling to improve rendering of translucent geometry.
 
@@ -505,6 +522,71 @@ class Renderer(_vtk.vtkRenderer):
         if self.has_border:
             return self._border_actor.GetProperty().GetColor()
         return None
+
+    def add_chart(self, chart, *charts):
+        """Add a chart to this renderer.
+
+        Parameters
+        ----------
+        chart : Chart2D, ChartBox, ChartPie or ChartMPL
+            Chart to add to renderer.
+
+        *charts : Chart2D, ChartBox, ChartPie or ChartMPL
+            Charts to add to renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.plot(range(10), range(10))
+        >>> pl = pyvista.Plotter()
+        >>> pl.add_chart(chart)
+        >>> pl.show()
+
+        """
+        self._charts.add_chart(chart, *charts)
+
+    def remove_chart(self, chart_or_index):
+        """Remove a chart from this renderer.
+
+        Parameters
+        ----------
+        chart_or_index : Chart2D, ChartBox, ChartPie, ChartMPL or int
+            Either the chart to remove from this renderer or its index in the collection of charts.
+
+        Examples
+        --------
+        First define a function to add two charts to a renderer.
+
+        >>> import pyvista
+        >>> def plotter_with_charts():
+        ...     pl = pyvista.Plotter()
+        ...     pl.background_color = 'w'
+        ...     chart_left = pyvista.Chart2D(size=(0.5, 1))
+        ...     _ = chart_left.line([0, 1, 2], [2, 1, 3])
+        ...     pl.add_chart(chart_left)
+        ...     chart_right = pyvista.Chart2D(size=(0.5, 1), loc=(0.5, 0))
+        ...     _ = chart_right.line([0, 1, 2], [3, 1, 2])
+        ...     pl.add_chart(chart_right)
+        ...     return pl, chart_left, chart_right
+        ...
+        >>> pl, *_ = plotter_with_charts()
+        >>> pl.show()
+
+        Now reconstruct the same plotter but remove the right chart by index.
+
+        >>> pl, *_ = plotter_with_charts()
+        >>> pl.remove_chart(1)
+        >>> pl.show()
+
+        Finally, remove the left chart by reference.
+
+        >>> pl, chart_left, chart_right = plotter_with_charts()
+        >>> pl.remove_chart(chart_left)
+        >>> pl.show()
+
+        """
+        self._charts.remove_chart(chart_or_index)
 
     @property
     def actors(self):
@@ -651,14 +733,14 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        self.marker_actor = create_axes_marker(line_width=line_width,
+        self._marker_actor = create_axes_marker(line_width=line_width,
             x_color=x_color, y_color=y_color, z_color=z_color,
             xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
-        self.AddActor(self.marker_actor)
-        memory_address = self.marker_actor.GetAddressAsString("")
-        self._actors[memory_address] = self.marker_actor
+        self.AddActor(self._marker_actor)
+        memory_address = self._marker_actor.GetAddressAsString("")
+        self._actors[memory_address] = self._marker_actor
         self.Modified()
-        return self.marker_actor
+        return self._marker_actor
 
     def add_orientation_widget(self, actor, interactive=None, color=None,
                                opacity=1.0):
@@ -1001,7 +1083,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> mesh = pyvista.Sphere()
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(mesh)
-        >>> actor = plotter.show_bounds(grid='front', location='outer', 
+        >>> actor = plotter.show_bounds(grid='front', location='outer',
         ...                             all_edges=True)
         >>> plotter.show()
 
@@ -1179,7 +1261,7 @@ class Renderer(_vtk.vtkRenderer):
         -------
         vtk.vtkAxesActor
             Bounds actor.
-            
+
          Examples
         --------
         >>> import pyvista
@@ -1271,7 +1353,7 @@ class Renderer(_vtk.vtkRenderer):
         Returns
         -------
         vtk.vtkActor
-            VTK actor of the floor.
+            VTK actor of the bounding box.
 
         Examples
         --------
@@ -1521,7 +1603,7 @@ class Renderer(_vtk.vtkRenderer):
 
     def remove_bounds_axes(self):
         """Remove bounds axes.
-        
+
         Examples
         --------
         >>> import pyvista
@@ -1534,7 +1616,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> actor = pl.show_bounds(grid='front', location='outer')
         >>> actor = pl.remove_bounds_axes()
         >>> pl.show()
-        
+
         """
         if hasattr(self, 'cube_axes_actor'):
             self.remove_actor(self.cube_axes_actor)
@@ -2076,7 +2158,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the XY plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()
@@ -2103,7 +2185,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the YX plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()
@@ -2111,7 +2193,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> _ = pl.add_mesh(airplane)
         >>> pl.view_yx()
         >>> pl.show()
-        
+
         """
         vec = np.array([0,0,-1])
         viewup = np.array([1,0,0])
@@ -2130,7 +2212,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the XZ plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()
@@ -2157,7 +2239,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the ZX plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()
@@ -2184,7 +2266,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the YZ plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()
@@ -2211,7 +2293,7 @@ class Renderer(_vtk.vtkRenderer):
         Examples
         --------
         View the ZY plane of a built-in mesh example.
-        
+
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> airplane = examples.load_airplane()
@@ -2464,11 +2546,17 @@ class Renderer(_vtk.vtkRenderer):
             self.remove_bounding_box(render=render)
         if self._shadow_pass is not None:
             self.disable_shadows()
+        if self.__charts is not None:
+            self.__charts.deep_clean()
 
         self.remove_floors(render=render)
+        self.remove_legend(render=render)
         self.RemoveAllViewProps()
         self._actors = {}
         self._camera = None
+        self._bounding_box = None
+        self._marker_actor = None
+        self._border_actor = None
         # remove reference to parent last
         self.parent = None
 

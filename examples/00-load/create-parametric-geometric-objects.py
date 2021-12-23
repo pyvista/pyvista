@@ -7,9 +7,10 @@ Parametric Geometric Objects
 Creating parametric objects
 """
 
+from math import pi
+
 # sphinx_gallery_thumbnail_number = 12
 import pyvista as pv
-from math import pi
 
 ###############################################################################
 # This example demonstrates how to plot parametric objects using pyvista

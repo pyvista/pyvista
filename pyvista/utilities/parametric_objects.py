@@ -2,10 +2,12 @@
 
 from math import pi
 
+import numpy as np
+
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities.errors import check_valid_vector
-import numpy as np
+
 from .geometric_objects import translate
 
 
@@ -28,7 +30,7 @@ def Spline(points, n_points=None):
 
     Examples
     --------
-    Construct a spline
+    Construct a spline.
 
     >>> import numpy as np
     >>> import pyvista as pv
@@ -247,7 +249,7 @@ def ParametricBoy(zscale=None, **kwargs):
 
     Examples
     --------
-    Create a ParametricBoy mesh
+    Create a ParametricBoy mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricBoy()
@@ -283,9 +285,9 @@ def ParametricCatalanMinimal(**kwargs):
     pyvista.PolyData
         ParametricCatalanMinimal surface.
 
-    Example
-    -------
-    Create a ParametricCatalanMinimal mesh
+    Examples
+    --------
+    Create a ParametricCatalanMinimal mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricCatalanMinimal()
@@ -337,11 +339,11 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
     Returns
     -------
     pyvista.PolyData
-        ParametricConicSpiral surface
+        ParametricConicSpiral surface.
 
     Examples
     --------
-    Create a ParametricConicSpiral mesh
+    Create a ParametricConicSpiral mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricConicSpiral()
@@ -433,7 +435,7 @@ def ParametricDini(a=None, b=None, **kwargs):
 
     Examples
     --------
-    Create a ParametricDini mesh
+    Create a ParametricDini mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricDini()
@@ -488,7 +490,7 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
 
     Examples
     --------
-    Create a ParametricEllipsoid mesh
+    Create a ParametricEllipsoid mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricEllipsoid()
@@ -581,7 +583,7 @@ def ParametricFigure8Klein(radius=None, **kwargs):
 
     Examples
     --------
-    Create a ParametricFigure8Klein mesh
+    Create a ParametricFigure8Klein mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricFigure8Klein()
@@ -615,7 +617,7 @@ def ParametricHenneberg(**kwargs):
 
     Examples
     --------
-    Create a ParametricHenneberg mesh
+    Create a ParametricHenneberg mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricHenneberg()
@@ -653,7 +655,7 @@ def ParametricKlein(**kwargs):
 
     Examples
     --------
-    Create a ParametricKlein mesh
+    Create a ParametricKlein mesh.
 
     >>> import pyvista
     >>> mesh = pyvista.ParametricKlein()
@@ -1003,6 +1005,13 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
     pyvista.PolyData
         ParametricSuperEllipsoid surface.
 
+    See Also
+    --------
+    pyvista.ParametricSuperToroid :
+        Toroidal equivalent of ParametricSuperEllipsoid.
+    pyvista.Superquadric :
+        Geometric object with additional parameters.
+
     Examples
     --------
     Create a ParametricSuperEllipsoid surface that looks like a box
@@ -1089,6 +1098,13 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     -------
     pyvista.PolyData
         ParametricSuperToroid surface.
+
+    See Also
+    --------
+    pyvista.ParametricSuperEllipsoid :
+        Ellipsoidal equivalent of ParametricSuperToroid.
+    pyvista.Superquadric :
+        Geometric object with additional parameters.
 
     Examples
     --------

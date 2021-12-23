@@ -3,19 +3,19 @@
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
-import pathlib
 import collections.abc
 import logging
+import pathlib
+from typing import Any, List, Optional, Tuple, Union, cast
 
 import numpy as np
-from typing import List, Tuple, Union, Optional, Any, cast
 
 import pyvista
-from pyvista.utilities import get_array, is_pyvista_dataset, wrap
 from pyvista import _vtk
+from pyvista.utilities import is_pyvista_dataset, wrap
+
 from .dataset import DataObject, DataSet
 from .filters import CompositeFilters
-from .._typing import Vector
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -51,7 +51,7 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     Instantiate from a list of objects.
 
-    >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), 
+    >>> data = [pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)),
     ...         pv.Cone()]
     >>> blocks = pv.MultiBlock(data)
     >>> blocks.plot()
@@ -80,7 +80,12 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)
-        self.refs: Any = []
+
+        # keep a python reference to the dataset to avoid
+        # unintentional garbage collections since python does not
+        # add a reference to the dataset when it's added here in
+        # MultiBlock.  See https://github.com/pyvista/pyvista/pull/1805
+        self._refs: Any = {}
 
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkMultiBlockDataSet):
@@ -101,8 +106,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             else:
                 raise TypeError(f'Type {type(args[0])} is not supported by pyvista.MultiBlock')
 
-            # keep a reference of the args
-            self.refs.append(args)
         elif len(args) > 1:
             raise ValueError('Invalid number of arguments:\n``pyvista.MultiBlock``'
                              'supports 0 or 1 arguments.')
@@ -286,10 +289,8 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         """
         if isinstance(index, slice):
-            stop = index.stop if index.stop >= 0 else self.n_blocks + index.stop + 1
-            step = index.step if isinstance(index.step, int) else 1
             multi = MultiBlock()
-            for i in range(index.start, stop, step):
+            for i in range(self.n_blocks)[index]:
                 multi[-1, self.get_block_name(i)] = self[i]
             return multi
         elif isinstance(index, (list, tuple, np.ndarray)):
@@ -310,8 +311,6 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             return data
         if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
-        if data not in self.refs:
-            self.refs.append(data)
         return data
 
     def append(self, dataset: DataSet):
@@ -333,8 +332,10 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         """
         index = self.n_blocks  # note off by one so use as index
+        # always wrap since we may need to reference the VTK memory address
+        if not pyvista.is_pyvista_dataset(dataset):
+            dataset = pyvista.wrap(dataset)
         self[index] = dataset
-        self.refs.append(dataset)
 
     def get(self, index: Union[int, str]) -> Optional['MultiBlock']:
         """Get a block by its index or name.
@@ -460,27 +461,63 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
             i, name = cast(int, index), None
         if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
+
         if i == -1:
             self.append(data)
             i = self.n_blocks - 1
         else:
+            # this is the only spot in the class where we actually add
+            # data to the MultiBlock
+
+            # check if we are overwriting a block
+            existing_dataset = self.GetBlock(i)
+            if existing_dataset is not None:
+                self._remove_ref(i)
+
             self.SetBlock(i, data)
+            if data is not None:
+                self._refs[data.memory_address] = data
+
         if name is None:
             name = f'Block-{i:02}'
-        self.set_block_name(i, name) # Note that this calls self.Modified()
-        if data not in self.refs:
-            self.refs.append(data)
+        self.set_block_name(i, name)  # Note that this calls self.Modified()
 
     def __delitem__(self, index: Union[int, str]):
         """Remove a block at the specified index."""
         if isinstance(index, str):
             index = self.get_index_by_name(index)
+        self._remove_ref(index)
         self.RemoveBlock(index)
+
+    def _remove_ref(self, index: int):
+        """Remove python reference to the dataset."""
+        dataset = self[index]
+        if hasattr(dataset, 'memory_address'):
+            self._refs.pop(dataset.memory_address, None)  # type: ignore
 
     def __iter__(self) -> 'MultiBlock':
         """Return the iterator across all blocks."""
         self._iter_n = 0
         return self
+
+    def __eq__(self, other):
+        """Equality comparison."""
+        if not isinstance(other, MultiBlock):
+            return False
+
+        if self is other:
+            return True
+
+        if len(self) != len(other):
+            return False
+
+        if not self.keys() == other.keys():
+            return False
+
+        if any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other)):
+            return False
+
+        return True
 
     def next(self) -> Optional['MultiBlock']:
         """Get the next block from the iterator."""

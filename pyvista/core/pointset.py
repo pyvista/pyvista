@@ -1,27 +1,29 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-from pathlib import Path
-from textwrap import dedent
-import pathlib
-import logging
-import os
-import warnings
-import numbers
 import collections
+import logging
+import numbers
+import os
+import pathlib
+from textwrap import dedent
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import abstract_class
-from pyvista.utilities.cells import (CellArray, numpy_to_idarr,
-                                     generate_cell_offsets,
-                                     create_mixed_cells,
-                                     get_mixed_cells)
-from .dataset import DataSet
-from .filters import (PolyDataFilters, UnstructuredGridFilters,
-                      StructuredGridFilters, _get_output)
+from pyvista.utilities.cells import (
+    CellArray,
+    create_mixed_cells,
+    generate_cell_offsets,
+    get_mixed_cells,
+    numpy_to_idarr,
+)
+
 from ..utilities.fileio import get_ext
+from .dataset import DataSet
 from .errors import DeprecationError, VTKVersionError
+from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -319,7 +321,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     def verts(self):
         """Get the vertex cells.
 
-        Returns 
+        Returns
         -------
         numpy.ndarray
             Array of vertex cell indices.
@@ -424,7 +426,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
            ``is_all_triangles`` is now a property.  Calling this value
            will warn the user that this should not be called.
            Additionally, the ``is`` operator will not work the return
-           value of this property since it is not a ``bool``           
+           value of this property since it is not a ``bool``
 
         Returns
         -------
@@ -475,7 +477,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
                 https://jfine-python-classes.readthedocs.io/en/latest/subclass-int.html#emulating-bool-using-new
 
                 """
-                return int.__new__(cls, bool(value))        
+                return int.__new__(cls, bool(value))
 
             def __call__(self):
                 """Return a ``bool`` of self."""
@@ -613,7 +615,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             as ``'RGB'`` if the array is just a 3 component array.
 
             .. note::
-               This feature is only available when saving PLY files. 
+               This feature is only available when saving PLY files.
 
         Notes
         -----
@@ -902,7 +904,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     Can be initialized by the following:
 
     - Creating an empty grid
-    - From a vtk.vtkPolyData object
+    - From a ``vtk.vtkPolyData`` or ``vtk.vtkStructuredGrid`` object
     - From cell, offset, and node arrays
     - From a file
 
@@ -953,7 +955,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
 
-            elif isinstance(args[0], _vtk.vtkStructuredGrid):
+            elif isinstance(args[0], (_vtk.vtkStructuredGrid, _vtk.vtkPolyData)):
                 vtkappend = _vtk.vtkAppendFilter()
                 vtkappend.AddInputData(args[0])
                 vtkappend.Update()
@@ -1129,7 +1131,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
         >>> hex_beam.cells[:18]  # doctest:+SKIP
-        array([ 8,  0,  2,  8,  7, 27, 36, 90, 81,  8,  2,  1,  4,  
+        array([ 8,  0,  2,  8,  7, 27, 36, 90, 81,  8,  2,  1,  4,
                 8, 36, 18, 54, 90])
 
         """
@@ -1192,6 +1194,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         Examples
         --------
         Return the cell connectivity for the first two cells.
+
         >>> import pyvista
         >>> from pyvista import examples
         >>> hex_beam = pyvista.read(examples.hexbeamfile)
@@ -1555,7 +1558,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> grid = pyvista.StructuredGrid(x, y, z)
         >>> grid.dimensions
         (10, 20, 4)
-        
+
         """
         return tuple(self.GetDimensions())
 
@@ -1740,24 +1743,24 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     --------
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> 
+    >>>
     >>> # grid size: ni*nj*nk cells; si, sj, sk steps
     >>> ni, nj, nk = 4, 5, 6
     >>> si, sj, sk = 20, 10, 1
-    >>> 
+    >>>
     >>> # create raw coordinate grid
     >>> grid_ijk = np.mgrid[:(ni+1)*si:si, :(nj+1)*sj:sj, :(nk+1)*sk:sk]
-    >>> 
+    >>>
     >>> # repeat array along each Cartesian axis for connectivity
     >>> for axis in range(1, 4):
     ...     grid_ijk = grid_ijk.repeat(2, axis=axis)
-    >>> 
+    >>>
     >>> # slice off unnecessarily doubled edge coordinates
     >>> grid_ijk = grid_ijk[:, 1:-1, 1:-1, 1:-1]
-    >>> 
+    >>>
     >>> # reorder and reshape to VTK order
     >>> corners = grid_ijk.transpose().reshape(-1, 3)
-    >>> 
+    >>>
     >>> dims = np.array([ni, nj, nk]) + 1
     >>> grid = pv.ExplicitStructuredGrid(dims, corners)
     >>> _ = grid.compute_connectivity()
@@ -2198,7 +2201,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> cell = grid.extract_cells(31)  # doctest:+SKIP
         >>> ind = grid.neighbors(31)  # doctest:+SKIP
         >>> neighbors = grid.extract_cells(ind)  # doctest:+SKIP
-        >>> 
+        >>>
         >>> plotter = pv.Plotter()
         >>> plotter.add_axes()  # doctest:+SKIP
         >>> plotter.add_mesh(cell, color='r', show_edges=True)  # doctest:+SKIP
@@ -2322,7 +2325,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         Examples
         --------
         >>> from pyvista import examples
-        >>> 
+        >>>
         >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
         >>> grid.compute_connectivity()  # doctest:+SKIP
         >>> grid.plot(show_edges=True)  # doctest:+SKIP

@@ -7,10 +7,11 @@ Shadows
 Demonstrate the usage of lights and shadows in PyVista.
 """
 
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista
 from pyvista import examples
-import numpy as np
 
 mesh = examples.download_dragon()
 mesh.rotate_x(90)
