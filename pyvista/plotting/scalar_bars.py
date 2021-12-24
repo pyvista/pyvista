@@ -1,9 +1,11 @@
 """PyVista Scalar bar module."""
 
-import pyvista
 import numpy as np
+
+import pyvista
 from pyvista import _vtk
-from .tools import parse_font_family, parse_color
+
+from .tools import parse_color, parse_font_family
 
 
 class ScalarBars():
@@ -420,6 +422,8 @@ class ScalarBars():
 
         if label_font_size is not None or title_font_size is not None:
             scalar_bar.UnconstrainedFontSizeOn()
+            scalar_bar.AnnotationTextScalingOff()
+        else:
             scalar_bar.AnnotationTextScalingOn()
 
         label_text = scalar_bar.GetLabelTextProperty()

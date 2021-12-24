@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from pytest import fixture
 
@@ -21,7 +20,7 @@ def set_mpl():
 
 @fixture()
 def cube():
-    return pyvista.Cube().clean()
+    return pyvista.Cube()
 
 
 @fixture()
@@ -91,4 +90,3 @@ def datasets():
         examples.load_airplane(),  # PolyData
         examples.load_structured(),  # StructuredGrid
     ]
-

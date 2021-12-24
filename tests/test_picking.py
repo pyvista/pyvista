@@ -1,7 +1,8 @@
 import pytest
+import vtk
+
 import pyvista
 from pyvista.plotting import system_supports_plotting
-import vtk
 
 NO_PLOTTING = not system_supports_plotting()
 skip_no_vtk9 = pytest.mark.skipif(not vtk.vtkVersion().GetVTKMajorVersion() >= 9, reason="Requires VTK9+")
@@ -115,6 +116,42 @@ def test_point_picking():
         picker = plotter.iren.get_picker()
         picker.Pick(50, 50, 0, renderer)
         plotter.close()
+
+@skip_no_vtk9
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_point_picking_window_not_pickable():
+
+    plotter = pyvista.Plotter(
+        window_size=(100, 100),
+    )
+
+    # bottom left corner, pickable
+    sphere = pyvista.Sphere()
+    sphere.translate([-100, -100, 0])
+    plotter.add_mesh(sphere, pickable=True)
+
+    # top right corner, not pickable
+    unpickable_sphere = pyvista.Sphere()
+    unpickable_sphere.translate([100, 100, 0])
+    plotter.add_mesh(unpickable_sphere, pickable=False)
+
+    plotter.view_xy()
+    plotter.enable_point_picking(
+        pickable_window=False,
+        tolerance=0.2,
+    )
+
+    # simulate the pick
+    renderer = plotter.renderer
+    picker = plotter.iren.get_picker()
+
+    successful_pick = picker.Pick(0, 0, 0, renderer)
+    assert successful_pick
+
+    successful_pick = picker.Pick(100, 100, 0, renderer)
+    assert not successful_pick
+
+    plotter.close()
 
 
 @skip_no_vtk9

@@ -1,17 +1,83 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
+from functools import partial
+from typing import Sequence
 from weakref import proxy
 
 import numpy as np
 
 import pyvista
-from pyvista import _vtk, MAX_N_COLOR_BARS
-from pyvista.utilities import wrap, check_depth_peeling
-from .tools import (create_axes_orientation_box, create_axes_marker,
-                    parse_color, parse_font_family)
-from .camera import Camera
+from pyvista import MAX_N_COLOR_BARS, _vtk
+from pyvista.utilities import check_depth_peeling, try_callback, wrap
 
+from .camera import Camera
+from .charts import Charts
+from .tools import create_axes_marker, create_axes_orientation_box, parse_color, parse_font_family
+
+ACTOR_LOC_MAP = [
+    'upper right',
+    'upper left',
+    'lower left',
+    'lower right',
+    'center left',
+    'center right',
+    'lower center',
+    'upper center',
+    'center',
+]
+
+
+def map_loc_to_pos(loc, size, border=0.05):
+    """Map location and size to a VTK position and position2.
+
+    Attempt to place 2d actor in a sensible position.
+
+    """
+    if not isinstance(size, Sequence) or len(size) != 2:
+        raise ValueError(
+            f'`size` must be a list of length 2. Passed value is {size}'
+        )
+
+    if 'right' in loc:
+        x = 1 - size[1] - border
+    elif 'left' in loc:
+        x = border
+    else:
+        x = 0.5 - size[1]/2
+
+    if 'upper' in loc:
+        y = 1 - size[1] - border
+    elif 'lower' in loc:
+        y = border
+    else:
+        y = 0.5 - size[1]/2
+
+    return x, y, size
+
+
+def make_legend_face(face):
+    """Create the legend face."""
+    if face is None:
+        legendface = pyvista.PolyData([0, 0, 0])
+    elif face in ["-", "line"]:
+        legendface = _line_for_legend()
+    elif face in ["^", "triangle"]:
+        legendface = pyvista.Triangle()
+    elif face in ["o", "circle"]:
+        legendface = pyvista.Circle()
+    elif face in ["r", "rectangle"]:
+        legendface = pyvista.Rectangle()
+    elif isinstance(face, pyvista.PolyData):
+        legendface = face
+    else:
+        raise ValueError(f'Invalid face "{face}".  Must be one of the following:\n'
+                         '\t"triangle"\n'
+                         '\t"circle"\n'
+                         '\t"rectangle"\n'
+                         '\tNone'
+                         '\tpyvista.PolyData')
+    return legendface
 
 def scale_point(camera, point, invert=False):
     """Scale a point using the camera's transform matrix.
@@ -135,6 +201,8 @@ class Renderer(_vtk.vtkRenderer):
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
+        self._labels = {}  # tracks labeled actors
+        self._legend = None
         self._floor = None
         self._floors = []
         self._floor_kwargs = []
@@ -149,10 +217,20 @@ class Renderer(_vtk.vtkRenderer):
         # This allows us to keep adding colorbars without overlapping
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
+        self.__charts = None
 
         self._border_actor = None
         if border:
             self.add_border(border_color, border_width)
+
+    @property
+    def _charts(self):
+        """Return the charts collection."""
+        # lazy instantiation here to avoid creating the charts object unless needed.
+        if self.__charts is None:
+            self.__charts = Charts(self)
+            self.AddObserver("StartEvent", partial(try_callback, self._render_event))
+        return self.__charts
 
     @property
     def camera_position(self):
@@ -297,6 +375,11 @@ class Renderer(_vtk.vtkRenderer):
         self.set_background(color)
         self.Modified()
 
+    def _render_event(self, *args, **kwargs):
+        """Notify all charts about render event."""
+        for chart in self._charts:
+            chart._render_event(*args, **kwargs)
+
     def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=None):
         """Enable depth peeling to improve rendering of translucent geometry.
 
@@ -439,6 +522,71 @@ class Renderer(_vtk.vtkRenderer):
         if self.has_border:
             return self._border_actor.GetProperty().GetColor()
         return None
+
+    def add_chart(self, chart, *charts):
+        """Add a chart to this renderer.
+
+        Parameters
+        ----------
+        chart : Chart2D, ChartBox, ChartPie or ChartMPL
+            Chart to add to renderer.
+
+        *charts : Chart2D, ChartBox, ChartPie or ChartMPL
+            Charts to add to renderer.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> chart = pyvista.Chart2D()
+        >>> _ = chart.plot(range(10), range(10))
+        >>> pl = pyvista.Plotter()
+        >>> pl.add_chart(chart)
+        >>> pl.show()
+
+        """
+        self._charts.add_chart(chart, *charts)
+
+    def remove_chart(self, chart_or_index):
+        """Remove a chart from this renderer.
+
+        Parameters
+        ----------
+        chart_or_index : Chart2D, ChartBox, ChartPie, ChartMPL or int
+            Either the chart to remove from this renderer or its index in the collection of charts.
+
+        Examples
+        --------
+        First define a function to add two charts to a renderer.
+
+        >>> import pyvista
+        >>> def plotter_with_charts():
+        ...     pl = pyvista.Plotter()
+        ...     pl.background_color = 'w'
+        ...     chart_left = pyvista.Chart2D(size=(0.5, 1))
+        ...     _ = chart_left.line([0, 1, 2], [2, 1, 3])
+        ...     pl.add_chart(chart_left)
+        ...     chart_right = pyvista.Chart2D(size=(0.5, 1), loc=(0.5, 0))
+        ...     _ = chart_right.line([0, 1, 2], [3, 1, 2])
+        ...     pl.add_chart(chart_right)
+        ...     return pl, chart_left, chart_right
+        ...
+        >>> pl, *_ = plotter_with_charts()
+        >>> pl.show()
+
+        Now reconstruct the same plotter but remove the right chart by index.
+
+        >>> pl, *_ = plotter_with_charts()
+        >>> pl.remove_chart(1)
+        >>> pl.show()
+
+        Finally, remove the left chart by reference.
+
+        >>> pl, chart_left, chart_right = plotter_with_charts()
+        >>> pl.remove_chart(chart_left)
+        >>> pl.show()
+
+        """
+        self._charts.remove_chart(chart_or_index)
 
     @property
     def actors(self):
@@ -585,14 +733,14 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        self.marker_actor = create_axes_marker(line_width=line_width,
+        self._marker_actor = create_axes_marker(line_width=line_width,
             x_color=x_color, y_color=y_color, z_color=z_color,
             xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
-        self.AddActor(self.marker_actor)
-        memory_address = self.marker_actor.GetAddressAsString("")
-        self._actors[memory_address] = self.marker_actor
+        self.AddActor(self._marker_actor)
+        memory_address = self._marker_actor.GetAddressAsString("")
+        self._actors[memory_address] = self._marker_actor
         self.Modified()
-        return self.marker_actor
+        return self._marker_actor
 
     def add_orientation_widget(self, actor, interactive=None, color=None,
                                opacity=1.0):
@@ -935,7 +1083,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> mesh = pyvista.Sphere()
         >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(mesh)
-        >>> actor = plotter.show_bounds(grid='front', location='outer', 
+        >>> actor = plotter.show_bounds(grid='front', location='outer',
         ...                             all_edges=True)
         >>> plotter.show()
 
@@ -1114,6 +1262,15 @@ class Renderer(_vtk.vtkRenderer):
         vtk.vtkAxesActor
             Bounds actor.
 
+         Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(examples.download_guitar())
+        >>> _ = pl.show_grid()
+        >>> pl.show()
+
         """
         kwargs.setdefault('grid', 'back')
         kwargs.setdefault('location', 'outer')
@@ -1196,7 +1353,7 @@ class Renderer(_vtk.vtkRenderer):
         Returns
         -------
         vtk.vtkActor
-            VTK actor of the floor.
+            VTK actor of the bounding box.
 
         Examples
         --------
@@ -1445,7 +1602,22 @@ class Renderer(_vtk.vtkRenderer):
             self._floor_kwargs.clear()
 
     def remove_bounds_axes(self):
-        """Remove bounds axes."""
+        """Remove bounds axes.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.show_bounds(grid='front', location='outer')
+        >>> pl.subplot(0, 1)
+        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.show_bounds(grid='front', location='outer')
+        >>> actor = pl.remove_bounds_axes()
+        >>> pl.show()
+
+        """
         if hasattr(self, 'cube_axes_actor'):
             self.remove_actor(self.cube_axes_actor)
             self.Modified()
@@ -1754,6 +1926,9 @@ class Renderer(_vtk.vtkRenderer):
         if actor is None:
             return False
 
+        # remove any labels associated with the actor
+        self._labels.pop(actor.GetAddressAsString(""), None)
+
         # ensure any scalar bars associated with this actor are removed
         self.parent.scalar_bars._remove_mapper_from_plotter(actor)
         self.RemoveActor(actor)
@@ -1980,6 +2155,18 @@ class Renderer(_vtk.vtkRenderer):
         negative : bool, optional
             View from the opposite direction.
 
+        Examples
+        --------
+        View the XY plane of a built-in mesh example.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_xy()
+        >>> pl.show()
+
         """
         vec = np.array([0,0,1])
         viewup = np.array([0,1,0])
@@ -1994,6 +2181,18 @@ class Renderer(_vtk.vtkRenderer):
         ----------
         negative : bool, optional
             View from the opposite direction.
+
+        Examples
+        --------
+        View the YX plane of a built-in mesh example.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_yx()
+        >>> pl.show()
 
         """
         vec = np.array([0,0,-1])
@@ -2010,6 +2209,18 @@ class Renderer(_vtk.vtkRenderer):
         negative : bool, optional
             View from the opposite direction.
 
+        Examples
+        --------
+        View the XZ plane of a built-in mesh example.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_xz()
+        >>> pl.show()
+
         """
         vec = np.array([0,-1,0])
         viewup = np.array([0,0,1])
@@ -2024,6 +2235,18 @@ class Renderer(_vtk.vtkRenderer):
         ----------
         negative : bool, optional
             View from the opposite direction.
+
+        Examples
+        --------
+        View the ZX plane of a built-in mesh example.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_zx()
+        >>> pl.show()
 
         """
         vec = np.array([0,1,0])
@@ -2040,6 +2263,18 @@ class Renderer(_vtk.vtkRenderer):
         negative : bool, optional
             View from the opposite direction.
 
+        Examples
+        --------
+        View the YZ plane of a built-in mesh example.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_yz()
+        >>> pl.show()
+
         """
         vec = np.array([1,0,0])
         viewup = np.array([0,0,1])
@@ -2054,6 +2289,18 @@ class Renderer(_vtk.vtkRenderer):
         ----------
         negative : bool, optional
             View from the opposite direction.
+
+        Examples
+        --------
+        View the ZY plane of a built-in mesh example.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_zy()
+        >>> pl.show()
 
         """
         vec = np.array([-1,0,0])
@@ -2299,11 +2546,17 @@ class Renderer(_vtk.vtkRenderer):
             self.remove_bounding_box(render=render)
         if self._shadow_pass is not None:
             self.disable_shadows()
+        if self.__charts is not None:
+            self.__charts.deep_clean()
 
         self.remove_floors(render=render)
+        self.remove_legend(render=render)
         self.RemoveAllViewProps()
         self._actors = {}
         self._camera = None
+        self._bounding_box = None
+        self._marker_actor = None
+        self._border_actor = None
         # remove reference to parent last
         self.parent = None
 
@@ -2369,3 +2622,196 @@ class Renderer(_vtk.vtkRenderer):
         """Height of the renderer."""
         _, ymin, _, ymax = self.viewport
         return self.parent.window_size[1]*(ymax - ymin)
+
+    def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5),
+                   border=False, size=(0.2, 0.2), name=None,
+                   loc='upper right', face='triangle'):
+        """Add a legend to render window.
+
+        Entries must be a list containing one string and color entry for each
+        item.
+
+        Parameters
+        ----------
+        labels : list, optional
+            When set to ``None``, uses existing labels as specified by
+
+            - :func:`add_mesh <BasePlotter.add_mesh>`
+            - :func:`add_lines <BasePlotter.add_lines>`
+            - :func:`add_points <BasePlotter.add_points>`
+
+            List containing one entry for each item to be added to the
+            legend.  Each entry must contain two strings, [label,
+            color], where label is the name of the item to add, and
+            color is the color of the label to add.
+
+        bcolor : list or str, optional
+            Background color, either a three item 0 to 1 RGB color
+            list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
+            for a white color).  If None, legend background is
+            disabled.
+
+        border : bool, optional
+            Controls if there will be a border around the legend.
+            Default False.
+
+        size : sequence, optional
+            Two float sequence, each float between 0 and 1.  For example
+            ``(0.1, 0.1)`` would make the legend 10% the size of the
+            entire figure window.
+
+        name : str, optional
+            The name for the added actor so that it can be easily
+            updated.  If an actor of this name already exists in the
+            rendering window, it will be replaced by the new actor.
+
+        loc : str, optional
+            Location string.  One of the following:
+
+            * ``'upper right'``
+            * ``'upper left'``
+            * ``'lower left'``
+            * ``'lower right'``
+            * ``'center left'``
+            * ``'center right'``
+            * ``'lower center'``
+            * ``'upper center'``
+            * ``'center'``
+
+        face : str or pyvista.PolyData, optional
+            Face shape of legend face.  One of the following:
+
+            * None: ``None``
+            * Line: ``"-"`` or ``"line"``
+            * Triangle: ``"^"`` or ``'triangle'``
+            * Circle: ``"o"`` or ``'circle'``
+            * Rectangle: ``"r"`` or ``'rectangle'``
+            * Custom: :class:`pyvista.PolyData`
+
+            Default is ``'triangle'``.  Passing ``None`` removes the
+            legend face.  A custom face can be created using
+            :class:`pyvista.PolyData`.  This will be rendered from the
+            XY plane.
+
+        Returns
+        -------
+        vtk.vtkLegendBoxActor
+            Actor for the legend.
+
+        Examples
+        --------
+        Create a legend by labeling the meshes when using ``add_mesh``
+
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> sphere = pyvista.Sphere(center=(0, 0, 1))
+        >>> cube = pyvista.Cube()
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True, label='Sphere')
+        >>> _ = plotter.add_mesh(cube, 'r', label='Cube')
+        >>> _ = plotter.add_legend(bcolor='w', face=None)
+        >>> plotter.show()
+
+        Alternatively provide labels in the plotter.
+
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
+        >>> _ = plotter.add_mesh(cube, 'r')
+        >>> legend_entries = []
+        >>> legend_entries.append(['My Mesh', 'w'])
+        >>> legend_entries.append(['My Other Mesh', 'k'])
+        >>> _ = plotter.add_legend(legend_entries)
+        >>> plotter.show()
+
+        """
+        if self.legend is not None:
+            self.remove_legend()
+        self._legend = _vtk.vtkLegendBoxActor()
+
+        if labels is None:
+            # use existing labels
+            if not self._labels:
+                raise ValueError('No labels input.\n\n'
+                                 'Add labels to individual items when adding them to'
+                                 'the plotting object with the "label=" parameter.  '
+                                 'or enter them as the "labels" parameter.')
+
+            self._legend.SetNumberOfEntries(len(self._labels))
+            for i, (vtk_object, text, color) in enumerate(self._labels.values()):
+
+                if face is None:
+                    # dummy vtk object
+                    vtk_object = pyvista.PolyData([0, 0, 0])
+
+                self._legend.SetEntry(i, vtk_object, text, parse_color(color))
+
+        else:
+            self._legend.SetNumberOfEntries(len(labels))
+
+            legend_face = make_legend_face(face)
+            for i, (text, color) in enumerate(labels):
+                self._legend.SetEntry(i, legend_face, text, parse_color(color))
+
+        if loc is not None:
+            if loc not in ACTOR_LOC_MAP:
+                allowed = '\n'.join([f'\t * "{item}"' for item in ACTOR_LOC_MAP])
+                raise ValueError(
+                    f'Invalid loc "{loc}".  Expected one of the following:\n{allowed}'
+                )
+            x, y, size = map_loc_to_pos(loc, size, border=0.05)
+            self._legend.SetPosition(x, y)
+            self._legend.SetPosition2(size[0], size[1])
+
+        if bcolor is None:
+            self._legend.UseBackgroundOff()
+        else:
+            self._legend.UseBackgroundOn()
+            self._legend.SetBackgroundColor(parse_color(bcolor))
+
+        self._legend.SetBorder(border)
+
+        self.add_actor(self._legend, reset_camera=False, name=name, pickable=False)
+        return self._legend
+
+    def remove_legend(self, render=True):
+        """Remove the legend actor.
+
+        Parameters
+        ----------
+        render : bool, optional
+            Render upon actor removal.  Set this to ``False`` to stop
+            the render window from rendering when a the legend is removed.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(mesh, label='sphere')
+        >>> _ = pl.add_legend()
+        >>> pl.remove_legend()
+
+        """
+        if self.legend is not None:
+            self.remove_actor(self.legend, reset_camera=False, render=render)
+            self._legend = None
+
+    @property
+    def legend(self):
+        """Legend actor."""
+        return self._legend
+
+
+def _line_for_legend():
+    """Create a simple line-like rectangle for the legend."""
+    points = [
+        [0, 0, 0],
+        [0.4, 0, 0],
+        [0.4, 0.07, 0],
+        [0, 0.07, 0],
+        [0.5, 0, 0],  # last point needed to expand the bounds of the PolyData to be rendered smaller
+    ]
+    legendface = pyvista.PolyData()
+    legendface.points = np.array(points)
+    legendface.faces = [4, 0, 1, 2, 3]
+    return legendface

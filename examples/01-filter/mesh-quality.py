@@ -10,9 +10,7 @@ Here we will use the :func:`pyvista.DataSetFilters.compute_cell_quality` filter
 to compute the cell qualities. For a full list of the various quality metrics
 available, please refer to the documentation for that filter.
 """
-import pyvista as pv
 from pyvista import examples
-import numpy as np
 
 mesh = examples.download_cow().triangulate().decimate(0.7)
 

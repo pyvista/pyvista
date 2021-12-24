@@ -198,10 +198,14 @@ to learn more about the developers of PyVista.
 Contributing
 ============
 
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+   :target: CODE_OF_CONDUCT.md
+
 .. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
    :target: https://www.codetriage.com/pyvista/pyvista
    :alt: Code Triage
 
+|Contributor Covenant|
 |codetriage|
 
 We absolutely welcome contributions and we hope that our `Contributing Guide`_

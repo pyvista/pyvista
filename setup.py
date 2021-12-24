@@ -1,8 +1,9 @@
 """
 Installation file for python pyvista module
 """
-import os
 from io import open as io_open
+import os
+
 from setuptools import setup
 
 package_name = 'pyvista'
@@ -18,7 +19,6 @@ install_requires = ['numpy',
                     'pillow',
                     'appdirs',
                     'scooby>=0.5.1',
-                    'meshio>=4.0.3, <5.0',
                     'vtk',
                     'dataclasses;python_version=="3.6"',
                     'typing_extensions;python_version<="3.7"',
@@ -61,7 +61,7 @@ setup(
     url='https://github.com/pyvista/pyvista',
     keywords='vtk numpy plotting mesh',
     package_data={'pyvista.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
-                                       'hexbeam.vtk', 'sphere.ply',
+                                       'hexbeam.vtk', 'sphere.ply', 'nut.ply',
                                        'uniform.vtk', 'rectilinear.vtk',
                                        'globe.vtk', '2k_earth_daymap.jpg'],
     },
@@ -69,6 +69,8 @@ setup(
     python_requires='>=3.6.*',
     install_requires=install_requires,
     extras_require={
-        'colormaps': ['matplotlib', 'colorcet', 'cmocean']
+        'all': ['matplotlib', 'colorcet', 'cmocean', 'meshio'],
+        'colormaps': ['matplotlib', 'colorcet', 'cmocean'],
+        'io': ['meshio>=5.2'],
     },
 )

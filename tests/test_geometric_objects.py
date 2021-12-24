@@ -58,6 +58,24 @@ def test_line():
         pyvista.Line(pointa, pointb, 0.1) # from vtk
 
 
+def test_tube():
+    pointa = (0, 0, 0)
+    pointb = (10, 1., 3)
+
+    tube = pyvista.Tube(n_sides=3)
+    assert tube.n_points == 6
+    assert tube.n_cells == 3
+    tube = pyvista.Tube(pointa, pointb, 10)
+    assert tube.n_points == 165
+    assert tube.n_cells == 15
+
+    with pytest.raises(ValueError):
+        pyvista.Tube(pointa, pointb, -1)
+
+    with pytest.raises(TypeError):
+        pyvista.Tube(pointa, pointb, 0.1) # from vtk
+
+
 def test_cube():
     cube = pyvista.Cube()
     assert np.any(cube.points)
@@ -113,6 +131,11 @@ def test_disc():
     assert np.allclose(
         geom.bounds, pyvista.Disc().bounds + np.array([1.2, 1.2, 3.4, 3.4, 5.6, 5.6])
     )
+
+
+def test_superquadric():
+    geom = pyvista.Superquadric()
+    assert np.any(geom.points)
 
 
 # def test_supertoroid():
@@ -219,3 +242,80 @@ def test_circle():
     assert mesh.n_cells
     diameter = np.max(mesh.points[:, 0]) - np.min(mesh.points[:, 0])
     assert np.isclose(diameter, radius*2.0, rtol=1e-3)
+
+
+@pytest.mark.parametrize(
+    'kind_str, kind_int, n_vertices, n_faces',
+    zip(
+        ['tetrahedron', 'cube', 'octahedron', 'icosahedron', 'dodecahedron'],
+        range(5),
+        [4, 8, 6, 12, 20],
+        [4, 6, 8, 20, 12],
+    )
+)
+def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):
+    # verify integer mapping
+    solid_from_str = pyvista.PlatonicSolid(kind_str)
+    solid_from_int = pyvista.PlatonicSolid(kind_int)
+    assert solid_from_str == solid_from_int
+
+    # verify type of solid
+    assert solid_from_str.n_points == n_vertices
+    assert solid_from_str.n_faces == n_faces
+
+
+def test_platonic_invalids():
+    with pytest.raises(ValueError):
+        solid = pyvista.PlatonicSolid(kind='invalid')
+    with pytest.raises(ValueError):
+        solid = pyvista.PlatonicSolid(kind=42)
+    with pytest.raises(ValueError):
+        solid = pyvista.PlatonicSolid(kind=[])
+
+
+def test_tetrahedron():
+    radius = 1.7
+    center = (1, -2, 3)
+    solid = pyvista.Tetrahedron(radius=radius, center=center)
+    assert solid.n_points == 4
+    assert solid.n_faces == 4
+    assert np.allclose(solid.center, center)
+
+    doubled_solid = pyvista.Tetrahedron(radius=2*radius, center=center)
+    assert np.isclose(doubled_solid.length, 2*solid.length)
+
+
+def test_octahedron():
+    radius = 1.7
+    center = (1, -2, 3)
+    solid = pyvista.Octahedron(radius=radius, center=center)
+    assert solid.n_points == 6
+    assert solid.n_faces == 8
+    assert np.allclose(solid.center, center)
+
+    doubled_solid = pyvista.Octahedron(radius=2*radius, center=center)
+    assert np.isclose(doubled_solid.length, 2*solid.length)
+
+
+def test_dodecahedron():
+    radius = 1.7
+    center = (1, -2, 3)
+    solid = pyvista.Dodecahedron(radius=radius, center=center)
+    assert solid.n_points == 20
+    assert solid.n_faces == 12
+    assert np.allclose(solid.center, center)
+
+    doubled_solid = pyvista.Dodecahedron(radius=2*radius, center=center)
+    assert np.isclose(doubled_solid.length, 2*solid.length)
+
+
+def test_icosahedron():
+    radius = 1.7
+    center = (1, -2, 3)
+    solid = pyvista.Icosahedron(radius=radius, center=center)
+    assert solid.n_points == 12
+    assert solid.n_faces == 20
+    assert np.allclose(solid.center, center)
+
+    doubled_solid = pyvista.Icosahedron(radius=2*radius, center=center)
+    assert np.isclose(doubled_solid.length, 2*solid.length)

@@ -12,13 +12,17 @@ vtkConeSource
 vtkDiskSource
 vtkRegularPolygonSource
 vtkPyramid
+vtkPlatonicSolidSource
+vtkSuperquadricSource
+
+as well as some pure-python helpers.
 
 """
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.utilities import assert_empty_kwargs, check_valid_vector
+from pyvista.utilities import check_valid_vector
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -433,13 +437,80 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
     return line
 
 
-def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
-         z_length=1.0, bounds=None):
+def Tube(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1, radius=1.0, n_sides=15):
+    """Create a tube.
+
+    Parameters
+    ----------
+    pointa : np.ndarray or list, optional
+        Location in ``[x, y, z]``.
+
+    pointb : np.ndarray or list, optional
+        Location in ``[x, y, z]``.
+
+    resolution : int, optional
+        Number of pieces to divide tube into.
+
+    radius : float, optional
+        Minimum tube radius (minimum because the tube radius may vary).
+
+    n_sides : int, optional
+        Number of sides for the tube.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Tube mesh.
+
+    Examples
+    --------
+    Create a tube between ``(0, 0, 0)`` and ``(0, 0, 1)``.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Tube((0, 0, 0), (0, 0, 1))
+    >>> mesh.plot()
+
+    """
+    if resolution <= 0:
+        raise ValueError('Resolution must be positive.')
+    if np.array(pointa).size != 3:
+        raise TypeError('Point A must be a length three tuple of floats.')
+    if np.array(pointb).size != 3:
+        raise TypeError('Point B must be a length three tuple of floats.')
+    line_src = _vtk.vtkLineSource()
+    line_src.SetPoint1(*pointa)
+    line_src.SetPoint2(*pointb)
+    line_src.SetResolution(resolution)
+    line_src.Update()
+
+    if n_sides < 3:
+        raise ValueError('Number of sides `n_sides` must be >= 3')
+    tube_filter = _vtk.vtkTubeFilter()
+    tube_filter.SetInputConnection(line_src.GetOutputPort())
+    tube_filter.SetRadius(radius)
+    tube_filter.SetNumberOfSides(n_sides)
+    tube_filter.Update()
+
+    return pyvista.wrap(tube_filter.GetOutput())
+
+
+
+def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0,
+         z_length=1.0, bounds=None, clean=True):
     """Create a cube.
 
     It's possible to specify either the center and side lengths or
     just the bounds of the cube. If ``bounds`` are given, all other
     arguments are ignored.
+
+    .. versionchanged:: 0.33.0
+        The cube is created using ``vtk.vtkCubeSource``. For
+        compatibility with :func:`pyvista.PlatonicSolid`, face indices
+        are also added as cell data. For full compatibility with
+        :func:`PlatonicSolid() <pyvista.PlatonicSolid>`, one has to
+        use ``x_length = y_length = z_length = 2 * radius / 3**0.5``.
+        The cube points are also cleaned by default now, leaving only
+        the 8 corners and a watertight (manifold) mesh.
 
     Parameters
     ----------
@@ -456,8 +527,16 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
         Length of the cube in the z-direction.
 
     bounds : sequence, optional
-        Specify the bounding box of the cube. If given, all other arguments are
-        ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        Specify the bounding box of the cube. If given, all other size
+        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    clean : bool, optional
+        Whether to clean the raw points of the mesh, making the cube
+        manifold. Note that this will degrade the texture coordinates
+        that come with the mesh, so if you plan to map a texture on
+        the cube, consider setting this to ``False``.
+
+        .. versionadded:: 0.33.0
 
     Returns
     -------
@@ -484,7 +563,17 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0,
         src.SetYLength(y_length)
         src.SetZLength(z_length)
     src.Update()
-    return pyvista.wrap(src.GetOutput())
+    cube = pyvista.wrap(src.GetOutput())
+
+    # add face index data for compatibility with PlatonicSolid
+    # but make it inactive for backwards compatibility
+    cube.cell_data.set_array([1, 4, 0, 3, 5, 2],['FaceIndex'])
+
+    # clean duplicate points
+    if clean:
+        cube.clean(inplace=True)
+
+    return cube
 
 
 def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
@@ -781,7 +870,7 @@ def Wavelet(extent=(-10, 10, -10, 10, -10, 10), center=(0, 0, 0), maximum=255,
     --------
     >>> import pyvista
     >>> wavelet = pyvista.Wavelet(extent=(0, 50, 0, 50, 0, 10), x_freq=20,
-    ...                           y_freq=10, z_freq=1, x_mag=100, y_mag=100, 
+    ...                           y_freq=10, z_freq=1, x_mag=100, y_mag=100,
     ...                           z_mag=1000)
     >>> wavelet.plot(show_scalar_bar=False)
 
@@ -1128,3 +1217,283 @@ def Circle(radius=0.5, resolution=100):
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
     return pyvista.wrap(pyvista.PolyData(points, cells))
+
+
+def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
+                 theta_roundness=1., phi_roundness=1.,
+                 theta_resolution=16, phi_resolution=16,
+                 toroidal=False, thickness=1/3):
+    """Create a superquadric.
+
+    Parameters
+    ----------
+    center : iterable, optional
+        Center of the superquadric in ``[x, y, z]``.
+
+    scale : iterable, optional
+        Scale factors of the superquadric in ``[x, y, z]``.
+
+    size : float, optional
+        Superquadric isotropic size.
+
+    theta_roundness : float, optional
+        Superquadric east/west roundness.
+        Values range from 0 (rectangular) to 1 (circular) to higher orders.
+
+    phi_roundness : float, optional
+        Superquadric north/south roundness.
+        Values range from 0 (rectangular) to 1 (circular) to higher orders.
+
+    theta_resolution : int, optional
+        Number of points in the longitude direction.
+        Values are rounded to nearest multiple of 4.
+
+    phi_resolution : int, optional
+        Number of points in the latitude direction.
+        Values are rounded to nearest multiple of 8.
+
+    toroidal : bool, optional
+        Whether or not the superquadric is toroidal (``True``)
+        or ellipsoidal (``False``).
+
+    thickness : float, optional
+        Superquadric ring thickness.
+        Only applies if toroidal is set to ``True``.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Superquadric mesh.
+
+    See Also
+    --------
+    pyvista.ParametricSuperEllipsoid :
+        Parametric superquadric if toroidal is ``False``.
+    pyvista.ParametricSuperToroid :
+        Parametric superquadric if toroidal is ``True``.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> superquadric = pyvista.Superquadric(scale=(3., 1., 0.5),
+    ...                                     phi_roundness=0.1,
+    ...                                     theta_roundness=0.5)
+    >>> superquadric.plot(show_edges=True)
+
+    """
+    superquadricSource = _vtk.vtkSuperquadricSource()
+    superquadricSource.SetCenter(center)
+    superquadricSource.SetScale(scale)
+    superquadricSource.SetSize(size)
+    superquadricSource.SetThetaRoundness(theta_roundness)
+    superquadricSource.SetPhiRoundness(phi_roundness)
+    superquadricSource.SetThetaResolution(round(theta_resolution/4)*4)
+    superquadricSource.SetPhiResolution(round(phi_resolution/8)*8)
+    superquadricSource.SetToroidal(toroidal)
+    superquadricSource.SetThickness(thickness)
+    superquadricSource.Update()
+    return pyvista.wrap(superquadricSource.GetOutput())
+
+
+def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
+    """Create a Platonic solid of a given size.
+
+    Parameters
+    ----------
+    kind : str or int, optional
+        The kind of Platonic solid to create. Either the name of the
+        polyhedron or an integer index:
+
+            * ``'tetrahedron'`` or ``0``
+            * ``'cube'`` or ``1``
+            * ``'octahedron'`` or ``2``
+            * ``'icosahedron'`` or ``3``
+            * ``'dodecahedron'`` or ``4``
+
+    radius : float, optional
+        The radius of the circumscribed sphere for the solid to create.
+
+    center : sequence, optional
+        Three-length sequence defining the center of the solid to create.
+
+    Returns
+    -------
+    pyvista.PolyData
+        One of the five Platonic solids. Cell scalars are defined that
+        assign integer labels to each face (with array name
+        ``"FaceIndex"``).
+
+    Examples
+    --------
+    Create and plot a dodecahedron.
+
+    >>> import pyvista
+    >>> dodeca = pyvista.PlatonicSolid('dodecahedron')
+    >>> dodeca.plot(categories=True)
+
+    See :ref:`platonic_example` for more examples using this filter.
+
+    """
+    kinds = {
+        'tetrahedron': 0,
+        'cube': 1,
+        'octahedron': 2,
+        'icosahedron': 3,
+        'dodecahedron': 4,
+    }
+    if isinstance(kind, str):
+        if kind not in kinds:
+            raise ValueError(f'Invalid Platonic solid kind "{kind}".')
+        kind = kinds[kind]
+    elif isinstance(kind, int) and kind not in range(5):
+        raise ValueError(f'Invalid Platonic solid index "{kind}".')
+    elif not isinstance(kind, int):
+        raise ValueError('Invalid Platonic solid index type '
+                         f'"{type(kind).__name__}".')
+    check_valid_vector(center, 'center')
+
+    solid = _vtk.vtkPlatonicSolidSource()
+    solid.SetSolidType(kind)
+    solid.Update()
+    solid = pyvista.wrap(solid.GetOutput())
+    solid.scale(radius)
+    solid.points += np.asanyarray(center) - solid.center
+    # rename and activate cell scalars
+    cell_data = solid.get_array(0)
+    solid.clear_data()
+    solid.cell_data['FaceIndex'] = cell_data
+    return solid
+
+
+def Tetrahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
+    """Create a tetrahedron of a given size.
+
+    A tetrahedron is composed of four congruent equilateral triangles.
+
+    Parameters
+    ----------
+    radius : float, optional
+        The radius of the circumscribed sphere for the tetrahedron.
+
+    center : sequence, optional
+        Three-length sequence defining the center of the tetrahedron.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh for the tetrahedron. Cell scalars are defined that assign
+        integer labels to each face (with array name ``"FaceIndex"``).
+
+    Examples
+    --------
+    Create and plot a tetrahedron.
+
+    >>> import pyvista
+    >>> tetra = pyvista.Tetrahedron()
+    >>> tetra.plot(categories=True)
+
+    See :ref:`platonic_example` for more examples using this filter.
+
+    """
+    return PlatonicSolid(kind='tetrahedron', radius=radius, center=center)
+
+
+def Octahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
+    """Create an octahedron of a given size.
+
+    An octahedron is composed of eight congruent equilateral
+    triangles.
+
+    Parameters
+    ----------
+    radius : float, optional
+        The radius of the circumscribed sphere for the octahedron.
+
+    center : sequence, optional
+        Three-length sequence defining the center of the octahedron.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh for the octahedron. Cell scalars are defined that assign
+        integer labels to each face (with array name ``"FaceIndex"``).
+
+    Examples
+    --------
+    Create and plot an octahedron.
+
+    >>> import pyvista
+    >>> tetra = pyvista.Octahedron()
+    >>> tetra.plot(categories=True)
+
+    See :ref:`platonic_example` for more examples using this filter.
+
+    """
+    return PlatonicSolid(kind='octahedron', radius=radius, center=center)
+
+
+def Dodecahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
+    """Create a dodecahedron of a given size.
+
+    A dodecahedron is composed of twelve congruent regular pentagons.
+
+    Parameters
+    ----------
+    radius : float, optional
+        The radius of the circumscribed sphere for the dodecahedron.
+
+    center : sequence, optional
+        Three-length sequence defining the center of the dodecahedron.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh for the dodecahedron. Cell scalars are defined that assign
+        integer labels to each face (with array name ``"FaceIndex"``).
+
+    Examples
+    --------
+    Create and plot a dodecahedron.
+
+    >>> import pyvista
+    >>> tetra = pyvista.Dodecahedron()
+    >>> tetra.plot(categories=True)
+
+    See :ref:`platonic_example` for more examples using this filter.
+
+    """
+    return PlatonicSolid(kind='dodecahedron', radius=radius, center=center)
+
+
+def Icosahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
+    """Create an icosahedron of a given size.
+
+    An icosahedron is composed of twenty congruent equilateral
+    triangles.
+
+    Parameters
+    ----------
+    radius : float, optional
+        The radius of the circumscribed sphere for the icosahedron.
+
+    center : sequence, optional
+        Three-length sequence defining the center of the icosahedron.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Mesh for the icosahedron. Cell scalars are defined that assign
+        integer labels to each face (with array name ``"FaceIndex"``).
+
+    Examples
+    --------
+    Create and plot an icosahedron.
+
+    >>> import pyvista
+    >>> tetra = pyvista.Icosahedron()
+    >>> tetra.plot(categories=True)
+
+    See :ref:`platonic_example` for more examples using this filter.
+
+    """
+    return PlatonicSolid(kind='icosahedron', radius=radius, center=center)

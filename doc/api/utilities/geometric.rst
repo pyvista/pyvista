@@ -19,13 +19,20 @@ additional details see :ref:`ref_geometric_example` example.
    Cylinder
    CylinderStructured
    Disc
+   Dodecahedron
+   Icosahedron
    Line
+   Tube
+   Octahedron
    Plane
+   PlatonicSolid
    Polygon
    Pyramid
    Rectangle
    Sphere
    Spline
+   Superquadric
+   Tetrahedron
    Text3D
    Triangle
    Wavelet

@@ -13,6 +13,7 @@ Integrate a vector field to generate streamlines.
 
 # sphinx_gallery_thumbnail_number = 3
 import numpy as np
+
 import pyvista as pv
 from pyvista import examples
 
@@ -24,7 +25,7 @@ from pyvista import examples
 mesh = examples.download_carotid()
 
 ###############################################################################
-# Run the stream line filtering algorithm using random seed points inside a 
+# Run the stream line filtering algorithm using random seed points inside a
 # sphere with radius of 2.0.
 
 streamlines, src = mesh.streamlines(
@@ -75,8 +76,8 @@ p.show()
 
 
 ###############################################################################
-# A source mesh can also be provided using the 
-# :func:`pyvista.DataSetFilters.streamlines_from_source` 
+# A source mesh can also be provided using the
+# :func:`pyvista.DataSetFilters.streamlines_from_source`
 # filter, for example if an inlet surface is available.  In this example, the
 # inlet surface is extracted just inside the domain for use as the seed for
 # the streamlines.
@@ -134,7 +135,11 @@ ny = 15
 nz = 5
 
 origin = (-(nx - 1)*0.1/2, -(ny - 1)*0.1/2, -(nz - 1)*0.1/2)
-mesh = pv.UniformGrid((nx, ny, nz), (.1, .1, .1), origin)
+mesh = pv.UniformGrid(
+    dims=(nx, ny, nz),
+    spacing=(.1, .1, .1),
+    origin=origin
+)
 x = mesh.points[:, 0]
 y = mesh.points[:, 1]
 z = mesh.points[:, 2]

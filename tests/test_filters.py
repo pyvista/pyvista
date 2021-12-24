@@ -1,17 +1,16 @@
-import os
-import sys
-import platform
 import itertools
+import os
+import platform
+import sys
 
 import numpy as np
 import pytest
 from vtk import VTK_QUADRATIC_HEXAHEDRON
 
-from pyvista._vtk import VTK9, vtkStaticCellLocator
 import pyvista
-from pyvista import examples, Sphere
+from pyvista import examples
+from pyvista._vtk import VTK9, vtkStaticCellLocator
 from pyvista.core.errors import VTKVersionError
-
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -49,7 +48,11 @@ def grid():
 def uniform_vec():
     nx, ny, nz = 20, 15, 5
     origin = (-(nx - 1)*0.1/2, -(ny - 1)*0.1/2, -(nz - 1)*0.1/2)
-    mesh = pyvista.UniformGrid((nx, ny, nz), (.1, .1, .1), origin)
+    mesh = pyvista.UniformGrid(
+        dims=(nx, ny, nz),
+        spacing=(.1, .1, .1),
+        origin=origin
+    )
     mesh['vectors'] = mesh.points
     return mesh
 
@@ -384,10 +387,11 @@ def test_wireframe_composite(composite):
     assert output.n_blocks == composite.n_blocks
 
 
-def test_delaunay_2d(datasets):
-    mesh = datasets[2].delaunay_2d(progress_bar=True)  # UnstructuredGrid
+def test_delaunay_2d_unstructured(datasets):
+    mesh = examples.load_hexbeam().delaunay_2d(progress_bar=True)  # UnstructuredGrid
     assert isinstance(mesh, pyvista.PolyData)
     assert mesh.n_points
+    assert len(mesh.point_data.keys()) > 0
 
 
 @pytest.mark.parametrize('method', ['contour', 'marching_cubes',
@@ -497,7 +501,7 @@ def test_compute_cell_sizes(datasets):
         assert 'Area' in result.array_names
         assert 'Volume' in result.array_names
     # Test the volume property
-    grid = pyvista.UniformGrid((10,10,10))
+    grid = pyvista.UniformGrid(dims=(10, 10, 10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
     assert np.allclose(grid.volume, volume)
 
@@ -569,13 +573,35 @@ def test_glyph_cell_point_data(sphere):
     sphere['vectors_points'] = np.ones([sphere.n_points,3])
     sphere['arr_cell'] = np.ones(sphere.n_cells)
     sphere['arr_points'] = np.ones(sphere.n_points)
-    
+
     assert sphere.glyph(orient='vectors_cell', scale='arr_cell', progress_bar=True)
     assert sphere.glyph(orient='vectors_points', scale='arr_points', progress_bar=True)
     with pytest.raises(ValueError):
         sphere.glyph(orient='vectors_cell', scale='arr_points', progress_bar=True)
     with pytest.raises(ValueError):
         sphere.glyph(orient='vectors_points', scale='arr_cell', progress_bar=True)
+
+
+def test_glyph_orient_and_scale():
+    grid = pyvista.UniformGrid(dims=(1, 1, 1))
+    geom = pyvista.Line()
+    scale = 10.0
+    orient = np.array([[0.0, 0.0, 1.0]])
+    grid["z_axis"] = orient * scale
+    glyph1 = grid.glyph(geom=geom, orient="z_axis", scale="z_axis")
+    glyph2 = grid.glyph(geom=geom, orient=False, scale="z_axis")
+    glyph3 = grid.glyph(geom=geom, orient="z_axis", scale=False)
+    glyph4 = grid.glyph(geom=geom, orient=False, scale=False)
+    assert (
+        glyph1.bounds[4] == geom.bounds[0] * scale
+        and glyph1.bounds[5] == geom.bounds[1] * scale
+    )
+    assert (
+        glyph2.bounds[0] == geom.bounds[0] * scale
+        and glyph2.bounds[1] == geom.bounds[1] * scale
+    )
+    assert glyph3.bounds[4] == geom.bounds[0] and glyph3.bounds[5] == geom.bounds[1]
+    assert glyph4.bounds[0] == geom.bounds[0] and glyph4.bounds[1] == geom.bounds[1]
 
 
 def test_split_and_connectivity():
@@ -798,7 +824,11 @@ def test_streamlines_from_source(uniform_vec):
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
-    source = pyvista.UniformGrid([5, 5, 5], [0.1, 0.1, 0.1], [0, 0, 0])
+    source = pyvista.UniformGrid(
+        dims=[5, 5, 5],
+        spacing=[0.1, 0.1, 0.1],
+        origin=[0, 0, 0]
+    )
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
@@ -880,8 +910,8 @@ def test_streamlines_evenly_spaced_2D_errors():
         streams = mesh.streamlines_evenly_spaced_2D(integrator_type=45)
 
     with pytest.raises(ValueError):
-        streams = mesh.streamlines_evenly_spaced_2D(interpolator_type="not valid")        
-    
+        streams = mesh.streamlines_evenly_spaced_2D(interpolator_type="not valid")
+
     with pytest.raises(ValueError):
         streams = mesh.streamlines_evenly_spaced_2D(step_unit="not valid")
 
@@ -1229,17 +1259,49 @@ def test_extract_surface():
     assert surf_no_subdivide.n_faces == 6
 
 
-def test_merge_general():
-    mesh = examples.load_uniform()
-    thresh = mesh.threshold_percent([0.2, 0.5], progress_bar=True)  # unstructured grid
-    con = mesh.contour()  # poly data
+def test_merge_general(uniform):
+    thresh = uniform.threshold_percent([0.2, 0.5], progress_bar=True)  # unstructured grid
+    con = uniform.contour()  # poly data
     merged = thresh + con
     assert isinstance(merged, pyvista.UnstructuredGrid)
     merged = con + thresh
     assert isinstance(merged, pyvista.UnstructuredGrid)
     # Pure PolyData inputs should yield poly data output
-    merged = mesh.extract_surface() + con
+    merged = uniform.extract_surface() + con
     assert isinstance(merged, pyvista.PolyData)
+
+
+def test_iadd_general(uniform, hexbeam, sphere):
+    unstructured = hexbeam
+    sphere_shifted = sphere.copy()
+    sphere_shifted.points += [1, 1, 1]
+    # successful case: poly += poly
+    merged = sphere
+    merged += sphere_shifted
+    assert merged is sphere
+
+    # successful case: unstructured += anything
+    merged = unstructured
+    merged += uniform
+    assert merged is unstructured
+    merged += unstructured
+    assert merged is unstructured
+    merged += sphere
+    assert merged is unstructured
+
+    # failing case: poly += non-poly
+    merged = sphere
+    with pytest.raises(TypeError):
+        merged += uniform
+
+    # failing case: uniform += anything
+    merged = uniform
+    with pytest.raises(TypeError):
+        merged += uniform
+    with pytest.raises(TypeError):
+        merged += unstructured
+    with pytest.raises(TypeError):
+        merged += sphere
 
 
 def test_compute_cell_quality():
@@ -1434,6 +1496,10 @@ def test_shrink():
     shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True)
     assert shrunk.n_cells == mesh.n_cells
     assert shrunk.area < mesh.area
+    mesh = examples.load_uniform()
+    shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True)
+    assert shrunk.n_cells == mesh.n_cells
+    assert shrunk.volume < mesh.volume
 
 
 @pytest.mark.parametrize('num_cell_arrays,num_point_data',
@@ -1444,10 +1510,10 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
         tf = pyvista.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
-            dataset.cell_data['C%d' % i] = np.random.rand(dataset.n_cells, 3)
+            dataset.cell_data[f'C{i}'] = np.random.rand(dataset.n_cells, 3)
 
         for i in range(num_point_data):
-            dataset.point_data['P%d' % i] = np.random.rand(dataset.n_points, 3)
+            dataset.point_data[f'P{i}'] = np.random.rand(dataset.n_points, 3)
 
         # deactivate any active vectors!
         # even if transform_all_input_vectors is False, vtkTransformfilter will
@@ -1466,6 +1532,18 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
 
         for name, array in dataset.cell_data.items():
             assert transformed.cell_data[name] == pytest.approx(array)
+
+        # verify that the cell connectivity is a deep copy
+        if hasattr(dataset, '_connectivity_array') and VTK9:
+            transformed._connectivity_array[0] += 1
+            assert not np.array_equal(
+                dataset._connectivity_array, transformed._connectivity_array
+            )
+        if hasattr(dataset, 'cell_connectivity') and VTK9:
+            transformed.cell_connectivity[0] += 1
+            assert not np.array_equal(
+                dataset.cell_connectivity, transformed.cell_connectivity
+            )
 
 
 @pytest.mark.parametrize('num_cell_arrays,num_point_data',
@@ -1587,7 +1665,7 @@ def test_transform_inplace_bad_types_2(dataset):
 def test_extrude_rotate():
     resolution = 4
     line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
-    
+
     with pytest.raises(ValueError):
         line.extrude_rotate(resolution=0)
 
@@ -1653,7 +1731,7 @@ def test_collision_solid_non_triangle(hexbeam):
     assert output.is_all_triangles
 
 
-def test_reconstruct_surface(sphere):
+def test_reconstruct_surface_poly(sphere):
     pc = pyvista.wrap(sphere.points)
     surf = pc.reconstruct_surface(nbr_sz=10, sample_spacing=50)
     assert surf.is_all_triangles
@@ -1662,3 +1740,9 @@ def test_reconstruct_surface(sphere):
 def test_is_manifold(sphere, plane):
     assert sphere.is_manifold
     assert not plane.is_manifold
+
+
+def test_reconstruct_surface_unstructured(datasets):
+    mesh = examples.load_hexbeam().reconstruct_surface()
+    assert isinstance(mesh, pyvista.PolyData)
+    assert mesh.n_points

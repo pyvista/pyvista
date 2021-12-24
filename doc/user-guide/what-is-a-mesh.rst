@@ -205,7 +205,7 @@ Note how this varies from assigning scalars to each point
 
 .. jupyter-execute::
 
-   cube = pv.Cube().clean()
+   cube = pv.Cube()
    cube.cell_data['myscalars'] = range(6)
 
    other_cube = cube.copy()

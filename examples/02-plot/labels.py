@@ -4,10 +4,12 @@ Label Points
 
 Use string arrays in a point set to label points
 """
+import numpy as np
+
+import pyvista as pv
+
 # sphinx_gallery_thumbnail_number = 3
 from pyvista import examples
-import pyvista as pv
-import numpy as np
 
 ###############################################################################
 # Label String Array

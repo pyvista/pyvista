@@ -22,8 +22,9 @@ Let's look at a few use cases that all update a surface mesh.
 #
 # Use a single sphere widget
 
-import pyvista as pv
 import numpy as np
+
+import pyvista as pv
 
 # Create a triangle surface
 surf = pv.PolyData()
@@ -55,8 +56,9 @@ p.show()
 #
 # Use several sphere widgets at once
 
-import pyvista as pv
 import numpy as np
+
+import pyvista as pv
 
 # Create a triangle surface
 surf = pv.PolyData()
@@ -89,13 +91,16 @@ p.show()
 # This one is the coolest - use four sphere widgets to update perturbations on
 # a surface and interpolate between them with some boundary conditions
 
-from scipy.interpolate import griddata
 import numpy as np
+from scipy.interpolate import griddata
+
 import pyvista as pv
+
 
 def get_colors(n):
     """A helper function to get n colors"""
     from itertools import cycle
+
     import matplotlib
     cycler = matplotlib.rcParams['axes.prop_cycle']
     colors = cycle(cycler)

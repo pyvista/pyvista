@@ -22,6 +22,7 @@ from the view point:
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
+
 mesh = examples.download_bunny()
 mesh.rotate_x(90)
 mesh.rotate_z(180)

@@ -6,13 +6,13 @@ import numpy as np
 
 # imports here rather than in _vtk to avoid circular imports
 try:
-    from vtkmodules.vtkRenderingCore import vtkLight, vtkLightActor
     from vtkmodules.vtkCommonMath import vtkMatrix4x4
+    from vtkmodules.vtkRenderingCore import vtkLight, vtkLightActor
 except ImportError:  # pragma: no cover
     from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
 
-from .tools import parse_color
 from ..utilities.helpers import vtkmatrix_from_array
+from .tools import parse_color
 
 
 class LightType(IntEnum):
@@ -250,7 +250,7 @@ class Light(vtkLight):
     @shadow_attenuation.setter
     def shadow_attenuation(self, value):
         """Set the shadow intensity."""
-        self.SetShadowAttenuation(value)    
+        self.SetShadowAttenuation(value)
 
     @property
     def ambient_color(self):
@@ -280,7 +280,7 @@ class Light(vtkLight):
     @ambient_color.setter
     def ambient_color(self, color):
         """Set the ambient color of the light."""
-        self.SetAmbientColor(parse_color(color))
+        self.SetAmbientColor(parse_color(color)[:3])
 
     @property
     def diffuse_color(self):
@@ -310,7 +310,7 @@ class Light(vtkLight):
     @diffuse_color.setter
     def diffuse_color(self, color):
         """Set the diffuse color of the light."""
-        self.SetDiffuseColor(parse_color(color))
+        self.SetDiffuseColor(parse_color(color)[:3])
 
     @property
     def specular_color(self):
@@ -340,7 +340,7 @@ class Light(vtkLight):
     @specular_color.setter
     def specular_color(self, color):
         """Set the specular color of the light."""
-        self.SetSpecularColor(parse_color(color))
+        self.SetSpecularColor(parse_color(color)[:3])
 
     @property
     def position(self):
@@ -991,7 +991,7 @@ class Light(vtkLight):
 
         >>> import pyvista as pv
         >>> light = pv.Light()
-        >>> light.transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], 
+        >>> light.transform_matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0],
         ...                           [0, 0, 0, 1]]
         >>> shallow_copied = light.copy(deep=False)
         >>> shallow_copied == light

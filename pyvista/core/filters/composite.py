@@ -1,6 +1,6 @@
 """Filters module with a class to manage filters/algorithms for composite datasets."""
 import pyvista
-from pyvista import abstract_class, _vtk, wrap
+from pyvista import _vtk, abstract_class, wrap
 from pyvista.core.filters.data_set import DataSetFilters
 
 
@@ -48,8 +48,10 @@ class CompositeFilters:
         Combine blocks within a multiblock without merging points.
 
         >>> import pyvista
-        >>> block = pyvista.MultiBlock([pyvista.Cube(),
-        ...                             pyvista.Cube(center=(1, 0, 0))])
+        >>> block = pyvista.MultiBlock([
+        ...     pyvista.Cube(clean=False),
+        ...     pyvista.Cube(center=(1, 0, 0), clean=False)
+        ... ])
         >>> merged = block.combine()
         >>> merged.n_points
         48

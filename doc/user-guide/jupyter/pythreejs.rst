@@ -133,7 +133,7 @@ points for point, wireframe, and surface representations.
 
    def make_cube(center=(0, 0, 0), resolution=1):
        cube = pyvista.Cube(center=center)
-       return cube.clean().triangulate().subdivide(resolution)
+       return cube.triangulate().subdivide(resolution)
 
    pl = pyvista.Plotter()
 

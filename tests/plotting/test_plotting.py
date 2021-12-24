@@ -1,28 +1,30 @@
 """
+This test module tests any functionality that requires plotting.
+
 See the image regression notes in doc/extras/developer_notes.rst
+
 """
-import time
-import platform
-import warnings
 import inspect
-import pathlib
+import io
 import os
-from weakref import proxy
-from pathlib import Path
+import pathlib
+import platform
+import time
+import warnings
 
 from PIL import Image
 import imageio
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import vtk
 
 import pyvista
-from pyvista._vtk import VTK9
 from pyvista import examples
+from pyvista._vtk import VTK9
+from pyvista.core.errors import DeprecationError
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
-from pyvista.core.errors import DeprecationError
-
 
 # skip all tests if unable to render
 if not system_supports_plotting():
@@ -39,20 +41,13 @@ try:
 except:
     ffmpeg_failed = True
 
-try:
-    from vtkmodules.vtkCommonCore import vtkVersion
-    vtk_dev = len(str(vtkVersion().GetVTKBuildVersion())) > 2
-except:
-    vtk_dev = False
-
 # These tests fail with mesa opengl on windows
-skip_windows_dev_whl = pytest.mark.skipif(os.name == 'nt' and vtk_dev,
-                                          reason='Test fails on Windows with VTK dev wheels')
+skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 
 # Reset image cache with new images
 glb_reset_image_cache = False
-THIS_PATH = Path(__file__).parent.absolute()
+THIS_PATH = pathlib.Path(__file__).parent.absolute()
 IMAGE_CACHE_DIR = os.path.join(THIS_PATH, 'image_cache')
 if not os.path.isdir(IMAGE_CACHE_DIR):
     os.mkdir(IMAGE_CACHE_DIR)
@@ -61,6 +56,9 @@ if not os.path.isdir(IMAGE_CACHE_DIR):
 AZURE_CI_WINDOWS = os.environ.get('AZURE_CI_WINDOWS', 'false').lower() == 'true'
 
 skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
+
+skip_mac = pytest.mark.skipif(platform.system() == 'Darwin',
+                              reason='MacOS CI fails when downloading examples')
 
 # Normal image warning/error thresholds (assumes using use_vtk)
 IMAGE_REGRESSION_ERROR = 500  # major differences
@@ -72,6 +70,7 @@ HIGH_VARIANCE_TESTS = {
     'test_pbr',
     'test_set_viewup',
     'test_add_title',
+    'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
     'test_import_gltf',  # image cache created with 9.0.20210612.dev0
     'test_export_gltf'}  # image cache created with 9.0.20210612.dev0
 VER_IMAGE_REGRESSION_ERROR = 1000
@@ -183,7 +182,7 @@ def test_export_gltf(tmpdir, sphere, airplane):
 
 
 @skip_not_vtk9
-@skip_windows_dev_whl
+@skip_windows
 @pytest.mark.skipif(AZURE_CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere):
     """Test PBR rendering"""
@@ -569,6 +568,25 @@ def test_plot_silhouette(tri_cylinder):
     plotter.show(before_close_callback=verify_cache_image)
 
 
+def test_plot_silhouette_method(tri_cylinder):
+    plotter = pyvista.Plotter()
+
+    plotter.add_mesh(tri_cylinder)
+    actors = list(plotter.renderer.GetActors())
+    assert len(actors) == 1  # cylinder
+
+    plotter.add_silhouette(tri_cylinder)
+    actors = list(plotter.renderer.GetActors())
+    assert len(actors) == 2 # cylinder + silhouette
+
+    actor = actors[1]  # get silhouette actor
+    props = actor.GetProperty()
+    assert props.GetColor() == pyvista.parse_color(pyvista.global_theme.silhouette.color)
+    assert props.GetOpacity() == pyvista.global_theme.silhouette.opacity
+    assert props.GetLineWidth() == pyvista.global_theme.silhouette.line_width
+    plotter.show(before_close_callback=verify_cache_image)
+
+
 def test_plot_silhouette_options(tri_cylinder):
     # cover other properties
     plotter = pyvista.Plotter()
@@ -657,6 +675,8 @@ def test_make_movie(sphere):
 
 def test_add_legend(sphere):
     plotter = pyvista.Plotter()
+    with pytest.raises(TypeError):
+        plotter.add_mesh(sphere, label=2)
     plotter.add_mesh(sphere)
     with pytest.raises(ValueError):
         plotter.add_legend()
@@ -664,34 +684,6 @@ def test_add_legend(sphere):
     plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
                        size=[0.1, 0.1])
     plotter.show(before_close_callback=verify_cache_image)
-
-
-def test_legend_origin(sphere):
-    """Ensure the origin parameter of `add_legend` affects origin position."""
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    origin = [0, 0]
-    legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
-                                size=[0.1, 0.1], origin=origin)
-    assert list(origin) == list(legend.GetPosition())
-
-
-def test_bad_legend_origin_and_size(sphere):
-    """Ensure bad parameters to origin/size raise ValueErrors."""
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    # test incorrect lengths
-    with pytest.raises(ValueError, match='origin'):
-        plotter.add_legend(labels=legend_labels, origin=(1, 2, 3))
-    with pytest.raises(ValueError, match='size'):
-        plotter.add_legend(labels=legend_labels, size=[])
-    # test non-sequences also raise
-    with pytest.raises(ValueError, match='origin'):
-        plotter.add_legend(labels=legend_labels, origin=len)
-    with pytest.raises(ValueError, match='size'):
-        plotter.add_legend(labels=legend_labels, size=type)
 
 
 def test_legend_circle_face(sphere):
@@ -722,6 +714,22 @@ def test_legend_invalid_face(sphere):
     with pytest.raises(ValueError):
         legend = plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
                                     size=[0.1, 0.1], face=face)
+
+
+def test_legend_subplots(sphere, cube):
+    plotter = pyvista.Plotter(shape=(1, 2))
+    plotter.add_mesh(sphere, 'blue', smooth_shading=True, label='Sphere')
+    assert plotter.legend is None
+    plotter.add_legend(bcolor='w')
+    assert isinstance(plotter.legend, vtk.vtkActor2D)
+
+    plotter.subplot(0, 1)
+    plotter.add_mesh(cube, 'r', label='Cube')
+    assert plotter.legend is None
+    plotter.add_legend(bcolor='w')
+    assert isinstance(plotter.legend, vtk.vtkActor2D)
+
+    plotter.show(before_close_callback=verify_cache_image)
 
 
 def test_add_axes_twice():
@@ -944,6 +952,17 @@ def test_screenshot(tmpdir):
         plotter.screenshot()
 
 
+def test_screenshot_bytes():
+    # Test screenshot to bytes object
+    buffer = io.BytesIO()
+    plotter = pyvista.Plotter(off_screen=True)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.show(screenshot=buffer)
+    buffer.seek(0)
+    im = Image.open(buffer)
+    assert im.format == 'PNG'
+
+
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
 def test_save_screenshot(tmpdir, sphere, ext):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp' + ext))
@@ -951,7 +970,7 @@ def test_save_screenshot(tmpdir, sphere, ext):
     plotter.add_mesh(sphere)
     plotter.screenshot(filename)
     assert os.path.isfile(filename)
-    assert Path(filename).stat().st_size
+    assert pathlib.Path(filename).stat().st_size
 
 
 def test_scalars_by_name():
@@ -1315,7 +1334,7 @@ def test_subplot_groups_fail():
         pyvista.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
 
-@skip_windows_dev_whl
+@skip_windows
 def test_link_views(sphere):
     plotter = pyvista.Plotter(shape=(1, 4))
     plotter.subplot(0, 0)
@@ -1483,6 +1502,15 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     p.show(before_close_callback=verify_cache_image)
 
 
+@skip_windows
+def test_opacity_by_array_direct(plane):
+    # test with opacity parm as an array
+    pl = pyvista.Plotter()
+    pl.add_mesh(plane, color='b', opacity=np.linspace(0, 1, plane.n_points),
+                show_edges=True)
+    pl.show(before_close_callback=verify_cache_image)
+
+
 def test_opacity_by_array(uniform):
     # Test with opacity array
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -1564,6 +1592,18 @@ def test_above_below_scalar_range_annotations():
 def test_user_annotations_scalar_bar_mesh(uniform):
     p = pyvista.Plotter()
     p.add_mesh(uniform, annotations={100.: 'yum'})
+    p.show(before_close_callback=verify_cache_image)
+
+
+def test_fixed_font_size_annotation_text_scaling_off():
+    p = pyvista.Plotter()
+    sargs = {
+        'title_font_size': 12,
+        'label_font_size': 10}
+    p.add_mesh(examples.load_uniform(), clim=[100, 500], cmap='viridis',
+               below_color='blue', above_color='red',
+               annotations={300.: 'yum'},
+               scalar_bar_args=sargs)
     p.show(before_close_callback=verify_cache_image)
 
 
@@ -1967,6 +2007,96 @@ def test_collision_plot():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+@skip_mac
+def test_chart_plot():
+    """Basic test to verify chart plots correctly"""
+    # Chart 1 (bottom left)
+    chart_bl = pyvista.Chart2D(size=(0.4, 0.4), loc=(0.05, 0.05))
+    chart_bl.background_color = "tab:purple"
+    chart_bl.x_range = [np.pi/2, 3*np.pi/2]
+    chart_bl.y_axis.margin = 20
+    chart_bl.y_axis.tick_locations = [-1, 0, 1]
+    chart_bl.y_axis.tick_labels = ["Small", "Medium", "Large"]
+    chart_bl.y_axis.tick_size += 10
+    chart_bl.y_axis.tick_labels_offset += 12
+    chart_bl.y_axis.pen.width = 10
+    chart_bl.grid = True
+    x = np.linspace(0, 2*np.pi, 50)
+    y = np.cos(x)*(-1)**np.arange(len(x))
+    hidden_plot = chart_bl.line(x, y, color="k", width=40)
+    hidden_plot.visible = False  # Make sure plot visibility works
+    chart_bl.bar(x, y, color="#33ff33")
+
+    # Chart 2 (bottom right)
+    chart_br = pyvista.Chart2D(size=(0.4, 0.4), loc=(0.55, 0.05))
+    chart_br.background_texture = examples.load_globe_texture()
+    chart_br.border_color = "r"
+    chart_br.border_width = 5
+    chart_br.border_style = "-."
+    chart_br.hide_axes()
+    x = np.linspace(0, 1, 50)
+    y = np.sin(6.5 * x - 1)
+    chart_br.scatter(x, y, color="y", size=15, style="o", label="Invisible label")
+    chart_br.legend_visible = False  # Check legend visibility
+
+    # Chart 3 (top left)
+    chart_tl = pyvista.Chart2D(size=(0.4, 0.4), loc=(0.05, 0.55))
+    chart_tl.background_color = (0.8, 0.8, 0.2)
+    chart_tl.title = "Exponential growth"
+    chart_tl.x_label = "X axis"
+    chart_tl.y_label = "Y axis"
+    chart_tl.y_axis.log_scale = True
+    x = np.arange(6)
+    y = 10**x
+    chart_tl.line(x, y, color="tab:green", width=5, style="--")
+    removed_plot = chart_tl.area(x, y, color="k")
+    chart_tl.remove_plot(removed_plot)  # Make sure plot removal works
+
+    # Chart 4 (top right)
+    chart_tr = pyvista.Chart2D(size=(0.4, 0.4), loc=(0.55, 0.55))
+    x = [0, 1, 2, 3, 4]
+    ys = [[0, 1, 2, 3, 4], [1, 0, 1, 0, 1], [6, 4, 5, 3, 2]]
+    chart_tr.stack(x, ys, colors="citrus", labels=["Segment 1", "Segment 2", "Segment 3"])
+    chart_tr.legend_visible = True
+
+    # Hidden chart (make sure chart visibility works)
+    hidden_chart = pyvista.ChartPie([3, 4, 5])
+    hidden_chart.visible = False
+
+    # Removed chart (make sure chart removal works)
+    removed_chart = pyvista.ChartBox([[1, 2, 3]])
+
+    pl = pyvista.Plotter(window_size=(1000, 1000))
+    pl.background_color = 'w'
+    pl.add_chart(chart_bl, chart_br, chart_tl, chart_tr, hidden_chart, removed_chart)
+    pl.remove_chart(removed_chart)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_chart_matplotlib_plot():
+    """Test integration with matplotlib"""
+    rng = np.random.default_rng(1)
+    # First, create the matplotlib figure
+    # use tight layout to keep axis labels visible on smaller figures
+    fig, ax = plt.subplots(tight_layout=True)
+    alphas = [0.5+i for i in range(5)]
+    betas = [*reversed(alphas)]
+    N = int(1e4)
+    data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas)]
+    labels = [f"$\\alpha={alpha:.1f}\\,;\\,\\beta={beta:.1f}$" for alpha, beta in zip(alphas, betas)]
+    ax.violinplot(data)
+    ax.set_xticks(np.arange(1, 1 + len(labels)))
+    ax.set_xticklabels(labels)
+    ax.set_title("$B(\\alpha, \\beta)$")
+
+    # Next, embed the figure into a pyvista plotting window
+    pl = pyvista.Plotter()
+    pl.background_color = "w"
+    chart = pyvista.ChartMPL(fig)
+    pl.add_chart(chart)
+    pl.show()
+
+
 def test_add_remove_background(sphere):
     plotter = pyvista.Plotter(shape=(1, 2))
     plotter.add_mesh(sphere, color='w')
@@ -1982,3 +2112,35 @@ def test_plot_zoom(sphere):
     # it's difficult to verify that zoom actually worked since we
     # can't get the output with cpos or verify the image cache matches
     sphere.plot(zoom=2, before_close_callback=verify_cache_image)
+
+
+def test_splitting():
+    nut = examples.load_nut()
+    # feature angle of 50 will smooth the outer edges of the nut but not the inner.
+    nut.plot(smooth_shading=True, split_sharp_edges=True, feature_angle=50,
+             before_close_callback=verify_cache_image)
+
+
+def test_add_cursor():
+    sphere = pyvista.Sphere()
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_cursor()
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_enable_stereo_render():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    pl.camera.distance = 0.1
+    pl.enable_stereo_render()
+    pl.show(before_close_callback=verify_cache_image)
+
+
+def test_disable_stereo_render():
+    pl = pyvista.Plotter()
+    pl.add_mesh(pyvista.Cube())
+    pl.camera.distance = 0.1
+    pl.enable_stereo_render()
+    pl.disable_stereo_render()
+    pl.show(before_close_callback=verify_cache_image)

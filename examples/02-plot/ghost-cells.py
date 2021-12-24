@@ -10,9 +10,9 @@ mesh without creating a new mesh.
 Notably, the mesh must be cast to an :class:`pyvista.UnstructuredGrid` type
 for this to work (use the ``cast_to_unstructured_grid`` filter).
 """
-import pyvista as pv
-from pyvista import examples
 import numpy as np
+
+from pyvista import examples
 
 vol = examples.load_channels()
 mesh = vol.cast_to_unstructured_grid()

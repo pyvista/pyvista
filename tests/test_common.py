@@ -1,16 +1,17 @@
 # TODO: This file really should be named test_dataset.py
 
 import pickle
+
+from hypothesis import HealthCheck, assume, given, settings
+from hypothesis.extra.numpy import array_shapes, arrays
+from hypothesis.strategies import composite, floats, integers, one_of
 import numpy as np
 import pytest
 import vtk
-from hypothesis import assume, given, settings, HealthCheck
-from hypothesis.extra.numpy import arrays, array_shapes
-from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista import examples, Texture
+from pyvista import Texture, examples
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -431,7 +432,7 @@ def test_texture():
     assert len(mesh.textures) == 0
 
 
-def test_texture_airplane():
+def test_multiple_texture_coordinates():
     mesh = examples.load_airplane()
     mesh.texture_map_to_plane(inplace=True, name="tex_a", use_bounds=False)
     mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
@@ -449,6 +450,14 @@ def test_texture_airplane():
     assert len(cmesh.textures) == 2
     assert "tex_a" in cmesh.textures
     assert "tex_b" in cmesh.textures
+
+
+def test_inplace_no_overwrite_texture_coordinates():
+    mesh = pyvista.Box()
+    truth = mesh.texture_map_to_plane(inplace=False)
+    mesh.texture_map_to_sphere(inplace=True)
+    test = mesh.texture_map_to_plane(inplace=True)
+    assert np.allclose(truth.active_t_coords, test.active_t_coords)
 
 
 def test_invalid_vector(grid):
@@ -512,9 +521,9 @@ def test_set_active_vectors(grid):
     grid.point_data['vector_arr'] = vector_arr
     grid.active_vectors_name = 'vector_arr'
     active_component_consistency_check(grid, "vectors", "point")
-    assert grid.active_vectors_name == 'vector_arr'  
+    assert grid.active_vectors_name == 'vector_arr'
     assert np.allclose(grid.active_vectors, vector_arr)
-    
+
     grid.active_vectors_name = None
     assert grid.active_vectors_name is None
     active_component_consistency_check(grid, "vectors", "point")
@@ -662,8 +671,7 @@ def test_set_extent_expect_error(grid):
 
 
 def test_set_extent():
-    dims = [10, 10, 10]
-    uni_grid = pyvista.UniformGrid(dims)
+    uni_grid = pyvista.UniformGrid(dims=[10, 10, 10])
     with pytest.raises(ValueError):
         uni_grid.extent = [0, 1]
 
@@ -706,12 +714,12 @@ def test_set_cell_vectors(grid):
 
 def test_axis_rotation_invalid():
     with pytest.raises(ValueError):
-        pyvista.core.dataset.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pyvista.utilities.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pyvista.core.dataset.axis_rotation(p, 1, False, axis='x')
+    p_out = pyvista.utilities.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
 
 
@@ -740,7 +748,7 @@ def test_string_arrays():
 
 def test_clear_data():
     # First try on an empty mesh
-    grid = pyvista.UniformGrid((10, 10, 10))
+    grid = pyvista.UniformGrid(dims=(10, 10, 10))
     # Now try something more complicated
     grid.clear_data()
     grid['foo-p'] = np.random.rand(grid.n_points)
@@ -885,16 +893,44 @@ def test_find_closest_cells():
     with pytest.raises(ValueError):
         mesh.find_closest_cell(np.empty((4, 4)))
 
-    # simply get the face centers
+    # simply get the face centers, ordered by cell Id
     fcent = mesh.points[mesh.faces.reshape(-1, 4)[:, 1:]].mean(1)
     indices = mesh.find_closest_cell(fcent)
 
-    # this will miss a few...
-    mask = indices == -1
-    assert mask.sum() < 10
-
     # Make sure we match the face centers
-    assert np.allclose(indices[~mask], np.arange(mesh.n_faces)[~mask])
+    assert np.allclose(indices, np.arange(mesh.n_faces))
+
+
+def test_find_cells_along_line():
+    mesh = pyvista.Cube()
+    indices = mesh.find_cells_along_line([0, 0, -1], [0, 0, 1])
+    assert len(indices) == 2
+
+
+def test_find_cells_within_bounds():
+    mesh = pyvista.Cube()
+
+    bounds = [
+        mesh.bounds[0] * 2.0,
+        mesh.bounds[1] * 2.0,
+        mesh.bounds[2] * 2.0,
+        mesh.bounds[3] * 2.0,
+        mesh.bounds[4] * 2.0,
+        mesh.bounds[5] * 2.0,
+    ]
+    indices = mesh.find_cells_within_bounds(bounds)
+    assert len(indices) == mesh.n_cells
+
+    bounds = [
+        mesh.bounds[0] * 0.5,
+        mesh.bounds[1] * 0.5,
+        mesh.bounds[2] * 0.5,
+        mesh.bounds[3] * 0.5,
+        mesh.bounds[4] * 0.5,
+        mesh.bounds[5] * 0.5,
+    ]
+    indices = mesh.find_cells_within_bounds(bounds)
+    assert len(indices) == 0
 
 
 def test_setting_points_from_self(grid):
