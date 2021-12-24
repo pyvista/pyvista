@@ -18,8 +18,7 @@ cpos = [(13.0, 7.6, -13.85), (0.44, -0.4, -0.37), (-0.28, 0.9, 0.3)]
 
 dargs = dict(show_edges=True)
 # Rotate the mesh to have a second mesh
-rot = mesh.copy()
-rot.rotate_y(90)
+rot = mesh.rotate_y(90, inplace=False)
 
 p = pv.Plotter()
 p.add_mesh(mesh, color="Crimson", **dargs)

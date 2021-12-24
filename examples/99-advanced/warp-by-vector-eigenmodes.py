@@ -207,7 +207,7 @@ for i, mode_index in enumerate(mode_indices):
 
 warpby = 'eigenmode_00'
 warped = vol.warp_by_vector(warpby, factor=0.04)
-warped.translate([-1.5 * l1, 0., 0.])
+warped.translate([-1.5 * l1, 0., 0.], inplace=True)
 p = pv.Plotter()
 p.add_mesh(vol, style='wireframe', scalars=warpby)
 p.add_mesh(warped, scalars=warpby)

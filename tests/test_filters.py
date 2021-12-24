@@ -161,7 +161,7 @@ def test_clip_box(datasets):
     mesh = examples.load_airplane()
     box = pyvista.Cube(center=(0.9e3, 0.2e3, mesh.center[2]),
                        x_length=500, y_length=500, z_length=500)
-    box.rotate_z(33)
+    box.rotate_z(33, inplace=True)
     result = mesh.clip_box(box, invert=False, progress_bar=True)
     assert result.n_cells
     result = mesh.clip_box(box, invert=True, progress_bar=True)
@@ -921,7 +921,7 @@ def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
     # test here so that fixes in vtk can be caught
     mesh = mesh_2D_velocity()
-    mesh.translate((0, 0, 1)) # move to z=1, xy plane
+    mesh.translate((0, 0, 1), inplace=True) # move to z=1, xy plane
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
@@ -1192,8 +1192,7 @@ def test_select_enclosed_points(uniform, hexbeam):
 
     # Now check non-closed surface
     mesh = pyvista.Sphere(end_theta=270)
-    surf = mesh.copy()
-    surf.rotate_x(90)
+    surf = mesh.rotate_x(90, inplace=False)
     result = mesh.select_enclosed_points(surf, check_surface=False, progress_bar=True)
     assert isinstance(result, type(mesh))
     assert 'SelectedPoints' in result.array_names
@@ -1708,15 +1707,14 @@ def test_subdivide_adaptive(sphere, inplace):
 
 
 def test_collision(sphere):
-    moved_sphere = sphere.copy()
-    moved_sphere.translate((0.5, 0, 0))
+    moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
     output, n_collision = sphere.collision(moved_sphere)
     assert isinstance(output, pyvista.PolyData)
     assert n_collision > 40
     assert 'ContactCells' in output.field_data
 
     # test no collision
-    moved_sphere.translate((1000, 0, 0))
+    moved_sphere.translate((1000, 0, 0), inplace=True)
     _, n_collision = sphere.collision(moved_sphere)
     assert not n_collision
 

@@ -103,7 +103,7 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
     cylinderSource.SetResolution(resolution)
     cylinderSource.Update()
     surf = pyvista.wrap(cylinderSource.GetOutput())
-    surf.rotate_z(-90)
+    surf.rotate_z(-90, inplace=True)
     translate(surf, center, direction)
     return surf
 
@@ -333,7 +333,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     sphere.SetEndPhi(end_phi)
     sphere.Update()
     surf = pyvista.wrap(sphere.GetOutput())
-    surf.rotate_y(-90)
+    surf.rotate_y(-90, inplace=True)
     translate(surf, center, direction)
     return surf
 
@@ -385,7 +385,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
-    surf.rotate_y(-90)
+    surf.rotate_y(-90, inplace=True)
     translate(surf, center, direction)
     return surf
 
@@ -773,7 +773,7 @@ def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
     normal = np.array(normal)
     center = np.array(center)
     surf = pyvista.wrap(src.GetOutput())
-    surf.rotate_y(90)
+    surf.rotate_y(90, inplace=True)
     translate(surf, center, normal)
     return surf
 
@@ -1356,7 +1356,7 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     solid.SetSolidType(kind)
     solid.Update()
     solid = pyvista.wrap(solid.GetOutput())
-    solid.scale(radius)
+    solid.scale(radius, inplace=True)
     solid.points += np.asanyarray(center) - solid.center
     # rename and activate cell scalars
     cell_data = solid.get_array(0)
