@@ -1737,6 +1737,11 @@ def test_reconstruct_surface_poly(sphere):
     assert surf.is_all_triangles
 
 
+def test_is_manifold(sphere, plane):
+    assert sphere.is_manifold
+    assert not plane.is_manifold
+
+
 def test_reconstruct_surface_unstructured(datasets):
     mesh = examples.load_hexbeam().reconstruct_surface()
     assert isinstance(mesh, pyvista.PolyData)
