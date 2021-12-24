@@ -133,9 +133,14 @@ class PointSet(DataSet):
     def points_to_double(self):
         """Convert the points datatype to double precision.
 
-        Note
-        ----
-        This operates in place
+        Returns
+        -------
+        pyvista.PointSet
+            Pointset with points in double precision.
+
+        Notes
+        -----
+        This operates in place.
 
         Examples
         --------
@@ -155,12 +160,9 @@ class PointSet(DataSet):
             self.points = self.points.astype(np.double)
         return self
 
+    # todo: `transform_all_input_vectors` is not handled when modifying inplace
     def translate(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=None):
         """Translate the mesh.
-
-        To Do
-        -----
-        `transform_all_input_vectors` is not handled when modifying inplace
 
         Parameters
         ----------
@@ -175,6 +177,11 @@ class PointSet(DataSet):
 
         inplace : bool, optional
             Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.PointSet
+            Translated pointset.
 
         Examples
         --------
@@ -201,10 +208,6 @@ class PointSet(DataSet):
     def scale(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=None):
         """Scale the mesh.
 
-        To Do
-        -----
-        `transform_all_input_vectors` is not handled when modifying inplace
-
         Parameters
         ----------
         xyz : scale factor list or tuple or np.ndarray
@@ -218,6 +221,15 @@ class PointSet(DataSet):
 
         inplace : bool, optional
             Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.PointSet
+            Scaled pointset.
+
+        Notes
+        -----
+        ``transform_all_input_vectors`` is not handled when modifying inplace.
 
         Examples
         --------
@@ -1847,6 +1859,14 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
             also be a boolean array of the same size as the number of
             cells.
 
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.PointSet
+            Point set with hidden cells.
+
         Examples
         --------
         Hide part of the middle of a structured surface.
@@ -1891,6 +1911,11 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
             List or array of point indices to be hidden.  The array
             can also be a boolean array of the same size as the number
             of points.
+
+        Returns
+        -------
+        pyvista.PointSet
+            Point set with hidden points.
 
         Examples
         --------

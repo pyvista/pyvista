@@ -886,6 +886,27 @@ class DataSet(DataSetFilters, DataObject):
         inplace : bool, optional
             Updates mesh in-place.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the x-axis.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> rot = mesh.rotate_x(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
         """
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
@@ -916,6 +937,27 @@ class DataSet(DataSetFilters, DataObject):
         inplace : bool, optional
             Updates mesh in-place.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Rotate a cube 30 degrees about the y-axis.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> rot = mesh.rotate_y(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
         """
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
@@ -945,6 +987,27 @@ class DataSet(DataSetFilters, DataObject):
 
         inplace : bool, optional
             Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the z-axis.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> rot = mesh.rotate_z(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
 
         """
         check_valid_vector(point, "point")
@@ -980,6 +1043,27 @@ class DataSet(DataSetFilters, DataObject):
         inplace : bool, optional
             Updates mesh in-place.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the ``(1, 1, 1)`` axis.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> rot = mesh.rotate_vector((1, 1, 1), 30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
         """
         check_valid_vector(vector)
         check_valid_vector(point, "point")
@@ -994,8 +1078,18 @@ class DataSet(DataSetFilters, DataObject):
         xyz : list or tuple or np.ndarray
             Length 3 list, tuple or array.
 
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
         inplace : bool, optional
             Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Translated dataset.
 
         Examples
         --------
@@ -1022,8 +1116,18 @@ class DataSet(DataSetFilters, DataObject):
         xyz : scale factor list or tuple or np.ndarray
             Length 3 list, tuple or array.
 
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
         inplace : bool, optional
             Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Scaled dataset.
 
         Examples
         --------
@@ -1063,6 +1167,11 @@ class DataSet(DataSetFilters, DataObject):
         inplace : bool, optional
             Updates mesh in-place.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
+
         Examples
         --------
         >>> import pyvista
@@ -1101,6 +1210,11 @@ class DataSet(DataSetFilters, DataObject):
         inplace : bool, optional
             Updates mesh in-place.
 
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
+
         Examples
         --------
         >>> import pyvista
@@ -1137,7 +1251,12 @@ class DataSet(DataSetFilters, DataObject):
             active vectors are transformed.
 
         inplace : bool, optional
-            Updates mesh in-place.s
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
 
         Examples
         --------
@@ -1179,6 +1298,11 @@ class DataSet(DataSetFilters, DataObject):
 
         inplace : bool, optional
             Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset flipped about its normal.
 
         Examples
         --------
