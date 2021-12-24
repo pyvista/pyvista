@@ -1,12 +1,12 @@
 """Module managing errors."""
 
 import collections
+from collections.abc import Iterable
 import logging
 import os
 import re
 import sys
 
-import numpy as np
 import scooby
 
 import pyvista
@@ -327,7 +327,9 @@ def assert_empty_kwargs(**kwargs):
 
 def check_valid_vector(point, name=''):
     """Check if a vector contains three components."""
-    if np.array(point).size != 3:
+    if not isinstance(point, Iterable):
+        raise TypeError(f'{name} must be a length three iterable of floats.')
+    if len(point) != 3:
         if name == '':
             name = 'Vector'
-        raise TypeError(f'{name} must be a length three tuple of floats.')
+        raise ValueError(f'{name} must be a length three iterable of floats.')

@@ -1714,7 +1714,7 @@ def test_collision(sphere):
     assert 'ContactCells' in output.field_data
 
     # test no collision
-    moved_sphere.translate((1000, 0, 0))
+    moved_sphere.translate((1000, 0, 0), inplace=True)
     _, n_collision = sphere.collision(moved_sphere)
     assert not n_collision
 

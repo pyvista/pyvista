@@ -861,7 +861,13 @@ class DataSet(DataSetFilters, DataObject):
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
-    def rotate_x(self, angle: float, point=None, transform_all_input_vectors=False, inplace=False):
+    def rotate_x(
+            self,
+            angle: float,
+            point=(0.0, 0.0, 0.0),
+            transform_all_input_vectors=False,
+            inplace=False
+    ):
         """Rotate mesh about the x-axis.
 
         Parameters
@@ -881,14 +887,17 @@ class DataSet(DataSetFilters, DataObject):
             Updates mesh in-place.
 
         """
-        if point is None:
-            point = (0.0, 0.0, 0.0)
-        if not isinstance(point, Iterable) or len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
+        check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
         return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def rotate_y(self, angle: float, point=None, transform_all_input_vectors=False, inplace=False):
+    def rotate_y(
+            self,
+            angle: float,
+            point=(0.0, 0.0, 0.0),
+            transform_all_input_vectors=False,
+            inplace=False
+    ):
         """Rotate mesh about the y-axis.
 
         Parameters
@@ -908,14 +917,17 @@ class DataSet(DataSetFilters, DataObject):
             Updates mesh in-place.
 
         """
-        if point is None:
-            point = (0.0, 0.0, 0.0)
-        if not isinstance(point, Iterable) or len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
+        check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
         return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def rotate_z(self, angle: float, point=None, transform_all_input_vectors=False, inplace=False):
+    def rotate_z(
+            self,
+            angle: float,
+            point=(0.0, 0.0, 0.0),
+            transform_all_input_vectors=False,
+            inplace=False
+    ):
         """Rotate mesh about the z-axis.
 
         Parameters
@@ -935,20 +947,23 @@ class DataSet(DataSetFilters, DataObject):
             Updates mesh in-place.
 
         """
-        if point is None:
-            point = (0.0, 0.0, 0.0)
-        if not isinstance(point, Iterable) or len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
+        check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
         return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def rotate_vector(self, vector: List[float], angle, point=None,
-                      transform_all_input_vectors=False, inplace=False):
+    def rotate_vector(
+            self,
+            vector: Iterable[float],
+            angle: float,
+            point=(0.0, 0.0, 0.0),
+            transform_all_input_vectors=False,
+            inplace=False
+    ):
         """Rotate mesh about a vector.
 
         Parameters
         ----------
-        vector : tuple
+        vector : Iterable
             Axes to rotate about.
 
         angle : float
@@ -966,12 +981,8 @@ class DataSet(DataSetFilters, DataObject):
             Updates mesh in-place.
 
         """
-        if point is None:
-            point = (0.0, 0.0, 0.0)
-        if not isinstance(vector, Iterable) or len(vector) != 3:
-            raise ValueError('Vector must be a vector of 3 values.')
-        if not isinstance(point, Iterable) or len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
+        check_valid_vector(vector)
+        check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
         return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 

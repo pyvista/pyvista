@@ -418,7 +418,7 @@ def test_gpuinfo():
 
 
 def test_check_valid_vector():
-    with pytest.raises(TypeError, match="length three"):
+    with pytest.raises(ValueError, match="length three"):
         check_valid_vector([0, 1])
     check_valid_vector([0, 1, 2])
 

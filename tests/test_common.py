@@ -223,6 +223,11 @@ def test_translate_should_fail_given_none(grid):
         grid.transform(None)
 
 
+def test_translate_deprication(grid):
+    with pytest.warns(PyvistaDeprecationWarning):
+        grid.translate((0.0, 0.0, 0.0))
+
+
 def test_translate_should_fail_bad_points_or_transform(grid):
     points = np.random.random((10, 2))
     bad_points = np.random.random((10, 2))
@@ -1106,7 +1111,7 @@ def test_rotate_x():
     mesh = examples.load_uniform()
     out = mesh.rotate_x(30)
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         out = mesh.rotate_x(30, point=5)
     with pytest.raises(ValueError):
         out = mesh.rotate_x(30, point=[1, 3])
@@ -1117,7 +1122,7 @@ def test_rotate_y():
     mesh = examples.load_uniform()
     out = mesh.rotate_y(30)
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         out = mesh.rotate_y(30, point=5)
     with pytest.raises(ValueError):
         out = mesh.rotate_y(30, point=[1, 3])
@@ -1128,10 +1133,17 @@ def test_rotate_z():
     mesh = examples.load_uniform()
     out = mesh.rotate_z(30)
     assert isinstance(out, pyvista.StructuredGrid)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         out = mesh.rotate_z(30, point=5)
     with pytest.raises(ValueError):
         out = mesh.rotate_z(30, point=[1, 3])
+
+
+@pytest.mark.parametrize('method', ['rotate_x', 'rotate_y', 'rotate_z'])
+def test_deprication_rotate(sphere, method):
+    meth = getattr(sphere, method)
+    with pytest.warns(PyvistaDeprecationWarning):
+        meth(30)
 
 
 def test_rotate_vector():
@@ -1141,8 +1153,13 @@ def test_rotate_vector():
     assert isinstance(out, pyvista.StructuredGrid)
     with pytest.raises(ValueError):
         out = mesh.rotate_vector([1, 1], 33)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         out = mesh.rotate_vector(30, 33)
+
+
+def test_deprication_vector(sphere):
+    with pytest.warns(PyvistaDeprecationWarning):
+        sphere.rotate_vector([1, 1, 1], 33)
 
 
 def test_scale():
