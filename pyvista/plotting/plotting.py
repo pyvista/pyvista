@@ -41,7 +41,13 @@ from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
-from .tools import FONTS, opacity_transfer_function, parse_color, parse_font_family
+from .tools import (  # noqa
+    FONTS,
+    normalize,
+    opacity_transfer_function,
+    parse_color,
+    parse_font_family,
+)
 from .widgets import WidgetHelper
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
