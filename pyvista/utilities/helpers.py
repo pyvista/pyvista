@@ -430,7 +430,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     return matches[0]
 
 
-def vtk_points(points, deep=True, force_float=True):
+def vtk_points(points, deep=True):
     """Convert numpy array or array-like to a ``vtkPoints`` object.
 
     Parameters
