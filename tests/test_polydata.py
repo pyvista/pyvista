@@ -84,6 +84,10 @@ def test_init_from_arrays():
     vertices[0] += 1
     assert not np.allclose(vertices[0], mesh.points[0])
 
+    # ensure that polydata raises a warning when inputting non-float dtype
+    with pytest.warns(Warning):
+        mesh = pyvista.PolyData(vertices.astype(np.int32), faces)
+
 
 def test_init_from_arrays_with_vert():
     vertices = np.array([[0, 0, 0],
@@ -156,7 +160,7 @@ def test_init_as_points():
 
 
 def test_init_as_points_from_list():
-    points = [[0, 0, 0],
+    points = [[0.0, 0.0, 0.0],
               [0, 1, 0],
               [0, 0, 1]]
     mesh = pyvista.PolyData(points)
@@ -165,10 +169,10 @@ def test_init_as_points_from_list():
 
 def test_invalid_init():
     with pytest.raises(ValueError):
-        pyvista.PolyData(np.array([1]))
+        pyvista.PolyData(np.array([1.0]))
 
     with pytest.raises(TypeError):
-        pyvista.PolyData([1, 2, 3], 'woa')
+        pyvista.PolyData([1.0, 2.0, 3.0], 'woa')
 
     with pytest.raises(ValueError):
         pyvista.PolyData('woa', 'woa')
@@ -811,7 +815,7 @@ def test_flip_normals(sphere, plane):
 
 
 def test_n_verts():
-    mesh = pyvista.PolyData([[1, 0, 0], [1, 1, 1]])
+    mesh = pyvista.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
     assert mesh.n_verts == 2
 
 

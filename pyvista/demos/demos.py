@@ -479,7 +479,7 @@ def plot_datasets(dataset_type=None):
 
     ###########################################################################
     # polydata
-    points = pv.PolyData([[1, 2, 2], [2, 2, 2]])
+    points = pv.PolyData([[1.0, 2.0, 2.0], [2.0, 2.0, 2.0]])
 
     line = pv.Line()
     line.points += np.array((2, 0, 0))

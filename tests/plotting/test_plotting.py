@@ -215,7 +215,7 @@ def test_plot_pyvista_ndarray(sphere):
 
 
 def test_plot_increment_point_size():
-    points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
+    points = np.array([[0.0, 0.0, 0.0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
     pl = pyvista.Plotter()
     pl.add_points(points + 1)
     pl.add_lines(points)
@@ -794,7 +794,7 @@ def test_add_point_labels_always_visible(always_visible):
     # just make sure it runs without exception
     plotter = pyvista.Plotter()
     plotter.add_point_labels(
-        np.array([[0, 0, 0]]), ['hello world'], always_visible=always_visible)
+        np.array([[0.0, 0.0, 0.0]]), ['hello world'], always_visible=always_visible)
     plotter.show()
 
 

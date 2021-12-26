@@ -1132,10 +1132,13 @@ def extract_points_invalid(sphere):
 
 def test_extract_points():
     # mesh points (4x4 regular grid)
-    vertices = np.array([[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0],
-                     [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0],
-                     [0, 2, 0], [1, 2, 0], [2, 2, 0], [3, 2, 0],
-                     [0, 3, 0], [1, 3, 0], [2, 3, 0], [3, 3, 0]])
+    vertices = np.array(
+        [[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0],
+         [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0],
+         [0, 2, 0], [1, 2, 0], [2, 2, 0], [3, 2, 0],
+         [0, 3, 0], [1, 3, 0], [2, 3, 0], [3, 3, 0]],
+        dtype=np.float32
+    )
     # corresponding mesh faces
     faces = np.hstack([[4, 0, 1, 5, 4],  # square
                        [4, 1, 2, 6, 5],  # square

@@ -127,12 +127,12 @@ def test_point_picking_window_not_pickable():
 
     # bottom left corner, pickable
     sphere = pyvista.Sphere()
-    sphere.translate([-100, -100, 0])
+    sphere.translate([-100, -100, 0], inplace=True)
     plotter.add_mesh(sphere, pickable=True)
 
     # top right corner, not pickable
     unpickable_sphere = pyvista.Sphere()
-    unpickable_sphere.translate([100, 100, 0])
+    unpickable_sphere.translate([100, 100, 0], inplace=True)
     plotter.add_mesh(unpickable_sphere, pickable=False)
 
     plotter.view_xy()

@@ -394,6 +394,12 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         file as if it had this extension as opposed to the one in the
         file.
 
+    force_float : bool, optional
+        Casts the datatype to float32 if points datatype are
+        non-float.  Default ``True``. Set this to ``False`` to allow
+        non-float types, though this may lead to errors when rotating
+        datasets.
+
     Examples
     --------
     >>> import vtk
@@ -437,7 +443,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
                 '.vtk': _vtk.vtkPolyDataWriter}
 
     def __init__(self, var_inp=None, faces=None, n_faces=None, lines=None,
-                 n_lines=None, deep=False, force_ext=None) -> None:
+                 n_lines=None, deep=False, force_ext=None, force_float=True) -> None:
         """Initialize the polydata."""
         local_parms = locals()
         super().__init__()
@@ -471,7 +477,18 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
         # First parameter is points
         if isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
+            if force_float:
+                var_inp = np.asarray(var_inp)
+                if not np.issubdtype(var_inp.dtype, np.floating):
+                    warnings.warn(
+                        'Points is not a float type. This can cause '
+                        'issues when transforming or applying '
+                        'filters. Casting to np.float32. Disable this '
+                        'by passing ``float_float=False``'
+                    )
+                    var_inp = var_inp.astype(np.float32)
             self.SetPoints(pyvista.vtk_points(var_inp, deep=deep))
+
         else:
             msg = f"""
                 Invalid Input type:
@@ -1248,7 +1265,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             cell_types, cells, offset = create_mixed_cells(cells_dict, nr_points)
             self._from_arrays(offset, cells, cell_types, points, deep=deep)
 
-    def _from_arrays(self, offset, cells, cell_type, points, deep=True):
+    def _from_arrays(
+            self, offset, cells, cell_type, points, deep=True, force_float=True
+    ):
         """Create VTK unstructured grid from numpy arrays.
 
         Parameters
@@ -1267,6 +1286,16 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         points : np.ndarray
             Numpy array containing point locations.
+
+        deep : bool, optional
+            When ``True``, makes a copy of the points array.  Default
+            ``False``.  Cells and cell types are always copied.
+
+        force_float : bool, optional
+            Casts the datatype to float32 if points datatype are
+            non-float.  Default ``True``. Set this to ``False`` to
+            allow non-float types, though this may lead to errors when
+            rotating datasets.
 
         Examples
         --------
@@ -1308,6 +1337,17 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
 
         # Convert points to vtkPoints object
+        if force_float:
+            if not np.issubdtype(points.dtype, np.floating):
+                warnings.warn(
+                    'Points is not a float type. This can cause '
+                    'issues when transforming or applying '
+                    'filters. Casting to np.float32. Disable this '
+                    'by passing ``float_float=False``'
+                )
+                points = points.astype(np.float32)
+        self.SetPoints(pyvista.vtk_points(points, deep=deep))
+
         points = pyvista.vtk_points(points, deep=deep)
         self.SetPoints(points)
 
