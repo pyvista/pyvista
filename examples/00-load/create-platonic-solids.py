@@ -48,9 +48,9 @@ solids = [
 
 # download and align teapotahedron
 teapot = examples.download_teapot()
-teapot.rotate_x(90)
-teapot.rotate_z(-45)
-teapot.scale(0.16)
+teapot.rotate_x(90, inplace=True)
+teapot.rotate_z(-45, inplace=True)
+teapot.scale(0.16, inplace=True)
 teapot.points += np.array([-1, 1, 0]) - teapot.center
 solids.append(teapot)
 

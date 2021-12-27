@@ -5,10 +5,10 @@ Examples
 Apply a built-in theme
 
 >>> import pyvista
->>> pyvista.set_plot_theme('default')
->>> pyvista.set_plot_theme('document')
->>> pyvista.set_plot_theme('dark')
->>> pyvista.set_plot_theme('paraview')
+>>> pyvista.set_plot_theme('default')  # doctest:+SKIP
+>>> pyvista.set_plot_theme('document')  # doctest:+SKIP
+>>> pyvista.set_plot_theme('dark')  # doctest:+SKIP
+>>> pyvista.set_plot_theme('paraview')  # doctest:+SKIP
 
 Load a theme into pyvista
 
@@ -24,8 +24,8 @@ pyvista.
 >>> my_theme.font.title_size = 40
 >>> my_theme.cmap = 'jet'
 ...
->>> pyvista.global_theme.load_theme(my_theme)
->>> pyvista.global_theme.font.size
+>>> pyvista.global_theme.load_theme(my_theme)  # doctest:+SKIP
+>>> pyvista.global_theme.font.size  # doctest:+SKIP
 20
 
 """
@@ -100,19 +100,19 @@ def set_plot_theme(theme):
     Set to the default theme.
 
     >>> import pyvista
-    >>> pyvista.set_plot_theme('default')
+    >>> pyvista.set_plot_theme('default')  # doctest:+SKIP
 
     Set to the document theme.
 
-    >>> pyvista.set_plot_theme('document')
+    >>> pyvista.set_plot_theme('document')  # doctest:+SKIP
 
     Set to the dark theme.
 
-    >>> pyvista.set_plot_theme('dark')
+    >>> pyvista.set_plot_theme('dark')  # doctest:+SKIP
 
     Set to the ParaView theme.
 
-    >>> pyvista.set_plot_theme('paraview')
+    >>> pyvista.set_plot_theme('paraview')  # doctest:+SKIP
 
     """
     import pyvista
@@ -1398,8 +1398,8 @@ class DefaultTheme(_ThemeConfig):
         Examples
         --------
         >>> import pyvista
-        >>> pyvista.global_theme.enable_camera_orientation_widget = True
-        >>> pyvista.global_theme.enable_camera_orientation_widget
+        >>> pyvista.global_theme.enable_camera_orientation_widget = True  # doctest:+SKIP
+        >>> pyvista.global_theme.enable_camera_orientation_widget  # doctest:+SKIP
         True
 
         """
@@ -2210,11 +2210,11 @@ class DarkTheme(DefaultTheme):
 
     >>> import pyvista
     >>> from pyvista import themes
-    >>> pyvista.set_plot_theme(themes.DarkTheme())
+    >>> pyvista.set_plot_theme(themes.DarkTheme())  # doctest:+SKIP
 
     Alternatively, set via a string.
 
-    >>> pyvista.set_plot_theme('dark')
+    >>> pyvista.set_plot_theme('dark')  # doctest:+SKIP
 
     """
 
@@ -2243,11 +2243,11 @@ class ParaViewTheme(DefaultTheme):
 
     >>> import pyvista
     >>> from pyvista import themes
-    >>> pyvista.set_plot_theme(themes.ParaViewTheme())
+    >>> pyvista.set_plot_theme(themes.ParaViewTheme())  # doctest:+SKIP
 
     Alternatively, set via a string.
 
-    >>> pyvista.set_plot_theme('paraview')
+    >>> pyvista.set_plot_theme('paraview')  # doctest:+SKIP
 
     """
 
@@ -2288,11 +2288,11 @@ class DocumentTheme(DefaultTheme):
 
     >>> import pyvista
     >>> from pyvista import themes
-    >>> pyvista.set_plot_theme(themes.DocumentTheme())
+    >>> pyvista.set_plot_theme(themes.DocumentTheme())  # doctest:+SKIP
 
     Alternatively, set via a string.
 
-    >>> pyvista.set_plot_theme('document')
+    >>> pyvista.set_plot_theme('document')  # doctest:+SKIP
 
     """
 

@@ -24,7 +24,7 @@ import pyvista as pv
 def hill(seed):
     mesh = pv.ParametricRandomHills(randomseed=seed, u_res=50, v_res=50,
                                     hillamplitude=0.5)
-    mesh.rotate_y(-10) # give the surfaces some tilt
+    mesh.rotate_y(-10, inplace=True) # give the surfaces some tilt
 
     return mesh
 

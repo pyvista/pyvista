@@ -69,7 +69,7 @@ def logo_letters(merge=False, depth=0.3):
     for letter in LOGO_TITLE:
         mesh_letter = text_3d(letter, depth=depth)
         this_letter_width = mesh_letter.points[:, 0].max()
-        mesh_letter.translate([width*space_factor, 0, 0.0])
+        mesh_letter.translate([width*space_factor, 0, 0.0], inplace=True)
         width += this_letter_width
         if merge:
             mesh_letters += mesh_letter
@@ -187,7 +187,7 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None,
     if show_note:
         text = text_3d("You can move me!", depth=0.1)
         text.points *= 0.1
-        text.translate([4.0, -0.3, 0])
+        text.translate([4.0, -0.3, 0], inplace=True)
         plotter.add_mesh(text, color='black')
 
     # finalize plot and show it

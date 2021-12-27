@@ -63,7 +63,7 @@ projecting the random_hills example data to a triangular plane.
 
     # Load data
     data = examples.load_random_hills()
-    data.translate((10, 10, 10))
+    data.translate((10, 10, 10), inplace=True)
 
     # Create triangular plane (vertices [10, 0, 0], [0, 10, 0], [0, 0, 10])
     size = 10

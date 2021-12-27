@@ -533,7 +533,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 return vtk_arr
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association.name]:
-            narray = narray.view(np.bool_)
+            narray = narray.view(np.bool_)  # type: ignore
         return narray
 
     def set_array(self, data: Union[Sequence[Number], Number, np.ndarray],

@@ -18,7 +18,7 @@ density = 0.03
 for letter in 'pyvista':
     mesh_letter = pyvista.Text3D(letter, depth=0.3)
     this_letter_width = mesh_letter.points[:, 0].max()
-    mesh_letter.translate([width + space, 0, 0.0])
+    mesh_letter.translate([width + space, 0, 0.0], inplace=True)
     width += this_letter_width
     mesh_letters[letter] = mesh_letter
 
@@ -70,7 +70,7 @@ for i in range(k_grid.n_cells):
     z_dist = np.mean(cell.bounds[4:]) - z_mean
     if fac > 0:
         fac = fac**1.5
-        cell.translate([x_shift, y_dist*fac*spread, z_dist*fac*spread])
+        cell.translate([x_shift, y_dist*fac*spread, z_dist*fac*spread], inplace=True)
     # cells.append(cell)
 
     opacity = (x_max - x_dist)/x_width

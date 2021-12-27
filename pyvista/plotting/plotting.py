@@ -41,7 +41,13 @@ from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
-from .tools import FONTS, opacity_transfer_function, parse_color, parse_font_family
+from .tools import (  # noqa
+    FONTS,
+    normalize,
+    opacity_transfer_function,
+    parse_color,
+    parse_font_family,
+)
 from .widgets import WidgetHelper
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
@@ -1270,6 +1276,67 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def untrack_click_position(self):
         """Stop tracking the click position."""
         self.iren.untrack_click_position()
+
+    @property
+    def pickable_actors(self):
+        """Return or set the pickable actors.
+
+        When setting, this will be the list of actors to make
+        pickable. All actors not in the list will be made unpickable.
+        If ``actors`` is ``None``, all actors will be made unpickable.
+
+        Returns
+        -------
+        list of vtk.vtkActors
+
+        Examples
+        --------
+        Add two actors to a :class:`pyvista.Plotter`, make one
+        pickable, and then list the pickable actors.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> sphere_actor = pl.add_mesh(pv.Sphere())
+        >>> cube_actor = pl.add_mesh(pv.Cube(), pickable=False, style='wireframe')
+        >>> len(pl.pickable_actors)
+        1
+
+        Set the pickable actors to both actors.
+
+        >>> pl.pickable_actors = [sphere_actor, cube_actor]
+        >>> len(pl.pickable_actors)
+        2
+
+        Set the pickable actors to ``None``.
+
+        >>> pl.pickable_actors = None
+        >>> len(pl.pickable_actors)
+        0
+
+        """
+        pickable = []
+        for renderer in self.renderers:
+            for actor in renderer.actors.values():
+                if actor.GetPickable():
+                    pickable.append(actor)
+        return pickable
+
+    @pickable_actors.setter
+    def pickable_actors(self, actors=None):
+        """Set the pickable actors."""
+        actors = [] if actors is None else actors
+        if isinstance(actors, _vtk.vtkActor):
+            actors = [actors]
+
+        if not all([isinstance(actor, _vtk.vtkActor) for actor in actors]):
+            raise TypeError(
+                f'Expected a vtkActor instance or a list of vtkActors, got '
+                f'{[type(actor) for actor in actors]} instead.'
+            )
+
+        for renderer in self.renderers:
+            for actor in renderer.actors.values():
+                actor.SetPickable(actor in actors)
 
     def _prep_for_close(self):
         """Make sure a screenshot is acquired before closing.

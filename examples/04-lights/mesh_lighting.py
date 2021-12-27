@@ -18,10 +18,9 @@ import pyvista as pv
 from pyvista import examples
 
 horse = examples.download_horse().decimate(0.9)
-horse.rotate_z(-120)
+horse.rotate_z(-120, inplace=True)
 horse.points = (horse.points - horse.center) * 100
-shifted = horse.copy()
-shifted.translate((0, 10, 0))
+shifted = horse.translate((0, 10, 0), inplace=False)
 
 plotter = pv.Plotter()
 plotter.add_mesh(horse, color='brown')
