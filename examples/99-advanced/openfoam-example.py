@@ -89,7 +89,7 @@ internal_mesh = mesh["internalMesh"]
 boundaries = mesh["boundary"]
 
 ###############################################################################
-# Plot the streamlines on a 2D plane.  This OpenFOAM simulation is in 3D with
+# This OpenFOAM simulation is in 3D with
 # only 1 cell in the z-direction.  First, the solution is sliced in the center
 # of the z-direction.
 # :func:`pyvista.DataSetFilters.streamlines_evenly_spaced_2D` requires the data
@@ -97,18 +97,25 @@ boundaries = mesh["boundary"]
 # ``z=0``.
 
 slice_internal_mesh = internal_mesh.slice(normal='z')
-slice_internal_mesh.translate((0, 0, -slice_internal_mesh.center[-1]), inplace=True)
+slice_internal_mesh.translate((0, 0, -slice_internal_mesh.center[-1]),
+                               inplace=True)
 
 slice_boundaries = pyvista.MultiBlock(
     {key: boundaries[key].slice(normal='z') for key in boundaries.keys()}
 )
 for slice_boundary in slice_boundaries:
-    slice_boundary.translate((0, 0, -slice_boundary.center[-1]), inplace=True)
+    slice_boundary.translate((0, 0, -slice_boundary.center[-1]),
+                              inplace=True)
 
 streamlines = slice_internal_mesh.streamlines_evenly_spaced_2D(
     vectors='U', start_position=(0.05, 0.05, 0), separating_distance=1,
     separating_distance_ratio=0.1
 )
+
+###############################################################################
+# Plot streamlines colored by velocity magnitude.  Additionally, the moving
+# and fixed wall boundaries are plotted.
+
 plotter = pyvista.Plotter()
 plotter.add_mesh(slice_boundaries["movingWall"], color='red', line_width=3)
 plotter.add_mesh(slice_boundaries["fixedWalls"], color='black', line_width=3)
@@ -116,7 +123,3 @@ plotter.add_mesh(streamlines.tube(radius=0.0005), scalars="U")
 plotter.view_xy()
 plotter.enable_parallel_projection()
 plotter.show()
-
-
-
-
