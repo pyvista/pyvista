@@ -139,13 +139,13 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         Parameters
         ----------
         x : np.ndarray
-            Coordinates of the nodes in x direction.
+            Coordinates of the points in x direction.
 
         y : np.ndarray
-            Coordinates of the nodes in y direction.
+            Coordinates of the points in y direction.
 
         z : np.ndarray
-            Coordinates of the nodes in z direction.
+            Coordinates of the points in z direction.
 
         """
         # Set the coordinates along each axial direction
@@ -401,13 +401,13 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         """Create VTK image data directly from numpy arrays.
 
         A uniform grid is defined by the node spacings for each axis
-        (uniform along each individual axis) and the number of nodes on each axis.
+        (uniform along each individual axis) and the number of points on each axis.
         These are relative to a specified origin (default is ``(0.0, 0.0, 0.0)``).
 
         Parameters
         ----------
         dims : tuple(int)
-            Length 3 tuple of ints specifying how many nodes along each axis.
+            Length 3 tuple of ints specifying how many points along each axis.
 
         spacing : tuple(float)
             Length 3 tuple of floats/ints specifying the node spacings for each axis.

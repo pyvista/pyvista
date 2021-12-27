@@ -45,7 +45,7 @@ def glyphs(grid_sz=3):
 
     # get dataset where to put glyphs
     x, y, z = np.mgrid[:grid_sz, :grid_sz, :grid_sz]
-    mesh = pv.StructuredGrid(x, y, z)
+    mesh = pv.StructuredGrid(x, y, z, force_float=False)
 
     # add random scalars
     rng_int = rng.integers(0, n, size=x.size)

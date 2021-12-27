@@ -10,6 +10,7 @@ import threading
 from threading import Thread
 import traceback
 from typing import Optional
+import warnings
 
 import numpy as np
 
@@ -430,7 +431,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     return matches[0]
 
 
-def vtk_points(points, deep=True):
+def vtk_points(points, deep=True, force_float=False):
     """Convert numpy array or array-like to a ``vtkPoints`` object.
 
     Parameters
@@ -442,6 +443,11 @@ def vtk_points(points, deep=True):
     deep : bool, optional
         Perform a deep copy of the array.  Only applicable if
         ``points`` is a :class:`numpy.ndarray`.
+
+    force_float : bool, optional
+        Casts the datatype to float32 if points datatype are
+        non-float.  Set this to ``False`` to allow non-float types,
+        though this may lead to errors when transforming datasets.
 
     Returns
     -------
@@ -463,6 +469,16 @@ def vtk_points(points, deep=True):
     # verify is numeric
     if not np.issubdtype(points.dtype, np.number):
         raise TypeError('Points must be a numeric type')
+
+    if force_float:
+        if not np.issubdtype(points.dtype, np.floating):
+            warnings.warn(
+                'Points is not a float type. This can cause issues when '
+                'transforming or applying filters. Casting to '
+                '``np.float32``. Disable this by passing '
+                '``float_float=False``'
+            )
+            points = points.astype(np.float32)
 
     # check dimensionality
     if points.ndim == 1:

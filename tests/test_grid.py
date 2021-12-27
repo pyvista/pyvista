@@ -476,9 +476,9 @@ def test_merge_invalid(hexbeam, sphere):
 
 
 def test_init_structured(struct_grid):
-    xrng = np.arange(-10, 10, 2)
-    yrng = np.arange(-10, 10, 2)
-    zrng = np.arange(-10, 10, 2)
+    xrng = np.arange(-10, 10, 2, dtype=np.float32)
+    yrng = np.arange(-10, 10, 2, dtype=np.float32)
+    zrng = np.arange(-10, 10, 2, dtype=np.float32)
     x, y, z = np.meshgrid(xrng, yrng, zrng)
     grid = pyvista.StructuredGrid(x, y, z)
     assert np.allclose(struct_grid.x, x)
