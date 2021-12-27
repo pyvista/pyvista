@@ -223,7 +223,7 @@ def test_translate_should_fail_given_none(grid):
         grid.transform(None)
 
 
-def test_translate_deprication(grid):
+def test_translate_deprecation(grid):
     with pytest.warns(PyvistaDeprecationWarning):
         grid.translate((0.0, 0.0, 0.0))
 
@@ -1140,7 +1140,7 @@ def test_rotate_z():
 
 
 @pytest.mark.parametrize('method', ['rotate_x', 'rotate_y', 'rotate_z'])
-def test_deprication_rotate(sphere, method):
+def test_deprecation_rotate(sphere, method):
     meth = getattr(sphere, method)
     with pytest.warns(PyvistaDeprecationWarning):
         meth(30)
@@ -1203,7 +1203,7 @@ def test_transform_integers_vtkbug_present():
     assert poly.points[-1, 1] != 0
 
 
-def test_deprication_vector(sphere):
+def test_deprecation_vector(sphere):
     with pytest.warns(PyvistaDeprecationWarning):
         sphere.rotate_vector([1, 1, 1], 33)
 
