@@ -97,11 +97,13 @@ boundaries = mesh["boundary"]
 # ``z=0``.
 
 slice_internal_mesh = internal_mesh.slice(normal='z')
-slice_internal_mesh.translate((0, 0, -slice_internal_mesh.center[-1]))
+slice_internal_mesh.translate((0, 0, -slice_internal_mesh.center[-1]), inplace=True)
 
-slice_boundaries = pyvista.MultiBlock({key: boundaries[key].slice('z') for key in boundaries.keys()})
+slice_boundaries = pyvista.MultiBlock(
+    {key: boundaries[key].slice(normal='z') for key in boundaries.keys()}
+)
 for slice_boundary in slice_boundaries:
-    slice_boundary.translate((0, 0, -slice_boundary.center[-1]))
+    slice_boundary.translate((0, 0, -slice_boundary.center[-1]), inplace=True)
 
 streamlines = slice_internal_mesh.streamlines_evenly_spaced_2D(
     vectors='U', start_position=(0.05, 0.05, 0), separating_distance=1,
