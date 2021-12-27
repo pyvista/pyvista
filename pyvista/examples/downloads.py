@@ -3499,8 +3499,8 @@ def download_cavity(load=True):
     See :ref:`openfoam_example` for a full example using this dataset.
     
     """
-    folder, _ = _download_file('OpenFOAM/cavity')
-    filename = os.path.join(folder, 'case.foam')
+    directory, _ = _download_file('OpenFOAM.zip')
+    filename = os.path.join(directory, 'cavity', 'case.foam')
     if not load:
         return filename
     return pyvista.OpenFOAMReader(filename).read()

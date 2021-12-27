@@ -10,6 +10,7 @@ def test_get_reader_fail():
     with pytest.raises(ValueError):
         reader = pyvista.get_reader("not_a_supported_file.no_data")
 
+
 def test_xmlimagedatareader(tmpdir):
     tmpfile = tmpdir.join("temp.vti")
     mesh = pyvista.UniformGrid()
