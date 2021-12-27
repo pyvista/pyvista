@@ -1157,6 +1157,52 @@ def test_rotate_vector():
         out = mesh.rotate_vector(30, 33)
 
 
+def test_transform_integers():
+    # regression test for gh-1943
+    points = [
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+    ]
+    # build vtkPolyData from scratch to enforce int data
+    poly = vtk.vtkPolyData()
+    poly.SetPoints(pyvista.vtk_points(points))
+    poly = pyvista.wrap(poly)
+    poly.rotate_x(angle=10)
+    assert poly.points[-1, 1] != 0
+
+    # TODO: check point/cell vectors/normals as well...
+
+
+@pytest.mark.xfail(reason='VTK bug')
+def test_transform_integers_vtkbug_present():
+    # verify that the VTK transform bug is still there
+    # if this test starts to pass, we can remove the
+    # automatic float conversion from ``DataSet.transform``
+    # along with this test
+    points = [
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+    ]
+    # build vtkPolyData from scratch to enforce int data
+    poly = vtk.vtkPolyData()
+    poly.SetPoints(pyvista.vtk_points(points))
+
+    # manually put together a rotate_x(10) transform
+    trans_arr = pyvista.transformations.axis_angle_rotation((1, 0, 0), 10, deg=True)
+    trans_mat = pyvista.vtkmatrix_from_array(trans_arr)
+    trans = vtk.vtkTransform()
+    trans.SetMatrix(trans_mat)
+    trans_filt = vtk.vtkTransformFilter()
+    trans_filt.SetInputDataObject(poly)
+    trans_filt.SetTransform(trans)
+    trans_filt.Update()
+    poly = pyvista.wrap(trans_filt.GetOutputDataObject(0))
+    # the bug is that e.g. 0.98 gets truncated to 0
+    assert poly.points[-1, 1] != 0
+
+
 def test_deprication_vector(sphere):
     with pytest.warns(PyvistaDeprecationWarning):
         sphere.rotate_vector([1, 1, 1], 33)
