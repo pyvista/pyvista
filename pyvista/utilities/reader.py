@@ -829,8 +829,8 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         >>> filename = examples.download_cavity(load=False)
         >>> reader = pyvista.OpenFOAMReader(filename)
         >>> reader.all_patch_arrays_status  #doctest: +NORMALIZE_WHITESPACE
-        {'internalMesh': True, 'patch/movingWall': False, 'patch/fixedWalls': False,
-         'patch/frontAndBack': False}
+        {'internalMesh': True, 'patch/movingWall': True, 'patch/fixedWalls': True,
+         'patch/frontAndBack': True}
 
         """
         return {name: self.patch_array_status(name) for name in self.patch_array_names}
