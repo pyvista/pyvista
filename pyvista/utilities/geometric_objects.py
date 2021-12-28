@@ -35,7 +35,7 @@ NORMALS = {
 
 
 def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
-    """Translate and orientate a mesh to a new center and direction.
+    """Translate and orient a mesh to a new center and direction.
 
     By default, the input mesh is considered centered at the origin
     and facing in the x direction.
