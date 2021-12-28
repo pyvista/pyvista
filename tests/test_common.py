@@ -1180,7 +1180,10 @@ def test_transform_integers():
     for key in 'active_v', 'inactive_v', 'active_n', 'inactive_n':
         assert poly.point_data[key].dtype == np.int_
         assert poly.cell_data[key].dtype == np.int_
-    poly.rotate_x(angle=10)
+
+    with pytest.warns(UserWarning):
+        poly.rotate_x(angle=10, inplace=True)
+
     # check that points were converted and transformed correctly
     assert poly.points.dtype == np.float32
     assert poly.points[-1, 1] != 0
