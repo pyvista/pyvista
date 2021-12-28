@@ -4480,7 +4480,7 @@ class DataSetFilters:
 
         if hasattr(f, 'SetTransformAllInputVectors'):
             f.SetTransformAllInputVectors(transform_all_input_vectors)
-        else:
+        else:  # pragma: no cover
             # In VTK 8.1.2 and earlier, vtkTransformFilter does not
             # support the transformation of all input vectors.
             # Raise an error if the user requested for input vectors
