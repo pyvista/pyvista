@@ -870,6 +870,11 @@ class DataSet(DataSetFilters, DataObject):
     ):
         """Rotate mesh about the x-axis.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         angle : float
@@ -921,6 +926,11 @@ class DataSet(DataSetFilters, DataObject):
     ):
         """Rotate mesh about the y-axis.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         angle : float
@@ -971,6 +981,11 @@ class DataSet(DataSetFilters, DataObject):
             inplace=False
     ):
         """Rotate mesh about the z-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -1024,6 +1039,11 @@ class DataSet(DataSetFilters, DataObject):
     ):
         """Rotate mesh about a vector.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         vector : Iterable
@@ -1073,6 +1093,11 @@ class DataSet(DataSetFilters, DataObject):
     def translate(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Translate the mesh.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         xyz : list or tuple or np.ndarray
@@ -1110,6 +1135,11 @@ class DataSet(DataSetFilters, DataObject):
 
     def scale(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Scale the mesh.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -1152,6 +1182,11 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_x(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the x-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -1196,6 +1231,11 @@ class DataSet(DataSetFilters, DataObject):
     def flip_y(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the y-axis.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         point : list, optional
@@ -1239,6 +1279,11 @@ class DataSet(DataSetFilters, DataObject):
     def flip_z(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the z-axis.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         point : list, optional
@@ -1281,6 +1326,11 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_normal(self, normal: List[float], point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the normal.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------

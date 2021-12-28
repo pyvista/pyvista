@@ -223,7 +223,7 @@ def test_translate_should_fail_given_none(grid):
         grid.transform(None)
 
 
-def test_translate_deprication(grid):
+def test_translate_deprecation(grid):
     with pytest.warns(PyvistaDeprecationWarning):
         grid.translate((0.0, 0.0, 0.0))
 
@@ -1140,7 +1140,7 @@ def test_rotate_z():
 
 
 @pytest.mark.parametrize('method', ['rotate_x', 'rotate_y', 'rotate_z'])
-def test_deprication_rotate(sphere, method):
+def test_deprecation_rotate(sphere, method):
     meth = getattr(sphere, method)
     with pytest.warns(PyvistaDeprecationWarning):
         meth(30)
@@ -1157,7 +1157,72 @@ def test_rotate_vector():
         out = mesh.rotate_vector(30, 33)
 
 
-def test_deprication_vector(sphere):
+def test_transform_integers():
+    # regression test for gh-1943
+    points = [
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+    ]
+    # build vtkPolyData from scratch to enforce int data
+    poly = vtk.vtkPolyData()
+    poly.SetPoints(pyvista.vtk_points(points))
+    poly = pyvista.wrap(poly)
+    poly.verts = [1, 0, 1, 1, 1, 2]
+    # define active and inactive vectors with int values
+    for dataset_attrs in poly.point_data, poly.cell_data:
+        for key in 'active_v', 'inactive_v', 'active_n', 'inactive_n':
+            dataset_attrs[key] = poly.points
+        dataset_attrs.active_vectors_name = 'active_v'
+        dataset_attrs.active_normals_name = 'active_n'
+
+    # active vectors and normals should be converted by default
+    for key in 'active_v', 'inactive_v', 'active_n', 'inactive_n':
+        assert poly.point_data[key].dtype == np.int_
+        assert poly.cell_data[key].dtype == np.int_
+    poly.rotate_x(angle=10)
+    # check that points were converted and transformed correctly
+    assert poly.points.dtype == np.float32
+    assert poly.points[-1, 1] != 0
+    # assert that exactly active vectors and normals were converted
+    for key in 'active_v', 'active_n':
+        assert poly.point_data[key].dtype == np.float32
+        assert poly.cell_data[key].dtype == np.float32
+    for key in 'inactive_v', 'inactive_n':
+        assert poly.point_data[key].dtype == np.int_
+        assert poly.cell_data[key].dtype == np.int_
+
+
+@pytest.mark.xfail(reason='VTK bug')
+def test_transform_integers_vtkbug_present():
+    # verify that the VTK transform bug is still there
+    # if this test starts to pass, we can remove the
+    # automatic float conversion from ``DataSet.transform``
+    # along with this test
+    points = [
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+    ]
+    # build vtkPolyData from scratch to enforce int data
+    poly = vtk.vtkPolyData()
+    poly.SetPoints(pyvista.vtk_points(points))
+
+    # manually put together a rotate_x(10) transform
+    trans_arr = pyvista.transformations.axis_angle_rotation((1, 0, 0), 10, deg=True)
+    trans_mat = pyvista.vtkmatrix_from_array(trans_arr)
+    trans = vtk.vtkTransform()
+    trans.SetMatrix(trans_mat)
+    trans_filt = vtk.vtkTransformFilter()
+    trans_filt.SetInputDataObject(poly)
+    trans_filt.SetTransform(trans)
+    trans_filt.Update()
+    poly = pyvista.wrap(trans_filt.GetOutputDataObject(0))
+    # the bug is that e.g. 0.98 gets truncated to 0
+    assert poly.points[-1, 1] != 0
+
+
+def test_deprecation_vector(sphere):
     with pytest.warns(PyvistaDeprecationWarning):
         sphere.rotate_vector([1, 1, 1], 33)
 
