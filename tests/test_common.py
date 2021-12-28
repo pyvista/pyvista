@@ -1168,10 +1168,29 @@ def test_transform_integers():
     poly = vtk.vtkPolyData()
     poly.SetPoints(pyvista.vtk_points(points))
     poly = pyvista.wrap(poly)
-    poly.rotate_x(angle=10)
-    assert poly.points[-1, 1] != 0
+    poly.verts = [1, 0, 1, 1, 1, 2]
+    # define active and inactive vectors with int values
+    for dataset_attrs in poly.point_data, poly.cell_data:
+        for key in 'active_v', 'inactive_v', 'active_n', 'inactive_n':
+            dataset_attrs[key] = poly.points
+        dataset_attrs.active_vectors_name = 'active_v'
+        dataset_attrs.active_normals_name = 'active_n'
 
-    # TODO: check point/cell vectors/normals as well...
+    # active vectors and normals should be converted by default
+    for key in 'active_v', 'inactive_v', 'active_n', 'inactive_n':
+        assert poly.point_data[key].dtype == np.int_
+        assert poly.cell_data[key].dtype == np.int_
+    poly.rotate_x(angle=10)
+    # check that points were converted and transformed correctly
+    assert poly.points.dtype == np.float32
+    assert poly.points[-1, 1] != 0
+    # assert that exactly active vectors and normals were converted
+    for key in 'active_v', 'active_n':
+        assert poly.point_data[key].dtype == np.float32
+        assert poly.cell_data[key].dtype == np.float32
+    for key in 'inactive_v', 'inactive_n':
+        assert poly.point_data[key].dtype == np.int_
+        assert poly.cell_data[key].dtype == np.int_
 
 
 @pytest.mark.xfail(reason='VTK bug')
