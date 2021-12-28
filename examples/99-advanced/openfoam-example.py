@@ -107,7 +107,7 @@ for slice_boundary in slice_boundaries:
     slice_boundary.translate((0, 0, -slice_boundary.center[-1]),
                               inplace=True)
 
-streamlines = slice_internal_mesh.streamlines_evenly_spaced_2D(
+streamlines = slice_internal_mesh.cell_data_to_point_data().streamlines_evenly_spaced_2D(
     vectors='U', start_position=(0.05, 0.05, 0), separating_distance=1,
     separating_distance_ratio=0.1
 )
