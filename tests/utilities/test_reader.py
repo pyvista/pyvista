@@ -1,9 +1,15 @@
+import platform
+
 import numpy as np
 import pytest
 
 import pyvista
 from pyvista import examples
 from pyvista.examples.downloads import _download_file
+
+
+pytestmark = pytest.mark.skipif(platform.system() == 'Darwin',
+                    reason='MacOS testing on Azure fails when downloading')
 
 
 def test_get_reader_fail():
