@@ -4351,6 +4351,15 @@ class DataSetFilters:
             is to store the three components as separate scalar
             arrays.
 
+        .. warning::
+            In general, transformations give non-integer results. This
+            method converts integer-typed vector data to float before
+            performing the transformation. This applies to the points
+            array, as well as any vector-valued data that is affected
+            by the transformation. To prevent subtle bugs arising from
+            in-place transformations truncating the result to integers,
+            this conversion always applies to the input mesh.
+
         Parameters
         ----------
         trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
