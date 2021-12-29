@@ -1,3 +1,70 @@
+[project]
+name = "pyvista"
+version = "0.33.dev0"
+description = "Easier Pythonic interface to VTK"
+readme = "README.rst"
+requires-python = ">=3.6"
+license = {file = "LICENSE"}
+keywords = ["vtk", "numpy", "plotting", "mesh"]
+authors = [
+    {name = "PyVista Developers", email="info@pyvista.org"},
+]
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "appdirs",
+    "dataclasses;python_version=='3.6'",
+    "imageio",
+    "numpy",
+    "pillow",
+    "scooby>=0.5.1",
+    "typing_extensions;python_version<='3.7'",
+    "vtk",
+]
+
+
+[project.optional-dependencies]
+all = [
+    "matplotlib",
+    "colorcet",
+    "cmocean",
+    "meshio",
+]
+colormaps = [
+    "matplotlib",
+    "colorcet",
+    "cmocean",
+]
+io = [
+    "meshio",
+]
+test = [
+    "matplotlib",
+]
+
+
+[project.urls]
+homepage = "https://github.com/pyvista/pyvista"
+code = "https://github.com/pyvista/pyvista"
+issues = "https://github.com/pyvista/pyvista/issues"
+
+
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+
 [tool.isort]
 profile = "black"
 line_length = 100
