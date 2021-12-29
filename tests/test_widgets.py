@@ -5,13 +5,11 @@ import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 
+NO_PLOTTING = not system_supports_plotting()
 mesh = examples.load_uniform()
 
-# skip all tests if unable to render
-if not system_supports_plotting():
-    pytestmark = pytest.mark.skip
 
-
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_box():
     p = pyvista.Plotter()
     func = lambda box: box  # Does nothing
@@ -30,39 +28,40 @@ def test_widget_box():
     p.close()
 
 
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_plane():
     p = pyvista.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
+    func = lambda normal, origin: normal # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, implicit=True)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda normal, origin, widget: normal  # Does nothing
+    func = lambda normal, origin, widget: normal # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=True)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
+    func = lambda normal, origin: normal # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, implicit=False)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda normal, origin, widget: normal  # Does nothing
+    func = lambda normal, origin, widget: normal # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=False)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
+    func = lambda normal, origin: normal # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, assign_to_axis='z', implicit=True)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
+    func = lambda normal, origin: normal # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, normal_rotation=False, implicit=False)
     p.close()
@@ -80,26 +79,28 @@ def test_widget_plane():
     p.close()
 
 
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_line():
     p = pyvista.Plotter()
-    func = lambda line: line  # Does nothing
+    func = lambda line: line # Does nothing
     p.add_mesh(mesh)
     p.add_line_widget(callback=func)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda line, widget: line  # Does nothing
+    func = lambda line, widget: line # Does nothing
     p.add_mesh(mesh)
     p.add_line_widget(callback=func, pass_widget=True)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda a, b: (a, b)  # Does nothing
+    func = lambda a, b: (a, b) # Does nothing
     p.add_mesh(mesh)
     p.add_line_widget(callback=func, use_vertices=True)
     p.close()
 
 
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_text_slider():
     p = pyvista.Plotter()
     func = lambda value: value  # Does nothing
@@ -113,6 +114,7 @@ def test_widget_text_slider():
     p.close()
 
 
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_slider():
     p = pyvista.Plotter()
     func = lambda value: value  # Does nothing
@@ -182,6 +184,7 @@ def test_widget_slider():
     p.close()
 
 
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_spline():
     p = pyvista.Plotter()
     func = lambda spline: spline # Does nothing
@@ -200,31 +203,24 @@ def test_widget_spline():
     p.close()
 
 
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_sphere():
     p = pyvista.Plotter()
-    func = lambda center: center  # Does nothing
+    func = lambda center: center # Does nothing
     p.add_sphere_widget(callback=func, center=(0, 0, 0))
     p.close()
 
-    nodes = np.array([[-1, -1, -1], [1, 1, 1]])
+    nodes = np.array([[-1,-1,-1], [1,1,1]])
     p = pyvista.Plotter()
-    func = lambda center: center  # Does nothing
+    func = lambda center: center # Does nothing
     p.add_sphere_widget(callback=func, center=nodes)
     p.close()
 
 
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_checkbox_button():
     p = pyvista.Plotter()
-    func = lambda value: value  # Does nothing
+    func = lambda value: value # Does nothing
     p.add_mesh(mesh)
     p.add_checkbox_button_widget(callback=func)
     p.close()
-
-
-@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires vtk>=9.1")
-def test_add_camera_orientation_widget():
-    p = pyvista.Plotter()
-    p.add_camera_orientation_widget()
-    assert p._camera_widgets
-    p.close()
-    assert not p._camera_widgets

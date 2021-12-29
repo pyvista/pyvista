@@ -1,7 +1,5 @@
 """Module dedicated to widgets."""
 
-from typing import List
-
 import numpy as np
 
 import pyvista
@@ -23,8 +21,6 @@ class WidgetHelper:
     It also manages and other helper methods involving widgets.
 
     """
-
-    _camera_widgets: List[object] = []
 
     def add_box_widget(self, callback, bounds=None, factor=1.25,
                        rotation_enabled=True, color=None, use_planes=False,
@@ -1740,50 +1736,6 @@ class WidgetHelper:
         self.button_widgets.append(button_widget)
         return button_widget
 
-    def add_camera_orientation_widget(self, animate=True, n_frames=20):
-        """Add a camera orientation widget to the active renderer.
-
-        .. note::
-           This widget requires ``vtk>=9.1.0``.
-
-        Parameters
-        ----------
-        animate : bool, optional
-            Enable or disable jump-to-axis-view animation.
-        n_frames : int, optional
-            The number of frames to animate the jump-to-axis-viewpoint feature.
-
-        Returns
-        -------
-        vtkCameraOrientationWidget
-            Camera orientation widget.
-
-        Examples
-        --------
-        Add a camera orientation widget to the scene.
-
-        >>> import pyvista
-        >>> mesh = pyvista.Cube()
-        >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
-        >>> _ = plotter.add_camera_orientation_widget()
-        >>> plotter.show()
-
-        """
-        widget = _vtk.lazy_vtkCameraOrientationWidget()
-        widget.SetParentRenderer(self.renderer)
-        widget.SetAnimate(animate)
-        widget.SetAnimatorTotalFrames(n_frames)
-        widget.On()
-        self._camera_widgets.append(widget)
-        return widget
-
-    def clear_camera_widgets(self):
-        """Disable all of the camera widgets."""
-        for widget in self._camera_widgets:
-            widget.Off()
-        self._camera_widgets = []
-
     def clear_button_widgets(self):
         """Disable all of the button widgets."""
         if hasattr(self, 'button_widgets'):
@@ -1800,4 +1752,3 @@ class WidgetHelper:
         self.clear_sphere_widgets()
         self.clear_spline_widgets()
         self.clear_button_widgets()
-        self.clear_camera_widgets()

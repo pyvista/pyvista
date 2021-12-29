@@ -1150,7 +1150,6 @@ class DefaultTheme(_ThemeConfig):
                  '_return_cpos',
                  '_hidden_line_removal',
                  '_antialiasing',
-                 '_enable_camera_orientation_widget',
     ]
 
     def __init__(self):
@@ -1215,7 +1214,6 @@ class DefaultTheme(_ThemeConfig):
         self._return_cpos = True
         self._hidden_line_removal = False
         self._antialiasing = False
-        self._enable_camera_orientation_widget = False
 
     @property
     def hidden_line_removal(self) -> bool:

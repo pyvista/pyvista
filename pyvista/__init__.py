@@ -12,7 +12,7 @@ from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
-from pyvista.utilities.misc import _get_vtk_id_type, vtk_version_info
+from pyvista.utilities.misc import _get_vtk_id_type
 from pyvista import _vtk
 from pyvista.jupyter import set_jupyter_backend, PlotterITK
 from pyvista.themes import set_plot_theme, load_theme, _rcParams
@@ -33,8 +33,8 @@ if 'PYVISTA_PLOT_THEME' in os.environ:
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
 
-# determine if using at least vtk 5.0.0
-if vtk_version_info.major < 5:
+# determine if using vtk > 5
+if _vtk.vtkVersion().GetVTKMajorVersion() <= 5:
     raise RuntimeError('VTK version must be 5.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
