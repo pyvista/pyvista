@@ -1,6 +1,6 @@
 """PyVista package for 3D plotting and mesh analysis."""
 
-__version__ = "0.33.0dev"
+__version__ = "0.33.dev0"
 MAX_N_COLOR_BARS = 10
 
 from typing import Optional
