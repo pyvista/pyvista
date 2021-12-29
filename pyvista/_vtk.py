@@ -521,11 +521,11 @@ else:  # pragma: no cover
             raise VTKVersionError('vtkGLTFReader requires VTK v9 or newer')
 
 
- # lazy import as this was added in 9.1.0
- def lazy_vtkCameraOrientationWidget():
-     """Lazy import of the vtkCameraOrientationWidget."""
-     try:
-         from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
-     except ImportError:  # pragma: no cover
-         raise ImportError('vtkCameraOrientationWidget requires vtk>=9.1.0')
-     return vtkCameraOrientationWidget()
+# lazy import as this was added in 9.1.0
+def lazy_vtkCameraOrientationWidget():
+    """Lazy import of the vtkCameraOrientationWidget."""
+    try:
+        from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
+    except ImportError:  # pragma: no cover
+        raise ImportError('vtkCameraOrientationWidget requires vtk>=9.1.0')
+    return vtkCameraOrientationWidget()
