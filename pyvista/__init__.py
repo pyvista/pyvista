@@ -1,24 +1,21 @@
 """PyVista package for 3D plotting and mesh analysis."""
 
+__version__ = "0.33.0dev"
 MAX_N_COLOR_BARS = 10
 
-import appdirs
-import importlib
-import os
 from typing import Optional
+import importlib
 import warnings
+import os
+import appdirs
 
-# version specified here
-__version__ = "0.33.0dev"
-
+# Load default theme.  Must be loaded first.
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
 from pyvista.utilities.misc import _get_vtk_id_type, vtk_version_info
 from pyvista import _vtk
 from pyvista.jupyter import set_jupyter_backend, PlotterITK
-
-# Load default theme.  Must be loaded first.
 from pyvista.themes import set_plot_theme, load_theme, _rcParams
 from pyvista.themes import DefaultTheme as _GlobalTheme  # hide this
 
