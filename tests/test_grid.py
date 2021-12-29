@@ -581,7 +581,7 @@ def test_create_rectilinear_grid_from_specs():
     grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
     assert grid.n_cells == 9*3*19
     assert grid.n_points == 10*4*20
-    assert grid.bounds == [-10.0,8.0, -10.0,5.0, -10.0,9.0]
+    assert grid.bounds == (-10.0, 8.0, -10.0, 5.0, -10.0, 9.0)
     # 2D example
     cell_spacings = np.array([1., 1., 2., 2., 5., 10.])
     x_coordinates = np.cumsum(cell_spacings)
@@ -589,20 +589,20 @@ def test_create_rectilinear_grid_from_specs():
     grid = pyvista.RectilinearGrid(x_coordinates, y_coordinates)
     assert grid.n_cells == 5*5
     assert grid.n_points == 6*6
-    assert grid.bounds == [1.,21., 1.,21., 0.,0.]
+    assert grid.bounds == (1., 21., 1., 21., 0., 0.)
 
 
 def test_create_rectilinear_after_init():
-    x = np.array([0,1,2])
-    y = np.array([0,5,8])
-    z = np.array([3,2,1])
+    x = np.array([0, 1, 2])
+    y = np.array([0, 5, 8])
+    z = np.array([3, 2, 1])
     grid = pyvista.RectilinearGrid()
     grid.x = x
-    assert grid.dimensions == [3, 1, 1]
+    assert grid.dimensions == (3, 1, 1)
     grid.y = y
-    assert grid.dimensions == [3, 3, 1]
+    assert grid.dimensions == (3, 3, 1)
     grid.z = z
-    assert grid.dimensions == [3, 3, 3]
+    assert grid.dimensions == (3, 3, 3)
     assert np.allclose(grid.x, x)
     assert np.allclose(grid.y, y)
     assert np.allclose(grid.z, z)
@@ -612,7 +612,7 @@ def test_create_rectilinear_grid_from_file():
     grid = examples.load_rectilinear()
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
-    assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
+    assert grid.bounds == (-350.0,1350.0, -400.0,1350.0, -850.0,0.0)
     assert grid.n_arrays == 1
 
 
@@ -620,7 +620,7 @@ def test_read_rectilinear_grid_from_file():
     grid = pyvista.read(examples.rectfile)
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
-    assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
+    assert grid.bounds == (-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0)
     assert grid.n_arrays == 1
 
 
@@ -628,7 +628,7 @@ def test_read_rectilinear_grid_from_pathlib():
     grid = pyvista.RectilinearGrid(pathlib.Path(examples.rectfile))
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
-    assert grid.bounds == [-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0]
+    assert grid.bounds == (-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0)
     assert grid.n_arrays == 1
 
 
@@ -650,20 +650,20 @@ def test_create_uniform_grid_from_specs():
     grid = pyvista.UniformGrid()
 
     # create UniformGrid
-    dims = [10, 10, 10]
+    dims = (10, 10, 10)
     grid = pyvista.UniformGrid(dims=dims) # Using default spacing and origin
     assert grid.dimensions == dims
-    assert grid.extent == [0, 9, 0, 9, 0, 9]
-    assert grid.origin == [0.0, 0.0, 0.0]
-    assert grid.spacing == [1.0, 1.0, 1.0]
+    assert grid.extent == (0, 9, 0, 9, 0, 9)
+    assert grid.origin == (0.0, 0.0, 0.0)
+    assert grid.spacing == (1.0, 1.0, 1.0)
 
     # Using default origin
-    spacing = [2, 1, 5]
+    spacing = (2, 1, 5)
     grid = pyvista.UniformGrid(dims=dims, spacing=spacing)
     assert grid.dimensions == dims
-    assert grid.origin == [0.0, 0.0, 0.0]
+    assert grid.origin == (0.0, 0.0, 0.0)
     assert grid.spacing == spacing
-    origin = [10, 35, 50]
+    origin = (10, 35, 50)
 
     # Everything is specified
     grid = pyvista.UniformGrid(dims=dims, spacing=spacing, origin=origin)
@@ -695,7 +695,7 @@ def test_create_uniform_grid_from_specs():
     assert grid == grid_from_grid
 
     # and is a copy
-    grid.origin = [0, 0, 0]
+    grid.origin = (0, 0, 0)
     assert grid != grid_from_grid
 
 
@@ -712,42 +712,42 @@ def test_uniform_grid_invald_args():
 
 def test_uniform_setters():
     grid = pyvista.UniformGrid()
-    grid.dimensions = [10, 10, 10]
+    grid.dimensions = (10, 10, 10)
     assert grid.GetDimensions() == (10, 10, 10)
-    assert grid.dimensions == [10, 10, 10]
-    grid.spacing = [5, 2, 1]
+    assert grid.dimensions == (10, 10, 10)
+    grid.spacing = (5, 2, 1)
     assert grid.GetSpacing() == (5, 2, 1)
-    assert grid.spacing == [5, 2, 1]
-    grid.origin = [6, 27.7, 19.8]
+    assert grid.spacing == (5, 2, 1)
+    grid.origin = (6, 27.7, 19.8)
     assert grid.GetOrigin() == (6, 27.7, 19.8)
-    assert grid.origin == [6, 27.7, 19.8]
+    assert grid.origin == (6, 27.7, 19.8)
 
 
 def test_create_uniform_grid_from_file():
     grid = examples.load_uniform()
     assert grid.n_cells == 729
     assert grid.n_points == 1000
-    assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]
+    assert grid.bounds == (0.0, 9.0, 0.0, 9.0, 0.0, 9.0)
     assert grid.n_arrays == 2
-    assert grid.dimensions == [10, 10, 10]
+    assert grid.dimensions == (10, 10, 10)
 
 
 def test_read_uniform_grid_from_file():
     grid = pyvista.read(examples.uniformfile)
     assert grid.n_cells == 729
     assert grid.n_points == 1000
-    assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]
+    assert grid.bounds == (0.0, 9.0, 0.0, 9.0, 0.0, 9.0)
     assert grid.n_arrays == 2
-    assert grid.dimensions == [10, 10, 10]
+    assert grid.dimensions == (10, 10, 10)
 
 
 def test_read_uniform_grid_from_pathlib():
     grid = pyvista.UniformGrid(pathlib.Path(examples.uniformfile))
     assert grid.n_cells == 729
     assert grid.n_points == 1000
-    assert grid.bounds == [0.0, 9.0, 0.0, 9.0, 0.0, 9.0]
+    assert grid.bounds == (0.0, 9.0, 0.0, 9.0, 0.0, 9.0)
     assert grid.n_arrays == 2
-    assert grid.dimensions == [10, 10, 10]
+    assert grid.dimensions == (10, 10, 10)
 
 
 def test_cast_uniform_to_structured():
@@ -848,7 +848,7 @@ def test_grid_points():
     grid.x = x
     grid.y = y
     grid.z = z
-    assert grid.dimensions == [3, 3, 2]
+    assert grid.dimensions == (3, 3, 2)
     assert np.allclose(grid.meshgrid, (xx, yy, zz))
     assert np.allclose(grid.points, np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')])
 
@@ -933,7 +933,7 @@ def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     grid = grid.cast_to_explicit_structured_grid()
     assert grid.n_cells == 120
     assert grid.n_points == 210
-    assert grid.bounds == [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
+    assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
     assert 'BLOCK_I' in grid.cell_data
     assert 'BLOCK_J' in grid.cell_data
     assert 'BLOCK_K' in grid.cell_data
@@ -947,7 +947,7 @@ def test_ExplicitStructuredGrid_init():
     assert isinstance(grid, pyvista.ExplicitStructuredGrid)
     assert grid.n_cells == 120
     assert grid.n_points == 210
-    assert grid.bounds == [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
+    assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
     assert repr(grid) == str(grid)
     assert 'N Cells' in str(grid)
     assert 'N Points' in str(grid)
@@ -996,7 +996,7 @@ def test_ExplicitStructuredGrid_save():
     grid = pyvista.ExplicitStructuredGrid('grid.vtu')
     assert grid.n_cells == 120
     assert grid.n_points == 210
-    assert grid.bounds == [0.0, 80.0, 0.0, 50.0, 0.0, 6.0]
+    assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
     os.remove('grid.vtu')
 
@@ -1044,20 +1044,20 @@ def test_ExplicitStructuredGrid_show_cells():
 @pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
 def test_ExplicitStructuredGrid_dimensions():
     grid = examples.load_explicit_structured()
-    assert isinstance(grid.dimensions, np.ndarray)
-    assert np.issubdtype(grid.dimensions.dtype, np.integer)
-    assert grid.dimensions.shape == (3,)
-    assert np.array_equal(grid.dimensions, [5, 6, 7])
+    assert isinstance(grid.dimensions, tuple)
+    assert isinstance(grid.dimensions[0], int)
+    assert len(grid.dimensions) == 3
+    assert grid.dimensions == (5, 6, 7)
 
 
 @pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
 def test_ExplicitStructuredGrid_visible_bounds():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
-    assert isinstance(grid.visible_bounds, list)
+    assert isinstance(grid.visible_bounds, tuple)
     assert all(isinstance(x, float) for x in grid.visible_bounds)
     assert len(grid.visible_bounds) == 6
-    assert grid.visible_bounds == [0.0, 80.0, 0.0, 50.0, 0.0, 4.0]
+    assert grid.visible_bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 4.0)
 
 
 @pytest.mark.skipif(not VTK9, reason='VTK 9 or higher is required')
