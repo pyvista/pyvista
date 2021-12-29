@@ -1258,7 +1258,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             self._from_arrays(offset, cells, cell_types, points, deep=deep)
 
     def _from_arrays(
-            self, offset, cells, cell_type, points, deep=True, force_float=True
+            self, offset, cells, cell_type, points, deep=True, force_float=True,
     ):
         """Create VTK unstructured grid from numpy arrays.
 
@@ -1284,10 +1284,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             ``False``.  Cells and cell types are always copied.
 
         force_float : bool, optional
-            Casts the datatype to float32 if points datatype are
-            non-float.  Default ``True``. Set this to ``False`` to
-            allow non-float types, though this may lead to errors when
-            transforming datasets.
+        Casts the datatype to ``float32`` if points datatype are
+        non-float.  Default ``True``. Set this to ``False`` to allow
+        non-float types, though this may lead to intermediate float
+        truncation when rotating datasets.
 
         Examples
         --------
@@ -1767,10 +1767,10 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
             Position of the points in z direction.
 
         force_float : bool, optional
-            Casts the datatype to float32 if points datatype are
-            non-float.  Default ``True``. Set this to ``False`` to
-            allow non-float types, though this may lead to errors when
-            transforming datasets.
+            Casts the datatype to ``float32`` if points datatype are
+            non-float.  Default ``True``. Set this to ``False`` to allow
+            non-float types, though this may lead to intermediate float
+            truncation when rotating datasets.
 
         """
         if not(x.shape == y.shape == z.shape):

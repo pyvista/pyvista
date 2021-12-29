@@ -44,8 +44,9 @@ def glyphs(grid_sz=3):
     geoms = [pv.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
 
     # get dataset where to put glyphs
+    grid_sz = float(grid_sz)
     x, y, z = np.mgrid[:grid_sz, :grid_sz, :grid_sz]
-    mesh = pv.StructuredGrid(x, y, z, force_float=False)
+    mesh = pv.StructuredGrid(x, y, z)
 
     # add random scalars
     rng_int = rng.integers(0, n, size=x.size)

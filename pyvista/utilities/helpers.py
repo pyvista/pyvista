@@ -445,9 +445,10 @@ def vtk_points(points, deep=True, force_float=False):
         ``points`` is a :class:`numpy.ndarray`.
 
     force_float : bool, optional
-        Casts the datatype to float32 if points datatype are
+        Casts the datatype to ``float32`` if points datatype is
         non-float.  Set this to ``False`` to allow non-float types,
-        though this may lead to errors when transforming datasets.
+        though this may lead to truncation of intermediate floats
+        when transforming datasets.
 
     Returns
     -------
@@ -476,7 +477,7 @@ def vtk_points(points, deep=True, force_float=False):
                 'Points is not a float type. This can cause issues when '
                 'transforming or applying filters. Casting to '
                 '``np.float32``. Disable this by passing '
-                '``float_float=False``'
+                '``force_float=False``.'
             )
             points = points.astype(np.float32)
 

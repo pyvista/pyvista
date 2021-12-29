@@ -161,8 +161,8 @@ def test_init_as_points():
 
 def test_init_as_points_from_list():
     points = [[0.0, 0.0, 0.0],
-              [0, 1, 0],
-              [0, 0, 1]]
+              [0.0, 1.0, 0.0],
+              [0.0, 0.0, 1.0]]
     mesh = pyvista.PolyData(points)
     assert np.allclose(mesh.points, points)
 
