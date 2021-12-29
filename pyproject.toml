@@ -1,7 +1,6 @@
 [project]
 name = "pyvista"
-version = "0.33.dev0"
-description = "Easier Pythonic interface to VTK"
+dynamic = ["version", "description"]
 readme = "README.rst"
 requires-python = ">=3.6"
 license = {file = "LICENSE"}

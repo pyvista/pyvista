@@ -2,20 +2,23 @@
 
 MAX_N_COLOR_BARS = 10
 
-from typing import Optional
-import warnings
-import os
 import appdirs
 import importlib
+import os
+from typing import Optional
+import warnings
 
-# Load default theme.  Must be loaded first.
-__version__ = importlib.metadata.version('pyvista')
+# version specified here
+__version__ = "0.33.0dev"
+
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
-from pyvista.utilities.misc import _get_vtk_id_type
+from pyvista.utilities.misc import _get_vtk_id_type, vtk_version_info
 from pyvista import _vtk
 from pyvista.jupyter import set_jupyter_backend, PlotterITK
+
+# Load default theme.  Must be loaded first.
 from pyvista.themes import set_plot_theme, load_theme, _rcParams
 from pyvista.themes import DefaultTheme as _GlobalTheme  # hide this
 
@@ -34,8 +37,8 @@ if 'PYVISTA_PLOT_THEME' in os.environ:
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
 
-# determine if using vtk > 5
-if _vtk.vtkVersion().GetVTKMajorVersion() <= 5:
+# determine if using at least vtk 5.0.0
+if vtk_version_info.major < 5:
     raise RuntimeError('VTK version must be 5.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
