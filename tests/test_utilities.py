@@ -23,6 +23,21 @@ from pyvista.utilities import (
 )
 
 
+def test_version():
+    assert "major" in str(pyvista.vtk_version_info)
+    ver = vtk.vtkVersion()
+    assert ver.GetVTKMajorVersion() == pyvista.vtk_version_info.major
+    assert ver.GetVTKMinorVersion() == pyvista.vtk_version_info.minor
+    assert ver.GetVTKBuildVersion() == pyvista.vtk_version_info.micro
+    ver_tup = (
+        ver.GetVTKMajorVersion(),
+        ver.GetVTKMinorVersion(),
+        ver.GetVTKBuildVersion(),
+    )
+    assert ver_tup == pyvista.vtk_version_info
+    assert pyvista.vtk_version_info >= (0, 0, 0)
+
+
 def test_createvectorpolydata_error():
     orig = np.random.random((3, 1))
     vec = np.random.random((3, 1))
