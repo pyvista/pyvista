@@ -395,10 +395,10 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         file.
 
     force_float : bool, optional
-        Casts the datatype to float32 if points datatype are
+        Casts the datatype to ``float32`` if points datatype is
         non-float.  Default ``True``. Set this to ``False`` to allow
-        non-float types, though this may lead to errors when rotating
-        datasets.
+        non-float types, though this may lead to truncation of
+        intermediate floats when transforming datasets.
 
     Examples
     --------
@@ -1284,10 +1284,10 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             ``False``.  Cells and cell types are always copied.
 
         force_float : bool, optional
-        Casts the datatype to ``float32`` if points datatype are
-        non-float.  Default ``True``. Set this to ``False`` to allow
-        non-float types, though this may lead to intermediate float
-        truncation when rotating datasets.
+            Casts the datatype to ``float32`` if points datatype is
+            non-float.  Default ``True``. Set this to ``False`` to allow
+            non-float types, though this may lead to truncation of
+            intermediate floats when transforming datasets.
 
         Examples
         --------
@@ -1767,10 +1767,10 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
             Position of the points in z direction.
 
         force_float : bool, optional
-            Casts the datatype to ``float32`` if points datatype are
+            Casts the datatype to ``float32`` if points datatype is
             non-float.  Default ``True``. Set this to ``False`` to allow
-            non-float types, though this may lead to intermediate float
-            truncation when rotating datasets.
+            non-float types, though this may lead to truncation of
+            intermediate floats when transforming datasets.
 
         """
         if not(x.shape == y.shape == z.shape):
