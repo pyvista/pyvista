@@ -44,6 +44,7 @@ def glyphs(grid_sz=3):
     geoms = [pv.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
 
     # get dataset where to put glyphs
+    grid_sz = float(grid_sz)
     x, y, z = np.mgrid[:grid_sz, :grid_sz, :grid_sz]
     mesh = pv.StructuredGrid(x, y, z)
 
@@ -479,7 +480,7 @@ def plot_datasets(dataset_type=None):
 
     ###########################################################################
     # polydata
-    points = pv.PolyData([[1, 2, 2], [2, 2, 2]])
+    points = pv.PolyData([[1.0, 2.0, 2.0], [2.0, 2.0, 2.0]])
 
     line = pv.Line()
     line.points += np.array((2, 0, 0))

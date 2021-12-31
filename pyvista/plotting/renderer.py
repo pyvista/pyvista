@@ -59,7 +59,7 @@ def map_loc_to_pos(loc, size, border=0.05):
 def make_legend_face(face):
     """Create the legend face."""
     if face is None:
-        legendface = pyvista.PolyData([0, 0, 0])
+        legendface = pyvista.PolyData([0.0, 0.0, 0.0])
     elif face in ["-", "line"]:
         legendface = _line_for_legend()
     elif face in ["^", "triangle"]:
@@ -2741,7 +2741,7 @@ class Renderer(_vtk.vtkRenderer):
 
                 if face is None:
                     # dummy vtk object
-                    vtk_object = pyvista.PolyData([0, 0, 0])
+                    vtk_object = pyvista.PolyData([0.0, 0.0, 0.0])
 
                 self._legend.SetEntry(i, vtk_object, text, parse_color(color))
 

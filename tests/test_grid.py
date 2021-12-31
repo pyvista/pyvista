@@ -69,7 +69,8 @@ def test_init_from_numpy_arrays():
             [1, 0, 1],
             [1, 1, 1],
             [0, 1, 1],
-        ]
+        ],
+        dtype=np.float32
     )
 
     cell2 = np.array(
@@ -82,7 +83,8 @@ def test_init_from_numpy_arrays():
             [1, 0, 3],
             [1, 1, 3],
             [0, 1, 3],
-        ]
+        ],
+        dtype=np.float32
     )
 
     points = np.vstack((cell1, cell2))
@@ -109,28 +111,35 @@ def create_hex_example():
     cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
     cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int32)
 
-    cell1 = np.array([[0, 0, 0],
-                      [1, 0, 0],
-                      [1, 1, 0],
-                      [0, 1, 0],
-                      [0, 0, 1],
-                      [1, 0, 1],
-                      [1, 1, 1],
-                      [0, 1, 1]])
+    cell1 = np.array(
+        [[0, 0, 0],
+         [1, 0, 0],
+         [1, 1, 0],
+         [0, 1, 0],
+         [0, 0, 1],
+         [1, 0, 1],
+         [1, 1, 1],
+         [0, 1, 1]],
+        dtype=np.float32
+    )
 
-    cell2 = np.array([[0, 0, 2],
-                      [1, 0, 2],
-                      [1, 1, 2],
-                      [0, 1, 2],
-                      [0, 0, 3],
-                      [1, 0, 3],
-                      [1, 1, 3],
-                      [0, 1, 3]])
+    cell2 = np.array(
+        [[0, 0, 2],
+         [1, 0, 2],
+         [1, 1, 2],
+         [0, 1, 2],
+         [0, 0, 3],
+         [1, 0, 3],
+         [1, 1, 3],
+         [0, 1, 3]],
+        dtype=np.float32
+    )
 
-    points = np.vstack((cell1, cell2)).astype(np.int32)
+    points = np.vstack((cell1, cell2))
     offset = np.array([0, 9], np.int8)
 
     return offset, cells, cell_type, points
+
 
 #Try both with and without an offset array
 @pytest.mark.parametrize('specify_offset', [False, True])
@@ -156,6 +165,7 @@ def test_init_from_arrays(specify_offset):
         with pytest.raises(AttributeError):
             grid.cell_connectivity
 
+
 @pytest.mark.parametrize('multiple_cell_types', [False, True])
 @pytest.mark.parametrize('flat_cells', [False, True])
 def test_init_from_dict(multiple_cell_types, flat_cells):
@@ -173,7 +183,6 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
                           [1, 0, -1],
                           [1, 1, -1],
                           [0, 1, -1]])
-
 
         points = np.vstack((points, cell3))
         input_cells_dict[vtk.VTK_QUAD] = cells_quad
@@ -467,9 +476,9 @@ def test_merge_invalid(hexbeam, sphere):
 
 
 def test_init_structured(struct_grid):
-    xrng = np.arange(-10, 10, 2)
-    yrng = np.arange(-10, 10, 2)
-    zrng = np.arange(-10, 10, 2)
+    xrng = np.arange(-10, 10, 2, dtype=np.float32)
+    yrng = np.arange(-10, 10, 2, dtype=np.float32)
+    zrng = np.arange(-10, 10, 2, dtype=np.float32)
     x, y, z = np.meshgrid(xrng, yrng, zrng)
     grid = pyvista.StructuredGrid(x, y, z)
     assert np.allclose(struct_grid.x, x)

@@ -394,6 +394,12 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         file as if it had this extension as opposed to the one in the
         file.
 
+    force_float : bool, optional
+        Casts the datatype to ``float32`` if points datatype is
+        non-float.  Default ``True``. Set this to ``False`` to allow
+        non-float types, though this may lead to truncation of
+        intermediate floats when transforming datasets.
+
     Examples
     --------
     >>> import vtk
@@ -437,7 +443,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
                 '.vtk': _vtk.vtkPolyDataWriter}
 
     def __init__(self, var_inp=None, faces=None, n_faces=None, lines=None,
-                 n_lines=None, deep=False, force_ext=None) -> None:
+                 n_lines=None, deep=False, force_ext=None, force_float=True) -> None:
         """Initialize the polydata."""
         local_parms = locals()
         super().__init__()
@@ -471,7 +477,10 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
         # First parameter is points
         if isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
-            self.SetPoints(pyvista.vtk_points(var_inp, deep=deep))
+            self.SetPoints(pyvista.vtk_points(
+                var_inp, deep=deep, force_float=force_float
+            ))
+
         else:
             msg = f"""
                 Invalid Input type:
@@ -761,7 +770,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
         number of vertices.
 
         >>> import pyvista
-        >>> mesh = pyvista.PolyData([[1, 0, 0], [1, 1, 1]])
+        >>> mesh = pyvista.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
         >>> mesh.n_verts
         2
 
@@ -1203,7 +1212,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             arg2_is_arr = isinstance(args[2], np.ndarray)
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(None, args[0], args[1], args[2], deep)
+                self._from_arrays(None, args[0], args[1], args[2], deep, **kwargs)
                 self._check_for_consistency()
             else:
                 raise TypeError('All input types must be np.ndarray')
@@ -1248,7 +1257,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             cell_types, cells, offset = create_mixed_cells(cells_dict, nr_points)
             self._from_arrays(offset, cells, cell_types, points, deep=deep)
 
-    def _from_arrays(self, offset, cells, cell_type, points, deep=True):
+    def _from_arrays(
+            self, offset, cells, cell_type, points, deep=True, force_float=True,
+    ):
         """Create VTK unstructured grid from numpy arrays.
 
         Parameters
@@ -1268,6 +1279,16 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         points : np.ndarray
             Numpy array containing point locations.
 
+        deep : bool, optional
+            When ``True``, makes a copy of the points array.  Default
+            ``False``.  Cells and cell types are always copied.
+
+        force_float : bool, optional
+            Casts the datatype to ``float32`` if points datatype is
+            non-float.  Default ``True``. Set this to ``False`` to allow
+            non-float types, though this may lead to truncation of
+            intermediate floats when transforming datasets.
+
         Examples
         --------
         >>> import numpy as np
@@ -1284,7 +1305,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         ...                   [0, 0, 1],
         ...                   [1, 0, 1],
         ...                   [1, 1, 1],
-        ...                   [0, 1, 1]])
+        ...                   [0, 1, 1]], dtype=np.float32)
 
         >>> cell2 = np.array([[0, 0, 2],
         ...                   [1, 0, 2],
@@ -1293,7 +1314,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         ...                   [0, 0, 3],
         ...                   [1, 0, 3],
         ...                   [1, 1, 3],
-        ...                   [0, 1, 3]])
+        ...                   [0, 1, 3]], dtype=np.float32)
 
         >>> points = np.vstack((cell1, cell2))
 
@@ -1307,8 +1328,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         cell_type_np = cell_type
         cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
 
-        # Convert points to vtkPoints object
-        points = pyvista.vtk_points(points, deep=deep)
+        points = pyvista.vtk_points(points, deep, force_float)
         self.SetPoints(points)
 
         # vtk9 does not require an offset array
@@ -1695,9 +1715,9 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     Create from NumPy arrays
 
-    >>> xrng = np.arange(-10, 10, 2)
-    >>> yrng = np.arange(-10, 10, 2)
-    >>> zrng = np.arange(-10, 10, 2)
+    >>> xrng = np.arange(-10, 10, 2, dtype=np.float32)
+    >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
+    >>> zrng = np.arange(-10, 10, 2, dtype=np.float32)
     >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
     >>> grid = pyvista.StructuredGrid(x, y, z)
 
@@ -1722,7 +1742,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
             arg2_is_arr = isinstance(args[2], np.ndarray)
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(args[0], args[1], args[2])
+                self._from_arrays(args[0], args[1], args[2], **kwargs)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -1732,7 +1752,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
-    def _from_arrays(self, x, y, z):
+    def _from_arrays(self, x, y, z, force_float=True):
         """Create VTK structured grid directly from numpy arrays.
 
         Parameters
@@ -1745,6 +1765,12 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         z : np.ndarray
             Position of the points in z direction.
+
+        force_float : bool, optional
+            Casts the datatype to ``float32`` if points datatype is
+            non-float.  Default ``True``. Set this to ``False`` to allow
+            non-float types, though this may lead to truncation of
+            intermediate floats when transforming datasets.
 
         """
         if not(x.shape == y.shape == z.shape):
@@ -1763,7 +1789,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         # Create structured grid
         self.SetDimensions(dim)
-        self.SetPoints(pyvista.vtk_points(points))
+        self.SetPoints(pyvista.vtk_points(points, force_float=force_float))
 
     @property
     def dimensions(self):
@@ -1778,9 +1804,9 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         --------
         >>> import pyvista
         >>> import numpy as np
-        >>> xrng = np.arange(-10, 10, 1)
-        >>> yrng = np.arange(-10, 10, 2)
-        >>> zrng = np.arange(-10, 10, 5)
+        >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
+        >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
+        >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
         >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
         >>> grid = pyvista.StructuredGrid(x, y, z)
         >>> grid.dimensions
@@ -1809,9 +1835,9 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         --------
         >>> import pyvista
         >>> import numpy as np
-        >>> xrng = np.arange(-10, 10, 1)
-        >>> yrng = np.arange(-10, 10, 2)
-        >>> zrng = np.arange(-10, 10, 5)
+        >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
+        >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
+        >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
         >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
         >>> grid = pyvista.StructuredGrid(x, y, z)
         >>> grid.x.shape

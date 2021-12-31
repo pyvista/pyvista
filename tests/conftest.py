@@ -60,9 +60,9 @@ def hexbeam():
 
 @fixture()
 def struct_grid():
-    x, y, z = np.meshgrid(np.arange(-10, 10, 2),
-                          np.arange(-10, 10, 2),
-                          np.arange(-10, 10, 2))
+    x, y, z = np.meshgrid(np.arange(-10, 10, 2, dtype=np.float32),
+                          np.arange(-10, 10, 2, dtype=np.float32),
+                          np.arange(-10, 10, 2, dtype=np.float32))
     return pyvista.StructuredGrid(x, y, z)
 
 
