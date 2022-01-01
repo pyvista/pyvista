@@ -1026,7 +1026,7 @@ def test_cell_points(grid):
 
 def test_cell_bounds(grid):
     bounds = grid.cell_bounds(0)
-    assert isinstance(bounds, list)
+    assert isinstance(bounds, tuple)
     assert len(bounds) == 6
 
 
