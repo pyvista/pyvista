@@ -680,6 +680,10 @@ def test_create_uniform_grid_from_specs():
     assert grid.origin == origin
     assert grid.spacing == spacing
 
+    # ensure negative spacing is not allowed
+    with pytest.raises(ValueError, match="Spacing must be non-negative"):
+        grid = pyvista.UniformGrid(dims=dims, spacing=(-1, 1, 1))
+
     # all args (deprecated)
     with pytest.warns(
             PyvistaDeprecationWarning,
