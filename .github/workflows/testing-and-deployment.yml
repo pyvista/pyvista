@@ -145,6 +145,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
@@ -194,7 +196,7 @@ jobs:
           xvfb-run pytest -v --cov pyvista --cov-report html
 
       - name: Upload coverage to codecov.io
-        if: matrix.python-version == '3.9'
+        if: matrix.python-version == '3.8'
         run: bash <(curl -s https://codecov.io/bash)
 
       - name: Check package

@@ -39,7 +39,7 @@ params = np.array([[1.56821334, 0.99649769],
 geoms = [pv.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
 
 # get dataset where to put glyphs
-x,y,z = np.mgrid[:3, :3, :3]
+x, y, z = np.mgrid[:3.0, :3.0, :3.0]
 mesh = pv.StructuredGrid(x, y, z)
 
 # add random scalars

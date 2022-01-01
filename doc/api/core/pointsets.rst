@@ -216,7 +216,7 @@ initializing.
    ...                   [0, 0, 1],
    ...                   [1, 0, 1],
    ...                   [1, 1, 1],
-   ...                   [0, 1, 1]])
+   ...                   [0, 1, 1]], dtype=np.float32)
    >>> cell2 = np.array([[0, 0, 2],
    ...                   [1, 0, 2],
    ...                   [1, 1, 2],
@@ -224,7 +224,7 @@ initializing.
    ...                   [0, 0, 3],
    ...                   [1, 0, 3],
    ...                   [1, 1, 3],
-   ...                   [0, 1, 3]])
+   ...                   [0, 1, 3]], dtype=np.float32)
    >>> points = np.vstack((cell1, cell2))
    >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
    >>> grid
@@ -276,9 +276,9 @@ grid from NumPy arrays.
     import pyvista as pv
     import numpy as np
 
-    x = np.arange(-10, 10, 1)
-    y = np.arange(-10, 10, 1)
-    z = np.arange(-10, 10, 2)
+    x = np.arange(-10, 10, 1, dtype=np.float32)
+    y = np.arange(-10, 10, 1, dtype=np.float32)
+    z = np.arange(-10, 10, 2, dtype=np.float32)
     x, y, z = np.meshgrid(x, y, z)
 
     # create the unstructured grid directly from the numpy arrays and plot
