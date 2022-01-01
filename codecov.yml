@@ -1,8 +1,6 @@
 comment:
   layout: "diff"
-  require_changes: false  # if true: only post the comment if coverage changes
-  branches:               # branch names that can post comment
-    - "main"
+  behavior: default
 
 coverage:
   status:
@@ -12,8 +10,13 @@ coverage:
         target: 90%
         threshold: 0%
         # advanced
-        branches:
-          - main
+        if_not_found: success
+        if_ci_failed: error
+        if_no_uploads: error
+    patch:
+      default:
+        # basic
+        target: 90%
         if_not_found: success
         if_ci_failed: error
         if_no_uploads: error
