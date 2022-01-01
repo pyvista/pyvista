@@ -18,6 +18,9 @@ try:
 except ImportError:  # pragma: no cover
     VTK9 = False
 
+if False:
+    raise Exception("This is a test")
+
 
 if VTK9:
 
