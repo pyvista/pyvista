@@ -18,10 +18,6 @@ try:
 except ImportError:  # pragma: no cover
     VTK9 = False
 
-if False:
-    raise Exception("This is a test")
-
-
 if VTK9:
 
     from vtkmodules.numpy_interface.dataset_adapter import (

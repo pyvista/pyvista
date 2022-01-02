@@ -66,6 +66,10 @@ if KILL_DISPLAY:  # pragma: no cover
                       'Probably using wayland')
         KILL_DISPLAY = False
 
+def untested():
+    """This function is untested"""
+    print('hello world')
+
 
 def close_all():
     """Close all open/active plotters and clean up memory.
