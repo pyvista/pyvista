@@ -18,6 +18,7 @@ try:
 except ImportError:  # pragma: no cover
     VTK9 = False
 
+
 if VTK9:
 
     from vtkmodules.numpy_interface.dataset_adapter import (
