@@ -195,9 +195,9 @@ jobs:
         run: |
           xvfb-run pytest -v --cov pyvista --cov-report html
 
-      - name: Upload coverage to codecov.io
+      - uses: codecov/codecov-action@v2
         if: matrix.python-version == '3.8'
-        run: bash <(curl -s https://codecov.io/bash)
+        name: 'Upload coverage to CodeCov'
 
       - name: Check package
         run: |
