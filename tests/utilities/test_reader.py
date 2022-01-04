@@ -379,12 +379,13 @@ def test_openfoamreader_active_time():
 def test_openfoam_cell_to_point_default():
     reader = get_cavity_reader()
     mesh = reader.read()
-    assert mesh[0].n_arrays == 2
+    assert reader.cell_to_point_creation
+    assert mesh[0].n_arrays == 4
 
     reader = get_cavity_reader()
-    reader.cell_to_point_creation = True
+    reader.cell_to_point_creation = False
     mesh = reader.read()
-    assert mesh[0].n_arrays == 4
+    assert mesh[0].n_arrays == 2
 
 
 def test_openfoam_patch_arrays():
