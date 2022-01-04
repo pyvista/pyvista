@@ -50,7 +50,7 @@ class pyvista_ndarray(np.ndarray):
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: int, value):
+    def __setitem__(self, key: Union[int, np.ndarray], value):
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates

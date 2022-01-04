@@ -3,7 +3,7 @@
 import collections.abc
 import logging
 import sys
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 import warnings
 
 if sys.version_info >= (3, 8):
@@ -870,6 +870,11 @@ class DataSet(DataSetFilters, DataObject):
     ):
         """Rotate mesh about the x-axis.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         angle : float
@@ -921,6 +926,11 @@ class DataSet(DataSetFilters, DataObject):
     ):
         """Rotate mesh about the y-axis.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         angle : float
@@ -971,6 +981,11 @@ class DataSet(DataSetFilters, DataObject):
             inplace=False
     ):
         """Rotate mesh about the z-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -1024,6 +1039,11 @@ class DataSet(DataSetFilters, DataObject):
     ):
         """Rotate mesh about a vector.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         vector : Iterable
@@ -1073,6 +1093,11 @@ class DataSet(DataSetFilters, DataObject):
     def translate(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Translate the mesh.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         xyz : list or tuple or np.ndarray
@@ -1110,6 +1135,11 @@ class DataSet(DataSetFilters, DataObject):
 
     def scale(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Scale the mesh.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -1152,6 +1182,11 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_x(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the x-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -1196,6 +1231,11 @@ class DataSet(DataSetFilters, DataObject):
     def flip_y(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the y-axis.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         point : list, optional
@@ -1239,6 +1279,11 @@ class DataSet(DataSetFilters, DataObject):
     def flip_z(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the z-axis.
 
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
         Parameters
         ----------
         point : list, optional
@@ -1281,6 +1326,11 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_normal(self, normal: List[float], point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the normal.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -1584,10 +1634,10 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def bounds(self) -> List[float]:
+    def bounds(self) -> Tuple[float, float, float, float, float, float]:
         """Return the bounding box of this dataset.
 
-        The form is: ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+        The form is: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -1596,10 +1646,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> cube = pyvista.Cube()
         >>> cube.bounds
-        [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
+        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
         """
-        return list(self.GetBounds())
+        return self.GetBounds()
 
     @property
     def length(self) -> float:
@@ -1636,16 +1686,16 @@ class DataSet(DataSetFilters, DataObject):
         return list(self.GetCenter())
 
     @property
-    def extent(self) -> Optional[list]:
+    def extent(self) -> Optional[tuple]:
         """Return the range of the bounding box."""
         try:
-            _extent = list(self.GetExtent())
+            _extent = self.GetExtent()
         except AttributeError:
             return None
         return _extent
 
     @extent.setter
-    def extent(self, extent: List[float]):
+    def extent(self, extent: Sequence[float]):
         """Set the range of the bounding box."""
         if hasattr(self, 'SetExtent'):
             if len(extent) != 6:
@@ -2244,7 +2294,7 @@ class DataSet(DataSetFilters, DataObject):
         points = _vtk.vtk_to_numpy(points)
         return points.copy()
 
-    def cell_bounds(self, ind: int) -> List[float]:
+    def cell_bounds(self, ind: int) -> Tuple[float, float, float, float, float, float]:
         """Return the bounding box of a cell.
 
         Parameters
@@ -2254,7 +2304,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        list(float)
+        tuple(float)
             The limits of the cell in the X, Y and Z directions respectivelly.
 
         Examples
@@ -2262,10 +2312,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
         >>> mesh.cell_bounds(0)
-        [896.9940185546875, 907.5390014648438, 48.760101318359375, 55.49020004272461, 80.74520111083984, 83.65809631347656]
+        (896.9940185546875, 907.5390014648438, 48.760101318359375, 55.49020004272461, 80.74520111083984, 83.65809631347656)
 
         """
-        return list(self.GetCell(ind).GetBounds())
+        return self.GetCell(ind).GetBounds()
 
     def cell_type(self, ind: int) -> int:
         """Return the type of a cell.

@@ -4,5 +4,19 @@ comment:
 
 coverage:
   status:
-    project: off
-    patch: off
+    project:
+      default:
+        # basic
+        target: 90%
+        threshold: 0%
+        # advanced
+        if_not_found: success
+        if_ci_failed: error
+        if_no_uploads: error
+    patch:
+      default:
+        # basic
+        target: 90%
+        if_not_found: success
+        if_ci_failed: error
+        if_no_uploads: error

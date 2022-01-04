@@ -1,6 +1,7 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 import collections.abc
 from typing import Union
+import warnings
 
 import numpy as np
 
@@ -4350,6 +4351,15 @@ class DataSetFilters:
             is to store the three components as separate scalar
             arrays.
 
+        .. warning::
+            In general, transformations give non-integer results. This
+            method converts integer-typed vector data to float before
+            performing the transformation. This applies to the points
+            array, as well as any vector-valued data that is affected
+            by the transformation. To prevent subtle bugs arising from
+            in-place transformations truncating the result to integers,
+            this conversion always applies to the input mesh.
+
         Parameters
         ----------
         trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
@@ -4405,9 +4415,7 @@ class DataSetFilters:
             t = trans
             m = trans.GetMatrix()
         elif isinstance(trans, np.ndarray):
-            if trans.ndim != 2:
-                raise ValueError('Transformation array must be 4x4')
-            elif trans.shape[0] != 4 or trans.shape[1] != 4:
+            if trans.shape != (4, 4):
                 raise ValueError('Transformation array must be 4x4')
             m = pyvista.vtkmatrix_from_array(trans)
             t = _vtk.vtkTransform()
@@ -4421,6 +4429,51 @@ class DataSetFilters:
         if m.GetElement(3, 3) == 0:
             raise ValueError(
                 "Transform element (3,3), the inverse scale term, is zero")
+
+        # vtkTransformFilter truncates the result if the input is an integer type
+        # so convert input points and relevant vectors to float
+        # (creating a new copy would be harmful much more often)
+        converted_ints = False
+        if not np.issubdtype(self.points.dtype, np.floating):
+            self.points = self.points.astype(np.float32)
+            converted_ints = True
+        if transform_all_input_vectors:
+            # all vector-shaped data will be transformed
+            point_vectors = [
+                name for name, data in self.point_data.items()
+                if data.shape == (self.n_points, 3)
+            ]
+            cell_vectors = [
+                name for name, data in self.cell_data.items()
+                if data.shape == (self.n_points, 3)
+            ]
+        else:
+            # we'll only transform active vectors and normals
+            point_vectors = [
+                self.point_data.active_vectors_name,
+                self.point_data.active_normals_name,
+            ]
+            cell_vectors = [
+                self.cell_data.active_vectors_name,
+                self.cell_data.active_normals_name,
+            ]
+        # dynamically convert each self.point_data[name] etc. to float32
+        all_vectors = [point_vectors, cell_vectors]
+        all_dataset_attrs = [self.point_data, self.cell_data]
+        for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs):
+            for vector_name in vector_names:
+                if vector_name is None:
+                    continue
+                vector_arr = dataset_attrs[vector_name]
+                if not np.issubdtype(vector_arr.dtype, np.floating):
+                    dataset_attrs[vector_name] = vector_arr.astype(np.float32)
+                    converted_ints = True
+        if converted_ints:
+            warnings.warn(
+                'Integer points, vector and normal data (if any) of the input mesh '
+                'have been converted to ``np.float32``. This is necessary in order '
+                'to transform properly.'
+            )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
         active_point_scalars_name = self.point_data.active_scalars_name
@@ -4436,7 +4489,7 @@ class DataSetFilters:
 
         if hasattr(f, 'SetTransformAllInputVectors'):
             f.SetTransformAllInputVectors(transform_all_input_vectors)
-        else:
+        else:  # pragma: no cover
             # In VTK 8.1.2 and earlier, vtkTransformFilter does not
             # support the transformation of all input vectors.
             # Raise an error if the user requested for input vectors

@@ -72,7 +72,7 @@ def test_bad_legend_origin_and_size(sphere):
 @pytest.mark.parametrize('loc', ACTOR_LOC_MAP)
 def test_add_legend_loc(loc):
     pl = pyvista.Plotter()
-    pl.add_mesh(pyvista.PolyData([0, 0, 0]), label='foo')
+    pl.add_mesh(pyvista.PolyData([0.0, 0.0, 0.0]), label='foo')
     legend = pl.add_legend(loc=loc)
 
     # note: this is only valid with the defaults:
@@ -109,7 +109,7 @@ def test_add_remove_legend(sphere):
 
 
 @pytest.mark.parametrize(
-    'face', ['-', '^', 'o', 'r', None, pyvista.PolyData([0, 0, 0])]
+    'face', ['-', '^', 'o', 'r', None, pyvista.PolyData([0.0, 0.0, 0.0])]
 )
 def test_legend_face(sphere, face):
     pl = pyvista.Plotter()
