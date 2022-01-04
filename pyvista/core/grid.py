@@ -265,7 +265,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
 
     @property
     def y(self) -> np.ndarray:
-        """Return or set the coordinates along the X-direction.
+        """Return or set the coordinates along the Y-direction.
 
         Examples
         --------
