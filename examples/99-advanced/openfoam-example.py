@@ -31,7 +31,7 @@ print(f"All patch status: {reader.all_patch_arrays_status}")
 
 ###############################################################################
 # This data is represented as a :class:`pyvista.MultiBlock` object.
-# The internal mesh will be located in the top-level MultiBlock mesh.  
+# The internal mesh will be located in the top-level MultiBlock mesh.
 
 mesh = reader.read()
 print(f"Mesh patches: {mesh.keys()}")
