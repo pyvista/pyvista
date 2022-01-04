@@ -623,7 +623,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     def active_time_value(self):  # noqa: D102
         try:
             value = self.reader.GetTimeValue()
-        except AttributeError as err:
+        except AttributeError as err:  # pragma: no cover
             raise AttributeError("Inspecting active time value only supported "
                       "for vtk versions >9.1.0") from err
         return value
@@ -663,9 +663,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         False
 
         """
-        if self.reader.GetCreateCellToPoint():
-            return True
-        return False
+        return bool(self.reader.GetCreateCellToPoint())
 
     @cell_to_point_creation.setter
     def cell_to_point_creation(self, value):
@@ -763,6 +761,10 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         ----------
         name : str
             Which patch array to report status.
+        Returns
+        -------
+        bool
+                Whether the patch with the given name is to be read.
 
         Examples
         --------
@@ -775,9 +777,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         True
 
         """
-        if self.reader.GetPatchArrayStatus(name):
-            return True
-        return False
+        return bool(self.reader.GetPatchArrayStatus(name))
 
     def enable_all_patch_arrays(self):
         """Enable reading of all patch arrays.
