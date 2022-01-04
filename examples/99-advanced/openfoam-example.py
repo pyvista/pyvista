@@ -24,26 +24,36 @@ reader = pyvista.OpenFOAMReader(filename)
 
 ###############################################################################
 # OpenFOAM datasets include multiple sub-datasets including the internal mesh
-# and patches, typically boundaries.  This data is represented as a
-# :class:`pyvista.MultiBlock` object.  The internal mesh will be located in the
-# top-level MultiBlock mesh.  By default it is the only mesh read.  This can
-# be inspected by the following
-#
+# and patches, typically boundaries.  This can be inspected before reading the data.
 
 print(f"All patch names: {reader.patch_array_names}")
 print(f"All patch status: {reader.all_patch_arrays_status}")
+
+###############################################################################
+# This data is represented as a :class:`pyvista.MultiBlock` object.
+# The internal mesh will be located in the top-level MultiBlock mesh.  
+
 mesh = reader.read()
 print(f"Mesh patches: {mesh.keys()}")
 internal_mesh = mesh["internalMesh"]  # or internal_mesh = mesh[0]
 
 ###############################################################################
-# In this case the internal mesh is a :class:`pyvista.UnstructuredGrid`
+# In this case the internal mesh is a :class:`pyvista.UnstructuredGrid`.
 
 print(internal_mesh)
 
 ###############################################################################
+# Additional Patch meshes are nested inside another MultiBlock mesh.  The name
+# of the sub-level MultiBlock mesh depends on the vtk version.
+
+boundaries = mesh["boundary"]
+print(boundaries)
+print(f"Boundaries patches: {boundaries.keys()}")
+print(boundaries["movingWall"])
+
+###############################################################################
 # The default in OpenFOAMReader is to translate the existing cell data to point
-# data.  Therefore, the cell data arrays are duplicated in point data
+# data.  Therefore, the cell data arrays are duplicated in point data.
 
 print("Cell Data:")
 print(internal_mesh.cell_data)
@@ -51,7 +61,7 @@ print("\nPoint Data:")
 print(internal_mesh.point_data)
 
 ###############################################################################
-# This behavior can be turned off.
+# This behavior can be turned off if only cell data is required.
 
 reader = pyvista.OpenFOAMReader(filename)
 reader.cell_to_point_creation = False
@@ -62,28 +72,11 @@ print("\nPoint Data:")
 print(internal_mesh.point_data)
 
 ###############################################################################
-# The movingWall patch is additionally read into the mesh.  Patches are
-# inserted into a sub-MultiBlock mesh, in this case `boundary`.
-
-reader = pyvista.OpenFOAMReader(filename)
-reader.enable_patch_array("patch/movingWall")
-mesh = reader.read()
-print(f"Mesh patches: {mesh.keys()}")
-
-###############################################################################
-# The movingWall mesh nested inside is a :class:`pyvista.PolyData` mesh.
-boundaries = mesh["boundary"]
-print(f"Boundaries patches: {boundaries.keys()}")
-print(boundaries["movingWall"])
-
-###############################################################################
-# Now we will read in all the data at the last time point
+# Now we will read in all the data at the last time point.
 
 reader = pyvista.OpenFOAMReader(filename)
 print(f"Available Time Values: {reader.time_values}")
 reader.set_active_time_value(2.5)
-reader.enable_all_patch_arrays()
-#reader.cell_to_point_creation = False
 mesh = reader.read()
 internal_mesh = mesh["internalMesh"]
 boundaries = mesh["boundary"]
@@ -96,18 +89,21 @@ boundaries = mesh["boundary"]
 # to lie in the z=0 plane.  So, after the domain sliced, it is translated to
 # ``z=0``.
 
-slice_internal_mesh = internal_mesh.slice(normal='z')
-slice_internal_mesh.translate((0, 0, -slice_internal_mesh.center[-1]),
-                               inplace=True)
+def slice_z_center(mesh):
+    """Slice mesh through center in z normal direction, move to z=0."""
+    slice_mesh = mesh.slice(normal='z')
+    slice_mesh.translate((0, 0, -slice_mesh.center[-1]), inplace=True)
+    return slice_mesh
 
+slice_internal_mesh = slice_z_center(internal_mesh)
 slice_boundaries = pyvista.MultiBlock(
-    {key: boundaries[key].slice(normal='z') for key in boundaries.keys()}
+    {key: slice_z_center(boundaries[key]) for key in boundaries.keys()}
 )
-for slice_boundary in slice_boundaries:
-    slice_boundary.translate((0, 0, -slice_boundary.center[-1]),
-                              inplace=True)
 
-streamlines = slice_internal_mesh.cell_data_to_point_data().streamlines_evenly_spaced_2D(
+###############################################################################
+# Streamlines are generated using the point data "U".
+
+streamlines = slice_internal_mesh.streamlines_evenly_spaced_2D(
     vectors='U', start_position=(0.05, 0.05, 0), separating_distance=1,
     separating_distance_ratio=0.1
 )

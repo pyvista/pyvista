@@ -605,13 +605,11 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     def __init__(self, filename):
         """Initialize OpenFOAMReader.
 
-        By default, pyvista sets ``cell_to_point_creation`` to ``False``,
-        and enables all patch arrays.  These are deviations from vtk
-        defaults.
+        By default, pyvista enables all patch arrays.  This is a deviation
+        from the vtk default.
 
         """
         super().__init__(filename)
-        self.cell_to_point_creation = False
         self.enable_all_patch_arrays()
 
     @property
