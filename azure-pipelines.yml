@@ -141,13 +141,6 @@ jobs:
       python doc/print_errors.py
     displayName: Check for warnings
 
-  # report coverage.  This must be run separately as to not overwrite
-  # build errors file.  Run quietly since we've already run sphinx.
-  - script: |
-      make -C doc html SPHINXOPTS="-Q" -b coverage
-      cat doc/_build/coverage/python.txt
-    displayName: Report documentation coverage
-
   # Push example notebooks to pyvista-examples
   - script: |
       pip install cookiecutter

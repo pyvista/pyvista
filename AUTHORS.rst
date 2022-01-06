@@ -25,3 +25,4 @@ considered "The PyVista Developers":
 - Eric Larson, (`@larsoner <https://github.com/larsoner>`_)
 - Matthew Flamm, (`@MatthewFlamm <https://github.com/MatthewFlamm>`_)
 - Darik Gamble, (`@darikg <https://github.com/darikg>`_)
+- Bram De Cooman, (`@dcbr <https://github.com/dcbr>`_)

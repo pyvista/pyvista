@@ -48,7 +48,11 @@ def grid():
 def uniform_vec():
     nx, ny, nz = 20, 15, 5
     origin = (-(nx - 1)*0.1/2, -(ny - 1)*0.1/2, -(nz - 1)*0.1/2)
-    mesh = pyvista.UniformGrid((nx, ny, nz), (.1, .1, .1), origin)
+    mesh = pyvista.UniformGrid(
+        dims=(nx, ny, nz),
+        spacing=(.1, .1, .1),
+        origin=origin
+    )
     mesh['vectors'] = mesh.points
     return mesh
 
@@ -157,7 +161,7 @@ def test_clip_box(datasets):
     mesh = examples.load_airplane()
     box = pyvista.Cube(center=(0.9e3, 0.2e3, mesh.center[2]),
                        x_length=500, y_length=500, z_length=500)
-    box.rotate_z(33)
+    box.rotate_z(33, inplace=True)
     result = mesh.clip_box(box, invert=False, progress_bar=True)
     assert result.n_cells
     result = mesh.clip_box(box, invert=True, progress_bar=True)
@@ -497,7 +501,7 @@ def test_compute_cell_sizes(datasets):
         assert 'Area' in result.array_names
         assert 'Volume' in result.array_names
     # Test the volume property
-    grid = pyvista.UniformGrid((10,10,10))
+    grid = pyvista.UniformGrid(dims=(10, 10, 10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
     assert np.allclose(grid.volume, volume)
 
@@ -579,7 +583,7 @@ def test_glyph_cell_point_data(sphere):
 
 
 def test_glyph_orient_and_scale():
-    grid = pyvista.UniformGrid((1, 1, 1))
+    grid = pyvista.UniformGrid(dims=(1, 1, 1))
     geom = pyvista.Line()
     scale = 10.0
     orient = np.array([[0.0, 0.0, 1.0]])
@@ -820,7 +824,11 @@ def test_streamlines_from_source(uniform_vec):
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
-    source = pyvista.UniformGrid([5, 5, 5], [0.1, 0.1, 0.1], [0, 0, 0])
+    source = pyvista.UniformGrid(
+        dims=[5, 5, 5],
+        spacing=[0.1, 0.1, 0.1],
+        origin=[0, 0, 0]
+    )
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
@@ -913,7 +921,7 @@ def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
     # test here so that fixes in vtk can be caught
     mesh = mesh_2D_velocity()
-    mesh.translate((0, 0, 1)) # move to z=1, xy plane
+    mesh.translate((0, 0, 1), inplace=True) # move to z=1, xy plane
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
@@ -1124,10 +1132,13 @@ def extract_points_invalid(sphere):
 
 def test_extract_points():
     # mesh points (4x4 regular grid)
-    vertices = np.array([[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0],
-                     [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0],
-                     [0, 2, 0], [1, 2, 0], [2, 2, 0], [3, 2, 0],
-                     [0, 3, 0], [1, 3, 0], [2, 3, 0], [3, 3, 0]])
+    vertices = np.array(
+        [[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0],
+         [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0],
+         [0, 2, 0], [1, 2, 0], [2, 2, 0], [3, 2, 0],
+         [0, 3, 0], [1, 3, 0], [2, 3, 0], [3, 3, 0]],
+        dtype=np.float32
+    )
     # corresponding mesh faces
     faces = np.hstack([[4, 0, 1, 5, 4],  # square
                        [4, 1, 2, 6, 5],  # square
@@ -1184,8 +1195,7 @@ def test_select_enclosed_points(uniform, hexbeam):
 
     # Now check non-closed surface
     mesh = pyvista.Sphere(end_theta=270)
-    surf = mesh.copy()
-    surf.rotate_x(90)
+    surf = mesh.rotate_x(90, inplace=False)
     result = mesh.select_enclosed_points(surf, check_surface=False, progress_bar=True)
     assert isinstance(result, type(mesh))
     assert 'SelectedPoints' in result.array_names
@@ -1700,15 +1710,14 @@ def test_subdivide_adaptive(sphere, inplace):
 
 
 def test_collision(sphere):
-    moved_sphere = sphere.copy()
-    moved_sphere.translate((0.5, 0, 0))
+    moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
     output, n_collision = sphere.collision(moved_sphere)
     assert isinstance(output, pyvista.PolyData)
     assert n_collision > 40
     assert 'ContactCells' in output.field_data
 
     # test no collision
-    moved_sphere.translate((1000, 0, 0))
+    moved_sphere.translate((1000, 0, 0), inplace=True)
     _, n_collision = sphere.collision(moved_sphere)
     assert not n_collision
 
@@ -1727,6 +1736,11 @@ def test_reconstruct_surface_poly(sphere):
     pc = pyvista.wrap(sphere.points)
     surf = pc.reconstruct_surface(nbr_sz=10, sample_spacing=50)
     assert surf.is_all_triangles
+
+
+def test_is_manifold(sphere, plane):
+    assert sphere.is_manifold
+    assert not plane.is_manifold
 
 
 def test_reconstruct_surface_unstructured(datasets):

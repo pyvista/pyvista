@@ -1,6 +1,7 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 import collections.abc
 from typing import Union
+import warnings
 
 import numpy as np
 
@@ -1244,9 +1245,9 @@ class DataSetFilters:
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
-        scalars : str, optional
-            Name of scalars to threshold on. Defaults to currently
-            active scalars.
+        scalars : str, numpy.ndarray, optional
+            Name or array of scalars to threshold on. Defaults to
+            currently active scalars.
 
         compute_normals : bool, optional
             Compute normals for the dataset.
@@ -1289,7 +1290,41 @@ class DataSetFilters:
         >>> contours = hills.contour()
         >>> contours.plot(line_width=5)
 
-        See :ref:`common_filter_example` for more examples using this filter.
+        Generate the surface of a mobius strip using flying edges.
+
+        >>> import pyvista as pv
+        >>> a = 0.4
+        >>> b = 0.1
+        >>> def f(x, y, z):
+        ...     xx = x*x
+        ...     yy = y*y
+        ...     zz = z*z
+        ...     xyz = x*y*z
+        ...     xx_yy = xx + yy
+        ...     a_xx = a*xx
+        ...     b_yy = b*yy
+        ...     return (
+        ...         (xx_yy + 1) * (a_xx + b_yy)
+        ...         + zz * (b * xx + a * yy) - 2 * (a - b) * xyz
+        ...         - a * b * xx_yy
+        ...     )**2 - 4 * (xx + yy) * (a_xx + b_yy - xyz * (a - b))**2
+        >>> n = 100
+        >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
+        >>> grid = pv.UniformGrid(
+        ...     dims=(n, n, n),
+        ...     spacing=(abs(x_min)/n*2, abs(y_min)/n*2, abs(z_min)/n*2),
+        ...     origin=(x_min, y_min, z_min),
+        ... )
+        >>> x, y, z = grid.points.T
+        >>> values = f(x, y, z)
+        >>> out = grid.contour(
+        ...     1, scalars=values, rng=[0, 0], method='flying_edges'
+        ... )
+        >>> out.plot(color='tan', smooth_shading=True)
+
+        See :ref:`common_filter_example` or
+        :ref:`marching_cubes_example` for more examples using this
+        filter.
 
         """
         if method is None or method == 'contour':
@@ -1300,9 +1335,18 @@ class DataSetFilters:
             alg = _vtk.vtkFlyingEdges3D()
         else:
             raise ValueError(f"Method '{method}' is not supported")
+
+        if isinstance(scalars, np.ndarray):
+            scalars_name = 'Contour Input'
+            self[scalars_name] = scalars
+            scalars = scalars_name
+
         # Make sure the input has scalars to contour on
         if self.n_arrays < 1:
-            raise ValueError('Input dataset for the contour filter must have scalar data.')
+            raise ValueError(
+                'Input dataset for the contour filter must have scalar.'
+            )
+
         alg.SetInputDataObject(self)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
@@ -3748,12 +3792,14 @@ class DataSetFilters:
         Parameters
         ----------
         pass_pointid : bool, optional
-            Adds a point array "vtkOriginalPointIds" that idenfities which
-            original points these surface points correspond to.
+            Adds a point array ``"vtkOriginalPointIds"`` that
+            idenfities which original points these surface points
+            correspond to.
 
         pass_cellid : bool, optional
-            Adds a cell array "vtkOriginalPointIds" that idenfities which
-            original cells these surface cells correspond to.
+            Adds a cell array ``"vtkOriginalPointIds"`` that
+            idenfities which original cells these surface cells
+            correspond to.
 
         nonlinear_subdivision : int, optional
             If the input is an unstructured grid with nonlinear faces,
@@ -3794,10 +3840,8 @@ class DataSetFilters:
         """
         surf_filter = _vtk.vtkDataSetSurfaceFilter()
         surf_filter.SetInputData(self)
-        if pass_pointid:
-            surf_filter.PassThroughCellIdsOn()
-        if pass_cellid:
-            surf_filter.PassThroughPointIdsOn()
+        surf_filter.SetPassThroughPointIds(pass_pointid)
+        surf_filter.SetPassThroughCellIds(pass_cellid)
 
         if nonlinear_subdivision != 1:
             surf_filter.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
@@ -4307,6 +4351,15 @@ class DataSetFilters:
             is to store the three components as separate scalar
             arrays.
 
+        .. warning::
+            In general, transformations give non-integer results. This
+            method converts integer-typed vector data to float before
+            performing the transformation. This applies to the points
+            array, as well as any vector-valued data that is affected
+            by the transformation. To prevent subtle bugs arising from
+            in-place transformations truncating the result to integers,
+            this conversion always applies to the input mesh.
+
         Parameters
         ----------
         trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
@@ -4362,9 +4415,7 @@ class DataSetFilters:
             t = trans
             m = trans.GetMatrix()
         elif isinstance(trans, np.ndarray):
-            if trans.ndim != 2:
-                raise ValueError('Transformation array must be 4x4')
-            elif trans.shape[0] != 4 or trans.shape[1] != 4:
+            if trans.shape != (4, 4):
                 raise ValueError('Transformation array must be 4x4')
             m = pyvista.vtkmatrix_from_array(trans)
             t = _vtk.vtkTransform()
@@ -4378,6 +4429,51 @@ class DataSetFilters:
         if m.GetElement(3, 3) == 0:
             raise ValueError(
                 "Transform element (3,3), the inverse scale term, is zero")
+
+        # vtkTransformFilter truncates the result if the input is an integer type
+        # so convert input points and relevant vectors to float
+        # (creating a new copy would be harmful much more often)
+        converted_ints = False
+        if not np.issubdtype(self.points.dtype, np.floating):
+            self.points = self.points.astype(np.float32)
+            converted_ints = True
+        if transform_all_input_vectors:
+            # all vector-shaped data will be transformed
+            point_vectors = [
+                name for name, data in self.point_data.items()
+                if data.shape == (self.n_points, 3)
+            ]
+            cell_vectors = [
+                name for name, data in self.cell_data.items()
+                if data.shape == (self.n_points, 3)
+            ]
+        else:
+            # we'll only transform active vectors and normals
+            point_vectors = [
+                self.point_data.active_vectors_name,
+                self.point_data.active_normals_name,
+            ]
+            cell_vectors = [
+                self.cell_data.active_vectors_name,
+                self.cell_data.active_normals_name,
+            ]
+        # dynamically convert each self.point_data[name] etc. to float32
+        all_vectors = [point_vectors, cell_vectors]
+        all_dataset_attrs = [self.point_data, self.cell_data]
+        for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs):
+            for vector_name in vector_names:
+                if vector_name is None:
+                    continue
+                vector_arr = dataset_attrs[vector_name]
+                if not np.issubdtype(vector_arr.dtype, np.floating):
+                    dataset_attrs[vector_name] = vector_arr.astype(np.float32)
+                    converted_ints = True
+        if converted_ints:
+            warnings.warn(
+                'Integer points, vector and normal data (if any) of the input mesh '
+                'have been converted to ``np.float32``. This is necessary in order '
+                'to transform properly.'
+            )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
         active_point_scalars_name = self.point_data.active_scalars_name
@@ -4393,7 +4489,7 @@ class DataSetFilters:
 
         if hasattr(f, 'SetTransformAllInputVectors'):
             f.SetTransformAllInputVectors(transform_all_input_vectors)
-        else:
+        else:  # pragma: no cover
             # In VTK 8.1.2 and earlier, vtkTransformFilter does not
             # support the transformation of all input vectors.
             # Raise an error if the user requested for input vectors

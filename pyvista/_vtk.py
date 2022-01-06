@@ -32,6 +32,25 @@ if VTK9:
         numpy_to_vtkIdTypeArray,
         vtk_to_numpy,
     )
+    from vtkmodules.vtkChartsCore import (
+        vtkAxis,
+        vtkChart,
+        vtkChartBox,
+        vtkChartPie,
+        vtkChartXY,
+        vtkChartXYZ,
+        vtkPlotArea,
+        vtkPlotBar,
+        vtkPlotBox,
+        vtkPlotLine,
+        vtkPlotLine3D,
+        vtkPlotPie,
+        vtkPlotPoints,
+        vtkPlotPoints3D,
+        vtkPlotStacked,
+        vtkPlotSurface,
+    )
+    from vtkmodules.vtkCommonColor import vtkColorSeries
     from vtkmodules.vtkCommonComputationalGeometry import (
         vtkKochanekSpline,
         vtkParametricBohemianDome,
@@ -102,6 +121,7 @@ if VTK9:
         VTK_WEDGE,
         vtkCellArray,
         vtkCellLocator,
+        vtkColor3ub,
         vtkCompositeDataSet,
         vtkDataObject,
         vtkDataSet,
@@ -122,6 +142,7 @@ if VTK9:
         vtkPolyLine,
         vtkPolyPlane,
         vtkPyramid,
+        vtkRectf,
         vtkRectilinearGrid,
         vtkSelection,
         vtkSelectionNode,
@@ -239,6 +260,7 @@ if VTK9:
         vtkSuperquadricSource,
         vtkTessellatedBoxSource,
     )
+    from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
     from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane, vtkTextureMapToSphere
     from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
     from vtkmodules.vtkIOEnSight import vtkGenericEnSightReader
@@ -326,6 +348,7 @@ if VTK9:
         vtkSplineWidget,
         vtkTexturedButtonRepresentation2D,
     )
+    from vtkmodules.vtkPythonContext2D import vtkPythonItem
     from vtkmodules.vtkRenderingAnnotation import (
         vtkAnnotatedCubeActor,
         vtkAxesActor,
@@ -334,6 +357,16 @@ if VTK9:
         vtkLegendBoxActor,
         vtkScalarBarActor,
     )
+    from vtkmodules.vtkRenderingContext2D import (
+        vtkBlockItem,
+        vtkBrush,
+        vtkContext2D,
+        vtkContextActor,
+        vtkContextScene,
+        vtkImageItem,
+        vtkPen,
+    )
+    import vtkmodules.vtkRenderingContextOpenGL2  # Necessary for displaying charts, otherwise crashes on rendering
     from vtkmodules.vtkRenderingCore import (
         vtkActor,
         vtkActor2D,
@@ -386,6 +419,7 @@ if VTK9:
         vtkOpenGLGPUVolumeRayCastMapper,
         vtkSmartVolumeMapper,
     )
+    from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
     from vtkmodules.vtkImagingFourier import (
         vtkImageFFT,
         vtkImageRFFT,

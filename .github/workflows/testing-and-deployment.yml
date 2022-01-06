@@ -43,6 +43,7 @@ jobs:
           pip install wheel
           pip install -e .
           python -c "import pyvista; print(pyvista.Report(gpu=False))"
+          python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
 
       - name: Install test dependencies
         run: |
@@ -81,6 +82,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-conda-
 
+      - uses: actions/cache@v2
+        with:
+          path: ~/.local/share/pyvista/examples
+          key: Examples-${{ hashFiles('*') }}
+          restore-keys: |
+            Examples-
+
       - name: Create Anaconda environment
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
@@ -98,6 +106,7 @@ jobs:
           pip install -e .
           which python
           python -c "import pyvista; print(pyvista.Report(gpu=False))"
+          python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
 
       - name: Test Core API
         continue-on-error: true
@@ -136,6 +145,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
@@ -148,6 +159,13 @@ jobs:
           key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.vtk-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
           restore-keys: |
             Python-${{ runner.os }}-${{ matrix.python-version }}
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.local/share/pyvista/examples
+          key: Examples-${{ hashFiles('*') }}
+          restore-keys: |
+            Examples-
 
       - name: Build wheel and install pyvista
         run: |
@@ -169,6 +187,7 @@ jobs:
       - name: Software Report
         run: |
           xvfb-run python -c "import pyvista; print(pyvista.Report())"
+          xvfb-run python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
           which python
           pip list
 
@@ -176,9 +195,9 @@ jobs:
         run: |
           xvfb-run pytest -v --cov pyvista --cov-report html
 
-      - name: Upload coverage to codecov.io
-        if: matrix.python-version == '3.9'
-        run: bash <(curl -s https://codecov.io/bash)
+      - uses: codecov/codecov-action@v2
+        if: matrix.python-version == '3.8'
+        name: 'Upload coverage to CodeCov'
 
       - name: Check package
         run: |

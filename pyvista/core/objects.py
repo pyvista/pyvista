@@ -38,7 +38,7 @@ class Table(_vtk.vtkTable, DataObject):
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
-            elif isinstance(args[0], np.ndarray):
+            elif isinstance(args[0], (np.ndarray, list)):
                 self._from_arrays(args[0])
             elif isinstance(args[0], dict):
                 self._from_dict(args[0])
@@ -47,10 +47,18 @@ class Table(_vtk.vtkTable, DataObject):
             else:
                 raise TypeError(f'Table unable to be made from ({type(args[0])})')
 
+    @staticmethod
+    def _prepare_arrays(arrays):
+        arrays = np.asarray(arrays)
+        if arrays.ndim == 1:
+            return np.reshape(arrays, (1, -1))
+        elif arrays.ndim == 2:
+            return arrays.T
+        else:
+            raise ValueError('Only 1D or 2D arrays are supported by Tables.')
+
     def _from_arrays(self, arrays):
-        if not arrays.ndim == 2:
-            raise ValueError('Only 2D arrays are supported by Tables.')
-        np_table = arrays.T
+        np_table = self._prepare_arrays(arrays)
         for i, array in enumerate(np_table):
             self.row_arrays[f'Array {i}'] = array
 
@@ -153,7 +161,12 @@ class Table(_vtk.vtkTable, DataObject):
             Other dataset attributes to update from.
 
         """
+        if isinstance(data, (np.ndarray, list)):
+            # Allow table updates using array data
+            data = self._prepare_arrays(data)
+            data = {f'Array {i}': array for i, array in enumerate(data)}
         self.row_arrays.update(data)
+        self.Modified()
 
     def pop(self, name):
         """Pop off an array by the specified name.
@@ -393,7 +406,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         elif image.ndim == 2:
             n_components = 1
 
-        grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
+        grid = pyvista.UniformGrid(dims=(image.shape[1], image.shape[0], 1))
         grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, n_components), order='F')
         grid.set_active_scalars('Image')
         self._from_image_data(grid)
@@ -452,6 +465,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def plot(self, *args, **kwargs):
         """Plot the texture as image data by itself."""
+        kwargs.setdefault("rgba", True)
         return self.to_image().plot(*args, **kwargs)
 
     @property

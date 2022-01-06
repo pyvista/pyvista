@@ -41,7 +41,7 @@ Demo Using ``ipygany``
 
    text = demos.logo.text_3d("I'm interactive!", depth=0.2)
    text.points *= 0.1
-   text.translate([0, 1.4, 1.5])
+   text.translate([0, 1.4, 1.5], inplace=True)
    mesh += text
    mesh['Example Scalars'] = mesh.points[:, 0]
 
