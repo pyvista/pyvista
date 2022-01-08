@@ -11,9 +11,8 @@ RUN apt-get update \
 USER jovyan
 
 # setup the itkwidgets conda environment
-COPY ../environment.yml labextensions.txt /tmp/
+COPY environment.yml /tmp/
 RUN conda env update --name base --file /tmp/environment.yml
-RUN conda run jupyter labextension install $(cat /tmp/labextensions.txt)
 
 # allow jupyterlab for ipyvtk
 ENV DISPLAY=:99.0

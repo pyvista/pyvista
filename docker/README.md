@@ -1,4 +1,5 @@
-### Pyvista within a Docker Container
+### PyVista within a Docker Container
+
 You can use ``pyvista`` from within a docker container with jupyterlab.
 To create a local docker image install ``docker`` and be sure you've logged into docker by following the directions at [Configuring Docker for use with GitHub Packages](https://docs.github.com/en/free-pro-team@latest/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages#authenticating-with-a-personal-access-token)
 
