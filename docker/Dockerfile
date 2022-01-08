@@ -1,5 +1,5 @@
 FROM jupyter/base-notebook:python-3.8.6
-LABEL maintainer="pyvista Developers"
+LABEL maintainer="PyVista Developers"
 
 USER root
 RUN apt-get update \
@@ -11,12 +11,9 @@ RUN apt-get update \
 USER jovyan
 
 # setup the itkwidgets conda environment
-COPY environment.yml labextensions.txt /tmp/
+COPY ../environment.yml labextensions.txt /tmp/
 RUN conda env update --name base --file /tmp/environment.yml
-RUN conda run conda install -y nodejs
 RUN conda run jupyter labextension install $(cat /tmp/labextensions.txt)
-
-RUN pip install ipyvtklink==0.2.1
 
 # allow jupyterlab for ipyvtk
 ENV DISPLAY=:99.0
