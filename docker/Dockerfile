@@ -13,6 +13,7 @@ USER jovyan
 # setup the itkwidgets conda environment
 COPY environment.yml /tmp/
 RUN conda env update --name base --file /tmp/environment.yml
+RUN pip install .
 
 # allow jupyterlab for ipyvtk
 ENV DISPLAY=:99.0
