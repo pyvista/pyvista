@@ -745,9 +745,12 @@ def test_resample():
     assert isinstance(result, type(mesh))
 
 
+locators = [None]
+if pyvista.vtk_version_info >= (9, ):
+    locators.append(vtkStaticCellLocator())
 @pytest.mark.parametrize('use_points', [True, False])
 @pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('locator', [None, vtkStaticCellLocator()])
+@pytest.mark.parametrize('locator', locators)
 def test_probe(categorical, use_points, locator):
     mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
@@ -1536,12 +1539,12 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
             assert transformed.cell_data[name] == pytest.approx(array)
 
         # verify that the cell connectivity is a deep copy
-        if hasattr(dataset, '_connectivity_array') and VTK9:
+        if VTK9 and hasattr(dataset, '_connectivity_array'):
             transformed._connectivity_array[0] += 1
             assert not np.array_equal(
                 dataset._connectivity_array, transformed._connectivity_array
             )
-        if hasattr(dataset, 'cell_connectivity') and VTK9:
+        if VTK9 and hasattr(dataset, 'cell_connectivity'):
             transformed.cell_connectivity[0] += 1
             assert not np.array_equal(
                 dataset.cell_connectivity, transformed.cell_connectivity
@@ -1709,6 +1712,7 @@ def test_subdivide_adaptive(sphere, inplace):
         assert sphere.n_faces == sub.n_faces
 
 
+@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
 def test_collision(sphere):
     moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
     output, n_collision = sphere.collision(moved_sphere)
@@ -1722,6 +1726,7 @@ def test_collision(sphere):
     assert not n_collision
 
 
+@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
 def test_collision_solid_non_triangle(hexbeam):
     # test non-triangular mesh with a unstructured grid
     cube = pyvista.Cube()
