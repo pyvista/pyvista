@@ -544,6 +544,12 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
+        if not _vtk._has_vtkRenderingContextOpenGL2:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+            raise VTKVersionError(
+                f"VTK is missing vtkRenderingContextOpenGL2. Try installing "
+                "VTK v9.1.0 or newer."
+            )
         self._charts.add_chart(chart, *charts)
 
     def remove_chart(self, chart_or_index):

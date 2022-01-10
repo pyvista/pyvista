@@ -2008,6 +2008,9 @@ def test_collision_plot():
 
 
 @skip_mac
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0"
+)
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
     # Chart 1 (bottom left)
@@ -2073,6 +2076,9 @@ def test_chart_plot():
     pl.show(before_close_callback=verify_cache_image)
 
 
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0"
+)
 def test_chart_matplotlib_plot():
     """Test integration with matplotlib"""
     rng = np.random.default_rng(1)
