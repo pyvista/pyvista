@@ -2457,7 +2457,8 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         locator : vtkAbstractCellLocator, optional
-            Prototype cell locator to perform the FindCell() operation.
+            Prototype cell locator to perform the ``FindCell()``
+            operation.  This requires VTK 9.0.0 or newer.
 
         Returns
         -------
@@ -2491,6 +2492,9 @@ class DataSetFilters:
             alg.SetTolerance(tolerance)
 
         if locator:
+            if pyvista.vtk_version_info < (9, ):  # pragma no: cover
+                raise VTKVersionError("Cell locator requires VTK v9.0.0 or newer")
+
             alg.SetCellLocatorPrototype(locator)
 
         _update_alg(alg, progress_bar, 'Sampling Data Values at Specified Point Locations')

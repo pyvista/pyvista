@@ -19,6 +19,11 @@ skip_no_plotting = pytest.mark.skipif(
     reason="Test requires system to support plotting"
 )
 
+# skip all tests if VTK<9.1.0
+if pyvista.vtk_version_info < (9, 1):
+    pytestmark = pytest.mark.skip
+
+
 def vtk_array_to_tuple(arr):
     return tuple(arr.GetValue(i) for i in range(arr.GetNumberOfValues()))
 
