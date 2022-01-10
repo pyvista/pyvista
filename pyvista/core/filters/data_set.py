@@ -2492,7 +2492,7 @@ class DataSetFilters:
             alg.SetTolerance(tolerance)
 
         if locator:
-            if pyvista.vtk_version_info < (9, ):  # pragma no: cover
+            if pyvista.vtk_version_info < (9, ):  # pragma: no cover
                 raise VTKVersionError("Cell locator requires VTK v9.0.0 or newer")
 
             alg.SetCellLocatorPrototype(locator)
