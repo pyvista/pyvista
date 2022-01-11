@@ -287,7 +287,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('Expected a pyvista theme like '
                             '``pyvista.themes.DefaultTheme``, '
                             f'not {type(theme).__name__}.')
-        self._theme.load_theme(pyvista.global_theme)
+        self._theme.load_theme(theme)
 
     def import_gltf(self, filename, set_camera=True):
         """Import a glTF file into the plotter.

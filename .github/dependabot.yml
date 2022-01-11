@@ -5,3 +5,5 @@ updates:
     insecure-external-code-execution: allow
     schedule:
       interval: "daily"
+    labels:
+      - "maintenance"

@@ -319,6 +319,8 @@ sphinx_gallery_conf = {
     "filename_pattern": r"\.py" if has_osmnx else r"(?!osmnx-example)\.py",
     # Remove the "Download all examples" button from the top level gallery
     "download_all_examples": False,
+    # Remove sphinx configuration comments from code blocks
+    "remove_config_comments": True,
     # Sort gallery example by file name instead of number of lines (default)
     "within_subsection_order": FileNameSortKey,
     # directory where function granular galleries are stored
@@ -563,3 +565,4 @@ def setup(app):
     AutoAutoSummary.app = app
     app.add_directive("autoautosummary", AutoAutoSummary)
     app.add_css_file("copybutton.css")
+    app.add_css_file("no_search_highlight.css")
