@@ -4,8 +4,6 @@ LABEL maintainer="PyVista Developers"
 USER root
 RUN apt-get update \
  && apt-get install  -yq --no-install-recommends \
-    libgl1-mesa-glx \
-    libglu1-mesa \
     libfontconfig1 \
     libxrender1 \
     libosmesa6 \
