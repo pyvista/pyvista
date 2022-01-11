@@ -1,0 +1,15 @@
+cmocean
+colorcet
+imageio-ffmpeg
+imageio>=2.5.0
+ipygany
+ipyvtklink
+lxml
+matplotlib
+meshio
+osmnx==1.1.1
+panel
+param==1.10.1  # due to panel bug
+scipy
+trimesh
+pythreejs
