@@ -87,11 +87,44 @@ p.show()
 from scipy.spatial import KDTree
 
 tree = KDTree(h1.points)
-d, idx = tree.query(h0.points )
-h0["distances"] = d
-np.mean(d)
+d_kdtree, idx = tree.query(h0.points )
+h0["distances"] = d_kdtree
+np.mean(d_kdtree)
 
 ###############################################################################
+p = pv.Plotter()
+p.add_mesh(h0, scalars="distances", smooth_shading=True)
+p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
+p.show()
+
+
+###############################################################################
+# Exact closest distance
+# ++++++++++++++++++++++
+#
+# The :func:`pyvista.DataSet.find_closest_cell` filter can be used to determine
+# the point on a surface that is closest to a set of points.  This method finds
+# points inside cells that are closest to the supplied points.  This provides
+# the exact closest distance from one mesh to the other. In this case, the
+# distances are calculated from points of ``h0`` to the entire mesh of ``h1``.
+
+_, closest_points = h1.find_closest_cell(h0.points, return_closest_point=True)
+
+d_exact = np.linalg.norm(h0.points - closest_points, axis=1)
+
+h0["distances"] = d_exact
+np.nanmean(d_exact)
+
+###############################################################################
+# The exact method produces shorter distances because it is not constrained to
+# looking at only nodal locations on the ``h1`` mesh.
+
+all(d_exact <= d_kdtree)
+
+###############################################################################
+# As expected there is only a small difference between this method and the
+# KDTree method.  
+
 p = pv.Plotter()
 p.add_mesh(h0, scalars="distances", smooth_shading=True)
 p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)

@@ -2083,7 +2083,7 @@ class DataSet(DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)
 
-    def find_closest_cell(self, point: Union[int, np.ndarray]) -> Union[int, np.ndarray]:
+    def find_closest_cell(self, point: Union[int, np.ndarray], return_closest_point=False) -> Union[int, np.ndarray]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
@@ -2092,11 +2092,21 @@ class DataSet(DataSetFilters, DataObject):
             Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
             points with shape ``(n, 3)``.
 
+        return_closest_point : bool
+            If ``True``, the closest point within a mesh cell to that point is
+            returned.  This is not neccesarily the closest nodal point on the
+            mesh.  Default is` `False``.
+
         Returns
         -------
         int or numpy.ndarray
-            Index or indices of the cell in this mesh that is closest
-            to the given point.
+            Index or indices of the cell in this mesh that is/are closest
+            to the given point(s).
+
+        numpy.ndarray
+            Point or points inside a cell of the mesh that is/are closest
+            to the given point(s).  Only returned if
+            ``return_closest_point=True``.
 
         Warnings
         --------
@@ -2133,6 +2143,19 @@ class DataSet(DataSetFilters, DataObject):
         >>> indices.shape
         (5000,)
 
+        Find the point on the surface, including inside the cells,
+        that is closest to ``[0.1, 0.2, 0.3]``.  The closest point
+        on a perfect sphere, i.e. not discretized, with radius 0.5 
+        is ``[0.134, 0.267, 0.401]``.
+
+        >>> index, closest_point = mesh.find_closest_cell(
+        ...     [0.1, 0.2, 0.3],
+        ...     return_closest_point=True
+        ... )
+        >>> # For pretty printing, limit to a precision of 3
+        >>> [round(p, 3) for p in closest_point]
+        [0.129, 0.264, 0.403]
+
         """
         if isinstance(point, collections.abc.Sequence):
             point = np.array(point)
@@ -2155,16 +2178,26 @@ class DataSet(DataSetFilters, DataObject):
         locator.BuildLocator()
 
         cell = _vtk.vtkGenericCell()
-        closest_point = [0, 0, 0]
-        cellId = _vtk.mutable(0)
-        subld = _vtk.mutable(0)
-        dist2 = _vtk.mutable(0.0)
 
         closest_cells = []
+        closest_points = []
+
         for node in point:
+            closest_point = [0, 0, 0]
+            cellId = _vtk.mutable(0)
+            subld = _vtk.mutable(0)
+            dist2 = _vtk.mutable(0.0)
+
             locator.FindClosestPoint(node, closest_point, cell, cellId, subld, dist2)
             closest_cells.append(int(cellId))
-        return closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
+            closest_points.append(closest_point)
+
+        closest_cells = closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
+        closest_points = closest_points[0] if len(closest_points) == 1 else np.array(closest_points)
+
+        if return_closest_point:
+            return closest_cells, closest_points
+        return closest_cells
 
     def find_cells_along_line(
         self,

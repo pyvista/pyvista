@@ -907,6 +907,24 @@ def test_find_closest_cells():
     assert np.allclose(indices, np.arange(mesh.n_faces))
 
 
+def test_find_closest_cell_surface_point():
+    # Increased resolution to obtain more precise values
+    mesh = pyvista.Sphere(radius=0.5, theta_resolution=100, phi_resolution=100)
+    
+    point = np.array([0.1, 0.2, 0.3])
+    points = np.vstack((point, -point))
+    
+    # Analytical closest point on sphere of radius 0.5
+    sphere_point = point/np.linalg.norm(point) * 0.5
+    sphere_points = np.vstack((sphere_point, -sphere_point))
+
+    _, closest_point = mesh.find_closest_cell(point, return_closest_point=True)
+    assert np.allclose(closest_point, sphere_point, rtol=5e-2)
+
+    _, closest_points = mesh.find_closest_cell(points, return_closest_point=True)
+    assert np.allclose(closest_points, sphere_points, rtol=5e-2)
+
+
 def test_find_cells_along_line():
     mesh = pyvista.Cube()
     indices = mesh.find_cells_along_line([0, 0, -1], [0, 0, 1])
