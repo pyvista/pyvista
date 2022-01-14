@@ -2,7 +2,7 @@
 
 Jupyter Notebook Plotting
 =========================
-Plot with ``pyvista`` interactively within a `Juptyer
+Plot with ``pyvista`` interactively within a `Jupyter
 <https://jupyter.org/>`_ notebook!
 
 
