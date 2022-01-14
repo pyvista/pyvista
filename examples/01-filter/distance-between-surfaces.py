@@ -123,7 +123,7 @@ all(d_exact <= d_kdtree)
 
 ###############################################################################
 # As expected there is only a small difference between this method and the
-# KDTree method.  
+# KDTree method.
 
 p = pv.Plotter()
 p.add_mesh(h0, scalars="distances", smooth_shading=True)
