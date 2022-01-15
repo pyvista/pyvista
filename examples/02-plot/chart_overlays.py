@@ -27,17 +27,19 @@ h = np.sin(t)
 v = np.cos(t)
 
 ###############################################################################
-# Define Matplotlib figure
-# Use a tight layout to keep axis labels visible on smaller figures
+# Define a Matplotlib figure.
+# Use a tight layout to keep axis labels visible on smaller figures.
 
 f, ax = plt.subplots(tight_layout=True)
 h_line = ax.plot(t[:1], h[:1])[0]
 ax.set_ylim([-1, 1])
 ax.set_xlabel('Time (s)')
-ax.set_ylabel('Height (m)')
+_ = ax.set_ylabel('Height (m)')
+# sphinx_gallery_defer_figures
 
 ###############################################################################
-# Define plotter, add matplotlib figure as first chart and define second chart
+# Define plotter, add the created matplotlib figure as the first (left) chart
+# to the scene, and define a second (right) chart.
 
 p = pv.Plotter()
 h_chart = pv.ChartMPL(f, size=(0.46, 0.25), loc=(0.02, 0.06))
@@ -53,7 +55,6 @@ p.show(auto_close=False, interactive=True, interactive_update=True)
 
 
 # Method and slider to update all visuals based on the time selection
-
 def update_time(time):
     k = np.count_nonzero(t < time)
     h_line.set_xdata(t[:k+1])

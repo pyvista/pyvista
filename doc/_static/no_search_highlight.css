@@ -1,0 +1,4 @@
+/* No search term highlighting, see https://stackoverflow.com/a/48771802 */
+span.highlighted {
+    background-color: transparent;
+}
