@@ -2145,7 +2145,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Find the point on the surface, including inside the cells,
         that is closest to ``[0.1, 0.2, 0.3]``.  The closest point
-        on a perfect sphere, i.e. not discretized, with radius 0.5 
+        on a perfect sphere, i.e. not discretized, with radius 0.5
         is ``[0.134, 0.267, 0.401]``.
 
         >>> index, closest_point = mesh.find_closest_cell(
