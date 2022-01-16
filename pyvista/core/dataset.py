@@ -2187,14 +2187,14 @@ class DataSet(DataSetFilters, DataObject):
 
         for node in point:
             closest_point = [0.0, 0.0, 0.0]
-            cellId = _vtk.mutable(0)
-            subld = _vtk.mutable(0)
+            cell_id = _vtk.mutable(0)
+            sub_id = _vtk.mutable(0)
             dist2 = _vtk.mutable(0.0)
 
-            locator.FindClosestPoint(node, closest_point, cell, cellId, subld, dist2)
-            cell_id: int = int(cellId)
+            locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)
+            cell_id_int: int = int(cell_id)
 
-            closest_cells.append(cell_id)
+            closest_cells.append(cell_id_int)
             closest_points.append(closest_point)
 
         out_cells: Union[int, np.ndarray] = (
