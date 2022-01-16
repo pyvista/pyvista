@@ -3962,7 +3962,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         # once as a pyvista plot (fetched by the 'pyvista' scraper) and once as a
         # matplotlib figure (fetched by the 'matplotlib' scraper).
         # See #1999 and #2031.
-        if pyvista.BUILDING_GALLERY:
+        if pyvista.BUILDING_GALLERY:  # pragma: no cover
             plt.close(self._fig)
 
     @property
