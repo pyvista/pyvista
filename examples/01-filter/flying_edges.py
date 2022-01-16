@@ -5,10 +5,10 @@ Marching Cubes
 ~~~~~~~~~~~~~~
 
 Generate a surface from a scalar field using the flying edges and
-marching cubes filters as provided by the `contour
-<pyvista.core.filters.data_set.DataSetFilters.contour>` filter.
+marching cubes filters as provided by the :func:`contour
+<pyvista.DataSetFilters.contour>` filter.
 
-Special thanks to GitHub user `stla <https://gist.github.com/stla>`
+Special thanks to GitHub user `stla <https://gist.github.com/stla>`_
 for providing examples.
 
 """
@@ -57,7 +57,7 @@ mesh.plot(
 # Barth Sextic
 # ~~~~~~~~~~~~
 # Use the flying edges algorithm to extract the isosurface
-# generated from the barth sextic function.
+# generated from the Barth sextic function.
 
 
 phi = (1 + np.sqrt(5)) / 2
@@ -87,7 +87,7 @@ x, y, z = grid.points.T
 
 # sample and plot
 values = barth_sextic(x, y, z)
-mesh = grid.contour(1, values, method='marching_cubes', rng=[-0.0, 0])
+mesh = grid.contour(1, values, method='flying_edges', rng=[-0.0, 0])
 dist = np.linalg.norm(mesh.points, axis=1)
 mesh.plot(
     scalars=dist, smooth_shading=True, specular=5,
@@ -98,14 +98,14 @@ mesh.plot(
 ###############################################################################
 # Animate Barth Sextic
 # ~~~~~~~~~~~~~~~~~~~~
-# Show 15 frames of various isocurves extracted from the barth sextic
+# Show 15 frames of various isocurves extracted from the Barth sextic
 # function.
 
 def angle_to_range(angle):
     return -2*np.sin(angle)
 
 mesh = grid.contour(
-    1, values, method='marching_cubes', rng=[angle_to_range(0), 0]
+    1, values, method='flying_edges', rng=[angle_to_range(0), 0]
 )
 dist = np.linalg.norm(mesh.points, axis=1)
 
@@ -118,7 +118,7 @@ pl.open_gif('barth_sextic.gif')
 
 for angle in np.linspace(0, np.pi, 15)[:-1]:
     new_mesh = grid.contour(
-        1, values, method='marching_cubes', rng=[angle_to_range(angle), 0]
+        1, values, method='flying_edges', rng=[angle_to_range(angle), 0]
     )
     mesh.overwrite(new_mesh)
     pl.update_scalars(np.linalg.norm(new_mesh.points, axis=1), render=False)
