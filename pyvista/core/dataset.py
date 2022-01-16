@@ -2085,7 +2085,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_closest_cell(self,
                           point: Union[int, np.ndarray],
-                          return_closest_point: bool=False
+                          return_closest_point: bool=False,
                           ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
 
