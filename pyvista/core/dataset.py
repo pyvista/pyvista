@@ -2095,7 +2095,7 @@ class DataSet(DataSetFilters, DataObject):
             Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
             points with shape ``(n, 3)``.
 
-        return_closest_point : bool
+        return_closest_point : bool, optional
             If ``True``, the closest point within a mesh cell to that point is
             returned.  This is not necessarily the closest nodal point on the
             mesh.  Default is` `False``.
