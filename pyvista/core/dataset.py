@@ -2098,7 +2098,7 @@ class DataSet(DataSetFilters, DataObject):
         return_closest_point : bool, optional
             If ``True``, the closest point within a mesh cell to that point is
             returned.  This is not necessarily the closest nodal point on the
-            mesh.  Default is` `False``.
+            mesh.  Default is ``False``.
 
         Returns
         -------
