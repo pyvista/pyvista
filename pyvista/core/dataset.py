@@ -2083,7 +2083,10 @@ class DataSet(DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)
 
-    def find_closest_cell(self, point: Union[int, np.ndarray], return_closest_point=False) -> Union[int, np.ndarray]:
+    def find_closest_cell(self,
+                          point: Union[int, np.ndarray],
+                          return_closest_point: bool=False
+                          ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
@@ -2179,25 +2182,29 @@ class DataSet(DataSetFilters, DataObject):
 
         cell = _vtk.vtkGenericCell()
 
-        closest_cells = []
-        closest_points = []
+        closest_cells: List[int] = []
+        closest_points: List[List[float]] = []
 
         for node in point:
-            closest_point = [0, 0, 0]
+            closest_point = [0.0, 0.0, 0.0]
             cellId = _vtk.mutable(0)
             subld = _vtk.mutable(0)
             dist2 = _vtk.mutable(0.0)
 
             locator.FindClosestPoint(node, closest_point, cell, cellId, subld, dist2)
-            closest_cells.append(int(cellId))
+            cell_id: int = int(cellId)
+
+            closest_cells.append(cell_id)
             closest_points.append(closest_point)
 
-        closest_cells = closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
-        closest_points = closest_points[0] if len(closest_points) == 1 else np.array(closest_points)
+        out_cells: Union[int, np.ndarray] = (
+            closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
+        )
+        out_points = np.array(closest_points[0]) if len(closest_points) == 1 else np.array(closest_points)
 
         if return_closest_point:
-            return closest_cells, closest_points
-        return closest_cells
+            return out_cells, out_points
+        return out_cells
 
     def find_cells_along_line(
         self,
