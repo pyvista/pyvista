@@ -2226,10 +2226,7 @@ class DataSet(DataSetFilters, DataObject):
         locator.SetDataSet(self)
         locator.BuildLocator()
 
-        containing_cells = []
-        for node in point:
-            index = locator.FindCell(node)
-            containing_cells.append(index)
+        containing_cells = [locator.FindCell(node) for node in point]
         return containing_cells[0] if len(containing_cells) == 1 else np.array(containing_cells)
 
     def find_cells_along_line(
