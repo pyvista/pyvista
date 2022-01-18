@@ -2,7 +2,7 @@
 
 # Directories to run style checks against
 CODE_DIRS ?= doc examples examples_flask pyvista tests
-# All files in toplevel directory
+# Files in top level directory
 CODE_FILES ?= *.py *.rst *.md
 CODESPELL_SKIP ?= "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,./doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*"
 CODESPELL_IGNORE ?= "ignore_words.txt"
