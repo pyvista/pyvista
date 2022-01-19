@@ -7,3 +7,9 @@ updates:
       interval: "daily"
     labels:
       - "maintenance"
+    ignore:
+     - dependency-name: "ipython"
+        # For ipython, ignore 8.0.0
+        versions: ["8.0.0"]
+      - dependency-name: "hypothesis"
+        # for hypothesis, ignore upgrades due to Python 3.6 availability

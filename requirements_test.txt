@@ -2,11 +2,11 @@ Sphinx==4.4.0
 cmocean==2.0
 codecov==2.1.12
 colorcet==3.0.0
-hypothesis==6.35.1
+hypothesis==6.31.6  # pinned due to python3.6 compatibility
 imageio-ffmpeg==0.4.5
 imageio==2.13.5
 ipygany==0.5.0
-ipython==7.31.0
+ipython==7.31.0  # pinned due to bug with 8.0.0
 ipyvtklink==0.2.2
 itkwidgets==0.32.1
 matplotlib==3.5.1
