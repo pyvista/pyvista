@@ -2084,14 +2084,14 @@ class DataSet(DataSetFilters, DataObject):
         return locator.FindClosestPoint(point)
 
     def find_closest_cell(self,
-                          point: Union[int, np.ndarray],
+                          point: Union[Sequence, np.ndarray],
                           return_closest_point: bool=False,
                           ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
         ----------
-        point : iterable(float) or np.ndarray
+        point : Sequence(float) or np.ndarray
             Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
             points with shape ``(n, 3)``.
 
@@ -2165,16 +2165,17 @@ class DataSet(DataSetFilters, DataObject):
         # check if this is an array of points
         if isinstance(point, np.ndarray):
             if point.ndim > 2:
-                raise ValueError("Array of points must be 2D")
+                raise ValueError("Array of points must be 1D or 2D")
             if point.ndim == 2:
                 if point.shape[1] != 3:
-                    raise ValueError("Array of points must have three values per point")
+                    raise ValueError("Array of points must have three values per point"
+                                     "(shape (n, 3))")
             else:
                 if point.size != 3:
                     raise ValueError("Given point must have three values")
                 point = np.array([point])
         else:
-            raise TypeError("Given point must be an iterable or an array.")
+            raise TypeError("Given point must be a sequence or an array.")
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
