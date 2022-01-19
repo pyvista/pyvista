@@ -8,8 +8,9 @@ updates:
     labels:
       - "maintenance"
     ignore:
-     - dependency-name: "ipython"
-        # For ipython, ignore 8.0.0
+      - dependency-name: "ipython"
+        # ipython has a bug with 8.0.0
         versions: ["8.0.0"]
+        # For Lodash, ignore all updates
       - dependency-name: "hypothesis"
         # for hypothesis, ignore upgrades due to Python 3.6 availability
