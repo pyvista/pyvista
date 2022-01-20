@@ -110,7 +110,7 @@ articles = dict(
         description="An open-source application for vasculature dataset analysis and visualization",
         link="https://jacobbumgarner.github.io/VesselVio/",
         image="vessel_vio.png"),
-    pyvista_artworks=Example(title="My PyVista artworks",
+    pyvista_artworks=Example(title="Stéphane Laurent's PyVista artwork",
         description="I like the Python library PyVista very much. In this blog post I show a sample of the animations I realized with this library.",
         link="https://laustep.github.io/stlahblog/posts/MyPyVistaArtworks.html",
         image="Duoprism_3-30.gif"),
