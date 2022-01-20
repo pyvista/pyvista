@@ -2051,6 +2051,13 @@ class DataSet(DataSetFilters, DataObject):
         int
             The index of the point in this mesh that is closest to the given point.
 
+        See Also
+        --------
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
+
         Examples
         --------
         Find the index of the closest point to ``(0, 1, 0)``.
@@ -2115,6 +2122,13 @@ class DataSet(DataSetFilters, DataObject):
         --------
         This method may still return a valid cell index even if the point
         contains a value like ``numpy.inf`` or ``numpy.nan``.
+
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
 
         Examples
         --------
@@ -2244,6 +2258,13 @@ class DataSet(DataSetFilters, DataObject):
             Index or indices of the cell in this mesh that are closest
             to the given point.
 
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_within_bounds
+
         Examples
         --------
         >>> import pyvista
@@ -2275,6 +2296,13 @@ class DataSet(DataSetFilters, DataObject):
         numpy.ndarray
             Index or indices of the cell in this mesh that are closest
             to the given point.
+
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
 
         Examples
         --------
