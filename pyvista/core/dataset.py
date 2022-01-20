@@ -2146,18 +2146,30 @@ class DataSet(DataSetFilters, DataObject):
         >>> indices.shape
         (5000,)
 
-        Find the point on the surface, including inside the cells,
-        that is closest to ``[0.1, 0.2, 0.3]``.  The closest point
-        on a perfect sphere, i.e. not discretized, with radius 0.5
-        is ``[0.134, 0.267, 0.401]``.
+        For the closest cell, find the point inside the cell that is
+        closest to the supplied point.  The rectangle is a unit square
+        with 1 cell and 4 nodal points at the corners in the plane with
+        ``z`` normal and ``z=0``.  The closest point inside the cell is
+        not usually at a nodal point.
 
-        >>> index, closest_point = mesh.find_closest_cell(
-        ...     [0.1, 0.2, 0.3],
+        >>> unit_square = pyvista.Rectangle()
+        >>> index, closest_point = unit_square.find_closest_cell(
+        ...     [0.25, 0.25, 0.5],
         ...     return_closest_point=True
         ... )
-        >>> # For pretty printing, limit to a precision of 3
-        >>> [round(p, 3) for p in closest_point]
-        [0.129, 0.264, 0.403]
+        >>> closest_point
+        array([0.25, 0.25, 0.  ])
+
+        But, the closest point can be a nodal point, although the index of
+        that point is not returned.  If the closest nodal point by index is
+        desired, see :func:`DataSet.find_closest_point`.
+
+        >>> index, closest_point = unit_square.find_closest_cell(
+        ...     [1.0, 1.0, 0.5],
+        ...     return_closest_point=True
+        ... )
+        >>> closest_point
+        array([1., 1., 0.])
 
         """
         if isinstance(point, collections.abc.Sequence):
