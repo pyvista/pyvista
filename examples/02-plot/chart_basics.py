@@ -110,7 +110,7 @@ chart.show()
 # other dedicated charts you can create. The example below shows how a pie
 # chart can be created.
 
-data = np.array([8.4,6.1,2.7,2.4,0.9])
+data = np.array([8.4, 6.1, 2.7, 2.4, 0.9])
 chart = pv.ChartPie(data)
 chart.plot.labels = [f"slice {i}" for i in range(len(data))]
 chart.show()
