@@ -1,6 +1,9 @@
 # Simple makefile to simplify repetitive build env management tasks under posix
 
-CODESPELL_DIRS ?= ./
+# Directories to run style checks against
+CODE_DIRS ?= doc examples examples_flask pyvista tests
+# Files in top level directory
+CODE_FILES ?= *.py *.rst *.md
 CODESPELL_SKIP ?= "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,./doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*"
 CODESPELL_IGNORE ?= "ignore_words.txt"
 
@@ -12,7 +15,7 @@ stylecheck: codespell pydocstyle lint
 
 codespell:
 	@echo "Running codespell"
-	@codespell $(CODESPELL_DIRS) -S $(CODESPELL_SKIP) -I $(CODESPELL_IGNORE)
+	@codespell $(CODE_DIRS) $(CODE_FILES) -S $(CODESPELL_SKIP) -I $(CODESPELL_IGNORE)
 
 pydocstyle:
 	@echo "Running pydocstyle"
@@ -53,7 +56,7 @@ mypy:
 
 lint:
 	@echo "Linting with flake8"
-	@flake8 .
+	@flake8 $(CODE_DIRS) $(CODE_FILES)
 
 isort:
 	@echo "Formatting with isort"
