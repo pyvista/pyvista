@@ -2166,6 +2166,77 @@ class DataSet(DataSetFilters, DataObject):
             closest_cells.append(int(cellId))
         return closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
 
+    def find_containing_cell(self, point: Union[Sequence, np.ndarray]) -> Union[int, np.ndarray]:
+        """Find index of a cell that contains the given point.
+
+        Parameters
+        ----------
+        point : Sequence(float) or np.ndarray
+            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
+            points with shape ``(n, 3)``.
+
+        Returns
+        -------
+        int or numpy.ndarray
+            Index or indices of the cell in this mesh that contains
+            the given point.
+
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
+
+        Examples
+        --------
+        A unit square with 16 equal sized cells is created and a cell
+        containing the point ``[0.3, 0.3, 0.0]`` is found.
+
+        >>> import pyvista
+        >>> mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
+        >>> mesh
+        UniformGrid...
+        >>> mesh.find_containing_cell([0.3, 0.3, 0.0])
+        5
+
+        A point outside the mesh domain will return ``-1``.
+
+        >>> mesh.find_containing_cell([0.3, 0.3, 1.0])
+        -1
+
+        Find the cells that contain 1000 random points inside the mesh.
+        >>> import numpy as np
+        >>> points = np.random.random((1000, 3))
+        >>> indices = mesh.find_containing_cell(points)
+        >>> indices.shape
+        (1000,)
+
+        """
+        if isinstance(point, collections.abc.Sequence):
+            point = np.array(point)
+        # check if this is an array of points
+        if isinstance(point, np.ndarray):
+            if point.ndim > 2:
+                raise ValueError("Array of points must be 1D or 2D")
+            if point.ndim == 2:
+                if point.shape[1] != 3:
+                    raise ValueError("Array of points must have three values per point "
+                                     "(shape (n, 3))")
+            else:
+                if point.size != 3:
+                    raise ValueError("Given point must have three values")
+                point = np.array([point])
+        else:
+            raise TypeError("Given point must be a sequence or an array.")
+
+        locator = _vtk.vtkCellLocator()
+        locator.SetDataSet(self)
+        locator.BuildLocator()
+
+        containing_cells = [locator.FindCell(node) for node in point]
+        return containing_cells[0] if len(containing_cells) == 1 else np.array(containing_cells)
+
     def find_cells_along_line(
         self,
         pointa: Iterable[float],
