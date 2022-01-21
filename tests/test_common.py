@@ -939,6 +939,7 @@ def test_find_containing_cells():
     indices = mesh.find_containing_cell([[0.3, 0.3, 0], [0.6, 0.6, 0]])
     assert np.allclose(indices, [5, 10])
 
+
 def test_find_cells_along_line():
     mesh = pyvista.Cube()
     indices = mesh.find_cells_along_line([0, 0, -1], [0, 0, 1])
