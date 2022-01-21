@@ -2181,6 +2181,13 @@ class DataSet(DataSetFilters, DataObject):
             Index or indices of the cell in this mesh that contains
             the given point.
 
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
+
         Examples
         --------
         A unit square with 16 equal sized cells is created and a cell
