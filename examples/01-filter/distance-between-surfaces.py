@@ -22,7 +22,7 @@ distance along the surface normals. This ray will usually intersect the top
 surface at a spatial point inside a cell of the mesh.
 
 Second, we will use a KDTree to compute the distance from every vertex point in
-the bottom mesh to it's closest vertex point in the top mesh.  
+the bottom mesh to it's closest vertex point in the top mesh.
 
 Lastly, we will use a PyVista filter, :func:`pyvista.DataSet.find_closest_cell` to calculate
 the distance from every vertex point in the bottom mesh to the closest spatial point
