@@ -1,23 +1,26 @@
-Sphinx==4.4.0
-cmocean==2.0
-codecov==2.1.12
-colorcet==3.0.0
-hypothesis==6.31.6  # pinned due to python3.6 compatibility
-imageio-ffmpeg==0.4.5
-imageio==2.13.5
-ipygany==0.5.0
-ipython==7.31.0  # pinned due to bug with 8.0.0
-ipyvtklink==0.2.2
-itkwidgets==0.32.1
-matplotlib==3.5.1
-meshio==5.2.2
-panel==0.12.6
-param==1.12.0
-pytest-cov==3.0.0
-pytest-memprof==0.2.0
-pytest-xdist==2.5.0
-pytest==6.2.5
-pythreejs==2.3.0
-sphinx-gallery==0.10.1
-tqdm==4.62.3
-trimesh==3.9.42
+# Note: using < here to maintain compatability with Python3.6
+# See: https://github.com/pyvista/pyvista/pull/2038
+
+Sphinx<4.5.0
+cmocean<2.1
+codecov<2.2.0
+colorcet<3.1.0
+hypothesis<6.31.6  # not latest due to python3.6 compatibility
+imageio-ffmpeg<0.5.0
+imageio<2.14.0
+ipygany<0.6.0
+ipython<8.0.0
+ipyvtklink<0.4.0
+itkwidgets<0.33.0
+matplotlib<3.6.0
+meshio<5.3.0
+panel<0.13.0
+param<1.13.0
+pytest-cov<3.1.0
+pytest-memprof<0.3.0
+pytest-xdist<2.6.0
+pytest<6.3.0
+pythreejs<2.4.0
+sphinx-gallery<0.11.0
+tqdm<4.63.0
+trimesh<3.10.0
