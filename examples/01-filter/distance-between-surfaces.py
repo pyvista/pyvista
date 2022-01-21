@@ -10,11 +10,11 @@ average thickness of a unit between those boundaries.
 
 A clarification on terminology in this example is important.  A mesh point
 exists on the vertex of each cell on the mesh.  See :ref:`what_is_a_mesh`.
-Each cell encompass a 2D region of space which contains an infinite number of
-spatial points; these spatial points are not mesh points.  The distance between
-two surfaces can mean different things depending on context and usage.  Each
-example here explores different aspects of the distance from the vertex points of
-the bottom mesh to the top mesh.
+Each cell in this example encompasses a 2D region of space which contains an
+infinite number of spatial points; these spatial points are not mesh points.
+The distance between two surfaces can mean different things depending on context
+and usage.  Each example here explores different aspects of the distance from the 
+vertex points of the bottom mesh to the top mesh.
 
 First, we will demo a method where we compute the normals on the vertex points
 of the bottom surface, and then project a ray to the top surface to compute the
@@ -22,7 +22,7 @@ distance along the surface normals. This ray will usually intersect the top
 surface at a spatial point inside a cell of the mesh.
 
 Second, we will use a KDTree to compute the distance from every vertex point in
-the bottom mesh to it's closest vertex point in the top mesh.
+the bottom mesh to its closest vertex point in the top mesh.
 
 Lastly, we will use a PyVista filter, :func:`pyvista.DataSet.find_closest_cell` to calculate
 the distance from every vertex point in the bottom mesh to the closest spatial point
