@@ -1031,9 +1031,6 @@ class _Chart(DocSubs):
         if loc is not None:
             self.loc = loc
 
-    def deep_clean(self):
-        """Clean up the chart."""
-
     @property
     def _scene(self):
         """Get a reference to the vtkScene in which this chart is drawn."""
@@ -3960,21 +3957,13 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
         self._redraw()
 
-    def deep_clean(self):
-        """Clean up the chart.
-
-        Notes
-        -----
-        The underlying matplotlib figure is closed and cleaned up.
-        This is necessary while creating the sphinx gallery, as otherwise
-        these charts are drawn twice in example scripts: once as a
-        pyvista plot (fetched by the 'pyvista' scraper) and once as a
-        matplotlib figure (fetched by the 'matplotlib' scraper).
-        """
-        import matplotlib.pyplot as plt
-        plt.close(self._fig)
-        self._fig = None
-        self._canvas = None
+        # Close the underlying matplotlib figure when creating the sphinx gallery.
+        # This prevents the charts from being drawn twice in example scripts:
+        # once as a pyvista plot (fetched by the 'pyvista' scraper) and once as a
+        # matplotlib figure (fetched by the 'matplotlib' scraper).
+        # See #1999 and #2031.
+        if pyvista.BUILDING_GALLERY:  # pragma: no cover
+            plt.close(self._fig)
 
     @property
     def figure(self):
@@ -4157,7 +4146,6 @@ class Charts:
             charts = [*self._charts]  # Make a copy, as this list will be modified by remove_plot
             for chart in charts:
                 self.remove_chart(chart)
-                chart.deep_clean()
             self._renderer.RemoveActor(self._actor)
         self._scene = None
         self._actor = None

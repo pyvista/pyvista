@@ -1,9 +1,9 @@
 """
 .. _load_gltf:
 
-Working with a glTF Files
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Import a glTF directly into a PyVista plotting scene.  For more
+Working with glTF Files
+~~~~~~~~~~~~~~~~~~~~~~~
+Import a glTF file directly into a PyVista plotting scene.  For more
 details regarding the glTF format, see:
 https://www.khronos.org/gltf/
 
