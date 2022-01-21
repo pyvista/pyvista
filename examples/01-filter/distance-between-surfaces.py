@@ -13,7 +13,7 @@ exists on the vertex of each cell on the mesh.  See :ref:`what_is_a_mesh`.
 Each cell in this example encompasses a 2D region of space which contains an
 infinite number of spatial points; these spatial points are not mesh points.
 The distance between two surfaces can mean different things depending on context
-and usage.  Each example here explores different aspects of the distance from the 
+and usage.  Each example here explores different aspects of the distance from the
 vertex points of the bottom mesh to the top mesh.
 
 First, we will demo a method where we compute the normals on the vertex points

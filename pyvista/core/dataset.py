@@ -2271,6 +2271,7 @@ class DataSet(DataSetFilters, DataObject):
         -1
 
         Find the cells that contain 1000 random points inside the mesh.
+
         >>> import numpy as np
         >>> points = np.random.random((1000, 3))
         >>> indices = mesh.find_containing_cell(points)

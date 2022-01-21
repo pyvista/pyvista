@@ -907,7 +907,6 @@ def test_find_closest_cells():
     assert np.allclose(indices, np.arange(mesh.n_faces))
 
 
-
 def test_find_closest_cell_surface_point():
     mesh = pyvista.Rectangle()
 
