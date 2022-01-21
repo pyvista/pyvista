@@ -1,4 +1,4 @@
-matplotlib<=3.5.0
+matplotlib<3.6.0
 pytest
 pytest-cov
 pytest-memprof
