@@ -1238,7 +1238,10 @@ def test_multi_renderers_subplot_ind_2x1():
     plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.xfail(sys.version_info == (3, 10), reason="Test fails when using pyvista dev wheel on Python 3.10")
+@pytest.mark.xfail(
+    sys.version_info.minor == 10,
+    reason="Test fails when using pyvista dev wheel on Python 3.10"
+)
 def test_multi_renderers_subplot_ind_1x2():
     # Test subplot indices (1 row by 2 columns)
     plotter = pyvista.Plotter(shape=(1, 2))
