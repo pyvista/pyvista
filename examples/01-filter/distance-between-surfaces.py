@@ -8,12 +8,27 @@ For example, you might have two surfaces that represent the boundaries of
 lithological layers in a subsurface geological model and you want to know the
 average thickness of a unit between those boundaries.
 
-We can compute the thickness between the two surfaces using a few different
-methods. First, we will demo a method where we compute the normals of the
-bottom surface, and then project a ray to the top surface to compute the
-distance along the surface normals. Second, we will use a KDTree to compute
-the distance from every point in the bottom mesh to it's closest point in
-the top mesh.
+A clarification on terminology in this example is important.  A mesh point
+exists on the vertex of each cell on the mesh.  See :ref:`what_is_a_mesh`.
+Each cell in this example encompasses a 2D region of space which contains an
+infinite number of spatial points; these spatial points are not mesh points.
+The distance between two surfaces can mean different things depending on context
+and usage.  Each example here explores different aspects of the distance from the
+vertex points of the bottom mesh to the top mesh.
+
+First, we will demo a method where we compute the normals on the vertex points
+of the bottom surface, and then project a ray to the top surface to compute the
+distance along the surface normals. This ray will usually intersect the top
+surface at a spatial point inside a cell of the mesh.
+
+Second, we will use a KDTree to compute the distance from every vertex point in
+the bottom mesh to its closest vertex point in the top mesh.
+
+Lastly, we will use a PyVista filter, :func:`pyvista.DataSet.find_closest_cell` to calculate
+the distance from every vertex point in the bottom mesh to the closest spatial point
+inside a cell of the top mesh.  This will be the shortest distance from the vertex point
+to the top surface, unlike the first two examples.
+
 """
 import numpy as np
 
@@ -46,7 +61,7 @@ p.show()
 # Ray Tracing Distance
 # ++++++++++++++++++++
 #
-# Compute normals of lower surface
+# Compute normals of lower surface at vertex points
 h0n = h0.compute_normals(point_normals=True, cell_normals=False,
                          auto_orient_normals=True)
 
@@ -80,18 +95,45 @@ p.show()
 # Nearest Neighbor Distance
 # +++++++++++++++++++++++++
 #
-# You could also use a KDTree to compare the distance between each point of the
-# upper surface and the nearest neighbor of the lower surface.
-# This won't be the exact surface to surface distance, but it will be
+# You could also use a KDTree to compare the distance between each vertex point
+# of the
+# upper surface and the nearest neighbor vertex point of the lower surface.
+# This will be
 # noticeably faster than a ray trace, especially for large surfaces.
 from scipy.spatial import KDTree
 
 tree = KDTree(h1.points)
-d, idx = tree.query(h0.points )
-h0["distances"] = d
-np.mean(d)
+d_kdtree, idx = tree.query(h0.points )
+h0["distances"] = d_kdtree
+np.mean(d_kdtree)
 
 ###############################################################################
+p = pv.Plotter()
+p.add_mesh(h0, scalars="distances", smooth_shading=True)
+p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
+p.show()
+
+
+###############################################################################
+# Using PyVista Filter
+# ++++++++++++++++++++
+#
+# The :func:`pyvista.DataSet.find_closest_cell` filter returns the spatial
+# points inside the cells of the top surface that are closest to the vertex
+# points of the bottom surface.  ``closest_points`` is returned when using
+# ``return_closest_point=True``.
+
+closest_cells, closest_points = h1.find_closest_cell(h0.points,
+                                                     return_closest_point=True)
+d_exact = np.linalg.norm(h0.points - closest_points, axis=1)
+h0["distances"] = d_exact
+np.mean(d_exact)
+
+
+###############################################################################
+# As expected there is only a small difference between this method and the
+# KDTree method.
+
 p = pv.Plotter()
 p.add_mesh(h0, scalars="distances", smooth_shading=True)
 p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)

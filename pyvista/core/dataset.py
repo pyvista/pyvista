@@ -2051,6 +2051,13 @@ class DataSet(DataSetFilters, DataObject):
         int
             The index of the point in this mesh that is closest to the given point.
 
+        See Also
+        --------
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
+
         Examples
         --------
         Find the index of the closest point to ``(0, 1, 0)``.
@@ -2083,25 +2090,45 @@ class DataSet(DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)
 
-    def find_closest_cell(self, point: Union[int, np.ndarray]) -> Union[int, np.ndarray]:
+    def find_closest_cell(self,
+                          point: Union[Sequence, np.ndarray],
+                          return_closest_point: bool=False,
+                          ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
         ----------
-        point : iterable(float) or np.ndarray
+        point : Sequence(float) or np.ndarray
             Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
             points with shape ``(n, 3)``.
+
+        return_closest_point : bool, optional
+            If ``True``, the closest point within a mesh cell to that point is
+            returned.  This is not necessarily the closest nodal point on the
+            mesh.  Default is ``False``.
 
         Returns
         -------
         int or numpy.ndarray
-            Index or indices of the cell in this mesh that is closest
-            to the given point.
+            Index or indices of the cell in this mesh that is/are closest
+            to the given point(s).
+
+        numpy.ndarray
+            Point or points inside a cell of the mesh that is/are closest
+            to the given point(s).  Only returned if
+            ``return_closest_point=True``.
 
         Warnings
         --------
         This method may still return a valid cell index even if the point
         contains a value like ``numpy.inf`` or ``numpy.nan``.
+
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
 
         Examples
         --------
@@ -2133,38 +2160,76 @@ class DataSet(DataSetFilters, DataObject):
         >>> indices.shape
         (5000,)
 
+        For the closest cell, find the point inside the cell that is
+        closest to the supplied point.  The rectangle is a unit square
+        with 1 cell and 4 nodal points at the corners in the plane with
+        ``z`` normal and ``z=0``.  The closest point inside the cell is
+        not usually at a nodal point.
+
+        >>> unit_square = pyvista.Rectangle()
+        >>> index, closest_point = unit_square.find_closest_cell(
+        ...     [0.25, 0.25, 0.5],
+        ...     return_closest_point=True
+        ... )
+        >>> closest_point
+        array([0.25, 0.25, 0.  ])
+
+        But, the closest point can be a nodal point, although the index of
+        that point is not returned.  If the closest nodal point by index is
+        desired, see :func:`DataSet.find_closest_point`.
+
+        >>> index, closest_point = unit_square.find_closest_cell(
+        ...     [1.0, 1.0, 0.5],
+        ...     return_closest_point=True
+        ... )
+        >>> closest_point
+        array([1., 1., 0.])
+
         """
         if isinstance(point, collections.abc.Sequence):
             point = np.array(point)
         # check if this is an array of points
         if isinstance(point, np.ndarray):
             if point.ndim > 2:
-                raise ValueError("Array of points must be 2D")
+                raise ValueError("Array of points must be 1D or 2D")
             if point.ndim == 2:
                 if point.shape[1] != 3:
-                    raise ValueError("Array of points must have three values per point")
+                    raise ValueError("Array of points must have three values per point"
+                                     "(shape (n, 3))")
             else:
                 if point.size != 3:
                     raise ValueError("Given point must have three values")
                 point = np.array([point])
         else:
-            raise TypeError("Given point must be an iterable or an array.")
+            raise TypeError("Given point must be a sequence or an array.")
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
 
         cell = _vtk.vtkGenericCell()
-        closest_point = [0, 0, 0]
-        cellId = _vtk.mutable(0)
-        subld = _vtk.mutable(0)
-        dist2 = _vtk.mutable(0.0)
 
-        closest_cells = []
+        closest_cells: List[int] = []
+        closest_points: List[List[float]] = []
+
         for node in point:
-            locator.FindClosestPoint(node, closest_point, cell, cellId, subld, dist2)
-            closest_cells.append(int(cellId))
-        return closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
+            closest_point = [0.0, 0.0, 0.0]
+            cell_id = _vtk.mutable(0)
+            sub_id = _vtk.mutable(0)
+            dist2 = _vtk.mutable(0.0)
+
+            locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)
+            closest_cells.append(int(cell_id))
+            closest_points.append(closest_point)
+
+        out_cells: Union[int, np.ndarray] = (
+            closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
+        )
+        out_points = np.array(closest_points[0]) if len(closest_points) == 1 else np.array(closest_points)
+
+        if return_closest_point:
+            return out_cells, out_points
+        return out_cells
 
     def find_containing_cell(self, point: Union[Sequence, np.ndarray]) -> Union[int, np.ndarray]:
         """Find index of a cell that contains the given point.
@@ -2206,6 +2271,7 @@ class DataSet(DataSetFilters, DataObject):
         -1
 
         Find the cells that contain 1000 random points inside the mesh.
+
         >>> import numpy as np
         >>> points = np.random.random((1000, 3))
         >>> indices = mesh.find_containing_cell(points)
@@ -2264,6 +2330,13 @@ class DataSet(DataSetFilters, DataObject):
             Index or indices of the cell in this mesh that are closest
             to the given point.
 
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_within_bounds
+
         Examples
         --------
         >>> import pyvista
@@ -2295,6 +2368,13 @@ class DataSet(DataSetFilters, DataObject):
         numpy.ndarray
             Index or indices of the cell in this mesh that are closest
             to the given point.
+
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
 
         Examples
         --------

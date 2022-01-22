@@ -907,6 +907,20 @@ def test_find_closest_cells():
     assert np.allclose(indices, np.arange(mesh.n_faces))
 
 
+def test_find_closest_cell_surface_point():
+    mesh = pyvista.Rectangle()
+
+    point = np.array([0.5, 0.5, -1.0])
+    point2 = np.array([1.0, 1.0, -1.0])
+    points = np.vstack((point, point2))
+
+    _, closest_point = mesh.find_closest_cell(point, return_closest_point=True)
+    assert np.allclose(closest_point, [0.5, 0.5, 0])
+
+    _, closest_points = mesh.find_closest_cell(points, return_closest_point=True)
+    assert np.allclose(closest_points, [[0.5, 0.5, 0], [1.0, 1.0, 0]])
+
+
 def test_find_containing_cell():
     mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
     node = np.array([0.3, 0.3, 0.0])
