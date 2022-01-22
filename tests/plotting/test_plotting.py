@@ -1237,6 +1237,7 @@ def test_multi_renderers_subplot_ind_2x1():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+@pytest.mark.xfail(sys.version_info > (3, 9), reason="high variance on xvfb on GH Actions")
 def test_multi_renderers_subplot_ind_1x2():
     # Test subplot indices (1 row by 2 columns)
     plotter = pyvista.Plotter(shape=(1, 2))
@@ -1247,6 +1248,7 @@ def test_multi_renderers_subplot_ind_1x2():
     plotter.subplot(0, 1)
     plotter.add_mesh(pyvista.Cube())
     plotter.show(before_close_callback=verify_cache_image)
+
 
 def test_multi_renderers_bad_indices():
     with pytest.raises(IndexError):
