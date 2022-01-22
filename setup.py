@@ -3,9 +3,6 @@ Installation file for python pyvista module
 """
 from io import open as io_open
 import os
-import platform
-import struct
-import sys
 
 from setuptools import setup
 
@@ -17,26 +14,15 @@ version_file = os.path.join(filepath, package_name, '_version.py')
 with io_open(version_file, mode='r') as fd:
     exec(fd.read())
 
-install_requires = [
-    'numpy',
-    'imageio',
-    'pillow',
-    'appdirs',
-    'scooby>=0.5.1',
-    'vtk',
-    'dataclasses;python_version=="3.6"',
-    'typing_extensions;python_version<="3.7"',
-]
-
-# Handle Python 3.10
-# remove this when Kitware releases VTK on PyPI as we prefer official wheels
-is64 = struct.calcsize("P") * 8 == 64
-if sys.version_info.minor == 10 and is64:
-    if platform.system().lower() == 'linux':
-        install_requires.remove('vtk')
-        install_requires.append(
-            'vtk @ https://github.com/pyvista/pyvista-wheels/raw/main/vtk-9.1.0.dev0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl',
-        )
+install_requires = ['numpy',
+                    'imageio',
+                    'pillow',
+                    'appdirs',
+                    'scooby>=0.5.1',
+                    'vtk',
+                    'dataclasses;python_version=="3.6"',
+                    'typing_extensions;python_version<="3.7"',
+                    ]
 
 readme_file = os.path.join(filepath, 'README.rst')
 
