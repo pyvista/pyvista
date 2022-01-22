@@ -169,15 +169,15 @@ jobs:
           restore-keys: |
             Examples-
 
+      - name: Setup vtk
+        if: ${{ matrix.vtk-version != 'latest' }}
+        run: pip install vtk==${{ matrix.vtk-version }}
+
       - name: Build wheel and install pyvista
         run: |
           pip install wheel
           python setup.py bdist_wheel
           pip install dist/pyvista*.whl
-
-      - name: Setup vtk
-        if: ${{ matrix.vtk-version != 'latest' }}
-        run: pip install vtk==${{ matrix.vtk-version }}
 
       - name: Install Testing Requirements
         run: |
