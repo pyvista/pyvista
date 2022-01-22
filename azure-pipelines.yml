@@ -130,7 +130,7 @@ jobs:
 
   # note: built this wheel using Ubuntu 20.04.3 with OSMESA
   - script: |
-      pip install --find-links https://wheels.pyvista.org vtk
+      pip install --find-links https://wheels.pyvista.org vtk-osmesa
     displayName: "Install VTK build with osmesa 9.1.0"
   - script: |
       make -C doc html SPHINXOPTS="-w build_errors.txt -N"
