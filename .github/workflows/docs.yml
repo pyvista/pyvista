@@ -44,7 +44,7 @@ jobs:
       - name: PyVista Report
         run: python -c "import pyvista;print(pyvista.Report())"
       - uses: actions/cache@v2
-        if: ${{ DOCS_CACHE }}
+        if: $DOCS_CACHE
         with:
           path: doc/examples/
           key: doc-examples
