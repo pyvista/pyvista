@@ -38,7 +38,7 @@ jobs:
           pip install https://github.com/pyvista/pyvista-wheels/raw/add_v9_1_0/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
       - name: Install PyVista
         run: pip install -e .
-      - name: Install Dependencies and PyVista
+      - name: Install Dependencies
         run: |
           sudo apt-get install python3-tk pandoc
           pip install -r requirements_docs.txt
