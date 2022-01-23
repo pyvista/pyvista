@@ -15,9 +15,6 @@ on:
     branches:
       - main
 
-env:
-  DOCS_CACHE: ${{ (github.event.inputs.cache && github.event_name == 'workflow_dispatch') || github.event_name != 'workflow_dispatch'  }}
-
 jobs:
   doc:
     name: Build Documentation
@@ -44,7 +41,7 @@ jobs:
       - name: PyVista Report
         run: python -c "import pyvista;print(pyvista.Report())"
       - uses: actions/cache@v2
-        if: $DOCS_CACHE
+        if: ${{ (github.event.inputs.cache && github.event_name == 'workflow_dispatch') || github.event_name != 'workflow_dispatch'  }}
         with:
           path: doc/examples/
           key: doc-examples
