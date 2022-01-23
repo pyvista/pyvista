@@ -62,6 +62,5 @@ jobs:
           push: true
           tags: ${{ steps.docs_meta.outputs.tags }}
           labels: ${{ steps.docs_meta.outputs.labels }}
-          # TODO: if more than one tag, this will not work: e.g., `latest` and version tag on release
           build-args: |
-            BASE_IMAGE=${{ steps.base_meta.outputs.tags }}
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.base_meta.outputs.version }}
