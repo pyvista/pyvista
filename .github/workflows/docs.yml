@@ -47,12 +47,14 @@ jobs:
           python -c "import pyvista;print(pyvista.Report())"
           EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
 
-      - uses: actions/cache@v2
+      - name: Cache Sphinx-Gallery Examples
+        uses: actions/cache@v2
         if: env.USE_CACHE
         with:
           path: doc/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
-      - uses: actions/cache@v2
+      - name: Cache docs _build directory
+        uses: actions/cache@v2
         if: env.USE_CACHE
         with:
           path: doc/_build/
