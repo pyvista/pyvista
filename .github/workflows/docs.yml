@@ -38,14 +38,14 @@ jobs:
         with:
           name: examples
           path: doc/examples/
-      # - name: Get Notebooks
-      #   run: |
-      #     mkdir _notebooks
-      #     cp doc/examples/**/*.ipynb _notebooks/
-      # - uses: actions/upload-artifact@v2
-      #   with:
-      #     name: pyvista-notebooks
-      #     path: _notebooks
+      - name: Get Notebooks
+        run: |
+          mkdir _notebooks
+          cp doc/examples/**/*.ipynb _notebooks/
+      - uses: actions/upload-artifact@v2
+        with:
+          name: pyvista-notebooks
+          path: _notebooks
   deploy:
     name: Publish Documentation
     runs-on: ubuntu-latest
