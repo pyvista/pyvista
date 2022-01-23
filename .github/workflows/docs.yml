@@ -49,10 +49,12 @@ jobs:
         run: make -C doc html SPHINXOPTS="-w build_errors.txt -N"
       - name: Check for Warnings
         run: python doc/print_errors.py
+      - name: Tar build
+        run: tar -zcvf docs-build.tar.gz doc/_build/
       - uses: actions/upload-artifact@v2
         with:
           name: docs-build
-          path: doc/_build/
+          path: docs-build.tar.gz
       - uses: actions/upload-artifact@v2
         with:
           name: examples
@@ -75,7 +77,12 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: docs-build
-          path: html
+          path: .
+      # TODO: check this
+      - name: Untar uild
+        run: |
+          ls -l
+          tar -xzvf docs-build.tar.gz
       - name: Copy meta data
         run: |
           cp doc/README.md ./html/
