@@ -6,7 +6,6 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-latest
     env:
-      DISPLAY: ':99.0'
       PYVISTA_OFF_SCREEN: 'True'
       ALLOW_PLOTTING: true
       SHELLOPTS: 'errexit:pipefail'
@@ -15,10 +14,8 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: '3.8'
-      - name: Setup Headless Display
-        run: |
-          .ci/setup_headless_display.sh
-          # python .ci/pyvista_test.py  # for debug
+      - name: Install OSMesa VTK
+        run: pip install https://github.com/pyvista/pyvista-wheels/raw/add_v9_1_0/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
       - name: Install PyVista
         run: pip install -e .
       - name: Install Dependencies and PyVista
