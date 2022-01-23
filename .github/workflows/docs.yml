@@ -41,7 +41,7 @@ jobs:
       - name: PyVista Report
         run: python -c "import pyvista;print(pyvista.Report())"
       - uses: actions/cache@v2
-        if: ${{ (github.event.inputs.cache && github.event_name == 'workflow_dispatch') || github.event_name != 'workflow_dispatch'  }}
+        if: ${{ ((github.event.inputs.cache && github.event_name == 'workflow_dispatch') || github.event_name != 'workflow_dispatch') && startswith(github.ref, 'refs/heads') }}
         with:
           path: doc/examples/
           key: doc-examples
