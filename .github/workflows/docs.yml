@@ -61,6 +61,9 @@ jobs:
         run: |
           cp doc/README.md ./html/
           cp doc/ads.txt ./html/
+
+      - name: Make CNAME for dev.pyvista.org
+        run: echo "dev.pyvista.org" > ./html/CNAME
       - name: Deploy on main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
@@ -68,6 +71,9 @@ jobs:
           external_repository: pyvista/pyvista-docs-dev
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: html
+
+      - name: Make CNAME for docs.pyvista.org
+        run: echo "docs.pyvista.org" > ./html/CNAME
       - name: Deploy on release
         if: startsWith(github.ref, 'refs/tags')
         uses: peaceiris/actions-gh-pages@v3
