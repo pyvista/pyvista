@@ -63,7 +63,7 @@ jobs:
         uses: actions/cache@v2
         if: env.USE_CACHE
         with:
-          path: env.EXAMPLES_PATH
+          path: $env.EXAMPLES_PATH
           key: example-data-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Build Documentation
