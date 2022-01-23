@@ -16,6 +16,9 @@ on:
     tags:
       - "*"
 
+env:
+  USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache) || (github.event_name != 'push' && github.event_name != 'workflow_dispatch') }}
+
 jobs:
   doc:
     name: Build Documentation
@@ -40,13 +43,21 @@ jobs:
           sudo apt-get install python3-tk pandoc
           pip install -r requirements_docs.txt
       - name: PyVista Report
-        run: python -c "import pyvista;print(pyvista.Report())"
+        run: |
+          python -c "import pyvista;print(pyvista.Report())"
+          EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
+
       - uses: actions/cache@v2
-        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache) || (github.event_name != 'push' && github.event_name != 'workflow_dispatch') }}
+        if: env.USE_CACHE
         with:
           path: doc/examples/
-          key: doc-examples
-      # TODO: cache examples source data: EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
+          key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
+      - uses: actions/cache@v2
+        if: env.USE_CACHE
+        with:
+          path: doc/_build/
+          key: doc-_build-${{ hashFiles('pyvista/_version.py') }}
+
       - name: Build Documentation
         run: make -C doc html SPHINXOPTS="-w build_errors.txt -N"
       - name: Check for Warnings
