@@ -1,3 +1,5 @@
+import datetime
+
 from packaging.version import parse as parse_version
 import sphinx
 
@@ -8,7 +10,8 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 master_doc = 'index'
 project = 'tinypages'
-copyright = '2021, PyVista developers'
+year = datetime.date.today().year
+copyright = f"2021-{year}, PyVista developers"
 version = '0.1'
 release = '0.1'
 exclude_patterns = ['_build']

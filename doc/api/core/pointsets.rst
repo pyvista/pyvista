@@ -155,12 +155,12 @@ and plots the meshes with various colors.
 
     # rotate and translate ant so it is on the plane
     ant = pyvista.PolyData(examples.antfile)
-    ant.rotate_x(90)
-    ant.translate([90, 60, 15])
+    ant.rotate_x(90, inplace=True)
+    ant.translate([90, 60, 15], inplace=True)
 
     # Make a copy and add another ant
     ant_copy = ant.copy()
-    ant_copy.translate([30, 0, -10])
+    ant_copy.translate([30, 0, -10], inplace=True)
 
     # Create plotter object
     plotter = pyvista.Plotter()
@@ -216,7 +216,7 @@ initializing.
    ...                   [0, 0, 1],
    ...                   [1, 0, 1],
    ...                   [1, 1, 1],
-   ...                   [0, 1, 1]])
+   ...                   [0, 1, 1]], dtype=np.float32)
    >>> cell2 = np.array([[0, 0, 2],
    ...                   [1, 0, 2],
    ...                   [1, 1, 2],
@@ -224,7 +224,7 @@ initializing.
    ...                   [0, 0, 3],
    ...                   [1, 0, 3],
    ...                   [1, 1, 3],
-   ...                   [0, 1, 3]])
+   ...                   [0, 1, 3]], dtype=np.float32)
    >>> points = np.vstack((cell1, cell2))
    >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
    >>> grid
@@ -276,9 +276,9 @@ grid from NumPy arrays.
     import pyvista as pv
     import numpy as np
 
-    x = np.arange(-10, 10, 1)
-    y = np.arange(-10, 10, 1)
-    z = np.arange(-10, 10, 2)
+    x = np.arange(-10, 10, 1, dtype=np.float32)
+    y = np.arange(-10, 10, 1, dtype=np.float32)
+    z = np.arange(-10, 10, 2, dtype=np.float32)
     x, y, z = np.meshgrid(x, y, z)
 
     # create the unstructured grid directly from the numpy arrays and plot
@@ -367,7 +367,7 @@ scalars of the grid copied to the plotting object.  Here is a full example:
     # use hardcoded camera position
     cpos = [(11.915, 6.114, 3.612),
             (0.0, 0.375, 2.0),
-            (-0.425, 0.902, -0.0679)]       
+            (-0.425, 0.902, -0.0679)]
 
     plotter = pv.Plotter(window_size=(800, 600))
     plotter.add_mesh(grid, scalars=d[:, 1],

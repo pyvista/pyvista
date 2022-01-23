@@ -1,12 +1,12 @@
 """Module managing errors."""
 
 import collections
+from collections.abc import Iterable
 import logging
 import os
 import re
 import sys
 
-import numpy as np
 import scooby
 
 import pyvista
@@ -281,12 +281,14 @@ class Report(scooby.Report):
 
         """
         # Mandatory packages.
-        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby',
-                'meshio']
+        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
 
         # Optional packages.
-        optional = ['matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'ipyvtklink', 'scipy', 'itkwidgets', 'tqdm']
+        optional = [
+            'matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
+            'cmocean', 'ipyvtklink', 'scipy', 'itkwidgets', 'tqdm',
+            'meshio',
+        ]
 
         # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.
@@ -325,7 +327,9 @@ def assert_empty_kwargs(**kwargs):
 
 def check_valid_vector(point, name=''):
     """Check if a vector contains three components."""
-    if np.array(point).size != 3:
+    if not isinstance(point, Iterable):
+        raise TypeError(f'{name} must be a length three iterable of floats.')
+    if len(point) != 3:
         if name == '':
             name = 'Vector'
-        raise TypeError(f'{name} must be a length three tuple of floats.')
+        raise ValueError(f'{name} must be a length three iterable of floats.')

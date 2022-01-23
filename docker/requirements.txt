@@ -1,0 +1,11 @@
+cmocean
+colorcet
+imageio-ffmpeg
+imageio
+ipygany
+ipyvtklink
+matplotlib
+meshio
+panel
+trimesh
+pythreejs

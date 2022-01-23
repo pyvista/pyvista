@@ -14,8 +14,8 @@ import pyvista
 from pyvista import examples
 
 mesh = examples.download_dragon()
-mesh.rotate_x(90)
-mesh.rotate_z(120)
+mesh.rotate_x(90, inplace=True)
+mesh.rotate_z(120, inplace=True)
 
 
 ###############################################################################
@@ -56,8 +56,8 @@ base_mesh = pyvista.Cube(center,
                          height)
 
 # rotate base and mesh to get a better view
-base_mesh.rotate_z(30)
-mesh.rotate_z(30)
+base_mesh.rotate_z(30, inplace=True)
+mesh.rotate_z(30, inplace=True)
 
 # create the plotter with custom lighting
 pl = pyvista.Plotter(lighting=None, window_size=(800, 800))

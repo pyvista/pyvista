@@ -3,7 +3,7 @@
 import collections.abc
 import logging
 import sys
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 import warnings
 
 if sys.version_info >= (3, 8):
@@ -861,28 +861,19 @@ class DataSet(DataSetFilters, DataObject):
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
-    def points_to_double(self):
-        """Convert the points datatype to double precision.
-
-        Examples
-        --------
-        Create a mesh that has points of the type ``float32`` and
-        convert the points to ``float64``.
-
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> mesh.points.dtype
-        dtype('float32')
-        >>> mesh.points_to_double()
-        >>> mesh.points.dtype
-        dtype('float64')
-
-        """
-        if self.points.dtype != np.double:
-            self.points = self.points.astype(np.double)
-
-    def rotate_x(self, angle: float, point=None, transform_all_input_vectors=False):
+    def rotate_x(
+            self,
+            angle: float,
+            point=(0.0, 0.0, 0.0),
+            transform_all_input_vectors=False,
+            inplace=False
+    ):
         """Rotate mesh about the x-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -896,16 +887,49 @@ class DataSet(DataSetFilters, DataObject):
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
-        """
-        if point is None:
-            point = (0.0, 0.0, 0.0)
-        if len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
-        t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_y(self, angle: float, point=None, transform_all_input_vectors=False):
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the x-axis.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> rot = mesh.rotate_x(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        check_valid_vector(point, "point")
+        t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+
+    def rotate_y(
+            self,
+            angle: float,
+            point=(0.0, 0.0, 0.0),
+            transform_all_input_vectors=False,
+            inplace=False
+    ):
         """Rotate mesh about the y-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -919,16 +943,49 @@ class DataSet(DataSetFilters, DataObject):
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
-        """
-        if point is None:
-            point = (0.0, 0.0, 0.0)
-        if len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
-        t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_z(self, angle: float, point=None, transform_all_input_vectors=False):
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Rotate a cube 30 degrees about the y-axis.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> rot = mesh.rotate_y(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        check_valid_vector(point, "point")
+        t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+
+    def rotate_z(
+            self,
+            angle: float,
+            point=(0.0, 0.0, 0.0),
+            transform_all_input_vectors=False,
+            inplace=False
+    ):
         """Rotate mesh about the z-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -942,21 +999,54 @@ class DataSet(DataSetFilters, DataObject):
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
-        """
-        if point is None:
-            point = (0.0, 0.0, 0.0)
-        if len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
-        t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def rotate_vector(self, vector: List[float], angle, point=None,
-                      transform_all_input_vectors=False):
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the z-axis.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> rot = mesh.rotate_z(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        check_valid_vector(point, "point")
+        t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+
+    def rotate_vector(
+            self,
+            vector: Iterable[float],
+            angle: float,
+            point=(0.0, 0.0, 0.0),
+            transform_all_input_vectors=False,
+            inplace=False
+    ):
         """Rotate mesh about a vector.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
-        vector : tuple
+        vector : Iterable
             Axes to rotate about.
 
         angle : float
@@ -969,23 +1059,62 @@ class DataSet(DataSetFilters, DataObject):
             When ``True``, all input vectors are
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
-        """
-        if point is None:
-            point = (0.0, 0.0, 0.0)
-        if len(vector) != 3:
-            raise ValueError('Vector must be a vector of 3 values.')
-        if len(point) != 3:
-            raise ValueError('Point must be a vector of 3 values.')
-        t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
 
-    def translate(self, xyz: Union[list, tuple, np.ndarray]):
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the ``(1, 1, 1)`` axis.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> rot = mesh.rotate_vector((1, 1, 1), 30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        check_valid_vector(vector)
+        check_valid_vector(point, "point")
+        t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+
+    def translate(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Translate the mesh.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
         xyz : list or tuple or np.ndarray
             Length 3 list, tuple or array.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Translated dataset.
 
         Examples
         --------
@@ -995,20 +1124,40 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = pyvista.Sphere()
         >>> mesh.center
         [0.0, 0.0, 0.0]
-        >>> mesh.translate((2, 1, 2))
-        >>> mesh.center
+        >>> trans = mesh.translate((2, 1, 2), inplace=False)
+        >>> trans.center
         [2.0, 1.0, 2.0]
 
         """
-        self.points += np.asarray(xyz)  # type: ignore
+        transform = _vtk.vtkTransform()
+        transform.Translate(xyz)
+        return self.transform(transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def scale(self, xyz: Union[list, tuple, np.ndarray]):
+    def scale(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
         """Scale the mesh.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
         xyz : scale factor list or tuple or np.ndarray
             Length 3 list, tuple or array.
+
+        transform_all_input_vectors : bool, optional
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Scaled dataset.
 
         Examples
         --------
@@ -1023,15 +1172,21 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.subplot(0, 1)
         >>> pl.show_axes()
         >>> _ = pl.show_grid()
-        >>> mesh2 = mesh1.copy()
-        >>> mesh2.scale([10.0, 10.0, 10.0])
+        >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
-        self.points *= np.asarray(xyz)  # type: ignore
+        transform = _vtk.vtkTransform()
+        transform.Scale(xyz)
+        return self.transform(transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def flip_x(self, point=None, transform_all_input_vectors=False):
+    def flip_x(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the x-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -1044,6 +1199,14 @@ class DataSet(DataSetFilters, DataObject):
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
+
         Examples
         --------
         >>> import pyvista
@@ -1055,8 +1218,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh1)
         >>> pl.subplot(0, 1)
         >>> pl.show_axes()
-        >>> mesh2 = mesh1.copy()
-        >>> mesh2.flip_x()
+        >>> mesh2 = mesh1.flip_x(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
@@ -1064,10 +1226,15 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((1, 0, 0), point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def flip_y(self, point=None, transform_all_input_vectors=False):
+    def flip_y(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the y-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -1080,6 +1247,14 @@ class DataSet(DataSetFilters, DataObject):
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
+
         Examples
         --------
         >>> import pyvista
@@ -1091,8 +1266,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh1)
         >>> pl.subplot(0, 1)
         >>> pl.show_axes()
-        >>> mesh2 = mesh1.copy()
-        >>> mesh2.flip_y()
+        >>> mesh2 = mesh1.flip_y(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
@@ -1100,10 +1274,15 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 1, 0), point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def flip_z(self, point=None, transform_all_input_vectors=False):
+    def flip_z(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the z-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -1116,6 +1295,14 @@ class DataSet(DataSetFilters, DataObject):
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
+
         Examples
         --------
         >>> import pyvista
@@ -1127,8 +1314,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh1)
         >>> pl.subplot(0, 1)
         >>> pl.show_axes()
-        >>> mesh2 = mesh1.copy()
-        >>> mesh2.flip_z()
+        >>> mesh2 = mesh1.flip_z(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
@@ -1136,10 +1322,15 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 0, 1), point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
-    def flip_normal(self, normal: List[float], point=None, transform_all_input_vectors=False):
+    def flip_normal(self, normal: List[float], point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the normal.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
 
         Parameters
         ----------
@@ -1155,6 +1346,14 @@ class DataSet(DataSetFilters, DataObject):
             transformed. Otherwise, only the points, normals and
             active vectors are transformed.
 
+        inplace : bool, optional
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset flipped about its normal.
+
         Examples
         --------
         >>> import pyvista
@@ -1166,8 +1365,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh1)
         >>> pl.subplot(0, 1)
         >>> pl.show_axes()
-        >>> mesh2 = mesh1.copy()
-        >>> mesh2.flip_normal([1.0, 1.0, 1.0])
+        >>> mesh2 = mesh1.flip_normal([1.0, 1.0, 1.0], inplace=False)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show(cpos="xy")
         """
@@ -1176,7 +1374,7 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(normal, 'normal')
         check_valid_vector(point, 'point')
         t = transformations.reflection(normal, point=point)
-        self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=True)
+        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
 
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object.
@@ -1436,10 +1634,10 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def bounds(self) -> List[float]:
+    def bounds(self) -> Tuple[float, float, float, float, float, float]:
         """Return the bounding box of this dataset.
 
-        The form is: ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+        The form is: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -1448,10 +1646,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista
         >>> cube = pyvista.Cube()
         >>> cube.bounds
-        [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
+        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
         """
-        return list(self.GetBounds())
+        return self.GetBounds()
 
     @property
     def length(self) -> float:
@@ -1488,16 +1686,16 @@ class DataSet(DataSetFilters, DataObject):
         return list(self.GetCenter())
 
     @property
-    def extent(self) -> Optional[list]:
+    def extent(self) -> Optional[tuple]:
         """Return the range of the bounding box."""
         try:
-            _extent = list(self.GetExtent())
+            _extent = self.GetExtent()
         except AttributeError:
             return None
         return _extent
 
     @extent.setter
-    def extent(self, extent: List[float]):
+    def extent(self, extent: Sequence[float]):
         """Set the range of the bounding box."""
         if hasattr(self, 'SetExtent'):
             if len(extent) != 6:
@@ -1853,6 +2051,13 @@ class DataSet(DataSetFilters, DataObject):
         int
             The index of the point in this mesh that is closest to the given point.
 
+        See Also
+        --------
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
+
         Examples
         --------
         Find the index of the closest point to ``(0, 1, 0)``.
@@ -1885,25 +2090,45 @@ class DataSet(DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)
 
-    def find_closest_cell(self, point: Union[int, np.ndarray]) -> Union[int, np.ndarray]:
+    def find_closest_cell(self,
+                          point: Union[Sequence, np.ndarray],
+                          return_closest_point: bool=False,
+                          ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
         ----------
-        point : iterable(float) or np.ndarray
+        point : Sequence(float) or np.ndarray
             Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
             points with shape ``(n, 3)``.
+
+        return_closest_point : bool, optional
+            If ``True``, the closest point within a mesh cell to that point is
+            returned.  This is not necessarily the closest nodal point on the
+            mesh.  Default is ``False``.
 
         Returns
         -------
         int or numpy.ndarray
-            Index or indices of the cell in this mesh that is closest
-            to the given point.
+            Index or indices of the cell in this mesh that is/are closest
+            to the given point(s).
+
+        numpy.ndarray
+            Point or points inside a cell of the mesh that is/are closest
+            to the given point(s).  Only returned if
+            ``return_closest_point=True``.
 
         Warnings
         --------
         This method may still return a valid cell index even if the point
         contains a value like ``numpy.inf`` or ``numpy.nan``.
+
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
 
         Examples
         --------
@@ -1935,38 +2160,148 @@ class DataSet(DataSetFilters, DataObject):
         >>> indices.shape
         (5000,)
 
+        For the closest cell, find the point inside the cell that is
+        closest to the supplied point.  The rectangle is a unit square
+        with 1 cell and 4 nodal points at the corners in the plane with
+        ``z`` normal and ``z=0``.  The closest point inside the cell is
+        not usually at a nodal point.
+
+        >>> unit_square = pyvista.Rectangle()
+        >>> index, closest_point = unit_square.find_closest_cell(
+        ...     [0.25, 0.25, 0.5],
+        ...     return_closest_point=True
+        ... )
+        >>> closest_point
+        array([0.25, 0.25, 0.  ])
+
+        But, the closest point can be a nodal point, although the index of
+        that point is not returned.  If the closest nodal point by index is
+        desired, see :func:`DataSet.find_closest_point`.
+
+        >>> index, closest_point = unit_square.find_closest_cell(
+        ...     [1.0, 1.0, 0.5],
+        ...     return_closest_point=True
+        ... )
+        >>> closest_point
+        array([1., 1., 0.])
+
         """
         if isinstance(point, collections.abc.Sequence):
             point = np.array(point)
         # check if this is an array of points
         if isinstance(point, np.ndarray):
             if point.ndim > 2:
-                raise ValueError("Array of points must be 2D")
+                raise ValueError("Array of points must be 1D or 2D")
             if point.ndim == 2:
                 if point.shape[1] != 3:
-                    raise ValueError("Array of points must have three values per point")
+                    raise ValueError("Array of points must have three values per point"
+                                     "(shape (n, 3))")
             else:
                 if point.size != 3:
                     raise ValueError("Given point must have three values")
                 point = np.array([point])
         else:
-            raise TypeError("Given point must be an iterable or an array.")
+            raise TypeError("Given point must be a sequence or an array.")
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
 
         cell = _vtk.vtkGenericCell()
-        closest_point = [0, 0, 0]
-        cellId = _vtk.mutable(0)
-        subld = _vtk.mutable(0)
-        dist2 = _vtk.mutable(0.0)
 
-        closest_cells = []
+        closest_cells: List[int] = []
+        closest_points: List[List[float]] = []
+
         for node in point:
-            locator.FindClosestPoint(node, closest_point, cell, cellId, subld, dist2)
-            closest_cells.append(int(cellId))
-        return closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
+            closest_point = [0.0, 0.0, 0.0]
+            cell_id = _vtk.mutable(0)
+            sub_id = _vtk.mutable(0)
+            dist2 = _vtk.mutable(0.0)
+
+            locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)
+            closest_cells.append(int(cell_id))
+            closest_points.append(closest_point)
+
+        out_cells: Union[int, np.ndarray] = (
+            closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
+        )
+        out_points = np.array(closest_points[0]) if len(closest_points) == 1 else np.array(closest_points)
+
+        if return_closest_point:
+            return out_cells, out_points
+        return out_cells
+
+    def find_containing_cell(self, point: Union[Sequence, np.ndarray]) -> Union[int, np.ndarray]:
+        """Find index of a cell that contains the given point.
+
+        Parameters
+        ----------
+        point : Sequence(float) or np.ndarray
+            Coordinates of point to query (length 3) or a ``numpy`` array of ``n``
+            points with shape ``(n, 3)``.
+
+        Returns
+        -------
+        int or numpy.ndarray
+            Index or indices of the cell in this mesh that contains
+            the given point.
+
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_cells_along_line
+        DataSet.find_cells_within_bounds
+
+        Examples
+        --------
+        A unit square with 16 equal sized cells is created and a cell
+        containing the point ``[0.3, 0.3, 0.0]`` is found.
+
+        >>> import pyvista
+        >>> mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
+        >>> mesh
+        UniformGrid...
+        >>> mesh.find_containing_cell([0.3, 0.3, 0.0])
+        5
+
+        A point outside the mesh domain will return ``-1``.
+
+        >>> mesh.find_containing_cell([0.3, 0.3, 1.0])
+        -1
+
+        Find the cells that contain 1000 random points inside the mesh.
+
+        >>> import numpy as np
+        >>> points = np.random.random((1000, 3))
+        >>> indices = mesh.find_containing_cell(points)
+        >>> indices.shape
+        (1000,)
+
+        """
+        if isinstance(point, collections.abc.Sequence):
+            point = np.array(point)
+        # check if this is an array of points
+        if isinstance(point, np.ndarray):
+            if point.ndim > 2:
+                raise ValueError("Array of points must be 1D or 2D")
+            if point.ndim == 2:
+                if point.shape[1] != 3:
+                    raise ValueError("Array of points must have three values per point "
+                                     "(shape (n, 3))")
+            else:
+                if point.size != 3:
+                    raise ValueError("Given point must have three values")
+                point = np.array([point])
+        else:
+            raise TypeError("Given point must be a sequence or an array.")
+
+        locator = _vtk.vtkCellLocator()
+        locator.SetDataSet(self)
+        locator.BuildLocator()
+
+        containing_cells = [locator.FindCell(node) for node in point]
+        return containing_cells[0] if len(containing_cells) == 1 else np.array(containing_cells)
 
     def find_cells_along_line(
         self,
@@ -1994,6 +2329,13 @@ class DataSet(DataSetFilters, DataObject):
         numpy.ndarray
             Index or indices of the cell in this mesh that are closest
             to the given point.
+
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_within_bounds
 
         Examples
         --------
@@ -2026,6 +2368,13 @@ class DataSet(DataSetFilters, DataObject):
         numpy.ndarray
             Index or indices of the cell in this mesh that are closest
             to the given point.
+
+        See Also
+        --------
+        DataSet.find_closest_point
+        DataSet.find_closest_cell
+        DataSet.find_containing_cell
+        DataSet.find_cells_along_line
 
         Examples
         --------
@@ -2096,7 +2445,7 @@ class DataSet(DataSetFilters, DataObject):
         points = _vtk.vtk_to_numpy(points)
         return points.copy()
 
-    def cell_bounds(self, ind: int) -> List[float]:
+    def cell_bounds(self, ind: int) -> Tuple[float, float, float, float, float, float]:
         """Return the bounding box of a cell.
 
         Parameters
@@ -2106,7 +2455,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        list(float)
+        tuple(float)
             The limits of the cell in the X, Y and Z directions respectivelly.
 
         Examples
@@ -2114,10 +2463,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
         >>> mesh.cell_bounds(0)
-        [896.9940185546875, 907.5390014648438, 48.760101318359375, 55.49020004272461, 80.74520111083984, 83.65809631347656]
+        (896.9940185546875, 907.5390014648438, 48.760101318359375, 55.49020004272461, 80.74520111083984, 83.65809631347656)
 
         """
-        return list(self.GetCell(ind).GetBounds())
+        return self.GetCell(ind).GetBounds()
 
     def cell_type(self, ind: int) -> int:
         """Return the type of a cell.

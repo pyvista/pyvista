@@ -24,8 +24,8 @@ without lighting and add our light to it manually.
     plotter = pv.Plotter(lighting='none')
     plotter.background_color = 'white'
     mesh = examples.download_bunny()
-    mesh.rotate_x(90)
-    mesh.rotate_z(180)
+    mesh.rotate_x(90, inplace=True)
+    mesh.rotate_z(180, inplace=True)
     plotter.add_mesh(mesh, specular=1.0, diffuse=0.7, smooth_shading=True)
     plotter.add_light(light)
     plotter.show()
