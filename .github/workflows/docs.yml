@@ -1,6 +1,9 @@
 name: Build Documentation
 on:
   pull_request:
+    branches-ignore:
+      - 'no-ci/**'
+      - 'junk/**'
   workflow_dispatch:
     inputs:
       cache:
