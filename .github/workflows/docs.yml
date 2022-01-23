@@ -2,6 +2,11 @@ name: Build Documentation
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      cache:
+        description: 'Use build cache'
+        required: false
+        default: true
   schedule:
     - cron: "0 4 * * *"
   push:
@@ -9,6 +14,9 @@ on:
       - "*"
     branches:
       - main
+
+env:
+  DOCS_CACHE: ${{ (github.event.inputs.cache && github.event_name == 'workflow_dispatch') || github.event_name != 'workflow_dispatch'  }}
 
 jobs:
   doc:
@@ -35,6 +43,11 @@ jobs:
           pip install -r requirements_docs.txt
       - name: PyVista Report
         run: python -c "import pyvista;print(pyvista.Report())"
+      - uses: actions/cache@v2
+        if: ${{ DOCS_CACHE }}
+        with:
+          path: doc/examples/
+          key: doc-examples
       - name: Build Documentation
         run: make -C doc html SPHINXOPTS="-w build_errors.txt -N"
       - name: Check for Warnings
