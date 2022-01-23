@@ -52,13 +52,13 @@ jobs:
         id: docs_meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/docs
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/examples
 
       - name: Build and push the docs Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: docker/docs.Dockerfile
+          file: docker/examples.Dockerfile
           push: true
           tags: ${{ steps.docs_meta.outputs.tags }}
           labels: ${{ steps.docs_meta.outputs.labels }}
