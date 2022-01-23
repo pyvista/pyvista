@@ -1,5 +1,14 @@
 name: Build Documentation
-on: [pull_request, workflow_dispatch]
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *"
+  push:
+    tags:
+      - "*"
+    branches:
+      - main
 
 jobs:
   doc:
