@@ -52,10 +52,15 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags')
     steps:
+      - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
         with:
           name: docs-build
           path: html
+      - name: Copy meta data
+        run: |
+          cp doc/README.md ./html/
+          cp doc/ads.txt ./html/
       - name: Deploy on main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
