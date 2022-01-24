@@ -2265,22 +2265,7 @@ class DataSet(DataSetFilters, DataObject):
         (1000,)
 
         """
-        if isinstance(point, collections.abc.Sequence):
-            point = np.array(point)
-        # check if this is an array of points
-        if isinstance(point, np.ndarray):
-            if point.ndim > 2:
-                raise ValueError("Array of points must be 1D or 2D")
-            if point.ndim == 2:
-                if point.shape[1] != 3:
-                    raise ValueError("Array of points must have three values per point "
-                                     "(shape (n, 3))")
-            else:
-                if point.size != 3:
-                    raise ValueError("Given point must have three values")
-                point = np.array([point])
-        else:
-            raise TypeError("Given point must be a sequence or an array.")
+        point = _coerce_points_like_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)

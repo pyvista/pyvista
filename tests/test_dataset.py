@@ -907,34 +907,17 @@ def test_find_closest_cell_surface_point():
 def test_find_containing_cell():
     mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
     node = np.array([0.3, 0.3, 0.0])
-
-    with pytest.raises(ValueError):
-        mesh.find_containing_cell([1, 2])
-
-    with pytest.raises(TypeError):
-        # allow Sequence but not Iterable
-        mesh.find_containing_cell({1, 2, 3})
-
-    # array but bad size
-    with pytest.raises(ValueError):
-        mesh.find_containing_cell(np.empty(4))
-
     index = mesh.find_containing_cell(node)
     assert index == 5
 
 
 def test_find_containing_cells():
     mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
-    # invalid array dim
-    with pytest.raises(ValueError):
-        mesh.find_containing_cell(np.empty((1, 1, 1)))
-
-    # test invalid array size
-    with pytest.raises(ValueError):
-        mesh.find_containing_cell(np.empty((4, 4)))
-
-    indices = mesh.find_containing_cell([[0.3, 0.3, 0], [0.6, 0.6, 0]])
+    points = np.array([[0.3, 0.3, 0], [0.6, 0.6, 0]])
+    points_copy = points.copy()
+    indices = mesh.find_containing_cell(points)
     assert np.allclose(indices, [5, 10])
+    assert np.array_equal(points, points_copy)
 
 
 def test_find_cells_along_line():
