@@ -1457,9 +1457,8 @@ def _coerce_points_like_arg(points: Union[Sequence, np.ndarray], copy: bool=True
     copy : bool
         Whether to copy the ``points`` array.  Copying always occurs if ``points``
         is not ``np.ndarray``.
-    
-    """
 
+    """
     if isinstance(points, collections.abc.Sequence):
             points = np.asarray(points)
 

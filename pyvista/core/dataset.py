@@ -25,8 +25,8 @@ from pyvista.utilities import (
     transformations,
     vtk_id_list_to_array,
 )
-from pyvista.utilities.helpers import _coerce_points_like_arg
 from pyvista.utilities.errors import check_valid_vector
+from pyvista.utilities.helpers import _coerce_points_like_arg
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 from .._typing import Vector
