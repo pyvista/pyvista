@@ -1,4 +1,4 @@
-# TODO: This file really should be named test_dataset.py
+"""Tests for pyvista.core.dataset."""
 
 import pickle
 
