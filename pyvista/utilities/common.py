@@ -5,7 +5,8 @@ from typing import Sequence, Union
 import numpy as np
 
 
-def _coerce_points_like_arg(points: Union[Sequence, np.ndarray], copy: bool=True):
+def _coerce_points_like_arg(points: Union[Sequence, np.ndarray],
+                            copy: bool=True) -> np.ndarray:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
