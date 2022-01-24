@@ -333,7 +333,7 @@ sphinx_gallery_conf = {
         "from pyvista import set_plot_theme\n"
         "set_plot_theme('document')\n"
     ),
-    "reset_modules": (reset_pyvista, ),
+    # "reset_modules": (reset_pyvista, ),
     "reset_modules_order": "both",
 }
 
