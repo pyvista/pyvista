@@ -1447,6 +1447,7 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
     return texture
 
+
 def _coerce_points_like_arg(points: Union[Sequence, np.ndarray], copy: bool=True):
     """Check and coerce arg to (n, 3) np.ndarray.
 
