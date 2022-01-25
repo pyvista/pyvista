@@ -25,7 +25,7 @@ from pyvista.utilities import (
     transformations,
     vtk_id_list_to_array,
 )
-from pyvista.utilities.common import _coerce_points_like_arg
+from pyvista.utilities.common import PointLike, _coerce_points_like_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
@@ -2092,7 +2092,7 @@ class DataSet(DataSetFilters, DataObject):
         return locator.FindClosestPoint(point)
 
     def find_closest_cell(self,
-                          point: Union[Sequence, np.ndarray],
+                          point: PointLike,
                           return_closest_point: bool=False,
                           ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
@@ -2217,7 +2217,7 @@ class DataSet(DataSetFilters, DataObject):
             return out_cells, out_points
         return out_cells
 
-    def find_containing_cell(self, point: Union[Sequence, np.ndarray]) -> Union[int, np.ndarray]:
+    def find_containing_cell(self, point: PointLike) -> Union[int, np.ndarray]:
         """Find index of a cell that contains the given point.
 
         Parameters
