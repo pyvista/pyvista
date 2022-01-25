@@ -29,19 +29,35 @@ jobs:
       SHELLOPTS: 'errexit:pipefail'
     steps:
       - uses: actions/checkout@v2
+
       - uses: actions/setup-python@v2
         with:
           python-version: '3.8'
+
+      - name: Cache Python Virtual Enviornment
+        uses: actions/cache@v2
+        if: env.USE_CACHE
+        with:
+          key: pythonvenv-${{ hashFiles('requirements_docs.txt') }}
+
+      - uses: syphar/restore-virtualenv@v1
+        id: cache-virtualenv
+        with:
+          requirement_files: requirements_docs.txt
+
+      - name: Install OS Packages
+        run: sudo apt-get install libosmesa6-dev libgl1-mesa-dev python3-tk pandoc
+
       - name: Install OSMesa VTK
-        run: |
-          sudo apt-get install libosmesa6-dev libgl1-mesa-dev
-          pip install https://github.com/pyvista/pyvista-wheels/raw/add_v9_1_0/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
+        run: pip install https://github.com/pyvista/pyvista-wheels/raw/add_v9_1_0/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
+
       - name: Install PyVista
         run: pip install -e .
+
       - name: Install Dependencies
-        run: |
-          sudo apt-get install python3-tk pandoc
-          pip install -r requirements_docs.txt
+        if: steps.cache-virtualenv.outputs.cache-hit != 'true'
+        run: pip install -r requirements_docs.txt
+
       - name: PyVista Report
         run: |
           python -c "import pyvista;print(pyvista.Report())"
@@ -53,12 +69,14 @@ jobs:
         with:
           path: doc/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
+
       - name: Cache docs _build directory
         uses: actions/cache@v2
         if: env.USE_CACHE
         with:
           path: doc/_build/
-          key: doc-_build-${{ hashFiles('pyvista/_version.py') }}
+          key: doc-_build-${{ hashFiles('pyvista/_version.py') }}-${{ hashFiles('doc/conf.py') }}
+
       - name: Cache example data
         uses: actions/cache@v2
         if: env.USE_CACHE
@@ -68,14 +86,18 @@ jobs:
 
       - name: Build Documentation
         run: make -C doc html SPHINXOPTS="-w build_errors.txt -N"
+
       - name: Check for Warnings
         run: python doc/print_errors.py
+
       - name: Tar build
         run: tar -zcvf docs-build.tar.gz doc/_build/
+
       - uses: actions/upload-artifact@v2
         with:
           name: docs-build
           path: docs-build.tar.gz
+
       - uses: actions/upload-artifact@v2
         with:
           name: examples
