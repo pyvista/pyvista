@@ -34,12 +34,6 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name: Cache Python Virtual Enviornment
-        uses: actions/cache@v2
-        if: env.USE_CACHE
-        with:
-          key: pythonvenv-${{ hashFiles('requirements_docs.txt') }}
-
       - uses: syphar/restore-virtualenv@v1
         id: cache-virtualenv
         with:
