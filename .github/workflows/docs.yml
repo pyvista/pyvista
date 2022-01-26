@@ -29,6 +29,8 @@ jobs:
       SHELLOPTS: 'errexit:pipefail'
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v2
         with:
@@ -40,13 +42,15 @@ jobs:
           requirement_files: requirements_docs.txt
 
       - name: Install OS Packages
-        run: sudo apt-get install libosmesa6-dev libgl1-mesa-dev python3-tk pandoc
+        run: sudo apt-get install libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
 
       - name: Install OSMesa VTK
         run: pip install https://github.com/pyvista/pyvista-wheels/raw/add_v9_1_0/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
 
       - name: Install PyVista
-        run: pip install -e .
+        run: |
+          pip install -e .
+          git restore-mtime
 
       - name: Install Dependencies
         if: steps.cache-virtualenv.outputs.cache-hit != 'true'

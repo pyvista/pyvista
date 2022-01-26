@@ -289,14 +289,25 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
-def reset_pyvista(gallery_conf, fname):
-    """Reset pyvista module to default settings
+# using class rather than function to have a stable repr.
+# see https://github.com/pyvista/pyvista/pull/1910
+class ResetPyvista:
+    """Reset pyvista module to default settings."""
 
-    If default documentation settings are modified in any example, reset here.
-    """
-    import pyvista
-    pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
-    pyvista.set_plot_theme('document')
+    def __call__(self):
+        """Reset pyvista module to default settings
+
+        If default documentation settings are modified in any example, reset here.
+        """
+        import pyvista
+        pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+        pyvista.set_plot_theme('document')
+
+    def __repr__(self):
+        return 'ResetPyvista'
+
+
+reset_pyvista = ResetPyvista()
 
 
 # skip building the osmnx example if osmnx is not installed
@@ -333,7 +344,7 @@ sphinx_gallery_conf = {
         "from pyvista import set_plot_theme\n"
         "set_plot_theme('document')\n"
     ),
-    # "reset_modules": (reset_pyvista, ),
+    "reset_modules": (reset_pyvista, ),
     "reset_modules_order": "both",
 }
 
