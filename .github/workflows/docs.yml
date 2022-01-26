@@ -171,19 +171,19 @@ jobs:
       - run: ls; ls pyvista-notebooks
 
       - name: Publish notebooks on main
-        # if: startsWith(github.ref, 'refs/tags')
+        # if: github.ref == 'refs/heads/main'
         run: |
-          cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
-          rm -rf ../pyvista-examples/notebooks/
-          cp pyvista-notebooks/ ../pyvista-examples/
-          cd ../pyvista-examples/
-          git init
-          git checkout -b develop
-          git add .
-          git commit -am "GitHub Actions CI commit ref ${{ github.sha }}"
-          REMOTE="https://${{ secrets.GITHUB_TOKEN }}@github.com/pyvista/pyvista-examples"
-          git remote add origin ${REMOTE}
-          git push -uf origin main
+          cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+          rm -rf ./pyvista-examples/notebooks/
+          cp pyvista-notebooks/ ./pyvista-examples/
+      - name: Deploy on main
+        # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          external_repository: pyvista/pyvista-examples
+          github_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          publish_dir: pyvista-examples
+          publish_branch: develop
 
       # - name: Publish notebooks on release
       #   if: startsWith(github.ref, 'refs/tags')
