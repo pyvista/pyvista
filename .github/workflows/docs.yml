@@ -168,14 +168,14 @@ jobs:
         with:
           name: pyvista-notebooks
           path: .
-      - run: ls
+      - run: ls; ls pyvista-notebooks
 
       - name: Publish notebooks on main
         # if: startsWith(github.ref, 'refs/tags')
         run: |
           cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
           rm -rf ../pyvista-examples/notebooks/
-          cp _notebooks/ ../pyvista-examples/
+          cp pyvista-notebooks/ ../pyvista-examples/
           cd ../pyvista-examples/
           git init
           git checkout -b develop
@@ -190,7 +190,7 @@ jobs:
       #   run: |
       #     cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
       #     rm -rf ../pyvista-examples/notebooks/
-      #     cp _notebooks/ ../pyvista-examples/
+      #     cp pyvista-notebooks/ ../pyvista-examples/
       #     cd ../pyvista-examples/
       #     git init
       #     git add .
