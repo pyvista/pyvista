@@ -168,6 +168,7 @@ jobs:
         with:
           name: pyvista-notebooks
           path: .
+      - run: ls
 
       - name: Publish notebooks on main
         # if: startsWith(github.ref, 'refs/tags')
