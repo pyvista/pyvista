@@ -289,12 +289,10 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
-# using class rather than function to have a stable repr.
-# see https://github.com/pyvista/pyvista/pull/1910
 class ResetPyvista:
     """Reset pyvista module to default settings."""
 
-    def __call__(self):
+    def __call__(self, gallery_conf, fname):
         """Reset pyvista module to default settings
 
         If default documentation settings are modified in any example, reset here.
