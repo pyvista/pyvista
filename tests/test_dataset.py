@@ -952,11 +952,23 @@ def test_find_cells_within_bounds():
     assert len(indices) == 0
 
 
-def test_setting_points_from_self(grid):
+def test_setting_points_by_different_types(grid):
     grid_copy = grid.copy()
     grid.points = grid_copy.points
     assert np.allclose(grid.points, grid_copy.points)
 
+    grid.points = np.array(grid_copy.points)
+    assert np.allclose(grid.points, grid_copy.points)
+
+    grid.points = grid_copy.points.tolist()
+    assert np.allclose(grid.points, grid_copy.points)
+
+    pgrid = pyvista.PolyData([0., 0., 0.])
+    pgrid.points = [1., 1., 1.]
+    assert np.allclose(pgrid.points, [1., 1., 1.])
+
+    pgrid.points = np.array([2., 2., 2.])
+    assert np.allclose(pgrid.points, [2., 2., 2.])
 
 def test_empty_points():
     pdata = pyvista.PolyData()

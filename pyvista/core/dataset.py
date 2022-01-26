@@ -392,7 +392,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: np.ndarray):
+    def points(self, points: Union[pyvista_ndarray, PointLike]):
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -401,10 +401,8 @@ class DataSet(DataSetFilters, DataObject):
                 pdata.Modified()
                 self.Modified()
                 return
-
         # otherwise, wrap and use the array
-        if not isinstance(points, np.ndarray):
-            raise TypeError('Points must be a numpy array')
+        points = _coerce_points_like_arg(points)
         vtk_points = pyvista.vtk_points(points, False)
         if not pdata:
             self.SetPoints(vtk_points)
