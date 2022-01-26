@@ -127,6 +127,7 @@ jobs:
           tar -xzvf docs-build.tar.gz
       - name: Copy meta data
         run: |
+          mkdir ./html/
           cp doc/README.md ./html/
           cp doc/ads.txt ./html/
 
