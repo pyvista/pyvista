@@ -173,9 +173,8 @@ jobs:
         run: |
           cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
           rm -rf ../pyvista-examples/notebooks/
-          cd doc
-          cp _notebooks/ ../../pyvista-examples/
-          cd ../../pyvista-examples/
+          cp _notebooks/ ../pyvista-examples/
+          cd ../pyvista-examples/
           git init
           git checkout -b develop
           git add .
@@ -189,9 +188,8 @@ jobs:
       #   run: |
       #     cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
       #     rm -rf ../pyvista-examples/notebooks/
-      #     cd doc
-      #     cp _notebooks/ ../../pyvista-examples/
-      #     cd ../../pyvista-examples/
+      #     cp _notebooks/ ../pyvista-examples/
+      #     cd ../pyvista-examples/
       #     git init
       #     git add .
       #     git commit -am "GitHub Actions CI commit ref ${{ github.sha }}"
