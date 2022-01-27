@@ -127,36 +127,32 @@ jobs:
         with:
           name: docs-build
           path: .
-      # TODO: check this
       - name: Untar build
-        run: |
-          ls -l
-          tar -xzvf docs-build.tar.gz
+        run: tar -xzvf docs-build.tar.gz
       - name: Copy meta data
         run: |
-          mkdir ./html/
-          cp doc/README.md ./html/
-          cp doc/ads.txt ./html/
+          cp doc/README.md doc/_build/html/
+          cp doc/ads.txt doc/_build/html/
 
       - name: Make CNAME for dev.pyvista.org
-        run: echo "dev.pyvista.org" > ./html/CNAME
+        run: echo "dev.pyvista.org" > doc/_build/html/CNAME
       - name: Deploy on main
         # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
           external_repository: pyvista/pyvista-docs-dev
           personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          publish_dir: html
+          publish_dir: doc/_build/html/
 
       # - name: Make CNAME for docs.pyvista.org
-      #   run: echo "docs.pyvista.org" > ./html/CNAME
+      #   run: echo "docs.pyvista.org" > doc/_build/html//CNAME
       # - name: Deploy on release
       #   if: startsWith(github.ref, 'refs/tags')
       #   uses: peaceiris/actions-gh-pages@v3
       #   with:
       #     external_repository: pyvista/pyvista-docs
       #     personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-      #     publish_dir: html
+      #     publish_dir: doc/_build/html/
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder
