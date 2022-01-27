@@ -1,7 +1,6 @@
 Sphinx==4.4.0
 cmocean==2.0
 colorcet==3.0.0
-https://github.com/numpy/numpydoc/archive/main.zip  # need latest
 imageio-ffmpeg==0.4.5
 imageio>=2.5.0
 ipygany==0.5.0
@@ -13,6 +12,7 @@ matplotlib==3.5.1
 meshio==5.3.0
 mypy-extensions==0.4.3
 mypy==0.931
+numpydoc==1.2.0
 osmnx==1.1.2
 panel==0.12.6
 param==1.12.0  # due to panel bug

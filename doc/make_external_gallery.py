@@ -1,4 +1,5 @@
-"""A helper script to generate the external examples gallery"""
+"""A helper script to generate the external examples gallery."""
+from io import StringIO
 import os
 
 
@@ -124,11 +125,11 @@ articles = dict(
 ###############################################################################
 
 def make_example_gallery():
-    filename = "./getting-started/external_examples.rst"
-    if os.path.exists(filename):
-        os.remove(filename)
-    with open(filename, "w") as f:
-        f.write("""
+    """Make the example gallery."""
+    path = "./getting-started/external_examples.rst"
+
+    with StringIO() as new_fid:
+        new_fid.write("""
 External Examples
 =================
 
@@ -149,10 +150,10 @@ https://github.com/pyvista and we would be glad to add it!
 
 """)
         # Reverse to put the latest items at the top
-        for Example in list(articles.values())[::-1]:
-            f.write(Example.format())
+        for example in list(articles.values())[::-1]:
+            new_fid.write(example.format())
 
-        f.write("""
+        new_fid.write("""
 
 .. raw:: html
 
@@ -160,5 +161,18 @@ https://github.com/pyvista and we would be glad to add it!
 
 
 """)
+        new_fid.seek(0)
+        new_text = new_fid.read()
+
+    # check if it's necessary to overwrite the table
+    existing = ""
+    if os.path.exists(path):
+        with open(path) as existing_fid:
+            existing = existing_fid.read()
+
+    # write if different or does not exist
+    if new_text != existing:
+        with open(path, "w") as fid:
+            fid.write(new_text)
 
     return
