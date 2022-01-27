@@ -134,9 +134,6 @@ jobs:
           cp doc/README.md doc/_build/html/
           cp doc/ads.txt doc/_build/html/
 
-      - name: Make CNAME for dev.pyvista.org
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: echo "dev.pyvista.org" > doc/_build/html/CNAME
       - name: Deploy on main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
@@ -144,10 +141,8 @@ jobs:
           external_repository: pyvista/pyvista-docs-dev
           personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           publish_dir: doc/_build/html/
+          cname: dev.pyvista.org
 
-      - name: Make CNAME for docs.pyvista.org
-        if: startsWith(github.ref, 'refs/tags')
-        run: echo "docs.pyvista.org" > doc/_build/html/CNAME
       - name: Deploy on release
         if: startsWith(github.ref, 'refs/tags')
         uses: peaceiris/actions-gh-pages@v3
@@ -155,6 +150,7 @@ jobs:
           external_repository: pyvista/pyvista-docs
           personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           publish_dir: doc/_build/html/
+          cname: docs.pyvista.org
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder
