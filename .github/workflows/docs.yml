@@ -168,14 +168,13 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: pyvista-notebooks
-          path: pyvista-notebooks
-      - run: ls; ls pyvista-notebooks
+          path: .
 
       - name: Make Cookiecutter
         run: |
           cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
           rm -rf ./pyvista-examples/notebooks/
-          cp -r pyvista-notebooks/ ./pyvista-examples/
+          cp doc/examples ./pyvista-examples/
           ls -l ./pyvista-examples/
 
       - name: Publish notebooks on main
