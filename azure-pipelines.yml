@@ -24,7 +24,7 @@ jobs:
   pool:
     vmIMage: 'windows-2019'
   variables:
-    AZURE_CI_WINDOWS: 'true'
+    CI_WINDOWS: 'true'
   strategy:
     maxParallel: 4
     matrix:
