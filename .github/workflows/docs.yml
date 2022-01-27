@@ -188,7 +188,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           external_repository: pyvista/pyvista-examples
-          github_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           publish_dir: pyvista-examples
           publish_branch: develop
 
