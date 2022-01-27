@@ -5,6 +5,10 @@ on:
     branches:
       - main
   pull_request:
+    branches-ignore:
+      - 'no-ci/**'
+      - 'junk/**'
+      - 'doc/**'
 
 env:
   REGISTRY: ghcr.io

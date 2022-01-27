@@ -2,6 +2,10 @@ name: Unit Testing and Deployment
 
 on:
   pull_request:
+    branches-ignore:
+      - 'no-ci/**'
+      - 'junk/**'
+      - 'doc/**'
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
