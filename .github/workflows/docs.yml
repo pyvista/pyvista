@@ -145,7 +145,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           external_repository: pyvista/pyvista-docs-dev
-          github_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           publish_dir: html
 
       # - name: Make CNAME for docs.pyvista.org
@@ -155,7 +155,7 @@ jobs:
       #   uses: peaceiris/actions-gh-pages@v3
       #   with:
       #     external_repository: pyvista/pyvista-docs
-      #     github_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+      #     personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
       #     publish_dir: html
 
   publish-notebooks:
@@ -174,7 +174,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: pyvista-notebooks
-          path: .
+          path: pyvista-notebooks
       - run: ls; ls pyvista-notebooks
 
       - name: Publish notebooks on main
