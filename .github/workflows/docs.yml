@@ -11,10 +11,12 @@ on:
         required: false
         default: true
   schedule:
-    - cron: "0 0 1 * *"  # once a month on main
+    - cron: '0 0 1 * *'  # once a month on main
   push:
     tags:
-      - "*"
+      - '*'
+    branches:
+      - 'main'
 
 env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache) || (github.event_name != 'push' && github.event_name != 'workflow_dispatch') }}
