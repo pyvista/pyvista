@@ -89,8 +89,8 @@ jobs:
           path: /**/_autosummary/*.rst
           key: autosummary-rst-${{ hashFiles('pyvista/_version.py') }}
 
-      - name: Build Documentation
-        run: make -C doc html SPHINXOPTS="-w build_errors.txt -N"
+      # - name: Build Documentation
+      #   run: make -C doc html SPHINXOPTS="-w build_errors.txt -N"
 
       - name: Check for Warnings
         run: python doc/print_errors.py
@@ -145,7 +145,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           external_repository: pyvista/pyvista-docs-dev
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           publish_dir: html
 
       # - name: Make CNAME for docs.pyvista.org
@@ -155,7 +155,7 @@ jobs:
       #   uses: peaceiris/actions-gh-pages@v3
       #   with:
       #     external_repository: pyvista/pyvista-docs
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     github_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
       #     publish_dir: html
 
   publish-notebooks:
@@ -202,6 +202,6 @@ jobs:
       #     git init
       #     git add .
       #     git commit -am "GitHub Actions CI commit ref ${{ github.sha }}"
-      #     REMOTE="https://${{ secrets.GITHUB_TOKEN }}@github.com/pyvista/pyvista-examples"
+      #     REMOTE="https://${{ secrets.PYVISTA_BOT_TOKEN }}@github.com/pyvista/pyvista-examples"
       #     git remote add origin ${REMOTE}
       #     git push -uf origin main
