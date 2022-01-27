@@ -180,6 +180,7 @@ jobs:
           cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
           rm -rf ./pyvista-examples/notebooks/
           cp -r pyvista-notebooks/ ./pyvista-examples/
+          ls -l ./pyvista-examples/
 
       - name: Publish notebooks on main
         # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
