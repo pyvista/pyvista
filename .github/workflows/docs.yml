@@ -174,7 +174,7 @@ jobs:
         run: |
           cookiecutter -f --no-input --config-file ./doc/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
           rm -rf ./pyvista-examples/notebooks/
-          cp doc/examples ./pyvista-examples/
+          cp -r doc/examples/ ./pyvista-examples/
           ls -l ./pyvista-examples/
 
       - name: Publish notebooks on main
