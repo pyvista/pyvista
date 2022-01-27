@@ -2,7 +2,6 @@
 import warnings
 from weakref import proxy
 
-
 import numpy as np
 
 import pyvista
