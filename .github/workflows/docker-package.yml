@@ -6,9 +6,9 @@ on:
       - main
   pull_request:
     branches-ignore:
-      - 'no-ci/**'
-      - 'junk/**'
-      - 'doc/**'
+      - 'no-ci/*'
+      - 'junk/*'
+      - 'doc/*'
 
 env:
   REGISTRY: ghcr.io
