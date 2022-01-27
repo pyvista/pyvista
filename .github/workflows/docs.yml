@@ -110,7 +110,7 @@ jobs:
       - name: Get Notebooks
         run: |
           mkdir _notebooks
-          cp doc/examples/**/*.ipynb _notebooks/
+          find doc/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
       - uses: actions/upload-artifact@v2
         with:
           name: pyvista-notebooks
