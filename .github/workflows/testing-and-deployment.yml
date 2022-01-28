@@ -252,4 +252,4 @@ jobs:
         run: pip install -r requirements_test.txt
 
       - name: Test Core API
-        runt: python -m pytest --cov -v .
+        run: python -m pytest --cov -v .
