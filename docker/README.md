@@ -20,5 +20,6 @@ PyVista in Jupyter Lab!
 Clone PyVista and run the following at the top level of the project:
 
 ```bash
-docker build -t my-pyvista-jupyterlab -f docker/Dockerfile
+python setup.py sdist
+docker build -t my-pyvista-jupyterlab -f docker/jupyter.Dockerfile
 ```

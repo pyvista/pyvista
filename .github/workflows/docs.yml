@@ -1,25 +1,21 @@
 name: Build Documentation
 on:
-  pull_request:
-    branches-ignore:
-      - 'no-ci/**'
-      - 'junk/**'
-  workflow_dispatch:
+  pull_request:  # Uses cache
+  workflow_dispatch:  # Able to not use cache by user demand
     inputs:
       cache:
         description: 'Use build cache'
         required: false
         default: true
+  # No cache enabled for `schedule` and `push`
   schedule:
     - cron: '0 0 1 * *'  # once a month on main
   push:
     tags:
       - '*'
-    branches:
-      - 'main'
 
 env:
-  USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache) || (github.event_name != 'push' && github.event_name != 'workflow_dispatch') }}
+  USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') }}
 
 jobs:
   doc:
@@ -65,28 +61,28 @@ jobs:
 
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v2
-        if: env.USE_CACHE
+        if: env.USE_CACHE == 'true'
         with:
           path: doc/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache docs _build directory
         uses: actions/cache@v2
-        if: env.USE_CACHE
+        if: env.USE_CACHE == 'true'
         with:
           path: doc/_build/
           key: doc-_build-${{ hashFiles('pyvista/_version.py') }}-${{ hashFiles('doc/conf.py') }}
 
       - name: Cache example data
         uses: actions/cache@v2
-        if: env.USE_CACHE
+        if: env.USE_CACHE == 'true'
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: example-data-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache autosummary
         uses: actions/cache@v2
-        if: env.USE_CACHE
+        if: env.USE_CACHE == 'true'
         with:
           path: /**/_autosummary/*.rst
           key: autosummary-rst-${{ hashFiles('pyvista/_version.py') }}
