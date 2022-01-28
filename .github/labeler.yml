@@ -2,3 +2,14 @@ documentation:
 - doc/*
 - examples/*
 - examples_flask/*
+maintenance:
+- maint/*
+- ci/*
+- no-ci/*
+- testing/*
+ignore-for-release:
+- junk/*
+enhancement:
+- feat/*
+bug:
+- fix/*
