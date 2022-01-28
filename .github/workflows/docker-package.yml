@@ -14,6 +14,10 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository )
+    strategy:
+      fail-fast: false
+      matrix:
+        docker-file: [slim, jupyter]
     steps:
       - uses: actions/checkout@v2
 
@@ -37,13 +41,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.docker-file }}
 
       - name: Build and push the Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: docker/jupyter.Dockerfile
+          file: docker/${{ matrix.docker-file }}.Dockerfile
           push: ${{ github.actor != 'dependabot[bot]' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
