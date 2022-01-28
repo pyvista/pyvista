@@ -255,8 +255,6 @@ jobs:
           chcp 65001 #set code page to utf-8
           echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")) >> $env:GITHUB_ENV
 
-      - run: echo "${{ env.PYVISTA_EXAMPLE_DATA_PATH }}"
-
       - name: Cache example data
         uses: actions/cache@v2
         with:
