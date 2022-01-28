@@ -19,9 +19,6 @@ PyVista
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
-.. |azure| image:: https://dev.azure.com/pyvista/PyVista/_apis/build/status/pyvista.pyvista?branchName=main
-   :target: https://dev.azure.com/pyvista/PyVista/_build/latest?definitionId=3&branchName=main
-
 .. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
    :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
 
@@ -49,7 +46,7 @@ PyVista
 +----------------------+-----------+------------+
 | Deployment           | |pypi|    |   |conda|  |
 +----------------------+-----------+------------+
-| Build Status         | |azure|   |   |GH-CI|  |
+| Build Status         | |GH-CI|                |
 +----------------------+-----------+------------+
 | Metrics              | |codacy|  |  |codecov| |
 +----------------------+-----------+------------+
