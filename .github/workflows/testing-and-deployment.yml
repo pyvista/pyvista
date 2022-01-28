@@ -212,6 +212,7 @@ jobs:
           TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
   windows:
+    name: Windows Unit Testing
     runs-on: windows-2019
     env:
       CI_WINDOWS: true
