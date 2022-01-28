@@ -3,9 +3,6 @@ name: Style and Docstring Check
 
 on:
   pull_request:
-    branches-ignore:
-      - 'no-ci/**'
-      - 'junk/**'
   workflow_dispatch:
 
 jobs:
