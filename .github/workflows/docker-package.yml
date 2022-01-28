@@ -13,7 +13,8 @@ env:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository )
+    # For Pull Requests, only runs from `feat`, `fix`, `patch`, or `dependabot`
+    if: github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (startsWith(github.ref, 'refs/heads/feat') || startsWith(github.ref, 'refs/heads/fix') || startsWith(github.ref, 'refs/heads/patch') || startsWith(github.ref, 'refs/heads/dependabot')) )
     steps:
       - uses: actions/checkout@v2
 
