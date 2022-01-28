@@ -248,11 +248,12 @@ jobs:
           pip install wheel
           pip install .
           python -c "import pyvista; print(pyvista.Report(gpu=False))"
+          python -c "import pyvista; print(pyvista.EXAMPLES_PATH)"
 
       - name: Set example data path as env variable
         run: |
           chcp 65001 #set code page to utf-8
-          echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")) >> $GITHUB_ENV
+          echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")) >> $env:GITHUB_ENV
 
       - run: echo "${{ env.PYVISTA_EXAMPLE_DATA_PATH }}"
 
