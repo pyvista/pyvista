@@ -227,13 +227,21 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # TODO: cache virtual environment (pip)
-      # - name: Store pip cache path and pyvista version
-      #   run: |
-      #     $PIP_CACHE_PATH = (pip cache dir) | Out-String
-      #     echo "##vso[task.setvariable variable=PIP_CACHE_PATH]$PIP_CACHE_PATH"
-      #     $PYVISTA_VERSION = $(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)") | Out-String
-      #     echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+
+      - name: Set pip cache dir as env variable
+        run: |
+          chcp 65001 #set code page to utf-8
+          echo ("PIP_CACHE_DIR=" + $(pip cache dir)) >> $env:GITHUB_ENV
+
+      - name: Restore pip cache dir
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: Python-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements_test.txt') }}
+          restore-keys: |
+            Python-${{ runner.os }}-${{ matrix.python-version }}
 
       - name: Install OpenGL
         run: |
