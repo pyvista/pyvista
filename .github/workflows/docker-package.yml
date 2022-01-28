@@ -14,7 +14,7 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     # For Pull Requests, only runs from `docker`, `feat`, `fix`, `patch`, or `dependabot`
-    if: github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (startsWith(github.ref, 'refs/heads/feat') || startsWith(github.ref, 'refs/heads/fix') || startsWith(github.ref, 'refs/heads/patch') || startsWith(github.ref, 'refs/heads/dependabot') || startsWith(github.ref, 'refs/heads/docker') )
+    if: github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (startsWith(github.ref, 'refs/heads/feat') || startsWith(github.ref, 'refs/heads/fix') || startsWith(github.ref, 'refs/heads/patch') || startsWith(github.ref, 'refs/heads/dependabot') || startsWith(github.ref, 'refs/heads/docker') ))
     steps:
       - uses: actions/checkout@v2
 
