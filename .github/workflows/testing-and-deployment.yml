@@ -11,6 +11,10 @@ on:
     branches:
       - main
 
+env:
+  ALLOW_PLOTTING: true
+  SHELLOPTS: 'errexit:pipefail'
+
 jobs:
   macOS:
     runs-on: macos-latest
@@ -18,10 +22,6 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.7', '3.8']
-
-    env:
-      ALLOW_PLOTTING: true
-      SHELLOPTS: 'errexit:pipefail'
 
     steps:
       - uses: actions/checkout@v2
@@ -140,9 +140,6 @@ jobs:
         include:
           - python-version: '3.9'
             vtk-version: '9.0.3'
-    env:
-      SHELLOPTS: 'errexit:pipefail'
-
     steps:
       - uses: actions/checkout@v2
         with:
@@ -217,8 +214,6 @@ jobs:
   windows:
     runs-on: windows-2019
     env:
-      ALLOW_PLOTTING: true
-      SHELLOPTS: 'errexit:pipefail'
       CI_WINDOWS: true
     strategy:
       fail-fast: false
