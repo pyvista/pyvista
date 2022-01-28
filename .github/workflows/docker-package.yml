@@ -1,5 +1,6 @@
 name: Docker Package
 on:
+  workflow_dispatch:
   push:
     tags: "*"
     branches:
