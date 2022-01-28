@@ -61,7 +61,6 @@ jobs:
         with:
           context: .
           file: docker/slim.Dockerfile
-          push: false
-          # TODO ${{ github.actor != 'dependabot[bot]' }}
+          push: ${{ github.actor != 'dependabot[bot]' }}
           tags: ${{ steps.slim_meta.outputs.tags }}
           labels: ${{ steps.slim_meta.outputs.labels }}
