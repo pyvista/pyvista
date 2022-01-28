@@ -134,8 +134,8 @@ jobs:
     name: Linux Unit Testing
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        fail-fast: false
         python-version: ['3.6', '3.7', '3.8', '3.9']
         vtk-version: ['latest']
         include:
