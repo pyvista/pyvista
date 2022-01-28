@@ -228,6 +228,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # TODO: cache virtual environment (pip)
       # - name: Store pip cache path and pyvista version
       #   run: |
       #     $PIP_CACHE_PATH = (pip cache dir) | Out-String
@@ -248,6 +249,8 @@ jobs:
           pip install wheel
           pip install .
           python -c "import pyvista; print(pyvista.Report(gpu=False))"
+
+      # TODO: cache PyVista example data
 
       - name: Install test dependencies
         run: pip install -r requirements_test.txt
