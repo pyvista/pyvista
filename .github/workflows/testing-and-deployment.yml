@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - run: echo ${{ startsWith(github.ref, 'refs/heads/no-ci') }}
+      - run: echo ${{ startsWith(github.ref, 'refs/heads/no-ci') == 'false' }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
