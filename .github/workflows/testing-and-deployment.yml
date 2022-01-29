@@ -15,6 +15,7 @@ env:
   ALLOW_PLOTTING: true
   SHELLOPTS: 'errexit:pipefail'
 
+
 jobs:
   macOS:
     runs-on: macos-latest
