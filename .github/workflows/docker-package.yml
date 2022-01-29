@@ -1,5 +1,6 @@
-name: Docker Package
+name: Build and Publish Docker Image
 on:
+  workflow_dispatch:
   push:
     tags: "*"
     branches:
@@ -12,8 +13,10 @@ env:
 
 jobs:
   build-and-publish:
+    name: Build and Publish Docker Image
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository )
+    # For Pull Requests, only runs from `docker`, `feat`, `fix`, `patch`, or `dependabot`
+    if: github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (startsWith(github.ref, 'refs/heads/feat') || startsWith(github.ref, 'refs/heads/fix') || startsWith(github.ref, 'refs/heads/patch') || startsWith(github.ref, 'refs/heads/dependabot') || startsWith(github.ref, 'refs/heads/docker') ))
     steps:
       - uses: actions/checkout@v2
 
@@ -33,17 +36,33 @@ jobs:
           username: token
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for the Docker image
-        id: meta
+      - name: Extract metadata for the Jupyter Docker image
+        id: jupyter_meta
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
-      - name: Build and push the Docker image
+      - name: Build and push the Jupyter Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: docker/Dockerfile
+          file: docker/jupyter.Dockerfile
           push: ${{ github.actor != 'dependabot[bot]' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.jupyter_meta.outputs.tags }}
+          labels: ${{ steps.jupyter_meta.outputs.labels }}
+
+      - name: Extract metadata for the Slim Docker image
+        id: slim_meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+            suffix=-slim,onlatest=true
+      - name: Build and push the Slim Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: docker/slim.Dockerfile
+          push: ${{ github.actor != 'dependabot[bot]' }}
+          tags: ${{ steps.slim_meta.outputs.tags }}
+          labels: ${{ steps.slim_meta.outputs.labels }}

@@ -1,11 +1,38 @@
 name: "Pull Request Labeler"
 on:
-- pull_request_target
+  pull_request_target:
+    types: [opened, reopened]
 
 jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/labeler@v3
+    - name: Label based on changed files
+      uses: actions/labeler@v3
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        # https://github.com/actions/labeler/issues/112#issuecomment-1000491676
+        sync-labels: ''
+
+    # Label based on branch name
+    - uses: actions-ecosystem/action-add-labels@v1
+      if: startsWith(github.ref, 'refs/heads/doc')
+      with:
+        labels: documentation
+    - uses: actions-ecosystem/action-add-labels@v1
+      if: startsWith(github.ref, 'refs/heads/maint') || startsWith(github.ref, 'refs/heads/no-ci') || startsWith(github.ref, 'refs/heads/ci')
+      with:
+        labels: maintenance
+    - uses: actions-ecosystem/action-add-labels@v1
+      if: startsWith(github.ref, 'refs/heads/junk')
+      with:
+        labels: ignore-for-release
+    - uses: actions-ecosystem/action-add-labels@v1
+      if: startsWith(github.ref, 'refs/heads/feat')
+      with:
+        labels: enhancement
+
+    - uses: actions-ecosystem/action-add-labels@v1
+      if: startsWith(github.ref, 'refs/heads/fix') || startsWith(github.ref, 'refs/heads/patch')
+      with:
+        labels: bug-fix
