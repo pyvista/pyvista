@@ -20,8 +20,6 @@ env:
 jobs:
   doc:
     name: Build Documentation
-    # Skip if branch is `no-ci/*`
-    if: startsWith(github.ref, 'refs/heads/no-ci') == 'false'
     runs-on: ubuntu-latest
     env:
       PYVISTA_OFF_SCREEN: 'True'
