@@ -1,9 +1,7 @@
 # check spelling, codestyle
 name: Style and Docstring Check
 
-on:
-  pull_request:
-  workflow_dispatch:
+on: [pull_request, workflow_dispatch]
 
 jobs:
   stylecheck:
