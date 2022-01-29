@@ -20,15 +20,13 @@ jobs:
     runs-on: macos-latest
     name: Mac OS Unit Testing
     # Skip if branch is `no-ci/*`
-    # if: startsWith(github.ref, 'refs/heads/no-ci') == 'false'
+    if: startsWith(github.ref, 'refs/heads/no-ci') == false
     strategy:
       matrix:
         python-version: ['3.7', '3.8']
 
     steps:
       - uses: actions/checkout@v2
-
-      - run: echo ${{ startsWith(github.ref, 'refs/heads/no-ci') == false }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
@@ -65,7 +63,7 @@ jobs:
   LinuxConda:
     runs-on: ubuntu-latest
     # Skip if branch is `no-ci/*`
-    if: startsWith(github.ref, 'refs/heads/no-ci') == 'false'
+    if: startsWith(github.ref, 'refs/heads/no-ci') == false
     env:
       CONDA_ALWAYS_YES: 1
       VTK_VERSION: 8.2
@@ -140,7 +138,7 @@ jobs:
     name: Linux Unit Testing
     runs-on: ubuntu-latest
     # Skip if branch is `no-ci/*`
-    if: startsWith(github.ref, 'refs/heads/no-ci') == 'false'
+    if: startsWith(github.ref, 'refs/heads/no-ci') == false
     strategy:
       fail-fast: false
       matrix:
@@ -222,6 +220,8 @@ jobs:
   windows:
     name: Windows Unit Testing
     runs-on: windows-2019
+    # Skip if branch is `no-ci/*`
+    if: startsWith(github.ref, 'refs/heads/no-ci') == false
     env:
       CI_WINDOWS: true
     strategy:
