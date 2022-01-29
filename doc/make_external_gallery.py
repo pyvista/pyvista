@@ -118,7 +118,7 @@ articles = dict(
     ptera_software=Example(title="PteraSoftware",
         description="Ptera Software is a fast, easy-to-use, and open-source software package for analyzing flapping-wing flight.",
         link="https://github.com/camurban/pterasoftware",
-        image=" ptera_software.gif"),
+        image="ptera_software.gif"),
     # entry=Example(title="",
     #     description="",
     #     link="",
