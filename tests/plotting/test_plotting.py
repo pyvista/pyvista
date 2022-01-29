@@ -52,8 +52,8 @@ IMAGE_CACHE_DIR = os.path.join(THIS_PATH, 'image_cache')
 if not os.path.isdir(IMAGE_CACHE_DIR):
     os.mkdir(IMAGE_CACHE_DIR)
 
-# always set on azure CI
-AZURE_CI_WINDOWS = os.environ.get('AZURE_CI_WINDOWS', 'false').lower() == 'true'
+# always set on Windows CI
+CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
 skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 
@@ -183,7 +183,7 @@ def test_export_gltf(tmpdir, sphere, airplane):
 
 @skip_not_vtk9
 @skip_windows
-@pytest.mark.skipif(AZURE_CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
+@pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere):
     """Test PBR rendering"""
     texture = examples.load_globe_texture()
