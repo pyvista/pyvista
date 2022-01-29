@@ -70,9 +70,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install headless display
-        run: |
-          .ci/setup_headless_display.sh
+      - name: Setup Xvfb
+        uses: pyvista/setup-headless-display-action
 
       - name: Cache Conda
         uses: actions/cache@v1
