@@ -5,6 +5,8 @@ on:
     types:
       - opened
   issues:
+    types:
+      - opened
 
 jobs:
   greeting:
