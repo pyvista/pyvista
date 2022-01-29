@@ -1,3 +1,4 @@
+from io import StringIO
 import os
 
 import pyvista as pv
@@ -7,14 +8,28 @@ IMAGE_DIR = "images/charts"
 
 
 def make_table(file_name, header, get_token_row, tokens):
+    """Write a table to disk."""
     path = f"{TABLE_DIR}/{file_name}.rst"
-    if os.path.exists(path):
-        os.remove(path)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(header)
+
+    with StringIO() as table_fid:
+        table_fid.write(header)
         for i, (token, data) in enumerate(tokens.items()):
             if data["descr"] is not None:
-                f.write(get_token_row(i, token, data))
+                table_fid.write(get_token_row(i, token, data))
+        table_fid.seek(0)
+        new_table = table_fid.read()
+
+    # check if it's necessary to overwrite the table
+    existing = ""
+    if os.path.exists(path):
+        with open(path) as existing_fid:
+            existing = existing_fid.read()
+
+    # write if different or does not exist
+    if new_table != existing:
+        with open(path, "w") as fid:
+            fid.write(new_table)
+
     pv.close_all()
 
 

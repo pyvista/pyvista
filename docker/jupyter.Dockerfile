@@ -1,5 +1,6 @@
 FROM jupyter/base-notebook:python-3.9.7
 LABEL maintainer="PyVista Developers"
+LABEL repo="https://github.com/pyvista/pyvista"
 
 USER root
 RUN apt-get update \
