@@ -70,7 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup Xvfb
+      - name: Setup headless display
         uses: pyvista/setup-headless-display-action
 
       - name: Cache Conda
@@ -243,13 +243,8 @@ jobs:
           restore-keys: |
             Python-${{ runner.os }}-${{ matrix.python-version }}
 
-      - name: Install OpenGL
-        run: |
-          Set-StrictMode -Version Latest
-          $ErrorActionPreference = "Stop"
-          $PSDefaultParameterValues['*:ErrorAction']='Stop'
-          git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
-          powershell gl-ci-helpers/appveyor/install_opengl.ps1
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action
 
       - name: Install PyVista
         run: |

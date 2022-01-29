@@ -47,7 +47,7 @@ To install this package with ``conda`` run::
 
     conda install -c conda-forge pyvista
 
-Installing the Current Development Branch from GitHub 
+Installing the Current Development Branch from GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There may be features or bug-fixes that have been implemented in PyVista but
 have not made their way into a release.  To install ``pyvista`` from the latest
@@ -151,9 +151,13 @@ See other examples and demos:
 
 Running on CI Services
 ~~~~~~~~~~~~~~~~~~~~~~
-Please head over to `pyvista/gl-ci-hepers`_ for details on setting up CI
+Please head over to `pyvista/setup-headless-display-action`_ for details on
+setting up a headless display in GitHub Actions Workflows using PyVista.
+
+In the past, we have also supported `pyvista/gl-ci-hepers`_ for setting up CI
 services like Travis and Azure Pipelines to run PyVista.
 
+.. _pyvista/setup-headless-display-action: https://github.com/pyvista/setup-headless-display-action
 .. _pyvista/gl-ci-hepers: https://github.com/pyvista/gl-ci-helpers
 
 
