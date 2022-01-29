@@ -54,6 +54,10 @@ the community implement that functionality. For example, if you would like a
 reader for a specific file format, please provide a link to documentation of
 that file format and possibly provide some sample files with screenshots to work
 with. We will use the issue thread as a place to discuss and provide feedback.
+We also want to know how our library is used.
+If you use this library or find a great example of
+[using pyvista](https://github.com/pyvista/pyvista/network/dependents),
+you can also report it as *Feature Request* .
 
 ## Contributing New Code
 
