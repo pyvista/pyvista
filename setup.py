@@ -69,6 +69,6 @@ setup(
     extras_require={
         'all': ['matplotlib', 'colorcet', 'cmocean', 'meshio'],
         'colormaps': ['matplotlib', 'colorcet', 'cmocean'],
-        'io': ['meshio>=4.0.3, <5.0'],
+        'io': ['meshio>=5.2'],
     },
 )
