@@ -38,7 +38,8 @@ available on the issues page for other users.
 ## Reporting Bugs
 
 If you stumble across any bugs, crashes, or concerning quirks while using code
-distributed here, please report it on the [issues page](https://github.com/pyvista/pyvista/issues)
+distributed here, please report it on the
+[issues page](https://github.com/pyvista/pyvista/issues)
 with an appropriate label so we can promptly address it.
 When reporting an issue, please be overly descriptive so that we may reproduce
 it. Whenever possible, please provide tracebacks, screenshots, and sample files
@@ -261,6 +262,72 @@ make html -b linkcheck
 
 The finished documentation can be found in the `doc/_build/html` directory.
 
+### Notes Regarding Image Regression Testing
+
+Since `pyvista` is primarily a plotting module, it's imperative we
+actually check the images that we generate in some sort of regression
+testing.  In practice, this ends up being quite a bit of work because:
+
+- OpenGL software vs. hardware rending causes slightly different
+  images to be rendered.
+- We want our CI (which uses a virtual frame buffer) to match our
+  desktop images (uses hardware acceleration).
+- Different OSes render different images.
+
+As each platform and environment renders different slightly images
+relative to Linux (which these images were built from), so running
+these tests across all OSes isn't optimal.  We could generate
+different images for each OS, but it's overkill in my opinion; we need
+to know if something fundamental changed with our plotting without
+actually looking at the plots (like the docs at dev.pyvista.com)
+
+Based on these points, image regression testing only occurs on Linux
+CI, and multi-sampling is disabled as that seems to be one of the
+biggest difference between software and hardware based rendering.
+
+Image cache is stored here as ./image_cache
+
+Image resolution is kept low at 400x400 as we don't want to pollute
+git with large images.  Small variations between versions and
+environments are to be expected, so error < `IMAGE_REGRESSION_ERROR`
+is allowable (and will be logged as a warning) while values over that
+amount will trigger an error.
+
+There are two mechanisms within `pytest` to control image regression
+testing, `--reset_image_cache` and `--ignore_image_cache`.  For
+example:
+
+```bash
+    pytest tests/plotting --reset_image_cache
+```
+
+Running `--reset_image_cache` creates a new image for each test in
+`tests/plotting/test_plotting.py` and is not recommended except for
+testing or for potentially a major or minor release.  You can use
+`--ignore_image_cache` if you're running on Linux and want to
+temporarily ignore regression testing.  Realize that regression
+testing will still occur on our CI testing.
+
+If you need to add a new test to `tests/plotting/test_plotting.py`
+and wish to include image regression testing, be sure to add
+`verify_cache_image` to `show`.  For example:
+
+```python
+
+    @skip_no_plotting
+    def test_add_background_image_not_global():
+        plotter = pyvista.Plotter()
+        plotter.add_mesh(sphere)
+        plotter.show(before_close_callback=verify_cache_image)
+```
+
+This ensures that immediately before the plotter is closed, the
+current render window will be verified against the image in CI.  If no
+image exists, be sure to add the resulting image with `git add
+tests/plotting/image_cache/*``.
+
+
+
 #### Creating a New Pull Request
 
 Once you have tested your branch locally, create a pull request on
@@ -337,7 +404,7 @@ cached.
     ```
 
 4. After building the documentation, open the local build and examine the
-examples gallery for any obvious issues.
+   examples gallery for any obvious issues.
 
 5. Update the version numbers in `pyvista/_version.py` and commit it.
    Push the branch to GitHub and create a new PR for this release that
@@ -355,37 +422,48 @@ examples gallery for any obvious issues.
    Tag the release with:
 
     ```bash
-	git tag MAJOR.MINOR.0
+    git tag MAJOR.MINOR.0
     git push origin --tags
     ```
 
 8. Create a list of all changes for the release. It is often helpful to
-leverage [GitHub's *compare* feature](https://github.com/pyvista/pyvista/compare)
-to see the differences from the last tag and the `main` branch.
-Be sure to acknowledge new contributors by their GitHub username and place
-mentions where appropriate if a specific contributor is to thank for a new
-feature.
+   leverage [GitHub's *compare* feature](https://github.com/pyvista/pyvista/compare)
+   to see the differences from the last tag and the `main` branch.
+   Be sure to acknowledge new contributors by their GitHub username and place
+   mentions where appropriate if a specific contributor is to thank for a new
+   feature.
 
 9. Place your release notes from step 8 in the description for
-[the new release on GitHub](https://github.com/pyvista/pyvista/releases/new)
+   [the new release on GitHub](https://github.com/pyvista/pyvista/releases/new)
 
 10. Go grab a beer/coffee/water and wait for
-[@regro-cf-autotick-bot](https://github.com/regro-cf-autotick-bot) to open a
-pull request on the conda-forge
-[PyVista feedstock](https://github.com/conda-forge/pyvista-feedstock).
-Merge that pull request.
+    [@regro-cf-autotick-bot](https://github.com/regro-cf-autotick-bot) to open a
+    pull request on the conda-forge
+    [PyVista feedstock](https://github.com/conda-forge/pyvista-feedstock).
+    Merge that pull request.
 
 11. Announce the new release in the PyVista Slack workspace and celebrate!
 
 
 #### Patch Release Steps
 
-Patch releases are for critical and important bugfixes that can not or should not wait until a minor release. The steps for a patch release
+Patch releases are for critical and important bugfixes that can not or
+should not wait until a minor release. The steps for a patch release
 
-1. Push the necessary bugfix(es) to the applicable release branch.  This will generally be the latest release branch (e.g. `release/0.25`).
+1. Push the necessary bugfix(es) to the applicable release branch.  This
+   will generally be the latest release branch (e.g. ``release/0.25``).
 
-2. Update `__version__.py` with the next patch increment (e.g. `0.25.1`), commit it, and open a PR that merge with the release branch.  This gives the `pyvista` community a chance to validate and approve the bugfix release.  Any additional hotfixes should be outside of this PR.
+2. Update ``__version__.py`` with the next patch increment (e.g.
+   ``0.25.1``), commit it, and open a PR that merge with the release
+   branch.  This gives the ``pyvista`` community a chance to validate and
+   approve the bugfix release.  Any additional hotfixes should be outside
+   of this PR.
 
-3. When approved, merge with the release branch, but not `main` as there is no reason to increment the version of the `main` branch.  Then create a tag from the release branch with the applicable version number (see above for the correct steps).
+3. When approved, merge with the release branch, but not ``main`` as
+   there is no reason to increment the version of the ``main`` branch.
+   Then create a tag from the release branch with the applicable version
+   number (see above for the correct steps).
 
-4. If deemed necessary, create a release notes page.  Also, open the PR from conda and follow the directions in step 10 in the minor release section.
+4. If deemed necessary, create a release notes page.  Also, open the PR
+   from conda and follow the directions in step 10 in the minor release
+   section.
