@@ -32,6 +32,10 @@ clean-except-examples:
 	rm -f getting-started/external_examples.rst
 	find . -type d -name "_autosummary" -exec rm -rf {} +
 
+# remove autosummary files
+clean-autosummary:
+	find . -type d -name "_autosummary" -exec rm -rf {} +
+
 # build html docs in parallel using all available CPUs
 # WARNING: this is a resource hog
 phtml:

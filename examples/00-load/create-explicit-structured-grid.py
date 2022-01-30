@@ -40,5 +40,5 @@ corners = corners.transpose()
 if pv._vtk.VTK9:
     dims = np.asarray((ni, nj, nk))+1
     grid = pv.ExplicitStructuredGrid(dims, corners)
-    grid.compute_connectivity()
+    grid = grid.compute_connectivity()
     grid.plot(show_edges=True)

@@ -22,7 +22,7 @@ from pyvista import examples
 
 # Load the statue mesh
 mesh = examples.download_nefertiti()
-mesh.rotate_x(-90.)  # rotate to orient with the skybox
+mesh.rotate_x(-90., inplace=True)  # rotate to orient with the skybox
 
 # Download skybox
 cubemap = examples.download_sky_box_cube_map()
@@ -72,7 +72,7 @@ p.show()
 
 # download louis model
 mesh = examples.download_louis_louvre()
-mesh.rotate_z(140)
+mesh.rotate_z(140, inplace=True)
 
 
 plotter = pv.Plotter(lighting=None)

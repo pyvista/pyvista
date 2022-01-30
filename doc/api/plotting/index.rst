@@ -29,6 +29,18 @@ all plotting functionality in PyVista.
    Renderer
 
 
+Charts API
+----------
+Charts API reference. These dedicated classes can be used to embed
+charts in plotting windows. Note that using charts requires a VTK version
+of at least 9.0 and in a future release will require `vtk>=9.2`.
+
+.. toctree::
+   :maxdepth: 2
+
+   charts/index
+
+
 Widget API
 ----------
 The :class:`pyvista.Plotter` class inherits all of the widget methods in
@@ -53,5 +65,4 @@ routines in PyVista.
    :maxdepth: 2
 
    conv_func
-
 

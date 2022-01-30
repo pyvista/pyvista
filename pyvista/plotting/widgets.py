@@ -1698,7 +1698,7 @@ class WidgetHelper:
             color3 = np.array(parse_color(color3)) * 255
 
             n_points = dims[0] * dims[1]
-            button = pyvista.UniformGrid(dims)
+            button = pyvista.UniformGrid(dims=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1:dims[0]-1, 1:dims[1]-1] = color2  # apply color2
             arr[

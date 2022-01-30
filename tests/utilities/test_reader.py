@@ -1,3 +1,5 @@
+import platform
+
 import numpy as np
 import pytest
 
@@ -5,10 +7,14 @@ import pyvista
 from pyvista import examples
 from pyvista.examples.downloads import _download_file
 
+pytestmark = pytest.mark.skipif(platform.system() == 'Darwin',
+                    reason='MacOS testing on Azure fails when downloading')
+
 
 def test_get_reader_fail():
     with pytest.raises(ValueError):
         reader = pyvista.get_reader("not_a_supported_file.no_data")
+
 
 def test_xmlimagedatareader(tmpdir):
     tmpfile = tmpdir.join("temp.vti")
@@ -339,3 +345,102 @@ def test_pvdreader_no_time_group():
         assert dataset.time == 0.0
         assert dataset.group == None
         assert dataset.part == i
+
+
+def get_cavity_reader():
+    filename = examples.download_cavity(load=False)
+    return pyvista.get_reader(filename)
+
+
+def test_openfoamreader_arrays_time():
+    reader = get_cavity_reader()
+    assert isinstance(reader, pyvista.OpenFOAMReader)
+
+    assert reader.number_point_arrays == 0
+    assert reader.number_cell_arrays == 2
+
+    assert reader.number_time_points == 6
+    assert reader.time_values == [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
+
+
+def test_openfoamreader_active_time():
+    # vtk < 9.1.0 does not support
+    if pyvista.vtk_version_info < (9, 1, 0):
+        pytest.xfail("OpenFOAMReader GetTimeValue missing on vtk<9.1.0")
+
+    reader = get_cavity_reader()
+    mesh = reader.active_time_value == 0.0
+    reader.set_active_time_point(1)
+    mesh = reader.active_time_value == 0.5
+    reader.set_active_time_value(1.0)
+    mesh = reader.active_time_value == 1.0
+
+
+def test_openfoam_cell_to_point_default():
+    reader = get_cavity_reader()
+    mesh = reader.read()
+    assert reader.cell_to_point_creation is True
+    assert mesh[0].n_arrays == 4
+
+    reader = get_cavity_reader()
+    reader.cell_to_point_creation = False
+    assert reader.cell_to_point_creation is False
+    mesh = reader.read()
+    assert mesh[0].n_arrays == 2
+
+    reader = get_cavity_reader()
+    mesh = reader.read()
+    reader.cell_to_point_creation = True
+    assert reader.cell_to_point_creation is True
+    assert mesh[0].n_arrays == 4
+
+
+def test_openfoam_patch_arrays():
+    # vtk version 9.1.0 changed the way patch names are handled.
+    vtk_version = pyvista.vtk_version_info
+    if vtk_version >= (9, 1, 0):
+        patch_array_key = 'boundary'
+        reader_patch_prefix = 'patch/'
+    else:
+        patch_array_key = 'Patches'
+        reader_patch_prefix = ''
+
+    reader = get_cavity_reader()
+    assert reader.number_patch_arrays == 4
+    assert reader.patch_array_names == [
+        'internalMesh', f'{reader_patch_prefix}movingWall',
+        f'{reader_patch_prefix}fixedWalls', f'{reader_patch_prefix}frontAndBack'
+    ]
+    assert reader.all_patch_arrays_status == {
+        'internalMesh': True, f'{reader_patch_prefix}movingWall': True,
+        f'{reader_patch_prefix}fixedWalls': True, f'{reader_patch_prefix}frontAndBack': True
+    }
+
+    #first only read in 'internalMesh'
+    for patch_array in reader.patch_array_names[1:]:
+        reader.disable_patch_array(patch_array)
+    assert reader.all_patch_arrays_status == {
+        'internalMesh': True, f'{reader_patch_prefix}movingWall': False,
+        f'{reader_patch_prefix}fixedWalls': False, f'{reader_patch_prefix}frontAndBack': False
+    }
+    mesh = reader.read()
+    assert mesh.n_blocks == 1
+    assert patch_array_key not in mesh.keys()
+
+    # now read in one more patch
+    reader = get_cavity_reader()
+    reader.disable_all_patch_arrays()
+    reader.enable_patch_array('internalMesh')
+    reader.enable_patch_array(f'{reader_patch_prefix}fixedWalls')
+    mesh = reader.read()
+    assert mesh.n_blocks == 2
+    assert patch_array_key in mesh.keys()
+    assert mesh[patch_array_key].keys() == ['fixedWalls']
+
+    # check multiple patch arrays without 'internalMesh'
+    reader = get_cavity_reader()
+    reader.disable_patch_array('internalMesh')
+    mesh = reader.read()
+    assert mesh.n_blocks == 1
+    assert patch_array_key in mesh.keys()
+    assert mesh[patch_array_key].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']

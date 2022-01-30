@@ -1,6 +1,10 @@
 import datetime
+import locale
 import os
 import sys
+
+# Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
+locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 if sys.version_info >= (3, 0):
     import faulthandler
@@ -8,9 +12,11 @@ if sys.version_info >= (3, 0):
     faulthandler.enable()
 
 sys.path.insert(0, os.path.abspath("."))
+import make_chart_style_tables
 import make_external_gallery
 
 make_external_gallery.make_example_gallery()
+make_chart_style_tables.make_all()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
@@ -76,6 +82,7 @@ coverage_additional_modules = [
 
     'pyvista.plotting.axes',
     'pyvista.plotting.camera',
+    'pyvista.plotting.charts',
     'pyvista.plotting.helpers',
     'pyvista.plotting.lights',
     'pyvista.plotting.picking',
@@ -189,6 +196,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.*boolean_cut$',
     r'\.*add_field_array$',
     r'\.*add_field_array$',
+    r'DataSetAttributes.append$',
 
     # methods we probably should make private
     r'\.store_click_position$',
@@ -282,14 +290,23 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
-def reset_pyvista(gallery_conf, fname):
-    """Reset pyvista module to default settings
+class ResetPyvista:
+    """Reset pyvista module to default settings."""
 
-    If default documentation settings are modified in any example, reset here.
-    """
-    import pyvista
-    pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
-    pyvista.set_plot_theme('document')
+    def __call__(self, gallery_conf, fname):
+        """Reset pyvista module to default settings
+
+        If default documentation settings are modified in any example, reset here.
+        """
+        import pyvista
+        pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+        pyvista.set_plot_theme('document')
+
+    def __repr__(self):
+        return 'ResetPyvista'
+
+
+reset_pyvista = ResetPyvista()
 
 
 # skip building the osmnx example if osmnx is not installed
@@ -312,6 +329,8 @@ sphinx_gallery_conf = {
     "filename_pattern": r"\.py" if has_osmnx else r"(?!osmnx-example)\.py",
     # Remove the "Download all examples" button from the top level gallery
     "download_all_examples": False,
+    # Remove sphinx configuration comments from code blocks
+    "remove_config_comments": True,
     # Sort gallery example by file name instead of number of lines (default)
     "within_subsection_order": FileNameSortKey,
     # directory where function granular galleries are stored
@@ -556,3 +575,4 @@ def setup(app):
     AutoAutoSummary.app = app
     app.add_directive("autoautosummary", AutoAutoSummary)
     app.add_css_file("copybutton.css")
+    app.add_css_file("no_search_highlight.css")

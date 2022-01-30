@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "pip" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    insecure-external-code-execution: allow
+    schedule:
+      interval: "daily"
+    labels:
+      - "maintenance"
+      - "dependencies"
+    ignore:
+      - dependency-name: "hypothesis"
+        # for hypothesis, ignore upgrades due to Python 3.6 availability

@@ -12,6 +12,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista import Texture, examples
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -222,6 +223,11 @@ def test_translate_should_fail_given_none(grid):
         grid.transform(None)
 
 
+def test_translate_deprecation(grid):
+    with pytest.warns(PyvistaDeprecationWarning):
+        grid.translate((0.0, 0.0, 0.0))
+
+
 def test_translate_should_fail_bad_points_or_transform(grid):
     points = np.random.random((10, 2))
     bad_points = np.random.random((10, 2))
@@ -247,7 +253,7 @@ def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
 @pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
 def test_translate_should_translate_grid(grid, axis_amounts):
     grid_copy = grid.copy()
-    grid_copy.translate(axis_amounts)
+    grid_copy.translate(axis_amounts, inplace=True)
 
     grid_points = grid.points.copy() + np.array(axis_amounts)
     assert np.allclose(grid_copy.points, grid_points)
@@ -269,7 +275,7 @@ def test_rotate_should_match_vtk_rotation(angle, axis, grid):
     grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
 
     grid_b = grid.copy()
-    getattr(grid_b, f'rotate_{axis}')(angle)
+    getattr(grid_b, f'rotate_{axis}')(angle, inplace=True)
     assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
 
 
@@ -671,8 +677,7 @@ def test_set_extent_expect_error(grid):
 
 
 def test_set_extent():
-    dims = [10, 10, 10]
-    uni_grid = pyvista.UniformGrid(dims)
+    uni_grid = pyvista.UniformGrid(dims=[10, 10, 10])
     with pytest.raises(ValueError):
         uni_grid.extent = [0, 1]
 
@@ -749,7 +754,7 @@ def test_string_arrays():
 
 def test_clear_data():
     # First try on an empty mesh
-    grid = pyvista.UniformGrid((10, 10, 10))
+    grid = pyvista.UniformGrid(dims=(10, 10, 10))
     # Now try something more complicated
     grid.clear_data()
     grid['foo-p'] = np.random.rand(grid.n_points)
@@ -902,6 +907,53 @@ def test_find_closest_cells():
     assert np.allclose(indices, np.arange(mesh.n_faces))
 
 
+def test_find_closest_cell_surface_point():
+    mesh = pyvista.Rectangle()
+
+    point = np.array([0.5, 0.5, -1.0])
+    point2 = np.array([1.0, 1.0, -1.0])
+    points = np.vstack((point, point2))
+
+    _, closest_point = mesh.find_closest_cell(point, return_closest_point=True)
+    assert np.allclose(closest_point, [0.5, 0.5, 0])
+
+    _, closest_points = mesh.find_closest_cell(points, return_closest_point=True)
+    assert np.allclose(closest_points, [[0.5, 0.5, 0], [1.0, 1.0, 0]])
+
+
+def test_find_containing_cell():
+    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
+    node = np.array([0.3, 0.3, 0.0])
+
+    with pytest.raises(ValueError):
+        mesh.find_containing_cell([1, 2])
+
+    with pytest.raises(TypeError):
+        # allow Sequence but not Iterable
+        mesh.find_containing_cell({1, 2, 3})
+
+    # array but bad size
+    with pytest.raises(ValueError):
+        mesh.find_containing_cell(np.empty(4))
+
+    index = mesh.find_containing_cell(node)
+    assert index == 5
+
+
+def test_find_containing_cells():
+    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
+    # invalid array dim
+    with pytest.raises(ValueError):
+        mesh.find_containing_cell(np.empty((1, 1, 1)))
+
+    # test invalid array size
+    with pytest.raises(ValueError):
+        mesh.find_containing_cell(np.empty((4, 4)))
+
+    indices = mesh.find_containing_cell([[0.3, 0.3, 0], [0.6, 0.6, 0]])
+    assert np.allclose(indices, [5, 10])
+
+
 def test_find_cells_along_line():
     mesh = pyvista.Cube()
     indices = mesh.find_cells_along_line([0, 0, -1], [0, 0, 1])
@@ -1021,7 +1073,7 @@ def test_cell_points(grid):
 
 def test_cell_bounds(grid):
     bounds = grid.cell_bounds(0)
-    assert isinstance(bounds, list)
+    assert isinstance(bounds, tuple)
     assert len(bounds) == 6
 
 
@@ -1075,30 +1127,154 @@ def test_rotations_should_match_by_a_360_degree_difference():
     # Rotate about x axis.
     rot1 = mesh.copy()
     rot2 = mesh.copy()
-    rot1.rotate_x(angle=angle, point=point)
-    rot2.rotate_x(angle=angle - 360.0, point=point)
+    rot1.rotate_x(angle=angle, point=point, inplace=True)
+    rot2.rotate_x(angle=angle - 360.0, point=point, inplace=True)
     assert np.allclose(rot1.points, rot2.points)
 
     # Rotate about y axis.
     rot1 = mesh.copy()
     rot2 = mesh.copy()
-    rot1.rotate_y(angle=angle, point=point)
-    rot2.rotate_y(angle=angle - 360.0, point=point)
+    rot1.rotate_y(angle=angle, point=point, inplace=True)
+    rot2.rotate_y(angle=angle - 360.0, point=point, inplace=True)
     assert np.allclose(rot1.points, rot2.points)
 
     # Rotate about z axis.
     rot1 = mesh.copy()
     rot2 = mesh.copy()
-    rot1.rotate_z(angle=angle, point=point)
-    rot2.rotate_z(angle=angle - 360.0, point=point)
+    rot1.rotate_z(angle=angle, point=point, inplace=True)
+    rot2.rotate_z(angle=angle - 360.0, point=point, inplace=True)
     assert np.allclose(rot1.points, rot2.points)
 
     # Rotate about custom vector.
     rot1 = mesh.copy()
     rot2 = mesh.copy()
-    rot1.rotate_vector(vector=vector, angle=angle, point=point)
-    rot2.rotate_vector(vector=vector, angle=angle - 360.0, point=point)
+    rot1.rotate_vector(vector=vector, angle=angle, point=point, inplace=True)
+    rot2.rotate_vector(vector=vector, angle=angle - 360.0, point=point, inplace=True)
     assert np.allclose(rot1.points, rot2.points)
+
+
+def test_rotate_x():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_x(30)
+    assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.raises(TypeError):
+        out = mesh.rotate_x(30, point=5)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_x(30, point=[1, 3])
+
+
+def test_rotate_y():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_y(30)
+    assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.raises(TypeError):
+        out = mesh.rotate_y(30, point=5)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_y(30, point=[1, 3])
+
+
+def test_rotate_z():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_z(30)
+    assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.raises(TypeError):
+        out = mesh.rotate_z(30, point=5)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_z(30, point=[1, 3])
+
+
+@pytest.mark.parametrize('method', ['rotate_x', 'rotate_y', 'rotate_z'])
+def test_deprecation_rotate(sphere, method):
+    meth = getattr(sphere, method)
+    with pytest.warns(PyvistaDeprecationWarning):
+        meth(30)
+
+
+def test_rotate_vector():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_vector([1, 1, 1], 33)
+    assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.raises(ValueError):
+        out = mesh.rotate_vector([1, 1], 33)
+    with pytest.raises(TypeError):
+        out = mesh.rotate_vector(30, 33)
+
+
+def test_transform_integers():
+    # regression test for gh-1943
+    points = [
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+    ]
+    # build vtkPolyData from scratch to enforce int data
+    poly = vtk.vtkPolyData()
+    poly.SetPoints(pyvista.vtk_points(points))
+    poly = pyvista.wrap(poly)
+    poly.verts = [1, 0, 1, 1, 1, 2]
+    # define active and inactive vectors with int values
+    for dataset_attrs in poly.point_data, poly.cell_data:
+        for key in 'active_v', 'inactive_v', 'active_n', 'inactive_n':
+            dataset_attrs[key] = poly.points
+        dataset_attrs.active_vectors_name = 'active_v'
+        dataset_attrs.active_normals_name = 'active_n'
+
+    # active vectors and normals should be converted by default
+    for key in 'active_v', 'inactive_v', 'active_n', 'inactive_n':
+        assert poly.point_data[key].dtype == np.int_
+        assert poly.cell_data[key].dtype == np.int_
+
+    with pytest.warns(UserWarning):
+        poly.rotate_x(angle=10, inplace=True)
+
+    # check that points were converted and transformed correctly
+    assert poly.points.dtype == np.float32
+    assert poly.points[-1, 1] != 0
+    # assert that exactly active vectors and normals were converted
+    for key in 'active_v', 'active_n':
+        assert poly.point_data[key].dtype == np.float32
+        assert poly.cell_data[key].dtype == np.float32
+    for key in 'inactive_v', 'inactive_n':
+        assert poly.point_data[key].dtype == np.int_
+        assert poly.cell_data[key].dtype == np.int_
+
+
+@pytest.mark.xfail(reason='VTK bug')
+def test_transform_integers_vtkbug_present():
+    # verify that the VTK transform bug is still there
+    # if this test starts to pass, we can remove the
+    # automatic float conversion from ``DataSet.transform``
+    # along with this test
+    points = [
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+    ]
+    # build vtkPolyData from scratch to enforce int data
+    poly = vtk.vtkPolyData()
+    poly.SetPoints(pyvista.vtk_points(points))
+
+    # manually put together a rotate_x(10) transform
+    trans_arr = pyvista.transformations.axis_angle_rotation((1, 0, 0), 10, deg=True)
+    trans_mat = pyvista.vtkmatrix_from_array(trans_arr)
+    trans = vtk.vtkTransform()
+    trans.SetMatrix(trans_mat)
+    trans_filt = vtk.vtkTransformFilter()
+    trans_filt.SetInputDataObject(poly)
+    trans_filt.SetTransform(trans)
+    trans_filt.Update()
+    poly = pyvista.wrap(trans_filt.GetOutputDataObject(0))
+    # the bug is that e.g. 0.98 gets truncated to 0
+    assert poly.points[-1, 1] != 0
+
+
+def test_deprecation_vector(sphere):
+    with pytest.warns(PyvistaDeprecationWarning):
+        sphere.rotate_vector([1, 1, 1], 33)
 
 
 def test_scale():
@@ -1107,57 +1283,90 @@ def test_scale():
     xyz = np.random.random(3)
     scale1 = mesh.copy()
     scale2 = mesh.copy()
-    scale1.scale(xyz)
+    scale1.scale(xyz, inplace=True)
     scale2.points *= xyz
+    scale3 = mesh.scale(xyz, inplace=False)
     assert np.allclose(scale1.points, scale2.points)
-
+    assert np.allclose(scale3.points, scale2.points)
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.scale(xyz)
+    assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.warns(PyvistaDeprecationWarning):
+        scale1.scale(xyz)
 
 def test_flip_x():
     mesh = examples.load_airplane()
     flip_x1 = mesh.copy()
     flip_x2 = mesh.copy()
-    flip_x1.flip_x(point=(0, 0, 0))
+    flip_x1.flip_x(point=(0, 0, 0), inplace=True)
     flip_x2.points[:, 0] *= -1.0
     assert np.allclose(flip_x1.points, flip_x2.points)
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_x()
+    assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.warns(PyvistaDeprecationWarning):
+        flip_x1.flip_x(point=(0, 0, 0))
 
 
 def test_flip_y():
     mesh = examples.load_airplane()
     flip_y1 = mesh.copy()
     flip_y2 = mesh.copy()
-    flip_y1.flip_y(point=(0, 0, 0))
+    flip_y1.flip_y(point=(0, 0, 0), inplace=True)
     flip_y2.points[:, 1] *= -1.0
     assert np.allclose(flip_y1.points, flip_y2.points)
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_y()
+    assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.warns(PyvistaDeprecationWarning):
+        flip_y1.flip_y(point=(0, 0, 0))
 
 
 def test_flip_z():
     mesh = examples.load_airplane()
     flip_z1 = mesh.copy()
     flip_z2 = mesh.copy()
-    flip_z1.flip_z(point=(0, 0, 0))
+    flip_z1.flip_z(point=(0, 0, 0), inplace=True)
     flip_z2.points[:, 2] *= -1.0
     assert np.allclose(flip_z1.points, flip_z2.points)
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_z()
+    assert isinstance(out, pyvista.StructuredGrid)
+    with pytest.warns(PyvistaDeprecationWarning):
+        flip_z1.flip_z(point=(0, 0, 0))
 
 
 def test_flip_normal():
     mesh = examples.load_airplane()
     flip_normal1 = mesh.copy()
     flip_normal2 = mesh.copy()
-    flip_normal1.flip_normal(normal=[1.0, 0.0, 0.0])
-    flip_normal2.flip_x()
+    flip_normal1.flip_normal(normal=[1.0, 0.0, 0.0], inplace=True)
+    flip_normal2.flip_x(inplace=True)
     assert np.allclose(flip_normal1.points, flip_normal2.points)
 
     flip_normal3 = mesh.copy()
     flip_normal4 = mesh.copy()
-    flip_normal3.flip_normal(normal=[0.0, 1.0, 0.0])
-    flip_normal4.flip_y()
+    flip_normal3.flip_normal(normal=[0.0, 1.0, 0.0], inplace=True)
+    flip_normal4.flip_y(inplace=True)
     assert np.allclose(flip_normal3.points, flip_normal4.points)
 
     flip_normal5 = mesh.copy()
     flip_normal6 = mesh.copy()
-    flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
-    flip_normal6.flip_z()
+    flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0], inplace=True)
+    flip_normal6.flip_z(inplace=True)
     assert np.allclose(flip_normal5.points, flip_normal6.points)
+
+    with pytest.warns(PyvistaDeprecationWarning):
+        flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0])
+
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
+    assert isinstance(out, pyvista.StructuredGrid)
 
 
 def test_active_normals(sphere):

@@ -18,6 +18,8 @@ try:
 except ImportError:  # pragma: no cover
     VTK9 = False
 
+# for charts
+_has_vtkRenderingContextOpenGL2 = False
 
 if VTK9:
 
@@ -32,6 +34,25 @@ if VTK9:
         numpy_to_vtkIdTypeArray,
         vtk_to_numpy,
     )
+    from vtkmodules.vtkChartsCore import (
+        vtkAxis,
+        vtkChart,
+        vtkChartBox,
+        vtkChartPie,
+        vtkChartXY,
+        vtkChartXYZ,
+        vtkPlotArea,
+        vtkPlotBar,
+        vtkPlotBox,
+        vtkPlotLine,
+        vtkPlotLine3D,
+        vtkPlotPie,
+        vtkPlotPoints,
+        vtkPlotPoints3D,
+        vtkPlotStacked,
+        vtkPlotSurface,
+    )
+    from vtkmodules.vtkCommonColor import vtkColorSeries
     from vtkmodules.vtkCommonComputationalGeometry import (
         vtkKochanekSpline,
         vtkParametricBohemianDome,
@@ -102,6 +123,7 @@ if VTK9:
         VTK_WEDGE,
         vtkCellArray,
         vtkCellLocator,
+        vtkColor3ub,
         vtkCompositeDataSet,
         vtkDataObject,
         vtkDataSet,
@@ -122,6 +144,7 @@ if VTK9:
         vtkPolyLine,
         vtkPolyPlane,
         vtkPyramid,
+        vtkRectf,
         vtkRectilinearGrid,
         vtkSelection,
         vtkSelectionNode,
@@ -239,6 +262,7 @@ if VTK9:
         vtkSuperquadricSource,
         vtkTessellatedBoxSource,
     )
+    from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
     from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane, vtkTextureMapToSphere
     from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
     from vtkmodules.vtkIOEnSight import vtkGenericEnSightReader
@@ -326,6 +350,7 @@ if VTK9:
         vtkSplineWidget,
         vtkTexturedButtonRepresentation2D,
     )
+    from vtkmodules.vtkPythonContext2D import vtkPythonItem
     from vtkmodules.vtkRenderingAnnotation import (
         vtkAnnotatedCubeActor,
         vtkAxesActor,
@@ -334,6 +359,23 @@ if VTK9:
         vtkLegendBoxActor,
         vtkScalarBarActor,
     )
+    from vtkmodules.vtkRenderingContext2D import (
+        vtkBlockItem,
+        vtkBrush,
+        vtkContext2D,
+        vtkContextActor,
+        vtkContextScene,
+        vtkImageItem,
+        vtkPen,
+    )
+
+    try:
+        # Necessary for displaying charts, otherwise crashes on rendering
+        import vtkmodules.vtkRenderingContextOpenGL2
+        _has_vtkRenderingContextOpenGL2 = True
+    except ImportError:  # pragma: no cover
+        pass
+
     from vtkmodules.vtkRenderingCore import (
         vtkActor,
         vtkActor2D,
@@ -386,6 +428,7 @@ if VTK9:
         vtkOpenGLGPUVolumeRayCastMapper,
         vtkSmartVolumeMapper,
     )
+    from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
 
     # lazy import for some of the less used readers
     def lazy_vtkGL2PSExporter():
@@ -485,6 +528,14 @@ else:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
             raise VTKVersionError('vtkGLTFReader requires VTK v9 or newer')
+
+    class vtkPythonItem():  # type: ignore
+        """Empty placeholder for VTK9 compatibility."""
+
+        def __init__(self):  # pragma: no cover
+            """Raise version error on init."""
+            from pyvista.core.errors import VTKVersionError
+            raise VTKVersionError('Charts requires VTK v9 or newer')
 
 
 # lazy import as this was added in 9.1.0
