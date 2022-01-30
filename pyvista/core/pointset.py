@@ -1,5 +1,5 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-import collections
+from collections.abc import Iterable
 from functools import wraps
 import logging
 import numbers
@@ -1884,7 +1884,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if len(key) != 3:
             raise RuntimeError('Slices must have exactly 3 dimensions.')
         for i, k in enumerate(key):
-            if isinstance(k, collections.Iterable):
+            if isinstance(k, Iterable):
                 raise RuntimeError('Fancy indexing is not supported.')
             if isinstance(k, numbers.Integral):
                 start = stop = k
