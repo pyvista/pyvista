@@ -59,7 +59,7 @@ setup(
     url='https://github.com/pyvista/pyvista',
     keywords='vtk numpy plotting mesh',
     package_data={'pyvista.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
-                                       'hexbeam.vtk', 'sphere.ply',
+                                       'hexbeam.vtk', 'sphere.ply', 'nut.ply',
                                        'uniform.vtk', 'rectilinear.vtk',
                                        'globe.vtk', '2k_earth_daymap.jpg'],
     },
