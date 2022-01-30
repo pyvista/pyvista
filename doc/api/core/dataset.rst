@@ -29,7 +29,8 @@ The :class:`pyvista.DataSet` class holds attributes that
 are *common* to all spatially referenced datasets in PyVista.  This
 base class is analogous to VTK's `vtk.vtkDataSet`_ class.
 
-The :class:`pyvista.DataSetAttributes` class contains the methods to access arrays associated with cells, points, and the DataSet in general (fields).
+The :class:`pyvista.DataSetAttributes` class contains the methods to access
+arrays associated with cells, points, and the DataSet in general (fields).
 
 .. autosummary::
    :toctree: _autosummary

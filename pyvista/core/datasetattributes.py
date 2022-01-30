@@ -99,6 +99,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     >>> del mesh.point_data['my_data']
     >>> 'my_data' in mesh.point_data
+    False
 
     Print the available arrays from dataset attributes.
 
