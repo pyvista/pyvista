@@ -1,6 +1,4 @@
-"""
-Installation file for python pyvista module
-"""
+"""Installation file for python pyvista module."""
 from io import open as io_open
 import os
 
