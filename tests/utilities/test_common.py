@@ -30,7 +30,6 @@ def test_coerce_point_like_arg():
 
 
 def test_coerce_point_like_arg_copy():
-
     # Sequence is always copied
     point = [1.0, 2.0, 3.0]
     coerced_arg = _coerce_points_like_arg(point, copy=True)

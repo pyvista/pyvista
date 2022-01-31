@@ -970,6 +970,7 @@ def test_setting_points_by_different_types(grid):
     pgrid.points = np.array([2., 2., 2.])
     assert np.allclose(pgrid.points, [2., 2., 2.])
 
+
 def test_empty_points():
     pdata = pyvista.PolyData()
     assert np.allclose(pdata.points, np.empty(3))
