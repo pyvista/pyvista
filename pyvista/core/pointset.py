@@ -338,7 +338,7 @@ class _PointSet(DataSet):
 class PointSet(_vtk.vtkPointSet, _PointSet):
     """Concrete class for storing a set of points.
 
-    This is an concrete class representing a set of points that specifies the
+    This is a concrete class representing a set of points that specifies the
     interface for datasets that explicitly use "point" arrays to represent
     geometry.
 
@@ -348,8 +348,9 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     Parameters
     ----------
     points : Sequence, optional
-        List, numpy array, or sequence containing point locations. Must be a
+        List, numpy array, or sequence containing point locations. Must be an
         ``(N, 3)`` array of points.
+
     editable : bool, optional
         Set whether this dataset is editable after creation. Default ``True``.
 
