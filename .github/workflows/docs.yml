@@ -13,6 +13,8 @@ on:
   push:
     tags:
       - '*'
+    branches:
+      - main
 
 env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') }}
@@ -20,8 +22,6 @@ env:
 jobs:
   doc:
     name: Build Documentation
-    # Skip if branch is `no-ci/*`
-    if: startsWith(github.ref, 'refs/heads/no-ci') == 'false'
     runs-on: ubuntu-latest
     env:
       PYVISTA_OFF_SCREEN: 'True'

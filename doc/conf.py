@@ -196,6 +196,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.*boolean_cut$',
     r'\.*add_field_array$',
     r'\.*add_field_array$',
+    r'DataSetAttributes.append$',
 
     # methods we probably should make private
     r'\.store_click_position$',
