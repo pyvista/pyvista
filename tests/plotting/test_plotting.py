@@ -2152,5 +2152,9 @@ def test_disable_stereo_render():
     pl.show(before_close_callback=verify_cache_image)
 
 
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+)
 def test_pointset_plot(pointset):
     pointset.plot()

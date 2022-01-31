@@ -338,9 +338,6 @@ class _PointSet(DataSet):
 class PointSet(_vtk.vtkPointSet, _PointSet):
     """Concrete class for storing a set of points.
 
-    .. note::
-       This is an abstract class for VTK < 9.1.0 and cannot be instantiated.
-
     This is an concrete class representing a set of points that specifies the
     interface for datasets that explicitly use "point" arrays to represent
     geometry.
@@ -355,6 +352,11 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         ``(N, 3)`` array of points.
     editable : bool, optional
         Set whether this dataset is editable after creation. Default ``True``.
+
+    Notes
+    -----
+    This class requires ``vtk>=9.1.0``. This is an abstract class in
+    ``vtk<9.1.0`` and cannot be instantiated.
 
     Examples
     --------

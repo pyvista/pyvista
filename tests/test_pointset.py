@@ -1,8 +1,13 @@
 """Test pyvista.PointSet"""
 
 import numpy as np
+import pytest
 
 import pyvista
+
+# skip all tests concrete pointset unavailable
+if pyvista.vtk_version_info < (9, 1, 0):
+    pytestmark = pytest.mark.skip
 
 
 def test_pointset_basic():
