@@ -2150,3 +2150,7 @@ def test_disable_stereo_render():
     pl.enable_stereo_render()
     pl.disable_stereo_render()
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_pointset_plot(pointset):
+    pointset.plot()

@@ -37,7 +37,7 @@ DEFAULT_INPLACE_WARNING = (
 )
 
 
-class PointSet(DataSet):
+class _PointSet(DataSet):
     """PyVista's equivalent of vtk.vtkPointSet.
 
     This holds methods common to PolyData and UnstructuredGrid.
@@ -335,7 +335,89 @@ class PointSet(DataSet):
         return super().rotate_vector(*args, **kwargs)
 
 
-class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
+class PointSet(_vtk.vtkPointSet, _PointSet):
+    """Concrete class for storing a set of points.
+
+    .. note::
+       This is an abstract class for VTK < 9.1.0 and cannot be instantiated.
+
+    This is an concrete class representing a set of points that specifies the
+    interface for datasets that explicitly use "point" arrays to represent
+    geometry.
+
+    For further details see `VTK: vtkPointSet Details
+    <https://vtk.org/doc/nightly/html/classvtkPointSet.html#details>`_
+
+    Parameters
+    ----------
+    points : Sequence, optional
+        List, numpy array, or sequence containing point locations. Must be a
+        ``(N, 3)`` array of points.
+    editable : bool, optional
+        Set whether this dataset is editable after creation. Default ``True``.
+
+    Examples
+    --------
+    Create a simple point cloud of 10 points from a numpy array.
+
+    >>> import numpy as np
+    >>> import pyvista
+    >>> rng = np.random.default_rng(0)
+    >>> points = rng.random((10, 3))
+    >>> pset = pyvista.PointSet(points)
+
+    Plot the pointset. Note: this casts to a ``pyvista.PolyData`` internally
+    when plotting.
+
+    >>> pset.plot(point_size=10)
+
+    """
+
+    def __init__(self, points=None, editable=True):
+        """Initialize the pointset."""
+        if pyvista.vtk_version_info < (9, 1, 0):
+            raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
+
+        super().__init__()
+        if points is not None:
+            self.points = points
+
+    def __repr__(self):
+        """Return the standard representation."""
+        return DataSet.__repr__(self)
+
+    def __str__(self):
+        """Return the standard str representation."""
+        return DataSet.__str__(self)
+
+    def cast_to_polydata(self, deep=True):
+        """Cast this dataset to polydata.
+
+        Parameters
+        ----------
+        deep : bool, optional
+            Whether to copy the pointset points, or to create a PolyData
+            without copying them.  Setting ``deep=True`` ensures that the
+            original arrays can be modified outside the PolyData without
+            affecting the PolyData. Default is ``True``.
+
+        Returns
+        -------
+        pyvista.PolyData
+            PointSet cast to a ``pyvista.PolyData``.
+
+        """
+        return PolyData(self.points, deep=deep)
+
+    @wraps(DataSet.plot)
+    def plot(self, *args, **kwargs):
+        """Cast to PolyData and plot."""
+        pdata = self.cast_to_polydata(deep=False)
+        kwargs.setdefault('style', 'points')
+        pdata.plot(*args, **kwargs)
+
+
+class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
 
     Can be initialized in several ways:
@@ -1096,7 +1178,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
 
 
 @abstract_class
-class PointGrid(PointSet):
+class PointGrid(_PointSet):
     """Class in common with structured and unstructured grids."""
 
     def __init__(self, *args, **kwargs) -> None:
@@ -1915,8 +1997,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Returns
         -------
-        pyvista.PointSet
-            Point set with hidden cells.
+        pyvista.StructuredGrid
+            Structured grid with hidden cells.
 
         Examples
         --------

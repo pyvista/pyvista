@@ -90,3 +90,8 @@ def datasets():
         examples.load_airplane(),  # PolyData
         examples.load_structured(),  # StructuredGrid
     ]
+
+@fixture()
+def pointset():
+    points = np.random.random((10, 3))
+    return pyvista.PointSet(points)
