@@ -36,7 +36,7 @@ def _coerce_points_like_arg(points: PointLike,
     if points.ndim == 2:
         if points.shape[1] != 3:
             raise ValueError("Array of points must have three values per point "
-                            "(shape (n, 3))")
+                             "(shape (n, 3))")
     else:
         if points.size != 3:
             raise ValueError("Given point must have three values")
