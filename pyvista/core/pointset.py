@@ -411,12 +411,12 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         """
         return PolyData(self.points, deep=deep)
 
-    @wraps(DataSet.plot)
+    @wraps(DataSet.plot)  # type: ignore
     def plot(self, *args, **kwargs):
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
-        pdata.plot(*args, **kwargs)
+        return pdata.plot(*args, **kwargs)
 
 
 class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
