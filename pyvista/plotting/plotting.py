@@ -817,23 +817,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.disable_anti_aliasing(*args, **kwargs)
 
     @wraps(Renderer.set_focus)
-    def set_focus(self, *args, **kwargs):
+    def set_focus(self, *args, render=True, **kwargs):
         """Wrap ``Renderer.set_focus``."""
         log.debug('set_focus: %s, %s', str(args), str(kwargs))
         self.renderer.set_focus(*args, **kwargs)
-        self.render()
+        if render:
+            self.render()
 
     @wraps(Renderer.set_position)
-    def set_position(self, *args, **kwargs):
+    def set_position(self, *args, render=True, **kwargs):
         """Wrap ``Renderer.set_position``."""
         self.renderer.set_position(*args, **kwargs)
-        self.render()
+        if render:
+            self.render()
 
     @wraps(Renderer.set_viewup)
-    def set_viewup(self, *args, **kwargs):
+    def set_viewup(self, *args, render=True, **kwargs):
         """Wrap ``Renderer.set_viewup``."""
         self.renderer.set_viewup(*args, **kwargs)
-        self.render()
+        if render:
+            self.render()
 
     @wraps(Renderer.add_orientation_widget)
     def add_orientation_widget(self, *args, **kwargs):
@@ -4073,9 +4076,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             for point in points_seq:
                 tstart = time.time()  # include the render time in the step time
-                self.set_position(point)
-                self.set_focus(focus)
-                self.set_viewup(viewup)
+                self.set_position(point, render=False)
+                self.set_focus(focus, render=False)
+                self.set_viewup(viewup, render=False)
                 self.renderer.ResetCameraClippingRange()
                 if write_frames:
                     self.write_frame()
