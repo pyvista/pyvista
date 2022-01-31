@@ -5,9 +5,11 @@ import pytest
 
 import pyvista
 
-# skip all tests concrete pointset unavailable
-if pyvista.vtk_version_info < (9, 1, 0):
-    pytestmark = pytest.mark.skip
+# skip all tests if concrete pointset unavailable
+pytestmark = pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+)
 
 
 def test_pointset_basic():
