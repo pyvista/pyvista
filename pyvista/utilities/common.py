@@ -4,6 +4,7 @@ from typing import Sequence, Union
 
 import numpy as np
 
+# TODO: When numpy>=1.20 is supported, remove and use np.typing.ArrayLike
 PointsLike = Union[Sequence, np.ndarray]
 
 
