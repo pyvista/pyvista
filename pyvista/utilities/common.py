@@ -9,7 +9,7 @@ PointsLike = Union[Sequence, np.ndarray]
 
 
 def _coerce_pointslike_arg(points: PointsLike,
-                            copy: bool=True) -> np.ndarray:
+                           copy: bool=True) -> np.ndarray:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
