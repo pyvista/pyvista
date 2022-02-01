@@ -25,7 +25,7 @@ from pyvista.utilities import (
     transformations,
     vtk_id_list_to_array,
 )
-from pyvista.utilities.common import PointLike, _coerce_points_like_arg
+from pyvista.utilities.common import PointsLike, _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
@@ -392,7 +392,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: Union[pyvista_ndarray, PointLike]):
+    def points(self, points: PointsLike):
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -402,7 +402,7 @@ class DataSet(DataSetFilters, DataObject):
                 self.Modified()
                 return
         # otherwise, wrap and use the array
-        points = _coerce_points_like_arg(points)
+        points = _coerce_pointslike_arg(points)
         vtk_points = pyvista.vtk_points(points, False)
         if not pdata:
             self.SetPoints(vtk_points)
@@ -2090,7 +2090,7 @@ class DataSet(DataSetFilters, DataObject):
         return locator.FindClosestPoint(point)
 
     def find_closest_cell(self,
-                          point: PointLike,
+                          point: PointsLike,
                           return_closest_point: bool=False,
                           ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
@@ -2185,7 +2185,7 @@ class DataSet(DataSetFilters, DataObject):
         array([1., 1., 0.])
 
         """
-        point = _coerce_points_like_arg(point, copy=False)
+        point = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
@@ -2215,7 +2215,7 @@ class DataSet(DataSetFilters, DataObject):
             return out_cells, out_points
         return out_cells
 
-    def find_containing_cell(self, point: PointLike) -> Union[int, np.ndarray]:
+    def find_containing_cell(self, point: PointsLike) -> Union[int, np.ndarray]:
         """Find index of a cell that contains the given point.
 
         Parameters
@@ -2263,7 +2263,7 @@ class DataSet(DataSetFilters, DataObject):
         (1000,)
 
         """
-        point = _coerce_points_like_arg(point, copy=False)
+        point = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)

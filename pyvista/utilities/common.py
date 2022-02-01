@@ -4,10 +4,10 @@ from typing import Sequence, Union
 
 import numpy as np
 
-PointLike = Union[Sequence, np.ndarray]
+PointsLike = Union[Sequence, np.ndarray]
 
 
-def _coerce_points_like_arg(points: PointLike,
+def _coerce_pointslike_arg(points: PointsLike,
                             copy: bool=True) -> np.ndarray:
     """Check and coerce arg to (n, 3) np.ndarray.
 
