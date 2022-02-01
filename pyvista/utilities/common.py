@@ -22,7 +22,8 @@ def _coerce_pointslike_arg(points: PointsLike,
 
     Returns
     -------
-    np.ndarray : size (n, 3) array
+    np.ndarray
+        Size (n, 3) array.
 
     """
     if isinstance(points, collections.abc.Sequence):
