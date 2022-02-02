@@ -1,10 +1,10 @@
 """Common functions."""
 import collections.abc
-from typing import Sequence, Union
 
 import numpy as np
 
 from pyvista._typing import PointsLike
+
 
 def _coerce_pointslike_arg(points: PointsLike,
                            copy: bool=True) -> np.ndarray:
