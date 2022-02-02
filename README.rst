@@ -246,3 +246,8 @@ BibTex:
       title = {{PyVista}: {3D} plotting and mesh analysis through a streamlined interface for the {Visualization Toolkit} ({VTK})},
       journal = {Journal of Open Source Software}
     }
+
+
+.. image:: https://api.codacy.com/project/badge/Grade/d7245445221d464e939c6e70695d21b6
+   :alt: Codacy Badge
+   :target: https://app.codacy.com/gh/pyvista/pyvista?utm_source=github.com&utm_medium=referral&utm_content=pyvista/pyvista&utm_campaign=Badge_Grade_Settings
