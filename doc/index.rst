@@ -204,8 +204,8 @@ Status
 .. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/pyvista/pyvista
 
-.. |codacy| image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
-   :target: https://www.codacy.com/app/banesullivan/pyvista?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/pyvista&amp;utm_campaign=Badge_Grade
+.. |codacy| image:: https://app.codacy.com/project/badge/Grade/779ac6aed37548839384acfc0c1aab44
+   :target: https://www.codacy.com/gh/pyvista/pyvista/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pyvista/pyvista&amp;utm_campaign=Badge_Grade
 
 .. |contributors| image:: https://img.shields.io/github/contributors/pyvista/pyvista.svg?logo=github&logoColor=white
    :target: https://github.com/pyvista/pyvista/graphs/contributors/
