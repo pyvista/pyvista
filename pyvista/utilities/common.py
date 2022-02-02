@@ -1,12 +1,13 @@
 """Common functions."""
 import collections.abc
+from typing import Union
 
 import numpy as np
 
-from pyvista._typing import PointsLike
+from pyvista._typing import NumericArray, VectorArray
 
 
-def _coerce_pointslike_arg(points: PointsLike,
+def _coerce_pointslike_arg(points: Union[NumericArray, VectorArray],
                            copy: bool=True) -> np.ndarray:
     """Check and coerce arg to (n, 3) np.ndarray.
 
