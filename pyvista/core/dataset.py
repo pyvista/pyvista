@@ -25,11 +25,11 @@ from pyvista.utilities import (
     transformations,
     vtk_id_list_to_array,
 )
-from pyvista.utilities.common import PointsLike, _coerce_pointslike_arg
+from pyvista.utilities.common import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
-from .._typing import Vector
+from .._typing import PointsLike, Vector
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output

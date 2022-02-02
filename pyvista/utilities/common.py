@@ -4,9 +4,7 @@ from typing import Sequence, Union
 
 import numpy as np
 
-# TODO: When numpy>=1.20 is supported, remove and use np.typing.ArrayLike
-PointsLike = Union[Sequence, np.ndarray]
-
+from pyvista._typing import PointsLike
 
 def _coerce_pointslike_arg(points: PointsLike,
                            copy: bool=True) -> np.ndarray:
