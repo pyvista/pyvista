@@ -29,7 +29,7 @@ from pyvista.utilities.common import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
-from .._typing import PointsLike, Vector
+from .._typing import NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -392,7 +392,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: PointsLike):
+    def points(self, points: Union[VectorArray, NumericArray]):
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -2090,7 +2090,7 @@ class DataSet(DataSetFilters, DataObject):
         return locator.FindClosestPoint(point)
 
     def find_closest_cell(self,
-                          point: PointsLike,
+                          point: Union[VectorArray, NumericArray],
                           return_closest_point: bool=False,
                           ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
@@ -2215,7 +2215,8 @@ class DataSet(DataSetFilters, DataObject):
             return out_cells, out_points
         return out_cells
 
-    def find_containing_cell(self, point: PointsLike) -> Union[int, np.ndarray]:
+    def find_containing_cell(self,
+                             point: Union[VectorArray, NumericArray]) -> Union[int, np.ndarray]:
         """Find index of a cell that contains the given point.
 
         Parameters
