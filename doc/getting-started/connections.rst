@@ -30,7 +30,7 @@ Geosciences
 * gimli_: Geophysical inversion and modeling library.
 * discretize_: Discretization tools for finite volume and inverse problems.
 * SEGY-SAK_: SEGY Swiss Army Knife for Seismic Data.
-* subsurface_: Core data exchange library for subsurface science and engineering
+* subsurface_: Core data exchange library for subsurface science and engineering.
 * Flownet_: Data-Driven Reservoir Predictions.
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
 * omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
@@ -73,4 +73,3 @@ Many More
 .. _pyntcloud: https://github.com/daavoo/pyntcloud
 .. _DiSECt: https://github.com/NVlabs/DiSECt
 .. _torch-points3d: https://github.com/torch-points3d/torch-points3d
-.. _pyprocar: https://github.com/romerogroup/pyprocar
