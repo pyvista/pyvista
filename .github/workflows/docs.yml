@@ -17,7 +17,7 @@ on:
       - main
 
 env:
-  USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') }}
+  USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
 
 jobs:
   doc:
