@@ -1,4 +1,4 @@
-# TODO: This file really should be named test_dataset.py
+"""Tests for pyvista.core.dataset."""
 
 import pickle
 
@@ -873,39 +873,22 @@ def test_find_closest_point():
 def test_find_closest_cell():
     mesh = pyvista.Wavelet()
     node = np.array([0, 0.2, 0.2])
-
-    with pytest.raises(ValueError):
-        mesh.find_closest_cell([1, 2])
-
-    with pytest.raises(TypeError):
-        # allow Sequence but not Iterable
-        mesh.find_closest_cell({1, 2, 3})
-
-    # array but bad size
-    with pytest.raises(ValueError):
-        mesh.find_closest_cell(np.empty(4))
-
     index = mesh.find_closest_cell(node)
     assert isinstance(index, int)
 
 
 def test_find_closest_cells():
     mesh = pyvista.Sphere()
-    # invalid array dim
-    with pytest.raises(ValueError):
-        mesh.find_closest_cell(np.empty((1, 1, 1)))
-
-    # test invalid array size
-    with pytest.raises(ValueError):
-        mesh.find_closest_cell(np.empty((4, 4)))
-
     # simply get the face centers, ordered by cell Id
     fcent = mesh.points[mesh.faces.reshape(-1, 4)[:, 1:]].mean(1)
+    fcent_copy = fcent.copy()
     indices = mesh.find_closest_cell(fcent)
 
     # Make sure we match the face centers
     assert np.allclose(indices, np.arange(mesh.n_faces))
 
+    # Make sure arg was not modified
+    assert np.array_equal(fcent, fcent_copy)
 
 def test_find_closest_cell_surface_point():
     mesh = pyvista.Rectangle()
@@ -924,34 +907,17 @@ def test_find_closest_cell_surface_point():
 def test_find_containing_cell():
     mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
     node = np.array([0.3, 0.3, 0.0])
-
-    with pytest.raises(ValueError):
-        mesh.find_containing_cell([1, 2])
-
-    with pytest.raises(TypeError):
-        # allow Sequence but not Iterable
-        mesh.find_containing_cell({1, 2, 3})
-
-    # array but bad size
-    with pytest.raises(ValueError):
-        mesh.find_containing_cell(np.empty(4))
-
     index = mesh.find_containing_cell(node)
     assert index == 5
 
 
 def test_find_containing_cells():
     mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
-    # invalid array dim
-    with pytest.raises(ValueError):
-        mesh.find_containing_cell(np.empty((1, 1, 1)))
-
-    # test invalid array size
-    with pytest.raises(ValueError):
-        mesh.find_containing_cell(np.empty((4, 4)))
-
-    indices = mesh.find_containing_cell([[0.3, 0.3, 0], [0.6, 0.6, 0]])
+    points = np.array([[0.3, 0.3, 0], [0.6, 0.6, 0]])
+    points_copy = points.copy()
+    indices = mesh.find_containing_cell(points)
     assert np.allclose(indices, [5, 10])
+    assert np.array_equal(points, points_copy)
 
 
 def test_find_cells_along_line():
@@ -986,10 +952,23 @@ def test_find_cells_within_bounds():
     assert len(indices) == 0
 
 
-def test_setting_points_from_self(grid):
+def test_setting_points_by_different_types(grid):
     grid_copy = grid.copy()
     grid.points = grid_copy.points
-    assert np.allclose(grid.points, grid_copy.points)
+    assert np.array_equal(grid.points, grid_copy.points)
+
+    grid.points = np.array(grid_copy.points)
+    assert np.array_equal(grid.points, grid_copy.points)
+
+    grid.points = grid_copy.points.tolist()
+    assert np.array_equal(grid.points, grid_copy.points)
+
+    pgrid = pyvista.PolyData([0., 0., 0.])
+    pgrid.points = [1., 1., 1.]
+    assert np.array_equal(pgrid.points, [[1., 1., 1.]])
+
+    pgrid.points = np.array([2., 2., 2.])
+    assert np.array_equal(pgrid.points, [[2., 2., 2.]])
 
 
 def test_empty_points():
