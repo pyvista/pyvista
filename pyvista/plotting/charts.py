@@ -1101,7 +1101,7 @@ class _Chart(DocSubs):
     @size.setter
     def size(self, val):
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
-            raise ValueError('invalid size')
+            raise ValueError(f'Invalid size {val}.')
         self._size = val
 
     @property  # type: ignore
@@ -1128,7 +1128,7 @@ class _Chart(DocSubs):
     @loc.setter
     def loc(self, val):
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
-            raise ValueError('invalid loc')
+            raise ValueError(f'Invalid loc {val}.')
         self._loc = val
 
     @property  # type: ignore
@@ -4053,8 +4053,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     @position.setter
     def position(self, val):
-        if not (len(val) == 2):
-            raise ValueError('invalid position, must be length 2')
+        if len(val) != 2:
+            raise ValueError(f'Invalid position {val}, must be length 2.')
         self.SetPosition(*val)
 
     @property
