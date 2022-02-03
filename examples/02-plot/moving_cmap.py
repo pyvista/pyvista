@@ -8,15 +8,13 @@ by updating the scalars.
 
 """
 
-from math import pi
-
 import numpy as np
 
 import pyvista as pv
 
-# A spherica curve
-def Gamma(t):
-    alpha = pi / 2 - (pi / 2 - 0.44) * np.cos(3 * t)
+# A spherical curve
+def scurve(t):
+    alpha = np.pi / 2 - (np.pi / 2 - 0.44) * np.cos(3 * t)
     beta = t + 0.44 * np.sin(6 * t)
     return np.array(
         [
@@ -27,7 +25,7 @@ def Gamma(t):
     )
 
 # Hopf fiber
-def HopfFiber(p, phi):
+def hopf_fiber(p, phi):
     return (
         np.array(
             [
@@ -41,40 +39,40 @@ def HopfFiber(p, phi):
     )
 
 # Stereographic projection
-def Stereo(q):
+def stereo_proj(q):
     return q[0:3] / (1 - q[3])
 
 # Parameterization of the Hopf torus
-def F(t, phi):
-    return Stereo(HopfFiber(Gamma(t), phi))
+def hopf_torus(t, phi):
+    return stereo_proj(hopf_fiber(scurve(t), phi))
 
 # Create the mesh
-angle_u = np.linspace(-pi, pi, 400)
-angle_v = np.linspace(0, pi, 200)
+angle_u = np.linspace(-np.pi, np.pi, 400)
+angle_v = np.linspace(0, np.pi, 200)
 u, v = np.meshgrid(angle_u, angle_v)
-x, y, z = F(u, v)
+x, y, z = hopf_torus(u, v)
 grid = pv.StructuredGrid(x, y, z)
 mesh = grid.extract_geometry().clean(tolerance=1e-6)
 
 # Distances normalized to [0, 2*pi]
 dists = np.linalg.norm(mesh.points, axis=1)
-dists = 2 * pi * (dists - dists.min()) / (dists.max() - dists.min())
+dists = 2 * np.pi * (dists - dists.min()) / (dists.max() - dists.min())
 
 # Make the movie
-pltr = pv.Plotter(window_size=[512,512])
+pltr = pv.Plotter(window_size=[512, 512])
 pltr.set_focus([0, 0, 0])
-pltr.set_position((40, 0, 0))
+pltr.set_position([40, 0, 0])
 pltr.add_mesh(
     mesh,
     scalars=np.sin(dists),
     smooth_shading=True,
     specular=10,
-    cmap="flag",
+    cmap="nipy_spectral",
     show_scalar_bar=False,
 )
 pltr.open_gif("Hopf_torus.gif")
 
-for t in np.linspace(0, 2 * pi, 60, endpoint=False):
+for t in np.linspace(0, 2 * np.pi, 60, endpoint=False):
     pltr.update_scalars(np.sin(dists - t), render=False)
     pltr.write_frame()
 
