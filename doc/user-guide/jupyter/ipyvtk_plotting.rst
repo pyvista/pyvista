@@ -60,7 +60,7 @@ Where environment.yml is:
       - pyvista
       - ipyvtklink
 
-On Linux, you can setup your jupyterlab environment with:
+Using pip, you can setup your jupyterlab environment with:
 
 .. code::
 
