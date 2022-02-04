@@ -58,12 +58,13 @@ Where environment.yml is:
       - jupyterlab
       - ipywidgets
       - pyvista
+      - ipyvtklink
 
 On Linux, you can setup your jupyterlab environment with:
 
 .. code::
 
-    pip install jupyterlab ipywidgets pyvista
+    pip install jupyterlab ipywidgets pyvista ipyvtklink
     sudo apt install nodejs
     jupyter labextension install @jupyter-widgets/jupyterlab-manager@2.0 ipycanvas@0.6.1 ipyevents@1.8.1
 
