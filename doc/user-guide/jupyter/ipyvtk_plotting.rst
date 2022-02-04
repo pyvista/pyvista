@@ -45,7 +45,7 @@ If you're using an Anaconda environment, installation is the quite straightforwa
 
     conda env update --name base --file environment.yml
     conda run conda install -y nodejs
-    conda run jupyter labextension install @jupyter-widgets/jupyterlab-manager@2.0 ipycanvas@0.6.1 ipyevents@1.8.1
+    conda run jupyter labextension install @jupyter-widgets/jupyterlab-manager ipycanvas ipyevents
 
 Where environment.yml is:
 
@@ -66,7 +66,7 @@ On Linux, you can setup your jupyterlab environment with:
 
     pip install jupyterlab ipywidgets pyvista ipyvtklink
     sudo apt install nodejs
-    jupyter labextension install @jupyter-widgets/jupyterlab-manager@2.0 ipycanvas@0.6.1 ipyevents@1.8.1
+    jupyter labextension install @jupyter-widgets/jupyterlab-manager ipycanvas ipyevents
 
 
 
