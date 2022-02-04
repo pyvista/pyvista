@@ -43,9 +43,7 @@ If you're using an Anaconda environment, installation is the quite straightforwa
 
 .. code::
 
-    conda env update --name base --file environment.yml
-    conda run conda install -y nodejs
-    conda run jupyter labextension install @jupyter-widgets/jupyterlab-manager ipycanvas ipyevents
+    conda env create --name pyvista --file environment.yml
 
 Where environment.yml is:
 
@@ -65,8 +63,6 @@ Using pip, you can setup your jupyterlab environment with:
 .. code::
 
     pip install jupyterlab ipywidgets pyvista[all] ipyvtklink
-    sudo apt install nodejs
-    jupyter labextension install @jupyter-widgets/jupyterlab-manager ipycanvas ipyevents
 
 
 
