@@ -24,3 +24,4 @@ pythreejs<2.4.0
 sphinx-gallery<0.11.0
 tqdm<4.63.0
 trimesh<3.10.0
+
