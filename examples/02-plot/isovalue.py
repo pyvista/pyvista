@@ -34,12 +34,17 @@ surface = surfaces[0].copy()
 
 filename = "isovalue.gif"
 
-plotter = pv.Plotter()
+plotter = pv.Plotter(off_screen=True)
 # Open a movie file
 plotter.open_gif(filename)
 
 # Add initial mesh
-plotter.add_mesh(surface, opacity=0.5, clim=vol.get_data_range())
+plotter.add_mesh(
+    surface,
+    opacity=0.5,
+    clim=vol.get_data_range(),
+    show_scalar_bar=False,
+)
 # Add outline for reference
 plotter.add_mesh(vol.outline_corners(), color='k')
 

@@ -10,8 +10,10 @@ In VTK, datasets consist of geometry, topology, and attributes to which PyVista
 provides direct access:
 
 * Geometry is the collection of points and cells in 2D or 3D space.
-* Topology defines the structure of the dataset, or how the points are connected to each other to form a cells making a surface or volume.
-* Attributes are any data values that are associated to either the points or cells of the dataset
+* Topology defines the structure of the dataset, or how the points are connected
+  to each other to form a cells making a surface or volume.
+* Attributes are any data values that are associated to either the points or
+  cells of the dataset
 
 All of the following data types are listed subclasses of a dataset and share a
 set of common functionality which we wrap into the base class
@@ -27,11 +29,14 @@ The :class:`pyvista.DataSet` class holds attributes that
 are *common* to all spatially referenced datasets in PyVista.  This
 base class is analogous to VTK's `vtk.vtkDataSet`_ class.
 
+The :class:`pyvista.DataSetAttributes` class contains the methods to access
+arrays associated with cells, points, and the DataSet in general (fields).
+
 .. autosummary::
    :toctree: _autosummary
    :template: custom-class-template.rst
 
    pyvista.DataSet
-
+   pyvista.DataSetAttributes
 
 .. _vtk.vtkDataSet: https://vtk.org/doc/nightly/html/classvtkDataSet.html

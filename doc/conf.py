@@ -196,6 +196,7 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.*boolean_cut$',
     r'\.*add_field_array$',
     r'\.*add_field_array$',
+    r'DataSetAttributes.append$',
 
     # methods we probably should make private
     r'\.store_click_position$',
@@ -289,14 +290,23 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
-def reset_pyvista(gallery_conf, fname):
-    """Reset pyvista module to default settings
+class ResetPyvista:
+    """Reset pyvista module to default settings."""
 
-    If default documentation settings are modified in any example, reset here.
-    """
-    import pyvista
-    pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
-    pyvista.set_plot_theme('document')
+    def __call__(self, gallery_conf, fname):
+        """Reset pyvista module to default settings
+
+        If default documentation settings are modified in any example, reset here.
+        """
+        import pyvista
+        pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+        pyvista.set_plot_theme('document')
+
+    def __repr__(self):
+        return 'ResetPyvista'
+
+
+reset_pyvista = ResetPyvista()
 
 
 # skip building the osmnx example if osmnx is not installed

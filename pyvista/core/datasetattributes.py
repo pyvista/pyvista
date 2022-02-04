@@ -69,6 +69,15 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     association : FieldAssociation
         The array association type of the vtkobject.
 
+    Notes
+    -----
+    When printing out the point arrays, you can see which arrays are
+    the active scalars, vectors, normals, and texture coordinates.
+    In the arrays list, ``SCALARS`` denotes that these are the active
+    scalars, ``VECTORS`` denotes that these arrays are tagged as the
+    active vectors data (i.e. data with magnitude and direction) and
+    so on.
+
     Examples
     --------
     Store data with point association in a DataSet.
@@ -85,6 +94,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     >>> data[:] = 0
     >>> mesh.point_data['my_data']
     pyvista_ndarray([0, 0, 0, 0, 0, 0, 0, 0])
+
+    Remove the array.
+
+    >>> del mesh.point_data['my_data']
+    >>> 'my_data' in mesh.point_data
+    False
 
     Print the available arrays from dataset attributes.
 
@@ -110,15 +125,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         my-other-data           int64    (4,)
         vectors1                float64  (4, 3)               VECTORS
         vectors0                float64  (4, 3)
-
-    Notes
-    -----
-    When printing out the point arrays, you can see which arrays are
-    the active scalars, vectors, normals, and texture coordinates.
-    In the arrays list, ``SCALARS`` denotes that these are the active
-    scalars, ``VECTORS`` denotes that these arrays are tagged as the
-    active vectors data (i.e. data with magnitude and direction) and
-    so on.
 
     """
 
@@ -496,6 +502,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         KeyError
             If the key does not exist.
 
+        Notes
+        -----
+        This is provided since arrays are ordered within VTK and can
+        be indexed via an int.  When getting an array, you can just
+        use the key of the array with the ``[]`` operator with the
+        name of the array.
+
         Examples
         --------
         Store data with point association in a DataSet.
@@ -514,13 +527,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         >>> mesh.point_data.get_array('my_data')
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
-
-        Notes
-        -----
-        This is provided since arrays are ordered within VTK and can
-        be indexed via an int.  When getting an array, you can just
-        use the key of the array with the ``[]`` operator with the
-        name of the array.
 
         """
         self._raise_index_out_of_bounds(index=key)
@@ -562,6 +568,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         deep_copy : bool, optional
             When ``True`` makes a full copy of the array.
 
+        Notes
+        -----
+        You can simply use the ``[]`` operator to add an array to the
+        dataset.  Note that this will automatically become the active
+        scalars.
+
         Examples
         --------
         Add a point array to a mesh.
@@ -586,12 +598,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> mesh.field_data.set_array(field_data, 'my-data')
         >>> mesh.field_data['my-data']
         pyvista_ndarray([0, 1, 2])
-
-        Notes
-        -----
-        You can simply use the ``[]`` operator to add an array to the
-        dataset.  Note that this will automatically become the active
-        scalars.
 
         """
         vtk_arr = self._prepare_array(data, name, deep_copy)
@@ -675,6 +681,17 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             ``False``, the data references the original array
             without copying it.
 
+        Notes
+        -----
+        PyVista and VTK treats vectors and scalars differently when
+        performing operations. Vector data, unlike scalar data, is
+        rotated along with the geometry when the DataSet is passed
+        through a transformation filter.
+
+        When adding non-directional data (such temperature values or
+        multi-component scalars like RGBA values), you can also use
+        :func:`DataSetAttributes.set_scalars`.
+
         Examples
         --------
         Add random vectors to a mesh as point data.
@@ -694,17 +711,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Active Normals  : None
         Contains arrays :
             my-vectors              float64  (8, 3)               VECTORS
-
-        Notes
-        -----
-        PyVista and VTK treats vectors and scalars differently when
-        performing operations. Vector data, unlike scalar data, is
-        rotated along with the geometry when the DataSet is passed
-        through a transformation filter.
-
-        When adding non-directional data (such temperature values or
-        multi-component scalars like RGBA values), you can also use
-        :func:`DataSetAttributes.set_scalars`.
 
         """
         # prepare the array and add an attribute so that we can track this as a vector
@@ -825,6 +831,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         key : str
             The name of the array to remove.
 
+        Notes
+        -----
+        You can also use the ``del`` statement.
+
         Examples
         --------
         Add a point data array to a DataSet and then remove it.
@@ -838,10 +848,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         >>> 'my_data' in mesh.point_data
         False
-
-        Notes
-        -----
-        You can also use the ``del`` statement.
 
         """
         if not isinstance(key, str):
@@ -906,6 +912,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def items(self) -> List[Tuple[str, pyvista_ndarray]]:
         """Return a list of (array name, array value) tuples.
 
+        Returns
+        -------
+        list
+            List of keys and values.
+
         Examples
         --------
         >>> import pyvista
@@ -921,6 +932,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def keys(self) -> List[str]:
         """Return the names of the arrays as a list.
+
+        Returns
+        -------
+        list
+            List of keys.
 
         Examples
         --------
@@ -948,6 +964,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def values(self) -> List[pyvista_ndarray]:
         """Return the arrays as a list.
+
+        Returns
+        -------
+        list
+            List of arrays.
 
         Examples
         --------
@@ -992,13 +1013,39 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def update(self, array_dict: Union[Dict[str, np.ndarray], 'DataSetAttributes']):
         """Update arrays in this object.
 
-        For each key, value given, add the pair, if it already exists,
+        For each key, value given, add the pair. If it already exists,
         update it.
 
         Parameters
         ----------
         array_dict : dict
-            A dictionary of (array name, numpy.ndarray)
+            A dictionary of ``(array name, numpy.ndarray)``.
+
+        Examples
+        --------
+        Add two arrays using ``update``.
+
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> mesh = examples.load_uniform()
+        >>> n = len(mesh.point_data)
+        >>> arrays = {
+        ...     'foo': np.arange(mesh.n_points),
+        ...     'rand': np.random.random(mesh.n_points),
+        ... }
+        >>> mesh.point_data.update(arrays)
+        >>> mesh.point_data
+        pyvista DataSetAttributes
+        Association     : POINT
+        Active Scalars  : rand
+        Active Vectors  : None
+        Active Texture  : None
+        Active Normals  : None
+        Contains arrays :
+            Spatial Point Data      float64  (1000,)
+            foo                     int64    (1000,)
+            rand                    float64  (1000,)              SCALARS
+
         """
         for name, array in array_dict.items():
             self[name] = array.copy()
@@ -1111,6 +1158,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             Normals of this dataset attribute.  ``None`` if no
             normals have been set.
 
+        Notes
+        -----
+        Field data will have no normals.
+
         Examples
         --------
         First, compute cell normals.
@@ -1149,10 +1200,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Contains arrays :
             Normals                 float64  (1, 3)               NORMALS
 
-        Notes
-        -----
-        Field data will have no normals.
-
         """
         self._raise_no_normals()
         vtk_normals = self.GetNormals()
@@ -1183,7 +1230,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Return or set the name of the normals array.
 
         Returns
-        --------
+        -------
         str
             Name of the active normals array.
 

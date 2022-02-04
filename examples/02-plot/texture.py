@@ -143,7 +143,6 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 
     # must update normals when smooth shading is enabled
     plotter.mesh.compute_normals(cell_normals=False, inplace=True)
-    plotter.render()
     plotter.write_frame()
     plotter.clear()
 
