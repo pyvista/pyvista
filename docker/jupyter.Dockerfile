@@ -18,7 +18,7 @@ COPY docker/requirements.txt /build-context/requirements.txt
 WORKDIR /build-context/
 
 # Install our custom vtk wheel
-RUN pip install --find-links https://wheels.pyvista.org vtk-osmesa
+RUN pip install --find-links https://wheels.pyvista.org/osmesa vtk
 
 RUN pip install pyvista*.tar.gz
 RUN pip install -r requirements.txt

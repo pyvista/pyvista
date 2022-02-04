@@ -45,7 +45,7 @@ jobs:
         run: sudo apt-get install libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
 
       - name: Install OSMesa VTK
-        run: pip install https://github.com/pyvista/pyvista-wheels/raw/add_v9_1_0/vtk-osmesa-9.1.0-cp38-cp38-linux_x86_64.whl
+        run: pip install --find-links https://wheels.pyvista.org/osmesa vtk
 
       - name: Install PyVista
         run: |
