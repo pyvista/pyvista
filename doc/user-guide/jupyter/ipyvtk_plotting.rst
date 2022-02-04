@@ -53,7 +53,7 @@ Where environment.yml is:
       - conda-forge
       - defaults
     dependencies:
-      - jupyterlab
+      - jupyterlab >=3
       - ipywidgets
       - pyvista
       - ipyvtklink
@@ -62,7 +62,7 @@ Using pip, you can setup your jupyterlab environment with:
 
 .. code::
 
-    pip install jupyterlab ipywidgets pyvista[all] ipyvtklink
+    pip install 'jupyterlab>=3' ipywidgets 'pyvista[all]' ipyvtklink
 
 
 
