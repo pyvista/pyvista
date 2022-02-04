@@ -57,6 +57,7 @@ Where environment.yml is:
       - ipywidgets
       - pyvista
       - ipyvtklink
+      - matplotlib
 
 Using pip, you can setup your jupyterlab environment with:
 
