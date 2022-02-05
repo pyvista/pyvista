@@ -352,7 +352,8 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         ``(N, 3)`` array of points.
 
     editable : bool, optional
-        Set whether this dataset is editable after creation. Default ``True``.
+        Set whether this dataset is editable after creation. Default
+        ``True``. For performance, set this to ``False``.
 
     Notes
     -----
@@ -385,6 +386,8 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         if points is not None:
             self.points = points
 
+        self.editable = editable
+
     def __repr__(self):
         """Return the standard representation."""
         return DataSet.__repr__(self)
@@ -392,6 +395,37 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     def __str__(self):
         """Return the standard str representation."""
         return DataSet.__str__(self)
+
+    @property
+    def editable(self) -> bool:
+        """Return or set if this dataset be incrementally modified.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista
+        >>> rng = np.random.default_rng(0)
+        >>> points = rng.random((10, 3))
+        >>> pset = pyvista.PointSet(points, editable=False)
+        >>> pset.editable
+        False
+
+        Allow the pointset to be editable.
+
+        >>> pset.editable = True
+        >>> pset.points[:] = 0
+
+        """
+        return self.GetEditable()
+
+    @editable.setter
+    def editable(self, value: bool):
+        self.SetEditable(value)
+        
+
+    # @points.setter
+    # def points(self, points: np.ndarray):
+    #     """Override points setter to 
 
     def cast_to_polydata(self, deep=True):
         """Cast this dataset to polydata.
@@ -2193,7 +2227,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             coord = (2*i + connectivity[0],
                      2*j + connectivity[1],
                      2*k + connectivity[2])
-            cinds = np.ravel_multi_index(coord, shape1, order='F')
+            cinds = np.ravel_multi_index(coord, shape1, order='F')  # type: ignore
             cells[c, 1:] = indices[cinds]
         cells = cells.flatten()
         points = pyvista.vtk_points(points)
@@ -2480,7 +2514,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             coords = tuple(coords)
         dims = self._dimensions()
         try:
-            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')
+            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')  # type: ignore
         except ValueError:
             return None
         else:

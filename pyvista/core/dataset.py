@@ -446,7 +446,7 @@ class DataSet(DataSetFilters, DataObject):
             raise ValueError('Active vectors are not vectors.')
 
         scale_name = f'{vectors_name} Magnitude'
-        scale = np.linalg.norm(self.active_vectors, axis=1)
+        scale = np.linalg.norm(self.active_vectors, axis=1)  # type: ignore
         self.point_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
 

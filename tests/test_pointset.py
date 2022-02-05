@@ -27,3 +27,6 @@ def test_pointset(pointset):
     arr_name = 'arr'
     pointset.point_data[arr_name] = np.random.random(10)
     assert arr_name in pointset.point_data
+
+    pointset.editable = False
+    pointset.points[:] = 0
