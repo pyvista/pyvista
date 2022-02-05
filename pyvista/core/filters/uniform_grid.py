@@ -82,6 +82,13 @@ class UniformGridFilters(DataSetFilters):
         alg = _vtk.vtkImageMedian3D()
         alg.SetInputDataObject(self)
 
+        if scalars is None:
+            field, scalars = self.active_scalars_info
+        else:
+            field = self.get_array_association(scalars, preference=preference)
+
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
+
     def extract_subset(self, voi, rate=(1, 1, 1), boundary=False, progress_bar=False):
         """Select piece (e.g., volume of interest).
 
