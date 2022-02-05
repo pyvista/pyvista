@@ -25,10 +25,11 @@ from pyvista.utilities import (
     transformations,
     vtk_id_list_to_array,
 )
+from pyvista.utilities.common import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
-from .._typing import Vector
+from .._typing import NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -391,7 +392,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: np.ndarray):
+    def points(self, points: Union[VectorArray, NumericArray]):
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -400,10 +401,8 @@ class DataSet(DataSetFilters, DataObject):
                 pdata.Modified()
                 self.Modified()
                 return
-
         # otherwise, wrap and use the array
-        if not isinstance(points, np.ndarray):
-            raise TypeError('Points must be a numpy array')
+        points = _coerce_pointslike_arg(points)
         vtk_points = pyvista.vtk_points(points, False)
         if not pdata:
             self.SetPoints(vtk_points)
@@ -2091,7 +2090,7 @@ class DataSet(DataSetFilters, DataObject):
         return locator.FindClosestPoint(point)
 
     def find_closest_cell(self,
-                          point: Union[Sequence, np.ndarray],
+                          point: Union[VectorArray, NumericArray],
                           return_closest_point: bool=False,
                           ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
@@ -2186,22 +2185,7 @@ class DataSet(DataSetFilters, DataObject):
         array([1., 1., 0.])
 
         """
-        if isinstance(point, collections.abc.Sequence):
-            point = np.array(point)
-        # check if this is an array of points
-        if isinstance(point, np.ndarray):
-            if point.ndim > 2:
-                raise ValueError("Array of points must be 1D or 2D")
-            if point.ndim == 2:
-                if point.shape[1] != 3:
-                    raise ValueError("Array of points must have three values per point"
-                                     "(shape (n, 3))")
-            else:
-                if point.size != 3:
-                    raise ValueError("Given point must have three values")
-                point = np.array([point])
-        else:
-            raise TypeError("Given point must be a sequence or an array.")
+        point = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
@@ -2231,7 +2215,8 @@ class DataSet(DataSetFilters, DataObject):
             return out_cells, out_points
         return out_cells
 
-    def find_containing_cell(self, point: Union[Sequence, np.ndarray]) -> Union[int, np.ndarray]:
+    def find_containing_cell(self,
+                             point: Union[VectorArray, NumericArray]) -> Union[int, np.ndarray]:
         """Find index of a cell that contains the given point.
 
         Parameters
@@ -2279,22 +2264,7 @@ class DataSet(DataSetFilters, DataObject):
         (1000,)
 
         """
-        if isinstance(point, collections.abc.Sequence):
-            point = np.array(point)
-        # check if this is an array of points
-        if isinstance(point, np.ndarray):
-            if point.ndim > 2:
-                raise ValueError("Array of points must be 1D or 2D")
-            if point.ndim == 2:
-                if point.shape[1] != 3:
-                    raise ValueError("Array of points must have three values per point "
-                                     "(shape (n, 3))")
-            else:
-                if point.size != 3:
-                    raise ValueError("Given point must have three values")
-                point = np.array([point])
-        else:
-            raise TypeError("Given point must be a sequence or an array.")
+        point = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)

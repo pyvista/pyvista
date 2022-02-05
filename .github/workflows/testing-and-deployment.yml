@@ -70,9 +70,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install headless display
-        run: |
-          .ci/setup_headless_display.sh
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action@v1
 
       - name: Cache Conda
         uses: actions/cache@v1
@@ -229,7 +228,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Upgrade pip
-        run: pip install --upgrade 'pip<22.0'
+        run: python -m pip install --upgrade pip
 
       - name: Set pip cache dir as env variable
         run: |
@@ -244,13 +243,8 @@ jobs:
           restore-keys: |
             Python-${{ runner.os }}-${{ matrix.python-version }}
 
-      - name: Install OpenGL
-        run: |
-          Set-StrictMode -Version Latest
-          $ErrorActionPreference = "Stop"
-          $PSDefaultParameterValues['*:ErrorAction']='Stop'
-          git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
-          powershell gl-ci-helpers/appveyor/install_opengl.ps1
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action@v1
 
       - name: Install PyVista
         run: |

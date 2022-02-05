@@ -1,6 +1,6 @@
 name: "Pull Request Labeler"
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened]
 
 jobs:
@@ -39,4 +39,4 @@ jobs:
     - uses: actions-ecosystem/action-add-labels@v1
       if: startsWith(github.event.pull_request.head.ref, 'fix') || startsWith(github.event.pull_request.head.ref, 'patch')
       with:
-        labels: bug-fix
+        labels: bug
