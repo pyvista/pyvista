@@ -3,7 +3,7 @@
 
 Create a GIF Movie of a Static Object with a Moving Colormap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Generate a gif movie of a Hopf torus with a moving colormap, 
+Generate a gif movie of a Hopf torus with a moving colormap,
 by updating the scalars.
 
 """
@@ -12,14 +12,15 @@ import numpy as np
 
 import pyvista as pv
 
+
 # A spherical curve
 def scurve(t):
     alpha = np.pi / 2 - (np.pi / 2 - 0.44) * np.cos(3 * t)
     beta = t + 0.44 * np.sin(6 * t)
     return np.array(
         [
-          np.sin(alpha) * np.cos(beta), 
-          np.sin(alpha) * np.sin(beta), 
+          np.sin(alpha) * np.cos(beta),
+          np.sin(alpha) * np.sin(beta),
           np.cos(alpha)
         ]
     )
