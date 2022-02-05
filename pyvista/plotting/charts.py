@@ -4168,8 +4168,8 @@ class Charts:
     def remove_chart(self, chart_or_index):
         """Remove a chart from the collection."""
         chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
-        if not (chart in self._charts):
-            raise ValueError('chart_index not present.')
+        if chart not in self._charts:
+            raise ValueError('chart_index not present in charts collection.')
         self._charts.remove(chart)
         self._scene.RemoveItem(chart)
         self._scene.RemoveItem(chart._background)
