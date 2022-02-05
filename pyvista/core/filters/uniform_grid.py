@@ -78,7 +78,9 @@ class UniformGridFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
         '''
-        pass
+
+        alg = _vtk.vtkImageMedian3D()
+        alg.SetInputDataObject(self)
 
     def extract_subset(self, voi, rate=(1, 1, 1), boundary=False, progress_bar=False):
         """Select piece (e.g., volume of interest).
