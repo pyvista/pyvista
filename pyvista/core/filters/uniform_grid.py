@@ -58,6 +58,28 @@ class UniformGridFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Gaussian Smoothing')
         return _get_output(alg)
 
+    def median_smooth(self, kernel_size=3,
+                      scalars=None, preference='points', progress_bar=False):
+        ''' Smooth data using a median filter.
+
+        Parameters
+        ----------
+        kernel_size : int or iterable, optional
+            Size of the kernel in each direction (units of voxels)
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        preference : str, optional
+            When scalars is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+        '''
+        pass
+
     def extract_subset(self, voi, rate=(1, 1, 1), boundary=False, progress_bar=False):
         """Select piece (e.g., volume of interest).
 
