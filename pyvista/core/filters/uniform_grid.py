@@ -92,9 +92,10 @@ class UniformGridFilters(DataSetFilters):
 
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
 
-        # check what dimensions of the dataset have size > 1
-        dim_greaterthan_one =
+        alg.SetKernelSize(kernel_size[0],kernel_size[1],kernel_size[2])
 
+        _update_alg(alg, progress_bar, 'Performing Median Smoothing')
+        return _get_output(alg)
 
 
     def extract_subset(self, voi, rate=(1, 1, 1), boundary=False, progress_bar=False):
