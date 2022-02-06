@@ -154,11 +154,11 @@ Running on CI Services
 Please head over to `pyvista/setup-headless-display-action`_ for details on
 setting up a headless display in GitHub Actions Workflows using PyVista.
 
-In the past, we have also supported `pyvista/gl-ci-hepers`_ for setting up CI
+In the past, we have also supported `pyvista/gl-ci-helpers`_ for setting up CI
 services like Travis and Azure Pipelines to run PyVista.
 
 .. _pyvista/setup-headless-display-action: https://github.com/pyvista/setup-headless-display-action
-.. _pyvista/gl-ci-hepers: https://github.com/pyvista/gl-ci-helpers
+.. _pyvista/gl-ci-helpers: https://github.com/pyvista/gl-ci-helpers
 
 
 Running on MyBinder
