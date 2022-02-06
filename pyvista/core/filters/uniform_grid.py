@@ -66,9 +66,8 @@ class UniformGridFilters(DataSetFilters):
         ----------
         kernel_size : iterable of three ints
             Size of the kernel in each dimensions (units of voxels). Default is
-            a 3D median filter. If you want to do a 2D median filter, provide
-            a list or tuple of three sizes and set the size to 1 in the
-            dimension you don't want to filter over.
+            a 3D median filter. If you want to do a 2D median filter, set the
+            size to 1 in the dimension you don't want to filter over.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
