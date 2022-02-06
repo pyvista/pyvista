@@ -60,7 +60,7 @@ class UniformGridFilters(DataSetFilters):
 
     def median_smooth(self, kernel_size=[3,3,3],
                       scalars=None, preference='points', progress_bar=False):
-        """ Smooth data using a median filter.
+        """Smooth data using a median filter.
 
         Parameters
         ----------
@@ -80,6 +80,12 @@ class UniformGridFilters(DataSetFilters):
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            Uniform grid with smoothed scalars.
+
         """
         alg = _vtk.vtkImageMedian3D()
         alg.SetInputDataObject(self)
