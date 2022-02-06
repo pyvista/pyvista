@@ -3,11 +3,6 @@
 Using ``ipyvtklink`` with PyVista
 ---------------------------------
 
-.. note::
-   As of version ``0.1.4``, ``ipyvtklink`` does not support
-   Jupyterlab 3.  Attempting to run the following will return a
-   ``Model not found`` error within jupyterlab.
-
 ``pyvista`` has the ability to display fully featured plots within a
 JupyterLab environment using ``ipyvtklink``.  This feature works by
 streaming the current render window to a canvas within JupyterLab and
@@ -16,8 +11,7 @@ window.
 
 While this isn't an exciting feature when JupyterLab is being run
 locally, this has huge implications when plotting remotely as you can
-display any plot (except for those with multiple render windows) from
-JupyterLab.
+display any plot, with subplots and widgets, from JupyterLab.
 
 For example, both sections of code will display an interactive canvas
 within JupyterLab:
@@ -40,7 +34,7 @@ For convenience, you can enable ``ipyvtklink`` by default with:
 .. code:: python
 
     import pyvista
-    pyvista.global_theme.jupyter_backend = 'ipyvtklink'
+    pyvista.set_jupyter_backend('ipyvtklink')
 
 
 Installation
@@ -49,9 +43,7 @@ If you're using an Anaconda environment, installation is the quite straightforwa
 
 .. code::
 
-    conda env update --name base --file environment.yml
-    conda run conda install -y nodejs
-    conda run jupyter labextension install @jupyter-widgets/jupyterlab-manager@2.0 itkwidgets@0.32.0 ipycanvas@0.6.1 ipyevents@1.8.1
+    conda env create --name pyvista --file environment.yml
 
 Where environment.yml is:
 
@@ -61,18 +53,17 @@ Where environment.yml is:
       - conda-forge
       - defaults
     dependencies:
-      - jupyterlab=2.2.9
-      - itkwidgets=0.32.0
-      - ipywidgets=7.5.1
-      - pyvista=0.27.0
+      - jupyterlab >=3
+      - ipywidgets
+      - pyvista
+      - ipyvtklink
+      - matplotlib
 
-On Linux, you can setup your jupyterlab environment with:
+Using pip, you can setup your jupyterlab environment with:
 
 .. code::
 
-    pip install jupyterlab itkwidgets==0.32.0 ipywidgets=7.5.1 pyvista
-    sudo apt install nodejs
-    jupyter labextension install @jupyter-widgets/jupyterlab-manager@2.0 itkwidgets@0.32.0 ipycanvas@0.6.1 ipyevents@1.8.1
+    pip install 'jupyterlab>=3' ipywidgets 'pyvista[all]' ipyvtklink
 
 
 
