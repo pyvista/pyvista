@@ -94,7 +94,7 @@ class UniformGridFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference=preference)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
-        alg.SetKernelSize(kernel_size[0],kernel_size[1],kernel_size[2])
+        alg.SetKernelSize(kernel_size[0], kernel_size[1], kernel_size[2])
         _update_alg(alg, progress_bar, 'Performing Median Smoothing')
         return _get_output(alg)
 
