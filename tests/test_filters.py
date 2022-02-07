@@ -1434,7 +1434,16 @@ def test_median_smooth_constant_data():
 
 
 def test_median_smooth_outlier():
-    pass
+    point_data = np.ones((10,10,10))
+    point_data_outlier = point_data.copy()
+    point_data_outlier[4,4,4] = 100
+    volume = pv.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_outlier = pv.UniformGrid(dims=(10,10,10))
+    volume_outlier.point_data['point_data'] = point_data_outlier.flatten(order='F')
+    volume_outlier_smoothed = volume_outlier.median_smooth()
+    assert np.array_equal(volume.point_data['point_data'],
+                          volume_outlier_smoothed.point_data['point_data'])
 
 
 def test_extract_subset_structured():
