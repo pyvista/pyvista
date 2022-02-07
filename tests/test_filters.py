@@ -1395,7 +1395,7 @@ def test_extract_subset():
     assert voi.origin == voi.bounds[::2]
 
 
-def test_gaussian_smooth():
+def test_gaussian_smooth_output_type():
     volume = examples.load_uniform()
     volume_smooth = volume.gaussian_smooth()
     assert isinstance(volume_smooth, pyvista.UniformGrid)
@@ -1403,12 +1403,38 @@ def test_gaussian_smooth():
     assert isinstance(volume_smooth, pyvista.UniformGrid)
 
 
-def test_median_smooth():
+def test_gaussian_smooth_constant_data():
+    point_data = np.ones((10,10,10))
+    volume = pv.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_smoothed = volume.gaussian_smooth()
+    assert np.array_equal(volume.point_data['point_data'],
+                          volume_smoothed.point_data['point_data'])
+
+
+def test_gaussian_smooth_outlier():
+    pass
+
+
+def test_median_smooth_output_type():
     volume = examples.load_uniform()
     volume_smooth = volume.median_smooth()
     assert isinstance(volume_smooth, pyvista.UniformGrid)
     volume_smooth = volume.median_smooth(scalars='Spatial Point Data')
     assert isinstance(volume_smooth, pyvista.UniformGrid)
+
+
+def test_median_smooth_constant_data():
+    point_data = np.ones((10,10,10))
+    volume = pv.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_smoothed = volume.median_smooth()
+    assert np.array_equal(volume.point_data['point_data'],
+                          volume_smoothed.point_data['point_data'])
+
+
+def test_median_smooth_outlier():
+    pass
 
 
 def test_extract_subset_structured():
