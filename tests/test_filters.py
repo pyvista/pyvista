@@ -1413,7 +1413,12 @@ def test_gaussian_smooth_constant_data():
 
 
 def test_gaussian_smooth_outlier():
-    pass
+    point_data = np.ones((10,10,10))
+    point_data[4,4,4] = 100
+    volume = pv.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_smoothed = volume.gaussian_smooth()
+    assert (volume_smoothed.get_data_range()[1]<volume.get_data_range()[1])
 
 
 def test_median_smooth_output_type():
