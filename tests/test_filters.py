@@ -1405,7 +1405,7 @@ def test_gaussian_smooth_output_type():
 
 def test_gaussian_smooth_constant_data():
     point_data = np.ones((10,10,10))
-    volume = pv.UniformGrid(dims=(10,10,10))
+    volume = pyvista.UniformGrid(dims=(10,10,10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.gaussian_smooth()
     assert np.array_equal(volume.point_data['point_data'],
@@ -1415,7 +1415,7 @@ def test_gaussian_smooth_constant_data():
 def test_gaussian_smooth_outlier():
     point_data = np.ones((10,10,10))
     point_data[4,4,4] = 100
-    volume = pv.UniformGrid(dims=(10,10,10))
+    volume = pyvista.UniformGrid(dims=(10,10,10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.gaussian_smooth()
     assert (volume_smoothed.get_data_range()[1]<volume.get_data_range()[1])
@@ -1431,7 +1431,7 @@ def test_median_smooth_output_type():
 
 def test_median_smooth_constant_data():
     point_data = np.ones((10,10,10))
-    volume = pv.UniformGrid(dims=(10,10,10))
+    volume = pyvista.UniformGrid(dims=(10,10,10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.median_smooth()
     assert np.array_equal(volume.point_data['point_data'],
@@ -1442,9 +1442,9 @@ def test_median_smooth_outlier():
     point_data = np.ones((10,10,10))
     point_data_outlier = point_data.copy()
     point_data_outlier[4,4,4] = 100
-    volume = pv.UniformGrid(dims=(10,10,10))
+    volume = pyvista.UniformGrid(dims=(10,10,10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_outlier = pv.UniformGrid(dims=(10,10,10))
+    volume_outlier = pyvista.UniformGrid(dims=(10,10,10))
     volume_outlier.point_data['point_data'] = point_data_outlier.flatten(order='F')
     volume_outlier_smoothed = volume_outlier.median_smooth()
     assert np.array_equal(volume.point_data['point_data'],
