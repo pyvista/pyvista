@@ -1399,6 +1399,11 @@ def test_gaussian_smooth():
     volume_smooth = volume.gaussian_smooth()
     assert isinstance(volume_smooth, pyvista.UniformGrid)
 
+def test_median_smooth():
+    volume = examples.load_uniform()
+    volume_smooth = volume.median_smooth()
+    assert isinstance(volume_smooth, pyvista.UniformGrid)
+
 def test_extract_subset_structured():
     structured = examples.load_structured()
     voi = structured.extract_subset([0, 3, 1, 4, 0, 1])
