@@ -3025,7 +3025,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.textActor = None
 
     def add_text(self, text, position='upper_left', font_size=18, color=None,
-                 font=None, shadow=False, name=None, viewport=False):
+                 font=None, shadow=False, name=None, viewport=False, *,
+                 render=True):
         """Add text to plot object in the top left corner by default.
 
         Parameters
@@ -3074,6 +3075,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``True`` and position is a tuple of float, uses the
             normalized viewport coordinate system (values between 0.0
             and 1.0 and support for HiDPI).
+
+        render : bool, optional
+            Force a render when ``True`` (default).
 
         Returns
         -------
@@ -3146,7 +3150,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.textActor.GetTextProperty().SetFontFamily(FONTS[font].value)
         self.textActor.GetTextProperty().SetShadow(shadow)
 
-        self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False)
+        self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False, render=render)
         return self.textActor
 
     def open_movie(self, filename, framerate=24, quality=5, **kwargs):
