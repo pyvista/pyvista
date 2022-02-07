@@ -1394,6 +1394,9 @@ def test_extract_subset():
     #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
     assert voi.origin == voi.bounds[::2]
 
+def test_gaussian_smooth():
+    volume = examples.load_uniform()
+    volume_smooth = volume.gaussian_smooth()
 
 def test_extract_subset_structured():
     structured = examples.load_structured()
