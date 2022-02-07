@@ -20,7 +20,7 @@ pydata-sphinx-theme==0.8.0
 pypandoc==1.7.2
 pytest-sphinx==0.3.1
 pythreejs==2.3.0
-scipy==1.7.3
+scipy==1.8.0
 sphinx-autobuild==2021.3.14
 sphinx-copybutton==0.5.0
 sphinx-gallery==0.10.1
