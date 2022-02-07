@@ -1399,11 +1399,15 @@ def test_gaussian_smooth():
     volume = examples.load_uniform()
     volume_smooth = volume.gaussian_smooth()
     assert isinstance(volume_smooth, pyvista.UniformGrid)
+    volume_smooth = volume.gaussian_smooth(scalars='Spatial Point Data')
+    assert isinstance(volume_smooth, pyvista.UniformGrid)
 
 
 def test_median_smooth():
     volume = examples.load_uniform()
     volume_smooth = volume.median_smooth()
+    assert isinstance(volume_smooth, pyvista.UniformGrid)
+    volume_smooth = volume.median_smooth(scalars='Spatial Point Data')
     assert isinstance(volume_smooth, pyvista.UniformGrid)
 
 
