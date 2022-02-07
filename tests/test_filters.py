@@ -1408,8 +1408,8 @@ def test_gaussian_smooth_constant_data():
     volume = pyvista.UniformGrid(dims=(10,10,10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.gaussian_smooth()
-    assert np.array_equal(volume.point_data['point_data'],
-                          volume_smoothed.point_data['point_data'])
+    assert np.allclose(volume.point_data['point_data'],
+                       volume_smoothed.point_data['point_data'])
 
 
 def test_gaussian_smooth_outlier():
