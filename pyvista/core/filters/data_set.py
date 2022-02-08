@@ -480,21 +480,21 @@ class DataSetFilters:
             field = self.get_array_association(scalars, preference=preference)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         # set the threshold(s) and mode
-        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
-            if len(value) != 2:
+        if isinstance(threshold, (np.ndarray, collections.abc.Sequence)):
+            if len(threshold) != 2:
                 raise ValueError(f'Threshold must be length one for a float value or two for min/max; not ({value}).')
-            alg.ThresholdBetween(value[0], value[1])
-        elif isinstance(value, collections.abc.Iterable):
+            alg.ThresholdBetween(threshold[0], threshold[1])
+        elif isinstance(threshold, collections.abc.Iterable):
             raise TypeError('Threshold must either be a single scalar or a sequence.')
         else:
-            alg.ThresholdByUpper(value)
+            alg.ThresholdByUpper(threshold)
         # set the replacement values / modes
-        if in_value:
+        if in_value is not None:
             alg.ReplaceInOn()
             alg.SetInValue(in_value)
         else:
             alg.ReplaceInOff()
-        if out_value:
+        if out_value is not None:
             alg.ReplaceOutOn()
             alg.SetOutValue(out_value)
         else:
