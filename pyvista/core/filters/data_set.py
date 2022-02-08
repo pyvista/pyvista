@@ -472,6 +472,12 @@ class DataSetFilters:
             Dataset with the specified scalars thresholded.
         """
         alg = _vtk.vtkImageThreshold()
+        alg.SetInputDataObject(self)
+        if scalars is None:
+            field, scalars = self.active_scalars_info
+        else:
+            field = self.get_array_association(scalars, preference=preference)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         
 
     def slice(self, normal='x', origin=None, generate_triangles=False,
