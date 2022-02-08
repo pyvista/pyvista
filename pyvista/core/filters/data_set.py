@@ -468,6 +468,8 @@ class DataSetFilters:
 
         Returns
         -------
+        pyvista.DataSet
+            Dataset with the specified scalars thresholded.
         """
         pass
 
