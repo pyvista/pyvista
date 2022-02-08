@@ -437,7 +437,7 @@ class DataSetFilters:
 
         If a single value is given for threshold, scalar values above or equal
         to the threshold are ``'in'`` and scalar values below the threshold are ``'out.'``
-        If two values are given for threshold (iterable) then values equal to
+        If two values are given for threshold (sequence) then values equal to
         or between the two values are ``'in'`` and values outside the range are ``'out.'``
 
         If `None` is given for in_value, scalars that are ``'in'`` won't be replaced.
@@ -448,7 +448,7 @@ class DataSetFilters:
         threshold : float or sequence, optional
             Single value or (min, max) to be used for the data threshold.  If
             a sequence, then length must be 2. Threshold(s) for deciding which
-            cells/points are ``'in'`` or ``'out'`` basd on scalar data.
+            cells/points are ``'in'`` or ``'out'`` based on scalar data.
 
         in_value : float or int or None
             Scalars that match the threshold criteria for ``'in'`` will be replaced with this.
@@ -494,7 +494,6 @@ class DataSetFilters:
             alg.SetInValue(in_value)
         else:
             alg.ReplaceInOff()
-
         if out_value:
             alg.ReplaceOutOn()
             alg.SetOutValue(out_value)
