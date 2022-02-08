@@ -445,8 +445,9 @@ class DataSetFilters:
 
         Parameters
         ----------
-        threshold : float or iterable(float)
-            Float or length 2 iterable of floats. Thresholds for deciding which
+        threshold : float or sequence, optional
+            Single value or (min, max) to be used for the data threshold.  If
+            a sequence, then length must be 2. Threshold(s) for deciding which
             cells/points are ``'in'`` or ``'out'`` basd on scalar data.
 
         in_value : float or int or None
@@ -478,7 +479,30 @@ class DataSetFilters:
         else:
             field = self.get_array_association(scalars, preference=preference)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
-        
+        # set the threshold(s) and mode
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
+            if len(value) != 2:
+                raise ValueError(f'Threshold must be length one for a float value or two for min/max; not ({value}).')
+            alg.ThresholdBetween(value[0], value[1])
+        elif isinstance(value, collections.abc.Iterable):
+            raise TypeError('Threshold must either be a single scalar or a sequence.')
+        else:
+            alg.ThresholdByUpper(value)
+        # set the replacement values / modes
+        if in_value:
+            alg.ReplaceInOn()
+            alg.SetInValue(in_value)
+        else:
+            alg.ReplaceInOff()
+
+        if out_value:
+            alg.ReplaceOutOn()
+            alg.SetOutValue(out_value)
+        else:
+            alg.ReplaceOutOff()
+        # run the algorithm
+        _update_alg(alg, progress_bar, 'Performing Image Thresholding')
+        return _get_output(alg)
 
     def slice(self, normal='x', origin=None, generate_triangles=False,
               contour=False, progress_bar=False):
