@@ -431,6 +431,46 @@ class DataSetFilters:
                                                     progress_bar=progress_bar)
         return result
 
+    def image_threshold(self, threshold, in_value=1, out_value=0,
+                        scalars=None, preference='points', progress_bar=False):
+        """Apply a threshold to scalar values in a dataset.
+
+        If a single value is given for threshold, scalar values above or equal
+        to the threshold are ``'in'`` and scalar values below the threshold are ``'out.'``
+        If two values are given for threshold (iterable) then values equal to
+        or between the two values are ``'in'`` and values outside the range are ``'out.'``
+
+        If `None` is given for in_value, scalars that are ``'in'`` won't be replaced.
+        If `None` is given for out_value, scalars that are ``'out'`` won't be replaced.
+
+        Parameters
+        ----------
+        threshold : float or iterable(float)
+            Float or length 2 iterable of floats. Thresholds for deciding which
+            cells/points are ``'in'`` or ``'out'`` basd on scalar data.
+
+        in_value : float or int or None
+            Scalars that match the threshold criteria for ``'in'`` will be replaced with this.
+
+        out_value : float or int or None
+            Scalars that match the threshold criteria for ``'out'`` will be replaced with this.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        preference : str, optional
+            When scalars is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        """
+        pass
+
     def slice(self, normal='x', origin=None, generate_triangles=False,
               contour=False, progress_bar=False):
         """Slice a dataset by a plane at the specified origin and normal vector orientation.
