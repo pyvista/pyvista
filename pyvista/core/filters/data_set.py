@@ -471,7 +471,8 @@ class DataSetFilters:
         pyvista.DataSet
             Dataset with the specified scalars thresholded.
         """
-        pass
+        alg = _vtk.vtkImageThreshold()
+        
 
     def slice(self, normal='x', origin=None, generate_triangles=False,
               contour=False, progress_bar=False):

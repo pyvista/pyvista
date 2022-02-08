@@ -154,7 +154,10 @@ if VTK9:
         vtkTable,
         vtkUnstructuredGrid,
     )
-    from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
+    from vtkmodules.vtkCommonExecutionModel import (
+        vtkImageToStructuredGrid,
+        vtkImageThreshold
+    )
     from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
     from vtkmodules.vtkCommonTransforms import vtkTransform
     from vtkmodules.vtkFiltersCore import (
