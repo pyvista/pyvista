@@ -1460,16 +1460,48 @@ def test_image_threshold_output_type():
     assert isinstance(volume_thresholded, pyvista.UniformGrid)
 
 
-def test_image_threshold_do_nothing():
-    pass
+@pytest.mark.parametrize('in_values', [1, None])
+@pytest.mark.parametrize('out_values', [0, None])
+def test_image_threshold_upper(in_values,out_values):
+    threshold = 0 # 'random' value
+    array_shape = (10,10,10)
+    in_value_location = (4,4,4)
+    point_data = np.ones(array_shape)
+    in_value_mask = np.zeros(array_shape,dtype=bool)
+    in_value_mask[in_value_location] = True
+    point_data[in_value_mask] = 100 # the only 'in' value
+    point_data[~in_value_mask] = -100 # out values
+    volume = pyvista.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    for in_value in in_values:
+        point_data_thresholded = point_data.copy()
+        if in_value is not None:
+            point_data_thresholded[in_value_mask] = 1
+        for out_value in out_values:
+            if out_value is not None:
+                point_data_thresholded[~in_value_mask] = 0
+            volume_thresholded = volume.image_threshold(threshold,
+                                                        in_value = in_value,
+                                                        out_value=out_value
+            assert np.array_equal(volume_thresholded.point_data['point_data'],
+                                  point_data_thresholded)                                            )
 
 
-def test_image_threshold_upper():
-    pass
-
-
-def test_image_threshold_between():
-    pass
+@pytest.mark.parametrize('in_values', [1, None])
+@pytest.mark.parametrize('out_values', [0, None])
+def test_image_threshold_between(in_values,out_values):
+    threshold = [0, 10] # 'random' values
+    point_data = np.ones((10,10,10))
+    point_data[2,2,2] = -10
+    point_data[4,4,4] = 100
+    volume = pyvista.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    for in_value in in_values:
+        for out_value in out_values:
+            volume_thresholded = volume.image_threshold(threshold,
+                                                        in_value = in_value,
+                                                        out_value=out_value
+                                                        )
 
 
 def test_extract_subset_structured():
