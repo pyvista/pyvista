@@ -217,7 +217,7 @@ class DataSetFilters:
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
-            alg.SetLocator(_vtk.vtkNonMergingPointLocator)
+            alg.SetLocator(_vtk.vtkNonMergingPointLocator())
         alg.SetInputDataObject(self)
         alg.SetBoxClip(*bounds)
         port = 0
