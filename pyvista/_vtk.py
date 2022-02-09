@@ -335,7 +335,7 @@ if VTK9:
         vtkImageFlip,
         vtkRTAnalyticSource,
     )
-    from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
+    from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
     from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
     from vtkmodules.vtkInteractionWidgets import (
         vtkBoxWidget,
