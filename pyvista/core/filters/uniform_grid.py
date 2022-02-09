@@ -212,7 +212,7 @@ class UniformGridFilters(DataSetFilters):
         # set the threshold(s) and mode
         if isinstance(threshold, (np.ndarray, collections.abc.Sequence)):
             if len(threshold) != 2:
-                raise ValueError(f'Threshold must be length one for a float value or two for min/max; not ({value}).')
+                raise ValueError(f'Threshold must be length one for a float value or two for min/max; not ({threshold}).')
             alg.ThresholdBetween(threshold[0], threshold[1])
         elif isinstance(threshold, collections.abc.Iterable):
             raise TypeError('Threshold must either be a single scalar or a sequence.')

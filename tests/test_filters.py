@@ -1460,6 +1460,20 @@ def test_image_threshold_output_type():
     assert isinstance(volume_thresholded, pyvista.UniformGrid)
 
 
+def test_image_threshold_wrong_threshold_length():
+    threshold = (10,10,10) # tuple with too many values
+    volume = examples.load_uniform()
+    with pytest.raises(ValueError):
+        volume_thresholded = volume.image_threshold(threshold)
+
+
+def test_image_threshold_wrong_threshold_type():
+    threshold = {'min':0, 'max':10} # dict thresh
+    volume = examples.load_uniform()
+    with pytest.raises(TypeError):
+        volume_thresholded = volume.image_threshold(threshold)
+
+
 @pytest.mark.parametrize('in_value', [1, None])
 @pytest.mark.parametrize('out_value', [0, None])
 def test_image_threshold_upper(in_value,out_value):
