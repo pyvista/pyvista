@@ -1475,9 +1475,9 @@ def test_image_threshold_upper(in_value,out_value):
     volume.point_data['point_data'] = point_data.flatten(order='F')
     point_data_thresholded = point_data.copy()
     if in_value is not None:
-        point_data_thresholded[in_value_mask] = 1
+        point_data_thresholded[in_value_mask] = in_value
     if out_value is not None:
-        point_data_thresholded[~in_value_mask] = 0
+        point_data_thresholded[~in_value_mask] = out_value
     volume_thresholded = volume.image_threshold(threshold,
                                                 in_value = in_value,
                                                 out_value = out_value
@@ -1504,9 +1504,9 @@ def test_image_threshold_between(in_value,out_value):
     volume.point_data['point_data'] = point_data.flatten(order='F')
     point_data_thresholded = point_data.copy()
     if in_value is not None:
-        point_data_thresholded[in_value_mask] = 1
+        point_data_thresholded[in_value_mask] = in_value
     if out_value is not None:
-        point_data_thresholded[~in_value_mask] = 0
+        point_data_thresholded[~in_value_mask] = out_value
     volume_thresholded = volume.image_threshold(threshold,
                                                 in_value = in_value,
                                                 out_value = out_value
