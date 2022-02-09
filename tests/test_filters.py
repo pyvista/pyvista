@@ -1489,16 +1489,30 @@ def test_image_threshold_upper(in_value,out_value):
 @pytest.mark.parametrize('in_value', [1, None])
 @pytest.mark.parametrize('out_value', [0, None])
 def test_image_threshold_between(in_value,out_value):
-    threshold = [0, 10] # 'random' values
-    point_data = np.ones((10,10,10))
-    point_data[2,2,2] = -10
-    point_data[4,4,4] = 100
-    volume = pyvista.UniformGrid(dims=(10,10,10))
+    threshold = [-10, 10] # 'random' values
+    array_shape = (3,3,3)
+    in_value_location = (1,1,1)
+    low_value_location = (1,1,2)
+    point_data = np.ones(array_shape)
+    in_value_mask = np.zeros(array_shape,dtype=bool)
+    in_value_mask[in_value_location] = True
+    point_data[in_value_mask] = 0 # the only 'in' value
+    point_data[~in_value_mask] = 100 # out values
+    point_data[low_value_location] = -100 # add a value below the threshold also
+    point_data
+    volume = pyvista.UniformGrid(dims=array_shape)
     volume.point_data['point_data'] = point_data.flatten(order='F')
+    point_data_thresholded = point_data.copy()
+    if in_value is not None:
+        point_data_thresholded[in_value_mask] = 1
+    if out_value is not None:
+        point_data_thresholded[~in_value_mask] = 0
     volume_thresholded = volume.image_threshold(threshold,
                                                 in_value = in_value,
                                                 out_value = out_value
                                                 )
+    assert np.array_equal(volume_thresholded.point_data['point_data'],
+                          point_data_thresholded.flatten(order='F'))
 
 
 def test_extract_subset_structured():
