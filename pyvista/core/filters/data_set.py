@@ -134,7 +134,8 @@ class DataSetFilters:
                 return self
         return result
 
-    def clip_box(self, bounds=None, invert=True, factor=0.35, progress_bar=False):
+    def clip_box(self, bounds=None, invert=True, factor=0.35, progress_bar=False,
+                 merge_points=True):
         """Clip a dataset by a bounding box defined by the bounds.
 
         If no bounds are given, a corner of the dataset bounds will be removed.
@@ -160,6 +161,10 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        merge_points : bool, optional
+            If ``True`` (default), coinciding points of independently
+            defined mesh elements will be merged.
 
         Returns
         -------
@@ -210,6 +215,9 @@ class DataSetFilters:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
             bounds = (xmin, xmin+bounds[0], ymin, ymin+bounds[1], zmin, zmin+bounds[2])
         alg = _vtk.vtkBoxClipDataSet()
+        if not merge_points:
+            # vtkBoxClipDataSet uses vtkMergePoints by default
+            alg.SetLocator(_vtk.vtkNonMergingPointLocator)
         alg.SetInputDataObject(self)
         alg.SetBoxClip(*bounds)
         port = 0
