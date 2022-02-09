@@ -40,9 +40,9 @@ structure using VTK Python's bindings, one would write the following:
    >>> image_data.GetPointData().SetScalars(points)
 
 As you can see, there is quite a bit of boilerplate that goes into
-the creation of a simple `vtk.vtkImageData`_ dataset, PyVista provides
-a much cleaner syntax that is more "Pythonic". The equivalent code in
-pyvista is:
+the creation of a simple `vtk.vtkImageData`_ dataset. PyVista provides
+much more concise syntax that is more "Pythonic". The equivalent code in
+PyVista is:
 
 
 .. code:: python
