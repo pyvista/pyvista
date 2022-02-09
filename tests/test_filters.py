@@ -1460,9 +1460,9 @@ def test_image_threshold_output_type():
     assert isinstance(volume_thresholded, pyvista.UniformGrid)
 
 
-@pytest.mark.parametrize('in_values', [1, None])
-@pytest.mark.parametrize('out_values', [0, None])
-def test_image_threshold_upper(in_values,out_values):
+@pytest.mark.parametrize('in_value', [1, None])
+@pytest.mark.parametrize('out_value', [0, None])
+def test_image_threshold_upper(in_value,out_value):
     threshold = 0 # 'random' value
     array_shape = (10,10,10)
     in_value_location = (4,4,4)
@@ -1480,15 +1480,15 @@ def test_image_threshold_upper(in_values,out_values):
         point_data_thresholded[~in_value_mask] = 0
     volume_thresholded = volume.image_threshold(threshold,
                                                 in_value = in_value,
-                                                out_value=out_value
+                                                out_value = out_value
                                                 )
     assert np.array_equal(volume_thresholded.point_data['point_data'],
                           point_data_thresholded)
 
 
-@pytest.mark.parametrize('in_values', [1, None])
-@pytest.mark.parametrize('out_values', [0, None])
-def test_image_threshold_between(in_values,out_values):
+@pytest.mark.parametrize('in_value', [1, None])
+@pytest.mark.parametrize('out_value', [0, None])
+def test_image_threshold_between(in_value,out_value):
     threshold = [0, 10] # 'random' values
     point_data = np.ones((10,10,10))
     point_data[2,2,2] = -10
@@ -1497,7 +1497,7 @@ def test_image_threshold_between(in_values,out_values):
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_thresholded = volume.image_threshold(threshold,
                                                 in_value = in_value,
-                                                out_value=out_value
+                                                out_value = out_value
                                                 )
 
 
