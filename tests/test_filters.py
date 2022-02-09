@@ -1451,6 +1451,27 @@ def test_median_smooth_outlier():
                           volume_outlier_smoothed.point_data['point_data'])
 
 
+def test_image_threshold_output_type():
+    threshold = 10 # 'random' value
+    volume = examples.load_uniform()
+    volume_thresholded = volume.image_threshold(threshold)
+    assert isinstance(volume_thresholded, pyvista.UniformGrid)
+    volume_thresholded = volume.image_threshold(threshold, scalars='Spatial Point Data')
+    assert isinstance(volume_thresholded, pyvista.UniformGrid)
+
+
+def test_image_threshold_do_nothing():
+    pass
+
+
+def test_image_threshold_upper():
+    pass
+
+
+def test_image_threshold_between():
+    pass
+
+
 def test_extract_subset_structured():
     structured = examples.load_structured()
     voi = structured.extract_subset([0, 3, 1, 4, 0, 1])
