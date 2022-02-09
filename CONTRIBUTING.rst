@@ -135,7 +135,7 @@ There are two important copyright guidelines:
    undermine the license of the whole projects.
 
 Please also take a look at our `Code of
-Conduct <https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md>`__
+Conduct <https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.rst>`__
 
 Contributing to pyvista through GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
