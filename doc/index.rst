@@ -17,7 +17,7 @@
 
 PyVista is...
 
-* *"VTK for humans"*: a high-level API to the `Visualization Toolkit`_ (VTK)
+* *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
 * mesh data structures and filtering methods for spatial datasets
 * 3D plotting made simple and built for large/complex data geometries
 
