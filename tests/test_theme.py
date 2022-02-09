@@ -14,7 +14,7 @@ def test_backwards_compatibility():
     try:
         color = (0.1, 0.4, 0.7)
         pyvista.rcParams['color'] = color
-        assert pyvista.rcParams['color'] == color
+        assert pyvista.rcParams['color'] == pyvista.Color(color)
 
         # test nested values
         init_value = pyvista.rcParams['axes']['show']
@@ -43,7 +43,7 @@ def test_depth_peeling_eq(default_theme):
     assert my_theme.depth_peeling != 1
 
 
-@pytest.mark.parametrize('parm', [('color', (0.1, 0.1, 0.1)),
+@pytest.mark.parametrize('parm', [('color', (0.2, 0.2, 0.2)),
                                   ('line_width', 1),
                                   ('opacity', 1.0),
                                   ('feature_angle', 20),
@@ -73,9 +73,9 @@ def test_depth_silhouette_opacity_outside_clamp(default_theme):
 
 @pytest.mark.parametrize('parm', [('slider_length', 0.03),
                                   ('slider_width', 0.02),
-                                  ('slider_color', (0.5, 0.5, 0.3)),
+                                  ('slider_color', (0.6, 0.6, 0.4)),
                                   ('tube_width', 0.02),
-                                  ('tube_color', (0.5, 0.5, 0.5)),
+                                  ('tube_color', (0.6, 0.6, 0.6)),
                                   ('cap_opacity', 0.5),
                                   ('cap_length', 0.02),
                                   ('cap_width', 0.04)
@@ -320,11 +320,11 @@ def test_set_hidden_line_removal(default_theme):
     assert default_theme.hidden_line_removal is False
 
 
-@pytest.mark.parametrize('parm', [('background', (0.1, 0.2, 0.3)),
+@pytest.mark.parametrize('parm', [('background', (0.2, 0.4, 0.6)),
                                   ('auto_close', False),
                                   ('notebook', False),
                                   ('full_screen', True),
-                                  ('nan_color', (0.5, 0.5, 0.5)),
+                                  ('nan_color', (0.6, 0.6, 0.6)),
                                   ('edge_color', (1.0, 0.0, 0.0)),
                                   ('outline_color', (1.0, 0.0, 0.0)),
                                   ('floor_color', (1.0, 0.0, 0.0)),

@@ -100,7 +100,7 @@ def pie_plot(chart_pie):
 
 
 def test_pen():
-    c_red, c_blue = (1, 0, 0, 1), (0, 0, 1, 1)
+    c_red, c_blue = (1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)
     w_thin, w_thick = 2, 10
     s_dash, s_dot, s_inv = "--", ":", "|"
     assert s_inv not in charts.Pen.LINE_STYLES, "New line styles added? Change this test."
@@ -144,7 +144,7 @@ def test_wrapping():
 
 @skip_mac
 def test_brush():
-    c_red, c_blue = (1, 0, 0, 1), (0, 0, 1, 1)
+    c_red, c_blue = (1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)
     t_masonry = examples.download_masonry_texture()
     t_puppy = examples.download_puppy_texture()
 
@@ -332,7 +332,7 @@ def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
     chart = request.getfixturevalue(chart_f)
     title = "Chart title"
-    c_red, c_blue = (1, 0, 0, 1), (0, 0, 1, 1)
+    c_red, c_blue = (1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)
     bw = 10
     bs = "--"
 
@@ -395,7 +395,7 @@ def test_chart_common(pl, chart_f, request):
 def test_plot_common(plot_f, request):
     # Test the common plot functionalities
     plot = request.getfixturevalue(plot_f)
-    c = (1, 0, 1, 1)
+    c = (1.0, 0.0, 1.0, 1.0)
     w = 5
     s = "-."
     l = "Label"
@@ -438,14 +438,14 @@ def test_multicomp_plot_common(plot_f, request):
                  (0.596078431372549, 0.3058823529411765, 0.6392156862745098, 1.0),
                  (1.0, 0.4980392156862745, 0.0, 1.0),
                  (0.6509803921568628, 0.33725490196078434, 0.1568627450980392, 1.0)]
-    colors = [(1, 0, 1, 1), (0, 1, 1, 1), (1, 1, 0, 1)]
+    colors = [(1.0, 0.0, 1.0, 1.0), (0.0, 1.0, 1.0, 1.0), (1.0, 1.0, 0.0, 1.0)]
     labels = ["Foo", "Spam", "Bla"]
 
     plot.color_scheme = cs
     assert plot.color_scheme == cs
     assert plot._color_series.GetColorScheme() == plot.COLOR_SCHEMES[cs]["id"]
     assert np.allclose(plot.colors, cs_colors)
-    series_colors = [plot._from_c3ub(plot._color_series.GetColor(i)) for i in range(len(cs_colors))]
+    series_colors = [pyvista.Color(plot._color_series.GetColor(i)).f_rgba for i in range(len(cs_colors))]
     assert np.allclose(series_colors, cs_colors)
     lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(cs_colors))]
     assert np.allclose(lookup_colors, cs_colors)
@@ -457,7 +457,7 @@ def test_multicomp_plot_common(plot_f, request):
     assert plot.color_scheme == cs
     plot.colors = colors
     assert np.allclose(plot.colors, colors)
-    series_colors = [plot._from_c3ub(plot._color_series.GetColor(i)) for i in range(len(colors))]
+    series_colors = [pyvista.Color(plot._color_series.GetColor(i)).f_rgba for i in range(len(colors))]
     assert np.allclose(series_colors, colors)
     lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(colors))]
     assert np.allclose(lookup_colors, colors)
@@ -486,7 +486,7 @@ def test_multicomp_plot_common(plot_f, request):
 def test_lineplot2d(line_plot_2d):
     x = [-2, -1, 0, 1, 2]
     y = [4, 1, 0, -1, -4]
-    c = (1, 0, 1, 1)
+    c = (1.0, 0.0, 1.0, 1.0)
     w = 5
     s = "-."
     l = "Line"
@@ -509,7 +509,7 @@ def test_lineplot2d(line_plot_2d):
 def test_scatterplot2d(scatter_plot_2d):
     x = [-2, -1, 0, 1, 2]
     y = [4, 1, 0, -1, -4]
-    c = (1, 0, 1, 1)
+    c = (1.0, 0.0, 1.0, 1.0)
     sz = 5
     st, st_inv = "o", "^"
     l = "Scatter"
@@ -546,7 +546,7 @@ def test_areaplot(area_plot):
     x = [-2, -1, 0, 1, 2]
     y1 = [4, 1, 0, -1, -4]
     y2 = [-4, -2, 0, 2, 4]
-    c = (1, 0, 1, 1)
+    c = (1.0, 0.0, 1.0, 1.0)
     l = "Line"
 
     # Test constructor
@@ -567,7 +567,7 @@ def test_areaplot(area_plot):
 def test_barplot(bar_plot):
     x = [0, 1, 2]
     y = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
-    c = [(1, 0, 1, 1), (1, 1, 0, 1), (0, 1, 1, 1)]
+    c = [(1.0, 0.0, 1.0, 1.0), (1.0, 1.0, 0.0, 1.0), (0.0, 1.0, 1.0, 1.0)]
     ori, ori_inv = "H", "I"
     l = ["Foo", "Spam", "Bla"]
     assert ori_inv not in charts.BarPlot.ORIENTATIONS, "New orientations added? Change this test."
@@ -612,7 +612,7 @@ def test_barplot(bar_plot):
 def test_stackplot(stack_plot):
     x = [0, 1, 2]
     ys = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
-    c = [(1, 0, 1, 1), (1, 1, 0, 1), (0, 1, 1, 1)]
+    c = [(1.0, 0.0, 1.0, 1.0), (1.0, 1.0, 0.0, 1.0), (0.0, 1.0, 1.0, 1.0)]
     l = ["Foo", "Spam", "Bla"]
 
     # Test multi comp constructor
@@ -655,7 +655,7 @@ def test_chart_2d(pl, chart_2d):
     x = np.arange(11)-5
     y = x**2
     ys = [np.sin(x), np.cos(x), np.tanh(x)]
-    col = (1, 0, 1, 1)
+    col = (1.0, 0.0, 1.0, 1.0)
     cs = "citrus"
     sz = 5
     ms = "d"

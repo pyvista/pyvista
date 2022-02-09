@@ -53,7 +53,7 @@ class PlotterITK():
             An ``n x 3`` numpy array of points or PyVista dataset with
             points.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, RGB sequence, or hex color string.  For one
             of the following.
 
@@ -91,7 +91,7 @@ class PlotterITK():
             raise TypeError('``point_size`` parameter must be a float')
 
         self._point_set_sizes.append(point_size)
-        self._point_set_colors.append(pv.parse_color(color))
+        self._point_set_colors.append(pv.Color(color).f_rgb)
         self._point_sets.append(point_array)
         # self._point_set_representations.append(style)
 
@@ -109,7 +109,7 @@ class PlotterITK():
             that :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
             points.
 
-        color : str sequence, optional
+        color : color_like, optional
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
@@ -180,7 +180,7 @@ class PlotterITK():
         from itkwidgets._transform_types import to_geometry
         mesh = to_geometry(mesh)
         self._geometries.append(mesh)
-        self._geometry_colors.append(pv.parse_color(color))
+        self._geometry_colors.append(pv.Color(color).f_rgb)
         self._geometry_opacities.append(opacity)
 
     @property
@@ -198,7 +198,7 @@ class PlotterITK():
 
         >>> plotter.background_color = 'k'
         """
-        self._background_color = pv.parse_color(color)
+        self._background_color = pv.Color(color).f_rgb
 
     @property
     def camera_position(self):

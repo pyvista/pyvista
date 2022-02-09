@@ -172,7 +172,7 @@ def test_widget_slider():
     p = pyvista.Plotter()
     title_color = "red"
     s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_color=title_color)
-    assert s.GetRepresentation().GetTitleProperty().GetColor() == pyvista.parse_color(title_color)
+    assert s.GetRepresentation().GetTitleProperty().GetColor() == pyvista.Color(title_color).f_rgb
     p.close()
 
     p = pyvista.Plotter()

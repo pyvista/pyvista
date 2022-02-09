@@ -33,7 +33,7 @@ from pyvista.utilities import (
 from ..utilities.misc import PyvistaDeprecationWarning
 from ..utilities.regression import image_from_window
 from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
-from .colors import get_cmap_safe
+from .colors import Color, get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
@@ -45,7 +45,6 @@ from .tools import (  # noqa
     FONTS,
     normalize,
     opacity_transfer_function,
-    parse_color,
     parse_font_family,
 )
 from .widgets import WidgetHelper
@@ -154,7 +153,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : str or sequence, optional
+    border_color : color_like, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -1575,7 +1574,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             that :func:`pyvista.wrap` can handle including NumPy
             arrays of XYZ points.
 
-        color : str or 3 item list, optional, defaults to white
+        color : color_like, optional, defaults to white
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
@@ -1605,7 +1604,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : str or 3 item list, optional, defaults to black
+        edge_color : color_like, optional, defaults to black
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
@@ -1729,7 +1728,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular_power : float, optional
             The specular power. Between 0.0 and 128.0.
 
-        nan_color : str or 3 item list, optional, defaults to gray
+        nan_color : color_like, optional, defaults to gray
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
@@ -1763,7 +1762,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``PolyData``.  As a ``dict``, it contains the properties
             of the silhouette to display:
 
-                * ``color``: ``str`` or 3-item ``list``, color of the silhouette
+                * ``color``: ``color_like``, color of the silhouette
                 * ``line_width``: ``float``, edge width
                 * ``opacity``: ``float`` between 0 and 1, edge transparency
                 * ``feature_angle``: If a ``float``, display sharp edges
@@ -1774,12 +1773,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Invert the opacity mappings and make the values correspond
             to transparency.
 
-        below_color : str or 3 item list, optional
+        below_color : color_like, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'Below'``.
 
-        above_color : str or 3 item list, optional
+        above_color : color_like, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'Above'``.
@@ -1904,9 +1903,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if show_edges is None:
             show_edges = self._theme.show_edges
 
-        if edge_color is None:
-            edge_color = self._theme.edge_color
-
         if show_scalar_bar is None:
             show_scalar_bar = self._theme.show_scalar_bar
 
@@ -1930,9 +1926,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if name is None:
             name = f'{type(mesh).__name__}({mesh.memory_address})'
 
-        if nan_color is None:
-            nan_color = self._theme.nan_color
-        nan_color = parse_color(nan_color, opacity=nan_opacity)
+        nan_color = Color(nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color)
 
         if color is True:
             color = self._theme.color
@@ -2174,11 +2168,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if show_edges:
             prop.EdgeVisibilityOn()
 
-        rgb_color = parse_color(color, default_color=self._theme.color)
+        rgb_color = Color(color, default_color=self._theme.color).f_rgb
         prop.SetColor(rgb_color)
         if isinstance(opacity, (float, int)):
             prop.SetOpacity(opacity)
-        prop.SetEdgeColor(parse_color(edge_color))
+        prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).f_rgb)
 
         if render_points_as_spheres:
             prop.SetRenderPointsAsSpheres(render_points_as_spheres)
@@ -2192,7 +2186,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             geom = pyvista.Triangle()
             if scalars is not None:
                 geom = pyvista.Box()
-                rgb_color = parse_color('black')
+                rgb_color = Color('black').f_rgb
             geom.points -= geom.center
             addr = actor.GetAddressAsString("")
             self.renderer._labels[addr] = [geom, label, rgb_color]
@@ -2671,7 +2665,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         params : dict, optional
 
             * If not supplied, the default theme values will be used.
-            * ``color``: ``str`` or 3-item ``list``, color of the silhouette
+            * ``color``: ``color_like``, color of the silhouette
             * ``line_width``: ``float``, edge width
             * ``opacity``: ``float`` between 0 and 1, edge transparency
             * ``feature_angle``: If a ``float``, display sharp edges
@@ -2720,7 +2714,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mapper = make_mapper(_vtk.vtkDataSetMapper)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop.SetColor(parse_color(silhouette_params["color"]))
+        prop.SetColor(Color(silhouette_params["color"]).f_rgb)
         prop.SetOpacity(silhouette_params["opacity"])
         prop.SetLineWidth(silhouette_params["line_width"])
 
@@ -3050,7 +3044,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_size : float, optional
             Sets the size of the title font.  Defaults to 18.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, RGB list, or hex color string.  For example:
 
             * ``color='white'``
@@ -3097,8 +3091,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             font = self._theme.font.family
         if font_size is None:
             font_size = self._theme.font.size
-        if color is None:
-            color = self._theme.font.color
         if position is None:
             # Set the position of the text to the top left corner
             window_size = self.window_size
@@ -3146,7 +3138,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.textActor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
 
-        self.textActor.GetTextProperty().SetColor(parse_color(color))
+        self.textActor.GetTextProperty().SetColor(Color(color, default_color=self._theme.font.color).f_rgb)
         self.textActor.GetTextProperty().SetFontFamily(FONTS[font].value)
         self.textActor.GetTextProperty().SetShadow(shadow)
 
@@ -3336,7 +3328,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             segments would be represented as ``np.array([[0, 0, 0],
             [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -3381,15 +3373,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(lines)
 
-        rgb_color = parse_color(color)
+        rgb_color = Color(color)
 
         # Create actor
         actor = _vtk.vtkActor()
         actor.SetMapper(mapper)
         actor.GetProperty().SetLineWidth(width)
         actor.GetProperty().EdgeVisibilityOn()
-        actor.GetProperty().SetEdgeColor(rgb_color)
-        actor.GetProperty().SetColor(rgb_color)
+        actor.GetProperty().SetEdgeColor(rgb_color.f_rgb)
+        actor.GetProperty().SetColor(rgb_color.f_rgb)
         actor.GetProperty().LightingOff()
 
         # legend label
@@ -3397,7 +3389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
             addr = actor.GetAddressAsString("")
-            self.renderer._labels[addr] = [lines, label, rgb_color]
+            self.renderer._labels[addr] = [lines, label, rgb_color.f_rgb]
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)
@@ -3438,7 +3430,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_size : float, optional
             Sets the size of the title font.  Defaults to 16.
 
-        text_color : str or 3 item list, optional
+        text_color : color_like, optional
             Color of text. Either a string, RGB sequence, or hex color string.
 
             * ``text_color='white'``
@@ -3456,7 +3448,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         show_points : bool, optional
             Controls if points are visible.  Default ``True``.
 
-        point_color : str or sequence, optional
+        point_color : color_like, optional
             Either a string, rgb list, or hex color string.  One of
             the following.
 
@@ -3473,7 +3465,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        shape_color : str or sequence, optional
+        shape_color : color_like, optional
             Color of points (if visible).  Either a string, rgb
             sequence, or hex color string.
 
@@ -3539,8 +3531,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             font_size = self._theme.font.size
         if point_color is None:
             point_color = self._theme.color
-        if text_color is None:
-            text_color = self._theme.font.color
 
         if isinstance(points, (list, tuple)):
             points = np.array(points)
@@ -3596,7 +3586,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             labelMapper.SetStyleToFilled()
         else:
             labelMapper.SetStyleToOutline()
-        labelMapper.SetBackgroundColor(parse_color(shape_color))
+        labelMapper.SetBackgroundColor(Color(shape_color).f_rgb)
         labelMapper.SetBackgroundOpacity(shape_opacity)
         labelMapper.SetMargin(margin)
 
@@ -3605,7 +3595,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         textprop.SetBold(bold)
         textprop.SetFontSize(font_size)
         textprop.SetFontFamily(parse_font_family(font_family))
-        textprop.SetColor(parse_color(text_color))
+        textprop.SetColor(Color(text_color, default_color=self._theme.font.color).f_rgb)
         textprop.SetShadow(shadow)
 
         self.remove_actor(f'{name}-points', reset_camera=False)
@@ -4378,7 +4368,7 @@ class Plotter(BasePlotter):
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : str or 3 item list, optional
+    border_color : color_like, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
@@ -4841,7 +4831,7 @@ class Plotter(BasePlotter):
             Sets the size of the title font.  Defaults to 16 or the
             value of the global theme if set.
 
-        color : str or 3 item list, optional,
+        color : color_like, optional,
             Either a string, rgb list, or hex color string.  Defaults
             to white or the value of the global theme if set.  For
             example:
@@ -4900,7 +4890,7 @@ class Plotter(BasePlotter):
 
             Defaults to ``(0.0, 0.0, 0.0)``.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, RGB sequence, or hex color string.  For one
             of the following.
 
@@ -4931,7 +4921,7 @@ class Plotter(BasePlotter):
         mapper = make_mapper(_vtk.vtkDataSetMapper)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop.SetColor(parse_color(color))
+        prop.SetColor(Color(color).f_rgb)
 
         return actor
 

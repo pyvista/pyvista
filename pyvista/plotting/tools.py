@@ -11,7 +11,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-from .colors import string_to_rgb
+from .colors import Color
 
 
 class FONTS(Enum):
@@ -92,9 +92,7 @@ def system_supports_plotting():
 
 def _update_axes_label_color(axes_actor, color=None):
     """Set the axes label color (internal helper)."""
-    if color is None:
-        color = pyvista.global_theme.font.color
-    color = parse_color(color)
+    color = Color(color, default_color=pyvista.global_theme.font.color).f_rgb
     if isinstance(axes_actor, _vtk.vtkAxesActor):
         prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
         prop_y = axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
@@ -113,16 +111,16 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
 
     Parameters
     ----------
-    label_color : str or sequence, optional
+    label_color : color_like, optional
         Unknown
 
-    x_color : str or sequence, optional
+    x_color : color_like, optional
         Color of the x axis text.
 
-    y_color : str or sequence, optional
+    y_color : color_like, optional
         Color of the y axis text.
 
-    z_color : str or sequence, optional
+    z_color : color_like, optional
         Color of the z axis text.
 
     xlabel : str, optional
@@ -146,19 +144,16 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
         Axes actor.
 
     """
-    if x_color is None:
-        x_color = pyvista.global_theme.axes.x_color
-    if y_color is None:
-        y_color = pyvista.global_theme.axes.y_color
-    if z_color is None:
-        z_color = pyvista.global_theme.axes.z_color
+    x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
+    y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
+    z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
     axes_actor = _vtk.vtkAxesActor()
-    axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
-    axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
-    axes_actor.GetYAxisShaftProperty().SetColor(parse_color(y_color))
-    axes_actor.GetYAxisTipProperty().SetColor(parse_color(y_color))
-    axes_actor.GetZAxisShaftProperty().SetColor(parse_color(z_color))
-    axes_actor.GetZAxisTipProperty().SetColor(parse_color(z_color))
+    axes_actor.GetXAxisShaftProperty().SetColor(x_color.f_rgb)
+    axes_actor.GetXAxisTipProperty().SetColor(x_color.f_rgb)
+    axes_actor.GetYAxisShaftProperty().SetColor(y_color.f_rgb)
+    axes_actor.GetYAxisTipProperty().SetColor(y_color.f_rgb)
+    axes_actor.GetZAxisShaftProperty().SetColor(z_color.f_rgb)
+    axes_actor.GetZAxisTipProperty().SetColor(z_color.f_rgb)
     # Set labels
     axes_actor.SetXAxisLabelText(xlabel)
     axes_actor.SetYAxisLabelText(ylabel)
@@ -194,16 +189,16 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     text_scale : float, optional
         Size of the text relative to the faces.
 
-    edge_color : str or sequence, optional
+    edge_color : color_like, optional
         Color of the edges.
 
-    x_color : str or sequence, optional
+    x_color : color_like, optional
         Color of the x axis text.
 
-    y_color : str or sequence, optional
+    y_color : color_like, optional
         Color of the y axis text.
 
-    z_color : str or sequence, optional
+    z_color : color_like, optional
         Color of the z axis text.
 
     xlabel : str, optional
@@ -215,22 +210,22 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     zlabel : str, optional
         Text used for the z axis.
 
-    x_face_color : str or sequence, optional
+    x_face_color : color_like, optional
         Color used for the x axis arrow.  Defaults to theme axes
         parameters.
 
-    y_face_color : str or sequence, optional
+    y_face_color : color_like, optional
         Color used for the y axis arrow.  Defaults to theme axes
         parameters.
 
-    z_face_color : str or sequence, optional
+    z_face_color : color_like, optional
         Color used for the z axis arrow.  Defaults to theme axes
         parameters.
 
     color_box : bool, optional
         Enable or disable the face colors.  Otherwise, box is white.
 
-    label_color : str or sequence, optional
+    label_color : color_like, optional
         Color of the labels.
 
     labels_off : bool, optional
@@ -261,14 +256,10 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     >>> pl.show()
 
     """
-    if x_color is None:
-        x_color = pyvista.global_theme.axes.x_color
-    if y_color is None:
-        y_color = pyvista.global_theme.axes.y_color
-    if z_color is None:
-        z_color = pyvista.global_theme.axes.z_color
-    if edge_color is None:
-        edge_color = pyvista.global_theme.edge_color
+    x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
+    y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
+    z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
+    edge_color = Color(edge_color, default_color=pyvista.global_theme.edge_color)
     axes_actor = _vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     if xlabel is not None:
@@ -282,17 +273,17 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         axes_actor.SetZMinusFaceText(f"-{zlabel}")
     axes_actor.SetFaceTextVisibility(not labels_off)
     axes_actor.SetTextEdgesVisibility(False)
-    # axes_actor.GetTextEdgesProperty().SetColor(parse_color(edge_color))
+    # axes_actor.GetTextEdgesProperty().SetColor(edge_color.f_rgb)
     # axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
-    axes_actor.GetXPlusFaceProperty().SetColor(parse_color(x_color))
-    axes_actor.GetXMinusFaceProperty().SetColor(parse_color(x_color))
-    axes_actor.GetYPlusFaceProperty().SetColor(parse_color(y_color))
-    axes_actor.GetYMinusFaceProperty().SetColor(parse_color(y_color))
-    axes_actor.GetZPlusFaceProperty().SetColor(parse_color(z_color))
-    axes_actor.GetZMinusFaceProperty().SetColor(parse_color(z_color))
+    axes_actor.GetXPlusFaceProperty().SetColor(x_color.f_rgb)
+    axes_actor.GetXMinusFaceProperty().SetColor(x_color.f_rgb)
+    axes_actor.GetYPlusFaceProperty().SetColor(y_color.f_rgb)
+    axes_actor.GetYMinusFaceProperty().SetColor(y_color.f_rgb)
+    axes_actor.GetZPlusFaceProperty().SetColor(z_color.f_rgb)
+    axes_actor.GetZMinusFaceProperty().SetColor(z_color.f_rgb)
 
     axes_actor.GetCubeProperty().SetOpacity(opacity)
-    # axes_actor.GetCubeProperty().SetEdgeColor(parse_color(edge_color))
+    # axes_actor.GetCubeProperty().SetEdgeColor(edge_color.f_rgb)
     axes_actor.GetCubeProperty().SetEdgeVisibility(True)
     axes_actor.GetCubeProperty().BackfaceCullingOn()
     if opacity < 1.0:
@@ -306,14 +297,13 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
 
         cube = pyvista.Cube()
         cube.clear_data() # remove normals
-        face_colors = np.array([parse_color(x_face_color),
-                                parse_color(x_face_color),
-                                parse_color(y_face_color),
-                                parse_color(y_face_color),
-                                parse_color(z_face_color),
-                                parse_color(z_face_color),
-                                ])
-        face_colors = (face_colors * 255).astype(np.uint8)
+        face_colors = np.array([Color(x_face_color).i_rgb,
+                                Color(x_face_color).i_rgb,
+                                Color(y_face_color).i_rgb,
+                                Color(y_face_color).i_rgb,
+                                Color(z_face_color).i_rgb,
+                                Color(z_face_color).i_rgb,
+                                ], np.uint8)
         cube.cell_data['face_colors'] = face_colors
 
         cube_mapper = _vtk.vtkPolyDataMapper()
@@ -468,7 +458,7 @@ def parse_color(color, opacity=None, default_color=None):
 
     Parameters
     ----------
-    color : str or sequence
+    color : color_like
         Either a string, RGB sequence, RGBA sequence, or hex color string.
         RGB(A) sequences should only contain values between 0 and 1.
         For example:
@@ -484,7 +474,7 @@ def parse_color(color, opacity=None, default_color=None):
         not a length 4 RGBA sequence. Only opacities between 0 and 1
         are allowed.
 
-    default_color : str or sequence, optional
+    default_color : color_like, optional
         Default color to use when ``color`` is None.  If this value is
         ``None``, then defaults to the global theme color.  Format is
         identical to ``color``.
@@ -512,42 +502,12 @@ def parse_color(color, opacity=None, default_color=None):
     (0.4, 0.3, 0.4, 1.0)
 
     """
-    color_valid = True
-    if color is None:
-        if default_color is None:
-            color = pyvista.global_theme.color
-        else:
-            color = default_color
-    if isinstance(color, str):
-        color = string_to_rgb(color)
-    elif isinstance(color, (Sequence, np.ndarray)):
-        try:
-            color = np.asarray(color, dtype=np.float64)
-            if color.ndim != 1 or color.size not in (3, 4) or not np.all((0 <= color) & (color <= 1)):
-                color_valid = False
-            elif len(color) == 4:
-                opacity = color[3]
-                color = color[:3]
-        except ValueError:
-            color_valid = False
-    else:
-        color_valid = False
-    if not color_valid:
-        raise ValueError("\n"
-                         f"\tInvalid color input: ({color})\n"
-                         "\tMust be string, rgb list, or hex color string.  For example:\n"
-                         "\t\tcolor='white'\n"
-                         "\t\tcolor='w'\n"
-                         "\t\tcolor=[1, 1, 1]\n"
-                         "\t\tcolor='#FFFFFF'")
-    if opacity is not None:
-        if isinstance(opacity, (float, int)) and 0 <= opacity <= 1:
-            color = [color[0], color[1], color[2], float(opacity)]
-        else:
-            raise ValueError("\n"
-                             f"\tInvalid opacity input: {opacity}\n"
-                             "\tMust be a scalar value between 0 and 1.")
-    return tuple(color)
+    has_opacity = opacity is not None
+    if isinstance(color, (list, tuple, np.ndarray)):
+        has_opacity |= len(color) == 4
+        color = np.asarray(color, np.float)
+    color = Color(color, default_opacity=1.0 if opacity is None else opacity, default_color=default_color)
+    return tuple(color.f_rgba if has_opacity else color.f_rgb)
 
 
 def parse_font_family(font_family):

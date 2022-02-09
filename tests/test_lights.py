@@ -43,9 +43,9 @@ def test_init():
     assert isinstance(light, pyvista.Light)
     assert light.position == position
     assert light.focal_point == focal_point
-    assert light.ambient_color == color
-    assert light.diffuse_color == color
-    assert light.specular_color == color
+    assert light.ambient_color == pyvista.Color(color)
+    assert light.diffuse_color == pyvista.Color(color)
+    assert light.specular_color == pyvista.Color(color)
     assert light.light_type == light.HEADLIGHT
     assert light.cone_angle == cone_angle
     assert light.intensity == intensity
@@ -114,13 +114,13 @@ def test_copy():
 def test_colors():
     light = pyvista.Light()
 
-    color = (0, 1, 0)
+    color = (0.0, 1.0, 0.0)
     light.diffuse_color = color
     assert light.diffuse_color == color
-    color = (0, 0, 1)
+    color = (0.0, 0.0, 1.0)
     light.specular_color = color
     assert light.specular_color == color
-    color = (1, 0, 0)
+    color = (1.0, 0.0, 0.0)
     light.ambient_color = color
     assert light.ambient_color == color
 

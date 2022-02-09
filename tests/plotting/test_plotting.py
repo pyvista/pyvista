@@ -562,7 +562,7 @@ def test_plot_silhouette(tri_cylinder):
     assert len(actors) == 2  # cylinder + silhouette
     actor = actors[0]  # get silhouette actor
     props = actor.GetProperty()
-    assert props.GetColor() == pyvista.parse_color(pyvista.global_theme.silhouette.color)
+    assert props.GetColor() == pyvista.Color(pyvista.global_theme.silhouette.color).f_rgb
     assert props.GetOpacity() == pyvista.global_theme.silhouette.opacity
     assert props.GetLineWidth() == pyvista.global_theme.silhouette.line_width
     plotter.show(before_close_callback=verify_cache_image)
@@ -581,7 +581,7 @@ def test_plot_silhouette_method(tri_cylinder):
 
     actor = actors[1]  # get silhouette actor
     props = actor.GetProperty()
-    assert props.GetColor() == pyvista.parse_color(pyvista.global_theme.silhouette.color)
+    assert props.GetColor() == pyvista.Color(pyvista.global_theme.silhouette.color).f_rgb
     assert props.GetOpacity() == pyvista.global_theme.silhouette.opacity
     assert props.GetLineWidth() == pyvista.global_theme.silhouette.line_width
     plotter.show(before_close_callback=verify_cache_image)
@@ -809,14 +809,14 @@ def test_set_background():
     plotter = pyvista.Plotter(shape=(1, 2))
     plotter.set_background('orange')
     for renderer in plotter.renderers:
-        assert renderer.GetBackground() == pyvista.parse_color('orange')
+        assert renderer.GetBackground() == pyvista.Color('orange').f_rgb
     plotter.show()
 
     plotter = pyvista.Plotter(shape=(1, 2))
     plotter.subplot(0, 1)
     plotter.set_background('orange', all_renderers=False)
-    assert plotter.renderers[0].GetBackground() != pyvista.parse_color('orange')
-    assert plotter.renderers[1].GetBackground() == pyvista.parse_color('orange')
+    assert plotter.renderers[0].GetBackground() != pyvista.Color('orange').f_rgb
+    assert plotter.renderers[1].GetBackground() == pyvista.Color('orange').f_rgb
     plotter.show(before_close_callback=verify_cache_image)
 
 

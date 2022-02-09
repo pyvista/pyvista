@@ -12,7 +12,7 @@ except ImportError:  # pragma: no cover
     from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
 
 from ..utilities.helpers import vtkmatrix_from_array
-from .tools import parse_color
+from .colors import Color, color_like
 
 
 class LightType(IntEnum):
@@ -44,7 +44,7 @@ class Light(vtkLight):
         has a transformation matrix.  See also the
         :py:attr:`focal_point` property.
 
-    color : str or 3-length sequence, optional
+    color : color_like, optional
         The color of the light. The ambient, diffuse and specular
         colors will all be set to this color on creation.
 
@@ -278,9 +278,9 @@ class Light(vtkLight):
         return self.GetAmbientColor()
 
     @ambient_color.setter
-    def ambient_color(self, color):
+    def ambient_color(self, color: color_like):
         """Set the ambient color of the light."""
-        self.SetAmbientColor(parse_color(color)[:3])
+        self.SetAmbientColor(Color(color).f_rgb)
 
     @property
     def diffuse_color(self):
@@ -300,7 +300,7 @@ class Light(vtkLight):
 
         >>> import pyvista as pv
         >>> light = pv.Light()
-        >>> light.diffuse_color = (0, 0, 1)
+        >>> light.diffuse_color = (0.0, 0.0, 1.0)
         >>> light.diffuse_color
         (0.0, 0.0, 1.0)
 
@@ -308,9 +308,9 @@ class Light(vtkLight):
         return self.GetDiffuseColor()
 
     @diffuse_color.setter
-    def diffuse_color(self, color):
+    def diffuse_color(self, color: color_like):
         """Set the diffuse color of the light."""
-        self.SetDiffuseColor(parse_color(color)[:3])
+        self.SetDiffuseColor(Color(color).f_rgb)
 
     @property
     def specular_color(self):
@@ -338,9 +338,9 @@ class Light(vtkLight):
         return self.GetSpecularColor()
 
     @specular_color.setter
-    def specular_color(self, color):
+    def specular_color(self, color: color_like):
         """Set the specular color of the light."""
-        self.SetSpecularColor(parse_color(color)[:3])
+        self.SetSpecularColor(Color(color).f_rgb)
 
     @property
     def position(self):

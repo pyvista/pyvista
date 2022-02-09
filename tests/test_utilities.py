@@ -600,3 +600,43 @@ def test_reflection():
         transformations.reflection(normal, point=[1, 0, 0, 0])
     with pytest.raises(ValueError):
         transformations.reflection([0, 0, 0])
+
+
+def test_color():
+    name, name2 = "blue", "b"
+    i_rgba, f_rgba = (0, 0, 255, 255), (0.0, 0.0, 1.0, 1.0)
+    h = "0000ffff"
+    i_opacity, f_opacity, h_opacity = 153, 0.6, "99"
+    invalid_colors = ((300, 0, 0), (0, -10, 0), (0, 0, 1.5), (-0.5, 0, 0), "#hh0000", "invalid_name")
+    i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
+    f_types = (float, np.float16, np.float32, np.float64)
+    h_prefixes = ("", "0x", "#")
+    assert pyvista.Color(name) == i_rgba
+    assert pyvista.Color(name2) == i_rgba
+    # Check integer types
+    for i_type in i_types:
+        i_color = [i_type(c) for c in i_rgba]
+        # Check list, tuple and numpy array
+        assert pyvista.Color(i_color) == i_rgba
+        assert pyvista.Color(tuple(i_color)) == i_rgba
+        assert pyvista.Color(np.asarray(i_color, dtype=i_type)) == i_rgba
+    # Check float types
+    for f_type in f_types:
+        f_color = [f_type(c) for c in f_rgba]
+        # Check list, tuple and numpy array
+        assert pyvista.Color(f_color) == i_rgba
+        assert pyvista.Color(tuple(f_color)) == i_rgba
+        assert pyvista.Color(np.asarray(f_color, dtype=f_type)) == i_rgba
+    # Check hex
+    for h_prefix in h_prefixes:
+        assert pyvista.Color(h_prefix + h) == i_rgba
+    # Check default_opacity
+    assert pyvista.Color(name, default_opacity=i_opacity) == (*i_rgba[:3], i_opacity)
+    assert pyvista.Color(name, default_opacity=f_opacity) == (*i_rgba[:3], i_opacity)
+    assert pyvista.Color(name, default_opacity=h_opacity) == (*i_rgba[:3], i_opacity)
+    # Check default_color
+    assert pyvista.Color(None, default_color=name) == i_rgba
+    # Check invalid colors
+    for invalid_color in invalid_colors:
+        with pytest.raises(ValueError):
+            pyvista.Color(invalid_color)

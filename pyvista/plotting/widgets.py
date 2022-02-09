@@ -14,7 +14,7 @@ from pyvista.utilities import (
     try_callback,
 )
 
-from .tools import parse_color
+from .colors import Color
 
 
 class WidgetHelper:
@@ -56,7 +56,7 @@ class WidgetHelper:
             If ``False``, the box widget cannot be rotated and is
             strictly orthogonal to the cartesian axes.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, rgb sequence, or hex color string.
             Defaults to :attr:`pyvista.global_theme.font.color
             <pyvista.themes._Font.color>`.
@@ -85,9 +85,6 @@ class WidgetHelper:
         if bounds is None:
             bounds = self.bounds
 
-        if color is None:
-            color = pyvista.global_theme.font.color
-
         def _the_callback(box_widget, event_id):
             the_box = pyvista.PolyData()
             box_widget.GetPolyData(the_box)
@@ -104,7 +101,7 @@ class WidgetHelper:
             return
 
         box_widget = _vtk.vtkBoxWidget()
-        box_widget.GetOutlineProperty().SetColor(parse_color(color))
+        box_widget.GetOutlineProperty().SetColor(Color(color, default_color=pyvista.global_theme.font.color).f_rgb)
         box_widget.SetInteractor(self.iren.interactor)
         box_widget.SetCurrentRenderer(self.renderer)
         box_widget.SetPlaceFactor(factor)
@@ -148,7 +145,7 @@ class WidgetHelper:
             If ``False``, the box widget cannot be rotated and is strictly
             orthogonal to the cartesian axes.
 
-        widget_color : str or sequence, optional
+        widget_color : color_like, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -241,7 +238,7 @@ class WidgetHelper:
         factor : float, optional
             An inflation factor to expand on the bounds when placing.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, rgb list, or hex color string.
 
         assign_to_axis : str or int, optional
@@ -298,8 +295,7 @@ class WidgetHelper:
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
 
-        if color is None:
-            color = pyvista.global_theme.font.color
+        color = Color(color, default_color=pyvista.global_theme.font.color)
 
         if assign_to_axis:
             normal_rotation = False
@@ -318,9 +314,9 @@ class WidgetHelper:
 
         if implicit:
             plane_widget = _vtk.vtkImplicitPlaneWidget()
-            plane_widget.GetNormalProperty().SetColor(parse_color(color))
-            plane_widget.GetOutlineProperty().SetColor(parse_color(color))
-            plane_widget.GetOutlineProperty().SetColor(parse_color(color))
+            plane_widget.GetNormalProperty().SetColor(color.f_rgb)
+            plane_widget.GetOutlineProperty().SetColor(color.f_rgb)
+            plane_widget.GetOutlineProperty().SetColor(color.f_rgb)
             plane_widget.SetTubing(tubing)
             plane_widget.SetOutlineTranslation(outline_translation)
             plane_widget.SetOriginTranslation(origin_translation)
@@ -358,8 +354,8 @@ class WidgetHelper:
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
             plane_widget.SetCenter(origin) # Necessary
-            plane_widget.GetPlaneProperty().SetColor(parse_color(color))  # self.C_LOT[fn])
-            plane_widget.GetHandleProperty().SetColor(parse_color(color))
+            plane_widget.GetPlaneProperty().SetColor(color.f_rgb)  # self.C_LOT[fn])
+            plane_widget.GetHandleProperty().SetColor(color.f_rgb)
 
             if not normal_rotation:
                 plane_widget.GetHandleProperty().SetOpacity(0)
@@ -425,7 +421,7 @@ class WidgetHelper:
         invert : bool, optional
             Flag on whether to flip/invert the clip.
 
-        widget_color : str or sequence, optional
+        widget_color : color_like, optional
             Either a string, RGB list, or hex color string.
 
         value : float, optional
@@ -536,7 +532,7 @@ class WidgetHelper:
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
-        widget_color : str or sequence, optional
+        widget_color : color_like, optional
             Either a string, RGB sequence, or hex color string.  Defaults
             to ``'white'``.
 
@@ -628,7 +624,7 @@ class WidgetHelper:
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
-        widget_color : str or sequence, optional
+        widget_color : color_like, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -692,7 +688,7 @@ class WidgetHelper:
         resolution : int, optional
             The number of points in the line created.
 
-        color : str or 3 item sequence, optional, defaults to white
+        color : color_like, optional, defaults to white
             Either a string, rgb sequence, or hex color string.
 
         use_vertices : bool, optional
@@ -715,8 +711,7 @@ class WidgetHelper:
         if bounds is None:
             bounds = self.bounds
 
-        if color is None:
-            color = pyvista.global_theme.font.color
+        color = Color(color, default_color=pyvista.global_theme.font.color)
 
         def _the_callback(widget, event_id):
             pointa = widget.GetPoint1()
@@ -732,7 +727,7 @@ class WidgetHelper:
                 try_callback(callback, *args)
 
         line_widget = _vtk.vtkLineWidget()
-        line_widget.GetLineProperty().SetColor(parse_color(color))
+        line_widget.GetLineProperty().SetColor(color.f_rgb)
         line_widget.SetInteractor(self.iren.interactor)
         line_widget.SetCurrentRenderer(self.renderer)
         line_widget.SetPlaceFactor(factor)
@@ -783,7 +778,7 @@ class WidgetHelper:
             The relative coordinates of the right point of the slider on the
             display port.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, RGB list, or hex color string.  Defaults
             to :attr:`pyvista.global_theme.font.color
             <pyvista.themes._Font.color>`.
@@ -888,7 +883,7 @@ class WidgetHelper:
             The relative coordinates of the right point of the slider
             on the display port.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, RGB list, or hex color string.  Defaults
             to :attr:`pyvista.global_theme.font.color
             <pyvista.themes._Font.color>`.
@@ -913,7 +908,7 @@ class WidgetHelper:
         title_opacity : float, optional
             Opacity of title. Defaults to 1.0.
 
-        title_color : str or sequence, optional
+        title_color : color_like, optional
             Either a string, RGB sequence, or hex color string.  Defaults
             to the value given in ``color``.
 
@@ -951,11 +946,8 @@ class WidgetHelper:
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
 
-        if color is None:
-            color = pyvista.global_theme.font.color
-
-        if title_color is None:
-            title_color = color
+        color = Color(color, default_color=pyvista.global_theme.font.color)
+        title_color = Color(title_color, default_color=color)
 
         if fmt is None:
             fmt = pyvista.global_theme.font.fmt
@@ -972,11 +964,11 @@ class WidgetHelper:
         slider_rep.SetMaximumValue(rng[1])
         slider_rep.SetValue(value)
         slider_rep.SetTitleText(title)
-        slider_rep.GetTitleProperty().SetColor(parse_color(color))
-        slider_rep.GetSliderProperty().SetColor(parse_color(color))
-        slider_rep.GetCapProperty().SetColor(parse_color(color))
-        slider_rep.GetLabelProperty().SetColor(parse_color(color))
-        slider_rep.GetTubeProperty().SetColor(parse_color(color))
+        slider_rep.GetTitleProperty().SetColor(color.f_rgb)
+        slider_rep.GetSliderProperty().SetColor(color.f_rgb)
+        slider_rep.GetCapProperty().SetColor(color.f_rgb)
+        slider_rep.GetLabelProperty().SetColor(color.f_rgb)
+        slider_rep.GetTubeProperty().SetColor(color.f_rgb)
         slider_rep.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
         slider_rep.GetPoint1Coordinate().SetValue(pointa[0], pointa[1])
         slider_rep.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
@@ -1014,7 +1006,7 @@ class WidgetHelper:
         slider_widget.SetRepresentation(slider_rep)
         slider_widget.GetRepresentation().SetTitleHeight(title_height)
         slider_widget.GetRepresentation().GetTitleProperty().SetOpacity(title_opacity)
-        slider_widget.GetRepresentation().GetTitleProperty().SetColor(parse_color(title_color))
+        slider_widget.GetRepresentation().GetTitleProperty().SetColor(title_color.f_rgb)
         if fmt is not None:
             slider_widget.GetRepresentation().SetLabelFormat(fmt)
         slider_widget.On()
@@ -1065,7 +1057,7 @@ class WidgetHelper:
         invert : bool, optional
             Invert (flip) the threshold.
 
-        widget_color : str or sequence, optional
+        widget_color : color_like, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -1205,7 +1197,7 @@ class WidgetHelper:
             The relative coordinates of the right point of the slider
             on the display port.
 
-        widget_color : str or sequence, optional
+        widget_color : color_like, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -1303,13 +1295,13 @@ class WidgetHelper:
         resolution : int, optional
             The number of points in the spline created between all the handles.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, RGB sequence, or hex color string.
 
         show_ribbon : bool, optional
             If ``True``, the poly plane used for slicing will also be shown.
 
-        ribbon_color : str or sequence, optional
+        ribbon_color : color_like, optional
             Color of the ribbon.  Either a string, RGB sequence, or
             hex color string.
 
@@ -1347,8 +1339,7 @@ class WidgetHelper:
         if not hasattr(self, "spline_widgets"):
             self.spline_widgets = []
 
-        if color is None:
-            color = pyvista.global_theme.color
+        color = Color(color, default_color=pyvista.global_theme.color)
 
         if bounds is None:
             bounds = self.bounds
@@ -1369,7 +1360,7 @@ class WidgetHelper:
             return
 
         spline_widget = _vtk.vtkSplineWidget()
-        spline_widget.GetLineProperty().SetColor(parse_color(color))
+        spline_widget.GetLineProperty().SetColor(color.f_rgb)
         spline_widget.SetNumberOfHandles(n_handles)
         spline_widget.SetInteractor(self.iren.interactor)
         spline_widget.SetCurrentRenderer(self.renderer)
@@ -1428,7 +1419,7 @@ class WidgetHelper:
         resolution : int, optional
             The number of points to generate on the spline.
 
-        widget_color : str or sequence, optional
+        widget_color : color_like, optional
             Color of the widget.  Either a string, RGB sequence, or
             hex color string.  For example:
 
@@ -1440,7 +1431,7 @@ class WidgetHelper:
         show_ribbon : bool, optional
             If ``True``, the poly plane used for slicing will also be shown.
 
-        ribbon_color : str or sequence, optional
+        ribbon_color : color_like, optional
             Color of the ribbon.  Either a string, RGB sequence, or
             hex color string.
 
@@ -1538,7 +1529,7 @@ class WidgetHelper:
         phi_resolution : int, optional
             Set the number of points in the latitude direction.
 
-        color : str or 3 item iterable, optional
+        color : color_like, optional
             The color of the sphere's surface.  If multiple centers
             are passed, then this must be a list of colors.  Each
             color is either a string, rgb list, or hex color string.
@@ -1552,7 +1543,7 @@ class WidgetHelper:
         style : str, optional
             Representation style: ``'surface'`` or ``'wireframe'``.
 
-        selected_color : str, optional
+        selected_color : color_like, optional
             Color of the widget when selected during interaction.
 
         indices : sequence, optional
@@ -1618,8 +1609,8 @@ class WidgetHelper:
                 sphere_widget.SetRepresentationToWireframe()
             else:
                 sphere_widget.SetRepresentationToSurface()
-            sphere_widget.GetSphereProperty().SetColor(parse_color(colors[i]))
-            sphere_widget.GetSelectedSphereProperty().SetColor(parse_color(selected_color))
+            sphere_widget.GetSphereProperty().SetColor(Color(colors[i]).f_rgb)
+            sphere_widget.GetSelectedSphereProperty().SetColor(Color(selected_color).f_rgb)
             sphere_widget.SetInteractor(self.iren.interactor)
             sphere_widget.SetCurrentRenderer(self.renderer)
             sphere_widget.SetRadius(radius)
@@ -1674,13 +1665,13 @@ class WidgetHelper:
         border_size : int, optional
             The size of the borders of the button in pixels.
 
-        color_on : str or 3 item list, optional
+        color_on : color_like, optional
             The color used when the button is checked. Default is ``'blue'``.
 
-        color_off : str or 3 item list, optional
+        color_off : color_like, optional
             The color used when the button is not checked. Default is ``'grey'``.
 
-        background_color : str or sequence, optional
+        background_color : color_like, optional
             The background color of the button. Default is ``'white'``.
 
         Returns
@@ -1693,9 +1684,9 @@ class WidgetHelper:
             self.button_widgets = []
 
         def create_button(color1, color2, color3, dims=[size, size, 1]):
-            color1 = np.array(parse_color(color1)) * 255
-            color2 = np.array(parse_color(color2)) * 255
-            color3 = np.array(parse_color(color3)) * 255
+            color1 = np.array(Color(color1).i_rgb)
+            color2 = np.array(Color(color2).i_rgb)
+            color3 = np.array(Color(color3).i_rgb)
 
             n_points = dims[0] * dims[1]
             button = pyvista.UniformGrid(dims=dims)

@@ -8,8 +8,8 @@ from pyvista import _vtk
 from pyvista.utilities import convert_array, convert_string_array, raise_not_matching
 
 from ._plotting import _has_matplotlib
-from .colors import get_cmap_safe
-from .tools import normalize, parse_color
+from .colors import Color, get_cmap_safe
+from .tools import normalize
 
 
 def make_mapper(mapper_class):
@@ -143,14 +143,14 @@ def make_mapper(mapper_class):
             if np.any(clim) and not rgb:
                 self.scalar_range = clim[0], clim[1]
 
-            table.SetNanColor(nan_color)
+            table.SetNanColor(Color(nan_color).f_rgba)
             if above_color:
                 table.SetUseAboveRangeColor(True)
-                table.SetAboveRangeColor(*parse_color(above_color, opacity=1))
+                table.SetAboveRangeColor(*Color(above_color, default_opacity=1.0).f_rgba)
                 scalar_bar_args.setdefault('above_label', 'Above')
             if below_color:
                 table.SetUseBelowRangeColor(True)
-                table.SetBelowRangeColor(*parse_color(below_color, opacity=1))
+                table.SetBelowRangeColor(*Color(below_color, default_opacity=1.0).f_rgba)
                 scalar_bar_args.setdefault('below_label', 'Below')
 
             if cmap is not None:
@@ -238,7 +238,6 @@ def make_mapper(mapper_class):
                                preference, interpolate_before_map, rgb, theme):
             """Set custom opacity."""
             # create a custom RGBA array to supply our opacity to
-            rgb_color = parse_color(color, default_color=theme.color)
             if (opacity.size == mesh.n_points and opacity.size == mesh.n_cells):
                 if preference == 'points':
                     rgba = np.empty((mesh.n_points, 4), np.uint8)
@@ -254,7 +253,7 @@ def make_mapper(mapper_class):
                     f"the number of points {mesh.n_points} or the "
                     f"number of cells ({mesh.n_cells}).")
 
-            rgb_color = np.array(parse_color(color, default_color=theme.color))*255
+            rgb_color = np.array(Color(color, default_color=theme.color).i_rgb)
             rgba[:, :-1] = rgb_color
             rgba[:, -1] = opacity*255
 

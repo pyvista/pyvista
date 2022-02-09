@@ -12,7 +12,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-from .tools import parse_color
+from .colors import Color
 
 
 #region Some metaclass wrapping magic
@@ -139,9 +139,9 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
     Parameters
     ----------
-    color : color, optional
+    color : color_like, optional
         Color of the lines drawn using this pen. Any color parsable by
-        :func:`pyvista.parse_color` is allowed. Defaults to ``"k"``.
+        :class:`pyvista.Color` is allowed. Defaults to ``"k"``.
 
     width : float, optional
         Width of the lines drawn using this pen. Defaults to ``1``.
@@ -198,12 +198,12 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         >>> chart.show()
 
         """
-        return self._color
+        return self._color.f_rgba
 
     @color.setter
     def color(self, val):
-        self._color = (0, 0, 0, 0) if val is None else parse_color(val, opacity=1)
-        self.SetColorF(*self._color)
+        self._color = Color(val, default_opacity=1.0, default_color=[0, 0, 0, 0])
+        self.SetColorF(*self._color.f_rgba)
 
     @property
     def width(self):
@@ -260,9 +260,9 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
     Parameters
     ----------
-    color : color, optional
+    color : color_like, optional
         Fill color of the shapes drawn using this brush. Any color
-        parsable by :func:`pyvista.parse_color` is allowed.  Defaults to
+        parsable by :class:`pyvista.Color` is allowed.  Defaults to
         ``"k"``.
 
     texture : Texture, optional
@@ -300,12 +300,12 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         >>> chart.show()
 
         """
-        return self._color
+        return self._color.f_rgba
 
     @color.setter
     def color(self, val):
-        self._color = (0, 0, 0, 0) if val is None else parse_color(val, opacity=1)
-        self.SetColorF(*self._color)
+        self._color = Color(val, default_opacity=1.0, default_color=[0, 0, 0, 0])
+        self.SetColorF(*self._color.f_rgba)
 
     @property
     def texture(self):
@@ -1373,7 +1373,7 @@ class _Chart(DocSubs):
             When ``True``, the resulting plot is placed inline a
             jupyter notebook.  Assumes a jupyter console is active.
 
-        background : str or 3 item list, optional
+        background : color_like, optional
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
             ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
@@ -1703,16 +1703,6 @@ class _MultiCompPlot(_Plot):
         self.SetLabels(self._labels)
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
-    @staticmethod
-    def _from_c3ub(c3ub):
-        """Convert vtkColor3ub to an RGBA color tuple (with values in range [0;1])."""
-        return tuple([float(c) / 255 for c in c3ub] + [1.0])
-
-    @staticmethod
-    def _to_c3ub(color):
-        """Convert an RGB(A) color tuple/sequence to a vtkColor3ub object (with values in range [0;255])."""
-        return _vtk.vtkColor3ub(*[int(255 * c + 0.5) for c in color[:3]])
-
     @property  # type: ignore
     @doc_subs
     def color_scheme(self):
@@ -1769,7 +1759,7 @@ class _MultiCompPlot(_Plot):
         >>> chart.show()
 
         """
-        return [self._from_c3ub(self._color_series.GetColor(i)) for i in range(self._color_series.GetNumberOfColors())]
+        return [Color(self._color_series.GetColor(i)).f_rgba for i in range(self._color_series.GetNumberOfColors())]
 
     @colors.setter
     def colors(self, val):
@@ -1783,7 +1773,7 @@ class _MultiCompPlot(_Plot):
             try:
                 self._color_series.SetNumberOfColors(len(val))
                 for i, color in enumerate(val):
-                    self._color_series.SetColor(i, self._to_c3ub(parse_color(color)))
+                    self._color_series.SetColor(i, Color(color).vtk_c3ub)
                 self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
                 self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
             except ValueError as e:
@@ -1894,8 +1884,8 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
     y : array_like
         Y coordinates of the points through which a line should be drawn.
 
-    color : color, optional
-        Color of the line drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+    color : color_like, optional
+        Color of the line drawn in this plot. Any color parsable by ``pyvista.Color`` is allowed. Defaults
         to ``"b"``.
 
     width : float, optional
@@ -2026,8 +2016,8 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
     y : array_like
         Y coordinates of the points to draw.
 
-    color : color, optional
-        Color of the points drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+    color : color_like, optional
+        Color of the points drawn in this plot. Any color parsable by ``pyvista.Color`` is allowed. Defaults
         to ``"b"``.
 
     size : float, optional
@@ -2230,8 +2220,8 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
     y2 : array_like, optional
         Y coordinates of the points on the second outline of the area to draw. Defaults to a sequence of zeros.
 
-    color : color, optional
-        Color of the area drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+    color : color_like, optional
+        Color of the area drawn in this plot. Any color parsable by ``pyvista.Color`` is allowed. Defaults
         to ``"b"``.
 
     label : str, optional
@@ -2382,8 +2372,8 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
     y : array_like
         Size of the bars to draw. Multiple bars can be stacked by passing a sequence of sequences.
 
-    color : color, optional
-        Color of the bars drawn in this plot. Any color parsable by ``pyvista.parse_color`` is allowed. Defaults
+    color : color_like, optional
+        Color of the bars drawn in this plot. Any color parsable by ``pyvista.Color`` is allowed. Defaults
         to ``"b"``.
 
     orientation : str, optional
@@ -2568,9 +2558,9 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         coordinates. Each sequence defines the sizes of one stack
         (area), which are stacked on top of each other.
 
-    colors : list or tuple of color, optional
+    colors : list or tuple of color_like, optional
         Color of the stacks (areas) drawn in this plot. Any color
-        parsable by ``pyvista.parse_color`` is allowed.  Defaults to
+        parsable by ``pyvista.Color`` is allowed.  Defaults to
         ``None``.
 
     labels : list or tuple of str, optional
@@ -2818,7 +2808,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             matter. See :attr:`pyvista.ScatterPlot2D.MARKER_STYLES`
             for a list of valid marker styles,
             :attr:`pyvista.Pen.LINE_STYLES` for a list of valid line
-            styles and :func:`pyvista.parse_color` for an overview of
+            styles and :class:`pyvista.Color` for an overview of
             parsable colors.
 
         Returns
@@ -2953,9 +2943,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         y : array_like
             Y coordinates of the points to draw.
 
-        color : color, optional
+        color : color_like, optional
             Color of the points drawn in this plot. Any color parsable
-            by ``pyvista.parse_color`` is allowed. Defaults to
+            by ``pyvista.Color`` is allowed. Defaults to
             ``"b"``.
 
         size : float, optional
@@ -2997,9 +2987,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         y : array_like
             Y coordinates of the points through which a line should be drawn.
 
-        color : color, optional
+        color : color_like, optional
             Color of the line drawn in this plot. Any color parsable
-            by :func:`pyvista.parse_color` is allowed. Defaults to
+            by :class:`pyvista.Color` is allowed. Defaults to
             ``"b"``.
 
         width : float, optional
@@ -3045,9 +3035,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             Y coordinates of the points on the second outline of the
             area to draw. Defaults to a sequence of zeros.
 
-        color : color, optional
+        color : color_like, optional
             Color of the area drawn in this plot. Any color parsable
-            by ``pyvista.parse_color`` is allowed. Defaults to
+            by ``pyvista.Color`` is allowed. Defaults to
             ``"b"``.
 
         label : str, optional
@@ -3084,9 +3074,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             Size of the bars to draw. Multiple bars can be stacked by
             passing a sequence of sequences.
 
-        color : color, optional
+        color : color_like, optional
             Color of the bars drawn in this plot. Any color parsable
-            by ``pyvista.parse_color`` is allowed. Defaults to
+            by ``pyvista.Color`` is allowed. Defaults to
             ``"b"``.
 
         orientation : str, optional
@@ -3127,9 +3117,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             coordinates. Each sequence defines the sizes of one stack
             (area), which are stacked on top of each other.
 
-        colors : list or tuple of color, optional
+        colors : list or tuple of color_like, optional
             Color of the stacks (areas) drawn in this plot. Any color
-            parsable by ``pyvista.parse_color`` is allowed.  Defaults
+            parsable by ``pyvista.Color`` is allowed.  Defaults
             to ``None``.
 
         labels : list or tuple of str, optional
@@ -3449,9 +3439,9 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         Dataset(s) from which the relevant statistics will be
         calculated used to draw the box plot.
 
-    colors : list or tuple of color, optional
+    colors : list or tuple of color_like, optional
         Color of the boxes drawn in this plot. Any color parsable by
-        ``pyvista.parse_color`` is allowed.  Defaults to ``None``.
+        ``pyvista.Color`` is allowed.  Defaults to ``None``.
 
     labels : list or tuple of str, optional
         Label for each box drawn in this plot, as shown in the chart's
@@ -3562,7 +3552,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         Dataset(s) from which the relevant statistics will be
         calculated used to draw the box plot.
 
-    colors : list or tuple of color, optional
+    colors : list or tuple of color_like, optional
         Color used for each drawn boxplot. Defaults to ``None``, which
         uses the default color scheme.
 
@@ -3680,9 +3670,9 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
     data : array_like
         Relative size of each pie segment.
 
-    colors : list or tuple of color, optional
+    colors : list or tuple of color_like, optional
         Color of the segments drawn in this plot. Any color parsable
-        by ``pyvista.parse_color`` is allowed.  Defaults to ``None``.
+        by ``pyvista.Color`` is allowed.  Defaults to ``None``.
 
     labels : list or tuple of str, optional
         Label for each pie segment drawn in this plot, as shown in the
@@ -3776,7 +3766,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     data : array_like
         Relative size of each pie segment.
 
-    colors : list or tuple of color, optional
+    colors : list or tuple of color_like, optional
         Color used for each pie segment drawn in this plot. Defaults
         to ``None``, which uses the default color scheme.
 
