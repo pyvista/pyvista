@@ -431,7 +431,6 @@ class DataSetFilters:
                                                     progress_bar=progress_bar)
         return result
 
-
     def slice(self, normal='x', origin=None, generate_triangles=False,
               contour=False, progress_bar=False):
         """Slice a dataset by a plane at the specified origin and normal vector orientation.

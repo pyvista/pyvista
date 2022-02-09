@@ -1452,7 +1452,7 @@ def test_median_smooth_outlier():
 
 
 def test_image_threshold_output_type():
-    threshold = 10 # 'random' value
+    threshold = 10  # 'random' value
     volume = examples.load_uniform()
     volume_thresholded = volume.image_threshold(threshold)
     assert isinstance(volume_thresholded, pyvista.UniformGrid)
@@ -1461,14 +1461,14 @@ def test_image_threshold_output_type():
 
 
 def test_image_threshold_wrong_threshold_length():
-    threshold = (10,10,10) # tuple with too many values
+    threshold = (10, 10, 10)  # tuple with too many values
     volume = examples.load_uniform()
     with pytest.raises(ValueError):
         volume_thresholded = volume.image_threshold(threshold)
 
 
 def test_image_threshold_wrong_threshold_type():
-    threshold = {'min':0, 'max':10} # dict thresh
+    threshold = {'min': 0, 'max': 10}  # dict thresh
     volume = examples.load_uniform()
     with pytest.raises(TypeError):
         volume_thresholded = volume.image_threshold(threshold)
@@ -1477,14 +1477,14 @@ def test_image_threshold_wrong_threshold_type():
 @pytest.mark.parametrize('in_value', [1, None])
 @pytest.mark.parametrize('out_value', [0, None])
 def test_image_threshold_upper(in_value,out_value):
-    threshold = 0 # 'random' value
-    array_shape = (3,3,3)
-    in_value_location = (1,1,1)
+    threshold = 0  # 'random' value
+    array_shape = (3, 3, 3)
+    in_value_location = (1, 1, 1)
     point_data = np.ones(array_shape)
     in_value_mask = np.zeros(array_shape,dtype=bool)
     in_value_mask[in_value_location] = True
-    point_data[in_value_mask] = 100 # the only 'in' value
-    point_data[~in_value_mask] = -100 # out values
+    point_data[in_value_mask] = 100  # the only 'in' value
+    point_data[~in_value_mask] = -100  # out values
     volume = pyvista.UniformGrid(dims=array_shape)
     volume.point_data['point_data'] = point_data.flatten(order='F')
     point_data_thresholded = point_data.copy()
@@ -1492,10 +1492,11 @@ def test_image_threshold_upper(in_value,out_value):
         point_data_thresholded[in_value_mask] = in_value
     if out_value is not None:
         point_data_thresholded[~in_value_mask] = out_value
-    volume_thresholded = volume.image_threshold(threshold,
-                                                in_value = in_value,
-                                                out_value = out_value
-                                                )
+    volume_thresholded = volume.image_threshold(
+        threshold,
+        in_value=in_value,
+        out_value=out_value
+    )
     assert np.array_equal(volume_thresholded.point_data['point_data'],
                           point_data_thresholded.flatten(order='F'))
 
@@ -1504,15 +1505,15 @@ def test_image_threshold_upper(in_value,out_value):
 @pytest.mark.parametrize('out_value', [0, None])
 def test_image_threshold_between(in_value,out_value):
     threshold = [-10, 10] # 'random' values
-    array_shape = (3,3,3)
-    in_value_location = (1,1,1)
-    low_value_location = (1,1,2)
+    array_shape = (3, 3, 3)
+    in_value_location = (1, 1, 1)
+    low_value_location = (1, 1, 2)
     point_data = np.ones(array_shape)
     in_value_mask = np.zeros(array_shape,dtype=bool)
     in_value_mask[in_value_location] = True
-    point_data[in_value_mask] = 0 # the only 'in' value
-    point_data[~in_value_mask] = 100 # out values
-    point_data[low_value_location] = -100 # add a value below the threshold also
+    point_data[in_value_mask] = 0  # the only 'in' value
+    point_data[~in_value_mask] = 100  # out values
+    point_data[low_value_location] = -100  # add a value below the threshold also
     point_data
     volume = pyvista.UniformGrid(dims=array_shape)
     volume.point_data['point_data'] = point_data.flatten(order='F')
@@ -1521,10 +1522,11 @@ def test_image_threshold_between(in_value,out_value):
         point_data_thresholded[in_value_mask] = in_value
     if out_value is not None:
         point_data_thresholded[~in_value_mask] = out_value
-    volume_thresholded = volume.image_threshold(threshold,
-                                                in_value = in_value,
-                                                out_value = out_value
-                                                )
+    volume_thresholded = volume.image_threshold(
+        threshold,
+        in_value=in_value,
+        out_value=out_value
+    )
     assert np.array_equal(volume_thresholded.point_data['point_data'],
                           point_data_thresholded.flatten(order='F'))
 

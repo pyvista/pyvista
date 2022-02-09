@@ -164,12 +164,12 @@ class UniformGridFilters(DataSetFilters):
         """Apply a threshold to scalar values in a uniform grid.
 
         If a single value is given for threshold, scalar values above or equal
-        to the threshold are ``'in'`` and scalar values below the threshold are ``'out.'``
+        to the threshold are ``'in'`` and scalar values below the threshold are ``'out'``.
         If two values are given for threshold (sequence) then values equal to
-        or between the two values are ``'in'`` and values outside the range are ``'out.'``
+        or between the two values are ``'in'`` and values outside the range are ``'out'``.
 
-        If `None` is given for in_value, scalars that are ``'in'`` won't be replaced.
-        If `None` is given for out_value, scalars that are ``'out'`` won't be replaced.
+        If ``None`` is given for ``in_value``, scalars that are ``'in'`` will not be replaced.
+        If ``None`` is given for ``out_value``, scalars that are ``'out'`` will not be replaced.
 
         Parameters
         ----------
@@ -195,7 +195,7 @@ class UniformGridFilters(DataSetFilters):
             ``'point'`` or ``'cell'``.
 
         progress_bar : bool, optional
-            Display a progress bar to indicate progress. Default False.
+            Display a progress bar to indicate progress. Default ``False``.
 
         Returns
         -------
