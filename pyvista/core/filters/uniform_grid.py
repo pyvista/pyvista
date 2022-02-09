@@ -1,6 +1,8 @@
 """Filters module with a class to manage filters/algorithms for uniform grid datasets."""
 import collections.abc
 
+import numpy as np
+
 import pyvista
 from pyvista import _vtk, abstract_class
 from pyvista.core.filters import _get_output, _update_alg
@@ -159,7 +161,7 @@ class UniformGridFilters(DataSetFilters):
 
     def image_threshold(self, threshold, in_value=1, out_value=0,
                         scalars=None, preference='points', progress_bar=False):
-        """Apply a threshold to scalar values in a dataset.
+        """Apply a threshold to scalar values in a uniform grid.
 
         If a single value is given for threshold, scalar values above or equal
         to the threshold are ``'in'`` and scalar values below the threshold are ``'out.'``
@@ -195,7 +197,7 @@ class UniformGridFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.DataSet
+        pyvista.UniformGrid
             Dataset with the specified scalars thresholded.
         """
         alg = _vtk.vtkImageThreshold()
