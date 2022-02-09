@@ -1485,7 +1485,7 @@ def test_image_threshold_upper(in_values,out_values):
                                                         out_value=out_value
                                                         )
             assert np.array_equal(volume_thresholded.point_data['point_data'],
-                                  point_data_thresholded)                                            )
+                                  point_data_thresholded)
 
 
 @pytest.mark.parametrize('in_values', [1, None])
