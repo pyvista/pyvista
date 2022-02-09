@@ -214,6 +214,7 @@ if VTK9:
         vtkOBBTree,
         vtkRectilinearGridToPointSet,
         vtkShrinkFilter,
+        vtkTessellatorFilter,
         vtkTableBasedClipDataSet,
         vtkTableToPolyData,
         vtkTransformFilter,

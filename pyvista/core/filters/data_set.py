@@ -4340,6 +4340,15 @@ class DataSetFilters:
             return output.extract_surface()
         return output
 
+    def tessellate(self, progress_bar=False):
+        alg = _vtk.vtkTessellatorFilter()
+        alg.SetInputData(self)
+        _update_alg(alg, progress_bar, 'Tessellating Mesh')
+        output = pyvista.wrap(alg.GetOutput())
+        if isinstance(self, _vtk.vtkPolyData):
+            return output.extract_surface()
+        return output
+
     def transform(self: _vtk.vtkDataSet,
                   trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
                   transform_all_input_vectors=False, inplace=True, progress_bar=False):

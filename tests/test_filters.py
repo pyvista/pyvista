@@ -1507,6 +1507,25 @@ def test_shrink():
     assert shrunk.volume < mesh.volume
 
 
+def test_tessellate():
+    topology = np.array([6, 0, 1, 2, 5, 3, 4], dtype=np.int32)
+    cell_types = np.array([69], dtype=np.int32)
+    geometry = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.6, 0.5, 0.0],
+            [-0.1, 0.5, 0.0],
+            [0.5, -0.2, 0.0],
+        ]
+    )
+    grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
+    tessellated = grid.tessellate()
+    assert tessellated.n_cells > grid.n_cells
+    assert tessellated.n_points > grid.n_points
+
+
 @pytest.mark.parametrize('num_cell_arrays,num_point_data',
                          itertools.product([0, 1, 2], [0, 1, 2]))
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
