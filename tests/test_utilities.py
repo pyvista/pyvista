@@ -600,3 +600,31 @@ def test_reflection():
         transformations.reflection(normal, point=[1, 0, 0, 0])
     with pytest.raises(ValueError):
         transformations.reflection([0, 0, 0])
+
+
+def test_merge(sphere, cube, datasets):
+    with pytest.raises(TypeError, match="Expected a sequence"):
+        pyvista.merge(None)
+
+    with pytest.raises(ValueError, match="Expected at least one"):
+        pyvista.merge([])
+
+    with pytest.raises(TypeError, match="Expected pyvista.DataSet"):
+        pyvista.merge([None, sphere])
+
+    # check polydata
+    merged_poly = pyvista.merge([sphere, cube])
+    assert isinstance(merged_poly, pyvista.PolyData)
+    assert merged_poly.n_points == sphere.n_points + cube.n_points
+
+    merged = pyvista.merge([sphere, sphere], merge_points=True)
+    assert merged.n_points == sphere.n_points
+
+    merged = pyvista.merge([sphere, sphere], merge_points=False)
+    assert merged.n_points == sphere.n_points*2
+
+    # check unstructured
+    merged_ugrid = pyvista.merge(datasets, merge_points=False)
+    assert isinstance(merged_ugrid, pyvista.UnstructuredGrid)
+    assert merged_ugrid.n_points == sum([ds.n_points for ds in datasets])
+
