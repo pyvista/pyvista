@@ -134,6 +134,7 @@ if VTK9:
         vtkImageData,
         vtkImplicitFunction,
         vtkMultiBlockDataSet,
+        vtkNonMergingPointLocator,
         vtkPerlinNoise,
         vtkPiecewiseFunction,
         vtkPlane,

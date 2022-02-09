@@ -127,7 +127,7 @@ class WidgetHelper:
 
     def add_mesh_clip_box(self, mesh, invert=False, rotation_enabled=True,
                           widget_color=None, outline_translation=True,
-                          **kwargs):
+                          merge_points=True, **kwargs):
         """Clip a mesh using a box widget.
 
         Add a mesh to the scene with a box widget that is used to clip
@@ -161,6 +161,10 @@ class WidgetHelper:
             If ``False``, the plane widget cannot be translated and is
             strictly placed at the given bounds.
 
+        merge_points : bool, optional
+            If ``True`` (default), coinciding points of independently
+            defined mesh elements will be merged.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -182,6 +186,8 @@ class WidgetHelper:
         port = 1 if invert else 0
 
         alg = _vtk.vtkBoxClipDataSet()
+        if not merge_points:
+            alg.SetLocator(_vtk.vtkNonMergingPointLocator)
         alg.SetInputDataObject(mesh)
         alg.GenerateClippedOutputOn()
 
