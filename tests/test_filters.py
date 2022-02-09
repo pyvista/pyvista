@@ -1473,19 +1473,17 @@ def test_image_threshold_upper(in_values,out_values):
     point_data[~in_value_mask] = -100 # out values
     volume = pyvista.UniformGrid(dims=(10,10,10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    for in_value in in_values:
-        point_data_thresholded = point_data.copy()
-        if in_value is not None:
-            point_data_thresholded[in_value_mask] = 1
-        for out_value in out_values:
-            if out_value is not None:
-                point_data_thresholded[~in_value_mask] = 0
-            volume_thresholded = volume.image_threshold(threshold,
-                                                        in_value = in_value,
-                                                        out_value=out_value
-                                                        )
-            assert np.array_equal(volume_thresholded.point_data['point_data'],
-                                  point_data_thresholded)
+    point_data_thresholded = point_data.copy()
+    if in_value is not None:
+        point_data_thresholded[in_value_mask] = 1
+    if out_value is not None:
+        point_data_thresholded[~in_value_mask] = 0
+    volume_thresholded = volume.image_threshold(threshold,
+                                                in_value = in_value,
+                                                out_value=out_value
+                                                )
+    assert np.array_equal(volume_thresholded.point_data['point_data'],
+                          point_data_thresholded)
 
 
 @pytest.mark.parametrize('in_values', [1, None])
@@ -1497,12 +1495,10 @@ def test_image_threshold_between(in_values,out_values):
     point_data[4,4,4] = 100
     volume = pyvista.UniformGrid(dims=(10,10,10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    for in_value in in_values:
-        for out_value in out_values:
-            volume_thresholded = volume.image_threshold(threshold,
-                                                        in_value = in_value,
-                                                        out_value=out_value
-                                                        )
+    volume_thresholded = volume.image_threshold(threshold,
+                                                in_value = in_value,
+                                                out_value=out_value
+                                                )
 
 
 def test_extract_subset_structured():
