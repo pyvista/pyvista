@@ -2150,3 +2150,10 @@ def test_disable_stereo_render():
     pl.enable_stereo_render()
     pl.disable_stereo_render()
     pl.show(before_close_callback=verify_cache_image)
+
+
+def test_orbit_on_path(sphere):
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere, show_edges=True)
+    pl.orbit_on_path(step=0.01, progress_bar=True)
+    pl.close()
