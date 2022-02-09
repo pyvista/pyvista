@@ -173,16 +173,18 @@ class UniformGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        threshold : float or sequence, optional
+        threshold : float or sequence
             Single value or (min, max) to be used for the data threshold.  If
             a sequence, then length must be 2. Threshold(s) for deciding which
             cells/points are ``'in'`` or ``'out'`` based on scalar data.
 
-        in_value : float or int or None
+        in_value : float or int or None, optional
             Scalars that match the threshold criteria for ``'in'`` will be replaced with this.
+            Default is 1.
 
-        out_value : float or int or None
+        out_value : float or int or None, optional
             Scalars that match the threshold criteria for ``'out'`` will be replaced with this.
+            Default is 0.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -193,7 +195,7 @@ class UniformGridFilters(DataSetFilters):
             ``'point'`` or ``'cell'``.
 
         progress_bar : bool, optional
-            Display a progress bar to indicate progress.
+            Display a progress bar to indicate progress. Default False.
 
         Returns
         -------
