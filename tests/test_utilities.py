@@ -627,4 +627,23 @@ def test_merge(sphere, cube, datasets):
     merged_ugrid = pyvista.merge(datasets, merge_points=False)
     assert isinstance(merged_ugrid, pyvista.UnstructuredGrid)
     assert merged_ugrid.n_points == sum([ds.n_points for ds in datasets])
+    # check main has priority
+    sphere_a = sphere.copy()
+    sphere_b = sphere.copy()
+    sphere_a['data'] = np.zeros(sphere_a.n_points)
+    sphere_b['data'] = np.ones(sphere_a.n_points)
+
+    merged = pyvista.merge(
+        [sphere_a, sphere_b],
+        merge_points=True,
+        main_has_priority=False,
+    )
+    assert np.allclose(merged['data'], 1)
+
+    merged = pyvista.merge(
+        [sphere_a, sphere_b],
+        merge_points=True,
+        main_has_priority=True,
+    )
+    assert np.allclose(merged['data'], 0)
 

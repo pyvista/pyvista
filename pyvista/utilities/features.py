@@ -184,7 +184,7 @@ def merge(
         datasets,
         merge_points=True,
         main_has_priority=True,
-        progress_bar=False
+        progress_bar=False,
     ):
     """Merge several datasets.
 
@@ -199,11 +199,6 @@ def merge(
 
     merge_points : bool, optional
         Merge equivalent points when ``True``. Defaults to ``True``.
-
-    main_has_priority : bool, optional
-        When this parameter is ``True`` and ``merge_points=True``,
-        the arrays of the merging grids will be overwritten
-        by the original main mesh.
 
     main_has_priority : bool, optional
         When this parameter is ``True`` and ``merge_points=True``,
@@ -232,14 +227,14 @@ def merge(
 
     """
     if not isinstance(datasets, collections.Sequence):
-        raise TypeError(f"Expected a sequence, got {type(datasets)}")
+        raise TypeError(f"Expected a sequence, got {type(datasets).__name__}")
 
     if len(datasets) < 1:
         raise ValueError("Expected at least one dataset.")
 
     first = datasets[0]
     if not isinstance(first, pyvista.DataSet):
-        raise TypeError(f"Expected pyvista.DataSet, not {type(first)}")
+        raise TypeError(f"Expected pyvista.DataSet, not {type(first).__name__}")
 
     return datasets[0].merge(
         datasets[1:],
