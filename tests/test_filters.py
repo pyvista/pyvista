@@ -1464,14 +1464,14 @@ def test_image_threshold_output_type():
 @pytest.mark.parametrize('out_value', [0, None])
 def test_image_threshold_upper(in_value,out_value):
     threshold = 0 # 'random' value
-    array_shape = (10,10,10)
-    in_value_location = (4,4,4)
+    array_shape = (3,3,3)
+    in_value_location = (1,1,1)
     point_data = np.ones(array_shape)
     in_value_mask = np.zeros(array_shape,dtype=bool)
     in_value_mask[in_value_location] = True
     point_data[in_value_mask] = 100 # the only 'in' value
     point_data[~in_value_mask] = -100 # out values
-    volume = pyvista.UniformGrid(dims=(10,10,10))
+    volume = pyvista.UniformGrid(dims=array_shape)
     volume.point_data['point_data'] = point_data.flatten(order='F')
     point_data_thresholded = point_data.copy()
     if in_value is not None:
@@ -1483,7 +1483,7 @@ def test_image_threshold_upper(in_value,out_value):
                                                 out_value = out_value
                                                 )
     assert np.array_equal(volume_thresholded.point_data['point_data'],
-                          point_data_thresholded)
+                          point_data_thresholded.flatten(order='F'))
 
 
 @pytest.mark.parametrize('in_value', [1, None])
