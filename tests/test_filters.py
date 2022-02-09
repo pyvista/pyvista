@@ -1514,7 +1514,6 @@ def test_image_threshold_between(in_value,out_value):
     point_data[in_value_mask] = 0  # the only 'in' value
     point_data[~in_value_mask] = 100  # out values
     point_data[low_value_location] = -100  # add a value below the threshold also
-    point_data
     volume = pyvista.UniformGrid(dims=array_shape)
     volume.point_data['point_data'] = point_data.flatten(order='F')
     point_data_thresholded = point_data.copy()
