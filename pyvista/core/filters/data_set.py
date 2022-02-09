@@ -4341,6 +4341,33 @@ class DataSetFilters:
         return output
 
     def tessellate(self, progress_bar=False):
+        """Tessellate a mesh.
+
+        This filter tessellate a mesh.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Parameters
+        ----------
+        pyvista.DataSet
+            Dataset with tessellated mesh.  Return type matches input.
+
+        Examples
+        --------
+        First, plot the original cube.
+
+        >>> import pyvista
+        >>> mesh = pyvista.Cube()
+        >>> mesh.plot(show_edges=True, line_width=5)
+
+        Now, plot the tessellated mesh.
+
+        >>> tessellated = mesh.tessellate()
+        >>> tessellated.clear_data()  # cleans up plot
+        >>> tessellated.plot(show_edges=True, line_width=5)
+
+        """
         alg = _vtk.vtkTessellatorFilter()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Tessellating Mesh')
