@@ -884,6 +884,9 @@ def test_chart_mpl(pl, chart_mpl):
     assert np.allclose(chart.position, (loc[0]*r_w/2, loc[1]*r_h/2))
     assert np.allclose(chart._canvas.get_width_height(), (size[0]*r_w/2, size[1]*r_h/2))
 
+    # test set position throw
+    with pytest.raises(ValueError, match="must be length 2"):
+        chart.position = (1, 2, 3)
 
 @skip_no_plotting
 def test_charts(pl):

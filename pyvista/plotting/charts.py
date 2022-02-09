@@ -127,7 +127,7 @@ def doc_subs(member):
     https://github.com/python/mypy/issues/1362)
     """
     # Ensure we are operating on a method
-    if not callable(member):
+    if not callable(member):  # pragma: no cover
         raise ValueError('`member` must be a callable.')
     member.__doc__ = DocSubs._DOC_TAG + member.__doc__
     return member
@@ -4168,7 +4168,7 @@ class Charts:
     def remove_chart(self, chart_or_index):
         """Remove a chart from the collection."""
         chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
-        if chart not in self._charts:
+        if chart not in self._charts:  # pragma: no cover
             raise ValueError('chart_index not present in charts collection.')
         self._charts.remove(chart)
         self._scene.RemoveItem(chart)

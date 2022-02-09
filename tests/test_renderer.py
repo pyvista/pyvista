@@ -13,9 +13,13 @@ def test_camera_position():
     assert isinstance(plotter.camera_position, pyvista.CameraPosition)
 
 
+@pytest.mark.skipif(
+    not system_supports_plotting(),
+    reason="Requires system to support plotting"
+)
 def test_plotter_camera_position():
     plotter = pyvista.Plotter()
-    plotter.renderer.set_position([1, 1, 1])
+    plotter.set_position([1, 1, 1], render=True)
 
 
 def test_renderer_set_viewup():
