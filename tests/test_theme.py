@@ -395,6 +395,12 @@ def test_plotter_set_theme():
     assert pl.theme.color == my_theme.color
     assert pyvista.global_theme.color != pl.theme.color
 
+    pl = pyvista.Plotter()
+    assert pl.theme == pyvista.global_theme
+    pl.theme = my_theme
+    assert pl.theme != pyvista.global_theme
+    assert pl.theme == my_theme
+
 
 def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))

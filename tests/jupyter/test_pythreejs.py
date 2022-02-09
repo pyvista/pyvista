@@ -9,6 +9,7 @@ except:
     pytestmark = pytest.mark.skip
 
 import pyvista
+from pyvista._vtk import VTK9
 from pyvista.jupyter import pv_pythreejs
 
 
@@ -99,6 +100,7 @@ def test_cast_to_min_size(max_index):
             buf_attr = pv_pythreejs.cast_to_min_size(np.arange(1000), max_index)
 
 
+@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
 def test_pbr(sphere):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, scalars=range(sphere.n_cells), pbr=True)

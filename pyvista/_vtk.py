@@ -18,6 +18,8 @@ try:
 except ImportError:  # pragma: no cover
     VTK9 = False
 
+# for charts
+_has_vtkRenderingContextOpenGL2 = False
 
 if VTK9:
 
@@ -332,7 +334,7 @@ if VTK9:
         vtkImageFlip,
         vtkRTAnalyticSource,
     )
-    from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
+    from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
     from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
     from vtkmodules.vtkInteractionWidgets import (
         vtkBoxWidget,
@@ -366,7 +368,14 @@ if VTK9:
         vtkImageItem,
         vtkPen,
     )
-    import vtkmodules.vtkRenderingContextOpenGL2  # Necessary for displaying charts, otherwise crashes on rendering
+
+    try:
+        # Necessary for displaying charts, otherwise crashes on rendering
+        import vtkmodules.vtkRenderingContextOpenGL2
+        _has_vtkRenderingContextOpenGL2 = True
+    except ImportError:  # pragma: no cover
+        pass
+
     from vtkmodules.vtkRenderingCore import (
         vtkActor,
         vtkActor2D,
@@ -523,6 +532,14 @@ else:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
             raise VTKVersionError('vtkGLTFReader requires VTK v9 or newer')
+
+    class vtkPythonItem():  # type: ignore
+        """Empty placeholder for VTK9 compatibility."""
+
+        def __init__(self):  # pragma: no cover
+            """Raise version error on init."""
+            from pyvista.core.errors import VTKVersionError
+            raise VTKVersionError('Charts requires VTK v9 or newer')
 
 
 # lazy import as this was added in 9.1.0

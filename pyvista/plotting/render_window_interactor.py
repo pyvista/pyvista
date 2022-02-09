@@ -176,7 +176,7 @@ class RenderWindowInteractor():
                 scene = renderer._charts.toggle_interaction(mouse_pos)
             else:
                 # Not in viewport or already an active chart found (in case they overlap), so disable interaction
-                renderer.charts.toggle_interaction(False)
+                renderer._charts.toggle_interaction(False)
 
         self._context_style.SetScene(scene)  # Set scene to interact with or reset it to stop interaction (otherwise crash)
         if scene is None and self._style == "Context":

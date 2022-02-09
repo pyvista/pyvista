@@ -1,0 +1,76 @@
+name: Build and Publish Docker Image
+on:
+  workflow_dispatch:
+  push:
+    tags: "*"
+    branches:
+      - main
+  pull_request:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-publish:
+    name: Build and Publish Docker Image
+    runs-on: ubuntu-latest
+    # For Pull Requests, only runs from `docker`, `feat`, `fix`, `patch`, or `dependabot`
+    if: github.event_name == 'push' ||
+        ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository &&
+          ( startsWith(github.event.pull_request.head.ref, 'feat') ||
+            startsWith(github.event.pull_request.head.ref, 'fix') ||
+            startsWith(github.event.pull_request.head.ref, 'patch') ||
+            startsWith(github.event.pull_request.head.ref, 'dependabot') ||
+            startsWith(github.event.pull_request.head.ref, 'docker')
+          )
+        )
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+
+      - name: Create PyVista package
+        run: |
+          python setup.py sdist
+
+      - name: Log into the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: token
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for the Jupyter Docker image
+        id: jupyter_meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Build and push the Jupyter Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: docker/jupyter.Dockerfile
+          push: ${{ github.actor != 'dependabot[bot]' }}
+          tags: ${{ steps.jupyter_meta.outputs.tags }}
+          labels: ${{ steps.jupyter_meta.outputs.labels }}
+
+      - name: Extract metadata for the Slim Docker image
+        id: slim_meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+            suffix=-slim,onlatest=true
+      - name: Build and push the Slim Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: docker/slim.Dockerfile
+          push: ${{ github.actor != 'dependabot[bot]' }}
+          tags: ${{ steps.slim_meta.outputs.tags }}
+          labels: ${{ steps.slim_meta.outputs.labels }}

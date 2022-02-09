@@ -58,6 +58,46 @@ class UniformGridFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Gaussian Smoothing')
         return _get_output(alg)
 
+    def median_smooth(self, kernel_size=[3,3,3],
+                      scalars=None, preference='points', progress_bar=False):
+        """Smooth data using a median filter.
+
+        Parameters
+        ----------
+        kernel_size : list(int) or tuple(int), optional
+            Length 3 list or tuple of ints : ``(x_size, y_size, z_size)``
+            Size of the kernel in each dimension (units of voxels). Default is
+            a 3D median filter. If you want to do a 2D median filter, set the
+            size to 1 in the dimension you don't want to filter over.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        preference : str, optional
+            When scalars is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            Uniform grid with smoothed scalars.
+
+        """
+        alg = _vtk.vtkImageMedian3D()
+        alg.SetInputDataObject(self)
+        if scalars is None:
+            field, scalars = self.active_scalars_info
+        else:
+            field = self.get_array_association(scalars, preference=preference)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
+        alg.SetKernelSize(kernel_size[0], kernel_size[1], kernel_size[2])
+        _update_alg(alg, progress_bar, 'Performing Median Smoothing')
+        return _get_output(alg)
+
     def extract_subset(self, voi, rate=(1, 1, 1), boundary=False, progress_bar=False):
         """Select piece (e.g., volume of interest).
 

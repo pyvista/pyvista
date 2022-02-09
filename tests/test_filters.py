@@ -745,9 +745,12 @@ def test_resample():
     assert isinstance(result, type(mesh))
 
 
+locators = [None]
+if pyvista.vtk_version_info >= (9, ):
+    locators.append(vtkStaticCellLocator())
 @pytest.mark.parametrize('use_points', [True, False])
 @pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('locator', [None, vtkStaticCellLocator()])
+@pytest.mark.parametrize('locator', locators)
 def test_probe(categorical, use_points, locator):
     mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
@@ -1392,6 +1395,62 @@ def test_extract_subset():
     assert voi.origin == voi.bounds[::2]
 
 
+def test_gaussian_smooth_output_type():
+    volume = examples.load_uniform()
+    volume_smooth = volume.gaussian_smooth()
+    assert isinstance(volume_smooth, pyvista.UniformGrid)
+    volume_smooth = volume.gaussian_smooth(scalars='Spatial Point Data')
+    assert isinstance(volume_smooth, pyvista.UniformGrid)
+
+
+def test_gaussian_smooth_constant_data():
+    point_data = np.ones((10,10,10))
+    volume = pyvista.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_smoothed = volume.gaussian_smooth()
+    assert np.allclose(volume.point_data['point_data'],
+                       volume_smoothed.point_data['point_data'])
+
+
+def test_gaussian_smooth_outlier():
+    point_data = np.ones((10,10,10))
+    point_data[4,4,4] = 100
+    volume = pyvista.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_smoothed = volume.gaussian_smooth()
+    assert (volume_smoothed.get_data_range()[1]<volume.get_data_range()[1])
+
+
+def test_median_smooth_output_type():
+    volume = examples.load_uniform()
+    volume_smooth = volume.median_smooth()
+    assert isinstance(volume_smooth, pyvista.UniformGrid)
+    volume_smooth = volume.median_smooth(scalars='Spatial Point Data')
+    assert isinstance(volume_smooth, pyvista.UniformGrid)
+
+
+def test_median_smooth_constant_data():
+    point_data = np.ones((10,10,10))
+    volume = pyvista.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_smoothed = volume.median_smooth()
+    assert np.array_equal(volume.point_data['point_data'],
+                          volume_smoothed.point_data['point_data'])
+
+
+def test_median_smooth_outlier():
+    point_data = np.ones((10,10,10))
+    point_data_outlier = point_data.copy()
+    point_data_outlier[4,4,4] = 100
+    volume = pyvista.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_outlier = pyvista.UniformGrid(dims=(10,10,10))
+    volume_outlier.point_data['point_data'] = point_data_outlier.flatten(order='F')
+    volume_outlier_smoothed = volume_outlier.median_smooth()
+    assert np.array_equal(volume.point_data['point_data'],
+                          volume_outlier_smoothed.point_data['point_data'])
+
+
 def test_extract_subset_structured():
     structured = examples.load_structured()
     voi = structured.extract_subset([0, 3, 1, 4, 0, 1])
@@ -1536,12 +1595,12 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
             assert transformed.cell_data[name] == pytest.approx(array)
 
         # verify that the cell connectivity is a deep copy
-        if hasattr(dataset, '_connectivity_array') and VTK9:
+        if VTK9 and hasattr(dataset, '_connectivity_array'):
             transformed._connectivity_array[0] += 1
             assert not np.array_equal(
                 dataset._connectivity_array, transformed._connectivity_array
             )
-        if hasattr(dataset, 'cell_connectivity') and VTK9:
+        if VTK9 and hasattr(dataset, 'cell_connectivity'):
             transformed.cell_connectivity[0] += 1
             assert not np.array_equal(
                 dataset.cell_connectivity, transformed.cell_connectivity
@@ -1709,6 +1768,7 @@ def test_subdivide_adaptive(sphere, inplace):
         assert sphere.n_faces == sub.n_faces
 
 
+@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
 def test_collision(sphere):
     moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
     output, n_collision = sphere.collision(moved_sphere)
@@ -1722,6 +1782,7 @@ def test_collision(sphere):
     assert not n_collision
 
 
+@pytest.mark.skipif(not VTK9, reason='Only supported on VTK v9 or newer')
 def test_collision_solid_non_triangle(hexbeam):
     # test non-triangular mesh with a unstructured grid
     cube = pyvista.Cube()

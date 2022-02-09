@@ -126,7 +126,9 @@ def doc_subs(member):
     necessary because mypy cannot handle decorated properties (see
     https://github.com/python/mypy/issues/1362)
     """
-    assert callable(member)  # Ensure we are operating on a method
+    # Ensure we are operating on a method
+    if not callable(member):
+        raise ValueError('`member` must be a callable.')
     member.__doc__ = DocSubs._DOC_TAG + member.__doc__
     return member
 #endregion
@@ -1098,7 +1100,8 @@ class _Chart(DocSubs):
 
     @size.setter
     def size(self, val):
-        assert len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1
+        if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
+            raise ValueError(f'Invalid size {val}.')
         self._size = val
 
     @property  # type: ignore
@@ -1124,7 +1127,8 @@ class _Chart(DocSubs):
 
     @loc.setter
     def loc(self, val):
-        assert len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1
+        if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
+            raise ValueError(f'Invalid loc {val}.')
         self._loc = val
 
     @property  # type: ignore
@@ -3957,6 +3961,14 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
         self._redraw()
 
+        # Close the underlying matplotlib figure when creating the sphinx gallery.
+        # This prevents the charts from being drawn twice in example scripts:
+        # once as a pyvista plot (fetched by the 'pyvista' scraper) and once as a
+        # matplotlib figure (fetched by the 'matplotlib' scraper).
+        # See #1999 and #2031.
+        if pyvista.BUILDING_GALLERY:  # pragma: no cover
+            plt.close(self._fig)
+
     @property
     def figure(self):
         """Retrieve the matplotlib figure associated with this chart.
@@ -4041,7 +4053,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     @position.setter
     def position(self, val):
-        assert len(val) == 2
+        if len(val) != 2:
+            raise ValueError(f'Invalid position {val}, must be length 2.')
         self.SetPosition(*val)
 
     @property
@@ -4155,7 +4168,8 @@ class Charts:
     def remove_chart(self, chart_or_index):
         """Remove a chart from the collection."""
         chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
-        assert chart in self._charts
+        if chart not in self._charts:
+            raise ValueError('chart_index not present in charts collection.')
         self._charts.remove(chart)
         self._scene.RemoveItem(chart)
         self._scene.RemoveItem(chart._background)

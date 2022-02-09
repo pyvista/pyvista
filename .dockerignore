@@ -1,0 +1,8 @@
+build/
+*.egg-info
+.pytest_cache
+*.pyc
+.ipynb_checkpoints
+htmlcov
+.hypothesis
+.git
