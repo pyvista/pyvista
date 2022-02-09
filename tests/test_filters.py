@@ -1483,6 +1483,7 @@ def test_image_threshold_upper(in_values,out_values):
             volume_thresholded = volume.image_threshold(threshold,
                                                         in_value = in_value,
                                                         out_value=out_value
+                                                        )
             assert np.array_equal(volume_thresholded.point_data['point_data'],
                                   point_data_thresholded)                                            )
 
