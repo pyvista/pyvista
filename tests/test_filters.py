@@ -146,6 +146,9 @@ def test_clip_box(datasets):
         clp = dataset.clip_box(invert=True, progress_bar=True)
         assert clp is not None
         assert isinstance(clp, pyvista.UnstructuredGrid)
+        clp2 = dataset.clip_box(merge_points=False)
+        assert clp2 is not None
+
     dataset = examples.load_airplane()
     # test length 3 bounds
     result = dataset.clip_box(bounds=(900, 900, 200), invert=False, progress_bar=True)
