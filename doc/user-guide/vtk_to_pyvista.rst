@@ -40,9 +40,9 @@ structure using VTK Python's bindings, one would write the following:
    >>> image_data.GetPointData().SetScalars(points)
 
 As you can see, there is quite a bit of boilerplate that goes into
-the creation of a simple `vtk.vtkImageData`_ dataset, PyVista provides
-a much cleaner syntax that is both more readable and intuitive. The
-equivalent code in pyvista is:
+the creation of a simple `vtk.vtkImageData`_ dataset. PyVista provides
+much more concise syntax that is more "Pythonic". The equivalent code in
+PyVista is:
 
 
 .. code:: python
@@ -73,7 +73,7 @@ Here, PyVista has done several things for us:
    variable.
 
 #. :class:`pyvista.UniformGrid` wraps `vtk.vtkImageData`_, just with a
-   better name; they are both containers of evenly spaced points. Your
+   different name; they are both containers of evenly spaced points. Your
    data does not have to be an "image" to use it with
    `vtk.vtkImageData`_; rather, like images, values in the dataset are
    evenly spaced apart like pixels in an image.
@@ -121,7 +121,7 @@ For example, in VTK you would have to do:
    >>> renWin.Render()
    >>> iren.Start()
 
-However, with PyVista you simply need:
+However, with PyVista you only need:
 
 .. code:: python
 
@@ -235,9 +235,9 @@ Object Representation
 ---------------------
 Both VTK and PyVista provide representations for their objects.
 
-VTK provides a verbose representation of their datatypes that can be
-accessed via :func:`print`, as the ``__repr__`` (unlike ``__str__``)
-only provides minimal information about each object:
+VTK provides a verbose representation (useful for debugging) of their datatypes
+that can be accessed via :func:`print`, as the ``__repr__``
+(unlike ``__str__``) only provides minimal information about each object:
 
 .. jupyter-execute::
 
@@ -303,8 +303,7 @@ Under the hood, the collision filter detects mesh collisions using
 oriented bounding box (OBB) trees.  For a single collision, this filter
 is as performant as the VTK counterpart, but when computing multiple
 collisions with the same meshes, as in the :ref:`collision_example`
-example, it is more efficient (though less convenient) to use the
-underlying `vtkCollisionDetectionFilter
+example, it is more efficient to use the `vtkCollisionDetectionFilter
 <https://vtk.org/doc/nightly/html/classvtkCollisionDetectionFilter.html>`_,
 as the OBB tree is computed once for each mesh.  In most cases, pure
 PyVista is sufficient for most data science, but there are times when
@@ -314,7 +313,7 @@ Note that nothing stops you from using VTK classes and then wrapping
 the output with PyVista.  For example:
 
 .. jupyter-execute::
-   
+
    import vtk
    import pyvista
 
@@ -331,7 +330,7 @@ the output with PyVista.  For example:
    mesh.plot(line_width=3, cpos='xy', color='k')
 
 In this manner, you can get the "best of both worlds" should you need
-the flexibility of PyVista and the functionality of VTK.
+the flexibility of PyVista and the raw power of VTK.
 
 .. note::
    You can use :func:`pyvista.Circle` for a one line replacement of
