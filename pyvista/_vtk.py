@@ -351,6 +351,7 @@ if VTK9:
         vtkSplineWidget,
         vtkTexturedButtonRepresentation2D,
     )
+    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
     from vtkmodules.vtkPythonContext2D import vtkPythonItem
     from vtkmodules.vtkRenderingAnnotation import (
         vtkAnnotatedCubeActor,
