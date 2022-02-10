@@ -376,7 +376,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     options.setdefault('include-source', config.plot_include_source)
     keep_context = 'context' in options
-    context_opt = None if not keep_context else options['context']
+    _ = None if not keep_context else options['context']
 
     rst_file = document.attributes['source']
     rst_dir = os.path.dirname(rst_file)
@@ -464,7 +464,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         # on Windows, relpath raises ValueError when path and start are on
         # different mounts/drives
         build_dir_link = build_dir
-    source_link = dest_dir_link + '/' + output_base + source_ext
+    _ = dest_dir_link + '/' + output_base + source_ext
 
     # make figures
     try:

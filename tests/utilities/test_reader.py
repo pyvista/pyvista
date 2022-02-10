@@ -14,7 +14,7 @@ pytestmark = pytest.mark.skipif(
 
 def test_get_reader_fail():
     with pytest.raises(ValueError):
-        reader = pyvista.get_reader("not_a_supported_file.no_data")
+        pyvista.get_reader("not_a_supported_file.no_data")
 
 
 def test_xmlimagedatareader(tmpdir):
@@ -394,11 +394,11 @@ def test_openfoamreader_active_time():
         pytest.xfail("OpenFOAMReader GetTimeValue missing on vtk<9.1.0")
 
     reader = get_cavity_reader()
-    mesh = reader.active_time_value == 0.0
+    assert reader.active_time_value == 0.0
     reader.set_active_time_point(1)
-    mesh = reader.active_time_value == 0.5
+    assert reader.active_time_value == 0.5
     reader.set_active_time_value(1.0)
-    mesh = reader.active_time_value == 1.0
+    assert reader.active_time_value == 1.0
 
 
 def test_openfoam_cell_to_point_default():

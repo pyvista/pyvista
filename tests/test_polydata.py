@@ -257,7 +257,7 @@ def test_plot_curvature(sphere):
 
 
 def test_edge_mask(sphere):
-    mask = sphere.edge_mask(10, progress_bar=True)
+    _ = sphere.edge_mask(10, progress_bar=True)
 
 
 def test_boolean_union_intersection(sphere, sphere_shifted):
@@ -376,7 +376,7 @@ def test_curvature(sphere, curv_type):
 
 def test_invalid_curvature(sphere):
     with pytest.raises(ValueError):
-        curv = sphere.curvature('not valid')
+        sphere.curvature('not valid')
 
 
 @pytest.mark.parametrize('binary', [True, False])
@@ -478,7 +478,7 @@ def test_subdivision(sphere, subfilter):
 
 def test_invalid_subdivision(sphere):
     with pytest.raises(ValueError):
-        mesh = sphere.subdivide(1, 'not valid')
+        sphere.subdivide(1, 'not valid')
 
 
 def test_extract_feature_edges(sphere):

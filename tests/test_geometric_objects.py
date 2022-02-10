@@ -25,7 +25,7 @@ def test_arrow(scale):
 
 def test_arrow_raises_error():
     with pytest.raises(TypeError):
-        surf = pyvista.Arrow([0, 0, 0], [1, 1, 1], scale='badarg')
+        pyvista.Arrow([0, 0, 0], [1, 1, 1], scale='badarg')
 
 
 def test_sphere():
@@ -266,11 +266,11 @@ def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):
 
 def test_platonic_invalids():
     with pytest.raises(ValueError):
-        solid = pyvista.PlatonicSolid(kind='invalid')
+        pyvista.PlatonicSolid(kind='invalid')
     with pytest.raises(ValueError):
-        solid = pyvista.PlatonicSolid(kind=42)
+        pyvista.PlatonicSolid(kind=42)
     with pytest.raises(ValueError):
-        solid = pyvista.PlatonicSolid(kind=[])
+        pyvista.PlatonicSolid(kind=[])
 
 
 def test_tetrahedron():

@@ -258,7 +258,7 @@ def test_voxelize_non_uniform_desnity():
 def test_voxelize_throws_when_density_is_not_length_3():
     with pytest.raises(ValueError) as e:
         mesh = pyvista.PolyData(ex.load_uniform().points)
-        vox = pyvista.voxelize(mesh, [0.5, 0.3])
+        _ = pyvista.voxelize(mesh, [0.5, 0.3])
     assert "not enough values to unpack" in str(e.value)
 
 

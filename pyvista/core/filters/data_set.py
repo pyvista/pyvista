@@ -2117,7 +2117,7 @@ class DataSetFilters:
         assert_empty_kwargs(**kwargs)
         if scalars is None:
             field, scalars = self.active_scalars_info
-        arr = get_array(self, scalars, preference='point', err=True)
+        _ = get_array(self, scalars, preference='point', err=True)
 
         field = get_array_association(self, scalars, preference='point')
         if field != FieldAssociation.POINT:

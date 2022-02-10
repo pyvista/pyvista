@@ -96,10 +96,10 @@ def test_init_from_numpy_arrays():
 
 def test_init_bad_input():
     with pytest.raises(TypeError):
-        unstruct_grid = pyvista.UnstructuredGrid(np.array(1))
+        pyvista.UnstructuredGrid(np.array(1))
 
     with pytest.raises(TypeError):
-        unstruct_grid = pyvista.UnstructuredGrid(np.array(1), np.array(1), np.array(1), 'woa')
+        pyvista.UnstructuredGrid(np.array(1), np.array(1), np.array(1), 'woa')
 
 
 def create_hex_example():
@@ -355,15 +355,15 @@ def test_pathlib_read_write(tmpdir, hexbeam):
 def test_init_bad_filename():
     filename = os.path.join(test_path, 'test_grid.py')
     with pytest.raises(IOError):
-        grid = pyvista.UnstructuredGrid(filename)
+        pyvista.UnstructuredGrid(filename)
 
     with pytest.raises(FileNotFoundError):
-        grid = pyvista.UnstructuredGrid('not a file')
+        pyvista.UnstructuredGrid('not a file')
 
 
 def test_save_bad_extension():
     with pytest.raises(FileNotFoundError):
-        grid = pyvista.UnstructuredGrid('file.abc')
+        pyvista.UnstructuredGrid('file.abc')
 
 
 def test_linear_copy(hexbeam):
@@ -505,7 +505,7 @@ def test_invalid_init_structured():
     x, y, z = np.meshgrid(xrng, yrng, zrng)
     z = z[:, :, :2]
     with pytest.raises(ValueError):
-        grid = pyvista.StructuredGrid(x, y, z)
+        pyvista.StructuredGrid(x, y, z)
 
 
 @pytest.mark.parametrize('binary', [True, False])
@@ -532,7 +532,7 @@ def test_load_structured_bad_filename():
 
     filename = os.path.join(test_path, 'test_grid.py')
     with pytest.raises(IOError):
-        grid = pyvista.StructuredGrid(filename)
+        pyvista.StructuredGrid(filename)
 
 
 def test_instantiate_by_filename():

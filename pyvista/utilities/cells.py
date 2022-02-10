@@ -203,7 +203,7 @@ def generate_cell_offsets(cells, cell_types):
         cell_sizes = np.array(
             [enum_cell_type_nr_points_map[cell_t] for cell_t in cell_types], dtype=np.int32
         )
-    except KeyError as err:
+    except KeyError:
         return generate_cell_offsets_loop(cells, cell_types)  # Unknown requested cell type present
 
     if np.any(cell_sizes == 0):

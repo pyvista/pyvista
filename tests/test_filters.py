@@ -207,7 +207,7 @@ def test_clip_surface():
 def test_clip_closed_surface():
     closed_surface = pyvista.Sphere()
     clipped = closed_surface.clip_closed_surface(progress_bar=True)
-    assert closed_surface.n_open_edges == 0
+    assert clipped.n_open_edges == 0
     open_surface = closed_surface.clip(progress_bar=True)
     with pytest.raises(ValueError):
         _ = open_surface.clip_closed_surface()
@@ -336,11 +336,11 @@ def test_threshold_percent(datasets):
         assert thresh is not None
         assert isinstance(thresh, pyvista.UnstructuredGrid)
     dataset = examples.load_uniform()
-    result = dataset.threshold_percent(0.75, scalars='Spatial Cell Data', progress_bar=True)
+    _ = dataset.threshold_percent(0.75, scalars='Spatial Cell Data', progress_bar=True)
     with pytest.raises(ValueError):
-        result = dataset.threshold_percent(20000)
+        dataset.threshold_percent(20000)
     with pytest.raises(ValueError):
-        result = dataset.threshold_percent(0.0)
+        dataset.threshold_percent(0.0)
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
         dataset.threshold_percent({18.0, 85.0})
@@ -940,13 +940,13 @@ def test_streamlines_evenly_spaced_2D_errors():
     mesh = mesh_2D_velocity()
 
     with pytest.raises(ValueError):
-        streams = mesh.streamlines_evenly_spaced_2D(integrator_type=45)
+        mesh.streamlines_evenly_spaced_2D(integrator_type=45)
 
     with pytest.raises(ValueError):
-        streams = mesh.streamlines_evenly_spaced_2D(interpolator_type="not valid")
+        mesh.streamlines_evenly_spaced_2D(interpolator_type="not valid")
 
     with pytest.raises(ValueError):
-        streams = mesh.streamlines_evenly_spaced_2D(step_unit="not valid")
+        mesh.streamlines_evenly_spaced_2D(step_unit="not valid")
 
 
 @pytest.mark.xfail
@@ -1142,7 +1142,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     filename = str(tmp_dir.join('tmp.png'))
 
     # Make center and normal/polar vector to construct the circular arc between
-    normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
+    # normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
     polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
     angle = 90
     center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
@@ -1586,14 +1586,14 @@ def test_image_threshold_wrong_threshold_length():
     threshold = (10, 10, 10)  # tuple with too many values
     volume = examples.load_uniform()
     with pytest.raises(ValueError):
-        volume_thresholded = volume.image_threshold(threshold)
+        volume.image_threshold(threshold)
 
 
 def test_image_threshold_wrong_threshold_type():
     threshold = {'min': 0, 'max': 10}  # dict thresh
     volume = examples.load_uniform()
     with pytest.raises(TypeError):
-        volume_thresholded = volume.image_threshold(threshold)
+        volume.image_threshold(threshold)
 
 
 @pytest.mark.parametrize('in_value', [1, None])
@@ -1696,41 +1696,41 @@ def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident
 
     # test invalid dimensions
     with pytest.raises(RuntimeError):
-        joined = voi_1.concatenate(voi_2, axis=0)
+        voi_1.concatenate(voi_2, axis=0)
 
     with pytest.raises(RuntimeError):
-        joined = voi_1.concatenate(voi_2, axis=2)
+        voi_1.concatenate(voi_2, axis=2)
 
 
 def test_concatenate_structured_bad_inputs(structured_grids_split_coincident):
     voi_1, voi_2, structured = structured_grids_split_coincident
     with pytest.raises(RuntimeError):
-        joined = voi_1.concatenate(voi_2, axis=3)
+        voi_1.concatenate(voi_2, axis=3)
 
 
 def test_concatenate_structured_bad_point_data(structured_grids_split_coincident):
     voi_1, voi_2, structured = structured_grids_split_coincident
     voi_1['point_data'] = voi_1['point_data'] * 2.0
     with pytest.raises(RuntimeError):
-        joined = voi_1.concatenate(voi_2, axis=1)
+        voi_1.concatenate(voi_2, axis=1)
 
 
 def test_concatenate_structured_disconnected(structured_grids_split_disconnected):
     voi_1, voi_2 = structured_grids_split_disconnected
     with pytest.raises(RuntimeError):
-        joined = voi_1.concatenate(voi_2, axis=1)
+        voi_1.concatenate(voi_2, axis=1)
 
 
 def test_concatenate_structured_different_arrays(structured_grids_split_coincident):
     voi_1, voi_2, structured = structured_grids_split_coincident
     point_data = voi_1.point_data.pop('point_data')
     with pytest.raises(RuntimeError):
-        joined = voi_1.concatenate(voi_2, axis=1)
+        voi_1.concatenate(voi_2, axis=1)
 
     voi_1.point_data['point_data'] = point_data
     voi_1.cell_data.remove('cell_data')
     with pytest.raises(RuntimeError):
-        joined = voi_1.concatenate(voi_2, axis=1)
+        voi_1.concatenate(voi_2, axis=1)
 
 
 def test_structured_add_non_grid():

@@ -72,10 +72,9 @@ def test_parallel_scale(camera):
 
 
 def test_zoom(camera):
-    value = np.random.random(1)
     camera.enable_parallel_projection()
     orig_scale = camera.parallel_scale
-    zoom = 0.5
+    zoom = np.random.random(1)
     camera.zoom(zoom)
     assert camera.parallel_scale == orig_scale / zoom
 
