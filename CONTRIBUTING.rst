@@ -11,6 +11,15 @@ tool for all users.
 This page is dedicated to outline where you should start with your
 question, concern, feature request, or desire to contribute.
 
+Being Respectful
+----------------
+
+Please demonstrate empathy and kindness toward other people, other software,
+and the communities who have worked diligently to build (un-)related tools.
+
+Please do not talk down in Pull Requests, Issues, or otherwise in a way that
+portrays other people or their works in a negative light.
+
 Cloning the Source Repository
 -----------------------------
 
