@@ -4066,14 +4066,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.camera.thickness = path.length
 
         if progress_bar:
-            try:  # pragma: no cover
+            try:
                 from tqdm import tqdm
-            except ImportError:
+            except ImportError:  # pragma: no cover
                 raise ImportError("Please install `tqdm` to use ``progress_bar=True``")
 
         def orbit():
             """Define the internal thread for running the orbit."""
-            if progress_bar:  # pragma: no cover
+            if progress_bar:
                 points_seq = tqdm(points)
             else:
                 points_seq = points

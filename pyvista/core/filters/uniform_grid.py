@@ -1,6 +1,8 @@
 """Filters module with a class to manage filters/algorithms for uniform grid datasets."""
 import collections.abc
 
+import numpy as np
+
 import pyvista
 from pyvista import _vtk, abstract_class
 from pyvista.core.filters import _get_output, _update_alg
@@ -156,3 +158,93 @@ class UniformGridFilters(DataSetFilters):
         fixed.field_data.update(result.field_data)
         fixed.copy_meta_from(result)
         return fixed
+
+    def image_threshold(self, threshold, in_value=1, out_value=0,
+                        scalars=None, preference='points', progress_bar=False):
+        """Apply a threshold to scalar values in a uniform grid.
+
+        If a single value is given for threshold, scalar values above or equal
+        to the threshold are ``'in'`` and scalar values below the threshold are ``'out'``.
+        If two values are given for threshold (sequence) then values equal to
+        or between the two values are ``'in'`` and values outside the range are ``'out'``.
+
+        If ``None`` is given for ``in_value``, scalars that are ``'in'`` will not be replaced.
+        If ``None`` is given for ``out_value``, scalars that are ``'out'`` will not be replaced.
+
+        Parameters
+        ----------
+        threshold : float or sequence
+            Single value or (min, max) to be used for the data threshold.  If
+            a sequence, then length must be 2. Threshold(s) for deciding which
+            cells/points are ``'in'`` or ``'out'`` based on scalar data.
+
+        in_value : float or int or None, optional
+            Scalars that match the threshold criteria for ``'in'`` will be replaced with this.
+            Default is 1.
+
+        out_value : float or int or None, optional
+            Scalars that match the threshold criteria for ``'out'`` will be replaced with this.
+            Default is 0.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        preference : str, optional
+            When scalars is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress. Default ``False``.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            Dataset with the specified scalars thresholded.
+
+        Examples
+        --------
+        Demonstrate image threshold on an example dataset. First, plot
+        the example dataset with the active scalars.
+
+        >>> from pyvista import examples
+        >>> uni = examples.load_uniform()
+        >>> uni.plot()
+
+        Now, plot the image threshold with ``threshold=100``. Note how
+        values above the threshold are 1 and below are 0.
+
+        >>> ithresh = uni.image_threshold(100)
+        >>> ithresh.plot()
+
+        """
+        alg = _vtk.vtkImageThreshold()
+        alg.SetInputDataObject(self)
+        if scalars is None:
+            field, scalars = self.active_scalars_info
+        else:
+            field = self.get_array_association(scalars, preference=preference)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
+        # set the threshold(s) and mode
+        if isinstance(threshold, (np.ndarray, collections.abc.Sequence)):
+            if len(threshold) != 2:
+                raise ValueError(f'Threshold must be length one for a float value or two for min/max; not ({threshold}).')
+            alg.ThresholdBetween(threshold[0], threshold[1])
+        elif isinstance(threshold, collections.abc.Iterable):
+            raise TypeError('Threshold must either be a single scalar or a sequence.')
+        else:
+            alg.ThresholdByUpper(threshold)
+        # set the replacement values / modes
+        if in_value is not None:
+            alg.ReplaceInOn()
+            alg.SetInValue(in_value)
+        else:
+            alg.ReplaceInOff()
+        if out_value is not None:
+            alg.ReplaceOutOn()
+            alg.SetOutValue(out_value)
+        else:
+            alg.ReplaceOutOff()
+        # run the algorithm
+        _update_alg(alg, progress_bar, 'Performing Image Thresholding')
+        return _get_output(alg)
