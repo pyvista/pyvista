@@ -4378,11 +4378,12 @@ class DataSetFilters:
         >>>         [1.5, 1.5, 0.0],
         >>>         [0.5, 1.5, 0.0],
         >>>     ]
-       >>> )
-       >>> cells = np.array([6, 0, 1, 2, 3, 4, 5])
-       >>> cell_types = np.array([69])
-       >>> mesh = pyvista.UnstructuredGrid(cells, cell_types, points)
-       >>> mesh.plot(show_edges=True, line_width=5)
+        >>> )
+        >>> cells = np.array([6, 0, 1, 2, 3, 4, 5])
+        >>> cell_types = np.array([69])
+        >>> mesh = pyvista.UnstructuredGrid(cells, cell_types, points)
+        >>> mesh.plot(show_edges=True, line_width=5)
+
         Now, plot the tessellated mesh.
 
         >>> tessellated = mesh.tessellate()
