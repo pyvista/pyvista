@@ -227,6 +227,9 @@ numpydoc_validation_exclude = {  # set of regex
     # called from inherited
     r'\.*Table.copy_meta_from$',
 
+    # Type alias
+    r'\.color_like$',
+
 }
 
 

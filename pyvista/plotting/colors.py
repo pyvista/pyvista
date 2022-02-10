@@ -439,9 +439,9 @@ class Color:
             elif isinstance(color, (list, tuple, np.ndarray)):
                 # From RGB(A) sequence
                 if np.issubdtype(np.asarray(color).dtype, np.floating):
-                    self.f_rgba = color
+                    self.f_rgba = color  # type: ignore
                 else:
-                    self.i_rgba = color
+                    self.i_rgba = color  # type: ignore
             elif isinstance(color, _vtk.vtkColor3ub):
                 # From vtkColor3ub instance
                 self.vtk_c3ub = color
@@ -574,7 +574,7 @@ class Color:
 
     @i_rgb.setter
     def i_rgb(self, rgb: color3i):
-        self.i_rgba = rgb
+        self.i_rgba = rgb  # type: ignore
 
     @property
     def f_rgba(self) -> Tuple[float, float, float, float]:
@@ -610,7 +610,7 @@ class Color:
     @f_rgba.setter
     def f_rgba(self, rgba: Union[color3f, color4f]):
         try:
-            self.i_rgba = [self.convert_color_channel(c) for c in rgba]
+            self.i_rgba = [self.convert_color_channel(c) for c in rgba]  # type: ignore
         except ValueError as e:
             raise ValueError(f"Invalid RGB(A) sequence: {rgba}") from e
 
@@ -641,7 +641,7 @@ class Color:
 
     @f_rgb.setter
     def f_rgb(self, rgb: color3f):
-        self.f_rgba = rgb
+        self.f_rgba = rgb  # type: ignore
 
     @property
     def hex(self) -> str:
@@ -676,13 +676,13 @@ class Color:
     def hex(self, h: str):
         h = self.strip_hex_prefix(h)
         try:
-            self.i_rgba = [self.convert_color_channel(h[i:i+2]) for i in range(0, len(h), 2)]
+            self.i_rgba = [self.convert_color_channel(h[i:i+2]) for i in range(0, len(h), 2)]  # type: ignore
         except ValueError as e:
             raise ValueError(f"Invalid hex string: {h}") from e
 
     @property
     def name(self) -> Optional[str]:
-        """Get or set the color value by name (or hexadecimal value).
+        """Get or set the color value by name or hexadecimal value.
 
         Notes
         -----
@@ -726,7 +726,7 @@ class Color:
             self._name = n
         elif n in 'paraview' or n in 'pv':
             # Use the default ParaView background color
-            self.f_rgba = PARAVIEW_BACKGROUND
+            self.f_rgba = PARAVIEW_BACKGROUND  # type: ignore
             self._name = 'paraview'
         else:
             # Otherwise, try conversion to hex
@@ -759,12 +759,14 @@ class Color:
         self._name = None
 
     def __eq__(self, other):
+        """Equality comparison."""
         try:
             return self.i_rgba == Color(other).i_rgba
         except ValueError:
             return NotImplemented
 
     def __repr__(self):
+        """Human readable representation."""
         kwargs = f"hex='{self.hex}'"
         if self._name is not None:
             kwargs = f"name='{self._name}', " + kwargs
