@@ -9,9 +9,9 @@ configuration = [
     ('light_type', pyvista.Light.CAMERA_LIGHT, 'SetLightType'),  # resets transformation!
     ('position', (1, 1, 1), 'SetPosition'),
     ('focal_point', (2, 2, 2), 'SetFocalPoint'),
-    ('ambient_color', (1, 0, 0), 'SetAmbientColor'),
-    ('diffuse_color', (0, 1, 0), 'SetDiffuseColor'),
-    ('specular_color', (0, 0, 1), 'SetSpecularColor'),
+    ('ambient_color', (1.0, 0.0, 0.0), 'SetAmbientColor'),
+    ('diffuse_color', (0.0, 1.0, 0.0), 'SetDiffuseColor'),
+    ('specular_color', (0.0, 0.0, 1.0), 'SetSpecularColor'),
     ('intensity', 0.5, 'SetIntensity'),
     ('on', False, 'SetSwitch'),
     ('positional', True, 'SetPositional'),

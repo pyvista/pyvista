@@ -166,8 +166,10 @@ tab:cyan
 """
 
 from __future__ import annotations  # Necessary for autodoc_type_aliases to recognize the 'color_like' alias
+
 import numpy as np
 from typing import Optional, Sequence, Tuple, Union
+
 import pyvista
 from pyvista import _vtk
 
@@ -453,7 +455,7 @@ class Color:
                              "\tMust be a string, rgb(a) sequence, or hex color string.  For example:\n"
                              "\t\tcolor='white'\n"
                              "\t\tcolor='w'\n"
-                             "\t\tcolor=[1, 1, 1]\n"
+                             "\t\tcolor=[1.0, 1.0, 1.0]\n"
                              "\t\tcolor='#FFFFFF'") from e
 
     @staticmethod

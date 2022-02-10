@@ -1,6 +1,5 @@
 """Module containing useful plotting tools."""
 
-from collections.abc import Sequence
 from enum import Enum
 import os
 import platform
@@ -465,8 +464,8 @@ def parse_color(color, opacity=None, default_color=None):
 
         * ``'white'``
         * ``'w'``
-        * ``[1, 1, 1]``
-        * ``[0.5, 1, 0.7, 1]``
+        * ``[1.0, 1.0, 1.0]``
+        * ``[0.5, 1.0, 0.7, 1.0]``
         * ``'#FFFFFF'``
 
     opacity : float, optional

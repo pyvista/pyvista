@@ -174,7 +174,7 @@ class ScalarBars():
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         font_family : {'courier', 'times', 'arial'}

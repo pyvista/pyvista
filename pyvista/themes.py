@@ -37,7 +37,7 @@ from typing import List, Union
 import warnings
 
 from .plotting.colors import PARAVIEW_BACKGROUND, Color, color_like, get_cmap_safe
-from .plotting.tools import parse_color, parse_font_family
+from .plotting.tools import parse_font_family
 from .utilities.misc import PyvistaDeprecationWarning
 
 
@@ -683,7 +683,7 @@ class _Font(_ThemeConfig):
         self._size = 12
         self._title_size = None
         self._label_size = None
-        self._color = [1, 1, 1]
+        self._color = [1.0, 1.0, 1.0]
         self._fmt = None
 
     def __repr__(self):
@@ -1008,7 +1008,7 @@ class _SliderConfig(_ThemeConfig):
     >>> pyvista.global_theme.slider_styles.classic.slider_width = 0.04
     >>> pyvista.global_theme.slider_styles.classic.slider_color = (0.5, 0.5, 0.5)
     >>> pyvista.global_theme.slider_styles.classic.tube_width = 0.005
-    >>> pyvista.global_theme.slider_styles.classic.tube_color = (1, 1, 1)
+    >>> pyvista.global_theme.slider_styles.classic.tube_color = (1.0, 1.0, 1.0)
     >>> pyvista.global_theme.slider_styles.classic.cap_opacity = 1
     >>> pyvista.global_theme.slider_styles.classic.cap_length = 0.01
     >>> pyvista.global_theme.slider_styles.classic.cap_width = 0.02
@@ -1572,7 +1572,7 @@ class DefaultTheme(_ThemeConfig):
 
         * ``color='white'``
         * ``color='w'``
-        * ``color=[1, 1, 1]``
+        * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
 
         Examples

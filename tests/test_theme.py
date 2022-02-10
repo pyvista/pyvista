@@ -390,7 +390,7 @@ def test_theme_eq():
 def test_plotter_set_theme():
     # test that the plotter theme is set to the new theme
     my_theme = pyvista.themes.DefaultTheme()
-    my_theme.color = [1, 0, 0]
+    my_theme.color = [1.0, 0.0, 0.0]
     pl = pyvista.Plotter(theme=my_theme)
     assert pl.theme.color == my_theme.color
     assert pyvista.global_theme.color != pl.theme.color

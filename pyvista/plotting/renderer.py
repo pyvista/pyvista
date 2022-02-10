@@ -191,7 +191,7 @@ class Renderer(_vtk.vtkRenderer):
                            'zx': 'view_zx', 'zy': 'view_zy',
                            'iso': 'view_isometric'}
 
-    def __init__(self, parent, border=True, border_color=(1, 1, 1),
+    def __init__(self, parent, border=True, border_color='w',
                  border_width=2.0):
         """Initialize the renderer."""
         super().__init__()
@@ -456,7 +456,7 @@ class Renderer(_vtk.vtkRenderer):
         self.SetUseFXAA(False)
         self.Modified()
 
-    def add_border(self, color=[1, 1, 1], width=2.0):
+    def add_border(self, color='w', width=2.0):
         """Add borders around the frame.
 
         Parameters
@@ -1018,7 +1018,7 @@ class Renderer(_vtk.vtkRenderer):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         xlabel : str, optional
@@ -1323,7 +1323,7 @@ class Renderer(_vtk.vtkRenderer):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         corner_factor : float, optional
@@ -2461,7 +2461,7 @@ class Renderer(_vtk.vtkRenderer):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         top : color_like, optional

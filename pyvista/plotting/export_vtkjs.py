@@ -536,10 +536,10 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     representation = renProp.GetProperty().GetRepresentation(
                     ) if hasattr(renProp, 'GetProperty') else 2
                     colorToUse = renProp.GetProperty().GetDiffuseColor(
-                    ) if hasattr(renProp, 'GetProperty') else [1, 1, 1]
+                    ) if hasattr(renProp, 'GetProperty') else [1.0, 1.0, 1.0]
                     if representation == 1:
                         colorToUse = renProp.GetProperty().GetColor() if hasattr(
-                            renProp, 'GetProperty') else [1, 1, 1]
+                            renProp, 'GetProperty') else [1.0, 1.0, 1.0]
                     pointSize = renProp.GetProperty().GetPointSize(
                     ) if hasattr(renProp, 'GetProperty') else 1.0
                     opacity = renProp.GetProperty().GetOpacity() if hasattr(

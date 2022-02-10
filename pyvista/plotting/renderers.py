@@ -369,16 +369,16 @@ class Renderers():
 
         Parameters
         ----------
-        color : str or 3 item sequence, optional
+        color : color_like, optional
             Either a string, rgb list, or hex color string.  Defaults
             to current theme parameters.  For example:
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        top : str or 3 item sequence, optional
+        top : color_like, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in ``top``
             will be the color at the top of the renderer.

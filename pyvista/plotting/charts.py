@@ -1376,7 +1376,7 @@ class _Chart(DocSubs):
         background : color_like, optional
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
-            ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+            ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``.  Defaults to ``'w'``.
 
         Returns
@@ -4028,7 +4028,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     #
     # @background_color.setter
     # def background_color(self, val):
-    #     color = parse_color(val) if val is not None else [1, 1, 1, 1]
+    #     color = parse_color(val) if val is not None else [1.0, 1.0, 1.0, 1.0]
     #     opacity = color[3] if len(color) == 4 else 1
     #     self._bg_color = color
     #     self._fig.patch.set_color(color[:3])

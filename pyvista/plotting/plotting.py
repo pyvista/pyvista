@@ -158,7 +158,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
     border_width : float, optional
@@ -1577,7 +1577,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         color : color_like, optional, defaults to white
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
-            ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+            ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
 
@@ -3049,7 +3049,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
             Defaults to :attr:`pyvista.global_theme.font.color <pyvista.themes._Font.color>`.
@@ -3318,7 +3318,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-    def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
+    def add_lines(self, lines, color=(1.0, 1.0, 1.0), width=5, label=None, name=None):
         """Add lines to the plotting object.
 
         Parameters
@@ -3333,7 +3333,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         width : float, optional
@@ -3435,7 +3435,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             * ``text_color='white'``
             * ``text_color='w'``
-            * ``text_color=[1, 1, 1]``
+            * ``text_color=[1.0, 1.0, 1.0]``
             * ``text_color='#FFFFFF'``
 
         font_family : str, optional
@@ -3454,7 +3454,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             * ``point_color='white'``
             * ``point_color='w'``
-            * ``point_color=[1, 1, 1]``
+            * ``point_color=[1.0, 1.0, 1.0]``
             * ``point_color='#FFFFFF'``
 
         point_size : float, optional
@@ -4373,7 +4373,7 @@ class Plotter(BasePlotter):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
     window_size : list, optional
@@ -4838,7 +4838,7 @@ class Plotter(BasePlotter):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         font : str, optional
@@ -4896,7 +4896,7 @@ class Plotter(BasePlotter):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         Returns

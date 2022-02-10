@@ -2,4 +2,4 @@
 
 from pyvista import rcParams  # noqa; pragma: no cover
 
-from ..themes import parse_color  # noqa; pragma: no cover
+from .tools import parse_color  # noqa; pragma: no cover
