@@ -162,7 +162,6 @@ class UniformGridFilters(DataSetFilters):
     def image_dilate_erode(self, dilate_value=1, erode_value=0,
                            kernel_size=(3, 3, 3), scalars=None,
                            preference='points', progress_bar=False):
-
         """Dilates one value and erodes another.
 
         image_dilate_erode will dilate one value and erode another. It uses an
