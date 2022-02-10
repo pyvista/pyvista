@@ -4355,6 +4355,11 @@ class DataSetFilters:
 
         Parameters
         ----------
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
         pyvista.DataSet
             Dataset with tessellated mesh.  Return type matches input.
 
