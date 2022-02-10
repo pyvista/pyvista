@@ -305,7 +305,7 @@ reset_pyvista = ResetPyvista()
 # skip building the osmnx example if osmnx is not installed
 has_osmnx = False
 try:
-    import osmnx, fiona  # noqa: F401 isort: skip
+    import osmnx, fiona  # noqa: F401,E401 isort: skip
 
     has_osmnx = True
 except:  # noqa: E722
@@ -557,7 +557,8 @@ class AutoAutoSummary(Autosummary):
         except:  # noqa: E722
             print(f"Something went wrong when autodocumenting {clazz}")
         finally:
-            return super().run()
+            # TODO: address B012
+            return super().run()  # noqa: B012
 
 
 def setup(app):

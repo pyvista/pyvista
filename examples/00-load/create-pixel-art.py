@@ -57,7 +57,7 @@ def draw_pixels(plotter, pixels, center, color):
     ]
     for rows in pixels:
         for pixel in rows:
-            if pixel == True:
+            if pixel:
                 box = pv.Box(bounds=bounds)
                 plotter.add_mesh(box, color=color)
             bounds[0] += 2.0

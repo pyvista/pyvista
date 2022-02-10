@@ -161,7 +161,7 @@ def cast_to_min_size(ind, max_index):
     return tjs.BufferAttribute(array=ind, normalized=False)
 
 
-def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
+def to_surf_mesh(actor, surf, mapper, prop, add_attr=None):
     """Convert a pyvista surface to a buffer geometry.
 
     General Notes
@@ -184,6 +184,8 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
     * MeshBasicMaterial when lighting is disabled.
 
     """
+    if add_attr is None:
+        add_attr = {}
     # convert to an all-triangular surface
     if surf.is_all_triangles():
         trimesh = surf

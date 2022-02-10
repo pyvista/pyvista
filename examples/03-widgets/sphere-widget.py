@@ -137,6 +137,7 @@ surf = pv.StructuredGrid(xx, yy, zz)
 # - this array will be updated inplace
 points = np.array([[33, 25, 45], [70, 80, 13], [51, 57, 10], [25, 69, 20]])
 
+
 # Create an interpolation function to update that surface mesh
 def update_surface(point, i):
     points[i] = point

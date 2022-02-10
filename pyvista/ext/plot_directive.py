@@ -114,6 +114,8 @@ pyvista.OFF_SCREEN = True
 # -----------------------------------------------------------------------------
 # Registration hook
 # -----------------------------------------------------------------------------
+
+
 def _option_boolean(arg):
     if not arg or not arg.strip():
         # no argument given, assume used as a flag

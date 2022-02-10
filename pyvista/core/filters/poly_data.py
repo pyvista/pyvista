@@ -1937,7 +1937,7 @@ class PolyDataFilters(DataSetFilters):
             import pyembree  # noqa
             import rtree  # noqa
             import trimesh  # noqa
-        except (ModuleNotFoundError, ImportError):
+        except ImportError:
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
                 "\tconda install trimesh rtree pyembree"

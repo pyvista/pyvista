@@ -329,6 +329,7 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     data_other = -data_main
     other.point_data['present_in_both'] = data_other
     merged = mesh.merge(other, main_has_priority=True)
+
     # note: order of points can change after point merging
     def matching_point_data(this, that, scalars_name):
         """Return True if scalars on two meshes only differ by point order."""

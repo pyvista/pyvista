@@ -58,7 +58,7 @@ mypy:
 
 lint:
 	@echo "Linting with flake8"
-	@flake8 $(CODE_DIRS) $(CODE_FILES)
+	@flake8 $(CODE_DIRS) *.py
 
 isort:
 	@echo "Formatting with isort"

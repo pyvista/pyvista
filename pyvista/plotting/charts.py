@@ -93,7 +93,9 @@ class DocSubs:
                 member.__doc__ = member.__doc__.format(**subs)
 
         # Secondly, register all members of this class that require substitutions in subclasses
-        setattr(cls, "_DOC_STORE", {**cls._DOC_STORE})  # Create copy of registered members so far
+        # Create copy of registered members so far
+        # TODO: B010
+        setattr(cls, "_DOC_STORE", {**cls._DOC_STORE})  # noqa: B010
         for member_name, member in cls.__dict__.items():
             if member.__doc__ and member.__doc__.startswith(cls._DOC_TAG):
                 # New method/property to register in this class (denoting their docstring should be
