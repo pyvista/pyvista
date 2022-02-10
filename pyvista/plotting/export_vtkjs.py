@@ -651,7 +651,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
         import zlib  # noqa
 
         compression = zipfile.ZIP_DEFLATED
-    except:
+    except:  # noqa: E722
         compression = zipfile.ZIP_STORED
 
     zf = zipfile.ZipFile(sceneFileName, mode='w')

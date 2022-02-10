@@ -490,7 +490,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                 # ensure normals are active
                                 normals = dataset.point_data['Normals']
                                 dataset.point_data.active_normals = normals.copy()
-                        except:
+                        except:  # noqa: E722
                             pass
 
         exporter = vtkGLTFExporter()
@@ -4342,7 +4342,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # load and is not always used
         try:
             from vtkmodules.vtkIOExport import vtkOBJExporter
-        except:
+        except:  # noqa: E722
             from vtk import vtkOBJExporter
 
         if not hasattr(self, "ren_win"):

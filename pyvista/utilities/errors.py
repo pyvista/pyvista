@@ -108,7 +108,7 @@ class Observer:
         try:
             kind, path, address, alert = regex.findall(message)[0]
             return kind, path, address, alert
-        except:
+        except:  # noqa: E722
             return '', '', '', message
 
     def log_message(self, kind, alert):

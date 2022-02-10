@@ -393,7 +393,7 @@ def string_to_rgb(string):
     else:
         try:
             return hex_to_rgb(string)
-        except:
+        except:  # noqa: E722
             raise ValueError('Invalid color string or hex string.')
 
     return hex_to_rgb(colorhex)
