@@ -159,6 +159,52 @@ class UniformGridFilters(DataSetFilters):
         fixed.copy_meta_from(result)
         return fixed
 
+    def image_dilate_erode(self, dilate_value=1, erode_value=0,
+                           kernel_size=(3, 3, 3), scalars=None,
+                           preference='points', progress_bar=False):
+
+        """Dilates one value and erodes another.
+
+        image_dilate_erode will dilate one value and erode another. It uses an
+        elliptical foot print, and only erodes/dilates on the boundary of the
+        two values. The filter is restricted to the X, Y, and Z axes for now.
+        It can degenerate to a 2 or 1 dimensional filter by setting the kernel
+        size to 1 for a specific axis.
+
+        Parameters
+        ----------
+        dilate_value : int or float, optional
+            The value in the dataset that will get dilated.
+
+        erode_value : int or float, optional
+            The value in the dataset that will get eroded.
+
+        kernel_size : list(int) or tuple(int), optional
+            Length 3 iterable of ints: ``(xsize, ysize, zsize)``.
+            Determines the size (and middle) of the kernel.
+            Default: ``(3, 3, 3)``.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        preference : str, optional
+            When scalars is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress. Default ``False``.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            Dataset with the specified scalars thresholded.
+
+        Examples
+        --------
+        """
+        pass
+
     def image_threshold(self, threshold, in_value=1, out_value=0,
                         scalars=None, preference='points', progress_bar=False):
         """Apply a threshold to scalar values in a uniform grid.
