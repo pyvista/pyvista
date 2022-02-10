@@ -5,7 +5,7 @@ import pyvista as pv
 has_panel = True
 try:
     from panel.pane.vtk.vtk import VTKRenderWindowSynchronized
-except:
+except:  # noqa: E722
     has_panel = False
 
 skip_no_panel = pytest.mark.skipif(not has_panel, reason='Requires panel')

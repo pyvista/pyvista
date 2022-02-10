@@ -16,7 +16,7 @@ try:
         import imageio
 
         imageio.plugins.ffmpeg.download()
-except:
+except:  # noqa: E722
     ffmpeg_failed = True
 
 TEST_DOWNLOADS = False

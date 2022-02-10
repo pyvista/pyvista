@@ -7,7 +7,7 @@ import pyvista as pv
 has_ipyvtklink = True
 try:
     from ipyvtklink.viewer import ViewInteractiveWidget
-except:
+except:  # noqa: E722
     has_ipyvtklink = False
 
 

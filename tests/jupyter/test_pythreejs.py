@@ -5,7 +5,7 @@ import pytest
 
 try:
     import pythreejs  # noqa
-except:
+except:  # noqa: E722
     pytestmark = pytest.mark.skip
 
 import pyvista

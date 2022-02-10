@@ -39,7 +39,7 @@ try:
         imageio_ffmpeg.get_ffmpeg_exe()
     except ImportError:
         imageio.plugins.ffmpeg.download()
-except:
+except:  # noqa: E722
     ffmpeg_failed = True
 
 # These tests fail with mesa opengl on windows

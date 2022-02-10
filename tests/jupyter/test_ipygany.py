@@ -9,7 +9,7 @@ try:
     from ipygany.ipygany import Scene
 
     from pyvista.jupyter.pv_ipygany import check_colormap
-except:
+except:  # noqa: E722
     has_ipygany = False
 
 skip_no_ipygany = pytest.mark.skipif(not has_ipygany, reason="Requires ipygany package")

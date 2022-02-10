@@ -308,7 +308,7 @@ try:
     import osmnx, fiona  # noqa: F401 isort: skip
 
     has_osmnx = True
-except:
+except:  # noqa: E722
     pass
 
 
@@ -554,7 +554,7 @@ class AutoAutoSummary(Autosummary):
                 self.content = [
                     f"~{clazz}.{attrib}" for attrib in attribs if not attrib.startswith("_")
                 ]
-        except:
+        except:  # noqa: E722
             print(f"Something went wrong when autodocumenting {clazz}")
         finally:
             return super().run()
