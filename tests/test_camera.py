@@ -17,6 +17,7 @@ configuration = [
     ('roll', 180.0, 'SetRoll'),
 ]
 
+
 @pytest.fixture()
 def camera():
     return pyvista.Camera()
@@ -52,8 +53,7 @@ def test_distance(camera):
     position = np.random.random(3)
     camera.position = position
     camera.focal_point = focal_point
-    assert np.isclose(camera.distance, np.linalg.norm(focal_point - position, ord=2),
-                      rtol=1E-8)
+    assert np.isclose(camera.distance, np.linalg.norm(focal_point - position, ord=2), rtol=1e-8)
     distance = np.random.random()
     camera.distance = distance
     assert np.isclose(camera.distance, distance)
@@ -77,7 +77,7 @@ def test_zoom(camera):
     orig_scale = camera.parallel_scale
     zoom = 0.5
     camera.zoom(zoom)
-    assert camera.parallel_scale == orig_scale/zoom
+    assert camera.parallel_scale == orig_scale / zoom
 
 
 def test_up(camera):
@@ -144,7 +144,7 @@ def test_view_frustum(camera):
 
 
 def test_roll(camera):
-    angle = 360.0*(np.random.rand()-0.5)
+    angle = 360.0 * (np.random.rand() - 0.5)
     camera.roll = angle
     assert np.allclose(camera.GetRoll(), angle)
     assert np.allclose(camera.roll, angle)
@@ -215,12 +215,12 @@ def test_eq():
 
 
 def test_copy():
-   camera = pyvista.Camera()
-   for name, value, _ in configuration:
-       setattr(camera, name, value)
+    camera = pyvista.Camera()
+    for name, value, _ in configuration:
+        setattr(camera, name, value)
 
-   deep = camera.copy()
-   assert deep == camera
+    deep = camera.copy()
+    assert deep == camera
 
 
 def test_deprecation_warning_of_is_parallel_projection(camera):

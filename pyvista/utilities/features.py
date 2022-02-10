@@ -67,9 +67,9 @@ def voxelize(mesh, density=None, check_surface=True):
     ugrid = pyvista.UnstructuredGrid(grid)
 
     # get part of the mesh within the mesh's bounding surface.
-    selection = ugrid.select_enclosed_points(mesh.extract_surface(),
-                                             tolerance=0.0,
-                                             check_surface=check_surface)
+    selection = ugrid.select_enclosed_points(
+        mesh.extract_surface(), tolerance=0.0, check_surface=check_surface
+    )
     mask = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
@@ -94,7 +94,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     dimensions = np.array(dimensions, dtype=int)
     image = pyvista.UniformGrid()
     image.dimensions = dimensions
-    dims = (dimensions - 1)
+    dims = dimensions - 1
     dims[dims == 0] = 1
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
     image.origin = bounds[::2]
@@ -104,9 +104,8 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
 def single_triangle():  # pragma: no cover
     """Create a single PolyData triangle."""
     warnings.warn(
-        "Use of `single_triangle` is deprecated. "
-        "Use `pyvista.Triangle` instead.",
-        PyvistaDeprecationWarning
+        "Use of `single_triangle` is deprecated. " "Use `pyvista.Triangle` instead.",
+        PyvistaDeprecationWarning,
     )
     points = np.zeros((3, 3))
     points[1] = [1, 0, 0]
@@ -181,11 +180,11 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
 
 
 def merge(
-        datasets,
-        merge_points=True,
-        main_has_priority=True,
-        progress_bar=False,
-    ):
+    datasets,
+    merge_points=True,
+    main_has_priority=True,
+    progress_bar=False,
+):
     """Merge several datasets.
 
     .. note::

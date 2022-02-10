@@ -28,7 +28,7 @@ def test_table_init(tmpdir):
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:,i], table[i])
+        assert np.allclose(arrays[:, i], table[i])
 
     with pytest.raises(ValueError):
         pyvista.Table(np.random.rand(100, 2, 3))
@@ -39,7 +39,7 @@ def test_table_init(tmpdir):
     assert table.n_columns == 1
 
     assert len(table.row_arrays) == 1
-    assert np.allclose(arrays[:,0], table[0])
+    assert np.allclose(arrays[:, 0], table[0])
 
     # create from dictionary
     array_dict = {}
@@ -51,7 +51,7 @@ def test_table_init(tmpdir):
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:,i], table[f'foo{i}'])
+        assert np.allclose(arrays[:, i], table[f'foo{i}'])
 
     dataset = examples.load_hexbeam()
     array_dict = dict(dataset.point_data)
@@ -93,7 +93,7 @@ def test_table_init(tmpdir):
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:,i], table[i])
+        assert np.allclose(arrays[:, i], table[i])
 
     with pytest.raises(TypeError):
         pyvista.Table("foo")
@@ -143,13 +143,13 @@ def test_table_row_arrays():
     n = table.n_arrays
     array = table.pop(table.keys()[0])
     assert isinstance(array, np.ndarray)
-    assert table.n_arrays == n-1
+    assert table.n_arrays == n - 1
     array = table.get(table.keys()[0])
     assert isinstance(array, np.ndarray)
-    assert table.n_arrays == n-1
+    assert table.n_arrays == n - 1
 
     del table[table.keys()[0]]
-    assert table.n_arrays == n-2
+    assert table.n_arrays == n - 2
 
     return
 

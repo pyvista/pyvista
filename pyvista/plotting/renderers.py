@@ -9,12 +9,21 @@ from .background_renderer import BackgroundRenderer
 from .renderer import Renderer
 
 
-class Renderers():
+class Renderers:
     """Organize Renderers for ``pyvista.Plotter``."""
 
-    def __init__(self, plotter, shape=(1, 1), splitting_position=None,
-                 row_weights=None, col_weights=None, groups=None,
-                 border=None, border_color='k', border_width=2.0):
+    def __init__(
+        self,
+        plotter,
+        shape=(1, 1),
+        splitting_position=None,
+        row_weights=None,
+        col_weights=None,
+        groups=None,
+        border=None,
+        border_color='k',
+        border_width=2.0,
+    ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
         self._plotter = plotter
@@ -46,29 +55,29 @@ class Renderers():
 
             if splitting_position is None:
                 if n >= m:
-                    xsplit = m/(n+m)
+                    xsplit = m / (n + m)
                 else:
-                    xsplit = 1-n/(n+m)
+                    xsplit = 1 - n / (n + m)
             else:
                 xsplit = splitting_position
 
             for i in rangen:
                 arenderer = Renderer(self._plotter, border, border_color, border_width)
                 if '|' in shape:
-                    arenderer.SetViewport(0, i/n, xsplit, (i+1)/n)
+                    arenderer.SetViewport(0, i / n, xsplit, (i + 1) / n)
                 else:
-                    arenderer.SetViewport(i/n, 0, (i+1)/n, xsplit)
+                    arenderer.SetViewport(i / n, 0, (i + 1) / n, xsplit)
                 self._renderers.append(arenderer)
             for i in rangem:
                 arenderer = Renderer(self._plotter, border, border_color, border_width)
                 if '|' in shape:
-                    arenderer.SetViewport(xsplit, i/m, 1, (i+1)/m)
+                    arenderer.SetViewport(xsplit, i / m, 1, (i + 1) / m)
                 else:
-                    arenderer.SetViewport(i/m, xsplit, (i+1)/m, 1)
+                    arenderer.SetViewport(i / m, xsplit, (i + 1) / m, 1)
                 self._renderers.append(arenderer)
 
-            self._shape = (n+m,)
-            self._render_idxs = np.arange(n+m)
+            self._shape = (n + m,)
+            self._render_idxs = np.arange(n + m)
 
         else:
             if not isinstance(shape, (np.ndarray, collections.abc.Sequence)):
@@ -94,13 +103,17 @@ class Renderers():
             row_weights = np.abs(np.asanyarray(row_weights).ravel())
             col_weights = np.abs(np.asanyarray(col_weights).ravel())
             if row_weights.size != shape[0]:
-                raise ValueError(f'"row_weights" must have {shape[0]} items '
-                                 f'for {shape[0]} rows of subplots, not '
-                                 f'{row_weights.size}.')
+                raise ValueError(
+                    f'"row_weights" must have {shape[0]} items '
+                    f'for {shape[0]} rows of subplots, not '
+                    f'{row_weights.size}.'
+                )
             if col_weights.size != shape[1]:
-                raise ValueError(f'"col_weights" must have {shape[1]} items '
-                                 f'for {shape[1]} columns of subplots, not '
-                                 f'{col_weights.size}.')
+                raise ValueError(
+                    f'"col_weights" must have {shape[1]} items '
+                    f'for {shape[1]} columns of subplots, not '
+                    f'{col_weights.size}.'
+                )
             row_off = np.cumsum(row_weights) / np.sum(row_weights)
             row_off = 1 - np.concatenate(([0], row_off))
             col_off = np.cumsum(col_weights) / np.sum(col_weights)
@@ -112,12 +125,15 @@ class Renderers():
 
             if groups is not None:
                 if not isinstance(groups, collections.abc.Sequence):
-                    raise TypeError('"groups" should be a list or tuple, not '
-                                    f'{type(groups).__name__}.')
+                    raise TypeError(
+                        '"groups" should be a list or tuple, not ' f'{type(groups).__name__}.'
+                    )
                 for group in groups:
                     if not isinstance(group, collections.abc.Sequence):
-                        raise TypeError('Each group entry should be a list or '
-                                        f'tuple, not {type(group).__name__}.')
+                        raise TypeError(
+                            'Each group entry should be a list or '
+                            f'tuple, not {type(group).__name__}.'
+                        )
                     if len(group) != 2:
                         raise ValueError('Each group entry must have length 2.')
 
@@ -129,15 +145,17 @@ class Renderers():
                         cols = np.arange(self.shape[1], dtype=int)[cols]
                     # Get the normalized group, i.e. extract top left corner
                     # and bottom right corner from the given rows and cols
-                    norm_group = [np.min(rows), np.min(cols),
-                                  np.max(rows), np.max(cols)]
+                    norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
                     # Check for overlap with already defined groups:
                     for i in range(norm_group[0], norm_group[2] + 1):
                         for j in range(norm_group[1], norm_group[3] + 1):
                             if self.loc_to_group((i, j)) is not None:
-                                raise ValueError('Groups cannot overlap. Overlap '
-                                                 f'found at position {(i, j)}.')
-                    self.groups = np.concatenate((self.groups, np.array([norm_group], dtype=int)), axis=0)
+                                raise ValueError(
+                                    'Groups cannot overlap. Overlap ' f'found at position {(i, j)}.'
+                                )
+                    self.groups = np.concatenate(
+                        (self.groups, np.array([norm_group], dtype=int)), axis=0
+                    )
             # Create subplot renderers
             for row in range(shape[0]):
                 for col in range(shape[1]):
@@ -159,27 +177,30 @@ class Renderers():
                         x1 = col_off[col + nb_cols]
                         y1 = row_off[row]
                         renderer.SetViewport(x0, y0, x1, y1)
-                        self._render_idxs[row,col] = len(self)
+                        self._render_idxs[row, col] = len(self)
                         self._renderers.append(renderer)
                     else:
-                        self._render_idxs[row, col] = self._render_idxs[self.groups[group,0], self.groups[group,1]]
+                        self._render_idxs[row, col] = self._render_idxs[
+                            self.groups[group, 0], self.groups[group, 1]
+                        ]
 
         # each render will also have an associated background renderer
         self._background_renderers = [None for _ in range(len(self))]
 
         # create a shadow renderer that lives on top of all others
-        self._shadow_renderer = Renderer(self._plotter, border, border_color,
-                                         border_width)
+        self._shadow_renderer = Renderer(self._plotter, border, border_color, border_width)
         self._shadow_renderer.SetViewport(0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
 
     def loc_to_group(self, loc):
         """Return group id of the given location index or ``None`` if this location is not part of any group."""
         group_idxs = np.arange(self.groups.shape[0])
-        index = (loc[0] >= self.groups[:, 0]) & \
-                (loc[0] <= self.groups[:, 2]) & \
-                (loc[1] >= self.groups[:, 1]) & \
-                (loc[1] <= self.groups[:, 3])
+        index = (
+            (loc[0] >= self.groups[:, 0])
+            & (loc[0] <= self.groups[:, 2])
+            & (loc[1] >= self.groups[:, 1])
+            & (loc[1] <= self.groups[:, 3])
+        )
         group = group_idxs[index]
         return None if group.size == 0 else group[0]
 

@@ -38,7 +38,7 @@ READERS = {
     '.nrrd': _vtk.vtkNrrdReader,
     '.nhdr': _vtk.vtkNrrdReader,
     '.png': _vtk.vtkPNGReader,
-    '.pnm': _vtk.vtkPNMReader, # TODO: not tested
+    '.pnm': _vtk.vtkPNMReader,  # TODO: not tested
     '.slc': _vtk.vtkSLCReader,
     '.tiff': _vtk.vtkTIFFReader,
     '.tif': _vtk.vtkTIFFReader,
@@ -46,23 +46,23 @@ READERS = {
     '.glb': _vtk.vtkGLTFReader,
     '.hdr': _vtk.vtkHDRReader,
     # Other formats:
-    '.byu': _vtk.vtkBYUReader, # TODO: not tested with this extension
+    '.byu': _vtk.vtkBYUReader,  # TODO: not tested with this extension
     '.g': _vtk.vtkBYUReader,
     # '.chemml': _vtk.vtkCMLMoleculeReader, # TODO: not tested
     # '.cml': _vtk.vtkCMLMoleculeReader, # vtkMolecule is not supported by pyvista
     # TODO: '.csv': _vtk.vtkCSVReader, # vtkTables are currently not supported
     '.facet': _vtk.lazy_vtkFacetReader,
-    '.cas': _vtk.vtkFLUENTReader, # TODO: not tested
+    '.cas': _vtk.vtkFLUENTReader,  # TODO: not tested
     # '.dat': _vtk.vtkFLUENTReader, # TODO: not working
     # '.cube': _vtk.vtkGaussianCubeReader, # Contains `atom_types` which are note supported?
-    '.res': _vtk.vtkMFIXReader, # TODO: not tested
+    '.res': _vtk.vtkMFIXReader,  # TODO: not tested
     '.foam': _vtk.vtkOpenFOAMReader,
     # '.pdb': _vtk.vtkPDBReader, # Contains `atom_types` which are note supported?
     '.p3d': _vtk.lazy_vtkPlot3DMetaReader,
     '.pts': _vtk.vtkPTSReader,
     # '.particles': _vtk.vtkParticleReader, # TODO: not tested
-    #TODO: '.pht': _vtk.vtkPhasta??????,
-    #TODO: '.vpc': _vtk.vtkVPIC?????,
+    # TODO: '.pht': _vtk.vtkPhasta??????,
+    # TODO: '.vpc': _vtk.vtkVPIC?????,
     # '.bin': _vtk.lazy_vtkMultiBlockPLOT3DReader,# TODO: non-default routine
     '.tri': _vtk.vtkMCubesReader,
     '.inp': _vtk.vtkAVSucdReader,
@@ -71,7 +71,7 @@ READERS = {
 VTK_MAJOR = _vtk.vtkVersion().GetVTKMajorVersion()
 VTK_MINOR = _vtk.vtkVersion().GetVTKMinorVersion()
 
-if (VTK_MAJOR >= 8 and VTK_MINOR >= 2):
+if VTK_MAJOR >= 8 and VTK_MINOR >= 2:
     try:
         READERS['.sgy'] = _vtk.lazy_vtkSegYReader
         READERS['.segy'] = _vtk.lazy_vtkSegYReader
@@ -159,8 +159,10 @@ def standard_reader_routine(reader, filename, attrs=None):
 
     # Check reader for errors
     if observer.has_event_occurred():
-        warnings.warn(f'The VTK reader `{reader.GetClassName()}` raised an error while reading the file.\n'
-                      f'\t"{observer.get_message()}"')
+        warnings.warn(
+            f'The VTK reader `{reader.GetClassName()}` raised an error while reading the file.\n'
+            f'\t"{observer.get_message()}"'
+        )
 
     data = pyvista.wrap(reader.GetOutputDataObject(0))
     data._post_file_load_processing()
@@ -339,8 +341,7 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
                 name = os.path.basename(str(each))
             else:
                 name = None
-            multi[-1, name] = read(each, attrs=attrs,
-                                   file_format=file_format)
+            multi[-1, name] = read(each, attrs=attrs, file_format=file_format)
         return multi
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
@@ -371,10 +372,12 @@ def read(filename, attrs=None, force_ext=None, file_format=None):
             # just intended to be used with the native PyVista readers
             if force_ext is not None:
                 from meshio._exceptions import ReadError
+
                 raise ReadError
             # Attempt read with meshio
             try:
                 from meshio._exceptions import ReadError
+
                 try:
                     return read_meshio(filename)
                 except ReadError:
@@ -431,16 +434,19 @@ def read_texture(filename, attrs=None):
         # Otherwise, use the imageio reader
         pass
     import imageio
+
     return pyvista.Texture(imageio.imread(filename))
 
 
-def read_exodus(filename,
-                animate_mode_shapes=True,
-                apply_displacements=True,
-                displacement_magnitude=1.0,
-                read_point_data=True,
-                read_cell_data=True,
-                enabled_sidesets=None):
+def read_exodus(
+    filename,
+    animate_mode_shapes=True,
+    apply_displacements=True,
+    displacement_magnitude=1.0,
+    read_point_data=True,
+    read_cell_data=True,
+    enabled_sidesets=None,
+):
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
 
     Parameters
@@ -571,8 +577,9 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
         # supported in VTK9.
         if len(q_filenames) > 0:
             if len(q_filenames) > 1:
-                raise RuntimeError('Reading of multiple q files is not supported '
-                                   'with this version of VTK.')
+                raise RuntimeError(
+                    'Reading of multiple q files is not supported ' 'with this version of VTK.'
+                )
             reader.SetQFileName(q_filenames[0])
 
     attrs = {} if not attrs else attrs
@@ -597,9 +604,7 @@ def from_meshio(mesh):
     for c in mesh.cells:
         vtk_type = meshio_to_vtk_type[c.type]
         numnodes = vtk_type_to_numnodes[vtk_type]
-        cells.append(
-            np.hstack((np.full((len(c.data), 1), numnodes), c.data)).ravel()
-        )
+        cells.append(np.hstack((np.full((len(c.data), 1), numnodes), c.data)).ravel())
         cell_type += [vtk_type] * len(c.data)
         if not _vtk.VTK9:
             offset += [next_offset + i * (numnodes + 1) for i in range(len(c.data))]
@@ -644,10 +649,7 @@ def read_meshio(filename, file_format=None):
     try:
         import meshio
     except ImportError:  # pragma: no cover
-        raise ImportError(
-            "To use this feature install meshio with:\n\n"
-            "pip install meshio"
-        )
+        raise ImportError("To use this feature install meshio with:\n\n" "pip install meshio")
 
     # Make sure relative paths will work
     filename = os.path.abspath(os.path.expanduser(str(filename)))
@@ -688,10 +690,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     try:
         import meshio
     except ImportError:  # pragma: no cover
-        raise ImportError(
-            "To use this feature install meshio with:\n\n"
-            "pip install meshio"
-        )
+        raise ImportError("To use this feature install meshio with:\n\n" "pip install meshio")
 
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type
@@ -711,7 +710,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     vtk_cell_type = mesh.celltypes
 
     # Check that meshio supports all cell types in input mesh
-    pixel_voxel = {8, 11}       # Handle pixels and voxels
+    pixel_voxel = {8, 11}  # Handle pixels and voxels
     for cell_type in np.unique(vtk_cell_type):
         if cell_type not in vtk_to_meshio_type.keys() and cell_type not in pixel_voxel:
             raise TypeError(f"meshio does not support VTK type {cell_type}.")
@@ -720,22 +719,21 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     cells = []
     c = 0
     for offset, cell_type in zip(vtk_offset, vtk_cell_type):
-        numnodes = vtk_cells[offset+c]
+        numnodes = vtk_cells[offset + c]
         if _vtk.VTK9:  # must offset by cell count
-            cell = vtk_cells[offset+1+c:offset+1+c+numnodes]
+            cell = vtk_cells[offset + 1 + c : offset + 1 + c + numnodes]
             c += 1
         else:
-            cell = vtk_cells[offset+1:offset+1+numnodes]
+            cell = vtk_cells[offset + 1 : offset + 1 + numnodes]
         cell = (
-            cell if cell_type not in pixel_voxel
-            else cell[[0, 1, 3, 2]] if cell_type == 8
+            cell
+            if cell_type not in pixel_voxel
+            else cell[[0, 1, 3, 2]]
+            if cell_type == 8
             else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
         )
-        cell_type = cell_type if cell_type not in pixel_voxel else cell_type+1
-        cell_type = (
-            vtk_to_meshio_type[cell_type] if cell_type != 7
-            else f"polygon{numnodes}"
-        )
+        cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
+        cell_type = vtk_to_meshio_type[cell_type] if cell_type != 7 else f"polygon{numnodes}"
 
         if len(cells) > 0 and cells[-1][0] == cell_type:
             cells[-1][1].append(cell)
@@ -765,8 +763,9 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
         point_data=point_data,
         cell_data=cell_data,
         file_format=file_format,
-        **kwargs
+        **kwargs,
     )
+
 
 def _process_filename(filename):
     return os.path.abspath(os.path.expanduser(str(filename)))

@@ -7,8 +7,9 @@ import pyvista
 from pyvista import examples
 from pyvista.examples.downloads import _download_file
 
-pytestmark = pytest.mark.skipif(platform.system() == 'Darwin',
-                    reason='MacOS testing on Azure fails when downloading')
+pytestmark = pytest.mark.skipif(
+    platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
+)
 
 
 def test_get_reader_fail():
@@ -151,18 +152,33 @@ def test_ensightreader_arrays():
     assert reader.number_cell_arrays == 9
     assert reader.number_point_arrays == 0
 
-    assert reader.cell_array_names == ['v2', 'nut', 'k', 'nuTilda', 'p',
-                                       'omega', 'f', 'epsilon', 'U']
+    assert reader.cell_array_names == [
+        'v2',
+        'nut',
+        'k',
+        'nuTilda',
+        'p',
+        'omega',
+        'f',
+        'epsilon',
+        'U',
+    ]
     assert reader.point_array_names == []
 
     reader.disable_all_cell_arrays()
     reader.enable_cell_array('k')
 
     assert reader.all_cell_arrays_status == {
-        'v2': False, 'nut': False, 'k': True, 'nuTilda': False, 'p': False,
-        'omega':False, 'f':False, 'epsilon':False, 'U':False
+        'v2': False,
+        'nut': False,
+        'k': True,
+        'nuTilda': False,
+        'p': False,
+        'omega': False,
+        'f': False,
+        'epsilon': False,
+        'U': False,
     }
-
 
     mesh = reader.read()
     assert isinstance(mesh, pyvista.MultiBlock)
@@ -178,8 +194,17 @@ def test_ensightreader_arrays():
 
     for i in range(all_mesh.n_blocks):
         assert all([all_mesh[i].n_points, all_mesh[i].n_cells])
-        assert all_mesh[i].array_names == ['v2', 'nut', 'k', 'nuTilda', 'p',
-                                           'omega', 'f', 'epsilon', 'U']
+        assert all_mesh[i].array_names == [
+            'v2',
+            'nut',
+            'k',
+            'nuTilda',
+            'p',
+            'omega',
+            'f',
+            'epsilon',
+            'U',
+        ]
 
 
 def test_ensightreader_timepoints():
@@ -408,20 +433,26 @@ def test_openfoam_patch_arrays():
     reader = get_cavity_reader()
     assert reader.number_patch_arrays == 4
     assert reader.patch_array_names == [
-        'internalMesh', f'{reader_patch_prefix}movingWall',
-        f'{reader_patch_prefix}fixedWalls', f'{reader_patch_prefix}frontAndBack'
+        'internalMesh',
+        f'{reader_patch_prefix}movingWall',
+        f'{reader_patch_prefix}fixedWalls',
+        f'{reader_patch_prefix}frontAndBack',
     ]
     assert reader.all_patch_arrays_status == {
-        'internalMesh': True, f'{reader_patch_prefix}movingWall': True,
-        f'{reader_patch_prefix}fixedWalls': True, f'{reader_patch_prefix}frontAndBack': True
+        'internalMesh': True,
+        f'{reader_patch_prefix}movingWall': True,
+        f'{reader_patch_prefix}fixedWalls': True,
+        f'{reader_patch_prefix}frontAndBack': True,
     }
 
-    #first only read in 'internalMesh'
+    # first only read in 'internalMesh'
     for patch_array in reader.patch_array_names[1:]:
         reader.disable_patch_array(patch_array)
     assert reader.all_patch_arrays_status == {
-        'internalMesh': True, f'{reader_patch_prefix}movingWall': False,
-        f'{reader_patch_prefix}fixedWalls': False, f'{reader_patch_prefix}frontAndBack': False
+        'internalMesh': True,
+        f'{reader_patch_prefix}movingWall': False,
+        f'{reader_patch_prefix}fixedWalls': False,
+        f'{reader_patch_prefix}frontAndBack': False,
     }
     mesh = reader.read()
     assert mesh.n_blocks == 1

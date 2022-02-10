@@ -23,8 +23,14 @@ import pyvista as pv
 
 points = np.random.random((30, 3))
 cloud = pv.wrap(points)
-pv.plot(cloud, scalars=points[:, 2], render_points_as_spheres=True, point_size=50,
-        opacity=points[:, 0], cpos='xz')
+pv.plot(
+    cloud,
+    scalars=points[:, 2],
+    render_points_as_spheres=True,
+    point_size=50,
+    opacity=points[:, 0],
+    cpos='xz',
+)
 
 ###############################################################################
 # Wrap an instance of Trimesh

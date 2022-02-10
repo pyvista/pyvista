@@ -41,15 +41,16 @@ class Camera(_vtk.vtkCamera):
 
         if renderer:
             if not isinstance(renderer, pyvista.Renderer):
-                raise TypeError('Camera only accepts a pyvista.Renderer or None as '
-                                'the ``renderer`` argument')
+                raise TypeError(
+                    'Camera only accepts a pyvista.Renderer or None as ' 'the ``renderer`` argument'
+                )
             self._renderer = proxy(renderer)
         else:
             self._renderer = None
 
     def __repr__(self):
-       """Print a repr specifying the id of the camera and its camera type."""
-       return (f'<{self.__class__.__name__} at {hex(id(self))}>')
+        """Print a repr specifying the id of the camera and its camera type."""
+        return f'<{self.__class__.__name__} at {hex(id(self))}>'
 
     def __eq__(self, other):
         """Compare whether the relevant attributes of two cameras are equal."""
@@ -127,8 +128,9 @@ class Camera(_vtk.vtkCamera):
 
         """
         if self._renderer is None:
-            raise AttributeError('Camera is must be associated with a renderer to '
-                                 'reset its clipping range.')
+            raise AttributeError(
+                'Camera is must be associated with a renderer to ' 'reset its clipping range.'
+            )
         self._renderer.reset_camera_clipping_range()
 
     @property
@@ -192,16 +194,17 @@ class Camera(_vtk.vtkCamera):
     @property
     def is_parallel_projection(self):
         """Return True if parallel projection is set."""
-        warnings.warn( "Use of `Camera.is_parallel_projection` is deprecated. "
+        warnings.warn(
+            "Use of `Camera.is_parallel_projection` is deprecated. "
             "Use `Camera.parallel_projection` instead.",
-            PyvistaDeprecationWarning
+            PyvistaDeprecationWarning,
         )
         return self._parallel_projection
 
     @property
     def distance(self):
         """Return or set the distance of the focal point from the camera.
-        
+
         Notes
         -----
         Setting the distance keeps the camera fixed and moves the focal point.

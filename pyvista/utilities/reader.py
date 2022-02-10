@@ -360,7 +360,6 @@ class PointCellDataSelection:
         return {name: self.cell_array_status(name) for name in self.cell_array_names}
 
 
-
 class TimeReader(ABC):
     """Abstract class for readers supporting time."""
 
@@ -438,7 +437,7 @@ class TimeReader(ABC):
 class XMLImageDataReader(BaseReader, PointCellDataSelection):
     """XML Image Data Reader for .vti files."""
 
-    _class_reader =_vtk.vtkXMLImageDataReader
+    _class_reader = _vtk.vtkXMLImageDataReader
 
 
 class XMLPImageDataReader(BaseReader, PointCellDataSelection):
@@ -546,6 +545,7 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
 
     _class_reader = _vtk.vtkXMLMultiBlockDataReader
 
+
 # skip pydocstyle D102 check since docstring is taken from TimeReader
 class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     """EnSight Reader for .case files.
@@ -624,8 +624,9 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         try:
             value = self.reader.GetTimeValue()
         except AttributeError as err:  # pragma: no cover
-            raise AttributeError("Inspecting active time value only supported "
-                      "for vtk versions >9.1.0") from err
+            raise AttributeError(
+                "Inspecting active time value only supported " "for vtk versions >9.1.0"
+            ) from err
         return value
 
     def set_active_time_value(self, time_value):  # noqa: D102
@@ -675,7 +676,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     @property
     def number_patch_arrays(self):
         """Return number of patch arrays in dataset.
-        
+
         Returns
         -------
         int
@@ -688,14 +689,14 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         >>> reader = pyvista.OpenFOAMReader(filename)
         >>> reader.number_patch_arrays
         4
-        
+
         """
         return self.reader.GetNumberOfPatchArrays()
 
     @property
     def patch_array_names(self):
         """Names of patch arrays in a list.
-        
+
         Returns
         -------
         list[str]
@@ -794,7 +795,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
         """
         self.reader.EnableAllPatchArrays()
-    
+
     def disable_all_patch_arrays(self):
         """Disable reading of all patch arrays.
 
@@ -1154,9 +1155,7 @@ class PVDReader(BaseReader, TimeReader):
         return self.active_datasets[0].time
 
     def set_active_time_value(self, time_value):  # noqa: D102
-        self._active_datasets = [
-            dataset for dataset in self.datasets if dataset.time == time_value
-        ]
+        self._active_datasets = [dataset for dataset in self.datasets if dataset.time == time_value]
         self._active_readers = [
             get_reader(os.path.join(self._directory, dataset.filename))
             for dataset in self.active_datasets

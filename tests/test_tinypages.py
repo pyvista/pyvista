@@ -9,21 +9,30 @@ import pytest
 
 pytest.importorskip('sphinx')
 
+
 @pytest.mark.skipif(os.name == 'nt', reason='path issues on Azure Windows CI')
 def test_tinypages(tmpdir):
     tmp_path = Path(tmpdir)
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
     # Build the pages with warnings turned into errors
-    cmd = [sys.executable, '-msphinx', '-W', '-b', 'html',
-           '-d', str(doctree_dir),
-           str(Path(__file__).parent / 'tinypages'), str(html_dir)]
-    proc = Popen(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True,
-                 env={**os.environ, "MPLBACKEND": ""})
+    cmd = [
+        sys.executable,
+        '-msphinx',
+        '-W',
+        '-b',
+        'html',
+        '-d',
+        str(doctree_dir),
+        str(Path(__file__).parent / 'tinypages'),
+        str(html_dir),
+    ]
+    proc = Popen(
+        cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True, env={**os.environ, "MPLBACKEND": ""}
+    )
     out, err = proc.communicate()
 
-    assert proc.returncode == 0, \
-        f"sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n"
+    assert proc.returncode == 0, f"sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n"
 
     if err:
         if err.strip() != 'vtkDebugLeaks has found no leaks.':

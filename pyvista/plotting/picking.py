@@ -30,10 +30,20 @@ class PickingHelper:
         """
         return self.renderer.get_pick_position()
 
-    def enable_cell_picking(self, mesh=None, callback=None, through=True,
-                            show=True, show_message=True, style='wireframe',
-                            line_width=5, color='pink', font_size=18,
-                            start=False, **kwargs):
+    def enable_cell_picking(
+        self,
+        mesh=None,
+        callback=None,
+        through=True,
+        show=True,
+        show_message=True,
+        style='wireframe',
+        line_width=5,
+        color='pink',
+        font_size=18,
+        start=False,
+        **kwargs,
+    ):
         """Enable picking at cells.
 
         Press ``"r"`` to enable retangle based selection.  Press
@@ -104,8 +114,9 @@ class PickingHelper:
         """
         if mesh is None:
             if not hasattr(self, 'mesh') or self.mesh is None:
-                raise AttributeError('Input a mesh into the Plotter class first or '
-                                     'or set it in this function')
+                raise AttributeError(
+                    'Input a mesh into the Plotter class first or ' 'or set it in this function'
+                )
             mesh = self.mesh
         self_ = weakref.ref(self)
 
@@ -136,10 +147,16 @@ class PickingHelper:
                             break
 
                 # Use try in case selection is empty
-                self_().add_mesh(picked, name='_cell_picking_selection',
-                                 style=style, color=color,
-                                 line_width=line_width, pickable=False,
-                                 reset_camera=False, **kwargs)
+                self_().add_mesh(
+                    picked,
+                    name='_cell_picking_selection',
+                    style=style,
+                    color=color,
+                    line_width=line_width,
+                    pickable=False,
+                    reset_camera=False,
+                    **kwargs,
+                )
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)
@@ -184,7 +201,9 @@ class PickingHelper:
                     cids = pyvista.convert_array(selection_node.GetSelectionList())
                     actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
                     if actor.GetProperty().GetRepresentation() != 2:  # surface
-                        logging.warning("Display representations other than `surface` will result in incorrect results.")
+                        logging.warning(
+                            "Display representations other than `surface` will result in incorrect results."
+                        )
                     smesh = actor.GetMapper().GetInputAsDataSet()
                     smesh = smesh.copy()
                     smesh["original_cell_ids"] = np.arange(smesh.n_cells)
@@ -227,10 +246,19 @@ class PickingHelper:
         if start:
             self.iren._style_class.StartSelect()
 
-    def enable_point_picking(self, callback=None, show_message=True,
-                             font_size=18, color='pink', point_size=10,
-                             use_mesh=False, show_point=True, tolerance=0.025,
-                             pickable_window=False, **kwargs):
+    def enable_point_picking(
+        self,
+        callback=None,
+        show_message=True,
+        font_size=18,
+        color='pink',
+        point_size=10,
+        use_mesh=False,
+        show_point=True,
+        tolerance=0.025,
+        pickable_window=False,
+        **kwargs,
+    ):
         """Enable picking at points.
 
         Enable picking a point at the mouse location in the render
@@ -307,9 +335,15 @@ class PickingHelper:
             self.picked_mesh = picker.GetDataSet()
             self.picked_point_id = picked_point_id
             if show_point:
-                self.add_mesh(self.picked_point, color=color,
-                              point_size=point_size, name='_picked_point',
-                              pickable=False, reset_camera=False, **kwargs)
+                self.add_mesh(
+                    self.picked_point,
+                    color=color,
+                    point_size=point_size,
+                    name='_picked_point',
+                    pickable=False,
+                    reset_camera=False,
+                    **kwargs,
+                )
             if callable(callback):
                 if use_mesh:
                     try_callback(callback, self.picked_mesh, self.picked_point_id)
@@ -328,13 +362,20 @@ class PickingHelper:
         if show_message:
             if show_message is True:
                 show_message = "Press P to pick under the mouse"
-            self.add_text(str(show_message), font_size=font_size,
-                          name='_point_picking_message')
+            self.add_text(str(show_message), font_size=font_size, name='_point_picking_message')
 
-    def enable_path_picking(self, callback=None, show_message=True,
-                            font_size=18, color='pink', point_size=10,
-                            line_width=5, show_path=True, tolerance=0.025,
-                            **kwargs):
+    def enable_path_picking(
+        self,
+        callback=None,
+        show_message=True,
+        font_size=18,
+        color='pink',
+        point_size=10,
+        line_width=5,
+        show_path=True,
+        tolerance=0.025,
+        **kwargs,
+    ):
         """Enable picking at paths.
 
         This is a convenience method for :func:`enable_point_picking
@@ -403,9 +444,15 @@ class PickingHelper:
             self.picked_path = pyvista.PolyData(np.array(the_points))
             self.picked_path.lines = make_line_cells(len(the_points))
             if show_path:
-                self.add_mesh(self.picked_path, color=color, name='_picked_path',
-                              line_width=line_width, point_size=point_size,
-                              reset_camera=False, **kwargs)
+                self.add_mesh(
+                    self.picked_path,
+                    color=color,
+                    name='_picked_path',
+                    line_width=line_width,
+                    point_size=point_size,
+                    reset_camera=False,
+                    **kwargs,
+                )
             if callable(callback):
                 try_callback(callback, self.picked_path)
 
@@ -418,16 +465,28 @@ class PickingHelper:
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        self.enable_point_picking(callback=_the_callback,
-                                  use_mesh=True, font_size=font_size,
-                                  show_message=show_message,
-                                  show_point=False,
-                                  tolerance=tolerance)
+        self.enable_point_picking(
+            callback=_the_callback,
+            use_mesh=True,
+            font_size=font_size,
+            show_message=show_message,
+            show_point=False,
+            tolerance=tolerance,
+        )
 
-    def enable_geodesic_picking(self, callback=None, show_message=True,
-                                font_size=18, color='pink', point_size=10,
-                                line_width=5, tolerance=0.025, show_path=True,
-                                keep_order=True, **kwargs):
+    def enable_geodesic_picking(
+        self,
+        callback=None,
+        show_message=True,
+        font_size=18,
+        color='pink',
+        point_size=10,
+        line_width=5,
+        tolerance=0.025,
+        show_path=True,
+        keep_order=True,
+        **kwargs,
+    ):
         """Enable picking at geodesic paths.
 
         This is a convenience method for ``enable_point_picking`` to
@@ -507,19 +566,27 @@ class PickingHelper:
                 locator.BuildLocator()
                 start_idx = locator.FindClosestPoint(mesh.points[self._last_picked_idx])
                 end_idx = locator.FindClosestPoint(point)
-                self.picked_geodesic += surface.geodesic(start_idx, end_idx,
-                                                         keep_order=keep_order)
+                self.picked_geodesic += surface.geodesic(start_idx, end_idx, keep_order=keep_order)
                 if keep_order:
                     # it makes sense to remove adjacent duplicate points
-                    self.picked_geodesic.clean(inplace=True, lines_to_points=False,
-                                               polys_to_lines=False,
-                                               strips_to_polys=False)
+                    self.picked_geodesic.clean(
+                        inplace=True,
+                        lines_to_points=False,
+                        polys_to_lines=False,
+                        strips_to_polys=False,
+                    )
             self._last_picked_idx = idx
 
             if show_path:
-                self.add_mesh(self.picked_geodesic, color=color, name='_picked_path',
-                              line_width=line_width, point_size=point_size,
-                              reset_camera=False, **kwargs)
+                self.add_mesh(
+                    self.picked_geodesic,
+                    color=color,
+                    name='_picked_path',
+                    line_width=line_width,
+                    point_size=point_size,
+                    reset_camera=False,
+                    **kwargs,
+                )
             if callable(callback):
                 try_callback(callback, self.picked_geodesic)
 
@@ -532,17 +599,30 @@ class PickingHelper:
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        self.enable_point_picking(callback=_the_callback,
-                                  use_mesh=True, font_size=font_size,
-                                  show_message=show_message,
-                                  tolerance=tolerance,
-                                  show_point=False)
+        self.enable_point_picking(
+            callback=_the_callback,
+            use_mesh=True,
+            font_size=font_size,
+            show_message=show_message,
+            tolerance=tolerance,
+            show_point=False,
+        )
 
-    def enable_horizon_picking(self, callback=None, normal=(0,0,1),
-                               width=None, show_message=True,
-                               font_size=18, color='pink', point_size=10,
-                               line_width=5, show_path=True, opacity=0.75,
-                               show_horizon=True, **kwargs):
+    def enable_horizon_picking(
+        self,
+        callback=None,
+        normal=(0, 0, 1),
+        width=None,
+        show_message=True,
+        font_size=18,
+        color='pink',
+        point_size=10,
+        line_width=5,
+        show_path=True,
+        opacity=0.75,
+        show_horizon=True,
+        **kwargs,
+    ):
         """Enable horizon picking.
 
         Helper for the ``enable_path_picking`` method to also show a
@@ -607,17 +687,28 @@ class PickingHelper:
             self.picked_horizon = path.ribbon(normal=normal, width=width)
 
             if show_horizon:
-                self.add_mesh(self.picked_horizon, name=name, color=color,
-                              opacity=opacity, pickable=False,
-                              reset_camera=False)
+                self.add_mesh(
+                    self.picked_horizon,
+                    name=name,
+                    color=color,
+                    opacity=opacity,
+                    pickable=False,
+                    reset_camera=False,
+                )
 
             if callable(callback):
                 try_callback(callback, path)
 
-        self.enable_path_picking(callback=_the_callback,
-            show_message=show_message, font_size=font_size, color=color,
-            point_size=point_size, line_width=line_width, show_path=show_path,
-            **kwargs)
+        self.enable_path_picking(
+            callback=_the_callback,
+            show_message=show_message,
+            font_size=font_size,
+            color=color,
+            point_size=point_size,
+            line_width=line_width,
+            show_path=show_path,
+            **kwargs,
+        )
 
     def pick_click_position(self):
         """Get corresponding click location in the 3D plot.

@@ -51,7 +51,7 @@ vtkcell_types = [
     ['VTK_BEZIER_QUADRILATERAL', 'vtkBezierQuadrilateral'],
     ['VTK_BEZIER_TETRAHEDRON', 'vtkBezierTetra'],
     ['VTK_BEZIER_HEXAHEDRON', 'vtkBezierHexahedron'],
-    ['VTK_BEZIER_WEDGE', 'vtkBezierWedge']
+    ['VTK_BEZIER_WEDGE', 'vtkBezierWedge'],
 ]
 
 

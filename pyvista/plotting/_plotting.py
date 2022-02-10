@@ -12,13 +12,13 @@ from .tools import opacity_transfer_function
 def _has_matplotlib():
     try:
         import matplotlib  # noqa
+
         return True
     except ImportError:  # pragma: no cover
         return False
 
 
-def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle,
-                           preference):
+def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):
     """Prepare a dataset for smooth shading.
 
     VTK requires datasets with prong shading to have active normals.
@@ -60,7 +60,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     if has_scalars:
         if not isinstance(scalars, np.ndarray):
             scalars = np.array(scalars)
-        if (scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells):
+        if scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells:
             use_points = preference == 'point'
         else:
             use_points = scalars.shape[0] == mesh.n_points
@@ -148,8 +148,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
     if isinstance(opacity, str):
         try:
             # Get array from mesh
-            opacity = get_array(mesh, opacity,
-                                preference=preference, err=True)
+            opacity = get_array(mesh, opacity, preference=preference, err=True)
             if np.any(opacity > 1):
                 warnings.warn("Opacity scalars contain values over 1")
             if np.any(opacity < 0):
@@ -161,8 +160,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
         else:
             if scalars.shape[0] != opacity.shape[0]:
                 raise ValueError(
-                    "Opacity array and scalars array must have the same number "
-                    "of elements."
+                    "Opacity array and scalars array must have the same number " "of elements."
                 )
     elif isinstance(opacity, (np.ndarray, list, tuple)):
         opacity = np.array(opacity)

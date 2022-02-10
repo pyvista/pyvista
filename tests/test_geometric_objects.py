@@ -42,7 +42,7 @@ def test_plane():
 
 def test_line():
     pointa = (0, 0, 0)
-    pointb = (10, 1., 3)
+    pointb = (10, 1.0, 3)
 
     line = pyvista.Line(pointa, pointb)
     assert line.n_points == 2
@@ -55,12 +55,12 @@ def test_line():
         pyvista.Line(pointa, pointb, -1)
 
     with pytest.raises(TypeError):
-        pyvista.Line(pointa, pointb, 0.1) # from vtk
+        pyvista.Line(pointa, pointb, 0.1)  # from vtk
 
 
 def test_tube():
     pointa = (0, 0, 0)
-    pointb = (10, 1., 3)
+    pointb = (10, 1.0, 3)
 
     tube = pyvista.Tube(n_sides=3)
     assert tube.n_points == 6
@@ -73,14 +73,14 @@ def test_tube():
         pyvista.Tube(pointa, pointb, -1)
 
     with pytest.raises(TypeError):
-        pyvista.Tube(pointa, pointb, 0.1) # from vtk
+        pyvista.Tube(pointa, pointb, 0.1)  # from vtk
 
 
 def test_cube():
     cube = pyvista.Cube()
     assert np.any(cube.points)
     assert np.any(cube.faces)
-    bounds = (1.,3., 5.,6., 7.,8.)
+    bounds = (1.0, 3.0, 5.0, 6.0, 7.0, 8.0)
     cube = pyvista.Cube(bounds=bounds)
     assert np.any(cube.points)
     assert np.any(cube.faces)
@@ -106,7 +106,7 @@ def test_box():
 
     quads = False
     mesh2 = pyvista.Box(bounds, level, quads)
-    assert mesh2.n_cells == mesh1.n_cells*2
+    assert mesh2.n_cells == mesh1.n_cells * 2
 
 
 def test_polygon():
@@ -169,7 +169,7 @@ def test_circular_arc():
     mesh = pyvista.CircularArc(pointa, pointb, center, resolution)
     assert mesh.n_points == resolution + 1
     assert mesh.n_cells == 1
-    distance = np.arange(0.0, 1.0 + 0.01, 0.01)*np.pi/2.0
+    distance = np.arange(0.0, 1.0 + 0.01, 0.01) * np.pi / 2.0
     assert np.allclose(mesh['Distance'], distance)
 
     # pointa and pointb are not equidistant from center
@@ -187,7 +187,7 @@ def test_circular_arc_from_normal():
     mesh = pyvista.CircularArcFromNormal(center, resolution, normal, polar, angle)
     assert mesh.n_points == resolution + 1
     assert mesh.n_cells == 1
-    distance = np.arange(0.0, 1.0 + 0.01, 0.01)*np.pi
+    distance = np.arange(0.0, 1.0 + 0.01, 0.01) * np.pi
     assert np.allclose(mesh['Distance'], distance)
 
 
@@ -241,7 +241,7 @@ def test_circle():
     assert mesh.n_points
     assert mesh.n_cells
     diameter = np.max(mesh.points[:, 0]) - np.min(mesh.points[:, 0])
-    assert np.isclose(diameter, radius*2.0, rtol=1e-3)
+    assert np.isclose(diameter, radius * 2.0, rtol=1e-3)
 
 
 @pytest.mark.parametrize(
@@ -251,7 +251,7 @@ def test_circle():
         range(5),
         [4, 8, 6, 12, 20],
         [4, 6, 8, 20, 12],
-    )
+    ),
 )
 def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):
     # verify integer mapping
@@ -281,8 +281,8 @@ def test_tetrahedron():
     assert solid.n_faces == 4
     assert np.allclose(solid.center, center)
 
-    doubled_solid = pyvista.Tetrahedron(radius=2*radius, center=center)
-    assert np.isclose(doubled_solid.length, 2*solid.length)
+    doubled_solid = pyvista.Tetrahedron(radius=2 * radius, center=center)
+    assert np.isclose(doubled_solid.length, 2 * solid.length)
 
 
 def test_octahedron():
@@ -293,8 +293,8 @@ def test_octahedron():
     assert solid.n_faces == 8
     assert np.allclose(solid.center, center)
 
-    doubled_solid = pyvista.Octahedron(radius=2*radius, center=center)
-    assert np.isclose(doubled_solid.length, 2*solid.length)
+    doubled_solid = pyvista.Octahedron(radius=2 * radius, center=center)
+    assert np.isclose(doubled_solid.length, 2 * solid.length)
 
 
 def test_dodecahedron():
@@ -305,8 +305,8 @@ def test_dodecahedron():
     assert solid.n_faces == 12
     assert np.allclose(solid.center, center)
 
-    doubled_solid = pyvista.Dodecahedron(radius=2*radius, center=center)
-    assert np.isclose(doubled_solid.length, 2*solid.length)
+    doubled_solid = pyvista.Dodecahedron(radius=2 * radius, center=center)
+    assert np.isclose(doubled_solid.length, 2 * solid.length)
 
 
 def test_icosahedron():
@@ -317,5 +317,5 @@ def test_icosahedron():
     assert solid.n_faces == 20
     assert np.allclose(solid.center, center)
 
-    doubled_solid = pyvista.Icosahedron(radius=2*radius, center=center)
-    assert np.isclose(doubled_solid.length, 2*solid.length)
+    doubled_solid = pyvista.Icosahedron(radius=2 * radius, center=center)
+    assert np.isclose(doubled_solid.length, 2 * solid.length)

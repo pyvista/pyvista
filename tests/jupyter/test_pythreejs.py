@@ -84,9 +84,10 @@ def test_output_face_scalars(sphere):
     pv_pythreejs.convert_plotter(pl)
 
 
-@pytest.mark.parametrize('max_index', [np.iinfo(np.uint16).max - 1,
-                                       np.iinfo(np.uint32).max - 1,
-                                       np.iinfo(np.uint32).max + 1])
+@pytest.mark.parametrize(
+    'max_index',
+    [np.iinfo(np.uint16).max - 1, np.iinfo(np.uint32).max - 1, np.iinfo(np.uint32).max + 1],
+)
 def test_cast_to_min_size(max_index):
 
     if max_index < np.iinfo(np.uint16).max:

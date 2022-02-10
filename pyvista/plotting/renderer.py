@@ -35,23 +35,21 @@ def map_loc_to_pos(loc, size, border=0.05):
 
     """
     if not isinstance(size, Sequence) or len(size) != 2:
-        raise ValueError(
-            f'`size` must be a list of length 2. Passed value is {size}'
-        )
+        raise ValueError(f'`size` must be a list of length 2. Passed value is {size}')
 
     if 'right' in loc:
         x = 1 - size[1] - border
     elif 'left' in loc:
         x = border
     else:
-        x = 0.5 - size[1]/2
+        x = 0.5 - size[1] / 2
 
     if 'upper' in loc:
         y = 1 - size[1] - border
     elif 'lower' in loc:
         y = border
     else:
-        y = 0.5 - size[1]/2
+        y = 0.5 - size[1] / 2
 
     return x, y, size
 
@@ -71,13 +69,16 @@ def make_legend_face(face):
     elif isinstance(face, pyvista.PolyData):
         legendface = face
     else:
-        raise ValueError(f'Invalid face "{face}".  Must be one of the following:\n'
-                         '\t"triangle"\n'
-                         '\t"circle"\n'
-                         '\t"rectangle"\n'
-                         '\tNone'
-                         '\tpyvista.PolyData')
+        raise ValueError(
+            f'Invalid face "{face}".  Must be one of the following:\n'
+            '\t"triangle"\n'
+            '\t"circle"\n'
+            '\t"rectangle"\n'
+            '\tNone'
+            '\tpyvista.PolyData'
+        )
     return legendface
+
 
 def scale_point(camera, point, invert=False):
     """Scale a point using the camera's transform matrix.
@@ -185,13 +186,17 @@ class Renderer(_vtk.vtkRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
-    CAMERA_STR_ATTR_MAP = {'xy': 'view_xy', 'xz': 'view_xz',
-                           'yz': 'view_yz', 'yx': 'view_yx',
-                           'zx': 'view_zx', 'zy': 'view_zy',
-                           'iso': 'view_isometric'}
+    CAMERA_STR_ATTR_MAP = {
+        'xy': 'view_xy',
+        'xz': 'view_xz',
+        'yz': 'view_yz',
+        'yx': 'view_yx',
+        'zx': 'view_zx',
+        'zy': 'view_zy',
+        'iso': 'view_isometric',
+    }
 
-    def __init__(self, parent, border=True, border_color=(1, 1, 1),
-                 border_width=2.0):
+    def __init__(self, parent, border=True, border_color=(1, 1, 1), border_width=2.0):
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
@@ -245,7 +250,8 @@ class Renderer(_vtk.vtkRenderer):
         return CameraPosition(
             scale_point(self.camera, self.camera.position, invert=True),
             scale_point(self.camera, self.camera.focal_point, invert=True),
-            self.camera.up)
+            self.camera.up,
+        )
 
     @camera_position.setter
     def camera_position(self, camera_location):
@@ -256,9 +262,11 @@ class Renderer(_vtk.vtkRenderer):
             camera_location = camera_location.lower()
             if camera_location not in self.CAMERA_STR_ATTR_MAP:
                 err = pyvista.core.errors.InvalidCameraError
-                raise err('Invalid view direction.  '
-                          'Use one of the following:\n   '
-                          f'{", ".join(self.CAMERA_STR_ATTR_MAP)}')
+                raise err(
+                    'Invalid view direction.  '
+                    'Use one of the following:\n   '
+                    f'{", ".join(self.CAMERA_STR_ATTR_MAP)}'
+                )
 
             getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
 
@@ -304,7 +312,7 @@ class Renderer(_vtk.vtkRenderer):
         self.camera_position = CameraPosition(
             scale_point(source, source.position, invert=True),
             scale_point(source, source.focal_point, invert=True),
-            source.up
+            source.up,
         )
         self.Modified()
         self.camera_set = True
@@ -316,10 +324,11 @@ class Renderer(_vtk.vtkRenderer):
 
         def _update_bounds(bounds):
             def update_axis(ax):
-                if bounds[ax*2] < the_bounds[ax*2]:
-                    the_bounds[ax*2] = bounds[ax*2]
-                if bounds[ax*2+1] > the_bounds[ax*2+1]:
-                    the_bounds[ax*2+1] = bounds[ax*2+1]
+                if bounds[ax * 2] < the_bounds[ax * 2]:
+                    the_bounds[ax * 2] = bounds[ax * 2]
+                if bounds[ax * 2 + 1] > the_bounds[ax * 2 + 1]:
+                    the_bounds[ax * 2 + 1] = bounds[ax * 2 + 1]
+
             for ax in range(3):
                 update_axis(ax)
             return
@@ -327,8 +336,11 @@ class Renderer(_vtk.vtkRenderer):
         for actor in self._actors.values():
             if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
                 continue
-            if (hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
-                 and id(actor) != id(self.bounding_box_actor)):
+            if (
+                hasattr(actor, 'GetBounds')
+                and actor.GetBounds() is not None
+                and id(actor) != id(self.bounding_box_actor)
+            ):
                 _update_bounds(actor.GetBounds())
 
         if np.any(np.abs(the_bounds)):
@@ -359,9 +371,9 @@ class Renderer(_vtk.vtkRenderer):
 
         """
         bounds = self.bounds
-        x = (bounds[1] + bounds[0])/2
-        y = (bounds[3] + bounds[2])/2
-        z = (bounds[5] + bounds[4])/2
+        x = (bounds[1] + bounds[0]) / 2
+        y = (bounds[3] + bounds[2]) / 2
+        z = (bounds[5] + bounds[4]) / 2
         return [x, y, z]
 
     @property
@@ -409,8 +421,7 @@ class Renderer(_vtk.vtkRenderer):
             number_of_peels = self._theme.depth_peeling.number_of_peels
         if occlusion_ratio is None:
             occlusion_ratio = self._theme.depth_peeling.occlusion_ratio
-        depth_peeling_supported = check_depth_peeling(number_of_peels,
-                                                      occlusion_ratio)
+        depth_peeling_supported = check_depth_peeling(number_of_peels, occlusion_ratio)
         if depth_peeling_supported:
             self.SetUseDepthPeeling(True)
             self.SetMaximumNumberOfPeels(number_of_peels)
@@ -472,15 +483,9 @@ class Renderer(_vtk.vtkRenderer):
             Border actor.
 
         """
-        points = np.array([[1., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 0., 0.],
-                           [1., 0., 0.]])
+        points = np.array([[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
 
-        lines = np.array([[2, 0, 1],
-                          [2, 1, 2],
-                          [2, 2, 3],
-                          [2, 3, 0]]).ravel()
+        lines = np.array([[2, 0, 1], [2, 1, 2], [2, 2, 3], [2, 3, 0]]).ravel()
 
         poly = pyvista.PolyData()
         poly.points = points
@@ -546,9 +551,9 @@ class Renderer(_vtk.vtkRenderer):
         """
         if not _vtk._has_vtkRenderingContextOpenGL2:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
+
             raise VTKVersionError(
-                f"VTK is missing vtkRenderingContextOpenGL2. Try installing "
-                "VTK v9.1.0 or newer."
+                f"VTK is missing vtkRenderingContextOpenGL2. Try installing " "VTK v9.1.0 or newer."
             )
         self._charts.add_chart(chart, *charts)
 
@@ -599,8 +604,9 @@ class Renderer(_vtk.vtkRenderer):
         """Return a dictionary of actors assigned to this renderer."""
         return self._actors
 
-    def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
-                  pickable=True, render=True):
+    def add_actor(
+        self, uinput, reset_camera=False, name=None, culling=False, pickable=True, render=True
+    ):
         """Add an actor to render window.
 
         Creates an actor if input is a mapper.
@@ -692,9 +698,17 @@ class Renderer(_vtk.vtkRenderer):
 
         return actor, prop
 
-    def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
-                           xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
-                           labels_off=False):
+    def add_axes_at_origin(
+        self,
+        x_color=None,
+        y_color=None,
+        z_color=None,
+        xlabel='X',
+        ylabel='Y',
+        zlabel='Z',
+        line_width=2,
+        labels_off=False,
+    ):
         """Add axes actor at origin.
 
         Parameters
@@ -739,17 +753,23 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        self._marker_actor = create_axes_marker(line_width=line_width,
-            x_color=x_color, y_color=y_color, z_color=z_color,
-            xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
+        self._marker_actor = create_axes_marker(
+            line_width=line_width,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            zlabel=zlabel,
+            labels_off=labels_off,
+        )
         self.AddActor(self._marker_actor)
         memory_address = self._marker_actor.GetAddressAsString("")
         self._actors[memory_address] = self._marker_actor
         self.Modified()
         return self._marker_actor
 
-    def add_orientation_widget(self, actor, interactive=None, color=None,
-                               opacity=1.0):
+    def add_orientation_widget(self, actor, interactive=None, color=None, opacity=1.0):
         """Use the given actor in an orientation marker widget.
 
         Color and opacity are only valid arguments if a mesh is passed.
@@ -816,10 +836,21 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
         return self.axes_widget
 
-    def add_axes(self, interactive=None, line_width=2,
-                 color=None, x_color=None, y_color=None, z_color=None,
-                 xlabel='X', ylabel='Y', zlabel='Z', labels_off=False,
-                 box=None, box_args=None):
+    def add_axes(
+        self,
+        interactive=None,
+        line_width=2,
+        color=None,
+        x_color=None,
+        y_color=None,
+        z_color=None,
+        xlabel='X',
+        ylabel='Y',
+        zlabel='Z',
+        labels_off=False,
+        box=None,
+        box_args=None,
+    ):
         """Add an interactive axes widget in the bottom left corner.
 
         Parameters
@@ -898,17 +929,30 @@ class Renderer(_vtk.vtkRenderer):
             if box_args is None:
                 box_args = {}
             self.axes_actor = create_axes_orientation_box(
-                label_color=color, line_width=line_width,
-                x_color=x_color, y_color=y_color, z_color=z_color,
-                xlabel=xlabel, ylabel=ylabel, zlabel=zlabel,
-                labels_off=labels_off, **box_args)
+                label_color=color,
+                line_width=line_width,
+                x_color=x_color,
+                y_color=y_color,
+                z_color=z_color,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                zlabel=zlabel,
+                labels_off=labels_off,
+                **box_args,
+            )
         else:
             self.axes_actor = create_axes_marker(
-                label_color=color, line_width=line_width,
-                x_color=x_color, y_color=y_color, z_color=z_color,
-                xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
-        self.add_orientation_widget(self.axes_actor, interactive=interactive,
-                                    color=None)
+                label_color=color,
+                line_width=line_width,
+                x_color=x_color,
+                y_color=y_color,
+                z_color=z_color,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                zlabel=zlabel,
+                labels_off=labels_off,
+            )
+        self.add_orientation_widget(self.axes_actor, interactive=interactive, color=None)
         return self.axes_actor
 
     def hide_axes(self):
@@ -959,15 +1003,34 @@ class Renderer(_vtk.vtkRenderer):
             return bool(self.axes_widget.GetEnabled())
         return False
 
-    def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
-                    show_yaxis=True, show_zaxis=True,
-                    show_xlabels=True, show_ylabels=True,
-                    show_zlabels=True, bold=True, font_size=None,
-                    font_family=None, color=None, xlabel='X Axis',
-                    ylabel='Y Axis', zlabel='Z Axis', use_2d=False,
-                    grid=None, location='closest', ticks=None,
-                    all_edges=False, corner_factor=0.5, fmt=None,
-                    minor_ticks=False, padding=0.0, render=None):
+    def show_bounds(
+        self,
+        mesh=None,
+        bounds=None,
+        show_xaxis=True,
+        show_yaxis=True,
+        show_zaxis=True,
+        show_xlabels=True,
+        show_ylabels=True,
+        show_zlabels=True,
+        bold=True,
+        font_size=None,
+        font_family=None,
+        color=None,
+        xlabel='X Axis',
+        ylabel='Y Axis',
+        zlabel='Z Axis',
+        use_2d=False,
+        grid=None,
+        location='closest',
+        ticks=None,
+        all_edges=False,
+        corner_factor=0.5,
+        fmt=None,
+        minor_ticks=False,
+        padding=0.0,
+        render=None,
+    ):
         """Add bounds axes.
 
         Shows the bounds of the most recent input mesh unless mesh is
@@ -1165,9 +1228,16 @@ class Renderer(_vtk.vtkRenderer):
             bounds = np.array(mesh.GetBounds())
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
-                cushion = np.array([np.abs(bounds[1] - bounds[0]),
-                                    np.abs(bounds[3] - bounds[2]),
-                                    np.abs(bounds[5] - bounds[4])]) * padding
+                cushion = (
+                    np.array(
+                        [
+                            np.abs(bounds[1] - bounds[0]),
+                            np.abs(bounds[3] - bounds[2]),
+                            np.abs(bounds[5] - bounds[4]),
+                        ]
+                    )
+                    * padding
+                )
                 bounds[::2] -= cushion
                 bounds[1::2] += cushion
         else:
@@ -1234,8 +1304,7 @@ class Renderer(_vtk.vtkRenderer):
             cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
             cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
 
-        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False,
-                       render=render)
+        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor
 
         if all_edges:
@@ -1306,10 +1375,18 @@ class Renderer(_vtk.vtkRenderer):
             self.remove_actor(actor, reset_camera=False, render=render)
             self.Modified()
 
-    def add_bounding_box(self, color="grey", corner_factor=0.5, line_width=None,
-                         opacity=1.0, render_lines_as_tubes=False,
-                         lighting=None, reset_camera=None, outline=True,
-                         culling='front'):
+    def add_bounding_box(
+        self,
+        color="grey",
+        corner_factor=0.5,
+        line_width=None,
+        opacity=1.0,
+        render_lines_as_tubes=False,
+        lighting=None,
+        reset_camera=None,
+        outline=True,
+        culling='front',
+    ):
         """Add an unlabeled and unticked box at the boundaries of plot.
 
         Useful for when wanting to plot outer grids while still
@@ -1389,10 +1466,9 @@ class Renderer(_vtk.vtkRenderer):
 
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._box_object)
-        self.bounding_box_actor, prop = self.add_actor(mapper,
-                                                       reset_camera=reset_camera,
-                                                       name=name, culling=culling,
-                                                       pickable=False)
+        self.bounding_box_actor, prop = self.add_actor(
+            mapper, reset_camera=reset_camera, name=name, culling=culling, pickable=False
+        )
 
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
@@ -1411,10 +1487,23 @@ class Renderer(_vtk.vtkRenderer):
         self.Modified()
         return self.bounding_box_actor
 
-    def add_floor(self, face='-z', i_resolution=10, j_resolution=10,
-                  color=None, line_width=None, opacity=1.0, show_edges=False,
-                  lighting=False, edge_color=None, reset_camera=None, pad=0.0,
-                  offset=0.0, pickable=False, store_floor_kwargs=True):
+    def add_floor(
+        self,
+        face='-z',
+        i_resolution=10,
+        j_resolution=10,
+        color=None,
+        line_width=None,
+        opacity=1.0,
+        show_edges=False,
+        lighting=False,
+        edge_color=None,
+        reset_camera=None,
+        pad=0.0,
+        offset=0.0,
+        pickable=False,
+        store_floor_kwargs=True,
+    ):
         """Show a floor mesh.
 
         This generates planes at the boundaries of the scene to behave
@@ -1499,7 +1588,7 @@ class Renderer(_vtk.vtkRenderer):
             kwargs.pop('self')
             self._floor_kwargs.append(kwargs)
         ranges = np.array(self.bounds).reshape(-1, 2).ptp(axis=1)
-        ranges += (ranges * pad)
+        ranges += ranges * pad
         center = np.array(self.center)
         if face.lower() in '-z':
             center[2] = self.bounds[4] - (ranges[2] * offset)
@@ -1533,10 +1622,14 @@ class Renderer(_vtk.vtkRenderer):
             j_size = ranges[1]
         else:
             raise NotImplementedError(f'Face ({face}) not implementd')
-        self._floor = pyvista.Plane(center=center, direction=normal,
-                                    i_size=i_size, j_size=j_size,
-                                    i_resolution=i_resolution,
-                                    j_resolution=j_resolution)
+        self._floor = pyvista.Plane(
+            center=center,
+            direction=normal,
+            i_size=i_size,
+            j_size=j_size,
+            i_resolution=i_resolution,
+            j_resolution=j_resolution,
+        )
         self._floor.clear_data()
 
         if lighting is None:
@@ -1551,9 +1644,9 @@ class Renderer(_vtk.vtkRenderer):
         rgb_color = parse_color(color)
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._floor)
-        actor, prop = self.add_actor(mapper,
-                                     reset_camera=reset_camera,
-                                     name=f'Floor({face})', pickable=pickable)
+        actor, prop = self.add_actor(
+            mapper, reset_camera=reset_camera, name=f'Floor({face})', pickable=pickable
+        )
 
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
@@ -1799,7 +1892,7 @@ class Renderer(_vtk.vtkRenderer):
         # Fix the 'reset camera' effect produced by the VTK when parallel
         # projection is enabled.
         angle = np.radians(self.camera.view_angle)
-        self.camera.parallel_scale = self.camera.distance * np.sin(.5 * angle)
+        self.camera.parallel_scale = self.camera.distance * np.sin(0.5 * angle)
 
         self.camera.enable_parallel_projection()
         self.Modified()
@@ -1820,7 +1913,7 @@ class Renderer(_vtk.vtkRenderer):
         # projection is disabled.
         focus = self.camera.focal_point
         angle = np.radians(self.camera.view_angle)
-        distance = self.camera.parallel_scale / np.sin(.5 * angle)
+        distance = self.camera.parallel_scale / np.sin(0.5 * angle)
         direction = self.camera.direction
         x = focus[0] - distance * direction[0]
         y = focus[1] - distance * direction[1]
@@ -2034,14 +2127,16 @@ class Renderer(_vtk.vtkRenderer):
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
-        cpos = [position + np.array(focal_pt),
-                focal_pt, self._theme.camera['viewup']]
+        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera['viewup']]
         return cpos
 
     def update_bounds_axes(self):
         """Update the bounds axes of the render window."""
-        if (hasattr(self, '_box_object') and self._box_object is not None
-                and self.bounding_box_actor is not None):
+        if (
+            hasattr(self, '_box_object')
+            and self._box_object is not None
+            and self.bounding_box_actor is not None
+        ):
             if not np.allclose(self._box_object.bounds, self.bounds):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
@@ -2148,8 +2243,7 @@ class Renderer(_vtk.vtkRenderer):
         focal_pt = self.center
         if viewup is None:
             viewup = self._theme.camera['viewup']
-        cpos = CameraPosition(vector + np.array(focal_pt),
-                focal_pt, viewup)
+        cpos = CameraPosition(vector + np.array(focal_pt), focal_pt, viewup)
         self.camera_position = cpos
         self.reset_camera()
 
@@ -2174,8 +2268,8 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0,0,1])
-        viewup = np.array([0,1,0])
+        vec = np.array([0, 0, 1])
+        viewup = np.array([0, 1, 0])
         if negative:
             vec *= -1
         self.view_vector(vec, viewup)
@@ -2201,8 +2295,8 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0,0,-1])
-        viewup = np.array([1,0,0])
+        vec = np.array([0, 0, -1])
+        viewup = np.array([1, 0, 0])
         if negative:
             vec *= -1
         self.view_vector(vec, viewup)
@@ -2228,8 +2322,8 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0,-1,0])
-        viewup = np.array([0,0,1])
+        vec = np.array([0, -1, 0])
+        viewup = np.array([0, 0, 1])
         if negative:
             vec *= -1
         self.view_vector(vec, viewup)
@@ -2255,8 +2349,8 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([0,1,0])
-        viewup = np.array([1,0,0])
+        vec = np.array([0, 1, 0])
+        viewup = np.array([1, 0, 0])
         if negative:
             vec *= -1
         self.view_vector(vec, viewup)
@@ -2282,8 +2376,8 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([1,0,0])
-        viewup = np.array([0,0,1])
+        vec = np.array([1, 0, 0])
+        viewup = np.array([0, 0, 1])
         if negative:
             vec *= -1
         self.view_vector(vec, viewup)
@@ -2309,8 +2403,8 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        vec = np.array([-1,0,0])
-        viewup = np.array([0,1,0])
+        vec = np.array([-1, 0, 0])
+        viewup = np.array([0, 1, 0])
         if negative:
             vec *= -1
         self.view_vector(vec, viewup)
@@ -2621,17 +2715,24 @@ class Renderer(_vtk.vtkRenderer):
     def width(self):
         """Width of the renderer."""
         xmin, _, xmax, _ = self.viewport
-        return self.parent.window_size[0]*(xmax - xmin)
+        return self.parent.window_size[0] * (xmax - xmin)
 
     @property
     def height(self):
         """Height of the renderer."""
         _, ymin, _, ymax = self.viewport
-        return self.parent.window_size[1]*(ymax - ymin)
+        return self.parent.window_size[1] * (ymax - ymin)
 
-    def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5),
-                   border=False, size=(0.2, 0.2), name=None,
-                   loc='upper right', face='triangle'):
+    def add_legend(
+        self,
+        labels=None,
+        bcolor=(0.5, 0.5, 0.5),
+        border=False,
+        size=(0.2, 0.2),
+        name=None,
+        loc='upper right',
+        face='triangle',
+    ):
         """Add a legend to render window.
 
         Entries must be a list containing one string and color entry for each
@@ -2737,10 +2838,12 @@ class Renderer(_vtk.vtkRenderer):
         if labels is None:
             # use existing labels
             if not self._labels:
-                raise ValueError('No labels input.\n\n'
-                                 'Add labels to individual items when adding them to'
-                                 'the plotting object with the "label=" parameter.  '
-                                 'or enter them as the "labels" parameter.')
+                raise ValueError(
+                    'No labels input.\n\n'
+                    'Add labels to individual items when adding them to'
+                    'the plotting object with the "label=" parameter.  '
+                    'or enter them as the "labels" parameter.'
+                )
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
@@ -2761,9 +2864,7 @@ class Renderer(_vtk.vtkRenderer):
         if loc is not None:
             if loc not in ACTOR_LOC_MAP:
                 allowed = '\n'.join([f'\t * "{item}"' for item in ACTOR_LOC_MAP])
-                raise ValueError(
-                    f'Invalid loc "{loc}".  Expected one of the following:\n{allowed}'
-                )
+                raise ValueError(f'Invalid loc "{loc}".  Expected one of the following:\n{allowed}')
             x, y, size = map_loc_to_pos(loc, size, border=0.05)
             self._legend.SetPosition(x, y)
             self._legend.SetPosition2(size[0], size[1])
@@ -2815,7 +2916,11 @@ def _line_for_legend():
         [0.4, 0, 0],
         [0.4, 0.07, 0],
         [0, 0.07, 0],
-        [0.5, 0, 0],  # last point needed to expand the bounds of the PolyData to be rendered smaller
+        [
+            0.5,
+            0,
+            0,
+        ],  # last point needed to expand the bounds of the PolyData to be rendered smaller
     ]
     legendface = pyvista.PolyData()
     legendface.points = np.array(points)

@@ -156,7 +156,7 @@ def load_structured():
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
     x, y = np.meshgrid(x, y)
-    r = np.sqrt(x**2 + y**2)
+    r = np.sqrt(x ** 2 + y ** 2)
     z = np.sin(r)
     return pyvista.StructuredGrid(x, y, z)
 
@@ -246,7 +246,7 @@ def load_spline():
     """
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     z = np.linspace(-2, 2, 100)
-    r = z**2 + 1
+    r = z ** 2 + 1
     x = r * np.sin(theta)
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
@@ -345,25 +345,25 @@ def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
     >>> grid.plot(show_edges=True)
 
     """
-    ni, nj, nk = np.asarray(dims)-1
+    ni, nj, nk = np.asarray(dims) - 1
     si, sj, sk = spacing
 
-    xcorn = np.arange(0, (ni+1)*si, si)
+    xcorn = np.arange(0, (ni + 1) * si, si)
     xcorn = np.repeat(xcorn, 2)
     xcorn = xcorn[1:-1]
-    xcorn = np.tile(xcorn, 4*nj*nk)
+    xcorn = np.tile(xcorn, 4 * nj * nk)
 
-    ycorn = np.arange(0, (nj+1)*sj, sj)
+    ycorn = np.arange(0, (nj + 1) * sj, sj)
     ycorn = np.repeat(ycorn, 2)
     ycorn = ycorn[1:-1]
-    ycorn = np.tile(ycorn, (2*ni, 2*nk))
+    ycorn = np.tile(ycorn, (2 * ni, 2 * nk))
     ycorn = np.transpose(ycorn)
     ycorn = ycorn.flatten()
 
-    zcorn = np.arange(0, (nk+1)*sk, sk)
+    zcorn = np.arange(0, (nk + 1) * sk, sk)
     zcorn = np.repeat(zcorn, 2)
     zcorn = zcorn[1:-1]
-    zcorn = np.repeat(zcorn, (4*ni*nj))
+    zcorn = np.repeat(zcorn, (4 * ni * nj))
 
     corners = np.stack((xcorn, ycorn, zcorn))
     corners = corners.transpose()

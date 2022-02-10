@@ -48,5 +48,5 @@ class Scraper:
             else:
                 plotter.screenshot(fname)
             image_names.append(fname)
-        pyvista.close_all() # close and clear all plotters
+        pyvista.close_all()  # close and clear all plotters
         return figure_rst(image_names, gallery_conf["src_dir"])

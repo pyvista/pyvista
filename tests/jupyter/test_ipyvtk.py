@@ -11,8 +11,8 @@ except:
     has_ipyvtklink = False
 
 
-skip_no_ipyvtk = pytest.mark.skipif(not has_ipyvtklink,
-                                    reason="Requires IPython package")
+skip_no_ipyvtk = pytest.mark.skipif(not has_ipyvtklink, reason="Requires IPython package")
+
 
 @skip_no_ipyvtk
 def test_set_jupyter_backend_ipyvtklink():
@@ -25,8 +25,7 @@ def test_set_jupyter_backend_ipyvtklink():
 def test_ipyvtk(sphere):
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(sphere)
-    viewer = pl.show(jupyter_backend='ipyvtklink',
-                     return_viewer=True)
+    viewer = pl.show(jupyter_backend='ipyvtklink', return_viewer=True)
     assert isinstance(viewer, ViewInteractiveWidget)
 
 

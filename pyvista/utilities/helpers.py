@@ -165,8 +165,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
         else:
             # This will handle numerical data
             arr = np.ascontiguousarray(arr)
-            vtk_data = _vtk.numpy_to_vtk(num_array=arr, deep=deep,
-                                         array_type=array_type)
+            vtk_data = _vtk.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
         if isinstance(name, str):
             vtk_data.SetName(name)
         return vtk_data
@@ -485,13 +484,14 @@ def vtk_points(points, deep=True, force_float=False):
     if points.ndim == 1:
         points = points.reshape(-1, 3)
     elif points.ndim > 2:
-        raise ValueError('Dimension of ``points`` should be 1 or 2, not '
-                         f'{points.ndim}')
+        raise ValueError('Dimension of ``points`` should be 1 or 2, not ' f'{points.ndim}')
 
     # verify shape
     if points.shape[1] != 3:
-        raise ValueError('Points array must contain three values per point. '
-                         f'Shape is {points.shape} and should be (X, 3)')
+        raise ValueError(
+            'Points array must contain three values per point. '
+            f'Shape is {points.shape} and should be (X, 3)'
+        )
 
     # points must be contiguous
     points = np.require(points, requirements=['C'])
@@ -536,9 +536,13 @@ def line_segments_from_points(points):
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
-    lines = np.c_[(2 * np.ones(n_lines, np.int_),
-                   np.arange(0, n_points-1, step=2),
-                   np.arange(1, n_points+1, step=2))]
+    lines = np.c_[
+        (
+            2 * np.ones(n_lines, np.int_),
+            np.arange(0, n_points - 1, step=2),
+            np.arange(1, n_points + 1, step=2),
+        )
+    ]
     poly = pyvista.PolyData()
     poly.points = points
     poly.lines = lines
@@ -574,11 +578,11 @@ def lines_from_points(points, close=False):
     """
     poly = pyvista.PolyData()
     poly.points = points
-    cells = np.full((len(points)-1, 3), 2, dtype=np.int_)
-    cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int_)
+    cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
+    cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
     if close:
-        cells = np.append(cells, [[2, len(points)-1, 0]], axis=0)
+        cells = np.append(cells, [[2, len(points) - 1, 0]], axis=0)
     poly.lines = cells
     return poly
 
@@ -712,7 +716,7 @@ def vector_poly_data(orig, vec):
 
     # Add magnitude of vectors to polydata
     name = 'mag'
-    scalars = (vec * vec).sum(1)**0.5
+    scalars = (vec * vec).sum(1) ** 0.5
     vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
@@ -729,6 +733,7 @@ def trans_from_matrix(matrix):  # pragma: no cover
     """
     # import needs to happen here to prevent a circular import
     from pyvista.core.errors import DeprecationError
+
     raise DeprecationError('DEPRECATED: Please use ``array_from_vtkmatrix``.')
 
 
@@ -752,8 +757,10 @@ def array_from_vtkmatrix(matrix):
     elif isinstance(matrix, _vtk.vtkMatrix4x4):
         shape = (4, 4)
     else:
-        raise TypeError('Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
-                        f' got {type(matrix).__name__} instead.')
+        raise TypeError(
+            'Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
+            f' got {type(matrix).__name__} instead.'
+        )
     array = np.zeros(shape)
     for i in range(shape[0]):
         for j in range(shape[1]):
@@ -807,6 +814,7 @@ def is_meshio_mesh(obj):
     """
     try:
         import meshio
+
         return isinstance(obj, meshio.Mesh)
     except ImportError:
         return False
@@ -995,7 +1003,9 @@ def is_inside_bounds(point, bounds):
     """
     if isinstance(point, (int, float)):
         point = [point]
-    if isinstance(point, (np.ndarray, collections.abc.Sequence)) and not isinstance(point, collections.deque):
+    if isinstance(point, (np.ndarray, collections.abc.Sequence)) and not isinstance(
+        point, collections.deque
+    ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
             raise ValueError('Bounds mismatch point dimensionality')
         point = collections.deque(point)
@@ -1081,10 +1091,14 @@ def raise_not_matching(scalars, dataset):
         Raises a ValueError if the size of scalars does not the dataset.
     """
     if isinstance(dataset, _vtk.vtkTable):
-        raise ValueError(f'Number of scalars ({scalars.size}) must match number of rows ({dataset.n_rows}).')
-    raise ValueError(f'Number of scalars ({scalars.size}) '
-                     f'must match either the number of points ({dataset.n_points}) '
-                     f'or the number of cells ({dataset.n_cells}).')
+        raise ValueError(
+            f'Number of scalars ({scalars.size}) must match number of rows ({dataset.n_rows}).'
+        )
+    raise ValueError(
+        f'Number of scalars ({scalars.size}) '
+        f'must match either the number of points ({dataset.n_points}) '
+        f'or the number of cells ({dataset.n_cells}).'
+    )
 
 
 def generate_plane(normal, origin):
@@ -1129,10 +1143,9 @@ def try_callback(func, *args):
     except Exception:
         etype, exc, tb = sys.exc_info()
         stack = traceback.extract_tb(tb)[1:]
-        formatted_exception = \
-            'Encountered issue in callback (most recent call last):\n' + \
-            ''.join(traceback.format_list(stack) +
-                    traceback.format_exception_only(etype, exc)).rstrip('\n')
+        formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
+            traceback.format_list(stack) + traceback.format_exception_only(etype, exc)
+        ).rstrip('\n')
         logging.warning(formatted_exception)
 
 
@@ -1229,7 +1242,7 @@ class conditional_decorator:
         return self.decorator(func)
 
 
-class ProgressMonitor():
+class ProgressMonitor:
     """A standard class for monitoring the progress of a VTK algorithm.
 
     This must be use in a ``with`` context and it will block keyboard
@@ -1268,8 +1281,9 @@ class ProgressMonitor():
     def handler(self, sig, frame):
         """Pass signal to custom interrupt handler."""
         self._interrupt_signal_received = (sig, frame)
-        logging.debug('SIGINT received. Delaying KeyboardInterrupt until '
-                      'VTK algorithm finishes.')
+        logging.debug(
+            'SIGINT received. Delaying KeyboardInterrupt until ' 'VTK algorithm finishes.'
+        )
 
     def __call__(self, obj, event, *args):
         """Call progress update callback.
@@ -1291,8 +1305,9 @@ class ProgressMonitor():
         # check if in main thread
         if threading.current_thread().__class__.__name__ == '_MainThread':
             self._old_handler = signal.signal(signal.SIGINT, self.handler)
-        self._progress_bar = tqdm(total=1, leave=True,
-                                  bar_format='{l_bar}{bar}[{elapsed}<{remaining}]')
+        self._progress_bar = tqdm(
+            total=1, leave=True, bar_format='{l_bar}{bar}[{elapsed}<{remaining}]'
+        )
         self._progress_bar.set_description(self.message)
         self.algorithm.AddObserver(self.event_type, self)
         return self._progress_bar
@@ -1318,6 +1333,7 @@ def abstract_class(cls_):
         if cls is cls_:
             raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
         return object.__new__(cls)
+
     cls_.__new__ = __new__
     return cls_
 
@@ -1364,11 +1380,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     >>> assert np.all(np.isclose(points[:, 2], points_orig[:, 1]))
     """
     axis = axis.lower()
-    axis_to_vec = {
-        'x': (1, 0, 0),
-        'y': (0, 1, 0),
-        'z': (0, 0, 1)
-    }
+    axis_to_vec = {'x': (1, 0, 0), 'y': (0, 1, 0), 'z': (0, 0, 1)}
 
     if axis not in axis_to_vec:
         raise ValueError('Invalid axis. Must be either "x", "y", or "z"')
@@ -1427,9 +1439,11 @@ def cubemap(path='', prefix='', ext='.jpg'):
     for image_path in image_paths:
         if not os.path.isfile(image_path):
             file_str = '\n'.join(image_paths)
-            raise FileNotFoundError(f'Unable to locate {image_path}\n'
-                                    'Expected to find the following files:\n'
-                                    f'{file_str}')
+            raise FileNotFoundError(
+                f'Unable to locate {image_path}\n'
+                'Expected to find the following files:\n'
+                f'{file_str}'
+            )
 
     texture = pyvista.Texture()
     texture.SetMipmap(True)

@@ -118,8 +118,10 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
                 img.render()
             return image_from_window(img.ren_win, True, ignore_alpha=True)
         else:
-            raise TypeError(f'Unsupported data type {type(img)}.  Should be '
-                            'Either a np.ndarray, vtkRenderWindow, or vtkImageData')
+            raise TypeError(
+                f'Unsupported data type {type(img)}.  Should be '
+                'Either a np.ndarray, vtkRenderWindow, or vtkImageData'
+            )
 
     im1 = remove_alpha(to_img(im1))
     im2 = remove_alpha(to_img(im2))

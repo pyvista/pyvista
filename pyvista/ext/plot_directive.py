@@ -154,13 +154,19 @@ class PlotDirective(Directive):
         'nofigs': directives.flag,
         'encoding': directives.encoding,
         'caption': directives.unchanged,
-        }
+    }
 
     def run(self):
         """Run the plot directive."""
         try:
-            return run(self.arguments, self.content, self.options,
-                       self.state_machine, self.state, self.lineno)
+            return run(
+                self.arguments,
+                self.content,
+                self.options,
+                self.state_machine,
+                self.state,
+                self.lineno,
+            )
         except Exception as e:  # pragma: no cover
             raise self.error(str(e))
 
@@ -175,9 +181,7 @@ def setup(app):
     app.add_config_value('plot_basedir', None, True)
     app.add_config_value('plot_html_show_formats', True, True)
     app.add_config_value('plot_template', None, True)
-    return {'parallel_read_safe': True,
-            'parallel_write_safe': True,
-            'version': pyvista.__version__}
+    return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pyvista.__version__}
 
 
 # -----------------------------------------------------------------------------
@@ -313,8 +317,15 @@ def _run_code(code, code_path, ns=None, function_name=None):
     return ns
 
 
-def render_figures(code, code_path, output_dir, output_base, context,
-                   function_name, config,):
+def render_figures(
+    code,
+    code_path,
+    output_dir,
+    output_base,
+    context,
+    function_name,
+    config,
+):
     """Run a pyplot script and save the images in *output_dir*.
 
     Save the images under *output_dir* with file names derived from
@@ -329,9 +340,12 @@ def render_figures(code, code_path, output_dir, output_base, context,
 
     for i, code_piece in enumerate(code_pieces):
         # generate the plot
-        _run_code(doctest.script_from_examples(code_piece) if is_doctest
-                  else code_piece,
-                  code_path, ns, function_name)
+        _run_code(
+            doctest.script_from_examples(code_piece) if is_doctest else code_piece,
+            code_path,
+            ns,
+            function_name,
+        )
 
         images = []
         figures = pyvista.plotting._ALL_PLOTTERS
@@ -345,7 +359,7 @@ def render_figures(code, code_path, output_dir, output_base, context,
                 plotter.screenshot(image_file.filename)
             images.append(image_file)
 
-        pyvista.close_all() # close and clear all plotters
+        pyvista.close_all()  # close and clear all plotters
 
         results.append((code_piece, images))
 
@@ -369,11 +383,11 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     if len(arguments):
         if not config.plot_basedir:
-            source_file_name = os.path.join(setup.app.builder.srcdir,
-                                            directives.uri(arguments[0]))
+            source_file_name = os.path.join(setup.app.builder.srcdir, directives.uri(arguments[0]))
         else:
-            source_file_name = os.path.join(setup.confdir, config.plot_basedir,
-                                            directives.uri(arguments[0]))
+            source_file_name = os.path.join(
+                setup.confdir, config.plot_basedir, directives.uri(arguments[0])
+            )
 
         # If there is content, it will be passed as a caption.
         caption = '\n'.join(content)
@@ -382,8 +396,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         if "caption" in options:
             if caption:  # pragma: no cover
                 raise ValueError(
-                    'Caption specified in both content and options.'
-                    ' Please remove ambiguity.'
+                    'Caption specified in both content and options.' ' Please remove ambiguity.'
                 )
             # Use caption option
             caption = options["caption"]
@@ -428,9 +441,9 @@ def run(arguments, content, options, state_machine, state, lineno):
     source_rel_dir = os.path.dirname(source_rel_name).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
-    build_dir = os.path.join(os.path.dirname(setup.app.doctreedir),
-                             'plot_directive',
-                             source_rel_dir)
+    build_dir = os.path.join(
+        os.path.dirname(setup.app.doctreedir), 'plot_directive', source_rel_dir
+    )
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
@@ -438,13 +451,13 @@ def run(arguments, content, options, state_machine, state, lineno):
     os.makedirs(build_dir, exist_ok=True)
 
     # output_dir: final location in the builder's directory
-    dest_dir = os.path.abspath(os.path.join(setup.app.builder.outdir,
-                                            source_rel_dir))
+    dest_dir = os.path.abspath(os.path.join(setup.app.builder.outdir, source_rel_dir))
     os.makedirs(dest_dir, exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = os.path.join(relpath(setup.confdir, rst_dir),
-                                 source_rel_dir).replace(os.path.sep, '/')
+    dest_dir_link = os.path.join(relpath(setup.confdir, rst_dir), source_rel_dir).replace(
+        os.path.sep, '/'
+    )
     try:
         build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
     except ValueError:  # pragma: no cover
@@ -455,26 +468,24 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # make figures
     try:
-        results = render_figures(code,
-                                 source_file_name,
-                                 build_dir,
-                                 output_base,
-                                 keep_context,
-                                 function_name,
-                                 config)
+        results = render_figures(
+            code, source_file_name, build_dir, output_base, keep_context, function_name, config
+        )
         errors = []
     except PlotError as err:  # pragma: no cover
         reporter = state.memo.reporter
         sm = reporter.system_message(
-            2, "Exception occurred in plotting {}\n from {}:\n{}".format(
-                output_base, source_file_name, err),
-            line=lineno)
+            2,
+            "Exception occurred in plotting {}\n from {}:\n{}".format(
+                output_base, source_file_name, err
+            ),
+            line=lineno,
+        )
         results = [(code, [])]
         errors = [sm]
 
     # Properly indent the caption
-    caption = '\n' + '\n'.join('      ' + line.strip()
-                               for line in caption.split('\n'))
+    caption = '\n' + '\n'.join('      ' + line.strip() for line in caption.split('\n'))
 
     # generate output restructuredtext
     total_lines = []
@@ -483,8 +494,11 @@ def run(arguments, content, options, state_machine, state, lineno):
             if is_doctest:
                 lines = ['', *code_piece.splitlines()]
             else:
-                lines = ['.. code-block:: python', '',
-                         *textwrap.indent(code_piece, '    ').splitlines()]
+                lines = [
+                    '.. code-block:: python',
+                    '',
+                    *textwrap.indent(code_piece, '    ').splitlines(),
+                ]
             source_code = "\n".join(lines)
         else:
             source_code = ''
@@ -493,8 +507,10 @@ def run(arguments, content, options, state_machine, state, lineno):
             images = []
 
         opts = [
-            ':%s: %s' % (key, val) for key, val in options.items()
-            if key in ('alt', 'height', 'width', 'scale', 'align')]
+            ':%s: %s' % (key, val)
+            for key, val in options.items()
+            if key in ('alt', 'height', 'width', 'scale', 'align')
+        ]
 
         result = jinja2.Template(config.plot_template or TEMPLATE).render(
             default_fmt=default_fmt,
@@ -506,7 +522,8 @@ def run(arguments, content, options, state_machine, state, lineno):
             images=images,
             source_code=source_code,
             html_show_formats=config.plot_html_show_formats and len(images),
-            caption=caption)
+            caption=caption,
+        )
 
         total_lines.extend(result.split("\n"))
         total_lines.extend("\n")
@@ -525,9 +542,8 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # copy script (if necessary)
     Path(dest_dir, output_base + source_ext).write_text(
-        doctest.script_from_examples(code)
-        if source_file_name == rst_file and is_doctest
-        else code,
-        encoding='utf-8')
+        doctest.script_from_examples(code) if source_file_name == rst_file and is_doctest else code,
+        encoding='utf-8',
+    )
 
     return errors

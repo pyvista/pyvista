@@ -34,11 +34,13 @@ pyvista.set_plot_theme("document")
 # It includes a property to keep track of the point on the mesh that is
 # furthest along in the (1, 0, 1) direction.
 
+
 class FooData(pyvista.PolyData):
     @property
     def max_point(self):
         """Returns index of point that is furthest along (1, 0, 1) direction."""
         return np.argmax(np.dot(self.points, (1.0, 0.0, 1.0)))
+
 
 ###############################################################################
 # Directly Managing Types

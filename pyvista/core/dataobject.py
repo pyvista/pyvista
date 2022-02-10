@@ -65,8 +65,10 @@ class DataObject:
     def _from_file(self, filename: Union[str, Path], **kwargs):
         data = pyvista.read(filename, **kwargs)
         if not isinstance(self, type(data)):
-            raise ValueError(f'Reading file returned data of `{type(data).__name__}`, '
-                             f'but `{type(self).__name__}` was expected.')
+            raise ValueError(
+                f'Reading file returned data of `{type(data).__name__}`, '
+                f'but `{type(self).__name__}` was expected.'
+            )
         self.shallow_copy(data)
         self._post_file_load_processing()
 
@@ -107,16 +109,20 @@ class DataObject:
 
         """
         if self._WRITERS is None:
-            raise NotImplementedError(f'{self.__class__.__name__} writers are not specified,'
-                                      ' this should be a dict of (file extension: vtkWriter type)')
+            raise NotImplementedError(
+                f'{self.__class__.__name__} writers are not specified,'
+                ' this should be a dict of (file extension: vtkWriter type)'
+            )
 
         file_path = Path(filename)
         file_path = file_path.expanduser()
         file_path = file_path.resolve()
         file_ext = file_path.suffix
         if file_ext not in self._WRITERS:
-            raise ValueError('Invalid file extension for this data type.'
-                             f' Must be one of: {self._WRITERS.keys()}')
+            raise ValueError(
+                'Invalid file extension for this data type.'
+                f' Must be one of: {self._WRITERS.keys()}'
+            )
 
         writer = self._WRITERS[file_ext]()
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
@@ -139,7 +145,9 @@ class DataObject:
     @abstractmethod
     def get_data_range(self):  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
-        raise NotImplementedError(f'{type(self)} mesh type does not have a `get_data_range` method.')
+        raise NotImplementedError(
+            f'{type(self)} mesh type does not have a `get_data_range` method.'
+        )
 
     def _get_attrs(self):  # pragma: no cover
         """Return the representation methods (internal helper)."""
@@ -185,6 +193,7 @@ class DataObject:
             fmt += "\n"
             if display:
                 from IPython.display import HTML, display as _display
+
                 _display(HTML(fmt))
                 return
             return fmt
@@ -259,12 +268,14 @@ class DataObject:
             return True
 
         # these attrs use numpy.array_equal
-        equal_attrs = ['verts',  # DataObject
-                       'points',  # DataObject
-                       'lines',  # DataObject
-                       'faces',  # DataObject
-                       'cells',  # UnstructuredGrid
-                       'celltypes']  # UnstructuredGrid
+        equal_attrs = [
+            'verts',  # DataObject
+            'points',  # DataObject
+            'lines',  # DataObject
+            'faces',  # DataObject
+            'cells',  # UnstructuredGrid
+            'celltypes',
+        ]  # UnstructuredGrid
         for attr in equal_attrs:
             if hasattr(self, attr):
                 if not np.array_equal(getattr(self, attr), getattr(other, attr)):
@@ -279,16 +290,15 @@ class DataObject:
 
         return True
 
-    def add_field_array(self, scalars: np.ndarray, name: str,
-                        deep=True):  # pragma: no cover
+    def add_field_array(self, scalars: np.ndarray, name: str, deep=True):  # pragma: no cover
         """Add field data.
 
         .. deprecated:: 0.32.0
            Use :func:`DataObject.add_field_data` instead.
         """
-        warnings.warn( "Use of `clear_point_arrays` is deprecated. "
-            "Use `clear_point_data` instead.",
-            PyvistaDeprecationWarning
+        warnings.warn(
+            "Use of `clear_point_arrays` is deprecated. " "Use `clear_point_data` instead.",
+            PyvistaDeprecationWarning,
         )
         return self.clear_point_data()
 
@@ -351,9 +361,8 @@ class DataObject:
 
         """
         warnings.warn(
-            "Use of `field_arrays` is deprecated. "
-            "Use `field_data` instead.",
-            PyvistaDeprecationWarning
+            "Use of `field_arrays` is deprecated. " "Use `field_data` instead.",
+            PyvistaDeprecationWarning,
         )
         return self.field_data
 
@@ -377,7 +386,9 @@ class DataObject:
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
         """
-        return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
+        return DataSetAttributes(
+            self.GetFieldData(), dataset=self, association=FieldAssociation.NONE
+        )
 
     def clear_field_arrays(self):  # pragma: no cover
         """Remove all field data.
@@ -387,9 +398,8 @@ class DataObject:
 
         """
         warnings.warn(
-            "Use of `clear_field_arrays` is deprecated. "
-            "Use `clear_field_data` instead.",
-            PyvistaDeprecationWarning
+            "Use of `clear_field_arrays` is deprecated. " "Use `clear_field_data` instead.",
+            PyvistaDeprecationWarning,
         )
         self.field_data
 
