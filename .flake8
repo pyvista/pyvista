@@ -1,6 +1,10 @@
 [flake8]
 exclude = .git,__pycache__,build,dist,doc/examples,doc/_build,pyvista/**/__init__.py,pyvista/__init__.py
 ignore =
+    # whitespace before ':'
+    E203,
+    # line break before binary operator
+    W503,
     # line length too long
     E501,
     # do not assign a lambda expression, use a def
