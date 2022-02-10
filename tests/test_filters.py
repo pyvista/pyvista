@@ -1643,22 +1643,25 @@ def test_shrink():
 
 
 def test_tessellate():
-    topology = np.array([6, 0, 1, 2, 5, 3, 4], dtype=np.int32)
-    cell_types = np.array([69], dtype=np.int32)
-    geometry = np.array(
+    points = np.array(
         [
             [0.0, 0.0, 0.0],
-            [1.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0],
-            [0.6, 0.5, 0.0],
-            [-0.1, 0.5, 0.0],
-            [0.5, -0.2, 0.0],
+            [2.0, 0.0, 0.0],
+            [1.0, 2.0, 0.0],
+            [1.0, 0.5, 0.0],
+            [1.5, 1.5, 0.0],
+            [0.5, 1.5, 0.0],
         ]
     )
-    grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
-    tessellated = grid.tessellate()
-    assert tessellated.n_cells > grid.n_cells
-    assert tessellated.n_points > grid.n_points
+    cells = np.array([6, 0, 1, 2, 3, 4, 5])
+    cell_types = np.array([69])
+    ugrid = pyvista.UnstructuredGrid(cells, cell_types, points)
+    tessellated = ugrid.tessellate()
+    assert tessellated.n_cells > ugrid.n_cells
+    assert tessellated.n_points > ugrid.n_points
+    with pytest.raises(TypeError):
+        pdata = pyvista.PolyData()
+        tessellated = pdata.tessellate()
 
 
 @pytest.mark.parametrize('num_cell_arrays,num_point_data',
