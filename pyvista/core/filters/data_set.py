@@ -4383,7 +4383,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Tessellating Mesh')
         output = pyvista.wrap(alg.GetOutput())
         if isinstance(self, _vtk.vtkPolyData):
-            return output.extract_surface()
+            raise TypeError('Tessellate filter is not support PolyData object.')
         return output
 
     def transform(self: _vtk.vtkDataSet,
