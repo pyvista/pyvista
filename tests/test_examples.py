@@ -161,10 +161,6 @@ if TEST_DOWNLOADS:
         data = examples.download_quadratic_pyramid()
         assert data.n_cells
 
-    def test_download_quadratic_pyramid():
-        data = examples.download_quadratic_pyramid()
-        assert data.n_cells
-
     def test_download_bird():
         data = examples.download_bird()
         assert data.n_cells
