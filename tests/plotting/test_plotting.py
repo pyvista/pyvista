@@ -676,7 +676,7 @@ def test_make_movie(sphere):
     plotter.add_mesh(movie_sphere, scalars=np.random.random(movie_sphere.n_faces))
     plotter.show(auto_close=False, window_size=[304, 304])
     plotter.set_focus([0, 0, 0])
-    for i in range(3):  # limiting number of frames to write for speed
+    for _ in range(3):  # limiting number of frames to write for speed
         plotter.write_frame()
         random_points = np.random.random(movie_sphere.points.shape)
         movie_sphere.points[:] = random_points * 0.01 + movie_sphere.points * 0.99

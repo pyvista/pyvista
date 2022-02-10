@@ -30,7 +30,7 @@ def ncells_from_cells(cells):
     """
     consumer = deque(maxlen=0)
     it = cells.flat
-    for n_cells in count():
+    for n_cells in count():  # noqa: B007
         skip = next(it, None)
         if skip is None:
             break
@@ -148,7 +148,7 @@ def generate_cell_offsets_loop(cells, cell_types):
     offsets = np.zeros(shape=[cell_types.size], dtype=np.int64)
 
     current_cell_pos = 0
-    for cell_i, cell_t in enumerate(cell_types):
+    for cell_i, _ in enumerate(cell_types):
         if current_cell_pos >= cells.size:
             raise ValueError(
                 "Cell types and cell array are inconsistent. Got %d values left after reading all types"

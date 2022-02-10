@@ -86,7 +86,7 @@ def test_clip_filter(datasets):
 @pytest.mark.parametrize('invert', [False, True])
 def test_clip_by_scalars_filter(datasets, both, invert):
     """This tests the clip filter on all datatypes available filters"""
-    for i, dataset_in in enumerate(datasets):
+    for dataset_in in datasets:
         dataset = dataset_in.copy()  # don't modify in-place
         dataset.point_data['to_clip'] = np.arange(dataset.n_points)
 
@@ -142,7 +142,7 @@ def test_clip_filter_composite(composite):
 
 
 def test_clip_box(datasets):
-    for i, dataset in enumerate(datasets):
+    for dataset in datasets:
         clp = dataset.clip_box(invert=True, progress_bar=True)
         assert clp is not None
         assert isinstance(clp, pyvista.UnstructuredGrid)
@@ -252,7 +252,7 @@ def test_slice_filter_composite(composite):
 def test_slice_orthogonal_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
 
-    for i, dataset in enumerate(datasets):
+    for dataset in datasets:
         slices = dataset.slice_orthogonal(progress_bar=True)
         assert slices is not None
         assert isinstance(slices, pyvista.MultiBlock)
@@ -292,7 +292,7 @@ def test_slice_along_axis_composite(composite):
 
 
 def test_threshold(datasets):
-    for i, dataset in enumerate(datasets[0:3]):
+    for dataset in datasets[0:3]:
         thresh = dataset.threshold(progress_bar=True)
         assert thresh is not None
         assert isinstance(thresh, pyvista.UnstructuredGrid)
@@ -347,7 +347,7 @@ def test_threshold_percent(datasets):
 
 
 def test_outline(datasets):
-    for i, dataset in enumerate(datasets):
+    for dataset in datasets:
         outline = dataset.outline(progress_bar=True)
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
@@ -367,7 +367,7 @@ def test_outline_composite(composite):
 
 
 def test_outline_corners(datasets):
-    for i, dataset in enumerate(datasets):
+    for dataset in datasets:
         outline = dataset.outline_corners(progress_bar=True)
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
@@ -383,7 +383,7 @@ def test_outline_corners_composite(composite):
 
 
 def test_extract_geometry(datasets, composite):
-    for i, dataset in enumerate(datasets):
+    for dataset in datasets:
         outline = dataset.extract_geometry(progress_bar=True)
         assert outline is not None
         assert isinstance(outline, pyvista.PolyData)
@@ -393,7 +393,7 @@ def test_extract_geometry(datasets, composite):
 
 
 def test_wireframe(datasets):
-    for i, dataset in enumerate(datasets):
+    for dataset in datasets:
         wire = dataset.extract_all_edges(progress_bar=True)
         assert wire is not None
         assert isinstance(wire, pyvista.PolyData)
@@ -517,7 +517,7 @@ def test_texture_map_to_sphere():
 
 
 def test_compute_cell_sizes(datasets):
-    for i, dataset in enumerate(datasets):
+    for dataset in datasets:
         result = dataset.compute_cell_sizes(progress_bar=True)
         assert result is not None
         assert isinstance(result, type(dataset))
@@ -537,7 +537,7 @@ def test_compute_cell_sizes_composite(composite):
 
 
 def test_cell_centers(datasets):
-    for i, dataset in enumerate(datasets):
+    for dataset in datasets:
         result = dataset.cell_centers(progress_bar=True)
         assert result is not None
         assert isinstance(result, pyvista.PolyData)
@@ -551,7 +551,7 @@ def test_cell_centers_composite(composite):
 
 
 def test_glyph(datasets, sphere):
-    for i, dataset in enumerate(datasets):
+    for dataset in datasets:
         dataset["vectors"] = np.ones_like(dataset.points)
         result = dataset.glyph(progress_bar=True)
         assert result is not None

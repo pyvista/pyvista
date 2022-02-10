@@ -75,7 +75,7 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for key, p in _ALL_PLOTTERS.items():
+    for _, p in _ALL_PLOTTERS.items():
         if not p._closed:
             p.close()
         p.deep_clean()

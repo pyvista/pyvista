@@ -350,7 +350,7 @@ def render_figures(
         images = []
         figures = pyvista.plotting._ALL_PLOTTERS
 
-        for j, (address, plotter) in enumerate(figures.items()):
+        for j, (_, plotter) in enumerate(figures.items()):
             if hasattr(plotter, '_gif_filename'):
                 image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
                 shutil.move(plotter._gif_filename, image_file.filename)
@@ -489,7 +489,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # generate output restructuredtext
     total_lines = []
-    for j, (code_piece, images) in enumerate(results):
+    for _, (code_piece, images) in enumerate(results):
         if options['include-source']:
             if is_doctest:
                 lines = ['', *code_piece.splitlines()]
@@ -534,7 +534,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     # copy image files to builder's output directory, if necessary
     Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
-    for code_piece, images in results:
+    for _, images in results:
         for image in images:
             destimg = os.path.join(dest_dir, image.basename)
             if image.filename != destimg:

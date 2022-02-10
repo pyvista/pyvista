@@ -657,7 +657,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
     zf = zipfile.ZipFile(sceneFileName, mode='w')
 
     try:
-        for dirName, subdirList, fileList in os.walk(output_dir):
+        for dirName, _, fileList in os.walk(output_dir):
             for fname in fileList:
                 fullPath = os.path.join(dirName, fname)
                 relPath = f'{sceneName}/{os.path.relpath(fullPath, output_dir)}'
