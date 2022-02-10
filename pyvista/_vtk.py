@@ -333,6 +333,7 @@ if VTK9:
         vtkImageExtractComponents,
         vtkImageFlip,
         vtkRTAnalyticSource,
+        vtkImageThreshold,
     )
     from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
     from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
