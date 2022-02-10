@@ -145,7 +145,7 @@ def test_multi_block_set_get_ers():
     # Make sure the rect grid was moved up
     assert isinstance(multi[0], RectilinearGrid)
     assert multi.get_block_name(0) == 'rect'
-    assert multi.get_block_name(2) == None
+    assert multi.get_block_name(2) is None
     # test del by name
     del multi['uni']
     assert multi.n_blocks == 4

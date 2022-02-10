@@ -368,7 +368,7 @@ def test_pvdreader_no_time_group():
     assert len(reader.active_datasets) == 2
     for i, dataset in enumerate(reader.active_datasets):
         assert dataset.time == 0.0
-        assert dataset.group == None
+        assert dataset.group is None
         assert dataset.part == i
 
 
