@@ -1,15 +1,7 @@
 [flake8]
 exclude = .git,__pycache__,build,dist,doc/examples,doc/_build,pyvista/**/__init__.py,pyvista/__init__.py
 ignore =
-    # closing bracket does not match indentation of opening bracket’s line
-    E123
-    # whitespace before ':'
-    E203,
-    # line break before binary operator
-    W503,
-    # Missing docstring in *
-    D10,
-    # line length too lon
+    # line length too long
     E501,
     # do not assign a lambda expression, use a def
     E731,
