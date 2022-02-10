@@ -4343,7 +4343,12 @@ class DataSetFilters:
     def tessellate(self, progress_bar=False):
         """Tessellate a mesh.
 
-        This filter tessellate a mesh.
+        This filter approximates nonlinear FEM-like elements with linear
+        simplices. The output mesh will have geometry and any fields specified
+        as attributes in the input mesh's point data. The attribute's copy
+        flags are honored, except for normals.
+        
+        For more details see `vtkTessellatorFilter <https://vtk.org/doc/nightly/html/classvtkTessellatorFilter.html#details>`_.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
