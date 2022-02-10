@@ -409,7 +409,7 @@ class Camera(_vtk.vtkCamera):
     def clipping_range(self, points):
         """Set the clipping planes."""
         if points[0] > points[1]:
-            raise ValueError(f'Near point must be lower than the far point.')
+            raise ValueError('Near point must be lower than the far point.')
         self.SetClippingRange(points[0], points[1])
 
     @property

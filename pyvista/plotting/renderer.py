@@ -553,7 +553,7 @@ class Renderer(_vtk.vtkRenderer):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                f"VTK is missing vtkRenderingContextOpenGL2. Try installing " "VTK v9.1.0 or newer."
+                "VTK is missing vtkRenderingContextOpenGL2. Try installing " "VTK v9.1.0 or newer."
             )
         self._charts.add_chart(chart, *charts)
 
