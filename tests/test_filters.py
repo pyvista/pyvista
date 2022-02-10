@@ -1451,6 +1451,41 @@ def test_median_smooth_outlier():
                           volume_outlier_smoothed.point_data['point_data'])
 
 
+def test_image_dilate_erode_output_type():
+    point_data = np.zeros((10,10,10))
+    point_data[4,4,4] = 1
+    volume = pyvista.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilate_erode = volume.image_dilate_erode()
+    assert isinstance(volume_dilate_erode, pyvista.UniformGrid)
+    volume_dilate_erode = volume.image_dilate_erode(scalars='point_data')
+    assert isinstance(volume_dilate_erode, pyvista.UniformGrid)
+
+
+def test_image_dilate_erode_dilation():
+    point_data = np.zeros((10,10,10))
+    point_data[4,4,4] = 1
+    point_data_dilated = point_data.copy()
+    point_data_dilated[3:6,3:6,4] = 1  # "activate" all voxels within diameter 3 around (4,4,4)
+    point_data_dilated[3:6,4,3:6] = 1
+    point_data_dilated[4,3:6,3:6] = 1
+    volume = pyvista.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilated = volume.image_dilate_erode()  # default is binary dilation
+    assert np.array_equal(volume_dilated.point_data['point_data'],
+                          point_data_dilated.flatten(order='F'))
+
+def test_image_dilate_erode_erosion():
+    point_data = np.zeros((10,10,10))
+    point_data[4,4,4] = 1
+    point_data_eroded = np.zeros((10,10,10))
+    volume = pyvista.UniformGrid(dims=(10,10,10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_eroded = volume.image_dilate_erode(0,1)  # binary erosion
+    assert np.array_equal(volume_eroded.point_data['point_data'],
+                          point_data_eroded.flatten(order='F'))
+
+
 def test_image_threshold_output_type():
     threshold = 10  # 'random' value
     volume = examples.load_uniform()
