@@ -30,7 +30,7 @@ def plot(
     jupyter_backend=None,
     return_viewer=False,
     return_cpos=False,
-    jupyter_kwargs={},
+    jupyter_kwargs=None,
     theme=None,
     hidden_line_removal=None,
     anti_aliasing=None,
@@ -194,6 +194,9 @@ def plot(
 
     if anti_aliasing is not None:
         theme.antialiasing = anti_aliasing
+
+    if jupyter_kwargs is None:
+        jupyter_kwargs = {}
 
     # undocumented kwarg used within pytest to run a function before closing
     before_close_callback = kwargs.pop('before_close_callback', None)

@@ -1870,7 +1870,7 @@ class WidgetHelper:
         if not hasattr(self, "button_widgets"):
             self.button_widgets = []
 
-        def create_button(color1, color2, color3, dims=[size, size, 1]):
+        def create_button(color1, color2, color3, dims=(size, size, 1)):
             color1 = np.array(parse_color(color1)) * 255
             color2 = np.array(parse_color(color2)) * 255
             color3 = np.array(parse_color(color3)) * 255

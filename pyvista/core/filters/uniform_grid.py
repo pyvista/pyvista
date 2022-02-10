@@ -64,7 +64,7 @@ class UniformGridFilters(DataSetFilters):
         return _get_output(alg)
 
     def median_smooth(
-        self, kernel_size=[3, 3, 3], scalars=None, preference='points', progress_bar=False
+        self, kernel_size=(3, 3, 3), scalars=None, preference='points', progress_bar=False
     ):
         """Smooth data using a median filter.
 
