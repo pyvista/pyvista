@@ -16,7 +16,7 @@ except ImportError:
 
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.csv'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.csv'))
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
 

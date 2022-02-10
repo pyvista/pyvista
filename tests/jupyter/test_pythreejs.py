@@ -22,7 +22,7 @@ def test_set_jupyter_backend_ipygany():
 
 
 def test_export_to_html(cube, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.html'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.html'))
 
     pl = pyvista.Plotter()
     pl.add_mesh(cube)

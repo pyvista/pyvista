@@ -83,7 +83,7 @@ def test_read(tmpdir, use_pathlib):
         obj = fileio.read(filename, attrs={'DebugOn': None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.npy'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
     arr = np.random.rand(10, 10)
     np.save(filename, arr)
     with pytest.raises(IOError):

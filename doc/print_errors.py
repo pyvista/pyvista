@@ -30,4 +30,4 @@ if os.path.isfile(error_file):
 else:
     print(f'build_errors.txt not found at {my_path}')
 
-print(f'Sphinx Reported no warnings\n\n')
+print('Sphinx Reported no warnings\n\n')

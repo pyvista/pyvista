@@ -403,7 +403,7 @@ def test_save(sphere, extension, binary, tmpdir):
 @pytest.mark.parametrize('as_str', [True, False])
 @pytest.mark.parametrize('ndim', [3, 4])
 def test_save_ply_texture_array(sphere, ndim, as_str, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.ply'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
 
     texture = np.ones((sphere.n_points, ndim), np.uint8)
     texture[:, 2] = np.arange(sphere.n_points)[::-1]
@@ -420,7 +420,7 @@ def test_save_ply_texture_array(sphere, ndim, as_str, tmpdir):
 
 @pytest.mark.parametrize('as_str', [True, False])
 def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.ply'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
 
     texture = np.ones((sphere.n_points, 3), np.float32)
     with pytest.raises(ValueError, match='Invalid datatype'):

@@ -175,7 +175,7 @@ def test_import_gltf():
 
 @skip_not_vtk9
 def test_export_gltf(tmpdir, sphere, airplane):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.gltf'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.gltf'))
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, smooth_shading=True)

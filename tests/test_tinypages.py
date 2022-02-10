@@ -55,7 +55,7 @@ def test_tinypages(tmpdir):
     assert not plot_file(10, 0, 0).exists()
 
     # verify external file generated figure
-    cone_file = html_dir / f'plot_cone_00_00.png'
+    cone_file = html_dir / 'plot_cone_00_00.png'
     assert cone_file.exists()
 
     html_contents = (html_dir / 'some_plots.html').read_bytes()
