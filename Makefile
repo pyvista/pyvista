@@ -61,3 +61,8 @@ lint:
 isort:
 	@echo "Formatting with isort"
 	isort .
+
+format:
+	@echo "Formatting"
+	black .
+	isort .
