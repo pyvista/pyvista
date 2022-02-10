@@ -424,7 +424,7 @@ html_theme_options = {
         },
         {
             "name": "Contributing",
-            "url": "https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md",
+            "url": "https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst",
             "icon": "fa fa-gavel fa-fw",
         },
         {

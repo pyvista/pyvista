@@ -602,6 +602,52 @@ def test_reflection():
         transformations.reflection([0, 0, 0])
 
 
+def test_merge(sphere, cube, datasets):
+    with pytest.raises(TypeError, match="Expected a sequence"):
+        pyvista.merge(None)
+
+    with pytest.raises(ValueError, match="Expected at least one"):
+        pyvista.merge([])
+
+    with pytest.raises(TypeError, match="Expected pyvista.DataSet"):
+        pyvista.merge([None, sphere])
+
+    # check polydata
+    merged_poly = pyvista.merge([sphere, cube])
+    assert isinstance(merged_poly, pyvista.PolyData)
+    assert merged_poly.n_points == sphere.n_points + cube.n_points
+
+    merged = pyvista.merge([sphere, sphere], merge_points=True)
+    assert merged.n_points == sphere.n_points
+
+    merged = pyvista.merge([sphere, sphere], merge_points=False)
+    assert merged.n_points == sphere.n_points*2
+
+    # check unstructured
+    merged_ugrid = pyvista.merge(datasets, merge_points=False)
+    assert isinstance(merged_ugrid, pyvista.UnstructuredGrid)
+    assert merged_ugrid.n_points == sum([ds.n_points for ds in datasets])
+    # check main has priority
+    sphere_a = sphere.copy()
+    sphere_b = sphere.copy()
+    sphere_a['data'] = np.zeros(sphere_a.n_points)
+    sphere_b['data'] = np.ones(sphere_a.n_points)
+
+    merged = pyvista.merge(
+        [sphere_a, sphere_b],
+        merge_points=True,
+        main_has_priority=False,
+    )
+    assert np.allclose(merged['data'], 1)
+
+    merged = pyvista.merge(
+        [sphere_a, sphere_b],
+        merge_points=True,
+        main_has_priority=True,
+    )
+    assert np.allclose(merged['data'], 0)
+
+
 def test_color():
     name, name2 = "blue", "b"
     i_rgba, f_rgba = (0, 0, 255, 255), (0.0, 0.0, 1.0, 1.0)
