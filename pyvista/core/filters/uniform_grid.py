@@ -176,7 +176,7 @@ class UniformGridFilters(DataSetFilters):
             Dilate value in the dataset. Default: ``1``.
 
         erode_value : int or float, optional
-            The value in the dataset that will get eroded. Default: ``0``.
+            Erode value in the dataset. Default: ``0``.
 
         kernel_size : list(int) or tuple(int), optional
             Length 3 iterable of ints: ``(xsize, ysize, zsize)``.
