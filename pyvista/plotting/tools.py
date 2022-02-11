@@ -4,11 +4,13 @@ from enum import Enum
 import os
 import platform
 from subprocess import PIPE, Popen
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.utilities import PyvistaDeprecationWarning
 
 from .colors import Color
 
@@ -501,6 +503,9 @@ def parse_color(color, opacity=None, default_color=None):
     (0.4, 0.3, 0.4, 1.0)
 
     """
+    # Deprecated on v0.34.0, estimated removal on v0.37.0
+    warnings.warn("The usage of `parse_color` is deprecated in favor of the new `Color` class.",
+                  PyvistaDeprecationWarning)
     has_opacity = opacity is not None
     if isinstance(color, (list, tuple, np.ndarray)):
         has_opacity |= len(color) == 4

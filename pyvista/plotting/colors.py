@@ -170,11 +170,13 @@ from __future__ import (
 )
 
 from typing import Optional, Sequence, Tuple, Union
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista.utilities import PyvistaDeprecationWarning
 
 color3i = Union[Tuple[int, int, int], Sequence[int], np.ndarray]
 color4i = Union[Tuple[int, int, int, int], Sequence[int], np.ndarray]
@@ -504,7 +506,7 @@ class Color:
             val = int(Color.strip_hex_prefix(val), 16)
         elif np.issubdtype(np.asarray(val).dtype, np.floating) and np.ndim(val) == 0:
             # From float
-            val = int(255 * val)  # int(255 * val + 0.5)
+            val = int(255 * val + 0.5)
         if np.issubdtype(np.asarray(val).dtype, np.integer) and np.ndim(val) == 0 and 0 <= val <= 255:
             # From integer
             return int(val)
@@ -782,6 +784,9 @@ class Color:
 
 def hex_to_rgb(h):
     """Return 0 to 1 rgb from a hex list or tuple."""
+    # Deprecated on v0.34.0, estimated removal on v0.37.0
+    warnings.warn("The usage of `hex_to_rgb` is deprecated in favor of the new `Color` class.",
+                  PyvistaDeprecationWarning)
     return Color(h).f_rgb
 
 
@@ -800,6 +805,9 @@ def string_to_rgb(string):
         w: white
 
     """
+    # Deprecated on v0.34.0, estimated removal on v0.37.0
+    warnings.warn("The usage of `string_to_rgb` is deprecated in favor of the new `Color` class.",
+                  PyvistaDeprecationWarning)
     return Color(string).f_rgb
 
 
