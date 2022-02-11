@@ -165,10 +165,13 @@ tab:cyan
 
 """
 
-from __future__ import annotations  # Necessary for autodoc_type_aliases to recognize the 'color_like' alias
+from __future__ import (
+    annotations,  # Necessary for autodoc_type_aliases to recognize the 'color_like' alias
+)
+
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
-from typing import Optional, Sequence, Tuple, Union
 
 import pyvista
 from pyvista import _vtk
