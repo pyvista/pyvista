@@ -17,9 +17,6 @@ from .lights import Light
 from .camera import Camera
 from .axes import Axes
 
-# Overwrite default docstring, as sphinx is not able to capture the docstring beneath the definition somehow?
-color_like.__doc__ = """Any object convertible to a :class:`Color`."""
-
 
 class QtDeprecationError(Exception):
     """Depreciation Error for features that moved to `pyvistaqt`."""

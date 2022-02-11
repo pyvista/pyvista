@@ -183,7 +183,9 @@ color_like = Union[
     Sequence[int], Sequence[float], np.ndarray, str, "Color",
     _vtk.vtkColor3ub
 ]
-"""Any object convertible to a :class:`Color`."""
+# Overwrite default docstring, as sphinx is not able to capture the docstring
+# when it is put beneath the definition somehow?
+color_like.__doc__ = """Any object convertible to a :class:`Color`."""
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -499,7 +501,7 @@ class Color:
             val = int(Color.strip_hex_prefix(val), 16)
         elif np.issubdtype(np.asarray(val).dtype, np.floating) and np.ndim(val) == 0:
             # From float
-            val = int(255 * val + 0.5)
+            val = int(255 * val)  # int(255 * val + 0.5)
         if np.issubdtype(np.asarray(val).dtype, np.integer) and np.ndim(val) == 0 and 0 <= val <= 255:
             # From integer
             return int(val)
