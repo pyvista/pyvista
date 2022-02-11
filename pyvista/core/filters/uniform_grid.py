@@ -187,7 +187,7 @@ class UniformGridFilters(DataSetFilters):
             Name of scalars to process. Defaults to currently active scalars.
 
         preference : str, optional
-            When scalars is specified, this is the preferred array
+            When scalars are specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
