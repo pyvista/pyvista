@@ -332,11 +332,12 @@ if VTK9:
         vtkImageDifference,
         vtkImageExtractComponents,
         vtkImageFlip,
-        vtkRTAnalyticSource,
         vtkImageThreshold,
+        vtkRTAnalyticSource,
     )
     from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
     from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
+    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
     from vtkmodules.vtkInteractionWidgets import (
         vtkBoxWidget,
         vtkButtonWidget,
@@ -351,7 +352,6 @@ if VTK9:
         vtkSplineWidget,
         vtkTexturedButtonRepresentation2D,
     )
-    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
     from vtkmodules.vtkPythonContext2D import vtkPythonItem
     from vtkmodules.vtkRenderingAnnotation import (
         vtkAnnotatedCubeActor,
