@@ -484,7 +484,7 @@ def vtk_points(points, deep=True, force_float=False):
     if points.ndim == 1:
         points = points.reshape(-1, 3)
     elif points.ndim > 2:
-        raise ValueError('Dimension of ``points`` should be 1 or 2, not ' f'{points.ndim}')
+        raise ValueError(f'Dimension of ``points`` should be 1 or 2, not {points.ndim}')
 
     # verify shape
     if points.shape[1] != 3:
@@ -1282,7 +1282,7 @@ class ProgressMonitor:
         """Pass signal to custom interrupt handler."""
         self._interrupt_signal_received = (sig, frame)
         logging.debug(
-            'SIGINT received. Delaying KeyboardInterrupt until ' 'VTK algorithm finishes.'
+            'SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.'
         )
 
     def __call__(self, obj, event, *args):

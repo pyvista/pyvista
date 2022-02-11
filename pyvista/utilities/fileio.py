@@ -578,7 +578,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
         if len(q_filenames) > 0:
             if len(q_filenames) > 1:
                 raise RuntimeError(
-                    'Reading of multiple q files is not supported ' 'with this version of VTK.'
+                    'Reading of multiple q files is not supported with this version of VTK.'
                 )
             reader.SetQFileName(q_filenames[0])
 
@@ -649,7 +649,7 @@ def read_meshio(filename, file_format=None):
     try:
         import meshio
     except ImportError:  # pragma: no cover
-        raise ImportError("To use this feature install meshio with:\n\n" "pip install meshio")
+        raise ImportError("To use this feature install meshio with:\n\npip install meshio")
 
     # Make sure relative paths will work
     filename = os.path.abspath(os.path.expanduser(str(filename)))
@@ -690,7 +690,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     try:
         import meshio
     except ImportError:  # pragma: no cover
-        raise ImportError("To use this feature install meshio with:\n\n" "pip install meshio")
+        raise ImportError("To use this feature install meshio with:\n\npip install meshio")
 
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type

@@ -176,9 +176,8 @@ class RenderWindowInteractor:
                 # Not in viewport or already an active chart found (in case they overlap), so disable interaction
                 renderer._charts.toggle_interaction(False)
 
-        self._context_style.SetScene(
-            scene
-        )  # Set scene to interact with or reset it to stop interaction (otherwise crash)
+        # Set scene to interact with or reset it to stop interaction (otherwise crash)
+        self._context_style.SetScene(scene)
         if scene is None and self._style == "Context":
             # Switch back to previous interactor style
             self._style = self._prev_style
@@ -664,7 +663,7 @@ class RenderWindowInteractor:
         # Note: This is only available in VTK 9+
         if not self.initialized:
             raise RuntimeError(
-                'Render window interactor must be initialized ' 'before processing events.'
+                'Render window interactor must be initialized before processing events.'
             )
         self.interactor.ProcessEvents()
 

@@ -126,7 +126,7 @@ class Renderers:
             if groups is not None:
                 if not isinstance(groups, collections.abc.Sequence):
                     raise TypeError(
-                        '"groups" should be a list or tuple, not ' f'{type(groups).__name__}.'
+                        f'"groups" should be a list or tuple, not {type(groups).__name__}.'
                     )
                 for group in groups:
                     if not isinstance(group, collections.abc.Sequence):
@@ -151,7 +151,7 @@ class Renderers:
                         for j in range(norm_group[1], norm_group[3] + 1):
                             if self.loc_to_group((i, j)) is not None:
                                 raise ValueError(
-                                    'Groups cannot overlap. Overlap ' f'found at position {(i, j)}.'
+                                    f'Groups cannot overlap. Overlap found at position {(i, j)}.'
                                 )
                     self.groups = np.concatenate(
                         (self.groups, np.array([norm_group], dtype=int)), axis=0

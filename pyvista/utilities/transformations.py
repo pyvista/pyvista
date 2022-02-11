@@ -187,7 +187,7 @@ def reflection(normal, point=None):
     if point is not None:
         point = np.asarray(point)
         if point.shape != (3,):
-            raise ValueError('Plane reference point must ' 'be a 3-length array-like.')
+            raise ValueError('Plane reference point must be a 3-length array-like.')
 
     # check and normalize
     normal_norm = np.linalg.norm(normal)

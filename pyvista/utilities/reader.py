@@ -625,7 +625,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             value = self.reader.GetTimeValue()
         except AttributeError as err:  # pragma: no cover
             raise AttributeError(
-                "Inspecting active time value only supported " "for vtk versions >9.1.0"
+                "Inspecting active time value only supported for vtk versions >9.1.0"
             ) from err
         return value
 

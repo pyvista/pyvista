@@ -115,7 +115,7 @@ class PickingHelper:
         if mesh is None:
             if not hasattr(self, 'mesh') or self.mesh is None:
                 raise AttributeError(
-                    'Input a mesh into the Plotter class first or ' 'or set it in this function'
+                    'Input a mesh into the Plotter class first or or set it in this function'
                 )
             mesh = self.mesh
         self_ = weakref.ref(self)

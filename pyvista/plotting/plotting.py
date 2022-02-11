@@ -62,7 +62,7 @@ if KILL_DISPLAY:  # pragma: no cover
         X11 = ctypes.CDLL("libX11.so")
         X11.XCloseDisplay.argtypes = [ctypes.c_void_p]
     except OSError:
-        warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\n' 'Probably using wayland')
+        warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\nProbably using wayland')
         KILL_DISPLAY = False
 
 
@@ -468,7 +468,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise RuntimeError('Support for glTF requires VTK v9 or newer')
 
         if not hasattr(self, "ren_win"):
-            raise RuntimeError('This plotter has been closed and is unable to export ' 'the scene.')
+            raise RuntimeError('This plotter has been closed and is unable to export the scene.')
 
         from vtkmodules.vtkIOExport import vtkGLTFExporter
 
@@ -2771,10 +2771,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.SetBlendModeToMinimumIntensity()
         else:
             raise ValueError(
-                f'Blending mode \'{blending}\' invalid. '
-                + 'Please choose one '
-                + 'of \'additive\', '
-                '\'composite\', \'minimum\' or ' + '\'maximum\'.'
+                f'Blending mode {blending!r} invalid. '
+                'Please choose one of "additive", '
+                '"composite", "minimum" or "maximum".'
             )
         self.mapper.Update()
 
@@ -2950,7 +2949,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for view_index in views:
                 self.renderers[view_index].camera = self.renderers[views[0]].camera
         else:
-            raise TypeError('Expected type is int, list or tuple:' f'{type(views)} is given')
+            raise TypeError(f'Expected type is int, list or tuple: {type(views)} is given')
 
     def unlink_views(self, views=None):
         """Unlink the views' cameras.
@@ -2975,7 +2974,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
         else:
-            raise TypeError('Expected type is None, int, list or tuple:' f'{type(views)} is given')
+            raise TypeError(f'Expected type is None, int, list or tuple: {type(views)} is given')
 
     @wraps(ScalarBars.add_scalar_bar)
     def add_scalar_bar(self, *args, **kwargs):
@@ -2989,7 +2988,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mapper = kwargs.get('mapper', None)
         if mapper is None:
             if not hasattr(self, 'mapper') or self.mapper is None:
-                raise AttributeError('Mapper does not exist.  ' 'Add a mesh with scalars first.')
+                raise AttributeError('Mapper does not exist.  Add a mesh with scalars first.')
             kwargs['mapper'] = self.mapper
 
         # title can be the first and only arg
@@ -3963,7 +3962,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 elif filename.suffix not in SUPPORTED_FORMATS:
                     raise ValueError(
                         f'Unsupported extension {filename.suffix}\n'
-                        + f'Must be one of the following: {SUPPORTED_FORMATS}'
+                        f'Must be one of the following: {SUPPORTED_FORMATS}'
                     )
                 filename = os.path.abspath(os.path.expanduser(str(filename)))
                 Image.fromarray(image).save(filename)
@@ -4104,7 +4103,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if self._first_time and not self.off_screen:
             raise RuntimeError(
-                "Nothing to screenshot - call .show first or " "use the off_screen argument"
+                "Nothing to screenshot - call .show first or use the off_screen argument"
             )
 
         # if off screen, show has not been called and we must render
@@ -4970,7 +4969,7 @@ class Plotter(BasePlotter):
         # handle plotter notebook
         if jupyter_backend and not self.notebook:
             warnings.warn(
-                'Not within a jupyter notebook environment.\n' 'Ignoring ``jupyter_backend``.'
+                'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.'
             )
 
         if self.notebook:

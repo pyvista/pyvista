@@ -888,7 +888,7 @@ class WidgetHelper:
         """
         if not isinstance(data, list):
             raise TypeError(
-                "The `data` parameter must be a list " "but {} was given : ", type(data)
+                f"The `data` parameter must be a list but {type(data).__name__} was passed instead"
             )
         n_states = len(data)
         if n_states == 0:
@@ -1090,7 +1090,7 @@ class WidgetHelper:
         if style is not None:
             if not isinstance(style, str):
                 raise TypeError(
-                    "Expected type for ``style`` is str but" f" {type(style)} was given."
+                    f"Expected type for ``style`` is str but {type(style).__name__} was given."
                 )
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
@@ -1123,7 +1123,7 @@ class WidgetHelper:
         slider_widget.On()
         if not isinstance(event_type, str):
             raise TypeError(
-                "Expected type for `event_type` is str: " f"{type(event_type)} was given."
+                f"Expected type for `event_type` is str: {type(event_type)} was given."
             )
         if event_type == 'start':
             slider_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _the_callback)

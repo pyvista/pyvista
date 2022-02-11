@@ -124,10 +124,8 @@ def make_mapper(mapper_class):
                         title = '{}-{}'.format(title, component)
                     else:
                         raise ValueError(
-                            (
-                                'component must be nonnegative and less than the '
-                                'dimensionality of the scalars array: {}'
-                            ).format(scalars.shape[1])
+                            'Component must be nonnegative and less than the '
+                            f'dimensionality of the scalars array: {scalars.shape[1]}'
                         )
                 else:
                     scalars = scalars.ravel()

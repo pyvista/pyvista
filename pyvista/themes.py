@@ -1429,7 +1429,7 @@ class DefaultTheme(_ThemeConfig):
     @camera.setter
     def camera(self, camera):
         if not isinstance(camera, dict):
-            raise TypeError('Expected ``camera`` to be a dict, not ' f'{type(camera).__name__}.')
+            raise TypeError(f'Expected ``camera`` to be a dict, not {type(camera).__name__}.')
 
         if 'position' not in camera:
             raise KeyError('Expected the "position" key in the camera dict.')
@@ -1667,7 +1667,7 @@ class DefaultTheme(_ThemeConfig):
     @colorbar_orientation.setter
     def colorbar_orientation(self, colorbar_orientation: str):
         if colorbar_orientation not in ['vertical', 'horizontal']:
-            raise ValueError('Colorbar orientation must be either "vertical" or ' '"horizontal"')
+            raise ValueError('Colorbar orientation must be either "vertical" or "horizontal"')
         self._colorbar_orientation = colorbar_orientation
 
     @property
@@ -2145,7 +2145,7 @@ class DefaultTheme(_ThemeConfig):
 
         if not isinstance(theme, DefaultTheme):
             raise TypeError(
-                '``theme`` must be a pyvista theme like ' '``pyvista.themes.DefaultTheme``.'
+                '``theme`` must be a pyvista theme like ``pyvista.themes.DefaultTheme``.'
             )
 
         for attr_name in theme.__slots__:
@@ -2180,7 +2180,7 @@ class DefaultTheme(_ThemeConfig):
         Deprecated in favor of ``jupyter_backend``.
         """
         warnings.warn(
-            'use_ipyvtk is deprecated.  Please use ' '``pyvista.global_theme.jupyter_backend``',
+            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
             DeprecationWarning,
         )
         return self.jupyter_backend == 'ipyvtklink'
@@ -2188,7 +2188,7 @@ class DefaultTheme(_ThemeConfig):
     @use_ipyvtk.setter
     def use_ipyvtk(self, value):  # pragma: no cover
         warnings.warn(
-            'use_ipyvtk is deprecated.  Please use ' '``pyvista.global_theme.jupyter_backend``',
+            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
             DeprecationWarning,
         )
 

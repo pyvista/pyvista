@@ -1402,7 +1402,7 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     elif isinstance(kind, int) and kind not in range(5):
         raise ValueError(f'Invalid Platonic solid index "{kind}".')
     elif not isinstance(kind, int):
-        raise ValueError('Invalid Platonic solid index type ' f'"{type(kind).__name__}".')
+        raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
     check_valid_vector(center, 'center')
 
     solid = _vtk.vtkPlatonicSolidSource()
