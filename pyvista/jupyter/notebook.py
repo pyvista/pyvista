@@ -58,7 +58,7 @@ def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, 
             return show_ipygany(plotter, return_viewer, **kwargs)
     except ImportError as e:
         warnings.warn(
-            f'Failed to use notebook backend: \n\n{e}\n\n' 'Falling back to a static output.'
+            f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.'
         )
 
     return show_static_image(plotter, screenshot, return_viewer)

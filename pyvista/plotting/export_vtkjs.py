@@ -497,9 +497,8 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     arrayLocation = ''
 
                     if scalarVisibility:
-                        if (
-                            scalarMode == 3 or scalarMode == 1
-                        ):  # VTK_SCALAR_MODE_USE_POINT_FIELD_DATA or VTK_SCALAR_MODE_USE_POINT_DATA
+                        if scalarMode == 3 or scalarMode == 1:
+                            # VTK_SCALAR_MODE_USE_POINT_FIELD_DATA or VTK_SCALAR_MODE_USE_POINT_DATA
                             dsAttrs = dataset.GetPointData()
                             arrayLocation = 'pointData'
                         # VTK_SCALAR_MODE_USE_CELL_FIELD_DATA or VTK_SCALAR_MODE_USE_CELL_DATA

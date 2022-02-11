@@ -184,7 +184,7 @@ for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz)
     error = np.abs(freq2 - freq1) / freq1 * 100.0
     print(
         f"freq. {ind + 1:1}: {freq1:8.1f} kHz,"
-        + f" expected: {freq2:8.1f} kHz, error: {error:.2f} %"
+        f" expected: {freq2:8.1f} kHz, error: {error:.2f} %"
     )
 
 ###############################################################################
@@ -240,7 +240,7 @@ for i in range(2):
         current_index = 4 * i + j
         vector = f"eigenmode_{current_index:02}"
         p.add_text(
-            f"mode {current_index}," + f" freq. {computed_freqs_kHz[current_index]:.1f} kHz",
+            f"mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz",
             font_size=10,
         )
         p.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector)

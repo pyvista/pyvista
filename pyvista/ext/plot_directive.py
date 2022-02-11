@@ -398,7 +398,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         if "caption" in options:
             if caption:  # pragma: no cover
                 raise ValueError(
-                    'Caption specified in both content and options.' ' Please remove ambiguity.'
+                    'Caption specified in both content and options. Please remove ambiguity.'
                 )
             # Use caption option
             caption = options["caption"]

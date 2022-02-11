@@ -100,7 +100,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         raise DeprecationError(
-            '``boolean_cut`` has been deprecated.  ' 'Please use ``boolean_difference``.'
+            '``boolean_cut`` has been deprecated.  Please use ``boolean_difference``.'
         )
 
     def boolean_add(self, *args, **kwargs):  # pragma: no cover
@@ -565,7 +565,7 @@ class PolyDataFilters(DataSetFilters):
             curvefilter.SetCurvatureTypeToMinimum()
         else:
             raise ValueError(
-                '``curv_type`` must be either "Mean", ' '"Gaussian", "Maximum", or "Minimum".'
+                '``curv_type`` must be either "Mean", "Gaussian", "Maximum", or "Minimum".'
             )
         _update_alg(curvefilter, progress_bar, 'Computing Curvature')
 
@@ -1555,7 +1555,7 @@ class PolyDataFilters(DataSetFilters):
         >>> assert edges.n_cells == 0  # doctest:+SKIP
 
         """
-        logging.warning('pyvista.PolyData.fill_holes is known to segfault. ' 'Use at your own risk')
+        logging.warning('pyvista.PolyData.fill_holes is known to segfault. Use at your own risk')
         alg = _vtk.vtkFillHolesFilter()
         alg.SetHoleSize(hole_size)
         alg.SetInputData(self)

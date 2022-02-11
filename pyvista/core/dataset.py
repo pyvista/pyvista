@@ -89,8 +89,9 @@ class ActiveArrayInfo:
 
     def __eq__(self, other):
         """Check equivalence (useful for serialize/deserialize tests)."""
-        return self.name == other.name and int(self.association.value) == int(
-            other.association.value
+        return (
+            self.name == other.name
+            and int(self.association.value) == int(other.association.value)
         )
 
 
@@ -461,7 +462,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `DataSet.vectors` is deprecated. " "Use `DataSet.active_vectors` instead.",
+            "Use of `DataSet.vectors` is deprecated. Use `DataSet.active_vectors` instead.",
             PyvistaDeprecationWarning,
         )
         return self.active_vectors
@@ -494,7 +495,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `DataSet.t_coords` is deprecated. " "Use `DataSet.active_t_coords` instead.",
+            "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
             PyvistaDeprecationWarning,
         )
         return self.active_t_coords
@@ -502,7 +503,7 @@ class DataSet(DataSetFilters, DataObject):
     @t_coords.setter
     def t_coords(self, t_coords: np.ndarray):  # pragma: no cover
         warnings.warn(
-            "Use of `DataSet.t_coords` is deprecated. " "Use `DataSet.active_t_coords` instead.",
+            "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
             PyvistaDeprecationWarning,
         )
         self.active_t_coords = t_coords  # type: ignore
@@ -1410,7 +1411,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `point_arrays` is deprecated. " "Use `point_data` instead.",
+            "Use of `point_arrays` is deprecated. Use `point_data` instead.",
             PyvistaDeprecationWarning,
         )
         return self.point_data
@@ -1463,7 +1464,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `clear_point_arrays` is deprecated. " "Use `clear_point_data` instead.",
+            "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
             PyvistaDeprecationWarning,
         )
         self.clear_point_data()
@@ -1495,7 +1496,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `clear_cell_arrays` is deprecated. " "Use `clear_cell_data` instead.",
+            "Use of `clear_cell_arrays` is deprecated. Use `clear_cell_data` instead.",
             PyvistaDeprecationWarning,
         )
         self.clear_cell_data()
@@ -1512,7 +1513,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `clear_arrays` is deprecated. " "Use `clear_data` instead.",
+            "Use of `clear_arrays` is deprecated. Use `clear_data` instead.",
             PyvistaDeprecationWarning,
         )
         self.clear_data()
@@ -1547,7 +1548,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `cell_arrays` is deprecated. " "Use `cell_data` instead.",
+            "Use of `cell_arrays` is deprecated. Use `cell_data` instead.",
             PyvistaDeprecationWarning,
         )
         return self.cell_data

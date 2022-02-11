@@ -117,7 +117,7 @@ class PointSet(DataSet):
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError(
-                    'Boolean array size must match the ' f'number of cells ({self.n_cells}'
+                    f'Boolean array size must match the number of cells ({self.n_cells})'
                 )
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
@@ -478,7 +478,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
                     raise ValueError(
-                        'No other arguments should be set when first ' 'parameter is a string'
+                        'No other arguments should be set when first parameter is a string'
                     )
             self._from_file(var_inp, force_ext=force_ext)  # is filename
 
@@ -489,7 +489,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
                     raise ValueError(
-                        'No other arguments should be set when first ' 'parameter is a PolyData'
+                        'No other arguments should be set when first parameter is a PolyData'
                     )
             if deep:
                 self.deep_copy(var_inp)
@@ -719,7 +719,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             def __call__(self):
                 """Return a ``bool`` of self."""
                 warnings.warn(
-                    '``is_all_triangles`` is now property as of 0.32.0 and ' 'does not need ()',
+                    '``is_all_triangles`` is now property as of 0.32.0 and does not need ()',
                     DeprecationWarning,
                 )
                 return bool(self)
@@ -820,7 +820,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     def number_of_faces(self):  # pragma: no cover
         """Return the number of cells."""
         raise DeprecationError(
-            '``number_of_faces`` has been depreciated.  ' 'Please use ``n_faces``'
+            '``number_of_faces`` has been deprecated.  Please use ``n_faces``'
         )
 
     def save(self, filename, binary=True, texture=None):
@@ -909,7 +909,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
             if isinstance(texture, str):
                 if self[texture].dtype != np.uint8:
                     raise ValueError(
-                        f'Invalid datatype {self[texture].dtype} of ' f'texture array "{texture}"'
+                        f'Invalid datatype {self[texture].dtype} of texture array "{texture}"'
                     )
             elif isinstance(texture, np.ndarray):
                 if texture.dtype != np.uint8:
@@ -1976,7 +1976,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError(
-                    'Boolean array size must match the ' f'number of cells ({self.n_cells})'
+                    f'Boolean array size must match the number of cells ({self.n_cells})'
                 )
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
@@ -2025,7 +2025,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_points:
                 raise ValueError(
-                    'Boolean array size must match the ' f'number of points ({self.n_points})'
+                    f'Boolean array size must match the number of points ({self.n_points})'
                 )
         ghost_points = np.zeros(self.n_points, np.uint8)
         ghost_points[ind] = _vtk.vtkDataSetAttributes.HIDDENPOINT

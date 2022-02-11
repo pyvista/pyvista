@@ -440,7 +440,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             )
         if t_coords.shape[1] != 2:
             raise ValueError(
-                'Texture coordinates must only have 2 components,' f' not ({t_coords.shape[1]})'
+                f'Texture coordinates must only have 2 components, not ({t_coords.shape[1]})'
             )
         vtkarr = _vtk.numpyTovtkDataArray(t_coords, name='Texture Coordinates')
         self.SetTCoords(vtkarr)
@@ -456,7 +456,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         warnings.warn(
-            "Use of `active_texture_name` is deprecated. " "Use `active_t_coords_name` instead.",
+            "Use of `active_texture_name` is deprecated. Use `active_t_coords_name` instead.",
             PyvistaDeprecationWarning,
         )
         return self.active_t_coords_name
@@ -730,7 +730,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         n_comp = vtk_arr.GetNumberOfComponents()
         if n_comp != 3:
-            raise ValueError('Vector array should contain 3 components, got ' f'{n_comp}')
+            raise ValueError(f'Vector array should contain 3 components, got {n_comp}')
 
         # check if there are current vectors, if so, we need to keep
         # this array around since setting active vectors will remove
@@ -1238,7 +1238,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 f'Number of normals ({normals.shape[0]}) must match number of points ({valid_length})'
             )
         if normals.shape[1] != 3:
-            raise ValueError('Normals must have exactly 3 components,' f' not ({normals.shape[1]})')
+            raise ValueError(f'Normals must have exactly 3 components, not ({normals.shape[1]})')
 
         vtkarr = _vtk.numpyTovtkDataArray(normals, name='Normals')
         self.SetNormals(vtkarr)

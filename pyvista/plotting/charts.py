@@ -1062,12 +1062,8 @@ class _Chart(DocSubs):
         Resize this chart such that it always occupies the specified
         geometry (matching the specified location and size).
         """
-        (
-            r_w,
-            r_h,
-        ) = (
-            self._renderer.GetSize()
-        )  # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
+        r_w, r_h = self._renderer.GetSize()
+        # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
         _, _, c_w, c_h = self._geometry
         # Target size is calculated from specified normalized width and height and the renderer's current size
         t_w = self._size[0] * r_w

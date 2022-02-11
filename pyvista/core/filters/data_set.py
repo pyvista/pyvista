@@ -683,7 +683,7 @@ class DataSetFilters:
                 ax_index = label_to_index[axis.lower()]
             except KeyError:
                 raise ValueError(
-                    f'Axis ({axis!r}) not understood. ' f'Choose one of {labels}.'
+                    f'Axis ({axis!r}) not understood. Choose one of {labels}.'
                 ) from None
             ax_label = axis
         # get the locations along that axis
@@ -2715,9 +2715,8 @@ class DataSetFilters:
             raise TypeError('`target` must be a PyVista mesh type.')
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(self)  # Set the Input data (actually the source i.e. where to sample from)
-        alg.SetSourceData(
-            target
-        )  # Set the Source data (actually the target, i.e. where to sample to)
+        # Set the Source data (actually the target, i.e. where to sample to)
+        alg.SetSourceData(target)
         alg.SetPassCellArrays(pass_cell_arrays)
         alg.SetPassPointArrays(pass_point_data)
         alg.SetCategoricalData(categorical)

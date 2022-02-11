@@ -31,10 +31,10 @@ lin_pts = np.array(
         [-1, -1, 1],  # point 4
         [1, -1, 1],  # point 5
         [1, 1, 1],  # point 6
-        [-1, 1, 1],
+        [-1, 1, 1],  # point 7
     ],
     np.double,
-)  # point 7
+)
 
 # these are the "midside" points of a quad cell.  See the definition of a
 # vtkQuadraticHexahedron at:

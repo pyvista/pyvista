@@ -103,19 +103,10 @@ plotter.show()
 import numpy as np
 
 shape = (5, 4)  # 5 by 4 grid
-row_weights = [
-    0.5,
-    1,
-    1,
-    2,
-    1,
-]  # First row is half the size and fourth row is double the size of the other rows
-col_weights = [
-    1,
-    1,
-    0.5,
-    2,
-]  # Third column is half the size and fourth column is double size of the other columns
+# First row is half the size and fourth row is double the size of the other rows
+row_weights = [0.5, 1, 1, 2, 1]
+# Third column is half the size and fourth column is double size of the other columns
+col_weights = [1, 1, 0.5, 2]
 groups = [
     (0, np.s_[:]),  # First group spans over all columns of the first row (0)
     ([1, 3], 0),  # Second group spans over row 1-3 of the first column (0)

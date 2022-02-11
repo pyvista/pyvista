@@ -42,7 +42,7 @@ class Camera(_vtk.vtkCamera):
         if renderer:
             if not isinstance(renderer, pyvista.Renderer):
                 raise TypeError(
-                    'Camera only accepts a pyvista.Renderer or None as ' 'the ``renderer`` argument'
+                    'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
                 )
             self._renderer = proxy(renderer)
         else:
@@ -129,7 +129,7 @@ class Camera(_vtk.vtkCamera):
         """
         if self._renderer is None:
             raise AttributeError(
-                'Camera is must be associated with a renderer to ' 'reset its clipping range.'
+                'Camera is must be associated with a renderer to reset its clipping range.'
             )
         self._renderer.reset_camera_clipping_range()
 

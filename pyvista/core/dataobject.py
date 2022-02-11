@@ -297,7 +297,7 @@ class DataObject:
            Use :func:`DataObject.add_field_data` instead.
         """
         warnings.warn(
-            "Use of `clear_point_arrays` is deprecated. " "Use `clear_point_data` instead.",
+            "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
             PyvistaDeprecationWarning,
         )
         return self.clear_point_data()
@@ -361,7 +361,7 @@ class DataObject:
 
         """
         warnings.warn(
-            "Use of `field_arrays` is deprecated. " "Use `field_data` instead.",
+            "Use of `field_arrays` is deprecated. Use `field_data` instead.",
             PyvistaDeprecationWarning,
         )
         return self.field_data
@@ -398,7 +398,7 @@ class DataObject:
 
         """
         warnings.warn(
-            "Use of `clear_field_arrays` is deprecated. " "Use `clear_field_data` instead.",
+            "Use of `clear_field_arrays` is deprecated. Use `clear_field_data` instead.",
             PyvistaDeprecationWarning,
         )
         self.field_data

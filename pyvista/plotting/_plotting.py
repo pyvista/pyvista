@@ -160,7 +160,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
         else:
             if scalars.shape[0] != opacity.shape[0]:
                 raise ValueError(
-                    "Opacity array and scalars array must have the same number " "of elements."
+                    "Opacity array and scalars array must have the same number of elements."
                 )
     elif isinstance(opacity, (np.ndarray, list, tuple)):
         opacity = np.array(opacity)

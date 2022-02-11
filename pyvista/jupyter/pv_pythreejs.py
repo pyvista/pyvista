@@ -94,7 +94,7 @@ def extract_surface_mesh(obj):
         mesh = pv.wrap(obj)
         if not pv.is_pyvista_dataset(mesh):
             raise TypeError(
-                f'Object type ({type(mesh)}) cannot be converted to ' 'a pyvista dataset'
+                f'Object type ({type(mesh)}) cannot be converted to a pyvista dataset'
             )
     else:
         mesh = obj
@@ -156,7 +156,7 @@ def cast_to_min_size(ind, max_index):
         ind = ind.astype(np.uint32, copy=False)
     else:
         raise ValueError(
-            'pythreejs does not support a maximum index more than ' f'{np.iinfo(np.uint32).max}'
+            f'pythreejs does not support a maximum index more than {np.iinfo(np.uint32).max}'
         )
     return tjs.BufferAttribute(array=ind, normalized=False)
 

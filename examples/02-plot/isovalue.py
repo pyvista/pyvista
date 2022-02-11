@@ -20,9 +20,7 @@ values = np.linspace(5, 150, num=25)
 
 ###############################################################################
 # Now let's create an initial isosurface that we can plot and move
-surface = vol.contour(
-    [values[0]],
-)
+surface = vol.contour(values[:1])
 
 ###############################################################################
 # Precompute the surfaces
