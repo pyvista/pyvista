@@ -74,8 +74,8 @@ HIGH_VARIANCE_TESTS = {
     'test_add_title',
     'test_opacity_by_array_direct',  # VTK regression 9.0.1 --> 9.1.0
     'test_import_gltf',  # image cache created with 9.0.20210612.dev0
-    'test_export_gltf',
-}  # image cache created with 9.0.20210612.dev0
+    'test_export_gltf',  # image cache created with 9.0.20210612.dev0
+}
 VER_IMAGE_REGRESSION_ERROR = 1000
 VER_IMAGE_REGRESSION_WARNING = 1000
 
@@ -1021,7 +1021,7 @@ def test_clear(sphere):
 
 
 def test_plot_texture():
-    """ "Test adding a texture to a plot"""
+    """Test adding a texture to a plot"""
     globe = examples.load_globe()
     texture = examples.load_globe_texture()
     plotter = pyvista.Plotter()
@@ -1030,7 +1030,7 @@ def test_plot_texture():
 
 
 def test_plot_texture_alone(tmpdir):
-    """ "Test adding a texture to a plot"""
+    """Test adding a texture to a plot"""
     path = str(tmpdir.mkdir("tmpdir"))
     image = Image.new('RGB', (10, 10), color='blue')
     filename = os.path.join(path, 'tmp.jpg')
@@ -1041,7 +1041,7 @@ def test_plot_texture_alone(tmpdir):
 
 
 def test_plot_texture_associated():
-    """ "Test adding a texture to a plot"""
+    """Test adding a texture to a plot"""
     globe = examples.load_globe()
     plotter = pyvista.Plotter()
     plotter.add_mesh(globe, texture=True)
@@ -1049,7 +1049,7 @@ def test_plot_texture_associated():
 
 
 def test_read_texture_from_numpy():
-    """ "Test adding a texture to a plot"""
+    """Test adding a texture to a plot"""
     globe = examples.load_globe()
     texture = pyvista.numpy_to_texture(imageio.imread(examples.mapfile))
     plotter = pyvista.Plotter()
@@ -1058,7 +1058,7 @@ def test_read_texture_from_numpy():
 
 
 def test_plot_rgb():
-    """ "Test adding a texture to a plot"""
+    """Test adding a texture to a plot"""
     cube = pyvista.Cube()
     cube.clear_data()
     x_face_color = (255, 0, 0)

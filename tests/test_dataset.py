@@ -522,9 +522,7 @@ def active_component_consistency_check(grid, component_type, field_association="
     vtk_field_association = field_association.capitalize()
 
     pv_arr = getattr(grid, "active_" + component_type)
-    vtk_arr = getattr(
-        getattr(grid, "Get" + vtk_field_association + "Data")(), "Get" + vtk_component_type
-    )()
+    vtk_arr = getattr(getattr(grid, f"Get{vtk_field_association}Data")(), f"Get{vtk_component_type}")()
 
     assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
 

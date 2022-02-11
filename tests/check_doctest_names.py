@@ -170,7 +170,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     total = len(doctests)
     fails = len(failures)
     passes = total - fails
-    print(f'\n{passes} passes and {fails} failures ' f'out of {total} total doctests.\n')
+    print(f'\n{passes} passes and {fails} failures out of {total} total doctests.\n')
     if not fails:
         return failures
 
