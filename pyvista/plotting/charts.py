@@ -1032,10 +1032,10 @@ class _Chart(DocSubs):
     def __init__(self, size=(1, 1), loc=(0, 0)):
         super().__init__()
         self._background = _ChartBackground(self)
-        self._x_axis = (
-            Axis()
-        )  # Not actually used for now (see note in Chart2D), but still present for the
-        self._y_axis = Axis()  # Charts.toggle_interaction code
+        self._x_axis = Axis()
+        self._y_axis = Axis()
+        # _x_axis and _y_axis are not actually used for now (see note in Chart2D),
+        # but still present for the Charts.toggle_interaction code
         self._z_axis = Axis()
         if size is not None:
             self.size = size

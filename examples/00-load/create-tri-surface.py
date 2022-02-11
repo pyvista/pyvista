@@ -86,12 +86,7 @@ polygon = pv.PolyData()
 # Make sure it has the same points as the mesh being triangulated
 polygon.points = points
 # But only has faces in regions to ignore
-polygon.faces = np.array(
-    [
-        len(ids),
-    ]
-    + ids
-)
+polygon.faces = np.insert(ids, 0, len(ids))
 
 surf = cloud.delaunay_2d(alpha=1.0, edge_source=polygon)
 

@@ -819,9 +819,7 @@ class PolyData(_vtk.vtkPolyData, PointSet, PolyDataFilters):
     @property
     def number_of_faces(self):  # pragma: no cover
         """Return the number of cells."""
-        raise DeprecationError(
-            '``number_of_faces`` has been deprecated.  Please use ``n_faces``'
-        )
+        raise DeprecationError('``number_of_faces`` has been deprecated.  Please use ``n_faces``')
 
     def save(self, filename, binary=True, texture=None):
         """Write a surface mesh to disk.

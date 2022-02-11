@@ -46,9 +46,7 @@ def pyvista_polydata_to_polymesh(obj):
     if not pv.is_pyvista_dataset(obj):  # pragma: no cover
         mesh = pv.wrap(obj)
         if not pv.is_pyvista_dataset(mesh):
-            raise TypeError(
-                f'Object type ({type(mesh)}) cannot be converted to a pyvista dataset'
-            )
+            raise TypeError(f'Object type ({type(mesh)}) cannot be converted to a pyvista dataset')
     else:
         mesh = obj
 

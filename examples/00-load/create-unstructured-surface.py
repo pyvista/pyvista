@@ -68,9 +68,8 @@ grid = pv.UnstructuredGrid(offset, cells, cell_type, points)
 # simplified dictionary interface. This automatically calculates the cell array with types
 # and offsets. Note that for mixing with additional cell types, just the appropriate key needs to be
 # added to the dictionary.
-cells_hex = np.arange(16).reshape(
-    [2, 8]
-)  # = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
+cells_hex = np.arange(16).reshape([2, 8])
+# = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
 grid = pv.UnstructuredGrid({vtk.VTK_HEXAHEDRON: cells_hex}, points)
 
 # plot the grid (and suppress the camera position output)

@@ -470,7 +470,6 @@ if VTK9:
 
         return vtkSegYReader()
 
-
 else:  # pragma: no cover
 
     # maintain VTK 8.2 compatibility

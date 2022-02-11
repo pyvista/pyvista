@@ -182,10 +182,7 @@ computed_freqs_kHz, mode_indices = get_first_N_above_thresh(8, freqs / 1e3, thre
 print('found the following first unique eigenfrequencies:')
 for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz)):
     error = np.abs(freq2 - freq1) / freq1 * 100.0
-    print(
-        f"freq. {ind + 1:1}: {freq1:8.1f} kHz,"
-        f" expected: {freq2:8.1f} kHz, error: {error:.2f} %"
-    )
+    print(f"freq. {ind + 1:1}: {freq1:8.1f} kHz, expected: {freq2:8.1f} kHz, error: {error:.2f} %")
 
 ###############################################################################
 # Now, let's display a mode on a mesh of the cube.
