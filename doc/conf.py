@@ -72,7 +72,8 @@ extensions = [
     "sphinx_panels",
     "pyvista.ext.plot_directive",
     "pyvista.ext.coverage",
-    "numpydoc"
+    "numpydoc",
+    "sphinx.ext.viewcode",
 ]
 
 # Configuration of pyvista.ext.coverage
