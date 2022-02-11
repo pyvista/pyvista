@@ -1122,9 +1122,7 @@ class WidgetHelper:
             slider_widget.GetRepresentation().SetLabelFormat(fmt)
         slider_widget.On()
         if not isinstance(event_type, str):
-            raise TypeError(
-                f"Expected type for `event_type` is str: {type(event_type)} was given."
-            )
+            raise TypeError(f"Expected type for `event_type` is str: {type(event_type)} was given.")
         if event_type == 'start':
             slider_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _the_callback)
         elif event_type == 'end':

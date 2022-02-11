@@ -4925,24 +4925,24 @@ class Plotter(BasePlotter):
         elif interactive_update and auto_close:
             warnings.warn(
                 textwrap.dedent(
-                    """\
-                The plotter will close immediately automatically since ``auto_close=True``.
-                Either, do not specify ``auto_close``, or set it to ``False`` if you want to
-                interact with the plotter interactively.\
-                """
-                )
+                    """
+                    The plotter will close immediately automatically since ``auto_close=True``.
+                    Either, do not specify ``auto_close``, or set it to ``False`` if you want to
+                    interact with the plotter interactively.
+                    """
+                ).strip()
             )
         elif auto_close is None:
             auto_close = self._theme.auto_close
 
         if use_ipyvtk:
             txt = textwrap.dedent(
-                """\
-            use_ipyvtk is deprecated.  Set the backend
-            globally with ``pyvista.set_jupyter_backend("ipyvtklink"
-            or with ``backend="ipyvtklink"``)
-            """
-            )
+                """
+                use_ipyvtk is deprecated.  Set the backend
+                globally with ``pyvista.set_jupyter_backend("ipyvtklink")
+                or with ``backend="ipyvtklink"``
+                """
+            ).strip()
             from pyvista.core.errors import DeprecationError
 
             raise DeprecationError(txt)

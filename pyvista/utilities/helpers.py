@@ -1281,9 +1281,7 @@ class ProgressMonitor:
     def handler(self, sig, frame):
         """Pass signal to custom interrupt handler."""
         self._interrupt_signal_received = (sig, frame)
-        logging.debug(
-            'SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.'
-        )
+        logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
 
     def __call__(self, obj, event, *args):
         """Call progress update callback.
