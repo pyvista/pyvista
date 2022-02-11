@@ -167,7 +167,7 @@ class UniformGridFilters(DataSetFilters):
         image_dilate_erode will dilate one value and erode another. It uses an
         elliptical foot print, and only erodes/dilates on the boundary of the
         two values. The filter is restricted to the X, Y, and Z axes for now.
-        It can degenerate to a 2 or 1 dimensional filter by setting the kernel
+        It can degenerate to a 2 or 1-dimensional filter by setting the kernel
         size to 1 for a specific axis.
 
         Parameters
