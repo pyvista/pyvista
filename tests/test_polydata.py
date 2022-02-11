@@ -87,10 +87,10 @@ def test_init_from_arrays_with_vert():
 
     # mesh faces
     faces = np.hstack(
-        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]]  # quad  # triangle  # triangle
+        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]]  # [quad, triangle, triangle, vertex]
     ).astype(
         np.int8
-    )  # vertex
+    )
 
     mesh = pyvista.PolyData(vertices, faces)
     assert mesh.n_points == 6
@@ -759,8 +759,8 @@ def test_is_all_triangles():
 
     # mesh faces
     faces = np.hstack(
-        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]]  # square  # triangle
-    )  # triangle
+        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]]  # [square, triangle, triangle]
+    )
 
     mesh = pyvista.PolyData(vertices, faces)
     assert not mesh.is_all_triangles

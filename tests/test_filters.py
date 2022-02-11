@@ -153,13 +153,7 @@ def test_clip_box(datasets):
     result = dataset.clip_box(bounds=0.5, progress_bar=True)
     assert result.n_cells
     with pytest.raises(ValueError):
-        dataset.clip_box(
-            bounds=(
-                5,
-                6,
-            ),
-            progress_bar=True,
-        )
+        dataset.clip_box(bounds=(5, 6), progress_bar=True)
     # allow Sequence but not Iterable bounds
     with pytest.raises(TypeError):
         dataset.clip_box(bounds={5, 6, 7}, progress_bar=True)
@@ -1250,9 +1244,9 @@ def test_extract_points():
             [4, 6, 7, 11, 10],  # square
             [4, 8, 9, 13, 12],  # square
             [4, 9, 10, 14, 13],  # square
-            [4, 10, 11, 15, 14],
+            [4, 10, 11, 15, 14],  # square
         ]
-    )  # square
+    )
     # create pyvista object
     surf = pyvista.PolyData(vertices, faces)
     # extract sub-surface with adjacent cells
@@ -1329,10 +1323,10 @@ def test_extract_surface():
             [-1, -1, 1],  # node 4
             [1, -1, 1],  # node 5
             [1, 1, 1],  # node 6
-            [-1, 1, 1],
+            [-1, 1, 1],  # node 7
         ],
         np.double,
-    )  # node 7
+    )
 
     quad_pts = np.array(
         [

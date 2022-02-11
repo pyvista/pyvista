@@ -810,9 +810,7 @@ def test_grid_points():
     """Test the points methods on UniformGrid and RectilinearGrid"""
     # test creation of 2d grids
     x = y = range(3)
-    z = [
-        0,
-    ]
+    z = [0]
     xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
     points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
     grid = pyvista.UniformGrid()
