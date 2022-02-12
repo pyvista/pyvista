@@ -18,7 +18,7 @@ jobs:
           issue-message: 'Hi and welcome! Thanks for posting your first issue in the PyVista project! Someone from `@pyvista/developers` will chime in before too long. If your question is support related, we may transfer it to the [Discussions](https://github.com/pyvista/pyvista/discussions).'
           pr-message: >
             🚀 Thanks for opening your first pull request in PyVista! 🚀
-            Please make sure you read (skim 😉) our [Contributing Guide](https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md) and abide by our [Code of Conduct](https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md).
+            Please make sure you read (skim 😉) our [Contributing Guide](https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst) and abide by our [Code of Conduct](https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md).
 
             A few things to keep in mind:
               - Remember to run the tests locally to make debugging issues easier.
