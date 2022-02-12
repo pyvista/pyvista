@@ -1457,7 +1457,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         carr = self.GetCells()
         if _vtk.VTK9:
             return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
-        raise AttributeError('Install vtk>=9.0.0 for `cell_connectivity`\n'
+        raise VTKVersionError('Install vtk>=9.0.0 for `cell_connectivity`\n'
                              'Otherwise, use the legacy `cells` method')
 
     def linear_copy(self, deep=False):
@@ -1675,7 +1675,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
         """
         if not _vtk.VTK9:
-            raise AttributeError('VTK 9 or higher is required')
+            raise VTKVersionError('VTK 9 or higher is required')
         s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
         s2 = self.cell_data.keys()
         if not s1.issubset(s2):
@@ -2048,7 +2048,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     def __init__(self, *args, **kwargs):
         """Initialize the explicit structured grid."""
         if not _vtk.VTK9:
-            raise AttributeError('VTK 9 or higher is required')
+            raise VTKVersionError('VTK 9 or higher is required')
         super().__init__()
         n = len(args)
         if n == 1:

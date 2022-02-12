@@ -22,6 +22,7 @@ from pyvista.themes import DefaultTheme as _GlobalTheme  # hide this
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
 from pyvista.utilities.wrappers import _wrappers
+from pyvista.core.errors import VTKVersionError
 
 global_theme = _GlobalTheme()
 rcParams = _rcParams()  # raises DeprecationError when used
@@ -35,7 +36,7 @@ ID_TYPE = _get_vtk_id_type()
 
 # determine if using at least vtk 5.0.0
 if vtk_version_info.major < 5:
-    raise RuntimeError('VTK version must be 5.0 or greater.')
+    raise VTKVersionError('VTK version must be 5.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
 warnings.simplefilter(action='ignore', category=FutureWarning)
