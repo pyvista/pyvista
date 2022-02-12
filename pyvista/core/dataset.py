@@ -2469,7 +2469,7 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         int
-            VTK cell type. See <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>.
+            VTK cell type. See `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ .
 
         Examples
         --------
