@@ -89,9 +89,8 @@ class ActiveArrayInfo:
 
     def __eq__(self, other):
         """Check equivalence (useful for serialize/deserialize tests)."""
-        return self.name == other.name and int(self.association.value) == int(
-            other.association.value
-        )
+        same_association = int(self.association.value) == int(other.association.value)
+        return self.name == other.name and same_association
 
 
 @abstract_class
