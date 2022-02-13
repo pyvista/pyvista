@@ -12,7 +12,6 @@ the entire library.
 # Checking for VTK9 here even though 8.2 contains vtkmodules.  There
 # are enough idiosyncrasies to VTK 8.2, and supporting it would lead
 # to obscure code.
-from pyvista.core.errors import VTKVersionError
 
 try:
     from vtkmodules.vtkCommonCore import vtkVersion
@@ -547,5 +546,6 @@ def lazy_vtkCameraOrientationWidget():
     try:
         from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
     except ImportError:  # pragma: no cover
+        from pyvista.core.errors import VTKVersionError
         raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
     return vtkCameraOrientationWidget()
