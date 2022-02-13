@@ -51,8 +51,8 @@ class BackgroundRenderer(Renderer):
         origin = image_data.GetOrigin()
         extent = image_data.GetExtent()
         spacing = image_data.GetSpacing()
-        xc = origin[0] + 0.5*(extent[0] + extent[1]) * spacing[0]
-        yc = origin[1] + 0.5*(extent[2] + extent[3]) * spacing[1]
+        xc = origin[0] + 0.5 * (extent[0] + extent[1]) * spacing[0]
+        yc = origin[1] + 0.5 * (extent[2] + extent[3]) * spacing[1]
         yd = (extent[3] - extent[2] + 1) * spacing[1]
         dist = self.camera.distance
 
@@ -61,7 +61,7 @@ class BackgroundRenderer(Renderer):
         self.camera.focus = np.array([xc, yc, 0.0])
         self.camera.position = np.array([xc, yc, dist])
 
-        ratio = img_dim/np.array(self.parent.window_size)
+        ratio = img_dim / np.array(self.parent.window_size)
         scale_value = 1
         if ratio.max() > 1:
             # images are not scaled if larger than the window

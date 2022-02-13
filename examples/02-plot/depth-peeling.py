@@ -16,8 +16,7 @@ import pyvista as pv
 from pyvista import examples
 
 ###############################################################################
-centers = [(0, 0, 0), (1, 0, 0), (-1, 0, 0),
-           (0, 1, 0), (0, -1, 0)]
+centers = [(0, 0, 0), (1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0)]
 radii = [1, 0.5, 0.5, 0.5, 0.5]
 
 spheres = pv.MultiBlock()
@@ -38,9 +37,7 @@ p.add_text("Standard")
 p.add_mesh(spheres.copy(), **dargs)
 
 p.link_views()
-p.camera_position = [(11.7, 4.7, -4.33),
-                     (0.0, 0.0, 0.0),
-                     (0.3, 0.07, 0.9)]
+p.camera_position = [(11.7, 4.7, -4.33), (0.0, 0.0, 0.0), (0.3, 0.07, 0.9)]
 p.show()
 
 ###############################################################################
@@ -57,14 +54,12 @@ p.enable_depth_peeling(number_of_peels=4, occlusion_ratio=0)
 p.add_mesh(room, opacity=0.5, color="tan")
 p.add_text("Depth Peeling")
 
-p.subplot(0,1)
+p.subplot(0, 1)
 p.add_text("Standard")
 p.add_mesh(room.copy(), opacity=0.5, color="tan")
 
 p.link_views()
-p.camera_position = [(43.6, 49.5, 19.8),
-                     (0.0, 2.25, 0.0),
-                     (-0.57, 0.70, -0.42)]
+p.camera_position = [(43.6, 49.5, 19.8), (0.0, 2.25, 0.0), (-0.57, 0.70, -0.42)]
 
 p.show()
 
@@ -76,18 +71,16 @@ p.show()
 mesh = examples.download_brain().contour(5)
 cmap = "viridis_r"
 
-p = pv.Plotter(shape=(1,2), multi_samples=4)
+p = pv.Plotter(shape=(1, 2), multi_samples=4)
 
 p.add_mesh(mesh, opacity=0.5, cmap=cmap)
 p.enable_depth_peeling(10)
 p.add_text("Depth Peeling")
 
-p.subplot(0,1)
+p.subplot(0, 1)
 p.add_text("Standard")
 p.add_mesh(mesh.copy(), opacity=0.5, cmap=cmap)
 
 p.link_views()
-p.camera_position = [(418.3, 659., 53.8),
-                     (90.2, 111.5, 90.0),
-                     (0.03, 0.05, 1.0)]
+p.camera_position = [(418.3, 659.0, 53.8), (90.2, 111.5, 90.0), (0.03, 0.05, 1.0)]
 p.show()

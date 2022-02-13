@@ -13,8 +13,9 @@ from pyvista.core.filters.data_set import DataSetFilters
 class UniformGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
-    def gaussian_smooth(self, radius_factor=1.5, std_dev=2.,
-                        scalars=None, preference='points', progress_bar=False):
+    def gaussian_smooth(
+        self, radius_factor=1.5, std_dev=2.0, scalars=None, preference='points', progress_bar=False
+    ):
         """Smooth the data with a Gaussian kernel.
 
         Parameters
@@ -48,7 +49,9 @@ class UniformGridFilters(DataSetFilters):
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(
+            0, 0, 0, field.value, scalars
+        )  # args: (idx, port, connection, field, name)
         if isinstance(radius_factor, collections.abc.Iterable):
             alg.SetRadiusFactors(radius_factor)
         else:
@@ -60,8 +63,9 @@ class UniformGridFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Gaussian Smoothing')
         return _get_output(alg)
 
-    def median_smooth(self, kernel_size=[3,3,3],
-                      scalars=None, preference='points', progress_bar=False):
+    def median_smooth(
+        self, kernel_size=(3, 3, 3), scalars=None, preference='points', progress_bar=False
+    ):
         """Smooth data using a median filter.
 
         Parameters
@@ -95,7 +99,9 @@ class UniformGridFilters(DataSetFilters):
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(
+            0, 0, 0, field.value, scalars
+        )  # args: (idx, port, connection, field, name)
         alg.SetKernelSize(kernel_size[0], kernel_size[1], kernel_size[2])
         _update_alg(alg, progress_bar, 'Performing Median Smoothing')
         return _get_output(alg)
@@ -159,8 +165,15 @@ class UniformGridFilters(DataSetFilters):
         fixed.copy_meta_from(result)
         return fixed
 
-    def image_threshold(self, threshold, in_value=1, out_value=0,
-                        scalars=None, preference='points', progress_bar=False):
+    def image_threshold(
+        self,
+        threshold,
+        in_value=1,
+        out_value=0,
+        scalars=None,
+        preference='points',
+        progress_bar=False,
+    ):
         """Apply a threshold to scalar values in a uniform grid.
 
         If a single value is given for threshold, scalar values above or equal
@@ -224,11 +237,15 @@ class UniformGridFilters(DataSetFilters):
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(
+            0, 0, 0, field.value, scalars
+        )  # args: (idx, port, connection, field, name)
         # set the threshold(s) and mode
         if isinstance(threshold, (np.ndarray, collections.abc.Sequence)):
             if len(threshold) != 2:
-                raise ValueError(f'Threshold must be length one for a float value or two for min/max; not ({threshold}).')
+                raise ValueError(
+                    f'Threshold must be length one for a float value or two for min/max; not ({threshold}).'
+                )
             alg.ThresholdBetween(threshold[0], threshold[1])
         elif isinstance(threshold, collections.abc.Iterable):
             raise TypeError('Threshold must either be a single scalar or a sequence.')
