@@ -19,7 +19,6 @@ import scooby
 
 import pyvista
 from pyvista import _vtk
-from pyvista.core.errors import VTKVersionError
 from pyvista.utilities import (
     abstract_class,
     assert_empty_kwargs,
@@ -443,6 +442,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not _vtk.VTK9:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
             raise VTKVersionError('Support for glTF requires VTK v9 or newer')
 
         if not hasattr(self, "ren_win"):
