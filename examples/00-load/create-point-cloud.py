@@ -21,12 +21,12 @@ from pyvista import examples
 # that is available from our ``examples`` module. This however is no different
 # than creating a PyVista mesh with your own NumPy arrays of vertice locations.
 
+
 # Define some helpers - ignore these and use your own data!
 def generate_points(subset=0.02):
     """A helper to make a 3D NumPy array of points (n_points by 3)"""
     dataset = examples.download_lidar()
-    ids = np.random.randint(low=0, high=dataset.n_points-1,
-                            size=int(dataset.n_points * subset))
+    ids = np.random.randint(low=0, high=dataset.n_points - 1, size=int(dataset.n_points * subset))
     return dataset.points[ids]
 
 
@@ -62,7 +62,7 @@ point_cloud.plot(eye_dome_lighting=True)
 # Each element in this array will correspond to points at the same index:
 
 # Make data array using z-component of points array
-data = points[:,-1]
+data = points[:, -1]
 
 # Add that data to the mesh with the name "uniform dist"
 point_cloud["elevation"] = data
@@ -93,6 +93,7 @@ def compute_vectors(mesh):
     vectors = vectors / np.linalg.norm(vectors, axis=1)[:, None]
     return vectors
 
+
 vectors = compute_vectors(point_cloud)
 vectors[0:5, :]
 
@@ -104,12 +105,15 @@ point_cloud['vectors'] = vectors
 # Now we can make arrows using those vectors using the glyph filter
 # (see :ref:`glyph_example` for more details).
 
-arrows = point_cloud.glyph(orient='vectors', scale=False, factor=0.15,)
+arrows = point_cloud.glyph(
+    orient='vectors',
+    scale=False,
+    factor=0.15,
+)
 
 # Display the arrows
 plotter = pv.Plotter()
-plotter.add_mesh(point_cloud, color='maroon', point_size=10.,
-                 render_points_as_spheres=True)
+plotter.add_mesh(point_cloud, color='maroon', point_size=10.0, render_points_as_spheres=True)
 plotter.add_mesh(arrows, color='lightblue')
 # plotter.add_point_labels([point_cloud.center,], ['Center',],
 #                          point_color='yellow', point_size=20)

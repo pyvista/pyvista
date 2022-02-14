@@ -15,17 +15,18 @@ from pyvista import _vtk
 from .tools import parse_color
 
 
-#region Some metaclass wrapping magic
+# region Some metaclass wrapping magic
 # Note: these classes can be removed once VTK 9.2 is released.
 class _vtkWrapperMeta(type):
-
     def __init__(cls, clsname, bases, attrs):
         # Restore the signature of classes inheriting from _vtkWrapper
         # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
         sig = inspect.signature(cls.__init__)
         params = list(sig.parameters.values())
-        params.insert(len(params)-1 if params[-1].kind == inspect.Parameter.VAR_KEYWORD else len(params),
-                      inspect.Parameter("_wrap", inspect.Parameter.KEYWORD_ONLY, default=None))
+        params.insert(
+            len(params) - 1 if params[-1].kind == inspect.Parameter.VAR_KEYWORD else len(params),
+            inspect.Parameter("_wrap", inspect.Parameter.KEYWORD_ONLY, default=None),
+        )
         cls.__signature__ = sig.replace(parameters=params[1:])
         super().__init__(clsname, bases, attrs)
 
@@ -41,7 +42,6 @@ class _vtkWrapperMeta(type):
 
 
 class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
-
     def __getattribute__(self, item):
         unwrapped_attrs = ["_wrapped", "__class__", "__init__"]
         wrapped = super().__getattribute__("_wrapped")
@@ -58,9 +58,11 @@ class _vtkWrapper(object, metaclass=_vtkWrapperMeta):
             return super().__str__()
         else:
             return "Wrapped: " + self._wrapped.__str__()
-#endregion
 
-#region Documentation substitution
+
+# endregion
+
+# region Documentation substitution
 class DocSubs:
     """Helper class to easily substitute the docstrings of the listed member functions or properties."""
 
@@ -91,25 +93,31 @@ class DocSubs:
                 member.__doc__ = member.__doc__.format(**subs)
 
         # Secondly, register all members of this class that require substitutions in subclasses
-        setattr(cls, "_DOC_STORE", {**cls._DOC_STORE})  # Create copy of registered members so far
+        # Create copy of registered members so far
+        # TODO: B010
+        setattr(cls, "_DOC_STORE", {**cls._DOC_STORE})  # noqa: B010
         for member_name, member in cls.__dict__.items():
             if member.__doc__ and member.__doc__.startswith(cls._DOC_TAG):
                 # New method/property to register in this class (denoting their docstring should be
                 # substituted in subsequent child classes).
-                cls._DOC_STORE[member_name] = (member, member.__doc__[len(cls._DOC_TAG):])
+                cls._DOC_STORE[member_name] = (member, member.__doc__[len(cls._DOC_TAG) :])
                 # Overwrite original docstring to prevent doctest issues
                 member.__doc__ = """Docstring to be specialized in subclasses."""
 
     @staticmethod
     def _wrap_member(member):
         if callable(member):
+
             @wraps(member)
             def mem_sub(*args, **kwargs):
                 return member(*args, **kwargs)
+
         elif isinstance(member, property):
             mem_sub = property(member.fget, member.fset, member.fdel)
         else:
-            raise NotImplementedError("Members other than methods and properties are currently not supported.")
+            raise NotImplementedError(
+                "Members other than methods and properties are currently not supported."
+            )
         return mem_sub
 
 
@@ -131,7 +139,9 @@ def doc_subs(member):
         raise ValueError('`member` must be a callable.')
     member.__doc__ = DocSubs._DOC_TAG + member.__doc__
     return member
-#endregion
+
+
+# endregion
 
 
 class Pen(_vtkWrapper, _vtk.vtkPen):
@@ -173,7 +183,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         "--": {"id": _vtk.vtkPen.DASH_LINE, "descr": "Dashed"},
         ":": {"id": _vtk.vtkPen.DOT_LINE, "descr": "Dotted"},
         "-.": {"id": _vtk.vtkPen.DASH_DOT_LINE, "descr": "Dash-dot"},
-        "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"}
+        "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"},
     }
 
     def __init__(self, color="k", width=1, style="-"):
@@ -403,7 +413,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
     def _update_textureprops(self):
         # Interpolation: NEAREST = 0x01, LINEAR = 0x02
         # Stretch/repeat: STRETCH = 0x04, REPEAT = 0x08
-        self.SetTextureProperties(1+int(self._interpolate) + 4*(1+int(self._repeat)))
+        self.SetTextureProperties(1 + int(self._interpolate) + 4 * (1 + int(self._repeat)))
 
 
 class Axis(_vtkWrapper, _vtk.vtkAxis):
@@ -440,10 +450,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     """
 
-    BEHAVIORS = {
-        "auto": _vtk.vtkAxis.AUTO,
-        "fixed": _vtk.vtkAxis.FIXED
-    }
+    BEHAVIORS = {"auto": _vtk.vtkAxis.AUTO, "fixed": _vtk.vtkAxis.FIXED}
 
     def __init__(self, label="", range=None, grid=True):
         """Initialize a new Axis instance."""
@@ -971,9 +978,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 
 class _CustomContextItem(_vtk.vtkPythonItem):
-
     class ItemWrapper(object):
-
         def Initialize(self, item):
             # item is the _CustomContextItem subclass instance
             return True
@@ -984,7 +989,9 @@ class _CustomContextItem(_vtk.vtkPythonItem):
 
     def __init__(self):
         super().__init__()
-        self.SetPythonObject(_CustomContextItem.ItemWrapper())  # This will also call ItemWrapper.Initialize
+        self.SetPythonObject(
+            _CustomContextItem.ItemWrapper()
+        )  # This will also call ItemWrapper.Initialize
 
     def paint(self, painter):
         return True
@@ -1025,8 +1032,10 @@ class _Chart(DocSubs):
     def __init__(self, size=(1, 1), loc=(0, 0)):
         super().__init__()
         self._background = _ChartBackground(self)
-        self._x_axis = Axis()  # Not actually used for now (see note in Chart2D), but still present for the
-        self._y_axis = Axis()  # Charts.toggle_interaction code
+        self._x_axis = Axis()
+        self._y_axis = Axis()
+        # _x_axis and _y_axis are not actually used for now (see note in Chart2D),
+        # but still present for the Charts.toggle_interaction code
         self._z_axis = Axis()
         if size is not None:
             self.size = size
@@ -1053,7 +1062,8 @@ class _Chart(DocSubs):
         Resize this chart such that it always occupies the specified
         geometry (matching the specified location and size).
         """
-        r_w, r_h = self._renderer.GetSize()  # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
+        r_w, r_h = self._renderer.GetSize()
+        # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
         _, _, c_w, c_h = self._geometry
         # Target size is calculated from specified normalized width and height and the renderer's current size
         t_w = self._size[0] * r_w
@@ -1075,7 +1085,7 @@ class _Chart(DocSubs):
     def _is_within(self, pos):
         """Check whether the specified position (in pixels) lies within this chart's geometry."""
         l, b, w, h = self._geometry
-        return l <= pos[0] <= l+w and b <= pos[1] <= b+h
+        return l <= pos[0] <= l + w and b <= pos[1] <= b + h
 
     @property  # type: ignore
     @doc_subs
@@ -1338,8 +1348,15 @@ class _Chart(DocSubs):
         self.SetShowLegend(val)
 
     @doc_subs
-    def show(self, off_screen=None, full_screen=None, screenshot=None,
-             window_size=None, notebook=None, background='w'):
+    def show(
+        self,
+        off_screen=None,
+        full_screen=None,
+        screenshot=None,
+        window_size=None,
+        notebook=None,
+        background='w',
+    ):
         """Show this chart in a self contained plotter.
 
         Parameters
@@ -1399,13 +1416,12 @@ class _Chart(DocSubs):
         >>> chart.show()
 
         """
-        pl = pyvista.Plotter(window_size=window_size,
-                             notebook=notebook,
-                             off_screen=off_screen)
+        pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
         pl.background_color = background
         pl.add_chart(self)
-        return pl.show(screenshot=screenshot,
-                       full_screen=full_screen,
+        return pl.show(
+            screenshot=screenshot,
+            full_screen=full_screen,
         )
 
 
@@ -1625,71 +1641,244 @@ class _MultiCompPlot(_Plot):
     """
 
     COLOR_SCHEMES = {
-        "spectrum": {"id": _vtk.vtkColorSeries.SPECTRUM, "descr": "black, red, blue, green, purple, orange, brown"},
+        "spectrum": {
+            "id": _vtk.vtkColorSeries.SPECTRUM,
+            "descr": "black, red, blue, green, purple, orange, brown",
+        },
         "warm": {"id": _vtk.vtkColorSeries.WARM, "descr": "dark red → yellow"},
         "cool": {"id": _vtk.vtkColorSeries.COOL, "descr": "green → blue → purple"},
         "blues": {"id": _vtk.vtkColorSeries.BLUES, "descr": "Different shades of blue"},
         "wild_flower": {"id": _vtk.vtkColorSeries.WILD_FLOWER, "descr": "blue → purple → pink"},
         "citrus": {"id": _vtk.vtkColorSeries.CITRUS, "descr": "green → yellow → orange"},
-        "div_purple_orange11": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11, "descr": "dark brown → white → dark purple"},
-        "div_purple_orange10": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_10, "descr": "dark brown → white → dark purple"},
-        "div_purple_orange9": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_9, "descr": "brown → white → purple"},
-        "div_purple_orange8": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_8, "descr": "brown → white → purple"},
-        "div_purple_orange7": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_7, "descr": "brown → white → purple"},
-        "div_purple_orange6": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_6, "descr": "brown → white → purple"},
-        "div_purple_orange5": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_5, "descr": "orange → white → purple"},
-        "div_purple_orange4": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_4, "descr": "orange → white → purple"},
-        "div_purple_orange3": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_3, "descr": "orange → white → purple"},
-        "div_spectral11": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_11, "descr": "dark red → light yellow → dark blue"},
-        "div_spectral10": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_10, "descr": "dark red → light yellow → dark blue"},
-        "div_spectral9": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_9, "descr": "red → light yellow → blue"},
-        "div_spectral8": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_8, "descr": "red → light yellow → blue"},
-        "div_spectral7": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_7, "descr": "red → light yellow → blue"},
-        "div_spectral6": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_6, "descr": "red → light yellow → blue"},
-        "div_spectral5": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_5, "descr": "red → light yellow → blue"},
-        "div_spectral4": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_4, "descr": "red → light yellow → blue"},
-        "div_spectral3": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_3, "descr": "orange → light yellow → green"},
-        "div_brown_blue_green11": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_11, "descr": "dark brown → white → dark blue-green"},
-        "div_brown_blue_green10": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_10, "descr": "dark brown → white → dark blue-green"},
-        "div_brown_blue_green9": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_9, "descr": "brown → white → blue-green"},
-        "div_brown_blue_green8": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_8, "descr": "brown → white → blue-green"},
-        "div_brown_blue_green7": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_7, "descr": "brown → white → blue-green"},
-        "div_brown_blue_green6": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_6, "descr": "brown → white → blue-green"},
-        "div_brown_blue_green5": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_5, "descr": "brown → white → blue-green"},
-        "div_brown_blue_green4": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_4, "descr": "brown → white → blue-green"},
-        "div_brown_blue_green3": {"id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_3, "descr": "brown → white → blue-green"},
-        "seq_blue_green9": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_9, "descr": "light blue → dark green"},
-        "seq_blue_green8": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_8, "descr": "light blue → dark green"},
-        "seq_blue_green7": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_7, "descr": "light blue → dark green"},
-        "seq_blue_green6": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_6, "descr": "light blue → green"},
-        "seq_blue_green5": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_5, "descr": "light blue → green"},
-        "seq_blue_green4": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_4, "descr": "light blue → green"},
-        "seq_blue_green3": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_3, "descr": "light blue → green"},
-        "seq_yellow_orange_brown9": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_9, "descr": "light yellow → orange → dark brown"},
-        "seq_yellow_orange_brown8": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_8, "descr": "light yellow → orange → brown"},
-        "seq_yellow_orange_brown7": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_7, "descr": "light yellow → orange → brown"},
-        "seq_yellow_orange_brown6": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_6, "descr": "light yellow → orange → brown"},
-        "seq_yellow_orange_brown5": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_5, "descr": "light yellow → orange → brown"},
-        "seq_yellow_orange_brown4": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_4, "descr": "light yellow → orange"},
-        "seq_yellow_orange_brown3": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_3, "descr": "light yellow → orange"},
-        "seq_blue_purple9": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_9, "descr": "light blue → dark purple"},
-        "seq_blue_purple8": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_8, "descr": "light blue → purple"},
-        "seq_blue_purple7": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_7, "descr": "light blue → purple"},
-        "seq_blue_purple6": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_6, "descr": "light blue → purple"},
-        "seq_blue_purple5": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_5, "descr": "light blue → purple"},
-        "seq_blue_purple4": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_4, "descr": "light blue → purple"},
-        "seq_blue_purple3": {"id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_3, "descr": "light blue → purple"},
-        "qual_accent": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT, "descr": "pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, brown, gray"},
-        "qual_dark2": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2, "descr": "darker shade of qual_set2"},
-        "qual_set3": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3, "descr": "pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, pink, gray, purple, light green, yellow"},
-        "qual_set2": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2, "descr": "blue green, orange, purple, pink, green, yellow, brown, gray"},
-        "qual_set1": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET1, "descr": "red, blue, green, purple, orange, yellow, brown, pink, gray"},
-        "qual_pastel2": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL2, "descr": "pastel shade of qual_set2"},
-        "qual_pastel1": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL1, "descr": "pastel shade of qual_set1"},
-        "qual_paired": {"id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED, "descr": "light blue, blue, light green, green, light red, red, light orange, orange, light purple, purple, light yellow"},
-        "custom": {"id": _vtk.vtkColorSeries.CUSTOM, "descr": None}
+        "div_purple_orange11": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11,
+            "descr": "dark brown → white → dark purple",
+        },
+        "div_purple_orange10": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_10,
+            "descr": "dark brown → white → dark purple",
+        },
+        "div_purple_orange9": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_9,
+            "descr": "brown → white → purple",
+        },
+        "div_purple_orange8": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_8,
+            "descr": "brown → white → purple",
+        },
+        "div_purple_orange7": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_7,
+            "descr": "brown → white → purple",
+        },
+        "div_purple_orange6": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_6,
+            "descr": "brown → white → purple",
+        },
+        "div_purple_orange5": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_5,
+            "descr": "orange → white → purple",
+        },
+        "div_purple_orange4": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_4,
+            "descr": "orange → white → purple",
+        },
+        "div_purple_orange3": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_3,
+            "descr": "orange → white → purple",
+        },
+        "div_spectral11": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_11,
+            "descr": "dark red → light yellow → dark blue",
+        },
+        "div_spectral10": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_10,
+            "descr": "dark red → light yellow → dark blue",
+        },
+        "div_spectral9": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_9,
+            "descr": "red → light yellow → blue",
+        },
+        "div_spectral8": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_8,
+            "descr": "red → light yellow → blue",
+        },
+        "div_spectral7": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_7,
+            "descr": "red → light yellow → blue",
+        },
+        "div_spectral6": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_6,
+            "descr": "red → light yellow → blue",
+        },
+        "div_spectral5": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_5,
+            "descr": "red → light yellow → blue",
+        },
+        "div_spectral4": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_4,
+            "descr": "red → light yellow → blue",
+        },
+        "div_spectral3": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_3,
+            "descr": "orange → light yellow → green",
+        },
+        "div_brown_blue_green11": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_11,
+            "descr": "dark brown → white → dark blue-green",
+        },
+        "div_brown_blue_green10": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_10,
+            "descr": "dark brown → white → dark blue-green",
+        },
+        "div_brown_blue_green9": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_9,
+            "descr": "brown → white → blue-green",
+        },
+        "div_brown_blue_green8": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_8,
+            "descr": "brown → white → blue-green",
+        },
+        "div_brown_blue_green7": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_7,
+            "descr": "brown → white → blue-green",
+        },
+        "div_brown_blue_green6": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_6,
+            "descr": "brown → white → blue-green",
+        },
+        "div_brown_blue_green5": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_5,
+            "descr": "brown → white → blue-green",
+        },
+        "div_brown_blue_green4": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_4,
+            "descr": "brown → white → blue-green",
+        },
+        "div_brown_blue_green3": {
+            "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_3,
+            "descr": "brown → white → blue-green",
+        },
+        "seq_blue_green9": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_9,
+            "descr": "light blue → dark green",
+        },
+        "seq_blue_green8": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_8,
+            "descr": "light blue → dark green",
+        },
+        "seq_blue_green7": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_7,
+            "descr": "light blue → dark green",
+        },
+        "seq_blue_green6": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_6,
+            "descr": "light blue → green",
+        },
+        "seq_blue_green5": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_5,
+            "descr": "light blue → green",
+        },
+        "seq_blue_green4": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_4,
+            "descr": "light blue → green",
+        },
+        "seq_blue_green3": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_3,
+            "descr": "light blue → green",
+        },
+        "seq_yellow_orange_brown9": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_9,
+            "descr": "light yellow → orange → dark brown",
+        },
+        "seq_yellow_orange_brown8": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_8,
+            "descr": "light yellow → orange → brown",
+        },
+        "seq_yellow_orange_brown7": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_7,
+            "descr": "light yellow → orange → brown",
+        },
+        "seq_yellow_orange_brown6": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_6,
+            "descr": "light yellow → orange → brown",
+        },
+        "seq_yellow_orange_brown5": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_5,
+            "descr": "light yellow → orange → brown",
+        },
+        "seq_yellow_orange_brown4": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_4,
+            "descr": "light yellow → orange",
+        },
+        "seq_yellow_orange_brown3": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_3,
+            "descr": "light yellow → orange",
+        },
+        "seq_blue_purple9": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_9,
+            "descr": "light blue → dark purple",
+        },
+        "seq_blue_purple8": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_8,
+            "descr": "light blue → purple",
+        },
+        "seq_blue_purple7": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_7,
+            "descr": "light blue → purple",
+        },
+        "seq_blue_purple6": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_6,
+            "descr": "light blue → purple",
+        },
+        "seq_blue_purple5": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_5,
+            "descr": "light blue → purple",
+        },
+        "seq_blue_purple4": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_4,
+            "descr": "light blue → purple",
+        },
+        "seq_blue_purple3": {
+            "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_3,
+            "descr": "light blue → purple",
+        },
+        "qual_accent": {
+            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT,
+            "descr": "pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, brown, gray",
+        },
+        "qual_dark2": {
+            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2,
+            "descr": "darker shade of qual_set2",
+        },
+        "qual_set3": {
+            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3,
+            "descr": "pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, pink, gray, purple, light green, yellow",
+        },
+        "qual_set2": {
+            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2,
+            "descr": "blue green, orange, purple, pink, green, yellow, brown, gray",
+        },
+        "qual_set1": {
+            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET1,
+            "descr": "red, blue, green, purple, orange, yellow, brown, pink, gray",
+        },
+        "qual_pastel2": {
+            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL2,
+            "descr": "pastel shade of qual_set2",
+        },
+        "qual_pastel1": {
+            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL1,
+            "descr": "pastel shade of qual_set1",
+        },
+        "qual_paired": {
+            "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED,
+            "descr": "light blue, blue, light green, green, light red, red, light orange, orange, light purple, purple, light yellow",
+        },
+        "custom": {"id": _vtk.vtkColorSeries.CUSTOM, "descr": None},
     }
-    _SCHEME_NAMES = {scheme_info["id"]: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()}
+    _SCHEME_NAMES = {
+        scheme_info["id"]: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()
+    }
     DEFAULT_COLOR_SCHEME = "qual_accent"
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
@@ -1746,7 +1935,9 @@ class _MultiCompPlot(_Plot):
 
     @color_scheme.setter
     def color_scheme(self, val):
-        self._color_series.SetColorScheme(self.COLOR_SCHEMES.get(val, self.COLOR_SCHEMES["custom"])["id"])
+        self._color_series.SetColorScheme(
+            self.COLOR_SCHEMES.get(val, self.COLOR_SCHEMES["custom"])["id"]
+        )
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
         self.brush.color = self.colors[0]
 
@@ -1769,7 +1960,10 @@ class _MultiCompPlot(_Plot):
         >>> chart.show()
 
         """
-        return [self._from_c3ub(self._color_series.GetColor(i)) for i in range(self._color_series.GetNumberOfColors())]
+        return [
+            self._from_c3ub(self._color_series.GetColor(i))
+            for i in range(self._color_series.GetNumberOfColors())
+        ]
 
     @colors.setter
     def colors(self, val):
@@ -1784,11 +1978,15 @@ class _MultiCompPlot(_Plot):
                 self._color_series.SetNumberOfColors(len(val))
                 for i, color in enumerate(val):
                     self._color_series.SetColor(i, self._to_c3ub(parse_color(color)))
-                self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
+                self._color_series.BuildLookupTable(
+                    self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL
+                )
                 self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
             except ValueError as e:
                 self.color_scheme = self.DEFAULT_COLOR_SCHEME
-                raise ValueError("Invalid colors specified, falling back to default color scheme.") from e
+                raise ValueError(
+                    "Invalid colors specified, falling back to default color scheme."
+                ) from e
 
     @property  # type: ignore
     @doc_subs
@@ -1929,7 +2127,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
     _DOC_SUBS = {
         "plot_name": "2D line plot",
         "chart_init": "pyvista.Chart2D()",
-        "plot_init": "chart.line([0, 1, 2], [2, 1, 3])"
+        "plot_init": "chart.line([0, 1, 2], [2, 1, 3])",
     }
 
     def __init__(self, x, y, color="b", width=1.0, style="-", label=""):
@@ -2069,12 +2267,12 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         "+": {"id": _vtk.vtkPlotPoints.PLUS, "descr": "Plus"},
         "s": {"id": _vtk.vtkPlotPoints.SQUARE, "descr": "Square"},
         "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
-        "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"}
+        "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"},
     }
     _DOC_SUBS = {
         "plot_name": "2D scatter plot",
         "chart_init": "pyvista.Chart2D()",
-        "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])"
+        "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])",
     }
 
     def __init__(self, x, y, color="b", size=10, style="o", label=""):
@@ -2261,13 +2459,19 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
     _DOC_SUBS = {
         "plot_name": "area plot",
         "chart_init": "pyvista.Chart2D()",
-        "plot_init": "chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])"
+        "plot_init": "chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])",
     }
 
     def __init__(self, x, y1, y2=None, color="b", label=""):
         """Initialize a new 2D area plot instance."""
         super().__init__()
-        self._table = pyvista.Table({"x": np.empty(0, np.float32), "y1": np.empty(0, np.float32), "y2": np.empty(0, np.float32)})
+        self._table = pyvista.Table(
+            {
+                "x": np.empty(0, np.float32),
+                "y1": np.empty(0, np.float32),
+                "y2": np.empty(0, np.float32),
+            }
+        )
         self.SetInputData(self._table)
         self.SetInputArray(0, "x")
         self.SetInputArray(1, "y1")
@@ -2362,7 +2566,13 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         if len(x) > 0:
             if y2 is None:
                 y2 = np.zeros_like(x)
-            self._table.update({"x": np.array(x, copy=False), "y1": np.array(y1, copy=False), "y2": np.array(y2, copy=False)})
+            self._table.update(
+                {
+                    "x": np.array(x, copy=False),
+                    "y1": np.array(y1, copy=False),
+                    "y2": np.array(y2, copy=False),
+                }
+            )
             self.visible = True
         else:
             self.visible = False
@@ -2418,16 +2628,13 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
     """
 
-    ORIENTATIONS = {
-        "H": _vtk.vtkPlotBar.HORIZONTAL,
-        "V": _vtk.vtkPlotBar.VERTICAL
-    }
+    ORIENTATIONS = {"H": _vtk.vtkPlotBar.HORIZONTAL, "V": _vtk.vtkPlotBar.VERTICAL}
     _DOC_SUBS = {
         "plot_name": "bar plot",
         "chart_init": "pyvista.Chart2D()",
         "plot_init": "chart.bar([1, 2, 3], [2, 1, 3])",
         "multichart_init": "pyvista.Chart2D()",
-        "multiplot_init": "chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])"
+        "multiplot_init": "chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
     def __init__(self, x, y, color=None, orientation="V", label=None):
@@ -2439,7 +2646,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
         self.SetInputData(self._table, "x", "y0")
         for i in range(1, len(y)):
-            self.SetInputArray(i+1, f"y{i}")
+            self.SetInputArray(i + 1, f"y{i}")
         self.update(x, y)
 
         if len(y) > 1:
@@ -2447,7 +2654,9 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
             self.colors = color  # None will use default scheme
             self.labels = label
         else:
-            self.color = "b" if color is None else color  # Use blue bars by default in single component mode
+            self.color = (
+                "b" if color is None else color
+            )  # Use blue bars by default in single component mode
             self.label = label
         self.orientation = orientation
 
@@ -2550,7 +2759,9 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
             self._orientation = val
         except KeyError:
             formatted_orientations = "\", \"".join(self.ORIENTATIONS.keys())
-            raise ValueError(f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"")
+            raise ValueError(
+                f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\""
+            )
 
 
 class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
@@ -2607,7 +2818,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         "chart_init": "pyvista.Chart2D()",
         "plot_init": "chart.stack([0, 1, 2], [2, 1, 3])",
         "multichart_init": "pyvista.Chart2D()",
-        "multiplot_init": "chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])"
+        "multiplot_init": "chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])",
     }
 
     def __init__(self, x, ys, colors=None, labels=None):
@@ -2619,7 +2830,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         self._table = pyvista.Table({"x": np.empty(0, np.float32), **y_data})
         self.SetInputData(self._table, "x", "y0")
         for i in range(1, len(ys)):
-            self.SetInputArray(i+1, f"y{i}")
+            self.SetInputArray(i + 1, f"y{i}")
         self.update(x, ys)
 
         if len(ys) > 1:
@@ -2766,7 +2977,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         "line": LinePlot2D,
         "area": AreaPlot,
         "bar": BarPlot,
-        "stack": StackPlot
+        "stack": StackPlot,
     }
     _PLOT_CLASSES = {plot_class: plot_type for (plot_type, plot_class) in PLOT_TYPES.items()}
     _DOC_SUBS = {
@@ -2774,7 +2985,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         "chart_args": "",
         "chart_init": """
         >>> plot = chart.line([0, 1, 2], [2, 1, 3])""",
-        "chart_set_labels": 'plot.label = "My awesome plot"'
+        "chart_set_labels": 'plot.label = "My awesome plot"',
     }
 
     def __init__(self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True):
@@ -2787,7 +2998,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         # TODO: fix for above issue, once the VTK PR (!8618) is merged:
         #  self.Register(self._x_axis)
         #  self.Register(self._y_axis)
-        self._x_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.BOTTOM))  # of the script's execution (nonzero exit code)
+        self._x_axis = Axis(
+            _wrap=self.GetAxis(_vtk.vtkAxis.BOTTOM)
+        )  # of the script's execution (nonzero exit code)
         self._y_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.LEFT))
         self.x_label = x_label
         self.y_label = y_label
@@ -2846,7 +3059,11 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         color = None
         # Note: All colors, marker styles and line styles are sorted in decreasing order of length to be able to find
         # the largest match first (e.g. find 'darkred' and '--' first instead of 'red' and '-')
-        colors = sorted(itertools.chain(pyvista.hexcolors.keys(), pyvista.color_char_to_word.keys()), key=len, reverse=True)
+        colors = sorted(
+            itertools.chain(pyvista.hexcolors.keys(), pyvista.color_char_to_word.keys()),
+            key=len,
+            reverse=True,
+        )
         marker_styles = sorted(ScatterPlot2D.MARKER_STYLES.keys(), key=len, reverse=True)
         line_styles = sorted(Pen.LINE_STYLES.keys(), key=len, reverse=True)
         hex_pattern = "#[A-Fa-f0-9]{6}"
@@ -2867,7 +3084,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         for style in marker_styles[:-1]:  # Last style is empty string
             if style in fmt:
                 marker_style = style
-                fmt = fmt.replace(marker_style, "", 1)  # Remove found marker_style from format string
+                fmt = fmt.replace(
+                    marker_style, "", 1
+                )  # Remove found marker_style from format string
                 break
         # Extract line style from format string
         for style in line_styles[:-1]:  # Last style is empty string
@@ -3257,7 +3476,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         """
         plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
         for plot_type in plot_types:
-            plots = [*self._plots[plot_type]]  # Make a copy, as this list will be modified by remove_plot
+            plots = [
+                *self._plots[plot_type]
+            ]  # Make a copy, as this list will be modified by remove_plot
             for plot in plots:
                 self.remove_plot(plot)
 
@@ -3475,13 +3696,15 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         "chart_init": "pyvista.ChartBox([[0, 1, 1, 2, 3, 3, 4]])",
         "plot_init": "chart.plot",
         "multichart_init": "pyvista.ChartBox([[0, 1, 1, 2, 3, 4, 5], [0, 1, 2, 2, 3, 4, 5], [0, 1, 2, 3, 3, 4, 5], [0, 1, 2, 3, 4, 4, 5]])",
-        "multiplot_init": "chart.plot"
+        "multiplot_init": "chart.plot",
     }
 
     def __init__(self, data, colors=None, labels=None):
         """Initialize a new box plot instance."""
         super().__init__()
-        self._table = pyvista.Table({f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)})
+        self._table = pyvista.Table(
+            {f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)}
+        )
         self._quartiles = _vtk.vtkComputeQuartiles()
         self._quartiles.SetInputData(self._table)
         self.SetInputData(self._quartiles.GetOutput())
@@ -3587,7 +3810,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         "chart_name": "boxplot chart",
         "chart_args": "[[0, 1, 1, 2, 3, 3, 4]]",
         "chart_init": "",
-        "chart_set_labels": 'chart.plot.label = "Data label"'
+        "chart_set_labels": 'chart.plot.label = "Data label"',
     }
 
     def __init__(self, data, colors=None, labels=None):
@@ -3649,7 +3872,9 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
     @size.setter
     def size(self, val):
-        raise ValueError("Cannot set ChartBox geometry, it fills up the entire viewport by default.")
+        raise ValueError(
+            "Cannot set ChartBox geometry, it fills up the entire viewport by default."
+        )
 
     @property
     def loc(self):
@@ -3666,7 +3891,9 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
     @loc.setter
     def loc(self, val):
-        raise ValueError("Cannot set ChartBox geometry, it fills up the entire viewport by default.")
+        raise ValueError(
+            "Cannot set ChartBox geometry, it fills up the entire viewport by default."
+        )
 
 
 class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
@@ -3710,7 +3937,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         "chart_init": "pyvista.ChartPie([4, 3, 2, 1])",
         "plot_init": "chart.plot",
         "multichart_init": "pyvista.ChartPie([4, 3, 2, 1])",
-        "multiplot_init": "chart.plot"
+        "multiplot_init": "chart.plot",
     }
 
     def __init__(self, data, colors=None, labels=None):
@@ -3800,14 +4027,16 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         "chart_name": "pie chart",
         "chart_args": "[5, 4, 3, 2, 1]",
         "chart_init": "",
-        "chart_set_labels": 'chart.plot.labels = ["A", "B", "C", "D", "E"]'
+        "chart_set_labels": 'chart.plot.labels = ["A", "B", "C", "D", "E"]',
     }
 
     def __init__(self, data, colors=None, labels=None):
         """Initialize a new chart containing a pie plot."""
         super().__init__(None, None)
         self.AddPlot(0)  # We can't manually set a wrapped vtkPlotPie instance...
-        self._plot = PiePlot(data, colors, labels, _wrap=self.GetPlot(0))  # So we have to wrap the existing one
+        self._plot = PiePlot(
+            data, colors, labels, _wrap=self.GetPlot(0)
+        )  # So we have to wrap the existing one
         self.legend_visible = True
 
     def _render_event(self, *args, **kwargs):
@@ -3857,7 +4086,9 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
     @size.setter
     def size(self, val):
-        raise ValueError("Cannot set ChartPie geometry, it fills up the entire viewport by default.")
+        raise ValueError(
+            "Cannot set ChartPie geometry, it fills up the entire viewport by default."
+        )
 
     @property
     def loc(self):
@@ -3874,15 +4105,17 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
     @loc.setter
     def loc(self, val):
-        raise ValueError("Cannot set ChartPie geometry, it fills up the entire viewport by default.")
+        raise ValueError(
+            "Cannot set ChartPie geometry, it fills up the entire viewport by default."
+        )
 
 
-#region 3D charts
+# region 3D charts
 # A basic implementation of 3D line, scatter and volume plots, to be used in a 3D chart was provided in this section
 # but removed in commit 8ef8daea5d105e85f256d4e9af584aeea3c85040 of PR #1432. Unfortunately, these charts are much less
 # customisable than their 2D counterparts and they do not respect the enforced size/geometry constraints once you start
 # interacting with them.
-#endregion
+# endregion
 
 
 class ChartMPL(_vtk.vtkImageItem, _Chart):
@@ -3936,7 +4169,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         "chart_args": "",
         "chart_init": """
         >>> plots = chart.figure.axes[0].plot([0, 1, 2], [2, 1, 3])""",
-        "chart_set_labels": 'plots[0].label = "My awesome plot"'
+        "chart_set_labels": 'plots[0].label = "My awesome plot"',
     }
 
     def __init__(self, figure=None, size=(1, 1), loc=(0, 0)):
@@ -3952,7 +4185,9 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         if figure is None:
             figure, _ = plt.subplots()
         self._fig = figure
-        self._canvas = FigureCanvasAgg(self._fig)  # Switch backends and store reference to figure's canvas
+        self._canvas = FigureCanvasAgg(
+            self._fig
+        )  # Switch backends and store reference to figure's canvas
         # Make figure and axes fully transparent, as the background is already dealt with by self._background.
         self._fig.patch.set_alpha(0)
         for ax in self._fig.axes:
@@ -3994,14 +4229,14 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         r_w, r_h = self._renderer.GetSize()
         c_w, c_h = self._canvas.get_width_height()
         # Calculate target size from specified normalized width and height and the renderer's current size
-        t_w = self._size[0]*r_w
-        t_h = self._size[1]*r_h
+        t_w = self._size[0] * r_w
+        t_h = self._size[1] * r_h
         if c_w != t_w or c_h != t_h:
             # Mismatch between canvas size and target size, so resize figure:
             f_w = t_w / self._fig.dpi
             f_h = t_h / self._fig.dpi
             self._fig.set_size_inches(f_w, f_h)
-            self.position = (self._loc[0]*r_w, self._loc[1]*r_h)
+            self.position = (self._loc[0] * r_w, self._loc[1] * r_h)
 
     def _redraw(self, event=None):
         """Redraw the chart."""
@@ -4010,7 +4245,9 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             self._canvas.draw()
         else:
             # Called from draw_event callback
-            img = np.frombuffer(self._canvas.buffer_rgba(), dtype=np.uint8)  # Store figure data in numpy array
+            img = np.frombuffer(
+                self._canvas.buffer_rgba(), dtype=np.uint8
+            )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])
             img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
@@ -4023,8 +4260,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     @property
     def _geometry(self):
         r_w, r_h = self._renderer.GetSize()
-        t_w = self._size[0]*r_w
-        t_h = self._size[1]*r_h
+        t_w = self._size[0] * r_w
+        t_h = self._size[1] * r_h
         return (*self.position, t_w, t_h)
 
     @_geometry.setter

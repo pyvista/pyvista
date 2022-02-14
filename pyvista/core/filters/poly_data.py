@@ -66,8 +66,7 @@ class PolyDataFilters(DataSetFilters):
         edges = _get_output(featureEdges)
         orig_id = pyvista.point_array(edges, 'point_ind')
 
-        return np.in1d(poly_data.point_data['point_ind'], orig_id,
-                       assume_unique=True)
+        return np.in1d(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar=False):
         """Perform boolean operation."""
@@ -100,8 +99,9 @@ class PolyDataFilters(DataSetFilters):
            Use :func:`PolyDataFilters.boolean_difference` instead.
 
         """
-        raise DeprecationError('``boolean_cut`` has been deprecated.  '
-                               'Please use ``boolean_difference``.')
+        raise DeprecationError(
+            '``boolean_cut`` has been deprecated.  Please use ``boolean_difference``.'
+        )
 
     def boolean_add(self, *args, **kwargs):  # pragma: no cover
         """Merge two meshes together.
@@ -110,10 +110,9 @@ class PolyDataFilters(DataSetFilters):
            Use :func:`PolyDataFilters.merge` instead.
 
         """
-        raise DeprecationError('``boolean_add`` has been deprecated.  '
-                               'Please use ``merge``.')
+        raise DeprecationError('``boolean_add`` has been deprecated.  ' 'Please use ``merge``.')
 
-    def boolean_union(self, other_mesh, tolerance=1E-5, progress_bar=False):
+    def boolean_union(self, other_mesh, tolerance=1e-5, progress_bar=False):
         """Perform a boolean union operation on two meshes.
 
         Essentially, boolean union, difference, and intersection are
@@ -182,7 +181,7 @@ class PolyDataFilters(DataSetFilters):
         """
         return self._boolean('union', other_mesh, tolerance, progress_bar=progress_bar)
 
-    def boolean_intersection(self, other_mesh, tolerance=1E-5, progress_bar=False):
+    def boolean_intersection(self, other_mesh, tolerance=1e-5, progress_bar=False):
         """Perform a boolean intersection operation on two meshes.
 
         Essentially, boolean union, difference, and intersection are
@@ -251,7 +250,7 @@ class PolyDataFilters(DataSetFilters):
         """
         return self._boolean('intersection', other_mesh, tolerance, progress_bar=progress_bar)
 
-    def boolean_difference(self, other_mesh, tolerance=1E-5, progress_bar=False):
+    def boolean_difference(self, other_mesh, tolerance=1e-5, progress_bar=False):
         """Perform a boolean difference operation between two meshes.
 
         Essentially, boolean union, difference, and intersection are
@@ -336,8 +335,9 @@ class PolyDataFilters(DataSetFilters):
             ) from None
         return merged
 
-    def merge(self, dataset, merge_points=True, inplace=False,
-              main_has_priority=True, progress_bar=False):
+    def merge(
+        self, dataset, merge_points=True, inplace=False, main_has_priority=True, progress_bar=False
+    ):
         """Merge this mesh with one or more datasets.
 
         .. note::
@@ -398,10 +398,13 @@ class PolyDataFilters(DataSetFilters):
 
         # use dataset merge if not polydata
         if not_pd:
-            return DataSetFilters.merge(self, dataset,
-                                        merge_points=merge_points,
-                                        main_has_priority=main_has_priority,
-                                        inplace=inplace)
+            return DataSetFilters.merge(
+                self,
+                dataset,
+                merge_points=merge_points,
+                main_has_priority=main_has_priority,
+                inplace=inplace,
+            )
 
         append_filter = pyvista._vtk.vtkAppendPolyData()
 
@@ -422,8 +425,9 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
         if merge_points:
-            merged = merged.clean(lines_to_points=False, polys_to_lines=False,
-                                  strips_to_polys=False)
+            merged = merged.clean(
+                lines_to_points=False, polys_to_lines=False, strips_to_polys=False
+            )
 
         if inplace:
             self.deep_copy(merged)
@@ -560,8 +564,9 @@ class PolyDataFilters(DataSetFilters):
         elif curv_type == 'minimum':
             curvefilter.SetCurvatureTypeToMinimum()
         else:
-            raise ValueError('``curv_type`` must be either "Mean", '
-                             '"Gaussian", "Maximum", or "Minimum".')
+            raise ValueError(
+                '``curv_type`` must be either "Mean", "Gaussian", "Maximum", or "Minimum".'
+            )
         _update_alg(curvefilter, progress_bar, 'Computing Curvature')
 
         # Compute and return curvature
@@ -602,8 +607,7 @@ class PolyDataFilters(DataSetFilters):
         ...                      clim=[0, 1])
 
         """
-        kwargs.setdefault('scalar_bar_args',
-                          {'title': f'{curv_type.capitalize()} Curvature'})
+        kwargs.setdefault('scalar_bar_args', {'title': f'{curv_type.capitalize()} Curvature'})
         return self.plot(scalars=self.curvature(curv_type), **kwargs)
 
     def triangulate(self, inplace=False, progress_bar=False):
@@ -651,10 +655,18 @@ class PolyDataFilters(DataSetFilters):
             return self
         return mesh
 
-    def smooth(self, n_iter=20, relaxation_factor=0.01, convergence=0.0,
-               edge_angle=15, feature_angle=45,
-               boundary_smoothing=True, feature_smoothing=False, inplace=False,
-               progress_bar=False):
+    def smooth(
+        self,
+        n_iter=20,
+        relaxation_factor=0.01,
+        convergence=0.0,
+        edge_angle=15,
+        feature_angle=45,
+        boundary_smoothing=True,
+        feature_smoothing=False,
+        inplace=False,
+        progress_bar=False,
+    ):
         """Adjust point coordinates using Laplacian smoothing.
 
         The effect is to "relax" the mesh, making the cells better shaped and
@@ -733,10 +745,17 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
-    def decimate_pro(self, reduction, feature_angle=45.0,
-                     split_angle=75.0, splitting=True,
-                     pre_split_mesh=False, preserve_topology=False,
-                     inplace=False, progress_bar=False):
+    def decimate_pro(
+        self,
+        reduction,
+        feature_angle=45.0,
+        split_angle=75.0,
+        splitting=True,
+        pre_split_mesh=False,
+        preserve_topology=False,
+        inplace=False,
+        progress_bar=False,
+    ):
         """Reduce the number of triangles in a triangular mesh.
 
         It forms a good approximation to the original geometry. Based
@@ -824,8 +843,17 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
-    def tube(self, radius=None, scalars=None, capping=True, n_sides=20,
-             radius_factor=10, preference='point', inplace=False, progress_bar=False):
+    def tube(
+        self,
+        radius=None,
+        scalars=None,
+        capping=True,
+        n_sides=20,
+        radius_factor=10,
+        preference='point',
+        inplace=False,
+        progress_bar=False,
+    ):
         """Generate a tube around each input line.
 
         The radius of the tube can be set to linearly vary with a
@@ -992,8 +1020,10 @@ class PolyDataFilters(DataSetFilters):
         elif subfilter == 'loop':
             sfilter = _vtk.vtkLoopSubdivisionFilter()
         else:
-            raise ValueError("Subdivision filter must be one of the following: "
-                             "'butterfly', 'loop', or 'linear'")
+            raise ValueError(
+                "Subdivision filter must be one of the following: "
+                "'butterfly', 'loop', or 'linear'"
+            )
 
         # Subdivide
         sfilter.SetNumberOfSubdivisions(nsub)
@@ -1007,9 +1037,15 @@ class PolyDataFilters(DataSetFilters):
 
         return submesh
 
-    def subdivide_adaptive(self, max_edge_len=None, max_tri_area=None,
-                           max_n_tris=None, max_n_passes=None, inplace=False,
-                           progress_bar=False):
+    def subdivide_adaptive(
+        self,
+        max_edge_len=None,
+        max_tri_area=None,
+        max_n_tris=None,
+        max_n_passes=None,
+        inplace=False,
+        progress_bar=False,
+    ):
         """Increase the number of triangles in a triangular mesh based on edge and/or area metrics.
 
         This filter uses a simple case-based, multi-pass approach to
@@ -1102,11 +1138,24 @@ class PolyDataFilters(DataSetFilters):
 
         return submesh
 
-    def decimate(self, target_reduction, volume_preservation=False,
-                 attribute_error=False, scalars=True, vectors=True,
-                 normals=False, tcoords=True, tensors=True, scalars_weight=0.1,
-                 vectors_weight=0.1, normals_weight=0.1, tcoords_weight=0.1,
-                 tensors_weight=0.1, inplace=False, progress_bar=False):
+    def decimate(
+        self,
+        target_reduction,
+        volume_preservation=False,
+        attribute_error=False,
+        scalars=True,
+        vectors=True,
+        normals=False,
+        tcoords=True,
+        tensors=True,
+        scalars_weight=0.1,
+        vectors_weight=0.1,
+        normals_weight=0.1,
+        tcoords_weight=0.1,
+        tensors_weight=0.1,
+        inplace=False,
+        progress_bar=False,
+    ):
         """Reduce the number of triangles in a triangular mesh using ``vtkQuadricDecimation``.
 
         Parameters
@@ -1225,14 +1274,19 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
-    def compute_normals(self, cell_normals=True,
-                        point_normals=True, split_vertices=False,
-                        flip_normals=False, consistent_normals=True,
-                        auto_orient_normals=False,
-                        non_manifold_traversal=True,
-                        feature_angle=30.0,
-                        inplace=False,
-                        progress_bar=False):
+    def compute_normals(
+        self,
+        cell_normals=True,
+        point_normals=True,
+        split_vertices=False,
+        flip_normals=False,
+        consistent_normals=True,
+        auto_orient_normals=False,
+        non_manifold_traversal=True,
+        feature_angle=30.0,
+        inplace=False,
+        progress_bar=False,
+    ):
         """Compute point and/or cell normals for a mesh.
 
         The filter can reorder polygons to insure consistent
@@ -1365,8 +1419,9 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
-    def clip_closed_surface(self, normal='x', origin=None,
-                            tolerance=1e-06, inplace=False, progress_bar=False):
+    def clip_closed_surface(
+        self, normal='x', origin=None, tolerance=1e-06, inplace=False, progress_bar=False
+    ):
         """Clip a closed polydata surface with a plane.
 
         This currently only supports one plane but could be
@@ -1500,8 +1555,7 @@ class PolyDataFilters(DataSetFilters):
         >>> assert edges.n_cells == 0  # doctest:+SKIP
 
         """
-        logging.warning('pyvista.PolyData.fill_holes is known to segfault. '
-                        'Use at your own risk')
+        logging.warning('pyvista.PolyData.fill_holes is known to segfault. Use at your own risk')
         alg = _vtk.vtkFillHolesFilter()
         alg.SetHoleSize(hole_size)
         alg.SetInputData(self)
@@ -1513,9 +1567,18 @@ class PolyDataFilters(DataSetFilters):
             return self
         return mesh
 
-    def clean(self, point_merging=True, tolerance=None, lines_to_points=True,
-              polys_to_lines=True, strips_to_polys=True, inplace=False,
-              absolute=True, progress_bar=False, **kwargs):
+    def clean(
+        self,
+        point_merging=True,
+        tolerance=None,
+        lines_to_points=True,
+        polys_to_lines=True,
+        strips_to_polys=True,
+        inplace=False,
+        absolute=True,
+        progress_bar=False,
+        **kwargs,
+    ):
         """Clean the mesh.
 
         This merges duplicate points, removes unused points, and/or
@@ -1605,8 +1668,9 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def geodesic(self, start_vertex, end_vertex, inplace=False,
-                 keep_order=True, progress_bar=False):
+    def geodesic(
+        self, start_vertex, end_vertex, inplace=False, keep_order=True, progress_bar=False
+    ):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
         This will add an array titled ``'vtkOriginalPointIds'`` of the input
@@ -1659,8 +1723,7 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`geodesic_example` for more examples using this filter.
 
         """
-        if not (0 <= start_vertex < self.n_points and
-                0 <= end_vertex < self.n_points):
+        if not (0 <= start_vertex < self.n_points and 0 <= end_vertex < self.n_points):
             raise IndexError('Invalid point indices.')
         if not self.is_all_triangles:
             raise NotAllTrianglesError("Input mesh for geodesic path must be all triangles.")
@@ -1720,14 +1783,15 @@ class PolyDataFilters(DataSetFilters):
 
         """
         path = self.geodesic(start_vertex, end_vertex)
-        sizes = path.compute_cell_sizes(length=True, area=False, volume=False, progress_bar=progress_bar)
+        sizes = path.compute_cell_sizes(
+            length=True, area=False, volume=False, progress_bar=progress_bar
+        )
         distance = np.sum(sizes['Length'])
         del path
         del sizes
         return distance
 
-    def ray_trace(self, origin, end_point, first_point=False, plot=False,
-                  off_screen=None):
+    def ray_trace(self, origin, end_point, first_point=False, plot=False, off_screen=None):
         """Perform a single ray trace calculation.
 
         This requires a mesh and a line segment defined by an origin
@@ -1781,9 +1845,7 @@ class PolyDataFilters(DataSetFilters):
         """
         points = _vtk.vtkPoints()
         cell_ids = _vtk.vtkIdList()
-        self.obbTree.IntersectWithLine(np.array(origin),
-                                       np.array(end_point),
-                                       points, cell_ids)
+        self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)
 
         intersection_points = _vtk.vtk_to_numpy(points.GetData())
         if first_point and intersection_points.shape[0] >= 1:
@@ -1804,8 +1866,7 @@ class PolyDataFilters(DataSetFilters):
             plotter.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
             plotter.add_lines(segment, 'b', label='Ray Segment')
-            plotter.add_mesh(intersection_points, 'r', point_size=10,
-                             label='Intersection Points')
+            plotter.add_mesh(intersection_points, 'r', point_size=10, label='Intersection Points')
             plotter.add_legend()
             plotter.add_axes()
             plotter.show()
@@ -1876,7 +1937,7 @@ class PolyDataFilters(DataSetFilters):
             import pyembree  # noqa
             import rtree  # noqa
             import trimesh  # noqa
-        except (ModuleNotFoundError, ImportError):
+        except ImportError:
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
                 "\tconda install trimesh rtree pyembree"
@@ -1900,8 +1961,9 @@ class PolyDataFilters(DataSetFilters):
             # compute ray points for all failed rays at once
             origins_retry = origins[retry_ray_indices, :]  # shape (n_retry, 3)
             directions_retry = directions[retry_ray_indices, :]
-            unit_directions = directions_retry / np.linalg.norm(directions_retry,
-                                                                axis=1, keepdims=True)
+            unit_directions = directions_retry / np.linalg.norm(
+                directions_retry, axis=1, keepdims=True
+            )
             second_points = origins_retry + unit_directions * self.length  # shape (n_retry, 3)
 
             for id_r, origin, second_point in zip(retry_ray_indices, origins_retry, second_points):
@@ -1922,8 +1984,7 @@ class PolyDataFilters(DataSetFilters):
 
         return locations, index_ray, index_tri
 
-    def plot_boundaries(self, edge_color="red", line_width=None,
-                        progress_bar=False, **kwargs):
+    def plot_boundaries(self, edge_color="red", line_width=None, progress_bar=False, **kwargs):
         """Plot boundaries of a mesh.
 
         Parameters
@@ -1956,16 +2017,19 @@ class PolyDataFilters(DataSetFilters):
         """
         edges = DataSetFilters.extract_feature_edges(self, progress_bar=progress_bar)
 
-        plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', None),
-                                  notebook=kwargs.pop('notebook', None))
-        plotter.add_mesh(edges, color=edge_color, style='wireframe', label='Edges',
-                         line_width=line_width)
+        plotter = pyvista.Plotter(
+            off_screen=kwargs.pop('off_screen', None), notebook=kwargs.pop('notebook', None)
+        )
+        plotter.add_mesh(
+            edges, color=edge_color, style='wireframe', label='Edges', line_width=line_width
+        )
         plotter.add_mesh(self, label='Mesh', **kwargs)
         plotter.add_legend()
         return plotter.show()
 
-    def plot_normals(self, show_mesh=True, mag=1.0, flip=False,
-                     use_every=1, faces=False, color=None, **kwargs):
+    def plot_normals(
+        self, show_mesh=True, mag=1.0, flip=False, use_every=1, faces=False, color=None, **kwargs
+    ):
         """Plot the point normals of a mesh.
 
         Parameters
@@ -2017,8 +2081,9 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, faces=True, show_edges=True)
 
         """
-        plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', None),
-                                  notebook=kwargs.pop('notebook', None))
+        plotter = pyvista.Plotter(
+            off_screen=kwargs.pop('off_screen', None), notebook=kwargs.pop('notebook', None)
+        )
         if show_mesh:
             plotter.add_mesh(self, **kwargs)
 
@@ -2035,8 +2100,9 @@ class PolyDataFilters(DataSetFilters):
         if flip:
             normals *= -1
 
-        plotter.add_arrows(centers, normals[::use_every],
-                           mag=mag, color=color, show_scalar_bar=False)
+        plotter.add_arrows(
+            centers, normals[::use_every], mag=mag, color=color, show_scalar_bar=False
+        )
 
         return plotter.show()
 
@@ -2165,8 +2231,16 @@ class PolyDataFilters(DataSetFilters):
             f[1::4], f[3::4] = f[3::4], f[1::4].copy()
             self.faces[:] = f
 
-    def delaunay_2d(self, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
-                    inplace=False, edge_source=None, progress_bar=False):
+    def delaunay_2d(
+        self,
+        tol=1e-05,
+        alpha=0.0,
+        offset=1.0,
+        bound=False,
+        inplace=False,
+        edge_source=None,
+        progress_bar=False,
+    ):
         """Apply a 2D Delaunay filter along the best fitting plane.
 
         This filter can be used to generate a 2d surface from a set of
@@ -2300,8 +2374,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Computing the Arc Length')
         return _get_output(alg)
 
-    def project_points_to_plane(self, origin=None, normal=(0, 0, 1),
-                                inplace=False):
+    def project_points_to_plane(self, origin=None, normal=(0, 0, 1), inplace=False):
         """Project points of this mesh to a plane.
 
         Parameters
@@ -2336,7 +2409,7 @@ class PolyDataFilters(DataSetFilters):
         if not isinstance(normal, (np.ndarray, collections.abc.Sequence)) or len(normal) != 3:
             raise TypeError('Normal must be a length three vector')
         if origin is None:
-            origin = np.array(self.center) - np.array(normal)*self.length/2.
+            origin = np.array(self.center) - np.array(normal) * self.length / 2.0
         # choose what mesh to use
         if not inplace:
             mesh = self.copy()
@@ -2349,8 +2422,17 @@ class PolyDataFilters(DataSetFilters):
         np.apply_along_axis(f, 1, mesh.points)
         return mesh
 
-    def ribbon(self, width=None, scalars=None, angle=0.0, factor=2.0,
-               normal=None, tcoords=False, preference='points', progress_bar=False):
+    def ribbon(
+        self,
+        width=None,
+        scalars=None,
+        angle=0.0,
+        factor=2.0,
+        normal=None,
+        tcoords=False,
+        preference='points',
+        progress_bar=False,
+    ):
         """Create a ribbon of the lines in this dataset.
 
         .. note::
@@ -2429,7 +2511,9 @@ class PolyDataFilters(DataSetFilters):
         alg.SetAngle(angle)
         if scalars is not None:
             alg.SetVaryWidth(True)
-            alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
+            alg.SetInputArrayToProcess(
+                0, 0, 0, field.value, scalars
+            )  # args: (idx, port, connection, field, name)
             alg.SetWidthFactor(factor)
         else:
             alg.SetVaryWidth(False)
@@ -2512,9 +2596,16 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def extrude_rotate(self, resolution=30, inplace=False,
-                       translation=0.0, dradius=0.0, angle=360.0,
-                       capping=False, progress_bar=False):
+    def extrude_rotate(
+        self,
+        resolution=30,
+        inplace=False,
+        translation=0.0,
+        dradius=0.0,
+        angle=360.0,
+        capping=False,
+        progress_bar=False,
+    ):
         """Sweep polygonal data creating "skirt" from free edges and lines, and lines from vertices.
 
         This takes polygonal data as input and generates polygonal
@@ -2614,8 +2705,15 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def strip(self, join=False, max_length=1000, pass_cell_data=False,
-              pass_cell_ids=False, pass_point_ids=False, progress_bar=False):
+    def strip(
+        self,
+        join=False,
+        max_length=1000,
+        pass_cell_data=False,
+        pass_cell_ids=False,
+        pass_point_ids=False,
+        progress_bar=False,
+    ):
         """Strip poly data cells.
 
         Generates triangle strips and/or poly-lines from input
@@ -2692,9 +2790,16 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Stripping Mesh')
         return _get_output(alg)
 
-    def collision(self, other_mesh, contact_mode=0, box_tolerance=0.001,
-                  cell_tolerance=0.0, n_cells_per_node=2, generate_scalars=False,
-                  progress_bar=False):
+    def collision(
+        self,
+        other_mesh,
+        contact_mode=0,
+        box_tolerance=0.001,
+        cell_tolerance=0.0,
+        n_cells_per_node=2,
+        generate_scalars=False,
+        progress_bar=False,
+    ):
         """Perform collision determination between two polyhedral surfaces.
 
         If ``collision_mode`` is set to all contacts, the output will
@@ -2847,8 +2952,7 @@ class PolyDataFilters(DataSetFilters):
 
         return output, alg.GetNumberOfContacts()
 
-    def reconstruct_surface(self, nbr_sz=None, sample_spacing=None,
-                            progress_bar=False):
+    def reconstruct_surface(self, nbr_sz=None, sample_spacing=None, progress_bar=False):
         """Reconstruct a surface from the points in this dataset.
 
         This filter takes a list of points assumed to lie on the

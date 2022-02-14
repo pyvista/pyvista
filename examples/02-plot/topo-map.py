@@ -63,7 +63,9 @@ p = pv.Plotter()
 p.add_mesh(local, texture=topo_map)
 p.add_mesh(surrounding, color="white")
 p.enable_eye_dome_lighting()
-p.camera_position = [(1831100., 5642142., 8168.),
-                     (1820841., 5648745., 1104.),
-                     (-0.435, 0.248, 0.865)]
+p.camera_position = [
+    (1831100.0, 5642142.0, 8168.0),
+    (1820841.0, 5648745.0, 1104.0),
+    (-0.435, 0.248, 0.865),
+]
 p.show()

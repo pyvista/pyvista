@@ -43,6 +43,15 @@ PyVista
 .. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
    :target: https://github.com/pyvista/pyvista/discussions
 
+.. |isort| image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat
+  :target: https://timothycrosley.github.io/isort
+  :alt: isort
+
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=flat
+  :target: https://github.com/psf/black
+  :alt: black
+
+
 +----------------------+-----------+------------+
 | Deployment           | |pypi|    |   |conda|  |
 +----------------------+-----------+------------+
@@ -58,13 +67,15 @@ PyVista
 +----------------------+-----------+------------+
 | Community            | |slack|   |  |discuss| |
 +----------------------+-----------+------------+
+| Formatter            | |black|   |  |isort|   |
++----------------------+-----------+------------+
 
 
     3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
 
 PyVista is...
 
-* *"VTK for humans"*: a high-level API to the `Visualization Toolkit`_ (VTK)
+* *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
 * mesh data structures and filtering methods for spatial datasets
 * 3D plotting made simple and built for large/complex data geometries
 
@@ -213,7 +224,7 @@ tool for all users while encouraging every member of the commutinity to share
 their ideas. To learn more about contributing to PyVista, please see the
 `Contributing Guide`_ and our `Code of Conduct`_.
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
 .. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
 
 

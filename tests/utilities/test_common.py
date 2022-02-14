@@ -35,7 +35,7 @@ def test_coerce_point_like_arg_copy():
     coerced_arg = _coerce_pointslike_arg(point, copy=True)
     point[0] = 10.0
     assert np.array_equal(coerced_arg, np.array([[1.0, 2.0, 3.0]]))
-    
+
     point = [1.0, 2.0, 3.0]
     coerced_arg = _coerce_pointslike_arg(point, copy=False)
     point[0] = 10.0

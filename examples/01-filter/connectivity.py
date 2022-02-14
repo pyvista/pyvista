@@ -16,9 +16,7 @@ from pyvista import examples
 # Load a dataset that has noisy isosurfaces
 mesh = examples.download_pine_roots()
 
-cpos = [(40.6018, -280.533, 47.0172),
-        (40.6018, 37.2813, 50.1953),
-        (0.0, 0.0, 1.0)]
+cpos = [(40.6018, -280.533, 47.0172), (40.6018, 37.2813, 50.1953), (0.0, 0.0, 1.0)]
 
 # Plot the raw data
 p = pv.Plotter()

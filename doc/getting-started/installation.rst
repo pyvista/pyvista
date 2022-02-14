@@ -145,8 +145,8 @@ See other examples and demos:
     repository. For details on how to clone and test the PyVista source, please
     see our `Contributing Guide`_ and specifically, the `Testing`_ section.
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md
-.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md#testing
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
+.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#testing
 
 
 Running on CI Services

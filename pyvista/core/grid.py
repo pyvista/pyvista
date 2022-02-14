@@ -99,8 +99,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
 
     """
 
-    _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter,
-                '.vtr': _vtk.vtkXMLRectilinearGridWriter}
+    _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter, '.vtr': _vtk.vtkXMLRectilinearGridWriter}
 
     def __init__(self, *args, **kwargs):
         """Initialize the rectilinear grid."""
@@ -225,10 +224,11 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
         This setter overrides the base class's setter to ensure a user
         does not attempt to set them.
         """
-        raise AttributeError("The points cannot be set. The points of "
+        raise AttributeError(
+            "The points cannot be set. The points of "
             "`RectilinearGrid` are defined in each axial direction. Please "
             "use the `x`, `y`, and `z` setters individually."
-            )
+        )
 
     @property
     def x(self) -> np.ndarray:
@@ -332,8 +332,10 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid):
     @Grid.dimensions.setter  # type: ignore
     def dimensions(self, dims):
         """Do not let the dimensions of the RectilinearGrid be set."""
-        raise AttributeError("The dimensions of a `RectilinearGrid` are implicitly "
-                             "defined and thus cannot be set.")
+        raise AttributeError(
+            "The dimensions of a `RectilinearGrid` are implicitly "
+            "defined and thus cannot be set."
+        )
 
     def cast_to_structured_grid(self) -> 'pyvista.StructuredGrid':
         """Cast this rectilinear grid to a structured grid.
@@ -429,12 +431,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     _WRITERS = {'.vtk': _vtk.vtkDataSetWriter, '.vti': _vtk.vtkXMLImageDataWriter}
 
     def __init__(
-            self,
-            uinput=None,
-            *args,
-            dims=None,
-            spacing=(1.0, 1.0, 1.0),
-            origin=(0.0, 0.0, 0.0)
+        self, uinput=None, *args, dims=None, spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)
     ):
         """Initialize the uniform grid."""
         super().__init__()
@@ -444,7 +441,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
             warnings.warn(
                 "Behavior of pyvista.UniformGrid has changed. First argument must be "
                 "either a ``vtk.vtkImageData`` or path.",
-                PyvistaDeprecationWarning
+                PyvistaDeprecationWarning,
             )
             dims = uinput
             uinput = None
@@ -458,7 +455,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
                 "    ...     spacing=(2, 1, 5),\n"
                 "    ...     origin=(10, 35, 50),\n"
                 "    ... )\n",
-                PyvistaDeprecationWarning
+                PyvistaDeprecationWarning,
             )
             origin = args[0]
             if len(args) > 1:
@@ -497,12 +494,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    def _from_specs(
-            self,
-            dims: Sequence[int],
-            spacing=(1.0, 1.0, 1.0),
-            origin=(0.0, 0.0, 0.0)
-    ):
+    def _from_specs(self, dims: Sequence[int], spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)):
         """Create VTK image data directly from numpy arrays.
 
         A uniform grid is defined by the point spacings for each axis
@@ -574,10 +566,11 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
         attempt to set them. See https://github.com/pyvista/pyvista/issues/713.
 
         """
-        raise AttributeError("The points cannot be set. The points of "
+        raise AttributeError(
+            "The points cannot be set. The points of "
             "`UniformGrid`/`vtkImageData` are implicitly defined by the "
             "`origin`, `spacing`, and `dimensions` of the grid."
-            )
+        )
 
     @property
     def x(self) -> np.ndarray:
@@ -699,7 +692,7 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
-        fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT]*3)
+        fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT] * 3)
         attrs.append(("Spacing", self.spacing, fmt))
         return attrs
 
@@ -726,11 +719,14 @@ class UniformGrid(_vtk.vtkImageData, Grid, UniformGridFilters):
             This uniform grid as a rectilinear grid.
 
         """
+
         def gen_coords(i):
-            coords = np.cumsum(np.insert(np.full(self.dimensions[i] - 1,
-                                                 self.spacing[i]), 0, 0)
-                               ) + self.origin[i]
+            coords = (
+                np.cumsum(np.insert(np.full(self.dimensions[i] - 1, self.spacing[i]), 0, 0))
+                + self.origin[i]
+            )
             return coords
+
         xcoords = gen_coords(0)
         ycoords = gen_coords(1)
         zcoords = gen_coords(2)

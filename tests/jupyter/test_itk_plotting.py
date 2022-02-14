@@ -9,6 +9,7 @@ NO_PLOTTING = not system_supports_plotting()
 HAS_ITK = False
 try:
     import itkwidgets
+
     HAS_ITK = True
 except ImportError:
     pass
@@ -16,7 +17,9 @@ except ImportError:
 SPHERE = pyvista.Sphere()
 SPHERE['z'] = SPHERE.points[:, 2]
 
-no_itk = pytest.mark.skipif(NO_PLOTTING or not HAS_ITK, reason="Requires system to support plotting and have itkwidgets.")
+no_itk = pytest.mark.skipif(
+    NO_PLOTTING or not HAS_ITK, reason="Requires system to support plotting and have itkwidgets."
+)
 
 
 @no_itk
