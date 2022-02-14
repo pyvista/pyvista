@@ -9,7 +9,7 @@ hypothesis<6.31.6  # not latest due to python3.6 compatibility
 imageio-ffmpeg<0.5.0
 imageio<2.17.0
 ipygany<0.6.0
-ipython<8.0.0
+ipython<9.0.0
 ipyvtklink<0.4.0
 itkwidgets<0.33.0
 matplotlib<3.6.0
