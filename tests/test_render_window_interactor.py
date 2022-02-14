@@ -46,6 +46,7 @@ def test_track_mouse_position():
 
 def test_track_click_position_multi_render():
     points = []
+
     def callback(mouse_point):
         points.append(mouse_point)
 

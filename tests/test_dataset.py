@@ -16,6 +16,7 @@ from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
+
 @pytest.fixture()
 def grid():
     return pyvista.UnstructuredGrid(examples.hexbeamfile)
@@ -45,7 +46,7 @@ def test_point_data(grid):
     grid[key] = np.arange(grid.n_points)
     assert key in grid.point_data
 
-    orig_value = grid.point_data[key][0]/1.0
+    orig_value = grid.point_data[key][0] / 1.0
     grid.point_data[key][0] += 1
     assert orig_value == grid.point_data[key][0] - 1
 
@@ -82,7 +83,7 @@ def test_cell_data(grid):
     grid[key] = np.arange(grid.n_cells)
     assert key in grid.cell_data
 
-    orig_value = grid.cell_data[key][0]/1.0
+    orig_value = grid.cell_data[key][0] / 1.0
     grid.cell_data[key][0] += 1
     assert orig_value == grid.cell_data[key][0] - 1
 
@@ -122,7 +123,7 @@ def test_field_data(grid):
     assert np.allclose(grid.field_data[key], np.arange(n))
     assert np.allclose(grid[key], np.arange(n))
 
-    orig_value = grid.field_data[key][0]/1.0
+    orig_value = grid.field_data[key][0] / 1.0
     grid.field_data[key][0] += 1
     assert orig_value == grid.field_data[key][0] - 1
 
@@ -144,7 +145,7 @@ def test_field_data(grid):
         grid.set_active_scalars('foo')
 
 
-@pytest.mark.parametrize('field', (range(5), np.ones((3,3))[:, 0]))
+@pytest.mark.parametrize('field', (range(5), np.ones((3, 3))[:, 0]))
 def test_add_field_data(grid, field):
     grid.add_field_data(field, 'foo')
     assert isinstance(grid.field_data['foo'], np.ndarray)
@@ -213,6 +214,7 @@ def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amo
     grid_d.transform(trans_rotate_only)
 
     from pyvista.utilities.transformations import apply_transformation_to_points
+
     trans_arr = pyvista.array_from_vtkmatrix(trans_rotate_only.GetMatrix())[:3, :3]
     trans_pts = apply_transformation_to_points(trans_arr, grid.points)
     assert np.allclose(grid_d.points, trans_pts, equal_nan=True)
@@ -240,9 +242,10 @@ def test_translate_should_fail_bad_points_or_transform(grid):
         pyvista.utilities.transformations.apply_transformation_to_points(bad_trans, points)
 
 
-
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture],
-          max_examples=HYPOTHESIS_MAX_EXAMPLES)
+@settings(
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+    max_examples=HYPOTHESIS_MAX_EXAMPLES,
+)
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
 def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
     assume(array.shape != (4, 4))
@@ -259,8 +262,10 @@ def test_translate_should_translate_grid(grid, axis_amounts):
     assert np.allclose(grid_copy.points, grid_points)
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture],
-          max_examples=HYPOTHESIS_MAX_EXAMPLES)
+@settings(
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+    max_examples=HYPOTHESIS_MAX_EXAMPLES,
+)
 @given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
 @pytest.mark.parametrize('axis', ('x', 'y', 'z'))
 def test_rotate_should_match_vtk_rotation(angle, axis, grid):
@@ -333,7 +338,7 @@ def test_points_uint8(grid):
 
 
 def test_field_uint8(grid):
-    n = grid.n_points//3
+    n = grid.n_points // 3
     arr = np.zeros(n, np.uint8)
     grid.field_data['arr'] = arr
     arr[:] = np.arange(n)
@@ -410,20 +415,20 @@ def test_print_repr(grid, display, html):
 def test_texture():
     """Test adding texture coordinates"""
     # create a rectangle vertices
-    vertices = np.array([[0, 0, 0],
-                         [1, 0, 0],
-                         [1, 0.5, 0],
-                         [0, 0.5, 0],])
+    vertices = np.array(
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 0.5, 0],
+            [0, 0.5, 0],
+        ]
+    )
 
     # mesh faces
-    faces = np.hstack([[3, 0, 1, 2],
-                       [3, 0, 3, 2]]).astype(np.int8)
+    faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]]).astype(np.int8)
 
     # Create simple texture coordinates
-    t_coords = np.array([[0, 0],
-                        [1, 0],
-                        [1, 1],
-                        [0, 1]])
+    t_coords = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
     # Create the poly data
     mesh = pyvista.PolyData(vertices, faces)
     # Attempt setting the texture coordinates
@@ -489,15 +494,15 @@ def test_arrows():
     sphere = pyvista.Sphere(radius=3.14)
 
     # make cool swirly pattern
-    vectors = np.vstack((np.sin(sphere.points[:, 0]),
-                         np.cos(sphere.points[:, 1]),
-                         np.cos(sphere.points[:, 2]))).T
+    vectors = np.vstack(
+        (np.sin(sphere.points[:, 0]), np.cos(sphere.points[:, 1]), np.cos(sphere.points[:, 2]))
+    ).T
 
     # add and scales
-    sphere["vectors"] = vectors*0.3
+    sphere["vectors"] = vectors * 0.3
     sphere.set_active_vectors("vectors")
-    assert np.allclose(sphere.active_vectors, vectors*0.3)
-    assert np.allclose(sphere["vectors"], vectors*0.3)
+    assert np.allclose(sphere.active_vectors, vectors * 0.3)
+    assert np.allclose(sphere["vectors"], vectors * 0.3)
 
     assert sphere.active_vectors_info[1] == 'vectors'
     arrows = sphere.arrows
@@ -517,13 +522,15 @@ def active_component_consistency_check(grid, component_type, field_association="
     vtk_field_association = field_association.capitalize()
 
     pv_arr = getattr(grid, "active_" + component_type)
-    vtk_arr = getattr(getattr(grid, "Get" + vtk_field_association + "Data")(), "Get" + vtk_component_type)()
+    vtk_arr = getattr(
+        getattr(grid, f"Get{vtk_field_association}Data")(), f"Get{vtk_component_type}"
+    )()
 
     assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
 
 
 def test_set_active_vectors(grid):
-    vector_arr = np.arange(grid.n_points*3).reshape([grid.n_points, 3])
+    vector_arr = np.arange(grid.n_points * 3).reshape([grid.n_points, 3])
     grid.point_data['vector_arr'] = vector_arr
     grid.active_vectors_name = 'vector_arr'
     active_component_consistency_check(grid, "vectors", "point")
@@ -536,7 +543,7 @@ def test_set_active_vectors(grid):
 
 
 def test_set_active_tensors(grid):
-    tensor_arr = np.arange(grid.n_points*9).reshape([grid.n_points, 9])
+    tensor_arr = np.arange(grid.n_points * 9).reshape([grid.n_points, 9])
     grid.point_data['tensor_arr'] = tensor_arr
     grid.active_tensors_name = 'tensor_arr'
     active_component_consistency_check(grid, "tensors", "point")
@@ -768,10 +775,7 @@ def test_clear_data():
 def test_scalars_dict_update():
     mesh = examples.load_uniform()
     n = len(mesh.point_data)
-    arrays = {
-        'foo': np.arange(mesh.n_points),
-        'rand': np.random.random(mesh.n_points)
-    }
+    arrays = {'foo': np.arange(mesh.n_points), 'rand': np.random.random(mesh.n_points)}
     mesh.point_data.update(arrays)
     assert 'foo' in mesh.array_names
     assert 'rand' in mesh.array_names
@@ -890,6 +894,7 @@ def test_find_closest_cells():
     # Make sure arg was not modified
     assert np.array_equal(fcent, fcent_copy)
 
+
 def test_find_closest_cell_surface_point():
     mesh = pyvista.Rectangle()
 
@@ -905,14 +910,14 @@ def test_find_closest_cell_surface_point():
 
 
 def test_find_containing_cell():
-    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
+    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     node = np.array([0.3, 0.3, 0.0])
     index = mesh.find_containing_cell(node)
     assert index == 5
 
 
 def test_find_containing_cells():
-    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1/4, 1/4, 0])
+    mesh = pyvista.UniformGrid(dims=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
     points = np.array([[0.3, 0.3, 0], [0.6, 0.6, 0]])
     points_copy = points.copy()
     indices = mesh.find_containing_cell(points)
@@ -963,12 +968,12 @@ def test_setting_points_by_different_types(grid):
     grid.points = grid_copy.points.tolist()
     assert np.array_equal(grid.points, grid_copy.points)
 
-    pgrid = pyvista.PolyData([0., 0., 0.])
-    pgrid.points = [1., 1., 1.]
-    assert np.array_equal(pgrid.points, [[1., 1., 1.]])
+    pgrid = pyvista.PolyData([0.0, 0.0, 0.0])
+    pgrid.points = [1.0, 1.0, 1.0]
+    assert np.array_equal(pgrid.points, [[1.0, 1.0, 1.0]])
 
-    pgrid.points = np.array([2., 2., 2.])
-    assert np.array_equal(pgrid.points, [[2., 2., 2.]])
+    pgrid.points = np.array([2.0, 2.0, 2.0])
+    assert np.array_equal(pgrid.points, [[2.0, 2.0, 2.0]])
 
 
 def test_empty_points():
@@ -1273,6 +1278,7 @@ def test_scale():
     assert isinstance(out, pyvista.StructuredGrid)
     with pytest.warns(PyvistaDeprecationWarning):
         scale1.scale(xyz)
+
 
 def test_flip_x():
     mesh = examples.load_airplane()

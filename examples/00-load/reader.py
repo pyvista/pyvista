@@ -113,7 +113,7 @@ for block_0, block_1 in zip(mesh_0, mesh_1):
 plotter = pyvista.Plotter(shape='2|1')
 
 plotter.subplot(0)
-plotter.add_mesh(mesh_0, scalars='DENS',show_scalar_bar=False)
+plotter.add_mesh(mesh_0, scalars='DENS', show_scalar_bar=False)
 plotter.add_text(f"{time_values[0]}")
 
 plotter.subplot(1)
@@ -126,7 +126,7 @@ plotter.add_mesh(mesh_1.copy(), scalars='DENS_DIFF', show_scalar_bar=False)
 plotter.add_text("DENS Difference")
 
 plotter.link_views()
-plotter.camera_position= ((0.5, 0, 8), (0.5, 0, 0), (0, 1, 0))
+plotter.camera_position = ((0.5, 0, 8), (0.5, 0, 0), (0, 1, 0))
 
 plotter.show()
 

@@ -26,9 +26,17 @@ class WidgetHelper:
 
     _camera_widgets: List[object] = []
 
-    def add_box_widget(self, callback, bounds=None, factor=1.25,
-                       rotation_enabled=True, color=None, use_planes=False,
-                       outline_translation=True, pass_widget=False):
+    def add_box_widget(
+        self,
+        callback,
+        bounds=None,
+        factor=1.25,
+        rotation_enabled=True,
+        color=None,
+        use_planes=False,
+        outline_translation=True,
+        pass_widget=False,
+    ):
         """Add a box widget to the scene.
 
         This is useless without a callback function. You can pass a
@@ -122,9 +130,15 @@ class WidgetHelper:
                 widget.Off()
             del self.box_widgets
 
-    def add_mesh_clip_box(self, mesh, invert=False, rotation_enabled=True,
-                          widget_color=None, outline_translation=True,
-                          **kwargs):
+    def add_mesh_clip_box(
+        self,
+        mesh,
+        invert=False,
+        rotation_enabled=True,
+        widget_color=None,
+        outline_translation=True,
+        **kwargs,
+    ):
         """Clip a mesh using a box widget.
 
         Add a mesh to the scene with a box widget that is used to clip
@@ -174,7 +188,7 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
         port = 1 if invert else 0
 
@@ -198,20 +212,35 @@ class WidgetHelper:
             alg.Update()
             box_clipped_mesh.shallow_copy(alg.GetOutput(port))
 
-        self.add_box_widget(callback=callback, bounds=mesh.bounds,
-                            factor=1.25, rotation_enabled=rotation_enabled,
-                            use_planes=True, color=widget_color,
-                            outline_translation=outline_translation)
+        self.add_box_widget(
+            callback=callback,
+            bounds=mesh.bounds,
+            factor=1.25,
+            rotation_enabled=rotation_enabled,
+            use_planes=True,
+            color=widget_color,
+            outline_translation=outline_translation,
+        )
 
         return self.add_mesh(box_clipped_mesh, reset_camera=False, **kwargs)
 
-    def add_plane_widget(self, callback, normal='x', origin=None,
-                         bounds=None, factor=1.25, color=None,
-                         assign_to_axis=None, tubing=False,
-                         outline_translation=False,
-                         origin_translation=True, implicit=True,
-                         pass_widget=False, test_callback=True,
-                         normal_rotation=True):
+    def add_plane_widget(
+        self,
+        callback,
+        normal='x',
+        origin=None,
+        bounds=None,
+        factor=1.25,
+        color=None,
+        assign_to_axis=None,
+        tubing=False,
+        outline_translation=False,
+        origin_translation=True,
+        implicit=True,
+        pass_widget=False,
+        test_callback=True,
+        normal_rotation=True,
+    ):
         """Add a plane widget to the scene.
 
         This is useless without a callback function. You can pass a
@@ -339,21 +368,25 @@ class WidgetHelper:
             source = _vtk.vtkPlaneSource()
             source.SetNormal(normal)
             source.SetCenter(origin)
-            source.SetPoint1(origin[0] + (bounds[1] - bounds[0]) * 0.01,
-                             origin[1] - (bounds[3] - bounds[2]) * 0.01,
-                             origin[2])
-            source.SetPoint2(origin[0] - (bounds[1] - bounds[0]) * 0.01,
-                             origin[1] + (bounds[3] - bounds[2]) * 0.01,
-                             origin[2])
+            source.SetPoint1(
+                origin[0] + (bounds[1] - bounds[0]) * 0.01,
+                origin[1] - (bounds[3] - bounds[2]) * 0.01,
+                origin[2],
+            )
+            source.SetPoint2(
+                origin[0] - (bounds[1] - bounds[0]) * 0.01,
+                origin[1] + (bounds[3] - bounds[2]) * 0.01,
+                origin[2],
+            )
             source.Update()
             plane_widget = _vtk.vtkPlaneWidget()
-            plane_widget.SetHandleSize(.01)
+            plane_widget.SetHandleSize(0.01)
             # Position of the widget
             plane_widget.SetInputData(source.GetOutput())
             plane_widget.SetRepresentationToOutline()
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
-            plane_widget.SetCenter(origin) # Necessary
+            plane_widget.SetCenter(origin)  # Necessary
             plane_widget.GetPlaneProperty().SetColor(color.f_rgb)  # self.C_LOT[fn])
             plane_widget.GetHandleProperty().SetColor(color.f_rgb)
 
@@ -385,7 +418,7 @@ class WidgetHelper:
         plane_widget.On()
         plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _the_callback)
         if test_callback:
-            _the_callback(plane_widget, None) # Trigger immediate update
+            _the_callback(plane_widget, None)  # Trigger immediate update
 
         self.plane_widgets.append(plane_widget)
         return plane_widget
@@ -397,11 +430,21 @@ class WidgetHelper:
                 widget.Off()
             del self.plane_widgets
 
-    def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
-                            widget_color=None, value=0.0, assign_to_axis=None,
-                            tubing=False, origin_translation=True,
-                            outline_translation=False, implicit=True,
-                            normal_rotation=True, **kwargs):
+    def add_mesh_clip_plane(
+        self,
+        mesh,
+        normal='x',
+        invert=False,
+        widget_color=None,
+        value=0.0,
+        assign_to_axis=None,
+        tubing=False,
+        origin_translation=True,
+        outline_translation=False,
+        implicit=True,
+        normal_rotation=True,
+        **kwargs,
+    ):
         """Clip a mesh using a plane widget.
 
         Add a mesh to the scene with a plane widget that is used to clip
@@ -472,7 +515,7 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
         if isinstance(mesh, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
@@ -481,9 +524,9 @@ class WidgetHelper:
         #     alg.SetMixed3DCellGeneration(True)
         else:
             alg = _vtk.vtkTableBasedClipDataSet()
-        alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
+        alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
-        alg.SetInsideOut(invert) # invert the clip if needed
+        alg.SetInsideOut(invert)  # invert the clip if needed
 
         if not hasattr(self, "plane_clipped_meshes"):
             self.plane_clipped_meshes = []
@@ -492,26 +535,41 @@ class WidgetHelper:
 
         def callback(normal, origin):
             function = generate_plane(normal, origin)
-            alg.SetClipFunction(function) # the implicit function
-            alg.Update() # Perform the Cut
+            alg.SetClipFunction(function)  # the implicit function
+            alg.Update()  # Perform the Cut
             plane_clipped_mesh.shallow_copy(alg.GetOutput())
 
-        self.add_plane_widget(callback=callback, bounds=mesh.bounds,
-                              factor=1.25, normal=normal,
-                              color=widget_color, tubing=tubing,
-                              assign_to_axis=assign_to_axis,
-                              origin_translation=origin_translation,
-                              outline_translation=outline_translation,
-                              implicit=implicit, origin=mesh.center,
-                              normal_rotation=normal_rotation)
+        self.add_plane_widget(
+            callback=callback,
+            bounds=mesh.bounds,
+            factor=1.25,
+            normal=normal,
+            color=widget_color,
+            tubing=tubing,
+            assign_to_axis=assign_to_axis,
+            origin_translation=origin_translation,
+            outline_translation=outline_translation,
+            implicit=implicit,
+            origin=mesh.center,
+            normal_rotation=normal_rotation,
+        )
 
         return self.add_mesh(plane_clipped_mesh, **kwargs)
 
-    def add_mesh_slice(self, mesh, normal='x', generate_triangles=False,
-                       widget_color=None, assign_to_axis=None,
-                       tubing=False, origin_translation=True,
-                       outline_translation=False, implicit=True,
-                       normal_rotation=True, **kwargs):
+    def add_mesh_slice(
+        self,
+        mesh,
+        normal='x',
+        generate_triangles=False,
+        widget_color=None,
+        assign_to_axis=None,
+        tubing=False,
+        origin_translation=True,
+        outline_translation=False,
+        implicit=True,
+        normal_rotation=True,
+        **kwargs,
+    ):
         """Slice a mesh using a plane widget.
 
         Add a mesh to the scene with a plane widget that is used to slice
@@ -578,10 +636,10 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
-        alg = _vtk.vtkCutter() # Construct the cutter object
-        alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
+        alg = _vtk.vtkCutter()  # Construct the cutter object
+        alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
@@ -593,23 +651,30 @@ class WidgetHelper:
         def callback(normal, origin):
             # create the plane for clipping
             plane = generate_plane(normal, origin)
-            alg.SetCutFunction(plane) # the cutter to use the plane we made
-            alg.Update() # Perform the Cut
+            alg.SetCutFunction(plane)  # the cutter to use the plane we made
+            alg.Update()  # Perform the Cut
             plane_sliced_mesh.shallow_copy(alg.GetOutput())
 
-        self.add_plane_widget(callback=callback, bounds=mesh.bounds,
-                              factor=1.25, normal=normal,
-                              color=widget_color, tubing=tubing,
-                              assign_to_axis=assign_to_axis,
-                              origin_translation=origin_translation,
-                              outline_translation=outline_translation,
-                              implicit=implicit, origin=mesh.center,
-                              normal_rotation=normal_rotation)
+        self.add_plane_widget(
+            callback=callback,
+            bounds=mesh.bounds,
+            factor=1.25,
+            normal=normal,
+            color=widget_color,
+            tubing=tubing,
+            assign_to_axis=assign_to_axis,
+            origin_translation=origin_translation,
+            outline_translation=outline_translation,
+            implicit=implicit,
+            origin=mesh.center,
+            normal_rotation=normal_rotation,
+        )
 
         return self.add_mesh(plane_sliced_mesh, **kwargs)
 
-    def add_mesh_slice_orthogonal(self, mesh, generate_triangles=False,
-                                  widget_color=None, tubing=False, **kwargs):
+    def add_mesh_slice_orthogonal(
+        self, mesh, generate_triangles=False, widget_color=None, tubing=False, **kwargs
+    ):
         """Slice a mesh with three interactive planes.
 
         Adds three interactive plane slicing widgets for orthogonal slicing
@@ -650,19 +715,30 @@ class WidgetHelper:
         """
         actors = []
         for ax in ["x", "y", "z"]:
-            a = self.add_mesh_slice(mesh, assign_to_axis=ax,
-                                    origin_translation=False,
-                                    outline_translation=False,
-                                    generate_triangles=generate_triangles,
-                                    widget_color=widget_color,
-                                    tubing=tubing, **kwargs)
+            a = self.add_mesh_slice(
+                mesh,
+                assign_to_axis=ax,
+                origin_translation=False,
+                outline_translation=False,
+                generate_triangles=generate_triangles,
+                widget_color=widget_color,
+                tubing=tubing,
+                **kwargs,
+            )
             actors.append(a)
 
         return actors
 
-    def add_line_widget(self, callback, bounds=None, factor=1.25,
-                        resolution=100, color=None, use_vertices=False,
-                        pass_widget=False):
+    def add_line_widget(
+        self,
+        callback,
+        bounds=None,
+        factor=1.25,
+        resolution=100,
+        color=None,
+        use_vertices=False,
+        pass_widget=False,
+    ):
         """Add a line widget to the scene.
 
         This is useless without a callback function. You can pass a
@@ -748,10 +824,17 @@ class WidgetHelper:
                 widget.Off()
             del self.line_widgets
 
-    def add_text_slider_widget(self, callback, data, value=None,
-                              pointa=(.4, .9), pointb=(.9, .9),
-                              color=None, event_type='end',
-                              style=None):
+    def add_text_slider_widget(
+        self,
+        callback,
+        data,
+        value=None,
+        pointa=(0.4, 0.9),
+        pointb=(0.9, 0.9),
+        color=None,
+        event_type='end',
+        style=None,
+    ):
         """Add a text slider bar widget.
 
         This is useless without a callback function. You can pass a callable
@@ -799,8 +882,9 @@ class WidgetHelper:
 
         """
         if not isinstance(data, list):
-            raise TypeError("The `data` parameter must be a list "
-                            "but {} was given : ", type(data))
+            raise TypeError(
+                f"The `data` parameter must be a list but {type(data).__name__} was passed instead"
+            )
         n_states = len(data)
         if n_states == 0:
             raise ValueError("The input list of values is empty")
@@ -818,11 +902,16 @@ class WidgetHelper:
                     try_callback(callback, data[idx])
             return
 
-        slider_widget = self.add_slider_widget(callback=_the_callback, rng=[0, n_states - 1],
-                                               value=value,
-                                               pointa=pointa, pointb=pointb,
-                                               color=color, event_type=event_type,
-                                               style=style)
+        slider_widget = self.add_slider_widget(
+            callback=_the_callback,
+            rng=[0, n_states - 1],
+            value=value,
+            pointa=pointa,
+            pointb=pointb,
+            color=color,
+            event_type=event_type,
+            style=style,
+        )
         slider_rep = slider_widget.GetRepresentation()
         slider_rep.ShowSliderLabelOff()
 
@@ -841,17 +930,30 @@ class WidgetHelper:
         elif event_type == 'always':
             slider_widget.AddObserver(_vtk.vtkCommand.InteractionEvent, title_callback)
         else:
-            raise ValueError("Expected value for `event_type` is 'start',"
-                             f" 'end' or 'always': {event_type} was given.")
+            raise ValueError(
+                "Expected value for `event_type` is 'start',"
+                f" 'end' or 'always': {event_type} was given."
+            )
         title_callback(slider_widget, None)
         return slider_widget
 
-    def add_slider_widget(self, callback, rng, value=None, title=None,
-                          pointa=(.4, .9), pointb=(.9, .9),
-                          color=None, pass_widget=False,
-                          event_type='end', style=None,
-                          title_height=0.03, title_opacity=1.0, title_color=None,
-                          fmt=None):
+    def add_slider_widget(
+        self,
+        callback,
+        rng,
+        value=None,
+        title=None,
+        pointa=(0.4, 0.9),
+        pointb=(0.9, 0.9),
+        color=None,
+        pass_widget=False,
+        event_type='end',
+        style=None,
+        title_height=0.03,
+        title_opacity=1.0,
+        title_color=None,
+        fmt=None,
+    ):
         """Add a slider bar widget.
 
         This is useless without a callback function. You can pass a
@@ -953,7 +1055,7 @@ class WidgetHelper:
             fmt = pyvista.global_theme.font.fmt
 
         def normalize(point, viewport):
-            return (point[0]*(viewport[2]-viewport[0]), point[1]*(viewport[3]-viewport[1]))
+            return (point[0] * (viewport[2] - viewport[0]), point[1] * (viewport[3] - viewport[1]))
 
         pointa = normalize(pointa, self.renderer.GetViewport())
         pointb = normalize(pointb, self.renderer.GetViewport())
@@ -979,8 +1081,9 @@ class WidgetHelper:
 
         if style is not None:
             if not isinstance(style, str):
-                raise TypeError("Expected type for ``style`` is str but"
-                                f" {type(style)} was given.")
+                raise TypeError(
+                    f"Expected type for ``style`` is str but {type(style).__name__} was given."
+                )
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
             slider_rep.SetSliderWidth(slider_style.slider_width)
@@ -1011,8 +1114,7 @@ class WidgetHelper:
             slider_widget.GetRepresentation().SetLabelFormat(fmt)
         slider_widget.On()
         if not isinstance(event_type, str):
-            raise TypeError("Expected type for `event_type` is str: "
-                            f"{type(event_type)} was given.")
+            raise TypeError(f"Expected type for `event_type` is str: {type(event_type)} was given.")
         if event_type == 'start':
             slider_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _the_callback)
         elif event_type == 'end':
@@ -1020,8 +1122,10 @@ class WidgetHelper:
         elif event_type == 'always':
             slider_widget.AddObserver(_vtk.vtkCommand.InteractionEvent, _the_callback)
         else:
-            raise ValueError("Expected value for `event_type` is 'start',"
-                             f" 'end' or 'always': {event_type} was given.")
+            raise ValueError(
+                "Expected value for `event_type` is 'start',"
+                f" 'end' or 'always': {event_type} was given."
+            )
         _the_callback(slider_widget, None)
 
         self.slider_widgets.append(slider_widget)
@@ -1034,10 +1138,19 @@ class WidgetHelper:
                 widget.Off()
             del self.slider_widgets
 
-    def add_mesh_threshold(self, mesh, scalars=None, invert=False,
-                           widget_color=None, preference='cell',
-                           title=None, pointa=(.4, .9), pointb=(.9, .9),
-                           continuous=False, **kwargs):
+    def add_mesh_threshold(
+        self,
+        mesh,
+        scalars=None,
+        invert=False,
+        widget_color=None,
+        preference='cell',
+        title=None,
+        pointa=(0.4, 0.9),
+        pointb=(0.9, 0.9),
+        continuous=False,
+        **kwargs,
+    ):
         """Apply a threshold on a mesh with a slider.
 
         Add a mesh to the scene with a slider widget that is used to
@@ -1116,11 +1229,13 @@ class WidgetHelper:
             title = scalars
         mesh.set_active_scalars(scalars)
 
-        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
         alg = _vtk.vtkThreshold()
         alg.SetInputDataObject(mesh)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(
+            0, 0, 0, field.value, scalars
+        )  # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
 
         if not hasattr(self, "threshold_meshes"):
@@ -1136,17 +1251,32 @@ class WidgetHelper:
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
 
-        self.add_slider_widget(callback=callback, rng=rng, title=title,
-                               color=widget_color, pointa=pointa,
-                               pointb=pointb)
+        self.add_slider_widget(
+            callback=callback,
+            rng=rng,
+            title=title,
+            color=widget_color,
+            pointa=pointa,
+            pointb=pointb,
+        )
 
         kwargs.setdefault("reset_camera", False)
         self.add_mesh(threshold_mesh, scalars=scalars, **kwargs)
 
-    def add_mesh_isovalue(self, mesh, scalars=None, compute_normals=False,
-                          compute_gradients=False, compute_scalars=True,
-                          preference='point', title=None, pointa=(.4, .9),
-                          pointb=(.9, .9), widget_color=None, **kwargs):
+    def add_mesh_isovalue(
+        self,
+        mesh,
+        scalars=None,
+        compute_normals=False,
+        compute_gradients=False,
+        compute_scalars=True,
+        preference='point',
+        title=None,
+        pointa=(0.4, 0.9),
+        pointb=(0.9, 0.9),
+        widget_color=None,
+        **kwargs,
+    ):
         """Create a contour of a mesh with a slider.
 
         Add a mesh to the scene with a slider widget that is used to
@@ -1229,7 +1359,9 @@ class WidgetHelper:
             field = get_array_association(mesh, scalars, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
-            raise TypeError(f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.')
+            raise TypeError(
+                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
+            )
 
         rng = mesh.get_data_range(scalars)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
@@ -1243,9 +1375,9 @@ class WidgetHelper:
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
-        alg.SetNumberOfContours(1) # Only one contour level
+        alg.SetNumberOfContours(1)  # Only one contour level
 
-        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
         if not hasattr(self, "isovalue_meshes"):
             self.isovalue_meshes = []
@@ -1257,18 +1389,33 @@ class WidgetHelper:
             alg.Update()
             isovalue_mesh.shallow_copy(alg.GetOutput())
 
-        self.add_slider_widget(callback=callback, rng=rng, title=title,
-                               color=widget_color, pointa=pointa,
-                               pointb=pointb)
+        self.add_slider_widget(
+            callback=callback,
+            rng=rng,
+            title=title,
+            color=widget_color,
+            pointa=pointa,
+            pointb=pointb,
+        )
 
         kwargs.setdefault("reset_camera", False)
         return self.add_mesh(isovalue_mesh, scalars=scalars, **kwargs)
 
-    def add_spline_widget(self, callback, bounds=None, factor=1.25,
-                          n_handles=5, resolution=25, color="yellow",
-                          show_ribbon=False, ribbon_color="pink",
-                          ribbon_opacity=0.5, pass_widget=False,
-                          closed=False, initial_points=None):
+    def add_spline_widget(
+        self,
+        callback,
+        bounds=None,
+        factor=1.25,
+        n_handles=5,
+        resolution=25,
+        color="yellow",
+        show_ribbon=False,
+        ribbon_color="pink",
+        ribbon_opacity=0.5,
+        pass_widget=False,
+        closed=False,
+        initial_points=None,
+    ):
         """Create and add a spline widget to the scene.
 
         Use the bounds argument to place this widget. Several "handles" are
@@ -1351,7 +1498,7 @@ class WidgetHelper:
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
             polyline = pyvista.wrap(para_source.GetOutput())
-            ribbon.shallow_copy(polyline.ribbon(normal=(0,0,1), angle=90.0))
+            ribbon.shallow_copy(polyline.ribbon(normal=(0, 0, 1), angle=90.0))
             if callable(callback):
                 if pass_widget:
                     try_callback(callback, polyline, widget)
@@ -1389,12 +1536,20 @@ class WidgetHelper:
                 widget.Off()
             del self.spline_widgets
 
-    def add_mesh_slice_spline(self, mesh, generate_triangles=False,
-                              n_handles=5, resolution=25,
-                              widget_color=None, show_ribbon=False,
-                              ribbon_color="pink", ribbon_opacity=0.5,
-                              initial_points=None, closed=False,
-                              **kwargs):
+    def add_mesh_slice_spline(
+        self,
+        mesh,
+        generate_triangles=False,
+        n_handles=5,
+        resolution=25,
+        widget_color=None,
+        show_ribbon=False,
+        ribbon_color="pink",
+        ribbon_opacity=0.5,
+        initial_points=None,
+        closed=False,
+        **kwargs,
+    ):
         """Slice a mesh with a spline widget.
 
         Add a mesh to the scene with a spline widget that is used to slice
@@ -1463,10 +1618,10 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
-        alg = _vtk.vtkCutter() # Construct the cutter object
-        alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
+        alg = _vtk.vtkCutter()  # Construct the cutter object
+        alg.SetInputDataObject(mesh)  # Use the grid as the data we desire to cut
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
@@ -1484,22 +1639,36 @@ class WidgetHelper:
             alg.Update()  # Perform the Cut
             spline_sliced_mesh.shallow_copy(alg.GetOutput())
 
-        self.add_spline_widget(callback=callback, bounds=mesh.bounds,
-                               factor=1.25, color=widget_color,
-                               n_handles=n_handles, resolution=resolution,
-                               show_ribbon=show_ribbon,
-                               ribbon_color=ribbon_color,
-                               ribbon_opacity=ribbon_opacity,
-                               initial_points=initial_points,
-                               closed=closed)
+        self.add_spline_widget(
+            callback=callback,
+            bounds=mesh.bounds,
+            factor=1.25,
+            color=widget_color,
+            n_handles=n_handles,
+            resolution=resolution,
+            show_ribbon=show_ribbon,
+            ribbon_color=ribbon_color,
+            ribbon_opacity=ribbon_opacity,
+            initial_points=initial_points,
+            closed=closed,
+        )
 
         return self.add_mesh(spline_sliced_mesh, **kwargs)
 
-    def add_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,
-                          theta_resolution=30, phi_resolution=30,
-                          color=None, style="surface",
-                          selected_color="pink", indices=None,
-                          pass_widget=False, test_callback=True):
+    def add_sphere_widget(
+        self,
+        callback,
+        center=(0, 0, 0),
+        radius=0.5,
+        theta_resolution=30,
+        phi_resolution=30,
+        color=None,
+        style="surface",
+        selected_color="pink",
+        indices=None,
+        pass_widget=False,
+        test_callback=True,
+    ):
         """Add one or many sphere widgets to a scene.
 
         Use a sphere widget to control a vertex location.
@@ -1605,7 +1774,7 @@ class WidgetHelper:
             else:
                 loc = center
             sphere_widget = _vtk.vtkSphereWidget()
-            sphere_widget.WIDGET_INDEX = indices[i] # Monkey patch the index
+            sphere_widget.WIDGET_INDEX = indices[i]  # Monkey patch the index
             if style in "wireframe":
                 sphere_widget.SetRepresentationToWireframe()
             else:
@@ -1638,10 +1807,17 @@ class WidgetHelper:
                 widget.Off()
             del self.sphere_widgets
 
-    def add_checkbox_button_widget(self, callback, value=False,
-                                   position=(10., 10.), size=50, border_size=5,
-                                   color_on='blue', color_off='grey',
-                                   background_color='white'):
+    def add_checkbox_button_widget(
+        self,
+        callback,
+        value=False,
+        position=(10.0, 10.0),
+        size=50,
+        border_size=5,
+        color_on='blue',
+        color_off='grey',
+        background_color='white',
+    ):
         """Add a checkbox button widget to the scene.
 
         This is useless without a callback function. You can pass a callable
@@ -1684,7 +1860,7 @@ class WidgetHelper:
         if not hasattr(self, "button_widgets"):
             self.button_widgets = []
 
-        def create_button(color1, color2, color3, dims=[size, size, 1]):
+        def create_button(color1, color2, color3, dims=(size, size, 1)):
             color1 = np.array(Color(color1).i_rgb)
             color2 = np.array(Color(color2).i_rgb)
             color3 = np.array(Color(color3).i_rgb)
@@ -1692,10 +1868,9 @@ class WidgetHelper:
             n_points = dims[0] * dims[1]
             button = pyvista.UniformGrid(dims=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
-            arr[1:dims[0]-1, 1:dims[1]-1] = color2  # apply color2
+            arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
             arr[
-                border_size:dims[0]-border_size,
-                border_size:dims[1]-border_size
+                border_size : dims[0] - border_size, border_size : dims[1] - border_size
             ] = color3  # apply color3
             button.point_data['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
             return button
@@ -1703,11 +1878,7 @@ class WidgetHelper:
         button_on = create_button(color_on, background_color, color_on)
         button_off = create_button(color_on, background_color, color_off)
 
-        bounds = [
-            position[0], position[0] + size,
-            position[1], position[1] + size,
-            0., 0.
-        ]
+        bounds = [position[0], position[0] + size, position[1], position[1] + size, 0.0, 0.0]
 
         button_rep = _vtk.vtkTexturedButtonRepresentation2D()
         button_rep.SetNumberOfStates(2)

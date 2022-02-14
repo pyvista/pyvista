@@ -32,8 +32,8 @@ def atomize(grid, shift_fac=0.1, scale=0.9):
     for i in range(grid.n_cells):
         cell = grid.extract_cells(i)
         ccent = np.array(cell.center)
-        cell.points[:] = (cell.points - ccent)*scale + ccent
-        cell.points += (ccent - np.array(cent))*shift_fac
+        cell.points[:] = (cell.points - ccent) * scale + ccent
+        cell.points += (ccent - np.array(cent)) * shift_fac
         cells.append(cell)
 
     return cells[0].merge(cells[1:])
@@ -69,7 +69,7 @@ def logo_letters(merge=False, depth=0.3):
     for letter in LOGO_TITLE:
         mesh_letter = text_3d(letter, depth=depth)
         this_letter_width = mesh_letter.points[:, 0].max()
-        mesh_letter.translate([width*space_factor, 0, 0.0], inplace=True)
+        mesh_letter.translate([width * space_factor, 0, 0.0], inplace=True)
         width += this_letter_width
         if merge:
             mesh_letters += mesh_letter
@@ -105,8 +105,15 @@ def logo_basic():
     return logo_letters(merge=True).compute_normals(split_vertices=True)
 
 
-def plot_logo(window_size=None, off_screen=None, screenshot=None,
-              cpos=None, just_return_plotter=False, show_note=False, **kwargs):
+def plot_logo(
+    window_size=None,
+    off_screen=None,
+    screenshot=None,
+    cpos=None,
+    just_return_plotter=False,
+    show_note=False,
+    **kwargs,
+):
     """Plot the stylized PyVista logo.
 
     Examples
@@ -140,24 +147,36 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None,
     faces = v_grid_atom_surf.faces.reshape(-1, 5)
     faces[:, 1:] = faces[:, 1:][:, ::-1]
     v_grid_atom_surf.faces = faces
-    plotter.add_mesh(v_grid_atom_surf, scalars='scalars', show_edges=True,
-                     cmap='winter', show_scalar_bar=False)
+    plotter.add_mesh(
+        v_grid_atom_surf, scalars='scalars', show_edges=True, cmap='winter', show_scalar_bar=False
+    )
 
     # letter 'i'
     i_grid = pyvista.voxelize(mesh_letters['i'], density=0.1)
 
-    plotter.add_mesh(i_grid.extract_surface(),
-                     style='points', color='r',
-                     render_points_as_spheres=True, point_size=14)
+    plotter.add_mesh(
+        i_grid.extract_surface(),
+        style='points',
+        color='r',
+        render_points_as_spheres=True,
+        point_size=14,
+    )
     plotter.add_mesh(i_grid, style='wireframe', color='k', line_width=4)
 
     # letter 's'
     mesh = mesh_letters['s']
     mesh['scalars'] = mesh.points[:, 0]
-    plotter.add_mesh(mesh, scalars='scalars', style='wireframe',
-                     show_edges=True, line_width=2, cmap='gist_heat',
-                     backface_culling=True, render_lines_as_tubes=True,
-                     show_scalar_bar=False)
+    plotter.add_mesh(
+        mesh,
+        scalars='scalars',
+        style='wireframe',
+        show_edges=True,
+        line_width=2,
+        cmap='gist_heat',
+        backface_culling=True,
+        render_lines_as_tubes=True,
+        show_scalar_bar=False,
+    )
 
     # letter 't'
     mesh = mesh_letters['t'].clean().compute_normals()
@@ -165,12 +184,11 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None,
     if pyvista.global_theme.jupyter_backend == 'pythreejs':
         mesh.flip_normals()
     scalars = mesh.points[:, 0]
-    plotter.add_mesh(mesh, scalars=scalars, show_edges=True,
-                     cmap='autumn', show_scalar_bar=False)
+    plotter.add_mesh(mesh, scalars=scalars, show_edges=True, cmap='autumn', show_scalar_bar=False)
 
     # letter 'a'
     grid = examples.download_letter_a()
-    grid.points[:, 0] += (mesh_letters['a'].center[0] - grid.center[0])
+    grid.points[:, 0] += mesh_letters['a'].center[0] - grid.center[0]
 
     # select some cells from grid
     cells = grid.cells.reshape(-1, 5)
@@ -181,8 +199,7 @@ def plot_logo(window_size=None, off_screen=None, screenshot=None,
 
     cells = a_part.cells.reshape(-1, 5)
     scalars = grid.points[cells[:, 1], 1]
-    plotter.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens',
-                     show_scalar_bar=False)
+    plotter.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens', show_scalar_bar=False)
 
     if show_note:
         text = text_3d("You can move me!", depth=0.1)

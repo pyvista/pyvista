@@ -108,7 +108,7 @@ class Observer:
         try:
             kind, path, address, alert = regex.findall(message)[0]
             return kind, path, address, alert
-        except:
+        except:  # noqa: E722
             return '', '', '', message
 
     def log_message(self, kind, alert):
@@ -190,7 +190,7 @@ def get_gpu_info():
     return gpu_info
 
 
-class GPUInfo():
+class GPUInfo:
     """A class to hold GPU details."""
 
     def __init__(self):
@@ -229,10 +229,11 @@ class GPUInfo():
 
     def get_info(self):
         """All GPU information as tuple pairs."""
-        return (("GPU Vendor", self.vendor),
-                ("GPU Renderer", self.renderer),
-                ("GPU Version", self.version),
-               )
+        return (
+            ("GPU Vendor", self.vendor),
+            ("GPU Renderer", self.renderer),
+            ("GPU Version", self.version),
+        )
 
     def _repr_html_(self):
         """HTML table representation."""
@@ -255,8 +256,7 @@ class GPUInfo():
 class Report(scooby.Report):
     """A class for custom scooby.Report."""
 
-    def __init__(self, additional=None, ncol=3, text_width=80, sort=False,
-                 gpu=True):
+    def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
         """Generate a :class:`scooby.Report` instance.
 
         Parameters
@@ -285,8 +285,16 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = [
-            'matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
-            'cmocean', 'ipyvtklink', 'scipy', 'itkwidgets', 'tqdm',
+            'matplotlib',
+            'pyvistaqt',
+            'PyQt5',
+            'IPython',
+            'colorcet',
+            'cmocean',
+            'ipyvtklink',
+            'scipy',
+            'itkwidgets',
+            'tqdm',
             'meshio',
         ]
 
@@ -300,10 +308,16 @@ class Report(scooby.Report):
         else:
             extra_meta = ("GPU Details", "None")
 
-        scooby.Report.__init__(self, additional=additional, core=core,
-                               optional=optional, ncol=ncol,
-                               text_width=text_width, sort=sort,
-                               extra_meta=extra_meta)
+        scooby.Report.__init__(
+            self,
+            additional=additional,
+            core=core,
+            optional=optional,
+            ncol=ncol,
+            text_width=text_width,
+            sort=sort,
+            extra_meta=extra_meta,
+        )
 
 
 def assert_empty_kwargs(**kwargs):

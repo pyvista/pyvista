@@ -46,21 +46,27 @@ class _rcParams(dict):  # pragma: no cover
 
     def __getitem__(self, key):
         import pyvista  # avoids circular import
-        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``.',
-                      DeprecationWarning)
+
+        warnings.warn(
+            'rcParams is deprecated.  Please use ``pyvista.global_theme``.', DeprecationWarning
+        )
         return getattr(pyvista.global_theme, key)
 
     def __setitem__(self, key, value):
         import pyvista  # avoids circular import
-        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``.',
-                      DeprecationWarning)
+
+        warnings.warn(
+            'rcParams is deprecated.  Please use ``pyvista.global_theme``.', DeprecationWarning
+        )
         setattr(pyvista.global_theme, key, value)
 
     def __repr__(self):
         """Use the repr of global_theme."""
         import pyvista  # avoids circular import
-        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
-                      DeprecationWarning)
+
+        warnings.warn(
+            'rcParams is deprecated.  Please use ``pyvista.global_theme``', DeprecationWarning
+        )
         return repr(pyvista.global_theme)
 
 
@@ -116,6 +122,7 @@ def set_plot_theme(theme):
 
     """
     import pyvista
+
     if isinstance(theme, str):
         theme = theme.lower()
         if theme == 'night':  # pragma: no cover
@@ -126,11 +133,13 @@ def set_plot_theme(theme):
     elif isinstance(theme, DefaultTheme):
         pyvista.global_theme.load_theme(theme)
     else:
-        raise TypeError(f'Expected a ``pyvista.themes.DefaultTheme`` or ``str``, not '
-                        f'a {type(theme).__name__}')
+        raise TypeError(
+            f'Expected a ``pyvista.themes.DefaultTheme`` or ``str``, not '
+            f'a {type(theme).__name__}'
+        )
 
 
-class _ThemeConfig():
+class _ThemeConfig:
     """Provide common methods for theme configuration classes."""
 
     __slots__: List[str] = []
@@ -212,9 +221,7 @@ class _DepthPeelingConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_number_of_peels',
-                 '_occlusion_ratio',
-                 '_enabled']
+    __slots__ = ['_number_of_peels', '_occlusion_ratio', '_enabled']
 
     def __init__(self):
         self._number_of_peels = 4
@@ -296,11 +303,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_color',
-                 '_line_width',
-                 '_opacity',
-                 '_feature_angle',
-                 '_decimate']
+    __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate']
 
     def __init__(self):
         self._color = Color('black')
@@ -420,10 +423,7 @@ class _ColorbarConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_width',
-                 '_height',
-                 '_position_x',
-                 '_position_y']
+    __slots__ = ['_width', '_height', '_position_x', '_position_y']
 
     def __init__(self):
         self._width = None
@@ -530,11 +530,7 @@ class _AxesConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_x_color',
-                 '_y_color',
-                 '_z_color',
-                 '_box',
-                 '_show']
+    __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
 
     def __init__(self):
         self._x_color = Color('tomato')
@@ -671,12 +667,7 @@ class _Font(_ThemeConfig):
 
     """
 
-    __slots__ = ['_family',
-                 '_size',
-                 '_title_size',
-                 '_label_size',
-                 '_color',
-                 '_fmt']
+    __slots__ = ['_family', '_size', '_title_size', '_label_size', '_color', '_fmt']
 
     def __init__(self):
         self._family = 'arial'
@@ -820,15 +811,17 @@ class _Font(_ThemeConfig):
 class _SliderStyleConfig(_ThemeConfig):
     """PyVista configuration for a single slider style."""
 
-    __slots__ = ['_name',
-                 '_slider_length',
-                 '_slider_width',
-                 '_slider_color',
-                 '_tube_width',
-                 '_tube_color',
-                 '_cap_opacity',
-                 '_cap_length',
-                 '_cap_width']
+    __slots__ = [
+        '_name',
+        '_slider_length',
+        '_slider_width',
+        '_slider_color',
+        '_tube_width',
+        '_tube_color',
+        '_cap_opacity',
+        '_cap_length',
+        '_cap_width',
+    ]
 
     def __init__(self):
         """Initialize the slider style configuration."""
@@ -1026,8 +1019,7 @@ class _SliderConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_classic',
-                 '_modern']
+    __slots__ = ['_classic', '_modern']
 
     def __init__(self):
         """Initialize the slider configuration."""
@@ -1114,43 +1106,44 @@ class DefaultTheme(_ThemeConfig):
 
     """
 
-    __slots__ = ['_name',
-                 '_background',
-                 '_jupyter_backend',
-                 '_full_screen',
-                 '_window_size',
-                 '_camera',
-                 '_notebook',
-                 '_font',
-                 '_auto_close',
-                 '_cmap',
-                 '_color',
-                 '_nan_color',
-                 '_edge_color',
-                 '_outline_color',
-                 '_floor_color',
-                 '_colorbar_orientation',
-                 '_colorbar_horizontal',
-                 '_colorbar_vertical',
-                 '_show_scalar_bar',
-                 '_show_edges',
-                 '_lighting',
-                 '_interactive',
-                 '_render_points_as_spheres',
-                 '_transparent_background',
-                 '_title',
-                 '_axes',
-                 '_multi_samples',
-                 '_multi_rendering_splitting_position',
-                 '_volume_mapper',
-                 '_smooth_shading',
-                 '_depth_peeling',
-                 '_silhouette',
-                 '_slider_styles',
-                 '_return_cpos',
-                 '_hidden_line_removal',
-                 '_antialiasing',
-                 '_enable_camera_orientation_widget',
+    __slots__ = [
+        '_name',
+        '_background',
+        '_jupyter_backend',
+        '_full_screen',
+        '_window_size',
+        '_camera',
+        '_notebook',
+        '_font',
+        '_auto_close',
+        '_cmap',
+        '_color',
+        '_nan_color',
+        '_edge_color',
+        '_outline_color',
+        '_floor_color',
+        '_colorbar_orientation',
+        '_colorbar_horizontal',
+        '_colorbar_vertical',
+        '_show_scalar_bar',
+        '_show_edges',
+        '_lighting',
+        '_interactive',
+        '_render_points_as_spheres',
+        '_transparent_background',
+        '_title',
+        '_axes',
+        '_multi_samples',
+        '_multi_rendering_splitting_position',
+        '_volume_mapper',
+        '_smooth_shading',
+        '_depth_peeling',
+        '_silhouette',
+        '_slider_styles',
+        '_return_cpos',
+        '_hidden_line_removal',
+        '_antialiasing',
+        '_enable_camera_orientation_widget',
     ]
 
     def __init__(self):
@@ -1353,6 +1346,7 @@ class DefaultTheme(_ThemeConfig):
     @jupyter_backend.setter
     def jupyter_backend(self, backend: 'str'):
         from pyvista.jupyter import _validate_jupyter_backend
+
         self._jupyter_backend = _validate_jupyter_backend(backend)
 
     @property
@@ -1435,8 +1429,7 @@ class DefaultTheme(_ThemeConfig):
     @camera.setter
     def camera(self, camera):
         if not isinstance(camera, dict):
-            raise TypeError('Expected ``camera`` to be a dict, not '
-                            f'{type(camera).__name__}.')
+            raise TypeError(f'Expected ``camera`` to be a dict, not {type(camera).__name__}.')
 
         if 'position' not in camera:
             raise KeyError('Expected the "position" key in the camera dict.')
@@ -1674,8 +1667,7 @@ class DefaultTheme(_ThemeConfig):
     @colorbar_orientation.setter
     def colorbar_orientation(self, colorbar_orientation: str):
         if colorbar_orientation not in ['vertical', 'horizontal']:
-            raise ValueError('Colorbar orientation must be either "vertical" or '
-                             '"horizontal"')
+            raise ValueError('Colorbar orientation must be either "vertical" or "horizontal"')
         self._colorbar_orientation = colorbar_orientation
 
     @property
@@ -1937,8 +1929,10 @@ class DefaultTheme(_ThemeConfig):
     def volume_mapper(self, mapper: str):
         mappers = ['fixed_point', 'gpu', 'open_gl', 'smart']
         if mapper not in mappers:
-            raise ValueError(f"Mapper ({mapper}) unknown. Available volume mappers "
-                             f"include:\n {', '.join(mappers)}")
+            raise ValueError(
+                f"Mapper ({mapper}) unknown. Available volume mappers "
+                f"include:\n {', '.join(mappers)}"
+            )
 
         self._volume_mapper = mapper
 
@@ -2058,7 +2052,7 @@ class DefaultTheme(_ThemeConfig):
     def __repr__(self):
         """User friendly representation of the current theme."""
         txt = [f'{self.name.capitalize()} Theme']
-        txt.append('-'*len(txt[0]))
+        txt.append('-' * len(txt[0]))
         parm = {
             'Background': 'background',
             'Jupyter backend': 'jupyter_backend',
@@ -2150,8 +2144,9 @@ class DefaultTheme(_ThemeConfig):
             theme = load_theme(theme)
 
         if not isinstance(theme, DefaultTheme):
-            raise TypeError('``theme`` must be a pyvista theme like '
-                            '``pyvista.themes.DefaultTheme``.')
+            raise TypeError(
+                '``theme`` must be a pyvista theme like ``pyvista.themes.DefaultTheme``.'
+            )
 
         for attr_name in theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
@@ -2184,14 +2179,18 @@ class DefaultTheme(_ThemeConfig):
 
         Deprecated in favor of ``jupyter_backend``.
         """
-        warnings.warn('use_ipyvtk is deprecated.  Please use '
-                      '``pyvista.global_theme.jupyter_backend``', DeprecationWarning)
+        warnings.warn(
+            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
+            DeprecationWarning,
+        )
         return self.jupyter_backend == 'ipyvtklink'
 
     @use_ipyvtk.setter
     def use_ipyvtk(self, value):  # pragma: no cover
-        warnings.warn('use_ipyvtk is deprecated.  Please use '
-                      '``pyvista.global_theme.jupyter_backend``', DeprecationWarning)
+        warnings.warn(
+            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
+            DeprecationWarning,
+        )
 
         if value:
             self.jupyter_backend = 'ipyvtklink'

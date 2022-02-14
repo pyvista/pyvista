@@ -6,11 +6,10 @@ has_ipython = True
 try:
     import IPython  # noqa
     from PIL.Image import Image
-except:
+except:  # noqa: E722
     has_ipython = False
 
-skip_no_ipython = pytest.mark.skipif(not has_ipython,
-                                     reason="Requires IPython package")
+skip_no_ipython = pytest.mark.skipif(not has_ipython, reason="Requires IPython package")
 
 
 def test_set_jupyter_backend_fail():
@@ -35,8 +34,12 @@ def test_set_jupyter_backend_static():
 @pytest.mark.parametrize('return_viewer', [True, False])
 def test_static_from_show(sphere, return_viewer):
     window_size = (100, 100)
-    image = sphere.plot(window_size=window_size, notebook=True,
-                        jupyter_backend='static', return_viewer=return_viewer)
+    image = sphere.plot(
+        window_size=window_size,
+        notebook=True,
+        jupyter_backend='static',
+        return_viewer=return_viewer,
+    )
     if return_viewer:
         assert isinstance(image, Image)
         assert window_size == image.size

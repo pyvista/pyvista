@@ -124,11 +124,20 @@ class Light(vtkLight):
     CAMERA_LIGHT = LightType.CAMERA_LIGHT
     SCENE_LIGHT = LightType.SCENE_LIGHT
 
-    def __init__(self, position=None, focal_point=None, color=None,
-                 light_type='scene light', intensity=None,
-                 positional=None, cone_angle=None, show_actor=False,
-                 exponent=None, shadow_attenuation=None,
-                 attenuation_values=None):
+    def __init__(
+        self,
+        position=None,
+        focal_point=None,
+        color=None,
+        light_type='scene light',
+        intensity=None,
+        positional=None,
+        cone_angle=None,
+        show_actor=False,
+        exponent=None,
+        shadow_attenuation=None,
+        attenuation_values=None,
+    ):
         """Initialize the light."""
         super().__init__()
         self._renderers = []
@@ -148,19 +157,24 @@ class Light(vtkLight):
             # be forgiving: ignore spaces and case
             light_type_orig = light_type
             type_normalized = light_type.replace(' ', '').lower()
-            mapping = {'headlight': LightType.HEADLIGHT,
-                       'cameralight': LightType.CAMERA_LIGHT,
-                       'scenelight': LightType.SCENE_LIGHT}
+            mapping = {
+                'headlight': LightType.HEADLIGHT,
+                'cameralight': LightType.CAMERA_LIGHT,
+                'scenelight': LightType.SCENE_LIGHT,
+            }
             try:
                 light_type = mapping[type_normalized]
             except KeyError:
                 light_keys = ', '.join(mapping)
-                msg = (f'Invalid light_type "{light_type_orig}"\n'
-                       f'Choose from one of the following: {light_keys}')
+                msg = (
+                    f'Invalid light_type "{light_type_orig}"\n'
+                    f'Choose from one of the following: {light_keys}'
+                )
                 raise ValueError(msg) from None
         elif not isinstance(light_type, int):
-            raise TypeError('Parameter light_type must be int or str,'
-                            f' not {type(light_type).__name__}.')
+            raise TypeError(
+                f'Parameter light_type must be int or str, not {type(light_type).__name__}.'
+            )
         # LightType is an int subclass
 
         self.light_type = light_type
@@ -190,15 +204,24 @@ class Light(vtkLight):
 
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
-        return (f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>')
+        return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
     def __eq__(self, other):
         """Compare whether the relevant attributes of two lights are equal."""
         # attributes which are native python types and thus implement __eq__
         native_attrs = [
-            'light_type', 'position', 'focal_point', 'ambient_color',
-            'diffuse_color', 'specular_color', 'intensity', 'on',
-            'positional', 'exponent', 'cone_angle', 'attenuation_values',
+            'light_type',
+            'position',
+            'focal_point',
+            'ambient_color',
+            'diffuse_color',
+            'specular_color',
+            'intensity',
+            'on',
+            'positional',
+            'exponent',
+            'cone_angle',
+            'attenuation_values',
             'shadow_attenuation',
         ]
         for attr in native_attrs:
@@ -770,8 +793,9 @@ class Light(vtkLight):
             try:
                 trans = vtkmatrix_from_array(matrix)
             except ValueError:
-                raise ValueError('Transformation matrix must be '
-                                 'a 4-by-4 matrix or array-like.') from None
+                raise ValueError(
+                    'Transformation matrix must be a 4-by-4 matrix or array-like.'
+                ) from None
         self.SetTransformMatrix(trans)
 
     @property
@@ -833,8 +857,9 @@ class Light(vtkLight):
         """
         if not isinstance(ltype, int):
             # note that LightType is an int subclass
-            raise TypeError('Light type must be an integer subclass instance,'
-                            f' got {ltype} instead.')
+            raise TypeError(
+                f'Light type must be an integer subclass instance, got {ltype} instead.'
+            )
         self.SetLightType(ltype)
 
     @property
@@ -959,11 +984,7 @@ class Light(vtkLight):
         self.focal_point = (0, 0, 0)
         theta = np.radians(90 - elev)
         phi = np.radians(azim)
-        self.position = (
-            np.sin(theta) * np.cos(phi),
-            np.sin(theta) * np.sin(phi),
-            np.cos(theta)
-        )
+        self.position = (np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta))
 
     def copy(self, deep=True):
         """Return a shallow or a deep copy of the light.
@@ -1101,8 +1122,9 @@ class Light(vtkLight):
 
         """
         if not isinstance(vtk_light, vtkLight):
-            raise TypeError('Expected vtk.vtkLight object, got '
-                            f'{type(vtk_light).__name__} instead.')
+            raise TypeError(
+                f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.'
+            )
 
         light = cls()
         light.light_type = vtk_light.GetLightType()  # resets transformation matrix!

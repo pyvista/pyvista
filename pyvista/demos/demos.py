@@ -53,8 +53,7 @@ def glyphs(grid_sz=3):
     mesh.point_data['scalars'] = rng_int
 
     # construct the glyphs on top of the mesh; don't scale by scalars now
-    return mesh.glyph(geom=geoms, indices=values, scale=False,
-                      factor=0.3, rng=(0, n - 1))
+    return mesh.glyph(geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, n - 1))
 
 
 def plot_glyphs(grid_sz=3, **kwargs):
@@ -167,13 +166,14 @@ def orientation_cube():
     z_n.translate(-np.array(z_n.center), inplace=True)
     z_n.translate([0, 0, -0.5], inplace=True)
 
-    return {'cube': cube,
-            'x_p': x_p,
-            'x_n': x_n,
-            'y_p': y_p,
-            'y_n': y_n,
-            'z_p': z_p,
-            'z_n': z_n,
+    return {
+        'cube': cube,
+        'x_p': x_p,
+        'x_n': x_n,
+        'y_p': y_p,
+        'y_n': y_n,
+        'z_p': z_p,
+        'z_n': z_n,
     }
 
 
@@ -205,8 +205,7 @@ def orientation_plotter():
     return pl
 
 
-def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
-              notebook=None):
+def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None):
     """Plot a 3D moving wave in a render window.
 
     Parameters
@@ -240,9 +239,11 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
 
     """
     # camera position
-    cpos = [(6.879481857604187, -32.143727535933195, 23.05622921691103),
-            (-0.2336056403734026, -0.6960083534590372, -0.7226721553894022),
-            (-0.008900669873416645, 0.6018246347860926, 0.7985786667826725)]
+    cpos = [
+        (6.879481857604187, -32.143727535933195, 23.05622921691103),
+        (-0.2336056403734026, -0.6960083534590372, -0.7226721553894022),
+        (-0.008900669873416645, 0.6018246347860926, 0.7985786667826725),
+    ]
 
     # Make data
     X = np.arange(-10, 10, 0.25)
@@ -260,14 +261,14 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
 
     # Start a plotter object and set the scalars to the Z height
     plotter = pv.Plotter(notebook=notebook)
-    plotter.add_mesh(mesh, scalars=Z.ravel(), show_scalar_bar=False,
-                     smooth_shading=True)
+    plotter.add_mesh(mesh, scalars=Z.ravel(), show_scalar_bar=False, smooth_shading=True)
     plotter.camera_position = cpos
-    plotter.show(title='Wave Example', window_size=[800, 600],
-                 auto_close=False, interactive_update=True)
+    plotter.show(
+        title='Wave Example', window_size=[800, 600], auto_close=False, interactive_update=True
+    )
 
     # Update Z and display a frame for each updated position
-    tdelay = 1. / fps
+    tdelay = 1.0 / fps
     tlast = time.time()
     tstart = time.time()
     while time.time() - tstart < wavetime:
@@ -372,8 +373,9 @@ def plot_ants_plane(notebook=None):
 
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]
-    plotter.add_mesh(airplane, scalars=plane_scalars,
-                     scalar_bar_args={'title': 'Plane Y\nLocation'})
+    plotter.add_mesh(
+        airplane, scalars=plane_scalars, scalar_bar_args={'title': 'Plane Y\nLocation'}
+    )
     plotter.add_text('Ants and Plane Example')
     plotter.show()
 
@@ -395,25 +397,32 @@ def plot_beam(notebook=None):
     """
     # Create fiticious displacements as a function of Z location
     grid = examples.load_hexbeam()
-    d = grid.points[:, 2]**3/250
+    d = grid.points[:, 2] ** 3 / 250
     grid.points[:, 1] += d
 
     # Camera position
-    cpos = [(11.915126303095157, 6.11392754955802, 3.6124956735471914),
-            (0.0, 0.375, 2.0),
-            (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177)]
+    cpos = [
+        (11.915126303095157, 6.11392754955802, 3.6124956735471914),
+        (0.0, 0.375, 2.0),
+        (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177),
+    ]
 
     try:
         import matplotlib  # noqa
+
         cmap = 'bwr'
     except ImportError:  # pragma: no cover
         cmap = None
 
     # plot this displaced beam
     plotter = pv.Plotter(notebook=notebook)
-    plotter.add_mesh(grid, scalars=d,
-                     scalar_bar_args={'title': 'Y Displacement'},
-                     rng=[-d.max(), d.max()], cmap=cmap)
+    plotter.add_mesh(
+        grid,
+        scalars=d,
+        scalar_bar_args={'title': 'Y Displacement'},
+        rng=[-d.max(), d.max()],
+        cmap=cmap,
+    )
     plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
     plotter.show()
@@ -447,12 +456,19 @@ def plot_datasets(dataset_type=None):
     >>> demos.plot_datasets()
 
     """
-    allowable_types = ['PolyData', 'UnstructuredGrid', 'UniformGrid',
-                       'RectilinearGrid', 'StructuredGrid']
+    allowable_types = [
+        'PolyData',
+        'UnstructuredGrid',
+        'UniformGrid',
+        'RectilinearGrid',
+        'StructuredGrid',
+    ]
     if dataset_type is not None:
         if dataset_type not in allowable_types:
-            raise ValueError(f'Invalid dataset_type {dataset_type}.  Must be one '
-                             f'of the following: {allowable_types}')
+            raise ValueError(
+                f'Invalid dataset_type {dataset_type}.  Must be one '
+                f'of the following: {allowable_types}'
+            )
 
     ###########################################################################
     # uniform grid
@@ -468,13 +484,13 @@ def plot_datasets(dataset_type=None):
 
     ###########################################################################
     # structured grid
-    ang = np.linspace(0, np.pi/2, 10)
+    ang = np.linspace(0, np.pi / 2, 10)
     r = np.linspace(6, 10, 8)
     z = [0]
     ang, r, z = np.meshgrid(ang, r, z)
 
-    x = r*np.sin(ang)
-    y = r*np.cos(ang)
+    x = r * np.sin(ang)
+    y = r * np.cos(ang)
 
     struct_grid = pv.StructuredGrid(x[::-1], y[::-1], z[::-1])
 
@@ -529,8 +545,7 @@ def plot_datasets(dataset_type=None):
         pl.add_text('1. UniformGrid')
     if dataset_type in [None, 'UniformGrid']:
         pl.add_mesh(image)
-        pl.add_mesh(image.extract_all_edges(), color='k', style='wireframe',
-                    line_width=2)
+        pl.add_mesh(image.extract_all_edges(), color='k', style='wireframe', line_width=2)
         pl.camera_position = 'xy'
 
     # RectilinearGrid
@@ -539,8 +554,7 @@ def plot_datasets(dataset_type=None):
         pl.add_text('2. RectilinearGrid')
     if dataset_type in [None, 'RectilinearGrid']:
         pl.add_mesh(rec_grid)
-        pl.add_mesh(rec_grid.extract_all_edges(), color='k', style='wireframe',
-                    line_width=2)
+        pl.add_mesh(rec_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
         pl.camera_position = 'xy'
 
     # StructuredGrid
@@ -549,8 +563,7 @@ def plot_datasets(dataset_type=None):
         pl.add_text('3. StructuredGrid')
     if dataset_type in [None, 'StructuredGrid']:
         pl.add_mesh(struct_grid)
-        pl.add_mesh(struct_grid.extract_all_edges(), color='k', style='wireframe',
-                    line_width=2)
+        pl.add_mesh(struct_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
         pl.camera_position = 'xy'
 
     pl.show()

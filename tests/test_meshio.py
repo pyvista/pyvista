@@ -21,7 +21,7 @@ def test_meshio(mesh_in, tmpdir):
     # Assert mesh is still the same
     assert np.allclose(mesh_in.points, mesh.points)
     if (mesh_in.celltypes == 11).all():
-        cells = mesh_in.cells.reshape((mesh_in.n_cells, 9))[:,[0,1,2,4,3,5,6,8,7]].ravel()
+        cells = mesh_in.cells.reshape((mesh_in.n_cells, 9))[:, [0, 1, 2, 4, 3, 5, 6, 8, 7]].ravel()
         assert np.allclose(cells, mesh.cells)
     else:
         assert np.allclose(mesh_in.cells, mesh.cells)
@@ -43,6 +43,7 @@ def test_pathlib_read_write(tmpdir, sphere):
 
 def test_file_format():
     from meshio._exceptions import ReadError, WriteError
+
     with pytest.raises(ReadError):
         _ = pyvista.read_meshio(examples.hexbeamfile, file_format="bar")
 

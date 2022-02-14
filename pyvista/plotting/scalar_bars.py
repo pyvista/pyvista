@@ -9,7 +9,7 @@ from .colors import Color
 from .tools import parse_font_family
 
 
-class ScalarBars():
+class ScalarBars:
     """Plotter Scalar Bars."""
 
     def __init__(self, plotter):
@@ -61,9 +61,9 @@ class ScalarBars():
                 if slot is not None:
                     self._scalar_bar_mappers.pop(name)
                     self._scalar_bar_ranges.pop(name)
-                    self._plotter.remove_actor(self._scalar_bar_actors.pop(name),
-                                               reset_camera=reset_camera,
-                                               render=render)
+                    self._plotter.remove_actor(
+                        self._scalar_bar_actors.pop(name), reset_camera=reset_camera, render=render
+                    )
                     self._plotter._scalar_bar_slots.add(slot)
             return
 
@@ -85,8 +85,10 @@ class ScalarBars():
         if title is None:
             if len(self) > 1:
                 titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
-                raise ValueError('Multiple scalar bars found.  Pick title of the'
-                                 f'scalar bar from one of the following:\n{titles}')
+                raise ValueError(
+                    'Multiple scalar bars found.  Pick title of the'
+                    f'scalar bar from one of the following:\n{titles}'
+                )
             else:
                 title = list(self._scalar_bar_actors.keys())[0]
 
@@ -128,16 +130,36 @@ class ScalarBars():
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 
-    def add_scalar_bar(self, title='', mapper=None, n_labels=5, italic=False,
-                       bold=False, title_font_size=None,
-                       label_font_size=None, color=None,
-                       font_family=None, shadow=False, width=None,
-                       height=None, position_x=None, position_y=None,
-                       vertical=None, interactive=None, fmt=None,
-                       use_opacity=True, outline=False,
-                       nan_annotation=False, below_label=None,
-                       above_label=None, background_color=None,
-                       n_colors=None, fill=False, render=False, theme=None):
+    def add_scalar_bar(
+        self,
+        title='',
+        mapper=None,
+        n_labels=5,
+        italic=False,
+        bold=False,
+        title_font_size=None,
+        label_font_size=None,
+        color=None,
+        font_family=None,
+        shadow=False,
+        width=None,
+        height=None,
+        position_x=None,
+        position_y=None,
+        vertical=None,
+        interactive=None,
+        fmt=None,
+        use_opacity=True,
+        outline=False,
+        nan_annotation=False,
+        below_label=None,
+        above_label=None,
+        background_color=None,
+        n_colors=None,
+        fill=False,
+        render=False,
+        theme=None,
+    ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
         Parameters
@@ -377,9 +399,9 @@ class ScalarBars():
             lut = _vtk.vtkLookupTable()
             lut.DeepCopy(mapper.lookup_table)
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
-            alphas = ctable[:, -1][:, np.newaxis] / 255.
+            alphas = ctable[:, -1][:, np.newaxis] / 255.0
             use_table = ctable.copy()
-            use_table[:, -1] = 255.
+            use_table[:, -1] = 255.0
             ctable = (use_table * alphas) + background_color * (1 - alphas)
             lut.SetTable(_vtk.numpy_to_vtk(ctable, array_type=_vtk.VTK_UNSIGNED_CHAR))
         else:
@@ -476,7 +498,7 @@ class ScalarBars():
                 rep.SetOrientation(1)  # 0 = Horizontal, 1 = Vertical
             else:
                 # y position determined emperically
-                y = -position_y/2 - height - scalar_bar.GetPosition()[1]
+                y = -position_y / 2 - height - scalar_bar.GetPosition()[1]
                 rep.GetPositionCoordinate().SetValue(width, y)
                 rep.GetPosition2Coordinate().SetValue(height, width)
                 rep.SetOrientation(0)  # 0 = Horizontal, 1 = Vertical
@@ -493,7 +515,6 @@ class ScalarBars():
             scalar_bar.SetDrawFrame(False)
 
         # finally, add to the actor and return the scalar bar
-        self._plotter.add_actor(scalar_bar, reset_camera=False,
-                                pickable=False, render=render)
+        self._plotter.add_actor(scalar_bar, reset_camera=False, pickable=False, render=render)
 
         return scalar_bar

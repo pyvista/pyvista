@@ -105,9 +105,17 @@ def _update_axes_label_color(axes_actor, color=None):
         axes_actor.GetTextEdgesProperty().SetColor(color.f_rgb)
 
 
-def create_axes_marker(label_color=None, x_color=None, y_color=None,
-                       z_color=None, xlabel='X', ylabel='Y', zlabel='Z',
-                       labels_off=False, line_width=2):
+def create_axes_marker(
+    label_color=None,
+    x_color=None,
+    y_color=None,
+    z_color=None,
+    xlabel='X',
+    ylabel='Y',
+    zlabel='Z',
+    labels_off=False,
+    line_width=2,
+):
     """Create an axis actor.
 
     Parameters
@@ -171,15 +179,24 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
     return axes_actor
 
 
-def create_axes_orientation_box(line_width=1, text_scale=0.366667,
-                                edge_color='black', x_color=None,
-                                y_color=None, z_color=None,
-                                xlabel='X', ylabel='Y', zlabel='Z',
-                                x_face_color='red',
-                                y_face_color='green',
-                                z_face_color='blue',
-                                color_box=False, label_color=None,
-                                labels_off=False, opacity=0.5):
+def create_axes_orientation_box(
+    line_width=1,
+    text_scale=0.366667,
+    edge_color='black',
+    x_color=None,
+    y_color=None,
+    z_color=None,
+    xlabel='X',
+    ylabel='Y',
+    zlabel='Z',
+    x_face_color='red',
+    y_face_color='green',
+    z_face_color='blue',
+    color_box=False,
+    label_color=None,
+    labels_off=False,
+    opacity=0.5,
+):
     """Create a Box axes orientation widget with labels.
 
     Parameters
@@ -300,7 +317,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         axes_actor.GetCubeProperty().SetEdgeVisibility(False)
 
         cube = pyvista.Cube()
-        cube.clear_data() # remove normals
+        cube.clear_data()  # remove normals
         face_colors = np.array([x_face_color.i_rgb,
                                 x_face_color.i_rgb,
                                 y_face_color.i_rgb,
@@ -341,8 +358,7 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-def opacity_transfer_function(mapping, n_colors, interpolate=True,
-                              kind='quadratic'):
+def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadratic'):
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of
@@ -397,15 +413,15 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
         'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
         'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
         'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
-        'sigmoid': sigmoid(np.linspace(-10., 10., n_colors)),
-        'sigmoid_3': sigmoid(np.linspace(-3., 3., n_colors)),
-        'sigmoid_4': sigmoid(np.linspace(-4., 4., n_colors)),
-        'sigmoid_5': sigmoid(np.linspace(-5., 5., n_colors)),
-        'sigmoid_6': sigmoid(np.linspace(-6., 6., n_colors)),
-        'sigmoid_7': sigmoid(np.linspace(-7., 7., n_colors)),
-        'sigmoid_8': sigmoid(np.linspace(-8., 8., n_colors)),
-        'sigmoid_9': sigmoid(np.linspace(-9., 9., n_colors)),
-        'sigmoid_10': sigmoid(np.linspace(-10., 10., n_colors)),
+        'sigmoid': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_3': sigmoid(np.linspace(-3.0, 3.0, n_colors)),
+        'sigmoid_4': sigmoid(np.linspace(-4.0, 4.0, n_colors)),
+        'sigmoid_5': sigmoid(np.linspace(-5.0, 5.0, n_colors)),
+        'sigmoid_6': sigmoid(np.linspace(-6.0, 6.0, n_colors)),
+        'sigmoid_7': sigmoid(np.linspace(-7.0, 7.0, n_colors)),
+        'sigmoid_8': sigmoid(np.linspace(-8.0, 8.0, n_colors)),
+        'sigmoid_9': sigmoid(np.linspace(-9.0, 9.0, n_colors)),
+        'sigmoid_10': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
     }
     transfer_func['linear_r'] = transfer_func['linear'][::-1]
     transfer_func['sigmoid_r'] = transfer_func['sigmoid'][::-1]
@@ -441,13 +457,15 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
                 vals = f(xx)
                 vals[vals < 0] = 0.0
                 vals[vals > 1.0] = 1.0
-                mapping = (vals * 255.).astype(np.uint8)
+                mapping = (vals * 255.0).astype(np.uint8)
 
             except (ImportError, ValueError):
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
-            raise RuntimeError(f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements')
+            raise RuntimeError(
+                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
+            )
         return mapping
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
 

@@ -4,7 +4,7 @@ import numpy as np
 import pyvista as pv
 
 
-class PlotterITK():
+class PlotterITK:
     """ITKwidgets plotter.
 
     Used for plotting interactively within a jupyter notebook.
@@ -31,6 +31,7 @@ class PlotterITK():
 
         from itkwidgets import __version__
         from scooby import meets_version
+
         if not meets_version(__version__, "0.25.2"):  # pragma: no cover
             raise ImportError("Please install `itkwidgets>=0.25.2`")
 
@@ -77,11 +78,9 @@ class PlotterITK():
         else:
             point_array = points
 
-
         # style : str, optional
         #     How to represent the point set. One of ``'hidden'``,
         #     ``'points'``, or ``'spheres'``.
-
 
         # if style not in ['hidden', 'points', 'spheres']:
         #     raise ValueError("``style`` must be either 'hidden', 'points', or"
@@ -95,8 +94,7 @@ class PlotterITK():
         self._point_sets.append(point_array)
         # self._point_set_representations.append(style)
 
-    def add_mesh(self, mesh, color=None, scalars=None,
-                 opacity=1.0, smooth_shading=False):
+    def add_mesh(self, mesh, color=None, scalars=None, opacity=1.0, smooth_shading=False):
         """Add a PyVista/VTK mesh or dataset.
 
         Adds any PyVista/VTK mesh that itkwidgets can wrap to the
@@ -178,6 +176,7 @@ class PlotterITK():
             mesh.cell_data.pop('vtkOriginalCellIds')
 
         from itkwidgets._transform_types import to_geometry
+
         mesh = to_geometry(mesh)
         self._geometries.append(mesh)
         self._geometry_colors.append(pv.Color(color).f_rgb)
@@ -220,8 +219,7 @@ class PlotterITK():
 
         self._camera_position = camera_location
 
-    def show(self, ui_collapsed=True, rotate=False, show_bounds=False,
-             **kwargs):
+    def show(self, ui_collapsed=True, rotate=False, show_bounds=False, **kwargs):
         """Show itkwidgets plotter in cell output.
 
         Parameters
@@ -251,21 +249,25 @@ class PlotterITK():
             kwargs.setdefault('camera', self._camera_position)
 
         from itkwidgets import Viewer
-        viewer = Viewer(geometries=self._geometries,
-                        geometry_colors=self._geometry_colors,
-                        geometry_opacities=self._geometry_opacities,
-                        point_set_colors=self._point_set_colors,
-                        point_sets=self._point_sets,
-                        point_set_sizes=self._point_set_sizes,
-                        point_set_representations=self._point_set_representations,
-                        ui_collapsed=ui_collapsed,
-                        rotate=rotate,
-                        axes=show_bounds,
-                        **kwargs)
+
+        viewer = Viewer(
+            geometries=self._geometries,
+            geometry_colors=self._geometry_colors,
+            geometry_opacities=self._geometry_opacities,
+            point_set_colors=self._point_set_colors,
+            point_sets=self._point_sets,
+            point_set_sizes=self._point_set_sizes,
+            point_set_representations=self._point_set_representations,
+            ui_collapsed=ui_collapsed,
+            rotate=rotate,
+            axes=show_bounds,
+            **kwargs,
+        )
 
         # always show if iPython is installed
         try:
             from IPython import display
+
             display.display_html(viewer)
         except ImportError:  # pragma: no cover
             pass
