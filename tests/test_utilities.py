@@ -320,7 +320,7 @@ def test_transform_vectors_sph_to_cart():
     lat = np.arange(0.0, 181.0, 60.0)  # colatitude
     lev = [1]  # elevation (radius)
     u, v = np.meshgrid(lon, lat, indexing="ij")
-    w = u ** 2 - v ** 2
+    w = u**2 - v**2
     uu, vv, ww = pyvista.transform_vectors_sph_to_cart(lon, lat, lev, u, v, w)
     assert np.allclose(
         [uu[-1, -1], vv[-1, -1], ww[-1, -1]],

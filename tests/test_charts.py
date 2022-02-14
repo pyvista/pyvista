@@ -684,7 +684,7 @@ def test_chart_2d(pl, chart_2d):
     rx = [0, 5]
     ry = [0, 1]
     x = np.arange(11) - 5
-    y = x ** 2
+    y = x**2
     ys = [np.sin(x), np.cos(x), np.tanh(x)]
     col = (1, 0, 1, 1)
     cs = "citrus"

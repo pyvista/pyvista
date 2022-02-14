@@ -1734,7 +1734,7 @@ def test_default_name_tracking():
             p.add_mesh(mesh, color=color)
     n_made_it = len(p.renderer._actors)
     p.show()
-    assert n_made_it == N ** 2
+    assert n_made_it == N**2
 
     # release attached scalars
     mesh.ReleaseData()
@@ -2080,7 +2080,7 @@ def test_chart_plot():
     chart_tl.y_label = "Y axis"
     chart_tl.y_axis.log_scale = True
     x = np.arange(6)
-    y = 10 ** x
+    y = 10**x
     chart_tl.line(x, y, color="tab:green", width=5, style="--")
     removed_plot = chart_tl.area(x, y, color="k")
     chart_tl.remove_plot(removed_plot)  # Make sure plot removal works
