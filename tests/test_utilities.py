@@ -653,7 +653,7 @@ def test_color():
     i_rgba, f_rgba = (0, 0, 255, 255), (0.0, 0.0, 1.0, 1.0)
     h = "0000ffff"
     i_opacity, f_opacity, h_opacity = 153, 0.6, "99"
-    invalid_colors = ((300, 0, 0), (0, -10, 0), (0, 0, 1.5), (-0.5, 0, 0), "#hh0000", "invalid_name")
+    invalid_colors = ((300, 0, 0), (0, -10, 0), (0, 0, 1.5), (-0.5, 0, 0), (0, 0), "#hh0000", "invalid_name")
     i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
     f_types = (float, np.float16, np.float32, np.float64)
     h_prefixes = ("", "0x", "#")
@@ -676,13 +676,24 @@ def test_color():
     # Check hex
     for h_prefix in h_prefixes:
         assert pyvista.Color(h_prefix + h) == i_rgba
+    # Check opacity
+    for opacity in (i_opacity, f_opacity, h_opacity):
+        # No opacity in color provided => use opacity
+        assert pyvista.Color(name, opacity) == (*i_rgba[:3], i_opacity)
+        # Opacity in color provided => overwrite using opacity
+        assert pyvista.Color(i_rgba, opacity) == (*i_rgba[:3], i_opacity)
     # Check default_opacity
-    assert pyvista.Color(name, default_opacity=i_opacity) == (*i_rgba[:3], i_opacity)
-    assert pyvista.Color(name, default_opacity=f_opacity) == (*i_rgba[:3], i_opacity)
-    assert pyvista.Color(name, default_opacity=h_opacity) == (*i_rgba[:3], i_opacity)
+    for opacity in (i_opacity, f_opacity, h_opacity):
+        # No opacity in color provided => use default_opacity
+        assert pyvista.Color(name, default_opacity=opacity) == (*i_rgba[:3], i_opacity)
+        # Opacity in color provided => keep that opacity
+        assert pyvista.Color(i_rgba, default_opacity=opacity) == i_rgba
     # Check default_color
     assert pyvista.Color(None, default_color=name) == i_rgba
     # Check invalid colors
     for invalid_color in invalid_colors:
         with pytest.raises(ValueError):
             pyvista.Color(invalid_color)
+    # Check hex and name getters
+    assert pyvista.Color(name).hex == f'#{h}'
+    assert pyvista.Color('paraview').name == 'paraview'

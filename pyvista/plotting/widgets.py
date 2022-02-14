@@ -984,9 +984,9 @@ class WidgetHelper:
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
             slider_rep.SetSliderWidth(slider_style.slider_width)
-            slider_rep.GetSliderProperty().SetColor(slider_style.slider_color)
+            slider_rep.GetSliderProperty().SetColor(slider_style.slider_color.f_rgb)
             slider_rep.SetTubeWidth(slider_style.tube_width)
-            slider_rep.GetTubeProperty().SetColor(slider_style.tube_color)
+            slider_rep.GetTubeProperty().SetColor(slider_style.tube_color.f_rgb)
             slider_rep.GetCapProperty().SetOpacity(slider_style.cap_opacity)
             slider_rep.SetEndCapLength(slider_style.cap_length)
             slider_rep.SetEndCapWidth(slider_style.cap_width)
@@ -1567,7 +1567,8 @@ class WidgetHelper:
             self.sphere_widgets = []
 
         if color is None:
-            color = pyvista.global_theme.color
+            color = pyvista.global_theme.color.f_rgb
+        selected_color = Color(selected_color)
 
         center = np.array(center)
         num = 1
@@ -1610,7 +1611,7 @@ class WidgetHelper:
             else:
                 sphere_widget.SetRepresentationToSurface()
             sphere_widget.GetSphereProperty().SetColor(Color(colors[i]).f_rgb)
-            sphere_widget.GetSelectedSphereProperty().SetColor(Color(selected_color).f_rgb)
+            sphere_widget.GetSelectedSphereProperty().SetColor(selected_color.f_rgb)
             sphere_widget.SetInteractor(self.iren.interactor)
             sphere_widget.SetCurrentRenderer(self.renderer)
             sphere_widget.SetRadius(radius)

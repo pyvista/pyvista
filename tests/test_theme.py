@@ -103,18 +103,18 @@ def test_slider_style_eq(default_theme):
 
 def test_invalid_color_str_single_char():
     with pytest.raises(ValueError):
-        colors.string_to_rgb('x')
+        colors.Color('x')
 
 
 def test_color_str():
-    clr = colors.string_to_rgb("k")
+    clr = colors.Color("k")
     assert (0.0, 0.0, 0.0) == clr
-    clr = colors.string_to_rgb("black")
+    clr = colors.Color("black")
     assert (0.0, 0.0, 0.0) == clr
-    clr = colors.string_to_rgb("white")
+    clr = colors.Color("white")
     assert (1.0, 1.0, 1.0) == clr
     with pytest.raises(ValueError):
-        colors.string_to_rgb('not a color')
+        colors.Color('not a color')
 
 
 def test_font():

@@ -402,9 +402,9 @@ class Color:
         * ``[255, 255, 255, 255]``
         * ``'#FFFFFF'``
 
-    default_opacity : int, float or str, optional
-        Default opacity of the represented color. Used when `color`
-        does not specify an opacity. Allowed opacities are floats between 0
+    opacity : int, float or str, optional
+        Opacity of the represented color. Overrides any opacity associated
+        with the provided `color`. Allowed opacities are floats between 0
         and 1, ints between 0 and 255 or hexadecimal strings of length 2.
         The following examples all denote a fully opaque color:
 
@@ -417,6 +417,16 @@ class Color:
         ``None``, then defaults to the global theme color. Format is
         identical to `color`.
 
+    default_opacity : int, float or str, optional
+        Default opacity of the represented color. Used when `color`
+        does not specify an opacity. Allowed opacities are floats between 0
+        and 1, ints between 0 and 255 or hexadecimal strings of length 2.
+        The following examples all denote a fully opaque color:
+
+        * ``1.0``
+        * ``255``
+        * ``'#ff'``
+
     Notes
     -----
     The internally used representation is an integer RGBA sequence (values
@@ -424,11 +434,11 @@ class Color:
 
     """
 
-    def __init__(self, color: Optional[color_like] = None, default_opacity: Union[int, float, str] = 255,
-                 default_color: Optional[color_like] = None):
+    def __init__(self, color: Optional[color_like] = None, opacity: Optional[Union[int, float, str]] = None,
+                 default_color: Optional[color_like] = None, default_opacity: Union[int, float, str] = 255):
         """Initialize new instance."""
         self._red, self._green, self._blue, self._opacity = 0, 0, 0, 0
-        self._default_opacity = self.convert_color_channel(default_opacity)
+        self._opacity = self.convert_color_channel(default_opacity)
         self._name = None
 
         # Use default color if no color is provided
@@ -464,6 +474,18 @@ class Color:
                              "\t\tcolor='w'\n"
                              "\t\tcolor=[1.0, 1.0, 1.0]\n"
                              "\t\tcolor='#FFFFFF'") from e
+
+        # Overwrite opacity if it is provided
+        try:
+            if opacity is not None:
+                self._opacity = self.convert_color_channel(opacity)
+        except ValueError as e:
+            raise ValueError("\n"
+                             f"\tInvalid opacity input: ({opacity})"
+                             "\tMust be an integer, float or string.  For example:\n"
+                             "\t\topacity='255'\n"
+                             "\t\topacity='1.0'\n"
+                             "\t\topacity='#FF'") from e
 
     @staticmethod
     def strip_hex_prefix(h: str) -> str:
@@ -539,7 +561,7 @@ class Color:
 
         >>> c.i_rgba = [0, 255, 0]
         >>> c
-        Color(hex='#00ff0080')
+        Color(hex='#00ff0040')
 
         """
         return self._red, self._green, self._blue, self._opacity
@@ -547,7 +569,8 @@ class Color:
     @i_rgba.setter
     def i_rgba(self, rgba: Union[color3i, color4i]):
         if len(rgba) == 3:
-            rgba = [*rgba, self._default_opacity]
+            # Keep using current opacity if it is not provided.
+            rgba = [*rgba, self._opacity]
         try:
             if len(rgba) != 4:
                 raise ValueError("Invalid length for RGBA sequence.")
@@ -572,7 +595,7 @@ class Color:
         (0, 0, 255)
 
         Modify the RGB values of the color using an integer sequence.
-        This uses the ``default_opacity``.
+        This keeps the previous opacity.
 
         >>> c.i_rgb = [0, 255, 0]
         >>> c
@@ -607,11 +630,11 @@ class Color:
         Color(hex='#ff000066')
 
         Modify the RGB values of the color using a float sequence.
-        This uses the ``default_opacity``.
+        This keeps the previous opacity.
 
         >>> c.f_rgba = [0.0, 1.0, 0.0]
         >>> c
-        Color(hex='#00ff0099')
+        Color(hex='#00ff0066')
 
         """
         return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
@@ -672,11 +695,11 @@ class Color:
         Color(hex='#ff000040')
 
         Modify the RGB values of the color using a hexadecimal value.
-        This uses the ``default_opacity``.
+        This keeps the previous opacity.
 
         >>> c.hex = "#00ff00"
         >>> c
-        Color(hex='#00ff0080')
+        Color(hex='#00ff0040')
 
         """
         return '#' + ''.join(f"{c:0>2x}" for c in (self._red, self._green, self._blue, self._opacity))
@@ -767,14 +790,23 @@ class Color:
         self.i_rgba = c3ub
         self._name = None
 
+    @classmethod
+    def from_dict(cls, dict_):
+        """Construct from dictionary for JSON deserialization."""
+        return Color(dict_)
+
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization."""
+        return (self._red, self._green, self._blue, self._opacity)
+
     def __eq__(self, other):
         """Equality comparison."""
         try:
             return self.i_rgba == Color(other).i_rgba
-        except ValueError:
+        except ValueError:  # pragma: no cover
             return NotImplemented
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         """Human readable representation."""
         kwargs = f"hex='{self.hex}'"
         if self._name is not None:
@@ -782,7 +814,7 @@ class Color:
         return f"Color({kwargs})"
 
 
-def hex_to_rgb(h):
+def hex_to_rgb(h):  # pragma: no cover
     """Return 0 to 1 rgb from a hex list or tuple."""
     # Deprecated on v0.34.0, estimated removal on v0.37.0
     warnings.warn("The usage of `hex_to_rgb` is deprecated in favor of the new `Color` class.",

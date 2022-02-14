@@ -93,16 +93,16 @@ def system_supports_plotting():
 
 def _update_axes_label_color(axes_actor, color=None):
     """Set the axes label color (internal helper)."""
-    color = Color(color, default_color=pyvista.global_theme.font.color).f_rgb
+    color = Color(color, default_color=pyvista.global_theme.font.color)
     if isinstance(axes_actor, _vtk.vtkAxesActor):
         prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
         prop_y = axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
         prop_z = axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
         for prop in [prop_x, prop_y, prop_z]:
-            prop.SetColor(color[0], color[1], color[2])
+            prop.SetColor(color.f_rgb)
             prop.SetShadow(False)
     elif isinstance(axes_actor, _vtk.vtkAnnotatedCubeActor):
-        axes_actor.GetTextEdgesProperty().SetColor(color)
+        axes_actor.GetTextEdgesProperty().SetColor(color.f_rgb)
 
 
 def create_axes_marker(label_color=None, x_color=None, y_color=None,
@@ -261,6 +261,9 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
     z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
     edge_color = Color(edge_color, default_color=pyvista.global_theme.edge_color)
+    x_face_color = Color(x_face_color)
+    y_face_color = Color(y_face_color)
+    z_face_color = Color(z_face_color)
     axes_actor = _vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     if xlabel is not None:
@@ -298,12 +301,12 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
 
         cube = pyvista.Cube()
         cube.clear_data() # remove normals
-        face_colors = np.array([Color(x_face_color).i_rgb,
-                                Color(x_face_color).i_rgb,
-                                Color(y_face_color).i_rgb,
-                                Color(y_face_color).i_rgb,
-                                Color(z_face_color).i_rgb,
-                                Color(z_face_color).i_rgb,
+        face_colors = np.array([x_face_color.i_rgb,
+                                x_face_color.i_rgb,
+                                y_face_color.i_rgb,
+                                y_face_color.i_rgb,
+                                z_face_color.i_rgb,
+                                z_face_color.i_rgb,
                                 ], np.uint8)
         cube.cell_data['face_colors'] = face_colors
 
@@ -449,7 +452,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
 
 
-def parse_color(color, opacity=None, default_color=None):
+def parse_color(color, opacity=None, default_color=None):  # pragma: no cover
     """Parse color into a VTK friendly RGB(A) tuple.
 
     If ``color`` is a sequence of RGBA floats, the ``opacity`` parameter

@@ -303,7 +303,7 @@ class _SilhouetteConfig(_ThemeConfig):
                  '_decimate']
 
     def __init__(self):
-        self._color = Color('black').f_rgb
+        self._color = Color('black')
         self._line_width = 2
         self._opacity = 1.0
         self._feature_angle = None
@@ -323,7 +323,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @color.setter
     def color(self, color: color_like):
-        self._color = Color(color).f_rgb
+        self._color = Color(color)
 
     @property
     def line_width(self) -> float:
@@ -537,9 +537,9 @@ class _AxesConfig(_ThemeConfig):
                  '_show']
 
     def __init__(self):
-        self._x_color = Color('tomato').f_rgb
-        self._y_color = Color('seagreen').f_rgb
-        self._z_color = Color('mediumblue').f_rgb
+        self._x_color = Color('tomato')
+        self._y_color = Color('seagreen')
+        self._z_color = Color('mediumblue')
         self._box = False
         self._show = True
 
@@ -571,7 +571,7 @@ class _AxesConfig(_ThemeConfig):
 
     @x_color.setter
     def x_color(self, color: color_like):
-        self._x_color = Color(color).f_rgb
+        self._x_color = Color(color)
 
     @property
     def y_color(self) -> tuple:
@@ -586,7 +586,7 @@ class _AxesConfig(_ThemeConfig):
 
     @y_color.setter
     def y_color(self, color: color_like):
-        self._y_color = Color(color).f_rgb
+        self._y_color = Color(color)
 
     @property
     def z_color(self) -> tuple:
@@ -601,7 +601,7 @@ class _AxesConfig(_ThemeConfig):
 
     @z_color.setter
     def z_color(self, color: color_like):
-        self._z_color = Color(color).f_rgb
+        self._z_color = Color(color)
 
     @property
     def box(self) -> bool:
@@ -683,7 +683,7 @@ class _Font(_ThemeConfig):
         self._size = 12
         self._title_size = None
         self._label_size = None
-        self._color = [1.0, 1.0, 1.0]
+        self._color = Color('white')
         self._fmt = None
 
     def __repr__(self):
@@ -796,7 +796,7 @@ class _Font(_ThemeConfig):
 
     @color.setter
     def color(self, color: color_like):
-        self._color = Color(color).f_rgb
+        self._color = Color(color)
 
     @property
     def fmt(self) -> str:
@@ -912,7 +912,7 @@ class _SliderStyleConfig(_ThemeConfig):
 
     @tube_color.setter
     def tube_color(self, tube_color: color_like):
-        self._tube_color = Color(tube_color).f_rgb
+        self._tube_color = Color(tube_color)
 
     @property
     def tube_width(self) -> float:
@@ -944,7 +944,7 @@ class _SliderStyleConfig(_ThemeConfig):
 
     @slider_color.setter
     def slider_color(self, slider_color: color_like):
-        self._slider_color = Color(slider_color).f_rgb
+        self._slider_color = Color(slider_color)
 
     @property
     def slider_width(self) -> float:
@@ -1035,9 +1035,9 @@ class _SliderConfig(_ThemeConfig):
         self._classic.name = 'classic'
         self._classic.slider_length = 0.02
         self._classic.slider_width = 0.04
-        self._classic.slider_color = (0.5, 0.5, 0.5)
+        self._classic.slider_color = 'gray'
         self._classic.tube_width = 0.005
-        self._classic.tube_color = (1.0, 1.0, 1.0)
+        self._classic.tube_color = 'white'
         self._classic.cap_opacity = 1
         self._classic.cap_length = 0.01
         self._classic.cap_width = 0.02
@@ -1046,9 +1046,9 @@ class _SliderConfig(_ThemeConfig):
         self._modern.name = 'modern'
         self._modern.slider_length = 0.02
         self._modern.slider_width = 0.04
-        self._modern.slider_color = (0.43137255, 0.44313725, 0.45882353)
+        self._modern.slider_color = (111, 113, 118)
         self._modern.tube_width = 0.04
-        self._modern.tube_color = (0.69803922, 0.70196078, 0.70980392)
+        self._modern.tube_color = (179, 179, 181)
         self._modern.cap_opacity = 0
         self._modern.cap_length = 0.01
         self._modern.cap_width = 0.02
@@ -1156,7 +1156,7 @@ class DefaultTheme(_ThemeConfig):
     def __init__(self):
         """Initialize the theme."""
         self._name = 'default'
-        self._background = Color([0.3, 0.3, 0.3]).f_rgb
+        self._background = Color([0.3, 0.3, 0.3])
         self._full_screen = False
         self._camera = {
             'position': [1, 1, 1],
@@ -1167,11 +1167,11 @@ class DefaultTheme(_ThemeConfig):
         self._window_size = [1024, 768]
         self._font = _Font()
         self._cmap = 'viridis'
-        self._color = Color('white').f_rgb
-        self._nan_color = Color('darkgray').f_rgb
-        self._edge_color = Color('black').f_rgb
-        self._outline_color = Color('white').f_rgb
-        self._floor_color = Color('gray').f_rgb
+        self._color = Color('white')
+        self._nan_color = Color('darkgray')
+        self._edge_color = Color('black')
+        self._outline_color = Color('white')
+        self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
 
         self._colorbar_horizontal = _ColorbarConfig()
@@ -1275,7 +1275,7 @@ class DefaultTheme(_ThemeConfig):
 
     @background.setter
     def background(self, new_background: color_like):
-        self._background = Color(new_background).f_rgb
+        self._background = Color(new_background)
 
     @property
     def jupyter_backend(self) -> str:
@@ -1587,7 +1587,7 @@ class DefaultTheme(_ThemeConfig):
 
     @color.setter
     def color(self, color: color_like):
-        self._color = Color(color).f_rgb
+        self._color = Color(color)
 
     @property
     def nan_color(self) -> tuple:
@@ -1605,7 +1605,7 @@ class DefaultTheme(_ThemeConfig):
 
     @nan_color.setter
     def nan_color(self, nan_color: color_like):
-        self._nan_color = Color(nan_color).f_rgb
+        self._nan_color = Color(nan_color)
 
     @property
     def edge_color(self) -> tuple:
@@ -1623,7 +1623,7 @@ class DefaultTheme(_ThemeConfig):
 
     @edge_color.setter
     def edge_color(self, edge_color: color_like):
-        self._edge_color = Color(edge_color).f_rgb
+        self._edge_color = Color(edge_color)
 
     @property
     def outline_color(self) -> tuple:
@@ -1639,7 +1639,7 @@ class DefaultTheme(_ThemeConfig):
 
     @outline_color.setter
     def outline_color(self, outline_color: color_like):
-        self._outline_color = Color(outline_color).f_rgb
+        self._outline_color = Color(outline_color)
 
     @property
     def floor_color(self) -> tuple:
@@ -1655,7 +1655,7 @@ class DefaultTheme(_ThemeConfig):
 
     @floor_color.setter
     def floor_color(self, floor_color: color_like):
-        self._floor_color = Color(floor_color).f_rgb
+        self._floor_color = Color(floor_color)
 
     @property
     def colorbar_orientation(self) -> str:

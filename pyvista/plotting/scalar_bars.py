@@ -301,8 +301,6 @@ class ScalarBars():
             label_font_size = theme.font.label_size
         if title_font_size is None:
             title_font_size = theme.font.title_size
-        if color is None:
-            color = theme.font.color
         if fmt is None:
             fmt = theme.font.fmt
         if vertical is None:
@@ -363,7 +361,7 @@ class ScalarBars():
                     position_y += slot * height
 
         # parse color
-        color = Color(color)
+        color = Color(color, default_color=theme.font.color)
 
         # Create scalar bar
         scalar_bar = _vtk.vtkScalarBarActor()

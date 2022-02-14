@@ -1373,7 +1373,6 @@ class Renderer(_vtk.vtkRenderer):
             lighting = self._theme.lighting
 
         self.remove_bounding_box()
-        rgb_color = Color(color, default_color=self._theme.outline_color).f_rgb
         if outline:
             self._bounding_box = _vtk.vtkOutlineCornerSource()
             self._bounding_box.SetCornerFactor(corner_factor)
@@ -1391,7 +1390,7 @@ class Renderer(_vtk.vtkRenderer):
                                                        name=name, culling=culling,
                                                        pickable=False)
 
-        prop.SetColor(rgb_color)
+        prop.SetColor(Color(color, default_color=self._theme.outline_color).f_rgb)
         prop.SetOpacity(opacity)
         if render_lines_as_tubes:
             prop.SetRenderLinesAsTubes(render_lines_as_tubes)
@@ -1539,24 +1538,20 @@ class Renderer(_vtk.vtkRenderer):
         if lighting is None:
             lighting = self._theme.lighting
 
-        if edge_color is None:
-            edge_color = self._theme.edge_color
-
         self.remove_bounding_box()
-        rgb_color = Color(color, default_color=self._theme.floor_color).f_rgb
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._floor)
         actor, prop = self.add_actor(mapper,
                                      reset_camera=reset_camera,
                                      name=f'Floor({face})', pickable=pickable)
 
-        prop.SetColor(rgb_color)
+        prop.SetColor(Color(color, default_color=self._theme.floor_color).f_rgb)
         prop.SetOpacity(opacity)
 
         # edge display style
         if show_edges:
             prop.EdgeVisibilityOn()
-        prop.SetEdgeColor(Color(edge_color).f_rgb)
+        prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).f_rgb)
 
         # lighting display style
         if lighting is False:
@@ -2741,7 +2736,7 @@ class Renderer(_vtk.vtkRenderer):
                     # dummy vtk object
                     vtk_object = pyvista.PolyData([0.0, 0.0, 0.0])
 
-                self._legend.SetEntry(i, vtk_object, text, Color(color).f_rgb)
+                self._legend.SetEntry(i, vtk_object, text, color.f_rgb)
 
         else:
             self._legend.SetNumberOfEntries(len(labels))

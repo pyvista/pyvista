@@ -253,9 +253,8 @@ def make_mapper(mapper_class):
                     f"the number of points {mesh.n_points} or the "
                     f"number of cells ({mesh.n_cells}).")
 
-            rgb_color = np.array(Color(color, default_color=theme.color).i_rgb)
-            rgba[:, :-1] = rgb_color
-            rgba[:, -1] = opacity*255
+            rgba[:, :-1] = Color(color, default_color=theme.color).i_rgb
+            rgba[:, -1] = opacity*255 + 0.5
 
             self.configure_scalars_mode(rgba, mesh, '',
                                         n_colors, preference,

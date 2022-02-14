@@ -2163,8 +2163,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if show_edges:
             prop.EdgeVisibilityOn()
 
-        rgb_color = Color(color, default_color=self._theme.color).f_rgb
-        prop.SetColor(rgb_color)
+        rgb_color = Color(color, default_color=self._theme.color)
+        prop.SetColor(rgb_color.f_rgb)
         if isinstance(opacity, (float, int)):
             prop.SetOpacity(opacity)
         prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).f_rgb)
@@ -2181,7 +2181,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             geom = pyvista.Triangle()
             if scalars is not None:
                 geom = pyvista.Box()
-                rgb_color = Color('black').f_rgb
+                rgb_color = Color('black')
             geom.points -= geom.center
             addr = actor.GetAddressAsString("")
             self.renderer._labels[addr] = [geom, label, rgb_color]
@@ -3384,7 +3384,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
             addr = actor.GetAddressAsString("")
-            self.renderer._labels[addr] = [lines, label, rgb_color.f_rgb]
+            self.renderer._labels[addr] = [lines, label, rgb_color]
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)
