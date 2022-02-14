@@ -83,9 +83,9 @@ def discover_modules(entry=pyvista, recurse=True):
                 attr = getattr(entry, attr_short_name)
                 if not isinstance(attr, ModuleType):
                     continue
-        
+
                 module_name = attr.__name__
-        
+
                 if module_name.startswith(entry_name):
                     next_modules[module_name] = attr
 
@@ -128,7 +128,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         of failed doctests under the specified modules.
 
     """
-    skip_pattern = re.compile('doctest: *\+SKIP')
+    skip_pattern = re.compile('doctest: *\+SKIP')  # noqa: W605
 
     if modules is None:
         modules = discover_modules()
@@ -151,18 +151,16 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         # mock print to suppress output from a few talkative tests
         globs = {'print': (lambda *args, **kwargs: ...)}
         for iline, example in enumerate(dt.examples, start=1):
-            if (not example.source.strip()
-                    or (respect_skips and skip_pattern.search(example.source))):
+            if not example.source.strip() or (
+                respect_skips and skip_pattern.search(example.source)
+            ):
                 continue
             try:
                 exec(example.source, globs)
             except Exception as exc:
                 if verbose:
                     print(f'FAILED: {dt.name} -- {repr(exc)}')
-                erroring_code = ''.join([
-                    example.source
-                    for example in dt.examples[:iline]
-                ])
+                erroring_code = ''.join([example.source for example in dt.examples[:iline]])
                 failures[dt_name] = exc, erroring_code
                 break
         else:
@@ -172,8 +170,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     total = len(doctests)
     fails = len(failures)
     passes = total - fails
-    print(f'\n{passes} passes and {fails} failures '
-          f'out of {total} total doctests.\n')
+    print(f'\n{passes} passes and {fails} failures out of {total} total doctests.\n')
     if not fails:
         return failures
 
@@ -190,15 +187,18 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
 
 if __name__ == "__main__":
     parser = ArgumentParser(description='Look for name errors in doctests.')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='print passes and failures as tests progress')
-    parser.add_argument('--no-respect-skips', action='store_false',
-                        dest='respect_skips',
-                        help='ignore doctest SKIP directives')
+    parser.add_argument(
+        '-v', '--verbose', action='store_true', help='print passes and failures as tests progress'
+    )
+    parser.add_argument(
+        '--no-respect-skips',
+        action='store_false',
+        dest='respect_skips',
+        help='ignore doctest SKIP directives',
+    )
     args = parser.parse_args()
 
-    failures = check_doctests(verbose=args.verbose,
-                              respect_skips=args.respect_skips)
+    failures = check_doctests(verbose=args.verbose, respect_skips=args.respect_skips)
 
     if failures:
         # raise a red flag for CI

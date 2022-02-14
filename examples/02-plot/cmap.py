@@ -44,10 +44,10 @@ mesh['values'] = pv.plotting.normalize(mesh['Elevation']) * 100
 # and we specify the ranges where those colors fall:
 
 # Define the colors we want to use
-blue = np.array([12/256, 238/256, 246/256, 1])
-black = np.array([11/256, 11/256, 11/256, 1])
-grey = np.array([189/256, 189/256, 189/256, 1])
-yellow = np.array([255/256, 247/256, 0/256, 1])
+blue = np.array([12 / 256, 238 / 256, 246 / 256, 1])
+black = np.array([11 / 256, 11 / 256, 11 / 256, 1])
+grey = np.array([189 / 256, 189 / 256, 189 / 256, 1])
+yellow = np.array([255 / 256, 247 / 256, 0 / 256, 1])
 red = np.array([1, 0, 0, 1])
 
 mapping = np.linspace(mesh['values'].min(), mesh['values'].max(), 256)
@@ -107,19 +107,39 @@ mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
 p = pv.Plotter(shape=(2, 2), border=False)
 p.subplot(0, 0)
-p.add_mesh(mesh, scalars='Elevation', cmap="fire",
-           lighting=True, scalar_bar_args={'title': "Colorcet Fire"})
+p.add_mesh(
+    mesh,
+    scalars='Elevation',
+    cmap="fire",
+    lighting=True,
+    scalar_bar_args={'title': "Colorcet Fire"},
+)
 
 p.subplot(0, 1)
-p.add_mesh(mesh, scalars='Elevation', cmap="fire",
-           lighting=False, scalar_bar_args={'title': "Colorcet Fire (No Lighting)"})
+p.add_mesh(
+    mesh,
+    scalars='Elevation',
+    cmap="fire",
+    lighting=False,
+    scalar_bar_args={'title': "Colorcet Fire (No Lighting)"},
+)
 
 p.subplot(1, 0)
-p.add_mesh(mesh, scalars='Elevation', cmap="hot",
-           lighting=True, scalar_bar_args={'title': "Matplotlib Hot"})
+p.add_mesh(
+    mesh,
+    scalars='Elevation',
+    cmap="hot",
+    lighting=True,
+    scalar_bar_args={'title': "Matplotlib Hot"},
+)
 
 p.subplot(1, 1)
-p.add_mesh(mesh, scalars='Elevation', cmap="hot",
-           lighting=False, scalar_bar_args={'title': "Matplotlib Hot (No Lighting)"})
+p.add_mesh(
+    mesh,
+    scalars='Elevation',
+    cmap="hot",
+    lighting=False,
+    scalar_bar_args={'title': "Matplotlib Hot (No Lighting)"},
+)
 
 p.show()

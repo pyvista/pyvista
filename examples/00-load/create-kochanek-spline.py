@@ -36,9 +36,7 @@ p = pv.Plotter(shape=(3, 5))
 
 c = [-1.0, -0.5, 0.0, 0.5, 1.0]
 for i in range(5):
-    kochanek_spline = pv.KochanekSpline(
-        points, continuity=[c[i], c[i], c[i]], n_points=1000
-    )
+    kochanek_spline = pv.KochanekSpline(points, continuity=[c[i], c[i], c[i]], n_points=1000)
     p.subplot(0, i)
     p.add_text("c = " + str(c[i]))
     p.add_mesh(kochanek_spline, color="k", point_size=10)
@@ -51,9 +49,7 @@ for i in range(5):
 
 t = [-1.0, -0.5, 0.0, 0.5, 1.0]
 for i in range(5):
-    kochanek_spline = pv.KochanekSpline(
-        points, tension=[t[i], t[i], t[i]], n_points=1000
-    )
+    kochanek_spline = pv.KochanekSpline(points, tension=[t[i], t[i], t[i]], n_points=1000)
     p.subplot(1, i)
     p.add_text("t = " + str(t[i]))
     p.add_mesh(kochanek_spline, color="k")

@@ -80,7 +80,6 @@ extensions = [
 coverage_additional_modules = [
     'pyvista',
     'pyvista.themes',
-
     'pyvista.plotting.axes',
     'pyvista.plotting.camera',
     'pyvista.plotting.charts',
@@ -94,7 +93,6 @@ coverage_additional_modules = [
     'pyvista.plotting.theme',
     'pyvista.plotting.tools',
     'pyvista.plotting.widgets',
-
     'pyvista.core.common_data',
     'pyvista.core.common_data',
     'pyvista.core.composite',
@@ -107,17 +105,14 @@ coverage_additional_modules = [
     'pyvista.core.objects',
     'pyvista.core.pointset',
     'pyvista.core.pyvista_ndarray',
-
     'pyvista.core.filters.composite',
     'pyvista.core.filters.data_set',
     'pyvista.core.filters.poly_data',
     'pyvista.core.filters.structured_grid',
     'pyvista.core.filters.uniform_grid',
     'pyvista.core.filters.unstructured_grid',
-
     'pyvista.demos',
     'pyvista.examples.examples',
-
     'pyvista.utilities.features',
     'pyvista.utilities.fileio',
     'pyvista.utilities.geometric_objects',
@@ -126,7 +121,6 @@ coverage_additional_modules = [
     'pyvista.utilities.xvfb',
     'pyvista.utilities.transformations',
     'pyvista.utilities.regression',
-
 ]
 coverage_ignore_modules = [
     r'\.plot_directive$',  # Issue with class parameter documentation
@@ -154,10 +148,8 @@ numpydoc_validation_checks = {
 }
 numpydoc_validation_exclude = {  # set of regex
     r'\.Plotter$',  # Issue with class parameter documentation
-
     r'\.from_dict$',
     r'\.__init__$',
-
     # parm of abstract classes
     r'\.CompositeFilters$',
     r'\.PolyDataFilters$',
@@ -184,43 +176,34 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.ExplicitStructuredGrid$',
     r'\.StructuredGrid$',
     r'\.PointGrid$',
-
     # classes inherit from BaseReader
     r'\.*Reader$',
     r'\.*Reader\.*',
-
     # internal
     r'\.Renderer$',
-
     # deprecated
     r'\.*boolean_add$',
     r'\.*boolean_cut$',
     r'\.*add_field_array$',
     r'\.*add_field_array$',
     r'DataSetAttributes.append$',
-
     # methods we probably should make private
     r'\.store_click_position$',
     r'\.store_mouse_position$',
     r'\.*fly_to_mouse_position$',
     r'\.*key_press_event$',
     r'\.*left_button_down$',
-
     # MISC
     r'\.*PlotterITK$',
     r'\.*MultiBlock.copy_meta_from$',
     r'\.DataObject.copy_meta_from$',
-
     # wraps
     r'\.*Plotter.enable_depth_peeling$',
     r'\.*add_scalar_bar$',
-
     # pending refactor
     r'\.*MultiBlock.next$',
-
     # called from inherited
     r'\.*Table.copy_meta_from$',
-
 }
 
 
@@ -231,11 +214,20 @@ add_module_names = False
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
     'python': ('https://docs.python.org/dev', (None, 'intersphinx/python-objects.inv')),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference', (None, 'intersphinx/scipy-objects.inv')),
+    'scipy': (
+        'https://docs.scipy.org/doc/scipy/reference',
+        (None, 'intersphinx/scipy-objects.inv'),
+    ),
     'numpy': ('https://numpy.org/doc/stable', (None, 'intersphinx/numpy-objects.inv')),
     'matplotlib': ('https://matplotlib.org/stable', (None, 'intersphinx/matplotlib-objects.inv')),
-    'imageio': ('https://imageio.readthedocs.io/en/stable', (None, 'intersphinx/imageio-objects.inv')),
-    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', (None, 'intersphinx/pandas-objects.inv')),
+    'imageio': (
+        'https://imageio.readthedocs.io/en/stable',
+        (None, 'intersphinx/imageio-objects.inv'),
+    ),
+    'pandas': (
+        'https://pandas.pydata.org/pandas-docs/stable',
+        (None, 'intersphinx/pandas-objects.inv'),
+    ),
     'pytest': ('https://docs.pytest.org/en/stable', (None, 'intersphinx/pytest-objects.inv')),
     'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, 'intersphinx/pyvistaqt-objects.inv')),
 }
@@ -300,6 +292,7 @@ class ResetPyvista:
         If default documentation settings are modified in any example, reset here.
         """
         import pyvista
+
         pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
         pyvista.set_plot_theme('document')
 
@@ -313,9 +306,10 @@ reset_pyvista = ResetPyvista()
 # skip building the osmnx example if osmnx is not installed
 has_osmnx = False
 try:
-    import osmnx, fiona  # noqa: F401 isort: skip
+    import osmnx, fiona  # noqa: F401,E401 isort: skip
+
     has_osmnx = True
-except:
+except:  # noqa: E722
     pass
 
 
@@ -340,11 +334,9 @@ sphinx_gallery_conf = {
     "doc_module": "pyvista",
     "image_scrapers": ("pyvista", "matplotlib"),
     "first_notebook_cell": (
-        "%matplotlib inline\n"
-        "from pyvista import set_plot_theme\n"
-        "set_plot_theme('document')\n"
+        "%matplotlib inline\n" "from pyvista import set_plot_theme\n" "set_plot_theme('document')\n"
     ),
-    "reset_modules": (reset_pyvista, ),
+    "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
 }
 
@@ -360,16 +352,18 @@ IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 def _str_examples(self):
     examples_str = "\n".join(self['Examples'])
 
-    if (self.use_plots and re.search(IMPORT_MATPLOTLIB_RE, examples_str)
-            and 'plot::' not in examples_str):
+    if (
+        self.use_plots
+        and re.search(IMPORT_MATPLOTLIB_RE, examples_str)
+        and 'plot::' not in examples_str
+    ):
         out = []
         out += self._str_header('Examples')
         out += ['.. plot::', '']
         out += self._str_indent(self['Examples'])
         out += ['']
         return out
-    elif (re.search(IMPORT_PYVISTA_RE, examples_str)
-          and 'plot-pyvista::' not in examples_str):
+    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'plot-pyvista::' not in examples_str:
         out = []
         out += self._str_header('Examples')
         out += ['.. pyvista-plot::', '']
@@ -378,6 +372,7 @@ def _str_examples(self):
         return out
     else:
         return self._str_section('Examples')
+
 
 SphinxDocString._str_examples = _str_examples
 
@@ -536,9 +531,7 @@ class AutoAutoSummary(Autosummary):
         items = []
         for name in sorted(obj.__dict__.keys()):  # dir(obj):
             try:
-                documenter = get_documenter(
-                    AutoAutoSummary.app, safe_getattr(obj, name), obj
-                )
+                documenter = get_documenter(AutoAutoSummary.app, safe_getattr(obj, name), obj)
             except AttributeError:
                 continue
             if documenter.objtype in typ:
@@ -555,21 +548,18 @@ class AutoAutoSummary(Autosummary):
             if "methods" in self.options:
                 _, methods = self.get_members(c, ["method"], ["__init__"])
                 self.content = [
-                    f"~{clazz}.{method}"
-                    for method in methods
-                    if not method.startswith("_")
+                    f"~{clazz}.{method}" for method in methods if not method.startswith("_")
                 ]
             if "attributes" in self.options:
                 _, attribs = self.get_members(c, ["attribute", "property"])
                 self.content = [
-                    f"~{clazz}.{attrib}"
-                    for attrib in attribs
-                    if not attrib.startswith("_")
+                    f"~{clazz}.{attrib}" for attrib in attribs if not attrib.startswith("_")
                 ]
-        except:
+        except:  # noqa: E722
             print(f"Something went wrong when autodocumenting {clazz}")
         finally:
-            return super().run()
+            # TODO: address B012
+            return super().run()  # noqa: B012
 
 
 def setup(app):

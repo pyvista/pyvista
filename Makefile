@@ -13,6 +13,8 @@ doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
 
 stylecheck: codespell pydocstyle lint
 
+format: isort stylize
+
 codespell:
 	@echo "Running codespell"
 	@codespell $(CODE_DIRS) $(CODE_FILES) -S $(CODESPELL_SKIP) -I $(CODESPELL_IGNORE)
@@ -56,8 +58,12 @@ mypy:
 
 lint:
 	@echo "Linting with flake8"
-	@flake8 $(CODE_DIRS) $(CODE_FILES)
+	@flake8 $(CODE_DIRS) *.py
 
 isort:
 	@echo "Formatting with isort"
 	isort .
+
+stylize:
+	@echo "Formatting"
+	black .
