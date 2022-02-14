@@ -63,7 +63,7 @@ pl.open_gif("collision_movie.gif")
 # pl.show(auto_close=False, interactive=False)
 
 delta_x = 0.05
-for i in range(int(2/delta_x)):
+for _ in range(int(2 / delta_x)):
     sphere1.translate([delta_x, 0, 0], inplace=True)
     col, n_contacts = sphere0.collision(sphere1)
 

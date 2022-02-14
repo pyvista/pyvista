@@ -8,23 +8,25 @@ may need to build VTK from source (e.g. new release of Python, EGL
 rendering, additional features, etc).  As ``pyvista`` does not provide
 ``vtk``, you will have to build it manually.
 
-Should you need a prebuilt wheel, a variety of prebuilt wheels
-(including ones with EGL) can be found at `pyvista Release 0.31.0
-<https://github.com/pyvista/pyvista/releases/tag/0.31.0>`_.  This
-includes wheels for Raspberry Pi (64-bit OS), Python 3.9 Linux, and
-EGL support (``arch64`` and ``x86_64``).
+Should you need a prebuilt wheel, a variety of prebuilt wheels can be found at
+`pyvista-wheels <https://github.com/pyvista/pyvista-wheels>`_, but you may be
+better off building your own.
+
+Reference the official directions for `Building VTK
+<https://gitlab.kitware.com/vtk/vtk/-/blob/master/Documentation/dev/build.md>`_. The
+following directions assume you want to build a Python wheel non-standard
+situations like EGL.
 
 
-Wheels on Linux and Mac OS
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-Building VTK from source on Linux and MacOS is fairly easy.  Using the
-default build settings, build a Python wheel of VTK using ``ninja``
-using the following script.  This script uses system python3, but you
-can use any modern Python version.  For some additional useful
-options, see the `conda-forge recipe
+Building Wheels
+~~~~~~~~~~~~~~~
+Building VTK from source is fairly straightforward.  Using the default build
+settings, build a Python wheel of VTK using ``ninja`` using the following
+script.  This script uses system python3, but you can use any modern Python
+version.  For some additional useful options, see the `conda-forge recipe
 <https://github.com/conda-forge/vtk-feedstock/blob/master/recipe/build.sh>`__.
-Most of the ones below are designed to reduce the build time and
-resulting wheel size.
+Most of the ones below are designed to reduce the build time and resulting
+wheel size.
 
 .. code-block:: bash
 
@@ -40,7 +42,7 @@ resulting wheel size.
     git clone https://github.com/Kitware/VTK
     mkdir VTK/build
     cd VTK/build
-    git checkout v9.0.1  # optional to select a version, but recommended
+    git checkout v9.1.0  # optional to select a version, but recommended
 
     PYBIN=/usr/bin/python3
     cmake -GNinja \
@@ -73,15 +75,40 @@ framebuffer.  The default VTK wheels are not built with this feature,
 but you can build VTK for off-screen plotting using GPU support by
 modifying the above ``cmake`` command with:
 
-.. code-block:: bash
+.. code::
 
-    # install OpenGL with EGL (Linux/Debian)
-    sudo apt-get install libegl1-mesa-dev
+   #!/bin/bash
 
-    # CentOS
-    sudo yum install mesa-libEGL-devel
+   # install build dependencies (Linux/Debian)
+   apt-get update
+   apt-get install -y ninja-build cmake libegl1-mesa-dev python3-dev 
 
-    -DVTK_OPENGL_HAS_EGL=True \
+   # build using EGL
+   git clone https://github.com/Kitware/VTK
+   mkdir VTK/build
+   cd VTK/build \
+   git checkout v9.1.0
+   cd /VTK/build
+   cmake -GNinja \
+     -DCMAKE_BUILD_TYPE=Release \
+     -DVTK_BUILD_TESTING=OFF \
+     -DVTK_BUILD_DOCUMENTATION=OFF \
+     -DVTK_BUILD_EXAMPLES=OFF \
+     -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
+     -DVTK_WHEEL_BUILD=ON \
+     -DVTK_PYTHON_VERSION=3 \
+     -DVTK_WRAP_PYTHON=ON \
+     -DVTK_OPENGL_HAS_EGL:BOOL=ON \
+     -DVTK_USE_X:BOOL=OFF \
+     -DVTK_USE_COCOA:BOOL=OFF \
+     -DVTK_DEFAULT_RENDER_WINDOW_HEADLESS:BOOL=ON \
+     -DPython3_EXECUTABLE=/usr/bin/python3 ../
+   ninja
+
+   # build the python wheel
+   python3 -m pip install wheel \
+   python3 setup.py bdist_wheel \
+   pip install dist/vtk-*.whl
 
 This disables any plotting using the X server, so be prepared to use
 this module only on a headless display where you either intend to save
@@ -90,6 +117,44 @@ display (e.g using ``pyvista.set_jupyter_backend('ipyvtklink')`` and
 jupyterlab). In other words, this wheel will make VTK unusable outside
 of an off-screen environment, so only plan on installing it on a
 headless system without an X server.
+
+
+Building OSMesa
+~~~~~~~~~~~~~~~
+OSMesa provides higher visualization performance on CPU based hosts. Use this
+instead of ``xvfb``:
+
+.. code::
+
+   sudo apt-get install libosmesa6-dev cmake ninja-build
+
+   git clone https://github.com/Kitware/VTK.git
+   cd VTK
+   git checkout v9.1.0
+   mkdir build
+   cd build
+
+   PYBIN=/usr/bin/python
+   cmake -GNinja \
+         -DCMAKE_BUILD_TYPE=Release \
+         -DVTK_BUILD_TESTING=OFF \
+         -DVTK_BUILD_DOCUMENTATION=OFF \
+         -DVTK_BUILD_EXAMPLES=OFF \
+         -DVTK_DATA_EXCLUDE_FROM_ALL:BOOL=ON \
+         -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
+         -DVTK_WHEEL_BUILD=ON \
+         -DVTK_PYTHON_VERSION=3 \
+         -DVTK_WRAP_PYTHON=ON \
+         -DVTK_OPENGL_HAS_EGL=False \
+         -DVTK_OPENGL_HAS_OSMESA=True \
+         -DVTK_USE_COCOA=FALSE \
+         -DVTK_USE_X=FALSE \
+         -DVTK_DEFAULT_RENDER_WINDOW_HEADLESS=True \
+         -DPython3_EXECUTABLE=$PYBIN ../
+   ninja
+   $PYBIN setup.py bdist_wheel
+
+Wheels will be generated in the ``dist`` directory.
 
 
 Building ManyLinux Wheels
@@ -261,10 +326,3 @@ Where ``build_wheels.sh`` is:
 
 Be sure to either enable or disable ``DVTK_OPENGL_HAS_EGL`` depending
 on if you want ``EGL`` enabled for your wheel.
-
-
-Building VTK on Windows
-~~~~~~~~~~~~~~~~~~~~~~~
-Please reference the directions at `Building VTK with Windows
-<https://vtk.org/Wiki/VTK/Configure_and_Build#On_Windows_5>`_.  This
-is generally a non-trivial process and is not for the faint-hearted.

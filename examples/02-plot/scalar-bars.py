@@ -81,9 +81,7 @@ p.show()
 ###############################################################################
 # Labelling values outside of the scalar range
 p = pv.Plotter()
-p.add_mesh(mesh, clim=[1000, 2000],
-           below_color='blue', above_color='red',
-           scalar_bar_args=sargs)
+p.add_mesh(mesh, clim=[1000, 2000], below_color='blue', above_color='red', scalar_bar_args=sargs)
 p.show()
 
 

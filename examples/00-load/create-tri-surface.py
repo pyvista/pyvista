@@ -53,9 +53,7 @@ surf.plot(show_edges=True)
 
 x = np.arange(10, dtype=float)
 xx, yy, zz = np.meshgrid(x, x, [0])
-points = np.column_stack((xx.ravel(order="F"),
-                          yy.ravel(order="F"),
-                          zz.ravel(order="F")))
+points = np.column_stack((xx.ravel(order="F"), yy.ravel(order="F"), zz.ravel(order="F")))
 # Perturb the points
 points[:, 0] += np.random.rand(len(points)) * 0.3
 points[:, 1] += np.random.rand(len(points)) * 0.3
@@ -88,7 +86,7 @@ polygon = pv.PolyData()
 # Make sure it has the same points as the mesh being triangulated
 polygon.points = points
 # But only has faces in regions to ignore
-polygon.faces = np.array([len(ids),] + ids)
+polygon.faces = np.insert(ids, 0, len(ids))
 
 surf = cloud.delaunay_2d(alpha=1.0, edge_source=polygon)
 

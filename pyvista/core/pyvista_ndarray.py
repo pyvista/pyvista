@@ -11,8 +11,12 @@ from pyvista.utilities.helpers import FieldAssociation, convert_array
 class pyvista_ndarray(np.ndarray):
     """An ndarray which references the owning dataset and the underlying vtkArray."""
 
-    def __new__(cls, array: Union[Iterable, _vtk.vtkAbstractArray], dataset=None,
-                association=FieldAssociation.NONE):
+    def __new__(
+        cls,
+        array: Union[Iterable, _vtk.vtkAbstractArray],
+        dataset=None,
+        association=FieldAssociation.NONE,
+    ):
         """Allocate the array."""
         if isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)
@@ -20,8 +24,10 @@ class pyvista_ndarray(np.ndarray):
             obj = convert_array(array).view(cls)
             obj.VTKObject = array
         else:
-            raise TypeError(f'pyvista_ndarray got an invalid type {type(array)}.  '
-                            'Expected an Iterable or vtk.vtkAbstractArray')
+            raise TypeError(
+                f'pyvista_ndarray got an invalid type {type(array)}.  '
+                'Expected an Iterable or vtk.vtkAbstractArray'
+            )
 
         obj.association = association
         obj.dataset = _vtk.vtkWeakReference()

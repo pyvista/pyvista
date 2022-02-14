@@ -47,7 +47,8 @@ def insert_string_array(hexbeam_point_attributes):
 
 def test_init(hexbeam):
     attributes = pyvista.DataSetAttributes(
-        hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT)
+        hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT
+    )
     assert attributes.VTKObject == hexbeam.GetPointData()
     assert attributes.dataset == hexbeam
     assert attributes.association == FieldAssociation.POINT
@@ -67,6 +68,7 @@ def test_getitem(hexbeam_point_attributes):
 def test_setitem(hexbeam_point_attributes):
     with raises(TypeError, match='Only strings'):
         hexbeam_point_attributes[0]
+
 
 def test_repr(hexbeam_point_attributes):
     repr_str = str(hexbeam_point_attributes)
@@ -193,7 +195,7 @@ def test_set_invalid_vectors(hexbeam):
     not_vectors = np.random.random(hexbeam.n_points)
     with raises(ValueError):
         hexbeam.point_data.set_vectors(not_vectors, 'my-vectors')
-    
+
 
 @mark.parametrize('array_key', ['invalid_array_name', -1])
 def test_get_array_should_fail_if_does_not_exist(array_key, hexbeam_point_attributes):
@@ -379,7 +381,7 @@ def test_length_should_be_0_on_clear(insert_arange_narray):
 def test_keys_should_be_strings(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     for name in dsa.keys():
-        assert(type(name) == str)
+        assert type(name) == str
 
 
 def test_key_should_exist(insert_arange_narray):
@@ -390,7 +392,7 @@ def test_key_should_exist(insert_arange_narray):
 def test_values_should_be_pyvista_ndarrays(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     for arr in dsa.values():
-        assert(type(arr) == pyvista.pyvista_ndarray)
+        assert type(arr) == pyvista.pyvista_ndarray
 
 
 def test_value_should_exist(insert_arange_narray):
@@ -431,15 +433,13 @@ def test_normals_get(plane):
     assert plane.point_data.active_normals is None
 
     plane_w_normals = plane.compute_normals()
-    assert np.array_equal(plane_w_normals.point_data.active_normals,
-                          plane_w_normals.point_normals)
+    assert np.array_equal(plane_w_normals.point_data.active_normals, plane_w_normals.point_normals)
 
 
 def test_normals_set():
     plane = pyvista.Plane(i_resolution=1, j_resolution=1)
     plane.point_data.normals = plane.point_normals
-    assert np.array_equal(plane.point_data.active_normals,
-                          plane.point_normals)
+    assert np.array_equal(plane.point_data.active_normals, plane.point_normals)
 
     with raises(ValueError, match='must be a 2-dim'):
         plane.point_data.active_normals = [1]

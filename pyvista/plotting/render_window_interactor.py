@@ -12,7 +12,7 @@ log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
 
-class RenderWindowInteractor():
+class RenderWindowInteractor:
     """Wrap vtk.vtkRenderWindowInteractor.
 
     This class has been added for the purpose of making some methods
@@ -21,8 +21,7 @@ class RenderWindowInteractor():
 
     """
 
-    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True,
-                 interactor=None):
+    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
         """Initialize."""
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
@@ -100,8 +99,7 @@ class RenderWindowInteractor():
         """Stop tracking the mouse position."""
         self.remove_observer(_vtk.vtkCommand.MouseMoveEvent)
 
-    def track_click_position(self, callback=None, side="right",
-                             viewport=False):
+    def track_click_position(self, callback=None, side="right", viewport=False):
         """Keep track of the click position.
 
         By default, it only tracks right clicks.
@@ -176,9 +174,10 @@ class RenderWindowInteractor():
                 scene = renderer._charts.toggle_interaction(mouse_pos)
             else:
                 # Not in viewport or already an active chart found (in case they overlap), so disable interaction
-                renderer.charts.toggle_interaction(False)
+                renderer._charts.toggle_interaction(False)
 
-        self._context_style.SetScene(scene)  # Set scene to interact with or reset it to stop interaction (otherwise crash)
+        # Set scene to interact with or reset it to stop interaction (otherwise crash)
+        self._context_style.SetScene(scene)
         if scene is None and self._style == "Context":
             # Switch back to previous interactor style
             self._style = self._prev_style
@@ -453,6 +452,7 @@ class RenderWindowInteractor():
         self.update_style()
 
         if mouse_wheel_zooms:
+
             def wheel_zoom_callback(obj, event):  # pragma: no cover
                 """Zoom in or out on mouse wheel roll."""
                 if event == 'MouseWheelForwardEvent':
@@ -460,15 +460,17 @@ class RenderWindowInteractor():
                     zoom_factor = 1.1
                 elif event == 'MouseWheelBackwardEvent':
                     # zoom out
-                    zoom_factor = 1/1.1
+                    zoom_factor = 1 / 1.1
                 self._plotter.camera.zoom(zoom_factor)
                 self._plotter.render()
+
             callback = partial(try_callback, wheel_zoom_callback)
 
             for event in 'MouseWheelForwardEvent', 'MouseWheelBackwardEvent':
                 self._style_class.AddObserver(event, callback)
 
         if shift_pans:
+
             def pan_on_shift_callback(obj, event):  # pragma: no cover
                 """Trigger left mouse panning if shift is pressed."""
                 if event == 'LeftButtonPressEvent':
@@ -479,6 +481,7 @@ class RenderWindowInteractor():
                     # always stop panning on release
                     self._style_class.EndPan()
                     self._style_class.OnLeftButtonUp()
+
             callback = partial(try_callback, pan_on_shift_callback)
 
             for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
@@ -659,8 +662,9 @@ class RenderWindowInteractor():
         """Process events."""
         # Note: This is only available in VTK 9+
         if not self.initialized:
-            raise RuntimeError('Render window interactor must be initialized '
-                               'before processing events.')
+            raise RuntimeError(
+                'Render window interactor must be initialized before processing events.'
+            )
         self.interactor.ProcessEvents()
 
     @property
@@ -712,16 +716,11 @@ def _style_factory(klass):
         import vtk as vtkInteractionStyle
 
     class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
-
         def __init__(self, parent):
             super().__init__()
             self._parent = weakref.ref(parent)
-            self.AddObserver(
-                "LeftButtonPressEvent",
-                partial(try_callback, self._press))
-            self.AddObserver(
-                "LeftButtonReleaseEvent",
-                partial(try_callback, self._release))
+            self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
+            self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
 
         def _press(self, obj, event):
             # Figure out which renderer has the event and disable the

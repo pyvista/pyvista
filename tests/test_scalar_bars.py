@@ -12,9 +12,16 @@ def scalar_bars(sphere):
 
     plotter = pv.Plotter()
     plotter.add_mesh(sphere, show_scalar_bar=False)
-    plotter.add_scalar_bar(KEY, interactive=True, vertical=False, outline=True,
-                           fmt='%10.5f', nan_annotation=True, fill=True,
-                           background_color='k')
+    plotter.add_scalar_bar(
+        KEY,
+        interactive=True,
+        vertical=False,
+        outline=True,
+        fmt='%10.5f',
+        nan_annotation=True,
+        fill=True,
+        background_color='k',
+    )
     return plotter.scalar_bars
 
 
