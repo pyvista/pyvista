@@ -1588,8 +1588,9 @@ def test_image_dilate_erode_dilation():
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_dilated = volume.image_dilate_erode()  # default is binary dilation
-    assert np.array_equal(volume_dilated.point_data['point_data'],
-                          point_data_dilated.flatten(order='F'))
+    assert np.array_equal(
+        volume_dilated.point_data['point_data'], point_data_dilated.flatten(order='F')
+    )
 
 
 def test_image_dilate_erode_erosion():
@@ -1599,8 +1600,9 @@ def test_image_dilate_erode_erosion():
     volume = pyvista.UniformGrid(dims=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_eroded = volume.image_dilate_erode(0, 1)  # binary erosion
-    assert np.array_equal(volume_eroded.point_data['point_data'],
-                          point_data_eroded.flatten(order='F'))
+    assert np.array_equal(
+        volume_eroded.point_data['point_data'], point_data_eroded.flatten(order='F')
+    )
 
 
 def test_image_threshold_output_type():
