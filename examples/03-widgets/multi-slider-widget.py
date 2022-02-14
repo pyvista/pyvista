@@ -13,9 +13,9 @@ mesh-generating/altering code.
 import pyvista as pv
 
 
-class MyCustomRoutine():
+class MyCustomRoutine:
     def __init__(self, mesh):
-        self.output = mesh # Expected PyVista mesh type
+        self.output = mesh  # Expected PyVista mesh type
         # default parameters
         self.kwargs = {
             'radius': 0.5,
@@ -33,6 +33,7 @@ class MyCustomRoutine():
         self.output.overwrite(result)
         return
 
+
 ###############################################################################
 
 starting_mesh = pv.Sphere()
@@ -47,7 +48,8 @@ p.add_slider_widget(
     rng=[3, 60],
     value=30,
     title="Phi Resolution",
-    pointa=(.025, .1), pointb=(.31, .1),
+    pointa=(0.025, 0.1),
+    pointb=(0.31, 0.1),
     style='modern',
 )
 p.add_slider_widget(
@@ -55,7 +57,8 @@ p.add_slider_widget(
     rng=[3, 60],
     value=30,
     title="Theta Resolution",
-    pointa=(.35, .1), pointb=(.64, .1),
+    pointa=(0.35, 0.1),
+    pointb=(0.64, 0.1),
     style='modern',
 )
 p.add_slider_widget(
@@ -63,7 +66,8 @@ p.add_slider_widget(
     rng=[0.1, 1.5],
     value=0.5,
     title="Radius",
-    pointa=(.67, .1), pointb=(.98, .1),
+    pointa=(0.67, 0.1),
+    pointb=(0.98, 0.1),
     style='modern',
 )
 p.show()

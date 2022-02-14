@@ -22,7 +22,7 @@ from pyvista import examples
 
 # Load the statue mesh
 mesh = examples.download_nefertiti()
-mesh.rotate_x(-90., inplace=True)  # rotate to orient with the skybox
+mesh.rotate_x(-90.0, inplace=True)  # rotate to orient with the skybox
 
 # Download skybox
 cubemap = examples.download_sky_box_cube_map()
@@ -34,14 +34,10 @@ cubemap = examples.download_sky_box_cube_map()
 p = pv.Plotter()
 p.add_actor(cubemap.to_skybox())
 p.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
-p.add_mesh(mesh, color='linen',
-           pbr=True, metallic=0.8, roughness=0.1,
-           diffuse=1)
+p.add_mesh(mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=1)
 
 # Define a nice camera perspective
-cpos = [(-313.40, 66.09, 1000.61),
-        (0.0, 0.0, 0.0),
-        (0.018, 0.99, -0.06)]
+cpos = [(-313.40, 66.09, 1000.61), (0.0, 0.0, 0.0), (0.018, 0.99, -0.06)]
 
 p.show(cpos=cpos)
 
@@ -60,8 +56,7 @@ p.set_environment_texture(cubemap)
 for i in range(5):
     for j in range(6):
         sphere = pv.Sphere(radius=0.5, center=(0.0, 4 - i, j))
-        p.add_mesh(sphere, color=colors[i],
-                   pbr=True, metallic=i/4, roughness=j/5)
+        p.add_mesh(sphere, color=colors[i], pbr=True, metallic=i / 4, roughness=j / 5)
 
 p.view_vector((-1, 0, 0), (0, 1, 0))
 p.show()
@@ -77,8 +72,7 @@ mesh.rotate_z(140, inplace=True)
 
 plotter = pv.Plotter(lighting=None)
 plotter.set_background('black')
-plotter.add_mesh(mesh, color='linen', pbr=True,
-                 metallic=0.5, roughness=0.5, diffuse=1)
+plotter.add_mesh(mesh, color='linen', pbr=True, metallic=0.5, roughness=0.5, diffuse=1)
 
 
 # setup lighting
@@ -93,7 +87,5 @@ plotter.add_light(light)
 
 
 # plot with a good camera position
-plotter.camera_position = [(9.51, 13.92, 15.81),
-                           (-2.836, -0.93, 10.2),
-                           (-0.22, -0.18, 0.959)]
+plotter.camera_position = [(9.51, 13.92, 15.81), (-2.836, -0.93, 10.2), (-0.22, -0.18, 0.959)]
 cpos = plotter.show()

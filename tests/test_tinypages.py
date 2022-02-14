@@ -9,21 +9,30 @@ import pytest
 
 pytest.importorskip('sphinx')
 
+
 @pytest.mark.skipif(os.name == 'nt', reason='path issues on Azure Windows CI')
 def test_tinypages(tmpdir):
     tmp_path = Path(tmpdir)
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
     # Build the pages with warnings turned into errors
-    cmd = [sys.executable, '-msphinx', '-W', '-b', 'html',
-           '-d', str(doctree_dir),
-           str(Path(__file__).parent / 'tinypages'), str(html_dir)]
-    proc = Popen(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True,
-                 env={**os.environ, "MPLBACKEND": ""})
+    cmd = [
+        sys.executable,
+        '-msphinx',
+        '-W',
+        '-b',
+        'html',
+        '-d',
+        str(doctree_dir),
+        str(Path(__file__).parent / 'tinypages'),
+        str(html_dir),
+    ]
+    proc = Popen(
+        cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True, env={**os.environ, "MPLBACKEND": ""}
+    )
     out, err = proc.communicate()
 
-    assert proc.returncode == 0, \
-        f"sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n"
+    assert proc.returncode == 0, f"sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n"
 
     if err:
         if err.strip() != 'vtkDebugLeaks has found no leaks.':
@@ -46,7 +55,7 @@ def test_tinypages(tmpdir):
     assert not plot_file(10, 0, 0).exists()
 
     # verify external file generated figure
-    cone_file = html_dir / f'plot_cone_00_00.png'
+    cone_file = html_dir / 'plot_cone_00_00.png'
     assert cone_file.exists()
 
     html_contents = (html_dir / 'some_plots.html').read_bytes()

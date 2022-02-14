@@ -116,8 +116,9 @@ class Table(_vtk.vtkTable, DataObject):
     @property
     def row_arrays(self):
         """Return the all row arrays."""
-        return DataSetAttributes(vtkobject=self.GetRowData(), dataset=self,
-                                 association=FieldAssociation.ROW)
+        return DataSetAttributes(
+            vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW
+        )
 
     def keys(self):
         """Return the table keys.
@@ -319,8 +320,9 @@ class Table(_vtk.vtkTable, DataObject):
 
     def save(self, *args, **kwargs):  # pragma: no cover
         """Save the table."""
-        raise NotImplementedError("Please use the `to_pandas` method and "
-                                  "harness Pandas' wonderful file IO methods.")
+        raise NotImplementedError(
+            "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
+        )
 
     def get_data_range(self, arr=None, preference='row'):
         """Get the non-NaN min and max of a named array.
@@ -381,6 +383,7 @@ class Texture(_vtk.vtkTexture, DataObject):
             self._from_image_data(image)
         except (KeyError, ValueError):
             from imageio import imread
+
             self._from_array(imread(filename))
 
     def _from_texture(self, texture):
@@ -407,7 +410,9 @@ class Texture(_vtk.vtkTexture, DataObject):
             n_components = 1
 
         grid = pyvista.UniformGrid(dims=(image.shape[1], image.shape[0], 1))
-        grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, n_components), order='F')
+        grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
+            (-1, n_components), order='F'
+        )
         grid.set_active_scalars('Image')
         self._from_image_data(grid)
 
@@ -461,7 +466,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         else:
             shape = (image.dimensions[1], image.dimensions[0])
 
-        return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1,0)
+        return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1, 0)
 
     def plot(self, *args, **kwargs):
         """Plot the texture as image data by itself."""

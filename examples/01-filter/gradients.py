@@ -38,11 +38,15 @@ mesh_g["gradient"]
 # ``mesh_g["gradient"]`` is an ``N`` by 9 NumPy array of the gradients, so we
 # could make a dictionary of NumPy arrays of the gradients like:
 
+
 def gradients_to_dict(arr):
     """A helper method to label the gradients into a dictionary."""
-    keys = np.array(["du/dx", "du/dy", "du/dz", "dv/dx", "dv/dy", "dv/dz", "dw/dx", "dw/dy", "dw/dz"])
-    keys = keys.reshape((3,3))[:,:arr.shape[1]].ravel()
+    keys = np.array(
+        ["du/dx", "du/dy", "du/dz", "dv/dx", "dv/dy", "dv/dz", "dw/dx", "dw/dy", "dw/dz"]
+    )
+    keys = keys.reshape((3, 3))[:, : arr.shape[1]].ravel()
     return dict(zip(keys, mesh_g["gradient"].T))
+
 
 gradients = gradients_to_dict(mesh_g["gradient"])
 gradients
@@ -55,19 +59,18 @@ mesh_g
 
 ###############################################################################
 
-keys = np.array(list(gradients.keys())).reshape(3,3)
+keys = np.array(list(gradients.keys())).reshape(3, 3)
 
 p = pv.Plotter(shape=keys.shape)
 for i in range(keys.shape[0]):
     for j in range(keys.shape[1]):
-        name = keys[i,j]
-        p.subplot(i,j)
+        name = keys[i, j]
+        p.subplot(i, j)
         p.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
         p.add_mesh(mesh_g.outline(), color="k")
 p.link_views()
 p.view_isometric()
 p.show()
-
 
 
 ###############################################################################
@@ -82,17 +85,16 @@ gradients
 
 mesh_g.point_data.update(gradients)
 
-keys = np.array(list(gradients.keys())).reshape(1,3)
+keys = np.array(list(gradients.keys())).reshape(1, 3)
 
 p = pv.Plotter(shape=keys.shape)
 
 for i in range(keys.shape[0]):
     for j in range(keys.shape[1]):
-        name = keys[i,j]
-        p.subplot(i,j)
+        name = keys[i, j]
+        p.subplot(i, j)
         p.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
         p.add_mesh(mesh_g.outline(), color="k")
 p.link_views()
 p.view_isometric()
 p.show()
-

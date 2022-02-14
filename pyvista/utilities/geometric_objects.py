@@ -34,14 +34,14 @@ NORMALS = {
 }
 
 
-def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
+def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
     """Translate and orient a mesh to a new center and direction.
 
     By default, the input mesh is considered centered at the origin
     and facing in the x direction.
 
     """
-    normx = np.array(direction)/np.linalg.norm(direction)
+    normx = np.array(direction) / np.linalg.norm(direction)
     normz = np.cross(normx, [0, 1.0, 0.0000001])
     normz /= np.linalg.norm(normz)
     normy = np.cross(normz, normx)
@@ -53,12 +53,18 @@ def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
     trans[3, 3] = 1
 
     surf.transform(trans)
-    if not np.allclose(center, [0., 0., 0.]):
+    if not np.allclose(center, [0.0, 0.0, 0.0]):
         surf.points += np.array(center)
 
 
-def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
-             radius=0.5, height=1.0, resolution=100, capping=True):
+def Cylinder(
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    radius=0.5,
+    height=1.0,
+    resolution=100,
+    capping=True,
+):
     """Create the surface of a cylinder.
 
     See also :func:`pyvista.CylinderStructured`.
@@ -108,9 +114,14 @@ def Cylinder(center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0),
     return surf
 
 
-def CylinderStructured(radius=0.5, height=1.0,
-                       center=(0.,0.,0.), direction=(1.,0.,0.),
-                       theta_resolution=32, z_resolution=10):
+def CylinderStructured(
+    radius=0.5,
+    height=1.0,
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    theta_resolution=32,
+    z_resolution=10,
+):
     """Create a cylinder mesh as a :class:`pyvista.StructuredGrid`.
 
     The end caps are left open. This can create a surface mesh if a single
@@ -164,7 +175,7 @@ def CylinderStructured(radius=0.5, height=1.0,
     # Define grid in polar coordinates
     r = np.array([radius]).ravel()
     nr = len(r)
-    theta = np.linspace(0, 2*np.pi, num=theta_resolution)
+    theta = np.linspace(0, 2 * np.pi, num=theta_resolution)
     radius_matrix, theta_matrix = np.meshgrid(r, theta)
 
     # Transform to cartesian space
@@ -186,7 +197,7 @@ def CylinderStructured(radius=0.5, height=1.0,
     grid.dimensions = [nr, theta_resolution, z_resolution]
 
     # Orient properly in user direction
-    vx = np.array([0., 0., 1.])
+    vx = np.array([0.0, 0.0, 1.0])
     if not np.allclose(vx, direction):
         direction /= np.linalg.norm(direction)
         vx -= vx.dot(direction) * direction
@@ -201,9 +212,16 @@ def CylinderStructured(radius=0.5, height=1.0,
     return grid
 
 
-def Arrow(start=(0., 0., 0.), direction=(1., 0., 0.), tip_length=0.25,
-          tip_radius=0.1, tip_resolution=20, shaft_radius=0.05,
-          shaft_resolution=20, scale=None):
+def Arrow(
+    start=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    tip_length=0.25,
+    tip_radius=0.1,
+    tip_resolution=20,
+    shaft_radius=0.05,
+    shaft_resolution=20,
+    scale=None,
+):
     """Create an arrow.
 
     Parameters
@@ -269,8 +287,17 @@ def Arrow(start=(0., 0., 0.), direction=(1., 0., 0.), tip_length=0.25,
     return surf
 
 
-def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=30,
-           phi_resolution=30, start_theta=0, end_theta=360, start_phi=0, end_phi=180):
+def Sphere(
+    radius=0.5,
+    center=(0, 0, 0),
+    direction=(0, 0, 1),
+    theta_resolution=30,
+    phi_resolution=30,
+    start_theta=0,
+    end_theta=360,
+    start_phi=0,
+    end_phi=180,
+):
     """Create a vtk Sphere.
 
     Parameters
@@ -338,8 +365,9 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     return surf
 
 
-def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
-          i_resolution=10, j_resolution=10):
+def Plane(
+    center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1, i_resolution=10, j_resolution=10
+):
     """Create a plane.
 
     Parameters
@@ -390,7 +418,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
     return surf
 
 
-def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
+def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     """Create a line.
 
     Parameters
@@ -431,13 +459,13 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
     src.Update()
     line = pyvista.wrap(src.GetOutput())
     # Compute distance of every point along line
-    compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0)**2, axis=1))
+    compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0) ** 2, axis=1))
     distance = compute(np.array(pointa), line.points)
     line['Distance'] = distance
     return line
 
 
-def Tube(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1, radius=1.0, n_sides=15):
+def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1.0, n_sides=15):
     """Create a tube.
 
     Parameters
@@ -494,9 +522,7 @@ def Tube(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1, radius=1.0, 
     return pyvista.wrap(tube_filter.GetOutput())
 
 
-
-def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0,
-         z_length=1.0, bounds=None, clean=True):
+def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None, clean=True):
     """Create a cube.
 
     It's possible to specify either the center and side lengths or
@@ -555,7 +581,9 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0,
     src = _vtk.vtkCubeSource()
     if bounds is not None:
         if np.array(bounds).size != 6:
-            raise TypeError('Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)')
+            raise TypeError(
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+            )
         src.SetBounds(bounds)
     else:
         src.SetCenter(center)
@@ -567,7 +595,7 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0,
 
     # add face index data for compatibility with PlatonicSolid
     # but make it inactive for backwards compatibility
-    cube.cell_data.set_array([1, 4, 0, 3, 5, 2],['FaceIndex'])
+    cube.cell_data.set_array([1, 4, 0, 3, 5, 2], ['FaceIndex'])
 
     # clean duplicate points
     if clean:
@@ -576,7 +604,7 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0,
     return cube
 
 
-def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
+def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
     """Create a box with solid faces for the given bounds.
 
     Parameters
@@ -607,20 +635,29 @@ def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
 
     """
     if np.array(bounds).size != 6:
-        raise TypeError('Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)')
+        raise TypeError(
+            'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+        )
     src = _vtk.vtkTessellatedBoxSource()
     src.SetLevel(level)
     if quads:
-       src.QuadsOn()
+        src.QuadsOn()
     else:
-       src.QuadsOff()
+        src.QuadsOff()
     src.SetBounds(bounds)
     src.Update()
     return pyvista.wrap(src.GetOutput())
 
 
-def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=None,
-         capping=True, angle=None, resolution=6):
+def Cone(
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    height=1.0,
+    radius=None,
+    capping=True,
+    angle=None,
+    resolution=6,
+):
     """Create a cone.
 
     Parameters
@@ -681,7 +718,7 @@ def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=None,
     return pyvista.wrap(src.GetOutput())
 
 
-def Polygon(center=(0., 0., 0.), radius=1, normal=(0, 0, 1), n_sides=6):
+def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6):
     """Create a polygon.
 
     Parameters
@@ -722,8 +759,7 @@ def Polygon(center=(0., 0., 0.), radius=1, normal=(0, 0, 1), n_sides=6):
     return pyvista.wrap(src.GetOutput())
 
 
-def Disc(center=(0., 0., 0.), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1,
-         c_res=6):
+def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1, c_res=6):
     """Create a polygonal disk with a hole in the center.
 
     The disk has zero height. The user can specify the inner and outer
@@ -815,9 +851,19 @@ def Text3D(string, depth=0.5):
     return pyvista.wrap(tri_filter.GetOutput())
 
 
-def Wavelet(extent=(-10, 10, -10, 10, -10, 10), center=(0, 0, 0), maximum=255,
-            x_freq=60, y_freq=30, z_freq=40, x_mag=10, y_mag=18, z_mag=5,
-            std=0.5, subsample_rate=1):
+def Wavelet(
+    extent=(-10, 10, -10, 10, -10, 10),
+    center=(0, 0, 0),
+    maximum=255,
+    x_freq=60,
+    y_freq=30,
+    z_freq=40,
+    x_mag=10,
+    y_mag=18,
+    z_mag=5,
+    std=0.5,
+    subsample_rate=1,
+):
     """Create a wavelet.
 
     Produces images with pixel values determined by
@@ -959,8 +1005,8 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
     pointb = list(pointb)
-    pointb[0] -= 1E-10
-    pointb[1] -= 1E-10
+    pointb[0] -= 1e-10
+    pointb[1] -= 1e-10
 
     arc = _vtk.vtkArcSource()
     arc.SetPoint1(*pointa)
@@ -974,14 +1020,13 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     arc = pyvista.wrap(arc.GetOutput())
     # Compute distance of every point along circular arc
     center = np.array(center).ravel()
-    radius = np.sqrt(np.sum((arc.points[0]-center)**2, axis=0))
-    angles = np.arange(0.0, 1.0 + 1.0/resolution, 1.0/resolution) * angle
+    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
+    angles = np.arange(0.0, 1.0 + 1.0 / resolution, 1.0 / resolution) * angle
     arc['Distance'] = radius * angles
     return arc
 
 
-def CircularArcFromNormal(center, resolution=100, normal=None,
-                          polar=None, angle=None):
+def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle=None):
     """Create a circular arc defined by normal to the plane of the arc, and an angle.
 
     The number of segments composing the polyline is controlled by
@@ -1049,8 +1094,8 @@ def CircularArcFromNormal(center, resolution=100, normal=None,
     arc = pyvista.wrap(arc.GetOutput())
     # Compute distance of every point along circular arc
     center = np.array(center)
-    radius = np.sqrt(np.sum((arc.points[0] - center)**2, axis=0))
-    angles = np.linspace(0.0, angle, resolution+1)
+    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
+    angles = np.linspace(0.0, angle, resolution + 1)
     arc['Distance'] = radius * angles
     return arc
 
@@ -1084,11 +1129,13 @@ def Pyramid(points=None):
     >>> pyramid.plot(show_edges=True, line_width=5)
     """
     if points is None:
-        points = [[1.0, 1.0, 0.0],
-                  [-1.0, 1.0, 0.0],
-                  [-1.0, -1.0, 0.0],
-                  [1.0, -1.0, 0.0],
-                  [0.0, 0.0, (4 - 2**0.5)**0.5]]
+        points = [
+            [1.0, 1.0, 0.0],
+            [-1.0, 1.0, 0.0],
+            [-1.0, -1.0, 0.0],
+            [1.0, -1.0, 0.0],
+            [0.0, 0.0, (4 - 2 ** 0.5) ** 0.5],
+        ]
 
     if len(points) != 5:
         raise TypeError('Points must be given as length 5 np.ndarray or list')
@@ -1137,7 +1184,7 @@ def Triangle(points=None):
     >>> triangle.plot(show_edges=True, line_width=5)
     """
     if points is None:
-        points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5**0.5, 0]]
+        points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5 ** 0.5, 0]]
 
     if len(points) != 3:
         raise TypeError('Points must be given as length 3 np.ndarray or list')
@@ -1212,17 +1259,24 @@ def Circle(radius=0.5, resolution=100):
     >>> circle.plot(show_edges=True, line_width=5)
     """
     points = np.zeros((resolution, 3))
-    theta = np.linspace(0.0, 2.0*np.pi, resolution)
+    theta = np.linspace(0.0, 2.0 * np.pi, resolution)
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
     return pyvista.wrap(pyvista.PolyData(points, cells))
 
 
-def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
-                 theta_roundness=1., phi_roundness=1.,
-                 theta_resolution=16, phi_resolution=16,
-                 toroidal=False, thickness=1/3):
+def Superquadric(
+    center=(0.0, 0.0, 0.0),
+    scale=(1.0, 1.0, 1.0),
+    size=0.5,
+    theta_roundness=1.0,
+    phi_roundness=1.0,
+    theta_resolution=16,
+    phi_resolution=16,
+    toroidal=False,
+    thickness=1 / 3,
+):
     """Create a superquadric.
 
     Parameters
@@ -1287,8 +1341,8 @@ def Superquadric(center=(0., 0., 0.), scale=(1., 1., 1.), size=0.5,
     superquadricSource.SetSize(size)
     superquadricSource.SetThetaRoundness(theta_roundness)
     superquadricSource.SetPhiRoundness(phi_roundness)
-    superquadricSource.SetThetaResolution(round(theta_resolution/4)*4)
-    superquadricSource.SetPhiResolution(round(phi_resolution/8)*8)
+    superquadricSource.SetThetaResolution(round(theta_resolution / 4) * 4)
+    superquadricSource.SetPhiResolution(round(phi_resolution / 8) * 8)
     superquadricSource.SetToroidal(toroidal)
     superquadricSource.SetThickness(thickness)
     superquadricSource.Update()
@@ -1348,8 +1402,7 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     elif isinstance(kind, int) and kind not in range(5):
         raise ValueError(f'Invalid Platonic solid index "{kind}".')
     elif not isinstance(kind, int):
-        raise ValueError('Invalid Platonic solid index type '
-                         f'"{type(kind).__name__}".')
+        raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
     check_valid_vector(center, 'center')
 
     solid = _vtk.vtkPlatonicSolidSource()
