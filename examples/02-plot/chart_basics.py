@@ -32,7 +32,7 @@ chart.show()
 # by specifying a custom axis range yourself.
 
 x = np.linspace(0, 10, 1000)
-y = np.sin(x ** 2)
+y = np.sin(x**2)
 chart = pv.Chart2D()
 chart.line(x, y)
 chart.x_range = [5, 10]  # Focus on the second half of the curve
