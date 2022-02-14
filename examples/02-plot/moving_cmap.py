@@ -22,17 +22,14 @@ def scurve(t):
 
 # Hopf fiber
 def hopf_fiber(p, phi):
-    return (
-        np.array(
-            [
-                (1 + p[2]) * np.cos(phi),
-                p[0] * np.sin(phi) - p[1] * np.cos(phi),
-                p[0] * np.cos(phi) + p[1] * np.sin(phi),
-                (1 + p[2]) * np.sin(phi),
-            ]
-        )
-        / np.sqrt(2 * (1 + p[2]))
-    )
+    return np.array(
+        [
+            (1 + p[2]) * np.cos(phi),
+            p[0] * np.sin(phi) - p[1] * np.cos(phi),
+            p[0] * np.cos(phi) + p[1] * np.sin(phi),
+            (1 + p[2]) * np.sin(phi),
+        ]
+    ) / np.sqrt(2 * (1 + p[2]))
 
 
 # Stereographic projection

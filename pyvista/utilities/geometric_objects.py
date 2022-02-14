@@ -1134,7 +1134,7 @@ def Pyramid(points=None):
             [-1.0, 1.0, 0.0],
             [-1.0, -1.0, 0.0],
             [1.0, -1.0, 0.0],
-            [0.0, 0.0, (4 - 2 ** 0.5) ** 0.5],
+            [0.0, 0.0, (4 - 2**0.5) ** 0.5],
         ]
 
     if len(points) != 5:
@@ -1184,7 +1184,7 @@ def Triangle(points=None):
     >>> triangle.plot(show_edges=True, line_width=5)
     """
     if points is None:
-        points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5 ** 0.5, 0]]
+        points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5**0.5, 0]]
 
     if len(points) != 3:
         raise TypeError('Points must be given as length 3 np.ndarray or list')

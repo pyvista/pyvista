@@ -122,7 +122,7 @@ plotter.show()
 plotter = pv.Plotter(lighting='none')
 hemi_template = pv.Sphere().clip()
 
-centers = [(0, 0, 0), (0, 1.5, 0), (0, 1.5 * 0.5, 1.5 * 3 ** 0.5 / 2)]
+centers = [(0, 0, 0), (0, 1.5, 0), (0, 1.5 * 0.5, 1.5 * 3**0.5 / 2)]
 exponents = [1, 0.3, 5]
 
 for center, exponent in zip(centers, exponents):
