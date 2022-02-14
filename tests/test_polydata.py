@@ -568,7 +568,7 @@ def test_clean(sphere):
 
 def test_area(sphere_dense, cube_dense):
     radius = 0.5
-    ideal_area = 4 * pi * radius ** 2
+    ideal_area = 4 * pi * radius**2
     assert np.isclose(sphere_dense.area, ideal_area, rtol=1e-3)
 
     ideal_area = 6 * np.cbrt(cube_dense.volume) ** 2
@@ -576,7 +576,7 @@ def test_area(sphere_dense, cube_dense):
 
 
 def test_volume(sphere_dense):
-    ideal_volume = (4 / 3.0) * pi * radius ** 3
+    ideal_volume = (4 / 3.0) * pi * radius**3
     assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1e-3)
 
 
@@ -718,7 +718,7 @@ def test_delaunay_2d():
 def test_lines():
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     z = np.linspace(-2, 2, 100)
-    r = z ** 2 + 1
+    r = z**2 + 1
     x = r * np.sin(theta)
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
