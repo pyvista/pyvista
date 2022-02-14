@@ -5,7 +5,7 @@ import pytest
 
 try:
     import pythreejs  # noqa
-except:
+except:  # noqa: E722
     pytestmark = pytest.mark.skip
 
 import pyvista
@@ -22,7 +22,7 @@ def test_set_jupyter_backend_ipygany():
 
 
 def test_export_to_html(cube, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.html'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.html'))
 
     pl = pyvista.Plotter()
     pl.add_mesh(cube)
@@ -84,9 +84,10 @@ def test_output_face_scalars(sphere):
     pv_pythreejs.convert_plotter(pl)
 
 
-@pytest.mark.parametrize('max_index', [np.iinfo(np.uint16).max - 1,
-                                       np.iinfo(np.uint32).max - 1,
-                                       np.iinfo(np.uint32).max + 1])
+@pytest.mark.parametrize(
+    'max_index',
+    [np.iinfo(np.uint16).max - 1, np.iinfo(np.uint32).max - 1, np.iinfo(np.uint32).max + 1],
+)
 def test_cast_to_min_size(max_index):
 
     if max_index < np.iinfo(np.uint16).max:

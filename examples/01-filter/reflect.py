@@ -28,4 +28,3 @@ p = pyvista.Plotter()
 p.add_mesh(airplane, show_edges=True)
 p.add_mesh(airplane_reflected, show_edges=True)
 p.show()
-

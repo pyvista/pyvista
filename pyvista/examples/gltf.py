@@ -2,7 +2,9 @@
 
 from .downloads import _retrieve_file
 
-GLTF_SAMPLES_ROOT_URL = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/'
+GLTF_SAMPLES_ROOT_URL = (
+    'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/'
+)
 
 
 def _download_file(end_url):  # pragma: no cover

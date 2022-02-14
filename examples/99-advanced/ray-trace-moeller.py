@@ -62,16 +62,16 @@ def ray_triangle_intersection(ray_start, ray_vec, triangle):
 
     if abs(det) < eps:  # no intersection
         return False, null_inter
-    inv_det = 1. / det
+    inv_det = 1.0 / det
     tvec = ray_start - v1
     u = tvec.dot(pvec) * inv_det
 
-    if u < 0. or u > 1.:  # if not intersection
+    if u < 0.0 or u > 1.0:  # if not intersection
         return False, null_inter
 
     qvec = np.cross(tvec, edge1)
     v = ray_vec.dot(qvec) * inv_det
-    if v < 0. or u + v > 1.:  # if not intersection
+    if v < 0.0 or u + v > 1.0:  # if not intersection
         return False, null_inter
 
     t = edge2.dot(qvec) * inv_det
@@ -84,9 +84,7 @@ def ray_triangle_intersection(ray_start, ray_vec, triangle):
 ###############################################################################
 
 # Create a basic triangle within pyvista
-points = np.array([[0, 0, 0],
-                   [0, 1, 0],
-                   [1, 0, 0]])
+points = np.array([[0, 0, 0], [0, 1, 0], [1, 0, 0]])
 faces = np.array([3, 0, 1, 2])
 tri = pv.PolyData(points, faces)
 
@@ -112,20 +110,20 @@ if inter:
     # reconstruct intersection point in barycentric coordinates.  See
     # https://en.wikipedia.org/wiki/Barycentric_coordinate_system
     a, b, c = (1 - u - v), u, v
-    point = tri.points[0]*a + tri.points[1]*b + tri.points[2]*c
+    point = tri.points[0] * a + tri.points[1] * b + tri.points[2] * c
 
     pl = pv.Plotter()
-    pl.add_text(f'Intersected at ({point[0]:.3}, {point[0]:.3}, {point[0]:.3})',
-                font_size=26)
+    pl.add_text(f'Intersected at ({point[0]:.3}, {point[0]:.3}, {point[0]:.3})', font_size=26)
     pl.add_mesh(tri)
-    _ = pl.add_arrows(np.array([start]),
-                      np.array([direction]),
-                      show_scalar_bar=False,
-                      color='r', style='wireframe')
-    pl.add_points(np.array([point]), point_size=20, render_points_as_spheres=True,
-                  color='b')
-    pl.add_point_labels(tri, [f'a = {1 - u - v:.3}', f'b = {u:.3}', f'c = {v:.3}'],
-                        font_size=40)
+    _ = pl.add_arrows(
+        np.array([start]),
+        np.array([direction]),
+        show_scalar_bar=False,
+        color='r',
+        style='wireframe',
+    )
+    pl.add_points(np.array([point]), point_size=20, render_points_as_spheres=True, color='b')
+    pl.add_point_labels(tri, [f'a = {1 - u - v:.3}', f'b = {u:.3}', f'c = {v:.3}'], font_size=40)
     pl.show_bounds()
     pl.camera_position = 'xy'
     pl.show()
@@ -133,10 +131,13 @@ if inter:
 else:  # no intersection
     pl = pv.Plotter()
     pl.add_text('No intersection')
-    _ = pl.add_arrows(np.array([start]),
-                      np.array([direction]),
-                      show_scalar_bar=False,
-                      color='r', style='wireframe')
+    _ = pl.add_arrows(
+        np.array([start]),
+        np.array([direction]),
+        show_scalar_bar=False,
+        color='r',
+        style='wireframe',
+    )
     pl.add_mesh(tri)
 
     pl.show_bounds()

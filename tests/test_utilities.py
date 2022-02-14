@@ -63,12 +63,17 @@ def test_createvectorpolydata():
 
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_read(tmpdir, use_pathlib):
-    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile,
-              ex.uniformfile, ex.rectfile)
+    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
     if use_pathlib:
         fnames = [pathlib.Path(fname) for fname in fnames]
-    types = (pyvista.PolyData, pyvista.PolyData, pyvista.UnstructuredGrid,
-             pyvista.PolyData, pyvista.UniformGrid, pyvista.RectilinearGrid)
+    types = (
+        pyvista.PolyData,
+        pyvista.PolyData,
+        pyvista.UnstructuredGrid,
+        pyvista.PolyData,
+        pyvista.UniformGrid,
+        pyvista.RectilinearGrid,
+    )
     for i, filename in enumerate(fnames):
         obj = fileio.read(filename)
         assert isinstance(obj, types[i])
@@ -78,7 +83,7 @@ def test_read(tmpdir, use_pathlib):
         obj = fileio.read(filename, attrs={'DebugOn': None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.npy'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
     arr = np.random.rand(10, 10)
     np.save(filename, arr)
     with pytest.raises(IOError):
@@ -90,8 +95,7 @@ def test_read(tmpdir, use_pathlib):
     multi = pyvista.read(fnames)
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == len(fnames)
-    nested = [ex.planefile,
-              [ex.hexbeamfile, ex.uniformfile]]
+    nested = [ex.planefile, [ex.hexbeamfile, ex.uniformfile]]
 
     multi = pyvista.read(nested)
     assert isinstance(multi, pyvista.MultiBlock)
@@ -101,10 +105,15 @@ def test_read(tmpdir, use_pathlib):
 
 
 def test_read_force_ext(tmpdir):
-    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile,
-              ex.uniformfile, ex.rectfile)
-    types = (pyvista.PolyData, pyvista.PolyData, pyvista.UnstructuredGrid,
-             pyvista.PolyData, pyvista.UniformGrid, pyvista.RectilinearGrid)
+    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
+    types = (
+        pyvista.PolyData,
+        pyvista.PolyData,
+        pyvista.UnstructuredGrid,
+        pyvista.PolyData,
+        pyvista.UniformGrid,
+        pyvista.RectilinearGrid,
+    )
 
     dummy_extension = '.dummy'
     for fname, type in zip(fnames, types):
@@ -188,8 +197,7 @@ def test_read_plot3d(srr_mock, auto_detect):
 
     # with grid and q
     srr_mock.reset_mock()
-    pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save',
-                        auto_detect=auto_detect)
+    pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save', auto_detect=auto_detect)
     args, kwargs = srr_mock.call_args
     reader = args[0]
     assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
@@ -240,16 +248,19 @@ def test_voxelize():
     vox = pyvista.voxelize(mesh, 0.5)
     assert vox.n_cells
 
+
 def test_voxelize_non_uniform_desnity():
     mesh = pyvista.PolyData(ex.load_uniform().points)
     vox = pyvista.voxelize(mesh, [0.5, 0.3, 0.2])
     assert vox.n_cells
 
+
 def test_voxelize_throws_when_density_is_not_length_3():
     with pytest.raises(ValueError) as e:
         mesh = pyvista.PolyData(ex.load_uniform().points)
-        vox = pyvista.voxelize(mesh, [0.5, 0.3])
+        _ = pyvista.voxelize(mesh, [0.5, 0.3])
     assert "not enough values to unpack" in str(e.value)
+
 
 def test_report():
     report = pyvista.Report(gpu=True)
@@ -309,7 +320,7 @@ def test_transform_vectors_sph_to_cart():
     lat = np.arange(0.0, 181.0, 60.0)  # colatitude
     lev = [1]  # elevation (radius)
     u, v = np.meshgrid(lon, lat, indexing="ij")
-    w = u ** 2 - v ** 2
+    w = u**2 - v**2
     uu, vv, ww = pyvista.transform_vectors_sph_to_cart(lon, lat, lev, u, v, w)
     assert np.allclose(
         [uu[-1, -1], vv[-1, -1], ww[-1, -1]],
@@ -359,10 +370,10 @@ def test_assert_empty_kwargs():
     kwargs = {}
     assert errors.assert_empty_kwargs(**kwargs)
     with pytest.raises(TypeError):
-        kwargs = {"foo":6}
+        kwargs = {"foo": 6}
         errors.assert_empty_kwargs(**kwargs)
     with pytest.raises(TypeError):
-        kwargs = {"foo":6, "goo":"bad"}
+        kwargs = {"foo": 6, "goo": "bad"}
         errors.assert_empty_kwargs(**kwargs)
 
 
@@ -435,8 +446,10 @@ def test_cells_dict_utils():
     cells_arr = np.array([3, 0, 1, 2, 3, 3, 4, 5])
     cells_types = np.array([vtk.VTK_TRIANGLE] * 2)
 
-    assert np.all(cells.generate_cell_offsets(cells_arr, cells_types)
-                  == cells.generate_cell_offsets(cells_arr, cells_types))
+    assert np.all(
+        cells.generate_cell_offsets(cells_arr, cells_types)
+        == cells.generate_cell_offsets(cells_arr, cells_types)
+    )
 
     # Non-integer type
     with pytest.raises(ValueError):
@@ -456,11 +469,15 @@ def test_cells_dict_utils():
         cells.generate_cell_offsets(cells_arr, np.array(cells_types.tolist() + [vtk.VTK_TRIANGLE]))
 
     with pytest.raises(ValueError):
-        cells.generate_cell_offsets_loop(cells_arr, np.array(cells_types.tolist() + [vtk.VTK_TRIANGLE]))
+        cells.generate_cell_offsets_loop(
+            cells_arr, np.array(cells_types.tolist() + [vtk.VTK_TRIANGLE])
+        )
 
     # Unknown cell type
-    np.all(cells.generate_cell_offsets(cells_arr, cells_types) ==
-           cells.generate_cell_offsets(cells_arr, np.array([255, 255])))
+    np.all(
+        cells.generate_cell_offsets(cells_arr, cells_types)
+        == cells.generate_cell_offsets(cells_arr, np.array([255, 255]))
+    )
 
 
 def test_apply_transformation_to_points():
@@ -488,13 +505,9 @@ def test_apply_transformation_to_points():
 
 def _generate_vtk_err():
     """Simple operation which generates a VTK error."""
-    x, y, z = np.meshgrid(
-        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
-    )
+    x, y, z = np.meshgrid(np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5))
     mesh = pyvista.StructuredGrid(x, y, z)
-    x2, y2, z2 = np.meshgrid(
-        np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5)
-    )
+    x2, y2, z2 = np.meshgrid(np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5))
     mesh2 = pyvista.StructuredGrid(x2, y2, z2)
 
     alg = vtk.vtkStreamTracer()
@@ -533,11 +546,13 @@ def test_vtk_error_catcher():
 
 def test_axis_angle_rotation():
     # rotate cube corners around body diagonal
-    points = np.array([
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1],
-    ])
+    points = np.array(
+        [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        ]
+    )
     axis = [1, 1, 1]
 
     # no-op case
@@ -572,12 +587,14 @@ def test_axis_angle_rotation():
 
 def test_reflection():
     # reflect points of a square across a diagonal
-    points = np.array([
-        [ 1,  1, 0],
-        [-1,  1, 0],
-        [-1, -1, 0],
-        [ 1, -1, 0],
-    ])
+    points = np.array(
+        [
+            [1, 1, 0],
+            [-1, 1, 0],
+            [-1, -1, 0],
+            [1, -1, 0],
+        ]
+    )
     normal = [1, 1, 0]
 
     # default origin
@@ -621,7 +638,7 @@ def test_merge(sphere, cube, datasets):
     assert merged.n_points == sphere.n_points
 
     merged = pyvista.merge([sphere, sphere], merge_points=False)
-    assert merged.n_points == sphere.n_points*2
+    assert merged.n_points == sphere.n_points * 2
 
     # check unstructured
     merged_ugrid = pyvista.merge(datasets, merge_points=False)
@@ -646,4 +663,3 @@ def test_merge(sphere, cube, datasets):
         main_has_priority=True,
     )
     assert np.allclose(merged['data'], 0)
-

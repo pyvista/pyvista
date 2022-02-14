@@ -32,20 +32,16 @@ print(fluid_mesh)
 # not the case in this dataset.
 
 one_streamline = fluid_mesh.streamlines(
-    start_position = (0., 0.4, 0.),
-    max_time = 100.,
+    start_position=(0.0, 0.4, 0.0),
+    max_time=100.0,
     compute_vorticity=False,  # vorticity already exists in dataset
 )
 
 clim = [0, 20]
-camera_position = [
-    (7, 0, 20.),
-    (7, 0.0, 0.0),
-    (0.0, 1.0, 0.0)
- ]
+camera_position = [(7, 0, 20.0), (7, 0.0, 0.0), (0.0, 1.0, 0.0)]
 
 p = pv.Plotter()
-for i in range(1,len(mesh)):
+for i in range(1, len(mesh)):
     p.add_mesh(mesh[i], color='k')
 p.add_mesh(one_streamline.tube(radius=0.05), scalars="vorticity_mag", clim=clim)
 p.view_xy()
@@ -59,12 +55,12 @@ line_streamlines = fluid_mesh.streamlines(
     pointa=(0, -5, 0),
     pointb=(0, 5, 0),
     n_points=25,
-    max_time=100.,
+    max_time=100.0,
     compute_vorticity=False,  # vorticity already exists in dataset
 )
 
 p = pv.Plotter()
-for i in range(1,len(mesh)):
+for i in range(1, len(mesh)):
     p.add_mesh(mesh[i], color='k')
 p.add_mesh(line_streamlines.tube(radius=0.05), scalars="vorticity_mag", clim=clim)
 p.view_xy()
@@ -81,14 +77,14 @@ p.show(cpos=camera_position)
 # parameters.  The defaults are in cell length units.
 
 line_streamlines = fluid_mesh.streamlines_evenly_spaced_2D(
-    start_position=(4, 0.1, 0.),
+    start_position=(4, 0.1, 0.0),
     separating_distance=3,
     separating_distance_ratio=0.2,
     compute_vorticity=False,  # vorticity already exists in dataset
 )
 
 p = pv.Plotter()
-for i in range(1,len(mesh)):
+for i in range(1, len(mesh)):
     p.add_mesh(mesh[i], color='k')
 p.add_mesh(line_streamlines.tube(radius=0.02), scalars="vorticity_mag", clim=clim)
 p.view_xy()
