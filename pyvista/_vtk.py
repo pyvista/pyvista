@@ -557,5 +557,6 @@ def lazy_vtkCameraOrientationWidget():
         from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
     except ImportError:  # pragma: no cover
         from pyvista.core.errors import VTKVersionError
+
         raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
     return vtkCameraOrientationWidget()
