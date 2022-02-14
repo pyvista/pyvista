@@ -166,13 +166,13 @@ class UniformGridFilters(DataSetFilters):
         return fixed
 
     def image_dilate_erode(
-      self,
-      dilate_value=1, 
-      erode_value=0,
-      kernel_size=(3, 3, 3), 
-      scalars=None,
-      preference='points', 
-      progress_bar=False
+        self,
+        dilate_value=1,
+        erode_value=0,
+        kernel_size=(3, 3, 3),
+        scalars=None,
+        preference='points',
+        progress_bar=False
     ):
         """Dilates one value and erodes another.
 
@@ -239,7 +239,7 @@ class UniformGridFilters(DataSetFilters):
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)  # args: (idx, port, connection, field, name)
         alg.SetKernelSize(kernel_size[0], kernel_size[1], kernel_size[2])
         alg.SetDilateValue(dilate_value)
         alg.SetErodeValue(erode_value)

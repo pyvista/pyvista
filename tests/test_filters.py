@@ -1591,7 +1591,7 @@ def test_image_dilate_erode_dilation():
     assert np.array_equal(volume_dilated.point_data['point_data'],
                           point_data_dilated.flatten(order='F'))
 
-    
+
 def test_image_dilate_erode_erosion():
     point_data = np.zeros((10, 10, 10))
     point_data[4, 4, 4] = 1
