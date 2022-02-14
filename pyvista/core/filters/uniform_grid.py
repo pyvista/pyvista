@@ -242,7 +242,7 @@ class UniformGridFilters(DataSetFilters):
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
-        alg.SetKernelSize(kernel_size[0], kernel_size[1], kernel_size[2])
+        alg.SetKernelSize(*kernel_size)
         alg.SetDilateValue(dilate_value)
         alg.SetErodeValue(erode_value)
         _update_alg(alg, progress_bar, 'Performing Dilation and Erosion')
