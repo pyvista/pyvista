@@ -4620,7 +4620,7 @@ class DataSetFilters:
         simplices. The output mesh will have geometry and any fields specified
         as attributes in the input mesh's point data. The attribute's copy
         flags are honored, except for normals.
-        
+
         For more details see `vtkTessellatorFilter <https://vtk.org/doc/nightly/html/classvtkTessellatorFilter.html#details>`_.
 
         progress_bar : bool, optional
