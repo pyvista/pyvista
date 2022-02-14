@@ -670,7 +670,15 @@ def test_color():
     i_rgba, f_rgba = (0, 0, 255, 255), (0.0, 0.0, 1.0, 1.0)
     h = "0000ffff"
     i_opacity, f_opacity, h_opacity = 153, 0.6, "99"
-    invalid_colors = ((300, 0, 0), (0, -10, 0), (0, 0, 1.5), (-0.5, 0, 0), (0, 0), "#hh0000", "invalid_name")
+    invalid_colors = (
+        (300, 0, 0),
+        (0, -10, 0),
+        (0, 0, 1.5),
+        (-0.5, 0, 0),
+        (0, 0),
+        "#hh0000",
+        "invalid_name",
+    )
     i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
     f_types = (float, np.float16, np.float32, np.float64)
     h_prefixes = ("", "0x", "#")

@@ -1989,7 +1989,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if name is None:
             name = f'{type(mesh).__name__}({mesh.memory_address})'
 
-        nan_color = Color(nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color)
+        nan_color = Color(
+            nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
+        )
 
         if color is True:
             color = self._theme.color
@@ -3290,7 +3292,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.textActor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
 
-        self.textActor.GetTextProperty().SetColor(Color(color, default_color=self._theme.font.color).f_rgb)
+        self.textActor.GetTextProperty().SetColor(
+            Color(color, default_color=self._theme.font.color).f_rgb
+        )
         self.textActor.GetTextProperty().SetFontFamily(FONTS[font].value)
         self.textActor.GetTextProperty().SetShadow(shadow)
 

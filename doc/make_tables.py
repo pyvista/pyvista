@@ -182,7 +182,8 @@ class ColorSchemeTable(DocTable):
         p.background_color = 'w'
         chart = pv.Chart2D()
         tmp_plot = chart.bar([0], [[1]] * 2, color=color_scheme, orientation="H")
-        n_colors = len(tmp_plot.colors)  # Use a temporary plot to determine the total number of colors in this scheme
+        # Use a temporary plot to determine the total number of colors in this scheme
+        n_colors = len(tmp_plot.colors)
         plot = chart.bar([0], [[1]] * n_colors, color=color_scheme, orientation="H")
         chart.remove_plot(tmp_plot)
         plot.pen.color = 'w'

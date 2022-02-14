@@ -474,7 +474,9 @@ def test_multicomp_plot_common(plot_f, request):
     assert plot.color_scheme == cs
     assert plot._color_series.GetColorScheme() == plot.COLOR_SCHEMES[cs]["id"]
     assert np.allclose(plot.colors, cs_colors)
-    series_colors = [pyvista.Color(plot._color_series.GetColor(i)).f_rgba for i in range(len(cs_colors))]
+    series_colors = [
+        pyvista.Color(plot._color_series.GetColor(i)).f_rgba for i in range(len(cs_colors))
+    ]
     assert np.allclose(series_colors, cs_colors)
     lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(cs_colors))]
     assert np.allclose(lookup_colors, cs_colors)
@@ -486,7 +488,9 @@ def test_multicomp_plot_common(plot_f, request):
     assert plot.color_scheme == cs
     plot.colors = colors
     assert np.allclose(plot.colors, colors)
-    series_colors = [pyvista.Color(plot._color_series.GetColor(i)).f_rgba for i in range(len(colors))]
+    series_colors = [
+        pyvista.Color(plot._color_series.GetColor(i)).f_rgba for i in range(len(colors))
+    ]
     assert np.allclose(series_colors, colors)
     lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(colors))]
     assert np.allclose(lookup_colors, colors)

@@ -109,7 +109,9 @@ class WidgetHelper:
             return
 
         box_widget = _vtk.vtkBoxWidget()
-        box_widget.GetOutlineProperty().SetColor(Color(color, default_color=pyvista.global_theme.font.color).f_rgb)
+        box_widget.GetOutlineProperty().SetColor(
+            Color(color, default_color=pyvista.global_theme.font.color).f_rgb
+        )
         box_widget.SetInteractor(self.iren.interactor)
         box_widget.SetCurrentRenderer(self.renderer)
         box_widget.SetPlaceFactor(factor)

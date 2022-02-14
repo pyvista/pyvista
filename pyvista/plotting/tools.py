@@ -318,13 +318,17 @@ def create_axes_orientation_box(
 
         cube = pyvista.Cube()
         cube.clear_data()  # remove normals
-        face_colors = np.array([x_face_color.i_rgb,
-                                x_face_color.i_rgb,
-                                y_face_color.i_rgb,
-                                y_face_color.i_rgb,
-                                z_face_color.i_rgb,
-                                z_face_color.i_rgb,
-                                ], np.uint8)
+        face_colors = np.array(
+            [
+                x_face_color.i_rgb,
+                x_face_color.i_rgb,
+                y_face_color.i_rgb,
+                y_face_color.i_rgb,
+                z_face_color.i_rgb,
+                z_face_color.i_rgb,
+            ],
+            np.uint8,
+        )
         cube.cell_data['face_colors'] = face_colors
 
         cube_mapper = _vtk.vtkPolyDataMapper()
@@ -525,13 +529,17 @@ def parse_color(color, opacity=None, default_color=None):  # pragma: no cover
 
     """
     # Deprecated on v0.34.0, estimated removal on v0.37.0
-    warnings.warn("The usage of `parse_color` is deprecated in favor of the new `Color` class.",
-                  PyvistaDeprecationWarning)
+    warnings.warn(
+        "The usage of `parse_color` is deprecated in favor of the new `Color` class.",
+        PyvistaDeprecationWarning,
+    )
     has_opacity = opacity is not None
     if isinstance(color, (list, tuple, np.ndarray)):
         has_opacity |= len(color) == 4
         color = np.asarray(color, np.float)
-    color = Color(color, default_opacity=1.0 if opacity is None else opacity, default_color=default_color)
+    color = Color(
+        color, default_opacity=1.0 if opacity is None else opacity, default_color=default_color
+    )
     return tuple(color.f_rgba if has_opacity else color.f_rgb)
 
 

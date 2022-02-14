@@ -183,10 +183,16 @@ color4i = Union[Tuple[int, int, int, int], Sequence[int], np.ndarray]
 color3f = Union[Tuple[float, float, float], Sequence[float], np.ndarray]
 color4f = Union[Tuple[float, float, float, float], Sequence[float], np.ndarray]
 color_like = Union[
-    Tuple[int, int, int], Tuple[int, int, int, int],
-    Tuple[float, float, float], Tuple[float, float, float, float],
-    Sequence[int], Sequence[float], np.ndarray, str, "Color",
-    _vtk.vtkColor3ub
+    Tuple[int, int, int],
+    Tuple[int, int, int, int],
+    Tuple[float, float, float],
+    Tuple[float, float, float, float],
+    Sequence[int],
+    Sequence[float],
+    np.ndarray,
+    str,
+    "Color",
+    _vtk.vtkColor3ub,
 ]
 # Overwrite default docstring, as sphinx is not able to capture the docstring
 # when it is put beneath the definition somehow?
@@ -434,8 +440,13 @@ class Color:
 
     """
 
-    def __init__(self, color: Optional[color_like] = None, opacity: Optional[Union[int, float, str]] = None,
-                 default_color: Optional[color_like] = None, default_opacity: Union[int, float, str] = 255):
+    def __init__(
+        self,
+        color: Optional[color_like] = None,
+        opacity: Optional[Union[int, float, str]] = None,
+        default_color: Optional[color_like] = None,
+        default_opacity: Union[int, float, str] = 255,
+    ):
         """Initialize new instance."""
         self._red, self._green, self._blue, self._opacity = 0, 0, 0, 0
         self._opacity = self.convert_color_channel(default_opacity)
@@ -467,25 +478,29 @@ class Color:
             else:
                 raise ValueError(f"Unsupported color type: {type(color)}")
         except ValueError as e:
-            raise ValueError("\n"
-                             f"\tInvalid color input: ({color})\n"
-                             "\tMust be a string, rgb(a) sequence, or hex color string.  For example:\n"
-                             "\t\tcolor='white'\n"
-                             "\t\tcolor='w'\n"
-                             "\t\tcolor=[1.0, 1.0, 1.0]\n"
-                             "\t\tcolor='#FFFFFF'") from e
+            raise ValueError(
+                "\n"
+                f"\tInvalid color input: ({color})\n"
+                "\tMust be a string, rgb(a) sequence, or hex color string.  For example:\n"
+                "\t\tcolor='white'\n"
+                "\t\tcolor='w'\n"
+                "\t\tcolor=[1.0, 1.0, 1.0]\n"
+                "\t\tcolor='#FFFFFF'"
+            ) from e
 
         # Overwrite opacity if it is provided
         try:
             if opacity is not None:
                 self._opacity = self.convert_color_channel(opacity)
         except ValueError as e:
-            raise ValueError("\n"
-                             f"\tInvalid opacity input: ({opacity})"
-                             "\tMust be an integer, float or string.  For example:\n"
-                             "\t\topacity='255'\n"
-                             "\t\topacity='1.0'\n"
-                             "\t\topacity='#FF'") from e
+            raise ValueError(
+                "\n"
+                f"\tInvalid opacity input: ({opacity})"
+                "\tMust be an integer, float or string.  For example:\n"
+                "\t\topacity='255'\n"
+                "\t\topacity='1.0'\n"
+                "\t\topacity='#FF'"
+            ) from e
 
     @staticmethod
     def strip_hex_prefix(h: str) -> str:
@@ -529,7 +544,11 @@ class Color:
         elif np.issubdtype(np.asarray(val).dtype, np.floating) and np.ndim(val) == 0:
             # From float
             val = int(255 * val + 0.5)
-        if np.issubdtype(np.asarray(val).dtype, np.integer) and np.ndim(val) == 0 and 0 <= val <= 255:
+        if (
+            np.issubdtype(np.asarray(val).dtype, np.integer)
+            and np.ndim(val) == 0
+            and 0 <= val <= 255
+        ):
             # From integer
             return int(val)
         else:
@@ -574,7 +593,9 @@ class Color:
         try:
             if len(rgba) != 4:
                 raise ValueError("Invalid length for RGBA sequence.")
-            self._red, self._green, self._blue, self._opacity = [self.convert_color_channel(c) for c in rgba]
+            self._red, self._green, self._blue, self._opacity = [
+                self.convert_color_channel(c) for c in rgba
+            ]
             self._name = None
         except ValueError as e:
             raise ValueError(f"Invalid RGB(A) sequence: {rgba}") from e
@@ -702,13 +723,15 @@ class Color:
         Color(hex='#00ff0040')
 
         """
-        return '#' + ''.join(f"{c:0>2x}" for c in (self._red, self._green, self._blue, self._opacity))
+        return '#' + ''.join(
+            f"{c:0>2x}" for c in (self._red, self._green, self._blue, self._opacity)
+        )
 
     @hex.setter
     def hex(self, h: str):
         h = self.strip_hex_prefix(h)
         try:
-            self.i_rgba = [self.convert_color_channel(h[i:i+2]) for i in range(0, len(h), 2)]  # type: ignore
+            self.i_rgba = [self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)]  # type: ignore
         except ValueError as e:
             raise ValueError(f"Invalid hex string: {h}") from e
 
@@ -747,8 +770,10 @@ class Color:
             # Single character
             # Convert from single character to full hex
             if n not in color_char_to_word:
-                raise ValueError('Single character string must be one of the following:'
-                                 f'\n{str(color_char_to_word.keys())}')
+                raise ValueError(
+                    'Single character string must be one of the following:'
+                    f'\n{str(color_char_to_word.keys())}'
+                )
             n = color_char_to_word[n]
             self.hex = hexcolors[n]
             self._name = n
@@ -817,8 +842,10 @@ class Color:
 def hex_to_rgb(h):  # pragma: no cover
     """Return 0 to 1 rgb from a hex list or tuple."""
     # Deprecated on v0.34.0, estimated removal on v0.37.0
-    warnings.warn("The usage of `hex_to_rgb` is deprecated in favor of the new `Color` class.",
-                  PyvistaDeprecationWarning)
+    warnings.warn(
+        "The usage of `hex_to_rgb` is deprecated in favor of the new `Color` class.",
+        PyvistaDeprecationWarning,
+    )
     return Color(h).f_rgb
 
 
@@ -838,8 +865,10 @@ def string_to_rgb(string):
 
     """
     # Deprecated on v0.34.0, estimated removal on v0.37.0
-    warnings.warn("The usage of `string_to_rgb` is deprecated in favor of the new `Color` class.",
-                  PyvistaDeprecationWarning)
+    warnings.warn(
+        "The usage of `string_to_rgb` is deprecated in favor of the new `Color` class.",
+        PyvistaDeprecationWarning,
+    )
     return Color(string).f_rgb
 
 

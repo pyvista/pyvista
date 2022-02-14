@@ -1950,7 +1950,10 @@ class _MultiCompPlot(_Plot):
         >>> chart.show()
 
         """
-        return [Color(self._color_series.GetColor(i)).f_rgba for i in range(self._color_series.GetNumberOfColors())]
+        return [
+            Color(self._color_series.GetColor(i)).f_rgba
+            for i in range(self._color_series.GetNumberOfColors())
+        ]
 
     @colors.setter
     def colors(self, val):
@@ -1965,7 +1968,9 @@ class _MultiCompPlot(_Plot):
                 self._color_series.SetNumberOfColors(len(val))
                 for i, color in enumerate(val):
                     self._color_series.SetColor(i, Color(color).vtk_c3ub)
-                self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
+                self._color_series.BuildLookupTable(
+                    self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL
+                )
                 self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
             except ValueError as e:
                 self.color_scheme = self.DEFAULT_COLOR_SCHEME
