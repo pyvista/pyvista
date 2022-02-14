@@ -147,8 +147,9 @@ class DataSetFilters:
                 return self
         return result
 
-    def clip_box(self, bounds=None, invert=True, factor=0.35, progress_bar=False,
-                 merge_points=True):
+    def clip_box(
+        self, bounds=None, invert=True, factor=0.35, progress_bar=False, merge_points=True
+    ):
         """Clip a dataset by a bounding box defined by the bounds.
 
         If no bounds are given, a corner of the dataset bounds will be removed.
