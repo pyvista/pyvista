@@ -17,13 +17,8 @@ import pyvista as pv
 def scurve(t):
     alpha = np.pi / 2 - (np.pi / 2 - 0.44) * np.cos(3 * t)
     beta = t + 0.44 * np.sin(6 * t)
-    return np.array(
-        [
-          np.sin(alpha) * np.cos(beta),
-          np.sin(alpha) * np.sin(beta),
-          np.cos(alpha)
-        ]
-    )
+    return np.array([np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta), np.cos(alpha)])
+
 
 # Hopf fiber
 def hopf_fiber(p, phi):
@@ -39,13 +34,16 @@ def hopf_fiber(p, phi):
         / np.sqrt(2 * (1 + p[2]))
     )
 
+
 # Stereographic projection
 def stereo_proj(q):
     return q[0:3] / (1 - q[3])
 
+
 # Parameterization of the Hopf torus
 def hopf_torus(t, phi):
     return stereo_proj(hopf_fiber(scurve(t), phi))
+
 
 # Create the mesh
 angle_u = np.linspace(-np.pi, np.pi, 400)

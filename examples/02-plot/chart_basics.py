@@ -32,7 +32,7 @@ chart.show()
 # by specifying a custom axis range yourself.
 
 x = np.linspace(0, 10, 1000)
-y = np.sin(x**2)
+y = np.sin(x ** 2)
 chart = pv.Chart2D()
 chart.line(x, y)
 chart.x_range = [5, 10]  # Focus on the second half of the curve
@@ -54,8 +54,8 @@ chart.show()
 # The following example shows how to create filled areas between two polylines.
 
 x = np.linspace(0, 10, 1000)
-y1 = np.cos(x) + np.sin(3*x)
-y2 = 0.1*(x - 5)
+y1 = np.cos(x) + np.sin(3 * x)
+y2 = 0.1 * (x - 5)
 chart = pv.Chart2D()
 chart.area(x, y1, y2, color=(0.1, 0.1, 0.9, 0.5))
 chart.line(x, y1, color=(0.9, 0.1, 0.1), width=4, style="--")
@@ -74,7 +74,20 @@ chart = pv.Chart2D()
 chart.bar(x, y1, color="b", label="2020")
 chart.bar(x, y2, color="r", label="2021")
 chart.x_axis.tick_locations = x
-chart.x_axis.tick_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+chart.x_axis.tick_labels = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+]
 chart.x_label = "Month"
 chart.y_axis.tick_labels = "2e"
 chart.y_label = "# incidents"
@@ -132,8 +145,10 @@ chart.show()
 import matplotlib.pyplot as plt
 
 # First, create the matplotlib figure
-f, ax = plt.subplots(tight_layout=True)  # Tight layout to keep axis labels visible on smaller figures
-alphas = [0.5+i for i in range(5)]
+f, ax = plt.subplots(
+    tight_layout=True
+)  # Tight layout to keep axis labels visible on smaller figures
+alphas = [0.5 + i for i in range(5)]
 betas = [*reversed(alphas)]
 N = int(1e4)
 data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas)]

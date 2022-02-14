@@ -35,18 +35,18 @@ import numpy as np
 import pyvista as pv
 
 
-# A helper to make a random surface
 def hill(seed):
-    mesh = pv.ParametricRandomHills(randomseed=seed, u_res=50, v_res=50,
-                                    hillamplitude=0.5)
-    mesh.rotate_y(-10, inplace=True) # give the surfaces some tilt
+    """A helper to make a random surface."""
+    mesh = pv.ParametricRandomHills(randomseed=seed, u_res=50, v_res=50, hillamplitude=0.5)
+    mesh.rotate_y(-10, inplace=True)  # give the surfaces some tilt
 
     return mesh
+
 
 h0 = hill(1).elevation()
 h1 = hill(10)
 # Shift one surface
-h1.points[:,-1] += 5
+h1.points[:, -1] += 5
 h1 = h1.elevation()
 
 ###############################################################################
@@ -62,8 +62,7 @@ p.show()
 # ++++++++++++++++++++
 #
 # Compute normals of lower surface at vertex points
-h0n = h0.compute_normals(point_normals=True, cell_normals=False,
-                         auto_orient_normals=True)
+h0n = h0.compute_normals(point_normals=True, cell_normals=False, auto_orient_normals=True)
 
 ###############################################################################
 # Travel along normals to the other surface and compute the thickness on each
@@ -76,7 +75,7 @@ for i in range(h0n.n_points):
     p0 = p - vec
     p1 = p + vec
     ip, ic = h1.ray_trace(p0, p1, first_point=True)
-    dist = np.sqrt(np.sum((ip - p)**2))
+    dist = np.sqrt(np.sum((ip - p) ** 2))
     h0n["distances"][i] = dist
 
 # Replace zeros with nans
@@ -103,7 +102,7 @@ p.show()
 from scipy.spatial import KDTree
 
 tree = KDTree(h1.points)
-d_kdtree, idx = tree.query(h0.points )
+d_kdtree, idx = tree.query(h0.points)
 h0["distances"] = d_kdtree
 np.mean(d_kdtree)
 
@@ -123,8 +122,7 @@ p.show()
 # points of the bottom surface.  ``closest_points`` is returned when using
 # ``return_closest_point=True``.
 
-closest_cells, closest_points = h1.find_closest_cell(h0.points,
-                                                     return_closest_point=True)
+closest_cells, closest_points = h1.find_closest_cell(h0.points, return_closest_point=True)
 d_exact = np.linalg.norm(h0.points - closest_points, axis=1)
 h0["distances"] = d_exact
 np.mean(d_exact)

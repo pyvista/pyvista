@@ -143,7 +143,7 @@ struct.plot(show_edges=True)
 ###############################################################################
 top = struct.points.copy()
 bottom = struct.points.copy()
-bottom[:,-1] = -10.0 # Wherever you want the plane
+bottom[:, -1] = -10.0  # Wherever you want the plane
 
 vol = pv.StructuredGrid()
 vol.points = np.vstack((top, bottom))

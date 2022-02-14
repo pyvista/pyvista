@@ -84,12 +84,10 @@ light_offsets = [-6, 0, 6]
 for attenuation_values, light_x in zip(all_attenuation_values, light_offsets):
     # loop over three perpendicular planes for each light
     for plane_y in [2, 5, 10]:
-        screen = pv.Plane(center=(light_x, plane_y, 0), direction=(0, 1, 0),
-                          i_size=5, j_size=5)
+        screen = pv.Plane(center=(light_x, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
         plotter.add_mesh(screen, color='white')
 
-    light = pv.Light(position=(light_x, 0, 0), focal_point=(light_x, 1, 0),
-                     color='cyan')
+    light = pv.Light(position=(light_x, 0, 0), focal_point=(light_x, 1, 0), color='cyan')
     light.positional = True
     light.cone_angle = 15
     light.intensity = 5

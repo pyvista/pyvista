@@ -7,8 +7,9 @@ import numpy as np
 from pyvista._typing import NumericArray, VectorArray
 
 
-def _coerce_pointslike_arg(points: Union[NumericArray, VectorArray],
-                           copy: bool=True) -> np.ndarray:
+def _coerce_pointslike_arg(
+    points: Union[NumericArray, VectorArray], copy: bool = True
+) -> np.ndarray:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
@@ -36,8 +37,7 @@ def _coerce_pointslike_arg(points: Union[NumericArray, VectorArray],
         raise ValueError("Array of points must be 1D or 2D")
     if points.ndim == 2:
         if points.shape[1] != 3:
-            raise ValueError("Array of points must have three values per point "
-                             "(shape (n, 3))")
+            raise ValueError("Array of points must have three values per point (shape (n, 3))")
     else:
         if points.size != 3:
             raise ValueError("Given point must have three values")

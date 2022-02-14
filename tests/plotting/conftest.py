@@ -33,6 +33,6 @@ def check_gc():
 
     gc.collect()
     after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
-    assert len(after) == 0, \
-        'Not all objects GCed:\n' + \
-        '\n'.join(sorted(o.__class__.__name__ for o in after))
+    assert len(after) == 0, 'Not all objects GCed:\n' + '\n'.join(
+        sorted(o.__class__.__name__ for o in after)
+    )

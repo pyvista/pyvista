@@ -144,7 +144,6 @@ p.add_mesh(line, color="red", line_width=5)
 p.show()
 
 
-
 ###############################################################################
 # Slice At Different Bearings
 # +++++++++++++++++++++++++++
@@ -156,16 +155,16 @@ p.show()
 #
 # Create a point to orient slices around
 ranges = np.array(model.bounds).reshape(-1, 2).ptp(axis=1)
-point = np.array(model.center) - ranges*0.25
+point = np.array(model.center) - ranges * 0.25
 
 ###############################################################################
 # Now generate a few normal vectors to rotate a slice around the z-axis.
 # Use equation for circle since its about the Z-axis.
-increment = np.pi/6.
+increment = np.pi / 6.0
 # use a container to hold all the slices
-slices = pv.MultiBlock() # treat like a dictionary/list
+slices = pv.MultiBlock()  # treat like a dictionary/list
 for theta in np.arange(0, np.pi, increment):
-    normal = np.array([np.cos(theta), np.sin(theta), 0.0]).dot(np.pi/2.)
+    normal = np.array([np.cos(theta), np.sin(theta), 0.0]).dot(np.pi / 2.0)
     name = f'Bearing: {np.rad2deg(theta):.2f}'
     slices[name] = model.slice(origin=point, normal=normal)
 slices

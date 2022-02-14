@@ -66,7 +66,7 @@ streamlines, src = mesh.streamlines(
 ###############################################################################
 boundary = mesh.decimate_boundary().extract_all_edges()
 
-sargs=dict(vertical=True, title_font_size=16)
+sargs = dict(vertical=True, title_font_size=16)
 p = pv.Plotter()
 p.add_mesh(streamlines.tube(radius=0.2), lighting=False, scalar_bar_args=sargs)
 p.add_mesh(src)
@@ -93,11 +93,15 @@ print([array_name for array_name in streamlines.array_names if array_name not in
 ###############################################################################
 # Plot streamlines colored by the time along the streamlines.
 
-sargs=dict(vertical=True, title_font_size=16)
+sargs = dict(vertical=True, title_font_size=16)
 p = pv.Plotter()
-p.add_mesh(streamlines.tube(radius=0.2),
-           scalars="IntegrationTime", clim=[0, 1000], lighting=False,
-           scalar_bar_args=sargs)
+p.add_mesh(
+    streamlines.tube(radius=0.2),
+    scalars="IntegrationTime",
+    clim=[0, 1000],
+    lighting=False,
+    scalar_bar_args=sargs,
+)
 p.add_mesh(boundary, color="grey", opacity=0.25)
 p.add_mesh(source_mesh, color="red")
 p.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
@@ -134,26 +138,21 @@ nx = 20
 ny = 15
 nz = 5
 
-origin = (-(nx - 1)*0.1/2, -(ny - 1)*0.1/2, -(nz - 1)*0.1/2)
-mesh = pv.UniformGrid(
-    dims=(nx, ny, nz),
-    spacing=(.1, .1, .1),
-    origin=origin
-)
+origin = (-(nx - 1) * 0.1 / 2, -(ny - 1) * 0.1 / 2, -(nz - 1) * 0.1 / 2)
+mesh = pv.UniformGrid(dims=(nx, ny, nz), spacing=(0.1, 0.1, 0.1), origin=origin)
 x = mesh.points[:, 0]
 y = mesh.points[:, 1]
 z = mesh.points[:, 2]
 vectors = np.empty((mesh.n_points, 3))
 vectors[:, 0] = np.sin(np.pi * x) * np.cos(np.pi * y) * np.cos(np.pi * z)
 vectors[:, 1] = -np.cos(np.pi * x) * np.sin(np.pi * y) * np.cos(np.pi * z)
-vectors[:, 2] = (np.sqrt(3.0 / 3.0) * np.cos(np.pi * x) * np.cos(np.pi * y) *
-                 np.sin(np.pi * z))
+vectors[:, 2] = np.sqrt(3.0 / 3.0) * np.cos(np.pi * x) * np.cos(np.pi * y) * np.sin(np.pi * z)
 
 mesh['vectors'] = vectors
 ###############################################################################
-stream, src = mesh.streamlines('vectors', return_source=True,
-                               terminal_speed=0.0, n_points=200,
-                               source_radius=0.1)
+stream, src = mesh.streamlines(
+    'vectors', return_source=True, terminal_speed=0.0, n_points=200, source_radius=0.1
+)
 ###############################################################################
 cpos = [(1.2, 1.2, 1.2), (-0.0, -0.0, -0.0), (0.0, 0.0, 1.0)]
 stream.tube(radius=0.0015).plot(cpos=cpos)

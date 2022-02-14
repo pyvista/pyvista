@@ -66,11 +66,12 @@ class CompositeFilters:
         alg = _vtk.vtkAppendFilter()
         for block in self:
             if isinstance(block, _vtk.vtkMultiBlockDataSet):
-                block = CompositeFilters.combine(block, merge_points=merge_points,
-                                                 tolerance=tolerance)
+                block = CompositeFilters.combine(
+                    block, merge_points=merge_points, tolerance=tolerance
+                )
             alg.AddInputData(block)
         alg.SetMergePoints(merge_points)
-        if pyvista.vtk_version_info >= (9, ):
+        if pyvista.vtk_version_info >= (9,):
             alg.SetTolerance(tolerance)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
@@ -122,8 +123,9 @@ class CompositeFilters:
 
         """
         if nested:
-            return DataSetFilters.outline(self, generate_faces=generate_faces,
-                                          progress_bar=progress_bar)
+            return DataSetFilters.outline(
+                self, generate_faces=generate_faces, progress_bar=progress_bar
+            )
         box = pyvista.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
@@ -149,7 +151,6 @@ class CompositeFilters:
 
         """
         if nested:
-            return DataSetFilters.outline_corners(self, factor=factor,
-                                                  progress_bar=progress_bar)
+            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
         box = pyvista.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)

@@ -53,12 +53,30 @@ def make_mapper(mapper_class):
                 self.SetLookupTable(lut)
             self._lut = lut
 
-        def set_scalars(self, mesh, scalars, scalar_bar_args, rgb,
-                        component, preference, interpolate_before_map,
-                        _custom_opac, annotations, log_scale,
-                        nan_color, above_color, below_color, cmap,
-                        flip_scalars, opacity, categories, n_colors,
-                        clim, theme, show_scalar_bar):
+        def set_scalars(
+            self,
+            mesh,
+            scalars,
+            scalar_bar_args,
+            rgb,
+            component,
+            preference,
+            interpolate_before_map,
+            _custom_opac,
+            annotations,
+            log_scale,
+            nan_color,
+            above_color,
+            below_color,
+            cmap,
+            flip_scalars,
+            opacity,
+            categories,
+            n_colors,
+            clim,
+            theme,
+            show_scalar_bar,
+        ):
             """Set the scalars on this mapper."""
             if cmap is None:  # Set default map if matplotlib is available
                 if _has_matplotlib():
@@ -93,7 +111,9 @@ def make_mapper(mapper_class):
             if scalars.ndim != 1:
                 if rgb:
                     pass
-                elif scalars.ndim == 2 and (scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells):
+                elif scalars.ndim == 2 and (
+                    scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells
+                ):
                     if not isinstance(component, (int, type(None))):
                         raise TypeError('component must be either None or an integer')
                     if component is None:
@@ -104,10 +124,8 @@ def make_mapper(mapper_class):
                         title = '{}-{}'.format(title, component)
                     else:
                         raise ValueError(
-                            ('component must be nonnegative and less than the '
-                             'dimensionality of the scalars array: {}').format(
-                                 scalars.shape[1]
-                             )
+                            'Component must be nonnegative and less than the '
+                            f'dimensionality of the scalars array: {scalars.shape[1]}'
                         )
                 else:
                     scalars = scalars.ravel()
@@ -116,9 +134,14 @@ def make_mapper(mapper_class):
                 scalars = scalars.astype(np.float_)
 
             self.configure_scalars_mode(
-                scalars, mesh, title, n_colors,
-                preference, interpolate_before_map, rgb,
-                _custom_opac
+                scalars,
+                mesh,
+                title,
+                n_colors,
+                preference,
+                interpolate_before_map,
+                rgb,
+                _custom_opac,
             )
             table = self.GetLookupTable()
 
@@ -160,6 +183,7 @@ def make_mapper(mapper_class):
                 # ipygany uses different colormaps
                 if theme.jupyter_backend == 'ipygany':
                     from ..jupyter.pv_ipygany import check_colormap
+
                     check_colormap(cmap)
                 else:
                     if not _has_matplotlib():
@@ -172,7 +196,7 @@ def make_mapper(mapper_class):
                             n_colors = len(np.unique(scalars))
                         elif isinstance(categories, int):
                             n_colors = categories
-                    ctable = cmap(np.linspace(0, 1, n_colors))*255
+                    ctable = cmap(np.linspace(0, 1, n_colors)) * 255
                     ctable = ctable.astype(np.uint8)
                     # Set opactities
                     if isinstance(opacity, np.ndarray) and not _custom_opac:
@@ -184,14 +208,19 @@ def make_mapper(mapper_class):
                         # need to round the colors here since we're
                         # directly displaying the colors
                         hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
-                        scalars = np.round(hue*n_colors)/n_colors
-                        scalars = cmap(scalars)*255
+                        scalars = np.round(hue * n_colors) / n_colors
+                        scalars = cmap(scalars) * 255
                         scalars[:, -1] *= opacity
                         scalars = scalars.astype(np.uint8)
                         self.configure_scalars_mode(
-                            scalars, mesh, title, n_colors,
-                            preference, interpolate_before_map, rgb,
-                            _custom_opac
+                            scalars,
+                            mesh,
+                            title,
+                            n_colors,
+                            preference,
+                            interpolate_before_map,
+                            rgb,
+                            _custom_opac,
                         )
 
             else:  # no cmap specified
@@ -202,12 +231,19 @@ def make_mapper(mapper_class):
 
             return show_scalar_bar, n_colors, clim
 
-        def configure_scalars_mode(self, scalars, mesh, title, n_colors,
-                                   preference, interpolate_before_map, rgb,
-                                   _custom_opac):
+        def configure_scalars_mode(
+            self,
+            scalars,
+            mesh,
+            title,
+            n_colors,
+            preference,
+            interpolate_before_map,
+            rgb,
+            _custom_opac,
+        ):
             """Configure scalar mode."""
-            if (scalars.shape[0] == mesh.n_points and
-                scalars.shape[0] == mesh.n_cells):
+            if scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells:
                 use_points = preference == 'point'
                 use_cells = not use_points
             else:
@@ -234,12 +270,13 @@ def make_mapper(mapper_class):
             else:
                 self.SetColorModeToMapScalars()
 
-        def set_custom_opacity(self, opacity, color, mesh, n_colors,
-                               preference, interpolate_before_map, rgb, theme):
+        def set_custom_opacity(
+            self, opacity, color, mesh, n_colors, preference, interpolate_before_map, rgb, theme
+        ):
             """Set custom opacity."""
             # create a custom RGBA array to supply our opacity to
             rgb_color = parse_color(color, default_color=theme.color)
-            if (opacity.size == mesh.n_points and opacity.size == mesh.n_cells):
+            if opacity.size == mesh.n_points and opacity.size == mesh.n_cells:
                 if preference == 'points':
                     rgba = np.empty((mesh.n_points, 4), np.uint8)
                 else:
@@ -252,16 +289,16 @@ def make_mapper(mapper_class):
                 raise ValueError(
                     f"Opacity array size ({opacity.size}) does not equal "
                     f"the number of points {mesh.n_points} or the "
-                    f"number of cells ({mesh.n_cells}).")
+                    f"number of cells ({mesh.n_cells})."
+                )
 
-            rgb_color = np.array(parse_color(color, default_color=theme.color))*255
+            rgb_color = np.array(parse_color(color, default_color=theme.color)) * 255
             rgba[:, :-1] = rgb_color
-            rgba[:, -1] = opacity*255
+            rgba[:, -1] = opacity * 255
 
-            self.configure_scalars_mode(rgba, mesh, '',
-                                        n_colors, preference,
-                                        interpolate_before_map, rgb,
-                                        True)
+            self.configure_scalars_mode(
+                rgba, mesh, '', n_colors, preference, interpolate_before_map, rgb, True
+            )
             self.SetColorModeToDirectScalars()
 
     return MapperHelper()
