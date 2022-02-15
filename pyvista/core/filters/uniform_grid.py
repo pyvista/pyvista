@@ -209,7 +209,7 @@ class UniformGridFilters(DataSetFilters):
         Returns
         -------
         pyvista.UniformGrid
-            Dataset with the specified scalars thresholded.
+            Dataset that has been dilated/eroded on the boundary of the specified scalars.
 
         Examples
         --------
