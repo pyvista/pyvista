@@ -4623,9 +4623,6 @@ class DataSetFilters:
 
         For more details see `vtkTessellatorFilter <https://vtk.org/doc/nightly/html/classvtkTessellatorFilter.html#details>`_.
 
-        progress_bar : bool, optional
-            Display a progress bar to indicate progress.
-
         Parameters
         ----------
         max_n_subdivide : int, optional
