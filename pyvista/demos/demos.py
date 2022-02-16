@@ -249,7 +249,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False, notebook=None)
     X = np.arange(-10, 10, 0.25)
     Y = np.arange(-10, 10, 0.25)
     X, Y = np.meshgrid(X, Y)
-    R = np.sqrt(X ** 2 + Y ** 2)
+    R = np.sqrt(X**2 + Y**2)
     Z = np.sin(R)
 
     # Create and plot structured grid
