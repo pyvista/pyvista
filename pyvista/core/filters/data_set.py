@@ -4634,8 +4634,8 @@ class DataSetFilters:
 
         merge_points : bool, optional
             The adaptive tessellation will output vertices that are not shared among cells,
-            even where they should be. This can be corrected to some extents.
-            Defaults to True.
+            even where they should be. This can be corrected to some extent.
+            Defaults to ``True``.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
