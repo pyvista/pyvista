@@ -4628,7 +4628,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        max_subdivisions : int, optional
+        max_n_subdivide : int, optional
             Maximum number of subdivisions.
             Defaults to ``3``.
 
