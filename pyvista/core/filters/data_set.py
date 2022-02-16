@@ -4673,14 +4673,14 @@ class DataSetFilters:
         >>> tessellated.plot(show_edges=True, line_width=5)
 
         """
+        if isinstance(self, _vtk.vtkPolyData):
+            raise TypeError('Tessellate filter is not support PolyData object.')
         alg = _vtk.vtkTessellatorFilter()
         alg.SetInputData(self)
         alg.SetMergePoints(merge_points)
         alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
         _update_alg(alg, progress_bar, 'Tessellating Mesh')
         output = pyvista.wrap(alg.GetOutput())
-        if isinstance(self, _vtk.vtkPolyData):
-            raise TypeError('Tessellate filter is not support PolyData object.')
         return output
 
     def transform(
