@@ -4674,7 +4674,7 @@ class DataSetFilters:
 
         """
         if isinstance(self, _vtk.vtkPolyData):
-            raise TypeError('Tessellate filter is not support PolyData object.')
+            raise TypeError('Tessellate filter is not supported for PolyData objects.')
         alg = _vtk.vtkTessellatorFilter()
         alg.SetInputData(self)
         alg.SetMergePoints(merge_points)
