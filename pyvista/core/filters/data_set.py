@@ -4680,7 +4680,7 @@ class DataSetFilters:
         alg.SetMergePoints(merge_points)
         alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
         _update_alg(alg, progress_bar, 'Tessellating Mesh')
-        output = pyvista.wrap(alg.GetOutput())
+        output = _get_output(alg)
         return output
 
     def transform(
