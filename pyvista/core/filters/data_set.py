@@ -4647,7 +4647,7 @@ class DataSetFilters:
 
         Examples
         --------
-        First, plot the high order FEM-like elements .
+        First, plot the high order FEM-like elements.
 
         >>> import pyvista
         >>> import numpy as np
