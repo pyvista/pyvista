@@ -4613,7 +4613,7 @@ class DataSetFilters:
             return output.extract_surface()
         return output
 
-    def tessellate(self, progress_bar=False):
+    def tessellate(self, max_n_subdivide=3, merge_points=True, progress_bar=False):
         """Tessellate a mesh.
 
         This filter approximates nonlinear FEM-like elements with linear
@@ -4628,6 +4628,15 @@ class DataSetFilters:
 
         Parameters
         ----------
+        max_subdivisions : int, optional
+            Maximum number of subdivisions.
+            Defaults to ``3``.
+
+        merge_points : bool, optional
+            The adaptive tessellation will output vertices that are not shared among cells,
+            even where they should be. This can be corrected to some extents.
+            Defaults to True.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -4666,6 +4675,8 @@ class DataSetFilters:
         """
         alg = _vtk.vtkTessellatorFilter()
         alg.SetInputData(self)
+        alg.SetMergePoints(merge_points)
+        alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
         _update_alg(alg, progress_bar, 'Tessellating Mesh')
         output = pyvista.wrap(alg.GetOutput())
         if isinstance(self, _vtk.vtkPolyData):

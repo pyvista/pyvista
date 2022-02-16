@@ -1768,6 +1768,8 @@ def test_tessellate():
     tessellated = ugrid.tessellate(progress_bar=True)
     assert tessellated.n_cells > ugrid.n_cells
     assert tessellated.n_points > ugrid.n_points
+    assert ugrid.tessellate(max_n_subdivide=6).n_cells > tessellated.n_cells
+    assert ugrid.tessellate(merge_points=False).n_points > tessellated.n_points
     with pytest.raises(TypeError):
         pdata = pyvista.PolyData()
         tessellated = pdata.tessellate(progress_bar=True)
