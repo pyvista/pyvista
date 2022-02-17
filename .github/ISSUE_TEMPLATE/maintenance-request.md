@@ -1,6 +1,6 @@
 ---
 name: Maintenance Request
-about: Request that a maintenance need to PyVista
+about: Request general maintenance to code, CI, deployment, or otherwise
 title: ''
 labels: maintenance
 assignees: ''
