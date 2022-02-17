@@ -534,7 +534,7 @@ class WidgetHelper:
 
         if not hasattr(self, "plane_clipped_meshes"):
             self.plane_clipped_meshes = []
-        pyvista.wrap(alg.GetOutput())
+        plane_clipped_mesh = pyvista.wrap(alg.GetOutput())
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
         def callback(normal, origin):
