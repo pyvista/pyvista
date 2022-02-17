@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you are using PyVista in your research, please help our scientific visibility by citing our work!"
+message: "If you use this software, please cite it as below."
 preferred-citation:
   type: article
   authors:
@@ -11,10 +11,12 @@ preferred-citation:
     orcid: "https://orcid.org/0000-0002-8232-7212"
   doi: "10.21105/joss.01450"
   journal: "Journal of Open Source Software"
-  publisher: "The Open Journal"
-  month: 5
+  publisher: 
+    name: "The Open Journal"
+  month: May
   title: "PyVista: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)"
   volume: 4
-  number: 37
+  issue: 37
+  start: 1450
   year: 2019
   url: "https://github.com/pyvista/pyvista"
