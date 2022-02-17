@@ -313,7 +313,7 @@ class _SilhouetteConfig(_ThemeConfig):
         self._decimate = 0.9
 
     @property
-    def color(self) -> tuple:
+    def color(self) -> Color:
         """Return or set the silhouette color.
 
         Examples
@@ -555,7 +555,7 @@ class _AxesConfig(_ThemeConfig):
         return '\n'.join(txt)
 
     @property
-    def x_color(self) -> tuple:
+    def x_color(self) -> Color:
         """Return or set x axis color.
 
         Examples
@@ -570,7 +570,7 @@ class _AxesConfig(_ThemeConfig):
         self._x_color = Color(color)
 
     @property
-    def y_color(self) -> tuple:
+    def y_color(self) -> Color:
         """Return or set y axis color.
 
         Examples
@@ -585,7 +585,7 @@ class _AxesConfig(_ThemeConfig):
         self._y_color = Color(color)
 
     @property
-    def z_color(self) -> tuple:
+    def z_color(self) -> Color:
         """Return or set z axis color.
 
         Examples
@@ -775,7 +775,7 @@ class _Font(_ThemeConfig):
             self._label_size = int(label_size)
 
     @property
-    def color(self) -> tuple:
+    def color(self) -> Color:
         """Return or set the font color.
 
         Examples
@@ -893,7 +893,7 @@ class _SliderStyleConfig(_ThemeConfig):
         self._cap_opacity = float(cap_opacity)
 
     @property
-    def tube_color(self) -> tuple:
+    def tube_color(self) -> Color:
         """Return or set the tube color.
 
         Examples
@@ -924,7 +924,7 @@ class _SliderStyleConfig(_ThemeConfig):
         self._tube_width = float(tube_width)
 
     @property
-    def slider_color(self) -> tuple:
+    def slider_color(self) -> Color:
         """Return or set the slider color.
 
         Examples
@@ -1038,9 +1038,9 @@ class _SliderConfig(_ThemeConfig):
         self._modern.name = 'modern'
         self._modern.slider_length = 0.02
         self._modern.slider_width = 0.04
-        self._modern.slider_color = (111, 113, 118)
+        self._modern.slider_color = (110, 113, 117)
         self._modern.tube_width = 0.04
-        self._modern.tube_color = (179, 179, 181)
+        self._modern.tube_color = (178, 179, 181)
         self._modern.cap_opacity = 0
         self._modern.cap_length = 0.01
         self._modern.cap_width = 0.02
@@ -1254,7 +1254,7 @@ class DefaultTheme(_ThemeConfig):
         self._return_cpos = value
 
     @property
-    def background(self):
+    def background(self) -> Color:
         """Return or set the default background color of pyvista plots.
 
         Examples
@@ -1555,7 +1555,7 @@ class DefaultTheme(_ThemeConfig):
         self._cmap = cmap
 
     @property
-    def color(self) -> tuple:
+    def color(self) -> Color:
         """Return or set the default color of meshes in pyvista.
 
         Used for meshes without ``scalars``.
@@ -1583,7 +1583,7 @@ class DefaultTheme(_ThemeConfig):
         self._color = Color(color)
 
     @property
-    def nan_color(self) -> tuple:
+    def nan_color(self) -> Color:
         """Return or set the default NaN color.
 
         This color is used to plot all NaN values.
@@ -1601,7 +1601,7 @@ class DefaultTheme(_ThemeConfig):
         self._nan_color = Color(nan_color)
 
     @property
-    def edge_color(self) -> tuple:
+    def edge_color(self) -> Color:
         """Return or set the default edge color.
 
         Examples
@@ -1619,7 +1619,7 @@ class DefaultTheme(_ThemeConfig):
         self._edge_color = Color(edge_color)
 
     @property
-    def outline_color(self) -> tuple:
+    def outline_color(self) -> Color:
         """Return or set the default outline color.
 
         Examples
@@ -1635,7 +1635,7 @@ class DefaultTheme(_ThemeConfig):
         self._outline_color = Color(outline_color)
 
     @property
-    def floor_color(self) -> tuple:
+    def floor_color(self) -> Color:
         """Return or set the default floor color.
 
         Examples

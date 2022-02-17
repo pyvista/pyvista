@@ -380,7 +380,7 @@ class Renderer(_vtk.vtkRenderer):
     @property
     def background_color(self):
         """Return the background color of this renderer."""
-        return self.GetBackground()
+        return Color(self.GetBackground())
 
     @background_color.setter
     def background_color(self, color):
@@ -526,7 +526,7 @@ class Renderer(_vtk.vtkRenderer):
     def border_color(self):
         """Return the border color."""
         if self.has_border:
-            return self._border_actor.GetProperty().GetColor()
+            return Color(self._border_actor.GetProperty().GetColor())
         return None
 
     def add_chart(self, chart, *charts):

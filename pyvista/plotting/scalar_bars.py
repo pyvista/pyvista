@@ -390,7 +390,7 @@ class ScalarBars:
         # self._scalar_bars.append(scalar_bar)
 
         if background_color is not None:
-            background_color = np.array(Color(background_color, default_opacity=1.0).i_rgba)
+            background_color = np.array(Color(background_color).i_rgba)
             scalar_bar.GetBackgroundProperty().SetColor(background_color[0:3])
 
             if fill:

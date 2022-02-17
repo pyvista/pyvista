@@ -178,10 +178,6 @@ import pyvista
 from pyvista import _vtk
 from pyvista.utilities import PyvistaDeprecationWarning
 
-color3i = Union[Tuple[int, int, int], Sequence[int], np.ndarray]
-color4i = Union[Tuple[int, int, int, int], Sequence[int], np.ndarray]
-color3f = Union[Tuple[float, float, float], Sequence[float], np.ndarray]
-color4f = Union[Tuple[float, float, float, float], Sequence[float], np.ndarray]
 color_like = Union[
     Tuple[int, int, int],
     Tuple[int, int, int, int],
@@ -419,24 +415,33 @@ class Color:
         * ``'#ff'``
 
     default_color : color_like, optional
-        Default color to use when `color` is None. If this value is
+        Default color to use when `color` is ``None``. If this value is
         ``None``, then defaults to the global theme color. Format is
         identical to `color`.
 
     default_opacity : int, float or str, optional
         Default opacity of the represented color. Used when `color`
-        does not specify an opacity. Allowed opacities are floats between 0
-        and 1, ints between 0 and 255 or hexadecimal strings of length 2.
-        The following examples all denote a fully opaque color:
-
-        * ``1.0``
-        * ``255``
-        * ``'#ff'``
+        does not specify an opacity and `opacity` is ``None``. Format
+        is identical to `opacity`.
 
     Notes
     -----
     The internally used representation is an integer RGBA sequence (values
     between 0 and 255). This might however change in future releases.
+
+    Examples
+    --------
+    Create a transparent green color using a color name, float RGBA sequence,
+    integer RGBA sequence and RGBA hexadecimal string.
+
+    >>> pyvista.Color("green", opacity=0.5)
+    Color(name='green', hex='#00800080')
+    >>> pyvista.Color([0.0, 0.5, 0.0, 0.5])
+    Color(hex='#00800080')
+    >>> pyvista.Color([0, 128, 0, 128])
+    Color(hex='#00800080')
+    >>> pyvista.Color("#00800080")
+    Color(hex='#00800080')
 
     """
 
@@ -461,20 +466,17 @@ class Color:
 
         try:
             if isinstance(color, Color):
-                # Create copy of color instance (but keep own defaults)
+                # Create copy of color instance
                 self._red, self._green, self._blue, self._opacity = color.i_rgba
             elif isinstance(color, str):
                 # From named color or hex string
-                self.name = color
+                self._from_str(color)
             elif isinstance(color, (list, tuple, np.ndarray)):
                 # From RGB(A) sequence
-                if np.issubdtype(np.asarray(color).dtype, np.floating):
-                    self.f_rgba = color  # type: ignore
-                else:
-                    self.i_rgba = color  # type: ignore
+                self._from_rgba(color)
             elif isinstance(color, _vtk.vtkColor3ub):
-                # From vtkColor3ub instance
-                self.vtk_c3ub = color
+                # From vtkColor3ub instance (can be unpacked as rgb tuple)
+                self._from_rgba(color)
             else:
                 raise ValueError(f"Unsupported color type: {type(color)}")
         except ValueError as e:
@@ -485,6 +487,7 @@ class Color:
                 "\t\tcolor='white'\n"
                 "\t\tcolor='w'\n"
                 "\t\tcolor=[1.0, 1.0, 1.0]\n"
+                "\t\tcolor=[255, 255, 255]\n"
                 "\t\tcolor='#FFFFFF'"
             ) from e
 
@@ -497,8 +500,8 @@ class Color:
                 "\n"
                 f"\tInvalid opacity input: ({opacity})"
                 "\tMust be an integer, float or string.  For example:\n"
-                "\t\topacity='255'\n"
                 "\t\topacity='1.0'\n"
+                "\t\topacity='255'\n"
                 "\t\topacity='#FF'"
             ) from e
 
@@ -554,39 +557,8 @@ class Color:
         else:
             raise ValueError(f"Unsupported color channel value provided: {val}")
 
-    @property
-    def i_rgba(self) -> Tuple[int, int, int, int]:
-        """Get or set the color value as an RGB(A) integer sequence.
-
-        Examples
-        --------
-        Create a blue color with half opacity.
-
-        >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=128)
-        >>> c
-        Color(name='blue', hex='#0000ff80')
-        >>> c.i_rgba
-        (0, 0, 255, 128)
-
-        Modify the RGBA values of the color using an integer sequence.
-
-        >>> c.i_rgba = [255, 0, 0, 64]
-        >>> c
-        Color(hex='#ff000040')
-
-        Modify the RGB values of the color using an integer sequence.
-        This uses the ``default_opacity``.
-
-        >>> c.i_rgba = [0, 255, 0]
-        >>> c
-        Color(hex='#00ff0040')
-
-        """
-        return self._red, self._green, self._blue, self._opacity
-
-    @i_rgba.setter
-    def i_rgba(self, rgba: Union[color3i, color4i]):
+    def _from_rgba(self, rgba):
+        """Construct color from an RGB(A) sequence."""
         if len(rgba) == 3:
             # Keep using current opacity if it is not provided.
             rgba = [*rgba, self._opacity]
@@ -600,105 +572,150 @@ class Color:
         except ValueError as e:
             raise ValueError(f"Invalid RGB(A) sequence: {rgba}") from e
 
+    def _from_hex(self, h):
+        """Construct color from a hex string."""
+        h = self.strip_hex_prefix(h)
+        try:
+            self._from_rgba([self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)])
+        except ValueError as e:
+            raise ValueError(f"Invalid hex string: {h}") from e
+
+    def _from_str(self, n: str):
+        """Construct color from a name or hex string."""
+        n = n.lower()
+        if len(n) == 1:
+            # Single character
+            # Convert from single character to full hex
+            if n not in color_char_to_word:
+                raise ValueError(
+                    'Single character string must be one of the following:'
+                    f'\n{str(color_char_to_word.keys())}'
+                )
+            n = color_char_to_word[n]
+            self._from_hex(hexcolors[n])
+            self._name = n
+        elif n in hexcolors:
+            # Color name
+            self._from_hex(hexcolors[n])
+            self._name = n
+        elif n in 'paraview' or n in 'pv':
+            # Use the default ParaView background color
+            self._from_rgba(PARAVIEW_BACKGROUND)
+            self._name = 'paraview'
+        else:
+            # Otherwise, try conversion to hex
+            try:
+                self._from_hex(n)
+            except ValueError as e:
+                raise ValueError(f"Invalid color name or hex string: {n}") from e
+
     @property
-    def i_rgb(self) -> Tuple[int, int, int]:
-        """Get or set the color value as an RGB integer sequence.
+    def i_rgba(self) -> Tuple[int, int, int, int]:
+        """Get the color value as an RGBA integer sequence.
 
         Examples
         --------
         Create a blue color with half opacity.
 
         >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=128)
+        >>> c = pyvista.Color("blue", opacity=128)
+        >>> c
+        Color(name='blue', hex='#0000ff80')
+        >>> c.i_rgba
+        (0, 0, 255, 128)
+
+        Create a transparent red color using an integer RGBA sequence.
+
+        >>> c = pyvista.Color([255, 0, 0, 64])
+        >>> c
+        Color(hex='#ff000040')
+        >>> c.i_rgba
+        (255, 0, 0, 64)
+
+        """
+        return self._red, self._green, self._blue, self._opacity
+
+    @property
+    def i_rgb(self) -> Tuple[int, int, int]:
+        """Get the color value as an RGB integer sequence.
+
+        Examples
+        --------
+        Create a blue color with half opacity.
+
+        >>> import pyvista
+        >>> c = pyvista.Color("blue", opacity=128)
         >>> c
         Color(name='blue', hex='#0000ff80')
         >>> c.i_rgb
         (0, 0, 255)
 
-        Modify the RGB values of the color using an integer sequence.
-        This keeps the previous opacity.
+        Create a red color using an integer RGB sequence.
 
-        >>> c.i_rgb = [0, 255, 0]
+        >>> c = pyvista.Color([255, 0, 0])
         >>> c
-        Color(hex='#00ff0080')
+        Color(hex='#ff0000ff')
+        >>> c.i_rgb
+        (255, 0, 0)
 
         """
         return self.i_rgba[:3]
 
-    @i_rgb.setter
-    def i_rgb(self, rgb: color3i):
-        self.i_rgba = rgb  # type: ignore
-
     @property
     def f_rgba(self) -> Tuple[float, float, float, float]:
-        """Get or set the color value as an RGB(A) float sequence.
+        """Get the color value as an RGBA float sequence.
 
         Examples
         --------
-        Create a blue color with half opacity.
+        Create a blue color with custom opacity.
 
         >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=0.6)
+        >>> c = pyvista.Color("blue", opacity=0.6)
         >>> c
         Color(name='blue', hex='#0000ff99')
         >>> c.f_rgba
         (0.0, 0.0, 1.0, 0.6)
 
-        Modify the RGBA values of the color using a float sequence.
+        Create a transparent red color using a float RGBA sequence.
 
-        >>> c.f_rgba = [1.0, 0.0, 0.0, 0.4]
+        >>> c = pyvista.Color([1.0, 0.0, 0.0, 0.2])
         >>> c
-        Color(hex='#ff000066')
-
-        Modify the RGB values of the color using a float sequence.
-        This keeps the previous opacity.
-
-        >>> c.f_rgba = [0.0, 1.0, 0.0]
-        >>> c
-        Color(hex='#00ff0066')
+        Color(hex='#ff000033')
+        >>> c.f_rgba
+        (1.0, 0.0, 0.0, 0.2)
 
         """
         return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
 
-    @f_rgba.setter
-    def f_rgba(self, rgba: Union[color3f, color4f]):
-        try:
-            self.i_rgba = [self.convert_color_channel(c) for c in rgba]  # type: ignore
-        except ValueError as e:
-            raise ValueError(f"Invalid RGB(A) sequence: {rgba}") from e
-
     @property
     def f_rgb(self) -> Tuple[float, float, float]:
-        """Get or set the color value as an RGB float sequence.
+        """Get the color value as an RGB float sequence.
 
         Examples
         --------
-        Create a blue color with half opacity.
+        Create a blue color with custom opacity.
 
         >>> import pyvista
-        >>> c = pyvista.Color("blue", default_opacity=0.5)
+        >>> c = pyvista.Color("blue", default_opacity=0.6)
         >>> c
-        Color(name='blue', hex='#0000ff80')
+        Color(name='blue', hex='#0000ff99')
         >>> c.f_rgb
         (0.0, 0.0, 1.0)
 
-        Modify the RGB values of the color using a float sequence.
-        This uses the ``default_opacity``.
+        Create a red color using a float RGBA sequence.
 
-        >>> c.f_rgb = [0.0, 1.0, 0.0]
+        >>> c = pyvista.Color([1.0, 0.0, 0.0])
         >>> c
-        Color(hex='#00ff0080')
+        Color(hex='#ff0000ff')
+        >>> c.f_rgb
+        (1.0, 0.0, 0.0)
 
         """
         return self.f_rgba[:3]
 
-    @f_rgb.setter
-    def f_rgb(self, rgb: color3f):
-        self.f_rgba = rgb  # type: ignore
-
     @property
     def hex(self) -> str:
-        """Get or set the color value as an RGB(A) hexadecimal value.
+        """Get the color value as an RGBA hexadecimal value.
 
         Examples
         --------
@@ -709,35 +726,20 @@ class Color:
         >>> c
         Color(name='blue', hex='#0000ff80')
 
-        Modify the RGBA values of the color using a hexadecimal value.
+        Create a transparent red color using an RGBA hexadecimal value.
 
-        >>> c.hex = "0xff000040"
+        >>> c = pyvista.Color("0xff000040")
         >>> c
         Color(hex='#ff000040')
-
-        Modify the RGB values of the color using a hexadecimal value.
-        This keeps the previous opacity.
-
-        >>> c.hex = "#00ff00"
-        >>> c
-        Color(hex='#00ff0040')
 
         """
         return '#' + ''.join(
             f"{c:0>2x}" for c in (self._red, self._green, self._blue, self._opacity)
         )
 
-    @hex.setter
-    def hex(self, h: str):
-        h = self.strip_hex_prefix(h)
-        try:
-            self.i_rgba = [self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)]  # type: ignore
-        except ValueError as e:
-            raise ValueError(f"Invalid hex string: {h}") from e
-
     @property
     def name(self) -> Optional[str]:
-        """Get or set the color value by name or hexadecimal value.
+        """Get the color name.
 
         Notes
         -----
@@ -754,47 +756,12 @@ class Color:
         >>> c
         Color(name='blue', hex='#0000ff80')
 
-        Modify the color by name.
-
-        >>> c.name = "red"
-        >>> c
-        Color(name='red', hex='#ff000080')
-
         """
         return self._name
 
-    @name.setter
-    def name(self, n: str):
-        n = n.lower()
-        if len(n) == 1:
-            # Single character
-            # Convert from single character to full hex
-            if n not in color_char_to_word:
-                raise ValueError(
-                    'Single character string must be one of the following:'
-                    f'\n{str(color_char_to_word.keys())}'
-                )
-            n = color_char_to_word[n]
-            self.hex = hexcolors[n]
-            self._name = n
-        elif n in hexcolors:
-            # Color name
-            self.hex = hexcolors[n]
-            self._name = n
-        elif n in 'paraview' or n in 'pv':
-            # Use the default ParaView background color
-            self.f_rgba = PARAVIEW_BACKGROUND  # type: ignore
-            self._name = 'paraview'
-        else:
-            # Otherwise, try conversion to hex
-            try:
-                self.hex = n
-            except ValueError as e:
-                raise ValueError(f"Invalid color name or hex string: {n}") from e
-
     @property
     def vtk_c3ub(self) -> _vtk.vtkColor3ub:
-        """Get or set the color value as a VTK Color3ub instance.
+        """Get the color value as a VTK Color3ub instance.
 
         Examples
         --------
@@ -810,10 +777,35 @@ class Color:
         """
         return _vtk.vtkColor3ub(self._red, self._green, self._blue)
 
-    @vtk_c3ub.setter
-    def vtk_c3ub(self, c3ub: _vtk.vtkColor3ub):
-        self.i_rgba = c3ub
-        self._name = None
+    def linear_to_srgb(self):
+        """Convert from linear color values to sRGB color values.
+
+        Returns
+        -------
+        Color
+            A new Color instance with sRGB color values.
+
+        """
+        rgba = np.array(self.f_rgba)
+        mask = rgba < 0.0031308
+        rgba[mask] *= 12.92
+        rgba[~mask] = 1.055 * rgba[~mask] ** (1 / 2.4) - 0.055
+        return Color(rgba)
+
+    def srgb_to_linear(self):
+        """Convert from sRGB color values to linear color values.
+
+        Returns
+        -------
+        Color
+            A new Color instance with linear color values.
+
+        """
+        rgba = np.array(self.f_rgba)
+        mask = rgba < 0.04045
+        rgba[mask] /= 12.92
+        rgba[~mask] = ((rgba[~mask] + 0.055) / 1.055) ** 2.4
+        return Color(rgba)
 
     @classmethod
     def from_dict(cls, dict_):
@@ -830,6 +822,10 @@ class Color:
             return self.i_rgba == Color(other).i_rgba
         except ValueError:  # pragma: no cover
             return NotImplemented
+
+    def __hash__(self):
+        """Hash calculation."""
+        return hash((self._red, self._green, self._blue, self._opacity))
 
     def __repr__(self):  # pragma: no cover
         """Human readable representation."""

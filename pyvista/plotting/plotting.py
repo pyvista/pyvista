@@ -1159,7 +1159,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def background_color(self):
         """Return the background color of the active render window."""
-        return self.renderers.active_renderer.GetBackground()
+        return self.renderers.active_renderer.background_color
 
     @background_color.setter
     def background_color(self, color):
@@ -3474,7 +3474,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-    def add_lines(self, lines, color=(1.0, 1.0, 1.0), width=5, label=None, name=None):
+    def add_lines(self, lines, color='w', width=5, label=None, name=None):
         """Add lines to the plotting object.
 
         Parameters
@@ -3702,8 +3702,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             font_family = self._theme.font.family
         if font_size is None:
             font_size = self._theme.font.size
-        if point_color is None:
-            point_color = self._theme.color
+        point_color = Color(point_color, default_color=self._theme.color)
 
         if isinstance(points, (list, tuple)):
             points = np.array(points)

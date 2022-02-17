@@ -169,11 +169,11 @@ def make_mapper(mapper_class):
             table.SetNanColor(Color(nan_color).f_rgba)
             if above_color:
                 table.SetUseAboveRangeColor(True)
-                table.SetAboveRangeColor(*Color(above_color, default_opacity=1.0).f_rgba)
+                table.SetAboveRangeColor(*Color(above_color).f_rgba)
                 scalar_bar_args.setdefault('above_label', 'Above')
             if below_color:
                 table.SetUseBelowRangeColor(True)
-                table.SetBelowRangeColor(*Color(below_color, default_opacity=1.0).f_rgba)
+                table.SetBelowRangeColor(*Color(below_color).f_rgba)
                 scalar_bar_args.setdefault('below_label', 'Below')
 
             if cmap is not None:

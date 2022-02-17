@@ -109,7 +109,7 @@ def test_pen():
 
     # Test constructor arguments
     pen = charts.Pen(color=c_red, width=w_thin, style=s_dash)
-    assert np.allclose(pen.color, c_red)
+    assert pen.color == c_red
     assert np.isclose(pen.width, w_thin)
     assert pen.style == s_dash
 
@@ -118,7 +118,7 @@ def test_pen():
     color = [0.0, 0.0, 0.0]
     pen.GetColorF(color)
     color.append(pen.GetOpacity() / 255)
-    assert np.allclose(pen.color, c_blue)
+    assert pen.color == c_blue
     assert np.allclose(color, c_blue)
 
     pen.width = w_thick
@@ -152,14 +152,14 @@ def test_brush():
 
     # Test constructor arguments
     brush = charts.Brush(color=c_red, texture=t_masonry)
-    assert np.allclose(brush.color, c_red)
+    assert brush.color == c_red
     assert np.allclose(brush.texture.to_array(), t_masonry.to_array())
 
     # Test properties
     brush.color = c_blue
     color = [0.0, 0.0, 0.0, 0.0]
     brush.GetColorF(color)
-    assert np.allclose(brush.color, c_blue)
+    assert brush.color == c_blue
     assert np.allclose(color, c_blue)
 
     brush.texture = t_puppy
@@ -386,13 +386,13 @@ def test_chart_common(pl, chart_f, request):
     assert not chart._is_within((chart.loc[0] * w - 5, chart.loc[1] * h - 5))
 
     chart.border_color = c_red
-    assert np.allclose(chart.border_color, c_red)
+    assert chart.border_color == c_red
     chart.border_width = bw
     assert chart.border_width == bw
     chart.border_style = bs
     assert chart.border_style == bs
     chart.background_color = c_blue
-    assert np.allclose(chart.background_color, c_blue)
+    assert chart.background_color == c_blue
 
     # Check remaining properties and methods
     chart.visible = False
@@ -428,8 +428,8 @@ def test_plot_common(plot_f, request):
     l = "Label"
 
     plot.color = c
-    assert np.allclose(plot.color, c)
-    assert np.allclose(plot.brush.color, c)
+    assert plot.color == c
+    assert plot.brush.color == c
 
     if hasattr(plot, "GetPen"):
         assert plot.pen.__this__ == plot.GetPen().__this__
@@ -473,33 +473,33 @@ def test_multicomp_plot_common(plot_f, request):
     plot.color_scheme = cs
     assert plot.color_scheme == cs
     assert plot._color_series.GetColorScheme() == plot.COLOR_SCHEMES[cs]["id"]
-    assert np.allclose(plot.colors, cs_colors)
+    assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
     series_colors = [
         pyvista.Color(plot._color_series.GetColor(i)).f_rgba for i in range(len(cs_colors))
     ]
     assert np.allclose(series_colors, cs_colors)
     lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(cs_colors))]
     assert np.allclose(lookup_colors, cs_colors)
-    assert np.allclose(plot.brush.color, cs_colors[0])
+    assert plot.brush.color == cs_colors[0]
 
     plot.colors = None
     assert plot.color_scheme == plot.DEFAULT_COLOR_SCHEME
     plot.colors = cs
     assert plot.color_scheme == cs
     plot.colors = colors
-    assert np.allclose(plot.colors, colors)
+    assert all(pc == c for pc, c in zip(plot.colors, colors))
     series_colors = [
         pyvista.Color(plot._color_series.GetColor(i)).f_rgba for i in range(len(colors))
     ]
     assert np.allclose(series_colors, colors)
     lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(colors))]
     assert np.allclose(lookup_colors, colors)
-    assert np.allclose(plot.brush.color, colors[0])
+    assert plot.brush.color == colors[0]
 
     plot.color = colors[1]
-    assert np.allclose(plot.color, colors[1])
-    assert np.allclose(plot.colors, [colors[1]])
-    assert np.allclose(plot.brush.color, colors[1])
+    assert np.allclose(plot.color.f_rgba, colors[1])
+    assert len(plot.colors) == 1 and np.allclose(plot.colors[0].f_rgba, colors[1])
+    assert plot.brush.color == colors[1]
 
     plot.labels = labels
     assert tuple(plot.labels) == tuple(labels)
@@ -528,7 +528,7 @@ def test_lineplot2d(line_plot_2d):
     plot = charts.LinePlot2D(x, y, c, w, s, l)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
-    assert np.allclose(plot.color, c)
+    assert plot.color == c
     assert plot.line_width == w
     assert plot.line_style == s
     assert plot.label == l
@@ -554,7 +554,7 @@ def test_scatterplot2d(scatter_plot_2d):
     plot = charts.ScatterPlot2D(x, y, c, sz, st, l)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
-    assert np.allclose(plot.color, c)
+    assert plot.color == c
     assert plot.marker_size == sz
     assert plot.marker_style == st
     assert plot.label == l
@@ -589,7 +589,7 @@ def test_areaplot(area_plot):
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y1, y1)
     assert np.allclose(plot.y2, y2)
-    assert np.allclose(plot.color, c)
+    assert plot.color == c
     assert plot.label == l
 
     # Test remaining properties
@@ -611,7 +611,7 @@ def test_barplot(bar_plot):
     plot = charts.BarPlot(x, y, c, ori, l)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
-    assert np.allclose(plot.colors, c)
+    assert all(pc == ci for pc, ci in zip(plot.colors, c))
     assert plot.orientation == ori
     assert plot.labels == l
 
@@ -619,7 +619,7 @@ def test_barplot(bar_plot):
     plot = charts.BarPlot(x, y[0], c[0], ori, l[0])
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y[0])
-    assert np.allclose(plot.color, c[0])
+    assert plot.color == c[0]
     assert plot.orientation == ori
     assert plot.label == l[0]
 
@@ -654,14 +654,14 @@ def test_stackplot(stack_plot):
     plot = charts.StackPlot(x, ys, c, l)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys)
-    assert np.allclose(plot.colors, c)
+    assert all(pc == ci for pc, ci in zip(plot.colors, c))
     assert plot.labels == l
 
     # Test single comp constructor
     plot = charts.StackPlot(x, ys[0], c[0], l[0])
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys[0])
-    assert np.allclose(plot.color, c[0])
+    assert plot.color == c[0]
     assert plot.label == l[0]
 
     # Test multi and single comp constructors with inconsistent arguments
@@ -754,7 +754,7 @@ def test_chart_2d(pl, chart_2d):
     s = chart_2d.scatter(x, y, col, sz, ms, lx)
     assert np.allclose(s.x, x)
     assert np.allclose(s.y, y)
-    assert np.allclose(s.color, col)
+    assert s.color == col
     assert s.marker_size == sz
     assert s.marker_style == ms
     assert s.label == lx
@@ -764,7 +764,7 @@ def test_chart_2d(pl, chart_2d):
     l = chart_2d.line(x, y, col, w, ls, lx)
     assert np.allclose(l.x, x)
     assert np.allclose(l.y, y)
-    assert np.allclose(l.color, col)
+    assert l.color == col
     assert l.line_width == w
     assert l.line_style == ls
     assert l.label == lx
@@ -775,7 +775,7 @@ def test_chart_2d(pl, chart_2d):
     assert np.allclose(a.x, x)
     assert np.allclose(a.y1, -y)
     assert np.allclose(a.y2, y)
-    assert np.allclose(a.color, col)
+    assert a.color == col
     assert a.label == lx
     assert a in chart_2d.plots("area")
     assert chart_2d.GetPlotIndex(a) >= 0
@@ -783,7 +783,7 @@ def test_chart_2d(pl, chart_2d):
     b = chart_2d.bar(x, -y, col, ori, lx)
     assert np.allclose(b.x, x)
     assert np.allclose(b.y, -y)
-    assert np.allclose(b.color, col)
+    assert b.color == col
     assert b.orientation == ori
     assert b.label == lx
     assert b in chart_2d.plots("bar")

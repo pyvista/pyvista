@@ -148,10 +148,9 @@ class Light(vtkLight):
         if focal_point is not None:
             self.focal_point = focal_point
 
-        if color is not None:
-            self.ambient_color = color
-            self.diffuse_color = color
-            self.specular_color = color
+        self.ambient_color = "black" if color is None else color
+        self.diffuse_color = "white" if color is None else color
+        self.specular_color = "black" if color is None else color
 
         if isinstance(light_type, str):
             # be forgiving: ignore spaces and case
@@ -295,15 +294,16 @@ class Light(vtkLight):
         >>> light = pyvista.Light()
         >>> light.ambient_color = 'red'
         >>> light.ambient_color
-        (1.0, 0.0, 0.0)
+        Color(name='red', hex='#ff0000ff')
 
         """
-        return self.GetAmbientColor()
+        return self._ambient_color
 
     @ambient_color.setter
     def ambient_color(self, color: color_like):
         """Set the ambient color of the light."""
-        self.SetAmbientColor(Color(color).f_rgb)
+        self._ambient_color = Color(color)
+        self.SetAmbientColor(self._ambient_color.f_rgb)
 
     @property
     def diffuse_color(self):
@@ -325,15 +325,16 @@ class Light(vtkLight):
         >>> light = pv.Light()
         >>> light.diffuse_color = (0.0, 0.0, 1.0)
         >>> light.diffuse_color
-        (0.0, 0.0, 1.0)
+        Color(hex='#0000ffff')
 
         """
-        return self.GetDiffuseColor()
+        return self._diffuse_color
 
     @diffuse_color.setter
     def diffuse_color(self, color: color_like):
         """Set the diffuse color of the light."""
-        self.SetDiffuseColor(Color(color).f_rgb)
+        self._diffuse_color = Color(color)
+        self.SetDiffuseColor(self._diffuse_color.f_rgb)
 
     @property
     def specular_color(self):
@@ -355,15 +356,16 @@ class Light(vtkLight):
         >>> light = pv.Light()
         >>> light.specular_color = '#00FF00'
         >>> light.specular_color
-        (0.0, 1.0, 0.0)
+        Color(hex='#00ff00ff')
 
         """
-        return self.GetSpecularColor()
+        return self._specular_color
 
     @specular_color.setter
     def specular_color(self, color: color_like):
         """Set the specular color of the light."""
-        self.SetSpecularColor(Color(color).f_rgb)
+        self._specular_color = Color(color)
+        self.SetSpecularColor(self._specular_color.f_rgb)
 
     @property
     def position(self):

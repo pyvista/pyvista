@@ -181,8 +181,8 @@ class ColorSchemeTable(DocTable):
         p = pv.Plotter(off_screen=True, window_size=[240, 120])
         p.background_color = 'w'
         chart = pv.Chart2D()
-        tmp_plot = chart.bar([0], [[1]] * 2, color=color_scheme, orientation="H")
         # Use a temporary plot to determine the total number of colors in this scheme
+        tmp_plot = chart.bar([0], [[1]] * 2, color=color_scheme, orientation="H")
         n_colors = len(tmp_plot.colors)
         plot = chart.bar([0], [[1]] * n_colors, color=color_scheme, orientation="H")
         chart.remove_plot(tmp_plot)

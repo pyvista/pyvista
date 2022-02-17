@@ -208,12 +208,12 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         >>> chart.show()
 
         """
-        return self._color.f_rgba
+        return self._color
 
     @color.setter
     def color(self, val):
-        self._color = Color(val, default_opacity=1.0, default_color=[0, 0, 0, 0])
-        self.SetColorF(*self._color.f_rgba)
+        self._color = Color(val, default_color="black")
+        self.SetColor(*self._color.i_rgba)
 
     @property
     def width(self):
@@ -310,12 +310,12 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         >>> chart.show()
 
         """
-        return self._color.f_rgba
+        return self._color
 
     @color.setter
     def color(self, val):
-        self._color = Color(val, default_opacity=1.0, default_color=[0, 0, 0, 0])
-        self.SetColorF(*self._color.f_rgba)
+        self._color = Color(val, default_color="black")
+        self.SetColor(*self._color.i_rgba)
 
     @property
     def texture(self):
@@ -1230,7 +1230,7 @@ class _Chart(DocSubs):
 
     @background_color.setter
     def background_color(self, val):
-        # self.GetBackgroundBrush().SetColorF(*parse_color(val))
+        # self.GetBackgroundBrush().SetColor(*Color(val).i_rgba)
         self._background.BackgroundBrush.color = val
 
     @property  # type: ignore
@@ -1951,7 +1951,7 @@ class _MultiCompPlot(_Plot):
 
         """
         return [
-            Color(self._color_series.GetColor(i)).f_rgba
+            Color(self._color_series.GetColor(i))
             for i in range(self._color_series.GetNumberOfColors())
         ]
 
@@ -2644,9 +2644,8 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
             self.colors = color  # None will use default scheme
             self.labels = label
         else:
-            self.color = (
-                "b" if color is None else color
-            )  # Use blue bars by default in single component mode
+            # Use blue bars by default in single component mode
+            self.color = "b" if color is None else color
             self.label = label
         self.orientation = orientation
 
@@ -4023,10 +4022,10 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     def __init__(self, data, colors=None, labels=None):
         """Initialize a new chart containing a pie plot."""
         super().__init__(None, None)
-        self.AddPlot(0)  # We can't manually set a wrapped vtkPlotPie instance...
-        self._plot = PiePlot(
-            data, colors, labels, _wrap=self.GetPlot(0)
-        )  # So we have to wrap the existing one
+        # We can't manually set a wrapped vtkPlotPie instance (for now), so we
+        # have to wrap the existing one.
+        self.AddPlot(0)
+        self._plot = PiePlot(data, colors, labels, _wrap=self.GetPlot(0))
         self.legend_visible = True
 
     def _render_event(self, *args, **kwargs):

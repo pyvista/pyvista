@@ -153,6 +153,7 @@ numpydoc_validation_checks = {
 numpydoc_validation_exclude = {  # set of regex
     r'\.Plotter$',  # Issue with class parameter documentation
     r'\.from_dict$',
+    r'\.to_dict$',
     r'\.__init__$',
     # parm of abstract classes
     r'\.CompositeFilters$',
