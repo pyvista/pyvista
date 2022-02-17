@@ -4608,7 +4608,7 @@ class DataSetFilters:
         alg.SetInputData(self)
         alg.SetShrinkFactor(shrink_factor)
         _update_alg(alg, progress_bar, 'Shrinking Mesh')
-        output = pyvista.wrap(alg.GetOutput())
+        output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface()
         return output

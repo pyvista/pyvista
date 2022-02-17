@@ -2590,7 +2590,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetCapping(capping)
         _update_alg(alg, progress_bar, 'Extruding')
-        output = pyvista.wrap(alg.GetOutput())
+        output = _get_output(alg)
         if inplace:
             self.overwrite(output)
             return self
