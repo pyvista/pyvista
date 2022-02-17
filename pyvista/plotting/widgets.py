@@ -6,7 +6,6 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.core.filters import _get_output
 from pyvista.utilities import (
     NORMALS,
     generate_plane,
@@ -535,7 +534,7 @@ class WidgetHelper:
 
         if not hasattr(self, "plane_clipped_meshes"):
             self.plane_clipped_meshes = []
-        plane_clipped_mesh = _get_output(alg)
+        pyvista.wrap(alg.GetOutput())
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
         def callback(normal, origin):
