@@ -434,6 +434,7 @@ class Color:
     Create a transparent green color using a color name, float RGBA sequence,
     integer RGBA sequence and RGBA hexadecimal string.
 
+    >>> import pyvista
     >>> pyvista.Color("green", opacity=0.5)
     Color(name='green', hex='#00800080')
     >>> pyvista.Color([0.0, 0.5, 0.0, 0.5])
