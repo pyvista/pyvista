@@ -292,7 +292,7 @@ def make_mapper(mapper_class):
                 )
 
             rgba[:, :-1] = Color(color, default_color=theme.color).i_rgb
-            rgba[:, -1] = opacity * 255
+            rgba[:, -1] = np.around(opacity * 255)
 
             self.configure_scalars_mode(
                 rgba, mesh, '', n_colors, preference, interpolate_before_map, rgb, True

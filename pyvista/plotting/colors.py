@@ -546,7 +546,7 @@ class Color:
             val = int(Color.strip_hex_prefix(val), 16)
         elif np.issubdtype(np.asarray(val).dtype, np.floating) and np.ndim(val) == 0:
             # From float
-            val = int(255 * val)
+            val = int(round(255 * val))
         if (
             np.issubdtype(np.asarray(val).dtype, np.integer)
             and np.ndim(val) == 0
