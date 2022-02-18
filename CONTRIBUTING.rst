@@ -170,7 +170,9 @@ Coding Style
 We adhere to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`__
 wherever possible, except that line widths are permitted to go beyond 79
 characters to a max of 99 characters for code. This should tend to be
-the exception rather than the norm.
+the exception rather than the norm. A uniform code style is enforced
+by `black <https://github.com/psf/black>` to prevent energy wasted on
+style disagreements.
 
 As for docstrings, follow the guidelines specified in `PEP 8 Maximum
 Line
@@ -201,11 +203,11 @@ To test the format locally, run:
 
    make stylecheck
 
-To automatically sort Python imports, run:
+To automatically fix style issues (including those found by ``black``), run:
 
 .. code:: bash
 
-   make isort
+   make format
 
 Branch Naming Conventions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
