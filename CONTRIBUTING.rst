@@ -24,7 +24,7 @@ Cloning the Source Repository
 -----------------------------
 
 You can clone the source repository from
-``https://github.com/pyvista/pyvista`` and install the latest version by
+`https://github.com/pyvista/pyvista`_ and install the latest version by
 running:
 
 .. code:: bash
@@ -144,7 +144,7 @@ There are two important copyright guidelines:
    undermine the license of the whole projects.
 
 Please also take a look at our `Code of
-Conduct <https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.rst>`__
+Conduct <https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md>`__.
 
 Contributing to pyvista through GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -300,7 +300,7 @@ directory.
 Notes Regarding Image Regression Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Since ``pyvista`` is primarily a plotting module, it’s imperative we
+Since PyVista is primarily a plotting module, it’s imperative we
 actually check the images that we generate in some sort of regression
 testing. In practice, this ends up being quite a bit of work because:
 
@@ -321,7 +321,7 @@ Based on these points, image regression testing only occurs on Linux CI,
 and multi-sampling is disabled as that seems to be one of the biggest
 difference between software and hardware based rendering.
 
-Image cache is stored here as ./image_cache
+Image cache is stored here as ``./image_cache``.
 
 Image resolution is kept low at 400x400 as we don’t want to pollute git
 with large images. Small variations between versions and environments
@@ -359,7 +359,7 @@ wish to include image regression testing, be sure to add
 
 This ensures that immediately before the plotter is closed, the current
 render window will be verified against the image in CI. If no image
-exists, be sure to add the resulting image with \`git add
+exists, be sure to add the resulting image with ``git add
 tests/plotting/image_cache/*``.
 
 Creating a New Pull Request
@@ -431,7 +431,13 @@ created the following will occur:
 3.  Locally test and build the documentation with link checking to make
     sure no links are outdated. Be sure to run ``make clean`` to ensure
     no results are cached.
-    ``bash     cd doc     make clean  # deletes the sphinx-gallery cache     make doctest     make html -b linkcheck``
+
+    .. code:: bash
+
+       cd doc
+       make clean  # deletes the sphinx-gallery cache
+       make doctest
+       make html -b linkcheck
 
 4.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
@@ -466,10 +472,10 @@ created the following will occur:
 
 9.  Place your release notes from step 8 in the description for `the new
     release on
-    GitHub <https://github.com/pyvista/pyvista/releases/new>`__
+    GitHub <https://github.com/pyvista/pyvista/releases/new>`__.
 
 10. Go grab a beer/coffee/water and wait for
-    [@regro-cf-autotick-bot](https://github.com/regro-cf-autotick-bot)
+    `@regro-cf-autotick-bot <https://github.com/regro-cf-autotick-bot>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`__.
     Merge that pull request.
