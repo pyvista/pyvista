@@ -171,7 +171,7 @@ We adhere to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_
 wherever possible, except that line widths are permitted to go beyond 79
 characters to a max of 99 characters for code. This should tend to be
 the exception rather than the norm. A uniform code style is enforced
-by `black <https://github.com/psf/black>` to prevent energy wasted on
+by `black <https://github.com/psf/black>`_ to prevent energy wasted on
 style disagreements.
 
 As for docstrings, follow the guidelines specified in `PEP 8 Maximum
