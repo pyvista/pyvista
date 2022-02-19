@@ -24,7 +24,7 @@ Cloning the Source Repository
 -----------------------------
 
 You can clone the source repository from
-`https://github.com/pyvista/pyvista`_ and install the latest version by
+`<https://github.com/pyvista/pyvista>`_ and install the latest version by
 running:
 
 .. code:: bash
@@ -365,7 +365,7 @@ exists, be sure to add the resulting image with
 
 .. code:: bash
 
-    git add tests/plotting/image_cache/*``.
+    git add tests/plotting/image_cache/*
 
 Creating a New Pull Request
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
