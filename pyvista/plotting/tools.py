@@ -584,5 +584,5 @@ def parse_font_family(font_family):
     font_family = font_family.lower()
     fonts = [font.name for font in FONTS]
     if font_family not in fonts:
-        raise ValueError('Font must one of the following:\n{", ".join(fonts)}')
+        raise ValueError(f'Font must one of the following:\n{", ".join(fonts)}')
     return FONTS[font_family].value
