@@ -361,8 +361,11 @@ wish to include image regression testing, be sure to add
 
 This ensures that immediately before the plotter is closed, the current
 render window will be verified against the image in CI. If no image
-exists, be sure to add the resulting image with ``git add
-tests/plotting/image_cache/*``.
+exists, be sure to add the resulting image with
+
+.. code:: bash
+
+    git add tests/plotting/image_cache/*``.
 
 Creating a New Pull Request
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
