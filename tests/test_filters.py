@@ -146,6 +146,9 @@ def test_clip_box(datasets):
         clp = dataset.clip_box(invert=True, progress_bar=True)
         assert clp is not None
         assert isinstance(clp, pyvista.UnstructuredGrid)
+        clp2 = dataset.clip_box(merge_points=False)
+        assert clp2 is not None
+
     dataset = examples.load_airplane()
     # test length 3 bounds
     result = dataset.clip_box(bounds=(900, 900, 200), invert=False, progress_bar=True)
@@ -1749,6 +1752,30 @@ def test_shrink():
     shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True)
     assert shrunk.n_cells == mesh.n_cells
     assert shrunk.volume < mesh.volume
+
+
+def test_tessellate():
+    points = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [2.0, 0.0, 0.0],
+            [1.0, 2.0, 0.0],
+            [1.0, 0.5, 0.0],
+            [1.5, 1.5, 0.0],
+            [0.5, 1.5, 0.0],
+        ]
+    )
+    cells = np.array([6, 0, 1, 2, 3, 4, 5])
+    cell_types = np.array([69])
+    ugrid = pyvista.UnstructuredGrid(cells, cell_types, points)
+    tessellated = ugrid.tessellate(progress_bar=True)
+    assert tessellated.n_cells > ugrid.n_cells
+    assert tessellated.n_points > ugrid.n_points
+    assert ugrid.tessellate(max_n_subdivide=6).n_cells > tessellated.n_cells
+    assert ugrid.tessellate(merge_points=False).n_points > tessellated.n_points
+    with pytest.raises(TypeError):
+        pdata = pyvista.PolyData()
+        tessellated = pdata.tessellate(progress_bar=True)
 
 
 @pytest.mark.parametrize('num_cell_arrays,num_point_data', itertools.product([0, 1, 2], [0, 1, 2]))
