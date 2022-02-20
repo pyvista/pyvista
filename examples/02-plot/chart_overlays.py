@@ -76,4 +76,5 @@ for i in range(1, 50):
     time_slider.GetSliderRepresentation().SetValue(t[i])
     update_time(t[i])
 
+p.enable_rubber_band_2d_style()
 p.show()  # Keep plotter open to let user play with time slider

@@ -27,6 +27,8 @@ skip_no_mpl_figure = pytest.mark.skipif(
 if pyvista.vtk_version_info < (9, 1):
     pytestmark = pytest.mark.skip
 
+# TODO: add tests for new and compat functionality?
+
 
 def vtk_array_to_tuple(arr):
     return tuple(arr.GetValue(i) for i in range(arr.GetNumberOfValues()))
@@ -243,8 +245,8 @@ def test_axis(chart_2d):
     chart_2d.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
-    # TODO: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
-    #  This is a VTK issue that will be fixed once PR (!8618) is merged.
+    # Note: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
+    # Should be fixed on VTK side, but tricky without breaking stuff (see !8828 for reference).
     chart_2d.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
     axis.log_scale = True
     chart_2d.show()
@@ -1014,6 +1016,5 @@ def test_iren_context_style(pl):
 @skip_mac
 def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
-    chart_2d
     chart_2d.background_texture = t_puppy
     assert chart_2d.background_texture == t_puppy

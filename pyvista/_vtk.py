@@ -611,7 +611,7 @@ else:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Charts requires VTK v9 or newer')
+            raise VTKVersionError('Chart backgrounds require VTK v9 or newer')
 
     class vtkHDFReader:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
