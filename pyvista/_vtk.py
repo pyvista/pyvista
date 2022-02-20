@@ -218,6 +218,7 @@ if VTK9:
         vtkShrinkFilter,
         vtkTableBasedClipDataSet,
         vtkTableToPolyData,
+        vtkTessellatorFilter,
         vtkTransformFilter,
         vtkWarpScalar,
         vtkWarpVector,
