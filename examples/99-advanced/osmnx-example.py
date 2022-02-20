@@ -38,7 +38,7 @@ nodes, edges = ox.graph_to_gdfs(graph)
 lines = []
 
 # convert each edge into a line
-for idx, row in edges.iterrows():
+for _, row in edges.iterrows():
     x_pts = row['geometry'].xy[0]
     y_pts = row['geometry'].xy[1]
     z_pts = np.zeros(len(x_pts))

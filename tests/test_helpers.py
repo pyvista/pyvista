@@ -22,18 +22,20 @@ def test_wrap_pyvista_ndarray(sphere):
 
 # NOTE: It's not necessary to test all data types here, several of the
 # most used ones.  We're just checking that we can wrap VTK data types.
-@pytest.mark.parametrize('dtypes', [(np.float64, _vtk.vtkDoubleArray),
-                                    (np.float32, _vtk.vtkFloatArray),
-                                    (np.int64, _vtk.vtkTypeInt64Array),
-                                    (np.int32, _vtk.vtkTypeInt32Array),
-                                    (np.int8, _vtk.vtkSignedCharArray),
-                                    (np.uint8, _vtk.vtkUnsignedCharArray),
-                                    ])
+@pytest.mark.parametrize(
+    'dtypes',
+    [
+        (np.float64, _vtk.vtkDoubleArray),
+        (np.float32, _vtk.vtkFloatArray),
+        (np.int64, _vtk.vtkTypeInt64Array),
+        (np.int32, _vtk.vtkTypeInt32Array),
+        (np.int8, _vtk.vtkSignedCharArray),
+        (np.uint8, _vtk.vtkUnsignedCharArray),
+    ],
+)
 def test_wrap_pyvista_ndarray_vtk(dtypes):
     np_dtype, vtk_class = dtypes
-    np_array = np.array([[0, 10, 20],
-                         [-10, -200, 0],
-                         [0.5, 0.667, 0]], dtype=np_dtype)
+    np_array = np.array([[0, 10, 20], [-10, -200, 0], [0.5, 0.667, 0]], dtype=np_dtype)
 
     vtk_array = vtk_class()
     vtk_array.SetNumberOfComponents(3)
@@ -78,6 +80,7 @@ def test_wrappers():
 
     class Foo(pyvista.PolyData):
         """A user defined subclass of pyvista.PolyData."""
+
         pass
 
     default_wrappers = pyvista._wrappers.copy()

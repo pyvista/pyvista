@@ -28,15 +28,21 @@ import pyvista as pv
 
 # Create a triangle surface
 surf = pv.PolyData()
-surf.points = np.array([[-10,-10,-10],
-                    [10,10,-10],
-                    [-10,10,0],])
+surf.points = np.array(
+    [
+        [-10, -10, -10],
+        [10, 10, -10],
+        [-10, 10, 0],
+    ]
+)
 surf.faces = np.array([3, 0, 1, 2])
 
 p = pv.Plotter()
 
+
 def callback(point):
     surf.points[0] = point
+
 
 p.add_sphere_widget(callback)
 p.add_mesh(surf, color=True)
@@ -62,16 +68,22 @@ import pyvista as pv
 
 # Create a triangle surface
 surf = pv.PolyData()
-surf.points = np.array([[-10,-10,-10],
-                        [10,10,-10],
-                        [-10,10,0],])
+surf.points = np.array(
+    [
+        [-10, -10, -10],
+        [10, 10, -10],
+        [-10, 10, 0],
+    ]
+)
 surf.faces = np.array([3, 0, 1, 2])
 
 
 p = pv.Plotter()
 
+
 def callback(point, i):
     surf.points[i] = point
+
 
 p.add_sphere_widget(callback, center=surf.points)
 p.add_mesh(surf, color=True)
@@ -102,10 +114,12 @@ def get_colors(n):
     from itertools import cycle
 
     import matplotlib
+
     cycler = matplotlib.rcParams['axes.prop_cycle']
     colors = cycle(cycler)
     colors = [next(colors)['color'] for i in range(n)]
     return colors
+
 
 # Create a grid to interpolate to
 xmin, xmax, ymin, ymax = 0, 100, 0, 100
@@ -114,28 +128,24 @@ y = np.linspace(ymin, ymax, num=25)
 xx, yy, zz = np.meshgrid(x, y, [0])
 
 # Make sure boundary conditions exist
-boundaries = np.array([[xmin,ymin,0],
-                   [xmin,ymax,0],
-                   [xmax,ymin,0],
-                   [xmax,ymax,0]])
+boundaries = np.array([[xmin, ymin, 0], [xmin, ymax, 0], [xmax, ymin, 0], [xmax, ymax, 0]])
 
 # Create the PyVista mesh to hold this grid
 surf = pv.StructuredGrid(xx, yy, zz)
 
 # Create some initial perturbations
 # - this array will be updated inplace
-points = np.array([[33,25,45],
-               [70,80,13],
-               [51,57,10],
-               [25,69,20]])
+points = np.array([[33, 25, 45], [70, 80, 13], [51, 57, 10], [25, 69, 20]])
+
 
 # Create an interpolation function to update that surface mesh
 def update_surface(point, i):
     points[i] = point
     tp = np.vstack((points, boundaries))
-    zz = griddata(tp[:,0:2], tp[:,2], (xx[:,:,0], yy[:,:,0]), method='cubic')
-    surf.points[:,-1] = zz.ravel(order='F')
+    zz = griddata(tp[:, 0:2], tp[:, 2], (xx[:, :, 0], yy[:, :, 0]), method='cubic')
+    surf.points[:, -1] = zz.ravel(order='F')
     return
+
 
 # Get a list of unique colors for each widget
 colors = get_colors(len(points))
@@ -149,8 +159,7 @@ p = pv.Plotter()
 p.add_mesh(surf, color=True)
 
 # Add the widgets which will update the surface
-p.add_sphere_widget(update_surface, center=points,
-                       color=colors, radius=3)
+p.add_sphere_widget(update_surface, center=points, color=colors, radius=3)
 # Add axes grid
 p.show_grid()
 

@@ -25,7 +25,7 @@ BibTex:
       volume = {4},
       number = {37},
       pages = {1450},
-      author = {C. Bane Sullivan and Alexander Kaszynski},
+      author = {Bane Sullivan and Alexander Kaszynski},
       title = {{PyVista}: {3D} plotting and mesh analysis through a streamlined interface for the {Visualization Toolkit} ({VTK})},
       journal = {Journal of Open Source Software}
     }

@@ -345,25 +345,25 @@ def load_explicit_structured(dims=(5, 6, 7), spacing=(20, 10, 1)):
     >>> grid.plot(show_edges=True)
 
     """
-    ni, nj, nk = np.asarray(dims)-1
+    ni, nj, nk = np.asarray(dims) - 1
     si, sj, sk = spacing
 
-    xcorn = np.arange(0, (ni+1)*si, si)
+    xcorn = np.arange(0, (ni + 1) * si, si)
     xcorn = np.repeat(xcorn, 2)
     xcorn = xcorn[1:-1]
-    xcorn = np.tile(xcorn, 4*nj*nk)
+    xcorn = np.tile(xcorn, 4 * nj * nk)
 
-    ycorn = np.arange(0, (nj+1)*sj, sj)
+    ycorn = np.arange(0, (nj + 1) * sj, sj)
     ycorn = np.repeat(ycorn, 2)
     ycorn = ycorn[1:-1]
-    ycorn = np.tile(ycorn, (2*ni, 2*nk))
+    ycorn = np.tile(ycorn, (2 * ni, 2 * nk))
     ycorn = np.transpose(ycorn)
     ycorn = ycorn.flatten()
 
-    zcorn = np.arange(0, (nk+1)*sk, sk)
+    zcorn = np.arange(0, (nk + 1) * sk, sk)
     zcorn = np.repeat(zcorn, 2)
     zcorn = zcorn[1:-1]
-    zcorn = np.repeat(zcorn, (4*ni*nj))
+    zcorn = np.repeat(zcorn, (4 * ni * nj))
 
     corners = np.stack((xcorn, ycorn, zcorn))
     corners = corners.transpose()

@@ -7,7 +7,7 @@ codecov<2.2.0
 colorcet<3.1.0
 hypothesis<6.31.6  # not latest due to python3.6 compatibility
 imageio-ffmpeg<0.5.0
-imageio<2.15.0
+imageio<2.17.0
 ipygany<0.6.0
 ipython<8.0.0
 ipyvtklink<0.4.0
@@ -19,8 +19,8 @@ param<1.13.0
 pytest-cov<3.1.0
 pytest-memprof<0.3.0
 pytest-xdist<2.6.0
-pytest<6.3.0
+pytest<7.1.0
 pythreejs<2.4.0
 sphinx-gallery<0.11.0
 tqdm<4.63.0
-trimesh<3.10.0
+trimesh<3.11.0

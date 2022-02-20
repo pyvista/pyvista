@@ -24,7 +24,10 @@ mesh = image.warp_by_scalar()
 # float between 0 and 1 which would enable you to see objects behind the mesh:
 
 p = pv.Plotter()
-p.add_mesh(image.contour(), line_width=5,)
+p.add_mesh(
+    image.contour(),
+    line_width=5,
+)
 p.add_mesh(mesh, opacity=0.85, color=True)
 p.show()
 
@@ -73,7 +76,7 @@ opacity = [0, 0.2, 0.9, 0.6, 0.3]
 # Curious what that opacity transfer function looks like? You can fetch it:
 
 # Have PyVista interpolate the transfer function
-tf = pv.opacity_transfer_function(opacity, 256).astype(float) / 255.
+tf = pv.opacity_transfer_function(opacity, 256).astype(float) / 255.0
 
 import matplotlib.pyplot as plt
 
@@ -103,18 +106,15 @@ p.add_mesh(knee, cmap="bone", scalar_bar_args={'title': "No Opacity"})
 p.view_xy()
 
 p.subplot(0, 1)
-p.add_mesh(knee, cmap="bone", opacity="linear",
-           scalar_bar_args={'title': "Linear Opacity"})
+p.add_mesh(knee, cmap="bone", opacity="linear", scalar_bar_args={'title': "Linear Opacity"})
 p.view_xy()
 
 p.subplot(1, 0)
-p.add_mesh(knee, cmap="bone", opacity="sigmoid",
-           scalar_bar_args={'title': "Sigmoidal Opacity"})
+p.add_mesh(knee, cmap="bone", opacity="sigmoid", scalar_bar_args={'title': "Sigmoidal Opacity"})
 p.view_xy()
 
 p.subplot(1, 1)
-p.add_mesh(knee, cmap="bone", opacity="geom_r",
-           scalar_bar_args={'title': "Log Scale Opacity"})
+p.add_mesh(knee, cmap="bone", opacity="geom_r", scalar_bar_args={'title': "Log Scale Opacity"})
 p.view_xy()
 
 p.show()
@@ -149,13 +149,15 @@ p = pv.Plotter(shape=(1, 2))
 
 p.subplot(0, 0)
 p.add_text('Opacity by Array')
-p.add_mesh(contours.copy(), scalars='Temperature',
-           opacity='Temperature_var',
-           use_transparency=True,
-           cmap='bwr')
+p.add_mesh(
+    contours.copy(),
+    scalars='Temperature',
+    opacity='Temperature_var',
+    use_transparency=True,
+    cmap='bwr',
+)
 
 p.subplot(0, 1)
 p.add_text('No Opacity')
-p.add_mesh(contours, scalars='Temperature',
-           cmap='bwr')
+p.add_mesh(contours, scalars='Temperature', cmap='bwr')
 p.show()

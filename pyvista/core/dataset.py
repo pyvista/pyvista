@@ -25,10 +25,11 @@ from pyvista.utilities import (
     transformations,
     vtk_id_list_to_array,
 )
+from pyvista.utilities.common import _coerce_pointslike_arg
 from pyvista.utilities.errors import check_valid_vector
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
-from .._typing import Vector
+from .._typing import NumericArray, Vector, VectorArray
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters, _get_output
@@ -88,8 +89,8 @@ class ActiveArrayInfo:
 
     def __eq__(self, other):
         """Check equivalence (useful for serialize/deserialize tests)."""
-        return self.name == other.name and \
-               int(self.association.value) == int(other.association.value)
+        same_association = int(self.association.value) == int(other.association.value)
+        return self.name == other.name and same_association
 
 
 @abstract_class
@@ -163,7 +164,9 @@ class DataSet(DataSetFilters, DataObject):
             self._active_scalars_info = ActiveArrayInfo(field, None)
             for attr in [self.point_data, self.cell_data]:
                 if attr.active_scalars_name is not None:
-                    self._active_scalars_info = ActiveArrayInfo(attr.association, attr.active_scalars_name)
+                    self._active_scalars_info = ActiveArrayInfo(
+                        attr.association, attr.active_scalars_name
+                    )
                     break
 
         return self._active_scalars_info
@@ -391,7 +394,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: np.ndarray):
+    def points(self, points: Union[VectorArray, NumericArray]):
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -400,10 +403,8 @@ class DataSet(DataSetFilters, DataObject):
                 pdata.Modified()
                 self.Modified()
                 return
-
         # otherwise, wrap and use the array
-        if not isinstance(points, np.ndarray):
-            raise TypeError('Points must be a numpy array')
+        points = _coerce_pointslike_arg(points)
         vtk_points = pyvista.vtk_points(points, False)
         if not pdata:
             self.SetPoints(vtk_points)
@@ -459,9 +460,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `DataSet.vectors` is deprecated. "
-            "Use `DataSet.active_vectors` instead.",
-            PyvistaDeprecationWarning
+            "Use of `DataSet.vectors` is deprecated. Use `DataSet.active_vectors` instead.",
+            PyvistaDeprecationWarning,
         )
         return self.active_vectors
 
@@ -470,9 +470,8 @@ class DataSet(DataSetFilters, DataObject):
         warnings.warn(
             "Use of `DataSet.vectors` to add vector data is deprecated. "
             "Use `DataSet['vector_name'] = data`. "
-            "Use `DataSet.active_vectors_name = 'vector_name' to make active."
-            ,
-            PyvistaDeprecationWarning
+            "Use `DataSet.active_vectors_name = 'vector_name' to make active.",
+            PyvistaDeprecationWarning,
         )
         if array.ndim != 2:
             raise ValueError('vector array must be a 2-dimensional array')
@@ -494,18 +493,16 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `DataSet.t_coords` is deprecated. "
-            "Use `DataSet.active_t_coords` instead.",
-            PyvistaDeprecationWarning
+            "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
+            PyvistaDeprecationWarning,
         )
         return self.active_t_coords
 
     @t_coords.setter
     def t_coords(self, t_coords: np.ndarray):  # pragma: no cover
         warnings.warn(
-            "Use of `DataSet.t_coords` is deprecated. "
-            "Use `DataSet.active_t_coords` instead.",
-            PyvistaDeprecationWarning
+            "Use of `DataSet.t_coords` is deprecated. Use `DataSet.active_t_coords` instead.",
+            PyvistaDeprecationWarning,
         )
         self.active_t_coords = t_coords  # type: ignore
 
@@ -633,8 +630,7 @@ class DataSet(DataSetFilters, DataObject):
             type.  Can be either ``'cell'`` or ``'point'``.
 
         """
-        if preference not in ['point', 'cell', FieldAssociation.CELL,
-                              FieldAssociation.POINT]:
+        if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
             raise ValueError('``preference`` must be either "point" or "cell"')
         if name is None:
             self.GetCellData().SetActiveScalars(None)
@@ -820,9 +816,9 @@ class DataSet(DataSetFilters, DataObject):
             return self.point_data.active_normals
         return self.cell_data.active_normals
 
-    def get_data_range(self,
-                       arr_var: Optional[Union[str, np.ndarray]] = None,
-                       preference='cell') -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
+    def get_data_range(
+        self, arr_var: Optional[Union[str, np.ndarray]] = None, preference='cell'
+    ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
         """Get the non-NaN min and max of a named array.
 
         Parameters
@@ -862,11 +858,7 @@ class DataSet(DataSetFilters, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
     def rotate_x(
-            self,
-            angle: float,
-            point=(0.0, 0.0, 0.0),
-            transform_all_input_vectors=False,
-            inplace=False
+        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False
     ):
         """Rotate mesh about the x-axis.
 
@@ -915,14 +907,12 @@ class DataSet(DataSetFilters, DataObject):
         """
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
-        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(
+            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
 
     def rotate_y(
-            self,
-            angle: float,
-            point=(0.0, 0.0, 0.0),
-            transform_all_input_vectors=False,
-            inplace=False
+        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False
     ):
         """Rotate mesh about the y-axis.
 
@@ -971,14 +961,12 @@ class DataSet(DataSetFilters, DataObject):
         """
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
-        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(
+            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
 
     def rotate_z(
-            self,
-            angle: float,
-            point=(0.0, 0.0, 0.0),
-            transform_all_input_vectors=False,
-            inplace=False
+        self, angle: float, point=(0.0, 0.0, 0.0), transform_all_input_vectors=False, inplace=False
     ):
         """Rotate mesh about the z-axis.
 
@@ -1027,15 +1015,17 @@ class DataSet(DataSetFilters, DataObject):
         """
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
-        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(
+            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
 
     def rotate_vector(
-            self,
-            vector: Iterable[float],
-            angle: float,
-            point=(0.0, 0.0, 0.0),
-            transform_all_input_vectors=False,
-            inplace=False
+        self,
+        vector: Iterable[float],
+        angle: float,
+        point=(0.0, 0.0, 0.0),
+        transform_all_input_vectors=False,
+        inplace=False,
     ):
         """Rotate mesh about a vector.
 
@@ -1088,9 +1078,13 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(vector)
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
-        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(
+            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
 
-    def translate(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
+    def translate(
+        self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False
+    ):
         """Translate the mesh.
 
         .. note::
@@ -1131,9 +1125,13 @@ class DataSet(DataSetFilters, DataObject):
         """
         transform = _vtk.vtkTransform()
         transform.Translate(xyz)
-        return self.transform(transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(
+            transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
 
-    def scale(self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False):
+    def scale(
+        self, xyz: Union[list, tuple, np.ndarray], transform_all_input_vectors=False, inplace=False
+    ):
         """Scale the mesh.
 
         .. note::
@@ -1178,7 +1176,9 @@ class DataSet(DataSetFilters, DataObject):
         """
         transform = _vtk.vtkTransform()
         transform.Scale(xyz)
-        return self.transform(transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(
+            transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
 
     def flip_x(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the x-axis.
@@ -1226,7 +1226,9 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((1, 0, 0), point=point)
-        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(
+            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
 
     def flip_y(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the y-axis.
@@ -1274,7 +1276,9 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 1, 0), point=point)
-        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(
+            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
 
     def flip_z(self, point=None, transform_all_input_vectors=False, inplace=False):
         """Flip mesh about the z-axis.
@@ -1322,9 +1326,13 @@ class DataSet(DataSetFilters, DataObject):
             point = self.center
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 0, 1), point=point)
-        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(
+            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
 
-    def flip_normal(self, normal: List[float], point=None, transform_all_input_vectors=False, inplace=False):
+    def flip_normal(
+        self, normal: List[float], point=None, transform_all_input_vectors=False, inplace=False
+    ):
         """Flip mesh about the normal.
 
         .. note::
@@ -1374,7 +1382,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(normal, 'normal')
         check_valid_vector(point, 'point')
         t = transformations.reflection(normal, point=point)
-        return self.transform(t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace)
+        return self.transform(
+            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
 
     def copy_meta_from(self, ido: 'DataSet'):
         """Copy pyvista meta data onto this object from another object.
@@ -1399,9 +1409,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `point_arrays` is deprecated. "
-            "Use `point_data` instead.",
-            PyvistaDeprecationWarning
+            "Use of `point_arrays` is deprecated. Use `point_data` instead.",
+            PyvistaDeprecationWarning,
         )
         return self.point_data
 
@@ -1441,8 +1450,9 @@ class DataSet(DataSetFilters, DataObject):
         (8,)
 
         """
-        return DataSetAttributes(self.GetPointData(), dataset=self,
-                                 association=FieldAssociation.POINT)
+        return DataSetAttributes(
+            self.GetPointData(), dataset=self, association=FieldAssociation.POINT
+        )
 
     def clear_point_arrays(self):  # pragma: no cover
         """Remove all point data.
@@ -1452,9 +1462,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `clear_point_arrays` is deprecated. "
-            "Use `clear_point_data` instead.",
-            PyvistaDeprecationWarning
+            "Use of `clear_point_arrays` is deprecated. Use `clear_point_data` instead.",
+            PyvistaDeprecationWarning,
         )
         self.clear_point_data()
 
@@ -1485,9 +1494,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `clear_cell_arrays` is deprecated. "
-            "Use `clear_cell_data` instead.",
-            PyvistaDeprecationWarning
+            "Use of `clear_cell_arrays` is deprecated. Use `clear_cell_data` instead.",
+            PyvistaDeprecationWarning,
         )
         self.clear_cell_data()
 
@@ -1503,9 +1511,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `clear_arrays` is deprecated. "
-            "Use `clear_data` instead.",
-            PyvistaDeprecationWarning
+            "Use of `clear_arrays` is deprecated. Use `clear_data` instead.",
+            PyvistaDeprecationWarning,
         )
         self.clear_data()
 
@@ -1539,9 +1546,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `cell_arrays` is deprecated. "
-            "Use `cell_data` instead.",
-            PyvistaDeprecationWarning
+            "Use of `cell_arrays` is deprecated. Use `cell_data` instead.",
+            PyvistaDeprecationWarning,
         )
         return self.cell_data
 
@@ -1581,8 +1587,9 @@ class DataSet(DataSetFilters, DataObject):
         (6,)
 
         """
-        return DataSetAttributes(self.GetCellData(), dataset=self,
-                                 association=FieldAssociation.CELL)
+        return DataSetAttributes(
+            self.GetCellData(), dataset=self, association=FieldAssociation.CELL
+        )
 
     @property
     def n_points(self) -> int:
@@ -1726,7 +1733,9 @@ class DataSet(DataSetFilters, DataObject):
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
         return np.sum(sizes.cell_data['Volume'])
 
-    def get_array(self, name: str, preference: Literal['cell', 'point', 'field']='cell') -> np.ndarray:
+    def get_array(
+        self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
+    ) -> np.ndarray:
         """Search both point, cell and field data for an array.
 
         Parameters
@@ -1778,8 +1787,9 @@ class DataSet(DataSetFilters, DataObject):
             raise RuntimeError  # this should never be reached with err=True
         return arr
 
-    def get_array_association(self, name: str,
-                              preference: Literal['cell', 'point', 'field'] = 'cell') -> FieldAssociation:
+    def get_array_association(
+        self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
+    ) -> FieldAssociation:
         """Get the association of an array.
 
         Parameters
@@ -1836,8 +1846,10 @@ class DataSet(DataSetFilters, DataObject):
             name = index
             preference = 'cell'
         else:
-            raise KeyError(f'Index ({index}) not understood.'
-                           ' Index must be a string name or a tuple of string name and string preference.')
+            raise KeyError(
+                f'Index ({index}) not understood.'
+                ' Index must be a string name or a tuple of string name and string preference.'
+            )
         return self.get_array(name, preference=preference)
 
     def _ipython_key_completions_(self) -> List[str]:
@@ -1996,8 +2008,10 @@ class DataSet(DataSetFilters, DataObject):
         """
         # Allow child classes to overwrite parent classes
         if not isinstance(self, type(mesh)):
-            raise TypeError(f'The Input DataSet type {type(mesh)} must be '
-                            f'compatible with the one being overwritten {type(self)}')
+            raise TypeError(
+                f'The Input DataSet type {type(mesh)} must be '
+                f'compatible with the one being overwritten {type(self)}'
+            )
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
@@ -2090,10 +2104,11 @@ class DataSet(DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)
 
-    def find_closest_cell(self,
-                          point: Union[Sequence, np.ndarray],
-                          return_closest_point: bool=False,
-                          ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
+    def find_closest_cell(
+        self,
+        point: Union[VectorArray, NumericArray],
+        return_closest_point: bool = False,
+    ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
@@ -2186,22 +2201,7 @@ class DataSet(DataSetFilters, DataObject):
         array([1., 1., 0.])
 
         """
-        if isinstance(point, collections.abc.Sequence):
-            point = np.array(point)
-        # check if this is an array of points
-        if isinstance(point, np.ndarray):
-            if point.ndim > 2:
-                raise ValueError("Array of points must be 1D or 2D")
-            if point.ndim == 2:
-                if point.shape[1] != 3:
-                    raise ValueError("Array of points must have three values per point"
-                                     "(shape (n, 3))")
-            else:
-                if point.size != 3:
-                    raise ValueError("Given point must have three values")
-                point = np.array([point])
-        else:
-            raise TypeError("Given point must be a sequence or an array.")
+        point = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
@@ -2225,13 +2225,17 @@ class DataSet(DataSetFilters, DataObject):
         out_cells: Union[int, np.ndarray] = (
             closest_cells[0] if len(closest_cells) == 1 else np.array(closest_cells)
         )
-        out_points = np.array(closest_points[0]) if len(closest_points) == 1 else np.array(closest_points)
+        out_points = (
+            np.array(closest_points[0]) if len(closest_points) == 1 else np.array(closest_points)
+        )
 
         if return_closest_point:
             return out_cells, out_points
         return out_cells
 
-    def find_containing_cell(self, point: Union[Sequence, np.ndarray]) -> Union[int, np.ndarray]:
+    def find_containing_cell(
+        self, point: Union[VectorArray, NumericArray]
+    ) -> Union[int, np.ndarray]:
         """Find index of a cell that contains the given point.
 
         Parameters
@@ -2279,22 +2283,7 @@ class DataSet(DataSetFilters, DataObject):
         (1000,)
 
         """
-        if isinstance(point, collections.abc.Sequence):
-            point = np.array(point)
-        # check if this is an array of points
-        if isinstance(point, np.ndarray):
-            if point.ndim > 2:
-                raise ValueError("Array of points must be 1D or 2D")
-            if point.ndim == 2:
-                if point.shape[1] != 3:
-                    raise ValueError("Array of points must have three values per point "
-                                     "(shape (n, 3))")
-            else:
-                if point.size != 3:
-                    raise ValueError("Given point must have three values")
-                point = np.array([point])
-        else:
-            raise TypeError("Given point must be a sequence or an array.")
+        point = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
@@ -2479,7 +2468,7 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         int
-            VTK cell type. See <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>.
+            VTK cell type. See `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ .
 
         Examples
         --------

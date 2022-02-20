@@ -107,8 +107,9 @@ class MultiBlock(_vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 raise TypeError(f'Type {type(args[0])} is not supported by pyvista.MultiBlock')
 
         elif len(args) > 1:
-            raise ValueError('Invalid number of arguments:\n``pyvista.MultiBlock``'
-                             'supports 0 or 1 arguments.')
+            raise ValueError(
+                'Invalid number of arguments:\n``pyvista.MultiBlock``' 'supports 0 or 1 arguments.'
+            )
 
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()

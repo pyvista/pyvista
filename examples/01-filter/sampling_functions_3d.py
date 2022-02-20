@@ -31,8 +31,13 @@ out
 ###############################################################################
 # color limits without blue
 mn, mx = [out['scalars'].min(), out['scalars'].max()]
-clim = (mn, mx*1.8)
+clim = (mn, mx * 1.8)
 
-out.plot(cmap='gist_earth_r', background='white',
-         show_scalar_bar=False, lighting=True, clim=clim,
-         show_edges=False)
+out.plot(
+    cmap='gist_earth_r',
+    background='white',
+    show_scalar_bar=False,
+    lighting=True,
+    clim=clim,
+    show_edges=False,
+)

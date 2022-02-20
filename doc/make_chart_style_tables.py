@@ -103,16 +103,20 @@ def make_marker_style_table():
      - Description
      - Example
 """
-    make_table("scatter_marker_styles", header, get_marker_style_row, pv.charts.ScatterPlot2D.MARKER_STYLES)
+    make_table(
+        "scatter_marker_styles", header, get_marker_style_row, pv.charts.ScatterPlot2D.MARKER_STYLES
+    )
 
 
 def make_color_scheme_img(color_scheme, path):
     p = pv.Plotter(off_screen=True, window_size=[240, 120])
     p.background_color = 'w'
     chart = pv.Chart2D()
-    tmp_plot = chart.bar([0], [[1]]*2, color=color_scheme, orientation="H")
-    n_colors = len(tmp_plot.colors)  # Use a temporary plot to determine the total number of colors in this scheme
-    plot = chart.bar([0], [[1]]*n_colors, color=color_scheme, orientation="H")
+    tmp_plot = chart.bar([0], [[1]] * 2, color=color_scheme, orientation="H")
+    n_colors = len(
+        tmp_plot.colors
+    )  # Use a temporary plot to determine the total number of colors in this scheme
+    plot = chart.bar([0], [[1]] * n_colors, color=color_scheme, orientation="H")
     chart.remove_plot(tmp_plot)
     plot.pen.color = 'w'
     chart.x_range = [0, n_colors]
@@ -147,7 +151,9 @@ def make_color_scheme_table():
      - # colors
      - Example
 """
-    make_table("plot_color_schemes", header, get_color_scheme_row, pv.charts._MultiCompPlot.COLOR_SCHEMES)
+    make_table(
+        "plot_color_schemes", header, get_color_scheme_row, pv.charts._MultiCompPlot.COLOR_SCHEMES
+    )
 
 
 def make_all():

@@ -17,6 +17,7 @@ def test_actors():
     axes.hide_actor()
     assert not actor.GetVisibility()
 
+
 def test_origin():
     axes = pyvista.Axes()
 
@@ -24,6 +25,7 @@ def test_origin():
     axes.origin = origin
     assert np.all(axes.GetOrigin() == origin)
     assert np.all(axes.origin == origin)
+
 
 def test_symmetric():
     axes = pyvista.Axes()

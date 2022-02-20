@@ -106,9 +106,17 @@ def _update_axes_label_color(axes_actor, color=None):
         axes_actor.GetTextEdgesProperty().SetColor(color)
 
 
-def create_axes_marker(label_color=None, x_color=None, y_color=None,
-                       z_color=None, xlabel='X', ylabel='Y', zlabel='Z',
-                       labels_off=False, line_width=2):
+def create_axes_marker(
+    label_color=None,
+    x_color=None,
+    y_color=None,
+    z_color=None,
+    xlabel='X',
+    ylabel='Y',
+    zlabel='Z',
+    labels_off=False,
+    line_width=2,
+):
     """Create an axis actor.
 
     Parameters
@@ -175,15 +183,24 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
     return axes_actor
 
 
-def create_axes_orientation_box(line_width=1, text_scale=0.366667,
-                                edge_color='black', x_color=None,
-                                y_color=None, z_color=None,
-                                xlabel='X', ylabel='Y', zlabel='Z',
-                                x_face_color='red',
-                                y_face_color='green',
-                                z_face_color='blue',
-                                color_box=False, label_color=None,
-                                labels_off=False, opacity=0.5):
+def create_axes_orientation_box(
+    line_width=1,
+    text_scale=0.366667,
+    edge_color='black',
+    x_color=None,
+    y_color=None,
+    z_color=None,
+    xlabel='X',
+    ylabel='Y',
+    zlabel='Z',
+    x_face_color='red',
+    y_face_color='green',
+    z_face_color='blue',
+    color_box=False,
+    label_color=None,
+    labels_off=False,
+    opacity=0.5,
+):
     """Create a Box axes orientation widget with labels.
 
     Parameters
@@ -305,14 +322,17 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         axes_actor.GetCubeProperty().SetEdgeVisibility(False)
 
         cube = pyvista.Cube()
-        cube.clear_data() # remove normals
-        face_colors = np.array([parse_color(x_face_color),
-                                parse_color(x_face_color),
-                                parse_color(y_face_color),
-                                parse_color(y_face_color),
-                                parse_color(z_face_color),
-                                parse_color(z_face_color),
-                                ])
+        cube.clear_data()  # remove normals
+        face_colors = np.array(
+            [
+                parse_color(x_face_color),
+                parse_color(x_face_color),
+                parse_color(y_face_color),
+                parse_color(y_face_color),
+                parse_color(z_face_color),
+                parse_color(z_face_color),
+            ]
+        )
         face_colors = (face_colors * 255).astype(np.uint8)
         cube.cell_data['face_colors'] = face_colors
 
@@ -347,8 +367,7 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-def opacity_transfer_function(mapping, n_colors, interpolate=True,
-                              kind='quadratic'):
+def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadratic'):
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of
@@ -403,15 +422,15 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
         'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
         'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
         'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
-        'sigmoid': sigmoid(np.linspace(-10., 10., n_colors)),
-        'sigmoid_3': sigmoid(np.linspace(-3., 3., n_colors)),
-        'sigmoid_4': sigmoid(np.linspace(-4., 4., n_colors)),
-        'sigmoid_5': sigmoid(np.linspace(-5., 5., n_colors)),
-        'sigmoid_6': sigmoid(np.linspace(-6., 6., n_colors)),
-        'sigmoid_7': sigmoid(np.linspace(-7., 7., n_colors)),
-        'sigmoid_8': sigmoid(np.linspace(-8., 8., n_colors)),
-        'sigmoid_9': sigmoid(np.linspace(-9., 9., n_colors)),
-        'sigmoid_10': sigmoid(np.linspace(-10., 10., n_colors)),
+        'sigmoid': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_3': sigmoid(np.linspace(-3.0, 3.0, n_colors)),
+        'sigmoid_4': sigmoid(np.linspace(-4.0, 4.0, n_colors)),
+        'sigmoid_5': sigmoid(np.linspace(-5.0, 5.0, n_colors)),
+        'sigmoid_6': sigmoid(np.linspace(-6.0, 6.0, n_colors)),
+        'sigmoid_7': sigmoid(np.linspace(-7.0, 7.0, n_colors)),
+        'sigmoid_8': sigmoid(np.linspace(-8.0, 8.0, n_colors)),
+        'sigmoid_9': sigmoid(np.linspace(-9.0, 9.0, n_colors)),
+        'sigmoid_10': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
     }
     transfer_func['linear_r'] = transfer_func['linear'][::-1]
     transfer_func['sigmoid_r'] = transfer_func['sigmoid'][::-1]
@@ -447,13 +466,15 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
                 vals = f(xx)
                 vals[vals < 0] = 0.0
                 vals[vals > 1.0] = 1.0
-                mapping = (vals * 255.).astype(np.uint8)
+                mapping = (vals * 255.0).astype(np.uint8)
 
             except (ImportError, ValueError):
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
-            raise RuntimeError(f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements')
+            raise RuntimeError(
+                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
+            )
         return mapping
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
 
@@ -523,7 +544,11 @@ def parse_color(color, opacity=None, default_color=None):
     elif isinstance(color, (Sequence, np.ndarray)):
         try:
             color = np.asarray(color, dtype=np.float64)
-            if color.ndim != 1 or color.size not in (3, 4) or not np.all((0 <= color) & (color <= 1)):
+            if (
+                color.ndim != 1
+                or color.size not in (3, 4)
+                or not np.all((0 <= color) & (color <= 1))
+            ):
                 color_valid = False
             elif len(color) == 4:
                 opacity = color[3]
@@ -533,20 +558,24 @@ def parse_color(color, opacity=None, default_color=None):
     else:
         color_valid = False
     if not color_valid:
-        raise ValueError("\n"
-                         f"\tInvalid color input: ({color})\n"
-                         "\tMust be string, rgb list, or hex color string.  For example:\n"
-                         "\t\tcolor='white'\n"
-                         "\t\tcolor='w'\n"
-                         "\t\tcolor=[1, 1, 1]\n"
-                         "\t\tcolor='#FFFFFF'")
+        raise ValueError(
+            "\n"
+            f"\tInvalid color input: ({color})\n"
+            "\tMust be string, rgb list, or hex color string.  For example:\n"
+            "\t\tcolor='white'\n"
+            "\t\tcolor='w'\n"
+            "\t\tcolor=[1, 1, 1]\n"
+            "\t\tcolor='#FFFFFF'"
+        )
     if opacity is not None:
         if isinstance(opacity, (float, int)) and 0 <= opacity <= 1:
             color = [color[0], color[1], color[2], float(opacity)]
         else:
-            raise ValueError("\n"
-                             f"\tInvalid opacity input: {opacity}\n"
-                             "\tMust be a scalar value between 0 and 1.")
+            raise ValueError(
+                "\n"
+                f"\tInvalid opacity input: {opacity}\n"
+                "\tMust be a scalar value between 0 and 1."
+            )
     return tuple(color)
 
 
@@ -555,5 +584,5 @@ def parse_font_family(font_family):
     font_family = font_family.lower()
     fonts = [font.name for font in FONTS]
     if font_family not in fonts:
-        raise ValueError('Font must one of the following:\n{", ".join(fonts)}')
+        raise ValueError(f'Font must one of the following:\n{", ".join(fonts)}')
     return FONTS[font_family].value

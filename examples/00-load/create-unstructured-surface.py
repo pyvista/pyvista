@@ -68,7 +68,8 @@ grid = pv.UnstructuredGrid(offset, cells, cell_type, points)
 # simplified dictionary interface. This automatically calculates the cell array with types
 # and offsets. Note that for mixing with additional cell types, just the appropriate key needs to be
 # added to the dictionary.
-cells_hex = np.arange(16).reshape([2, 8]) # = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
+cells_hex = np.arange(16).reshape([2, 8])
+# = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
 grid = pv.UnstructuredGrid({vtk.VTK_HEXAHEDRON: cells_hex}, points)
 
 # plot the grid (and suppress the camera position output)
@@ -82,53 +83,61 @@ _ = grid.plot(show_edges=True)
 # hexahedral cells, but using common points between the cells.
 
 # these points will all be shared between the cells
-points = np.array([[0. , 0. , 0. ],
-                   [1. , 0. , 0. ],
-                   [0.5, 0. , 0. ],
-                   [1. , 1. , 0. ],
-                   [1. , 0.5, 0. ],
-                   [0. , 1. , 0. ],
-                   [0.5, 1. , 0. ],
-                   [0. , 0.5, 0. ],
-                   [0.5, 0.5, 0. ],
-                   [1. , 0. , 0.5],
-                   [1. , 0. , 1. ],
-                   [0. , 0. , 0.5],
-                   [0. , 0. , 1. ],
-                   [0.5, 0. , 0.5],
-                   [0.5, 0. , 1. ],
-                   [1. , 1. , 0.5],
-                   [1. , 1. , 1. ],
-                   [1. , 0.5, 0.5],
-                   [1. , 0.5, 1. ],
-                   [0. , 1. , 0.5],
-                   [0. , 1. , 1. ],
-                   [0.5, 1. , 0.5],
-                   [0.5, 1. , 1. ],
-                   [0. , 0.5, 0.5],
-                   [0. , 0.5, 1. ],
-                   [0.5, 0.5, 0.5],
-                   [0.5, 0.5, 1. ]])
+points = np.array(
+    [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.5, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [1.0, 0.5, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.5, 1.0, 0.0],
+        [0.0, 0.5, 0.0],
+        [0.5, 0.5, 0.0],
+        [1.0, 0.0, 0.5],
+        [1.0, 0.0, 1.0],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 1.0],
+        [0.5, 0.0, 0.5],
+        [0.5, 0.0, 1.0],
+        [1.0, 1.0, 0.5],
+        [1.0, 1.0, 1.0],
+        [1.0, 0.5, 0.5],
+        [1.0, 0.5, 1.0],
+        [0.0, 1.0, 0.5],
+        [0.0, 1.0, 1.0],
+        [0.5, 1.0, 0.5],
+        [0.5, 1.0, 1.0],
+        [0.0, 0.5, 0.5],
+        [0.0, 0.5, 1.0],
+        [0.5, 0.5, 0.5],
+        [0.5, 0.5, 1.0],
+    ]
+)
 
 
 # Each cell in the cell array needs to include the size of the cell
 # and the points belonging to the cell.  In this example, there are 8
 # hexahedral cells that have common points between them.
-cells = np.array([[ 8,  0,  2,  8,  7, 11, 13, 25, 23],
-                  [ 8,  2,  1,  4,  8, 13,  9, 17, 25],
-                  [ 8,  7,  8,  6,  5, 23, 25, 21, 19],
-                  [ 8,  8,  4,  3,  6, 25, 17, 15, 21],
-                  [ 8, 11, 13, 25, 23, 12, 14, 26, 24],
-                  [ 8, 13,  9, 17, 25, 14, 10, 18, 26],
-                  [ 8, 23, 25, 21, 19, 24, 26, 22, 20],
-                  [ 8, 25, 17, 15, 21, 26, 18, 16, 22]]).ravel()
+cells = np.array(
+    [
+        [8, 0, 2, 8, 7, 11, 13, 25, 23],
+        [8, 2, 1, 4, 8, 13, 9, 17, 25],
+        [8, 7, 8, 6, 5, 23, 25, 21, 19],
+        [8, 8, 4, 3, 6, 25, 17, 15, 21],
+        [8, 11, 13, 25, 23, 12, 14, 26, 24],
+        [8, 13, 9, 17, 25, 14, 10, 18, 26],
+        [8, 23, 25, 21, 19, 24, 26, 22, 20],
+        [8, 25, 17, 15, 21, 26, 18, 16, 22],
+    ]
+).ravel()
 
 # each cell is a VTK_HEXAHEDRON
 celltypes = np.empty(8, dtype=np.uint8)
 celltypes[:] = vtk.VTK_HEXAHEDRON
 
 # the offset array points to the start of each cell (via flat indexing)
-offset = np.array([ 0, 9, 18, 27, 36, 45, 54, 63])
+offset = np.array([0, 9, 18, 27, 36, 45, 54, 63])
 
 # Effectively, when visualizing a VTK unstructured grid, it will
 # sequentially access the cell array by first looking at each index of
@@ -139,7 +148,7 @@ offset = np.array([ 0, 9, 18, 27, 36, 45, 54, 63])
 # for example, the 5th cell would be accessed by vtk with:
 start_of_cell = offset[4]
 n_points_in_cell = cells[start_of_cell]
-indices_in_cell = cells[start_of_cell + 1: start_of_cell + n_points_in_cell + 1]
+indices_in_cell = cells[start_of_cell + 1 : start_of_cell + n_points_in_cell + 1]
 print(indices_in_cell)
 
 
@@ -154,7 +163,9 @@ grid = pv.UnstructuredGrid(offset, cells, celltypes, points)
 
 # Alternate versions:
 grid = pv.UnstructuredGrid({vtk.VTK_HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
-grid = pv.UnstructuredGrid({vtk.VTK_HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))}, points)
+grid = pv.UnstructuredGrid(
+    {vtk.VTK_HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))}, points
+)
 
 # plot the grid (and suppress the camera position output)
 _ = grid.plot(show_edges=True)

@@ -14,6 +14,7 @@ the entire library.
 # to obscure code.
 try:
     from vtkmodules.vtkCommonCore import vtkVersion
+
     VTK9 = vtkVersion().GetVTKMajorVersion() >= 9
 except ImportError:  # pragma: no cover
     VTK9 = False
@@ -134,6 +135,7 @@ if VTK9:
         vtkImageData,
         vtkImplicitFunction,
         vtkMultiBlockDataSet,
+        vtkNonMergingPointLocator,
         vtkPerlinNoise,
         vtkPiecewiseFunction,
         vtkPlane,
@@ -216,6 +218,7 @@ if VTK9:
         vtkShrinkFilter,
         vtkTableBasedClipDataSet,
         vtkTableToPolyData,
+        vtkTessellatorFilter,
         vtkTransformFilter,
         vtkWarpScalar,
         vtkWarpVector,
@@ -332,9 +335,10 @@ if VTK9:
         vtkImageDifference,
         vtkImageExtractComponents,
         vtkImageFlip,
+        vtkImageThreshold,
         vtkRTAnalyticSource,
     )
-    from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
+    from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
     from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
     from vtkmodules.vtkInteractionWidgets import (
         vtkBoxWidget,
@@ -372,6 +376,7 @@ if VTK9:
     try:
         # Necessary for displaying charts, otherwise crashes on rendering
         import vtkmodules.vtkRenderingContextOpenGL2
+
         _has_vtkRenderingContextOpenGL2 = True
     except ImportError:  # pragma: no cover
         pass
@@ -434,31 +439,37 @@ if VTK9:
     def lazy_vtkGL2PSExporter():
         """Lazy import of the vtkGL2PSExporter."""
         from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
+
         return vtkGL2PSExporter()
 
     def lazy_vtkFacetReader():
         """Lazy import of the vtkFacetReader."""
         from vtkmodules.vtkFiltersHybrid import vtkFacetReader
+
         return vtkFacetReader()
 
     def lazy_vtkPDataSetReader():
         """Lazy import of the vtkPDataSetReader."""
         from vtkmodules.vtkIOParallel import vtkPDataSetReader
+
         return vtkPDataSetReader()
 
     def lazy_vtkMultiBlockPLOT3DReader():
         """Lazy import of the vtkMultiBlockPLOT3DReader."""
         from vtkmodules.vtkIOParallel import vtkMultiBlockPLOT3DReader
+
         return vtkMultiBlockPLOT3DReader()
 
     def lazy_vtkPlot3DMetaReader():
         """Lazy import of the vtkPlot3DMetaReader."""
         from vtkmodules.vtkIOParallel import vtkPlot3DMetaReader
+
         return vtkPlot3DMetaReader()
 
     def lazy_vtkSegYReader():
         """Lazy import of the vtkSegYReader."""
         from vtkmodules.vtkIOSegY import vtkSegYReader
+
         return vtkSegYReader()
 
 else:  # pragma: no cover
@@ -467,9 +478,7 @@ else:  # pragma: no cover
     try:
         from vtk.vtkCommonKitPython import buffer_shared, vtkAbstractArray, vtkWeakReference
     except ImportError:
-        from vtk.vtkCommonCore import (buffer_shared,
-                                       vtkAbstractArray,
-                                       vtkWeakReference)
+        from vtk.vtkCommonCore import buffer_shared, vtkAbstractArray, vtkWeakReference
 
     import vtk
 
@@ -505,36 +514,40 @@ else:  # pragma: no cover
         """Lazy import of the vtkPlot3DMetaReader."""
         return vtk.vtkPlot3DMetaReader()
 
-    class vtkExplicitStructuredGrid():  # type: ignore
+    class vtkExplicitStructuredGrid:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
         def __init__(self):  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
+
             raise VTKVersionError('vtkHDRReader requires VTK v9 or newer')
 
-    class vtkHDRReader():   # type: ignore
+    class vtkHDRReader:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
         def __init__(self):  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
+
             raise VTKVersionError('vtkHDRReader requires VTK v9 or newer')
 
-    class vtkGLTFReader():   # type: ignore
+    class vtkGLTFReader:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
         def __init__(self):  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
+
             raise VTKVersionError('vtkGLTFReader requires VTK v9 or newer')
 
-    class vtkPythonItem():  # type: ignore
+    class vtkPythonItem:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
         def __init__(self):  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
+
             raise VTKVersionError('Charts requires VTK v9 or newer')
 
 
