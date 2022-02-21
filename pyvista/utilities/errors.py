@@ -5,11 +5,11 @@ from collections.abc import Iterable
 import logging
 import os
 import re
+import subprocess
 import sys
 
 import scooby
 
-import pyvista
 from pyvista import _vtk
 
 
@@ -177,16 +177,24 @@ def send_errors_to_logging():
     return obs.observe(error_output)
 
 
+_cmd = """\
+import pyvista; \
+plotter = pyvista.Plotter(notebook=False, off_screen=True); \
+plotter.add_mesh(pyvista.Sphere()); \
+plotter.show(auto_close=False); \
+gpu_info = plotter.ren_win.ReportCapabilities(); \
+print(gpu_info); \
+plotter.close()\
+"""
+
+
 def get_gpu_info():
     """Get all information about the GPU."""
     # an OpenGL context MUST be opened before trying to do this.
-    plotter = pyvista.Plotter(notebook=False, off_screen=True)
-    plotter.add_mesh(pyvista.Sphere())
-    plotter.show(auto_close=False)
-    gpu_info = plotter.ren_win.ReportCapabilities()
-    plotter.close()
-    # Remove from list of Plotters
-    pyvista.plotting._ALL_PLOTTERS.pop(plotter._id_name)
+    proc = subprocess.run(
+        [sys.executable, '-c', _cmd],
+        check=False, capture_output=True)
+    gpu_info = '' if proc.returncode else proc.stdout.decode()
     return gpu_info
 
 
