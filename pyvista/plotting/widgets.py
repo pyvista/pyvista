@@ -140,6 +140,7 @@ class WidgetHelper:
         rotation_enabled=True,
         widget_color=None,
         outline_translation=True,
+        merge_points=True,
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -175,6 +176,10 @@ class WidgetHelper:
             If ``False``, the plane widget cannot be translated and is
             strictly placed at the given bounds.
 
+        merge_points : bool, optional
+            If ``True`` (default), coinciding points of independently
+            defined mesh elements will be merged.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -196,6 +201,9 @@ class WidgetHelper:
         port = 1 if invert else 0
 
         alg = _vtk.vtkBoxClipDataSet()
+        if not merge_points:
+            # vtkBoxClipDataSet uses vtkMergePoints by default
+            alg.SetLocator(_vtk.vtkNonMergingPointLocator())
         alg.SetInputDataObject(mesh)
         alg.GenerateClippedOutputOn()
 
