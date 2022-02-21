@@ -380,7 +380,7 @@ class Color:
         Either a string, RGB sequence, RGBA sequence, or hex color string.
         RGB(A) sequences should either be provided as floats between 0 and 1
         or as ints between 0 and 255. Hex color strings can contain optional
-        `'#'` or `'0x'` prefixes. If no opacity is provided, the
+        ``'#'`` or ``'0x'`` prefixes. If no opacity is provided, the
         ``default_opacity`` will be used. If ``color`` is ``None``, the
         ``default_color`` is used instead.
         The following examples all denote the color 'white':
@@ -520,8 +520,7 @@ class Color:
 
     @staticmethod
     def convert_color_channel(val: Union[int, np.integer, float, np.floating, str]) -> int:
-        """Convert the given color channel value to the integer representation
-        (values between ``0`` and ``255``).
+        """Convert the given color channel value to the integer representation.
 
         Parameters
         ----------
@@ -534,7 +533,8 @@ class Color:
         Returns
         -------
         int
-            Color channel value in the integer representation.
+            Color channel value in the integer representation (values between
+            ``0`` and ``255``).
 
         """
         if isinstance(val, str):

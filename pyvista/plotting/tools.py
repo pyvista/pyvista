@@ -478,13 +478,13 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
 def parse_color(color, opacity=None, default_color=None):  # pragma: no cover
     """Parse color into a VTK friendly RGB(A) tuple.
 
+    .. deprecated:: 0.34.0
+        Use :class:`Color` to parse and convert colors instead.
+
     If ``color`` is a sequence of RGBA floats, the ``opacity`` parameter
     is ignored.
 
     Values returned will be between 0 and 1.
-
-    .. deprecated:: 0.34.0
-        Use :class:`Color` to parse and convert colors instead.
 
     Parameters
     ----------

@@ -4,11 +4,14 @@ from __future__ import (
     annotations,  # Necessary for autodoc_type_aliases to recognize the type aliases
 )
 
-from typing import Dict, List, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 
 from . import _vtk
+
+if TYPE_CHECKING:
+    from .plotting.colors import Color
 
 Vector = Union[List[float], Tuple[float, float, float], np.ndarray]
 VectorArray = Union[np.ndarray, Sequence[Vector]]
