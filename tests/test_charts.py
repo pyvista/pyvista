@@ -497,8 +497,8 @@ def test_multicomp_plot_common(plot_f, request):
     assert plot.brush.color == colors[0]
 
     plot.color = colors[1]
-    assert np.allclose(plot.color.f_rgba, colors[1])
-    assert len(plot.colors) == 1 and np.allclose(plot.colors[0].f_rgba, colors[1])
+    assert plot.color == colors[1]
+    assert len(plot.colors) == 1 and plot.colors[0] == colors[1]
     assert plot.brush.color == colors[1]
 
     plot.labels = labels

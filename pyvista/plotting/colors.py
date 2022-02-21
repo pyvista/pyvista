@@ -165,34 +165,15 @@ tab:cyan
 
 """
 
-from __future__ import (
-    annotations,  # Necessary for autodoc_type_aliases to recognize the 'color_like' alias
-)
-
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Tuple, Union
 import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista import _vtk
+from pyvista._typing import color_like
 from pyvista.utilities import PyvistaDeprecationWarning
-
-color_like = Union[
-    Tuple[int, int, int],
-    Tuple[int, int, int, int],
-    Tuple[float, float, float],
-    Tuple[float, float, float, float],
-    Sequence[int],
-    Sequence[float],
-    np.ndarray,
-    str,
-    "Color",
-    _vtk.vtkColor3ub,
-]
-# Overwrite default docstring, as sphinx is not able to capture the docstring
-# when it is put beneath the definition somehow?
-color_like.__doc__ = """Any object convertible to a :class:`Color`."""
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -203,7 +184,6 @@ IPYGANY_MAP = {
 hexcolors = {
     'aliceblue': '#F0F8FF',
     'antiquewhite': '#FAEBD7',
-    'aqua': '#00FFFF',
     'aquamarine': '#7FFFD4',
     'azure': '#F0FFFF',
     'beige': '#F5F5DC',
@@ -227,7 +207,6 @@ hexcolors = {
     'darkgoldenrod': '#B8860B',
     'darkgray': '#A9A9A9',
     'darkgreen': '#006400',
-    'darkgrey': '#A9A9A9',
     'darkkhaki': '#BDB76B',
     'darkmagenta': '#8B008B',
     'darkolivegreen': '#556B2F',
@@ -238,18 +217,15 @@ hexcolors = {
     'darkseagreen': '#8FBC8F',
     'darkslateblue': '#483D8B',
     'darkslategray': '#2F4F4F',
-    'darkslategrey': '#2F4F4F',
     'darkturquoise': '#00CED1',
     'darkviolet': '#9400D3',
     'deeppink': '#FF1493',
     'deepskyblue': '#00BFFF',
     'dimgray': '#696969',
-    'dimgrey': '#696969',
     'dodgerblue': '#1E90FF',
     'firebrick': '#B22222',
     'floralwhite': '#FFFAF0',
     'forestgreen': '#228B22',
-    'fuchsia': '#FF00FF',
     'gainsboro': '#DCDCDC',
     'ghostwhite': '#F8F8FF',
     'gold': '#FFD700',
@@ -257,7 +233,6 @@ hexcolors = {
     'gray': '#808080',
     'green': '#008000',
     'greenyellow': '#ADFF2F',
-    'grey': '#808080',
     'honeydew': '#F0FFF0',
     'hotpink': '#FF69B4',
     'indianred': '#CD5C5C',
@@ -274,13 +249,11 @@ hexcolors = {
     'lightgoldenrodyellow': '#FAFAD2',
     'lightgray': '#D3D3D3',
     'lightgreen': '#90EE90',
-    'lightgrey': '#D3D3D3',
     'lightpink': '#FFB6C1',
     'lightsalmon': '#FFA07A',
     'lightseagreen': '#20B2AA',
     'lightskyblue': '#87CEFA',
     'lightslategray': '#778899',
-    'lightslategrey': '#778899',
     'lightsteelblue': '#B0C4DE',
     'lightyellow': '#FFFFE0',
     'lime': '#00FF00',
@@ -314,6 +287,7 @@ hexcolors = {
     'paleturquoise': '#AFEEEE',
     'palevioletred': '#DB7093',
     'papayawhip': '#FFEFD5',
+    'paraview': '#52576e',
     'peachpuff': '#FFDAB9',
     'peru': '#CD853F',
     'pink': '#FFC0CB',
@@ -335,7 +309,6 @@ hexcolors = {
     'skyblue': '#87CEEB',
     'slateblue': '#6A5ACD',
     'slategray': '#708090',
-    'slategrey': '#708090',
     'snow': '#FFFAFA',
     'springgreen': '#00FF7F',
     'steelblue': '#4682B4',
@@ -362,6 +335,8 @@ hexcolors = {
     'tab:cyan': '#17becf',
 }
 
+color_names = {h.lower(): n for n, h in hexcolors.items()}
+
 color_char_to_word = {
     'b': 'blue',
     'g': 'green',
@@ -373,18 +348,29 @@ color_char_to_word = {
     'w': 'white',
 }
 
-
-PARAVIEW_BACKGROUND = [82 / 255.0, 87 / 255.0, 110 / 255.0]
+color_synonyms = {
+    **color_char_to_word,
+    'aqua': 'cyan',
+    'darkgrey': 'darkgray',
+    'darkslategrey': 'darkslategray',
+    'dimgrey': 'dimgray',
+    'fuchsia': 'magenta',
+    'grey': 'gray',
+    'lightgrey': 'lightgray',
+    'lightslategrey': 'lightslategray',
+    'pv': 'paraview',
+    'slategrey': 'slategray',
+}
 
 
 class Color:
     """Helper class to convert between different color representations used in the pyvista library.
 
-    Many pyvista methods accept :attr:`color_like` parameters. This helper class
+    Many pyvista methods accept :ref:`color_like` parameters. This helper class
     is used to convert such parameters to the necessary format, used by
     underlying (VTK) methods. Any color name (``str``), hex string (``str``)
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
-    or ``float``) is considered a :attr:`color_like` parameter and can be converted
+    or ``float``) is considered a :ref:`color_like` parameter and can be converted
     by this class.
     See :attr:`Color.name` for a list of supported color names.
 
@@ -393,9 +379,10 @@ class Color:
     color : color_like, optional
         Either a string, RGB sequence, RGBA sequence, or hex color string.
         RGB(A) sequences should either be provided as floats between 0 and 1
-        or as ints between 0 and 255. If no opacity is provided, the
-        `default_opacity` will be used. If `color` is ``None``, the
-        `default_color` is used instead.
+        or as ints between 0 and 255. Hex color strings can contain optional
+        `'#'` or `'0x'` prefixes. If no opacity is provided, the
+        ``default_opacity`` will be used. If ``color`` is ``None``, the
+        ``default_color`` is used instead.
         The following examples all denote the color 'white':
 
         * ``'white'``
@@ -406,8 +393,9 @@ class Color:
 
     opacity : int, float or str, optional
         Opacity of the represented color. Overrides any opacity associated
-        with the provided `color`. Allowed opacities are floats between 0
-        and 1, ints between 0 and 255 or hexadecimal strings of length 2.
+        with the provided ``color``. Allowed opacities are floats between 0
+        and 1, ints between 0 and 255 or hexadecimal strings of length 2
+        (plus the length of the optional prefix).
         The following examples all denote a fully opaque color:
 
         * ``1.0``
@@ -415,14 +403,14 @@ class Color:
         * ``'#ff'``
 
     default_color : color_like, optional
-        Default color to use when `color` is ``None``. If this value is
+        Default color to use when ``color`` is ``None``. If this value is
         ``None``, then defaults to the global theme color. Format is
-        identical to `color`.
+        identical to ``color``.
 
     default_opacity : int, float or str, optional
-        Default opacity of the represented color. Used when `color`
-        does not specify an opacity and `opacity` is ``None``. Format
-        is identical to `opacity`.
+        Default opacity of the represented color. Used when ``color``
+        does not specify an opacity and ``opacity`` is ``None``. Format
+        is identical to ``opacity``.
 
     Notes
     -----
@@ -438,11 +426,11 @@ class Color:
     >>> pyvista.Color("green", opacity=0.5)
     Color(name='green', hex='#00800080')
     >>> pyvista.Color([0.0, 0.5, 0.0, 0.5])
-    Color(hex='#00800080')
+    Color(name='green', hex='#00800080')
     >>> pyvista.Color([0, 128, 0, 128])
-    Color(hex='#00800080')
+    Color(name='green', hex='#00800080')
     >>> pyvista.Color("#00800080")
-    Color(hex='#00800080')
+    Color(name='green', hex='#00800080')
 
     """
 
@@ -472,6 +460,9 @@ class Color:
             elif isinstance(color, str):
                 # From named color or hex string
                 self._from_str(color)
+            elif isinstance(color, dict):
+                # From dictionary
+                self._from_dict(color)
             elif isinstance(color, (list, tuple, np.ndarray)):
                 # From RGB(A) sequence
                 self._from_rgba(color)
@@ -480,6 +471,7 @@ class Color:
                 self._from_rgba(color)
             else:
                 raise ValueError(f"Unsupported color type: {type(color)}")
+            self._name = color_names.get(self.hex[:-2], None)
         except ValueError as e:
             raise ValueError(
                 "\n"
@@ -528,13 +520,16 @@ class Color:
 
     @staticmethod
     def convert_color_channel(val: Union[int, np.integer, float, np.floating, str]) -> int:
-        """Convert the given color channel value to the integer representation (values between ``0`` and ``255``).
+        """Convert the given color channel value to the integer representation
+        (values between ``0`` and ``255``).
 
         Parameters
         ----------
         val : int, float or str
-            Color channel value to convert. Supported input values are a hex string of length 2 (``'00'`` to ``'ff'``),
-            a float (``0.0`` to ``1.0``) or an integer (``0`` to ``255``).
+            Color channel value to convert. Supported input values are a
+            hex string of length 2 (``'00'`` to ``'ff'``) with an optional
+            prefix (``'#'`` or ``'0x'``), a float (``0.0`` to ``1.0``) or
+            an integer (``0`` to ``255``).
 
         Returns
         -------
@@ -550,7 +545,7 @@ class Color:
             val = int(round(255 * val))
         if (
             np.issubdtype(np.asarray(val).dtype, np.integer)
-            and np.ndim(val) == 0
+            and np.size(val) == 1
             and 0 <= val <= 255
         ):
             # From integer
@@ -560,6 +555,7 @@ class Color:
 
     def _from_rgba(self, rgba):
         """Construct color from an RGB(A) sequence."""
+        arg = rgba
         if len(rgba) == 3:
             # Keep using current opacity if it is not provided.
             rgba = [*rgba, self._opacity]
@@ -569,46 +565,44 @@ class Color:
             self._red, self._green, self._blue, self._opacity = [
                 self.convert_color_channel(c) for c in rgba
             ]
-            self._name = None
-        except ValueError as e:
-            raise ValueError(f"Invalid RGB(A) sequence: {rgba}") from e
+        except ValueError:
+            raise ValueError(f"Invalid RGB(A) sequence: {arg}")
+
+    def _from_dict(self, dct):
+        """Construct color from an RGB(A) dictionary."""
+        r = dct.get("r", dct.get("red", None))
+        g = dct.get("g", dct.get("green", None))
+        b = dct.get("b", dct.get("blue", None))
+        a = dct.get("a", dct.get("alpha", dct.get("opacity", None)))
+        self._from_rgba([r, g, b, a])
 
     def _from_hex(self, h):
         """Construct color from a hex string."""
+        arg = h
         h = self.strip_hex_prefix(h)
         try:
             self._from_rgba([self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)])
-        except ValueError as e:
-            raise ValueError(f"Invalid hex string: {h}") from e
+        except ValueError:
+            raise ValueError(f"Invalid hex string: {arg}")
 
     def _from_str(self, n: str):
         """Construct color from a name or hex string."""
+        arg = n
         n = n.lower()
-        if len(n) == 1:
-            # Single character
-            # Convert from single character to full hex
-            if n not in color_char_to_word:
-                raise ValueError(
-                    'Single character string must be one of the following:'
-                    f'\n{str(color_char_to_word.keys())}'
-                )
-            n = color_char_to_word[n]
+        if n in color_synonyms:
+            # Synonym of registered color name
+            # Convert from synonym to full hex
+            n = color_synonyms[n]
             self._from_hex(hexcolors[n])
-            self._name = n
         elif n in hexcolors:
             # Color name
             self._from_hex(hexcolors[n])
-            self._name = n
-        elif n in 'paraview' or n in 'pv':
-            # Use the default ParaView background color
-            self._from_rgba(PARAVIEW_BACKGROUND)
-            self._name = 'paraview'
         else:
             # Otherwise, try conversion to hex
             try:
                 self._from_hex(n)
-            except ValueError as e:
-                raise ValueError(f"Invalid color name or hex string: {n}") from e
+            except ValueError:
+                raise ValueError(f"Invalid color name or hex string: {arg}")
 
     @property
     def i_rgba(self) -> Tuple[int, int, int, int]:
@@ -629,7 +623,7 @@ class Color:
 
         >>> c = pyvista.Color([255, 0, 0, 64])
         >>> c
-        Color(hex='#ff000040')
+        Color(name='red', hex='#ff000040')
         >>> c.i_rgba
         (255, 0, 0, 64)
 
@@ -655,7 +649,7 @@ class Color:
 
         >>> c = pyvista.Color([255, 0, 0])
         >>> c
-        Color(hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff')
         >>> c.i_rgb
         (255, 0, 0)
 
@@ -681,7 +675,7 @@ class Color:
 
         >>> c = pyvista.Color([1.0, 0.0, 0.0, 0.2])
         >>> c
-        Color(hex='#ff000033')
+        Color(name='red', hex='#ff000033')
         >>> c.f_rgba
         (1.0, 0.0, 0.0, 0.2)
 
@@ -707,7 +701,7 @@ class Color:
 
         >>> c = pyvista.Color([1.0, 0.0, 0.0])
         >>> c
-        Color(hex='#ff0000ff')
+        Color(name='red', hex='#ff0000ff')
         >>> c.f_rgb
         (1.0, 0.0, 0.0)
 
@@ -726,12 +720,16 @@ class Color:
         >>> c = pyvista.Color("blue", default_opacity="#80")
         >>> c
         Color(name='blue', hex='#0000ff80')
+        >>> c.hex
+        '#0000ff80'
 
         Create a transparent red color using an RGBA hexadecimal value.
 
         >>> c = pyvista.Color("0xff000040")
         >>> c
-        Color(hex='#ff000040')
+        Color(name='red', hex='#ff000040')
+        >>> c.hex
+        '#ff000040'
 
         """
         return '#' + ''.join(
@@ -784,7 +782,7 @@ class Color:
         Returns
         -------
         Color
-            A new Color instance with sRGB color values.
+            A new ``Color`` instance with sRGB color values.
 
         """
         rgba = np.array(self.f_rgba)
@@ -799,7 +797,7 @@ class Color:
         Returns
         -------
         Color
-            A new Color instance with linear color values.
+            A new ``Color`` instance with linear color values.
 
         """
         rgba = np.array(self.f_rgba)
@@ -815,7 +813,7 @@ class Color:
 
     def to_dict(self):
         """Convert to dictionary for JSON serialization."""
-        return (self._red, self._green, self._blue, self._opacity)
+        return {'r': self._red, 'g': self._green, 'b': self._blue, 'a': self._opacity}
 
     def __eq__(self, other):
         """Equality comparison."""
@@ -824,16 +822,19 @@ class Color:
         except ValueError:  # pragma: no cover
             return NotImplemented
 
-    def __hash__(self):
+    def __hash__(self):  # pragma: no cover
         """Hash calculation."""
         return hash((self._red, self._green, self._blue, self._opacity))
 
     def __repr__(self):  # pragma: no cover
         """Human readable representation."""
-        kwargs = f"hex='{self.hex}'"
+        kwargs = f"hex={self.hex!r}"
         if self._name is not None:
-            kwargs = f"name='{self._name}', " + kwargs
+            kwargs = f"name={self._name!r}, " + kwargs
         return f"Color({kwargs})"
+
+
+PARAVIEW_BACKGROUND = Color('paraview').f_rgb  # [82, 87, 110] / 255
 
 
 def hex_to_rgb(h):  # pragma: no cover
@@ -846,7 +847,7 @@ def hex_to_rgb(h):  # pragma: no cover
     return Color(h).f_rgb
 
 
-def string_to_rgb(string):
+def string_to_rgb(string):  # pragma: no cover
     """Convert a literal color string (i.e. white) to a color rgb.
 
     Also accepts hex strings or single characters from the following list.

@@ -36,7 +36,8 @@ import os
 from typing import List, Union
 import warnings
 
-from .plotting.colors import PARAVIEW_BACKGROUND, Color, color_like, get_cmap_safe
+from ._typing import color_like
+from .plotting.colors import Color, get_cmap_safe
 from .plotting.tools import parse_font_family
 from .utilities.misc import PyvistaDeprecationWarning
 
@@ -2254,7 +2255,7 @@ class ParaViewTheme(DefaultTheme):
         """Initialize theme."""
         super().__init__()
         self.name = 'paraview'
-        self.background = tuple(PARAVIEW_BACKGROUND)
+        self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
         self.font.label_size = 16

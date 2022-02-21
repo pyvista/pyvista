@@ -201,7 +201,7 @@ class ColorTable(DocTable):
 
     path = f"{COLORS_TABLE_DIR}/colors.rst"
     header = """
-.. list-table:: Colors
+.. list-table::
    :widths: 50 20 30
    :header-rows: 1
 
@@ -220,7 +220,7 @@ class ColorTable(DocTable):
     @classmethod
     def fetch_tokens(cls):
         tokens = {token: {"hex": hex} for token, hex in pv.hexcolors.items()}
-        for s, token in pv.color_char_to_word.items():
+        for s, token in pv.colors.color_synonyms.items():
             if "synonyms" not in tokens[token]:
                 tokens[token]["synonyms"] = []
             tokens[token]["synonyms"].append(s)

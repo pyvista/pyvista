@@ -679,6 +679,7 @@ def test_color():
         "#hh0000",
         "invalid_name",
     )
+    invalid_opacities = (275, -50, 2.4, -1.2, "#zz")
     i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
     f_types = (float, np.float16, np.float32, np.float64)
     h_prefixes = ("", "0x", "#")
@@ -715,10 +716,16 @@ def test_color():
         assert pyvista.Color(i_rgba, default_opacity=opacity) == i_rgba
     # Check default_color
     assert pyvista.Color(None, default_color=name) == i_rgba
-    # Check invalid colors
+    # Check invalid colors and opacities
     for invalid_color in invalid_colors:
         with pytest.raises(ValueError):
             pyvista.Color(invalid_color)
+    for invalid_opacity in invalid_opacities:
+        with pytest.raises(ValueError):
+            pyvista.Color('b', invalid_opacity)
     # Check hex and name getters
     assert pyvista.Color(name).hex == f'#{h}'
     assert pyvista.Color('paraview').name == 'paraview'
+    # Check sRGB conversion
+    assert pyvista.Color('gray', 0.5).linear_to_srgb() == '#bcbcbcbc'
+    assert pyvista.Color('#bcbcbcbc').srgb_to_linear() == '#80808080'

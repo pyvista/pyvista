@@ -45,7 +45,7 @@ def test_depth_peeling_eq(default_theme):
 @pytest.mark.parametrize(
     'parm',
     [
-        ('color', (0.2, 0.2, 0.2)),
+        ('color', (0.1, 0.1, 0.1)),
         ('line_width', 1),
         ('opacity', 1.0),
         ('feature_angle', 20),
@@ -79,9 +79,9 @@ def test_depth_silhouette_opacity_outside_clamp(default_theme):
     [
         ('slider_length', 0.03),
         ('slider_width', 0.02),
-        ('slider_color', (0.6, 0.6, 0.4)),
+        ('slider_color', (0.5, 0.5, 0.3)),
         ('tube_width', 0.02),
-        ('tube_color', (0.6, 0.6, 0.6)),
+        ('tube_color', (0.5, 0.5, 0.5)),
         ('cap_opacity', 0.5),
         ('cap_length', 0.02),
         ('cap_width', 0.04),
@@ -330,11 +330,11 @@ def test_set_hidden_line_removal(default_theme):
 @pytest.mark.parametrize(
     'parm',
     [
-        ('background', (0.2, 0.4, 0.6)),
+        ('background', (0.1, 0.2, 0.3)),
         ('auto_close', False),
         ('notebook', False),
         ('full_screen', True),
-        ('nan_color', (0.6, 0.6, 0.6)),
+        ('nan_color', (0.5, 0.5, 0.5)),
         ('edge_color', (1.0, 0.0, 0.0)),
         ('outline_color', (1.0, 0.0, 0.0)),
         ('floor_color', (1.0, 0.0, 0.0)),

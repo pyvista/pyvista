@@ -1,5 +1,6 @@
 """Module containing useful plotting tools."""
 
+from collections.abc import Sequence
 from enum import Enum
 import os
 import platform
@@ -482,6 +483,9 @@ def parse_color(color, opacity=None, default_color=None):  # pragma: no cover
 
     Values returned will be between 0 and 1.
 
+    .. deprecated:: 0.34.0
+        Use :class:`Color` to parse and convert colors instead.
+
     Parameters
     ----------
     color : color_like
@@ -533,14 +537,50 @@ def parse_color(color, opacity=None, default_color=None):  # pragma: no cover
         "The usage of `parse_color` is deprecated in favor of the new `Color` class.",
         PyvistaDeprecationWarning,
     )
-    has_opacity = opacity is not None
-    if isinstance(color, (list, tuple, np.ndarray)):
-        has_opacity |= len(color) == 4
-        color = np.asarray(color, np.float)
-    color = Color(
-        color, default_opacity=1.0 if opacity is None else opacity, default_color=default_color
-    )
-    return tuple(color.f_rgba if has_opacity else color.f_rgb)
+    color_valid = True
+    if color is None:
+        if default_color is None:
+            color = pyvista.global_theme.color
+        else:
+            color = default_color
+    if isinstance(color, str):
+        color = Color(color).f_rgb
+    elif isinstance(color, (Sequence, np.ndarray)):
+        try:
+            color = np.asarray(color, dtype=np.float64)
+            if (
+                color.ndim != 1
+                or color.size not in (3, 4)
+                or not np.all((0 <= color) & (color <= 1))
+            ):
+                color_valid = False
+            elif len(color) == 4:
+                opacity = color[3]
+                color = color[:3]
+        except ValueError:
+            color_valid = False
+    else:
+        color_valid = False
+    if not color_valid:
+        raise ValueError(
+            "\n"
+            f"\tInvalid color input: ({color})\n"
+            "\tMust be string, rgb list, or hex color string.  For example:\n"
+            "\t\tcolor='white'\n"
+            "\t\tcolor='w'\n"
+            "\t\tcolor=[1, 1, 1]\n"
+            "\t\tcolor='#FFFFFF'"
+        )
+    if opacity is not None:
+        if isinstance(opacity, (float, int)) and 0 <= opacity <= 1:
+            color = [color[0], color[1], color[2], float(opacity)]
+        else:
+            raise ValueError(
+                "\n"
+                f"\tInvalid opacity input: {opacity}\n"
+                "\tMust be a scalar value between 0 and 1."
+            )
+    return tuple(color)
 
 
 def parse_font_family(font_family):
