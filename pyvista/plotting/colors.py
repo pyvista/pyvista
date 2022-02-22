@@ -750,6 +750,7 @@ class Color:
 
         Returns
         -------
+        str or None
             The color name, in case this color has a name; otherwise ``None``.
 
         Notes
