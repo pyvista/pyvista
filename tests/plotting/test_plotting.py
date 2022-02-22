@@ -946,6 +946,13 @@ def test_box_axes():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+def test_box_axes_label_color():
+    plotter = pyvista.Plotter()
+    plotter.add_axes(box=True, box_args={'label_color': 'red'})
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.show(before_close_callback=verify_cache_image)
+
+
 def test_screenshot(tmpdir):
     plotter = pyvista.Plotter()
     plotter.add_mesh(pyvista.Sphere())

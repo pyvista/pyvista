@@ -95,7 +95,7 @@ def test_add_legend_loc(loc):
 
 def test_add_legend_no_face(sphere):
     pl = pyvista.Plotter()
-    pl.add_mesh(sphere, label='sphere')
+    pl.add_mesh(sphere, scalars='Normals', label='sphere')
     pl.add_legend(face=None)
 
     pl = pyvista.Plotter()

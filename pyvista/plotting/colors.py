@@ -165,6 +165,10 @@ tab:cyan
 
 """
 
+# Necessary for autodoc_type_aliases to recognize the type aliases used in the signatures
+# of methods defined in this module.
+from __future__ import annotations
+
 from typing import Optional, Tuple, Union
 import warnings
 
@@ -180,7 +184,9 @@ IPYGANY_MAP = {
     'spectral': 'Spectral',
 }
 
-# shamelessly copied from matplotlib.colors
+# Following colors are copied from matplotlib.colors, synonyms (colors with a
+# different name but same hex value) are removed and put in the `color_synonyms`
+# dictionary. An extra `paraview_background` color is added.
 hexcolors = {
     'aliceblue': '#F0F8FF',
     'antiquewhite': '#FAEBD7',
@@ -287,7 +293,7 @@ hexcolors = {
     'paleturquoise': '#AFEEEE',
     'palevioletred': '#DB7093',
     'papayawhip': '#FFEFD5',
-    'paraview': '#52576e',
+    'paraview_background': '#52576e',
     'peachpuff': '#FFDAB9',
     'peru': '#CD853F',
     'pink': '#FFC0CB',
@@ -358,7 +364,8 @@ color_synonyms = {
     'grey': 'gray',
     'lightgrey': 'lightgray',
     'lightslategrey': 'lightslategray',
-    'pv': 'paraview',
+    'pv': 'paraview_background',
+    'paraview': 'paraview_background',
     'slategrey': 'slategray',
 }
 
@@ -366,11 +373,11 @@ color_synonyms = {
 class Color:
     """Helper class to convert between different color representations used in the pyvista library.
 
-    Many pyvista methods accept :ref:`color_like` parameters. This helper class
+    Many pyvista methods accept :data:`color_like` parameters. This helper class
     is used to convert such parameters to the necessary format, used by
     underlying (VTK) methods. Any color name (``str``), hex string (``str``)
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
-    or ``float``) is considered a :ref:`color_like` parameter and can be converted
+    or ``float``) is considered a :data:`color_like` parameter and can be converted
     by this class.
     See :attr:`Color.name` for a list of supported color names.
 
@@ -566,14 +573,15 @@ class Color:
                 self.convert_color_channel(c) for c in rgba
             ]
         except ValueError:
-            raise ValueError(f"Invalid RGB(A) sequence: {arg}")
+            raise ValueError(f"Invalid RGB(A) sequence: {arg}") from None
 
     def _from_dict(self, dct):
         """Construct color from an RGB(A) dictionary."""
-        r = dct.get("r", dct.get("red", None))
-        g = dct.get("g", dct.get("green", None))
-        b = dct.get("b", dct.get("blue", None))
-        a = dct.get("a", dct.get("alpha", dct.get("opacity", None)))
+        # Get any of the keys associated with each color channel (or None).
+        r = next((dct[key] for key in {'r', 'red'} if key in dct), None)
+        g = next((dct[key] for key in {'g', 'green'} if key in dct), None)
+        b = next((dct[key] for key in {'b', 'blue'} if key in dct), None)
+        a = next((dct[key] for key in {'a', 'alpha', 'opacity'} if key in dct), None)
         self._from_rgba([r, g, b, a])
 
     def _from_hex(self, h):
@@ -583,7 +591,7 @@ class Color:
         try:
             self._from_rgba([self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)])
         except ValueError:
-            raise ValueError(f"Invalid hex string: {arg}")
+            raise ValueError(f"Invalid hex string: {arg}") from None
 
     def _from_str(self, n: str):
         """Construct color from a name or hex string."""
@@ -602,11 +610,11 @@ class Color:
             try:
                 self._from_hex(n)
             except ValueError:
-                raise ValueError(f"Invalid color name or hex string: {arg}")
+                raise ValueError(f"Invalid color name or hex string: {arg}") from None
 
     @property
     def i_rgba(self) -> Tuple[int, int, int, int]:
-        """Get the color value as an RGBA integer sequence.
+        """Get the color value as an RGBA integer tuple.
 
         Examples
         --------
@@ -632,7 +640,7 @@ class Color:
 
     @property
     def i_rgb(self) -> Tuple[int, int, int]:
-        """Get the color value as an RGB integer sequence.
+        """Get the color value as an RGB integer tuple.
 
         Examples
         --------
@@ -658,7 +666,7 @@ class Color:
 
     @property
     def f_rgba(self) -> Tuple[float, float, float, float]:
-        """Get the color value as an RGBA float sequence.
+        """Get the color value as an RGBA float tuple.
 
         Examples
         --------
@@ -684,7 +692,7 @@ class Color:
 
     @property
     def f_rgb(self) -> Tuple[float, float, float]:
-        """Get the color value as an RGB float sequence.
+        """Get the color value as an RGB float tuple.
 
         Examples
         --------
@@ -739,6 +747,10 @@ class Color:
     @property
     def name(self) -> Optional[str]:
         """Get the color name.
+
+        Returns
+        -------
+            The color name, in case this color has a name; otherwise ``None``.
 
         Notes
         -----
