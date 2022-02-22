@@ -1,4 +1,5 @@
 # Note: using < here to reduce breakages
+# These should be automatically kept up to date by dependabot
 
 Sphinx<4.5.0
 cmocean<2.1
