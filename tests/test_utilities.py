@@ -725,7 +725,7 @@ def test_color():
             pyvista.Color('b', invalid_opacity)
     # Check hex and name getters
     assert pyvista.Color(name).hex == f'#{h}'
-    assert pyvista.Color('paraview').name == 'paraview'
+    assert pyvista.Color('b').name == 'blue'
     # Check sRGB conversion
     assert pyvista.Color('gray', 0.5).linear_to_srgb() == '#bcbcbcbc'
     assert pyvista.Color('#bcbcbcbc').srgb_to_linear() == '#80808080'
