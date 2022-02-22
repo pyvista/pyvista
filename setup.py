@@ -19,8 +19,6 @@ install_requires = [
     'appdirs',
     'scooby>=0.5.1',
     'vtk',
-    'dataclasses;python_version=="3.6"',
-    'typing_extensions;python_version<="3.7"',
 ]
 
 readme_file = os.path.join(filepath, 'README.rst')
