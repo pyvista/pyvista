@@ -154,7 +154,7 @@ Installation
 ============
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip`` on Python >= 3.6::
+using ``pip`` on Python >= 3.7::
 
     pip install pyvista
 
