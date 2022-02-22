@@ -210,7 +210,7 @@ class GPUInfo:
         try:
             renderer = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the renderer.")
+            raise RuntimeError("Unable to parse GPU information for the renderer.") from None
         return renderer.strip()
 
     @property
@@ -220,7 +220,7 @@ class GPUInfo:
         try:
             version = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the version.")
+            raise RuntimeError("Unable to parse GPU information for the version.") from None
         return version.strip()
 
     @property
@@ -230,7 +230,7 @@ class GPUInfo:
         try:
             vendor = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the vendor.")
+            raise RuntimeError("Unable to parse GPU information for the vendor.") from None
         return vendor.strip()
 
     def get_info(self):
