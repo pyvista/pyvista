@@ -941,14 +941,14 @@ def test_axes():
 
 def test_box_axes():
     plotter = pyvista.Plotter()
-    plotter.add_axes(box=True, box_args={'color_box': True})
+    plotter.add_axes(box=True)
     plotter.add_mesh(pyvista.Sphere())
     plotter.show(before_close_callback=verify_cache_image)
 
 
-def test_box_axes_label_color():
+def test_box_axes_color_box():
     plotter = pyvista.Plotter()
-    plotter.add_axes(box=True, box_args={'label_color': 'red'})
+    plotter.add_axes(box=True, box_args={'color_box': True})
     plotter.add_mesh(pyvista.Sphere())
     plotter.show(before_close_callback=verify_cache_image)
 
