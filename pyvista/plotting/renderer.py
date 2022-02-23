@@ -501,7 +501,7 @@ class Renderer(_vtk.vtkRenderer):
 
         actor = _vtk.vtkActor2D()
         actor.SetMapper(mapper)
-        actor.GetProperty().SetColor(Color(color).f_rgb)
+        actor.GetProperty().SetColor(Color(color).float_rgb)
         actor.GetProperty().SetLineWidth(width)
 
         self.AddViewProp(actor)
@@ -818,7 +818,7 @@ class Renderer(_vtk.vtkRenderer):
             actor.SetMapper(mapper)
             prop = actor.GetProperty()
             if color is not None:
-                prop.SetColor(Color(color).f_rgb)
+                prop.SetColor(Color(color).float_rgb)
             prop.SetOpacity(opacity)
         if hasattr(self, 'axes_widget'):
             # Delete the old one
@@ -1192,9 +1192,9 @@ class Renderer(_vtk.vtkRenderer):
             cube_axes_actor.SetDrawYGridlines(show_yaxis)
             cube_axes_actor.SetDrawZGridlines(show_zaxis)
             # Set the colors
-            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color.f_rgb)
-            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color.f_rgb)
-            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color.f_rgb)
+            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
+            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
+            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
 
         if isinstance(ticks, str):
             ticks = ticks.lower()
@@ -1257,9 +1257,9 @@ class Renderer(_vtk.vtkRenderer):
         cube_axes_actor.SetCamera(self.camera)
 
         # set color
-        cube_axes_actor.GetXAxesLinesProperty().SetColor(color.f_rgb)
-        cube_axes_actor.GetYAxesLinesProperty().SetColor(color.f_rgb)
-        cube_axes_actor.GetZAxesLinesProperty().SetColor(color.f_rgb)
+        cube_axes_actor.GetXAxesLinesProperty().SetColor(color.float_rgb)
+        cube_axes_actor.GetYAxesLinesProperty().SetColor(color.float_rgb)
+        cube_axes_actor.GetZAxesLinesProperty().SetColor(color.float_rgb)
 
         # empty string used for clearing axis labels
         self._empty_str = _vtk.vtkStringArray()
@@ -1294,12 +1294,12 @@ class Renderer(_vtk.vtkRenderer):
         font_family = parse_font_family(font_family)
         for i in range(3):
             cube_axes_actor.GetTitleTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetTitleTextProperty(i).SetColor(color.f_rgb)
+            cube_axes_actor.GetTitleTextProperty(i).SetColor(color.float_rgb)
             cube_axes_actor.GetTitleTextProperty(i).SetFontFamily(font_family)
             cube_axes_actor.GetTitleTextProperty(i).SetBold(bold)
 
             cube_axes_actor.GetLabelTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetLabelTextProperty(i).SetColor(color.f_rgb)
+            cube_axes_actor.GetLabelTextProperty(i).SetColor(color.float_rgb)
             cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
             cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
 
@@ -1466,7 +1466,7 @@ class Renderer(_vtk.vtkRenderer):
             mapper, reset_camera=reset_camera, name=name, culling=culling, pickable=False
         )
 
-        prop.SetColor(Color(color, default_color=self._theme.outline_color).f_rgb)
+        prop.SetColor(Color(color, default_color=self._theme.outline_color).float_rgb)
         prop.SetOpacity(opacity)
         if render_lines_as_tubes:
             prop.SetRenderLinesAsTubes(render_lines_as_tubes)
@@ -1638,13 +1638,13 @@ class Renderer(_vtk.vtkRenderer):
             mapper, reset_camera=reset_camera, name=f'Floor({face})', pickable=pickable
         )
 
-        prop.SetColor(Color(color, default_color=self._theme.floor_color).f_rgb)
+        prop.SetColor(Color(color, default_color=self._theme.floor_color).float_rgb)
         prop.SetOpacity(opacity)
 
         # edge display style
         if show_edges:
             prop.EdgeVisibilityOn()
-        prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).f_rgb)
+        prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).float_rgb)
 
         # lighting display style
         if lighting is False:
@@ -2574,10 +2574,10 @@ class Renderer(_vtk.vtkRenderer):
         if top is not None:
             use_gradient = True
 
-        self.SetBackground(Color(color, default_color=self._theme.background).f_rgb)
+        self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
         if use_gradient:
             self.GradientBackgroundOn()
-            self.SetBackground2(Color(top).f_rgb)
+            self.SetBackground2(Color(top).float_rgb)
         else:
             self.GradientBackgroundOff()
         self.Modified()
@@ -2839,14 +2839,14 @@ class Renderer(_vtk.vtkRenderer):
                     # dummy vtk object
                     vtk_object = pyvista.PolyData([0.0, 0.0, 0.0])
 
-                self._legend.SetEntry(i, vtk_object, text, color.f_rgb)
+                self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
 
             legend_face = make_legend_face(face)
             for i, (text, color) in enumerate(labels):
-                self._legend.SetEntry(i, legend_face, text, Color(color).f_rgb)
+                self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)
 
         if loc is not None:
             if loc not in ACTOR_LOC_MAP:
@@ -2860,7 +2860,7 @@ class Renderer(_vtk.vtkRenderer):
             self._legend.UseBackgroundOff()
         else:
             self._legend.UseBackgroundOn()
-            self._legend.SetBackgroundColor(Color(bcolor).f_rgb)
+            self._legend.SetBackgroundColor(Color(bcolor).float_rgb)
 
         self._legend.SetBorder(border)
 

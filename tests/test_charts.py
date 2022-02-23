@@ -475,7 +475,7 @@ def test_multicomp_plot_common(plot_f, request):
     assert plot._color_series.GetColorScheme() == plot.COLOR_SCHEMES[cs]["id"]
     assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
     series_colors = [
-        pyvista.Color(plot._color_series.GetColor(i)).f_rgba for i in range(len(cs_colors))
+        pyvista.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
     ]
     assert np.allclose(series_colors, cs_colors)
     lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(cs_colors))]
@@ -489,7 +489,7 @@ def test_multicomp_plot_common(plot_f, request):
     plot.colors = colors
     assert all(pc == c for pc, c in zip(plot.colors, colors))
     series_colors = [
-        pyvista.Color(plot._color_series.GetColor(i)).f_rgba for i in range(len(colors))
+        pyvista.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(colors))
     ]
     assert np.allclose(series_colors, colors)
     lookup_colors = [plot._lookup_table.GetTableValue(i) for i in range(len(colors))]
@@ -718,7 +718,8 @@ def test_chart_2d(pl, chart_2d):
     )
 
     # Test parse_format
-    colors = itertools.chain(pyvista.hexcolors, pyvista.color_char_to_word, ["#fa09b6", ""])
+    hex_colors = ["#fa09b6", "0xa53a8d", "#b02239f0", "0xcee6927f"]
+    colors = itertools.chain(pyvista.hexcolors, pyvista.colors.color_synonyms, [*hex_colors, ""])
     for m in charts.ScatterPlot2D.MARKER_STYLES:
         for l in charts.Pen.LINE_STYLES:
             for c in colors:

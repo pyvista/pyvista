@@ -110,7 +110,7 @@ class WidgetHelper:
 
         box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(
-            Color(color, default_color=pyvista.global_theme.font.color).f_rgb
+            Color(color, default_color=pyvista.global_theme.font.color).float_rgb
         )
         box_widget.SetInteractor(self.iren.interactor)
         box_widget.SetCurrentRenderer(self.renderer)
@@ -345,9 +345,9 @@ class WidgetHelper:
 
         if implicit:
             plane_widget = _vtk.vtkImplicitPlaneWidget()
-            plane_widget.GetNormalProperty().SetColor(color.f_rgb)
-            plane_widget.GetOutlineProperty().SetColor(color.f_rgb)
-            plane_widget.GetOutlineProperty().SetColor(color.f_rgb)
+            plane_widget.GetNormalProperty().SetColor(color.float_rgb)
+            plane_widget.GetOutlineProperty().SetColor(color.float_rgb)
+            plane_widget.GetOutlineProperty().SetColor(color.float_rgb)
             plane_widget.SetTubing(tubing)
             plane_widget.SetOutlineTranslation(outline_translation)
             plane_widget.SetOriginTranslation(origin_translation)
@@ -389,8 +389,8 @@ class WidgetHelper:
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
             plane_widget.SetCenter(origin)  # Necessary
-            plane_widget.GetPlaneProperty().SetColor(color.f_rgb)  # self.C_LOT[fn])
-            plane_widget.GetHandleProperty().SetColor(color.f_rgb)
+            plane_widget.GetPlaneProperty().SetColor(color.float_rgb)  # self.C_LOT[fn])
+            plane_widget.GetHandleProperty().SetColor(color.float_rgb)
 
             if not normal_rotation:
                 plane_widget.GetHandleProperty().SetOpacity(0)
@@ -805,7 +805,7 @@ class WidgetHelper:
                 try_callback(callback, *args)
 
         line_widget = _vtk.vtkLineWidget()
-        line_widget.GetLineProperty().SetColor(color.f_rgb)
+        line_widget.GetLineProperty().SetColor(color.float_rgb)
         line_widget.SetInteractor(self.iren.interactor)
         line_widget.SetCurrentRenderer(self.renderer)
         line_widget.SetPlaceFactor(factor)
@@ -1068,11 +1068,11 @@ class WidgetHelper:
         slider_rep.SetMaximumValue(rng[1])
         slider_rep.SetValue(value)
         slider_rep.SetTitleText(title)
-        slider_rep.GetTitleProperty().SetColor(color.f_rgb)
-        slider_rep.GetSliderProperty().SetColor(color.f_rgb)
-        slider_rep.GetCapProperty().SetColor(color.f_rgb)
-        slider_rep.GetLabelProperty().SetColor(color.f_rgb)
-        slider_rep.GetTubeProperty().SetColor(color.f_rgb)
+        slider_rep.GetTitleProperty().SetColor(color.float_rgb)
+        slider_rep.GetSliderProperty().SetColor(color.float_rgb)
+        slider_rep.GetCapProperty().SetColor(color.float_rgb)
+        slider_rep.GetLabelProperty().SetColor(color.float_rgb)
+        slider_rep.GetTubeProperty().SetColor(color.float_rgb)
         slider_rep.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
         slider_rep.GetPoint1Coordinate().SetValue(pointa[0], pointa[1])
         slider_rep.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
@@ -1089,9 +1089,9 @@ class WidgetHelper:
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
             slider_rep.SetSliderWidth(slider_style.slider_width)
-            slider_rep.GetSliderProperty().SetColor(slider_style.slider_color.f_rgb)
+            slider_rep.GetSliderProperty().SetColor(slider_style.slider_color.float_rgb)
             slider_rep.SetTubeWidth(slider_style.tube_width)
-            slider_rep.GetTubeProperty().SetColor(slider_style.tube_color.f_rgb)
+            slider_rep.GetTubeProperty().SetColor(slider_style.tube_color.float_rgb)
             slider_rep.GetCapProperty().SetOpacity(slider_style.cap_opacity)
             slider_rep.SetEndCapLength(slider_style.cap_length)
             slider_rep.SetEndCapWidth(slider_style.cap_width)
@@ -1111,7 +1111,7 @@ class WidgetHelper:
         slider_widget.SetRepresentation(slider_rep)
         slider_widget.GetRepresentation().SetTitleHeight(title_height)
         slider_widget.GetRepresentation().GetTitleProperty().SetOpacity(title_opacity)
-        slider_widget.GetRepresentation().GetTitleProperty().SetColor(title_color.f_rgb)
+        slider_widget.GetRepresentation().GetTitleProperty().SetColor(title_color.float_rgb)
         if fmt is not None:
             slider_widget.GetRepresentation().SetLabelFormat(fmt)
         slider_widget.On()
@@ -1509,7 +1509,7 @@ class WidgetHelper:
             return
 
         spline_widget = _vtk.vtkSplineWidget()
-        spline_widget.GetLineProperty().SetColor(color.f_rgb)
+        spline_widget.GetLineProperty().SetColor(color.float_rgb)
         spline_widget.SetNumberOfHandles(n_handles)
         spline_widget.SetInteractor(self.iren.interactor)
         spline_widget.SetCurrentRenderer(self.renderer)
@@ -1738,7 +1738,7 @@ class WidgetHelper:
             self.sphere_widgets = []
 
         if color is None:
-            color = pyvista.global_theme.color.f_rgb
+            color = pyvista.global_theme.color.float_rgb
         selected_color = Color(selected_color)
 
         center = np.array(center)
@@ -1781,8 +1781,8 @@ class WidgetHelper:
                 sphere_widget.SetRepresentationToWireframe()
             else:
                 sphere_widget.SetRepresentationToSurface()
-            sphere_widget.GetSphereProperty().SetColor(Color(colors[i]).f_rgb)
-            sphere_widget.GetSelectedSphereProperty().SetColor(selected_color.f_rgb)
+            sphere_widget.GetSphereProperty().SetColor(Color(colors[i]).float_rgb)
+            sphere_widget.GetSelectedSphereProperty().SetColor(selected_color.float_rgb)
             sphere_widget.SetInteractor(self.iren.interactor)
             sphere_widget.SetCurrentRenderer(self.renderer)
             sphere_widget.SetRadius(radius)
@@ -1863,9 +1863,9 @@ class WidgetHelper:
             self.button_widgets = []
 
         def create_button(color1, color2, color3, dims=(size, size, 1)):
-            color1 = np.array(Color(color1).i_rgb)
-            color2 = np.array(Color(color2).i_rgb)
-            color3 = np.array(Color(color3).i_rgb)
+            color1 = np.array(Color(color1).int_rgb)
+            color2 = np.array(Color(color2).int_rgb)
+            color3 = np.array(Color(color3).int_rgb)
 
             n_points = dims[0] * dims[1]
             button = pyvista.UniformGrid(dims=dims)

@@ -132,7 +132,7 @@ def ipygany_block_from_actor(actor):
         return
     else:
         pmesh = pyvista_polydata_to_polymesh(dataset)
-    pmesh.default_color = pv.Color(prop.GetColor()).hex[:-2]
+    pmesh.default_color = pv.Color(prop.GetColor()).hex_rgb
 
     # determine if there are active scalars
     valid_mode = mapper.GetScalarModeAsString() in ['UsePointData', 'UseCellData']
@@ -171,7 +171,7 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
         if ipygany_obj is not None:
             meshes.append(ipygany_obj)
 
-    bc_color = plotter.background_color.hex[:-2]
+    bc_color = plotter.background_color.hex_rgb
     scene = Scene(meshes, background_color=bc_color, camera=ipygany_camera_from_plotter(plotter))
 
     # optionally size of the plotter

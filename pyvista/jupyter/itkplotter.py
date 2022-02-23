@@ -90,7 +90,7 @@ class PlotterITK:
             raise TypeError('``point_size`` parameter must be a float')
 
         self._point_set_sizes.append(point_size)
-        self._point_set_colors.append(pv.Color(color).f_rgb)
+        self._point_set_colors.append(pv.Color(color).float_rgb)
         self._point_sets.append(point_array)
         # self._point_set_representations.append(style)
 
@@ -179,7 +179,7 @@ class PlotterITK:
 
         mesh = to_geometry(mesh)
         self._geometries.append(mesh)
-        self._geometry_colors.append(pv.Color(color).f_rgb)
+        self._geometry_colors.append(pv.Color(color).float_rgb)
         self._geometry_opacities.append(opacity)
 
     @property
@@ -197,7 +197,7 @@ class PlotterITK:
 
         >>> plotter.background_color = 'k'
         """
-        self._background_color = pv.Color(color).f_rgb
+        self._background_color = pv.Color(color).float_rgb
 
     @property
     def camera_position(self):

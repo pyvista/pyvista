@@ -390,7 +390,7 @@ class ScalarBars:
         # self._scalar_bars.append(scalar_bar)
 
         if background_color is not None:
-            background_color = np.array(Color(background_color).i_rgba)
+            background_color = np.array(Color(background_color).int_rgba)
             scalar_bar.GetBackgroundProperty().SetColor(background_color[0:3])
 
             if fill:
@@ -448,8 +448,8 @@ class ScalarBars:
 
         label_text = scalar_bar.GetLabelTextProperty()
         anno_text = scalar_bar.GetAnnotationTextProperty()
-        label_text.SetColor(color.f_rgb)
-        anno_text.SetColor(color.f_rgb)
+        label_text.SetColor(color.float_rgb)
+        anno_text.SetColor(color.float_rgb)
         label_text.SetShadow(shadow)
         anno_text.SetShadow(shadow)
 
@@ -483,7 +483,7 @@ class ScalarBars:
         title_text.SetFontFamily(parse_font_family(font_family))
 
         # set color
-        title_text.SetColor(color.f_rgb)
+        title_text.SetColor(color.float_rgb)
 
         self._scalar_bar_actors[title] = scalar_bar
         if interactive:
@@ -510,7 +510,7 @@ class ScalarBars:
         if outline:
             scalar_bar.SetDrawFrame(True)
             frame_prop = scalar_bar.GetFrameProperty()
-            frame_prop.SetColor(color.f_rgb)
+            frame_prop.SetColor(color.float_rgb)
         else:
             scalar_bar.SetDrawFrame(False)
 

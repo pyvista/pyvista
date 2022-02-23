@@ -269,7 +269,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr=None):
     }
 
     if colors is None:
-        shared_attr['color'] = pv.Color(prop.GetColor()).hex[:-2]
+        shared_attr['color'] = pv.Color(prop.GetColor()).hex_rgb
 
     if tjs_texture is not None:
         shared_attr['map'] = tjs_texture
@@ -340,7 +340,7 @@ def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
         edge_color = prop.GetColor()
 
     edge_mat = tjs.LineBasicMaterial(
-        color=pv.Color(edge_color).hex[:-2],
+        color=pv.Color(edge_color).hex_rgb,
         linewidth=prop.GetLineWidth(),
         opacity=prop.GetOpacity(),
         side='FrontSide',
@@ -363,7 +363,7 @@ def to_tjs_points(dataset, mapper, prop):
     geo = tjs.BufferGeometry(attributes=attr)
 
     m_attr = {
-        'color': pv.Color(prop.GetColor()).hex[:-2],
+        'color': pv.Color(prop.GetColor()).hex_rgb,
         'size': prop.GetPointSize() / 100,
         'vertexColors': coloring,
     }
@@ -395,7 +395,7 @@ def pvlight_to_threejs_light(pvlight):
         # extend the position of the light to make "near infinite"
         position = np.array(pvlight.position) * 100000
         return tjs.DirectionalLight(
-            color=pvlight.diffuse_color.linear_to_srgb().hex[:-2],
+            color=pvlight.diffuse_color.linear_to_srgb().hex_rgb,
             position=position.tolist(),
             intensity=pvlight.intensity,
         )
@@ -483,7 +483,7 @@ def convert_renderer(pv_renderer):
     if pv_renderer.axes_enabled:
         children.append(tjs.AxesHelper(0.1))
 
-    scene = tjs.Scene(children=children, background=pv_renderer.background_color.hex[:-2])
+    scene = tjs.Scene(children=children, background=pv_renderer.background_color.hex_rgb)
 
     # replace inf with a real value here due to changes in
     # ipywidges==6.4.0 see
@@ -509,7 +509,7 @@ def convert_renderer(pv_renderer):
     )
 
     if pv_renderer.has_border:
-        bdr_color = pv_renderer.border_color.hex[:-2]
+        bdr_color = pv_renderer.border_color.hex_rgb
         renderer.layout.border = f'solid {pv_renderer.border_width}px {bdr_color}'
 
     # for now, we can't dynamically size the render windows.  If

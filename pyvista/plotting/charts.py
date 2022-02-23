@@ -12,7 +12,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-from .colors import Color
+from .colors import Color, hexcolors, color_synonyms
 
 
 # region Some metaclass wrapping magic
@@ -213,7 +213,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     @color.setter
     def color(self, val):
         self._color = Color(val, default_color="black")
-        self.SetColor(*self._color.i_rgba)
+        self.SetColor(*self._color.int_rgba)
 
     @property
     def width(self):
@@ -315,7 +315,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
     @color.setter
     def color(self, val):
         self._color = Color(val, default_color="black")
-        self.SetColor(*self._color.i_rgba)
+        self.SetColor(*self._color.int_rgba)
 
     @property
     def texture(self):
@@ -1230,7 +1230,7 @@ class _Chart(DocSubs):
 
     @background_color.setter
     def background_color(self, val):
-        # self.GetBackgroundBrush().SetColor(*Color(val).i_rgba)
+        # self.GetBackgroundBrush().SetColor(*Color(val).int_rgba)
         self._background.BackgroundBrush.color = val
 
     @property  # type: ignore
@@ -3049,13 +3049,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         # Note: All colors, marker styles and line styles are sorted in decreasing order of length to be able to find
         # the largest match first (e.g. find 'darkred' and '--' first instead of 'red' and '-')
         colors = sorted(
-            itertools.chain(pyvista.hexcolors.keys(), pyvista.color_char_to_word.keys()),
+            itertools.chain(hexcolors.keys(), color_synonyms.keys()),
             key=len,
             reverse=True,
         )
         marker_styles = sorted(ScatterPlot2D.MARKER_STYLES.keys(), key=len, reverse=True)
         line_styles = sorted(Pen.LINE_STYLES.keys(), key=len, reverse=True)
-        hex_pattern = "#[A-Fa-f0-9]{6}"
+        hex_pattern = "(#|0x)[A-Fa-f0-9]{6}([A-Fa-f0-9]{2})?"  # Match RGB(A) hex string
         # Extract color from format string
         match = re.search(hex_pattern, fmt)  # Start with matching hex strings
         if match is not None:

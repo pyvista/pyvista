@@ -626,7 +626,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
 
     sceneDescription = {
         "fetchGzip": doCompressArrays,
-        "background": plotter.background_color.f_rgb,
+        "background": plotter.background_color.float_rgb,
         "camera": {
             "focalPoint": plotter.camera.focal_point,
             "position": plotter.camera.position,

@@ -2263,10 +2263,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             prop.EdgeVisibilityOn()
 
         rgb_color = Color(color, default_color=self._theme.color)
-        prop.SetColor(rgb_color.f_rgb)
+        prop.SetColor(rgb_color.float_rgb)
         if isinstance(opacity, (float, int)):
             prop.SetOpacity(opacity)
-        prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).f_rgb)
+        prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).float_rgb)
 
         if render_points_as_spheres:
             prop.SetRenderPointsAsSpheres(render_points_as_spheres)
@@ -2863,7 +2863,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mapper = make_mapper(_vtk.vtkDataSetMapper)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop.SetColor(Color(silhouette_params["color"]).f_rgb)
+        prop.SetColor(Color(silhouette_params["color"]).float_rgb)
         prop.SetOpacity(silhouette_params["opacity"])
         prop.SetLineWidth(silhouette_params["line_width"])
 
@@ -3293,7 +3293,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
 
         self.textActor.GetTextProperty().SetColor(
-            Color(color, default_color=self._theme.font.color).f_rgb
+            Color(color, default_color=self._theme.font.color).float_rgb
         )
         self.textActor.GetTextProperty().SetFontFamily(FONTS[font].value)
         self.textActor.GetTextProperty().SetShadow(shadow)
@@ -3536,8 +3536,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         actor.SetMapper(mapper)
         actor.GetProperty().SetLineWidth(width)
         actor.GetProperty().EdgeVisibilityOn()
-        actor.GetProperty().SetEdgeColor(rgb_color.f_rgb)
-        actor.GetProperty().SetColor(rgb_color.f_rgb)
+        actor.GetProperty().SetEdgeColor(rgb_color.float_rgb)
+        actor.GetProperty().SetColor(rgb_color.float_rgb)
         actor.GetProperty().LightingOff()
 
         # legend label
@@ -3758,7 +3758,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             labelMapper.SetStyleToFilled()
         else:
             labelMapper.SetStyleToOutline()
-        labelMapper.SetBackgroundColor(Color(shape_color).f_rgb)
+        labelMapper.SetBackgroundColor(Color(shape_color).float_rgb)
         labelMapper.SetBackgroundOpacity(shape_opacity)
         labelMapper.SetMargin(margin)
 
@@ -3767,7 +3767,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         textprop.SetBold(bold)
         textprop.SetFontSize(font_size)
         textprop.SetFontFamily(parse_font_family(font_family))
-        textprop.SetColor(Color(text_color, default_color=self._theme.font.color).f_rgb)
+        textprop.SetColor(Color(text_color, default_color=self._theme.font.color).float_rgb)
         textprop.SetShadow(shadow)
 
         self.remove_actor(f'{name}-points', reset_camera=False)
@@ -5158,7 +5158,7 @@ class Plotter(BasePlotter):
         mapper = make_mapper(_vtk.vtkDataSetMapper)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop.SetColor(Color(color).f_rgb)
+        prop.SetColor(Color(color).float_rgb)
 
         return actor
 

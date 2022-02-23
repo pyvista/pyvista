@@ -303,7 +303,7 @@ class Light(vtkLight):
     @ambient_color.setter
     def ambient_color(self, color: color_like):
         """Set the ambient color of the light."""
-        self.SetAmbientColor(Color(color).f_rgb)
+        self.SetAmbientColor(Color(color).float_rgb)
 
     @property
     def diffuse_color(self):
@@ -333,7 +333,7 @@ class Light(vtkLight):
     @diffuse_color.setter
     def diffuse_color(self, color: color_like):
         """Set the diffuse color of the light."""
-        self.SetDiffuseColor(Color(color).f_rgb)
+        self.SetDiffuseColor(Color(color).float_rgb)
 
     @property
     def specular_color(self):
@@ -363,7 +363,7 @@ class Light(vtkLight):
     @specular_color.setter
     def specular_color(self, color: color_like):
         """Set the specular color of the light."""
-        self.SetSpecularColor(Color(color).f_rgb)
+        self.SetSpecularColor(Color(color).float_rgb)
 
     @property
     def position(self):

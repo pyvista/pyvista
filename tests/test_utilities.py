@@ -724,7 +724,8 @@ def test_color():
         with pytest.raises(ValueError):
             pyvista.Color('b', invalid_opacity)
     # Check hex and name getters
-    assert pyvista.Color(name).hex == f'#{h}'
+    assert pyvista.Color(name).hex_rgba == f'#{h}'
+    assert pyvista.Color(name).hex_rgb == f'#{h[:-2]}'
     assert pyvista.Color('b').name == 'blue'
     # Check sRGB conversion
     assert pyvista.Color('gray', 0.5).linear_to_srgb() == '#bcbcbcbc'

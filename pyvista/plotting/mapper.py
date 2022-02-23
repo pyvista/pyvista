@@ -166,14 +166,14 @@ def make_mapper(mapper_class):
             if np.any(clim) and not rgb:
                 self.scalar_range = clim[0], clim[1]
 
-            table.SetNanColor(Color(nan_color).f_rgba)
+            table.SetNanColor(Color(nan_color).float_rgba)
             if above_color:
                 table.SetUseAboveRangeColor(True)
-                table.SetAboveRangeColor(*Color(above_color).f_rgba)
+                table.SetAboveRangeColor(*Color(above_color).float_rgba)
                 scalar_bar_args.setdefault('above_label', 'Above')
             if below_color:
                 table.SetUseBelowRangeColor(True)
-                table.SetBelowRangeColor(*Color(below_color).f_rgba)
+                table.SetBelowRangeColor(*Color(below_color).float_rgba)
                 scalar_bar_args.setdefault('below_label', 'Below')
 
             if cmap is not None:
@@ -291,7 +291,7 @@ def make_mapper(mapper_class):
                     f"number of cells ({mesh.n_cells})."
                 )
 
-            rgba[:, :-1] = Color(color, default_color=theme.color).i_rgb
+            rgba[:, :-1] = Color(color, default_color=theme.color).int_rgb
             rgba[:, -1] = np.around(opacity * 255)
 
             self.configure_scalars_mode(

@@ -1,4 +1,5 @@
 import os
+import textwrap
 
 import pyvista as pv
 
@@ -200,22 +201,29 @@ class ColorTable(DocTable):
     """Class to generate colors table."""
 
     path = f"{COLORS_TABLE_DIR}/colors.rst"
-    header = """
-.. list-table::
-   :widths: 50 20 30
-   :header-rows: 1
+    header = textwrap.dedent(
+        """
+        .. list-table::
+           :widths: 50 20 30
+           :header-rows: 1
 
-   * - Name
-     - Hex value
-     - Example
-"""
-    row_template = """
-   * - {}
-     - ``{}``
-     - .. raw:: html
+           * - Name
+             - Hex value
+             - Example
+        """
+    )
+    row_template = textwrap.indent(
+        textwrap.dedent(
+            """
+            * - {}
+              - ``{}``
+              - .. raw:: html
 
-          <span style='width:100%; height:100%; display:block; background-color: {};'>&nbsp;</span>
-"""
+                   <span style='width:100%; height:100%; display:block; background-color: {};'>&nbsp;</span>
+            """
+        ),
+        "   ",  # Extra indent needed to make it part of the table
+    )
 
     @classmethod
     def fetch_tokens(cls):

@@ -100,10 +100,10 @@ def _update_axes_label_color(axes_actor, color=None):
         prop_y = axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
         prop_z = axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
         for prop in [prop_x, prop_y, prop_z]:
-            prop.SetColor(color.f_rgb)
+            prop.SetColor(color.float_rgb)
             prop.SetShadow(False)
     elif isinstance(axes_actor, _vtk.vtkAnnotatedCubeActor):
-        axes_actor.GetTextEdgesProperty().SetColor(color.f_rgb)
+        axes_actor.GetTextEdgesProperty().SetColor(color.float_rgb)
 
 
 def create_axes_marker(
@@ -158,12 +158,12 @@ def create_axes_marker(
     y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
     z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
     axes_actor = _vtk.vtkAxesActor()
-    axes_actor.GetXAxisShaftProperty().SetColor(x_color.f_rgb)
-    axes_actor.GetXAxisTipProperty().SetColor(x_color.f_rgb)
-    axes_actor.GetYAxisShaftProperty().SetColor(y_color.f_rgb)
-    axes_actor.GetYAxisTipProperty().SetColor(y_color.f_rgb)
-    axes_actor.GetZAxisShaftProperty().SetColor(z_color.f_rgb)
-    axes_actor.GetZAxisTipProperty().SetColor(z_color.f_rgb)
+    axes_actor.GetXAxisShaftProperty().SetColor(x_color.float_rgb)
+    axes_actor.GetXAxisTipProperty().SetColor(x_color.float_rgb)
+    axes_actor.GetYAxisShaftProperty().SetColor(y_color.float_rgb)
+    axes_actor.GetYAxisTipProperty().SetColor(y_color.float_rgb)
+    axes_actor.GetZAxisShaftProperty().SetColor(z_color.float_rgb)
+    axes_actor.GetZAxisTipProperty().SetColor(z_color.float_rgb)
     # Set labels
     axes_actor.SetXAxisLabelText(xlabel)
     axes_actor.SetYAxisLabelText(ylabel)
@@ -295,17 +295,17 @@ def create_axes_orientation_box(
         axes_actor.SetZMinusFaceText(f"-{zlabel}")
     axes_actor.SetFaceTextVisibility(not labels_off)
     axes_actor.SetTextEdgesVisibility(False)
-    # axes_actor.GetTextEdgesProperty().SetColor(edge_color.f_rgb)
+    # axes_actor.GetTextEdgesProperty().SetColor(edge_color.float_rgb)
     # axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
-    axes_actor.GetXPlusFaceProperty().SetColor(x_color.f_rgb)
-    axes_actor.GetXMinusFaceProperty().SetColor(x_color.f_rgb)
-    axes_actor.GetYPlusFaceProperty().SetColor(y_color.f_rgb)
-    axes_actor.GetYMinusFaceProperty().SetColor(y_color.f_rgb)
-    axes_actor.GetZPlusFaceProperty().SetColor(z_color.f_rgb)
-    axes_actor.GetZMinusFaceProperty().SetColor(z_color.f_rgb)
+    axes_actor.GetXPlusFaceProperty().SetColor(x_color.float_rgb)
+    axes_actor.GetXMinusFaceProperty().SetColor(x_color.float_rgb)
+    axes_actor.GetYPlusFaceProperty().SetColor(y_color.float_rgb)
+    axes_actor.GetYMinusFaceProperty().SetColor(y_color.float_rgb)
+    axes_actor.GetZPlusFaceProperty().SetColor(z_color.float_rgb)
+    axes_actor.GetZMinusFaceProperty().SetColor(z_color.float_rgb)
 
     axes_actor.GetCubeProperty().SetOpacity(opacity)
-    # axes_actor.GetCubeProperty().SetEdgeColor(edge_color.f_rgb)
+    # axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
     axes_actor.GetCubeProperty().SetEdgeVisibility(True)
     axes_actor.GetCubeProperty().BackfaceCullingOn()
     if opacity < 1.0:
@@ -321,12 +321,12 @@ def create_axes_orientation_box(
         cube.clear_data()  # remove normals
         face_colors = np.array(
             [
-                x_face_color.i_rgb,
-                x_face_color.i_rgb,
-                y_face_color.i_rgb,
-                y_face_color.i_rgb,
-                z_face_color.i_rgb,
-                z_face_color.i_rgb,
+                x_face_color.int_rgb,
+                x_face_color.int_rgb,
+                y_face_color.int_rgb,
+                y_face_color.int_rgb,
+                z_face_color.int_rgb,
+                z_face_color.int_rgb,
             ],
             np.uint8,
         )
@@ -544,7 +544,7 @@ def parse_color(color, opacity=None, default_color=None):  # pragma: no cover
         else:
             color = default_color
     if isinstance(color, str):
-        color = Color(color).f_rgb
+        color = Color(color).float_rgb
     elif isinstance(color, (Sequence, np.ndarray)):
         try:
             color = np.asarray(color, dtype=np.float64)

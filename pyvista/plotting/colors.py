@@ -463,7 +463,7 @@ class Color:
         try:
             if isinstance(color, Color):
                 # Create copy of color instance
-                self._red, self._green, self._blue, self._opacity = color.i_rgba
+                self._red, self._green, self._blue, self._opacity = color.int_rgba
             elif isinstance(color, str):
                 # From named color or hex string
                 self._from_str(color)
@@ -478,7 +478,7 @@ class Color:
                 self._from_rgba(color)
             else:
                 raise ValueError(f"Unsupported color type: {type(color)}")
-            self._name = color_names.get(self.hex[:-2], None)
+            self._name = color_names.get(self.hex_rgb, None)
         except ValueError as e:
             raise ValueError(
                 "\n"
@@ -613,7 +613,7 @@ class Color:
                 raise ValueError(f"Invalid color name or hex string: {arg}") from None
 
     @property
-    def i_rgba(self) -> Tuple[int, int, int, int]:
+    def int_rgba(self) -> Tuple[int, int, int, int]:
         """Get the color value as an RGBA integer tuple.
 
         Examples
@@ -624,7 +624,7 @@ class Color:
         >>> c = pyvista.Color("blue", opacity=128)
         >>> c
         Color(name='blue', hex='#0000ff80')
-        >>> c.i_rgba
+        >>> c.int_rgba
         (0, 0, 255, 128)
 
         Create a transparent red color using an integer RGBA sequence.
@@ -632,14 +632,14 @@ class Color:
         >>> c = pyvista.Color([255, 0, 0, 64])
         >>> c
         Color(name='red', hex='#ff000040')
-        >>> c.i_rgba
+        >>> c.int_rgba
         (255, 0, 0, 64)
 
         """
         return self._red, self._green, self._blue, self._opacity
 
     @property
-    def i_rgb(self) -> Tuple[int, int, int]:
+    def int_rgb(self) -> Tuple[int, int, int]:
         """Get the color value as an RGB integer tuple.
 
         Examples
@@ -650,7 +650,7 @@ class Color:
         >>> c = pyvista.Color("blue", opacity=128)
         >>> c
         Color(name='blue', hex='#0000ff80')
-        >>> c.i_rgb
+        >>> c.int_rgb
         (0, 0, 255)
 
         Create a red color using an integer RGB sequence.
@@ -658,14 +658,14 @@ class Color:
         >>> c = pyvista.Color([255, 0, 0])
         >>> c
         Color(name='red', hex='#ff0000ff')
-        >>> c.i_rgb
+        >>> c.int_rgb
         (255, 0, 0)
 
         """
-        return self.i_rgba[:3]
+        return self.int_rgba[:3]
 
     @property
-    def f_rgba(self) -> Tuple[float, float, float, float]:
+    def float_rgba(self) -> Tuple[float, float, float, float]:
         """Get the color value as an RGBA float tuple.
 
         Examples
@@ -676,7 +676,7 @@ class Color:
         >>> c = pyvista.Color("blue", opacity=0.6)
         >>> c
         Color(name='blue', hex='#0000ff99')
-        >>> c.f_rgba
+        >>> c.float_rgba
         (0.0, 0.0, 1.0, 0.6)
 
         Create a transparent red color using a float RGBA sequence.
@@ -684,14 +684,14 @@ class Color:
         >>> c = pyvista.Color([1.0, 0.0, 0.0, 0.2])
         >>> c
         Color(name='red', hex='#ff000033')
-        >>> c.f_rgba
+        >>> c.float_rgba
         (1.0, 0.0, 0.0, 0.2)
 
         """
         return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
 
     @property
-    def f_rgb(self) -> Tuple[float, float, float]:
+    def float_rgb(self) -> Tuple[float, float, float]:
         """Get the color value as an RGB float tuple.
 
         Examples
@@ -702,22 +702,22 @@ class Color:
         >>> c = pyvista.Color("blue", default_opacity=0.6)
         >>> c
         Color(name='blue', hex='#0000ff99')
-        >>> c.f_rgb
+        >>> c.float_rgb
         (0.0, 0.0, 1.0)
 
-        Create a red color using a float RGBA sequence.
+        Create a red color using a float RGB sequence.
 
         >>> c = pyvista.Color([1.0, 0.0, 0.0])
         >>> c
         Color(name='red', hex='#ff0000ff')
-        >>> c.f_rgb
+        >>> c.float_rgb
         (1.0, 0.0, 0.0)
 
         """
-        return self.f_rgba[:3]
+        return self.float_rgba[:3]
 
     @property
-    def hex(self) -> str:
+    def hex_rgba(self) -> str:
         """Get the color value as an RGBA hexadecimal value.
 
         Examples
@@ -728,7 +728,7 @@ class Color:
         >>> c = pyvista.Color("blue", default_opacity="#80")
         >>> c
         Color(name='blue', hex='#0000ff80')
-        >>> c.hex
+        >>> c.hex_rgba
         '#0000ff80'
 
         Create a transparent red color using an RGBA hexadecimal value.
@@ -736,13 +736,39 @@ class Color:
         >>> c = pyvista.Color("0xff000040")
         >>> c
         Color(name='red', hex='#ff000040')
-        >>> c.hex
+        >>> c.hex_rgba
         '#ff000040'
 
         """
         return '#' + ''.join(
             f"{c:0>2x}" for c in (self._red, self._green, self._blue, self._opacity)
         )
+
+    @property
+    def hex_rgb(self) -> str:
+        """Get the color value as an RGB hexadecimal value.
+
+        Examples
+        --------
+        Create a blue color with half opacity.
+
+        >>> import pyvista
+        >>> c = pyvista.Color("blue", default_opacity="#80")
+        >>> c
+        Color(name='blue', hex='#0000ff80')
+        >>> c.hex_rgb
+        '#0000ff'
+
+        Create a red color using an RGB hexadecimal value.
+
+        >>> c = pyvista.Color("0xff0000")
+        >>> c
+        Color(name='red', hex='#ff0000ff')
+        >>> c.hex_rgb
+        '#ff0000'
+
+        """
+        return self.hex_rgba[:-2]
 
     @property
     def name(self) -> Optional[str]:
@@ -798,7 +824,7 @@ class Color:
             A new ``Color`` instance with sRGB color values.
 
         """
-        rgba = np.array(self.f_rgba)
+        rgba = np.array(self.float_rgba)
         mask = rgba < 0.0031308
         rgba[mask] *= 12.92
         rgba[~mask] = 1.055 * rgba[~mask] ** (1 / 2.4) - 0.055
@@ -813,7 +839,7 @@ class Color:
             A new ``Color`` instance with linear color values.
 
         """
-        rgba = np.array(self.f_rgba)
+        rgba = np.array(self.float_rgba)
         mask = rgba < 0.04045
         rgba[mask] /= 12.92
         rgba[~mask] = ((rgba[~mask] + 0.055) / 1.055) ** 2.4
@@ -831,7 +857,7 @@ class Color:
     def __eq__(self, other):
         """Equality comparison."""
         try:
-            return self.i_rgba == Color(other).i_rgba
+            return self.int_rgba == Color(other).int_rgba
         except ValueError:  # pragma: no cover
             return NotImplemented
 
@@ -841,13 +867,13 @@ class Color:
 
     def __repr__(self):  # pragma: no cover
         """Human readable representation."""
-        kwargs = f"hex={self.hex!r}"
+        kwargs = f"hex={self.hex_rgba!r}"
         if self._name is not None:
             kwargs = f"name={self._name!r}, " + kwargs
         return f"Color({kwargs})"
 
 
-PARAVIEW_BACKGROUND = Color('paraview').f_rgb  # [82, 87, 110] / 255
+PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
 def hex_to_rgb(h):  # pragma: no cover
@@ -857,7 +883,7 @@ def hex_to_rgb(h):  # pragma: no cover
         "The usage of `hex_to_rgb` is deprecated in favor of the new `Color` class.",
         PyvistaDeprecationWarning,
     )
-    return Color(h).f_rgb
+    return Color(h).float_rgb
 
 
 def string_to_rgb(string):  # pragma: no cover
@@ -880,7 +906,7 @@ def string_to_rgb(string):  # pragma: no cover
         "The usage of `string_to_rgb` is deprecated in favor of the new `Color` class.",
         PyvistaDeprecationWarning,
     )
-    return Color(string).f_rgb
+    return Color(string).float_rgb
 
 
 def get_cmap_safe(cmap):
