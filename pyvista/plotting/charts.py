@@ -12,7 +12,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-from .colors import Color, hexcolors, color_synonyms
+from .colors import Color, color_synonyms, hexcolors
 
 
 # region Some metaclass wrapping magic
