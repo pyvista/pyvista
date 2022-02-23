@@ -201,3 +201,15 @@ def test_non_standard_shape():
     pl = pyvista.Plotter(shape='2|3')
     with pytest.raises(RuntimeError, match='Unsupported plotter shape'):
         pv_pythreejs.convert_plotter(pl)
+
+
+def test_labels():
+    poly = pyvista.PolyData(np.random.rand(10, 3))
+    poly["My Labels"] = [f"Label {i}" for i in range(poly.n_points)]
+
+    pl = pyvista.Plotter()
+    pl.add_point_labels(poly, "My Labels", point_size=20, font_size=36)
+
+    # ensure that we ignore labels
+    with pytest.warns(UserWarning):
+        pv_pythreejs.convert_plotter(pl)
