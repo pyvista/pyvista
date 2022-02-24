@@ -30,7 +30,7 @@ def ncells_from_cells(cells):
     """
     consumer = deque(maxlen=0)
     it = cells.flat
-    for n_cells in count():
+    for n_cells in count():  # noqa: B007
         skip = next(it, None)
         if skip is None:
             break
@@ -140,22 +140,30 @@ def generate_cell_offsets_loop(cells, cell_types):
     ValueError
         If cell types and cell arrays are inconsistent, or have wrong size/dtype
     """
-    if (not np.issubdtype(cells.dtype, np.integer) or not np.issubdtype(cell_types.dtype, np.integer)):
+    if not np.issubdtype(cells.dtype, np.integer) or not np.issubdtype(
+        cell_types.dtype, np.integer
+    ):
         raise ValueError("The cells and cell-type arrays must have an integral data-type")
 
     offsets = np.zeros(shape=[cell_types.size], dtype=np.int64)
 
     current_cell_pos = 0
-    for cell_i, cell_t in enumerate(cell_types):
+    for cell_i, _ in enumerate(cell_types):
         if current_cell_pos >= cells.size:
-            raise ValueError("Cell types and cell array are inconsistent. Got %d values left after reading all types" % (cell_types.size - current_cell_pos))
+            raise ValueError(
+                "Cell types and cell array are inconsistent. Got %d values left after reading all types"
+                % (cell_types.size - current_cell_pos)
+            )
 
         cell_size = cells[current_cell_pos]
         offsets[cell_i] = current_cell_pos
-        current_cell_pos += cell_size+1
+        current_cell_pos += cell_size + 1
 
     if current_cell_pos != cells.size:
-        raise ValueError("Cell types and cell array are inconsistent. Got %d values left after reading all types" % (cell_types.size - current_cell_pos))
+        raise ValueError(
+            "Cell types and cell array are inconsistent. Got %d values left after reading all types"
+            % (cell_types.size - current_cell_pos)
+        )
 
     return offsets
 
@@ -186,21 +194,28 @@ def generate_cell_offsets(cells, cell_types):
     """
     from .cell_type_helper import enum_cell_type_nr_points_map
 
-    if (not np.issubdtype(cells.dtype, np.integer) or not np.issubdtype(cell_types.dtype, np.integer)):
+    if not np.issubdtype(cells.dtype, np.integer) or not np.issubdtype(
+        cell_types.dtype, np.integer
+    ):
         raise ValueError("The cells and cell-type arrays must have an integral data-type")
 
     try:
-        cell_sizes = np.array([enum_cell_type_nr_points_map[cell_t] for cell_t in cell_types], dtype=np.int32)
-    except KeyError as err:
-        return generate_cell_offsets_loop(cells, cell_types) #Unknown requested cell type present
+        cell_sizes = np.array(
+            [enum_cell_type_nr_points_map[cell_t] for cell_t in cell_types], dtype=np.int32
+        )
+    except KeyError:
+        return generate_cell_offsets_loop(cells, cell_types)  # Unknown requested cell type present
 
     if np.any(cell_sizes == 0):
         return generate_cell_offsets_loop(cells, cell_types)
 
-    cell_sizes_cum = np.cumsum(cell_sizes+1)
+    cell_sizes_cum = np.cumsum(cell_sizes + 1)
 
     if cell_sizes_cum[-1] != cells.size:
-        raise ValueError("Cell types and cell array are inconsistent. Expected a cell array of length %d according to the cell types" % (cell_sizes_cum[-1]))
+        raise ValueError(
+            "Cell types and cell array are inconsistent. Expected a cell array of length %d according to the cell types"
+            % (cell_sizes_cum[-1])
+        )
 
     offsets = np.concatenate([[0], cell_sizes_cum])[:-1]
 
@@ -268,7 +283,9 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         raise ValueError("Found unknown or unsupported VTK cell type in your requested cells")
 
     if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in mixed_cell_dict.keys()]):
-        raise ValueError("You requested a cell type with variable length, which can't be used in this method")
+        raise ValueError(
+            "You requested a cell type with variable length, which can't be used in this method"
+        )
 
     final_cell_types = []
     final_cell_arr = []
@@ -276,27 +293,41 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     current_cell_offset = 0
     for elem_t, cells_arr in mixed_cell_dict.items():
         nr_points_per_elem = enum_cell_type_nr_points_map[elem_t]
-        if (not isinstance(cells_arr, np.ndarray) or not np.issubdtype(cells_arr.dtype, np.integer)
-                or cells_arr.ndim not in [1, 2]
-                or (cells_arr.ndim == 1 and cells_arr.size % nr_points_per_elem != 0)
-                or (cells_arr.ndim == 2 and cells_arr.shape[-1] != nr_points_per_elem)):
-            raise ValueError("Expected an np.ndarray of size [N, %d] or [N*%d] with an integral type" % (nr_points_per_elem, nr_points_per_elem))
+        if (
+            not isinstance(cells_arr, np.ndarray)
+            or not np.issubdtype(cells_arr.dtype, np.integer)
+            or cells_arr.ndim not in [1, 2]
+            or (cells_arr.ndim == 1 and cells_arr.size % nr_points_per_elem != 0)
+            or (cells_arr.ndim == 2 and cells_arr.shape[-1] != nr_points_per_elem)
+        ):
+            raise ValueError(
+                "Expected an np.ndarray of size [N, %d] or [N*%d] with an integral type"
+                % (nr_points_per_elem, nr_points_per_elem)
+            )
 
         if np.any(cells_arr < 0):
             raise ValueError("Non-valid index (<0) given for cells of type %s" % (elem_t))
 
         if nr_points is not None and np.any(cells_arr >= nr_points):
-            raise ValueError("Non-valid index (>=%d) given for cells of type %s" % (nr_points, elem_t))
+            raise ValueError(
+                "Non-valid index (>=%d) given for cells of type %s" % (nr_points, elem_t)
+            )
 
-        if cells_arr.ndim == 1: #Flattened array present
+        if cells_arr.ndim == 1:  # Flattened array present
             cells_arr = cells_arr.reshape([-1, nr_points_per_elem])
 
         nr_elems = cells_arr.shape[0]
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
-        final_cell_arr.append(np.concatenate([np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1).reshape([-1]))
+        final_cell_arr.append(
+            np.concatenate(
+                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1
+            ).reshape([-1])
+        )
 
         if not _vtk.VTK9:
-            final_cell_offsets.append(current_cell_offset + (nr_points_per_elem+1) * (np.arange(nr_elems)+1))
+            final_cell_offsets.append(
+                current_cell_offset + (nr_points_per_elem + 1) * (np.arange(nr_elems) + 1)
+            )
             current_cell_offset += final_cell_offsets[-1][-1]
 
     final_cell_types = np.concatenate(final_cell_types)
@@ -346,7 +377,7 @@ def get_mixed_cells(vtkobj):
 
     nr_cells = vtkobj.n_cells
     if nr_cells == 0:
-      return None
+        return None
 
     cell_types = vtkobj.celltypes
     cells = vtkobj.cells
@@ -357,8 +388,10 @@ def get_mixed_cells(vtkobj):
         raise ValueError("Found unknown or unsupported VTK cell type in the present cells")
 
     if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in unique_cell_types]):
-        raise ValueError("You requested a cell-dictionary with a variable length cell, which is not supported "
-                         "currently")
+        raise ValueError(
+            "You requested a cell-dictionary with a variable length cell, which is not supported "
+            "currently"
+        )
 
     cell_sizes = np.zeros_like(cell_types)
     for cell_type in unique_cell_types:
@@ -373,7 +406,9 @@ def get_mixed_cells(vtkobj):
         mask = cell_types == cell_type
         current_cell_starts = cell_starts[mask]
 
-        cells_inds = current_cell_starts[..., np.newaxis] + np.arange(cell_size)[np.newaxis].astype(cell_starts.dtype)
+        cells_inds = current_cell_starts[..., np.newaxis] + np.arange(cell_size)[np.newaxis].astype(
+            cell_starts.dtype
+        )
 
         return_dict[cell_type] = cells[cells_inds]
 

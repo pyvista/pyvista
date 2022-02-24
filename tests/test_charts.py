@@ -11,12 +11,12 @@ import pyvista
 from pyvista import examples
 from pyvista.plotting import charts, system_supports_plotting
 
-skip_mac = pytest.mark.skipif(platform.system() == 'Darwin',
-                              reason='MacOS CI fails when downloading examples')
+skip_mac = pytest.mark.skipif(
+    platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
+)
 
 skip_no_plotting = pytest.mark.skipif(
-    not system_supports_plotting(),
-    reason="Test requires system to support plotting"
+    not system_supports_plotting(), reason="Test requires system to support plotting"
 )
 
 # skip all tests if VTK<9.1.0
@@ -32,7 +32,9 @@ def to_vtk_scientific(val):
     parts = val.split('e')
     sign, exp = parts[1][0], parts[1][1:]
     exp = exp.lstrip("0")  # Remove leading zeros of exponent
-    return parts[0] + "e" + sign + exp if exp != "" else parts[0]  # Remove exponent altogether if it is 0
+    return (
+        parts[0] + "e" + sign + exp if exp != "" else parts[0]
+    )  # Remove exponent altogether if it is 0
 
 
 @pytest.fixture
@@ -283,7 +285,9 @@ def test_axis(chart_2d):
     axis.tick_locations = tlocs_large  # Add some more variety to labels
     chart_2d.show()
     assert tuple(axis.tick_labels) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
-    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
+    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(
+        to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large
+    )
     assert axis.GetNotation() == charts.Axis.SCIENTIFIC_NOTATION
     assert axis.GetPrecision() == 4
     axis.tick_locations = None
@@ -358,16 +362,28 @@ def test_chart_common(pl, chart_f, request):
     # Check geometry and resizing
     w, h = pl.window_size
     chart._render_event()
-    assert chart._geometry == (chart.loc[0]*w, chart.loc[1]*h, chart.size[0]*w, chart.size[1]*h)
+    assert chart._geometry == (
+        chart.loc[0] * w,
+        chart.loc[1] * h,
+        chart.size[0] * w,
+        chart.size[1] * h,
+    )
     w, h = pl.window_size = [200, 200]
     chart._render_event()
-    assert chart._geometry == (chart.loc[0]*w, chart.loc[1]*h, chart.size[0]*w, chart.size[1]*h)
+    assert chart._geometry == (
+        chart.loc[0] * w,
+        chart.loc[1] * h,
+        chart.size[0] * w,
+        chart.size[1] * h,
+    )
 
     # Check is_within
-    assert chart._is_within(((chart.loc[0]+chart.size[0]/2)*w, (chart.loc[1]+chart.size[1]/2)*h))
-    assert not chart._is_within(((chart.loc[0]+chart.size[0]/2)*w, chart.loc[1]*h-5))
-    assert not chart._is_within((chart.loc[0]*w-5, (chart.loc[1]+chart.size[1]/2)*h))
-    assert not chart._is_within((chart.loc[0]*w-5, chart.loc[1]*h-5))
+    assert chart._is_within(
+        ((chart.loc[0] + chart.size[0] / 2) * w, (chart.loc[1] + chart.size[1] / 2) * h)
+    )
+    assert not chart._is_within(((chart.loc[0] + chart.size[0] / 2) * w, chart.loc[1] * h - 5))
+    assert not chart._is_within((chart.loc[0] * w - 5, (chart.loc[1] + chart.size[1] / 2) * h))
+    assert not chart._is_within((chart.loc[0] * w - 5, chart.loc[1] * h - 5))
 
     chart.border_color = c_red
     assert np.allclose(chart.border_color, c_red)
@@ -391,7 +407,18 @@ def test_chart_common(pl, chart_f, request):
     assert not chart.legend_visible
 
 
-@pytest.mark.parametrize("plot_f", ("line_plot_2d", "scatter_plot_2d", "area_plot", "bar_plot", "stack_plot", "box_plot", "pie_plot"))
+@pytest.mark.parametrize(
+    "plot_f",
+    (
+        "line_plot_2d",
+        "scatter_plot_2d",
+        "area_plot",
+        "bar_plot",
+        "stack_plot",
+        "box_plot",
+        "pie_plot",
+    ),
+)
 def test_plot_common(plot_f, request):
     # Test the common plot functionalities
     plot = request.getfixturevalue(plot_f)
@@ -431,13 +458,15 @@ def test_multicomp_plot_common(plot_f, request):
     # Test the common multicomp plot functionalities
     plot = request.getfixturevalue(plot_f)
     cs = "spectrum"
-    cs_colors = [(0.0, 0.0, 0.0, 1.0),
-                 (0.8941176470588236, 0.10196078431372549, 0.10980392156862745, 1.0),
-                 (0.21568627450980393, 0.49411764705882355, 0.7215686274509804, 1.0),
-                 (0.30196078431372547, 0.6862745098039216, 0.2901960784313726, 1.0),
-                 (0.596078431372549, 0.3058823529411765, 0.6392156862745098, 1.0),
-                 (1.0, 0.4980392156862745, 0.0, 1.0),
-                 (0.6509803921568628, 0.33725490196078434, 0.1568627450980392, 1.0)]
+    cs_colors = [
+        (0.0, 0.0, 0.0, 1.0),
+        (0.8941176470588236, 0.10196078431372549, 0.10980392156862745, 1.0),
+        (0.21568627450980393, 0.49411764705882355, 0.7215686274509804, 1.0),
+        (0.30196078431372547, 0.6862745098039216, 0.2901960784313726, 1.0),
+        (0.596078431372549, 0.3058823529411765, 0.6392156862745098, 1.0),
+        (1.0, 0.4980392156862745, 0.0, 1.0),
+        (0.6509803921568628, 0.33725490196078434, 0.1568627450980392, 1.0),
+    ]
     colors = [(1, 0, 1, 1), (0, 1, 1, 1), (1, 1, 0, 1)]
     labels = ["Foo", "Spam", "Bla"]
 
@@ -513,7 +542,9 @@ def test_scatterplot2d(scatter_plot_2d):
     sz = 5
     st, st_inv = "o", "^"
     l = "Scatter"
-    assert st_inv not in charts.ScatterPlot2D.MARKER_STYLES, "New marker styles added? Change this test."
+    assert (
+        st_inv not in charts.ScatterPlot2D.MARKER_STYLES
+    ), "New marker styles added? Change this test."
 
     # Test constructor
     plot = charts.ScatterPlot2D(x, y, c, sz, st, l)
@@ -652,7 +683,7 @@ def test_chart_2d(pl, chart_2d):
     ly = "Y label"
     rx = [0, 5]
     ry = [0, 1]
-    x = np.arange(11)-5
+    x = np.arange(11) - 5
     y = x**2
     ys = [np.sin(x), np.cos(x), np.tanh(x)]
     col = (1, 0, 1, 1)
@@ -675,10 +706,12 @@ def test_chart_2d(pl, chart_2d):
     pl.add_chart(chart)
     r_w, r_h = chart._renderer.GetSize()
     pl.show(auto_close=False)
-    assert np.allclose(chart._geometry, (loc[0]*r_w, loc[1]*r_h, size[0]*r_w, size[1]*r_h))
-    pl.window_size = (int(pl.window_size[0]/2), int(pl.window_size[1]/2))
+    assert np.allclose(chart._geometry, (loc[0] * r_w, loc[1] * r_h, size[0] * r_w, size[1] * r_h))
+    pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show()  # This will also call chart._resize
-    assert np.allclose(chart._geometry, (loc[0]*r_w/2, loc[1]*r_h/2, size[0]*r_w/2, size[1]*r_h/2))
+    assert np.allclose(
+        chart._geometry, (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2)
+    )
 
     # Test parse_format
     colors = itertools.chain(pyvista.hexcolors, pyvista.color_char_to_word, ["#fa09b6", ""])
@@ -795,7 +828,13 @@ def test_chart_2d(pl, chart_2d):
 
     chart_2d.hide_axes()
     for axis in (chart_2d.x_axis, chart_2d.y_axis):
-        assert not (axis.visible or axis.label_visible or axis.ticks_visible or axis.tick_labels_visible or axis.grid)
+        assert not (
+            axis.visible
+            or axis.label_visible
+            or axis.ticks_visible
+            or axis.tick_labels_visible
+            or axis.grid
+        )
 
 
 @skip_no_plotting
@@ -816,9 +855,9 @@ def test_chart_box(pl, chart_box, box_plot):
     r_w, r_h = chart._renderer.GetSize()
     pl.show(auto_close=False)
     assert np.allclose(chart._geometry, (0, 0, r_w, r_h))
-    pl.window_size = (int(pl.window_size[0]/2), int(pl.window_size[1]/2))
+    pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show()  # This will also call chart._resize
-    assert np.allclose(chart._geometry, (0, 0, r_w/2, r_h/2))
+    assert np.allclose(chart._geometry, (0, 0, r_w / 2, r_h / 2))
 
     # Test remaining properties
     assert chart_box.loc == (0, 0)
@@ -847,9 +886,9 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     r_w, r_h = chart._renderer.GetSize()
     pl.show(auto_close=False)
     assert np.allclose(chart._geometry, (0, 0, r_w, r_h))
-    pl.window_size = (int(pl.window_size[0]/2), int(pl.window_size[1]/2))
+    pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show()  # This will also call chart._resize
-    assert np.allclose(chart._geometry, (0, 0, r_w/2, r_h/2))
+    assert np.allclose(chart._geometry, (0, 0, r_w / 2, r_h / 2))
 
     # Test remaining properties
     assert chart_pie.loc == (0, 0)
@@ -875,14 +914,20 @@ def test_chart_mpl(pl, chart_mpl):
     pl.add_chart(chart)
     r_w, r_h = chart._renderer.GetSize()
     pl.show(auto_close=False)
-    assert np.allclose(chart._geometry, (loc[0]*r_w, loc[1]*r_h, size[0]*r_w, size[1]*r_h))
-    assert np.allclose(chart.position, (loc[0]*r_w, loc[1]*r_h))
-    assert np.allclose(chart._canvas.get_width_height(), (size[0]*r_w, size[1]*r_h))
-    pl.window_size = (int(pl.window_size[0]/2), int(pl.window_size[1]/2))
+    assert np.allclose(chart._geometry, (loc[0] * r_w, loc[1] * r_h, size[0] * r_w, size[1] * r_h))
+    assert np.allclose(chart.position, (loc[0] * r_w, loc[1] * r_h))
+    assert np.allclose(chart._canvas.get_width_height(), (size[0] * r_w, size[1] * r_h))
+    pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show()  # This will also call chart._resize
-    assert np.allclose(chart._geometry, (loc[0]*r_w/2, loc[1]*r_h/2, size[0]*r_w/2, size[1]*r_h/2))
-    assert np.allclose(chart.position, (loc[0]*r_w/2, loc[1]*r_h/2))
-    assert np.allclose(chart._canvas.get_width_height(), (size[0]*r_w/2, size[1]*r_h/2))
+    assert np.allclose(
+        chart._geometry, (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2)
+    )
+    assert np.allclose(chart.position, (loc[0] * r_w / 2, loc[1] * r_h / 2))
+    assert np.allclose(chart._canvas.get_width_height(), (size[0] * r_w / 2, size[1] * r_h / 2))
+
+    # test set position throw
+    with pytest.raises(ValueError, match="must be length 2"):
+        chart.position = (1, 2, 3)
 
 
 @skip_no_plotting
@@ -902,7 +947,10 @@ def test_charts(pl):
     pl.show(auto_close=False)  # We need to plot once to let the charts compute their true geometry
     assert not top_left.GetInteractive()
     assert not bottom_right.GetInteractive()
-    assert pl.renderers[0]._charts.toggle_interaction((0.75*win_size[0], 0.25*win_size[1])) is bottom_right._scene
+    assert (
+        pl.renderers[0]._charts.toggle_interaction((0.75 * win_size[0], 0.25 * win_size[1]))
+        is bottom_right._scene
+    )
     assert not top_left.GetInteractive()
     assert bottom_right.GetInteractive()
     assert pl.renderers[0]._charts.toggle_interaction((0, 0)) is None
@@ -934,7 +982,7 @@ def test_iren_context_style(pl):
     style_class = pl.iren._style_class
 
     # Simulate right click on the chart:
-    pl.iren._mouse_right_button_press(int(0.75*win_size[0]), int(0.75*win_size[1]))
+    pl.iren._mouse_right_button_press(int(0.75 * win_size[0]), int(0.75 * win_size[1]))
     assert chart.GetInteractive()
     assert pl.iren._style == "Context"
     assert pl.iren._style_class == pl.iren._context_style

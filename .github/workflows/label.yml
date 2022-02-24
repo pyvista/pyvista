@@ -16,23 +16,27 @@ jobs:
 
     # Label based on branch name
     - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.ref, 'refs/heads/doc')
+      if: startsWith(github.event.pull_request.head.ref, 'doc/') || startsWith(github.event.pull_request.head.ref, 'docs')
       with:
         labels: documentation
     - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.ref, 'refs/heads/maint') || startsWith(github.ref, 'refs/heads/no-ci') || startsWith(github.ref, 'refs/heads/ci')
+      if: startsWith(github.event.pull_request.head.ref, 'docker')
+      with:
+        labels: docker
+    - uses: actions-ecosystem/action-add-labels@v1
+      if: startsWith(github.event.pull_request.head.ref, 'maint') || startsWith(github.event.pull_request.head.ref, 'no-ci') || startsWith(github.event.pull_request.head.ref, 'ci')
       with:
         labels: maintenance
     - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.ref, 'refs/heads/junk')
+      if: startsWith(github.event.pull_request.head.ref, 'junk')
       with:
         labels: ignore-for-release
     - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.ref, 'refs/heads/feat')
+      if: startsWith(github.event.pull_request.head.ref, 'feat')
       with:
         labels: enhancement
 
     - uses: actions-ecosystem/action-add-labels@v1
-      if: startsWith(github.ref, 'refs/heads/fix') || startsWith(github.ref, 'refs/heads/patch')
+      if: startsWith(github.event.pull_request.head.ref, 'fix') || startsWith(github.event.pull_request.head.ref, 'patch')
       with:
-        labels: bug-fix
+        labels: bug

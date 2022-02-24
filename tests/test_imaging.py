@@ -18,19 +18,21 @@ def test_perlin_noise():
     assert_allclose(perlin.GetPhase(), phase)
 
 
-
-@pytest.mark.parametrize('dtype', [
-    np.float64,
-    np.float32,
-    np.int64,
-    np.uint64,
-    np.int32,
-    np.uint32,
-    np.int16,
-    np.uint16,
-    np.int8,
-    np.uint8,
-])
+@pytest.mark.parametrize(
+    'dtype',
+    [
+        np.float64,
+        np.float32,
+        np.int64,
+        np.uint64,
+        np.int32,
+        np.uint32,
+        np.int16,
+        np.uint16,
+        np.int8,
+        np.uint8,
+    ],
+)
 def test_sample_function(dtype):
     perlin = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
     bounds = (0, 2, 0, 1, -4, 4)
@@ -41,13 +43,15 @@ def test_sample_function(dtype):
         with pytest.raises(ValueError):
             pv.sample_function(perlin, output_type=dtype)
     else:
-        mesh = pv.sample_function(perlin,
-                                  bounds,
-                                  dim,
-                                  compute_normals=False,
-                                  output_type=dtype,
-                                  scalar_arr_name=scalar_arr_name)
-    
+        mesh = pv.sample_function(
+            perlin,
+            bounds,
+            dim,
+            compute_normals=False,
+            output_type=dtype,
+            scalar_arr_name=scalar_arr_name,
+        )
+
         assert_allclose(mesh.dimensions, dim)
         assert_allclose(mesh.bounds, bounds)
         assert mesh[scalar_arr_name].dtype == dtype

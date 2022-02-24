@@ -12,7 +12,13 @@ Orbit around a scene.
    ``p.open_gif('orbit.gif')``
 
 For orbiting to work you first have to show the scene and leave the plotter open
-with ``.show(auto_close=False)``.
+with ``.show(auto_close=False)``.  You may also have to set
+``pv.Plotter(off_screen=True)``
+
+.. note::
+   Use ``lighting=False`` to reduce the size of the color space to avoid
+   "jittery" GIFs when showing the scalar bar.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -22,19 +28,22 @@ from pyvista import examples
 mesh = examples.download_st_helens().warp_by_scalar()
 
 ###############################################################################
+# Orbit around the Mt. St Helens dataset.
 
 p = pv.Plotter()
-p.add_mesh(mesh)
+p.add_mesh(mesh, lighting=False)
+p.camera.zoom(1.5)
 p.show(auto_close=False)
 path = p.generate_orbital_path(n_points=36, shift=mesh.length)
 p.open_gif("orbit.gif")
 p.orbit_on_path(path, write_frames=True)
 p.close()
 
+
 ###############################################################################
 
 p = pv.Plotter()
-p.add_mesh(mesh)
+p.add_mesh(mesh, lighting=False)
 p.show_grid()
 p.show(auto_close=False)
 viewup = [0.5, 0.5, 1]

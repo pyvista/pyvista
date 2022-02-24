@@ -82,20 +82,24 @@ else:
         # Set up data directory
         os.makedirs(USER_DATA_PATH, exist_ok=True)
     except Exception as e:
-        warnings.warn(f'Unable to create `PYVISTA_USERDATA_PATH` at "{USER_DATA_PATH}"\n'
-                      f'Error: {e}\n\n'
-                      'Override the default path by setting the environmental variable '
-                      '`PYVISTA_USERDATA_PATH` to a writable path.')
+        warnings.warn(
+            f'Unable to create `PYVISTA_USERDATA_PATH` at "{USER_DATA_PATH}"\n'
+            f'Error: {e}\n\n'
+            'Override the default path by setting the environmental variable '
+            '`PYVISTA_USERDATA_PATH` to a writable path.'
+        )
         USER_DATA_PATH = ''
 
 EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
 try:
     os.makedirs(EXAMPLES_PATH, exist_ok=True)
 except Exception as e:
-    warnings.warn(f'Unable to create `EXAMPLES_PATH` at "{EXAMPLES_PATH}"\n'
-                  f'Error: {e}\n\n'
-                  'Override the default path by setting the environmental variable '
-                  '`PYVISTA_USERDATA_PATH` to a writable path.')
+    warnings.warn(
+        f'Unable to create `EXAMPLES_PATH` at "{EXAMPLES_PATH}"\n'
+        f'Error: {e}\n\n'
+        'Override the default path by setting the environmental variable '
+        '`PYVISTA_USERDATA_PATH` to a writable path.'
+    )
     EXAMPLES_PATH = ''
 
 # Send VTK messages to the logging module:

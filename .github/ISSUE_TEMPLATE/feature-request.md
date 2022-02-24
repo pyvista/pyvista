@@ -2,7 +2,7 @@
 name: Feature Request
 about: Request that a feature be added to PyVista
 title: ''
-labels: 'feature-request'
+labels: feature-request
 assignees: ''
 
 ---

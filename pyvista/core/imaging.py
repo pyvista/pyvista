@@ -10,16 +10,18 @@ from pyvista import _vtk, wrap
 from .filters import _update_alg
 
 
-def sample_function(function: _vtk.vtkImplicitFunction,
-                    bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
-                    dim: Sequence[int] = (50, 50, 50),
-                    compute_normals: bool = False,
-                    output_type: np.dtype = np.double,  # type: ignore
-                    capping: bool = False,
-                    cap_value: float = sys.float_info.max,
-                    scalar_arr_name: str = "scalars",
-                    normal_arr_name: str = "normals",
-                    progress_bar: bool = False):
+def sample_function(
+    function: _vtk.vtkImplicitFunction,
+    bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+    dim: Sequence[int] = (50, 50, 50),
+    compute_normals: bool = False,
+    output_type: np.dtype = np.double,  # type: ignore
+    capping: bool = False,
+    cap_value: float = sys.float_info.max,
+    scalar_arr_name: str = "scalars",
+    normal_arr_name: str = "normals",
+    progress_bar: bool = False,
+):
     """Sample an implicit function over a structured point set.
 
     Uses ``vtk.vtkSampleFunction``

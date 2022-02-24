@@ -5,7 +5,7 @@ import pytest
 
 try:
     import pythreejs  # noqa
-except:
+except:  # noqa: E722
     pytestmark = pytest.mark.skip
 
 import pyvista
@@ -22,7 +22,7 @@ def test_set_jupyter_backend_ipygany():
 
 
 def test_export_to_html(cube, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.html'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.html'))
 
     pl = pyvista.Plotter()
     pl.add_mesh(cube)
@@ -84,9 +84,10 @@ def test_output_face_scalars(sphere):
     pv_pythreejs.convert_plotter(pl)
 
 
-@pytest.mark.parametrize('max_index', [np.iinfo(np.uint16).max - 1,
-                                       np.iinfo(np.uint32).max - 1,
-                                       np.iinfo(np.uint32).max + 1])
+@pytest.mark.parametrize(
+    'max_index',
+    [np.iinfo(np.uint16).max - 1, np.iinfo(np.uint32).max - 1, np.iinfo(np.uint32).max + 1],
+)
 def test_cast_to_min_size(max_index):
 
     if max_index < np.iinfo(np.uint16).max:
@@ -200,4 +201,16 @@ def test_export_after_show():
 def test_non_standard_shape():
     pl = pyvista.Plotter(shape='2|3')
     with pytest.raises(RuntimeError, match='Unsupported plotter shape'):
+        pv_pythreejs.convert_plotter(pl)
+
+
+def test_labels():
+    poly = pyvista.PolyData(np.random.rand(10, 3))
+    poly["My Labels"] = [f"Label {i}" for i in range(poly.n_points)]
+
+    pl = pyvista.Plotter()
+    pl.add_point_labels(poly, "My Labels", point_size=20, font_size=36)
+
+    # ensure that we ignore labels
+    with pytest.warns(UserWarning):
         pv_pythreejs.convert_plotter(pl)

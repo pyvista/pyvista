@@ -43,15 +43,15 @@ path = examples.download_gpr_path().points
 data = examples.download_gpr_data_array()
 
 ###############################################################################
-plt.figure(figsize=(15,3))
-plt.pcolormesh(data, cmap="seismic", clim=[-1,1])
+plt.figure(figsize=(15, 3))
+plt.pcolormesh(data, cmap="seismic", clim=[-1, 1])
 plt.gca().invert_yaxis()
 
 ###############################################################################
 # View the the path of the GPR profile from a top-down perspective.
 # Since we have the full coordinates (XY and Z), we can create a structured
 # mesh "draping" down from those coordinates to hold the GPR image data.
-plt.scatter(path[:,1], path[:,0])
+plt.scatter(path[:, 1], path[:, 0])
 plt.axis("image")
 plt.xlabel("Northing")
 plt.ylabel("Easting")
@@ -62,7 +62,7 @@ assert len(path) in data.shape, "Make sure coordinates are present for every tra
 # If not, you'll need to interpolate the path!
 
 # Grab the number of samples (in Z dir) and number of traces/soundings
-nsamples, ntraces = data.shape # Might be opposite for your data, pay attention here
+nsamples, ntraces = data.shape  # Might be opposite for your data, pay attention here
 
 # Define the Z spacing of your 2D section
 z_spacing = 0.12
@@ -70,9 +70,9 @@ z_spacing = 0.12
 # Create structured points draping down from the path
 points = np.repeat(path, nsamples, axis=0)
 # repeat the Z locations across
-tp = np.arange(0, z_spacing*nsamples, z_spacing)
-tp = path[:,2][:,None] - tp
-points[:,-1] = tp.ravel()
+tp = np.arange(0, z_spacing * nsamples, z_spacing)
+tp = path[:, 2][:, None] - tp
+points[:, -1] = tp.ravel()
 
 ###############################################################################
 # Make a StructuredGrid from the structured points
@@ -87,11 +87,13 @@ grid["values"] = data.ravel(order="F")
 # And now we can plot it! or process or do anything, because it is a PyVista
 # mesh and the possibilities are endless with PyVista
 
-cpos = [(1217002.366883762, 345363.80666238244, 3816.828857791056),
- (1216322.4753436751, 344033.0310674846, 3331.052985309526),
- (-0.17716571330686096, -0.25634368781817973, 0.9502106207279767)]
+cpos = [
+    (1217002.366883762, 345363.80666238244, 3816.828857791056),
+    (1216322.4753436751, 344033.0310674846, 3331.052985309526),
+    (-0.17716571330686096, -0.25634368781817973, 0.9502106207279767),
+]
 
 p = pv.Plotter()
-p.add_mesh(grid, cmap="seismic", clim=[-1,1])
+p.add_mesh(grid, cmap="seismic", clim=[-1, 1])
 p.add_mesh(pv.PolyData(path), color='orange')
 p.show(cpos=cpos)

@@ -5,11 +5,11 @@ from collections.abc import Iterable
 import logging
 import os
 import re
+import subprocess
 import sys
 
 import scooby
 
-import pyvista
 from pyvista import _vtk
 
 
@@ -108,7 +108,7 @@ class Observer:
         try:
             kind, path, address, alert = regex.findall(message)[0]
             return kind, path, address, alert
-        except:
+        except:  # noqa: E722
             return '', '', '', message
 
     def log_message(self, kind, alert):
@@ -177,20 +177,26 @@ def send_errors_to_logging():
     return obs.observe(error_output)
 
 
+_cmd = """\
+import pyvista; \
+plotter = pyvista.Plotter(notebook=False, off_screen=True); \
+plotter.add_mesh(pyvista.Sphere()); \
+plotter.show(auto_close=False); \
+gpu_info = plotter.ren_win.ReportCapabilities(); \
+print(gpu_info); \
+plotter.close()\
+"""
+
+
 def get_gpu_info():
     """Get all information about the GPU."""
     # an OpenGL context MUST be opened before trying to do this.
-    plotter = pyvista.Plotter(notebook=False, off_screen=True)
-    plotter.add_mesh(pyvista.Sphere())
-    plotter.show(auto_close=False)
-    gpu_info = plotter.ren_win.ReportCapabilities()
-    plotter.close()
-    # Remove from list of Plotters
-    pyvista.plotting._ALL_PLOTTERS.pop(plotter._id_name)
+    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    gpu_info = '' if proc.returncode else proc.stdout.decode()
     return gpu_info
 
 
-class GPUInfo():
+class GPUInfo:
     """A class to hold GPU details."""
 
     def __init__(self):
@@ -204,7 +210,7 @@ class GPUInfo():
         try:
             renderer = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the renderer.")
+            raise RuntimeError("Unable to parse GPU information for the renderer.") from None
         return renderer.strip()
 
     @property
@@ -214,7 +220,7 @@ class GPUInfo():
         try:
             version = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the version.")
+            raise RuntimeError("Unable to parse GPU information for the version.") from None
         return version.strip()
 
     @property
@@ -224,15 +230,16 @@ class GPUInfo():
         try:
             vendor = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the vendor.")
+            raise RuntimeError("Unable to parse GPU information for the vendor.") from None
         return vendor.strip()
 
     def get_info(self):
         """All GPU information as tuple pairs."""
-        return (("GPU Vendor", self.vendor),
-                ("GPU Renderer", self.renderer),
-                ("GPU Version", self.version),
-               )
+        return (
+            ("GPU Vendor", self.vendor),
+            ("GPU Renderer", self.renderer),
+            ("GPU Version", self.version),
+        )
 
     def _repr_html_(self):
         """HTML table representation."""
@@ -255,8 +262,7 @@ class GPUInfo():
 class Report(scooby.Report):
     """A class for custom scooby.Report."""
 
-    def __init__(self, additional=None, ncol=3, text_width=80, sort=False,
-                 gpu=True):
+    def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
         """Generate a :class:`scooby.Report` instance.
 
         Parameters
@@ -285,8 +291,16 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = [
-            'matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
-            'cmocean', 'ipyvtklink', 'scipy', 'itkwidgets', 'tqdm',
+            'matplotlib',
+            'pyvistaqt',
+            'PyQt5',
+            'IPython',
+            'colorcet',
+            'cmocean',
+            'ipyvtklink',
+            'scipy',
+            'itkwidgets',
+            'tqdm',
             'meshio',
         ]
 
@@ -300,10 +314,16 @@ class Report(scooby.Report):
         else:
             extra_meta = ("GPU Details", "None")
 
-        scooby.Report.__init__(self, additional=additional, core=core,
-                               optional=optional, ncol=ncol,
-                               text_width=text_width, sort=sort,
-                               extra_meta=extra_meta)
+        scooby.Report.__init__(
+            self,
+            additional=additional,
+            core=core,
+            optional=optional,
+            ncol=ncol,
+            text_width=text_width,
+            sort=sort,
+            extra_meta=extra_meta,
+        )
 
 
 def assert_empty_kwargs(**kwargs):

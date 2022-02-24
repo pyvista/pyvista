@@ -1,5 +1,6 @@
 """Module containing geometry helper functions."""
 
+import collections
 import warnings
 
 import numpy as np
@@ -66,14 +67,15 @@ def voxelize(mesh, density=None, check_surface=True):
     ugrid = pyvista.UnstructuredGrid(grid)
 
     # get part of the mesh within the mesh's bounding surface.
-    selection = ugrid.select_enclosed_points(mesh.extract_surface(),
-                                             tolerance=0.0,
-                                             check_surface=check_surface)
+    selection = ugrid.select_enclosed_points(
+        mesh.extract_surface(), tolerance=0.0, check_surface=check_surface
+    )
     mask = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
     vox = ugrid.extract_points(mask)
     return vox
+
 
 def create_grid(dataset, dimensions=(101, 101, 101)):
     """Create a uniform grid surrounding the given dataset.
@@ -92,7 +94,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     dimensions = np.array(dimensions, dtype=int)
     image = pyvista.UniformGrid()
     image.dimensions = dimensions
-    dims = (dimensions - 1)
+    dims = dimensions - 1
     dims[dims == 0] = 1
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
     image.origin = bounds[::2]
@@ -102,9 +104,8 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
 def single_triangle():  # pragma: no cover
     """Create a single PolyData triangle."""
     warnings.warn(
-        "Use of `single_triangle` is deprecated. "
-        "Use `pyvista.Triangle` instead.",
-        PyvistaDeprecationWarning
+        "Use of `single_triangle` is deprecated. Use `pyvista.Triangle` instead.",
+        PyvistaDeprecationWarning,
     )
     points = np.zeros((3, 3))
     points[1] = [1, 0, 0]
@@ -176,3 +177,67 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
     w_t = np.cos(ph) * w - np.sin(ph) * v
 
     return u_t, v_t, w_t
+
+
+def merge(
+    datasets,
+    merge_points=True,
+    main_has_priority=True,
+    progress_bar=False,
+):
+    """Merge several datasets.
+
+    .. note::
+       The behavior of this filter varies from the
+       :func:`PolyDataFilters.boolean_union` filter. This filter
+       does not attempt to create a manifold mesh and will include
+       internal surfaces when two meshes overlap.
+
+    datasets : sequence of :class:`pyvista.Dataset`
+        Sequence of datasets. Can be of any :class:`pyvista.Dataset`
+
+    merge_points : bool, optional
+        Merge equivalent points when ``True``. Defaults to ``True``.
+
+    main_has_priority : bool, optional
+        When this parameter is ``True`` and ``merge_points=True``,
+        the arrays of the merging grids will be overwritten
+        by the original main mesh.
+
+    progress_bar : bool, optional
+        Display a progress bar to indicate progress.
+
+    Returns
+    -------
+    pyvista.DataSet
+        :class:`pyvista.PolyData` if all items in datasets are
+        :class:`pyvista.PolyData`, otherwise returns a
+        :class:`pyvista.UnstructuredGrid`.
+
+    Examples
+    --------
+    Merge two polydata datasets.
+
+    >>> import pyvista
+    >>> sphere = pyvista.Sphere(center=(0, 0, 1))
+    >>> cube = pyvista.Cube()
+    >>> mesh = pyvista.merge([cube, sphere])
+    >>> mesh.plot()
+
+    """
+    if not isinstance(datasets, collections.Sequence):
+        raise TypeError(f"Expected a sequence, got {type(datasets).__name__}")
+
+    if len(datasets) < 1:
+        raise ValueError("Expected at least one dataset.")
+
+    first = datasets[0]
+    if not isinstance(first, pyvista.DataSet):
+        raise TypeError(f"Expected pyvista.DataSet, not {type(first).__name__}")
+
+    return datasets[0].merge(
+        datasets[1:],
+        merge_points=merge_points,
+        main_has_priority=main_has_priority,
+        progress_bar=progress_bar,
+    )
