@@ -1,5 +1,6 @@
 """Module managing picking events."""
 
+from functools import partial
 import logging
 import weakref
 
@@ -257,6 +258,7 @@ class PickingHelper:
         show_point=True,
         tolerance=0.025,
         pickable_window=False,
+        left_clicking=False,
         **kwargs,
     ):
         """Enable picking at points.
@@ -307,6 +309,11 @@ class PickingHelper:
         pickable_window : bool, optional
             When True, points in the 3D window are pickable. Default to ``True``.
 
+        left_clicking : bool, optional
+            When True, points can be picked by clicking the left mousebutton.
+            Default to ``False``. Note, if enabled, left-clicking will **not**
+            display the bounding box around the picked point.
+
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked point is interactively displayed.
@@ -324,6 +331,16 @@ class PickingHelper:
         See :ref:`point_picking_example` for a full example using this method.
 
         """
+
+        def _launch_pick_event(interactor, event):
+            """Create a Pick event based on coordinate or left-click"""
+
+            click_x, click_y = interactor.GetEventPosition()
+            click_z = 0
+
+            picker = interactor.GetPicker()
+            renderer = interactor.GetInteractorStyle()._parent()._plotter.renderer
+            picker.Pick(click_x, click_y, click_z, renderer)
 
         def _end_pick_event(picker, event):
 
@@ -358,10 +375,16 @@ class PickingHelper:
         self.enable_trackball_style()
         self.iren.set_picker(point_picker)
 
+        if left_clicking:
+            self.iren.interactor.AddObserver( 
+                "LeftButtonPressEvent",
+                partial(try_callback, _launch_pick_event),
+            )
+
         # Now add text about cell-selection
         if show_message:
             if show_message is True:
-                show_message = "Press P to pick under the mouse"
+                show_message = "Left-click or press P to pick under the mouse" if left_clicking else  "Press P to pick under the mouse"
             self.add_text(str(show_message), font_size=font_size, name='_point_picking_message')
 
     def enable_path_picking(
