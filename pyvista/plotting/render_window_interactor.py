@@ -30,7 +30,7 @@ class RenderWindowInteractor:
         if not light_follow_camera:
             self.interactor.LightFollowCameraOff()
 
-        # Map of events to observers
+        # Map of observers to events
         self._observers = {}
         self._key_press_event_callbacks = collections.defaultdict(list)
 
@@ -38,7 +38,6 @@ class RenderWindowInteractor:
         self._style = 'RubberBandPick'
         self._style_class = None
         self._plotter = plotter
-        self._click_observer = None
 
         # Toggle interaction style when clicked on a visible chart (to
         # enable interaction with visible charts)
@@ -69,18 +68,26 @@ class RenderWindowInteractor:
     def add_observer(self, event, call):
         """Add an observer."""
         call = partial(try_callback, call)
-        self._observers[event] = self.interactor.AddObserver(event, call)
+        if not isinstance(event, str):
+            event = _vtk.vtkCommand.GetStringFromEventId(event)
+        observer = self.interactor.AddObserver(event, call)
+        self._observers[observer] = event
+        return observer
 
-    def remove_observer(self, event):
+    def remove_observer(self, observer):
         """Remove an observer."""
-        if event in self._observers:
-            self.interactor.RemoveObserver(event)
-            del self._observers[event]
+        if observer in self._observers:
+            self.interactor.RemoveObserver(observer)
+            del self._observers[observer]
 
-    def remove_observers(self):
+    def remove_observers(self, event=None):
         """Remove all observers."""
-        for obs in list(self._observers.values()):
-            self.remove_observer(obs)
+        if event is None:
+            observers = list(self._observers.keys())
+        else:
+            observers = [obs for obs, ev in self._observers.items() if event == ev]
+        for observer in observers:
+            self.remove_observer(observer)
 
     def clear_events_for_key(self, key):
         """Remove the callbacks associated to the key."""
@@ -97,7 +104,7 @@ class RenderWindowInteractor:
 
     def untrack_mouse_position(self):
         """Stop tracking the mouse position."""
-        self.remove_observer(_vtk.vtkCommand.MouseMoveEvent)
+        self.remove_observers(_vtk.vtkCommand.MouseMoveEvent)
 
     def track_click_position(self, callback=None, side="right", viewport=False):
         """Keep track of the click position.
@@ -136,13 +143,18 @@ class RenderWindowInteractor:
                 else:
                     callback(self._plotter.pick_click_position())
 
-        self._click_observer = event
         self.add_observer(event, _click_callback)
 
-    def untrack_click_position(self):
+    def untrack_click_position(self, side="right"):
         """Stop tracking the click position."""
-        self.remove_observer(self._click_observer)
-        self._click_observer = None
+        side = str(side).lower()
+        if side in ["right", "r"]:
+            event = _vtk.vtkCommand.RightButtonPressEvent
+        elif side in ["left", "l"]:
+            event = _vtk.vtkCommand.LeftButtonPressEvent
+        else:
+            raise TypeError(f"Side ({side}) not supported. Try `left` or `right`")
+        self.remove_observers(event)
 
     def clear_key_event_callbacks(self):
         """Clear key event callbacks."""

@@ -10,8 +10,10 @@ def empty_callback():
     return
 
 
-def test_remove_observer():
+def test_observers():
     pl = pyvista.Plotter()
+
+    # Key events
     with pytest.raises(TypeError):
         pl.add_key_event('w', 1)
 
@@ -19,11 +21,20 @@ def test_remove_observer():
     pl.add_key_event(key, empty_callback)
     assert key in pl.iren._key_press_event_callbacks
     pl.clear_events_for_key(key)
-    pl.iren.add_observer(_vtk.vtkCommand.MouseMoveEvent, empty_callback)
+    assert key not in pl.iren._key_press_event_callbacks
 
-    assert _vtk.vtkCommand.MouseMoveEvent in pl.iren._observers
-    pl.iren.remove_observer(_vtk.vtkCommand.MouseMoveEvent)
-    assert _vtk.vtkCommand.MouseMoveEvent not in pl.iren._observers
+    # Custom events
+    obs_move = pl.iren.add_observer(_vtk.vtkCommand.MouseMoveEvent, empty_callback)
+    obs_double1 = pl.iren.add_observer(_vtk.vtkCommand.LeftButtonDoubleClickEvent, empty_callback)
+    obs_double2 = pl.iren.add_observer("LeftButtonDoubleClickEvent", empty_callback)
+    assert pl.iren._observers[obs_move] == "MouseMoveEvent"
+    assert pl.iren._observers[obs_double1] == "LeftButtonDoubleClickEvent"
+    assert pl.iren._observers[obs_double2] == "LeftButtonDoubleClickEvent"
+    pl.iren.remove_observer(obs_move)
+    assert obs_move not in pl.iren._observers
+    pl.iren.remove_observers(_vtk.vtkCommand.LeftButtonDoubleClickEvent)
+    assert obs_double1 not in pl.iren._observers
+    assert obs_double2 not in pl.iren._observers
 
 
 def test_clear_key_event_callbacks():
@@ -41,10 +52,10 @@ def test_track_mouse_position():
     assert pl.mouse_position == (x, y)
 
     pl.iren.untrack_mouse_position()
-    assert _vtk.vtkCommand.MouseMoveEvent not in pl.iren._observers
+    assert "MouseMoveEvent" not in pl.iren._observers.values()
 
 
-def test_track_click_position_multi_render():
+def test_track_click_position_multi_render():  # TODO: verify why this test was not failing?
     points = []
 
     def callback(mouse_point):
