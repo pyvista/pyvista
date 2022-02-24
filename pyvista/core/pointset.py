@@ -344,7 +344,8 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     This is a concrete class representing a set of points that specifies the
     interface for datasets that explicitly use "point" arrays to represent
-    geometry.
+    geometry. This class is useful for improving the performance of filters on
+    point clouds, but not plotting.
 
     For further details see `VTK: vtkPointSet Details
     <https://vtk.org/doc/nightly/html/classvtkPointSet.html#details>`_
@@ -358,6 +359,18 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     editable : bool, optional
         Set whether this dataset is editable after creation. Default
         ``True``. For performance, set this to ``False``.
+
+    deep : bool, optional
+        Whether to copy the input ``points``, or to create a PointSet from them
+        without copying them.  Setting ``deep=True`` ensures that the original
+        arrays can be modified outside the mesh without affecting the
+        mesh. Default is ``False``.
+
+    force_float : bool, optional
+        Casts the datatype to ``float32`` if points datatype is non-float.
+        Default ``True``. Set this to ``False`` to allow non-float types,
+        though this may lead to truncation of intermediate floats when
+        transforming datasets.
 
     Notes
     -----
@@ -381,14 +394,14 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     """
 
-    def __init__(self, points=None, editable=True):
+    def __init__(self, points=None, editable=True, deep=False, force_float=True):
         """Initialize the pointset."""
         if pyvista.vtk_version_info < (9, 1, 0):
             raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
 
         super().__init__()
         if points is not None:
-            self.points = points
+            self.SetPoints(pyvista.vtk_points(points, deep=deep, force_float=force_float))
 
         self.editable = editable
 
@@ -425,11 +438,6 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     @editable.setter
     def editable(self, value: bool):
         self.SetEditable(value)
-
-
-    # @points.setter
-    # def points(self, points: np.ndarray):
-    #     """Override points setter to
 
     def cast_to_polydata(self, deep=True):
         """Cast this dataset to polydata.

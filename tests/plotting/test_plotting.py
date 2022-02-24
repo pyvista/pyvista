@@ -2199,3 +2199,7 @@ def test_orbit_on_path(sphere):
 @skip_9_1_0
 def test_pointset_plot(pointset):
     pointset.plot()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(pointset)
+    pl.show(before_close_callback=verify_cache_image)

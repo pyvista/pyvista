@@ -394,7 +394,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: Union[VectorArray, NumericArray]):
+    def points(self, points: Union[VectorArray, NumericArray, pyvista._vtk.vtkPoints]):
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -403,6 +403,12 @@ class DataSet(DataSetFilters, DataObject):
                 pdata.Modified()
                 self.Modified()
                 return
+        # directly set the data if vtk object
+        if isinstance(points, pyvista._vtk.vtkPoints):
+            self.SetPoints(points)
+            pdata.Modified()
+            self.Modified()
+            return
         # otherwise, wrap and use the array
         points = _coerce_pointslike_arg(points)
         vtk_points = pyvista.vtk_points(points, False)
@@ -2042,6 +2048,20 @@ class DataSet(DataSetFilters, DataObject):
         alg.AddInputData(self)
         alg.Update()
         return _get_output(alg)
+
+    def cast_to_pointset(self, deep=True) -> 'pyvista.PointSet':
+        """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
+
+        Examples
+        --------
+
+        """
+        pset = pyvista.PointSet()
+        pset.SetPoints(self.GetPoints())
+        pset.GetPointData().ShallowCopy(self.GetPointData())
+        if deep:
+            return pset.copy(deep=True)
+        return pset
 
     def find_closest_point(self, point: Iterable[float], n=1) -> int:
         """Find index of closest point in this mesh to the given point.
