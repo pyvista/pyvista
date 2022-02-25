@@ -146,7 +146,9 @@ class MarkerStyleTable(DocTable):
     @classmethod
     def fetch_data(cls):
         # Fetch table data from ``MARKER_STYLES`` dictionary.
-        return [{"style": ms, **data} for (ms, data) in pv.charts.ScatterPlot2D.MARKER_STYLES.items()]
+        return [
+            {"style": ms, **data} for (ms, data) in pv.charts.ScatterPlot2D.MARKER_STYLES.items()
+        ]
 
     @classmethod
     def get_header(cls, data):
@@ -205,7 +207,9 @@ class ColorSchemeTable(DocTable):
     @classmethod
     def fetch_data(cls):
         # Fetch table data from ``COLOR_SCHEMES`` dictionary.
-        return [{"scheme": cs, **data} for (cs, data) in pv.charts._MultiCompPlot.COLOR_SCHEMES.items()]
+        return [
+            {"scheme": cs, **data} for (cs, data) in pv.charts._MultiCompPlot.COLOR_SCHEMES.items()
+        ]
 
     @classmethod
     def get_header(cls, data):
@@ -219,7 +223,9 @@ class ColorSchemeTable(DocTable):
             # Create an image from the given color scheme and generate the row rst.
             img_path = f"{CHARTS_IMAGE_DIR}/cs_{i}.png"
             n_colors = cls.generate_img(row_data["scheme"], img_path)
-            return cls.row_template.format(row_data["scheme"], row_data["descr"], n_colors, img_path)
+            return cls.row_template.format(
+                row_data["scheme"], row_data["descr"], n_colors, img_path
+            )
 
     @staticmethod
     def generate_img(color_scheme, img_path):
