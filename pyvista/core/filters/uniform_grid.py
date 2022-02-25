@@ -309,6 +309,11 @@ class UniformGridFilters(DataSetFilters):
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
             UniformGrid subset.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            UniformGrid subset.
         """
         alg = _vtk.vtkImageRFFT()
         alg.SetInputDataObject(self)
