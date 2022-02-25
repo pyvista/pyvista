@@ -135,7 +135,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9']
+        python-version: ['3.7', '3.8', '3.9']
         vtk-version: ['latest']
         include:
           - python-version: '3.9'
@@ -189,7 +189,7 @@ jobs:
 
       - name: Unit Testing
         run: |
-          xvfb-run pytest -v --cov pyvista --cov-report html
+          xvfb-run pytest -v --cov pyvista --cov-report xml
 
       - uses: codecov/codecov-action@v2
         if: matrix.python-version == '3.8'
@@ -218,7 +218,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
 

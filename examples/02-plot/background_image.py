@@ -42,4 +42,3 @@ pl.add_text('Earth Visible as Globe')
 pl.add_mesh(examples.load_globe(), smooth_shading=True)
 
 pl.show()
-

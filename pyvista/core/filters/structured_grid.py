@@ -118,51 +118,56 @@ class StructuredGridFilters(DataSetFilters):
             raise RuntimeError('Concatenation axis must be <= 2.')
 
         # check dimensions are compatible
-        for i, (dim1, dim2) in enumerate(zip(self.dimensions,
-                                             other.dimensions)):
+        for i, (dim1, dim2) in enumerate(zip(self.dimensions, other.dimensions)):
             if i == axis:
                 continue
             if dim1 != dim2:
-                raise RuntimeError('StructuredGrids with dimensions %s and %s '
-                                   'are not compatible.'
-                                   % (self.dimensions, other.dimensions))
+                raise RuntimeError(
+                    'StructuredGrids with dimensions %s and %s '
+                    'are not compatible.' % (self.dimensions, other.dimensions)
+                )
 
         # check point/cell variables are the same
-        if not set(self.point_data.keys()) == \
-               set(other.point_data.keys()):
+        if not set(self.point_data.keys()) == set(other.point_data.keys()):
             raise RuntimeError('Grid to concatenate has different point array names.')
-        if not set(self.cell_data.keys()) == \
-               set(other.cell_data.keys()):
+        if not set(self.cell_data.keys()) == set(other.cell_data.keys()):
             raise RuntimeError('Grid to concatenate has different cell array names.')
 
         # check that points are coincident (within tolerance) along seam
-        if not np.allclose(np.take(self.points_matrix, indices=-1, axis=axis),
-                           np.take(other.points_matrix, indices=0, axis=axis),
-                           atol=tolerance):
-            raise RuntimeError('Grids cannot be joined along axis %d, as points '
-                               'are not coincident within tolerance of %f.'
-                               % (axis, tolerance))
+        if not np.allclose(
+            np.take(self.points_matrix, indices=-1, axis=axis),
+            np.take(other.points_matrix, indices=0, axis=axis),
+            atol=tolerance,
+        ):
+            raise RuntimeError(
+                'Grids cannot be joined along axis %d, as points '
+                'are not coincident within tolerance of %f.' % (axis, tolerance)
+            )
 
         # slice to cut off the repeated grid face
         slice_spec = [slice(None, None, None)] * 3
         slice_spec[axis] = slice(0, -1, None)
 
         # concatenate points, cutting off duplicate
-        new_points = np.concatenate((self.points_matrix[slice_spec],
-                                     other.points_matrix), axis=axis)
+        new_points = np.concatenate(
+            (self.points_matrix[slice_spec], other.points_matrix), axis=axis
+        )
 
         # concatenate point arrays, cutting off duplicate
         new_point_data = {}
         for name, point_array in self.point_data.items():
             arr_1 = self._reshape_point_array(point_array)
             arr_2 = other._reshape_point_array(other.point_data[name])
-            if not np.array_equal(np.take(arr_1, indices=-1, axis=axis),
-                                  np.take(arr_2, indices=0, axis=axis)):
-                raise RuntimeError('Grids cannot be joined along axis %d, as field '
-                                   '`%s` is not identical along the seam.'
-                                   % (axis, name))
-            new_point_data[name] = np.concatenate((arr_1[slice_spec], arr_2),
-                                                  axis=axis).ravel(order='F')
+            if not np.array_equal(
+                np.take(arr_1, indices=-1, axis=axis), np.take(arr_2, indices=0, axis=axis)
+            ):
+                raise RuntimeError(
+                    'Grids cannot be joined along axis %d, as field '
+                    '`%s` is not identical along the seam.' % (axis, name)
+                )
+            new_point_data[name] = np.concatenate((arr_1[slice_spec], arr_2), axis=axis).ravel(
+                order='F'
+            )
 
         new_dims = np.array(self.dimensions)
         new_dims[axis] += other.dimensions[axis] - 1
@@ -172,8 +177,7 @@ class StructuredGridFilters(DataSetFilters):
         for name, cell_array in self.cell_data.items():
             arr_1 = self._reshape_cell_array(cell_array)
             arr_2 = other._reshape_cell_array(other.cell_data[name])
-            new_cell_data[name] = np.concatenate((arr_1, arr_2),
-                                                 axis=axis).ravel(order='F')
+            new_cell_data[name] = np.concatenate((arr_1, arr_2), axis=axis).ravel(order='F')
 
         # assemble output
         joined = pyvista.StructuredGrid()

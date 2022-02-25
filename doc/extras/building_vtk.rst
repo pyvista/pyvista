@@ -81,7 +81,7 @@ modifying the above ``cmake`` command with:
 
    # install build dependencies (Linux/Debian)
    apt-get update
-   apt-get install -y ninja-build cmake libegl1-mesa-dev python3-dev 
+   apt-get install -y ninja-build cmake libegl1-mesa-dev python3-dev
 
    # build using EGL
    git clone https://github.com/Kitware/VTK
@@ -175,15 +175,6 @@ built on.  You can work around this by building your wheels using a
     # build based on python version from args
     PYTHON_VERSION="$1"
     case $PYTHON_VERSION in
-    2.7)
-      PYBIN="/opt/python/cp27-cp27m/bin/python"
-      ;;
-    3.5)
-      PYBIN="/opt/python/cp35-cp35m/bin/python"
-      ;;
-    3.6)
-      PYBIN="/opt/python/cp36-cp36m/bin/python"
-      ;;
     3.7)
       PYBIN="/opt/python/cp37-cp37m/bin/python"
       ;;
@@ -192,6 +183,9 @@ built on.  You can work around this by building your wheels using a
       ;;
     3.9)
       PYBIN="/opt/python/cp39-cp39/bin/python"
+      ;;
+    3.10)
+      PYBIN="/opt/python/cp310-cp310/bin/python"
       ;;
     esac
 
@@ -255,7 +249,7 @@ the ``quay.io/pypa/manylinux2014_aarch64`` image.  Run the following:
 
 .. code-block:: bash
 
-    PYTHON_VERSION=3.6
+    PYTHON_VERSION=3.7
     rm -rf build
     docker run -e \
            --rm -v `pwd`:/io quay.io/pypa/manylinux2014_aarch64 \
@@ -273,15 +267,6 @@ Where ``build_wheels.sh`` is:
     # build based on python version from args
     PYTHON_VERSION="$1"
     case $PYTHON_VERSION in
-    2.7)
-      PYBIN="/opt/python/cp27-cp27m/bin/python"
-      ;;
-    3.5)
-      PYBIN="/opt/python/cp35-cp35m/bin/python"
-      ;;
-    3.6)
-      PYBIN="/opt/python/cp36-cp36m/bin/python"
-      ;;
     3.7)
       PYBIN="/opt/python/cp37-cp37m/bin/python"
       ;;
@@ -290,6 +275,9 @@ Where ``build_wheels.sh`` is:
       ;;
     3.9)
       PYBIN="/opt/python/cp39-cp39/bin/python"
+      ;;
+    3.10)
+      PYBIN="/opt/python/cp310-cp310/bin/python"
       ;;
     esac
 

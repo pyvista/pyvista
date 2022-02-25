@@ -18,7 +18,7 @@ import pyvista as pv
 x = np.arange(-10, 10, 0.5)
 y = np.arange(-10, 10, 0.5)
 x, y = np.meshgrid(x, y)
-r = np.sqrt(x ** 2 + y ** 2)
+r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
 
 # Create and structured surface

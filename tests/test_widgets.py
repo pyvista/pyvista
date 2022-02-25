@@ -29,6 +29,11 @@ def test_widget_box():
     p.add_mesh_clip_box(mesh)
     p.close()
 
+    p = pyvista.Plotter()
+    # merge_points=True is the default and is tested above
+    p.add_mesh_clip_box(mesh, merge_points=False)
+    p.close()
+
 
 def test_widget_plane():
     p = pyvista.Plotter()
@@ -122,25 +127,21 @@ def test_widget_slider():
 
     p = pyvista.Plotter()
     for event_type in ['start', 'end', 'always']:
-        p.add_slider_widget(callback=func, rng=[0, 10],
-                            event_type=event_type)
+        p.add_slider_widget(callback=func, rng=[0, 10], event_type=event_type)
     with pytest.raises(TypeError, match='type for ``style``'):
         p.add_slider_widget(callback=func, rng=[0, 10], style=0)
     with pytest.raises(AttributeError):
         p.add_slider_widget(callback=func, rng=[0, 10], style="foo")
     with pytest.raises(TypeError, match='type for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0, 10],
-                            event_type=0)
+        p.add_slider_widget(callback=func, rng=[0, 10], event_type=0)
     with pytest.raises(ValueError, match='value for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0, 10],
-                            event_type='foo')
+        p.add_slider_widget(callback=func, rng=[0, 10], event_type='foo')
     p.close()
 
     p = pyvista.Plotter()
     func = lambda value, widget: value  # Does nothing
     p.add_mesh(mesh)
-    p.add_slider_widget(callback=func, rng=[0, 10], style="modern",
-                        pass_widget=True)
+    p.add_slider_widget(callback=func, rng=[0, 10], style="modern", pass_widget=True)
     p.close()
 
     p = pyvista.Plotter()
@@ -165,7 +166,9 @@ def test_widget_slider():
 
     p = pyvista.Plotter()
     title_opacity = np.random.random()
-    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_opacity=title_opacity)
+    s = p.add_slider_widget(
+        callback=func, rng=[0, 10], style="classic", title_opacity=title_opacity
+    )
     assert s.GetRepresentation().GetTitleProperty().GetOpacity() == title_opacity
     p.close()
 
@@ -184,13 +187,13 @@ def test_widget_slider():
 
 def test_widget_spline():
     p = pyvista.Plotter()
-    func = lambda spline: spline # Does nothing
+    func = lambda spline: spline  # Does nothing
     p.add_mesh(mesh)
     p.add_spline_widget(callback=func)
     p.close()
 
     p = pyvista.Plotter()
-    func = lambda spline, widget: spline # Does nothing
+    func = lambda spline, widget: spline  # Does nothing
     p.add_mesh(mesh)
     p.add_spline_widget(callback=func, pass_widget=True, color=None, show_ribbon=True)
     p.close()

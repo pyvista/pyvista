@@ -29,9 +29,11 @@ glyphs = mesh.glyph(orient="vectors", scale="scalars", factor=0.003, geom=geom)
 # plot using the plotting class
 pl = pv.Plotter()
 pl.add_mesh(glyphs, show_scalar_bar=False, lighting=False, cmap='coolwarm')
-pl.camera_position = [(146.53, 91.28, 21.70),
-                      (125.00, 94.45, 19.81),
-                      (-0.086, 0.007, 0.996)]  # view only part of the vector field
+pl.camera_position = [
+    (146.53, 91.28, 21.70),
+    (125.00, 94.45, 19.81),
+    (-0.086, 0.007, 0.996),
+]  # view only part of the vector field
 cpos = pl.show(return_cpos=True)
 
 
@@ -61,8 +63,7 @@ sphere.arrows.plot()
 # Plot the arrows and the sphere.
 
 p = pv.Plotter()
-p.add_mesh(sphere.arrows, lighting=False,
-           scalar_bar_args={'title': "Vector Magnitude"})
+p.add_mesh(sphere.arrows, lighting=False, scalar_bar_args={'title': "Vector Magnitude"})
 p.add_mesh(sphere, color="grey", ambient=0.6, opacity=0.5, show_edges=False)
 p.show()
 

@@ -42,8 +42,7 @@ mesh.plot(smooth_shading=True, split_sharp_edges=True)
 
 # extract the feature edges exceeding 30 degrees
 edges = mesh.extract_feature_edges(
-    boundary_edges=False, non_manifold_edges=False,
-    feature_angle=30, manifold_edges=False
+    boundary_edges=False, non_manifold_edges=False, feature_angle=30, manifold_edges=False
 )
 
 # plot both the edges and the smoothed mesh
@@ -61,6 +60,5 @@ pl.show()
 # plot both the edges and the smoothed mesh
 pl = pyvista.Plotter()
 pl.enable_anti_aliasing()
-pl.add_mesh(mesh, color='w', split_sharp_edges=True, pbr=True,
-            metallic=1.0, roughness=0.5)
+pl.add_mesh(mesh, color='w', split_sharp_edges=True, pbr=True, metallic=1.0, roughness=0.5)
 pl.show()

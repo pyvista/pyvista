@@ -25,9 +25,7 @@ import pyvista as pv
 # terrain seem more like hills rather than mountains.
 freq = [0.689, 0.562, 0.683]
 noise = pv.perlin_noise(1, freq, (0, 0, 0))
-sampled = pv.sample_function(noise,
-                             bounds=(-10, 10, -10, 10, -10, 10),
-                             dim=(500, 500, 1))
+sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(500, 500, 1))
 
 
 ###############################################################################
@@ -48,7 +46,7 @@ diff = z.max() - z.min()
 
 # water level at 70%  (change this to change the water level)
 water_percent = 0.7
-water_level = z.max() - water_percent*diff
+water_level = z.max() - water_percent * diff
 mesh.points[z < water_level, 2] = water_level
 
 
@@ -57,12 +55,18 @@ mesh.points[z < water_level, 2] = water_level
 
 # make the water blue
 rng = z.max() - z.min()
-clim = (z.max() - rng*1.65, z.max())
+clim = (z.max() - rng * 1.65, z.max())
 
 pl = pv.Plotter()
-pl.add_mesh(mesh, scalars=z,
-            cmap='gist_earth', n_colors=10, show_scalar_bar=False,
-            smooth_shading=True, clim=clim)
+pl.add_mesh(
+    mesh,
+    scalars=z,
+    cmap='gist_earth',
+    n_colors=10,
+    show_scalar_bar=False,
+    smooth_shading=True,
+    clim=clim,
+)
 pl.show()
 
 
@@ -70,9 +74,7 @@ pl.show()
 # Show the terrain with custom lighting and shadows
 
 pl = pv.Plotter(lighting=None)
-pl.add_light(pv.Light((3, 1, 0.5), show_actor=True, positional=True,
-                      cone_angle=90, intensity=1.2))
-pl.add_mesh(mesh, cmap='gist_earth', show_scalar_bar=False,
-            smooth_shading=True, clim=clim)
+pl.add_light(pv.Light((3, 1, 0.5), show_actor=True, positional=True, cone_angle=90, intensity=1.2))
+pl.add_mesh(mesh, cmap='gist_earth', show_scalar_bar=False, smooth_shading=True, clim=clim)
 pl.enable_shadows = True
 pl.show()

@@ -27,8 +27,7 @@ from pyvista import _vtk
 PANEL_EXTENSION_SET = [False]
 
 
-def handle_plotter(plotter, backend=None, screenshot=None,
-                   return_viewer=False, **kwargs):
+def handle_plotter(plotter, backend=None, screenshot=None, return_viewer=False, **kwargs):
     """Show the ``pyvista`` plot in a jupyter environment.
 
     Parameters
@@ -55,10 +54,12 @@ def handle_plotter(plotter, backend=None, screenshot=None,
             return show_panel(plotter, return_viewer)
         if backend == 'ipygany':
             from pyvista.jupyter.pv_ipygany import show_ipygany
+
             return show_ipygany(plotter, return_viewer, **kwargs)
     except ImportError as e:
-        warnings.warn(f'Failed to use notebook backend: \n\n{e}\n\n'
-                      'Falling back to a static output.')
+        warnings.warn(
+            f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.'
+        )
 
     return show_static_image(plotter, screenshot, return_viewer)
 
@@ -86,20 +87,27 @@ def show_static_image(plotter, screenshot, return_viewer):
 def show_ipyvtk(plotter, return_viewer):
     """Display an interactive viewer widget using ``ipyvtklink``."""
     if any('SPYDER' in name for name in os.environ):
-        warnings.warn('``use_ipyvtk`` is incompatible with Spyder.\n'
-                      'Use notebook=False for interactive '
-                      'plotting within spyder or disable it globally with:\n'
-                      'pyvista.set_jupyter_backend(None)')
+        warnings.warn(
+            '``use_ipyvtk`` is incompatible with Spyder.\n'
+            'Use notebook=False for interactive '
+            'plotting within spyder or disable it globally with:\n'
+            'pyvista.set_jupyter_backend(None)'
+        )
 
     try:
         from ipyvtklink.viewer import ViewInteractiveWidget
     except ImportError:  # pragma: no cover
-        raise ImportError('Please install `ipyvtklink` to use this feature: '
-                          'https://github.com/Kitware/ipyvtklink')
+        raise ImportError(
+            'Please install `ipyvtklink` to use this feature: '
+            'https://github.com/Kitware/ipyvtklink'
+        )
 
     # Have to leave the Plotter open for the widget to use
-    disp = ViewInteractiveWidget(plotter.ren_win, on_close=plotter.close,
-                                 transparent_background=plotter.image_transparent_background)
+    disp = ViewInteractiveWidget(
+        plotter.ren_win,
+        on_close=plotter.close,
+        transparent_background=plotter.image_transparent_background,
+    )
 
     for renderer in plotter.renderers:
         renderer.AddObserver(_vtk.vtkCommand.ModifiedEvent, lambda *args: disp.update_canvas())
@@ -125,14 +133,16 @@ def show_panel(plotter, return_viewer):
     sizing = {}
     if not plotter._window_size_unset:
         width, height = plotter.window_size
-        sizing = {'width': width,
-                  'height': height}
+        sizing = {'width': width, 'height': height}
 
     axes_enabled = plotter.renderer.axes_enabled
-    pan = pn.panel(plotter.ren_win,
-                   sizing_mode='stretch_width',
-                   orientation_widget=axes_enabled,
-                   enable_keybindings=False, **sizing)
+    pan = pn.panel(
+        plotter.ren_win,
+        sizing_mode='stretch_width',
+        orientation_widget=axes_enabled,
+        enable_keybindings=False,
+        **sizing,
+    )
 
     # if plotter.renderer.axes_enabled:
     # pan.axes = build_panel_axes()
@@ -174,6 +184,7 @@ def build_panel_bounds(actor):
 def show_pythreejs(plotter, return_viewer, **kwargs):
     """Show a pyvista plotting scene using pythreejs."""
     from .pv_pythreejs import convert_plotter
+
     renderer = convert_plotter(plotter)
     if return_viewer:
         return renderer

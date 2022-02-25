@@ -3,7 +3,7 @@
 Installation
 ============
 
-PyVista is supported on Python versions 3.6+. Previous versions of Python are
+PyVista is supported on Python versions 3.7+. Previous versions of Python are
 no longer supported as outlined in `this issue`_.
 
 .. _this issue: https://github.com/pyvista/pyvista/issues/164
@@ -145,8 +145,8 @@ See other examples and demos:
     repository. For details on how to clone and test the PyVista source, please
     see our `Contributing Guide`_ and specifically, the `Testing`_ section.
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md
-.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md#testing
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
+.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#testing
 
 
 Running on CI Services
