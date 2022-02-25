@@ -382,8 +382,10 @@ class PickingHelper:
 
         # Now add text about cell-selection
         if show_message:
-            if show_message is True:
-                show_message = "Left-click or press P to pick under the mouse" if left_clicking else "Press P to pick under the mouse"
+            if show_message is True and left_clicking:
+                show_message = "Left-click or press P to pick under the mouse"
+            elif show_message is True:
+                show_message = "Press P to pick under the mouse"
             self.add_text(str(show_message), font_size=font_size, name='_point_picking_message')
 
     def enable_path_picking(
