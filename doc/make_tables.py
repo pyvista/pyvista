@@ -276,11 +276,9 @@ class ColorTable(DocTable):
     @classmethod
     def fetch_data(cls):
         # Fetch table data from ``hexcolors`` dictionary.
-        colors = {name: {"name": name, "hex": hex} for name, hex in pv.hexcolors.items()}
+        colors = {name: {"name": name, "hex": hex, "synonyms": []} for name, hex in pv.hexcolors.items()}
         # Add synonyms defined in ``color_synonyms`` dictionary.
         for s, name in pv.colors.color_synonyms.items():
-            if "synonyms" not in colors[name]:
-                colors[name]["synonyms"] = []
             colors[name]["synonyms"].append(s)
         return colors.values()
 
@@ -291,7 +289,7 @@ class ColorTable(DocTable):
     @classmethod
     def get_row(cls, i, row_data):
         name_template = '``"{}"``'
-        names = [row_data["name"]] + row_data.get("synonyms", [])
+        names = [row_data["name"]] + row_data["synonyms"]
         name = " or ".join(name_template.format(n) for n in names)
         return cls.row_template.format(name, row_data["hex"], row_data["hex"])
 
