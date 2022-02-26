@@ -276,7 +276,9 @@ class ColorTable(DocTable):
     @classmethod
     def fetch_data(cls):
         # Fetch table data from ``hexcolors`` dictionary.
-        colors = {name: {"name": name, "hex": hex, "synonyms": []} for name, hex in pv.hexcolors.items()}
+        colors = {
+            name: {"name": name, "hex": hex, "synonyms": []} for name, hex in pv.hexcolors.items()
+        }
         # Add synonyms defined in ``color_synonyms`` dictionary.
         for s, name in pv.colors.color_synonyms.items():
             colors[name]["synonyms"].append(s)
