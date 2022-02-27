@@ -85,6 +85,8 @@ class RenderWindowInteractor:
         if event is None:
             observers = list(self._observers.keys())
         else:
+            if not isinstance(event, str):
+                event = _vtk.vtkCommand.GetStringFromEventId(event)
             observers = [obs for obs, ev in self._observers.items() if event == ev]
         for observer in observers:
             self.remove_observer(observer)
