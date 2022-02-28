@@ -65,11 +65,18 @@ class RenderWindowInteractor:
             raise TypeError('callback must be callable.')
         self._key_press_event_callbacks[key].append(callback)
 
+    @staticmethod
+    def _get_event_str(event):
+        if isinstance(event, str):
+            # Make sure we pass it at least once through these functions, such that
+            # invalid event names are mapped to "NoEvent".
+            event = _vtk.vtkCommand.GetEventIdFromString(event)
+        return _vtk.vtkCommand.GetStringFromEventId(event)
+
     def add_observer(self, event, call):
         """Add an observer."""
         call = partial(try_callback, call)
-        if not isinstance(event, str):
-            event = _vtk.vtkCommand.GetStringFromEventId(event)
+        event = self._get_event_str(event)
         observer = self.interactor.AddObserver(event, call)
         self._observers[observer] = event
         return observer
@@ -85,8 +92,7 @@ class RenderWindowInteractor:
         if event is None:
             observers = list(self._observers.keys())
         else:
-            if not isinstance(event, str):
-                event = _vtk.vtkCommand.GetStringFromEventId(event)
+            event = self._get_event_str(event)
             observers = [obs for obs, ev in self._observers.items() if event == ev]
         for observer in observers:
             self.remove_observer(observer)
@@ -107,6 +113,16 @@ class RenderWindowInteractor:
     def untrack_mouse_position(self):
         """Stop tracking the mouse position."""
         self.remove_observers(_vtk.vtkCommand.MouseMoveEvent)
+
+    @staticmethod
+    def _get_click_event(side):
+        side = str(side).lower()
+        if side in ["right", "r"]:
+            return _vtk.vtkCommand.RightButtonPressEvent
+        elif side in ["left", "l"]:
+            return _vtk.vtkCommand.LeftButtonPressEvent
+        else:
+            raise TypeError(f"Side ({side}) not supported. Try `left` or `right`.")
 
     def track_click_position(self, callback=None, side="right", viewport=False):
         """Keep track of the click position.
@@ -129,13 +145,7 @@ class RenderWindowInteractor:
             when passing the click position to the callback.
 
         """
-        side = str(side).lower()
-        if side in ["right", "r"]:
-            event = _vtk.vtkCommand.RightButtonPressEvent
-        elif side in ["left", "l"]:
-            event = _vtk.vtkCommand.LeftButtonPressEvent
-        else:
-            raise TypeError(f"Side ({side}) not supported. Try `left` or `right`")
+        event = self._get_click_event(side)
 
         def _click_callback(obj, event):
             self._plotter.store_click_position()
@@ -149,14 +159,7 @@ class RenderWindowInteractor:
 
     def untrack_click_position(self, side="right"):
         """Stop tracking the click position."""
-        side = str(side).lower()
-        if side in ["right", "r"]:
-            event = _vtk.vtkCommand.RightButtonPressEvent
-        elif side in ["left", "l"]:
-            event = _vtk.vtkCommand.LeftButtonPressEvent
-        else:
-            raise TypeError(f"Side ({side}) not supported. Try `left` or `right`")
-        self.remove_observers(event)
+        self.remove_observers(self._get_click_event(side))
 
     def clear_key_event_callbacks(self):
         """Clear key event callbacks."""
@@ -591,6 +594,10 @@ class RenderWindowInteractor:
             self._mouse_move(x, y)
         self.interactor.LeftButtonReleaseEvent()
 
+    def _mouse_left_button_click(self, x=None, y=None):
+        self._mouse_left_button_press(x, y)
+        self._mouse_left_button_release()
+
     def _mouse_right_button_press(self, x=None, y=None):  # pragma: no cover
         """Simulate a right mouse button press.
 
@@ -607,6 +614,10 @@ class RenderWindowInteractor:
         if x is not None and y is not None:
             self._mouse_move(x, y)
         self.interactor.RightButtonReleaseEvent()
+
+    def _mouse_right_button_click(self, x=None, y=None):
+        self._mouse_right_button_press(x, y)
+        self._mouse_right_button_release()
 
     def _mouse_move(self, x, y):  # pragma: no cover
         """Simulate moving the mouse to ``(x, y)`` screen coordinates."""
