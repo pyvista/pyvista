@@ -24,25 +24,32 @@ def test_observers():
     assert key not in pl.iren._key_press_event_callbacks
 
     # Custom events
-    assert not pl.iren.interactor.HasObserver("PickEvent"), "Subsequent PickEvent observer tests are wrong if this fails."
+    assert not pl.iren.interactor.HasObserver(
+        "PickEvent"
+    ), "Subsequent PickEvent HasObserver tests are wrong if this fails."
+    # Add different observers
     obs_move = pl.iren.add_observer(_vtk.vtkCommand.MouseMoveEvent, empty_callback)
     obs_double1 = pl.iren.add_observer(_vtk.vtkCommand.LeftButtonDoubleClickEvent, empty_callback)
     obs_double2 = pl.iren.add_observer("LeftButtonDoubleClickEvent", empty_callback)
     obs_picks = tuple(pl.iren.add_observer("PickEvent", empty_callback) for _ in range(5))
-    obs_select = pl.iren.add_observer("SelectionChangedEvent", empty_callback)
-    assert pl.iren._observers[obs_move] == "MouseMoveEvent" and pl.iren.interactor.HasObserver("MouseMoveEvent")
-    assert pl.iren._observers[obs_double1] == "LeftButtonDoubleClickEvent" and pl.iren._observers[obs_double2] == "LeftButtonDoubleClickEvent"
+    pl.iren.add_observer("SelectionChangedEvent", empty_callback)
+    assert pl.iren._observers[obs_move] == "MouseMoveEvent"
+    assert pl.iren.interactor.HasObserver("MouseMoveEvent")
+    assert pl.iren._observers[obs_double1] == "LeftButtonDoubleClickEvent"
+    assert pl.iren._observers[obs_double2] == "LeftButtonDoubleClickEvent"
     assert pl.iren.interactor.HasObserver("LeftButtonDoubleClickEvent")
     assert all(pl.iren._observers[obs_pick] == "PickEvent" for obs_pick in obs_picks)
     assert pl.iren.interactor.HasObserver("SelectionChangedEvent")
-    pl.iren.remove_observer(obs_move)  # Remove specific observer
+    # Remove a specific observer
+    pl.iren.remove_observer(obs_move)
     assert obs_move not in pl.iren._observers
-    pl.iren.remove_observers(_vtk.vtkCommand.LeftButtonDoubleClickEvent)  # Remove all observers of specific event
+    # Remove all observers of a specific event
+    pl.iren.remove_observers(_vtk.vtkCommand.LeftButtonDoubleClickEvent)
     assert obs_double1 not in pl.iren._observers and obs_double2 not in pl.iren._observers
-    pl.iren.remove_observers()  # Remove all (remaining) observers
-    assert all(obs_pick not in pl.iren._observers for obs_pick in obs_picks)
+    # Remove all (remaining) observers
+    pl.iren.remove_observers()
+    assert len(pl.iren._observers) == 0
     assert not pl.iren.interactor.HasObserver("PickEvent")
-    assert obs_select not in pl.iren._observers
 
 
 def test_clear_key_event_callbacks():
@@ -76,6 +83,7 @@ def test_track_click_position_multi_render():
     pl.track_click_position(callback=callback, side='left', viewport=True)
     pl.show(auto_close=False)
     x, y = 10, 20
+    pl.iren._mouse_right_button_click(2 * x, 2 * y)
     pl.iren._mouse_left_button_click(x, y)
     assert points[0] == (x, y)
 

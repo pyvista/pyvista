@@ -74,7 +74,31 @@ class RenderWindowInteractor:
         return _vtk.vtkCommand.GetStringFromEventId(event)
 
     def add_observer(self, event, call):
-        """Add an observer."""
+        """Add an observer for the given event.
+
+        Parameters
+        ----------
+        event : str or int
+            The event to observe. Either the name of this event (string) or
+            a VTK event identifier (int).
+
+        call : callable
+            Callback to be called when the event is invoked.
+
+        Returns
+        -------
+        int
+            The identifier of the added observer.
+
+        Examples
+        --------
+        Add a custom observer.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
+
+        """
         call = partial(try_callback, call)
         event = self._get_event_str(event)
         observer = self.interactor.AddObserver(event, call)
@@ -82,13 +106,47 @@ class RenderWindowInteractor:
         return observer
 
     def remove_observer(self, observer):
-        """Remove an observer."""
+        """Remove an observer.
+
+        Parameters
+        ----------
+        observer : int
+            The identifier of the observer to remove.
+
+        Examples
+        --------
+        Add an observer and immediately remove it.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
+        >>> pl.iren.remove_observer(obs_enter)
+
+        """
         if observer in self._observers:
             self.interactor.RemoveObserver(observer)
             del self._observers[observer]
 
     def remove_observers(self, event=None):
-        """Remove all observers."""
+        """Remove all observers.
+
+        Parameters
+        ----------
+        event : str or int, optional
+            If provided, only removes observers of the given event. Otherwise,
+            if it is ``None``, removes all observers.
+
+        Examples
+        --------
+        Add two observers and immediately remove them.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
+        >>> obs_leave = pl.iren.add_observer("LeaveEvent", lambda *_: print('Leave!'))
+        >>> pl.iren.remove_observers()
+
+        """
         if event is None:
             observers = list(self._observers.keys())
         else:
@@ -136,8 +194,8 @@ class RenderWindowInteractor:
             the click position as a length two tuple.
 
         side : str, optional
-            The side of the mouse for the button to track (left or
-            right).  Default is left. Also accepts ``'r'`` or ``'l'``.
+            The mouse button to track (either ``'left'`` or ``'right'``).
+            Default is ``'right'``. Also accepts ``'r'`` or ``'l'``.
 
         viewport : bool, optional
             If ``True``, uses the normalized viewport coordinate
@@ -158,7 +216,16 @@ class RenderWindowInteractor:
         self.add_observer(event, _click_callback)
 
     def untrack_click_position(self, side="right"):
-        """Stop tracking the click position."""
+        """Stop tracking the click position.
+
+        Parameters
+        ----------
+        side : str, optional
+            The mouse button to stop tracking (either ``'left'`` or
+            ``'right'``). Default is ``'right'``. Also accepts ``'r'``
+            or ``'l'``.
+
+        """
         self.remove_observers(self._get_click_event(side))
 
     def clear_key_event_callbacks(self):
