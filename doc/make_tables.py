@@ -296,7 +296,7 @@ class ColorTable(DocTable):
         return cls.row_template.format(name, row_data["hex"], row_data["hex"])
 
 
-def make_all():
+def make_all_tables():
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     LineStyleTable.generate()
     MarkerStyleTable.generate()

@@ -16,7 +16,7 @@ import make_external_gallery
 import make_tables
 
 make_external_gallery.make_example_gallery()
-make_tables.make_all()
+make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista

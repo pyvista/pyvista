@@ -467,7 +467,7 @@ class Renderer(_vtk.vtkRenderer):
         self.SetUseFXAA(False)
         self.Modified()
 
-    def add_border(self, color='w', width=2.0):
+    def add_border(self, color='white', width=2.0):
         """Add borders around the frame.
 
         Parameters
