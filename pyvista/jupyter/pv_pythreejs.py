@@ -13,21 +13,6 @@ from ipywidgets import GridspecLayout
 
 import pyvista as pv
 
-# TODO: Consider adding sprites for point labels
-# def add_sprite():
-#     text = tjs.TextTexture('hi', size=60, color='black')
-#     sprite = tjs.Sprite(tjs.SpriteMaterial(map=text,
-#                                            sizeAttenuation=False,
-#                                            transparent=False,
-#                                            # depthWrite=False,
-#                                            # depthTest=False
-#                                            useScreenCoordinates=True,
-#                                            ),
-#                         scale=(.1,.1,.1),
-#                         center=(0.0, 0.0)
-#                         )
-#     children.append(sprite)
-
 
 def segment_poly_cells(mesh):
     """Segment lines from a mesh into line segments."""
@@ -412,7 +397,12 @@ def actor_to_mesh(actor, focal_point):
     if mapper is None:
         return
 
+    # ignore any mappers whose inputs are not datasets
+    if not hasattr(mapper, 'GetInputAsDataSet'):
+        return
+
     dataset = mapper.GetInputAsDataSet()
+
     has_faces = True
     if hasattr(dataset, 'faces'):
         has_faces = np.any(dataset.faces)

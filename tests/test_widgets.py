@@ -29,6 +29,11 @@ def test_widget_box():
     p.add_mesh_clip_box(mesh)
     p.close()
 
+    p = pyvista.Plotter()
+    # merge_points=True is the default and is tested above
+    p.add_mesh_clip_box(mesh, merge_points=False)
+    p.close()
+
 
 def test_widget_plane():
     p = pyvista.Plotter()

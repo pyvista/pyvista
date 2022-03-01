@@ -147,7 +147,9 @@ class DataSetFilters:
                 return self
         return result
 
-    def clip_box(self, bounds=None, invert=True, factor=0.35, progress_bar=False):
+    def clip_box(
+        self, bounds=None, invert=True, factor=0.35, progress_bar=False, merge_points=True
+    ):
         """Clip a dataset by a bounding box defined by the bounds.
 
         If no bounds are given, a corner of the dataset bounds will be removed.
@@ -173,6 +175,10 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        merge_points : bool, optional
+            If ``True`` (default), coinciding points of independently
+            defined mesh elements will be merged.
 
         Returns
         -------
@@ -225,6 +231,9 @@ class DataSetFilters:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
             bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
         alg = _vtk.vtkBoxClipDataSet()
+        if not merge_points:
+            # vtkBoxClipDataSet uses vtkMergePoints by default
+            alg.SetLocator(_vtk.vtkNonMergingPointLocator())
         alg.SetInputDataObject(self)
         alg.SetBoxClip(*bounds)
         port = 0
@@ -4611,6 +4620,73 @@ class DataSetFilters:
         output = pyvista.wrap(alg.GetOutput())
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface()
+        return output
+
+    def tessellate(self, max_n_subdivide=3, merge_points=True, progress_bar=False):
+        """Tessellate a mesh.
+
+        This filter approximates nonlinear FEM-like elements with linear
+        simplices. The output mesh will have geometry and any fields specified
+        as attributes in the input mesh's point data. The attribute's copy
+        flags are honored, except for normals.
+
+        For more details see `vtkTessellatorFilter <https://vtk.org/doc/nightly/html/classvtkTessellatorFilter.html#details>`_.
+
+        Parameters
+        ----------
+        max_n_subdivide : int, optional
+            Maximum number of subdivisions.
+            Defaults to ``3``.
+
+        merge_points : bool, optional
+            The adaptive tessellation will output vertices that are not shared among cells,
+            even where they should be. This can be corrected to some extent.
+            Defaults to ``True``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with tessellated mesh.  Return type matches input.
+
+        Examples
+        --------
+        First, plot the high order FEM-like elements.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> points = np.array(
+        ...     [
+        ...         [0.0, 0.0, 0.0],
+        ...         [2.0, 0.0, 0.0],
+        ...         [1.0, 2.0, 0.0],
+        ...         [1.0, 0.5, 0.0],
+        ...         [1.5, 1.5, 0.0],
+        ...         [0.5, 1.5, 0.0],
+        ...     ]
+        ... )
+        >>> cells = np.array([6, 0, 1, 2, 3, 4, 5])
+        >>> cell_types = np.array([69])
+        >>> mesh = pyvista.UnstructuredGrid(cells, cell_types, points)
+        >>> mesh.plot(show_edges=True, line_width=5)
+
+        Now, plot the tessellated mesh.
+
+        >>> tessellated = mesh.tessellate()
+        >>> tessellated.clear_data()  # cleans up plot
+        >>> tessellated.plot(show_edges=True, line_width=5)
+
+        """
+        if isinstance(self, _vtk.vtkPolyData):
+            raise TypeError('Tessellate filter is not supported for PolyData objects.')
+        alg = _vtk.vtkTessellatorFilter()
+        alg.SetInputData(self)
+        alg.SetMergePoints(merge_points)
+        alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
+        _update_alg(alg, progress_bar, 'Tessellating Mesh')
+        output = _get_output(alg)
         return output
 
     def transform(
