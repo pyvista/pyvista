@@ -120,7 +120,8 @@ def create_axes_marker(
     shaft_length=0.8,
     tip_length=0.2,
     ambient=0.5,
-    label_size=(0.25, 0.1)):
+    label_size=(0.25, 0.1),
+):
     """Create an axis actor.
 
     Parameters
@@ -209,7 +210,6 @@ def create_axes_marker(
             axes_actor.GetYAxisCaptionActor2D(),
             axes_actor.GetZAxisCaptionActor2D()
     ]:
-        prop = label_actor.GetCaptionTextProperty()
         label_actor.SetWidth(label_size[0])
         label_actor.SetHeight(label_size[1])
 

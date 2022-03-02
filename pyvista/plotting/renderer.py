@@ -971,7 +971,10 @@ class Renderer(_vtk.vtkRenderer):
                 **marker_args,
             )
         axes_widget = self.add_orientation_widget(
-                self.axes_actor, interactive=interactive, color=None)
+            self.axes_actor,
+            interactive=interactive,
+            color=None
+        )
         axes_widget.SetViewport(viewport)
         return self.axes_actor
 
