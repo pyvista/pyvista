@@ -206,9 +206,9 @@ def create_axes_marker(
     axes_actor.GetZAxisTipProperty().SetAmbient(ambient)
 
     for label_actor in [
-            axes_actor.GetXAxisCaptionActor2D(),
-            axes_actor.GetYAxisCaptionActor2D(),
-            axes_actor.GetZAxisCaptionActor2D()
+        axes_actor.GetXAxisCaptionActor2D(),
+        axes_actor.GetYAxisCaptionActor2D(),
+        axes_actor.GetZAxisCaptionActor2D(),
     ]:
         label_actor.SetWidth(label_size[0])
         label_actor.SetHeight(label_size[1])
