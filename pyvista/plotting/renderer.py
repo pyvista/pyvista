@@ -900,6 +900,9 @@ class Renderer(_vtk.vtkRenderer):
             ``box=True``. See the parameters of
             :func:`pyvista.create_axes_orientation_box`.
 
+        viewport : tuple, optional
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+
         Returns
         -------
         vtk.vtkAxesActor
