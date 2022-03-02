@@ -848,8 +848,10 @@ class Renderer(_vtk.vtkRenderer):
         ylabel='Y',
         zlabel='Z',
         labels_off=False,
+        marker_args=None,
         box=None,
         box_args=None,
+        viewport=(0, 0, 0.2, 0.2),
     ):
         """Add an interactive axes widget in the bottom left corner.
 
@@ -916,6 +918,15 @@ class Renderer(_vtk.vtkRenderer):
         >>> _ = pl.add_axes(box=True)
         >>> pl.show()
 
+        Specify more parameters for the axes marker.
+
+        >>> pimport pyvista
+        >>> ppl = pyvista.Plotter()
+        >>> pactor = pl.add_mesh(pyvista.Box(), show_edges=True)
+        >>> marker_args = dict(cone_radius=0.6, shaft_length=0.7, tip_length=0.3, ambient=0.5, label_size=(0.4, 0.16))
+        >>> _ = pl.add_axes(line_width=5)
+        >>> pl.show()
+
         """
         if interactive is None:
             interactive = self._theme.interactive
@@ -951,8 +962,11 @@ class Renderer(_vtk.vtkRenderer):
                 ylabel=ylabel,
                 zlabel=zlabel,
                 labels_off=labels_off,
+                **marker_args,
             )
-        self.add_orientation_widget(self.axes_actor, interactive=interactive, color=None)
+        axes_widget = self.add_orientation_widget(
+                self.axes_actor, interactive=interactive, color=None)
+        axes_widget.SetViewport(viewport)
         return self.axes_actor
 
     def hide_axes(self):

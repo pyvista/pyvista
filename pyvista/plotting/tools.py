@@ -116,7 +116,11 @@ def create_axes_marker(
     zlabel='Z',
     labels_off=False,
     line_width=2,
-):
+    cone_radius=0.4,
+    shaft_length=0.8,
+    tip_length=0.2,
+    ambient=0.5,
+    label_size=(0.25, 0.1)):
     """Create an axis actor.
 
     Parameters
@@ -148,6 +152,18 @@ def create_axes_marker(
     line_width : float, optional
         The width of the marker lines.
 
+    cone_radius: float, optional
+        The radius of the axes arrow tips.
+
+    shaft_length: float, optional
+        The length of the axes arrow shafts.
+
+    ambient: float, optional
+        The ambient of the axes arrows.
+
+    label_size: sequence, optoinal
+        The width and height of the axes label actors.
+
     Returns
     -------
     vtk.vtkAxesActor
@@ -177,6 +193,25 @@ def create_axes_marker(
     axes_actor.GetXAxisShaftProperty().SetLineWidth(line_width)
     axes_actor.GetYAxisShaftProperty().SetLineWidth(line_width)
     axes_actor.GetZAxisShaftProperty().SetLineWidth(line_width)
+
+    axes_actor.SetConeRadius(cone_radius)
+    axes_actor.SetNormalizedShaftLength([shaft_length] * 3)
+    axes_actor.SetNormalizedTipLength([tip_length] * 3)
+    axes_actor.GetXAxisShaftProperty().SetAmbient(ambient)
+    axes_actor.GetYAxisShaftProperty().SetAmbient(ambient)
+    axes_actor.GetZAxisShaftProperty().SetAmbient(ambient)
+    axes_actor.GetXAxisTipProperty().SetAmbient(ambient)
+    axes_actor.GetYAxisTipProperty().SetAmbient(ambient)
+    axes_actor.GetZAxisTipProperty().SetAmbient(ambient)
+
+    for label_actor in [
+            axes_actor.GetXAxisCaptionActor2D(),
+            axes_actor.GetYAxisCaptionActor2D(),
+            axes_actor.GetZAxisCaptionActor2D()
+    ]:
+        prop = label_actor.GetCaptionTextProperty()
+        label_actor.SetWidth(label_size[0])
+        label_actor.SetHeight(label_size[1])
 
     _update_axes_label_color(axes_actor, label_color)
 
