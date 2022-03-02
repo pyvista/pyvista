@@ -887,6 +887,10 @@ class Renderer(_vtk.vtkRenderer):
         labels_off : bool, optional
             Enable or disable the text labels for the axes.
 
+        marker_args : dict, optional
+            Parameters for the orientation marker widget. See the parameters of
+            :func:`pyvista.create_axes_marker`.
+
         box : bool, optional
             Show a box orientation marker. Use ``box_args`` to adjust.
             See :func:`pyvista.create_axes_orientation_box` for details.
@@ -924,7 +928,7 @@ class Renderer(_vtk.vtkRenderer):
         >>> ppl = pyvista.Plotter()
         >>> pactor = pl.add_mesh(pyvista.Box(), show_edges=True)
         >>> marker_args = dict(cone_radius=0.6, shaft_length=0.7, tip_length=0.3, ambient=0.5, label_size=(0.4, 0.16))
-        >>> _ = pl.add_axes(line_width=5)
+        >>> _ = pl.add_axes(line_width=5, marker_args=marker_args)
         >>> pl.show()
 
         """
@@ -952,6 +956,8 @@ class Renderer(_vtk.vtkRenderer):
                 **box_args,
             )
         else:
+            if marker_args is None:
+                marker_args = {}
             self.axes_actor = create_axes_marker(
                 label_color=color,
                 line_width=line_width,
