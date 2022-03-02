@@ -575,3 +575,4 @@ def setup(app):
     app.add_directive("autoautosummary", AutoAutoSummary)
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")
+    app.add_css_file("summary.css")
