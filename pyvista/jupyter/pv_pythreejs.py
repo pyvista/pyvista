@@ -254,7 +254,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr=None):
     }
 
     if colors is None:
-        shared_attr['color'] = color_to_hex(prop.GetColor())
+        shared_attr['color'] = pv.Color(prop.GetColor()).hex_rgb
 
     if tjs_texture is not None:
         shared_attr['map'] = tjs_texture
@@ -278,7 +278,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr=None):
         material = tjs.MeshPhongMaterial(
             shininess=0,
             flatShading=prop.GetInterpolation() == 0,
-            specular=color_to_hex((0, 0, 0)),
+            specular='#000000',
             reflectivity=0,
             **shared_attr,
             **add_attr,
@@ -325,7 +325,7 @@ def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
         edge_color = prop.GetColor()
 
     edge_mat = tjs.LineBasicMaterial(
-        color=color_to_hex(edge_color),
+        color=pv.Color(edge_color).hex_rgb,
         linewidth=prop.GetLineWidth(),
         opacity=prop.GetOpacity(),
         side='FrontSide',
@@ -348,7 +348,7 @@ def to_tjs_points(dataset, mapper, prop):
     geo = tjs.BufferGeometry(attributes=attr)
 
     m_attr = {
-        'color': color_to_hex(prop.GetColor()),
+        'color': pv.Color(prop.GetColor()).hex_rgb,
         'size': prop.GetPointSize() / 100,
         'vertexColors': coloring,
     }
@@ -374,29 +374,13 @@ def pvcamera_to_threejs_camera(pv_camera, lights, aspect):
     )
 
 
-def color_to_hex(color, linear_to_srgb=False):
-    """Convert a 0 - 1 RGB color tuple to a HTML hex color.
-
-    Optionally convert linear colors to sRGB.
-
-    """
-    color = np.array(color)
-    if linear_to_srgb:
-        mask = color < 0.0031308
-        color[mask] *= 12.92
-        color[~mask] = 1.055 * color[~mask] ** (1 / 2.4) - 0.055
-
-    color = tuple((color * 255).astype(np.uint8))
-    return '#%02x%02x%02x' % tuple(color)
-
-
 def pvlight_to_threejs_light(pvlight):
     """Convert a pyvista headlight into a three.js directional light."""
     if pvlight.is_camera_light or pvlight.is_headlight:
         # extend the position of the light to make "near infinite"
         position = np.array(pvlight.position) * 100000
         return tjs.DirectionalLight(
-            color=color_to_hex(pvlight.diffuse_color, True),
+            color=pvlight.diffuse_color.linear_to_srgb().hex_rgb,
             position=position.tolist(),
             intensity=pvlight.intensity,
         )
@@ -489,7 +473,7 @@ def convert_renderer(pv_renderer):
     if pv_renderer.axes_enabled:
         children.append(tjs.AxesHelper(0.1))
 
-    scene = tjs.Scene(children=children, background=color_to_hex(pv_renderer.background_color))
+    scene = tjs.Scene(children=children, background=pv_renderer.background_color.hex_rgb)
 
     # replace inf with a real value here due to changes in
     # ipywidges==6.4.0 see
@@ -515,7 +499,7 @@ def convert_renderer(pv_renderer):
     )
 
     if pv_renderer.has_border:
-        bdr_color = color_to_hex(pv_renderer.border_color)
+        bdr_color = pv_renderer.border_color.hex_rgb
         renderer.layout.border = f'solid {pv_renderer.border_width}px {bdr_color}'
 
     # for now, we can't dynamically size the render windows.  If

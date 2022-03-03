@@ -98,7 +98,7 @@ class PickingHelper:
         line_width : float, optional
             Thickness of selected mesh edges. Default 5.
 
-        color : str, optional
+        color : color_like, optional
             The color of the selected mesh is shown.
 
         font_size : int, optional
@@ -284,7 +284,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : str, optional
+        color : color_like, optional
             The color of the selected mesh is shown.
 
         point_size : int, optional
@@ -399,7 +399,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : str, optional
+        color : color_like, optional
             The color of the selected mesh is shown.
 
         point_size : int, optional
@@ -510,7 +510,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the size of the message.
 
-        color : str, optional
+        color : color_like, optional
             The color of the selected mesh is shown.
 
         point_size : int, optional
@@ -651,7 +651,7 @@ class PickingHelper:
         font_size : int, optional
             Sets the font size of the message.
 
-        color : str, optional
+        color : color_like, optional
             The color of the horizon surface if shown.
 
         point_size : int, optional

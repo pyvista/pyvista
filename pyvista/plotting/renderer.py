@@ -13,7 +13,8 @@ from pyvista.utilities import check_depth_peeling, try_callback, wrap
 
 from .camera import Camera
 from .charts import Charts
-from .tools import create_axes_marker, create_axes_orientation_box, parse_color, parse_font_family
+from .colors import Color
+from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -196,7 +197,7 @@ class Renderer(_vtk.vtkRenderer):
         'iso': 'view_isometric',
     }
 
-    def __init__(self, parent, border=True, border_color=(1, 1, 1), border_width=2.0):
+    def __init__(self, parent, border=True, border_color='w', border_width=2.0):
         """Initialize the renderer."""
         super().__init__()
         self._actors = {}
@@ -379,7 +380,7 @@ class Renderer(_vtk.vtkRenderer):
     @property
     def background_color(self):
         """Return the background color of this renderer."""
-        return self.GetBackground()
+        return Color(self.GetBackground())
 
     @background_color.setter
     def background_color(self, color):
@@ -466,12 +467,12 @@ class Renderer(_vtk.vtkRenderer):
         self.SetUseFXAA(False)
         self.Modified()
 
-    def add_border(self, color=(1, 1, 1), width=2.0):
+    def add_border(self, color='white', width=2.0):
         """Add borders around the frame.
 
         Parameters
         ----------
-        color : str or sequence, optional
+        color : color_like, optional
             Color of the border.
 
         width : float, optional
@@ -500,7 +501,7 @@ class Renderer(_vtk.vtkRenderer):
 
         actor = _vtk.vtkActor2D()
         actor.SetMapper(mapper)
-        actor.GetProperty().SetColor(parse_color(color))
+        actor.GetProperty().SetColor(Color(color).float_rgb)
         actor.GetProperty().SetLineWidth(width)
 
         self.AddViewProp(actor)
@@ -525,7 +526,7 @@ class Renderer(_vtk.vtkRenderer):
     def border_color(self):
         """Return the border color."""
         if self.has_border:
-            return self._border_actor.GetProperty().GetColor()
+            return Color(self._border_actor.GetProperty().GetColor())
         return None
 
     def add_chart(self, chart, *charts):
@@ -713,13 +714,13 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
-        x_color : str or 3 item sequence, optional
+        x_color : color_like, optional
             The color of the x axes arrow.
 
-        y_color : str or 3 item sequence, optional
+        y_color : color_like, optional
             The color of the y axes arrow.
 
-        z_color : str or 3 item sequence, optional
+        z_color : color_like, optional
             The color of the z axes arrow.
 
         xlabel : str, optional
@@ -785,7 +786,7 @@ class Renderer(_vtk.vtkRenderer):
             :attr:`pyvista.global_theme.interactive
             <pyvista.themes.DefaultTheme.interactive>`.
 
-        color : str or sequence, optional
+        color : color_like, optional
             The color of the actor.  This only applies if ``actor`` is
             a :class:`pyvista.DataSet`.
 
@@ -817,7 +818,7 @@ class Renderer(_vtk.vtkRenderer):
             actor.SetMapper(mapper)
             prop = actor.GetProperty()
             if color is not None:
-                prop.SetColor(parse_color(color))
+                prop.SetColor(Color(color).float_rgb)
             prop.SetOpacity(opacity)
         if hasattr(self, 'axes_widget'):
             # Delete the old one
@@ -861,16 +862,16 @@ class Renderer(_vtk.vtkRenderer):
         line_width : int, optional
             The width of the marker lines.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Color of the labels.
 
-        x_color : str or sequence, optional
+        x_color : color_like, optional
             Color used for the x axis arrow.  Defaults to theme axes parameters.
 
-        y_color : str or sequence, optional
+        y_color : color_like, optional
             Color used for the y axis arrow.  Defaults to theme axes parameters.
 
-        z_color : str or sequence, optional
+        z_color : color_like, optional
             Color used for the z axis arrow.  Defaults to theme axes parameters.
 
         xlabel : str, optional
@@ -1073,14 +1074,14 @@ class Renderer(_vtk.vtkRenderer):
             Font family.  Must be either ``'courier'``, ``'times'``,
             or ``'arial'``.
 
-        color : str or 3 item list, optional
+        color : color_like, optional
             Color of all labels and axis titles.  Default white.
             Either a string, rgb list, or hex color string.  For
             example:
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         xlabel : str, optional
@@ -1163,12 +1164,10 @@ class Renderer(_vtk.vtkRenderer):
             font_family = self._theme.font.family
         if font_size is None:
             font_size = self._theme.font.size
-        if color is None:
-            color = self._theme.font.color
         if fmt is None:
             fmt = self._theme.font.fmt
 
-        color = parse_color(color)
+        color = Color(color, default_color=self._theme.font.color)
 
         # Use the bounds of all data in the rendering window
         if mesh is None and bounds is None:
@@ -1193,9 +1192,9 @@ class Renderer(_vtk.vtkRenderer):
             cube_axes_actor.SetDrawYGridlines(show_yaxis)
             cube_axes_actor.SetDrawZGridlines(show_zaxis)
             # Set the colors
-            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color)
-            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color)
-            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color)
+            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
+            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
+            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
 
         if isinstance(ticks, str):
             ticks = ticks.lower()
@@ -1258,9 +1257,9 @@ class Renderer(_vtk.vtkRenderer):
         cube_axes_actor.SetCamera(self.camera)
 
         # set color
-        cube_axes_actor.GetXAxesLinesProperty().SetColor(color)
-        cube_axes_actor.GetYAxesLinesProperty().SetColor(color)
-        cube_axes_actor.GetZAxesLinesProperty().SetColor(color)
+        cube_axes_actor.GetXAxesLinesProperty().SetColor(color.float_rgb)
+        cube_axes_actor.GetYAxesLinesProperty().SetColor(color.float_rgb)
+        cube_axes_actor.GetZAxesLinesProperty().SetColor(color.float_rgb)
 
         # empty string used for clearing axis labels
         self._empty_str = _vtk.vtkStringArray()
@@ -1295,12 +1294,12 @@ class Renderer(_vtk.vtkRenderer):
         font_family = parse_font_family(font_family)
         for i in range(3):
             cube_axes_actor.GetTitleTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetTitleTextProperty(i).SetColor(color)
+            cube_axes_actor.GetTitleTextProperty(i).SetColor(color.float_rgb)
             cube_axes_actor.GetTitleTextProperty(i).SetFontFamily(font_family)
             cube_axes_actor.GetTitleTextProperty(i).SetBold(bold)
 
             cube_axes_actor.GetLabelTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetLabelTextProperty(i).SetColor(color)
+            cube_axes_actor.GetLabelTextProperty(i).SetColor(color.float_rgb)
             cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
             cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
 
@@ -1394,14 +1393,14 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
-        color : str or sequence, optional
+        color : color_like, optional
             Color of all labels and axis titles.  Default white.
             Either a string, rgb sequence, or hex color string.  For
             example:
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         corner_factor : float, optional
@@ -1451,9 +1450,6 @@ class Renderer(_vtk.vtkRenderer):
             lighting = self._theme.lighting
 
         self.remove_bounding_box()
-        if color is None:
-            color = self._theme.outline_color
-        rgb_color = parse_color(color)
         if outline:
             self._bounding_box = _vtk.vtkOutlineCornerSource()
             self._bounding_box.SetCornerFactor(corner_factor)
@@ -1470,7 +1466,7 @@ class Renderer(_vtk.vtkRenderer):
             mapper, reset_camera=reset_camera, name=name, culling=culling, pickable=False
         )
 
-        prop.SetColor(rgb_color)
+        prop.SetColor(Color(color, default_color=self._theme.outline_color).float_rgb)
         prop.SetOpacity(opacity)
         if render_lines_as_tubes:
             prop.SetRenderLinesAsTubes(render_lines_as_tubes)
@@ -1525,7 +1521,7 @@ class Renderer(_vtk.vtkRenderer):
         j_resolution : int, optional
             Number of points on the plane in the j direction.
 
-        color : str or 3 item list, optional
+        color : color_like, optional
             Color of all labels and axis titles.  Default gray.
             Either a string, rgb list, or hex color string.
 
@@ -1547,7 +1543,7 @@ class Renderer(_vtk.vtkRenderer):
             Enable or disable view direction lighting.  Default
             ``False``.
 
-        edge_color : str or sequence, optional
+        edge_color : color_like, optional
             Color of of the edges of the mesh.
 
         reset_camera : bool, optional
@@ -1635,26 +1631,20 @@ class Renderer(_vtk.vtkRenderer):
         if lighting is None:
             lighting = self._theme.lighting
 
-        if edge_color is None:
-            edge_color = self._theme.edge_color
-
         self.remove_bounding_box()
-        if color is None:
-            color = self._theme.floor_color
-        rgb_color = parse_color(color)
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._floor)
         actor, prop = self.add_actor(
             mapper, reset_camera=reset_camera, name=f'Floor({face})', pickable=pickable
         )
 
-        prop.SetColor(rgb_color)
+        prop.SetColor(Color(color, default_color=self._theme.floor_color).float_rgb)
         prop.SetOpacity(opacity)
 
         # edge display style
         if show_edges:
             prop.EdgeVisibilityOn()
-        prop.SetEdgeColor(parse_color(edge_color))
+        prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).float_rgb)
 
         # lighting display style
         if lighting is False:
@@ -2554,16 +2544,16 @@ class Renderer(_vtk.vtkRenderer):
 
         Parameters
         ----------
-        color : str or 3 item list, optional
+        color : color_like, optional
             Either a string, rgb list, or hex color string.  Defaults
             to theme default.  For example:
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        top : str or 3 item list, optional
+        top : color_like, optional
             If given, this will enable a gradient background where the
             ``color`` argument is at the bottom and the color given in
             ``top`` will be the color at the top of the renderer.
@@ -2580,17 +2570,14 @@ class Renderer(_vtk.vtkRenderer):
         >>> pl.show()
 
         """
-        if color is None:
-            color = self._theme.background
-
         use_gradient = False
         if top is not None:
             use_gradient = True
 
-        self.SetBackground(parse_color(color))
+        self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
         if use_gradient:
             self.GradientBackgroundOn()
-            self.SetBackground2(parse_color(top))
+            self.SetBackground2(Color(top).float_rgb)
         else:
             self.GradientBackgroundOff()
         self.Modified()
@@ -2752,7 +2739,7 @@ class Renderer(_vtk.vtkRenderer):
             color], where label is the name of the item to add, and
             color is the color of the label to add.
 
-        bcolor : list or str, optional
+        bcolor : color_like, optional
             Background color, either a three item 0 to 1 RGB color
             list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
             for a white color).  If None, legend background is
@@ -2852,14 +2839,14 @@ class Renderer(_vtk.vtkRenderer):
                     # dummy vtk object
                     vtk_object = pyvista.PolyData([0.0, 0.0, 0.0])
 
-                self._legend.SetEntry(i, vtk_object, text, parse_color(color))
+                self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
 
             legend_face = make_legend_face(face)
             for i, (text, color) in enumerate(labels):
-                self._legend.SetEntry(i, legend_face, text, parse_color(color))
+                self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)
 
         if loc is not None:
             if loc not in ACTOR_LOC_MAP:
@@ -2873,7 +2860,7 @@ class Renderer(_vtk.vtkRenderer):
             self._legend.UseBackgroundOff()
         else:
             self._legend.UseBackgroundOn()
-            self._legend.SetBackgroundColor(parse_color(bcolor))
+            self._legend.SetBackgroundColor(Color(bcolor).float_rgb)
 
         self._legend.SetBorder(border)
 

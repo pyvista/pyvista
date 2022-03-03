@@ -12,7 +12,7 @@ except ImportError:  # pragma: no cover
     from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
 
 from ..utilities.helpers import vtkmatrix_from_array
-from .tools import parse_color
+from .colors import Color, color_like
 
 
 class LightType(IntEnum):
@@ -44,7 +44,7 @@ class Light(vtkLight):
         has a transformation matrix.  See also the
         :py:attr:`focal_point` property.
 
-    color : str or 3-length sequence, optional
+    color : color_like, optional
         The color of the light. The ambient, diffuse and specular
         colors will all be set to this color on creation.
 
@@ -109,7 +109,7 @@ class Light(vtkLight):
 
     >>> import pyvista as pv
     >>> light = pv.Light(position=(10, 10, 10))
-    >>> light.diffuse_color = 1, 0, 0
+    >>> light.diffuse_color = 1.0, 0.0, 0.0
 
     Create a positional light at (0, 0, 3) with a cone angle of
     30, exponent of 20, and a visible actor.
@@ -284,7 +284,7 @@ class Light(vtkLight):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         Examples
@@ -295,15 +295,15 @@ class Light(vtkLight):
         >>> light = pyvista.Light()
         >>> light.ambient_color = 'red'
         >>> light.ambient_color
-        (1.0, 0.0, 0.0)
+        Color(name='red', hex='#ff0000ff')
 
         """
-        return self.GetAmbientColor()
+        return Color(self.GetAmbientColor())
 
     @ambient_color.setter
-    def ambient_color(self, color):
+    def ambient_color(self, color: color_like):
         """Set the ambient color of the light."""
-        self.SetAmbientColor(parse_color(color)[:3])
+        self.SetAmbientColor(Color(color).float_rgb)
 
     @property
     def diffuse_color(self):
@@ -314,7 +314,7 @@ class Light(vtkLight):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         Examples
@@ -323,17 +323,17 @@ class Light(vtkLight):
 
         >>> import pyvista as pv
         >>> light = pv.Light()
-        >>> light.diffuse_color = (0, 0, 1)
+        >>> light.diffuse_color = (0.0, 0.0, 1.0)
         >>> light.diffuse_color
-        (0.0, 0.0, 1.0)
+        Color(name='blue', hex='#0000ffff')
 
         """
-        return self.GetDiffuseColor()
+        return Color(self.GetDiffuseColor())
 
     @diffuse_color.setter
-    def diffuse_color(self, color):
+    def diffuse_color(self, color: color_like):
         """Set the diffuse color of the light."""
-        self.SetDiffuseColor(parse_color(color)[:3])
+        self.SetDiffuseColor(Color(color).float_rgb)
 
     @property
     def specular_color(self):
@@ -344,7 +344,7 @@ class Light(vtkLight):
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         Examples
@@ -355,15 +355,15 @@ class Light(vtkLight):
         >>> light = pv.Light()
         >>> light.specular_color = '#00FF00'
         >>> light.specular_color
-        (0.0, 1.0, 0.0)
+        Color(name='lime', hex='#00ff00ff')
 
         """
-        return self.GetSpecularColor()
+        return Color(self.GetSpecularColor())
 
     @specular_color.setter
-    def specular_color(self, color):
+    def specular_color(self, color: color_like):
         """Set the specular color of the light."""
-        self.SetSpecularColor(parse_color(color)[:3])
+        self.SetSpecularColor(Color(color).float_rgb)
 
     @property
     def position(self):
