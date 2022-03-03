@@ -85,7 +85,7 @@ def plot(
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
-    background : str or sequence, optional
+    background : color_like, optional
         Color of the background.
 
     text : str, optional
@@ -393,10 +393,10 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0, smooth_shading=False):
         :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
         points.
 
-    color : str or 3 item list, optional, defaults to white
+    color : color_like, optional, defaults to white
         Use to make the entire mesh have a single solid color.  Either
         a string, RGB list, or hex color string.  For example:
-        ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
 

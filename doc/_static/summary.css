@@ -1,0 +1,13 @@
+details > summary::after {
+    display: inline-block;
+    vertical-align: bottom;
+    margin-left: 10pt;
+    padding-bottom: 3pt;
+    color: gray;
+    font-size: 8pt;
+    content: '(Click to expand)';
+}
+
+details[open] > summary::after {
+    content: '(Click to collapse)';
+}
