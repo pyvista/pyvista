@@ -981,15 +981,15 @@ def test_iren_context_style(pl):
     style = pl.iren._style
     style_class = pl.iren._style_class
 
-    # Simulate right click on the chart:
-    pl.iren._mouse_right_button_press(int(0.75 * win_size[0]), int(0.75 * win_size[1]))
+    # Simulate double left click on the chart:
+    pl.iren._mouse_left_button_click(int(0.75 * win_size[0]), int(0.75 * win_size[1]), count=2)
     assert chart.GetInteractive()
     assert pl.iren._style == "Context"
     assert pl.iren._style_class == pl.iren._context_style
     assert pl.iren._context_style.GetScene().__this__ == chart._scene.__this__
 
     # Simulate right click outside the chart:
-    pl.iren._mouse_right_button_press(0, 0)
+    pl.iren._mouse_left_button_click(0, 0, count=2)
     assert not chart.GetInteractive()
     assert pl.iren._style == style
     assert pl.iren._style_class == style_class
