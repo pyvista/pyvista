@@ -764,6 +764,24 @@ def test_hide_axes():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+def test_add_axes_parameters():
+    plotter = pyvista.Plotter()
+    plotter.add_axes()
+    marker_args = dict(
+        cone_radius=0.6,
+        shaft_length=0.7,
+        tip_length=0.3,
+        ambient=0.5,
+        label_size=(0.4, 0.16),
+    )
+    plotter.add_axes(
+        line_width=5,
+        marker_args=marker_args,
+        viewport=(0, 0, 0.4, 0.4),
+    )
+    plotter.show(before_close_callback=verify_cache_image)
+
+
 def test_show_axes_all():
     plotter = pyvista.Plotter()
     plotter.show_axes_all()
