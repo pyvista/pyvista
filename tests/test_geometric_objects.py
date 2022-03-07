@@ -61,6 +61,12 @@ def test_line():
     with pytest.raises(TypeError):
         pyvista.Line(pointa, pointb, 0.1)  # from vtk
 
+    with pytest.raises(TypeError):
+        pyvista.Line((0, 0), pointb)
+
+    with pytest.raises(TypeError):
+        pyvista.Line(pointa, (10, 1.0))
+
 
 def test_tube():
     pointa = (0, 0, 0)
@@ -82,6 +88,12 @@ def test_tube():
 
     with pytest.raises(TypeError):
         pyvista.Tube(pointa, pointb, 0.1)  # from vtk
+
+    with pytest.raises(TypeError):
+        pyvista.Tube((0, 0), pointb)
+
+    with pytest.raises(TypeError):
+        pyvista.Tube(pointa, (10, 1.0))
 
 
 def test_cube():
