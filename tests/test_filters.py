@@ -976,6 +976,15 @@ def test_sample_over_line():
     # is sampled result a polydata object
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
+    # test points
+    sphere = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+    sampled_points_from_sphere = sphere.sample_over_line(
+        points=[[3, 1, 1], [-3, -1, -1]], progress_bar=True
+    )
+    assert sampled_points_from_sphere.n_points == 2
+    # is sampled result a polydata object
+    assert isinstance(sampled_points_from_sphere, pyvista.PolyData)
+
 
 def test_plot_over_line(tmpdir):
     """this requires matplotlib"""
@@ -1001,6 +1010,8 @@ def test_plot_over_line(tmpdir):
         progress_bar=True,
     )
     assert os.path.isfile(filename)
+    # Test points
+    mesh.plot_over_line(points=[a, b], show=False)
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_line(

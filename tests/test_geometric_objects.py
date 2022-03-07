@@ -43,12 +43,16 @@ def test_plane():
 def test_line():
     pointa = (0, 0, 0)
     pointb = (10, 1.0, 3)
+    points = np.array([[0, 0, 0], [1, 1, 0], [2, 2, 2], [3, 3, 0]])
 
     line = pyvista.Line(pointa, pointb)
     assert line.n_points == 2
     assert line.n_cells == 1
     line = pyvista.Line(pointa, pointb, 10)
     assert line.n_points == 11
+    assert line.n_cells == 1
+    line = pyvista.Line(points=points)
+    assert line.n_points == 4
     assert line.n_cells == 1
 
     with pytest.raises(ValueError):
@@ -61,6 +65,7 @@ def test_line():
 def test_tube():
     pointa = (0, 0, 0)
     pointb = (10, 1.0, 3)
+    points = np.array([[0, 0, 0], [1, 1, 0], [2, 2, 2], [3, 3, 0]])
 
     tube = pyvista.Tube(n_sides=3)
     assert tube.n_points == 6
@@ -68,6 +73,9 @@ def test_tube():
     tube = pyvista.Tube(pointa, pointb, 10)
     assert tube.n_points == 165
     assert tube.n_cells == 15
+    tube = pyvista.Tube(n_sides=3, points=points)
+    assert tube.n_points == 12
+    assert tube.n_cells == 3
 
     with pytest.raises(ValueError):
         pyvista.Tube(pointa, pointb, -1)

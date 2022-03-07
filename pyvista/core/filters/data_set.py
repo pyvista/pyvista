@@ -3374,15 +3374,23 @@ class DataSetFilters:
             .decimate(target_reduction)
         )
 
-    def sample_over_line(self, pointa, pointb, resolution=None, tolerance=None, progress_bar=False):
+    def sample_over_line(
+        self,
+        pointa=(-0.5, 0.0, 0.0),
+        pointb=(0.5, 0.0, 0.0),
+        resolution=None,
+        tolerance=None,
+        points=None,
+        progress_bar=False,
+    ):
         """Sample a dataset onto a line.
 
         Parameters
         ----------
-        pointa : sequence
+        pointa : sequence, optional
             Location in ``[x, y, z]``.
 
-        pointb : sequence
+        pointb : sequence, optional
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -3392,6 +3400,10 @@ class DataSetFilters:
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is in a
             cell of the input.  If not given, tolerance is automatically generated.
+
+        points : np.ndarray or list, optional
+            List of points defining a broken line, default is ``None``
+            If given, pointa, pointb and resolution will be ignored.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -3427,14 +3439,14 @@ class DataSetFilters:
         if resolution is None:
             resolution = int(self.n_cells)
         # Make a line and sample the dataset
-        line = pyvista.Line(pointa, pointb, resolution=resolution)
+        line = pyvista.Line(pointa, pointb, points=points, resolution=resolution)
         sampled_line = line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
         return sampled_line
 
     def plot_over_line(
         self,
-        pointa,
-        pointb,
+        pointa=(-0.5, 0.0, 0.0),
+        pointb=(0.5, 0.0, 0.0),
         resolution=None,
         scalars=None,
         title=None,
@@ -3444,6 +3456,7 @@ class DataSetFilters:
         show=True,
         tolerance=None,
         fname=None,
+        points=None,
         progress_bar=False,
     ):
         """Sample a dataset along a high resolution line and plot.
@@ -3454,10 +3467,10 @@ class DataSetFilters:
 
         Parameters
         ----------
-        pointa : sequence
+        pointa : sequence, optional
             Location in ``[x, y, z]``.
 
-        pointb : sequence
+        pointb : sequence, optional
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -3490,6 +3503,10 @@ class DataSetFilters:
         fname : str, optional
             Save the figure this file name when set.
 
+        points : np.ndarray or list, optional
+            List of points defining a broken line, default is ``None``
+            If given, pointa, pointb and resolution will be ignored.
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -3506,7 +3523,13 @@ class DataSetFilters:
 
         # Sample on line
         sampled = DataSetFilters.sample_over_line(
-            self, pointa, pointb, resolution, tolerance, progress_bar=progress_bar
+            self,
+            pointa,
+            pointb,
+            resolution,
+            tolerance,
+            points,
+            progress_bar=progress_bar,
         )
 
         # Get variable of interest

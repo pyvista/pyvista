@@ -418,7 +418,7 @@ def Plane(
     return surf
 
 
-def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
+def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, points=None):
     """Create a line.
 
     Parameters
@@ -431,6 +431,10 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
 
     resolution : int, optional
         Number of pieces to divide line into.
+
+    points : np.ndarray or list, optional
+        List of points defining a broken line, default is ``None``
+        If given, pointa, pointb and resolution will be ignored.
 
     Returns
     -------
@@ -446,16 +450,19 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     >>> mesh.plot(color='k', line_width=10)
 
     """
-    if resolution <= 0:
-        raise ValueError('Resolution must be positive')
-    if np.array(pointa).size != 3:
-        raise TypeError('Point A must be a length three tuple of floats.')
-    if np.array(pointb).size != 3:
-        raise TypeError('Point B must be a length three tuple of floats.')
     src = _vtk.vtkLineSource()
-    src.SetPoint1(*pointa)
-    src.SetPoint2(*pointb)
-    src.SetResolution(resolution)
+    if points is None:
+        if resolution <= 0:
+            raise ValueError('Resolution must be positive')
+        if np.array(pointa).size != 3:
+            raise TypeError('Point A must be a length three tuple of floats.')
+        if np.array(pointb).size != 3:
+            raise TypeError('Point B must be a length three tuple of floats.')
+        src.SetPoint1(*pointa)
+        src.SetPoint2(*pointb)
+        src.SetResolution(resolution)
+    else:
+        src.SetPoints(pyvista.vtk_points(points))
     src.Update()
     line = pyvista.wrap(src.GetOutput())
     # Compute distance of every point along line
@@ -465,7 +472,14 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     return line
 
 
-def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1.0, n_sides=15):
+def Tube(
+    pointa=(-0.5, 0.0, 0.0),
+    pointb=(0.5, 0.0, 0.0),
+    resolution=1,
+    radius=1.0,
+    n_sides=15,
+    points=None,
+):
     """Create a tube.
 
     Parameters
@@ -485,6 +499,10 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
     n_sides : int, optional
         Number of sides for the tube.
 
+    points : np.ndarray or list, optional
+        List of points defining a broken tube, default is ``None``
+        If given, pointa, pointb and resolution will be ignored.
+
     Returns
     -------
     pyvista.PolyData
@@ -499,16 +517,19 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
     >>> mesh.plot()
 
     """
-    if resolution <= 0:
-        raise ValueError('Resolution must be positive.')
-    if np.array(pointa).size != 3:
-        raise TypeError('Point A must be a length three tuple of floats.')
-    if np.array(pointb).size != 3:
-        raise TypeError('Point B must be a length three tuple of floats.')
     line_src = _vtk.vtkLineSource()
-    line_src.SetPoint1(*pointa)
-    line_src.SetPoint2(*pointb)
-    line_src.SetResolution(resolution)
+    if points is None:
+        if resolution <= 0:
+            raise ValueError('Resolution must be positive.')
+        if np.array(pointa).size != 3:
+            raise TypeError('Point A must be a length three tuple of floats.')
+        if np.array(pointb).size != 3:
+            raise TypeError('Point B must be a length three tuple of floats.')
+        line_src.SetPoint1(*pointa)
+        line_src.SetPoint2(*pointb)
+        line_src.SetResolution(resolution)
+    else:
+        line_src.SetPoints(pyvista.vtk_points(points))
     line_src.Update()
 
     if n_sides < 3:
