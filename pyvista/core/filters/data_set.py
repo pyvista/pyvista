@@ -3401,10 +3401,6 @@ class DataSetFilters:
             Tolerance used to compute whether a point in the source is in a
             cell of the input.  If not given, tolerance is automatically generated.
 
-        points : np.ndarray or list, optional
-            List of points defining a broken line, default is ``None``
-            If given, pointa, pointb and resolution will be ignored.
-
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -3439,7 +3435,7 @@ class DataSetFilters:
         if resolution is None:
             resolution = int(self.n_cells)
         # Make a line and sample the dataset
-        line = pyvista.Line(pointa, pointb, points=points, resolution=resolution)
+        line = pyvista.Line(pointa, pointb, resolution=resolution)
         sampled_line = line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
         return sampled_line
 
@@ -3456,7 +3452,6 @@ class DataSetFilters:
         show=True,
         tolerance=None,
         fname=None,
-        points=None,
         progress_bar=False,
     ):
         """Sample a dataset along a high resolution line and plot.
@@ -3503,10 +3498,6 @@ class DataSetFilters:
         fname : str, optional
             Save the figure this file name when set.
 
-        points : np.ndarray or list, optional
-            List of points defining a broken line, default is ``None``
-            If given, pointa, pointb and resolution will be ignored.
-
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -3528,7 +3519,154 @@ class DataSetFilters:
             pointb,
             resolution,
             tolerance,
+            progress_bar=progress_bar,
+        )
+
+        # Get variable of interest
+        if scalars is None:
+            field, scalars = self.active_scalars_info
+        values = sampled.get_array(scalars)
+        distance = sampled['Distance']
+
+        # Remainder is plotting
+        if figure:
+            plt.figure(figsize=figsize)
+        # Plot it in 2D
+        if values.ndim > 1:
+            for i in range(values.shape[1]):
+                plt.plot(distance, values[:, i], label=f'Component {i}')
+            plt.legend()
+        else:
+            plt.plot(distance, values)
+        plt.xlabel('Distance')
+        if ylabel is None:
+            plt.ylabel(scalars)
+        else:
+            plt.ylabel(ylabel)
+        if title is None:
+            plt.title(f'{scalars} Profile')
+        else:
+            plt.title(title)
+        if fname:
+            plt.savefig(fname)
+        if show:  # pragma: no cover
+            plt.show()
+
+    def sample_over_broken_line(self, points=None, tolerance=None, progress_bar=False):
+        """Sample a dataset onto a broken line.
+
+        Parameters
+        ----------
+        points : np.ndarray or list, optional
+            List of points defining a broken line, default is ``None``
+            If given, pointa, pointb and resolution will be ignored.
+
+        tolerance : float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line object with sampled data from dataset.
+
+        Examples
+        --------
+        Sample over a plane that is interpolating a point cloud.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> np.random.seed(12)
+        >>> point_cloud = np.random.random((5, 3))
+        >>> point_cloud[:, 2] = 0
+        >>> point_cloud -= point_cloud.mean(0)
+        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata['values'] = np.random.random(5)
+        >>> plane = pyvista.Plane()
+        >>> plane.clear_data()
+        >>> plane = plane.interpolate(pdata, sharpness=3.5)
+        >>> sample = plane.sample_over_broken_line((-0.5, -0.5, 0), (0.5, -0.5, 0), (0.5, 0.5, 0))
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
+        >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
+        >>> pl.show()
+
+        """
+        # Make a broken line and sample the dataset
+        broken_line = pyvista.Line(points=points)
+        sampled_broken_line = broken_line.sample(
+            self, tolerance=tolerance, progress_bar=progress_bar
+        )
+        return sampled_broken_line
+
+    def plot_over_broken_line(
+        self,
+        points=None,
+        scalars=None,
+        title=None,
+        ylabel=None,
+        figsize=None,
+        figure=True,
+        show=True,
+        tolerance=None,
+        fname=None,
+        progress_bar=False,
+    ):
+        """Sample a dataset along a broken line and plot.
+
+        points : np.ndarray or list, optional
+            List of points defining a broken line, default is ``None``
+            If given, pointa, pointb and resolution will be ignored.
+
+        scalars : str, optional
+            The string name of the variable in the input dataset to probe. The
+            active scalar is used by default.
+
+        title : str, optional
+            The string title of the matplotlib figure.
+
+        ylabel : str, optional
+            The string label of the Y-axis. Defaults to variable name.
+
+        figsize : tuple(int), optional
+            The size of the new figure.
+
+        figure : bool, optional
+            Flag on whether or not to create a new figure.
+
+        show : bool, optional
+            Shows the matplotlib figure.
+
+        tolerance : float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
+        fname : str, optional
+            Save the figure this file name when set.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Examples
+        --------
+        See the :ref:`plot_over_line_example` example.
+
+        """
+        # Ensure matplotlib is available
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:  # pragma: no cover
+            raise ImportError('matplotlib must be available to use this filter.')
+
+        # Sample on line
+        sampled = DataSetFilters.sample_over_broken_line(
+            self,
             points,
+            tolerance,
             progress_bar=progress_bar,
         )
 

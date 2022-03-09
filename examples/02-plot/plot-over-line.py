@@ -34,6 +34,10 @@ p.show()
 # Run the filter and produce a line plot
 mesh.plot_over_line(a, b, resolution=100)
 
+###############################################################################
+# Run the filter and produce a line plot on explicit points.
+mesh.plot_over_broken_line([a, a + (b - a) * 0.25, a + (b - a) * 0.5, a + (b - a) * 0.75, b])
+
 
 ###############################################################################
 # Flat Surface

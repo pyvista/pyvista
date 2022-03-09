@@ -976,15 +976,6 @@ def test_sample_over_line():
     # is sampled result a polydata object
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
-    # test points
-    sphere = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
-    sampled_points_from_sphere = sphere.sample_over_line(
-        points=[[3, 1, 1], [-3, -1, -1]], progress_bar=True
-    )
-    assert sampled_points_from_sphere.n_points == 2
-    # is sampled result a polydata object
-    assert isinstance(sampled_points_from_sphere, pyvista.PolyData)
-
 
 def test_plot_over_line(tmpdir):
     """this requires matplotlib"""
@@ -1010,14 +1001,62 @@ def test_plot_over_line(tmpdir):
         progress_bar=True,
     )
     assert os.path.isfile(filename)
-    # Test points
-    mesh.plot_over_line(points=[a, b], show=False)
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_line(
             a,
             b,
             resolution=None,
+            scalars='invalid_array_name',
+            title='My Stuff',
+            ylabel='3 Values',
+            show=False,
+        )
+
+
+def test_sample_over_broken_line():
+    """Test that"""
+    name = 'values'
+
+    line = pyvista.Line([0, 0, 0], [0, 0, 10], 9)
+    line[name] = np.linspace(0, 10, 10)
+
+    sampled_broken_line = line.sample_over_broken_line(
+        [[0, 0, 0.5], [0, 0, 1], [0, 0, 1.5]], progress_bar=True
+    )
+
+    expected_result = np.array([0.5, 1, 1.5])
+    assert np.allclose(sampled_broken_line[name], expected_result)
+    assert name in sampled_broken_line.array_names  # is name in sampled result
+
+
+def test_plot_over_broken_line(tmpdir):
+    """this requires matplotlib"""
+    pytest.importorskip('matplotlib')
+    tmp_dir = tmpdir.mkdir("tmpdir")
+    filename = str(tmp_dir.join('tmp.png'))
+    mesh = examples.load_uniform()
+    # Make three points to construct the broken line between
+    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    b = [mesh.bounds[1] * 0.5, mesh.bounds[3] * 0.5, 0.0]
+    c = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
+    mesh.plot_over_broken_line([a, b, c], show=False, progress_bar=True)
+    # Test multicomponent
+    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh.plot_over_broken_line(
+        [a, b, c],
+        scalars='foo',
+        title='My Stuff',
+        ylabel='3 Values',
+        show=False,
+        fname=filename,
+        progress_bar=True,
+    )
+    assert os.path.isfile(filename)
+    # Should fail if scalar name does not exist
+    with pytest.raises(KeyError):
+        mesh.plot_over_broken_line(
+            [a, b, c],
             scalars='invalid_array_name',
             title='My Stuff',
             ylabel='3 Values',

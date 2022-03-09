@@ -449,6 +449,11 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, points=N
     >>> mesh = pyvista.Line((0, 0, 0), (0, 0, 1))
     >>> mesh.plot(color='k', line_width=10)
 
+    Create a broken line between ``(0, 0, 0)``, ``(1, 1, 1)`` and ``(0, 0, 1)``.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Line([[0, 0, 0], [1, 1, 1], [0, 0, 1]])
+    >>> mesh.plot(color='k', line_width=10)
     """
     src = _vtk.vtkLineSource()
     if points is None:
