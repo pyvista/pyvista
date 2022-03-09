@@ -36,8 +36,9 @@ import os
 from typing import List, Union
 import warnings
 
-from .plotting.colors import PARAVIEW_BACKGROUND, get_cmap_safe
-from .plotting.tools import parse_color, parse_font_family
+from ._typing import color_like
+from .plotting.colors import Color, get_cmap_safe
+from .plotting.tools import parse_font_family
 from .utilities.misc import PyvistaDeprecationWarning
 
 
@@ -306,14 +307,14 @@ class _SilhouetteConfig(_ThemeConfig):
     __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate']
 
     def __init__(self):
-        self._color = parse_color('black')
+        self._color = Color('black')
         self._line_width = 2
         self._opacity = 1.0
         self._feature_angle = None
         self._decimate = 0.9
 
     @property
-    def color(self) -> tuple:
+    def color(self) -> Color:
         """Return or set the silhouette color.
 
         Examples
@@ -325,8 +326,8 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: Union[tuple, str]):
-        self._color = parse_color(color)
+    def color(self, color: color_like):
+        self._color = Color(color)
 
     @property
     def line_width(self) -> float:
@@ -533,9 +534,9 @@ class _AxesConfig(_ThemeConfig):
     __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
 
     def __init__(self):
-        self._x_color = parse_color('tomato')
-        self._y_color = parse_color('seagreen')
-        self._z_color = parse_color('mediumblue')
+        self._x_color = Color('tomato')
+        self._y_color = Color('seagreen')
+        self._z_color = Color('mediumblue')
         self._box = False
         self._show = True
 
@@ -555,7 +556,7 @@ class _AxesConfig(_ThemeConfig):
         return '\n'.join(txt)
 
     @property
-    def x_color(self) -> tuple:
+    def x_color(self) -> Color:
         """Return or set x axis color.
 
         Examples
@@ -566,11 +567,11 @@ class _AxesConfig(_ThemeConfig):
         return self._x_color
 
     @x_color.setter
-    def x_color(self, color: Union[tuple, str]):
-        self._x_color = parse_color(color)
+    def x_color(self, color: color_like):
+        self._x_color = Color(color)
 
     @property
-    def y_color(self) -> tuple:
+    def y_color(self) -> Color:
         """Return or set y axis color.
 
         Examples
@@ -581,11 +582,11 @@ class _AxesConfig(_ThemeConfig):
         return self._y_color
 
     @y_color.setter
-    def y_color(self, color: Union[tuple, str]):
-        self._y_color = parse_color(color)
+    def y_color(self, color: color_like):
+        self._y_color = Color(color)
 
     @property
-    def z_color(self) -> tuple:
+    def z_color(self) -> Color:
         """Return or set z axis color.
 
         Examples
@@ -596,8 +597,8 @@ class _AxesConfig(_ThemeConfig):
         return self._z_color
 
     @z_color.setter
-    def z_color(self, color: Union[tuple, str]):
-        self._z_color = parse_color(color)
+    def z_color(self, color: color_like):
+        self._z_color = Color(color)
 
     @property
     def box(self) -> bool:
@@ -674,7 +675,7 @@ class _Font(_ThemeConfig):
         self._size = 12
         self._title_size = None
         self._label_size = None
-        self._color = [1, 1, 1]
+        self._color = Color('white')
         self._fmt = None
 
     def __repr__(self):
@@ -775,7 +776,7 @@ class _Font(_ThemeConfig):
             self._label_size = int(label_size)
 
     @property
-    def color(self) -> tuple:
+    def color(self) -> Color:
         """Return or set the font color.
 
         Examples
@@ -786,8 +787,8 @@ class _Font(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: Union[tuple, str]):
-        self._color = parse_color(color)
+    def color(self, color: color_like):
+        self._color = Color(color)
 
     @property
     def fmt(self) -> str:
@@ -893,7 +894,7 @@ class _SliderStyleConfig(_ThemeConfig):
         self._cap_opacity = float(cap_opacity)
 
     @property
-    def tube_color(self) -> tuple:
+    def tube_color(self) -> Color:
         """Return or set the tube color.
 
         Examples
@@ -904,8 +905,8 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._tube_color
 
     @tube_color.setter
-    def tube_color(self, tube_color: Union[tuple, str]):
-        self._tube_color = parse_color(tube_color)
+    def tube_color(self, tube_color: color_like):
+        self._tube_color = Color(tube_color)
 
     @property
     def tube_width(self) -> float:
@@ -924,7 +925,7 @@ class _SliderStyleConfig(_ThemeConfig):
         self._tube_width = float(tube_width)
 
     @property
-    def slider_color(self) -> tuple:
+    def slider_color(self) -> Color:
         """Return or set the slider color.
 
         Examples
@@ -936,8 +937,8 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._slider_color
 
     @slider_color.setter
-    def slider_color(self, slider_color: Union[tuple, str]):
-        self._slider_color = parse_color(slider_color)
+    def slider_color(self, slider_color: color_like):
+        self._slider_color = Color(slider_color)
 
     @property
     def slider_width(self) -> float:
@@ -1001,7 +1002,7 @@ class _SliderConfig(_ThemeConfig):
     >>> pyvista.global_theme.slider_styles.classic.slider_width = 0.04
     >>> pyvista.global_theme.slider_styles.classic.slider_color = (0.5, 0.5, 0.5)
     >>> pyvista.global_theme.slider_styles.classic.tube_width = 0.005
-    >>> pyvista.global_theme.slider_styles.classic.tube_color = (1, 1, 1)
+    >>> pyvista.global_theme.slider_styles.classic.tube_color = (1.0, 1.0, 1.0)
     >>> pyvista.global_theme.slider_styles.classic.cap_opacity = 1
     >>> pyvista.global_theme.slider_styles.classic.cap_length = 0.01
     >>> pyvista.global_theme.slider_styles.classic.cap_width = 0.02
@@ -1027,9 +1028,9 @@ class _SliderConfig(_ThemeConfig):
         self._classic.name = 'classic'
         self._classic.slider_length = 0.02
         self._classic.slider_width = 0.04
-        self._classic.slider_color = (0.5, 0.5, 0.5)
+        self._classic.slider_color = 'gray'
         self._classic.tube_width = 0.005
-        self._classic.tube_color = (1, 1, 1)
+        self._classic.tube_color = 'white'
         self._classic.cap_opacity = 1
         self._classic.cap_length = 0.01
         self._classic.cap_width = 0.02
@@ -1038,9 +1039,9 @@ class _SliderConfig(_ThemeConfig):
         self._modern.name = 'modern'
         self._modern.slider_length = 0.02
         self._modern.slider_width = 0.04
-        self._modern.slider_color = (0.43137255, 0.44313725, 0.45882353)
+        self._modern.slider_color = (110, 113, 117)
         self._modern.tube_width = 0.04
-        self._modern.tube_color = (0.69803922, 0.70196078, 0.70980392)
+        self._modern.tube_color = (178, 179, 181)
         self._modern.cap_opacity = 0
         self._modern.cap_length = 0.01
         self._modern.cap_width = 0.02
@@ -1149,7 +1150,7 @@ class DefaultTheme(_ThemeConfig):
     def __init__(self):
         """Initialize the theme."""
         self._name = 'default'
-        self._background = parse_color([0.3, 0.3, 0.3])
+        self._background = Color([0.3, 0.3, 0.3])
         self._full_screen = False
         self._camera = {
             'position': [1, 1, 1],
@@ -1160,11 +1161,11 @@ class DefaultTheme(_ThemeConfig):
         self._window_size = [1024, 768]
         self._font = _Font()
         self._cmap = 'viridis'
-        self._color = parse_color('white')
-        self._nan_color = parse_color('darkgray')
-        self._edge_color = parse_color('black')
-        self._outline_color = parse_color('white')
-        self._floor_color = parse_color('gray')
+        self._color = Color('white')
+        self._nan_color = Color('darkgray')
+        self._edge_color = Color('black')
+        self._outline_color = Color('white')
+        self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
 
         self._colorbar_horizontal = _ColorbarConfig()
@@ -1254,7 +1255,7 @@ class DefaultTheme(_ThemeConfig):
         self._return_cpos = value
 
     @property
-    def background(self):
+    def background(self) -> Color:
         """Return or set the default background color of pyvista plots.
 
         Examples
@@ -1267,8 +1268,8 @@ class DefaultTheme(_ThemeConfig):
         return self._background
 
     @background.setter
-    def background(self, new_background):
-        self._background = parse_color(new_background)
+    def background(self, new_background: color_like):
+        self._background = Color(new_background)
 
     @property
     def jupyter_backend(self) -> str:
@@ -1555,7 +1556,7 @@ class DefaultTheme(_ThemeConfig):
         self._cmap = cmap
 
     @property
-    def color(self) -> tuple:
+    def color(self) -> Color:
         """Return or set the default color of meshes in pyvista.
 
         Used for meshes without ``scalars``.
@@ -1565,7 +1566,7 @@ class DefaultTheme(_ThemeConfig):
 
         * ``color='white'``
         * ``color='w'``
-        * ``color=[1, 1, 1]``
+        * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
 
         Examples
@@ -1579,11 +1580,11 @@ class DefaultTheme(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: Union[tuple, str]):
-        self._color = parse_color(color)
+    def color(self, color: color_like):
+        self._color = Color(color)
 
     @property
-    def nan_color(self) -> tuple:
+    def nan_color(self) -> Color:
         """Return or set the default NaN color.
 
         This color is used to plot all NaN values.
@@ -1597,11 +1598,11 @@ class DefaultTheme(_ThemeConfig):
         return self._nan_color
 
     @nan_color.setter
-    def nan_color(self, nan_color: Union[tuple, str]):
-        self._nan_color = parse_color(nan_color)
+    def nan_color(self, nan_color: color_like):
+        self._nan_color = Color(nan_color)
 
     @property
-    def edge_color(self) -> tuple:
+    def edge_color(self) -> Color:
         """Return or set the default edge color.
 
         Examples
@@ -1615,11 +1616,11 @@ class DefaultTheme(_ThemeConfig):
         return self._edge_color
 
     @edge_color.setter
-    def edge_color(self, edge_color: Union[tuple, str]):
-        self._edge_color = parse_color(edge_color)
+    def edge_color(self, edge_color: color_like):
+        self._edge_color = Color(edge_color)
 
     @property
-    def outline_color(self) -> tuple:
+    def outline_color(self) -> Color:
         """Return or set the default outline color.
 
         Examples
@@ -1631,11 +1632,11 @@ class DefaultTheme(_ThemeConfig):
         return self._outline_color
 
     @outline_color.setter
-    def outline_color(self, outline_color: Union[tuple, str]):
-        self._outline_color = parse_color(outline_color)
+    def outline_color(self, outline_color: color_like):
+        self._outline_color = Color(outline_color)
 
     @property
-    def floor_color(self) -> tuple:
+    def floor_color(self) -> Color:
         """Return or set the default floor color.
 
         Examples
@@ -1647,8 +1648,8 @@ class DefaultTheme(_ThemeConfig):
         return self._floor_color
 
     @floor_color.setter
-    def floor_color(self, floor_color: Union[tuple, str]):
-        self._floor_color = parse_color(floor_color)
+    def floor_color(self, floor_color: color_like):
+        self._floor_color = Color(floor_color)
 
     @property
     def colorbar_orientation(self) -> str:
@@ -2254,7 +2255,7 @@ class ParaViewTheme(DefaultTheme):
         """Initialize theme."""
         super().__init__()
         self.name = 'paraview'
-        self.background = tuple(PARAVIEW_BACKGROUND)
+        self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
         self.font.label_size = 16

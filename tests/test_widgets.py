@@ -29,6 +29,11 @@ def test_widget_box():
     p.add_mesh_clip_box(mesh)
     p.close()
 
+    p = pyvista.Plotter()
+    # merge_points=True is the default and is tested above
+    p.add_mesh_clip_box(mesh, merge_points=False)
+    p.close()
+
 
 def test_widget_plane():
     p = pyvista.Plotter()
@@ -170,7 +175,7 @@ def test_widget_slider():
     p = pyvista.Plotter()
     title_color = "red"
     s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_color=title_color)
-    assert s.GetRepresentation().GetTitleProperty().GetColor() == pyvista.parse_color(title_color)
+    assert s.GetRepresentation().GetTitleProperty().GetColor() == pyvista.Color(title_color)
     p.close()
 
     p = pyvista.Plotter()

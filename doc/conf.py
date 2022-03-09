@@ -12,11 +12,11 @@ if sys.version_info >= (3, 0):
     faulthandler.enable()
 
 sys.path.insert(0, os.path.abspath("."))
-import make_chart_style_tables
 import make_external_gallery
+import make_tables
 
 make_external_gallery.make_example_gallery()
-make_chart_style_tables.make_all()
+make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
@@ -73,6 +73,7 @@ extensions = [
     "pyvista.ext.plot_directive",
     "pyvista.ext.coverage",
     "numpydoc",
+    "sphinx.ext.viewcode",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -126,6 +127,11 @@ coverage_ignore_modules = [
 ]
 
 
+# Configuration for sphinx.ext.autodoc
+# Do not expand following type aliases when generating the docs
+autodoc_type_aliases = {"color_like": "pyvista.color_like"}
+
+
 # See https://numpydoc.readthedocs.io/en/latest/install.html
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
@@ -148,6 +154,7 @@ numpydoc_validation_checks = {
 numpydoc_validation_exclude = {  # set of regex
     r'\.Plotter$',  # Issue with class parameter documentation
     r'\.from_dict$',
+    r'\.to_dict$',
     r'\.__init__$',
     # parm of abstract classes
     r'\.CompositeFilters$',
@@ -203,6 +210,8 @@ numpydoc_validation_exclude = {  # set of regex
     r'\.*MultiBlock.next$',
     # called from inherited
     r'\.*Table.copy_meta_from$',
+    # Type alias
+    r'\.color_like$',
 }
 
 
@@ -566,3 +575,4 @@ def setup(app):
     app.add_directive("autoautosummary", AutoAutoSummary)
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")
+    app.add_css_file("summary.css")

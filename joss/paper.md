@@ -5,7 +5,7 @@ tags:
   - visualization
   - 3D
 authors:
-  - name: C. Bane Sullivan
+  - name: Bane Sullivan
     orcid: 0000-0001-8628-4566
     affiliation: 1
   - name: Alexander A. Kaszynski
