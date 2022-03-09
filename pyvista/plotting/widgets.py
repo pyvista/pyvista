@@ -140,6 +140,7 @@ class WidgetHelper:
         widget_color=None,
         outline_translation=True,
         merge_points=True,
+        crinkle=False,
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -179,6 +180,9 @@ class WidgetHelper:
             If ``True`` (default), coinciding points of independently
             defined mesh elements will be merged.
 
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the clip.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -198,6 +202,9 @@ class WidgetHelper:
         self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
         port = 1 if invert else 0
+
+        if crinkle:
+            mesh.cell_data['cell_ids'] = np.arange(0, mesh.n_cells, dtype=int)
 
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
@@ -220,7 +227,10 @@ class WidgetHelper:
 
             alg.SetBoxClip(*bounds)
             alg.Update()
-            box_clipped_mesh.shallow_copy(alg.GetOutput(port))
+            clipped = pyvista.wrap(alg.GetOutput(port))
+            if crinkle:
+                clipped = mesh.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+            box_clipped_mesh.shallow_copy(clipped)
 
         self.add_box_widget(
             callback=callback,
