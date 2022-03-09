@@ -9,7 +9,7 @@ from pyvista import _vtk
 from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
-class Camera(_vtk.vtkCamera):
+class BaseCamera:
     """PyVista wrapper for the VTK Camera class.
 
     Parameters
@@ -618,3 +618,7 @@ class Camera(_vtk.vtkCamera):
             setattr(new_camera, attr, value)
 
         return new_camera
+
+
+class Camera(_vtk.vtkCamera, BaseCamera):
+    pass

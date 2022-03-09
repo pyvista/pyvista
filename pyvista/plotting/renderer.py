@@ -183,7 +183,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(_vtk.vtkRenderer):
+class BaseRenderer:
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -2918,6 +2918,10 @@ class Renderer(_vtk.vtkRenderer):
     def legend(self):
         """Legend actor."""
         return self._legend
+
+
+class Renderer(_vtk.vtkRenderer, BaseRenderer):
+    pass
 
 
 def _line_for_legend():
