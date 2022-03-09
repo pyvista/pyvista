@@ -79,6 +79,13 @@ def test_clip_filter(datasets):
             else:
                 assert isinstance(clp, pyvista.UnstructuredGrid)
 
+    # crinkle clip
+    clp = pyvista.Wavelet().clip(normal=(1, 1, 1), crinkle=True)
+    assert clp is not None
+    clp1, clp2 = pyvista.Wavelet().clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
+    assert clp1 is not None
+    assert clp2 is not None
+
 
 @skip_windows
 @skip_mac
@@ -174,6 +181,13 @@ def test_clip_box(datasets):
     with pytest.raises(ValueError):
         dataset.clip_box(bounds=pyvista.Sphere(), progress_bar=True)
 
+    # crinkle clip
+    surf = pyvista.Sphere(radius=3)
+    vol = pyvista.voxelize(surf)
+    cube = pyvista.Cube().rotate_x(33, inplace=False)
+    clp = vol.clip_box(bounds=cube, invert=False, crinkle=True)
+    assert clp is not None
+
 
 @skip_py2_nobind
 def test_clip_box_composite(composite):
@@ -199,6 +213,9 @@ def test_clip_surface():
     clipped = dataset.clip_surface(surface.cast_to_unstructured_grid(), progress_bar=True)
     assert isinstance(clipped, pyvista.UnstructuredGrid)
     assert 'implicit_distance' in clipped.array_names
+    # Test crinkle
+    clipped = dataset.clip_surface(surface, invert=False, progress_bar=True, crinkle=True)
+    assert isinstance(clipped, pyvista.UnstructuredGrid)
 
 
 def test_clip_closed_surface():
