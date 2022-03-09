@@ -27,9 +27,19 @@ class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
     def _clip_with_function(
-        self, function, invert=True, value=0.0, return_clipped=False, progress_bar=False
+        self,
+        function,
+        invert=True,
+        value=0.0,
+        return_clipped=False,
+        progress_bar=False,
+        crinkle=False,
     ):
         """Clip using an implicit function (internal helper)."""
+        if crinkle:
+            # Add Cell IDs
+            self.cell_data['cell_ids'] = np.arange(0, self.n_cells, dtype=int)
+
         if isinstance(self, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
         # elif isinstance(self, vtk.vtkImageData):
@@ -48,9 +58,14 @@ class DataSetFilters:
         if return_clipped:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
+            if crinkle:
+                a = self.extract_cells(np.unique(a.cell_data['cell_ids']))
+                b = self.extract_cells(np.unique(b.cell_data['cell_ids']))
             return a, b
-        else:
-            return _get_output(alg)
+        clipped = _get_output(alg)
+        if crinkle:
+            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+        return clipped
 
     def clip(
         self,
@@ -61,6 +76,7 @@ class DataSetFilters:
         inplace=False,
         return_clipped=False,
         progress_bar=False,
+        crinkle=False,
     ):
         """Clip a dataset by a plane by specifying the origin and normal.
 
@@ -93,6 +109,9 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the clip.
 
         Returns
         -------
@@ -137,6 +156,7 @@ class DataSetFilters:
             value=value,
             return_clipped=return_clipped,
             progress_bar=progress_bar,
+            crinkle=crinkle,
         )
         if inplace:
             if return_clipped:
@@ -393,7 +413,13 @@ class DataSetFilters:
         return result0
 
     def clip_surface(
-        self, surface, invert=True, value=0.0, compute_distance=False, progress_bar=False
+        self,
+        surface,
+        invert=True,
+        value=0.0,
+        compute_distance=False,
+        progress_bar=False,
+        crinkle=False,
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
@@ -423,6 +449,9 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the clip.
 
         Returns
         -------
@@ -454,7 +483,12 @@ class DataSetFilters:
             self['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
         result = DataSetFilters._clip_with_function(
-            self, function, invert=invert, value=value, progress_bar=progress_bar
+            self,
+            function,
+            invert=invert,
+            value=value,
+            progress_bar=progress_bar,
+            crinkle=crinkle,
         )
         return result
 
