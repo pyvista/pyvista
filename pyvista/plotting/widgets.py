@@ -463,6 +463,7 @@ class WidgetHelper:
         outline_translation=False,
         implicit=True,
         normal_rotation=True,
+        crinkle=False,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -519,6 +520,9 @@ class WidgetHelper:
             rotating the normal. This is forced to ``False`` when
             ``assign_to_axis`` is set.
 
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the clip.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -536,6 +540,9 @@ class WidgetHelper:
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
         self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+
+        if crinkle:
+            mesh.cell_data['cell_ids'] = np.arange(0, mesh.n_cells, dtype=int)
 
         if isinstance(mesh, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
@@ -557,7 +564,10 @@ class WidgetHelper:
             function = generate_plane(normal, origin)
             alg.SetClipFunction(function)  # the implicit function
             alg.Update()  # Perform the Cut
-            plane_clipped_mesh.shallow_copy(alg.GetOutput())
+            clipped = pyvista.wrap(alg.GetOutput())
+            if crinkle:
+                clipped = mesh.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+            plane_clipped_mesh.shallow_copy(clipped)
 
         self.add_plane_widget(
             callback=callback,
