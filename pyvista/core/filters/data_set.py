@@ -3588,7 +3588,7 @@ class DataSetFilters:
         >>> plane = pyvista.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
-        >>> sample = plane.sample_over_broken_line((-0.5, -0.5, 0), (0.5, -0.5, 0), (0.5, 0.5, 0))
+        >>> sample = plane.sample_over_broken_line([[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]])
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
         >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
