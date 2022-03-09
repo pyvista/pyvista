@@ -168,7 +168,13 @@ class DataSetFilters:
         return result
 
     def clip_box(
-        self, bounds=None, invert=True, factor=0.35, progress_bar=False, merge_points=True
+        self,
+        bounds=None,
+        invert=True,
+        factor=0.35,
+        progress_bar=False,
+        merge_points=True,
+        crinkle=False,
     ):
         """Clip a dataset by a bounding box defined by the bounds.
 
@@ -199,6 +205,9 @@ class DataSetFilters:
         merge_points : bool, optional
             If ``True`` (default), coinciding points of independently
             defined mesh elements will be merged.
+
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the clip.
 
         Returns
         -------
@@ -250,6 +259,8 @@ class DataSetFilters:
         if len(bounds) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
             bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
+        if crinkle:
+            self.cell_data['cell_ids'] = np.arange(0, self.n_cells, dtype=int)
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -262,7 +273,10 @@ class DataSetFilters:
             port = 1
             alg.GenerateClippedOutputOn()
         _update_alg(alg, progress_bar, 'Clipping a Dataset by a Bounding Box')
-        return _get_output(alg, oport=port)
+        clipped = _get_output(alg, oport=port)
+        if crinkle:
+            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+        return clipped
 
     def compute_implicit_distance(self, surface, inplace=False):
         """Compute the implicit distance from the points to a surface.
