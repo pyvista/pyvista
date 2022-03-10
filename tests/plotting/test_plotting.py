@@ -42,6 +42,9 @@ try:
 except:  # noqa: E722
     ffmpeg_failed = True
 
+# These tests fail with mesa opengl on windows
+skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+
 # Reset image cache with new images
 glb_reset_image_cache = False
 THIS_PATH = pathlib.Path(__file__).parent.absolute()
@@ -187,7 +190,7 @@ def test_export_gltf(tmpdir, sphere, airplane):
 
 
 @skip_not_vtk9
-@pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+@skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere):
     """Test PBR rendering"""
@@ -1376,6 +1379,7 @@ def test_subplot_groups_fail():
         pyvista.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
 
+@skip_windows
 def test_link_views(sphere):
     plotter = pyvista.Plotter(shape=(1, 4))
     plotter.subplot(0, 0)
@@ -1551,6 +1555,7 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     p.show(before_close_callback=verify_cache_image)
 
 
+@skip_windows
 def test_opacity_by_array_direct(plane):
     # test with opacity parm as an array
     pl = pyvista.Plotter()
