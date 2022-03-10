@@ -18,7 +18,6 @@ skip_py2_nobind = pytest.mark.skipif(
     int(sys.version[0]) < 3, reason="Python 2 doesn't support binding methods"
 )
 
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 
@@ -59,7 +58,6 @@ def test_datasetfilters_init():
         pyvista.core.filters.DataSetFilters()
 
 
-@skip_windows
 def test_clip_filter(datasets):
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset in enumerate(datasets):
@@ -80,7 +78,6 @@ def test_clip_filter(datasets):
                 assert isinstance(clp, pyvista.UnstructuredGrid)
 
 
-@skip_windows
 @skip_mac
 @pytest.mark.parametrize('both', [False, True])
 @pytest.mark.parametrize('invert', [False, True])
