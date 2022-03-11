@@ -27,12 +27,23 @@ class OpenVRCamera(vtkOpenVRCamera, BaseCamera):
 
 
 class OpenVRRenderer(vtkOpenVRRenderer, BaseRenderer):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.show_floor = True
+
+    @property
+    def show_floor(self):
+        return self.GetShowFloor()
+
+    @show_floor.setter
+    def show_floor(self, value):
+        return self.SetShowFloor(value)
 
 
 class OpenVRPlotter(BasePlotter):
     last_update_time = 0.0
     right_timer_id = -1
+    renderer_class = OpenVRRenderer
 
     def __init__(
         self,
@@ -128,6 +139,15 @@ class OpenVRPlotter(BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+
+        # crazy frame rate requirement
+        # need to look into that at some point
+        self.ren_win.SetDesiredUpdateRate(350.0)
+        self.iren.SetDesiredUpdateRate(350.0)
+        self.iren.SetStillUpdateRate(350.0)
+
+        self.renderer.RemoveCuller(self.renderer.GetCullers().GetLastItem())
+
         log.debug('Plotter init stop')
 
     def show(

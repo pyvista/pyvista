@@ -23,6 +23,7 @@ class Renderers:
         border=None,
         border_color='k',
         border_width=2.0,
+        renderer_class=Renderer,
     ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
@@ -62,14 +63,14 @@ class Renderers:
                 xsplit = splitting_position
 
             for i in rangen:
-                arenderer = Renderer(self._plotter, border, border_color, border_width)
+                arenderer = renderer_class(self._plotter, border, border_color, border_width)
                 if '|' in shape:
                     arenderer.SetViewport(0, i / n, xsplit, (i + 1) / n)
                 else:
                     arenderer.SetViewport(i / n, 0, (i + 1) / n, xsplit)
                 self._renderers.append(arenderer)
             for i in rangem:
-                arenderer = Renderer(self._plotter, border, border_color, border_width)
+                arenderer = renderer_class(self._plotter, border, border_color, border_width)
                 if '|' in shape:
                     arenderer.SetViewport(xsplit, i / m, 1, (i + 1) / m)
                 else:
@@ -171,7 +172,7 @@ class Renderers:
                         nb_rows = 1
                         nb_cols = 1
                     if nb_rows is not None:
-                        renderer = Renderer(self._plotter, border, border_color, border_width)
+                        renderer = renderer_class(self._plotter, border, border_color, border_width)
                         x0 = col_off[col]
                         y0 = row_off[row + nb_rows]
                         x1 = col_off[col + nb_cols]
@@ -188,7 +189,7 @@ class Renderers:
         self._background_renderers = [None for _ in range(len(self))]
 
         # create a shadow renderer that lives on top of all others
-        self._shadow_renderer = Renderer(self._plotter, border, border_color, border_width)
+        self._shadow_renderer = renderer_class(self._plotter, border, border_color, border_width)
         self._shadow_renderer.SetViewport(0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
 

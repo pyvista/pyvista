@@ -181,6 +181,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     mouse_position = None
     click_position = None
+    renderer_class = Renderer
 
     def __init__(
         self,
@@ -232,6 +233,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             border,
             border_color,
             border_width,
+            self.renderer_class,
         )
 
         # This keeps track of scalars names already plotted and their ranges
