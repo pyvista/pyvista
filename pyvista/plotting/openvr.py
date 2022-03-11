@@ -2,7 +2,7 @@ import logging
 import os
 import warnings
 
-from vtkmodules.vtkRenderingCore import (
+from vtkmodules.vtkRenderingOpenVR import (
     vtkOpenVRCamera,
     vtkOpenVRRenderer,
     vtkOpenVRRenderWindow,
