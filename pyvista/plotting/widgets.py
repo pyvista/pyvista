@@ -204,7 +204,7 @@ class WidgetHelper:
         port = 1 if invert else 0
 
         if crinkle:
-            mesh.cell_data['cell_ids'] = np.arange(0, mesh.n_cells, dtype=int)
+            mesh.cell_data['cell_ids'] = np.arange(mesh.n_cells)
 
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
