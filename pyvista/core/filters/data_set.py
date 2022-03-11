@@ -3386,10 +3386,10 @@ class DataSetFilters:
 
         Parameters
         ----------
-        pointa : sequence, optional
+        pointa : sequence
             Location in ``[x, y, z]``.
 
-        pointb : sequence, optional
+        pointb : sequence
             Location in ``[x, y, z]``.
 
         resolution : int, optional
