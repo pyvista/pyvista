@@ -40,7 +40,7 @@ class BaseCamera:
         self._azimuth = 0.0
 
         if renderer:
-            if not isinstance(renderer, pyvista.Renderer):
+            if not isinstance(renderer, pyvista.BaseRenderer):
                 raise TypeError(
                     'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
                 )

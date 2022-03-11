@@ -143,8 +143,8 @@ class OpenVRPlotter(BasePlotter):
         # crazy frame rate requirement
         # need to look into that at some point
         self.ren_win.SetDesiredUpdateRate(350.0)
-        self.iren.SetDesiredUpdateRate(350.0)
-        self.iren.SetStillUpdateRate(350.0)
+        self.iren.interactor.SetDesiredUpdateRate(350.0)
+        self.iren.interactor.SetStillUpdateRate(350.0)
 
         self.renderer.RemoveCuller(self.renderer.GetCullers().GetLastItem())
 
