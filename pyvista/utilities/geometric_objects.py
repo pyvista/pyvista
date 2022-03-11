@@ -418,7 +418,7 @@ def Plane(
     return surf
 
 
-def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, points=None):
+def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     """Create a line.
 
     Parameters
@@ -432,10 +432,6 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, points=N
     resolution : int, optional
         Number of pieces to divide line into.
 
-    points : np.ndarray or list, optional
-        List of points defining a broken line, default is ``None``
-        If given, pointa, pointb and resolution will be ignored.
-
     Returns
     -------
     pyvista.PolyData
@@ -448,26 +444,17 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, points=N
     >>> import pyvista
     >>> mesh = pyvista.Line((0, 0, 0), (0, 0, 1))
     >>> mesh.plot(color='k', line_width=10)
-
-    Create a broken line between ``(0, 0, 0)``, ``(1, 1, 1)`` and ``(0, 0, 1)``.
-
-    >>> import pyvista
-    >>> mesh = pyvista.Line(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
-    >>> mesh.plot(color='k', line_width=10)
     """
     src = _vtk.vtkLineSource()
-    if points is None:
-        if resolution <= 0:
-            raise ValueError('Resolution must be positive')
-        if np.array(pointa).size != 3:
-            raise TypeError('Point A must be a length three tuple of floats.')
-        if np.array(pointb).size != 3:
-            raise TypeError('Point B must be a length three tuple of floats.')
-        src.SetPoint1(*pointa)
-        src.SetPoint2(*pointb)
-        src.SetResolution(resolution)
-    else:
-        src.SetPoints(pyvista.vtk_points(points))
+    if resolution <= 0:
+        raise ValueError('Resolution must be positive')
+    if np.array(pointa).size != 3:
+        raise TypeError('Point A must be a length three tuple of floats.')
+    if np.array(pointb).size != 3:
+        raise TypeError('Point B must be a length three tuple of floats.')
+    src.SetPoint1(*pointa)
+    src.SetPoint2(*pointb)
+    src.SetResolution(resolution)
     src.Update()
     line = pyvista.wrap(src.GetOutput())
     # Compute distance of every point along line
@@ -475,6 +462,38 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, points=N
     distance = compute(np.array(pointa), line.points)
     line['Distance'] = distance
     return line
+
+
+def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+    """Create multiple lines.
+
+    Parameters
+    ----------
+    points : np.ndarray or list, optional
+        List of points defining a broken line, default is ``None``
+        If given, pointa, pointb and resolution will be ignored.
+
+    Returns
+    -------
+    pyvista.PolyData
+
+    Examples
+    --------
+    Create a multiple lines between ``(0, 0, 0)``, ``(1, 1, 1)`` and ``(0, 0, 1)``.
+
+    >>> import pyvista
+    >>> mesh = pyvista.Line(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
+    >>> mesh.plot(color='k', line_width=10)
+    """
+    src = _vtk.vtkLineSource()
+    src.SetPoints(pyvista.vtk_points(points))
+    src.Update()
+    multiple_lines = pyvista.wrap(src.GetOutput())
+    # Compute distance of every point along multiple lines
+    compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0) ** 2, axis=1))
+    distance = compute(np.array(pointa), multiple_lines.points)
+    multiple_lines['Distance'] = distance
+    return multiple_lines
 
 
 def Tube(
