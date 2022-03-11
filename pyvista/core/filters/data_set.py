@@ -3539,13 +3539,13 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
-    def sample_over_broken_line(self, points=None, tolerance=None, progress_bar=False):
-        """Sample a dataset onto a broken line.
+    def sample_over_multiple_lines(self, points=None, tolerance=None, progress_bar=False):
+        """Sample a dataset onto a multiple lines.
 
         Parameters
         ----------
         points : np.ndarray or list, optional
-            List of points defining a broken line, default is ``None``
+            List of points defining a multiple lines, default is ``None``
             If given, pointa, pointb and resolution will be ignored.
 
         tolerance : float, optional
@@ -3575,7 +3575,7 @@ class DataSetFilters:
         >>> plane = pyvista.Plane()
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
-        >>> sample = plane.sample_over_broken_line([[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]])
+        >>> sample = plane.sample_over_multiple_lines([[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]])
         >>> pl = pyvista.Plotter()
         >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
         >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
@@ -3583,12 +3583,12 @@ class DataSetFilters:
         >>> pl.show()
 
         """
-        # Make a broken line and sample the dataset
-        broken_line = pyvista.Line(points=points)
-        sampled_broken_line = broken_line.sample(
+        # Make a multiple lines and sample the dataset
+        multiple_lines = pyvista.Line(points=points)
+        sampled_multiple_lines = multiple_lines.sample(
             self, tolerance=tolerance, progress_bar=progress_bar
         )
-        return sampled_broken_line
+        return sampled_multiple_lines
 
     def sample_over_circular_arc(
         self, pointa, pointb, center, resolution=None, tolerance=None, progress_bar=False

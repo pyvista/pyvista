@@ -1014,20 +1014,20 @@ def test_plot_over_line(tmpdir):
         )
 
 
-def test_sample_over_broken_line():
+def test_sample_over_multiple_lines():
     """Test that"""
     name = 'values'
 
     line = pyvista.Line([0, 0, 0], [0, 0, 10], 9)
     line[name] = np.linspace(0, 10, 10)
 
-    sampled_broken_line = line.sample_over_broken_line(
+    sampled_multiple_lines = line.sample_over_multiple_lines(
         [[0, 0, 0.5], [0, 0, 1], [0, 0, 1.5]], progress_bar=True
     )
 
     expected_result = np.array([0.5, 1, 1.5])
-    assert np.allclose(sampled_broken_line[name], expected_result)
-    assert name in sampled_broken_line.array_names  # is name in sampled result
+    assert np.allclose(sampled_multiple_lines[name], expected_result)
+    assert name in sampled_multiple_lines.array_names  # is name in sampled result
 
 
 def test_sample_over_circular_arc():
