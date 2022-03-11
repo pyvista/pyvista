@@ -3506,7 +3506,7 @@ class DataSetFilters:
 
         # Sample on line
         sampled = DataSetFilters.sample_over_line(
-            self, pointa, pointb, resolution, tolerance, progress_bar=progress_bar,
+            self, pointa, pointb, resolution, tolerance, progress_bar=progress_bar
         )
 
         # Get variable of interest
