@@ -3380,7 +3380,6 @@ class DataSetFilters:
         pointb=(0.5, 0.0, 0.0),
         resolution=None,
         tolerance=None,
-        points=None,
         progress_bar=False,
     ):
         """Sample a dataset onto a line.
