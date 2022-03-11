@@ -150,7 +150,15 @@ class OpenVRPlotter(BasePlotter):
 
         log.debug('Plotter init stop')
 
-    def show(
+    def show(self):
+        # the HMD may not be turned on/etc
+        self.iren.initialize()
+        if self.ren_win.GetHMD():
+            self.renderer.ResetCamera()
+            self.ren_win.Render()
+            self.iren.start()
+
+    def show_(
         self,
         title=None,
         window_size=None,
