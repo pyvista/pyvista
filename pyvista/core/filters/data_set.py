@@ -3374,14 +3374,7 @@ class DataSetFilters:
             .decimate(target_reduction)
         )
 
-    def sample_over_line(
-        self,
-        pointa=(-0.5, 0.0, 0.0),
-        pointb=(0.5, 0.0, 0.0),
-        resolution=None,
-        tolerance=None,
-        progress_bar=False,
-    ):
+    def sample_over_line(self, pointa, pointb, resolution=None, tolerance=None, progress_bar=False):
         """Sample a dataset onto a line.
 
         Parameters
@@ -3440,8 +3433,8 @@ class DataSetFilters:
 
     def plot_over_line(
         self,
-        pointa=(-0.5, 0.0, 0.0),
-        pointb=(0.5, 0.0, 0.0),
+        pointa,
+        pointb,
         resolution=None,
         scalars=None,
         title=None,
