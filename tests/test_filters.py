@@ -1030,40 +1030,6 @@ def test_sample_over_broken_line():
     assert name in sampled_broken_line.array_names  # is name in sampled result
 
 
-def test_plot_over_broken_line(tmpdir):
-    """this requires matplotlib"""
-    pytest.importorskip('matplotlib')
-    tmp_dir = tmpdir.mkdir("tmpdir")
-    filename = str(tmp_dir.join('tmp.png'))
-    mesh = examples.load_uniform()
-    # Make three points to construct the broken line between
-    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-    b = [mesh.bounds[1] * 0.5, mesh.bounds[3] * 0.5, 0.0]
-    c = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
-    mesh.plot_over_broken_line([a, b, c], show=False, progress_bar=True)
-    # Test multicomponent
-    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
-    mesh.plot_over_broken_line(
-        [a, b, c],
-        scalars='foo',
-        title='My Stuff',
-        ylabel='3 Values',
-        show=False,
-        fname=filename,
-        progress_bar=True,
-    )
-    assert os.path.isfile(filename)
-    # Should fail if scalar name does not exist
-    with pytest.raises(KeyError):
-        mesh.plot_over_broken_line(
-            [a, b, c],
-            scalars='invalid_array_name',
-            title='My Stuff',
-            ylabel='3 Values',
-            show=False,
-        )
-
-
 def test_sample_over_circular_arc():
     """Test that we get a circular arc."""
 
