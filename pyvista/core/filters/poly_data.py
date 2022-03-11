@@ -439,7 +439,7 @@ class PolyDataFilters(DataSetFilters):
         """Compute the intersection between two meshes.
 
         .. note::
-           This method returns the surface interection from two meshes
+           This method returns the surface intersection from two meshes
            (which often resolves as a line), whereas the
            :func:`PolyDataFilters.boolean_intersection` filter returns
            the "volume" intersection between two closed (manifold)
