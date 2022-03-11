@@ -1298,9 +1298,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.track_click_position."""
         self.iren.track_click_position(*args, **kwargs)
 
-    def untrack_click_position(self):
+    @wraps(RenderWindowInteractor.untrack_click_position)
+    def untrack_click_position(self, *args, **kwargs):
         """Stop tracking the click position."""
-        self.iren.untrack_click_position()
+        self.iren.untrack_click_position(*args, **kwargs)
 
     @property
     def pickable_actors(self):
