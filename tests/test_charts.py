@@ -861,7 +861,7 @@ def test_chart_box(pl, chart_box, box_plot):
     pl.show(auto_close=False)
     assert np.allclose(chart._geometry, (0, 0, r_w, r_h))
     pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
-    pl.show()  # This will also call chart._resize
+    pl.show(auto_close=False)  # This will also call chart._resize
     assert np.allclose(chart._geometry, (0, 0, r_w / 2, r_h / 2))
 
     # Test remaining properties
@@ -892,7 +892,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     pl.show(auto_close=False)
     assert np.allclose(chart._geometry, (0, 0, r_w, r_h))
     pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
-    pl.show()  # This will also call chart._resize
+    pl.show(auto_close=False)  # This will also call chart._resize
     assert np.allclose(chart._geometry, (0, 0, r_w / 2, r_h / 2))
 
     # Test remaining properties
@@ -923,7 +923,7 @@ def test_chart_mpl(pl, chart_mpl):
     assert np.allclose(chart.position, (loc[0] * r_w, loc[1] * r_h))
     assert np.allclose(chart._canvas.get_width_height(), (size[0] * r_w, size[1] * r_h))
     pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
-    pl.show()  # This will also call chart._resize
+    pl.show(auto_close=False)  # This will also call chart._resize
     assert np.allclose(
         chart._geometry, (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2)
     )
@@ -986,15 +986,15 @@ def test_iren_context_style(pl):
     style = pl.iren._style
     style_class = pl.iren._style_class
 
-    # Simulate right click on the chart:
-    pl.iren._mouse_right_button_press(int(0.75 * win_size[0]), int(0.75 * win_size[1]))
+    # Simulate double left click on the chart:
+    pl.iren._mouse_left_button_click(int(0.75 * win_size[0]), int(0.75 * win_size[1]), count=2)
     assert chart.GetInteractive()
     assert pl.iren._style == "Context"
     assert pl.iren._style_class == pl.iren._context_style
     assert pl.iren._context_style.GetScene().__this__ == chart._scene.__this__
 
     # Simulate right click outside the chart:
-    pl.iren._mouse_right_button_press(0, 0)
+    pl.iren._mouse_left_button_click(0, 0, count=2)
     assert not chart.GetInteractive()
     assert pl.iren._style == style
     assert pl.iren._style_class == style_class

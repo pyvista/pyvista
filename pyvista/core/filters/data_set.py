@@ -217,7 +217,7 @@ class DataSetFilters:
             if poly.n_cells != 6:
                 raise ValueError("The bounds mesh must have only 6 faces.")
             bounds = []
-            poly.compute_normals()
+            poly.compute_normals(inplace=True)
             for cid in range(6):
                 cell = poly.extract_cells(cid)
                 normal = cell["Normals"][0]
