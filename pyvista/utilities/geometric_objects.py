@@ -23,6 +23,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import check_valid_vector
+from pyvista.utilities.common import _coerce_pointslike_arg
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -485,25 +486,15 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> mesh = pyvista.Line(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
     >>> mesh.plot(color='k', line_width=10)
     """
+    points = _coerce_pointslike_arg(points)
     src = _vtk.vtkLineSource()
     src.SetPoints(pyvista.vtk_points(points))
     src.Update()
     multiple_lines = pyvista.wrap(src.GetOutput())
-    # Compute distance of every point along multiple lines
-    compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0) ** 2, axis=1))
-    distance = compute(np.array(pointa), multiple_lines.points)
-    multiple_lines['Distance'] = distance
     return multiple_lines
 
 
-def Tube(
-    pointa=(-0.5, 0.0, 0.0),
-    pointb=(0.5, 0.0, 0.0),
-    resolution=1,
-    radius=1.0,
-    n_sides=15,
-    points=None,
-):
+def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1.0, n_sides=15):
     """Create a tube.
 
     Parameters
@@ -523,10 +514,6 @@ def Tube(
     n_sides : int, optional
         Number of sides for the tube.
 
-    points : np.ndarray or list, optional
-        List of points defining a broken tube, default is ``None``
-        If given, pointa, pointb and resolution will be ignored.
-
     Returns
     -------
     pyvista.PolyData
@@ -542,18 +529,15 @@ def Tube(
 
     """
     line_src = _vtk.vtkLineSource()
-    if points is None:
-        if resolution <= 0:
-            raise ValueError('Resolution must be positive.')
-        if np.array(pointa).size != 3:
-            raise TypeError('Point A must be a length three tuple of floats.')
-        if np.array(pointb).size != 3:
-            raise TypeError('Point B must be a length three tuple of floats.')
-        line_src.SetPoint1(*pointa)
-        line_src.SetPoint2(*pointb)
-        line_src.SetResolution(resolution)
-    else:
-        line_src.SetPoints(pyvista.vtk_points(points))
+    if resolution <= 0:
+        raise ValueError('Resolution must be positive.')
+    if np.array(pointa).size != 3:
+        raise TypeError('Point A must be a length three tuple of floats.')
+    if np.array(pointb).size != 3:
+        raise TypeError('Point B must be a length three tuple of floats.')
+    line_src.SetPoint1(*pointa)
+    line_src.SetPoint2(*pointb)
+    line_src.SetResolution(resolution)
     line_src.Update()
 
     if n_sides < 3:

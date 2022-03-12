@@ -3584,7 +3584,7 @@ class DataSetFilters:
 
         """
         # Make a multiple lines and sample the dataset
-        multiple_lines = pyvista.Line(points=points)
+        multiple_lines = pyvista.MultipleLines(points=points)
         sampled_multiple_lines = multiple_lines.sample(
             self, tolerance=tolerance, progress_bar=progress_bar
         )
