@@ -529,13 +529,13 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
     >>> mesh.plot()
 
     """
-    line_src = _vtk.vtkLineSource()
     if resolution <= 0:
         raise ValueError('Resolution must be positive.')
     if np.array(pointa).size != 3:
         raise TypeError('Point A must be a length three tuple of floats.')
     if np.array(pointb).size != 3:
         raise TypeError('Point B must be a length three tuple of floats.')
+    line_src = _vtk.vtkLineSource()
     line_src.SetPoint1(*pointa)
     line_src.SetPoint2(*pointb)
     line_src.SetResolution(resolution)
