@@ -70,11 +70,12 @@ def test_multiple_lines():
     assert multiple_lines.n_points == 4
     assert multiple_lines.n_cells == 1
 
-    points = np.array([[0, 0, 0], [1, 1*np.sqrt(3), 0], [2, 0, 0], [3, 3*np.sqrt(3), 0]])
+    points = np.array([[0, 0, 0], [1, 1 * np.sqrt(3), 0], [2, 0, 0], [3, 3 * np.sqrt(3), 0]])
     multiple_lines = pyvista.MultipleLines(points=points)
 
     with pytest.raises(ValueError):
         pyvista.MultipleLines(points[:, :1])
+
 
 def test_tube():
     pointa = (0, 0, 0)
