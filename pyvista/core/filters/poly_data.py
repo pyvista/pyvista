@@ -2548,6 +2548,10 @@ class PolyDataFilters(DataSetFilters):
         surfaces. This is true also of lines or polylines. Vertices
         generate lines.
 
+        .. versionchanged:: 0.32.0
+           The ``capping`` keyword was added with a default of ``False``.
+           The previously used VTK default corresponds to ``capping=True``.
+
         Parameters
         ----------
         vector : numpy.ndarray or sequence
@@ -2631,6 +2635,10 @@ class PolyDataFilters(DataSetFilters):
         This filter can be used to model axisymmetric objects like
         cylinders, bottles, and wine glasses; or translational
         rotational symmetric objects like springs or corkscrews.
+
+        .. versionchanged:: 0.32.0
+           The ``capping`` keyword was added with a default of ``False``.
+           The previously used VTK default corresponds to ``capping=True``.
 
         Parameters
         ----------
