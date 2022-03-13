@@ -237,7 +237,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bars = ScalarBars(self)
 
-        # track if the camera has been setup
+        # track if the camera has been set up
         self._first_time = True
         # Keep track of the scale
 
@@ -404,7 +404,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Widget containing pythreejs renderer.
 
         """
-        self._on_first_render_request()  # setup camera
+        self._on_first_render_request()  # set up camera
         from pyvista.jupyter.pv_pythreejs import convert_plotter
 
         return convert_plotter(self)
@@ -1203,7 +1203,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Check if the render window has been shown and raise an exception if not."""
         if not self._rendered:
             raise AttributeError(
-                '\nThis plotter has not yet been setup and rendered '
+                '\nThis plotter has not yet been set up and rendered '
                 'with ``show()``.\n'
                 'Consider setting ``off_screen=True`` '
                 'for off screen rendering.\n'
@@ -4401,7 +4401,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         renderer = self.renderers.add_background_renderer(image_path, scale, as_global)
         self.ren_win.AddRenderer(renderer)
 
-        # setup autoscaling of the image
+        # set up autoscaling of the image
         if auto_resize:  # pragma: no cover
             self.iren.add_observer('ModifiedEvent', renderer.resize)
 
