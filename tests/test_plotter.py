@@ -13,7 +13,7 @@ from pyvista.plotting import _plotting
 
 def test_plotter_image():
     plotter = pyvista.Plotter()
-    with pytest.raises(AttributeError, match='not yet been setup'):
+    with pytest.raises(AttributeError, match='not yet been set up'):
         plotter.image
 
 
