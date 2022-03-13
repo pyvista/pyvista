@@ -3545,7 +3545,7 @@ class DataSetFilters:
         Parameters
         ----------
         points : np.ndarray or list
-            List of points defining a multiple lines, default is ``None``
+            List of points defining a multiple lines, default is ``None``.
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is in a
