@@ -472,7 +472,7 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     Parameters
     ----------
     points : np.ndarray or list, optional
-        List of points defining a broken line, default is [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]].
+        List of points defining a broken line, default is ``[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]``.
 
     Returns
     -------
