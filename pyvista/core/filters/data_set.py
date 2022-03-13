@@ -3539,14 +3539,13 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
-    def sample_over_multiple_lines(self, points=None, tolerance=None, progress_bar=False):
+    def sample_over_multiple_lines(self, points, tolerance=None, progress_bar=False):
         """Sample a dataset onto a multiple lines.
 
         Parameters
         ----------
-        points : np.ndarray or list, optional
+        points : np.ndarray or list
             List of points defining a multiple lines, default is ``None``
-            If given, pointa, pointb and resolution will be ignored.
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is in a

@@ -76,6 +76,9 @@ def test_multiple_lines():
     with pytest.raises(ValueError):
         pyvista.MultipleLines(points[:, :1])
 
+    with pytest.raises(ValueError):
+        pyvista.MultipleLines(points[0, :])
+
 
 def test_tube():
     pointa = (0, 0, 0)

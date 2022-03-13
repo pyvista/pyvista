@@ -472,8 +472,7 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     Parameters
     ----------
     points : np.ndarray or list, optional
-        List of points defining a broken line, default is ``None``
-        If given, pointa, pointb and resolution will be ignored.
+        List of points defining a broken line, default is [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
 
     Returns
     -------
@@ -489,6 +488,8 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     """
     points = _coerce_pointslike_arg(points)
     src = _vtk.vtkLineSource()
+    if not (len(points) >= 2):
+        raise ValueError('>=2 points need to define multiple lines.')
     src.SetPoints(pyvista.vtk_points(points))
     src.Update()
     multiple_lines = pyvista.wrap(src.GetOutput())
