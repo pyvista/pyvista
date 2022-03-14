@@ -151,14 +151,16 @@ class OpenVRPlotter(BasePlotter):
         self.renderer.RemoveCuller(self.renderer.GetCullers().GetLastItem())
 
         log.debug('Plotter init stop')
+        print('Plotter init stop')
 
     def show(self):
-        # the HMD may not be turned on/etc
-        self.iren.initialize()
-        if self.ren_win.GetHMD():
-            self.renderer.ResetCamera()
-            self.ren_win.Render()
-            self.iren.start()
+        self.ren_win.Initialize()
+        print('initialized')
+        # if self.ren_win.GetHMD():
+        self.renderer.ResetCamera()
+        self.ren_win.Render()
+        print('rendered and starting...')
+        self.iren.start()
 
     def show_(
         self,
@@ -171,8 +173,6 @@ class OpenVRPlotter(BasePlotter):
         screenshot=False,
         return_img=False,
         cpos=None,
-        use_ipyvtk=None,
-        jupyter_backend=None,
         return_viewer=False,
         return_cpos=None,
         **kwargs,
@@ -204,7 +204,7 @@ class OpenVRPlotter(BasePlotter):
         # reset unless camera for the first render unless camera is set
         self._on_first_render_request(cpos)
 
-        self.render()
+        # self.render()
 
         # This has to be after the first render for some reason
         if title is None:
@@ -219,6 +219,7 @@ class OpenVRPlotter(BasePlotter):
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
+        print('if interactive')
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive:
             try:  # interrupts will be caught here
@@ -237,7 +238,14 @@ class OpenVRPlotter(BasePlotter):
                             VERY_FIRST_RENDER = False
 
                     self.iren.start()
-                self.iren.initialize()
+                # self.iren.initialize()
+                self.ren_win.Initialize()
+                print('initialized')
+                # if self.ren_win.GetHMD():
+                self.renderer.ResetCamera()
+                self.ren_win.Render()
+                print('rendered and starting...')
+                self.iren.start()
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
                 self.close()
