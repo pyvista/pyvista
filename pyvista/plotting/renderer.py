@@ -185,6 +185,7 @@ class CameraPosition:
 
 class BaseRenderer:
     """Renderer class."""
+    camera_class = Camera
 
     # map camera_position string to an attribute
     CAMERA_STR_ATTR_MAP = {
@@ -214,7 +215,7 @@ class BaseRenderer:
         self._floor_kwargs = []
         # this keeps track of lights added manually to prevent garbage collection
         self._lights = []
-        self._camera = Camera(self)
+        self._camera = self.camera_class(self)
         self.SetActiveCamera(self._camera)
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None

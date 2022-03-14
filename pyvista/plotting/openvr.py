@@ -27,6 +27,8 @@ class OpenVRCamera(vtkOpenVRCamera, BaseCamera):
 
 
 class OpenVRRenderer(vtkOpenVRRenderer, BaseRenderer):
+    camera_class = OpenVRCamera
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.show_floor = True
