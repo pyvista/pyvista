@@ -927,6 +927,7 @@ class DataSetFilters:
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
+
         field = get_array_association(self, scalars, preference=preference)
 
         # If using an inverted range, merge the result of two filters:
