@@ -322,6 +322,27 @@ def test_threshold(datasets):
         )
 
 
+def test_threshold_vector():
+    mesh = pyvista.Plane()
+    data = np.zeros((mesh.n_cells, 3))
+    data[0:3, 0] = 1
+    data[2:4, 1] = 2
+    data[2, 2] = 3
+    mesh["data"] = data
+
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="component", component=0)
+    assert thresh.n_cells == 3
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="component", component=1)
+    assert thresh.n_cells == 2
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="all")
+    assert thresh.n_cells == 1
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="any")
+    assert thresh.n_cells == 4
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="not a mode")
+
+
 def test_threshold_percent(datasets):
     percents = [25, 50, [18.0, 85.0], [19.0, 80.0], 0.70]
     inverts = [False, True, False, True, False]
