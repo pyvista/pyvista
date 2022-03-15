@@ -984,6 +984,8 @@ class DataSetFilters:
         if component_mode == "component":
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]
+            if not isinstance(component, (int, np.integer)):
+                raise TypeError("component must be int")
             if component > (dim - 1) or component < 0:
                 raise ValueError(
                     f"scalars has {dim} components: supplied component {component} not in range"

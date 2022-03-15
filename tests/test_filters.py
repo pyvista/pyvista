@@ -348,6 +348,9 @@ def test_threshold_multicomponent():
     with pytest.raises(ValueError):
         mesh.threshold(value=0.5, scalars="data", component_mode="component", component=3)
 
+    with pytest.raises(TypeError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=0.5)
+
 
 def test_threshold_percent(datasets):
     percents = [25, 50, [18.0, 85.0], [19.0, 80.0], 0.70]
