@@ -322,7 +322,7 @@ def test_threshold(datasets):
         )
 
 
-def test_threshold_vector():
+def test_threshold_multicomponent():
     mesh = pyvista.Plane()
     data = np.zeros((mesh.n_cells, 3))
     data[0:3, 0] = 1
@@ -341,6 +341,12 @@ def test_threshold_vector():
 
     with pytest.raises(ValueError):
         mesh.threshold(value=0.5, scalars="data", component_mode="not a mode")
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=-1)
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=3)
 
 
 def test_threshold_percent(datasets):

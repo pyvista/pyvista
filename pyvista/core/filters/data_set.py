@@ -927,7 +927,6 @@ class DataSetFilters:
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
-
         field = get_array_association(self, scalars, preference=preference)
 
         # If using an inverted range, merge the result of two filters:
@@ -984,6 +983,11 @@ class DataSetFilters:
                 alg.ThresholdByUpper(value)
         if component_mode == "component":
             alg.SetComponentModeToUseSelected()
+            dim = arr.shape[1]
+            if component > (dim - 1) or component < 0:
+                raise ValueError(
+                    f"scalars has {dim} components: supplied component {component} not in range"
+                )
             alg.SetSelectedComponent(component)
         elif component_mode == "all":
             alg.SetComponentModeToUseAll()
