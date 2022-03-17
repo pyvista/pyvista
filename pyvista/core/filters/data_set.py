@@ -862,7 +862,7 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         component_mode : {'selected', 'all', 'any'}
-            The method to satisfy the criteria for the threshold for
+            The method to satisfy the criteria for the threshold of
             multicomponent scalars.  'selected' (default)
             uses only the ``component``.  'all' requires all
             components to meet criteria.  'any' is when
