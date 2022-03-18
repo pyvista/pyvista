@@ -82,7 +82,7 @@ if VTK_MAJOR >= 8 and VTK_MINOR >= 2:
 if VTK_MAJOR >= 9 and VTK_MINOR >= 0:
     try:
         READERS['.hdf'] = _vtk.lazy_vtkHDFReader
-    except AttributeError:
+    except AttributeError:  # pragma: no cover
         pass
 
 
