@@ -13,10 +13,6 @@ skip_no_plotting = pytest.mark.skipif(
 )
 
 
-# These tests fail with mesa opengl on windows
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
-
-
 @skip_no_plotting
 def test_plot_glyphs():
     demos.plot_glyphs(2)
@@ -41,7 +37,7 @@ def test_logo_voxel():
     platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
 )
 @skip_no_plotting
-@skip_windows
+@pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 def test_plot_logo():
     # simply should not fail
     demos.plot_logo()
