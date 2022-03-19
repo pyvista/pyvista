@@ -332,7 +332,7 @@ class PickingHelper:
 
         """
 
-        def _launch_pick_event(interactor, event):
+        def _launch_pick_event(interactor, event):  # pragma: no cover
             """Create a Pick event based on coordinate or left-click."""
             click_x, click_y = interactor.GetEventPosition()
             click_z = 0
