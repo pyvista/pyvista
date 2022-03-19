@@ -520,6 +520,8 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        from pyvista.core.filters import _get_output  # avoids circular import
+
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
@@ -540,7 +542,7 @@ class WidgetHelper:
 
         if not hasattr(self, "plane_clipped_meshes"):
             self.plane_clipped_meshes = []
-        plane_clipped_mesh = pyvista.wrap(alg.GetOutput())
+        plane_clipped_mesh = _get_output(alg)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
         def callback(normal, origin):
