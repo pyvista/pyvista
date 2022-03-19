@@ -23,6 +23,7 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 from pyvista.utilities import check_valid_vector
+from pyvista.utilities.common import _coerce_pointslike_arg
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -463,6 +464,36 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     distance = compute(np.array(pointa), line.points)
     line['Distance'] = distance
     return line
+
+
+def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+    """Create multiple lines.
+
+    Parameters
+    ----------
+    points : np.ndarray or list, optional
+        List of points defining a broken line, default is ``[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]``.
+
+    Returns
+    -------
+    pyvista.PolyData
+
+    Examples
+    --------
+    Create a multiple lines between ``(0, 0, 0)``, ``(1, 1, 1)`` and ``(0, 0, 1)``.
+
+    >>> import pyvista
+    >>> mesh = pyvista.MultipleLines(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
+    >>> mesh.plot(color='k', line_width=10)
+    """
+    points = _coerce_pointslike_arg(points)
+    src = _vtk.vtkLineSource()
+    if not (len(points) >= 2):
+        raise ValueError('>=2 points need to define multiple lines.')
+    src.SetPoints(pyvista.vtk_points(points))
+    src.Update()
+    multiple_lines = pyvista.wrap(src.GetOutput())
+    return multiple_lines
 
 
 def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1.0, n_sides=15):

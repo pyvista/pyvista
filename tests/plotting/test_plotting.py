@@ -45,7 +45,6 @@ except:  # noqa: E722
 # These tests fail with mesa opengl on windows
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
-
 # Reset image cache with new images
 glb_reset_image_cache = False
 THIS_PATH = pathlib.Path(__file__).parent.absolute()
