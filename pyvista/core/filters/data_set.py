@@ -217,7 +217,7 @@ class DataSetFilters:
             if poly.n_cells != 6:
                 raise ValueError("The bounds mesh must have only 6 faces.")
             bounds = []
-            poly.compute_normals()
+            poly.compute_normals(inplace=True)
             for cid in range(6):
                 cell = poly.extract_cells(cid)
                 normal = cell["Normals"][0]
@@ -813,6 +813,8 @@ class DataSetFilters:
         preference='cell',
         all_scalars=False,
         progress_bar=False,
+        component_mode="all",
+        component=0,
     ):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
@@ -858,6 +860,17 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        component_mode : {'selected', 'all', 'any'}
+            The method to satisfy the criteria for the threshold of
+            multicomponent scalars.  'selected' (default)
+            uses only the ``component``.  'all' requires all
+            components to meet criteria.  'any' is when
+            any component satisfies the criteria.
+
+        component : int
+            When using ``component_mode='selected'``, this sets
+            which component to threshold on.  Default is ``0``.
 
         Returns
         -------
@@ -969,6 +982,24 @@ class DataSetFilters:
                 alg.ThresholdByLower(value)
             else:
                 alg.ThresholdByUpper(value)
+        if component_mode == "component":
+            alg.SetComponentModeToUseSelected()
+            dim = arr.shape[1]
+            if not isinstance(component, (int, np.integer)):
+                raise TypeError("component must be int")
+            if component > (dim - 1) or component < 0:
+                raise ValueError(
+                    f"scalars has {dim} components: supplied component {component} not in range"
+                )
+            alg.SetSelectedComponent(component)
+        elif component_mode == "all":
+            alg.SetComponentModeToUseAll()
+        elif component_mode == "any":
+            alg.SetComponentModeToUseAny()
+        else:
+            raise ValueError(
+                f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"
+            )
         # Run the threshold
         _update_alg(alg, progress_bar, 'Thresholding')
         return _get_output(alg)
@@ -3538,6 +3569,56 @@ class DataSetFilters:
             plt.savefig(fname)
         if show:  # pragma: no cover
             plt.show()
+
+    def sample_over_multiple_lines(self, points, tolerance=None, progress_bar=False):
+        """Sample a dataset onto a multiple lines.
+
+        Parameters
+        ----------
+        points : np.ndarray or list
+            List of points defining multiple lines.
+
+        tolerance : float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line object with sampled data from dataset.
+
+        Examples
+        --------
+        Sample over a plane that is interpolating a point cloud.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> np.random.seed(12)
+        >>> point_cloud = np.random.random((5, 3))
+        >>> point_cloud[:, 2] = 0
+        >>> point_cloud -= point_cloud.mean(0)
+        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata['values'] = np.random.random(5)
+        >>> plane = pyvista.Plane()
+        >>> plane.clear_data()
+        >>> plane = plane.interpolate(pdata, sharpness=3.5)
+        >>> sample = plane.sample_over_multiple_lines([[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]])
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
+        >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
+        >>> pl.show()
+
+        """
+        # Make a multiple lines and sample the dataset
+        multiple_lines = pyvista.MultipleLines(points=points)
+        sampled_multiple_lines = multiple_lines.sample(
+            self, tolerance=tolerance, progress_bar=progress_bar
+        )
+        return sampled_multiple_lines
 
     def sample_over_circular_arc(
         self, pointa, pointb, center, resolution=None, tolerance=None, progress_bar=False

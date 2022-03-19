@@ -439,7 +439,7 @@ class PolyDataFilters(DataSetFilters):
         """Compute the intersection between two meshes.
 
         .. note::
-           This method returns the surface interection from two meshes
+           This method returns the surface intersection from two meshes
            (which often resolves as a line), whereas the
            :func:`PolyDataFilters.boolean_intersection` filter returns
            the "volume" intersection between two closed (manifold)
@@ -1989,7 +1989,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        edge_color : str, optional
+        edge_color : color_like, optional
             The color of the edges when they are added to the plotter.
 
         line_width : int, optional
@@ -2052,7 +2052,7 @@ class PolyDataFilters(DataSetFilters):
         faces : bool, optional
             Plot face normals instead of the default point normals.
 
-        color : str, optional
+        color : color_like, optional
             Color of the arrows.  Defaults to
             :attr:`pyvista.themes.DefaultTheme.edge_color`.
 
@@ -2087,8 +2087,7 @@ class PolyDataFilters(DataSetFilters):
         if show_mesh:
             plotter.add_mesh(self, **kwargs)
 
-        if color is None:
-            color = pyvista.global_theme.edge_color
+        color = pyvista.Color(color, default_color=pyvista.global_theme.edge_color)
 
         if faces:
             centers = self.cell_centers().points[::use_every]
@@ -2549,6 +2548,10 @@ class PolyDataFilters(DataSetFilters):
         surfaces. This is true also of lines or polylines. Vertices
         generate lines.
 
+        .. versionchanged:: 0.32.0
+           The ``capping`` keyword was added with a default of ``False``.
+           The previously used VTK default corresponds to ``capping=True``.
+
         Parameters
         ----------
         vector : numpy.ndarray or sequence
@@ -2632,6 +2635,10 @@ class PolyDataFilters(DataSetFilters):
         This filter can be used to model axisymmetric objects like
         cylinders, bottles, and wine glasses; or translational
         rotational symmetric objects like springs or corkscrews.
+
+        .. versionchanged:: 0.32.0
+           The ``capping`` keyword was added with a default of ``False``.
+           The previously used VTK default corresponds to ``capping=True``.
 
         Parameters
         ----------

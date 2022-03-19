@@ -5,7 +5,8 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-from .tools import parse_color, parse_font_family
+from .colors import Color
+from .tools import parse_font_family
 
 
 class ScalarBars:
@@ -188,14 +189,14 @@ class ScalarBars:
             Sets the size of the title font.  Defaults to ``None`` and is sized
             according to :attr:`pyvista.themes.DefaultTheme.font`.
 
-        color : str or 3 item list, optional
+        color : color_like, optional
             Either a string, rgb list, or hex color string.  Default
             set by :attr:`pyvista.themes.DefaultTheme.font`.  Can be
             in one of the following formats:
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         font_family : {'courier', 'times', 'arial'}
@@ -263,7 +264,7 @@ class ScalarBars:
         above_label : str, optional
             String annotation for values above the scalars range.
 
-        background_color : array, optional
+        background_color : color_like, optional
             The color used for the background in RGB format.
 
         n_colors : int, optional
@@ -322,8 +323,6 @@ class ScalarBars:
             label_font_size = theme.font.label_size
         if title_font_size is None:
             title_font_size = theme.font.title_size
-        if color is None:
-            color = theme.font.color
         if fmt is None:
             fmt = theme.font.fmt
         if vertical is None:
@@ -384,15 +383,14 @@ class ScalarBars:
                     position_y += slot * height
 
         # parse color
-        color = parse_color(color)
+        color = Color(color, default_color=theme.font.color)
 
         # Create scalar bar
         scalar_bar = _vtk.vtkScalarBarActor()
         # self._scalar_bars.append(scalar_bar)
 
         if background_color is not None:
-            background_color = parse_color(background_color, opacity=1.0)
-            background_color = np.array(background_color) * 255
+            background_color = np.array(Color(background_color).int_rgba)
             scalar_bar.GetBackgroundProperty().SetColor(background_color[0:3])
 
             if fill:
@@ -450,8 +448,8 @@ class ScalarBars:
 
         label_text = scalar_bar.GetLabelTextProperty()
         anno_text = scalar_bar.GetAnnotationTextProperty()
-        label_text.SetColor(color)
-        anno_text.SetColor(color)
+        label_text.SetColor(color.float_rgb)
+        anno_text.SetColor(color.float_rgb)
         label_text.SetShadow(shadow)
         anno_text.SetShadow(shadow)
 
@@ -485,7 +483,7 @@ class ScalarBars:
         title_text.SetFontFamily(parse_font_family(font_family))
 
         # set color
-        title_text.SetColor(color)
+        title_text.SetColor(color.float_rgb)
 
         self._scalar_bar_actors[title] = scalar_bar
         if interactive:
@@ -512,7 +510,7 @@ class ScalarBars:
         if outline:
             scalar_bar.SetDrawFrame(True)
             frame_prop = scalar_bar.GetFrameProperty()
-            frame_prop.SetColor(color)
+            frame_prop.SetColor(color.float_rgb)
         else:
             scalar_bar.SetDrawFrame(False)
 
