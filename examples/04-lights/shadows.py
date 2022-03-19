@@ -30,14 +30,14 @@ mesh.rotate_z(120, inplace=True)
 light1 = pyvista.Light(
     position=(0, 0.2, 1.0),
     focal_point=(0, 0, 0),
-    color=[1, 1.0, 0.9843, 1],  # Color temp. 5400 K
+    color=[1.0, 1.0, 0.9843, 1.0],  # Color temp. 5400 K
     intensity=0.3,
 )
 
 light2 = pyvista.Light(
     position=(0, 1.0, 1.0),
     focal_point=(0, 0, 0),
-    color=[1, 0.83921, 0.6666, 1],  # Color temp. 2850 K
+    color=[1.0, 0.83921, 0.6666, 1.0],  # Color temp. 2850 K
     intensity=1,
 )
 

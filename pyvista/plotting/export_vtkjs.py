@@ -552,13 +552,13 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     colorToUse = (
                         renProp.GetProperty().GetDiffuseColor()
                         if hasattr(renProp, 'GetProperty')
-                        else [1, 1, 1]
+                        else [1.0, 1.0, 1.0]
                     )
                     if representation == 1:
                         colorToUse = (
                             renProp.GetProperty().GetColor()
                             if hasattr(renProp, 'GetProperty')
-                            else [1, 1, 1]
+                            else [1.0, 1.0, 1.0]
                         )
                     pointSize = (
                         renProp.GetProperty().GetPointSize()
@@ -626,7 +626,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
 
     sceneDescription = {
         "fetchGzip": doCompressArrays,
-        "background": plotter.background_color,
+        "background": plotter.background_color.float_rgb,
         "camera": {
             "focalPoint": plotter.camera.focal_point,
             "position": plotter.camera.position,

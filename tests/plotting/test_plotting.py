@@ -45,7 +45,6 @@ except:  # noqa: E722
 # These tests fail with mesa opengl on windows
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
-
 # Reset image cache with new images
 glb_reset_image_cache = False
 THIS_PATH = pathlib.Path(__file__).parent.absolute()
@@ -578,7 +577,7 @@ def test_plot_silhouette(tri_cylinder):
     assert len(actors) == 2  # cylinder + silhouette
     actor = actors[0]  # get silhouette actor
     props = actor.GetProperty()
-    assert props.GetColor() == pyvista.parse_color(pyvista.global_theme.silhouette.color)
+    assert props.GetColor() == pyvista.global_theme.silhouette.color
     assert props.GetOpacity() == pyvista.global_theme.silhouette.opacity
     assert props.GetLineWidth() == pyvista.global_theme.silhouette.line_width
     plotter.show(before_close_callback=verify_cache_image)
@@ -597,7 +596,7 @@ def test_plot_silhouette_method(tri_cylinder):
 
     actor = actors[1]  # get silhouette actor
     props = actor.GetProperty()
-    assert props.GetColor() == pyvista.parse_color(pyvista.global_theme.silhouette.color)
+    assert props.GetColor() == pyvista.global_theme.silhouette.color
     assert props.GetOpacity() == pyvista.global_theme.silhouette.opacity
     assert props.GetLineWidth() == pyvista.global_theme.silhouette.line_width
     plotter.show(before_close_callback=verify_cache_image)
@@ -764,6 +763,24 @@ def test_hide_axes():
     plotter.show(before_close_callback=verify_cache_image)
 
 
+def test_add_axes_parameters():
+    plotter = pyvista.Plotter()
+    plotter.add_axes()
+    marker_args = dict(
+        cone_radius=0.6,
+        shaft_length=0.7,
+        tip_length=0.3,
+        ambient=0.5,
+        label_size=(0.4, 0.16),
+    )
+    plotter.add_axes(
+        line_width=5,
+        marker_args=marker_args,
+        viewport=(0, 0, 0.4, 0.4),
+    )
+    plotter.show(before_close_callback=verify_cache_image)
+
+
 def test_show_axes_all():
     plotter = pyvista.Plotter()
     plotter.show_axes_all()
@@ -823,14 +840,14 @@ def test_set_background():
     plotter = pyvista.Plotter(shape=(1, 2))
     plotter.set_background('orange')
     for renderer in plotter.renderers:
-        assert renderer.GetBackground() == pyvista.parse_color('orange')
+        assert renderer.GetBackground() == pyvista.Color('orange')
     plotter.show()
 
     plotter = pyvista.Plotter(shape=(1, 2))
     plotter.subplot(0, 1)
     plotter.set_background('orange', all_renderers=False)
-    assert plotter.renderers[0].GetBackground() != pyvista.parse_color('orange')
-    assert plotter.renderers[1].GetBackground() == pyvista.parse_color('orange')
+    assert plotter.renderers[0].GetBackground() != pyvista.Color('orange')
+    assert plotter.renderers[1].GetBackground() == pyvista.Color('orange')
     plotter.show(before_close_callback=verify_cache_image)
 
 
@@ -934,12 +951,19 @@ def test_add_arrows():
 
 def test_axes():
     plotter = pyvista.Plotter()
-    plotter.add_orientation_widget(pyvista.Cube())
+    plotter.add_orientation_widget(pyvista.Cube(), color='b')
     plotter.add_mesh(pyvista.Cube())
     plotter.show(before_close_callback=verify_cache_image)
 
 
 def test_box_axes():
+    plotter = pyvista.Plotter()
+    plotter.add_axes(box=True)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_box_axes_color_box():
     plotter = pyvista.Plotter()
     plotter.add_axes(box=True, box_args={'color_box': True})
     plotter.add_mesh(pyvista.Sphere())

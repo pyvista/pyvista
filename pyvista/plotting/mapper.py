@@ -8,8 +8,8 @@ from pyvista import _vtk
 from pyvista.utilities import convert_array, convert_string_array, raise_not_matching
 
 from ._plotting import _has_matplotlib
-from .colors import get_cmap_safe
-from .tools import normalize, parse_color
+from .colors import Color, get_cmap_safe
+from .tools import normalize
 
 
 def make_mapper(mapper_class):
@@ -166,14 +166,14 @@ def make_mapper(mapper_class):
             if np.any(clim) and not rgb:
                 self.scalar_range = clim[0], clim[1]
 
-            table.SetNanColor(nan_color)
+            table.SetNanColor(Color(nan_color).float_rgba)
             if above_color:
                 table.SetUseAboveRangeColor(True)
-                table.SetAboveRangeColor(*parse_color(above_color, opacity=1))
+                table.SetAboveRangeColor(*Color(above_color).float_rgba)
                 scalar_bar_args.setdefault('above_label', 'Above')
             if below_color:
                 table.SetUseBelowRangeColor(True)
-                table.SetBelowRangeColor(*parse_color(below_color, opacity=1))
+                table.SetBelowRangeColor(*Color(below_color).float_rgba)
                 scalar_bar_args.setdefault('below_label', 'Below')
 
             if cmap is not None:
@@ -275,7 +275,6 @@ def make_mapper(mapper_class):
         ):
             """Set custom opacity."""
             # create a custom RGBA array to supply our opacity to
-            rgb_color = parse_color(color, default_color=theme.color)
             if opacity.size == mesh.n_points and opacity.size == mesh.n_cells:
                 if preference == 'points':
                     rgba = np.empty((mesh.n_points, 4), np.uint8)
@@ -292,9 +291,8 @@ def make_mapper(mapper_class):
                     f"number of cells ({mesh.n_cells})."
                 )
 
-            rgb_color = np.array(parse_color(color, default_color=theme.color)) * 255
-            rgba[:, :-1] = rgb_color
-            rgba[:, -1] = opacity * 255
+            rgba[:, :-1] = Color(color, default_color=theme.color).int_rgb
+            rgba[:, -1] = np.around(opacity * 255)
 
             self.configure_scalars_mode(
                 rgba, mesh, '', n_colors, preference, interpolate_before_map, rgb, True
