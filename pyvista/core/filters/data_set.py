@@ -3570,6 +3570,56 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
+    def sample_over_multiple_lines(self, points, tolerance=None, progress_bar=False):
+        """Sample a dataset onto a multiple lines.
+
+        Parameters
+        ----------
+        points : np.ndarray or list
+            List of points defining multiple lines.
+
+        tolerance : float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line object with sampled data from dataset.
+
+        Examples
+        --------
+        Sample over a plane that is interpolating a point cloud.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> np.random.seed(12)
+        >>> point_cloud = np.random.random((5, 3))
+        >>> point_cloud[:, 2] = 0
+        >>> point_cloud -= point_cloud.mean(0)
+        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata['values'] = np.random.random(5)
+        >>> plane = pyvista.Plane()
+        >>> plane.clear_data()
+        >>> plane = plane.interpolate(pdata, sharpness=3.5)
+        >>> sample = plane.sample_over_multiple_lines([[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]])
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
+        >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
+        >>> pl.show()
+
+        """
+        # Make a multiple lines and sample the dataset
+        multiple_lines = pyvista.MultipleLines(points=points)
+        sampled_multiple_lines = multiple_lines.sample(
+            self, tolerance=tolerance, progress_bar=progress_bar
+        )
+        return sampled_multiple_lines
+
     def sample_over_circular_arc(
         self, pointa, pointb, center, resolution=None, tolerance=None, progress_bar=False
     ):
