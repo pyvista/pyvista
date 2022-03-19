@@ -18,7 +18,6 @@ skip_py2_nobind = pytest.mark.skipif(
     int(sys.version[0]) < 3, reason="Python 2 doesn't support binding methods"
 )
 
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 
@@ -59,7 +58,6 @@ def test_datasetfilters_init():
         pyvista.core.filters.DataSetFilters()
 
 
-@skip_windows
 def test_clip_filter(datasets):
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset in enumerate(datasets):
@@ -80,7 +78,6 @@ def test_clip_filter(datasets):
                 assert isinstance(clp, pyvista.UnstructuredGrid)
 
 
-@skip_windows
 @skip_mac
 @pytest.mark.parametrize('both', [False, True])
 @pytest.mark.parametrize('invert', [False, True])
@@ -320,6 +317,36 @@ def test_threshold(datasets):
         datasets[0].threshold(
             [10, 500], scalars='Spatial Point Data', all_scalars=True, progress_bar=True
         )
+
+
+def test_threshold_multicomponent():
+    mesh = pyvista.Plane()
+    data = np.zeros((mesh.n_cells, 3))
+    data[0:3, 0] = 1
+    data[2:4, 1] = 2
+    data[2, 2] = 3
+    mesh["data"] = data
+
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="component", component=0)
+    assert thresh.n_cells == 3
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="component", component=1)
+    assert thresh.n_cells == 2
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="all")
+    assert thresh.n_cells == 1
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="any")
+    assert thresh.n_cells == 4
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="not a mode")
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=-1)
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=3)
+
+    with pytest.raises(TypeError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=0.5)
 
 
 def test_threshold_percent(datasets):

@@ -217,7 +217,7 @@ class DataSetFilters:
             if poly.n_cells != 6:
                 raise ValueError("The bounds mesh must have only 6 faces.")
             bounds = []
-            poly.compute_normals()
+            poly.compute_normals(inplace=True)
             for cid in range(6):
                 cell = poly.extract_cells(cid)
                 normal = cell["Normals"][0]
@@ -813,6 +813,8 @@ class DataSetFilters:
         preference='cell',
         all_scalars=False,
         progress_bar=False,
+        component_mode="all",
+        component=0,
     ):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
@@ -858,6 +860,17 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        component_mode : {'selected', 'all', 'any'}
+            The method to satisfy the criteria for the threshold of
+            multicomponent scalars.  'selected' (default)
+            uses only the ``component``.  'all' requires all
+            components to meet criteria.  'any' is when
+            any component satisfies the criteria.
+
+        component : int
+            When using ``component_mode='selected'``, this sets
+            which component to threshold on.  Default is ``0``.
 
         Returns
         -------
@@ -969,6 +982,24 @@ class DataSetFilters:
                 alg.ThresholdByLower(value)
             else:
                 alg.ThresholdByUpper(value)
+        if component_mode == "component":
+            alg.SetComponentModeToUseSelected()
+            dim = arr.shape[1]
+            if not isinstance(component, (int, np.integer)):
+                raise TypeError("component must be int")
+            if component > (dim - 1) or component < 0:
+                raise ValueError(
+                    f"scalars has {dim} components: supplied component {component} not in range"
+                )
+            alg.SetSelectedComponent(component)
+        elif component_mode == "all":
+            alg.SetComponentModeToUseAll()
+        elif component_mode == "any":
+            alg.SetComponentModeToUseAny()
+        else:
+            raise ValueError(
+                f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"
+            )
         # Run the threshold
         _update_alg(alg, progress_bar, 'Thresholding')
         return _get_output(alg)
