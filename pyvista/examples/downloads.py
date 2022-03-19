@@ -3563,3 +3563,43 @@ def download_lucy(load=True):  # pragma: no cover
 
     """
     return _download_and_read('lucy.ply', load=load)
+
+
+def download_can(partial=False):  # pragma: no cover
+    """Download the can dataset mesh.
+
+    Original downloaded from Testing/Data/FileSeriesat from paraview.org. Used
+    for testing hdf files.
+
+    Parameters
+    ----------
+    partial : bool, optional
+        Load part of the dataset. Defaults to to ``False`` and
+        filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData
+        The example ParaView can DataSet.
+
+    Examples
+    --------
+    Plot the can dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_can()
+    >>> dataset.plot(scalars='VEL', smooth_shading=True)
+
+    """
+    can_0 = _download_and_read('hdf/can_0.hdf')
+    if partial:
+        return can_0
+
+    return pyvista.merge(
+        [
+            can_0,
+            _download_and_read('hdf/can_1.hdf'),
+            _download_and_read('hdf/can_2.hdf'),
+        ]
+    )
