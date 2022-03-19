@@ -119,9 +119,9 @@ def test_point_picking(left_clicking):
         )
         # simulate the pick
         if left_clicking:
-             width, height = plotter.window_size
-             plotter.iren._mouse_left_button_press(width // 2, height // 2)
-             plotter.iren._mouse_left_button_release(width, height)
+            width, height = plotter.window_size
+            plotter.iren._mouse_left_button_press(width // 2, height // 2)
+            plotter.iren._mouse_left_button_release(width, height)
         else:
             renderer = plotter.renderer
             picker = plotter.iren.get_picker()
