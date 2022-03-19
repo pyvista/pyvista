@@ -2226,5 +2226,12 @@ def test_pointset_plot(pointset):
     pointset.plot()
 
     pl = pyvista.Plotter()
-    pl.add_mesh(pointset)
+    pl.add_mesh(pointset, scalars=range(pointset.n_points), show_scalar_bar=False)
+    pl.show(before_close_callback=verify_cache_image)
+
+
+@skip_9_1_0
+def test_pointset_plot_as_points(pointset):
+    pl = pyvista.Plotter()
+    pl.add_points(pointset, scalars=range(pointset.n_points), show_scalar_bar=False)
     pl.show(before_close_callback=verify_cache_image)

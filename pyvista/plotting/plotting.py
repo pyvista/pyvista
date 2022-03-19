@@ -1960,6 +1960,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise TypeError(
                     f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
                 )
+
+        # cast to PointSet to PolyData
+        if isinstance(mesh, pyvista.PointSet):
+            mesh = mesh.cast_to_polydata(deep=False)
+
         ##### Parse arguments to be used for all meshes #####
 
         # Avoid mutating input

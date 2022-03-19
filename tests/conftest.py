@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.random import default_rng
 from pytest import fixture
 
 import pyvista
@@ -94,7 +95,9 @@ def datasets():
         examples.load_structured(),  # StructuredGrid
     ]
 
+
 @fixture()
 def pointset():
-    points = np.random.random((10, 3))
+    rng = default_rng(0)
+    points = rng.random((10, 3))
     return pyvista.PointSet(points)
