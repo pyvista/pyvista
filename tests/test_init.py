@@ -12,8 +12,8 @@ Please see:
 https://github.com/pyvista/pyvista/pull/1163
 """
 
-@pytest.mark.skipif(not pyvista._vtk.VTK9,
-                    reason='``vtk`` can be loaded directly on vtk<9')
+
+@pytest.mark.skipif(not pyvista._vtk.VTK9, reason='``vtk`` can be loaded directly on vtk<9')
 def test_vtk_not_loaded():
     """This test verifies that the vtk module isn't loaded when using vtk>=9
 
@@ -28,14 +28,18 @@ def test_vtk_not_loaded():
 
 
 # validate all lazy loads
-lazy_readers = ['vtkGL2PSExporter',
-                'vtkFacetReader',
-                'vtkPDataSetReader',
-                'vtkMultiBlockPLOT3DReader',
-                'vtkPlot3DMetaReader']
+lazy_readers = [
+    'vtkGL2PSExporter',
+    'vtkFacetReader',
+    'vtkPDataSetReader',
+    'vtkMultiBlockPLOT3DReader',
+    'vtkPlot3DMetaReader',
+]
 
 if pyvista._vtk.VTK9:
     lazy_readers.append('vtkSegYReader')
+
+
 @pytest.mark.parametrize("cls_", lazy_readers)
 def test_lazy_loads(cls_):
     lazy_class = getattr(pyvista._vtk, 'lazy_' + cls_)()

@@ -26,9 +26,11 @@ from pyvista import _vtk
 def _check_examples_path():
     """Check if the examples path exists."""
     if not pyvista.EXAMPLES_PATH:
-        raise FileNotFoundError('EXAMPLES_PATH does not exist.  Try setting the '
-                                'environment variable `PYVISTA_USERDATA_PATH` '
-                                'to a writable path and restarting python')
+        raise FileNotFoundError(
+            'EXAMPLES_PATH does not exist.  Try setting the '
+            'environment variable `PYVISTA_USERDATA_PATH` '
+            'to a writable path and restarting python'
+        )
 
 
 def delete_downloads():
@@ -118,9 +120,13 @@ def _download_file(filename):
         retriever = partial(_http_request, url)
     else:
         if not os.path.isdir(pyvista.VTK_DATA_PATH):
-            raise FileNotFoundError(f'VTK data repository path does not exist at:\n\n{pyvista.VTK_DATA_PATH}')
+            raise FileNotFoundError(
+                f'VTK data repository path does not exist at:\n\n{pyvista.VTK_DATA_PATH}'
+            )
         if not os.path.isdir(os.path.join(pyvista.VTK_DATA_PATH, 'Data')):
-            raise FileNotFoundError(f'VTK data repository does not have "Data" folder at:\n\n{pyvista.VTK_DATA_PATH}')
+            raise FileNotFoundError(
+                f'VTK data repository does not have "Data" folder at:\n\n{pyvista.VTK_DATA_PATH}'
+            )
         retriever = partial(_repo_file_request, pyvista.VTK_DATA_PATH, filename)
     return _retrieve_file(retriever, filename)
 
@@ -135,6 +141,7 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
 
 
 ###############################################################################
+
 
 def download_masonry_texture(load=True):  # pragma: no cover
     """Download masonry texture.
@@ -372,6 +379,7 @@ def download_bunny_coarse(load=True):  # pragma: no cover
         result.verts = np.array([], dtype=np.int32)
     return result
 
+
 def download_cow(load=True):  # pragma: no cover
     """Download cow dataset.
 
@@ -547,10 +555,7 @@ def download_bolt_nut(load=True):  # pragma: no cover
 
     """
     if not load:
-        return (
-            _download_and_read('bolt.slc', load=load),
-            _download_and_read('nut.slc', load=load)
-        )
+        return (_download_and_read('bolt.slc', load=load), _download_and_read('nut.slc', load=load))
     blocks = pyvista.MultiBlock()
     blocks['bolt'] = _download_and_read('bolt.slc')
     blocks['nut'] = _download_and_read('nut.slc')
@@ -2288,7 +2293,7 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
     """
     mesh = _download_and_read('kitchen.vtk', load=load)
     if not load:
-         return mesh
+        return mesh
     if not split:
         return mesh
     extents = {
@@ -3410,7 +3415,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
     """
     filename, _ = _download_file('PVD/paraview/singleSphereAnimation.pvd')
-    folder, _ =_download_file('PVD/paraview/singleSphereAnimation')
+    folder, _ = _download_file('PVD/paraview/singleSphereAnimation')
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
@@ -3432,7 +3437,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
 
     """
     filename, _ = _download_file('PVD/paraview/dualSphereAnimation.pvd')
-    folder, _ =_download_file('PVD/paraview/dualSphereAnimation')
+    folder, _ = _download_file('PVD/paraview/dualSphereAnimation')
     if not load:
         return filename
     return pyvista.PVDReader(filename).read()
@@ -3497,7 +3502,7 @@ def download_cavity(load=True):
     >>> dataset = examples.download_cavity()  # doctest:+SKIP
 
     See :ref:`openfoam_example` for a full example using this dataset.
-    
+
     """
     directory, _ = _download_file('OpenFOAM.zip')
     filename = os.path.join(directory, 'cavity', 'case.foam')
@@ -3558,3 +3563,43 @@ def download_lucy(load=True):  # pragma: no cover
 
     """
     return _download_and_read('lucy.ply', load=load)
+
+
+def download_can(partial=False):  # pragma: no cover
+    """Download the can dataset mesh.
+
+    Original downloaded from Testing/Data/FileSeriesat from paraview.org. Used
+    for testing hdf files.
+
+    Parameters
+    ----------
+    partial : bool, optional
+        Load part of the dataset. Defaults to to ``False`` and
+        filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData
+        The example ParaView can DataSet.
+
+    Examples
+    --------
+    Plot the can dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_can()
+    >>> dataset.plot(scalars='VEL', smooth_shading=True)
+
+    """
+    can_0 = _download_and_read('hdf/can_0.hdf')
+    if partial:
+        return can_0
+
+    return pyvista.merge(
+        [
+            can_0,
+            _download_and_read('hdf/can_1.hdf'),
+            _download_and_read('hdf/can_2.hdf'),
+        ]
+    )

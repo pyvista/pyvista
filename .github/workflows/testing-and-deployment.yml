@@ -70,9 +70,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install headless display
-        run: |
-          .ci/setup_headless_display.sh
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@v1
 
       - name: Cache Conda
         uses: actions/cache@v1
@@ -136,7 +135,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9']
+        python-version: ['3.7', '3.8', '3.9']
         vtk-version: ['latest']
         include:
           - python-version: '3.9'
@@ -171,7 +170,7 @@ jobs:
           python setup.py bdist_wheel
           pip install dist/pyvista*.whl
 
-      - name: Setup vtk
+      - name: Set up vtk
         if: ${{ matrix.vtk-version != 'latest' }}
         run: pip install vtk==${{ matrix.vtk-version }}
 
@@ -190,7 +189,7 @@ jobs:
 
       - name: Unit Testing
         run: |
-          xvfb-run pytest -v --cov pyvista --cov-report html
+          xvfb-run pytest -v --cov pyvista --cov-report xml
 
       - uses: codecov/codecov-action@v2
         if: matrix.python-version == '3.8'
@@ -219,7 +218,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
 
@@ -244,13 +243,8 @@ jobs:
           restore-keys: |
             Python-${{ runner.os }}-${{ matrix.python-version }}
 
-      - name: Install OpenGL
-        run: |
-          Set-StrictMode -Version Latest
-          $ErrorActionPreference = "Stop"
-          $PSDefaultParameterValues['*:ErrorAction']='Stop'
-          git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
-          powershell gl-ci-helpers/appveyor/install_opengl.ps1
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@v1
 
       - name: Install PyVista
         run: |

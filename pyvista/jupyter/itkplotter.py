@@ -4,7 +4,7 @@ import numpy as np
 import pyvista as pv
 
 
-class PlotterITK():
+class PlotterITK:
     """ITKwidgets plotter.
 
     Used for plotting interactively within a jupyter notebook.
@@ -31,6 +31,7 @@ class PlotterITK():
 
         from itkwidgets import __version__
         from scooby import meets_version
+
         if not meets_version(__version__, "0.25.2"):  # pragma: no cover
             raise ImportError("Please install `itkwidgets>=0.25.2`")
 
@@ -53,13 +54,13 @@ class PlotterITK():
             An ``n x 3`` numpy array of points or PyVista dataset with
             points.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, RGB sequence, or hex color string.  For one
             of the following.
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         point_size : float, optional
@@ -77,11 +78,9 @@ class PlotterITK():
         else:
             point_array = points
 
-
         # style : str, optional
         #     How to represent the point set. One of ``'hidden'``,
         #     ``'points'``, or ``'spheres'``.
-
 
         # if style not in ['hidden', 'points', 'spheres']:
         #     raise ValueError("``style`` must be either 'hidden', 'points', or"
@@ -91,12 +90,11 @@ class PlotterITK():
             raise TypeError('``point_size`` parameter must be a float')
 
         self._point_set_sizes.append(point_size)
-        self._point_set_colors.append(pv.parse_color(color))
+        self._point_set_colors.append(pv.Color(color).float_rgb)
         self._point_sets.append(point_array)
         # self._point_set_representations.append(style)
 
-    def add_mesh(self, mesh, color=None, scalars=None,
-                 opacity=1.0, smooth_shading=False):
+    def add_mesh(self, mesh, color=None, scalars=None, opacity=1.0, smooth_shading=False):
         """Add a PyVista/VTK mesh or dataset.
 
         Adds any PyVista/VTK mesh that itkwidgets can wrap to the
@@ -109,10 +107,10 @@ class PlotterITK():
             that :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
             points.
 
-        color : str sequence, optional
+        color : color_like, optional
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
-            ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+            ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
 
@@ -178,9 +176,10 @@ class PlotterITK():
             mesh.cell_data.pop('vtkOriginalCellIds')
 
         from itkwidgets._transform_types import to_geometry
+
         mesh = to_geometry(mesh)
         self._geometries.append(mesh)
-        self._geometry_colors.append(pv.parse_color(color))
+        self._geometry_colors.append(pv.Color(color).float_rgb)
         self._geometry_opacities.append(opacity)
 
     @property
@@ -198,7 +197,7 @@ class PlotterITK():
 
         >>> plotter.background_color = 'k'
         """
-        self._background_color = pv.parse_color(color)
+        self._background_color = pv.Color(color).float_rgb
 
     @property
     def camera_position(self):
@@ -220,8 +219,7 @@ class PlotterITK():
 
         self._camera_position = camera_location
 
-    def show(self, ui_collapsed=True, rotate=False, show_bounds=False,
-             **kwargs):
+    def show(self, ui_collapsed=True, rotate=False, show_bounds=False, **kwargs):
         """Show itkwidgets plotter in cell output.
 
         Parameters
@@ -251,21 +249,25 @@ class PlotterITK():
             kwargs.setdefault('camera', self._camera_position)
 
         from itkwidgets import Viewer
-        viewer = Viewer(geometries=self._geometries,
-                        geometry_colors=self._geometry_colors,
-                        geometry_opacities=self._geometry_opacities,
-                        point_set_colors=self._point_set_colors,
-                        point_sets=self._point_sets,
-                        point_set_sizes=self._point_set_sizes,
-                        point_set_representations=self._point_set_representations,
-                        ui_collapsed=ui_collapsed,
-                        rotate=rotate,
-                        axes=show_bounds,
-                        **kwargs)
+
+        viewer = Viewer(
+            geometries=self._geometries,
+            geometry_colors=self._geometry_colors,
+            geometry_opacities=self._geometry_opacities,
+            point_set_colors=self._point_set_colors,
+            point_sets=self._point_sets,
+            point_set_sizes=self._point_set_sizes,
+            point_set_representations=self._point_set_representations,
+            ui_collapsed=ui_collapsed,
+            rotate=rotate,
+            axes=show_bounds,
+            **kwargs,
+        )
 
         # always show if iPython is installed
         try:
             from IPython import display
+
             display.display_html(viewer)
         except ImportError:  # pragma: no cover
             pass

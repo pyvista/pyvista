@@ -13,21 +13,6 @@ from ipywidgets import GridspecLayout
 
 import pyvista as pv
 
-# TODO: Consider adding sprites for point labels
-# def add_sprite():
-#     text = tjs.TextTexture('hi', size=60, color='black')
-#     sprite = tjs.Sprite(tjs.SpriteMaterial(map=text,
-#                                            sizeAttenuation=False,
-#                                            transparent=False,
-#                                            # depthWrite=False,
-#                                            # depthTest=False
-#                                            useScreenCoordinates=True,
-#                                            ),
-#                         scale=(.1,.1,.1),
-#                         center=(0.0, 0.0)
-#                         )
-#     children.append(sprite)
-
 
 def segment_poly_cells(mesh):
     """Segment lines from a mesh into line segments."""
@@ -38,7 +23,7 @@ def segment_poly_cells(mesh):
     cc = mesh.lines  # fetch up front
     while i < mesh.n_cells:
         nn = cc[offset]
-        polylines.append(cc[offset + 1:offset + 1 + nn])
+        polylines.append(cc[offset + 1 : offset + 1 + nn])
         offset += nn + 1
         i += 1
 
@@ -93,8 +78,7 @@ def extract_surface_mesh(obj):
     if not pv.is_pyvista_dataset(obj):  # pragma: no cover
         mesh = pv.wrap(obj)
         if not pv.is_pyvista_dataset(mesh):
-            raise TypeError(f'Object type ({type(mesh)}) cannot be converted to '
-                            'a pyvista dataset')
+            raise TypeError(f'Object type ({type(mesh)}) cannot be converted to a pyvista dataset')
     else:
         mesh = obj
 
@@ -130,7 +114,7 @@ def map_scalars(mapper, scalars):
             scalars = pv._vtk.numpy_to_vtk(scalars)
 
     table = mapper.GetLookupTable()
-    return pv.wrap(table.MapScalars(scalars, 0, 0))[:, :3]/255
+    return pv.wrap(table.MapScalars(scalars, 0, 0))[:, :3] / 255
 
 
 def array_to_float_buffer(points):
@@ -154,12 +138,13 @@ def cast_to_min_size(ind, max_index):
     elif max_index < np.iinfo(np.uint32).max:
         ind = ind.astype(np.uint32, copy=False)
     else:
-        raise ValueError('pythreejs does not support a maximum index more than '
-                         f'{np.iinfo(np.uint32).max}')
+        raise ValueError(
+            f'pythreejs does not support a maximum index more than {np.iinfo(np.uint32).max}'
+        )
     return tjs.BufferAttribute(array=ind, normalized=False)
 
 
-def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
+def to_surf_mesh(actor, surf, mapper, prop, add_attr=None):
     """Convert a pyvista surface to a buffer geometry.
 
     General Notes
@@ -182,6 +167,8 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
     * MeshBasicMaterial when lighting is disabled.
 
     """
+    if add_attr is None:
+        add_attr = {}
     # convert to an all-triangular surface
     if surf.is_all_triangles():
         trimesh = surf
@@ -193,8 +180,9 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
     # convert to minimum index type
     face_ind = trimesh.faces.reshape(-1, 4)[:, 1:]
     index = cast_to_min_size(face_ind, trimesh.n_points)
-    attr = {'position': position,
-            'index': index,
+    attr = {
+        'position': position,
+        'index': index,
     }
 
     if prop.GetInterpolation():  # something other than flat shading
@@ -210,7 +198,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
         if mapper.GetColorMode() == 2:
             scalars = trimesh.cell_data.active_scalars.repeat(3, axis=0)
             scalars = scalars.astype(np.float32, copy=False)
-            colors = scalars[:, :3]/255  # ignore alpha
+            colors = scalars[:, :3] / 255  # ignore alpha
         else:
             # must repeat for each triangle
             scalars = trimesh.cell_data.active_scalars.repeat(3)
@@ -247,18 +235,14 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
     if texture is not None:
         wrapped_tex = pv.wrap(texture.GetInput())
         data = wrapped_tex.active_scalars
-        dim = (wrapped_tex.dimensions[0],
-               wrapped_tex.dimensions[1],
-               data.shape[1])
+        dim = (wrapped_tex.dimensions[0], wrapped_tex.dimensions[1], data.shape[1])
         data = data.reshape(dim)
-        fmt = "RGBFormat" if data.shape[1] == 3 else "RGBAFormat"
+        # fmt = "RGBFormat" if data.shape[1] == 3 else "RGBAFormat"
 
         # Create data texture and catch invalid warning
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", message="Given trait value dtype")
-            tjs_texture = tjs.DataTexture(data=data,
-                                          format="RGBFormat",
-                                          type="UnsignedByteType")
+            tjs_texture = tjs.DataTexture(data=data, format="RGBFormat", type="UnsignedByteType")
 
     # these attributes are always used regardless of the material
     shared_attr = {
@@ -270,7 +254,7 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
     }
 
     if colors is None:
-        shared_attr['color'] = color_to_hex(prop.GetColor())
+        shared_attr['color'] = pv.Color(prop.GetColor()).hex_rgb
 
     if tjs_texture is not None:
         shared_attr['map'] = tjs_texture
@@ -281,19 +265,24 @@ def to_surf_mesh(actor, surf, mapper, prop, add_attr={}):
         shared_attr['transparent'] = True
 
     if prop.GetInterpolation() == 3:  # using physically based rendering
-        material = tjs.MeshPhysicalMaterial(flatShading=False,
-                                            roughness=prop.GetRoughness(),
-                                            metalness=prop.GetMetallic(),
-                                            reflectivity=0,
-                                            **shared_attr, **add_attr)
+        material = tjs.MeshPhysicalMaterial(
+            flatShading=False,
+            roughness=prop.GetRoughness(),
+            metalness=prop.GetMetallic(),
+            reflectivity=0,
+            **shared_attr,
+            **add_attr,
+        )
     elif prop.GetLighting():
         # specular disabled to fix lighting issues
-        material = tjs.MeshPhongMaterial(shininess=0,
-                                         flatShading=prop.GetInterpolation() == 0,
-                                         specular=color_to_hex((0, 0, 0)),
-                                         reflectivity=0,
-                                         **shared_attr,
-                                         **add_attr)
+        material = tjs.MeshPhongMaterial(
+            shininess=0,
+            flatShading=prop.GetInterpolation() == 0,
+            specular='#000000',
+            reflectivity=0,
+            **shared_attr,
+            **add_attr,
+        )
     else:  # no lighting
         material = tjs.MeshBasicMaterial(**shared_attr, **add_attr)
 
@@ -311,8 +300,9 @@ def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
         edges_mesh = surf.extract_all_edges()
         edges = edges_mesh.lines.reshape(-1, 3)[:, 1:]
 
-    attr = {'position': array_to_float_buffer(edges_mesh.points),
-            'index': cast_to_min_size(edges, surf.n_points),
+    attr = {
+        'position': array_to_float_buffer(edges_mesh.points),
+        'index': cast_to_min_size(edges, surf.n_points),
     }
 
     # add in colors
@@ -334,11 +324,13 @@ def to_edge_mesh(surf, mapper, prop, use_edge_coloring=True, use_lines=False):
     else:
         edge_color = prop.GetColor()
 
-    edge_mat = tjs.LineBasicMaterial(color=color_to_hex(edge_color),
-                                     linewidth=prop.GetLineWidth(),
-                                     opacity=prop.GetOpacity(),
-                                     side='FrontSide',
-                                     **mesh_attr)
+    edge_mat = tjs.LineBasicMaterial(
+        color=pv.Color(edge_color).hex_rgb,
+        linewidth=prop.GetLineWidth(),
+        opacity=prop.GetOpacity(),
+        side='FrontSide',
+        **mesh_attr,
+    )
     return tjs.LineSegments(edge_geo, edge_mat)
 
 
@@ -356,8 +348,8 @@ def to_tjs_points(dataset, mapper, prop):
     geo = tjs.BufferGeometry(attributes=attr)
 
     m_attr = {
-        'color': color_to_hex(prop.GetColor()),
-        'size': prop.GetPointSize()/100,
+        'color': pv.Color(prop.GetColor()).hex_rgb,
+        'size': prop.GetPointSize() / 100,
         'vertexColors': coloring,
     }
 
@@ -369,7 +361,7 @@ def pvcamera_to_threejs_camera(pv_camera, lights, aspect):
     """Return an ipygany camera dict from a ``pyvista.Plotter`` object."""
     # scene will be centered at focal_point, so adjust the position
     position = np.array(pv_camera.position) - np.array(pv_camera.focal_point)
-    far = np.linalg.norm(position)*100000
+    far = np.linalg.norm(position) * 100000
 
     return tjs.PerspectiveCamera(
         up=pv_camera.up,
@@ -382,31 +374,16 @@ def pvcamera_to_threejs_camera(pv_camera, lights, aspect):
     )
 
 
-def color_to_hex(color, linear_to_srgb=False):
-    """Convert a 0 - 1 RGB color tuple to a HTML hex color.
-
-    Optionally convert linear colors to sRGB.
-
-    """
-    color = np.array(color)
-    if linear_to_srgb:
-        mask = color < 0.0031308
-        color[mask] *= 12.92
-        color[~mask] = 1.055*color[~mask]**(1/2.4) - 0.055
-
-    color = tuple((color*255).astype(np.uint8))
-    return '#%02x%02x%02x' % tuple(color)
-
-
 def pvlight_to_threejs_light(pvlight):
     """Convert a pyvista headlight into a three.js directional light."""
     if pvlight.is_camera_light or pvlight.is_headlight:
         # extend the position of the light to make "near infinite"
-        position = np.array(pvlight.position)*100000
-        return tjs.DirectionalLight(color=color_to_hex(pvlight.diffuse_color, True),
-                                    position=position.tolist(),
-                                    intensity=pvlight.intensity,
-                                    )
+        position = np.array(pvlight.position) * 100000
+        return tjs.DirectionalLight(
+            color=pvlight.diffuse_color.linear_to_srgb().hex_rgb,
+            position=position.tolist(),
+            intensity=pvlight.intensity,
+        )
 
 
 def extract_lights_from_renderer(renderer):
@@ -420,7 +397,12 @@ def actor_to_mesh(actor, focal_point):
     if mapper is None:
         return
 
+    # ignore any mappers whose inputs are not datasets
+    if not hasattr(mapper, 'GetInputAsDataSet'):
+        return
+
     dataset = mapper.GetInputAsDataSet()
+
     has_faces = True
     if hasattr(dataset, 'faces'):
         has_faces = np.any(dataset.faces)
@@ -434,9 +416,7 @@ def actor_to_mesh(actor, focal_point):
         add_attr = {}
         if prop.GetEdgeVisibility():
             # must offset polygons to have mesh render property with lines
-            add_attr = {'polygonOffset': True,
-                        'polygonOffsetFactor': 1,
-                        'polygonOffsetUnits': 1}
+            add_attr = {'polygonOffset': True, 'polygonOffsetFactor': 1, 'polygonOffsetUnits': 1}
 
             meshes.append(to_edge_mesh(surf, mapper, prop, use_edge_coloring=True))
 
@@ -450,8 +430,7 @@ def actor_to_mesh(actor, focal_point):
             mesh = to_edge_mesh(surf, mapper, prop, use_edge_coloring=False)
             meshes.append(mesh)
         elif np.any(dataset.lines):
-            mesh = to_edge_mesh(dataset, mapper, prop, use_edge_coloring=False,
-                                use_lines=True)
+            mesh = to_edge_mesh(dataset, mapper, prop, use_edge_coloring=False, use_lines=True)
             meshes.append(mesh)
         else:  # pragma: no cover
             warnings.warn('Empty or unsupported dataset attached to actor')
@@ -483,11 +462,10 @@ def convert_renderer(pv_renderer):
 
     width, height = pv_renderer.width, pv_renderer.height
     pv_camera = pv_renderer.camera
-    children = meshes_from_actors(pv_renderer.actors.values(),
-                                  pv_camera.focal_point)
+    children = meshes_from_actors(pv_renderer.actors.values(), pv_camera.focal_point)
 
     lights = extract_lights_from_renderer(pv_renderer)
-    aspect = width/height
+    aspect = width / height
     camera = pvcamera_to_threejs_camera(pv_camera, lights, aspect)
 
     children.append(camera)
@@ -495,14 +473,12 @@ def convert_renderer(pv_renderer):
     if pv_renderer.axes_enabled:
         children.append(tjs.AxesHelper(0.1))
 
-    scene = tjs.Scene(children=children,
-                      background=color_to_hex(pv_renderer.background_color)
-    )
+    scene = tjs.Scene(children=children, background=pv_renderer.background_color.hex_rgb)
 
     # replace inf with a real value here due to changes in
     # ipywidges==6.4.0 see
     # https://github.com/ipython/ipykernel/issues/771
-    inf = 1E20
+    inf = 1e20
     orbit_controls = tjs.OrbitControls(
         controlling=camera,
         maxAzimuthAngle=inf,
@@ -511,18 +487,19 @@ def convert_renderer(pv_renderer):
         minAzimuthAngle=-inf,
     )
 
-    renderer = tjs.Renderer(camera=camera,
-                            scene=scene,
-                            alpha=True,
-                            clearOpacity=0,
-                            controls=[orbit_controls],
-                            width=width,
-                            height=height,
-                            antialias=pv_renderer.GetUseFXAA(),
+    renderer = tjs.Renderer(
+        camera=camera,
+        scene=scene,
+        alpha=True,
+        clearOpacity=0,
+        controls=[orbit_controls],
+        width=width,
+        height=height,
+        antialias=pv_renderer.GetUseFXAA(),
     )
 
     if pv_renderer.has_border:
-        bdr_color = color_to_hex(pv_renderer.border_color)
+        bdr_color = pv_renderer.border_color.hex_rgb
         renderer.layout.border = f'solid {pv_renderer.border_width}px {bdr_color}'
 
     # for now, we can't dynamically size the render windows.  If
@@ -536,8 +513,10 @@ def convert_renderer(pv_renderer):
 def convert_plotter(pl):
     """Convert a pyvista plotter to a pythreejs widget."""
     if not hasattr(pl, 'ren_win'):
-        raise AttributeError('This plotter is closed and unable to export to html.\n'
-                             'Please run this before showing or closing the plotter.')
+        raise AttributeError(
+            'This plotter is closed and unable to export to html.\n'
+            'Please run this before showing or closing the plotter.'
+        )
 
     if len(pl.renderers) == 1:
         # return HBox(children=(convert_renderer(pl.renderers[0]),))
@@ -551,11 +530,11 @@ def convert_plotter(pl):
         width, height = 0, 0
         for i in range(n_row):
             for j in range(n_col):
-                pv_ren = pl.renderers[j + n_row*i]
+                pv_ren = pl.renderers[j + n_row * i]
                 if j == 0:
-                    height += pv_ren.height + pv_ren.border_width*2
+                    height += pv_ren.height + pv_ren.border_width * 2
                 if i == 0:
-                    width += pv_ren.width + pv_ren.border_width*2
+                    width += pv_ren.width + pv_ren.border_width * 2
                 grid[i, j] = convert_renderer(pv_ren)
 
         # this is important to ignore when building the gallery
@@ -565,5 +544,7 @@ def convert_plotter(pl):
 
         return grid
 
-    raise RuntimeError('Unsupported plotter shape.  The ``pythreejs`` backend only '
-                       'supports single or regular grids of plots')
+    raise RuntimeError(
+        'Unsupported plotter shape.  The ``pythreejs`` backend only '
+        'supports single or regular grids of plots'
+    )

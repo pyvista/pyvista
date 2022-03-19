@@ -36,8 +36,9 @@ import os
 from typing import List, Union
 import warnings
 
-from .plotting.colors import PARAVIEW_BACKGROUND, get_cmap_safe
-from .plotting.tools import parse_color, parse_font_family
+from ._typing import color_like
+from .plotting.colors import Color, get_cmap_safe
+from .plotting.tools import parse_font_family
 from .utilities.misc import PyvistaDeprecationWarning
 
 
@@ -46,21 +47,27 @@ class _rcParams(dict):  # pragma: no cover
 
     def __getitem__(self, key):
         import pyvista  # avoids circular import
-        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``.',
-                      DeprecationWarning)
+
+        warnings.warn(
+            'rcParams is deprecated.  Please use ``pyvista.global_theme``.', DeprecationWarning
+        )
         return getattr(pyvista.global_theme, key)
 
     def __setitem__(self, key, value):
         import pyvista  # avoids circular import
-        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``.',
-                      DeprecationWarning)
+
+        warnings.warn(
+            'rcParams is deprecated.  Please use ``pyvista.global_theme``.', DeprecationWarning
+        )
         setattr(pyvista.global_theme, key, value)
 
     def __repr__(self):
         """Use the repr of global_theme."""
         import pyvista  # avoids circular import
-        warnings.warn('rcParams is deprecated.  Please use ``pyvista.global_theme``',
-                      DeprecationWarning)
+
+        warnings.warn(
+            'rcParams is deprecated.  Please use ``pyvista.global_theme``', DeprecationWarning
+        )
         return repr(pyvista.global_theme)
 
 
@@ -116,6 +123,7 @@ def set_plot_theme(theme):
 
     """
     import pyvista
+
     if isinstance(theme, str):
         theme = theme.lower()
         if theme == 'night':  # pragma: no cover
@@ -126,11 +134,13 @@ def set_plot_theme(theme):
     elif isinstance(theme, DefaultTheme):
         pyvista.global_theme.load_theme(theme)
     else:
-        raise TypeError(f'Expected a ``pyvista.themes.DefaultTheme`` or ``str``, not '
-                        f'a {type(theme).__name__}')
+        raise TypeError(
+            f'Expected a ``pyvista.themes.DefaultTheme`` or ``str``, not '
+            f'a {type(theme).__name__}'
+        )
 
 
-class _ThemeConfig():
+class _ThemeConfig:
     """Provide common methods for theme configuration classes."""
 
     __slots__: List[str] = []
@@ -212,9 +222,7 @@ class _DepthPeelingConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_number_of_peels',
-                 '_occlusion_ratio',
-                 '_enabled']
+    __slots__ = ['_number_of_peels', '_occlusion_ratio', '_enabled']
 
     def __init__(self):
         self._number_of_peels = 4
@@ -296,21 +304,17 @@ class _SilhouetteConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_color',
-                 '_line_width',
-                 '_opacity',
-                 '_feature_angle',
-                 '_decimate']
+    __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate']
 
     def __init__(self):
-        self._color = parse_color('black')
+        self._color = Color('black')
         self._line_width = 2
         self._opacity = 1.0
         self._feature_angle = None
         self._decimate = 0.9
 
     @property
-    def color(self) -> tuple:
+    def color(self) -> Color:
         """Return or set the silhouette color.
 
         Examples
@@ -322,8 +326,8 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: Union[tuple, str]):
-        self._color = parse_color(color)
+    def color(self, color: color_like):
+        self._color = Color(color)
 
     @property
     def line_width(self) -> float:
@@ -420,10 +424,7 @@ class _ColorbarConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_width',
-                 '_height',
-                 '_position_x',
-                 '_position_y']
+    __slots__ = ['_width', '_height', '_position_x', '_position_y']
 
     def __init__(self):
         self._width = None
@@ -530,16 +531,12 @@ class _AxesConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_x_color',
-                 '_y_color',
-                 '_z_color',
-                 '_box',
-                 '_show']
+    __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
 
     def __init__(self):
-        self._x_color = parse_color('tomato')
-        self._y_color = parse_color('seagreen')
-        self._z_color = parse_color('mediumblue')
+        self._x_color = Color('tomato')
+        self._y_color = Color('seagreen')
+        self._z_color = Color('mediumblue')
         self._box = False
         self._show = True
 
@@ -559,7 +556,7 @@ class _AxesConfig(_ThemeConfig):
         return '\n'.join(txt)
 
     @property
-    def x_color(self) -> tuple:
+    def x_color(self) -> Color:
         """Return or set x axis color.
 
         Examples
@@ -570,11 +567,11 @@ class _AxesConfig(_ThemeConfig):
         return self._x_color
 
     @x_color.setter
-    def x_color(self, color: Union[tuple, str]):
-        self._x_color = parse_color(color)
+    def x_color(self, color: color_like):
+        self._x_color = Color(color)
 
     @property
-    def y_color(self) -> tuple:
+    def y_color(self) -> Color:
         """Return or set y axis color.
 
         Examples
@@ -585,11 +582,11 @@ class _AxesConfig(_ThemeConfig):
         return self._y_color
 
     @y_color.setter
-    def y_color(self, color: Union[tuple, str]):
-        self._y_color = parse_color(color)
+    def y_color(self, color: color_like):
+        self._y_color = Color(color)
 
     @property
-    def z_color(self) -> tuple:
+    def z_color(self) -> Color:
         """Return or set z axis color.
 
         Examples
@@ -600,8 +597,8 @@ class _AxesConfig(_ThemeConfig):
         return self._z_color
 
     @z_color.setter
-    def z_color(self, color: Union[tuple, str]):
-        self._z_color = parse_color(color)
+    def z_color(self, color: color_like):
+        self._z_color = Color(color)
 
     @property
     def box(self) -> bool:
@@ -671,19 +668,14 @@ class _Font(_ThemeConfig):
 
     """
 
-    __slots__ = ['_family',
-                 '_size',
-                 '_title_size',
-                 '_label_size',
-                 '_color',
-                 '_fmt']
+    __slots__ = ['_family', '_size', '_title_size', '_label_size', '_color', '_fmt']
 
     def __init__(self):
         self._family = 'arial'
         self._size = 12
         self._title_size = None
         self._label_size = None
-        self._color = [1, 1, 1]
+        self._color = Color('white')
         self._fmt = None
 
     def __repr__(self):
@@ -784,7 +776,7 @@ class _Font(_ThemeConfig):
             self._label_size = int(label_size)
 
     @property
-    def color(self) -> tuple:
+    def color(self) -> Color:
         """Return or set the font color.
 
         Examples
@@ -795,8 +787,8 @@ class _Font(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: Union[tuple, str]):
-        self._color = parse_color(color)
+    def color(self, color: color_like):
+        self._color = Color(color)
 
     @property
     def fmt(self) -> str:
@@ -820,15 +812,17 @@ class _Font(_ThemeConfig):
 class _SliderStyleConfig(_ThemeConfig):
     """PyVista configuration for a single slider style."""
 
-    __slots__ = ['_name',
-                 '_slider_length',
-                 '_slider_width',
-                 '_slider_color',
-                 '_tube_width',
-                 '_tube_color',
-                 '_cap_opacity',
-                 '_cap_length',
-                 '_cap_width']
+    __slots__ = [
+        '_name',
+        '_slider_length',
+        '_slider_width',
+        '_slider_color',
+        '_tube_width',
+        '_tube_color',
+        '_cap_opacity',
+        '_cap_length',
+        '_cap_width',
+    ]
 
     def __init__(self):
         """Initialize the slider style configuration."""
@@ -900,7 +894,7 @@ class _SliderStyleConfig(_ThemeConfig):
         self._cap_opacity = float(cap_opacity)
 
     @property
-    def tube_color(self) -> tuple:
+    def tube_color(self) -> Color:
         """Return or set the tube color.
 
         Examples
@@ -911,8 +905,8 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._tube_color
 
     @tube_color.setter
-    def tube_color(self, tube_color: Union[tuple, str]):
-        self._tube_color = parse_color(tube_color)
+    def tube_color(self, tube_color: color_like):
+        self._tube_color = Color(tube_color)
 
     @property
     def tube_width(self) -> float:
@@ -931,7 +925,7 @@ class _SliderStyleConfig(_ThemeConfig):
         self._tube_width = float(tube_width)
 
     @property
-    def slider_color(self) -> tuple:
+    def slider_color(self) -> Color:
         """Return or set the slider color.
 
         Examples
@@ -943,8 +937,8 @@ class _SliderStyleConfig(_ThemeConfig):
         return self._slider_color
 
     @slider_color.setter
-    def slider_color(self, slider_color: Union[tuple, str]):
-        self._slider_color = parse_color(slider_color)
+    def slider_color(self, slider_color: color_like):
+        self._slider_color = Color(slider_color)
 
     @property
     def slider_width(self) -> float:
@@ -1008,7 +1002,7 @@ class _SliderConfig(_ThemeConfig):
     >>> pyvista.global_theme.slider_styles.classic.slider_width = 0.04
     >>> pyvista.global_theme.slider_styles.classic.slider_color = (0.5, 0.5, 0.5)
     >>> pyvista.global_theme.slider_styles.classic.tube_width = 0.005
-    >>> pyvista.global_theme.slider_styles.classic.tube_color = (1, 1, 1)
+    >>> pyvista.global_theme.slider_styles.classic.tube_color = (1.0, 1.0, 1.0)
     >>> pyvista.global_theme.slider_styles.classic.cap_opacity = 1
     >>> pyvista.global_theme.slider_styles.classic.cap_length = 0.01
     >>> pyvista.global_theme.slider_styles.classic.cap_width = 0.02
@@ -1026,8 +1020,7 @@ class _SliderConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_classic',
-                 '_modern']
+    __slots__ = ['_classic', '_modern']
 
     def __init__(self):
         """Initialize the slider configuration."""
@@ -1035,9 +1028,9 @@ class _SliderConfig(_ThemeConfig):
         self._classic.name = 'classic'
         self._classic.slider_length = 0.02
         self._classic.slider_width = 0.04
-        self._classic.slider_color = (0.5, 0.5, 0.5)
+        self._classic.slider_color = 'gray'
         self._classic.tube_width = 0.005
-        self._classic.tube_color = (1, 1, 1)
+        self._classic.tube_color = 'white'
         self._classic.cap_opacity = 1
         self._classic.cap_length = 0.01
         self._classic.cap_width = 0.02
@@ -1046,9 +1039,9 @@ class _SliderConfig(_ThemeConfig):
         self._modern.name = 'modern'
         self._modern.slider_length = 0.02
         self._modern.slider_width = 0.04
-        self._modern.slider_color = (0.43137255, 0.44313725, 0.45882353)
+        self._modern.slider_color = (110, 113, 117)
         self._modern.tube_width = 0.04
-        self._modern.tube_color = (0.69803922, 0.70196078, 0.70980392)
+        self._modern.tube_color = (178, 179, 181)
         self._modern.cap_opacity = 0
         self._modern.cap_length = 0.01
         self._modern.cap_width = 0.02
@@ -1114,49 +1107,50 @@ class DefaultTheme(_ThemeConfig):
 
     """
 
-    __slots__ = ['_name',
-                 '_background',
-                 '_jupyter_backend',
-                 '_full_screen',
-                 '_window_size',
-                 '_camera',
-                 '_notebook',
-                 '_font',
-                 '_auto_close',
-                 '_cmap',
-                 '_color',
-                 '_nan_color',
-                 '_edge_color',
-                 '_outline_color',
-                 '_floor_color',
-                 '_colorbar_orientation',
-                 '_colorbar_horizontal',
-                 '_colorbar_vertical',
-                 '_show_scalar_bar',
-                 '_show_edges',
-                 '_lighting',
-                 '_interactive',
-                 '_render_points_as_spheres',
-                 '_transparent_background',
-                 '_title',
-                 '_axes',
-                 '_multi_samples',
-                 '_multi_rendering_splitting_position',
-                 '_volume_mapper',
-                 '_smooth_shading',
-                 '_depth_peeling',
-                 '_silhouette',
-                 '_slider_styles',
-                 '_return_cpos',
-                 '_hidden_line_removal',
-                 '_antialiasing',
-                 '_enable_camera_orientation_widget',
+    __slots__ = [
+        '_name',
+        '_background',
+        '_jupyter_backend',
+        '_full_screen',
+        '_window_size',
+        '_camera',
+        '_notebook',
+        '_font',
+        '_auto_close',
+        '_cmap',
+        '_color',
+        '_nan_color',
+        '_edge_color',
+        '_outline_color',
+        '_floor_color',
+        '_colorbar_orientation',
+        '_colorbar_horizontal',
+        '_colorbar_vertical',
+        '_show_scalar_bar',
+        '_show_edges',
+        '_lighting',
+        '_interactive',
+        '_render_points_as_spheres',
+        '_transparent_background',
+        '_title',
+        '_axes',
+        '_multi_samples',
+        '_multi_rendering_splitting_position',
+        '_volume_mapper',
+        '_smooth_shading',
+        '_depth_peeling',
+        '_silhouette',
+        '_slider_styles',
+        '_return_cpos',
+        '_hidden_line_removal',
+        '_antialiasing',
+        '_enable_camera_orientation_widget',
     ]
 
     def __init__(self):
         """Initialize the theme."""
         self._name = 'default'
-        self._background = parse_color([0.3, 0.3, 0.3])
+        self._background = Color([0.3, 0.3, 0.3])
         self._full_screen = False
         self._camera = {
             'position': [1, 1, 1],
@@ -1167,11 +1161,11 @@ class DefaultTheme(_ThemeConfig):
         self._window_size = [1024, 768]
         self._font = _Font()
         self._cmap = 'viridis'
-        self._color = parse_color('white')
-        self._nan_color = parse_color('darkgray')
-        self._edge_color = parse_color('black')
-        self._outline_color = parse_color('white')
-        self._floor_color = parse_color('gray')
+        self._color = Color('white')
+        self._nan_color = Color('darkgray')
+        self._edge_color = Color('black')
+        self._outline_color = Color('white')
+        self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
 
         self._colorbar_horizontal = _ColorbarConfig()
@@ -1261,7 +1255,7 @@ class DefaultTheme(_ThemeConfig):
         self._return_cpos = value
 
     @property
-    def background(self):
+    def background(self) -> Color:
         """Return or set the default background color of pyvista plots.
 
         Examples
@@ -1274,8 +1268,8 @@ class DefaultTheme(_ThemeConfig):
         return self._background
 
     @background.setter
-    def background(self, new_background):
-        self._background = parse_color(new_background)
+    def background(self, new_background: color_like):
+        self._background = Color(new_background)
 
     @property
     def jupyter_backend(self) -> str:
@@ -1287,13 +1281,13 @@ class DefaultTheme(_ThemeConfig):
         * ``'ipyvtklink'`` : Render remotely and stream the
           resulting VTK images back to the client.  Supports all VTK
           methods, but suffers from lag due to remote rendering.
-          Requires that a virtual framebuffer be setup when displaying
+          Requires that a virtual framebuffer be set up when displaying
           on a headless server.  Must have ``ipyvtklink`` installed.
 
         * ``'panel'`` : Convert the VTK render window to a vtkjs
           object and then visualize that within jupyterlab. Supports
           most VTK objects.  Requires that a virtual framebuffer be
-          setup when displaying on a headless server.  Must have
+          set up when displaying on a headless server.  Must have
           ``panel`` installed.
 
         * ``'ipygany'`` : Convert all the meshes into ``ipygany``
@@ -1310,7 +1304,7 @@ class DefaultTheme(_ThemeConfig):
 
         * ``'static'`` : Display a single static image within the
           JupyterLab environment.  Still requires that a virtual
-          framebuffer be setup when displaying on a headless server,
+          framebuffer be set up when displaying on a headless server,
           but does not require any additional modules to be installed.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
@@ -1353,6 +1347,7 @@ class DefaultTheme(_ThemeConfig):
     @jupyter_backend.setter
     def jupyter_backend(self, backend: 'str'):
         from pyvista.jupyter import _validate_jupyter_backend
+
         self._jupyter_backend = _validate_jupyter_backend(backend)
 
     @property
@@ -1435,8 +1430,7 @@ class DefaultTheme(_ThemeConfig):
     @camera.setter
     def camera(self, camera):
         if not isinstance(camera, dict):
-            raise TypeError('Expected ``camera`` to be a dict, not '
-                            f'{type(camera).__name__}.')
+            raise TypeError(f'Expected ``camera`` to be a dict, not {type(camera).__name__}.')
 
         if 'position' not in camera:
             raise KeyError('Expected the "position" key in the camera dict.')
@@ -1562,7 +1556,7 @@ class DefaultTheme(_ThemeConfig):
         self._cmap = cmap
 
     @property
-    def color(self) -> tuple:
+    def color(self) -> Color:
         """Return or set the default color of meshes in pyvista.
 
         Used for meshes without ``scalars``.
@@ -1572,7 +1566,7 @@ class DefaultTheme(_ThemeConfig):
 
         * ``color='white'``
         * ``color='w'``
-        * ``color=[1, 1, 1]``
+        * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
 
         Examples
@@ -1586,11 +1580,11 @@ class DefaultTheme(_ThemeConfig):
         return self._color
 
     @color.setter
-    def color(self, color: Union[tuple, str]):
-        self._color = parse_color(color)
+    def color(self, color: color_like):
+        self._color = Color(color)
 
     @property
-    def nan_color(self) -> tuple:
+    def nan_color(self) -> Color:
         """Return or set the default NaN color.
 
         This color is used to plot all NaN values.
@@ -1604,11 +1598,11 @@ class DefaultTheme(_ThemeConfig):
         return self._nan_color
 
     @nan_color.setter
-    def nan_color(self, nan_color: Union[tuple, str]):
-        self._nan_color = parse_color(nan_color)
+    def nan_color(self, nan_color: color_like):
+        self._nan_color = Color(nan_color)
 
     @property
-    def edge_color(self) -> tuple:
+    def edge_color(self) -> Color:
         """Return or set the default edge color.
 
         Examples
@@ -1622,11 +1616,11 @@ class DefaultTheme(_ThemeConfig):
         return self._edge_color
 
     @edge_color.setter
-    def edge_color(self, edge_color: Union[tuple, str]):
-        self._edge_color = parse_color(edge_color)
+    def edge_color(self, edge_color: color_like):
+        self._edge_color = Color(edge_color)
 
     @property
-    def outline_color(self) -> tuple:
+    def outline_color(self) -> Color:
         """Return or set the default outline color.
 
         Examples
@@ -1638,11 +1632,11 @@ class DefaultTheme(_ThemeConfig):
         return self._outline_color
 
     @outline_color.setter
-    def outline_color(self, outline_color: Union[tuple, str]):
-        self._outline_color = parse_color(outline_color)
+    def outline_color(self, outline_color: color_like):
+        self._outline_color = Color(outline_color)
 
     @property
-    def floor_color(self) -> tuple:
+    def floor_color(self) -> Color:
         """Return or set the default floor color.
 
         Examples
@@ -1654,8 +1648,8 @@ class DefaultTheme(_ThemeConfig):
         return self._floor_color
 
     @floor_color.setter
-    def floor_color(self, floor_color: Union[tuple, str]):
-        self._floor_color = parse_color(floor_color)
+    def floor_color(self, floor_color: color_like):
+        self._floor_color = Color(floor_color)
 
     @property
     def colorbar_orientation(self) -> str:
@@ -1674,8 +1668,7 @@ class DefaultTheme(_ThemeConfig):
     @colorbar_orientation.setter
     def colorbar_orientation(self, colorbar_orientation: str):
         if colorbar_orientation not in ['vertical', 'horizontal']:
-            raise ValueError('Colorbar orientation must be either "vertical" or '
-                             '"horizontal"')
+            raise ValueError('Colorbar orientation must be either "vertical" or "horizontal"')
         self._colorbar_orientation = colorbar_orientation
 
     @property
@@ -1937,8 +1930,10 @@ class DefaultTheme(_ThemeConfig):
     def volume_mapper(self, mapper: str):
         mappers = ['fixed_point', 'gpu', 'open_gl', 'smart']
         if mapper not in mappers:
-            raise ValueError(f"Mapper ({mapper}) unknown. Available volume mappers "
-                             f"include:\n {', '.join(mappers)}")
+            raise ValueError(
+                f"Mapper ({mapper}) unknown. Available volume mappers "
+                f"include:\n {', '.join(mappers)}"
+            )
 
         self._volume_mapper = mapper
 
@@ -2058,7 +2053,7 @@ class DefaultTheme(_ThemeConfig):
     def __repr__(self):
         """User friendly representation of the current theme."""
         txt = [f'{self.name.capitalize()} Theme']
-        txt.append('-'*len(txt[0]))
+        txt.append('-' * len(txt[0]))
         parm = {
             'Background': 'background',
             'Jupyter backend': 'jupyter_backend',
@@ -2150,8 +2145,9 @@ class DefaultTheme(_ThemeConfig):
             theme = load_theme(theme)
 
         if not isinstance(theme, DefaultTheme):
-            raise TypeError('``theme`` must be a pyvista theme like '
-                            '``pyvista.themes.DefaultTheme``.')
+            raise TypeError(
+                '``theme`` must be a pyvista theme like ``pyvista.themes.DefaultTheme``.'
+            )
 
         for attr_name in theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
@@ -2184,14 +2180,18 @@ class DefaultTheme(_ThemeConfig):
 
         Deprecated in favor of ``jupyter_backend``.
         """
-        warnings.warn('use_ipyvtk is deprecated.  Please use '
-                      '``pyvista.global_theme.jupyter_backend``', DeprecationWarning)
+        warnings.warn(
+            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
+            DeprecationWarning,
+        )
         return self.jupyter_backend == 'ipyvtklink'
 
     @use_ipyvtk.setter
     def use_ipyvtk(self, value):  # pragma: no cover
-        warnings.warn('use_ipyvtk is deprecated.  Please use '
-                      '``pyvista.global_theme.jupyter_backend``', DeprecationWarning)
+        warnings.warn(
+            'use_ipyvtk is deprecated.  Please use ``pyvista.global_theme.jupyter_backend``',
+            DeprecationWarning,
+        )
 
         if value:
             self.jupyter_backend = 'ipyvtklink'
@@ -2255,7 +2255,7 @@ class ParaViewTheme(DefaultTheme):
         """Initialize theme."""
         super().__init__()
         self.name = 'paraview'
-        self.background = tuple(PARAVIEW_BACKGROUND)
+        self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
         self.font.label_size = 16

@@ -5,10 +5,11 @@ import numpy as np
 import pyvista
 from pyvista import _vtk
 
-from .tools import parse_color, parse_font_family
+from .colors import Color
+from .tools import parse_font_family
 
 
-class ScalarBars():
+class ScalarBars:
     """Plotter Scalar Bars."""
 
     def __init__(self, plotter):
@@ -60,9 +61,9 @@ class ScalarBars():
                 if slot is not None:
                     self._scalar_bar_mappers.pop(name)
                     self._scalar_bar_ranges.pop(name)
-                    self._plotter.remove_actor(self._scalar_bar_actors.pop(name),
-                                               reset_camera=reset_camera,
-                                               render=render)
+                    self._plotter.remove_actor(
+                        self._scalar_bar_actors.pop(name), reset_camera=reset_camera, render=render
+                    )
                     self._plotter._scalar_bar_slots.add(slot)
             return
 
@@ -84,8 +85,10 @@ class ScalarBars():
         if title is None:
             if len(self) > 1:
                 titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
-                raise ValueError('Multiple scalar bars found.  Pick title of the'
-                                 f'scalar bar from one of the following:\n{titles}')
+                raise ValueError(
+                    'Multiple scalar bars found.  Pick title of the'
+                    f'scalar bar from one of the following:\n{titles}'
+                )
             else:
                 title = list(self._scalar_bar_actors.keys())[0]
 
@@ -127,16 +130,36 @@ class ScalarBars():
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 
-    def add_scalar_bar(self, title='', mapper=None, n_labels=5, italic=False,
-                       bold=False, title_font_size=None,
-                       label_font_size=None, color=None,
-                       font_family=None, shadow=False, width=None,
-                       height=None, position_x=None, position_y=None,
-                       vertical=None, interactive=None, fmt=None,
-                       use_opacity=True, outline=False,
-                       nan_annotation=False, below_label=None,
-                       above_label=None, background_color=None,
-                       n_colors=None, fill=False, render=False, theme=None):
+    def add_scalar_bar(
+        self,
+        title='',
+        mapper=None,
+        n_labels=5,
+        italic=False,
+        bold=False,
+        title_font_size=None,
+        label_font_size=None,
+        color=None,
+        font_family=None,
+        shadow=False,
+        width=None,
+        height=None,
+        position_x=None,
+        position_y=None,
+        vertical=None,
+        interactive=None,
+        fmt=None,
+        use_opacity=True,
+        outline=False,
+        nan_annotation=False,
+        below_label=None,
+        above_label=None,
+        background_color=None,
+        n_colors=None,
+        fill=False,
+        render=False,
+        theme=None,
+    ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
         Parameters
@@ -166,14 +189,14 @@ class ScalarBars():
             Sets the size of the title font.  Defaults to ``None`` and is sized
             according to :attr:`pyvista.themes.DefaultTheme.font`.
 
-        color : str or 3 item list, optional
+        color : color_like, optional
             Either a string, rgb list, or hex color string.  Default
             set by :attr:`pyvista.themes.DefaultTheme.font`.  Can be
             in one of the following formats:
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         font_family : {'courier', 'times', 'arial'}
@@ -241,7 +264,7 @@ class ScalarBars():
         above_label : str, optional
             String annotation for values above the scalars range.
 
-        background_color : array, optional
+        background_color : color_like, optional
             The color used for the background in RGB format.
 
         n_colors : int, optional
@@ -300,8 +323,6 @@ class ScalarBars():
             label_font_size = theme.font.label_size
         if title_font_size is None:
             title_font_size = theme.font.title_size
-        if color is None:
-            color = theme.font.color
         if fmt is None:
             fmt = theme.font.fmt
         if vertical is None:
@@ -362,15 +383,14 @@ class ScalarBars():
                     position_y += slot * height
 
         # parse color
-        color = parse_color(color)
+        color = Color(color, default_color=theme.font.color)
 
         # Create scalar bar
         scalar_bar = _vtk.vtkScalarBarActor()
         # self._scalar_bars.append(scalar_bar)
 
         if background_color is not None:
-            background_color = parse_color(background_color, opacity=1.0)
-            background_color = np.array(background_color) * 255
+            background_color = np.array(Color(background_color).int_rgba)
             scalar_bar.GetBackgroundProperty().SetColor(background_color[0:3])
 
             if fill:
@@ -379,9 +399,9 @@ class ScalarBars():
             lut = _vtk.vtkLookupTable()
             lut.DeepCopy(mapper.lookup_table)
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
-            alphas = ctable[:, -1][:, np.newaxis] / 255.
+            alphas = ctable[:, -1][:, np.newaxis] / 255.0
             use_table = ctable.copy()
-            use_table[:, -1] = 255.
+            use_table[:, -1] = 255.0
             ctable = (use_table * alphas) + background_color * (1 - alphas)
             lut.SetTable(_vtk.numpy_to_vtk(ctable, array_type=_vtk.VTK_UNSIGNED_CHAR))
         else:
@@ -428,8 +448,8 @@ class ScalarBars():
 
         label_text = scalar_bar.GetLabelTextProperty()
         anno_text = scalar_bar.GetAnnotationTextProperty()
-        label_text.SetColor(color)
-        anno_text.SetColor(color)
+        label_text.SetColor(color.float_rgb)
+        anno_text.SetColor(color.float_rgb)
         label_text.SetShadow(shadow)
         anno_text.SetShadow(shadow)
 
@@ -463,7 +483,7 @@ class ScalarBars():
         title_text.SetFontFamily(parse_font_family(font_family))
 
         # set color
-        title_text.SetColor(color)
+        title_text.SetColor(color.float_rgb)
 
         self._scalar_bar_actors[title] = scalar_bar
         if interactive:
@@ -478,7 +498,7 @@ class ScalarBars():
                 rep.SetOrientation(1)  # 0 = Horizontal, 1 = Vertical
             else:
                 # y position determined emperically
-                y = -position_y/2 - height - scalar_bar.GetPosition()[1]
+                y = -position_y / 2 - height - scalar_bar.GetPosition()[1]
                 rep.GetPositionCoordinate().SetValue(width, y)
                 rep.GetPosition2Coordinate().SetValue(height, width)
                 rep.SetOrientation(0)  # 0 = Horizontal, 1 = Vertical
@@ -490,12 +510,11 @@ class ScalarBars():
         if outline:
             scalar_bar.SetDrawFrame(True)
             frame_prop = scalar_bar.GetFrameProperty()
-            frame_prop.SetColor(color)
+            frame_prop.SetColor(color.float_rgb)
         else:
             scalar_bar.SetDrawFrame(False)
 
         # finally, add to the actor and return the scalar bar
-        self._plotter.add_actor(scalar_bar, reset_camera=False,
-                                pickable=False, render=render)
+        self._plotter.add_actor(scalar_bar, reset_camera=False, pickable=False, render=render)
 
         return scalar_bar

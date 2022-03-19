@@ -3,7 +3,7 @@
 Installation
 ============
 
-PyVista is supported on Python versions 3.6+. Previous versions of Python are
+PyVista is supported on Python versions 3.7+. Previous versions of Python are
 no longer supported as outlined in `this issue`_.
 
 .. _this issue: https://github.com/pyvista/pyvista/issues/164
@@ -47,7 +47,7 @@ To install this package with ``conda`` run::
 
     conda install -c conda-forge pyvista
 
-Installing the Current Development Branch from GitHub 
+Installing the Current Development Branch from GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There may be features or bug-fixes that have been implemented in PyVista but
 have not made their way into a release.  To install ``pyvista`` from the latest
@@ -145,16 +145,20 @@ See other examples and demos:
     repository. For details on how to clone and test the PyVista source, please
     see our `Contributing Guide`_ and specifically, the `Testing`_ section.
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md
-.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.md#testing
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
+.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#testing
 
 
 Running on CI Services
 ~~~~~~~~~~~~~~~~~~~~~~
-Please head over to `pyvista/gl-ci-hepers`_ for details on setting up CI
+Please head over to `pyvista/setup-headless-display-action`_ for details on
+setting up a headless display in GitHub Actions Workflows using PyVista.
+
+In the past, we have also supported `pyvista/gl-ci-helpers`_ for setting up CI
 services like Travis and Azure Pipelines to run PyVista.
 
-.. _pyvista/gl-ci-hepers: https://github.com/pyvista/gl-ci-helpers
+.. _pyvista/setup-headless-display-action: https://github.com/pyvista/setup-headless-display-action
+.. _pyvista/gl-ci-helpers: https://github.com/pyvista/gl-ci-helpers
 
 
 Running on MyBinder

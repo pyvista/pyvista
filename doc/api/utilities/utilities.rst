@@ -72,10 +72,16 @@ Miscellaneous
 ~~~~~~~~~~~~~
 .. autosummary::
    :toctree: _autosummary
+   :template: custom-class-template.rst
 
+   Color
+
+.. autosummary::
+   :toctree: _autosummary
+
+   color_like
    parse_color
    start_xvfb
-
 
 VTK Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~

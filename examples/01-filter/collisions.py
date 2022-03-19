@@ -47,7 +47,7 @@ sphere0['collisions'] = np.zeros(sphere0.n_cells, dtype=bool)
 sphere1 = pv.Sphere(radius=0.6, center=(-1, 0, 0))
 
 ###############################################################################
-# Setup the plotter open a movie, and write a frame after moving the sphere.
+# Set up the plotter open a movie, and write a frame after moving the sphere.
 #
 
 pl = pv.Plotter()
@@ -63,7 +63,7 @@ pl.open_gif("collision_movie.gif")
 # pl.show(auto_close=False, interactive=False)
 
 delta_x = 0.05
-for i in range(int(2/delta_x)):
+for _ in range(int(2 / delta_x)):
     sphere1.translate([delta_x, 0, 0], inplace=True)
     col, n_contacts = sphere0.collision(sphere1)
 

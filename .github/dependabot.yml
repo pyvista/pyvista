@@ -8,6 +8,3 @@ updates:
     labels:
       - "maintenance"
       - "dependencies"
-    ignore:
-      - dependency-name: "hypothesis"
-        # for hypothesis, ignore upgrades due to Python 3.6 availability

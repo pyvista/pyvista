@@ -13,9 +13,10 @@ def test_camera_position():
     assert isinstance(plotter.camera_position, pyvista.CameraPosition)
 
 
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plotter_camera_position():
     plotter = pyvista.Plotter()
-    plotter.renderer.set_position([1, 1, 1])
+    plotter.set_position([1, 1, 1], render=True)
 
 
 def test_renderer_set_viewup():
@@ -38,10 +39,11 @@ def test_layer():
 
 @pytest.mark.parametrize('has_border', (True, False))
 def test_border(has_border):
-    border_color = (1, 1, 1)
+    border_color = (1.0, 1.0, 1.0)
     border_width = 1
-    plotter = pyvista.Plotter(border=has_border, border_color=border_color,
-                              border_width=border_width)
+    plotter = pyvista.Plotter(
+        border=has_border, border_color=border_color, border_width=border_width
+    )
     assert plotter.renderer.has_border is has_border
 
     if has_border:
@@ -93,7 +95,8 @@ def test_add_legend_loc(loc):
 
 def test_add_legend_no_face(sphere):
     pl = pyvista.Plotter()
-    pl.add_mesh(sphere, label='sphere')
+    sphere.point_data["Z"] = sphere.points[:, 2]
+    pl.add_mesh(sphere, scalars='Z', label='sphere')
     pl.add_legend(face=None)
 
     pl = pyvista.Plotter()
@@ -108,9 +111,7 @@ def test_add_remove_legend(sphere):
     pl.remove_legend()
 
 
-@pytest.mark.parametrize(
-    'face', ['-', '^', 'o', 'r', None, pyvista.PolyData([0.0, 0.0, 0.0])]
-)
+@pytest.mark.parametrize('face', ['-', '^', 'o', 'r', None, pyvista.PolyData([0.0, 0.0, 0.0])])
 def test_legend_face(sphere, face):
     pl = pyvista.Plotter()
     pl.add_mesh(sphere, label='sphere')

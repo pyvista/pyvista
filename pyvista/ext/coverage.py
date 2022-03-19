@@ -64,9 +64,12 @@ class CoverageBuilder(Builder):
     """
     Evaluates coverage of code in the documentation.
     """
+
     name = 'coverage'
-    epilog = __('Testing of coverage in the sources finished, look at the '
-                'results in %(outdir)s' + path.sep + 'python.txt.')
+    epilog = __(
+        'Testing of coverage in the sources finished, look at the '
+        'results in %(outdir)s' + path.sep + 'python.txt.'
+    )
 
     def init(self) -> None:
         self.c_sourcefiles: List[str] = []
@@ -83,18 +86,20 @@ class CoverageBuilder(Builder):
 
         self.c_ignorexps: Dict[str, List[Pattern]] = {}
         for (name, exps) in self.config.coverage_ignore_c_items.items():
-            self.c_ignorexps[name] = compile_regex_list('coverage_ignore_c_items',
-                                                        exps)
-        self.mod_ignorexps = compile_regex_list('coverage_ignore_modules',
-                                                self.config.coverage_ignore_modules)
-        self.cls_ignorexps = compile_regex_list('coverage_ignore_classes',
-                                                self.config.coverage_ignore_classes)
-        self.fun_ignorexps = compile_regex_list('coverage_ignore_functions',
-                                                self.config.coverage_ignore_functions)
-        self.py_ignorexps = compile_regex_list('coverage_ignore_pyobjects',
-                                               self.config.coverage_ignore_pyobjects)
+            self.c_ignorexps[name] = compile_regex_list('coverage_ignore_c_items', exps)
+        self.mod_ignorexps = compile_regex_list(
+            'coverage_ignore_modules', self.config.coverage_ignore_modules
+        )
+        self.cls_ignorexps = compile_regex_list(
+            'coverage_ignore_classes', self.config.coverage_ignore_classes
+        )
+        self.fun_ignorexps = compile_regex_list(
+            'coverage_ignore_functions', self.config.coverage_ignore_functions
+        )
+        self.py_ignorexps = compile_regex_list(
+            'coverage_ignore_pyobjects', self.config.coverage_ignore_pyobjects
+        )
         self.add_modules = self.config.coverage_additional_modules
-
 
     def get_outdated_docs(self) -> str:
         return 'coverage overview'
@@ -142,12 +147,18 @@ class CoverageBuilder(Builder):
                     op.write(' * %-50s [%9s]\n' % (name, typ))
                     if self.config.coverage_show_missing_items:
                         if self.app.quiet or self.app.warningiserror:
-                            logger.warning(__('undocumented c api: %s [%s] in file %s'),
-                                           name, typ, filename)
+                            logger.warning(
+                                __('undocumented c api: %s [%s] in file %s'), name, typ, filename
+                            )
                         else:
-                            logger.info(red('undocumented  ') + 'c   ' + 'api       ' +
-                                        '%-30s' % (name + " [%9s]" % typ) +
-                                        red(' - in file ') + filename)
+                            logger.info(
+                                red('undocumented  ')
+                                + 'c   '
+                                + 'api       '
+                                + '%-30s' % (name + " [%9s]" % typ)
+                                + red(' - in file ')
+                                + filename
+                            )
                 op.write('\n')
 
     def ignore_pyobj(self, full_name: str) -> bool:
@@ -238,8 +249,7 @@ class CoverageBuilder(Builder):
                                 attr = safe_getattr(obj, attr_name)
                             except AttributeError:
                                 continue
-                            if not (inspect.ismethod(attr) or
-                                    inspect.isfunction(attr)):
+                            if not (inspect.ismethod(attr) or inspect.isfunction(attr)):
                                 continue
                             if attr_name[0] == '_':
                                 # starts with an underscore, ignore it
@@ -284,28 +294,40 @@ class CoverageBuilder(Builder):
                             if self.app.quiet or self.app.warningiserror:
                                 for func in undoc['funcs']:
                                     logger.warning(
-                                        __('undocumented python function: %s :: %s'),
-                                        name, func)
+                                        __('undocumented python function: %s :: %s'), name, func
+                                    )
                             else:
                                 for func in undoc['funcs']:
-                                    logger.info(red('undocumented  ') + 'py  ' + 'function  ' +
-                                                '%-30s' % func + red(' - in module ') + name)
+                                    logger.info(
+                                        red('undocumented  ')
+                                        + 'py  '
+                                        + 'function  '
+                                        + '%-30s' % func
+                                        + red(' - in module ')
+                                        + name
+                                    )
                         op.write('\n')
                     if undoc['classes']:
                         op.write('Classes:\n')
-                        for class_name, methods in sorted(
-                                undoc['classes'].items()):
+                        for class_name, methods in sorted(undoc['classes'].items()):
                             if not methods:
                                 op.write(' * %s\n' % class_name)
                                 if self.config.coverage_show_missing_items:
                                     if self.app.quiet or self.app.warningiserror:
                                         logger.warning(
                                             __('undocumented python class: %s :: %s'),
-                                            name, class_name)
+                                            name,
+                                            class_name,
+                                        )
                                     else:
-                                        logger.info(red('undocumented  ') + 'py  ' +
-                                                    'class     ' + '%-30s' % class_name +
-                                                    red(' - in module ') + name)
+                                        logger.info(
+                                            red('undocumented  ')
+                                            + 'py  '
+                                            + 'class     '
+                                            + '%-30s' % class_name
+                                            + red(' - in module ')
+                                            + name
+                                        )
                             else:
                                 op.write(' * %s -- missing methods:\n\n' % class_name)
                                 op.writelines('   - %s\n' % x for x in methods)
@@ -313,15 +335,24 @@ class CoverageBuilder(Builder):
                                     if self.app.quiet or self.app.warningiserror:
                                         for meth in methods:
                                             logger.warning(
-                                                __('undocumented python method:' +
-                                                   ' %s :: %s :: %s'),
-                                                name, class_name, meth)
+                                                __(
+                                                    'undocumented python method:'
+                                                    + ' %s :: %s :: %s'
+                                                ),
+                                                name,
+                                                class_name,
+                                                meth,
+                                            )
                                     else:
                                         for meth in methods:
-                                            logger.info(red('undocumented  ') + 'py  ' +
-                                                        'method    ' + '%-30s' %
-                                                        (class_name + '.' + meth) +
-                                                        red(' - in module ') + name)
+                                            logger.info(
+                                                red('undocumented  ')
+                                                + 'py  '
+                                                + 'method    '
+                                                + '%-30s' % (class_name + '.' + meth)
+                                                + red(' - in module ')
+                                                + name
+                                            )
                         op.write('\n')
 
             if failed:

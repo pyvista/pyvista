@@ -62,7 +62,7 @@ u_vec = np.cos(np.radians(xx))  # zonal
 v_vec = np.sin(np.radians(yy))  # meridional
 
 # Scalar data
-scalar = u_vec ** 2 + v_vec ** 2
+scalar = u_vec**2 + v_vec**2
 
 # Create arrays of grid cell boundaries, which have shape of (x.shape[0] + 1)
 xx_bounds = _cell_bounds(x)

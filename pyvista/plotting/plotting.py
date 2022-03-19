@@ -33,7 +33,7 @@ from pyvista.utilities import (
 from ..utilities.misc import PyvistaDeprecationWarning
 from ..utilities.regression import image_from_window
 from ._plotting import _has_matplotlib, prepare_smooth_shading, process_opacity
-from .colors import get_cmap_safe
+from .colors import Color, get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
@@ -41,13 +41,7 @@ from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera, Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
-from .tools import (  # noqa
-    FONTS,
-    normalize,
-    opacity_transfer_function,
-    parse_color,
-    parse_font_family,
-)
+from .tools import FONTS, normalize, opacity_transfer_function, parse_font_family  # noqa
 from .widgets import WidgetHelper
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
@@ -62,8 +56,7 @@ if KILL_DISPLAY:  # pragma: no cover
         X11 = ctypes.CDLL("libX11.so")
         X11.XCloseDisplay.argtypes = [ctypes.c_void_p]
     except OSError:
-        warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\n'
-                      'Probably using wayland')
+        warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\nProbably using wayland')
         KILL_DISPLAY = False
 
 
@@ -76,7 +69,7 @@ def close_all():
         ``True`` when all plotters have been closed.
 
     """
-    for key, p in _ALL_PLOTTERS.items():
+    for _, p in _ALL_PLOTTERS.items():
         if not p._closed:
             p.close()
         p.deep_clean()
@@ -119,11 +112,13 @@ def _warn_xserver():  # pragma: no cover
         if 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str:
             return
 
-        warnings.warn('\n'
-                      'This system does not appear to be running an xserver.\n'
-                      'PyVista will likely segfault when rendering.\n\n'
-                      'Try starting a virtual frame buffer with xvfb, or using\n '
-                      ' ``pyvista.start_xvfb()``\n')
+        warnings.warn(
+            '\n'
+            'This system does not appear to be running an xserver.\n'
+            'PyVista will likely segfault when rendering.\n\n'
+            'Try starting a virtual frame buffer with xvfb, or using\n '
+            ' ``pyvista.start_xvfb()``\n'
+        )
 
 
 USE_SCALAR_BAR_ARGS = """
@@ -154,12 +149,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : str or sequence, optional
+    border_color : color_like, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
     border_width : float, optional
@@ -187,10 +182,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
     mouse_position = None
     click_position = None
 
-    def __init__(self, shape=(1, 1), border=None, border_color='k',
-                 border_width=2.0, title=None, splitting_position=None,
-                 groups=None, row_weights=None, col_weights=None,
-                 lighting='light kit', theme=None):
+    def __init__(
+        self,
+        shape=(1, 1),
+        border=None,
+        border_color='k',
+        border_width=2.0,
+        title=None,
+        splitting_position=None,
+        groups=None,
+        row_weights=None,
+        col_weights=None,
+        lighting='light kit',
+        theme=None,
+    ):
         """Initialize base plotter."""
         log.debug('BasePlotter init start')
         self._theme = pyvista.themes.DefaultTheme()
@@ -200,8 +205,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._theme.load_theme(pyvista.global_theme)
         else:
             if not isinstance(theme, pyvista.themes.DefaultTheme):
-                raise TypeError('Expected ``pyvista.themes.DefaultTheme`` for '
-                                f'``theme``, not {type(theme).__name__}.')
+                raise TypeError(
+                    'Expected ``pyvista.themes.DefaultTheme`` for '
+                    f'``theme``, not {type(theme).__name__}.'
+                )
             self._theme.load_theme(theme)
 
         self.image_transparent_background = self._theme.transparent_background
@@ -215,14 +222,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.title = str(title)
 
         # add renderers
-        self.renderers = Renderers(self, shape, splitting_position, row_weights,
-                                   col_weights, groups, border, border_color,
-                                   border_width)
+        self.renderers = Renderers(
+            self,
+            shape,
+            splitting_position,
+            row_weights,
+            col_weights,
+            groups,
+            border,
+            border_color,
+            border_width,
+        )
 
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bars = ScalarBars(self)
 
-        # track if the camera has been setup
+        # track if the camera has been set up
         self._first_time = True
         # Keep track of the scale
 
@@ -284,9 +299,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @theme.setter
     def theme(self, theme):
         if not isinstance(theme, pyvista.themes.DefaultTheme):
-            raise TypeError('Expected a pyvista theme like '
-                            '``pyvista.themes.DefaultTheme``, '
-                            f'not {type(theme).__name__}.')
+            raise TypeError(
+                'Expected a pyvista theme like '
+                '``pyvista.themes.DefaultTheme``, '
+                f'not {type(theme).__name__}.'
+            )
         self._theme.load_theme(theme)
 
     def import_gltf(self, filename, set_camera=True):
@@ -319,7 +336,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not _vtk.VTK9:  # pragma: no cover
-            raise RuntimeError('Support for glTF requires VTK v9 or newer')
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Support for glTF requires VTK v9 or newer')
 
         filename = os.path.abspath(os.path.expanduser(str(filename)))
         if not os.path.isfile(filename):
@@ -327,6 +346,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         from vtkmodules.vtkIOImport import vtkGLTFImporter
+
         importer = vtkGLTFImporter()
         importer.SetFileName(filename)
         importer.SetRenderWindow(self.ren_win)
@@ -372,8 +392,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         try:
             from ipywidgets.embed import embed_minimal_html
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install ipywidgets with:\n'
-                              '\n\tpip install ipywidgets')
+            raise ImportError('Please install ipywidgets with:\n' '\n\tpip install ipywidgets')
 
         # convert and write to file
         embed_minimal_html(filename, views=[pythreejs_renderer], title=self.title)
@@ -387,12 +406,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Widget containing pythreejs renderer.
 
         """
-        self._on_first_render_request()  # setup camera
+        self._on_first_render_request()  # set up camera
         from pyvista.jupyter.pv_pythreejs import convert_plotter
+
         return convert_plotter(self)
 
-    def export_gltf(self, filename, inline_data=True, rotate_scene=True,
-                    save_normals=True):
+    def export_gltf(self, filename, inline_data=True, rotate_scene=True, save_normals=True):
         """Export the current rendering scene as a glTF file.
 
         Visit https://gltf-viewer.donmccurdy.com/ for an online viewer.
@@ -442,11 +461,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not _vtk.VTK9:  # pragma: no cover
-            raise RuntimeError('Support for glTF requires VTK v9 or newer')
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Support for glTF requires VTK v9 or newer')
 
         if not hasattr(self, "ren_win"):
-            raise RuntimeError('This plotter has been closed and is unable to export '
-                               'the scene.')
+            raise RuntimeError('This plotter has been closed and is unable to export the scene.')
 
         from vtkmodules.vtkIOExport import vtkGLTFExporter
 
@@ -468,7 +488,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                 # ensure normals are active
                                 normals = dataset.point_data['Normals']
                                 dataset.point_data.active_normals = normals.copy()
-                        except:
+                        except:  # noqa: E722
                             pass
 
         exporter = vtkGLTFExporter()
@@ -735,6 +755,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
+
         def _to_pos(elevation, azimuth):
             theta = azimuth * np.pi / 180.0
             phi = (90.0 - elevation) * np.pi / 180.0
@@ -760,6 +781,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def disable_3_lights(self):
         """Please use ``enable_lightkit``, this method has been depreciated."""
         from pyvista.core.errors import DeprecationError
+
         raise DeprecationError('DEPRECATED: Please use ``enable_lightkit``')
 
     def enable_lightkit(self, only_active=False):
@@ -1141,7 +1163,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def background_color(self):
         """Return the background color of the active render window."""
-        return self.renderers.active_renderer.GetBackground()
+        return self.renderers.active_renderer.background_color
 
     @background_color.setter
     def background_color(self, color):
@@ -1184,18 +1206,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def _check_rendered(self):
         """Check if the render window has been shown and raise an exception if not."""
         if not self._rendered:
-            raise AttributeError('\nThis plotter has not yet been setup and rendered '
-                                 'with ``show()``.\n'
-                                 'Consider setting ``off_screen=True`` '
-                                 'for off screen rendering.\n')
+            raise AttributeError(
+                '\nThis plotter has not yet been set up and rendered '
+                'with ``show()``.\n'
+                'Consider setting ``off_screen=True`` '
+                'for off screen rendering.\n'
+            )
 
     def _check_has_ren_win(self):
         """Check if render window attribute exists and raise an exception if not."""
         if not hasattr(self, 'ren_win'):
-            raise AttributeError('\n\nTo retrieve an image after the render window '
-                                 'has been closed, set:\n\n'
-                                 ' ``plotter.store_image = True``\n\n'
-                                 'before closing the plotter.')
+            raise AttributeError(
+                '\n\nTo retrieve an image after the render window '
+                'has been closed, set:\n\n'
+                ' ``plotter.store_image = True``\n\n'
+                'before closing the plotter.'
+            )
 
     @property
     def image(self):
@@ -1276,9 +1302,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.track_click_position."""
         self.iren.track_click_position(*args, **kwargs)
 
-    def untrack_click_position(self):
+    @wraps(RenderWindowInteractor.untrack_click_position)
+    def untrack_click_position(self, *args, **kwargs):
         """Stop tracking the click position."""
-        self.iren.untrack_click_position()
+        self.iren.untrack_click_position(*args, **kwargs)
 
     @property
     def pickable_actors(self):
@@ -1379,8 +1406,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'iren'):
             self.iren.clear_key_event_callbacks()
 
-        self.add_key_event('q', self._prep_for_close) # Add no matter what
-        b_left_down_callback = lambda: self.iren.add_observer('LeftButtonPressEvent', self.left_button_down)
+        self.add_key_event('q', self._prep_for_close)  # Add no matter what
+        b_left_down_callback = lambda: self.iren.add_observer(
+            'LeftButtonPressEvent', self.left_button_down
+        )
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
         self.add_key_event('C', lambda: self.enable_cell_picking())
@@ -1537,7 +1566,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if self.iren is not None:
             update_rate = self.iren.get_desired_update_rate()
-            if (curr_time - Plotter.last_update_time) > (1.0/update_rate):
+            if (curr_time - Plotter.last_update_time) > (1.0 / update_rate):
                 self.right_timer_id = self.iren.create_repeating_timer(stime)
                 self.render()
                 Plotter.last_update_time = curr_time
@@ -1546,22 +1575,58 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if force_redraw:
             self.render()
 
-    def add_mesh(self, mesh, color=None, style=None, scalars=None,
-                 clim=None, show_edges=None, edge_color=None,
-                 point_size=5.0, line_width=None, opacity=1.0,
-                 flip_scalars=False, lighting=None, n_colors=256,
-                 interpolate_before_map=True, cmap=None, label=None,
-                 reset_camera=None, scalar_bar_args=None, show_scalar_bar=None,
-                 multi_colors=False, name=None, texture=None,
-                 render_points_as_spheres=None, render_lines_as_tubes=False,
-                 smooth_shading=None, split_sharp_edges=False,
-                 ambient=0.0, diffuse=1.0, specular=0.0,
-                 specular_power=100.0, nan_color=None, nan_opacity=1.0,
-                 culling=None, rgb=None, categories=False, silhouette=False,
-                 use_transparency=False, below_color=None, above_color=None,
-                 annotations=None, pickable=True, preference="point",
-                 log_scale=False, pbr=False, metallic=0.0, roughness=0.5,
-                 render=True, component=None, **kwargs):
+    def add_mesh(
+        self,
+        mesh,
+        color=None,
+        style=None,
+        scalars=None,
+        clim=None,
+        show_edges=None,
+        edge_color=None,
+        point_size=5.0,
+        line_width=None,
+        opacity=1.0,
+        flip_scalars=False,
+        lighting=None,
+        n_colors=256,
+        interpolate_before_map=True,
+        cmap=None,
+        label=None,
+        reset_camera=None,
+        scalar_bar_args=None,
+        show_scalar_bar=None,
+        multi_colors=False,
+        name=None,
+        texture=None,
+        render_points_as_spheres=None,
+        render_lines_as_tubes=False,
+        smooth_shading=None,
+        split_sharp_edges=False,
+        ambient=0.0,
+        diffuse=1.0,
+        specular=0.0,
+        specular_power=100.0,
+        nan_color=None,
+        nan_opacity=1.0,
+        culling=None,
+        rgb=None,
+        categories=False,
+        silhouette=False,
+        use_transparency=False,
+        below_color=None,
+        above_color=None,
+        annotations=None,
+        pickable=True,
+        preference="point",
+        log_scale=False,
+        pbr=False,
+        metallic=0.0,
+        roughness=0.5,
+        render=True,
+        component=None,
+        **kwargs,
+    ):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
@@ -1575,10 +1640,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             that :func:`pyvista.wrap` can handle including NumPy
             arrays of XYZ points.
 
-        color : str or 3 item list, optional, defaults to white
+        color : color_like, optional, defaults to white
             Use to make the entire mesh have a single solid color.
             Either a string, RGB list, or hex color string.  For example:
-            ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+            ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
 
@@ -1605,7 +1670,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : str or 3 item list, optional, defaults to black
+        edge_color : color_like, optional, defaults to black
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
@@ -1729,7 +1794,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular_power : float, optional
             The specular power. Between 0.0 and 128.0.
 
-        nan_color : str or 3 item list, optional, defaults to gray
+        nan_color : color_like, optional, defaults to gray
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
@@ -1763,7 +1828,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``PolyData``.  As a ``dict``, it contains the properties
             of the silhouette to display:
 
-                * ``color``: ``str`` or 3-item ``list``, color of the silhouette
+                * ``color``: ``color_like``, color of the silhouette
                 * ``line_width``: ``float``, edge width
                 * ``opacity``: ``float`` between 0 and 1, edge transparency
                 * ``feature_angle``: If a ``float``, display sharp edges
@@ -1774,12 +1839,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Invert the opacity mappings and make the values correspond
             to transparency.
 
-        below_color : str or 3 item list, optional
+        below_color : color_like, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'Below'``.
 
-        above_color : str or 3 item list, optional
+        above_color : color_like, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'Above'``.
@@ -1892,7 +1957,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
             if not is_pyvista_dataset(mesh):
-                raise TypeError(f'Object type ({type(mesh)}) not supported for plotting in PyVista.')
+                raise TypeError(
+                    f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
+                )
         ##### Parse arguments to be used for all meshes #####
 
         # Avoid mutating input
@@ -1903,9 +1970,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if show_edges is None:
             show_edges = self._theme.show_edges
-
-        if edge_color is None:
-            edge_color = self._theme.edge_color
 
         if show_scalar_bar is None:
             show_scalar_bar = self._theme.show_scalar_bar
@@ -1930,9 +1994,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if name is None:
             name = f'{type(mesh).__name__}({mesh.memory_address})'
 
-        if nan_color is None:
-            nan_color = self._theme.nan_color
-        nan_color = parse_color(nan_color, opacity=nan_opacity)
+        nan_color = Color(
+            nan_color, default_opacity=nan_opacity, default_color=self._theme.nan_color
+        )
 
         if color is True:
             color = self._theme.color
@@ -1952,7 +2016,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if "scalar" in kwargs:
-            raise TypeError("`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?")
+            raise TypeError(
+                "`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?"
+            )
         assert_empty_kwargs(**kwargs)
 
         ##### Handle composite datasets #####
@@ -1970,7 +2036,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     #       arrays where first index corresponds to
                     #       the block? This could get complicated real
                     #       quick.
-                    raise TypeError('scalars array must be given as a string name for multiblock datasets.')
+                    raise TypeError(
+                        'scalars array must be given as a string name for multiblock datasets.'
+                    )
 
             the_arguments = locals()
             the_arguments.pop('self')
@@ -1983,6 +2051,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     from itertools import cycle
 
                     import matplotlib
+
                     cycler = matplotlib.rcParams['axes.prop_cycle']
                     colors = cycle(cycler)
                 else:
@@ -2000,7 +2069,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if not is_pyvista_dataset(mesh[idx]):
                     data = wrap(mesh.GetBlock(idx))
                     if not is_pyvista_dataset(mesh[idx]):
-                        continue # move on if we can't plot it
+                        continue  # move on if we can't plot it
                 else:
                     data = mesh.GetBlock(idx)
                 if data is None or (not isinstance(data, pyvista.MultiBlock) and data.n_points < 1):
@@ -2048,7 +2117,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Make sure scalars components are not vectors/tuples
                 scalars = mesh.active_scalars_name
                 # Don't allow plotting of string arrays by default
-                if scalars is not None:# and np.issubdtype(mesh.active_scalars.dtype, np.number):
+                if scalars is not None:  # and np.issubdtype(mesh.active_scalars.dtype, np.number):
                     scalar_bar_args.setdefault('title', scalars)
                 else:
                     scalars = None
@@ -2064,8 +2133,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     rgb = True
 
             original_scalar_name = scalars
-            scalars = get_array(mesh, scalars,
-                                preference=preference, err=True)
+            scalars = get_array(mesh, scalars, preference=preference, err=True)
             scalar_bar_args.setdefault('title', original_scalar_name)
 
         # Compute surface normals if using smooth shading
@@ -2099,7 +2167,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
                 raise TypeError(f'Invalid texture type ({type(texture)})')
             if mesh.GetPointData().GetTCoords() is None:
-                raise ValueError('Input mesh does not have texture coordinates to support the texture.')
+                raise ValueError(
+                    'Input mesh does not have texture coordinates to support the texture.'
+                )
             actor.SetTexture(texture)
             # Set color to white by default when using a texture
             if color is None:
@@ -2119,16 +2189,38 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Scalars formatting ==================================================
         if scalars is not None:
             show_scalar_bar, n_colors, clim = self.mapper.set_scalars(
-                mesh, scalars, scalar_bar_args, rgb,
-                component, preference, interpolate_before_map,
-                custom_opac, annotations, log_scale, nan_color, above_color,
-                below_color, cmap, flip_scalars, opacity, categories, n_colors,
-                clim, self._theme, show_scalar_bar,
+                mesh,
+                scalars,
+                scalar_bar_args,
+                rgb,
+                component,
+                preference,
+                interpolate_before_map,
+                custom_opac,
+                annotations,
+                log_scale,
+                nan_color,
+                above_color,
+                below_color,
+                cmap,
+                flip_scalars,
+                opacity,
+                categories,
+                n_colors,
+                clim,
+                self._theme,
+                show_scalar_bar,
             )
         elif custom_opac:  # no scalars but custom opacity
             self.mapper.set_custom_opacity(
-                opacity, color, mesh, n_colors, preference,
-                interpolate_before_map, rgb, self._theme,
+                opacity,
+                color,
+                mesh,
+                n_colors,
+                preference,
+                interpolate_before_map,
+                rgb,
+                self._theme,
             )
         else:
             self.mapper.SetScalarModeToUseFieldData()
@@ -2148,10 +2240,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif style == 'surface':
             prop.SetRepresentationToSurface()
         else:
-            raise ValueError('Invalid style.  Must be one of the following:\n'
-                             '\t"surface"\n'
-                             '\t"wireframe"\n'
-                             '\t"points"\n')
+            raise ValueError(
+                'Invalid style.  Must be one of the following:\n'
+                '\t"surface"\n'
+                '\t"wireframe"\n'
+                '\t"points"\n'
+            )
 
         prop.SetPointSize(point_size)
         prop.SetAmbient(ambient)
@@ -2161,8 +2255,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if pbr:
             if not _vtk.VTK9:  # pragma: no cover
-                raise RuntimeError('Physically based rendering requires VTK 9 '
-                                   'or newer')
+                raise RuntimeError('Physically based rendering requires VTK 9 ' 'or newer')
             prop.SetInterpolationToPBR()
             prop.SetMetallic(metallic)
             prop.SetRoughness(roughness)
@@ -2174,11 +2267,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if show_edges:
             prop.EdgeVisibilityOn()
 
-        rgb_color = parse_color(color, default_color=self._theme.color)
-        prop.SetColor(rgb_color)
+        rgb_color = Color(color, default_color=self._theme.color)
+        prop.SetColor(rgb_color.float_rgb)
         if isinstance(opacity, (float, int)):
             prop.SetOpacity(opacity)
-        prop.SetEdgeColor(parse_color(edge_color))
+        prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).float_rgb)
 
         if render_points_as_spheres:
             prop.SetRenderPointsAsSpheres(render_points_as_spheres)
@@ -2192,7 +2285,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             geom = pyvista.Triangle()
             if scalars is not None:
                 geom = pyvista.Box()
-                rgb_color = parse_color('black')
+                rgb_color = Color('black')
             geom.points -= geom.center
             addr = actor.GetAddressAsString("")
             self.renderer._labels[addr] = [geom, label, rgb_color]
@@ -2205,8 +2298,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if line_width:
             prop.SetLineWidth(line_width)
 
-        self.add_actor(actor, reset_camera=reset_camera, name=name, culling=culling,
-                       pickable=pickable, render=render)
+        self.add_actor(
+            actor,
+            reset_camera=reset_camera,
+            name=name,
+            culling=culling,
+            pickable=pickable,
+            render=render,
+        )
 
         # hide scalar bar if using special scalars
         if scalar_bar_args.get('title') == '__custom_rgba':
@@ -2219,16 +2318,37 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.Modified()
         return actor
 
-    def add_volume(self, volume, scalars=None, clim=None, resolution=None,
-                   opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
-                   reset_camera=None, name=None, ambient=0.0, categories=False,
-                   culling=False, multi_colors=False,
-                   blending='composite', mapper=None,
-                   scalar_bar_args=None, show_scalar_bar=None,
-                   annotations=None, pickable=True, preference="point",
-                   opacity_unit_distance=None, shade=False,
-                   diffuse=0.7, specular=0.2, specular_power=10.0,
-                   render=True, **kwargs):
+    def add_volume(
+        self,
+        volume,
+        scalars=None,
+        clim=None,
+        resolution=None,
+        opacity='linear',
+        n_colors=256,
+        cmap=None,
+        flip_scalars=False,
+        reset_camera=None,
+        name=None,
+        ambient=0.0,
+        categories=False,
+        culling=False,
+        multi_colors=False,
+        blending='composite',
+        mapper=None,
+        scalar_bar_args=None,
+        show_scalar_bar=None,
+        annotations=None,
+        pickable=True,
+        preference="point",
+        opacity_unit_distance=None,
+        shade=False,
+        diffuse=0.7,
+        specular=0.2,
+        specular_power=10.0,
+        render=True,
+        **kwargs,
+    ):
         """Add a volume, rendered using a smart mapper by default.
 
         Requires a 3D :class:`numpy.ndarray` or :class:`pyvista.UniformGrid`.
@@ -2395,7 +2515,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         culling = kwargs.pop("backface_culling", culling)
 
         if "scalar" in kwargs:
-            raise TypeError("`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?")
+            raise TypeError(
+                "`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?"
+            )
         assert_empty_kwargs(**kwargs)
 
         # Avoid mutating input
@@ -2433,7 +2555,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 volume = wrap(volume)
                 if not is_pyvista_dataset(volume):
-                    raise TypeError(f'Object type ({type(volume)}) not supported for plotting in PyVista.')
+                    raise TypeError(
+                        f'Object type ({type(volume)}) not supported for plotting in PyVista.'
+                    )
         else:
             # HACK: Make a copy so the original object is not altered.
             #       Also, place all data on the nodes as issues arise when
@@ -2445,6 +2569,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if isinstance(volume, pyvista.MultiBlock):
             from itertools import cycle
+
             cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
             actors = []
@@ -2467,21 +2592,36 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 else:
                     color = cmap
 
-                a = self.add_volume(block, resolution=block_resolution, opacity=opacity,
-                                    n_colors=n_colors, cmap=color, flip_scalars=flip_scalars,
-                                    reset_camera=reset_camera, name=next_name,
-                                    ambient=ambient, categories=categories,
-                                    culling=culling, clim=clim,
-                                    mapper=mapper, pickable=pickable,
-                                    opacity_unit_distance=opacity_unit_distance,
-                                    shade=shade, diffuse=diffuse, specular=specular,
-                                    specular_power=specular_power, render=render)
+                a = self.add_volume(
+                    block,
+                    resolution=block_resolution,
+                    opacity=opacity,
+                    n_colors=n_colors,
+                    cmap=color,
+                    flip_scalars=flip_scalars,
+                    reset_camera=reset_camera,
+                    name=next_name,
+                    ambient=ambient,
+                    categories=categories,
+                    culling=culling,
+                    clim=clim,
+                    mapper=mapper,
+                    pickable=pickable,
+                    opacity_unit_distance=opacity_unit_distance,
+                    shade=shade,
+                    diffuse=diffuse,
+                    specular=specular,
+                    specular_power=specular_power,
+                    render=render,
+                )
 
                 actors.append(a)
             return actors
 
         if not isinstance(volume, pyvista.UniformGrid):
-            raise TypeError(f'Type {type(volume)} not supported for volume rendering at this time. Use `pyvista.UniformGrid`.')
+            raise TypeError(
+                f'Type {type(volume)} not supported for volume rendering at this time. Use `pyvista.UniformGrid`.'
+            )
 
         if opacity_unit_distance is None:
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
@@ -2502,8 +2642,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         title = 'Data'
         if isinstance(scalars, str):
             title = scalars
-            scalars = get_array(volume, scalars,
-                                preference=preference, err=True)
+            scalars = get_array(volume, scalars, preference=preference, err=True)
             scalar_bar_args.setdefault('title', title)
 
         if not isinstance(scalars, np.ndarray):
@@ -2526,7 +2665,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'smart': _vtk.vtkSmartVolumeMapper,
         }
         if not isinstance(mapper, str) or mapper not in mappers.keys():
-            raise TypeError(f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers.keys())}")
+            raise TypeError(
+                f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers.keys())}"
+            )
         self.mapper = make_mapper(mappers[mapper])
 
         # Scalars interpolation approach
@@ -2605,7 +2746,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Now put color tf and opacity tf into a lookup table for the scalar bar
         table.SetNumberOfTableValues(n_colors)
         lut = cmap(np.array(range(n_colors))) * 255
-        lut[:,3] = opacity_values
+        lut[:, 3] = opacity_values
         lut = lut.astype(np.uint8)
         table.SetTable(_vtk.numpy_to_vtk(lut))
         table.SetRange(*clim)
@@ -2625,9 +2766,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif blending in ['minimum', 'min', 'minimum_intensity']:
             self.mapper.SetBlendModeToMinimumIntensity()
         else:
-            raise ValueError(f'Blending mode \'{blending}\' invalid. ' +
-                             'Please choose one ' + 'of \'additive\', '
-                             '\'composite\', \'minimum\' or ' + '\'maximum\'.')
+            raise ValueError(
+                f'Blending mode {blending!r} invalid. '
+                'Please choose one of "additive", '
+                '"composite", "minimum" or "maximum".'
+            )
         self.mapper.Update()
 
         self.volume = _vtk.vtkVolume()
@@ -2644,9 +2787,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop.SetSpecularPower(specular_power)
         self.volume.SetProperty(prop)
 
-        actor, prop = self.add_actor(self.volume, reset_camera=reset_camera,
-                                     name=name, culling=culling,
-                                     pickable=pickable, render=render)
+        actor, prop = self.add_actor(
+            self.volume,
+            reset_camera=reset_camera,
+            name=name,
+            culling=culling,
+            pickable=pickable,
+            render=render,
+        )
 
         # Add scalar bar if scalars are available
         if show_scalar_bar and scalars is not None:
@@ -2671,7 +2819,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         params : dict, optional
 
             * If not supplied, the default theme values will be used.
-            * ``color``: ``str`` or 3-item ``list``, color of the silhouette
+            * ``color``: ``color_like``, color of the silhouette
             * ``line_width``: ``float``, edge width
             * ``opacity``: ``float`` between 0 and 1, edge transparency
             * ``feature_angle``: If a ``float``, display sharp edges
@@ -2720,7 +2868,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mapper = make_mapper(_vtk.vtkDataSetMapper)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop.SetColor(parse_color(silhouette_params["color"]))
+        prop.SetColor(Color(silhouette_params["color"]).float_rgb)
         prop.SetOpacity(silhouette_params["opacity"])
         prop.SetLineWidth(silhouette_params["line_width"])
 
@@ -2795,11 +2943,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         views = np.asarray(views)
         if np.issubdtype(views.dtype, np.integer):
             for view_index in views:
-                self.renderers[view_index].camera = \
-                    self.renderers[views[0]].camera
+                self.renderers[view_index].camera = self.renderers[views[0]].camera
         else:
-            raise TypeError('Expected type is int, list or tuple:'
-                            f'{type(views)} is given')
+            raise TypeError(f'Expected type is int, list or tuple: {type(views)} is given')
 
     def unlink_views(self, views=None):
         """Unlink the views' cameras.
@@ -2824,8 +2970,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
         else:
-            raise TypeError('Expected type is None, int, list or tuple:'
-                            f'{type(views)} is given')
+            raise TypeError(f'Expected type is None, int, list or tuple: {type(views)} is given')
 
     @wraps(ScalarBars.add_scalar_bar)
     def add_scalar_bar(self, *args, **kwargs):
@@ -2839,8 +2984,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mapper = kwargs.get('mapper', None)
         if mapper is None:
             if not hasattr(self, 'mapper') or self.mapper is None:
-                raise AttributeError('Mapper does not exist.  '
-                                     'Add a mesh with scalars first.')
+                raise AttributeError('Mapper does not exist.  Add a mesh with scalars first.')
             kwargs['mapper'] = self.mapper
 
         # title can be the first and only arg
@@ -3024,8 +3168,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.volume = None
         self.textActor = None
 
-    def add_text(self, text, position='upper_left', font_size=18, color=None,
-                 font=None, shadow=False, name=None, viewport=False):
+    def add_text(
+        self,
+        text,
+        position='upper_left',
+        font_size=18,
+        color=None,
+        font=None,
+        shadow=False,
+        name=None,
+        viewport=False,
+        *,
+        render=True,
+    ):
         """Add text to plot object in the top left corner by default.
 
         Parameters
@@ -3049,12 +3204,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_size : float, optional
             Sets the size of the title font.  Defaults to 18.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, RGB list, or hex color string.  For example:
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
             Defaults to :attr:`pyvista.global_theme.font.color <pyvista.themes._Font.color>`.
@@ -3075,6 +3230,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             normalized viewport coordinate system (values between 0.0
             and 1.0 and support for HiDPI).
 
+        render : bool, optional
+            Force a render when ``True`` (default).
+
         Returns
         -------
         vtk.vtkTextActor
@@ -3093,8 +3251,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             font = self._theme.font.family
         if font_size is None:
             font_size = self._theme.font.size
-        if color is None:
-            color = self._theme.font.color
         if position is None:
             # Set the position of the text to the top left corner
             window_size = self.window_size
@@ -3111,7 +3267,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'upper_edge': _vtk.vtkCornerAnnotation.UpperEdge,
             'left_edge': _vtk.vtkCornerAnnotation.LeftEdge,
             'right_edge': _vtk.vtkCornerAnnotation.RightEdge,
-
         }
         corner_mappings['ll'] = corner_mappings['lower_left']
         corner_mappings['lr'] = corner_mappings['lower_right']
@@ -3142,11 +3297,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.textActor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
 
-        self.textActor.GetTextProperty().SetColor(parse_color(color))
+        self.textActor.GetTextProperty().SetColor(
+            Color(color, default_color=self._theme.font.color).float_rgb
+        )
         self.textActor.GetTextProperty().SetFontFamily(FONTS[font].value)
         self.textActor.GetTextProperty().SetShadow(shadow)
 
-        self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False)
+        self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False, render=render)
         return self.textActor
 
     def open_movie(self, filename, framerate=24, quality=5, **kwargs):
@@ -3183,6 +3340,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         from imageio import get_writer
+
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
@@ -3205,6 +3363,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         from imageio import get_writer
+
         if filename[-3:] != 'gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
@@ -3249,9 +3408,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         tgt_size = (img_size[1], img_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
 
-    def get_image_depth(self,
-                        fill_value=np.nan,
-                        reset_camera_clipping_range=True):
+    def get_image_depth(self, fill_value=np.nan, reset_camera_clipping_range=True):
         """Return a depth image representing current render window.
 
         Parameters
@@ -3322,7 +3479,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-    def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
+    def add_lines(self, lines, color='w', width=5, label=None, name=None):
         """Add lines to the plotting object.
 
         Parameters
@@ -3332,12 +3489,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             segments would be represented as ``np.array([[0, 0, 0],
             [1, 0, 0], [1, 0, 0], [1, 1, 0]])``.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         width : float, optional
@@ -3377,15 +3534,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(lines)
 
-        rgb_color = parse_color(color)
+        rgb_color = Color(color)
 
         # Create actor
         actor = _vtk.vtkActor()
         actor.SetMapper(mapper)
         actor.GetProperty().SetLineWidth(width)
         actor.GetProperty().EdgeVisibilityOn()
-        actor.GetProperty().SetEdgeColor(rgb_color)
-        actor.GetProperty().SetColor(rgb_color)
+        actor.GetProperty().SetEdgeColor(rgb_color.float_rgb)
+        actor.GetProperty().SetColor(rgb_color.float_rgb)
         actor.GetProperty().LightingOff()
 
         # legend label
@@ -3404,15 +3561,32 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Remove the active scalar bar."""
         self.scalar_bars.remove_scalar_bar(*args, **kwargs)
 
-    def add_point_labels(self, points, labels, italic=False, bold=True,
-                         font_size=None, text_color=None,
-                         font_family=None, shadow=False,
-                         show_points=True, point_color=None, point_size=5,
-                         name=None, shape_color='grey', shape='rounded_rect',
-                         fill_shape=True, margin=3, shape_opacity=1.0,
-                         pickable=False, render_points_as_spheres=False,
-                         tolerance=0.001, reset_camera=None, always_visible=False,
-                         render=True):
+    def add_point_labels(
+        self,
+        points,
+        labels,
+        italic=False,
+        bold=True,
+        font_size=None,
+        text_color=None,
+        font_family=None,
+        shadow=False,
+        show_points=True,
+        point_color=None,
+        point_size=5,
+        name=None,
+        shape_color='grey',
+        shape='rounded_rect',
+        fill_shape=True,
+        margin=3,
+        shape_opacity=1.0,
+        pickable=False,
+        render_points_as_spheres=False,
+        tolerance=0.001,
+        reset_camera=None,
+        always_visible=False,
+        render=True,
+    ):
         """Create a point actor with one label from list labels assigned to each point.
 
         Parameters
@@ -3434,12 +3608,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_size : float, optional
             Sets the size of the title font.  Defaults to 16.
 
-        text_color : str or 3 item list, optional
+        text_color : color_like, optional
             Color of text. Either a string, RGB sequence, or hex color string.
 
             * ``text_color='white'``
             * ``text_color='w'``
-            * ``text_color=[1, 1, 1]``
+            * ``text_color=[1.0, 1.0, 1.0]``
             * ``text_color='#FFFFFF'``
 
         font_family : str, optional
@@ -3452,13 +3626,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         show_points : bool, optional
             Controls if points are visible.  Default ``True``.
 
-        point_color : str or sequence, optional
+        point_color : color_like, optional
             Either a string, rgb list, or hex color string.  One of
             the following.
 
             * ``point_color='white'``
             * ``point_color='w'``
-            * ``point_color=[1, 1, 1]``
+            * ``point_color=[1.0, 1.0, 1.0]``
             * ``point_color='#FFFFFF'``
 
         point_size : float, optional
@@ -3469,7 +3643,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             updated.  If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
-        shape_color : str or sequence, optional
+        shape_color : color_like, optional
             Color of points (if visible).  Either a string, rgb
             sequence, or hex color string.
 
@@ -3533,16 +3707,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             font_family = self._theme.font.family
         if font_size is None:
             font_size = self._theme.font.size
-        if point_color is None:
-            point_color = self._theme.color
-        if text_color is None:
-            text_color = self._theme.font.color
+        point_color = Color(point_color, default_color=self._theme.color)
 
         if isinstance(points, (list, tuple)):
             points = np.array(points)
 
         if isinstance(points, np.ndarray):
-            vtkpoints = pyvista.PolyData(points) # Cast to poly data
+            vtkpoints = pyvista.PolyData(points)  # Cast to poly data
         elif is_pyvista_dataset(points):
             vtkpoints = pyvista.PolyData(points.points)
             if isinstance(labels, str):
@@ -3592,7 +3763,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             labelMapper.SetStyleToFilled()
         else:
             labelMapper.SetStyleToOutline()
-        labelMapper.SetBackgroundColor(parse_color(shape_color))
+        labelMapper.SetBackgroundColor(Color(shape_color).float_rgb)
         labelMapper.SetBackgroundOpacity(shape_opacity)
         labelMapper.SetMargin(margin)
 
@@ -3601,7 +3772,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         textprop.SetBold(bold)
         textprop.SetFontSize(font_size)
         textprop.SetFontFamily(parse_font_family(font_family))
-        textprop.SetColor(parse_color(text_color))
+        textprop.SetColor(Color(text_color, default_color=self._theme.font.color).float_rgb)
         textprop.SetShadow(shadow)
 
         self.remove_actor(f'{name}-points', reset_camera=False)
@@ -3609,15 +3780,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # add points
         if show_points:
-            self.add_mesh(vtkpoints, color=point_color, point_size=point_size,
-                          name=f'{name}-points', pickable=pickable,
-                          render_points_as_spheres=render_points_as_spheres,
-                          reset_camera=reset_camera, render=render)
+            self.add_mesh(
+                vtkpoints,
+                color=point_color,
+                point_size=point_size,
+                name=f'{name}-points',
+                pickable=pickable,
+                render_points_as_spheres=render_points_as_spheres,
+                reset_camera=reset_camera,
+                render=render,
+            )
 
         label_actor = _vtk.vtkActor2D()
         label_actor.SetMapper(labelMapper)
-        self.add_actor(label_actor, reset_camera=False,
-                       name=f'{name}-labels', pickable=False)
+        self.add_actor(label_actor, reset_camera=False, name=f'{name}-labels', pickable=False)
         return label_actor
 
     def add_point_scalar_labels(self, points, labels, fmt=None, preamble='', **kwargs):
@@ -3742,7 +3918,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             direction = direction.reshape((-1, 3))
 
         if mag != 1:
-            direction = direction*mag
+            direction = direction * mag
 
         pdata = pyvista.vector_poly_data(cent, direction)
         # Create arrow object
@@ -3777,8 +3953,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if not filename.suffix:
                     filename = filename.with_suffix('.png')
                 elif filename.suffix not in SUPPORTED_FORMATS:
-                    raise ValueError(f'Unsupported extension {filename.suffix}\n' +
-                                     f'Must be one of the following: {SUPPORTED_FORMATS}')
+                    raise ValueError(
+                        f'Unsupported extension {filename.suffix}\n'
+                        f'Must be one of the following: {SUPPORTED_FORMATS}'
+                    )
                 filename = os.path.abspath(os.path.expanduser(str(filename)))
                 Image.fromarray(image).save(filename)
             else:
@@ -3787,8 +3965,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if return_img:
             return image
 
-    def save_graphic(self, filename, title='PyVista Export',
-                     raster=True, painter=True):
+    def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True):
         """Save a screenshot of the rendering window as a graphic file.
 
         This can be helpful for publication documents.
@@ -3843,8 +4020,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             '.tex': writer.SetFileFormatToTeX,
         }
         if extension not in modes:
-            raise ValueError(f"Extension ({extension}) is an invalid choice.\n\n"
-                             f"Valid options include: {', '.join(modes.keys())}")
+            raise ValueError(
+                f"Extension ({extension}) is an invalid choice.\n\n"
+                f"Valid options include: {', '.join(modes.keys())}"
+            )
         writer.CompressOff()
         writer.SetFilePrefix(filename.replace(extension, ''))
         writer.SetInput(self.ren_win)
@@ -3855,8 +4034,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             writer.UsePainterSettings()
         writer.Update()
 
-    def screenshot(self, filename=None, transparent_background=None,
-                   return_img=True, window_size=None):
+    def screenshot(
+        self, filename=None, transparent_background=None, return_img=True, window_size=None
+    ):
         """Take screenshot at current camera position.
 
         Parameters
@@ -3915,8 +4095,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise RuntimeError('This plotter is closed and unable to save a screenshot.')
 
         if self._first_time and not self.off_screen:
-            raise RuntimeError("Nothing to screenshot - call .show first or "
-                               "use the off_screen argument")
+            raise RuntimeError(
+                "Nothing to screenshot - call .show first or use the off_screen argument"
+            )
 
         # if off screen, show has not been called and we must render
         # before extracting an image
@@ -3926,13 +4107,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return self._save_image(self.image, filename, return_img)
 
-
     @wraps(Renderers.set_background)
     def set_background(self, *args, **kwargs):
         """Wrap ``Renderers.set_background``."""
         self.renderers.set_background(*args, **kwargs)
 
-    def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
+    def generate_orbital_path(self, factor=3.0, n_points=20, viewup=None, shift=0.0):
         """Generate an orbital path around the data scene.
 
         Parameters
@@ -3994,8 +4174,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         self.iren.fly_to(self.renderer, point)
 
-    def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None,
-                      write_frames=False, threaded=False, progress_bar=False):
+    def orbit_on_path(
+        self,
+        path=None,
+        focus=None,
+        step=0.5,
+        viewup=None,
+        write_frames=False,
+        threaded=False,
+        progress_bar=False,
+    ):
         """Orbit on the given path focusing on the focus point.
 
         Parameters
@@ -4062,14 +4250,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.camera.thickness = path.length
 
         if progress_bar:
-            try:  # pragma: no cover
+            try:
                 from tqdm import tqdm
-            except ImportError:
+            except ImportError:  # pragma: no cover
                 raise ImportError("Please install `tqdm` to use ``progress_bar=True``")
 
         def orbit():
             """Define the internal thread for running the orbit."""
-            if progress_bar:  # pragma: no cover
+            if progress_bar:
                 points_seq = tqdm(points)
             else:
                 points_seq = points
@@ -4146,7 +4334,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # load and is not always used
         try:
             from vtkmodules.vtkIOExport import vtkOBJExporter
-        except:
+        except:  # noqa: E722
             from vtk import vtkOBJExporter
 
         if not hasattr(self, "ren_win"):
@@ -4171,8 +4359,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             del self.renderers
 
-    def add_background_image(self, image_path, scale=1, auto_resize=True,
-                             as_global=True):
+    def add_background_image(self, image_path, scale=1, auto_resize=True, as_global=True):
         """Add a background image to a plot.
 
         Parameters
@@ -4205,9 +4392,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if self.renderers.has_active_background_renderer:
-            raise RuntimeError('A background image already exists.  '
-                               'Remove it with ``remove_background_image`` '
-                               'before adding one')
+            raise RuntimeError(
+                'A background image already exists.  '
+                'Remove it with ``remove_background_image`` '
+                'before adding one'
+            )
 
         # Need to change the number of layers to support an additional
         # background layer
@@ -4216,7 +4405,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         renderer = self.renderers.add_background_renderer(image_path, scale, as_global)
         self.ren_win.AddRenderer(renderer)
 
-        # setup autoscaling of the image
+        # set up autoscaling of the image
         if auto_resize:  # pragma: no cover
             self.iren.add_observer('ModifiedEvent', renderer.resize)
 
@@ -4374,12 +4563,12 @@ class Plotter(BasePlotter):
     border : bool, optional
         Draw a border around each render window.  Default ``False``.
 
-    border_color : str or 3 item list, optional
+    border_color : color_like, optional
         Either a string, rgb list, or hex color string.  For example:
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
     window_size : list, optional
@@ -4428,21 +4617,41 @@ class Plotter(BasePlotter):
     last_update_time = 0.0
     right_timer_id = -1
 
-    def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
-                 groups=None, row_weights=None, col_weights=None,
-                 border=None, border_color='k', border_width=2.0,
-                 window_size=None, multi_samples=None, line_smoothing=False,
-                 point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, title=None, lighting='light kit',
-                 theme=None):
+    def __init__(
+        self,
+        off_screen=None,
+        notebook=None,
+        shape=(1, 1),
+        groups=None,
+        row_weights=None,
+        col_weights=None,
+        border=None,
+        border_color='k',
+        border_width=2.0,
+        window_size=None,
+        multi_samples=None,
+        line_smoothing=False,
+        point_smoothing=False,
+        polygon_smoothing=False,
+        splitting_position=None,
+        title=None,
+        lighting='light kit',
+        theme=None,
+    ):
         """Initialize a vtk plotting object."""
-        super().__init__(shape=shape, border=border,
-                         border_color=border_color,
-                         border_width=border_width,
-                         groups=groups, row_weights=row_weights,
-                         col_weights=col_weights,
-                         splitting_position=splitting_position,
-                         title=title, lighting=lighting, theme=theme)
+        super().__init__(
+            shape=shape,
+            border=border,
+            border_color=border_color,
+            border_width=border_width,
+            groups=groups,
+            row_weights=row_weights,
+            col_weights=col_weights,
+            splitting_position=splitting_position,
+            title=title,
+            lighting=lighting,
+            theme=theme,
+        )
 
         log.debug('Plotter init start')
 
@@ -4513,8 +4722,7 @@ class Plotter(BasePlotter):
             interactor = None
 
         # Add ren win and interactor
-        self.iren = RenderWindowInteractor(self, light_follow_camera=False,
-                                           interactor=interactor)
+        self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
         self.iren.set_render_window(self.ren_win)
         self.enable_trackball_style()  # internally calls update_style()
         self.iren.add_observer("KeyPressEvent", self.key_press_event)
@@ -4539,11 +4747,23 @@ class Plotter(BasePlotter):
                     renderer.enable_depth_peeling()
         log.debug('Plotter init stop')
 
-    def show(self, title=None, window_size=None, interactive=True,
-             auto_close=None, interactive_update=False, full_screen=None,
-             screenshot=False, return_img=False, cpos=None, use_ipyvtk=None,
-             jupyter_backend=None, return_viewer=False, return_cpos=None,
-             **kwargs):
+    def show(
+        self,
+        title=None,
+        window_size=None,
+        interactive=True,
+        auto_close=None,
+        interactive_update=False,
+        full_screen=None,
+        screenshot=False,
+        return_img=False,
+        cpos=None,
+        use_ipyvtk=None,
+        jupyter_backend=None,
+        return_viewer=False,
+        return_cpos=None,
+        **kwargs,
+    ):
         """Display the plotting window.
 
         Parameters
@@ -4696,22 +4916,28 @@ class Plotter(BasePlotter):
         if interactive_update and auto_close is None:
             auto_close = False
         elif interactive_update and auto_close:
-            warnings.warn(textwrap.dedent("""\
-                The plotter will close immediately automatically since ``auto_close=True``.
-                Either, do not specify ``auto_close``, or set it to ``False`` if you want to
-                interact with the plotter interactively.\
-                """)
+            warnings.warn(
+                textwrap.dedent(
+                    """
+                    The plotter will close immediately automatically since ``auto_close=True``.
+                    Either, do not specify ``auto_close``, or set it to ``False`` if you want to
+                    interact with the plotter interactively.
+                    """
+                ).strip()
             )
         elif auto_close is None:
             auto_close = self._theme.auto_close
 
         if use_ipyvtk:
-            txt = textwrap.dedent("""\
-            use_ipyvtk is deprecated.  Set the backend
-            globally with ``pyvista.set_jupyter_backend("ipyvtklink"
-            or with ``backend="ipyvtklink"``)
-            """)
+            txt = textwrap.dedent(
+                """
+                use_ipyvtk is deprecated.  Set the backend
+                globally with ``pyvista.set_jupyter_backend("ipyvtklink")
+                or with ``backend="ipyvtklink"``
+                """
+            ).strip()
             from pyvista.core.errors import DeprecationError
+
             raise DeprecationError(txt)
 
         if not hasattr(self, "ren_win"):
@@ -4735,18 +4961,20 @@ class Plotter(BasePlotter):
 
         # handle plotter notebook
         if jupyter_backend and not self.notebook:
-            warnings.warn('Not within a jupyter notebook environment.\n'
-                          'Ignoring ``jupyter_backend``.')
+            warnings.warn(
+                'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.'
+            )
 
         if self.notebook:
             from ..jupyter.notebook import handle_plotter
+
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend
 
             if jupyter_backend != 'none':
-                disp = handle_plotter(self, backend=jupyter_backend,
-                                      return_viewer=return_viewer,
-                                      **jupyter_kwargs)
+                disp = handle_plotter(
+                    self, backend=jupyter_backend, return_viewer=return_viewer, **jupyter_kwargs
+                )
                 return disp
 
         self.render()
@@ -4797,9 +5025,11 @@ class Plotter(BasePlotter):
             self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:
-                warnings.warn("`auto_close` ignored: by clicking the exit button, "
-                              "you have destroyed the render window and we have to "
-                              "close it out.")
+                warnings.warn(
+                    "`auto_close` ignored: by clicking the exit button, "
+                    "you have destroyed the render window and we have to "
+                    "close it out."
+                )
                 auto_close = True
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user presed the close button, then it destroys the
@@ -4821,8 +5051,7 @@ class Plotter(BasePlotter):
         if return_cpos:
             return self.camera_position
 
-    def add_title(self, title, font_size=18, color=None, font=None,
-                  shadow=False):
+    def add_title(self, title, font_size=18, color=None, font=None, shadow=False):
         """Add text to the top center of the plot.
 
         This is merely a convenience method that calls ``add_text``
@@ -4837,14 +5066,14 @@ class Plotter(BasePlotter):
             Sets the size of the title font.  Defaults to 16 or the
             value of the global theme if set.
 
-        color : str or 3 item list, optional,
+        color : color_like, optional,
             Either a string, rgb list, or hex color string.  Defaults
             to white or the value of the global theme if set.  For
             example:
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         font : str, optional
@@ -4870,9 +5099,16 @@ class Plotter(BasePlotter):
         """
         # add additional spacing from the top of the figure by default
         title = '\n' + title
-        return self.add_text(title, position='upper_edge',
-                             font_size=font_size, color=color, font=font,
-                             shadow=shadow, name='title', viewport=False)
+        return self.add_text(
+            title,
+            position='upper_edge',
+            font_size=font_size,
+            color=color,
+            font=font,
+            shadow=shadow,
+            name='title',
+            viewport=False,
+        )
 
     def add_cursor(
         self,
@@ -4896,13 +5132,13 @@ class Plotter(BasePlotter):
 
             Defaults to ``(0.0, 0.0, 0.0)``.
 
-        color : str or sequence, optional
+        color : color_like, optional
             Either a string, RGB sequence, or hex color string.  For one
             of the following.
 
             * ``color='white'``
             * ``color='w'``
-            * ``color=[1, 1, 1]``
+            * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
         Returns
@@ -4927,7 +5163,7 @@ class Plotter(BasePlotter):
         mapper = make_mapper(_vtk.vtkDataSetMapper)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop.SetColor(parse_color(color))
+        prop.SetColor(Color(color).float_rgb)
 
         return actor
 
@@ -4959,4 +5195,4 @@ def _kill_display(disp_id):  # pragma: no cover
 
         # this is unsafe as events might be queued, but sometimes the
         # window fails to close if we don't just close it
-        Thread(target=X11.XCloseDisplay, args=(cdisp_id, )).start()
+        Thread(target=X11.XCloseDisplay, args=(cdisp_id,)).start()

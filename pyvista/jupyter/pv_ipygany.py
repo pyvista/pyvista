@@ -46,8 +46,7 @@ def pyvista_polydata_to_polymesh(obj):
     if not pv.is_pyvista_dataset(obj):  # pragma: no cover
         mesh = pv.wrap(obj)
         if not pv.is_pyvista_dataset(mesh):
-            raise TypeError(f'Object type ({type(mesh)}) cannot be converted to '
-                            'a pyvista dataset')
+            raise TypeError(f'Object type ({type(mesh)}) cannot be converted to a pyvista dataset')
     else:
         mesh = obj
 
@@ -84,27 +83,15 @@ def pyvista_polydata_to_polymesh(obj):
     points = trimesh.points.astype(np.float32, copy=False)
 
     # for speed, only convert the active scalars later
-    return PolyMesh(
-        vertices=points,
-        triangle_indices=triangle_indices,
-        data=data
-    )
+    return PolyMesh(vertices=points, triangle_indices=triangle_indices, data=data)
 
 
 def pyvista_object_to_pointcloud(pv_object):
     """Convert any pyvista object into a ``ipygany.PointCloud``."""
-    pc = PointCloud(vertices=pv_object.points,
-                    data=_grid_data_to_data_widget(get_ugrid_data(pv_object)))
+    pc = PointCloud(
+        vertices=pv_object.points, data=_grid_data_to_data_widget(get_ugrid_data(pv_object))
+    )
     return pc
-
-
-def color_float_to_hex(r, g, b):
-    """Convert RGB to hex."""
-    def clamp(x):
-        x = round(x*255)
-        return max(0, min(x, 255))
-    return "#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))
-
 
 
 def check_colormap(cmap):
@@ -116,9 +103,10 @@ def check_colormap(cmap):
 
     if cmap not in colormaps:
         allowed = ', '.join([f"'{clmp}'" for clmp in colormaps.keys()])
-        raise ValueError(f'``cmap`` "{cmap}" is not supported by ``ipygany``\n'
-                         'Pick from one of the following:\n'
-                         + allowed)
+        raise ValueError(
+            f'``cmap`` "{cmap}" is not supported by ``ipygany``\n'
+            'Pick from one of the following:\n' + allowed
+        )
     return cmap
 
 
@@ -144,7 +132,7 @@ def ipygany_block_from_actor(actor):
         return
     else:
         pmesh = pyvista_polydata_to_polymesh(dataset)
-    pmesh.default_color = color_float_to_hex(*prop.GetColor())
+    pmesh.default_color = pv.Color(prop.GetColor()).hex_rgb
 
     # determine if there are active scalars
     valid_mode = mapper.GetScalarModeAsString() in ['UsePointData', 'UseCellData']
@@ -168,11 +156,9 @@ def ipygany_camera_from_plotter(plotter):
     # TODO: camera position appears twice as far within ipygany, adjust:
 
     position = np.array(position, copy=True)
-    position -= (position - np.array(target))/2
+    position -= (position - np.array(target)) / 2
 
-    return {'position': position.tolist(),
-            'target': target,
-            'up': up}
+    return {'position': position.tolist(), 'target': target, 'up': up}
 
 
 def show_ipygany(plotter, return_viewer, height=None, width=None):
@@ -185,10 +171,8 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
         if ipygany_obj is not None:
             meshes.append(ipygany_obj)
 
-    bc_color = color_float_to_hex(*plotter.background_color)
-    scene = Scene(meshes,
-                  background_color=bc_color,
-                  camera=ipygany_camera_from_plotter(plotter))
+    bc_color = plotter.background_color.hex_rgb
+    scene = Scene(meshes, background_color=bc_color, camera=ipygany_camera_from_plotter(plotter))
 
     # optionally size of the plotter
     if height is not None:
@@ -210,10 +194,7 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
 
     if cbar is not None:
         # Colormap choice widget
-        colormap_dd = Dropdown(
-            options=colormaps,
-            description='Colormap:'
-        )
+        colormap_dd = Dropdown(options=colormaps, description='Colormap:')
         jslink((colored_mesh, 'colormap'), (colormap_dd, 'index'))
 
         # sensible colorbar maximum width, or else it looks bad when
@@ -233,8 +214,6 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
         # create app
         title = HTML(value=f'<h3>{list(plotter.scalar_bars.keys())[0]}</h3>')
         legend = VBox((title, colormap_dd, cbar))
-        scene = AppLayout(center=scene,
-                          footer=legend,
-                          pane_heights=[0, 0, '150px'])
+        scene = AppLayout(center=scene, footer=legend, pane_heights=[0, 0, '150px'])
 
     display.display_html(scene)

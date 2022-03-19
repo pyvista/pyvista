@@ -61,10 +61,12 @@ mesh = examples.download_carotid()
 p = pv.Plotter()
 p.add_mesh(mesh.contour(8).extract_largest(), opacity=0.5)
 
+
 def my_plane_func(normal, origin):
     slc = mesh.slice(normal=normal, origin=origin)
     arrows = slc.glyph(orient='vectors', scale="scalars", factor=0.01)
     p.add_mesh(arrows, name='arrows')
+
 
 p.add_plane_widget(my_plane_func)
 p.show_grid()
@@ -84,7 +86,7 @@ p.show()
 # plane and we disable the arrow to prevent its rotation.
 
 p = pv.Plotter()
-p.add_mesh_slice(vol, normal=(1,1,1), normal_rotation=False)
+p.add_mesh_slice(vol, normal=(1, 1, 1), normal_rotation=False)
 p.show()
 
 ###############################################################################

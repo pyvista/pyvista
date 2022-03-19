@@ -14,7 +14,7 @@ def test_backwards_compatibility():
     try:
         color = (0.1, 0.4, 0.7)
         pyvista.rcParams['color'] = color
-        assert pyvista.rcParams['color'] == color
+        assert pyvista.rcParams['color'] == pyvista.Color(color)
 
         # test nested values
         init_value = pyvista.rcParams['axes']['show']
@@ -25,9 +25,8 @@ def test_backwards_compatibility():
         pyvista.set_plot_theme('testing')
 
 
-@pytest.mark.parametrize('parm', [('enabled', True),
-                                  ('occlusion_ratio', 0.5),
-                                  ('number_of_peels', 2)]
+@pytest.mark.parametrize(
+    'parm', [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)]
 )
 def test_depth_peeling_config(default_theme, parm):
     attr, value = parm
@@ -43,12 +42,16 @@ def test_depth_peeling_eq(default_theme):
     assert my_theme.depth_peeling != 1
 
 
-@pytest.mark.parametrize('parm', [('color', (0.1, 0.1, 0.1)),
-                                  ('line_width', 1),
-                                  ('opacity', 1.0),
-                                  ('feature_angle', 20),
-                                  ('decimate', 0.5),
-])
+@pytest.mark.parametrize(
+    'parm',
+    [
+        ('color', (0.1, 0.1, 0.1)),
+        ('line_width', 1),
+        ('opacity', 1.0),
+        ('feature_angle', 20),
+        ('decimate', 0.5),
+    ],
+)
 def test_silhouette_config(default_theme, parm):
     attr, value = parm
     assert hasattr(default_theme.silhouette, attr)
@@ -71,15 +74,19 @@ def test_depth_silhouette_opacity_outside_clamp(default_theme):
         my_theme.silhouette.opacity = -1
 
 
-@pytest.mark.parametrize('parm', [('slider_length', 0.03),
-                                  ('slider_width', 0.02),
-                                  ('slider_color', (0.5, 0.5, 0.3)),
-                                  ('tube_width', 0.02),
-                                  ('tube_color', (0.5, 0.5, 0.5)),
-                                  ('cap_opacity', 0.5),
-                                  ('cap_length', 0.02),
-                                  ('cap_width', 0.04)
-])
+@pytest.mark.parametrize(
+    'parm',
+    [
+        ('slider_length', 0.03),
+        ('slider_width', 0.02),
+        ('slider_color', (0.5, 0.5, 0.3)),
+        ('tube_width', 0.02),
+        ('tube_color', (0.5, 0.5, 0.5)),
+        ('cap_opacity', 0.5),
+        ('cap_length', 0.02),
+        ('cap_width', 0.04),
+    ],
+)
 @pytest.mark.parametrize('style', ('modern', 'classic'))
 def test_slider_style_config(default_theme, parm, style):
     attr, value = parm
@@ -103,18 +110,18 @@ def test_slider_style_eq(default_theme):
 
 def test_invalid_color_str_single_char():
     with pytest.raises(ValueError):
-        colors.string_to_rgb('x')
+        colors.Color('x')
 
 
 def test_color_str():
-    clr = colors.string_to_rgb("k")
+    clr = colors.Color("k")
     assert (0.0, 0.0, 0.0) == clr
-    clr = colors.string_to_rgb("black")
+    clr = colors.Color("black")
     assert (0.0, 0.0, 0.0) == clr
-    clr = colors.string_to_rgb("white")
+    clr = colors.Color("white")
     assert (1.0, 1.0, 1.0) == clr
     with pytest.raises(ValueError):
-        colors.string_to_rgb('not a color')
+        colors.Color('not a color')
 
 
 def test_font():
@@ -282,7 +289,7 @@ def test_window_size(default_theme):
 def test_camera(default_theme):
     with pytest.raises(TypeError):
         default_theme.camera = [1, 0, 0]
-    
+
     with pytest.raises(KeyError, match='Expected the "viewup"'):
         default_theme.camera = {'position': [1, 0, 0]}
 
@@ -320,25 +327,29 @@ def test_set_hidden_line_removal(default_theme):
     assert default_theme.hidden_line_removal is False
 
 
-@pytest.mark.parametrize('parm', [('background', (0.1, 0.2, 0.3)),
-                                  ('auto_close', False),
-                                  ('notebook', False),
-                                  ('full_screen', True),
-                                  ('nan_color', (0.5, 0.5, 0.5)),
-                                  ('edge_color', (1.0, 0.0, 0.0)),
-                                  ('outline_color', (1.0, 0.0, 0.0)),
-                                  ('floor_color', (1.0, 0.0, 0.0)),
-                                  ('show_scalar_bar', False),
-                                  ('lighting', False),
-                                  ('interactive', False),
-                                  ('render_points_as_spheres', True),
-                                  ('transparent_background', True),
-                                  ('title', 'test_title'),
-                                  ('multi_samples', 10),
-                                  ('multi_rendering_splitting_position', 0.1),
-                                  ('smooth_shading', True),
-                                  ('name', 'test_theme'),
-])
+@pytest.mark.parametrize(
+    'parm',
+    [
+        ('background', (0.1, 0.2, 0.3)),
+        ('auto_close', False),
+        ('notebook', False),
+        ('full_screen', True),
+        ('nan_color', (0.5, 0.5, 0.5)),
+        ('edge_color', (1.0, 0.0, 0.0)),
+        ('outline_color', (1.0, 0.0, 0.0)),
+        ('floor_color', (1.0, 0.0, 0.0)),
+        ('show_scalar_bar', False),
+        ('lighting', False),
+        ('interactive', False),
+        ('render_points_as_spheres', True),
+        ('transparent_background', True),
+        ('title', 'test_title'),
+        ('multi_samples', 10),
+        ('multi_rendering_splitting_position', 0.1),
+        ('smooth_shading', True),
+        ('name', 'test_theme'),
+    ],
+)
 def test_theme_parm(default_theme, parm):
     attr, value = parm
     assert hasattr(default_theme, attr)
@@ -390,7 +401,7 @@ def test_theme_eq():
 def test_plotter_set_theme():
     # test that the plotter theme is set to the new theme
     my_theme = pyvista.themes.DefaultTheme()
-    my_theme.color = [1, 0, 0]
+    my_theme.color = [1.0, 0.0, 0.0]
     pl = pyvista.Plotter(theme=my_theme)
     assert pl.theme.color == my_theme.color
     assert pyvista.global_theme.color != pl.theme.color
@@ -418,4 +429,3 @@ def test_antialiasing(default_theme):
         assert default_theme.antialiasing is value
         pl = pyvista.Plotter(theme=default_theme)
         assert pl.renderer.GetUseFXAA() is value
-

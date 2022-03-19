@@ -5,7 +5,7 @@ import pyvista as pv
 has_panel = True
 try:
     from panel.pane.vtk.vtk import VTKRenderWindowSynchronized
-except:
+except:  # noqa: E722
     has_panel = False
 
 skip_no_panel = pytest.mark.skipif(not has_panel, reason='Requires panel')
@@ -21,9 +21,13 @@ def test_set_jupyter_backend_panel():
 @skip_no_panel
 @pytest.mark.parametrize('return_viewer', [True, False])
 def test_panel(sphere, return_viewer):
-    viewer = sphere.plot(notebook=True, jupyter_backend='panel',
-                         return_viewer=return_viewer,
-                         window_size=(100, 100), show_bounds=True)
+    viewer = sphere.plot(
+        notebook=True,
+        jupyter_backend='panel',
+        return_viewer=return_viewer,
+        window_size=(100, 100),
+        show_bounds=True,
+    )
     if return_viewer:
         assert isinstance(viewer, VTKRenderWindowSynchronized)
     else:

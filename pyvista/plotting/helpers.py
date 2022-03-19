@@ -9,14 +9,34 @@ from pyvista.utilities import is_pyvista_dataset
 from .plotting import Plotter
 
 
-def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
-         interactive=True, cpos=None, window_size=None,
-         show_bounds=False, show_axes=None, notebook=None, background=None,
-         text='', return_img=False, eye_dome_lighting=False, volume=False,
-         parallel_projection=False, use_ipyvtk=None, jupyter_backend=None,
-         return_viewer=False, return_cpos=False, jupyter_kwargs={},
-         theme=None, hidden_line_removal=None, anti_aliasing=None,
-         zoom=None, **kwargs):
+def plot(
+    var_item,
+    off_screen=None,
+    full_screen=None,
+    screenshot=None,
+    interactive=True,
+    cpos=None,
+    window_size=None,
+    show_bounds=False,
+    show_axes=None,
+    notebook=None,
+    background=None,
+    text='',
+    return_img=False,
+    eye_dome_lighting=False,
+    volume=False,
+    parallel_projection=False,
+    use_ipyvtk=None,
+    jupyter_backend=None,
+    return_viewer=False,
+    return_cpos=False,
+    jupyter_kwargs=None,
+    theme=None,
+    hidden_line_removal=None,
+    anti_aliasing=None,
+    zoom=None,
+    **kwargs,
+):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -65,7 +85,7 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
         When ``True``, the resulting plot is placed inline a jupyter
         notebook.  Assumes a jupyter console is active.
 
-    background : str or sequence, optional
+    background : color_like, optional
         Color of the background.
 
     text : str, optional
@@ -175,6 +195,9 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
     if anti_aliasing is not None:
         theme.antialiasing = anti_aliasing
 
+    if jupyter_kwargs is None:
+        jupyter_kwargs = {}
+
     # undocumented kwarg used within pytest to run a function before closing
     before_close_callback = kwargs.pop('before_close_callback', None)
 
@@ -241,18 +264,21 @@ def plot(var_item, off_screen=None, full_screen=None, screenshot=None,
     if parallel_projection:
         plotter.enable_parallel_projection()
 
-    return plotter.show(window_size=window_size,
-                        auto_close=auto_close,
-                        interactive=interactive,
-                        full_screen=full_screen,
-                        screenshot=screenshot,
-                        return_img=return_img,
-                        use_ipyvtk=use_ipyvtk,
-                        jupyter_backend=jupyter_backend,
-                        before_close_callback=before_close_callback,
-                        jupyter_kwargs=jupyter_kwargs,
-                        return_viewer=return_viewer,
-                        return_cpos=return_cpos)
+    return plotter.show(
+        window_size=window_size,
+        auto_close=auto_close,
+        interactive=interactive,
+        full_screen=full_screen,
+        screenshot=screenshot,
+        return_img=return_img,
+        use_ipyvtk=use_ipyvtk,
+        jupyter_backend=jupyter_backend,
+        before_close_callback=before_close_callback,
+        jupyter_kwargs=jupyter_kwargs,
+        return_viewer=return_viewer,
+        return_cpos=return_cpos,
+    )
+
 
 def plot_arrows(cent, direction, **kwargs):
     """Plot arrows as vectors.
@@ -300,10 +326,22 @@ def plot_arrows(cent, direction, **kwargs):
     return plot([cent, direction], **kwargs)
 
 
-def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
-                      plotter_kwargs=None, show_kwargs=None, screenshot=None,
-                      camera_position=None, outline=None, outline_color='k',
-                      labels=('A', 'B', 'C', 'D'), link=True, notebook=None):
+def plot_compare_four(
+    data_a,
+    data_b,
+    data_c,
+    data_d,
+    disply_kwargs=None,
+    plotter_kwargs=None,
+    show_kwargs=None,
+    screenshot=None,
+    camera_position=None,
+    outline=None,
+    outline_color='k',
+    labels=('A', 'B', 'C', 'D'),
+    link=True,
+    notebook=None,
+):
     """Plot a 2 by 2 comparison of data objects.
 
     Plotting parameters and camera positions will all be the same.
@@ -342,8 +380,7 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
     return pl.show(screenshot=screenshot, **show_kwargs)
 
 
-def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
-             smooth_shading=False):
+def plot_itk(mesh, color=None, scalars=None, opacity=1.0, smooth_shading=False):
     """Plot a PyVista/VTK mesh or dataset.
 
     Adds any PyVista/VTK mesh that itkwidgets can wrap to the
@@ -356,10 +393,10 @@ def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
         :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
         points.
 
-    color : str or 3 item list, optional, defaults to white
+    color : color_like, optional, defaults to white
         Use to make the entire mesh have a single solid color.  Either
         a string, RGB list, or hex color string.  For example:
-        ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+        ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
 

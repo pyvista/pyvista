@@ -20,6 +20,7 @@ if not os.path.isdir(static_image_path):
 
 app = Flask(__name__)
 
+
 @app.route("/")
 def index():
     return render_template('index.html')
@@ -52,9 +53,7 @@ def get_img():
     # generate screenshot
     filename = f'{meshtype}.png'
     filepath = os.path.join(static_image_path, filename)
-    mesh.plot(off_screen=True,
-              window_size=(300, 300),
-              screenshot=filepath)
+    mesh.plot(off_screen=True, window_size=(300, 300), screenshot=filepath)
     return os.path.join('images', filename)
 
 

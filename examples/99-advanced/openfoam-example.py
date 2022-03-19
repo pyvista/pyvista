@@ -89,11 +89,13 @@ boundaries = mesh["boundary"]
 # to lie in the z=0 plane.  So, after the domain sliced, it is translated to
 # ``z=0``.
 
+
 def slice_z_center(mesh):
     """Slice mesh through center in z normal direction, move to z=0."""
     slice_mesh = mesh.slice(normal='z')
     slice_mesh.translate((0, 0, -slice_mesh.center[-1]), inplace=True)
     return slice_mesh
+
 
 slice_internal_mesh = slice_z_center(internal_mesh)
 slice_boundaries = pyvista.MultiBlock(
@@ -104,8 +106,10 @@ slice_boundaries = pyvista.MultiBlock(
 # Streamlines are generated using the point data "U".
 
 streamlines = slice_internal_mesh.streamlines_evenly_spaced_2D(
-    vectors='U', start_position=(0.05, 0.05, 0), separating_distance=1,
-    separating_distance_ratio=0.1
+    vectors='U',
+    start_position=(0.05, 0.05, 0),
+    separating_distance=1,
+    separating_distance_ratio=0.1,
 )
 
 ###############################################################################

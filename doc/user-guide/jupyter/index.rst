@@ -133,7 +133,7 @@ At the moment, ``itkwidgets`` and ``ipyvtklink`` are incompatible with
 Jupyterlab 3, and will result in a "Error displaying widget: model not
 found" message from juptyer.  Additionally, all the modules other than
 ``ipygany`` and ``pythreejs`` require a framebuffer, which can be
-setup on a headless environment with :func:`pyvista.start_xvfb`.
+set up on a headless environment with :func:`pyvista.start_xvfb`.
 However, on Google Colab, where it's not possible to install system
 packages, you should stick with a module like ``threejs``, which does
 not require any server side rendering or framebuffer.

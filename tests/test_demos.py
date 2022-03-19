@@ -8,12 +8,9 @@ import pyvista
 from pyvista import demos
 from pyvista.plotting import system_supports_plotting
 
-skip_no_plotting = pytest.mark.skipif(not system_supports_plotting(),
-                                      reason="Test requires system to support plotting")
-
-
-# These tests fail with mesa opengl on windows
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+skip_no_plotting = pytest.mark.skipif(
+    not system_supports_plotting(), reason="Test requires system to support plotting"
+)
 
 
 @skip_no_plotting
@@ -36,10 +33,11 @@ def test_logo_voxel():
     assert grid.n_cells
 
 
-@pytest.mark.skipif(platform.system() == 'Darwin',
-                    reason='MacOS testing on Azure fails when downloading')
+@pytest.mark.skipif(
+    platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
+)
 @skip_no_plotting
-@skip_windows
+@pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 def test_plot_logo():
     # simply should not fail
     demos.plot_logo()

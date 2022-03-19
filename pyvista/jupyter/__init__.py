@@ -26,15 +26,16 @@ def _validate_jupyter_backend(backend):
         try:
             import ipyvtklink
         except ImportError:
-            raise ImportError('Please install `ipyvtklink`. `ipyvtk_simple` '
-                              'is deprecated.')
+            raise ImportError('Please install `ipyvtklink`. `ipyvtk_simple` ' 'is deprecated.')
         else:
             backend = 'ipyvtklink'
 
     if backend not in ALLOWED_BACKENDS:
         backend_list_str = ', '.join([f'"{item}"' for item in ALLOWED_BACKENDS])
-        raise ValueError(f'Invalid Jupyter notebook plotting backend "{backend}".\n'
-                         f'Use one of the following:\n{backend_list_str}')
+        raise ValueError(
+            f'Invalid Jupyter notebook plotting backend "{backend}".\n'
+            f'Use one of the following:\n{backend_list_str}'
+        )
 
     # verify required packages are installed
     if backend == 'pythreejs':
@@ -76,13 +77,13 @@ def set_jupyter_backend(backend):
         * ``'ipyvtklink'`` : Render remotely and stream the
           resulting VTK images back to the client.  Supports all VTK
           methods, but suffers from lag due to remote rendering.
-          Requires that a virtual framebuffer be setup when displaying
+          Requires that a virtual framebuffer be set up when displaying
           on a headless server.  Must have ``ipyvtklink`` installed.
 
         * ``'panel'`` : Convert the VTK render window to a vtkjs
           object and then visualize that within jupyterlab. Supports
           most VTK objects.  Requires that a virtual framebuffer be
-          setup when displaying on a headless server.  Must have
+          set up when displaying on a headless server.  Must have
           ``panel`` installed.
 
         * ``'ipygany'`` : Convert all the meshes into ``ipygany``
@@ -99,7 +100,7 @@ def set_jupyter_backend(backend):
 
         * ``'static'`` : Display a single static image within the
           Jupyterlab environment.  Still requires that a virtual
-          framebuffer be setup when displaying on a headless server,
+          framebuffer be set up when displaying on a headless server,
           but does not require any additional modules to be installed.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
