@@ -781,9 +781,9 @@ def test_extrude():
 def test_extrude_capping_warnings():
     arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
     with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
-        poly = arc.extrude([0, 0, 1])
+        arc.extrude([0, 0, 1])
     with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
-        poly = arc.extrude_rotate()
+        arc.extrude_rotate()
 
 
 def test_flip_normals(sphere, plane):
