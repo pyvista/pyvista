@@ -6,7 +6,6 @@ import numpy as np
 
 import pyvista
 from pyvista import _vtk
-from pyvista.core.filters import _get_output
 from pyvista.utilities import (
     NORMALS,
     generate_plane,
@@ -521,6 +520,8 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        from pyvista.core.filters import _get_output  # avoids circular import
+
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
