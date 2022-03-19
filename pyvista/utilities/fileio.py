@@ -85,6 +85,11 @@ if VTK_MAJOR >= 9 and VTK_MINOR >= 0:
     except AttributeError:  # pragma: no cover
         pass
 
+    try:
+        READERS['.cgns'] = _vtk.lazy_vtkCGNSReader
+    except AttributeError:  # pragma: no cover
+        pass
+
 
 def _get_ext_force(filename, force_ext=None):
     if force_ext:

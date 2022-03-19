@@ -479,6 +479,12 @@ if VTK9:
 
         return vtkHDFReader()
 
+    def lazy_vtkCGNSReader():
+        """Lazy import of the vtkCGNSReader."""
+        from vtkmodules.vtkIOCGNSReader import vtkCGNSReader
+
+        return vtkCGNSReader()
+
 else:  # pragma: no cover
 
     # maintain VTK 8.2 compatibility
@@ -558,6 +564,15 @@ else:  # pragma: no cover
             raise VTKVersionError('Charts requires VTK v9 or newer')
 
     class vtkHDFReader:  # type: ignore
+        """Empty placeholder for VTK9 compatibility."""
+
+        def __init__(self):  # pragma: no cover
+            """Raise version error on init."""
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('vtkHDFReader requires VTK v9 or newer')
+
+    class vtkCGNSReader:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
         def __init__(self):  # pragma: no cover
