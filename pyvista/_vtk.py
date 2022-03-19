@@ -579,7 +579,7 @@ else:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('vtkCGNSReader requires VTK v9 or newer')
+            raise VTKVersionError('vtkCGNSReader requires vtk>=9.1.0')
 
 
 # lazy import as this was added in 9.1.0
