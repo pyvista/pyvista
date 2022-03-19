@@ -1999,21 +1999,26 @@ def test_extrude_rotate():
     line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
 
     with pytest.raises(ValueError):
-        line.extrude_rotate(resolution=0)
+        line.extrude_rotate(resolution=0, capping=True)
 
-    poly = line.extrude_rotate(resolution=resolution, progress_bar=True)
+    poly = line.extrude_rotate(resolution=resolution, progress_bar=True, capping=True)
     assert poly.n_cells == line.n_points - 1
     assert poly.n_points == (resolution + 1) * line.n_points
 
     translation = 10.0
     dradius = 1.0
-    poly = line.extrude_rotate(translation=translation, dradius=dradius, progress_bar=True)
+    poly = line.extrude_rotate(
+        translation=translation,
+        dradius=dradius,
+        progress_bar=True,
+        capping=True,
+    )
     zmax = poly.bounds[5]
     assert zmax == translation
     xmax = poly.bounds[1]
     assert xmax == line.bounds[1] + dradius
 
-    poly = line.extrude_rotate(angle=90.0, progress_bar=True)
+    poly = line.extrude_rotate(angle=90.0, progress_bar=True, capping=True)
     xmin = poly.bounds[0]
     xmax = poly.bounds[1]
     ymin = poly.bounds[2]
@@ -2030,7 +2035,7 @@ def test_extrude_rotate_inplace():
     resolution = 4
     poly = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
     old_line = poly.copy()
-    poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True)
+    poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True, capping=True)
     assert poly.n_cells == old_line.n_points - 1
     assert poly.n_points == (resolution + 1) * old_line.n_points
 

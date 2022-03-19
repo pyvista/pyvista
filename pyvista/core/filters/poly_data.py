@@ -2599,7 +2599,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh.plot(line_width=5, show_edges=True)
 
         """
-        if capping is None:
+        if capping is None:  # pragma: no cover
             capping = False
             warnings.warn(
                 'The default value of the ``capping`` keyword argument will change in '
@@ -2729,7 +2729,7 @@ class PolyDataFilters(DataSetFilters):
         >>> extruded.plot(color='tan')
 
         """
-        if capping is None:
+        if capping is None:  # pragma: no cover
             capping = False
             warnings.warn(
                 'The default value of the ``capping`` keyword argument will change in '

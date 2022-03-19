@@ -768,12 +768,12 @@ def test_is_all_triangles():
 
 def test_extrude():
     arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-    poly = arc.extrude([0, 0, 1], progress_bar=True)
+    poly = arc.extrude([0, 0, 1], progress_bar=True, capping=True)
     assert poly.n_points
     assert poly.n_cells
 
     n_points_old = arc.n_points
-    arc.extrude([0, 0, 1], inplace=True)
+    arc.extrude([0, 0, 1], inplace=True, capping=True)
     assert arc.n_points != n_points_old
 
 
