@@ -39,7 +39,7 @@ def test_layer():
 
 @pytest.mark.parametrize('has_border', (True, False))
 def test_border(has_border):
-    border_color = (1, 1, 1)
+    border_color = (1.0, 1.0, 1.0)
     border_width = 1
     plotter = pyvista.Plotter(
         border=has_border, border_color=border_color, border_width=border_width
@@ -95,7 +95,8 @@ def test_add_legend_loc(loc):
 
 def test_add_legend_no_face(sphere):
     pl = pyvista.Plotter()
-    pl.add_mesh(sphere, label='sphere')
+    sphere.point_data["Z"] = sphere.points[:, 2]
+    pl.add_mesh(sphere, scalars='Z', label='sphere')
     pl.add_legend(face=None)
 
     pl = pyvista.Plotter()

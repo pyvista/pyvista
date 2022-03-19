@@ -57,6 +57,28 @@ def test_line():
     with pytest.raises(TypeError):
         pyvista.Line(pointa, pointb, 0.1)  # from vtk
 
+    with pytest.raises(TypeError):
+        pyvista.Line((0, 0), pointb)
+
+    with pytest.raises(TypeError):
+        pyvista.Line(pointa, (10, 1.0))
+
+
+def test_multiple_lines():
+    points = np.array([[0, 0, 0], [1, 1, 0], [2, 2, 2], [3, 3, 0]])
+    multiple_lines = pyvista.MultipleLines(points=points)
+    assert multiple_lines.n_points == 4
+    assert multiple_lines.n_cells == 1
+
+    points = np.array([[0, 0, 0], [1, 1 * np.sqrt(3), 0], [2, 0, 0], [3, 3 * np.sqrt(3), 0]])
+    multiple_lines = pyvista.MultipleLines(points=points)
+
+    with pytest.raises(ValueError):
+        pyvista.MultipleLines(points[:, :1])
+
+    with pytest.raises(ValueError):
+        pyvista.MultipleLines(points[0, :])
+
 
 def test_tube():
     pointa = (0, 0, 0)
@@ -74,6 +96,12 @@ def test_tube():
 
     with pytest.raises(TypeError):
         pyvista.Tube(pointa, pointb, 0.1)  # from vtk
+
+    with pytest.raises(TypeError):
+        pyvista.Tube((0, 0), pointb)
+
+    with pytest.raises(TypeError):
+        pyvista.Tube(pointa, (10, 1.0))
 
 
 def test_cube():

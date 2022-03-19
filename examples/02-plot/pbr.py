@@ -75,7 +75,7 @@ plotter.set_background('black')
 plotter.add_mesh(mesh, color='linen', pbr=True, metallic=0.5, roughness=0.5, diffuse=1)
 
 
-# setup lighting
+# set up lighting
 light = pv.Light((-2, 2, 0), (0, 0, 0), 'white')
 plotter.add_light(light)
 

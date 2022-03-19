@@ -94,16 +94,6 @@ def pyvista_object_to_pointcloud(pv_object):
     return pc
 
 
-def color_float_to_hex(r, g, b):
-    """Convert RGB to hex."""
-
-    def clamp(x):
-        x = round(x * 255)
-        return max(0, min(x, 255))
-
-    return "#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))
-
-
 def check_colormap(cmap):
     """Attempt to convert a colormap to ``ipygany``."""
     if cmap not in colormaps:
@@ -142,7 +132,7 @@ def ipygany_block_from_actor(actor):
         return
     else:
         pmesh = pyvista_polydata_to_polymesh(dataset)
-    pmesh.default_color = color_float_to_hex(*prop.GetColor())
+    pmesh.default_color = pv.Color(prop.GetColor()).hex_rgb
 
     # determine if there are active scalars
     valid_mode = mapper.GetScalarModeAsString() in ['UsePointData', 'UseCellData']
@@ -181,7 +171,7 @@ def show_ipygany(plotter, return_viewer, height=None, width=None):
         if ipygany_obj is not None:
             meshes.append(ipygany_obj)
 
-    bc_color = color_float_to_hex(*plotter.background_color)
+    bc_color = plotter.background_color.hex_rgb
     scene = Scene(meshes, background_color=bc_color, camera=ipygany_camera_from_plotter(plotter))
 
     # optionally size of the plotter

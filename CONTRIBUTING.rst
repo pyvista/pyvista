@@ -24,7 +24,7 @@ Cloning the Source Repository
 -----------------------------
 
 You can clone the source repository from
-``https://github.com/pyvista/pyvista`` and install the latest version by
+`<https://github.com/pyvista/pyvista>`_ and install the latest version by
 running:
 
 .. code:: bash
@@ -38,14 +38,14 @@ Questions
 
 For general questions about the project, its applications, or about
 software usage, please create a discussion in the
-`Discussions <https://github.com/pyvista/pyvista/discussions>`__
+`Discussions <https://github.com/pyvista/pyvista/discussions>`_
 repository where the community can collectively address your questions.
-You are also welcome to join us on `Slack <http://slack.pyvista.org>`__
+You are also welcome to join us on `Slack <http://slack.pyvista.org>`_
 or send one of the developers an email. The project support team can be
 reached at info@pyvista.org
 
 For more technical questions, you are welcome to create an issue on the
-`issues page <https://github.com/pyvista/pyvista/issues>`__ which we
+`issues page <https://github.com/pyvista/pyvista/issues>`_ which we
 will address promptly. Through posting on the issues page, your question
 can be addressed by community members with the needed expertise and the
 information gained will remain available on the issues page for other
@@ -56,7 +56,7 @@ Reporting Bugs
 
 If you stumble across any bugs, crashes, or concerning quirks while
 using code distributed here, please report it on the `issues
-page <https://github.com/pyvista/pyvista/issues>`__ with an appropriate
+page <https://github.com/pyvista/pyvista/issues>`_ with an appropriate
 label so we can promptly address it. When reporting an issue, please be
 overly descriptive so that we may reproduce it. Whenever possible,
 please provide tracebacks, screenshots, and sample files to help us
@@ -67,7 +67,7 @@ Feature Requests
 
 We encourage users to submit ideas for improvements to PyVista code
 base! Please create an issue on the `issues
-page <https://github.com/pyvista/pyvista/issues>`__ with a *Feature
+page <https://github.com/pyvista/pyvista/issues>`_ with a *Feature
 Request* label to suggest an improvement. Please use a descriptive title
 and provide ample background information to help the community implement
 that functionality. For example, if you would like a reader for a
@@ -84,7 +84,7 @@ issue as a feature request which we can use as a discussion thread to
 work through how to implement the contribution.
 
 Once you are ready to start coding and develop for PyVista, please see
-the `Development Practices <#development-practices>`__ section for more
+the `Development Practices <#development-practices>`_ section for more
 details.
 
 Licensing
@@ -144,37 +144,39 @@ There are two important copyright guidelines:
    undermine the license of the whole projects.
 
 Please also take a look at our `Code of
-Conduct <https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.rst>`__
+Conduct <https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md>`_.
 
 Contributing to pyvista through GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To submit new code to pyvista, first fork the `pyvista GitHub
-Repo <https://github.com/pyvista/pyvista>`__ and then clone the forked
+Repo <https://github.com/pyvista/pyvista>`_ and then clone the forked
 repository to your computer. Then, create a new branch based on the
-`Branch Naming Conventions Section <#branch-naming-conventions>`__ in
+`Branch Naming Conventions Section <#branch-naming-conventions>`_ in
 your local repository.
 
 Next, add your new feature and commit it locally. Be sure to commit
 frequently as it is often helpful to revert to past commits, especially
 if your change is complex. Also, be sure to test often. See the `Testing
-Section <#testing>`__ below for automating testing.
+Section <#testing>`_ below for automating testing.
 
 When you are ready to submit your code, create a pull request by
 following the steps in the `Creating a New Pull Request
-section <#creating-a-new-pull-request>`__.
+section <#creating-a-new-pull-request>`_.
 
 Coding Style
 ^^^^^^^^^^^^
 
-We adhere to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`__
+We adhere to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_
 wherever possible, except that line widths are permitted to go beyond 79
 characters to a max of 99 characters for code. This should tend to be
-the exception rather than the norm.
+the exception rather than the norm. A uniform code style is enforced
+by `black <https://github.com/psf/black>`_ to prevent energy wasted on
+style disagreements.
 
 As for docstrings, follow the guidelines specified in `PEP 8 Maximum
 Line
-Length <https://www.python.org/dev/peps/pep-0008/#maximum-line-length>`__
+Length <https://www.python.org/dev/peps/pep-0008/#maximum-line-length>`_
 of limiting docstrings to 72 characters per line. This follows the
 directive:
 
@@ -185,7 +187,7 @@ directive:
    at 72 characters.
 
 Outside of PEP 8, when coding please consider `PEP 20 – The Zen of
-Python <https://www.python.org/dev/peps/pep-0020/>`__. When in doubt:
+Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
 
 .. code:: python
 
@@ -201,11 +203,11 @@ To test the format locally, run:
 
    make stylecheck
 
-To automatically sort Python imports, run:
+To automatically fix style issues (including those found by ``black``), run:
 
 .. code:: bash
 
-   make isort
+   make format
 
 Branch Naming Conventions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -300,7 +302,7 @@ directory.
 Notes Regarding Image Regression Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Since ``pyvista`` is primarily a plotting module, it’s imperative we
+Since PyVista is primarily a plotting module, it’s imperative we
 actually check the images that we generate in some sort of regression
 testing. In practice, this ends up being quite a bit of work because:
 
@@ -321,7 +323,7 @@ Based on these points, image regression testing only occurs on Linux CI,
 and multi-sampling is disabled as that seems to be one of the biggest
 difference between software and hardware based rendering.
 
-Image cache is stored here as ./image_cache
+Image cache is stored here as ``./image_cache``.
 
 Image resolution is kept low at 400x400 as we don’t want to pollute git
 with large images. Small variations between versions and environments
@@ -359,14 +361,17 @@ wish to include image regression testing, be sure to add
 
 This ensures that immediately before the plotter is closed, the current
 render window will be verified against the image in CI. If no image
-exists, be sure to add the resulting image with \`git add
-tests/plotting/image_cache/*``.
+exists, be sure to add the resulting image with
+
+.. code:: bash
+
+    git add tests/plotting/image_cache/*
 
 Creating a New Pull Request
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once you have tested your branch locally, create a pull request on
-`pyvista GitHub <https://github.com/pyvista/pyvista>`__ while merging to
+`pyvista GitHub <https://github.com/pyvista/pyvista>`_ while merging to
 main. This will automatically run continuous integration (CI) testing
 and verify your changes will work across several platforms.
 
@@ -386,7 +391,7 @@ Branching Model
 
 This project has a branching model that enables rapid development of
 features without sacrificing stability, and closely follows the `Trunk
-Based Development <https://trunkbaseddevelopment.com/>`__ approach.
+Based Development <https://trunkbaseddevelopment.com/>`_ approach.
 
 The main features of our branching model are:
 
@@ -426,12 +431,18 @@ created the following will occur:
     ``release/MAJOR.MINOR`` (e.g. ``release/0.25``).
 
 2.  Locally run all tests as outlined in the `Testing
-    Section <#testing>`__ and ensure all are passing.
+    Section <#testing>`_ and ensure all are passing.
 
 3.  Locally test and build the documentation with link checking to make
     sure no links are outdated. Be sure to run ``make clean`` to ensure
     no results are cached.
-    ``bash     cd doc     make clean  # deletes the sphinx-gallery cache     make doctest     make html -b linkcheck``
+
+    .. code:: bash
+
+       cd doc
+       make clean  # deletes the sphinx-gallery cache
+       make doctest
+       make html -b linkcheck
 
 4.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
@@ -458,7 +469,7 @@ created the following will occur:
 
 8.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare
-    feature <https://github.com/pyvista/pyvista/compare>`__ to see the
+    feature <https://github.com/pyvista/pyvista/compare>`_ to see the
     differences from the last tag and the ``main`` branch. Be sure to
     acknowledge new contributors by their GitHub username and place
     mentions where appropriate if a specific contributor is to thank for
@@ -466,12 +477,12 @@ created the following will occur:
 
 9.  Place your release notes from step 8 in the description for `the new
     release on
-    GitHub <https://github.com/pyvista/pyvista/releases/new>`__
+    GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
 10. Go grab a beer/coffee/water and wait for
-    [@regro-cf-autotick-bot](https://github.com/regro-cf-autotick-bot)
+    `@regro-cf-autotick-bot <https://github.com/regro-cf-autotick-bot>`_
     to open a pull request on the conda-forge `PyVista
-    feedstock <https://github.com/conda-forge/pyvista-feedstock>`__.
+    feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
 11. Announce the new release in the PyVista Slack workspace and

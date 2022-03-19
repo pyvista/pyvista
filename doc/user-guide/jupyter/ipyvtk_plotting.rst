@@ -59,7 +59,7 @@ Where environment.yml is:
       - ipyvtklink
       - matplotlib
 
-Using pip, you can setup your jupyterlab environment with:
+Using pip, you can set up your jupyterlab environment with:
 
 .. code::
 

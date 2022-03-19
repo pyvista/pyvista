@@ -14,7 +14,7 @@ def test_backwards_compatibility():
     try:
         color = (0.1, 0.4, 0.7)
         pyvista.rcParams['color'] = color
-        assert pyvista.rcParams['color'] == color
+        assert pyvista.rcParams['color'] == pyvista.Color(color)
 
         # test nested values
         init_value = pyvista.rcParams['axes']['show']
@@ -110,18 +110,18 @@ def test_slider_style_eq(default_theme):
 
 def test_invalid_color_str_single_char():
     with pytest.raises(ValueError):
-        colors.string_to_rgb('x')
+        colors.Color('x')
 
 
 def test_color_str():
-    clr = colors.string_to_rgb("k")
+    clr = colors.Color("k")
     assert (0.0, 0.0, 0.0) == clr
-    clr = colors.string_to_rgb("black")
+    clr = colors.Color("black")
     assert (0.0, 0.0, 0.0) == clr
-    clr = colors.string_to_rgb("white")
+    clr = colors.Color("white")
     assert (1.0, 1.0, 1.0) == clr
     with pytest.raises(ValueError):
-        colors.string_to_rgb('not a color')
+        colors.Color('not a color')
 
 
 def test_font():
@@ -401,7 +401,7 @@ def test_theme_eq():
 def test_plotter_set_theme():
     # test that the plotter theme is set to the new theme
     my_theme = pyvista.themes.DefaultTheme()
-    my_theme.color = [1, 0, 0]
+    my_theme.color = [1.0, 0.0, 0.0]
     pl = pyvista.Plotter(theme=my_theme)
     assert pl.theme.color == my_theme.color
     assert pyvista.global_theme.color != pl.theme.color

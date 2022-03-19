@@ -154,7 +154,7 @@ Installation
 ============
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip`` on Python >= 3.6::
+using ``pip`` on Python >= 3.7::
 
     pip install pyvista
 
@@ -253,7 +253,7 @@ BibTex:
       volume = {4},
       number = {37},
       pages = {1450},
-      author = {C. Bane Sullivan and Alexander Kaszynski},
+      author = {Bane Sullivan and Alexander Kaszynski},
       title = {{PyVista}: {3D} plotting and mesh analysis through a streamlined interface for the {Visualization Toolkit} ({VTK})},
       journal = {Journal of Open Source Software}
     }

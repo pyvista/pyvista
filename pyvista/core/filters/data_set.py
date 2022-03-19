@@ -147,7 +147,9 @@ class DataSetFilters:
                 return self
         return result
 
-    def clip_box(self, bounds=None, invert=True, factor=0.35, progress_bar=False):
+    def clip_box(
+        self, bounds=None, invert=True, factor=0.35, progress_bar=False, merge_points=True
+    ):
         """Clip a dataset by a bounding box defined by the bounds.
 
         If no bounds are given, a corner of the dataset bounds will be removed.
@@ -173,6 +175,10 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        merge_points : bool, optional
+            If ``True`` (default), coinciding points of independently
+            defined mesh elements will be merged.
 
         Returns
         -------
@@ -211,7 +217,7 @@ class DataSetFilters:
             if poly.n_cells != 6:
                 raise ValueError("The bounds mesh must have only 6 faces.")
             bounds = []
-            poly.compute_normals()
+            poly.compute_normals(inplace=True)
             for cid in range(6):
                 cell = poly.extract_cells(cid)
                 normal = cell["Normals"][0]
@@ -225,6 +231,9 @@ class DataSetFilters:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
             bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
         alg = _vtk.vtkBoxClipDataSet()
+        if not merge_points:
+            # vtkBoxClipDataSet uses vtkMergePoints by default
+            alg.SetLocator(_vtk.vtkNonMergingPointLocator())
         alg.SetInputDataObject(self)
         alg.SetBoxClip(*bounds)
         port = 0
@@ -804,6 +813,8 @@ class DataSetFilters:
         preference='cell',
         all_scalars=False,
         progress_bar=False,
+        component_mode="all",
+        component=0,
     ):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
@@ -849,6 +860,17 @@ class DataSetFilters:
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        component_mode : {'selected', 'all', 'any'}
+            The method to satisfy the criteria for the threshold of
+            multicomponent scalars.  'selected' (default)
+            uses only the ``component``.  'all' requires all
+            components to meet criteria.  'any' is when
+            any component satisfies the criteria.
+
+        component : int
+            When using ``component_mode='selected'``, this sets
+            which component to threshold on.  Default is ``0``.
 
         Returns
         -------
@@ -960,6 +982,24 @@ class DataSetFilters:
                 alg.ThresholdByLower(value)
             else:
                 alg.ThresholdByUpper(value)
+        if component_mode == "component":
+            alg.SetComponentModeToUseSelected()
+            dim = arr.shape[1]
+            if not isinstance(component, (int, np.integer)):
+                raise TypeError("component must be int")
+            if component > (dim - 1) or component < 0:
+                raise ValueError(
+                    f"scalars has {dim} components: supplied component {component} not in range"
+                )
+            alg.SetSelectedComponent(component)
+        elif component_mode == "all":
+            alg.SetComponentModeToUseAll()
+        elif component_mode == "any":
+            alg.SetComponentModeToUseAny()
+        else:
+            raise ValueError(
+                f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"
+            )
         # Run the threshold
         _update_alg(alg, progress_bar, 'Thresholding')
         return _get_output(alg)
@@ -3530,6 +3570,56 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
+    def sample_over_multiple_lines(self, points, tolerance=None, progress_bar=False):
+        """Sample a dataset onto a multiple lines.
+
+        Parameters
+        ----------
+        points : np.ndarray or list
+            List of points defining multiple lines.
+
+        tolerance : float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Line object with sampled data from dataset.
+
+        Examples
+        --------
+        Sample over a plane that is interpolating a point cloud.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> np.random.seed(12)
+        >>> point_cloud = np.random.random((5, 3))
+        >>> point_cloud[:, 2] = 0
+        >>> point_cloud -= point_cloud.mean(0)
+        >>> pdata = pyvista.PolyData(point_cloud)
+        >>> pdata['values'] = np.random.random(5)
+        >>> plane = pyvista.Plane()
+        >>> plane.clear_data()
+        >>> plane = plane.interpolate(pdata, sharpness=3.5)
+        >>> sample = plane.sample_over_multiple_lines([[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]])
+        >>> pl = pyvista.Plotter()
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
+        >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
+        >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
+        >>> pl.show()
+
+        """
+        # Make a multiple lines and sample the dataset
+        multiple_lines = pyvista.MultipleLines(points=points)
+        sampled_multiple_lines = multiple_lines.sample(
+            self, tolerance=tolerance, progress_bar=progress_bar
+        )
+        return sampled_multiple_lines
+
     def sample_over_circular_arc(
         self, pointa, pointb, center, resolution=None, tolerance=None, progress_bar=False
     ):
@@ -4611,6 +4701,73 @@ class DataSetFilters:
         output = pyvista.wrap(alg.GetOutput())
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface()
+        return output
+
+    def tessellate(self, max_n_subdivide=3, merge_points=True, progress_bar=False):
+        """Tessellate a mesh.
+
+        This filter approximates nonlinear FEM-like elements with linear
+        simplices. The output mesh will have geometry and any fields specified
+        as attributes in the input mesh's point data. The attribute's copy
+        flags are honored, except for normals.
+
+        For more details see `vtkTessellatorFilter <https://vtk.org/doc/nightly/html/classvtkTessellatorFilter.html#details>`_.
+
+        Parameters
+        ----------
+        max_n_subdivide : int, optional
+            Maximum number of subdivisions.
+            Defaults to ``3``.
+
+        merge_points : bool, optional
+            The adaptive tessellation will output vertices that are not shared among cells,
+            even where they should be. This can be corrected to some extent.
+            Defaults to ``True``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with tessellated mesh.  Return type matches input.
+
+        Examples
+        --------
+        First, plot the high order FEM-like elements.
+
+        >>> import pyvista
+        >>> import numpy as np
+        >>> points = np.array(
+        ...     [
+        ...         [0.0, 0.0, 0.0],
+        ...         [2.0, 0.0, 0.0],
+        ...         [1.0, 2.0, 0.0],
+        ...         [1.0, 0.5, 0.0],
+        ...         [1.5, 1.5, 0.0],
+        ...         [0.5, 1.5, 0.0],
+        ...     ]
+        ... )
+        >>> cells = np.array([6, 0, 1, 2, 3, 4, 5])
+        >>> cell_types = np.array([69])
+        >>> mesh = pyvista.UnstructuredGrid(cells, cell_types, points)
+        >>> mesh.plot(show_edges=True, line_width=5)
+
+        Now, plot the tessellated mesh.
+
+        >>> tessellated = mesh.tessellate()
+        >>> tessellated.clear_data()  # cleans up plot
+        >>> tessellated.plot(show_edges=True, line_width=5)
+
+        """
+        if isinstance(self, _vtk.vtkPolyData):
+            raise TypeError('Tessellate filter is not supported for PolyData objects.')
+        alg = _vtk.vtkTessellatorFilter()
+        alg.SetInputData(self)
+        alg.SetMergePoints(merge_points)
+        alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
+        _update_alg(alg, progress_bar, 'Tessellating Mesh')
+        output = _get_output(alg)
         return output
 
     def transform(
