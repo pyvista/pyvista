@@ -477,6 +477,7 @@ def test_openfoam_patch_arrays():
     assert mesh[patch_array_key].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']
 
 
+@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
 def test_read_hdf():
     can = examples.download_can(partial=True)
     assert can.n_points == 6724
