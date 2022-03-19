@@ -17,6 +17,7 @@ from pyvista import (
 from pyvista.core.errors import DeprecationError, NotAllTrianglesError, VTKVersionError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 @abstract_class
@@ -2530,7 +2531,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Creating a Ribbon')
         return _get_output(alg)
 
-    def extrude(self, vector, capping=False, inplace=False, progress_bar=False):
+    def extrude(self, vector, capping=None, inplace=False, progress_bar=False):
         """Sweep polygonal data creating a "skirt" from free edges.
 
         This will create a line from vertices.
@@ -2551,6 +2552,8 @@ class PolyDataFilters(DataSetFilters):
         .. versionchanged:: 0.32.0
            The ``capping`` keyword was added with a default of ``False``.
            The previously used VTK default corresponds to ``capping=True``.
+           In a future version the default will be changed to ``True`` to
+           match the behavior of the underlying VTK filter.
 
         Parameters
         ----------
@@ -2558,7 +2561,16 @@ class PolyDataFilters(DataSetFilters):
             Direction and length to extrude the mesh in.
 
         capping : bool, optional
-            Control if the sweep of a 2D object is capped.
+            Control if the sweep of a 2D object is capped. The default is
+            ``False``, which differs from VTK's default.
+
+            .. warning::
+               The ``capping`` keyword was added in version 0.32.0 with a
+               default value of ``False``. In a future version this default
+               will be changed to ``True`` to match the behavior of the
+               underlying VTK filter. It is recommended to explicitly pass
+               a value for this keyword argument to prevent future changes
+               in behavior and warnings.
 
         inplace : bool, optional
             Overwrites the original mesh in-place.
@@ -2587,6 +2599,15 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh.plot(line_width=5, show_edges=True)
 
         """
+        if capping is None:
+            capping = False
+            warnings.warn(
+                'The default value of the ``capping`` keyword argument will change in '
+                'a future version to ``True`` to match the behavior of VTK. We recommend '
+                'passing the keyword explicitly to prevent future surprises.',
+                PyvistaDeprecationWarning,
+            )
+
         alg = _vtk.vtkLinearExtrusionFilter()
         alg.SetExtrusionTypeToVectorExtrusion()
         alg.SetVector(*vector)
@@ -2606,7 +2627,7 @@ class PolyDataFilters(DataSetFilters):
         translation=0.0,
         dradius=0.0,
         angle=360.0,
-        capping=False,
+        capping=None,
         progress_bar=False,
     ):
         """Sweep polygonal data creating "skirt" from free edges and lines, and lines from vertices.
@@ -2639,6 +2660,8 @@ class PolyDataFilters(DataSetFilters):
         .. versionchanged:: 0.32.0
            The ``capping`` keyword was added with a default of ``False``.
            The previously used VTK default corresponds to ``capping=True``.
+           In a future version the default will be changed to ``True`` to
+           match the behavior of the underlying VTK filter.
 
         Parameters
         ----------
@@ -2658,7 +2681,16 @@ class PolyDataFilters(DataSetFilters):
             The angle of rotation in degrees.
 
         capping : bool, optional
-            Control if the sweep of a 2D object is capped.
+            Control if the sweep of a 2D object is capped. The default is
+            ``False``, which differs from VTK's default.
+
+            .. warning::
+               The ``capping`` keyword was added in version 0.32.0 with a
+               default value of ``False``. In a future version this default
+               will be changed to ``True`` to match the behavior of the
+               underlying VTK filter. It is recommended to explicitly pass
+               a value for this keyword argument to prevent future changes
+               in behavior and warnings.
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
@@ -2676,7 +2708,8 @@ class PolyDataFilters(DataSetFilters):
         >>> profile = pyvista.Polygon(center=[1.25, 0.0, 0.0], radius=0.2,
         ...                           normal=(0, 1, 0), n_sides=30)
         >>> extruded = profile.extrude_rotate(resolution=360, translation=4.0,
-        ...                                   dradius=.5, angle=1500.0)
+        ...                                   dradius=0.5, angle=1500.0,
+        ...                                   capping=True)
         >>> extruded.plot(smooth_shading=True)
 
         Create a "wine glass" using the rotational extrusion filter.
@@ -2696,6 +2729,15 @@ class PolyDataFilters(DataSetFilters):
         >>> extruded.plot(color='tan')
 
         """
+        if capping is None:
+            capping = False
+            warnings.warn(
+                'The default value of the ``capping`` keyword argument will change in '
+                'a future version to ``True`` to match the behavior of VTK. We recommend '
+                'passing the keyword explicitly to prevent future surprises.',
+                PyvistaDeprecationWarning,
+            )
+
         if resolution <= 0:
             raise ValueError('`resolution` should be positive')
         alg = _vtk.vtkRotationalExtrusionFilter()
