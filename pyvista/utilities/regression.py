@@ -1,14 +1,13 @@
 """Image regression module."""
-import vtk
-from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import numpy as np
 
 import pyvista
+from pyvista import _vtk
 
 
 def remove_alpha(img):
     """Remove the alpha channel from ``vtk.vtkImageData``."""
-    ec = vtk.vtkImageExtractComponents()
+    ec = _vtk.vtkImageExtractComponents()
     ec.SetComponents(0, 1, 2)
     ec.SetInputData(img)
     ec.Update()
@@ -32,19 +31,19 @@ def wrap_image_array(arr):
     if arr.dtype != np.uint8:
         raise ValueError('Expecting a np.uint8 array')
 
-    img = vtk.vtkImageData()
+    img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
     wrap_img = pyvista.wrap(img)
-    wrap_img.point_arrays['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
+    wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
     return wrap_img
 
 
 def image_from_window(ren_win, as_vtk=False, ignore_alpha=False):
     """Extract the image from the render window as an array."""
     width, height = ren_win.GetSize()
-    arr = vtk.vtkUnsignedCharArray()
+    arr = _vtk.vtkUnsignedCharArray()
     ren_win.GetRGBACharPixelData(0, 0, width - 1, height - 1, 0, arr)
-    data = vtk_to_numpy(arr).reshape(height, width, -1)[::-1]
+    data = _vtk.vtk_to_numpy(arr).reshape(height, width, -1)[::-1]
     if ignore_alpha:
         data = data[:, :, :-1]
     if as_vtk:
@@ -57,20 +56,20 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
 
     Parameters
     ----------
-    im1 : filename, np.ndarray, vtkRenderWindow, or vtkImageData
+    im1 : filename, numpy.ndarray, vtkRenderWindow, or vtkImageData
         Render window, numpy array representing the output of a render
-        window, or ``vtkImageData``
+        window, or ``vtkImageData``.
 
-    im2 : filename, np.ndarray, vtkRenderWindow, or vtkImageData
+    im2 : filename, numpy.ndarray, vtkRenderWindow, or vtkImageData
         Render window, numpy array representing the output of a render
-        window, or ``vtkImageData``
+        window, or ``vtkImageData``.
 
-    threshold : int
+    threshold : int, optional
         Threshold tolerance for pixel differences.  This should be
         greater than 0, otherwise it will always return an error, even
         on identical images.
 
-    use_vtk : bool
+    use_vtk : bool, optional
         When disabled, computes the mean pixel error over the entire
         image using numpy.  The difference between pixel is calculated
         for each RGB channel, summed, and then divided by the number
@@ -79,22 +78,22 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
 
     Returns
     -------
-    error : float
+    float
         Total error between the images if using ``use_vtk=True``, and
         the mean pixel error when ``use_vtk=False``.
 
     Examples
     --------
-    Compare two active plotters
+    Compare two active plotters.
 
     >>> import pyvista
     >>> pl1 = pyvista.Plotter()
     >>> _ = pl1.add_mesh(pyvista.Sphere(), smooth_shading=True)
     >>> pl2 = pyvista.Plotter()
     >>> _ = pl2.add_mesh(pyvista.Sphere(), smooth_shading=False)
-    >>> pyvista.compare_images(pl1, pl2)  # doctest:+SKIP
+    >>> error = pyvista.compare_images(pl1, pl2)
 
-    Compare two active plotters
+    Compare images from file.
 
     >>> import pyvista
     >>> img1 = pyvista.read('img1.png')  # doctest:+SKIP
@@ -102,12 +101,12 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     >>> pyvista.compare_images(img1, img2)  # doctest:+SKIP
 
     """
-    from pyvista import wrap, UniformGrid, read, Plotter
+    from pyvista import Plotter, UniformGrid, read, wrap
 
     def to_img(img):
         if isinstance(img, UniformGrid):  # pragma: no cover
             return img
-        elif isinstance(img, vtk.vtkImageData):
+        elif isinstance(img, _vtk.vtkImageData):
             return wrap(img)
         elif isinstance(img, str):
             return read(img)
@@ -119,17 +118,19 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
                 img.render()
             return image_from_window(img.ren_win, True, ignore_alpha=True)
         else:
-            raise TypeError(f'Unsupported data type {type(img)}.  Should be '
-                            'Either a np.ndarray, vtkRenderWindow, or vtkImageData')
+            raise TypeError(
+                f'Unsupported data type {type(img)}.  Should be '
+                'Either a np.ndarray, vtkRenderWindow, or vtkImageData'
+            )
 
     im1 = remove_alpha(to_img(im1))
     im2 = remove_alpha(to_img(im2))
 
     if im1.GetDimensions() != im2.GetDimensions():
-        raise RuntimeError('Input images %s and %s are not of equal size.')
+        raise RuntimeError('Input images are not the same size.')
 
     if use_vtk:
-        img_diff = vtk.vtkImageDifference()
+        img_diff = _vtk.vtkImageDifference()
         img_diff.SetThreshold(threshold)
         img_diff.SetInputData(im1)
         img_diff.SetImageData(im2)
@@ -139,5 +140,5 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         return img_diff.GetError()
 
     # otherwise, simply compute the mean pixel difference
-    diff = np.abs(im1.point_arrays[0] - im2.point_arrays[0])
-    return np.sum(diff) / im1.point_arrays[0].shape[0]
+    diff = np.abs(im1.point_data[0] - im2.point_data[0])
+    return np.sum(diff) / im1.point_data[0].shape[0]

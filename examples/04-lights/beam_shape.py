@@ -13,14 +13,14 @@ Consider two hemispheres:
 """
 # sphinx_gallery_thumbnail_number = 5
 import pyvista as pv
+
 plotter = pv.Plotter()
 
 hemi = pv.Sphere().clip()
-hemi.translate((-1, 0, 0))
+hemi.translate((-1, 0, 0), inplace=True)
 plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
-hemi = hemi.copy()
-hemi.rotate_z(180)
+hemi = hemi.rotate_z(180, inplace=False)
 plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 plotter.show()
@@ -36,11 +36,10 @@ plotter.show()
 plotter = pv.Plotter(lighting='none')
 
 hemi = pv.Sphere().clip()
-hemi.translate((-1, 0, 0))
+hemi.translate((-1, 0, 0), inplace=True)
 plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
-hemi = hemi.copy()
-hemi.rotate_z(180)
+hemi = hemi.rotate_z(180, inplace=False)
 plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 light = pv.Light(position=(0, 0, 0), focal_point=(-1, 0, 0))
@@ -59,11 +58,10 @@ plotter.show()
 plotter = pv.Plotter(lighting='none')
 
 hemi = pv.Sphere().clip()
-hemi.translate((-1, 0, 0))
+hemi.translate((-1, 0, 0), inplace=True)
 plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
-hemi = hemi.copy()
-hemi.rotate_z(180)
+hemi = hemi.rotate_z(180, inplace=False)
 plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 light = pv.Light(position=(0, 0, 0), focal_point=(-1, 0, 0))
@@ -91,8 +89,7 @@ hemi = pv.Sphere().clip()
 plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 offset = 1.5
-hemi = hemi.copy()
-hemi.translate((0, offset, 0))
+hemi = hemi.translate((0, offset, 0), inplace=False)
 plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
 # non-spot positional light in the center of the first hemisphere
@@ -125,12 +122,12 @@ plotter.show()
 plotter = pv.Plotter(lighting='none')
 hemi_template = pv.Sphere().clip()
 
-centers = [(0, 0, 0), (0, 1.5, 0), (0, 1.5*0.5, 1.5*3**0.5/2)]
+centers = [(0, 0, 0), (0, 1.5, 0), (0, 1.5 * 0.5, 1.5 * 3**0.5 / 2)]
 exponents = [1, 0.3, 5]
 
 for center, exponent in zip(centers, exponents):
     hemi = hemi_template.copy()
-    hemi.translate(center)
+    hemi.translate(center, inplace=True)
     plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 
     # spotlight in the center of the hemisphere, shining into it

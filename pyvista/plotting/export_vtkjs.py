@@ -52,8 +52,6 @@ import sys
 import time
 import zipfile
 
-import vtk
-
 FILENAME_EXTENSION = '.vtkjs'
 
 arrayTypesMapping = '  bBhHiIlLfdL'  # last one is idtype
@@ -68,7 +66,7 @@ jsMapping = {
     'l': 'Int32Array',
     'L': 'Uint32Array',
     'f': 'Float32Array',
-    'd': 'Float64Array'
+    'd': 'Float64Array',
 }
 
 writer_mapping = {}
@@ -85,6 +83,7 @@ def get_range_info(array, component):
     comp_range['component'] = array.GetComponentName(component)
     return comp_range
 
+
 # -----------------------------------------------------------------------------
 
 
@@ -95,6 +94,7 @@ def get_ref(dest_dir, md5):
     ref['encode'] = 'BigEndian' if sys.byteorder == 'big' else 'LittleEndian'
     ref['basepath'] = dest_dir
     return ref
+
 
 # -----------------------------------------------------------------------------
 
@@ -114,8 +114,12 @@ def get_object_id(obj):
 
 # -----------------------------------------------------------------------------
 
+
 def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
     """Dump vtkjs data array."""
+    # import here to avoid circular imports
+    from pyvista import _vtk
+
     if root is None:
         root = {}
     if not array:
@@ -124,7 +128,7 @@ def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
     if array.GetDataType() == 12:
         # IdType need to be converted to Uint32
         array_size = array.GetNumberOfTuples() * array.GetNumberOfComponents()
-        new_array = vtk.vtkTypeUInt32Array()
+        new_array = _vtk.vtkTypeUInt32Array()
         new_array.SetNumberOfTuples(array_size)
         for i in range(array_size):
             new_array.SetValue(i, -1 if array.GetValue(i) < 0 else array.GetValue(i))
@@ -138,7 +142,9 @@ def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
         f.write(pbuffer)
 
     if compress:
-        with open(ppath, 'rb') as f_in, gzip.open(os.path.join(data_dir, pMd5 + '.gz'), 'wb') as f_out:
+        with open(ppath, 'rb') as f_in, gzip.open(
+            os.path.join(data_dir, pMd5 + '.gz'), 'wb'
+        ) as f_out:
             shutil.copyfileobj(f_in, f_out)
         # Close then remove.
         os.remove(ppath)
@@ -159,6 +165,7 @@ def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
 
     return root
 
+
 # -----------------------------------------------------------------------------
 
 
@@ -175,7 +182,7 @@ def dump_color_array(dataset_dir, data_dir, color_array_info, root=None, compres
         "activeTCoords": -1,
         "activeTensors": -1,
         "activeVectors": -1,
-        "arrays": []
+        "arrays": [],
     }
     root['cellData'] = {
         'vtkClass': 'vtkDataSetAttributes',
@@ -186,7 +193,7 @@ def dump_color_array(dataset_dir, data_dir, color_array_info, root=None, compres
         "activeTCoords": -1,
         "activeTensors": -1,
         "activeVectors": -1,
-        "arrays": []
+        "arrays": [],
     }
     root['fieldData'] = {
         'vtkClass': 'vtkDataSetAttributes',
@@ -197,7 +204,7 @@ def dump_color_array(dataset_dir, data_dir, color_array_info, root=None, compres
         "activeTCoords": -1,
         "activeTensors": -1,
         "activeVectors": -1,
-        "arrays": []
+        "arrays": [],
     }
 
     colorArray = color_array_info['colorArray']
@@ -210,6 +217,7 @@ def dump_color_array(dataset_dir, data_dir, color_array_info, root=None, compres
         root[location]['arrays'].append({'data': dumped_array})
 
     return root
+
 
 # -----------------------------------------------------------------------------
 
@@ -224,6 +232,7 @@ def dump_t_coords(dataset_dir, data_dir, dataset, root=None, compress=True):
         root['pointData']['activeTCoords'] = len(root['pointData']['arrays'])
         root['pointData']['arrays'].append({'data': dumped_array})
 
+
 # -----------------------------------------------------------------------------
 
 
@@ -236,6 +245,7 @@ def dump_normals(dataset_dir, data_dir, dataset, root=None, compress=True):
         dumped_array = dump_data_array(dataset_dir, data_dir, normals, {}, compress)
         root['pointData']['activeNormals'] = len(root['pointData']['arrays'])
         root['pointData']['arrays'].append({'data': dumped_array})
+
 
 # -----------------------------------------------------------------------------
 
@@ -253,7 +263,7 @@ def dump_all_arrays(dataset_dir, data_dir, dataset, root=None, compress=True):
         "activeTCoords": -1,
         "activeTensors": -1,
         "activeVectors": -1,
-        "arrays": []
+        "arrays": [],
     }
     root['cellData'] = {
         'vtkClass': 'vtkDataSetAttributes',
@@ -264,7 +274,7 @@ def dump_all_arrays(dataset_dir, data_dir, dataset, root=None, compress=True):
         "activeTCoords": -1,
         "activeTensors": -1,
         "activeVectors": -1,
-        "arrays": []
+        "arrays": [],
     }
     root['fieldData'] = {
         'vtkClass': 'vtkDataSetAttributes',
@@ -275,7 +285,7 @@ def dump_all_arrays(dataset_dir, data_dir, dataset, root=None, compress=True):
         "activeTCoords": -1,
         "activeTensors": -1,
         "activeVectors": -1,
-        "arrays": []
+        "arrays": [],
     }
 
     # Point data
@@ -284,8 +294,7 @@ def dump_all_arrays(dataset_dir, data_dir, dataset, root=None, compress=True):
     for i in range(pd_size):
         array = pd.GetArray(i)
         if array:
-            dumped_array = dump_data_array(
-                dataset_dir, data_dir, array, {}, compress)
+            dumped_array = dump_data_array(dataset_dir, data_dir, array, {}, compress)
             root['pointData']['activeScalars'] = 0
             root['pointData']['arrays'].append({'data': dumped_array})
 
@@ -295,12 +304,12 @@ def dump_all_arrays(dataset_dir, data_dir, dataset, root=None, compress=True):
     for i in range(cd_size):
         array = cd.GetArray(i)
         if array:
-            dumped_array = dump_data_array(
-                dataset_dir, data_dir, array, {}, compress)
+            dumped_array = dump_data_array(dataset_dir, data_dir, array, {}, compress)
             root['cellData']['activeScalars'] = 0
             root['cellData']['arrays'].append({'data': dumped_array})
 
     return root
+
 
 # -----------------------------------------------------------------------------
 
@@ -313,8 +322,7 @@ def dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None, 
     container = root
 
     # Points
-    points = dump_data_array(dataset_dir, data_dir,
-                             dataset.GetPoints().GetData(), {}, compress)
+    points = dump_data_array(dataset_dir, data_dir, dataset.GetPoints().GetData(), {}, compress)
     points['vtkClass'] = 'vtkPoints'
     container['points'] = points
 
@@ -323,29 +331,27 @@ def dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None, 
 
     # Verts
     if dataset.GetVerts() and dataset.GetVerts().GetData().GetNumberOfTuples() > 0:
-        _verts = dump_data_array(dataset_dir, data_dir,
-                                 dataset.GetVerts().GetData(), {}, compress)
+        _verts = dump_data_array(dataset_dir, data_dir, dataset.GetVerts().GetData(), {}, compress)
         _cells['verts'] = _verts
         _cells['verts']['vtkClass'] = 'vtkCellArray'
 
     # Lines
     if dataset.GetLines() and dataset.GetLines().GetData().GetNumberOfTuples() > 0:
-        _lines = dump_data_array(dataset_dir, data_dir,
-                                 dataset.GetLines().GetData(), {}, compress)
+        _lines = dump_data_array(dataset_dir, data_dir, dataset.GetLines().GetData(), {}, compress)
         _cells['lines'] = _lines
         _cells['lines']['vtkClass'] = 'vtkCellArray'
 
     # Polys
     if dataset.GetPolys() and dataset.GetPolys().GetData().GetNumberOfTuples() > 0:
-        _polys = dump_data_array(dataset_dir, data_dir,
-                                 dataset.GetPolys().GetData(), {}, compress)
+        _polys = dump_data_array(dataset_dir, data_dir, dataset.GetPolys().GetData(), {}, compress)
         _cells['polys'] = _polys
         _cells['polys']['vtkClass'] = 'vtkCellArray'
 
     # Strips
     if dataset.GetStrips() and dataset.GetStrips().GetData().GetNumberOfTuples() > 0:
-        _strips = dump_data_array(dataset_dir, data_dir,
-                                  dataset.GetStrips().GetData(), {}, compress)
+        _strips = dump_data_array(
+            dataset_dir, data_dir, dataset.GetStrips().GetData(), {}, compress
+        )
         _cells['strips'] = _strips
         _cells['strips']['vtkClass'] = 'vtkCellArray'
 
@@ -408,9 +414,11 @@ def write_data_set(file_path, dataset, output_dir, color_array_info, new_name=No
 
     return dataset_dir
 
+
 ### ----------------------------------------------------------------------- ###
 ###                          Main script contents                           ###
 ### ----------------------------------------------------------------------- ###
+
 
 def mkdir_p(path):
     """Make directory at path."""
@@ -425,6 +433,11 @@ def mkdir_p(path):
 
 def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
     """Export a plotter's rendering window to the VTKjs format."""
+    arrays = []  # assist in cleaning up references
+
+    # import here to avoid circular imports
+    from pyvista import _vtk
+
     sceneName = os.path.split(filename)[1]
     doCompressArrays = compress_arrays
 
@@ -457,26 +470,25 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     if dataObject.GetNumberOfBlocks() == 1:
                         dataset = dataObject.GetBlock(0)
                     else:
-                        gf = vtk.vtkCompositeDataGeometryFilter()
+                        gf = _vtk.vtkCompositeDataGeometryFilter()
                         gf.SetInputData(dataObject)
                         gf.Update()
                         dataset = gf.GetOutput()
                 else:
                     dataset = mapper.GetInput()
 
-                if dataset and not isinstance(dataset, (vtk.vtkPolyData, vtk.vtkImageData)):
+                if dataset and not isinstance(dataset, (_vtk.vtkPolyData, _vtk.vtkImageData)):
                     # All data must be PolyData surfaces
-                    gf = vtk.vtkGeometryFilter()
+                    gf = _vtk.vtkGeometryFilter()
                     gf.SetInputData(dataset)
                     gf.Update()
                     dataset = gf.GetOutputDataObject(0)
 
-
-                if dataset:# and dataset.GetPoints(): # NOTE: vtkImageData does not have points
-                    componentName = f'data_{rIdx}_{rpIdx}' # getComponentName(renProp)
+                if dataset:  # and dataset.GetPoints(): # NOTE: vtkImageData does not have points
+                    componentName = f'data_{rIdx}_{rpIdx}'  # getComponentName(renProp)
                     scalarVisibility = mapper.GetScalarVisibility()
-                    #arrayAccessMode = mapper.GetArrayAccessMode()
-                    #colorArrayName = mapper.GetArrayName() #TODO: if arrayAccessMode == 1 else mapper.GetArrayId()
+                    # arrayAccessMode = mapper.GetArrayAccessMode()
+                    # colorArrayName = mapper.GetArrayName() #TODO: if arrayAccessMode == 1 else mapper.GetArrayId()
                     colorMode = mapper.GetColorMode()
                     scalarMode = mapper.GetScalarMode()
                     lookupTable = mapper.GetLookupTable()
@@ -485,7 +497,8 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     arrayLocation = ''
 
                     if scalarVisibility:
-                        if scalarMode == 3 or scalarMode == 1:  # VTK_SCALAR_MODE_USE_POINT_FIELD_DATA or VTK_SCALAR_MODE_USE_POINT_DATA
+                        if scalarMode == 3 or scalarMode == 1:
+                            # VTK_SCALAR_MODE_USE_POINT_FIELD_DATA or VTK_SCALAR_MODE_USE_POINT_DATA
                             dsAttrs = dataset.GetPointData()
                             arrayLocation = 'pointData'
                         # VTK_SCALAR_MODE_USE_CELL_FIELD_DATA or VTK_SCALAR_MODE_USE_CELL_DATA
@@ -497,27 +510,32 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     dataArray = None
 
                     if dsAttrs:
-                        dataArray = dsAttrs.GetArray(0) # Force getting the active array
+                        dataArray = dsAttrs.GetArray(0)  # Force getting the active array
 
                     if dataArray:
                         # component = -1 => let specific instance get scalar from vector before mapping
-                        colorArray = lookupTable.MapScalars(
-                            dataArray, colorMode, -1)
+                        colorArray = lookupTable.MapScalars(dataArray, colorMode, -1)
                         colorArrayName = '__CustomRGBColorArray__'
                         colorArray.SetName(colorArrayName)
                         colorMode = 0
+
+                        # track arrays for cleanup
+                        arrays.append(colorArray)
                     else:
                         colorArrayName = ''
 
-                    color_array_info = {
-                        'colorArray': colorArray,
-                        'location': arrayLocation
-                    }
+                    color_array_info = {'colorArray': colorArray, 'location': arrayLocation}
 
-                    scDirs.append(write_data_set('', dataset, output_dir,
-                                                 color_array_info,
-                                                 new_name=componentName,
-                                                 compress=doCompressArrays))
+                    scDirs.append(
+                        write_data_set(
+                            '',
+                            dataset,
+                            output_dir,
+                            color_array_info,
+                            new_name=componentName,
+                            compress=doCompressArrays,
+                        )
+                    )
 
                     # Handle texture if any
                     textureName = None
@@ -526,72 +544,89 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                         textureName = f'texture_{get_object_id(textureData)}'
                         textureToSave[textureName] = textureData
 
-                    representation = renProp.GetProperty().GetRepresentation(
-                    ) if hasattr(renProp, 'GetProperty') else 2
-                    colorToUse = renProp.GetProperty().GetDiffuseColor(
-                    ) if hasattr(renProp, 'GetProperty') else [1, 1, 1]
+                    representation = (
+                        renProp.GetProperty().GetRepresentation()
+                        if hasattr(renProp, 'GetProperty')
+                        else 2
+                    )
+                    colorToUse = (
+                        renProp.GetProperty().GetDiffuseColor()
+                        if hasattr(renProp, 'GetProperty')
+                        else [1.0, 1.0, 1.0]
+                    )
                     if representation == 1:
-                        colorToUse = renProp.GetProperty().GetColor() if hasattr(
-                            renProp, 'GetProperty') else [1, 1, 1]
-                    pointSize = renProp.GetProperty().GetPointSize(
-                    ) if hasattr(renProp, 'GetProperty') else 1.0
-                    opacity = renProp.GetProperty().GetOpacity() if hasattr(
-                        renProp, 'GetProperty') else 1.0
-                    edgeVisibility = renProp.GetProperty().GetEdgeVisibility(
-                    ) if hasattr(renProp, 'GetProperty') else False
+                        colorToUse = (
+                            renProp.GetProperty().GetColor()
+                            if hasattr(renProp, 'GetProperty')
+                            else [1.0, 1.0, 1.0]
+                        )
+                    pointSize = (
+                        renProp.GetProperty().GetPointSize()
+                        if hasattr(renProp, 'GetProperty')
+                        else 1.0
+                    )
+                    opacity = (
+                        renProp.GetProperty().GetOpacity()
+                        if hasattr(renProp, 'GetProperty')
+                        else 1.0
+                    )
+                    edgeVisibility = (
+                        renProp.GetProperty().GetEdgeVisibility()
+                        if hasattr(renProp, 'GetProperty')
+                        else False
+                    )
 
-                    p3dPosition = renProp.GetPosition() if renProp.IsA(
-                        'vtkProp3D') else [0, 0, 0]
-                    p3dScale = renProp.GetScale() if renProp.IsA(
-                        'vtkProp3D') else [1, 1, 1]
-                    p3dOrigin = renProp.GetOrigin() if renProp.IsA(
-                        'vtkProp3D') else [0, 0, 0]
-                    p3dRotateWXYZ = renProp.GetOrientationWXYZ(
-                    ) if renProp.IsA('vtkProp3D') else [0, 0, 0, 0]
+                    p3dPosition = renProp.GetPosition() if renProp.IsA('vtkProp3D') else [0, 0, 0]
+                    p3dScale = renProp.GetScale() if renProp.IsA('vtkProp3D') else [1, 1, 1]
+                    p3dOrigin = renProp.GetOrigin() if renProp.IsA('vtkProp3D') else [0, 0, 0]
+                    p3dRotateWXYZ = (
+                        renProp.GetOrientationWXYZ() if renProp.IsA('vtkProp3D') else [0, 0, 0, 0]
+                    )
 
-                    sceneComponents.append({
-                        "name": componentName,
-                        "type": "httpDataSetReader",
-                        "httpDataSetReader": {
-                            "url": componentName
-                        },
-                        "actor": {
-                            "origin": p3dOrigin,
-                            "scale": p3dScale,
-                            "position": p3dPosition,
-                        },
-                        "actorRotation": p3dRotateWXYZ,
-                        "mapper": {
-                            "colorByArrayName": colorArrayName,
-                            "colorMode": colorMode,
-                            "scalarMode": scalarMode
-                        },
-                        "property": {
-                            "representation": representation,
-                            "edgeVisibility": edgeVisibility,
-                            "diffuseColor": colorToUse,
-                            "pointSize": pointSize,
-                            "opacity": opacity
-                        },
-                        "lookupTable": {
-                            "tableRange": lookupTable.GetRange(),
-                            "hueRange": lookupTable.GetHueRange() if hasattr(lookupTable, 'GetHueRange') else [0.5, 0]
+                    sceneComponents.append(
+                        {
+                            "name": componentName,
+                            "type": "httpDataSetReader",
+                            "httpDataSetReader": {"url": componentName},
+                            "actor": {
+                                "origin": p3dOrigin,
+                                "scale": p3dScale,
+                                "position": p3dPosition,
+                            },
+                            "actorRotation": p3dRotateWXYZ,
+                            "mapper": {
+                                "colorByArrayName": colorArrayName,
+                                "colorMode": colorMode,
+                                "scalarMode": scalarMode,
+                            },
+                            "property": {
+                                "representation": representation,
+                                "edgeVisibility": edgeVisibility,
+                                "diffuseColor": colorToUse,
+                                "pointSize": pointSize,
+                                "opacity": opacity,
+                            },
+                            "lookupTable": {
+                                "tableRange": lookupTable.GetRange(),
+                                "hueRange": lookupTable.GetHueRange()
+                                if hasattr(lookupTable, 'GetHueRange')
+                                else [0.5, 0],
+                            },
                         }
-                    })
+                    )
 
                     if textureName:
                         sceneComponents[-1]['texture'] = textureName
 
     # Save texture data if any
     for key, val in textureToSave.items():
-        write_data_set('', val, output_dir, None, new_name=key,
-                       compress=doCompressArrays)
+        write_data_set('', val, output_dir, None, new_name=key, compress=doCompressArrays)
 
     cameraClippingRange = plotter.camera.clipping_range
 
     sceneDescription = {
         "fetchGzip": doCompressArrays,
-        "background": plotter.background_color,
+        "background": plotter.background_color.float_rgb,
         "camera": {
             "focalPoint": plotter.camera.focal_point,
             "position": plotter.camera.position,
@@ -599,29 +634,29 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
             "clippingRange": [elt for elt in cameraClippingRange],
         },
         "centerOfRotation": plotter.camera.focal_point,
-        "scene": sceneComponents
+        "scene": sceneComponents,
     }
 
     indexFilePath = os.path.join(output_dir, 'index.json')
     with open(indexFilePath, 'w') as outfile:
         json.dump(sceneDescription, outfile, indent=4)
 
-# -----------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------
 
     # Now zip up the results and get rid of the temp directory
-    sceneFileName = os.path.join(
-        root_output_directory, f'{sceneName}{FILENAME_EXTENSION}')
+    sceneFileName = os.path.join(root_output_directory, f'{sceneName}{FILENAME_EXTENSION}')
 
     try:
-        import zlib
+        import zlib  # noqa
+
         compression = zipfile.ZIP_DEFLATED
-    except:
+    except:  # noqa: E722
         compression = zipfile.ZIP_STORED
 
     zf = zipfile.ZipFile(sceneFileName, mode='w')
 
     try:
-        for dirName, subdirList, fileList in os.walk(output_dir):
+        for dirName, _, fileList in os.walk(output_dir):
             for fname in fileList:
                 fullPath = os.path.join(dirName, fname)
                 relPath = f'{sceneName}/{os.path.relpath(fullPath, output_dir)}'
@@ -631,7 +666,10 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
 
     shutil.rmtree(output_dir)
 
-    print('Finished exporting dataset to: ', sceneFileName)
+    # this must occur to avoid leaks
+    scDirs.clear()
+    for array in arrays:
+        array.SetReferenceCount(0)
 
 
 def convert_dropbox_url(url):
@@ -675,7 +713,9 @@ def get_vtkjs_url(*args):
     if host.lower() == "dropbox":
         convertURL = convert_dropbox_url(inURL)
     else:
-        print("--> Warning: Web host not specified or supported. URL is simply appended to standalone scene loader link.")
+        print(
+            "--> Warning: Web host not specified or supported. URL is simply appended to standalone scene loader link."
+        )
         convertURL = inURL
-    #print("--> Your link: %s" % generate_viewer_url(convertURL))
+    # print("--> Your link: %s" % generate_viewer_url(convertURL))
     return generate_viewer_url(convertURL)

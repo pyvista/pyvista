@@ -1,15 +1,23 @@
 import pathlib
 import platform
+import weakref
 
 import numpy as np
 import pytest
 import vtk
 
 import pyvista
-from pyvista import PolyData, RectilinearGrid, UniformGrid, StructuredGrid, MultiBlock
-from pyvista import examples as ex
+from pyvista import (
+    MultiBlock,
+    PolyData,
+    RectilinearGrid,
+    StructuredGrid,
+    UniformGrid,
+    examples as ex,
+)
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
+
 
 @pytest.fixture()
 def vtk_multi():
@@ -23,7 +31,7 @@ def pyvista_multi():
 
 def multi_from_datasets(*datasets):
     """Return pyvista multiblock composed of any number of datasets."""
-    return MultiBlock([*datasets])
+    return MultiBlock(datasets)
 
 
 def test_multi_block_init_vtk():
@@ -67,9 +75,9 @@ def test_multi_block_init_dict(rectilinear, airplane):
     assert multi.n_blocks == 2
     # Note that dictionaries do not maintain order
     assert isinstance(multi.GetBlock(0), (RectilinearGrid, PolyData))
-    assert multi.get_block_name(0) in ['grid','poly']
+    assert multi.get_block_name(0) in ['grid', 'poly']
     assert isinstance(multi.GetBlock(1), (RectilinearGrid, PolyData))
-    assert multi.get_block_name(1) in ['grid','poly']
+    assert multi.get_block_name(1) in ['grid', 'poly']
 
 
 def test_multi_block_keys(rectilinear, airplane):
@@ -111,8 +119,8 @@ def test_multi_block_set_get_ers():
     multi = MultiBlock()
     # Set the number of blocks
     multi.n_blocks = 6
-    assert multi.GetNumberOfBlocks() == 6 # Check that VTK side registered it
-    assert multi.n_blocks == 6 # Check pyvista side registered it
+    assert multi.GetNumberOfBlocks() == 6  # Check that VTK side registered it
+    assert multi.n_blocks == 6  # Check pyvista side registered it
     # Add data to the MultiBlock
     data = ex.load_rectilinear()
     multi[1, 'rect'] = data
@@ -120,13 +128,13 @@ def test_multi_block_set_get_ers():
     assert multi.n_blocks == 6
     # Check content
     assert isinstance(multi[1], RectilinearGrid)
-    for i in [0,2,3,4,5]:
+    for i in [0, 2, 3, 4, 5]:
         assert multi[i] is None
     # Check the bounds
     assert multi.bounds == list(data.bounds)
     multi[5] = ex.load_uniform()
     multi.set_block_name(5, 'uni')
-    multi.set_block_name(5, None) # Make sure it doesn't get overwritten
+    multi.set_block_name(5, None)  # Make sure it doesn't get overwritten
     assert isinstance(multi.get(5), UniformGrid)
     # Test get by name
     assert isinstance(multi['uni'], UniformGrid)
@@ -137,7 +145,7 @@ def test_multi_block_set_get_ers():
     # Make sure the rect grid was moved up
     assert isinstance(multi[0], RectilinearGrid)
     assert multi.get_block_name(0) == 'rect'
-    assert multi.get_block_name(2) == None
+    assert multi.get_block_name(2) is None
     # test del by name
     del multi['uni']
     assert multi.n_blocks == 4
@@ -196,11 +204,33 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
     assert str(multi) is not None
 
 
+def test_multi_block_eq(ant, sphere, uniform, airplane, globe):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+    other = multi.copy()
+
+    assert multi is not other
+    assert multi == other
+
+    assert pyvista.MultiBlock() == pyvista.MultiBlock()
+
+    other[0] = pyvista.Sphere()
+    assert multi != other
+
+    other = multi.copy()
+    other.set_block_name(0, "not matching")
+    assert multi != other
+
+    other = multi.copy()
+    other.append(pyvista.Sphere())
+    assert multi != other
+
+
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._WRITERS)
 @pytest.mark.parametrize('use_pathlib', [True, False])
-def test_multi_block_io(extension, binary, tmpdir, use_pathlib, ant,
-                        sphere, uniform, airplane, globe):
+def test_multi_block_io(
+    extension, binary, tmpdir, use_pathlib, ant, sphere, uniform, airplane, globe
+):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     if use_pathlib:
         pathlib.Path(filename)
@@ -214,11 +244,11 @@ def test_multi_block_io(extension, binary, tmpdir, use_pathlib, ant,
     foo = pyvista.read(filename)
     assert foo.n_blocks == multi.n_blocks
 
+
 @skip_mac  # fails due to download examples
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
-def test_ensight_multi_block_io(extension, binary, tmpdir, ant,
-                                sphere, uniform, airplane, globe):
+def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     # multi = ex.load_bfs()  # .case file
     multi = ex.download_backward_facing_step()  # .case file
@@ -259,7 +289,7 @@ def test_multi_io_erros(tmpdir):
     with pytest.raises(FileNotFoundError):
         _ = MultiBlock('foo.vtm')
     # Load bad extension
-    with pytest.raises(ValueError):
+    with pytest.raises(IOError):
         _ = MultiBlock(bad_ext_name)
 
 
@@ -320,20 +350,40 @@ def test_multi_slice_index(ant, sphere, uniform, airplane, globe):
     # Now check everything
     sub = multi[0:3]
     assert len(sub) == 3
-    for i in range(3):
-        assert id(sub[i]) == id(multi[i])
+    for i in range(len(sub)):
+        assert sub[i] is multi[i]
         assert sub.get_block_name(i) == multi.get_block_name(i)
     sub = multi[0:-1]
-    assert len(sub) == len(multi) == multi.n_blocks
-    for i in range(multi.n_blocks):
-        assert id(sub[i]) == id(multi[i])
+    assert len(sub) + 1 == len(multi)
+    for i in range(len(sub)):
+        assert sub[i] is multi[i]
         assert sub.get_block_name(i) == multi.get_block_name(i)
     sub = multi[0:-1:2]
-    assert len(sub) == 3
-    for i in range(3):
-        j = i*2
-        assert id(sub[i]) == id(multi[j])
+    assert len(sub) == 2
+    for i in range(len(sub)):
+        j = i * 2
+        assert sub[i] is multi[j]
         assert sub.get_block_name(i) == multi.get_block_name(j)
+
+
+def test_slice_defaults(ant, sphere, uniform, airplane, globe):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+    assert multi[:] == multi[0 : len(multi)]
+
+
+def test_slice_negatives(ant, sphere, uniform, airplane, globe):
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[::-1]})
+    assert multi[::-1] == test_multi
+
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[-2:]})
+    assert multi[-2:] == test_multi
+
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[:-1]})
+    assert multi[:-1] == test_multi
+
+    test_multi = pyvista.MultiBlock({key: multi[key] for key in multi.keys()[-1:-4:-2]})
+    assert multi[-1:-4:-2] == test_multi
 
 
 def test_multi_block_list_index(ant, sphere, uniform, airplane, globe):
@@ -358,7 +408,8 @@ def test_multi_block_list_index(ant, sphere, uniform, airplane, globe):
 
 def test_multi_block_volume(ant, airplane, sphere, uniform):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
-    assert multi.volume
+    vols = ant.volume + sphere.volume + uniform.volume + airplane.volume
+    assert multi.volume == pytest.approx(vols)
 
 
 def test_multi_block_length(ant, sphere, uniform, airplane):
@@ -395,17 +446,51 @@ def test_multi_block_save_lines(tmpdir):
 
 def test_multi_block_data_range():
     volume = pyvista.Wavelet()
-    a = volume.slice_along_axis(5,'x')
-    with pytest.raises(ValueError):
+    a = volume.slice_along_axis(5, 'x')
+    with pytest.raises(KeyError):
         a.get_data_range('foo')
     mi, ma = a.get_data_range(volume.active_scalars_name)
     assert mi is not None
     assert ma is not None
     # Test on a nested MultiBlock
-    b = volume.slice_along_axis(5,'y')
-    slices = pyvista.MultiBlock([a,b])
-    with pytest.raises(ValueError):
+    b = volume.slice_along_axis(5, 'y')
+    slices = pyvista.MultiBlock([a, b])
+    with pytest.raises(KeyError):
         slices.get_data_range('foo')
     mi, ma = slices.get_data_range(volume.active_scalars_name)
     assert mi is not None
     assert ma is not None
+
+
+def test_multiblock_ref():
+    # can't use fixtures here as we need to remove all references for
+    # garbage collection
+    sphere = pyvista.Sphere()
+    cube = pyvista.Cube()
+
+    block = MultiBlock([sphere, cube])
+    block[0]["a_new_var"] = np.zeros(block[0].n_points)
+    assert "a_new_var" in block[0].array_names
+
+    assert sphere is block[0]
+    assert cube is block[1]
+
+    wref_sphere = weakref.ref(sphere)
+    wref_cube = weakref.ref(cube)
+
+    # verify reference remains
+    assert wref_sphere() is sphere
+    del sphere
+    assert wref_sphere() is not None
+
+    # verify __delitem__ works and removes reference
+    del block[0]
+    assert wref_sphere() is None
+
+    # verify reference remains
+    assert wref_cube() is cube
+
+    # verify the __setitem__(index, None) edge case
+    del cube
+    block[0] = None
+    assert wref_cube() is None

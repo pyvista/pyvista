@@ -1,3 +1,6 @@
 lod
 byteorder
 flem
+parm
+doubleclick
+revered

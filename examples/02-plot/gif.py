@@ -1,30 +1,39 @@
 """
+.. _gif_movie_example:
+
 Create a GIF Movie
 ~~~~~~~~~~~~~~~~~~
+Generate a moving gif from an active plotter.
 
-Generate a moving gif from an active plotter
+.. note::
+   Use ``lighting=False`` to reduce the size of the color space to avoid
+   "jittery" GIFs, especially for the scalar bar.
+
 """
 
-import pyvista as pv
 import numpy as np
 
-x = np.arange(-10, 10, 0.25)
-y = np.arange(-10, 10, 0.25)
+import pyvista as pv
+
+x = np.arange(-10, 10, 0.5)
+y = np.arange(-10, 10, 0.5)
 x, y = np.meshgrid(x, y)
-r = np.sqrt(x ** 2 + y ** 2)
+r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
 
 # Create and structured surface
 grid = pv.StructuredGrid(x, y, z)
 
 # Create a plotter object and set the scalars to the Z height
-plotter = pv.Plotter()
-plotter.add_mesh(grid, scalars=z.ravel(), smooth_shading=True)
-
-print('Orient the view, then press "q" to close window and produce movie')
-
-# setup camera and close
-plotter.show(auto_close=False)
+plotter = pv.Plotter(notebook=False, off_screen=True)
+plotter.add_mesh(
+    grid,
+    scalars=z.ravel(),
+    lighting=False,
+    show_edges=True,
+    scalar_bar_args={"title": "Height"},
+    clim=[-1, 1],
+)
 
 # Open a gif
 plotter.open_gif("wave.gif")
@@ -39,12 +48,8 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     plotter.update_coordinates(pts, render=False)
     plotter.update_scalars(z.ravel(), render=False)
 
-    # must update normals when smooth shading is enabled
-    plotter.mesh.compute_normals(cell_normals=False, inplace=True)
-    plotter.write_frame()  # this will trigger the render
+    # Write a frame. This triggers a render.
+    plotter.write_frame()
 
-    # otherwise, when not writing frames, render with:
-    # plotter.render()
-
-# Close movie and delete object
+# Closes and finalizes movie
 plotter.close()

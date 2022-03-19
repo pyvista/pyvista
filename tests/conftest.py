@@ -3,13 +3,7 @@ from pytest import fixture
 
 import pyvista
 from pyvista import examples
-pyvista.rcParams['off_screen'] = True
 
-# necessary for image regression.  Xvfb doesn't support
-# multi-sampling, so we disable it here for consistency between
-# desktops and remote testing
-pyvista.rcParams['multi_samples'] = 1
-pyvista.rcParams['window_size'] = [400, 400]  # default is [1024, 768]
 pyvista.OFF_SCREEN = True
 
 
@@ -22,6 +16,11 @@ def set_mpl():
         pass
     else:
         matplotlib.use('agg', force=True)
+
+
+@fixture()
+def cube():
+    return pyvista.Cube()
 
 
 @fixture()
@@ -61,9 +60,11 @@ def hexbeam():
 
 @fixture()
 def struct_grid():
-    x, y, z = np.meshgrid(np.arange(-10, 10, 2),
-                          np.arange(-10, 10, 2),
-                          np.arange(-10, 10, 2))
+    x, y, z = np.meshgrid(
+        np.arange(-10, 10, 2, dtype=np.float32),
+        np.arange(-10, 10, 2, dtype=np.float32),
+        np.arange(-10, 10, 2, dtype=np.float32),
+    )
     return pyvista.StructuredGrid(x, y, z)
 
 
@@ -75,3 +76,20 @@ def plane():
 @fixture()
 def spline():
     return examples.load_spline()
+
+
+@fixture()
+def tri_cylinder():
+    """Triangulated cylinder"""
+    return pyvista.Cylinder().triangulate()
+
+
+@fixture()
+def datasets():
+    return [
+        examples.load_uniform(),  # UniformGrid
+        examples.load_rectilinear(),  # RectilinearGrid
+        examples.load_hexbeam(),  # UnstructuredGrid
+        examples.load_airplane(),  # PolyData
+        examples.load_structured(),  # StructuredGrid
+    ]

@@ -1,4 +1,6 @@
 """
+.. _volumetric_example:
+
 Volumetric Analysis
 ~~~~~~~~~~~~~~~~~~~
 
@@ -8,6 +10,7 @@ Calculate mass properties such as the volume or area of datasets
 
 # sphinx_gallery_thumbnail_number = 4
 import numpy as np
+
 from pyvista import examples
 
 ###############################################################################
@@ -30,7 +33,7 @@ dataset.set_active_scalars("Spatial Cell Data")
 sized = dataset.compute_cell_sizes()
 
 # Grab volumes for all cells in the mesh
-cell_volumes = sized.cell_arrays["Volume"]
+cell_volumes = sized.cell_data["Volume"]
 
 ###############################################################################
 # We can also compute the total volume of the mesh using the ``.volume``
@@ -55,11 +58,11 @@ threshed.plot(show_grid=True, cpos=[-2, 5, 3])
 # Create a classifying array to ID each body
 rng = dataset.get_data_range()
 cval = ((rng[1] - rng[0]) * 0.20) + rng[0]
-classifier = threshed.cell_arrays["Spatial Cell Data"] > cval
+classifier = threshed.cell_data["Spatial Cell Data"] > cval
 
 # Compute cell volumes
 sizes = threshed.compute_cell_sizes()
-volumes = sizes.cell_arrays["Volume"]
+volumes = sizes.cell_data["Volume"]
 
 # Split volumes based on classifier and get volumes!
 idx = np.argwhere(classifier)
@@ -145,7 +148,7 @@ for key in bodies.keys():
         del bodies[key]
         continue
     # Now lets add a volume array to all blocks
-    b.cell_arrays["TOTAL VOLUME"] = np.full(b.n_cells, vol)
+    b.cell_data["TOTAL VOLUME"] = np.full(b.n_cells, vol)
 
 ###############################################################################
 # Print out the volumes for each body:

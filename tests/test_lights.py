@@ -9,9 +9,9 @@ configuration = [
     ('light_type', pyvista.Light.CAMERA_LIGHT, 'SetLightType'),  # resets transformation!
     ('position', (1, 1, 1), 'SetPosition'),
     ('focal_point', (2, 2, 2), 'SetFocalPoint'),
-    ('ambient_color', (1, 0, 0), 'SetAmbientColor'),
-    ('diffuse_color', (0, 1, 0), 'SetDiffuseColor'),
-    ('specular_color', (0, 0, 1), 'SetSpecularColor'),
+    ('ambient_color', (1.0, 0.0, 0.0), 'SetAmbientColor'),
+    ('diffuse_color', (0.0, 1.0, 0.0), 'SetDiffuseColor'),
+    ('specular_color', (0.0, 0.0, 1.0), 'SetSpecularColor'),
     ('intensity', 0.5, 'SetIntensity'),
     ('on', False, 'SetSwitch'),
     ('positional', True, 'SetPositional'),
@@ -19,15 +19,33 @@ configuration = [
     ('cone_angle', 45, 'SetConeAngle'),
     ('attenuation_values', (3, 2, 1), 'SetAttenuationValues'),
     ('transform_matrix', np.arange(4 * 4).reshape(4, 4), 'SetTransformMatrix'),
+    ('shadow_attenuation', 0.5, 'SetShadowAttenuation'),
 ]
+
 
 def test_init():
     position = (1, 1, 1)
     focal_point = (2, 2, 2)
     color = (0.5, 0.5, 0.5)
     light_type = 'headlight'
-    light = pyvista.Light(position=position, focal_point=focal_point,
-                          color=color, light_type=light_type)
+    cone_angle = 15
+    intensity = 2
+    exponent = 1.5
+    positional = True
+    show_actor = False
+    shadow_attenuation = 0.5
+    light = pyvista.Light(
+        position=position,
+        focal_point=focal_point,
+        color=color,
+        light_type=light_type,
+        cone_angle=cone_angle,
+        intensity=intensity,
+        exponent=exponent,
+        show_actor=show_actor,
+        positional=positional,
+        shadow_attenuation=shadow_attenuation,
+    )
     assert isinstance(light, pyvista.Light)
     assert light.position == position
     assert light.focal_point == focal_point
@@ -35,6 +53,12 @@ def test_init():
     assert light.diffuse_color == color
     assert light.specular_color == color
     assert light.light_type == light.HEADLIGHT
+    assert light.cone_angle == cone_angle
+    assert light.intensity == intensity
+    assert light.exponent == exponent
+    assert light.positional == positional
+    assert light.actor.GetVisibility() == show_actor
+    assert light.shadow_attenuation == shadow_attenuation
 
     # check repr too
     assert repr(light) is not None
@@ -96,13 +120,13 @@ def test_copy():
 def test_colors():
     light = pyvista.Light()
 
-    color = (0, 1, 0)
+    color = (0.0, 1.0, 0.0)
     light.diffuse_color = color
     assert light.diffuse_color == color
-    color = (0, 0, 1)
+    color = (0.0, 0.0, 1.0)
     light.specular_color = color
     assert light.specular_color == color
-    color = (1, 0, 0)
+    color = (1.0, 0.0, 0.0)
     light.ambient_color = color
     assert light.ambient_color == color
 
@@ -135,11 +159,7 @@ def test_positioning():
     assert light.world_focal_point == focal_point
 
     elev, azim = (30, 60)
-    expected_position = (
-        np.sqrt(3)/2 * 1/2,
-        np.sqrt(3)/2 * np.sqrt(3)/2,                
-        1/2
-    )
+    expected_position = (np.sqrt(3) / 2 * 1 / 2, np.sqrt(3) / 2 * np.sqrt(3) / 2, 1 / 2)
     light.positional = True
     light.set_direction_angle(elev, azim)
     assert not light.positional
@@ -168,8 +188,9 @@ def test_transforms():
     assert np.array_equal(array, trans_array)
     light.transform_matrix = trans_matrix
     matrix = light.transform_matrix
-    assert all(matrix.GetElement(i, j) == trans_matrix.GetElement(i, j)
-               for i in range(4) for j in range(4))
+    assert all(
+        matrix.GetElement(i, j) == trans_matrix.GetElement(i, j) for i in range(4) for j in range(4)
+    )
 
     linear_trans = trans_array[:-1, :-1]
     shift = trans_array[:-1, -1]
@@ -234,7 +255,7 @@ def test_shape():
         (1, pyvista.Light.HEADLIGHT),
         (2, pyvista.Light.CAMERA_LIGHT),
         (3, pyvista.Light.SCENE_LIGHT),
-    ]
+    ],
 )
 def test_type_properties(int_code, enum_code):
     light = pyvista.Light()
@@ -297,9 +318,15 @@ def test_from_vtk():
         pyvista.Light('invalid')
 
 
+def test_add_vtk_light():
+    pl = pyvista.Plotter(lighting=None)
+    pl.add_light(vtk.vtkLight())
+    assert len(pl.renderer.lights) == 1
+
+
 def test_actors():
     light = pyvista.Light()
-    actor = light._actor
+    actor = light.actor
 
     # test showing
     assert not actor.GetVisibility()

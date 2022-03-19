@@ -1,9 +1,11 @@
 """
+.. _clip_with_surface_example:
+
 Clipping with a Surface
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Clip any PyVista dataset by a :class:`pyvista.PolyData` surface mesh using
-the :func:`pyvista.DataSet.Filters.clip_surface` filter.
+the :func:`pyvista.DataSetFilters.clip_surface` filter.
 
 Note that we first demonstrate how the clipping is performed by computing an
 implicit distance and thresholding the mesh. This thresholding is one approach
@@ -11,26 +13,24 @@ to clip by a surface, and preserve the original geometry of the given mesh,
 but many folks leverage the ``clip_surface`` filter to triangulate/tessellate
 the mesh geometries along the clip.
 """
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
-import numpy as np
-
 
 ###############################################################################
-surface = pv.Cone(direction=(0,0,-1), height=3.0, radius=1,
-                  resolution=50, capping=False)
+surface = pv.Cone(direction=(0, 0, -1), height=3.0, radius=1, resolution=50, capping=False)
 
 # Make a gridded dataset
 n = 51
-xx = yy = zz = 1 - np.linspace(0, n, n) * 2 / (n-1)
+xx = yy = zz = 1 - np.linspace(0, n, n) * 2 / (n - 1)
 dataset = pv.RectilinearGrid(xx, yy, zz)
 
 # Preview the problem
 p = pv.Plotter()
 p.add_mesh(surface, color='w', label='Surface')
-p.add_mesh(dataset, color='gold', show_edges=True,
-           opacity=0.75, label='To Clip')
+p.add_mesh(dataset, color='gold', show_edges=True, opacity=0.75, label='To Clip')
 p.add_legend()
 p.show()
 
@@ -48,26 +48,37 @@ outer = dataset.threshold(0.0, scalars="implicit_distance", invert=False)
 
 p = pv.Plotter()
 p.add_mesh(surface, color='w', label='Surface', opacity=0.75)
-p.add_mesh(inner, scalars="implicit_distance", show_edges=True,
-           opacity=0.75, label='Inner region', clim=[-1,1], cmap="bwr")
+p.add_mesh(
+    inner,
+    scalars="implicit_distance",
+    show_edges=True,
+    opacity=0.75,
+    label='Inner region',
+    clim=[-1, 1],
+    cmap="bwr",
+)
 p.add_legend()
-p.enable_depth_peeling()
 p.show()
 
 ###############################################################################
 p = pv.Plotter()
 p.add_mesh(surface, color='w', label='Surface', opacity=0.75)
-p.add_mesh(outer, scalars="implicit_distance", show_edges=True,
-           opacity=0.75, label='Outer region', clim=[-1,1], cmap="bwr")
+p.add_mesh(
+    outer,
+    scalars="implicit_distance",
+    show_edges=True,
+    opacity=0.75,
+    label='Outer region',
+    clim=[-1, 1],
+    cmap="bwr",
+)
 p.add_legend()
-p.enable_depth_peeling()
 p.show()
-
 
 
 ###############################################################################
 # Clip the rectilinear grid dataset using the :class:`pyvista.PolyData`
-# surface mesh via the :func:`pyvista.DataSet.Filters.clip_surface` filter.
+# surface mesh via the :func:`pyvista.DataSetFilters.clip_surface` filter.
 # This will triangulate/tessellate the mesh geometries along the clip.
 clipped = dataset.clip_surface(surface, invert=False)
 
@@ -76,7 +87,6 @@ p = pv.Plotter()
 p.add_mesh(surface, color='w', opacity=0.75, label='Surface')
 p.add_mesh(clipped, color='gold', show_edges=True, label="clipped", opacity=0.75)
 p.add_legend()
-p.enable_depth_peeling()
 p.show()
 
 

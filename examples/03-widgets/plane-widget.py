@@ -1,4 +1,6 @@
 """
+.. _plane_widget_example:
+
 Plane Widget
 ~~~~~~~~~~~~
 
@@ -59,10 +61,12 @@ mesh = examples.download_carotid()
 p = pv.Plotter()
 p.add_mesh(mesh.contour(8).extract_largest(), opacity=0.5)
 
+
 def my_plane_func(normal, origin):
     slc = mesh.slice(normal=normal, origin=origin)
     arrows = slc.glyph(orient='vectors', scale="scalars", factor=0.01)
     p.add_mesh(arrows, name='arrows')
+
 
 p.add_plane_widget(my_plane_func)
 p.show_grid()
@@ -73,3 +77,21 @@ p.show()
 # And here is a screen capture of a user interacting with this
 #
 # .. image:: ../../images/gifs/plane-glyph.gif
+
+
+###############################################################################
+# Further, a user can disable the arrow vector by setting the
+# ``normal_rotation`` argument to ``False``. For example, here we
+# programmatically set the normal vector on which we want to translate the
+# plane and we disable the arrow to prevent its rotation.
+
+p = pv.Plotter()
+p.add_mesh_slice(vol, normal=(1, 1, 1), normal_rotation=False)
+p.show()
+
+###############################################################################
+# The vector is also forcibly disabled anytime the ``assign_to_axis`` argument
+# is set.
+p = pv.Plotter()
+p.add_mesh_slice(vol, assign_to_axis='z')
+p.show()

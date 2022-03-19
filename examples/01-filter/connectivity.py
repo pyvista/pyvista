@@ -1,10 +1,12 @@
 """
+.. _connectivity_example:
+
 Connectivity
 ~~~~~~~~~~~~
 
 Use the connectivity filter to remove noisy isosurfaces.
 
-This example is very similar to `this VTK example <https://lorensen.github.io/VTKExamples/site/Python/VisualizationAlgorithms/PineRootConnectivity/>`__
+This example is very similar to `this VTK example <https://kitware.github.io/vtk-examples/site/Python/VisualizationAlgorithms/PineRootConnectivity/>`__
 """
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
@@ -14,9 +16,7 @@ from pyvista import examples
 # Load a dataset that has noisy isosurfaces
 mesh = examples.download_pine_roots()
 
-cpos = [(40.6018, -280.533, 47.0172),
-        (40.6018, 37.2813, 50.1953),
-        (0.0, 0.0, 1.0)]
+cpos = [(40.6018, -280.533, 47.0172), (40.6018, 37.2813, 50.1953), (0.0, 0.0, 1.0)]
 
 # Plot the raw data
 p = pv.Plotter()

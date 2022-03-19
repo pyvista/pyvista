@@ -7,11 +7,11 @@ Creating a Structured Surface
 Create a StructuredGrid surface from NumPy arrays
 """
 
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
-import numpy as np
-
 
 ###############################################################################
 # From NumPy Meshgrid
@@ -23,7 +23,7 @@ import numpy as np
 x = np.arange(-10, 10, 0.25)
 y = np.arange(-10, 10, 0.25)
 x, y = np.meshgrid(x, y)
-r = np.sqrt(x ** 2 + y ** 2)
+r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
 
 ###############################################################################
@@ -75,7 +75,7 @@ def make_point_set():
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
     points = np.c_[xx.reshape(-1), yy.reshape(-1), zz.reshape(-1)]
     foo = pv.PolyData(points)
-    foo.rotate_z(36.6)
+    foo.rotate_z(36.6, inplace=True)
     return foo.points
 
 
@@ -143,7 +143,7 @@ struct.plot(show_edges=True)
 ###############################################################################
 top = struct.points.copy()
 bottom = struct.points.copy()
-bottom[:,-1] = -10.0 # Wherever you want the plane
+bottom[:, -1] = -10.0  # Wherever you want the plane
 
 vol = pv.StructuredGrid()
 vol.points = np.vstack((top, bottom))

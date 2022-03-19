@@ -6,8 +6,9 @@ Create a simple uniform grid from a 3D NumPy array of values.
 
 """
 
-import pyvista as pv
 import numpy as np
+
+import pyvista as pv
 
 ###############################################################################
 # Take a 3D NumPy array of data values that holds some spatial data where each
@@ -34,7 +35,7 @@ grid.origin = (100, 33, 55.6)  # The bottom left corner of the data set
 grid.spacing = (1, 5, 2)  # These are the cell sizes along each axis
 
 # Add the data values to the cell data
-grid.cell_arrays["values"] = values.flatten(order="F")  # Flatten the array!
+grid.cell_data["values"] = values.flatten(order="F")  # Flatten the array!
 
 # Now plot the grid!
 grid.plot(show_edges=True)
@@ -63,7 +64,7 @@ grid.origin = (100, 33, 55.6)  # The bottom left corner of the data set
 grid.spacing = (1, 5, 2)  # These are the cell sizes along each axis
 
 # Add the data values to the cell data
-grid.point_arrays["values"] = values.flatten(order="F")  # Flatten the array!
+grid.point_data["values"] = values.flatten(order="F")  # Flatten the array!
 
 # Now plot the grid!
 grid.plot(show_edges=True)

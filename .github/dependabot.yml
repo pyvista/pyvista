@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "pip" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    insecure-external-code-execution: allow
+    schedule:
+      interval: "daily"
+    labels:
+      - "maintenance"
+      - "dependencies"

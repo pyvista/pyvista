@@ -16,7 +16,7 @@ except ImportError:
 
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.csv'))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.csv'))
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
 
@@ -28,13 +28,18 @@ def test_table_init(tmpdir):
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:,i], table[i])
-
-    with pytest.raises(ValueError):
-        pyvista.Table(np.random.rand(100))
+        assert np.allclose(arrays[:, i], table[i])
 
     with pytest.raises(ValueError):
         pyvista.Table(np.random.rand(100, 2, 3))
+
+    # Create from 1D array
+    table = pyvista.Table(arrays[:, 0])
+    assert table.n_rows == nr
+    assert table.n_columns == 1
+
+    assert len(table.row_arrays) == 1
+    assert np.allclose(arrays[:, 0], table[0])
 
     # create from dictionary
     array_dict = {}
@@ -46,10 +51,10 @@ def test_table_init(tmpdir):
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:,i], table[f'foo{i}'])
+        assert np.allclose(arrays[:, i], table[f'foo{i}'])
 
     dataset = examples.load_hexbeam()
-    array_dict = dict(dataset.point_arrays)
+    array_dict = dict(dataset.point_data)
     table = pyvista.Table(array_dict)
     assert table.n_rows == dataset.n_points
     assert table.n_columns == len(array_dict)
@@ -88,7 +93,7 @@ def test_table_init(tmpdir):
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:,i], table[i])
+        assert np.allclose(arrays[:, i], table[i])
 
     with pytest.raises(TypeError):
         pyvista.Table("foo")
@@ -117,7 +122,7 @@ def test_table_row_arrays():
     assert table.n_columns == 0
 
     dataset = examples.load_hexbeam()
-    array_dict = dataset.point_arrays
+    array_dict = dataset.point_data
     # Test dict methods
     table = pyvista.Table()
     table.update(array_dict)
@@ -138,13 +143,13 @@ def test_table_row_arrays():
     n = table.n_arrays
     array = table.pop(table.keys()[0])
     assert isinstance(array, np.ndarray)
-    assert table.n_arrays == n-1
+    assert table.n_arrays == n - 1
     array = table.get(table.keys()[0])
     assert isinstance(array, np.ndarray)
-    assert table.n_arrays == n-1
+    assert table.n_arrays == n - 1
 
     del table[table.keys()[0]]
-    assert table.n_arrays == n-2
+    assert table.n_arrays == n - 2
 
     return
 
@@ -216,3 +221,15 @@ def test_texture():
     texture.flip(1)
     texture = pyvista.Texture(examples.load_globe_texture())
     assert texture is not None
+
+
+def test_skybox():
+    texture = examples.load_globe_texture()
+    texture.cube_map = False
+    assert texture.cube_map is False
+
+    texture.cube_map = True
+    assert texture.cube_map is True
+
+    skybox = texture.to_skybox()
+    assert isinstance(skybox, vtk.vtkOpenGLSkybox)

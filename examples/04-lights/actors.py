@@ -1,26 +1,28 @@
 """
+.. _light_actors_example:
+
 Light Actors
 ~~~~~~~~~~~~
 
 Positional lights in PyVista have customizable beam shapes, see the
-:ref:`ref_light_beam_shape_example` example. Spotlights are special in the sense that
-they are unidirectional lights with a finite position, so they can be visualized
-using a cone.
+:ref:`ref_light_beam_shape_example` example. Spotlights are special in
+the sense that they are unidirectional lights with a finite position,
+so they can be visualized using a cone.
 
-This is exactly the purpose of a ``vtk.vtkLightActor``, the functionality of which
-can be enabled for spotlights:
+This is exactly the purpose of a ``vtk.vtkLightActor``, the
+functionality of which can be enabled for spotlights:
 """
 # sphinx_gallery_thumbnail_number = 1
 import numpy as np
+
 import pyvista as pv
 from pyvista import examples
 
 cow = examples.download_cow()
-cow.rotate_x(90)
-plotter = pv.Plotter(lighting='none')
+cow.rotate_x(90, inplace=True)
+plotter = pv.Plotter(lighting='none', window_size=(1000, 1000))
 plotter.add_mesh(cow, color='white')
-floor = pv.Plane(center=(*cow.center[:2], cow.bounds[-2]),
-                 i_size=30, j_size=25)
+floor = pv.Plane(center=(*cow.center[:2], cow.bounds[-2]), i_size=30, j_size=25)
 plotter.add_mesh(floor, color='green')
 
 UFO = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color='white')
@@ -30,6 +32,9 @@ UFO.exponent = 10
 UFO.intensity = 3
 UFO.show_actor()
 plotter.add_light(UFO)
+
+# enable shadows to better demonstrate lighting
+plotter.enable_shadows()
 
 plotter.camera_position = [(28, 30, 22), (0.77, 0, -0.44), (0, 0, 1)]
 plotter.show()
@@ -43,7 +48,7 @@ plotter = pv.Plotter(lighting='none')
 plane = pv.Plane(i_size=4, j_size=4)
 plotter.add_mesh(plane, color='white')
 
-rot120 = np.array([[-0.5, -np.sqrt(3)/2, 0], [np.sqrt(3)/2, -0.5, 0], [0, 0, 1]])
+rot120 = np.array([[-0.5, -np.sqrt(3) / 2, 0], [np.sqrt(3) / 2, -0.5, 0], [0, 0, 1]])
 
 position = (-1.5, -1.5, 3)
 focus = (-0.5, -0.5, 0)
@@ -70,8 +75,7 @@ plotter.show()
 
 plotter = pv.Plotter(lighting='none')
 plotter.add_mesh(cow, color='white')
-floor = pv.Plane(center=(*cow.center[:2], cow.bounds[-2]),
-                 i_size=30, j_size=25)
+floor = pv.Plane(center=(*cow.center[:2], cow.bounds[-2]), i_size=30, j_size=25)
 plotter.add_mesh(floor, color='green')
 
 UFO = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color='white')
@@ -83,5 +87,3 @@ UFO.show_actor()
 plotter.add_light(UFO)
 
 plotter.show()
-
-

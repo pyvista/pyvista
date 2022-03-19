@@ -1,13 +1,14 @@
 """
+.. _background_image_example:
+
 Background Image
 ~~~~~~~~~~~~~~~~
 
-Add a background image with ``add_background_image``
+Add a background image with :func:`pyvista.Plotter.add_background_image`.
 
 """
 import pyvista as pv
 from pyvista import examples
-
 
 ###############################################################################
 # Plot an airplane with the map of the earth in the background
@@ -41,4 +42,3 @@ pl.add_text('Earth Visible as Globe')
 pl.add_mesh(examples.load_globe(), smooth_shading=True)
 
 pl.show()
-

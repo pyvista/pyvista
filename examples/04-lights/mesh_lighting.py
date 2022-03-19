@@ -1,21 +1,26 @@
 """
+.. _disabling_mesh_lighting_example:
+
 Disabling Mesh Lighting
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-While plotters have a default set of lights and there are many options for
-customizing lighting conditions in general, meshes have the option to opt out
-of lighting altogether. Pass ``lighting=False`` to ``add_mesh`` to disable
-lighting for the given mesh:
+Disable mesh lighting.
+
+While plotters have a default set of lights and there are many options
+for customizing lighting conditions in general, meshes have the option
+to opt out of lighting altogether. Pass ``lighting=False`` to
+:func:`pyvista.Plotter.add_mesh` to disable lighting for the given
+mesh:
+
 """
 # sphinx_gallery_thumbnail_number = 1
 import pyvista as pv
 from pyvista import examples
 
 horse = examples.download_horse().decimate(0.9)
-horse.rotate_z(-120)
+horse.rotate_z(-120, inplace=True)
 horse.points = (horse.points - horse.center) * 100
-shifted = horse.copy()
-shifted.translate((0, 10, 0))
+shifted = horse.translate((0, 10, 0), inplace=False)
 
 plotter = pv.Plotter()
 plotter.add_mesh(horse, color='brown')

@@ -1,31 +1,93 @@
 """Module managing errors."""
 
+import collections
+from collections.abc import Iterable
 import logging
 import os
 import re
+import subprocess
 import sys
 
-import numpy as np
 import scooby
-import vtk
 
-import pyvista
+from pyvista import _vtk
 
 
 def set_error_output_file(filename):
-    """Set a file to write out the VTK errors."""
+    """Set a file to write out the VTK errors.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the file to write VTK errors to.
+
+    Returns
+    -------
+    vtkFileOutputWindow
+        VTK file output window.
+    vtkOutputWindow
+        VTK output window.
+
+    """
     filename = os.path.abspath(os.path.expanduser(filename))
-    fileOutputWindow = vtk.vtkFileOutputWindow()
+    fileOutputWindow = _vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)
-    outputWindow = vtk.vtkOutputWindow()
+    outputWindow = _vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow
+
+
+class VtkErrorCatcher:
+    """Context manager to temporarily catch VTK errors.
+
+    Parameters
+    ----------
+    raise_errors : bool, optional
+        Raise a ``RuntimeError`` when a VTK error is encountered.
+        Defaults to ``False``.
+
+    send_to_logging : bool, optional
+        Determine whether VTK errors raised within the context should
+        also be sent to logging.  Defaults to ``True``.
+
+    Examples
+    --------
+    Catch VTK errors using the context manager.
+
+    >>> import pyvista
+    >>> with pyvista.VtkErrorCatcher() as error_catcher:
+    ...     sphere = pyvista.Sphere()
+    """
+
+    def __init__(self, raise_errors=False, send_to_logging=True):
+        """Initialize context manager."""
+        self.raise_errors = raise_errors
+        self.send_to_logging = send_to_logging
+
+    def __enter__(self):
+        """Observe VTK string output window for errors."""
+        error_output = _vtk.vtkStringOutputWindow()
+        error_win = _vtk.vtkOutputWindow()
+        self._error_output_orig = error_win.GetInstance()
+        error_win.SetInstance(error_output)
+        obs = Observer(log=self.send_to_logging, store_history=True)
+        obs.observe(error_output)
+        self._observer = obs
+
+    def __exit__(self, type, val, traceback):
+        """Stop observing VTK string output window."""
+        error_win = _vtk.vtkOutputWindow()
+        error_win.SetInstance(self._error_output_orig)
+        self.events = self._observer.event_history
+        if self.raise_errors and self.events:
+            errors = [RuntimeError(f'{e.kind}: {e.alert}', e.path, e.address) for e in self.events]
+            raise RuntimeError(errors)
 
 
 class Observer:
     """A standard class for observing VTK objects."""
 
-    def __init__(self, event_type='ErrorEvent', log=True):
+    def __init__(self, event_type='ErrorEvent', log=True, store_history=False):
         """Initialize observer."""
         self.__event_occurred = False
         self.__message = None
@@ -35,6 +97,9 @@ class Observer:
         self.event_type = event_type
         self.__log = log
 
+        self.store_history = store_history
+        self.event_history = []
+
     @staticmethod
     def parse_message(message):
         """Parse the given message."""
@@ -43,7 +108,7 @@ class Observer:
         try:
             kind, path, address, alert = regex.findall(message)[0]
             return kind, path, address, alert
-        except:
+        except:  # noqa: E722
             return '', '', '', message
 
     def log_message(self, kind, alert):
@@ -66,9 +131,12 @@ class Observer:
         self.__message = alert
         if self.__log:
             self.log_message(kind, alert)
+        if self.store_history:
+            VtkEvent = collections.namedtuple('VtkEvent', ['kind', 'path', 'address', 'alert'])
+            self.event_history.append(VtkEvent(kind, path, address, alert))
 
     def has_event_occurred(self):
-        """Ask self if an error has occurred since last querried.
+        """Ask self if an error has occurred since last queried.
 
         This resets the observer's status.
 
@@ -102,27 +170,33 @@ class Observer:
 
 def send_errors_to_logging():
     """Send all VTK error/warning messages to Python's logging module."""
-    error_output = vtk.vtkStringOutputWindow()
-    error_win = vtk.vtkOutputWindow()
+    error_output = _vtk.vtkStringOutputWindow()
+    error_win = _vtk.vtkOutputWindow()
     error_win.SetInstance(error_output)
     obs = Observer()
     return obs.observe(error_output)
 
 
+_cmd = """\
+import pyvista; \
+plotter = pyvista.Plotter(notebook=False, off_screen=True); \
+plotter.add_mesh(pyvista.Sphere()); \
+plotter.show(auto_close=False); \
+gpu_info = plotter.ren_win.ReportCapabilities(); \
+print(gpu_info); \
+plotter.close()\
+"""
+
+
 def get_gpu_info():
     """Get all information about the GPU."""
     # an OpenGL context MUST be opened before trying to do this.
-    plotter = pyvista.Plotter(notebook=False, off_screen=True)
-    plotter.add_mesh(pyvista.Sphere())
-    plotter.show(auto_close=False)
-    gpu_info = plotter.ren_win.ReportCapabilities()
-    plotter.close()
-    # Remove from list of Plotters
-    pyvista.plotting._ALL_PLOTTERS.pop(plotter._id_name)
+    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    gpu_info = '' if proc.returncode else proc.stdout.decode()
     return gpu_info
 
 
-class GPUInfo():
+class GPUInfo:
     """A class to hold GPU details."""
 
     def __init__(self):
@@ -136,7 +210,7 @@ class GPUInfo():
         try:
             renderer = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the renderer.")
+            raise RuntimeError("Unable to parse GPU information for the renderer.") from None
         return renderer.strip()
 
     @property
@@ -146,7 +220,7 @@ class GPUInfo():
         try:
             version = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the version.")
+            raise RuntimeError("Unable to parse GPU information for the version.") from None
         return version.strip()
 
     @property
@@ -156,15 +230,16 @@ class GPUInfo():
         try:
             vendor = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the vendor.")
+            raise RuntimeError("Unable to parse GPU information for the vendor.") from None
         return vendor.strip()
 
     def get_info(self):
         """All GPU information as tuple pairs."""
-        return (("GPU Vendor", self.vendor),
-                ("GPU Renderer", self.renderer),
-                ("GPU Version", self.version),
-               )
+        return (
+            ("GPU Vendor", self.vendor),
+            ("GPU Renderer", self.renderer),
+            ("GPU Version", self.version),
+        )
 
     def _repr_html_(self):
         """HTML table representation."""
@@ -187,8 +262,7 @@ class GPUInfo():
 class Report(scooby.Report):
     """A class for custom scooby.Report."""
 
-    def __init__(self, additional=None, ncol=3, text_width=80, sort=False,
-                 gpu=True):
+    def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
         """Generate a :class:`scooby.Report` instance.
 
         Parameters
@@ -213,12 +287,22 @@ class Report(scooby.Report):
 
         """
         # Mandatory packages.
-        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby',
-                'meshio']
+        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
 
         # Optional packages.
-        optional = ['matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'ipyvtk_simple', 'scipy', 'itkwidgets', 'tqdm']
+        optional = [
+            'matplotlib',
+            'pyvistaqt',
+            'PyQt5',
+            'IPython',
+            'colorcet',
+            'cmocean',
+            'ipyvtklink',
+            'scipy',
+            'itkwidgets',
+            'tqdm',
+            'meshio',
+        ]
 
         # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.
@@ -230,10 +314,16 @@ class Report(scooby.Report):
         else:
             extra_meta = ("GPU Details", "None")
 
-        scooby.Report.__init__(self, additional=additional, core=core,
-                               optional=optional, ncol=ncol,
-                               text_width=text_width, sort=sort,
-                               extra_meta=extra_meta)
+        scooby.Report.__init__(
+            self,
+            additional=additional,
+            core=core,
+            optional=optional,
+            ncol=ncol,
+            text_width=text_width,
+            sort=sort,
+            extra_meta=extra_meta,
+        )
 
 
 def assert_empty_kwargs(**kwargs):
@@ -257,7 +347,9 @@ def assert_empty_kwargs(**kwargs):
 
 def check_valid_vector(point, name=''):
     """Check if a vector contains three components."""
-    if np.array(point).size != 3:
+    if not isinstance(point, Iterable):
+        raise TypeError(f'{name} must be a length three iterable of floats.')
+    if len(point) != 3:
         if name == '':
             name = 'Vector'
-        raise TypeError(f'{name} must be a length three tuple of floats.')
+        raise ValueError(f'{name} must be a length three iterable of floats.')

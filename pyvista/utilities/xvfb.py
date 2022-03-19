@@ -1,6 +1,6 @@
 """Start xvfb from Python."""
-import time
 import os
+import time
 
 XVFB_INSTALL_NOTES = """Please install Xvfb with:
 
@@ -23,11 +23,22 @@ def start_xvfb(wait=3, window_size=None):
         to disable wait.
 
     window_size : list, optional
-        Window size of the virtual frame buffer.  Defaults to the
-        default window size in ``rcParams``.
+        Window size of the virtual frame buffer.  Defaults to
+        :attr:`pyvista.global_theme.window_size
+        <pyvista.themes.DefaultTheme.window_size>`.
+
+    Notes
+    -----
+    Only available on Linux.  Be sure to install ``libgl1-mesa-glx
+    xvfb`` in your package manager.
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pyvista.start_xvfb()  # doctest:+SKIP
 
     """
-    from pyvista import rcParams
+    from pyvista import global_theme
 
     if os.name != 'posix':
         raise OSError('`start_xvfb` is only supported on Linux')
@@ -36,7 +47,9 @@ def start_xvfb(wait=3, window_size=None):
         raise OSError(XVFB_INSTALL_NOTES)
 
     # use current default window size
-    window_size_parm = '%dx%dx24' % tuple(rcParams['window_size'])
+    if window_size is None:
+        window_size = global_theme.window_size
+    window_size_parm = f'{window_size[0]:d}x{window_size[1]:d}x24'
     display_num = ':99'
     os.system(f'Xvfb {display_num} -screen 0 {window_size_parm} > /dev/null 2>&1 &')
     os.environ['DISPLAY'] = display_num

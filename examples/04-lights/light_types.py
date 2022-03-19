@@ -1,4 +1,6 @@
 """
+.. _light_types_example:
+
 Light Types
 ~~~~~~~~~~~
 
@@ -20,9 +22,10 @@ from the view point:
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
+
 mesh = examples.download_bunny()
-mesh.rotate_x(90)
-mesh.rotate_z(180)
+mesh.rotate_x(90, inplace=True)
+mesh.rotate_z(180, inplace=True)
 
 plotter = pv.Plotter(lighting='none')
 plotter.add_mesh(mesh, color='tan', smooth_shading=True)

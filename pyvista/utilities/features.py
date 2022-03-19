@@ -1,10 +1,12 @@
 """Module containing geometry helper functions."""
 
-import ctypes
+import collections
+import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.utilities.misc import PyvistaDeprecationWarning
 
 
 def voxelize(mesh, density=None, check_surface=True):
@@ -25,24 +27,24 @@ def voxelize(mesh, density=None, check_surface=True):
 
     Returns
     -------
-    vox : pyvista.core.pointset.UnstructuredGrid
-        voxelized unstructured grid for original mesh
+    pyvista.UnstructuredGrid
+        Voxelized unstructured grid of the original mesh.
 
     Examples
     --------
-    This example creates an equal density voxelized mesh.
+    Create an equal density voxelized mesh.
 
     >>> import pyvista as pv
-    >>> import pyvista.examples as ex
-    >>> mesh = pv.PolyData(ex.load_uniform().points)
+    >>> from pyvista import examples
+    >>> mesh = pv.PolyData(examples.load_uniform().points)
     >>> vox = pv.voxelize(mesh, density=0.5)
+    >>> vox.plot()
 
-    This example creates a voxelized mesh using unequal density dimensions
+    Create a voxelized mesh using unequal density dimensions.
 
-    >>> import pyvista as pv
-    >>> import pyvista.examples as ex
-    >>> mesh = pv.PolyData(ex.load_uniform().points)
+    >>> mesh = pv.PolyData(examples.load_uniform().points)
     >>> vox = pv.voxelize(mesh, density=[0.5, 0.9, 1.4])
+    >>> vox.plot()
 
     """
     if not pyvista.is_pyvista_dataset(mesh):
@@ -53,7 +55,7 @@ def voxelize(mesh, density=None, check_surface=True):
         density_x, density_y, density_z = [density] * 3
     if isinstance(density, (list, set, tuple)):
         density_x, density_y, density_z = density
-        
+
     x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
     x = np.arange(x_min, x_max, density_x)
     y = np.arange(y_min, y_max, density_y)
@@ -65,14 +67,15 @@ def voxelize(mesh, density=None, check_surface=True):
     ugrid = pyvista.UnstructuredGrid(grid)
 
     # get part of the mesh within the mesh's bounding surface.
-    selection = ugrid.select_enclosed_points(mesh.extract_surface(),
-                                             tolerance=0.0,
-                                             check_surface=check_surface)
-    mask = selection.point_arrays['SelectedPoints'].view(np.bool_)
+    selection = ugrid.select_enclosed_points(
+        mesh.extract_surface(), tolerance=0.0, check_surface=check_surface
+    )
+    mask = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
     vox = ugrid.extract_points(mask)
     return vox
+
 
 def create_grid(dataset, dimensions=(101, 101, 101)):
     """Create a uniform grid surrounding the given dataset.
@@ -91,19 +94,23 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     dimensions = np.array(dimensions, dtype=int)
     image = pyvista.UniformGrid()
     image.dimensions = dimensions
-    dims = (dimensions - 1)
+    dims = dimensions - 1
     dims[dims == 0] = 1
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
     image.origin = bounds[::2]
     return image
 
 
-def single_triangle():
+def single_triangle():  # pragma: no cover
     """Create a single PolyData triangle."""
+    warnings.warn(
+        "Use of `single_triangle` is deprecated. Use `pyvista.Triangle` instead.",
+        PyvistaDeprecationWarning,
+    )
     points = np.zeros((3, 3))
     points[1] = [1, 0, 0]
     points[2] = [0.5, 0.707, 0]
-    cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
+    cells = np.array([[3, 0, 1, 2]])
     return pyvista.PolyData(points, cells)
 
 
@@ -113,15 +120,16 @@ def grid_from_sph_coords(theta, phi, r):
     Parameters
     ----------
     theta: array-like
-        Azimuthal angle in degrees [0, 360)
+        Azimuthal angle in degrees ``[0, 360]``.
     phi: array-like
-        Polar (zenith) angle in degrees [0, 180]
+        Polar (zenith) angle in degrees ``[0, 180]``.
     r: array-like
-        Distance (radius) from the point of origin
+        Distance (radius) from the point of origin.
 
     Returns
     -------
     pyvista.StructuredGrid
+        Structured grid.
 
     """
     x, y, z = np.meshgrid(np.radians(theta), np.radians(phi), r)
@@ -140,22 +148,22 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
 
     Parameters
     ----------
-    theta: array-like
-        Azimuthal angle in degrees [0, 360) of shape (M,)
-    phi: array-like
-        Polar (zenith) angle in degrees [0, 180] of shape (N,)
-    r: array-like
+    theta : sequence
+        Azimuthal angle in degrees ``[0, 360]`` of shape (M,)
+    phi : sequence
+        Polar (zenith) angle in degrees ``[0, 180]`` of shape (N,)
+    r : sequence
         Distance (radius) from the point of origin of shape (P,)
-    u: array-like
+    u : sequence
         X-component of the vector of shape (P, N, M)
-    v: array-like
+    v : sequence
         Y-component of the vector of shape (P, N, M)
-    w: array-like
+    w : sequence
         Z-component of the vector of shape (P, N, M)
 
     Returns
     -------
-    u_t, v_t, w_t: array-like
+    u_t, v_t, w_t : :class:`numpy.ndarray`
         Arrays of transformed x-, y-, z-components, respectively.
 
     """
@@ -169,3 +177,67 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
     w_t = np.cos(ph) * w - np.sin(ph) * v
 
     return u_t, v_t, w_t
+
+
+def merge(
+    datasets,
+    merge_points=True,
+    main_has_priority=True,
+    progress_bar=False,
+):
+    """Merge several datasets.
+
+    .. note::
+       The behavior of this filter varies from the
+       :func:`PolyDataFilters.boolean_union` filter. This filter
+       does not attempt to create a manifold mesh and will include
+       internal surfaces when two meshes overlap.
+
+    datasets : sequence of :class:`pyvista.Dataset`
+        Sequence of datasets. Can be of any :class:`pyvista.Dataset`
+
+    merge_points : bool, optional
+        Merge equivalent points when ``True``. Defaults to ``True``.
+
+    main_has_priority : bool, optional
+        When this parameter is ``True`` and ``merge_points=True``,
+        the arrays of the merging grids will be overwritten
+        by the original main mesh.
+
+    progress_bar : bool, optional
+        Display a progress bar to indicate progress.
+
+    Returns
+    -------
+    pyvista.DataSet
+        :class:`pyvista.PolyData` if all items in datasets are
+        :class:`pyvista.PolyData`, otherwise returns a
+        :class:`pyvista.UnstructuredGrid`.
+
+    Examples
+    --------
+    Merge two polydata datasets.
+
+    >>> import pyvista
+    >>> sphere = pyvista.Sphere(center=(0, 0, 1))
+    >>> cube = pyvista.Cube()
+    >>> mesh = pyvista.merge([cube, sphere])
+    >>> mesh.plot()
+
+    """
+    if not isinstance(datasets, collections.Sequence):
+        raise TypeError(f"Expected a sequence, got {type(datasets).__name__}")
+
+    if len(datasets) < 1:
+        raise ValueError("Expected at least one dataset.")
+
+    first = datasets[0]
+    if not isinstance(first, pyvista.DataSet):
+        raise TypeError(f"Expected pyvista.DataSet, not {type(first).__name__}")
+
+    return datasets[0].merge(
+        datasets[1:],
+        merge_points=merge_points,
+        main_has_priority=main_has_priority,
+        progress_bar=progress_bar,
+    )
