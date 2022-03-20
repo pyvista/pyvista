@@ -445,7 +445,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
         # setter inheritance workaround:
         # https://stackoverflow.com/questions/10810369
-        super(type(self), type(self)).points.fset(self, points)
+        super(type(self), type(self)).points.fset(self, points)  # type: ignore
 
     @property
     def editable(self) -> bool:

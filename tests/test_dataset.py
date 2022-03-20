@@ -1369,6 +1369,10 @@ def test_active_normals(sphere):
     assert mesh.active_normals.shape[0] == mesh.n_cells
 
 
+@pytest.mark.skipif(
+    pyvista.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+)
 @pytest.mark.parametrize('deep', [False, True])
 def test_cast_to_pointset(sphere, deep):
     pointset = sphere.cast_to_pointset(deep=deep)
