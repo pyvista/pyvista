@@ -415,13 +415,13 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     @property
     def editable(self) -> bool:
-        """Return or set if this dataset be incrementally modified.
+        """Return or set if this dataset can be incrementally modified.
 
         Examples
         --------
         >>> import numpy as np
         >>> import pyvista
-        >>> rng = np.random.default_rng(0)
+        >>> rng = np.random.default_rng()
         >>> points = rng.random((10, 3))
         >>> pset = pyvista.PointSet(points, editable=False)
         >>> pset.editable
