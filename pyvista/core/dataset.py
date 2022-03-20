@@ -2050,11 +2050,15 @@ class DataSet(DataSetFilters, DataObject):
         return _get_output(alg)
 
     def cast_to_pointset(self, deep=True) -> 'pyvista.PointSet':
-        """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
+        """Get a new representation of this object as a :class:`pyvista.PointSet`.
 
         Examples
         --------
-
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> pointset = mesh.cast_to_pointset()
+        >>> type(pointset)
+        <class 'pyvista.core.pointset.PointSet'>
         """
         pset = pyvista.PointSet()
         pset.SetPoints(self.GetPoints())

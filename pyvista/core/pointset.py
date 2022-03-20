@@ -22,10 +22,12 @@ from pyvista.utilities.cells import (
     numpy_to_idarr,
 )
 
+from .._typing import NumericArray, VectorArray
 from ..utilities.fileio import get_ext
 from .dataset import DataSet
 from .errors import DeprecationError, VTKVersionError
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
+from .pyvista_ndarray import pyvista_ndarray
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -414,6 +416,20 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         return DataSet.__str__(self)
 
     @property
+    @wraps(DataSet.points)
+    def points(self) -> pyvista_ndarray:
+        """Wrap dataset points and set the writeable flag."""
+        points = super().points
+        points.flags.writeable = self.editable
+        return points
+
+    @points.setter
+    def points(self, points: Union[VectorArray, NumericArray, pyvista._vtk.vtkPoints]):
+        if not self.editable:
+            raise ValueError("PointSet is read only as editable is set to False")
+        super().points = points
+
+    @property
     def editable(self) -> bool:
         """Return or set if this dataset can be incrementally modified.
 
@@ -438,6 +454,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     @editable.setter
     def editable(self, value: bool):
         self.SetEditable(value)
+        self.points.flags.writeable = value
 
     def cast_to_polydata(self, deep=True):
         """Cast this dataset to polydata.

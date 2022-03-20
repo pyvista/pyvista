@@ -28,5 +28,19 @@ def test_pointset(pointset):
     pointset.point_data[arr_name] = np.random.random(10)
     assert arr_name in pointset.point_data
 
-    pointset.editable = False
+    # test editable
+    pointset.editable = True
+    assert pointset.editable is True
     pointset.points[:] = 0
+
+    # test not editable
+    pointset.editable = False
+    assert pointset.editable is False
+
+    # check the numpy slice case
+    with pytest.raises(ValueError, match="destination is read-only"):
+        pointset.points[:] = 1
+
+    # direct setter case
+    with pytest.raises(ValueError, match="PointSet is read only"):
+        pointset.points = np.zeros((10, 3))
