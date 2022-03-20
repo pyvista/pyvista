@@ -7,8 +7,7 @@ import pyvista
 
 # skip all tests if concrete pointset unavailable
 pytestmark = pytest.mark.skipif(
-    pyvista.vtk_version_info < (9, 1, 0),
-    reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pyvista.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
 )
 
 
@@ -18,6 +17,7 @@ def test_pointset_basic():
     assert pset.n_points == 0
     assert pset.n_cells == 0
     assert 'PointSet' in str(pset)
+    assert 'PointSet' in repr(pset)
 
 
 def test_pointset(pointset):
@@ -33,6 +33,10 @@ def test_pointset(pointset):
     assert pointset.editable is True
     pointset.points[:] = 0
 
+    assert np.allclose(pointset.points, 0)
+    pointset.points = np.ones((10, 3))
+    assert np.allclose(pointset.points, 1)
+
     # test not editable
     pointset.editable = False
     assert pointset.editable is False
@@ -44,3 +48,9 @@ def test_pointset(pointset):
     # direct setter case
     with pytest.raises(ValueError, match="PointSet is read only"):
         pointset.points = np.zeros((10, 3))
+
+
+def test_filters_return_pointset(sphere):
+    pointset = sphere.cast_to_pointset()
+    clipped = pointset.clip()
+    assert isinstance(clipped, pyvista.PointSet)

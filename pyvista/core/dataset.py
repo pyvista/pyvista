@@ -8,7 +8,7 @@ import warnings
 
 if sys.version_info >= (3, 8):
     from typing import Literal
-else:
+else:  # pragma: no cover
     from typing_extensions import Literal
 
 import numpy as np
@@ -406,7 +406,8 @@ class DataSet(DataSetFilters, DataObject):
         # directly set the data if vtk object
         if isinstance(points, pyvista._vtk.vtkPoints):
             self.SetPoints(points)
-            pdata.Modified()
+            if pdata is not None:
+                pdata.Modified()
             self.Modified()
             return
         # otherwise, wrap and use the array

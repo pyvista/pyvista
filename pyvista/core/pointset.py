@@ -385,12 +385,12 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     >>> import numpy as np
     >>> import pyvista
-    >>> rng = np.random.default_rng(0)
+    >>> rng = np.random.default_rng()
     >>> points = rng.random((10, 3))
     >>> pset = pyvista.PointSet(points)
 
-    Plot the pointset. Note: this casts to a ``pyvista.PolyData`` internally
-    when plotting.
+    Plot the pointset. Note: this casts to a :class:`pyvista.PolyData`
+    internally when plotting.
 
     >>> pset.plot(point_size=10)
 
@@ -416,9 +416,24 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         return DataSet.__str__(self)
 
     @property
-    @wraps(DataSet.points)
     def points(self) -> pyvista_ndarray:
-        """Wrap dataset points and set the writeable flag."""
+        """Return a reference to the points as a numpy object.
+
+        Notes
+        -----
+        Points may only be set when the ``editable`` attribute is ``False``.
+
+        Examples
+        --------
+        Create an empty ``pyvista.PointSet`` and assign points to it.
+
+        >>> import numpy as np
+        >>> import pyvista
+        >>> pset = pyvista.PointSet()
+        >>> rng = np.random.default_rng()
+        >>> pset.points = rng.random((10, 3))
+
+        """
         points = super().points
         points.flags.writeable = self.editable
         return points
@@ -427,7 +442,10 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     def points(self, points: Union[VectorArray, NumericArray, pyvista._vtk.vtkPoints]):
         if not self.editable:
             raise ValueError("PointSet is read only as editable is set to False")
-        super().points = points
+
+        # setter inheritance workaround:
+        # https://stackoverflow.com/questions/10810369
+        super(self.__class__, self.__class__).points.fset(self, points)
 
     @property
     def editable(self) -> bool:
