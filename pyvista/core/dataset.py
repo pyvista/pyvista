@@ -2050,8 +2050,20 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self, deep=True) -> 'pyvista.PointSet':
+    def cast_to_pointset(self, deep: bool = False) -> 'pyvista.PointSet':
         """Get a new representation of this object as a :class:`pyvista.PointSet`.
+
+        Parameters
+        ----------
+        deep : bool, optional
+            When ``True`` makes a full copy of the object.  When ``False``,
+            performs a shallow copy where the points and data arrays are
+            references to the original object.
+
+        Returns
+        -------
+        pyvista.PointSet
+            Dataset cast into a :class:`pyvista.PointSet`.
 
         Examples
         --------
