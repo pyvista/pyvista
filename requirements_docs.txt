@@ -28,6 +28,6 @@ sphinx-gallery==0.10.1
 sphinx-notfound-page==0.8
 sphinx-panels==0.6.0
 sphinxcontrib-websupport==1.2.4
-trimesh==3.10.5
+trimesh==3.10.7
 typed-ast==1.5.2
 typing_extensions==4.1.1
