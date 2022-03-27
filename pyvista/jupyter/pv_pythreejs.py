@@ -21,9 +21,10 @@ def segment_poly_cells(mesh):
     polylines = []
     offset = 0
     cc = mesh.lines  # fetch up front
-    while offset < len(cc):
+    ncc = len(cc)
+    while offset < ncc:
         nn = cc[offset]
-        polylines.append(cc[offset + 1 : offset + 1 + nn])
+        polylines.append(cc[offset + 1:offset + 1 + nn])
         offset += nn + 1
 
     lines = []
