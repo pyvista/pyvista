@@ -432,7 +432,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Rotate scene to be compatible with the glTF specifications.
 
         save_normals : bool, optional
-            Saves the point array ``'Normals'`` as ``'NORMALS'`` in
+            Saves the point array ``'Normals'`` as ``'NORMAL'`` in
             the outputted scene.
 
         Examples
@@ -485,9 +485,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                 continue
                             dataset = mapper.GetInputAsDataSet()
                             if 'Normals' in dataset.point_data:
-                                # ensure normals are active
-                                normals = dataset.point_data['Normals']
-                                dataset.point_data.active_normals = normals.copy()
+                                # By default VTK uses the 'Normals' point data for normals
+                                # but gLTF uses NORMAL. We have to both copy this as an
+                                # inactive array and then change the name of the active
+                                # normals to get `SetSaveNormal` to work.
+                                dataset.point_data.set_array(
+                                    dataset.point_data['Normals'].copy(), "NORMAL"
+                                )
+                                dataset.active_normals_name = "NORMAL"
                         except:  # noqa: E722
                             pass
 
