@@ -143,6 +143,7 @@ if VTK9:
         vtkPlaneCollection,
         vtkPlanes,
         vtkPointLocator,
+        vtkPointSet,
         vtkPolyData,
         vtkPolyLine,
         vtkPolyPlane,
