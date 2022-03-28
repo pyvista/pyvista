@@ -47,7 +47,7 @@ Many More
 * pyntcloud_: Python library for working with 3D point clouds.
 * DiSECt_: Differentiable Cutting Simulator.
 * torch-points3d_: Pytorch framework for doing deep learning on point clouds.
-* pyprocar_: A Python library for electronic structure pre/post-processing
+* pyprocar_: A Python library for electronic structure pre/post-processing.
 
 
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
