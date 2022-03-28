@@ -62,7 +62,7 @@ storing a set of points.
    rng = np.random.default_rng(0)
    points = rng.random((10, 3))
    pset = pyvista.PointSet(points)
-   pset.plot()
+   pset.plot(color='red')
 
 
 **Class Descriptions**
