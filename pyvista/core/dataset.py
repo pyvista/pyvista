@@ -394,7 +394,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: Union[VectorArray, NumericArray, pyvista._vtk.vtkPoints]):
+    def points(self, points: Union[VectorArray, NumericArray, _vtk.vtkPoints]):
         pdata = self.GetPoints()
         if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
@@ -404,7 +404,7 @@ class DataSet(DataSetFilters, DataObject):
                 self.Modified()
                 return
         # directly set the data if vtk object
-        if isinstance(points, pyvista._vtk.vtkPoints):
+        if isinstance(points, _vtk.vtkPoints):
             self.SetPoints(points)
             if pdata is not None:
                 pdata.Modified()
@@ -2072,6 +2072,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pointset = mesh.cast_to_pointset()
         >>> type(pointset)
         <class 'pyvista.core.pointset.PointSet'>
+
         """
         pset = pyvista.PointSet()
         pset.SetPoints(self.GetPoints())

@@ -9,8 +9,8 @@ that specifies the interface for datasets that explicitly use "point" arrays to
 represent geometry. This class is useful for improving the performance of
 filters on point clouds.
 
-This example shows the performacne improvement when cliping using a
-:class:`pyvista.PointSet` using the :func:`pyvista.DataSet.clip` filter.
+This example shows the performance improvement when clipping using the
+:func:`pyvista.DataSet.clip` filter on a :class:`pyvista.PointSet`.
 
 """
 import time
@@ -26,13 +26,12 @@ t_elapsed = time.time() - tstart
 print(f"Time to clip with a PolyData {t_elapsed:.2f} seconds.")
 
 ###############################################################################
-# Plot the Clipped polydata
+# Plot the clipped polydata
 clipped.plot(show_scalar_bar=False)
 
 ###############################################################################
-# Show the performacne improvement when using a PointSet
-#
-# This is only available with VTK >= 9.1.0
+# Show the performance improvement when using a PointSet.
+# This is only available with VTK >= 9.1.0.
 
 # pset = lidar.cast_to_pointset(deep=False)
 
@@ -44,7 +43,7 @@ if pv.vtk_version_info >= (9, 1):
     print(f"Time to clip with a PointSet {t_elapsed:.2f} seconds.")
 
 ###############################################################################
-# Plot the same dataset
+# Plot the same dataset.
 #
 # .. note::
 #    PyVista must still create an intermediate PolyData to be able to plot, so

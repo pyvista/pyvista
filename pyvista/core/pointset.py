@@ -348,7 +348,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     point clouds, but not plotting.
 
     For further details see `VTK: vtkPointSet Details
-    <https://vtk.org/doc/nightly/html/classvtkPointSet.html#details>`_
+    <https://vtk.org/doc/nightly/html/classvtkPointSet.html#details>`_.
 
     Parameters
     ----------
@@ -392,7 +392,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     def __init__(self, points=None, deep=False, force_float=True):
         """Initialize the pointset."""
-        if pyvista.vtk_version_info < (9, 1, 0):
+        if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
             raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
 
         super().__init__()
