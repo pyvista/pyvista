@@ -48,6 +48,7 @@ Many More
 * DiSECt_: Differentiable Cutting Simulator.
 * torch-points3d_: Pytorch framework for doing deep learning on point clouds.
 * pyprocar_: A Python library for electronic structure pre/post-processing.
+* FEniCSx_: FEniCS Problem Solving Environment in Python and C++.
 
 
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
@@ -73,3 +74,4 @@ Many More
 .. _pyntcloud: https://github.com/daavoo/pyntcloud
 .. _DiSECt: https://github.com/NVlabs/DiSECt
 .. _torch-points3d: https://github.com/torch-points3d/torch-points3d
+.. _FEniCSx: https://github.com/FEniCS/dolfinx/
