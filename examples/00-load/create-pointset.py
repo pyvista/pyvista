@@ -50,4 +50,4 @@ if pv.vtk_version_info >= (9, 1):
 #    there is no performance improvement when using a :class:`pyvista.PointSet`
 
 if pv.vtk_version_info >= (9, 1):
-    clipped_pset.plot()
+    clipped_pset.plot(show_scalar_bar=False)

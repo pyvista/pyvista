@@ -424,7 +424,13 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
             PointSet cast to a ``pyvista.PolyData``.
 
         """
-        return PolyData(self.points, deep=deep)
+        pdata = PolyData(self.points, deep=deep)
+        if deep:
+            pdata.point_data.update(self.point_data)  # update performs deep copy
+        else:
+            for key, value in self.point_data.items():
+                pdata.point_data[key] = value
+        return pdata
 
     @wraps(DataSet.plot)  # type: ignore
     def plot(self, *args, **kwargs):

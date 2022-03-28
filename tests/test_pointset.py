@@ -35,6 +35,22 @@ def test_pointset(pointset):
     assert np.allclose(pointset.points, 1)
 
 
+@pytest.mark.parametrize('deep', [True, False])
+def test_cast_to_polydata(pointset, deep):
+    data = np.linspace(0, 1, pointset.n_points)
+    key = 'key'
+    pointset.point_data[key] = data
+
+    pdata = pointset.cast_to_polydata(deep)
+    assert key in pdata.point_data
+    assert np.allclose(pdata.point_data[key], pointset.point_data[key])
+    pdata.point_data[key][:] = 0
+    if deep:
+        assert not np.allclose(pdata.point_data[key], pointset.point_data[key])
+    else:
+        assert np.allclose(pdata.point_data[key], pointset.point_data[key])
+
+
 def test_filters_return_pointset(sphere):
     pointset = sphere.cast_to_pointset()
     clipped = pointset.clip()
