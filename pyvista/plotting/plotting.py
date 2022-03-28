@@ -471,6 +471,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         from vtkmodules.vtkIOExport import vtkGLTFExporter
 
         # rotate scene to gltf compatible view
+        renamed_arrays = []  # any renamed normal arrays
         if rotate_scene:
             for renderer in self.renderers:
                 for actor in renderer.actors.values():
@@ -486,13 +487,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                             dataset = mapper.GetInputAsDataSet()
                             if 'Normals' in dataset.point_data:
                                 # By default VTK uses the 'Normals' point data for normals
-                                # but gLTF uses NORMAL. We have to both copy this as an
-                                # inactive array and then change the name of the active
-                                # normals to get `SetSaveNormal` to work.
-                                dataset.point_data.set_array(
-                                    dataset.point_data['Normals'].copy(), "NORMAL"
-                                )
-                                dataset.active_normals_name = "NORMAL"
+                                # but gLTF uses NORMAL.
+                                point_data = dataset.GetPointData()
+                                array = point_data.GetArray('Normals')
+                                array.SetName('NORMAL')
+                                renamed_arrays.append(array)
+
                         except:  # noqa: E722
                             pass
 
@@ -510,6 +510,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     if hasattr(actor, 'RotateX'):
                         actor.RotateZ(90)
                         actor.RotateX(90)
+
+        # revert any renamed arrays
+        for array in renamed_arrays:
+            array.SetName('Normals')
 
     def enable_hidden_line_removal(self, all_renderers=True):
         """Enable hidden line removal.
