@@ -38,7 +38,7 @@ class DataSetFilters:
         """Clip using an implicit function (internal helper)."""
         if crinkle:
             # Add Cell IDs
-            self.cell_data['cell_ids'] = np.arange(0, self.n_cells, dtype=int)
+            self.cell_data['cell_ids'] = np.arange(self.n_cells)
 
         if isinstance(self, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
@@ -111,7 +111,10 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         crinkle : bool, optional
-            Crinkle the clip by extracting the entire cells along the clip.
+            Crinkle the clip by extracting the entire cells along the
+            clip. This adds the ``"cell_ids"`` array to the ``cell_data``
+            attribute that tracks the original cell IDs of the original
+            dataset.
 
         Returns
         -------
@@ -207,7 +210,10 @@ class DataSetFilters:
             defined mesh elements will be merged.
 
         crinkle : bool, optional
-            Crinkle the clip by extracting the entire cells along the clip.
+            Crinkle the clip by extracting the entire cells along the
+            clip. This adds the ``"cell_ids"`` array to the ``cell_data``
+            attribute that tracks the original cell IDs of the original
+            dataset.
 
         Returns
         -------
@@ -260,7 +266,7 @@ class DataSetFilters:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
             bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
         if crinkle:
-            self.cell_data['cell_ids'] = np.arange(0, self.n_cells, dtype=int)
+            self.cell_data['cell_ids'] = np.arange(self.n_cells)
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -465,7 +471,10 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         crinkle : bool, optional
-            Crinkle the clip by extracting the entire cells along the clip.
+            Crinkle the clip by extracting the entire cells along the
+            clip. This adds the ``"cell_ids"`` array to the ``cell_data``
+            attribute that tracks the original cell IDs of the original
+            dataset.
 
         Returns
         -------
