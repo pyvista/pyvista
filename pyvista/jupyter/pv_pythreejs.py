@@ -19,13 +19,13 @@ def segment_poly_cells(mesh):
     if not pv.is_pyvista_dataset(mesh):  # pragma: no cover
         mesh = pv.wrap(mesh)
     polylines = []
-    i, offset = 0, 0
+    offset = 0
     cc = mesh.lines  # fetch up front
-    while i < mesh.n_cells:
+    ncc = len(cc)
+    while offset < ncc:
         nn = cc[offset]
         polylines.append(cc[offset + 1 : offset + 1 + nn])
         offset += nn + 1
-        i += 1
 
     lines = []
     for poly in polylines:
