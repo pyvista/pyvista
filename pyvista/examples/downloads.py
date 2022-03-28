@@ -3603,3 +3603,80 @@ def download_can(partial=False):  # pragma: no cover
             _download_and_read('hdf/can_2.hdf'),
         ]
     )
+
+
+def download_cgns_structured(load=True):  # pragma: no cover
+    """Download the structured CGNS dataset mesh.
+
+    Original downloaded from `CFD General Notation System Example Files
+    <https://cgns.github.io/CGNSFiles.html>`_
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock or str
+        Structured, 12 block, 3-D constricting channel, with example use of
+        Family_t for BCs (ADF type). If ``load`` is False, then the path of the
+        example CGNS file.
+
+    Examples
+    --------
+    Plot the example CGNS dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_cgns_structured()
+    >>> dataset[0].plot(scalars='Density', off_screen=False)
+
+    """
+    filename, _ = _download_file('cgns/sqnz_s.adf.cgns')
+    if not load:
+        return filename
+    return pyvista.read(filename)
+
+
+def download_cgns_multi(load=True):  # pragma: no cover
+    """Download a multielement airfoil with a cell centered solution.
+
+    Original downloaded from `CFD General Notation System Example Files
+    <https://cgns.github.io/CGNSFiles.html>`_
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock or str
+        Structured, 4 blocks, 2D (2 planes in third dimension) multielement
+        airfoil, with cell centered solution.
+
+    Examples
+    --------
+    Plot the airfoil dataset. Merge the multi-block and then plot the airfoil's
+    ``"ViscosityEddy"``. Convert the cell data to point data as in this
+    dataset, the solution is stored within the cells.
+
+    >>> from pyvista import examples
+    >>> import pyvista
+    >>> dataset = examples.download_cgns_multi()
+    >>> ugrid = dataset.combine()
+    >>> ugrid = ugrid = ugrid.cell_data_to_point_data()
+    >>> ugrid.plot(
+    ...     cmap='bwr', scalars='ViscosityEddy', zoom=4, cpos='xz', show_scalar_bar=False
+    ... )
+
+    """
+    filename, _ = _download_file('cgns/multi.cgns')
+    if not load:
+        return filename
+    reader = pyvista.CGNSReader(filename)
+    reader.enable_all_cell_arrays()
+    return reader.read()

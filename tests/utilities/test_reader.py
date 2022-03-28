@@ -483,3 +483,24 @@ def test_read_hdf():
     assert can.n_points == 6724
     assert 'VEL' in can.point_data
     assert can.n_cells == 4800
+
+
+@pytest.mark.skipif(pyvista.vtk_version_info < (9, 1), reason="Requires VTK v9.1.0 or newer")
+def test_read_cgns():
+    filename = examples.download_cgns_structured(load=False)
+    reader = pyvista.get_reader(filename)
+    reader.distrubte_blocks = True
+    assert reader.distrubte_blocks
+    reader.disable_all_bases()
+    reader.disable_all_cell_arrays()
+    reader.disable_all_point_arrays()
+    empty_block = reader.read()
+    assert len(empty_block) == 0
+
+    reader.enable_all_bases()
+    reader.enable_all_cell_arrays()
+    reader.enable_all_point_arrays()
+
+    block = reader.read()
+    assert len(block[0]) == 12
+    assert len(block[0][0].cell_data) == 3
