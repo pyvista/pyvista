@@ -68,7 +68,7 @@ storing a set of points.
 **Class Descriptions**
 
 The following table describes PyVista's point set classes.  These
-classes inherit all methods from their corresponding VTK
+classes inherit all methods from their corresponding VTK `vtkPointSet`_,
 `vtkPolyData`_, `vtkUnstructuredGrid`_, `vtkStructuredGrid`_, and
 `vtkExplicitStructuredGrid`_ superclasses.
 
@@ -82,6 +82,7 @@ classes inherit all methods from their corresponding VTK
    pyvista.StructuredGrid
    pyvista.ExplicitStructuredGrid
 
+.. _vtkPointSet: https://www.vtk.org/doc/nightly/html/classvtkPointSet.html
 .. _vtkPolyData: https://www.vtk.org/doc/nightly/html/classvtkPolyData.html
 .. _vtkUnstructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
 .. _vtkStructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html
