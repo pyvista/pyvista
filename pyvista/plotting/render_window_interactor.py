@@ -2,6 +2,7 @@
 import collections.abc
 from functools import partial
 import logging
+import time
 import weakref
 
 from pyvista import _vtk
@@ -30,22 +31,28 @@ class RenderWindowInteractor:
         if not light_follow_camera:
             self.interactor.LightFollowCameraOff()
 
-        # Map of events to observers
+        # Map of observers to events
         self._observers = {}
         self._key_press_event_callbacks = collections.defaultdict(list)
+        self._click_event_callbacks = {
+            event: {(double, v): [] for double in (False, True) for v in (False, True)}
+            for event in ("LeftButtonPressEvent", "RightButtonPressEvent")
+        }
+        self._click_time = 0
+        self._MAX_CLICK_DELAY = 0.8  # seconds
+        self._MAX_CLICK_DELTA = 40  # squared => ~6 pixels
 
         # Set default style
         self._style = 'RubberBandPick'
         self._style_class = None
         self._plotter = plotter
-        self._click_observer = None
 
         # Toggle interaction style when clicked on a visible chart (to
         # enable interaction with visible charts)
-        # Current trigger is right click, alternatively double click triggers could be used:
-        # https://kitware.github.io/vtk-examples/site/Cxx/Interaction/DoubleClick/
         self._context_style = _vtk.vtkContextInteractorStyle()
-        self.add_observer("RightButtonPressEvent", self._toggle_context_style)
+        self.track_click_position(
+            self._toggle_context_style, side="left", double=True, viewport=True
+        )
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.
@@ -66,21 +73,95 @@ class RenderWindowInteractor:
             raise TypeError('callback must be callable.')
         self._key_press_event_callbacks[key].append(callback)
 
+    @staticmethod
+    def _get_event_str(event):
+        if isinstance(event, str):
+            # Make sure we pass it at least once through these functions, such that
+            # invalid event names are mapped to "NoEvent".
+            event = _vtk.vtkCommand.GetEventIdFromString(event)
+        return _vtk.vtkCommand.GetStringFromEventId(event)
+
     def add_observer(self, event, call):
-        """Add an observer."""
+        """Add an observer for the given event.
+
+        Parameters
+        ----------
+        event : str or int
+            The event to observe. Either the name of this event (string) or
+            a VTK event identifier (int).
+
+        call : callable
+            Callback to be called when the event is invoked.
+
+        Returns
+        -------
+        int
+            The identifier of the added observer.
+
+        Examples
+        --------
+        Add a custom observer.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
+
+        """
         call = partial(try_callback, call)
-        self._observers[event] = self.interactor.AddObserver(event, call)
+        event = self._get_event_str(event)
+        observer = self.interactor.AddObserver(event, call)
+        self._observers[observer] = event
+        return observer
 
-    def remove_observer(self, event):
-        """Remove an observer."""
-        if event in self._observers:
-            self.interactor.RemoveObserver(event)
-            del self._observers[event]
+    def remove_observer(self, observer):
+        """Remove an observer.
 
-    def remove_observers(self):
-        """Remove all observers."""
-        for obs in list(self._observers.values()):
-            self.remove_observer(obs)
+        Parameters
+        ----------
+        observer : int
+            The identifier of the observer to remove.
+
+        Examples
+        --------
+        Add an observer and immediately remove it.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
+        >>> pl.iren.remove_observer(obs_enter)
+
+        """
+        if observer in self._observers:
+            self.interactor.RemoveObserver(observer)
+            del self._observers[observer]
+
+    def remove_observers(self, event=None):
+        """Remove all observers.
+
+        Parameters
+        ----------
+        event : str or int, optional
+            If provided, only removes observers of the given event. Otherwise,
+            if it is ``None``, removes all observers.
+
+        Examples
+        --------
+        Add two observers and immediately remove them.
+
+        >>> import pyvista
+        >>> pl = pyvista.Plotter()
+        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
+        >>> obs_leave = pl.iren.add_observer("LeaveEvent", lambda *_: print('Leave!'))
+        >>> pl.iren.remove_observers()
+
+        """
+        if event is None:
+            observers = list(self._observers.keys())
+        else:
+            event = self._get_event_str(event)
+            observers = [obs for obs, ev in self._observers.items() if event == ev]
+        for observer in observers:
+            self.remove_observer(observer)
 
     def clear_events_for_key(self, key):
         """Remove the callbacks associated to the key."""
@@ -97,9 +178,35 @@ class RenderWindowInteractor:
 
     def untrack_mouse_position(self):
         """Stop tracking the mouse position."""
-        self.remove_observer(_vtk.vtkCommand.MouseMoveEvent)
+        self.remove_observers(_vtk.vtkCommand.MouseMoveEvent)
 
-    def track_click_position(self, callback=None, side="right", viewport=False):
+    @staticmethod
+    def _get_click_event(side):
+        side = str(side).lower()
+        if side in ["right", "r"]:
+            return "RightButtonPressEvent"
+        elif side in ["left", "l"]:
+            return "LeftButtonPressEvent"
+        else:
+            raise TypeError(f"Side ({side}) not supported. Try `left` or `right`.")
+
+    def _click_event(self, obj, event):
+        t = time.time()
+        dt = t - self._click_time
+        last_pos = self._plotter.click_position or (0, 0)
+
+        self._plotter.store_click_position()
+        self._click_time = t
+        dp = (self._plotter.click_position[0] - last_pos[0]) ** 2
+        dp += (self._plotter.click_position[1] - last_pos[1]) ** 2
+        double = dp < self._MAX_CLICK_DELTA and dt < self._MAX_CLICK_DELAY
+
+        for callback in self._click_event_callbacks[event][double, False]:
+            callback(self._plotter.pick_click_position())
+        for callback in self._click_event_callbacks[event][double, True]:
+            callback(self._plotter.click_position)
+
+    def track_click_position(self, callback=None, side="right", double=False, viewport=False):
         """Keep track of the click position.
 
         By default, it only tracks right clicks.
@@ -111,8 +218,12 @@ class RenderWindowInteractor:
             the click position as a length two tuple.
 
         side : str, optional
-            The side of the mouse for the button to track (left or
-            right).  Default is left. Also accepts ``'r'`` or ``'l'``.
+            The mouse button to track (either ``'left'`` or ``'right'``).
+            Default is ``'right'``. Also accepts ``'r'`` or ``'l'``.
+
+        double : bool, optional
+            Track single clicks if ``False``, double clicks if ``True``.
+            Defaults to single clicks ``False``.
 
         viewport : bool, optional
             If ``True``, uses the normalized viewport coordinate
@@ -120,29 +231,37 @@ class RenderWindowInteractor:
             when passing the click position to the callback.
 
         """
-        side = str(side).lower()
-        if side in ["right", "r"]:
-            event = _vtk.vtkCommand.RightButtonPressEvent
-        elif side in ["left", "l"]:
-            event = _vtk.vtkCommand.LeftButtonPressEvent
+        event = self._get_click_event(side)
+        add_observer = all(len(cbs) == 0 for cbs in self._click_event_callbacks[event].values())
+
+        if callback is None and add_observer:
+            # No observers for this event yet and custom callback not given => insert dummy callback
+            callback = lambda obs, event: None
+        if callable(callback):
+            self._click_event_callbacks[event][double, viewport].append(callback)
         else:
-            raise TypeError(f"Side ({side}) not supported. Try `left` or `right`")
+            raise ValueError(
+                "Invalid callback provided, it should be either ``None`` or a callable."
+            )
 
-        def _click_callback(obj, event):
-            self._plotter.store_click_position()
-            if callable(callback):
-                if viewport:
-                    callback(self._plotter.click_position)
-                else:
-                    callback(self._plotter.pick_click_position())
+        if add_observer:
+            self.add_observer(event, self._click_event)
 
-        self._click_observer = event
-        self.add_observer(event, _click_callback)
+    def untrack_click_position(self, side="right"):
+        """Stop tracking the click position.
 
-    def untrack_click_position(self):
-        """Stop tracking the click position."""
-        self.remove_observer(self._click_observer)
-        self._click_observer = None
+        Parameters
+        ----------
+        side : str, optional
+            The mouse button to stop tracking (either ``'left'`` or
+            ``'right'``). Default is ``'right'``. Also accepts ``'r'``
+            or ``'l'``.
+
+        """
+        event = self._get_click_event(side)
+        self.remove_observers(event)
+        for cbs in self._click_event_callbacks[event].values():
+            cbs.clear()
 
     def clear_key_event_callbacks(self):
         """Clear key event callbacks."""
@@ -166,8 +285,7 @@ class RenderWindowInteractor:
             self._style_class = _style_factory(self._style)(self)
         self.interactor.SetInteractorStyle(self._style_class)
 
-    def _toggle_context_style(self, obj, event):
-        mouse_pos = self.get_event_position()
+    def _toggle_context_style(self, mouse_pos):
         scene = None
         for renderer in self._plotter.renderers:
             if scene is None and renderer.IsInViewport(*mouse_pos):
@@ -577,6 +695,11 @@ class RenderWindowInteractor:
             self._mouse_move(x, y)
         self.interactor.LeftButtonReleaseEvent()
 
+    def _mouse_left_button_click(self, x=None, y=None, count=1):
+        for _ in range(count):
+            self._mouse_left_button_press(x, y)
+            self._mouse_left_button_release()
+
     def _mouse_right_button_press(self, x=None, y=None):  # pragma: no cover
         """Simulate a right mouse button press.
 
@@ -593,6 +716,11 @@ class RenderWindowInteractor:
         if x is not None and y is not None:
             self._mouse_move(x, y)
         self.interactor.RightButtonReleaseEvent()
+
+    def _mouse_right_button_click(self, x=None, y=None, count=1):
+        for _ in range(count):
+            self._mouse_right_button_press(x, y)
+            self._mouse_right_button_release()
 
     def _mouse_move(self, x, y):  # pragma: no cover
         """Simulate moving the mouse to ``(x, y)`` screen coordinates."""

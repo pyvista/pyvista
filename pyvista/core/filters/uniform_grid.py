@@ -165,6 +165,89 @@ class UniformGridFilters(DataSetFilters):
         fixed.copy_meta_from(result)
         return fixed
 
+    def image_dilate_erode(
+        self,
+        dilate_value=1,
+        erode_value=0,
+        kernel_size=(3, 3, 3),
+        scalars=None,
+        preference='points',
+        progress_bar=False,
+    ):
+        """Dilates one value and erodes another.
+
+        ``image_dilate_erode`` will dilate one value and erode another. It uses
+        an elliptical footprint, and only erodes/dilates on the boundary of the
+        two values. The filter is restricted to the X, Y, and Z axes for now.
+        It can degenerate to a 2 or 1-dimensional filter by setting the kernel
+        size to 1 for a specific axis.
+
+        Parameters
+        ----------
+        dilate_value : int or float, optional
+            Dilate value in the dataset. Default: ``1``.
+
+        erode_value : int or float, optional
+            Erode value in the dataset. Default: ``0``.
+
+        kernel_size : list(int) or tuple(int), optional
+            Length 3 iterable of ints: ``(xsize, ysize, zsize)``.
+            Determines the size (and center) of the kernel.
+            Default: ``(3, 3, 3)``.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        preference : str, optional
+            When scalars are specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress. Default ``False``.
+
+        Returns
+        -------
+        pyvista.UniformGrid
+            Dataset that has been dilated/eroded on the boundary of the specified scalars.
+
+        Examples
+        --------
+        Demonstrate image dilate/erode on an example dataset. First, plot
+        the example dataset with the active scalars.
+
+        >>> from pyvista import examples
+        >>> uni = examples.load_uniform()
+        >>> uni.plot()
+
+        Now, plot the image threshold with ``threshold=[400, 600]``. Note how
+        values within the threshold are 1 and outside are 0.
+
+        >>> ithresh = uni.image_threshold([400, 600])
+        >>> ithresh.plot()
+
+        Note how there is a hole in the thresholded image. Apply a dilation/
+        erosion filter with a large kernel to fill that hole in.
+
+        >>> idilate = ithresh.image_dilate_erode(kernel_size=[5, 5, 5])
+        >>> idilate.plot()
+
+        """
+        alg = _vtk.vtkImageDilateErode3D()
+        alg.SetInputDataObject(self)
+        if scalars is None:
+            field, scalars = self.active_scalars_info
+        else:
+            field = self.get_array_association(scalars, preference=preference)
+        alg.SetInputArrayToProcess(
+            0, 0, 0, field.value, scalars
+        )  # args: (idx, port, connection, field, name)
+        alg.SetKernelSize(*kernel_size)
+        alg.SetDilateValue(dilate_value)
+        alg.SetErodeValue(erode_value)
+        _update_alg(alg, progress_bar, 'Performing Dilation and Erosion')
+        return _get_output(alg)
+
     def image_threshold(
         self,
         threshold,

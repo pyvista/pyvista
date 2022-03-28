@@ -18,7 +18,6 @@ skip_py2_nobind = pytest.mark.skipif(
     int(sys.version[0]) < 3, reason="Python 2 doesn't support binding methods"
 )
 
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 skip_not_vtk9 = pytest.mark.skipif(not VTK9, reason="Test requires >=VTK v9")
 
@@ -59,7 +58,6 @@ def test_datasetfilters_init():
         pyvista.core.filters.DataSetFilters()
 
 
-@skip_windows
 def test_clip_filter(datasets):
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset in enumerate(datasets):
@@ -87,7 +85,6 @@ def test_clip_filter(datasets):
     assert clp2 is not None
 
 
-@skip_windows
 @skip_mac
 @pytest.mark.parametrize('both', [False, True])
 @pytest.mark.parametrize('invert', [False, True])
@@ -337,6 +334,36 @@ def test_threshold(datasets):
         datasets[0].threshold(
             [10, 500], scalars='Spatial Point Data', all_scalars=True, progress_bar=True
         )
+
+
+def test_threshold_multicomponent():
+    mesh = pyvista.Plane()
+    data = np.zeros((mesh.n_cells, 3))
+    data[0:3, 0] = 1
+    data[2:4, 1] = 2
+    data[2, 2] = 3
+    mesh["data"] = data
+
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="component", component=0)
+    assert thresh.n_cells == 3
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="component", component=1)
+    assert thresh.n_cells == 2
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="all")
+    assert thresh.n_cells == 1
+    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="any")
+    assert thresh.n_cells == 4
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="not a mode")
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=-1)
+
+    with pytest.raises(ValueError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=3)
+
+    with pytest.raises(TypeError):
+        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=0.5)
 
 
 def test_threshold_percent(datasets):
@@ -1031,6 +1058,22 @@ def test_plot_over_line(tmpdir):
         )
 
 
+def test_sample_over_multiple_lines():
+    """Test that"""
+    name = 'values'
+
+    line = pyvista.Line([0, 0, 0], [0, 0, 10], 9)
+    line[name] = np.linspace(0, 10, 10)
+
+    sampled_multiple_lines = line.sample_over_multiple_lines(
+        [[0, 0, 0.5], [0, 0, 1], [0, 0, 1.5]], progress_bar=True
+    )
+
+    expected_result = np.array([0.5, 1, 1.5])
+    assert np.allclose(sampled_multiple_lines[name], expected_result)
+    assert name in sampled_multiple_lines.array_names  # is name in sampled result
+
+
 def test_sample_over_circular_arc():
     """Test that we get a circular arc."""
 
@@ -1587,6 +1630,44 @@ def test_median_smooth_outlier():
     )
 
 
+def test_image_dilate_erode_output_type():
+    point_data = np.zeros((10, 10, 10))
+    point_data[4, 4, 4] = 1
+    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilate_erode = volume.image_dilate_erode()
+    assert isinstance(volume_dilate_erode, pyvista.UniformGrid)
+    volume_dilate_erode = volume.image_dilate_erode(scalars='point_data')
+    assert isinstance(volume_dilate_erode, pyvista.UniformGrid)
+
+
+def test_image_dilate_erode_dilation():
+    point_data = np.zeros((10, 10, 10))
+    point_data[4, 4, 4] = 1
+    point_data_dilated = point_data.copy()
+    point_data_dilated[3:6, 3:6, 4] = 1  # "activate" all voxels within diameter 3 around (4,4,4)
+    point_data_dilated[3:6, 4, 3:6] = 1
+    point_data_dilated[4, 3:6, 3:6] = 1
+    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilated = volume.image_dilate_erode()  # default is binary dilation
+    assert np.array_equal(
+        volume_dilated.point_data['point_data'], point_data_dilated.flatten(order='F')
+    )
+
+
+def test_image_dilate_erode_erosion():
+    point_data = np.zeros((10, 10, 10))
+    point_data[4, 4, 4] = 1
+    point_data_eroded = np.zeros((10, 10, 10))
+    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_eroded = volume.image_dilate_erode(0, 1)  # binary erosion
+    assert np.array_equal(
+        volume_eroded.point_data['point_data'], point_data_eroded.flatten(order='F')
+    )
+
+
 def test_image_threshold_output_type():
     threshold = 10  # 'random' value
     volume = examples.load_uniform()
@@ -1989,21 +2070,26 @@ def test_extrude_rotate():
     line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
 
     with pytest.raises(ValueError):
-        line.extrude_rotate(resolution=0)
+        line.extrude_rotate(resolution=0, capping=True)
 
-    poly = line.extrude_rotate(resolution=resolution, progress_bar=True)
+    poly = line.extrude_rotate(resolution=resolution, progress_bar=True, capping=True)
     assert poly.n_cells == line.n_points - 1
     assert poly.n_points == (resolution + 1) * line.n_points
 
     translation = 10.0
     dradius = 1.0
-    poly = line.extrude_rotate(translation=translation, dradius=dradius, progress_bar=True)
+    poly = line.extrude_rotate(
+        translation=translation,
+        dradius=dradius,
+        progress_bar=True,
+        capping=True,
+    )
     zmax = poly.bounds[5]
     assert zmax == translation
     xmax = poly.bounds[1]
     assert xmax == line.bounds[1] + dradius
 
-    poly = line.extrude_rotate(angle=90.0, progress_bar=True)
+    poly = line.extrude_rotate(angle=90.0, progress_bar=True, capping=True)
     xmin = poly.bounds[0]
     xmax = poly.bounds[1]
     ymin = poly.bounds[2]
@@ -2020,7 +2106,7 @@ def test_extrude_rotate_inplace():
     resolution = 4
     poly = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
     old_line = poly.copy()
-    poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True)
+    poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True, capping=True)
     assert poly.n_cells == old_line.n_points - 1
     assert poly.n_points == (resolution + 1) * old_line.n_points
 

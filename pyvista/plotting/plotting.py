@@ -237,7 +237,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bars = ScalarBars(self)
 
-        # track if the camera has been setup
+        # track if the camera has been set up
         self._first_time = True
         # Keep track of the scale
 
@@ -336,7 +336,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not _vtk.VTK9:  # pragma: no cover
-            raise RuntimeError('Support for glTF requires VTK v9 or newer')
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Support for glTF requires VTK v9 or newer')
 
         filename = os.path.abspath(os.path.expanduser(str(filename)))
         if not os.path.isfile(filename):
@@ -404,7 +406,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Widget containing pythreejs renderer.
 
         """
-        self._on_first_render_request()  # setup camera
+        self._on_first_render_request()  # set up camera
         from pyvista.jupyter.pv_pythreejs import convert_plotter
 
         return convert_plotter(self)
@@ -459,7 +461,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not _vtk.VTK9:  # pragma: no cover
-            raise RuntimeError('Support for glTF requires VTK v9 or newer')
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Support for glTF requires VTK v9 or newer')
 
         if not hasattr(self, "ren_win"):
             raise RuntimeError('This plotter has been closed and is unable to export the scene.')
@@ -1203,7 +1207,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Check if the render window has been shown and raise an exception if not."""
         if not self._rendered:
             raise AttributeError(
-                '\nThis plotter has not yet been setup and rendered '
+                '\nThis plotter has not yet been set up and rendered '
                 'with ``show()``.\n'
                 'Consider setting ``off_screen=True`` '
                 'for off screen rendering.\n'
@@ -1298,9 +1302,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.track_click_position."""
         self.iren.track_click_position(*args, **kwargs)
 
-    def untrack_click_position(self):
+    @wraps(RenderWindowInteractor.untrack_click_position)
+    def untrack_click_position(self, *args, **kwargs):
         """Stop tracking the click position."""
-        self.iren.untrack_click_position()
+        self.iren.untrack_click_position(*args, **kwargs)
 
     @property
     def pickable_actors(self):
@@ -4400,7 +4405,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         renderer = self.renderers.add_background_renderer(image_path, scale, as_global)
         self.ren_win.AddRenderer(renderer)
 
-        # setup autoscaling of the image
+        # set up autoscaling of the image
         if auto_resize:  # pragma: no cover
             self.iren.add_observer('ModifiedEvent', renderer.resize)
 

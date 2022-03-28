@@ -103,7 +103,8 @@ def test_enable_cell_picking_interactive_two_ren_win():
 
 @skip_no_vtk9
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_point_picking():
+@pytest.mark.parametrize('left_clicking', [False, True])
+def test_point_picking(left_clicking):
     sphere = pyvista.Sphere()
     for use_mesh in (False, True):
         plotter = pyvista.Plotter(
@@ -113,12 +114,18 @@ def test_point_picking():
         plotter.enable_point_picking(
             show_message=True,
             use_mesh=use_mesh,
+            left_clicking=left_clicking,
             callback=lambda: None,
         )
         # simulate the pick
-        renderer = plotter.renderer
-        picker = plotter.iren.get_picker()
-        picker.Pick(50, 50, 0, renderer)
+        if left_clicking:
+            width, height = plotter.window_size
+            plotter.iren._mouse_left_button_press(width // 2, height // 2)
+            plotter.iren._mouse_left_button_release(width, height)
+        else:
+            renderer = plotter.renderer
+            picker = plotter.iren.get_picker()
+            picker.Pick(50, 50, 0, renderer)
         plotter.close()
 
 
