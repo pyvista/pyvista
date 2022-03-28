@@ -432,7 +432,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Rotate scene to be compatible with the glTF specifications.
 
         save_normals : bool, optional
-            Saves the point array ``'Normals'`` as ``'NORMALS'`` in
+            Saves the point array ``'Normals'`` as ``'NORMAL'`` in
             the outputted scene.
 
         Examples
@@ -471,6 +471,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         from vtkmodules.vtkIOExport import vtkGLTFExporter
 
         # rotate scene to gltf compatible view
+        renamed_arrays = []  # any renamed normal arrays
         if rotate_scene:
             for renderer in self.renderers:
                 for actor in renderer.actors.values():
@@ -485,9 +486,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                 continue
                             dataset = mapper.GetInputAsDataSet()
                             if 'Normals' in dataset.point_data:
-                                # ensure normals are active
-                                normals = dataset.point_data['Normals']
-                                dataset.point_data.active_normals = normals.copy()
+                                # By default VTK uses the 'Normals' point data for normals
+                                # but gLTF uses NORMAL.
+                                point_data = dataset.GetPointData()
+                                array = point_data.GetArray('Normals')
+                                array.SetName('NORMAL')
+                                renamed_arrays.append(array)
+
                         except:  # noqa: E722
                             pass
 
@@ -505,6 +510,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     if hasattr(actor, 'RotateX'):
                         actor.RotateZ(90)
                         actor.RotateX(90)
+
+        # revert any renamed arrays
+        for array in renamed_arrays:
+            array.SetName('Normals')
 
     def enable_hidden_line_removal(self, all_renderers=True):
         """Enable hidden line removal.
