@@ -28,26 +28,11 @@ def test_pointset(pointset):
     pointset.point_data[arr_name] = np.random.random(10)
     assert arr_name in pointset.point_data
 
-    # test editable
-    pointset.editable = True
-    assert pointset.editable is True
+    # test that points can be modified
     pointset.points[:] = 0
-
     assert np.allclose(pointset.points, 0)
     pointset.points = np.ones((10, 3))
     assert np.allclose(pointset.points, 1)
-
-    # test not editable
-    pointset.editable = False
-    assert pointset.editable is False
-
-    # check the numpy slice case
-    with pytest.raises(ValueError, match="destination is read-only"):
-        pointset.points[:] = 1
-
-    # direct setter case
-    with pytest.raises(ValueError, match="PointSet is read only"):
-        pointset.points = np.zeros((10, 3))
 
 
 def test_filters_return_pointset(sphere):

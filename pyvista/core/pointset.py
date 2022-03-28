@@ -22,12 +22,10 @@ from pyvista.utilities.cells import (
     numpy_to_idarr,
 )
 
-from .._typing import NumericArray, VectorArray
 from ..utilities.fileio import get_ext
 from .dataset import DataSet
 from .errors import DeprecationError, VTKVersionError
 from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
-from .pyvista_ndarray import pyvista_ndarray
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -358,10 +356,6 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         List, numpy array, or sequence containing point locations. Must be an
         ``(N, 3)`` array of points.
 
-    editable : bool, optional
-        Set whether this dataset is editable after creation. Default
-        ``True``. For performance, set this to ``False``.
-
     deep : bool, optional
         Whether to copy the input ``points``, or to create a PointSet from them
         without copying them.  Setting ``deep=True`` ensures that the original
@@ -396,7 +390,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     """
 
-    def __init__(self, points=None, editable=True, deep=False, force_float=True):
+    def __init__(self, points=None, deep=False, force_float=True):
         """Initialize the pointset."""
         if pyvista.vtk_version_info < (9, 1, 0):
             raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
@@ -405,8 +399,6 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         if points is not None:
             self.SetPoints(pyvista.vtk_points(points, deep=deep, force_float=force_float))
 
-        self.editable = editable
-
     def __repr__(self):
         """Return the standard representation."""
         return DataSet.__repr__(self)
@@ -414,65 +406,6 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     def __str__(self):
         """Return the standard str representation."""
         return DataSet.__str__(self)
-
-    @property
-    def points(self) -> pyvista_ndarray:
-        """Return a reference to the points as a numpy object.
-
-        Notes
-        -----
-        Points may only be set when the ``editable`` attribute is ``False``.
-
-        Examples
-        --------
-        Create an empty ``pyvista.PointSet`` and assign points to it.
-
-        >>> import numpy as np
-        >>> import pyvista
-        >>> pset = pyvista.PointSet()
-        >>> rng = np.random.default_rng()
-        >>> pset.points = rng.random((10, 3))
-
-        """
-        points = super().points
-        points.flags.writeable = self.editable
-        return points
-
-    @points.setter
-    def points(self, points: Union[VectorArray, NumericArray, pyvista._vtk.vtkPoints]):
-        if not self.editable:
-            raise ValueError("PointSet is read only as editable is set to False")
-
-        # setter inheritance workaround:
-        # https://stackoverflow.com/questions/10810369
-        super(type(self), type(self)).points.fset(self, points)  # type: ignore
-
-    @property
-    def editable(self) -> bool:
-        """Return or set if this dataset can be incrementally modified.
-
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import pyvista
-        >>> rng = np.random.default_rng()
-        >>> points = rng.random((10, 3))
-        >>> pset = pyvista.PointSet(points, editable=False)
-        >>> pset.editable
-        False
-
-        Allow the pointset to be editable.
-
-        >>> pset.editable = True
-        >>> pset.points[:] = 0
-
-        """
-        return self.GetEditable()
-
-    @editable.setter
-    def editable(self, value: bool):
-        self.SetEditable(value)
-        self.points.flags.writeable = value
 
     def cast_to_polydata(self, deep=True):
         """Cast this dataset to polydata.
