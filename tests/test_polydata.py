@@ -9,6 +9,7 @@ import pyvista
 from pyvista import examples
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.plotting import system_supports_plotting
+from pyvista.utilities.misc import PyvistaFutureWarning
 
 radius = 0.5
 
@@ -768,13 +769,21 @@ def test_is_all_triangles():
 
 def test_extrude():
     arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-    poly = arc.extrude([0, 0, 1], progress_bar=True)
+    poly = arc.extrude([0, 0, 1], progress_bar=True, capping=True)
     assert poly.n_points
     assert poly.n_cells
 
     n_points_old = arc.n_points
-    arc.extrude([0, 0, 1], inplace=True)
+    arc.extrude([0, 0, 1], inplace=True, capping=True)
     assert arc.n_points != n_points_old
+
+
+def test_extrude_capping_warnings():
+    arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+    with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
+        arc.extrude([0, 0, 1])
+    with pytest.warns(PyvistaFutureWarning, match='default value of the ``capping`` keyword'):
+        arc.extrude_rotate()
 
 
 def test_flip_normals(sphere, plane):

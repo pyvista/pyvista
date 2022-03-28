@@ -23,6 +23,12 @@ class PyvistaDeprecationWarning(Warning):
     pass
 
 
+class PyvistaFutureWarning(Warning):
+    """Non-supressed Future Warning."""
+
+    pass
+
+
 def VTKVersionInfo():
     """Return the vtk version as a namedtuple."""
     version_info = namedtuple('VTKVersionInfo', ['major', 'minor', 'micro'])
