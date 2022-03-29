@@ -52,3 +52,14 @@ p.enable_point_picking(pickable_window=False)
 p.pickable_actors = [sphere_actor, cube_actor]  # now both are pickable
 p.view_xy()
 p.show()
+
+###############################################################################
+# Pick using the left-mouse button
+# ++++++++++++++++++++++++++++++++
+#
+sphere = pv.Sphere()
+
+p = pv.Plotter()
+p.add_mesh(sphere, pickable=True)
+p.enable_point_picking(left_clicking=True)
+p.show()

@@ -140,6 +140,7 @@ class WidgetHelper:
         widget_color=None,
         outline_translation=True,
         merge_points=True,
+        crinkle=False,
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -179,6 +180,9 @@ class WidgetHelper:
             If ``True`` (default), coinciding points of independently
             defined mesh elements will be merged.
 
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the clip.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -198,6 +202,9 @@ class WidgetHelper:
         self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
 
         port = 1 if invert else 0
+
+        if crinkle:
+            mesh.cell_data['cell_ids'] = np.arange(mesh.n_cells)
 
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
@@ -220,7 +227,10 @@ class WidgetHelper:
 
             alg.SetBoxClip(*bounds)
             alg.Update()
-            box_clipped_mesh.shallow_copy(alg.GetOutput(port))
+            clipped = pyvista.wrap(alg.GetOutput(port))
+            if crinkle:
+                clipped = mesh.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+            box_clipped_mesh.shallow_copy(clipped)
 
         self.add_box_widget(
             callback=callback,
@@ -453,6 +463,7 @@ class WidgetHelper:
         outline_translation=False,
         implicit=True,
         normal_rotation=True,
+        crinkle=False,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -509,6 +520,9 @@ class WidgetHelper:
             rotating the normal. This is forced to ``False`` when
             ``assign_to_axis`` is set.
 
+        crinkle : bool, optional
+            Crinkle the clip by extracting the entire cells along the clip.
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`BasePlotter.add_mesh` to control how the mesh is
@@ -520,12 +534,17 @@ class WidgetHelper:
             VTK actor of the mesh.
 
         """
+        from pyvista.core.filters import _get_output  # avoids circular import
+
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
         self.add_mesh(mesh.outline(), name=name + "outline", opacity=0.0)
+
+        if crinkle:
+            mesh.cell_data['cell_ids'] = np.arange(0, mesh.n_cells, dtype=int)
 
         if isinstance(mesh, _vtk.vtkPolyData):
             alg = _vtk.vtkClipPolyData()
@@ -540,14 +559,17 @@ class WidgetHelper:
 
         if not hasattr(self, "plane_clipped_meshes"):
             self.plane_clipped_meshes = []
-        plane_clipped_mesh = pyvista.wrap(alg.GetOutput())
+        plane_clipped_mesh = _get_output(alg)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
         def callback(normal, origin):
             function = generate_plane(normal, origin)
             alg.SetClipFunction(function)  # the implicit function
             alg.Update()  # Perform the Cut
-            plane_clipped_mesh.shallow_copy(alg.GetOutput())
+            clipped = pyvista.wrap(alg.GetOutput())
+            if crinkle:
+                clipped = mesh.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+            plane_clipped_mesh.shallow_copy(clipped)
 
         self.add_plane_widget(
             callback=callback,

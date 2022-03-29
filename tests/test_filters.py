@@ -77,6 +77,13 @@ def test_clip_filter(datasets):
             else:
                 assert isinstance(clp, pyvista.UnstructuredGrid)
 
+    # crinkle clip
+    clp = pyvista.Wavelet().clip(normal=(1, 1, 1), crinkle=True)
+    assert clp is not None
+    clp1, clp2 = pyvista.Wavelet().clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
+    assert clp1 is not None
+    assert clp2 is not None
+
 
 @skip_mac
 @pytest.mark.parametrize('both', [False, True])
@@ -171,6 +178,13 @@ def test_clip_box(datasets):
     with pytest.raises(ValueError):
         dataset.clip_box(bounds=pyvista.Sphere(), progress_bar=True)
 
+    # crinkle clip
+    surf = pyvista.Sphere(radius=3)
+    vol = pyvista.voxelize(surf)
+    cube = pyvista.Cube().rotate_x(33, inplace=False)
+    clp = vol.clip_box(bounds=cube, invert=False, crinkle=True)
+    assert clp is not None
+
 
 @skip_py2_nobind
 def test_clip_box_composite(composite):
@@ -196,6 +210,9 @@ def test_clip_surface():
     clipped = dataset.clip_surface(surface.cast_to_unstructured_grid(), progress_bar=True)
     assert isinstance(clipped, pyvista.UnstructuredGrid)
     assert 'implicit_distance' in clipped.array_names
+    # Test crinkle
+    clipped = dataset.clip_surface(surface, invert=False, progress_bar=True, crinkle=True)
+    assert isinstance(clipped, pyvista.UnstructuredGrid)
 
 
 def test_clip_closed_surface():
@@ -1041,6 +1058,22 @@ def test_plot_over_line(tmpdir):
         )
 
 
+def test_sample_over_multiple_lines():
+    """Test that"""
+    name = 'values'
+
+    line = pyvista.Line([0, 0, 0], [0, 0, 10], 9)
+    line[name] = np.linspace(0, 10, 10)
+
+    sampled_multiple_lines = line.sample_over_multiple_lines(
+        [[0, 0, 0.5], [0, 0, 1], [0, 0, 1.5]], progress_bar=True
+    )
+
+    expected_result = np.array([0.5, 1, 1.5])
+    assert np.allclose(sampled_multiple_lines[name], expected_result)
+    assert name in sampled_multiple_lines.array_names  # is name in sampled result
+
+
 def test_sample_over_circular_arc():
     """Test that we get a circular arc."""
 
@@ -1597,6 +1630,44 @@ def test_median_smooth_outlier():
     )
 
 
+def test_image_dilate_erode_output_type():
+    point_data = np.zeros((10, 10, 10))
+    point_data[4, 4, 4] = 1
+    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilate_erode = volume.image_dilate_erode()
+    assert isinstance(volume_dilate_erode, pyvista.UniformGrid)
+    volume_dilate_erode = volume.image_dilate_erode(scalars='point_data')
+    assert isinstance(volume_dilate_erode, pyvista.UniformGrid)
+
+
+def test_image_dilate_erode_dilation():
+    point_data = np.zeros((10, 10, 10))
+    point_data[4, 4, 4] = 1
+    point_data_dilated = point_data.copy()
+    point_data_dilated[3:6, 3:6, 4] = 1  # "activate" all voxels within diameter 3 around (4,4,4)
+    point_data_dilated[3:6, 4, 3:6] = 1
+    point_data_dilated[4, 3:6, 3:6] = 1
+    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilated = volume.image_dilate_erode()  # default is binary dilation
+    assert np.array_equal(
+        volume_dilated.point_data['point_data'], point_data_dilated.flatten(order='F')
+    )
+
+
+def test_image_dilate_erode_erosion():
+    point_data = np.zeros((10, 10, 10))
+    point_data[4, 4, 4] = 1
+    point_data_eroded = np.zeros((10, 10, 10))
+    volume = pyvista.UniformGrid(dims=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_eroded = volume.image_dilate_erode(0, 1)  # binary erosion
+    assert np.array_equal(
+        volume_eroded.point_data['point_data'], point_data_eroded.flatten(order='F')
+    )
+
+
 def test_image_threshold_output_type():
     threshold = 10  # 'random' value
     volume = examples.load_uniform()
@@ -1999,21 +2070,26 @@ def test_extrude_rotate():
     line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
 
     with pytest.raises(ValueError):
-        line.extrude_rotate(resolution=0)
+        line.extrude_rotate(resolution=0, capping=True)
 
-    poly = line.extrude_rotate(resolution=resolution, progress_bar=True)
+    poly = line.extrude_rotate(resolution=resolution, progress_bar=True, capping=True)
     assert poly.n_cells == line.n_points - 1
     assert poly.n_points == (resolution + 1) * line.n_points
 
     translation = 10.0
     dradius = 1.0
-    poly = line.extrude_rotate(translation=translation, dradius=dradius, progress_bar=True)
+    poly = line.extrude_rotate(
+        translation=translation,
+        dradius=dradius,
+        progress_bar=True,
+        capping=True,
+    )
     zmax = poly.bounds[5]
     assert zmax == translation
     xmax = poly.bounds[1]
     assert xmax == line.bounds[1] + dradius
 
-    poly = line.extrude_rotate(angle=90.0, progress_bar=True)
+    poly = line.extrude_rotate(angle=90.0, progress_bar=True, capping=True)
     xmin = poly.bounds[0]
     xmax = poly.bounds[1]
     ymin = poly.bounds[2]
@@ -2030,7 +2106,7 @@ def test_extrude_rotate_inplace():
     resolution = 4
     poly = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
     old_line = poly.copy()
-    poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True)
+    poly.extrude_rotate(resolution=resolution, inplace=True, progress_bar=True, capping=True)
     assert poly.n_cells == old_line.n_points - 1
     assert poly.n_points == (resolution + 1) * old_line.n_points
 
