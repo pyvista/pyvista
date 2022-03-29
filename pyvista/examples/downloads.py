@@ -3608,7 +3608,7 @@ def download_can(partial=False):  # pragma: no cover
 def download_cgns_structured(load=True):  # pragma: no cover
     """Download the structured CGNS dataset mesh.
 
-    Original downloaded from `CFD General Notation System Example Files
+    Originally downloaded from `CFD General Notation System Example Files
     <https://cgns.github.io/CGNSFiles.html>`_
 
     Parameters
