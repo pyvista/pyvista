@@ -489,8 +489,9 @@ def test_read_hdf():
 def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pyvista.get_reader(filename)
-    reader.distrubte_blocks = True
-    assert reader.distrubte_blocks
+    assert reader.distribute_blocks in [True, False]  # don't insist on a VTK default
+    reader.distribute_blocks = True
+    assert reader.distribute_blocks
     reader.disable_all_bases()
     reader.disable_all_cell_arrays()
     reader.disable_all_point_arrays()

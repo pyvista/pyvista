@@ -527,6 +527,10 @@ else:  # pragma: no cover
         """Lazy import of the vtkPlot3DMetaReader."""
         return vtk.vtkPlot3DMetaReader()
 
+    def lazy_vtkCGNSReader():
+        """Lazy import of the vtkCGNSReader."""
+        raise VTKVersionError('vtk.CGNSReader requires VTK v9.1.0 or newer')
+
     class vtkExplicitStructuredGrid:  # type: ignore
         """Empty placeholder for VTK9 compatibility."""
 
