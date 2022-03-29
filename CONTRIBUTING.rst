@@ -296,6 +296,9 @@ requirements::
   flake8...................................................................Passed
   codespell................................................................Passed
 
+The actual installation of the environment happens before the first commit 
+following ``pre-commit install``. This will take a bit longer, but subsequent
+commits will only trigger the actual style checks.
 
 Notes Regarding Image Regression Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
