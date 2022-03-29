@@ -1023,8 +1023,8 @@ class CGNSReader(BaseReader):
     _class_reader = staticmethod(_vtk.lazy_vtkCGNSReader)
 
     @property
-    def distrubte_blocks(self) -> bool:
-        """Distrubte each block in each zone across ranks.
+    def distribute_blocks(self) -> bool:
+        """Distribute each block in each zone across ranks.
 
         To make the reader disregard piece request and read all blocks in the
         zone, set this to ``False``. The default is ``True``.
@@ -1032,7 +1032,7 @@ class CGNSReader(BaseReader):
         Returns
         -------
         bool
-            If ``True``, distrubte each block in each zone across ranks.
+            If ``True``, distribute each block in each zone across ranks.
 
         Examples
         --------
@@ -1042,15 +1042,15 @@ class CGNSReader(BaseReader):
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
         >>> reader = pyvista.get_reader(filename)
-        >>> reader.distrubte_blocks = False
-        >>> reader.distrubte_blocks
+        >>> reader.distribute_blocks = False
+        >>> reader.distribute_blocks
         False
 
         """
         return bool(self._reader.GetDistributeBlocks())
 
-    @distrubte_blocks.setter
-    def distrubte_blocks(self, value):
+    @distribute_blocks.setter
+    def distribute_blocks(self, value):
         self._reader.SetDistributeBlocks(value)
 
     def enable_all_bases(self):
