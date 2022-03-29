@@ -99,6 +99,7 @@ import re
 import shutil
 import textwrap
 import traceback
+from typing import Any, Dict
 
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
@@ -278,7 +279,7 @@ Exception occurred rendering plot.
 
 # the context of the plot for all directives specified with the
 # :context: option
-plot_context = dict()
+plot_context: Dict[Any, Any] = dict()
 
 
 class ImageFile:
