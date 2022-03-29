@@ -3621,8 +3621,8 @@ def download_cgns_structured(load=True):  # pragma: no cover
     -------
     pyvista.MultiBlock or str
         Structured, 12 block, 3-D constricting channel, with example use of
-        Family_t for BCs (ADF type). If ``load`` is False, then the path of the
-        example CGNS file.
+        Family_t for BCs (ADF type). If ``load`` is ``False``, then the path of the
+        example CGNS file is returned.
 
     Examples
     --------
@@ -3643,7 +3643,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
 def download_cgns_multi(load=True):  # pragma: no cover
     """Download a multielement airfoil with a cell centered solution.
 
-    Original downloaded from `CFD General Notation System Example Files
+    Originally downloaded from `CFD General Notation System Example Files
     <https://cgns.github.io/CGNSFiles.html>`_
 
     Parameters
@@ -3656,7 +3656,8 @@ def download_cgns_multi(load=True):  # pragma: no cover
     -------
     pyvista.MultiBlock or str
         Structured, 4 blocks, 2D (2 planes in third dimension) multielement
-        airfoil, with cell centered solution.
+        airfoil, with cell centered solution. If ``load`` is ``False``, then the path of the
+        example CGNS file is returned.
 
     Examples
     --------
@@ -3670,7 +3671,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     >>> ugrid = dataset.combine()
     >>> ugrid = ugrid = ugrid.cell_data_to_point_data()
     >>> ugrid.plot(
-    ...     cmap='bwr', scalars='ViscosityEddy', zoom=4, cpos='xz', show_scalar_bar=False
+    ...     cmap='bwr', scalars='ViscosityEddy', zoom=4, cpos='xz', show_scalar_bar=False,
     ... )
 
     """

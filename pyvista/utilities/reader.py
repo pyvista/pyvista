@@ -134,7 +134,7 @@ class BaseReader:
         Returns
         -------
         pyvista.BaseReader
-            An instance of a Reader object.
+            An instance of the Reader object.
 
         """
         if self._reader is None:
@@ -1032,7 +1032,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
     def distribute_blocks(self) -> bool:
         """Distribute each block in each zone across ranks.
 
-        To make the reader disregard piece request and read all blocks in the
+        To make the reader disregard the piece request and read all blocks in the
         zone, set this to ``False``. The default is ``True``.
 
         Returns
@@ -1066,7 +1066,8 @@ class CGNSReader(BaseReader, PointCellDataSelection):
 
         Examples
         --------
-        Read all bases
+        Read all bases.
+
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
@@ -1083,6 +1084,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         Examples
         --------
         Disable reading all bases.
+
         >>> import pyvista
         >>> from pyvista import examples
         >>> filename = examples.download_cgns_multi(load=False)
