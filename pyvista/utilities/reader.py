@@ -1062,7 +1062,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
     def enable_all_bases(self):
         """Enable reading all bases.
 
-       By default only the 0th base is read.
+        By default only the 0th base is read.
 
         Examples
         --------
