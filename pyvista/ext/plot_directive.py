@@ -99,7 +99,6 @@ import re
 import shutil
 import textwrap
 import traceback
-from typing import Any, Dict
 
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
