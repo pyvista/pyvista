@@ -290,7 +290,7 @@ checks. For example, each commit automatically checks that you meet the style
 requirements::
 
   $ pre-commit install
-  $ git commit -am "added my cool feature"
+  $ git commit -m "added my cool feature"
   black....................................................................Passed
   isort....................................................................Passed
   flake8...................................................................Passed
